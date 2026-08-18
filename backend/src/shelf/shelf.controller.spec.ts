@@ -60,6 +60,7 @@ describe("ShelfController", () => {
 		const result = await controller.getUserShelf("did:plc:test", {
 			page: 2,
 			pageSize: 24,
+			sortOrder: "asc",
 		});
 
 		expect(mockShelfService.getUserShelf).toHaveBeenCalledWith(
@@ -68,6 +69,7 @@ describe("ShelfController", () => {
 			24,
 			undefined,
 			undefined,
+			"asc",
 		);
 		expect(result.items[0]).toMatchObject({
 			id: "tm-1",

@@ -20,6 +20,13 @@ export class DiscoverController {
 		return this.discoverService.trending();
 	}
 
+	@Get("onboarding")
+	@ApiOperation({ summary: "Movies and shows for the onboarding swipe deck" })
+	@ApiResponse({ status: 200, type: DiscoverSectionResponseDto })
+	async onboarding() {
+		return this.discoverService.onboarding();
+	}
+
 	@Get("from-follows")
 	@UseGuards(AuthGuard)
 	@ApiOperation({

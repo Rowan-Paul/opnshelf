@@ -293,7 +293,8 @@
                   "watchedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Custom watch datetime (ISO 8601)"
+                    "nullable": true,
+                    "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time."
                   }
                 }
               }
@@ -676,12 +677,24 @@
             "required": true,
             "in": "query",
             "description": "Search query (handle prefix)",
-            "schema": {}
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Array of actor suggestions"
+            "description": "Array of actor suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActorSuggestionDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Search for actor suggestions by handle prefix",
@@ -4355,6 +4368,20 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort shelf items by date",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
           }
         ],
         "responses": {
@@ -5505,6 +5532,28 @@
         ]
       }
     },
+    "/discover/onboarding": {
+      "get": {
+        "operationId": "DiscoverController_onboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverSectionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Movies and shows for the onboarding swipe deck",
+        "tags": [
+          "discover"
+        ]
+      }
+    },
     "/discover/from-follows": {
       "get": {
         "operationId": "DiscoverController_fromFollows",
@@ -6055,12 +6104,12 @@
             "type": "string"
           },
           "watchedDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
-          "id",
-          "watchedDate"
+          "id"
         ]
       },
       "RegisterDto": {
@@ -6156,6 +6205,35 @@
           "did",
           "handle",
           "coreOAuthUrl"
+        ]
+      },
+      "ActorSuggestionDto": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string",
+            "description": "The actor's DID"
+          },
+          "handle": {
+            "type": "string",
+            "description": "The actor's handle"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The actor's display name, if set",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "string",
+            "description": "URL of the actor's avatar, if set",
+            "nullable": true
+          }
+        },
+        "required": [
+          "did",
+          "handle",
+          "displayName",
+          "avatar"
         ]
       },
       "PermissionChangeDto": {
@@ -7086,7 +7164,9 @@
           },
           "watchedAt": {
             "type": "string",
-            "description": "Custom watch datetime (ISO 8601). If not provided, current time is used."
+            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [
@@ -7102,7 +7182,8 @@
             "type": "string"
           },
           "watchedDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "seasonNumber": {
             "type": "number"
@@ -7113,7 +7194,6 @@
         },
         "required": [
           "id",
-          "watchedDate",
           "seasonNumber",
           "episodeNumber"
         ]
@@ -7131,7 +7211,9 @@
           },
           "watchedAt": {
             "type": "string",
-            "description": "Custom watch datetime (ISO 8601). If not provided, current time is used."
+            "description": "Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [
@@ -7165,7 +7247,9 @@
           },
           "watchedAt": {
             "type": "string",
-            "description": "Custom watch datetime (ISO 8601). If not provided, current time is used."
+            "description": "Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [

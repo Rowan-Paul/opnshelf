@@ -412,7 +412,16 @@ export class ShowsController {
 		if (req.user.did !== userDid) {
 			throw new Error("Unauthorized");
 		}
-		return this.showsService.getEpisodeWatchHistory(userDid, showId);
+		const history = await this.showsService.getEpisodeWatchHistory(
+			userDid,
+			showId,
+		);
+		return history.map((item) => ({
+			id: item.id,
+			watchedDate: item.watchedDate?.toISOString(),
+			seasonNumber: item.seasonNumber,
+			episodeNumber: item.episodeNumber,
+		}));
 	}
 
 	@Delete("history/:trackedEpisodeId")

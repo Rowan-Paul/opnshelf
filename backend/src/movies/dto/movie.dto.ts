@@ -367,11 +367,14 @@ export class MarkWatchedDto {
 
 	@ApiPropertyOptional({
 		description:
-			"Custom watch datetime (ISO 8601). If not provided, current time is used.",
+			"Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+		type: String,
+		format: "date-time",
+		nullable: true,
 	})
 	@IsOptional()
 	@IsDateString()
-	watchedAt?: string;
+	watchedAt?: string | null;
 }
 
 export class UnmarkWatchedDto {
@@ -394,8 +397,8 @@ export class WatchHistoryItemDto {
 	@ApiProperty()
 	id: string;
 
-	@ApiProperty()
-	watchedDate: string;
+	@ApiPropertyOptional({ type: String, format: "date-time" })
+	watchedDate?: string;
 }
 
 export class PaginatedMoviesQueryDto {

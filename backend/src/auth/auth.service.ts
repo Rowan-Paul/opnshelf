@@ -16,6 +16,7 @@ import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
+import type { ActorSuggestionDto } from "./dto/actor-suggestion.dto";
 import {
 	buildOAuthScope,
 	includesOAuthCapabilities,
@@ -1519,14 +1520,7 @@ export class AuthService implements OnModuleInit {
 	 * @param query - The search query (handle prefix)
 	 * @returns Array of actor suggestions with handle, displayName, and avatar
 	 */
-	async searchActors(query: string): Promise<
-		Array<{
-			did: string;
-			handle: string;
-			displayName: string | null;
-			avatar: string | null;
-		}>
-	> {
+	async searchActors(query: string): Promise<ActorSuggestionDto[]> {
 		if (!query || query.trim().length < 2) {
 			return [];
 		}

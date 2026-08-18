@@ -160,26 +160,41 @@ describe("ShelfService", () => {
 		});
 	});
 
-	it("should use the merged order clause and page window in the raw query", async () => {
-		mockPrismaService.trackedMovie.count.mockResolvedValue(4);
-		mockPrismaService.trackedEpisode.count.mockResolvedValue(2);
-		mockPrismaService.$queryRaw.mockResolvedValue([]);
+	it.each(["asc", "desc"] as const)(
+		"should use deterministic %s ordering and the page window in the raw query",
+		async (sortOrder) => {
+			mockPrismaService.trackedMovie.count.mockResolvedValue(4);
+			mockPrismaService.trackedEpisode.count.mockResolvedValue(2);
+			mockPrismaService.$queryRaw.mockResolvedValue([]);
 
-		await service.getUserShelf("did:plc:test", 2, 3);
+			await service.getUserShelf(
+				"did:plc:test",
+				2,
+				3,
+				undefined,
+				undefined,
+				sortOrder,
+			);
 
-		const sql = mockPrismaService.$queryRaw.mock.calls[0]?.[0];
-		const queryText = Array.isArray(sql?.strings)
-			? sql.strings.join(" ")
-			: String(sql);
+			const sql = mockPrismaService.$queryRaw.mock.calls[0]?.[0];
+			const queryText = Array.isArray(sql?.strings)
+				? sql.strings.join(" ")
+				: String(sql);
 
-		expect(queryText).toContain('COALESCE(tm."watchedDate", tm."createdAt")');
-		expect(queryText).toContain('COALESCE(te."watchedDate", te."createdAt")');
-		expect(queryText).toContain("ORDER BY");
-		expect(queryText).toContain("OFFSET");
-		expect(queryText).toContain("LIMIT");
-		expect(sql.values.at(-2)).toBe(3);
-		expect(sql.values.at(-1)).toBe(3);
-	});
+			expect(queryText).toContain('tm."watchedDate" IS NULL AS "isUndated"');
+			expect(queryText).toContain('te."watchedDate" IS NULL AS "isUndated"');
+			expect(queryText).not.toContain("COALESCE");
+			expect(queryText).toContain("ORDER BY");
+			expect(queryText).toContain('shelf."isUndated" ASC');
+			expect(queryText).toContain(
+				`shelf."sortDate" ${sortOrder.toUpperCase()} NULLS LAST`,
+			);
+			expect(queryText).toContain("OFFSET");
+			expect(queryText).toContain("LIMIT");
+			expect(sql.values.at(-2)).toBe(3);
+			expect(sql.values.at(-1)).toBe(3);
+		},
+	);
 
 	it("should return a 30-day activity summary with zero-filled days and matching totals", async () => {
 		vi.useFakeTimers().setSystemTime(new Date("2024-03-10T12:00:00.000Z"));

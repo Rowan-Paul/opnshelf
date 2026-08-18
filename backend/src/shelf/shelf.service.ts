@@ -91,6 +91,7 @@ export class ShelfService {
 		pageSize: number = 20,
 		type?: "movie" | "episode",
 		search?: string,
+		sortOrder: "asc" | "desc" = "desc",
 	): Promise<{
 		items: ShelfItem[];
 		total: number;
@@ -103,6 +104,8 @@ export class ShelfService {
 		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
 		const requestedPage = Math.max(page, 1);
 		const searchTerm = search?.trim();
+		const sortDirection =
+			sortOrder === "asc" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
 
 		// Build count queries conditionally based on type filter
 		const countPromises: Promise<number>[] = [];
@@ -169,7 +172,8 @@ export class ShelfService {
 				'movie' AS "type",
 				tm."watchedDate" AS "watchedDate",
 				tm."createdAt" AS "createdAt",
-				COALESCE(tm."watchedDate", tm."createdAt") AS "sortDate",
+				tm."watchedDate" IS NULL AS "isUndated",
+				tm."watchedDate" AS "sortDate",
 				tm."movieId" AS "movieId",
 				NULL::text AS "showId",
 				m.title AS "title",
@@ -196,7 +200,8 @@ export class ShelfService {
 				'episode' AS "type",
 				te."watchedDate" AS "watchedDate",
 				te."createdAt" AS "createdAt",
-				COALESCE(te."watchedDate", te."createdAt") AS "sortDate",
+				te."watchedDate" IS NULL AS "isUndated",
+				te."watchedDate" AS "sortDate",
 				NULL::text AS "movieId",
 				te."showId" AS "showId",
 				s.title AS "title",
@@ -258,10 +263,11 @@ export class ShelfService {
 						shelf."overview"
 					FROM ${shelfQuery} shelf
 					ORDER BY
-						shelf."sortDate" DESC,
-						shelf."createdAt" DESC,
-						shelf."type" DESC,
-						shelf."trackedId" DESC
+						shelf."isUndated" ASC,
+						shelf."sortDate" ${sortDirection} NULLS LAST,
+						shelf."createdAt" ${sortDirection},
+						shelf."type" ${sortDirection},
+						shelf."trackedId" ${sortDirection}
 					OFFSET ${offset}
 					LIMIT ${safePageSize}
 				`);

@@ -58,14 +58,14 @@ Yesterday, or with a full calendar date in the viewer's timezone; every Watch
 card repeats its full date and time without a timezone abbreviation.
 
 **Watch**:
-A single logged instance of a user watching a media item — a tracked record with a watched status and a watch date. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. Counts of "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
+A single logged instance of a user watching a media item — a tracked record with watched status and an optional watch date. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. An undated Watch belongs on the Shelf but not in date-based Activity or statistics. Counts of dated "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
 _Avoid_: View, log entry (a watchlist add is a separate, un-watched state)
 
 **Most-Watched Show**:
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
 
 **Onboarding**:
-The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → optional Trakt history import → follow suggestions → done. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
+The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → optional Trakt history import → follow suggestions → add watched Media Items → done. The watched-Media-Items step presents the same mixed deck on both clients: 14 all-time recognizable movies and shows, ranked by TMDB vote count, plus 6 titles trending that week. Skipping a card makes no change. Marking a movie watched adds one undated Watch. Marking a show watched adds an undated Watch for each aired episode. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
 _Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup), Welcome Tour (that comes after, over the live UI)
 
 **Welcome Tour**:

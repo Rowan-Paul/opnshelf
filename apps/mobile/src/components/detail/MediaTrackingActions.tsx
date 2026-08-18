@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { Calendar, Check, ChevronRight, Plus, X } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
 import {
 	type WatchHistoryEntry,
@@ -11,7 +11,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
-import { formatWatchDateTime } from "@/lib/watch-date";
+import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
 
 type MediaTrackingActionsProps =
 	| { mediaType: "movie"; movieId: string }
@@ -96,14 +96,13 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				status.isEpisodeWatched?.(props.seasonNumber, props.episodeNumber) ??
 				false;
 			const watchedDate = formatWatchDateTime(
-				[...showHistory]
-					.filter(
+				latestWatchDate(
+					showHistory.filter(
 						(ep) =>
 							ep.seasonNumber === props.seasonNumber &&
 							ep.episodeNumber === props.episodeNumber,
-					)
-					.sort((a, b) => b.watchedDate.localeCompare(a.watchedDate))[0]
-					?.watchedDate,
+					),
+				),
 			);
 			detail = watchedDate ? `Watched ${watchedDate}` : undefined;
 			break;
@@ -126,6 +125,8 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				: props.mediaType === "season"
 					? actions.isUnmarkSeasonPending
 					: actions.isUnmarkEpisodePending;
+
+	const isPending = isMarkPending || isUnmarkPending;
 
 	// Movies and episodes can hold multiple plays, so they expose a manageable
 	// watch history (list + per-entry delete); shows/seasons stay binary.
@@ -253,15 +254,32 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			<View className="flex-row gap-2">
 				<Pressable
 					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
-					disabled={isMarkPending || isUnmarkPending}
+					disabled={isPending}
+					accessibilityState={{ busy: isPending }}
 					className={
 						isOnShelf
 							? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card py-3"
 							: "flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
 					}
-					style={{ opacity: isMarkPending || isUnmarkPending ? 0.7 : 1 }}
+					style={{ opacity: isPending ? 0.7 : 1 }}
 				>
-					{isOnShelf ? (
+					{isPending ? (
+						<>
+							<ActivityIndicator
+								size="small"
+								color={isOnShelf ? "#94a3b8" : "#3f2e00"}
+							/>
+							<Text
+								className={
+									isOnShelf
+										? "font-semibold text-foreground"
+										: "font-semibold text-primary-foreground"
+								}
+							>
+								Loading
+							</Text>
+						</>
+					) : isOnShelf ? (
 						<>
 							<X color="#ef4444" size={18} />
 							<Text className="font-semibold text-foreground">
@@ -280,6 +298,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				{showCalendar ? (
 					<Pressable
 						onPress={() => setDatePickerVisible(true)}
+						disabled={isPending}
 						className="items-center justify-center rounded-lg border border-border px-4"
 					>
 						<Calendar color="#94a3b8" size={20} />

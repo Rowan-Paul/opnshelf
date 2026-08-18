@@ -174,7 +174,7 @@ export type PaginatedMoviesResponseDto = {
 
 export type WatchHistoryItemDto = {
     id: string;
-    watchedDate: string;
+    watchedDate?: string;
 };
 
 export type RegisterDto = {
@@ -231,6 +231,25 @@ export type GoogleRegisterResponseDto = {
      * Where to send the browser next: the PDS consent page for the OAuth request bound to this registration
      */
     coreOAuthUrl: string;
+};
+
+export type ActorSuggestionDto = {
+    /**
+     * The actor's DID
+     */
+    did: string;
+    /**
+     * The actor's handle
+     */
+    handle: string;
+    /**
+     * The actor's display name, if set
+     */
+    displayName: string | null;
+    /**
+     * URL of the actor's avatar, if set
+     */
+    avatar: string | null;
 };
 
 export type PermissionChangeDto = {
@@ -625,14 +644,14 @@ export type MarkEpisodeWatchedDto = {
      */
     episodeNumber: number;
     /**
-     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     * Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.
      */
-    watchedAt?: string;
+    watchedAt?: string | null;
 };
 
 export type EpisodeHistoryItemDto = {
     id: string;
-    watchedDate: string;
+    watchedDate?: string;
     seasonNumber: number;
     episodeNumber: number;
 };
@@ -647,9 +666,9 @@ export type MarkSeasonWatchedDto = {
      */
     seasonNumber: number;
     /**
-     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     * Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.
      */
-    watchedAt?: string;
+    watchedAt?: string | null;
 };
 
 export type MarkedEpisodesResponseDto = {
@@ -669,9 +688,9 @@ export type MarkShowWatchedDto = {
      */
     showId: string;
     /**
-     * Custom watch datetime (ISO 8601). If not provided, current time is used.
+     * Custom watch datetime (ISO 8601). Null creates undated Watches. If omitted, current time is used.
      */
-    watchedAt?: string;
+    watchedAt?: string | null;
 };
 
 export type ProfileActivityDayDto = {
@@ -2412,9 +2431,9 @@ export type MoviesControllerMarkWatchedData = {
          */
         movieId: string;
         /**
-         * Custom watch datetime (ISO 8601)
+         * Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time.
          */
-        watchedAt?: string;
+        watchedAt?: string | null;
     };
     path?: never;
     query?: never;
@@ -2671,7 +2690,7 @@ export type AuthControllerSuggestionsData = {
         /**
          * Search query (handle prefix)
          */
-        q: unknown;
+        q: string;
     };
     url: '/auth/suggestions';
 };
@@ -2680,8 +2699,10 @@ export type AuthControllerSuggestionsResponses = {
     /**
      * Array of actor suggestions
      */
-    200: unknown;
+    200: Array<ActorSuggestionDto>;
 };
+
+export type AuthControllerSuggestionsResponse = AuthControllerSuggestionsResponses[keyof AuthControllerSuggestionsResponses];
 
 export type AuthControllerCallbackData = {
     body?: never;
@@ -4770,6 +4791,10 @@ export type ShelfControllerGetUserShelfData = {
          * Search by title (case-insensitive partial match)
          */
         search?: string;
+        /**
+         * Sort shelf items by date
+         */
+        sortOrder?: 'asc' | 'desc';
     };
     url: '/users/{userDid}/shelf';
 };
@@ -5415,6 +5440,19 @@ export type DiscoverControllerTrendingResponses = {
 };
 
 export type DiscoverControllerTrendingResponse = DiscoverControllerTrendingResponses[keyof DiscoverControllerTrendingResponses];
+
+export type DiscoverControllerOnboardingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/discover/onboarding';
+};
+
+export type DiscoverControllerOnboardingResponses = {
+    200: DiscoverSectionResponseDto;
+};
+
+export type DiscoverControllerOnboardingResponse = DiscoverControllerOnboardingResponses[keyof DiscoverControllerOnboardingResponses];
 
 export type DiscoverControllerFromFollowsData = {
     body?: never;

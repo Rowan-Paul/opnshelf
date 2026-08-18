@@ -8,7 +8,7 @@
 			"key": "tid",
 			"record": {
 				"type": "object",
-				"required": ["movieId", "source", "watchedAt", "createdAt"],
+				"required": ["movieId", "source", "createdAt"],
 				"properties": {
 					"movieId": {
 						"type": "string",

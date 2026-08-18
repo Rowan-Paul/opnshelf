@@ -13,7 +13,6 @@
 					"seasonNumber",
 					"episodeNumber",
 					"source",
-					"watchedAt",
 					"createdAt"
 				],
 				"properties": {

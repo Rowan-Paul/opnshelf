@@ -191,7 +191,9 @@ export class MoviesController {
 				watchedAt: {
 					type: "string",
 					format: "date-time",
-					description: "Custom watch datetime (ISO 8601)",
+					nullable: true,
+					description:
+						"Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time.",
 				},
 			},
 		},
@@ -200,7 +202,7 @@ export class MoviesController {
 	@ApiResponse({ status: 401, description: "Not authenticated" })
 	async markWatched(
 		@Body("movieId") movieId: string,
-		@Body("watchedAt") watchedAt: string | undefined,
+		@Body("watchedAt") watchedAt: string | null | undefined,
 		@Req() req: AuthenticatedRequest,
 	) {
 		const user = req.user;
@@ -309,7 +311,10 @@ export class MoviesController {
 			userDid,
 			movieId,
 		);
-		return history;
+		return history.map((item) => ({
+			id: item.id,
+			watchedDate: item.watchedDate?.toISOString(),
+		}));
 	}
 
 	@Delete("history/:trackedMovieId")

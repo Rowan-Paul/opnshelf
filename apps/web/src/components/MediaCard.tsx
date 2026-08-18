@@ -310,7 +310,13 @@ export default function MediaCard({
 
 				{/* Poster layout content below image */}
 				{layout === "poster" && (
-					<div className="mt-2 flex min-h-[4rem] flex-col gap-1">
+					<div className="mt-2 flex flex-col gap-1">
+						{watchedDate && (
+							<p className="flex items-center gap-1 text-(--foreground-muted) text-xs">
+								<Clock className="size-3" />
+								{watchedDate}
+							</p>
+						)}
 						{episodeInfo ? (
 							<>
 								<h3 className="line-clamp-2 font-medium text-(--foreground) text-sm">
@@ -330,7 +336,7 @@ export default function MediaCard({
 								{role}
 							</p>
 						)}
-						<div className="mt-auto flex flex-wrap items-center gap-2 text-(--foreground-muted) text-xs">
+						<div className="flex flex-wrap items-center gap-2 text-(--foreground-muted) text-xs">
 							{(() => {
 								const parts: { key: string; node: React.ReactNode }[] = [];
 								if (year)
@@ -390,12 +396,6 @@ export default function MediaCard({
 								<StarRating value={userRating} readOnly size="sm" />
 							</div>
 						) : null}
-						{watchedDate && (
-							<p className="flex items-center gap-1 text-(--foreground-muted) text-xs">
-								<Clock className="size-3" />
-								{watchedDate}
-							</p>
-						)}
 					</div>
 				)}
 			</Link>

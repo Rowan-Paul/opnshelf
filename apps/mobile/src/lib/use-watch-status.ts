@@ -6,6 +6,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { latestWatchDate } from "@/lib/watch-date";
 
 interface WatchStatusShowOptions {
 	mediaType: "show";
@@ -86,11 +87,9 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 	};
 
 	const latestWatchedDate = useMemo(() => {
-		if (isMovie) return movieWatchHistory?.[0]?.watchedDate;
+		if (isMovie) return latestWatchDate(movieWatchHistory ?? []);
 		if (isShow && showWatchHistory && showWatchHistory.length > 0) {
-			return [...showWatchHistory].sort((a, b) =>
-				b.watchedDate.localeCompare(a.watchedDate),
-			)[0]?.watchedDate;
+			return latestWatchDate(showWatchHistory);
 		}
 		return undefined;
 	}, [isMovie, isShow, movieWatchHistory, showWatchHistory]);

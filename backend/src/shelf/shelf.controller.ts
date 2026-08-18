@@ -30,6 +30,7 @@ export class ShelfController {
 			pageSize,
 			query.type,
 			query.search,
+			query.sortOrder,
 		);
 
 		// Transform items to DTO format

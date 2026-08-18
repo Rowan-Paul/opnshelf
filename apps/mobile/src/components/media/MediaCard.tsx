@@ -141,8 +141,17 @@ function MediaCardBase({
 						</Pressable>
 					) : null}
 				</View>
+				{item.timestamp ? (
+					<Text
+						selectable
+						className="mt-2 text-muted-foreground text-xs"
+						numberOfLines={2}
+					>
+						{item.timestamp}
+					</Text>
+				) : null}
 				<Text
-					className="mt-2 font-medium text-foreground text-sm"
+					className={`${item.timestamp ? "mt-0.5" : "mt-2"} font-medium text-foreground text-sm`}
 					numberOfLines={2}
 				>
 					{item.title}
@@ -181,15 +190,6 @@ function MediaCardBase({
 						) : null}
 					</View>
 				)}
-				{item.timestamp ? (
-					<Text
-						selectable
-						className="mt-1 text-muted-foreground text-xs"
-						numberOfLines={2}
-					>
-						{item.timestamp}
-					</Text>
-				) : null}
 			</Pressable>
 		</Link>
 	);

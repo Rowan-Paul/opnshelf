@@ -4,6 +4,27 @@ type WatchDateFormatOptions = {
 	hour12?: boolean;
 };
 
+/** Resolve an optimistic date without turning an explicit undated Watch into now. */
+export function optimisticWatchDate(
+	watchedAt: string | null | undefined,
+	now: string,
+): string | undefined {
+	return watchedAt === null ? undefined : (watchedAt ?? now);
+}
+
+/** Return the newest dated Watch while ignoring undated Watches. */
+export function latestWatchDate(
+	watches: ReadonlyArray<{ watchedDate?: string | null }>,
+): string | undefined {
+	return watches.reduce<string | undefined>((latest, watch) => {
+		if (!watch.watchedDate) return latest;
+		if (!latest || watch.watchedDate.localeCompare(latest) > 0) {
+			return watch.watchedDate;
+		}
+		return latest;
+	}, undefined);
+}
+
 /**
  * Format a logged watch as a compact date and time. Formatting the two parts
  * separately keeps narrow poster cards from leaving a dangling locale-provided

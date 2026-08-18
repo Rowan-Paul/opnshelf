@@ -35,6 +35,7 @@ export { client } from "./generated/client.gen";
 export * from "./generated/index";
 export { isUnauthorizedError } from "./http-errors";
 export { slugifyName } from "./media-slug";
+export { onboardingDiscoveryOptions } from "./onboarding-discovery";
 export {
 	getYouTubeEmbedUrl,
 	getYouTubeThumbnailUrl,

@@ -21,6 +21,7 @@ import { useDialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
+import { optimisticWatchDate } from "@/lib/watch-date";
 import { requestWidgetUpdate } from "../../modules/widget-bridge";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
@@ -66,7 +67,7 @@ function errorMessage(error: unknown, fallback: string) {
 function captureWatchLogged(
 	mediaType: "movie" | "show",
 	watchScope: "movie" | "episode" | "season" | "show",
-	watchedAt?: string,
+	watchedAt?: string | null,
 	itemsLogged?: number,
 ) {
 	if (itemsLogged === 0) return;
@@ -74,7 +75,8 @@ function captureWatchLogged(
 		media_type: mediaType,
 		watch_scope: watchScope,
 		source: "mobile",
-		date_kind: watchedAt ? "specified" : "current",
+		date_kind:
+			watchedAt === null ? "undated" : watchedAt ? "specified" : "current",
 		...(itemsLogged === undefined ? {} : { items_logged: itemsLogged }),
 	});
 }
@@ -138,14 +140,19 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			const prevHistory =
 				queryClient.getQueryData<WatchHistoryItemDto[]>(movieHistoryKey);
 
-			const watchedDate = variables.body.watchedAt ?? new Date().toISOString();
-			queryClient.setQueryData<WatchHistoryItemDto[]>(
-				movieHistoryKey,
-				(old) => [
-					{ id: `optimistic-${Date.now()}`, watchedDate },
-					...(old ?? []),
-				],
+			const watchedDate = optimisticWatchDate(
+				variables.body.watchedAt,
+				new Date().toISOString(),
 			);
+			if (watchedDate) {
+				queryClient.setQueryData<WatchHistoryItemDto[]>(
+					movieHistoryKey,
+					(old) => [
+						{ id: `optimistic-${Date.now()}`, watchedDate },
+						...(old ?? []),
+					],
+				);
+			}
 			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) => {
 				if (!Array.isArray(old)) return old;
 				if (old.some((m) => String(m.movieId) === movieId)) return old;
@@ -268,18 +275,24 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			const prevHistory =
 				queryClient.getQueryData<EpisodeHistoryItemDto[]>(showHistoryKey);
 			const { seasonNumber, episodeNumber, watchedAt } = variables.body;
-			queryClient.setQueryData<EpisodeHistoryItemDto[]>(
-				showHistoryKey,
-				(old) => [
-					{
-						episodeNumber,
-						id: `optimistic-${Date.now()}`,
-						seasonNumber,
-						watchedDate: watchedAt ?? new Date().toISOString(),
-					},
-					...(old ?? []),
-				],
+			const watchedDate = optimisticWatchDate(
+				watchedAt,
+				new Date().toISOString(),
 			);
+			if (watchedDate) {
+				queryClient.setQueryData<EpisodeHistoryItemDto[]>(
+					showHistoryKey,
+					(old) => [
+						{
+							episodeNumber,
+							id: `optimistic-${Date.now()}`,
+							seasonNumber,
+							watchedDate,
+						},
+						...(old ?? []),
+					],
+				);
+			}
 			return { prevHistory };
 		},
 		onError: (error, _vars, context) => {
