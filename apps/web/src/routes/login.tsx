@@ -16,6 +16,7 @@ import Logo from "#/components/Logo";
 import { env } from "#/env";
 import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
+import { nextIndex } from "#/lib/list-navigation";
 
 export const Route = createFileRoute("/login")({
 	head: () => ({
@@ -29,6 +30,7 @@ function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSignupLoading, setIsSignupLoading] = useState(false);
 	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [activeIndex, setActiveIndex] = useState(-1);
 	const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
@@ -43,6 +45,7 @@ function LoginPage() {
 	});
 	const suggestions = suggestionsQuery.data ?? [];
 	const shouldShowSuggestions = showSuggestions && debouncedHandle.length >= 2;
+	const listId = "handle-suggestions";
 
 	// Redirect if already authenticated
 	useEffect(() => {
@@ -164,32 +167,79 @@ function LoginPage() {
 									onChange={(e) => {
 										setHandle(e.target.value);
 										setShowSuggestions(true);
+										// Typing changes the result set, so the old highlight is
+										// meaningless. Start over from nothing highlighted.
+										setActiveIndex(-1);
 									}}
 									onFocus={() => setShowSuggestions(true)}
 									onKeyDown={(e) => {
 										if (e.key === "Escape") {
 											setShowSuggestions(false);
+											setActiveIndex(-1);
+											return;
+										}
+										if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+											// Stop the caret jumping to either end of the input.
+											e.preventDefault();
+											setShowSuggestions(true);
+											setActiveIndex((current) =>
+												nextIndex(
+													current,
+													suggestions.length,
+													e.key === "ArrowDown" ? 1 : -1,
+												),
+											);
+											return;
+										}
+										// Enter on a highlighted row picks it. With nothing
+										// highlighted the form submits the typed handle as before.
+										if (e.key === "Enter" && activeIndex >= 0) {
+											const actor = suggestions[activeIndex];
+											if (actor) {
+												e.preventDefault();
+												handleSuggestionPick(actor.handle);
+											}
 										}
 									}}
 									className="input"
 									disabled={isLoading}
 									autoComplete="off"
+									role="combobox"
+									aria-expanded={shouldShowSuggestions}
+									aria-controls={listId}
+									aria-autocomplete="list"
+									aria-activedescendant={
+										activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined
+									}
 								/>
 								{shouldShowSuggestions &&
 									(suggestionsQuery.isFetching || suggestions.length > 0) && (
-										<div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg">
+										<div
+											id={listId}
+											role="listbox"
+											className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg"
+										>
 											{suggestionsQuery.isFetching ? (
 												<div className="flex items-center justify-center gap-2 p-4 text-(--foreground-muted) text-sm">
 													<Loader2 className="size-4 animate-spin" />
 													Searching...
 												</div>
 											) : (
-												suggestions.map((actor) => (
+												suggestions.map((actor, index) => (
 													<button
 														key={actor.did}
+														id={`${listId}-${index}`}
 														type="button"
+														role="option"
+														aria-selected={index === activeIndex}
+														ref={(el) => {
+															if (index === activeIndex) {
+																el?.scrollIntoView({ block: "nearest" });
+															}
+														}}
 														onClick={() => handleSuggestionPick(actor.handle)}
-														className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-(--background-subtle)"
+														onMouseEnter={() => setActiveIndex(index)}
+														className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index === activeIndex ? "bg-(--background-subtle)" : ""}`}
 													>
 														<UserAvatar
 															src={actor.avatar}
