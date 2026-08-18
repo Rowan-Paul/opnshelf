@@ -18,6 +18,7 @@ import {
 	Req,
 	Res,
 	ServiceUnavailableException,
+	UnauthorizedException,
 	UseGuards,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -1101,7 +1102,11 @@ export class AuthController {
 
 		const user = await this.authService.getUser(did);
 		if (!user) {
-			throw new BadRequestException("User not found");
+			// AuthSession has no FK to User, so a session can outlive its user row
+			// (account deletion, restored DB). That is an auth failure, not a bad
+			// request: 401 is what makes the clients drop the stale session instead
+			// of crashing every route on an unexpected 400.
+			throw new UnauthorizedException("Not authenticated");
 		}
 
 		return {
