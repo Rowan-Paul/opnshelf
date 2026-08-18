@@ -24,6 +24,7 @@ import Animated, {
 	withSpring,
 	withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
@@ -43,6 +44,7 @@ export function WatchedMediaSwipe({
 	onWatched: () => void;
 }) {
 	const { height, width } = useWindowDimensions();
+	const insets = useSafeAreaInsets();
 	const compact = height < 720;
 	const cardWidth = onboardingCardWidth(width, height);
 	const queryClient = useQueryClient();
@@ -187,7 +189,12 @@ export function WatchedMediaSwipe({
 	}));
 
 	return (
-		<View className={`flex-1 pt-1 ${compact ? "gap-2" : "gap-4"}`}>
+		<View
+			className={`flex-1 pt-1 ${compact ? "gap-2" : "gap-4"}`}
+			// This step pins its own footer instead of using StepScaffold, so it
+			// needs the same bottom safe-area padding the scaffold applies.
+			style={{ paddingBottom: insets.bottom + 8 }}
+		>
 			<View className={compact ? "gap-0.5" : "gap-1"}>
 				<Text
 					className={`font-bold font-display text-foreground ${compact ? "text-2xl leading-7" : "text-3xl"}`}
