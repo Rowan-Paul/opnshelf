@@ -425,8 +425,8 @@ export class EpisodeHistoryItemDto {
 	@ApiProperty()
 	id: string;
 
-	@ApiProperty()
-	watchedDate: string;
+	@ApiPropertyOptional({ type: String, format: "date-time" })
+	watchedDate?: string;
 
 	@ApiProperty()
 	seasonNumber: number;

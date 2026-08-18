@@ -79,7 +79,7 @@ export function WatchHistorySheet({
 										className="flex-row items-center gap-2 rounded-lg p-2"
 									>
 										<Text className="flex-1 font-medium text-foreground text-sm">
-											{formatWatchDateTime(entry.watchedDate) ?? "Unknown date"}
+											{formatWatchDateTime(entry.watchedDate) ?? "No date"}
 										</Text>
 										<Pressable
 											hitSlop={8}

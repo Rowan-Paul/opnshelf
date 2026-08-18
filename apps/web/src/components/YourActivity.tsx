@@ -145,11 +145,13 @@ export function YourActivity({
 						>
 							<div className="flex flex-1 items-center p-2">
 								<span className="font-medium text-sm">
-									{formatDateTime(
-										entry.watchedDate || "",
-										userTimezone,
-										userTimeFormat,
-									)}
+									{entry.watchedDate
+										? formatDateTime(
+												entry.watchedDate,
+												userTimezone,
+												userTimeFormat,
+											)
+										: "No date"}
 								</span>
 							</div>
 							<button

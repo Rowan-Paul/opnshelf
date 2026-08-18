@@ -174,7 +174,7 @@ export type PaginatedMoviesResponseDto = {
 
 export type WatchHistoryItemDto = {
     id: string;
-    watchedDate: string;
+    watchedDate?: string;
 };
 
 export type RegisterDto = {
@@ -632,7 +632,7 @@ export type MarkEpisodeWatchedDto = {
 
 export type EpisodeHistoryItemDto = {
     id: string;
-    watchedDate: string;
+    watchedDate?: string;
     seasonNumber: number;
     episodeNumber: number;
 };

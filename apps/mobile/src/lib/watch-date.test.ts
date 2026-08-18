@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { formatWatchDateTime, optimisticWatchDate } from "./watch-date";
+import {
+	formatWatchDateTime,
+	latestWatchDate,
+	optimisticWatchDate,
+} from "./watch-date";
 
 describe("formatWatchDateTime", () => {
 	it("includes both the date and time without a dangling at separator", () => {
@@ -30,5 +34,17 @@ describe("optimisticWatchDate", () => {
 		expect(optimisticWatchDate("2020-01-01T00:00:00.000Z", now)).toBe(
 			"2020-01-01T00:00:00.000Z",
 		);
+	});
+
+	it("finds the latest dated Watch without crashing on undated Watches", () => {
+		expect(
+			latestWatchDate([
+				{},
+				{ watchedDate: "2026-08-17T12:00:00.000Z" },
+				{},
+				{ watchedDate: "2026-08-18T12:00:00.000Z" },
+			]),
+		).toBe("2026-08-18T12:00:00.000Z");
+		expect(latestWatchDate([{}, {}])).toBeUndefined();
 	});
 });

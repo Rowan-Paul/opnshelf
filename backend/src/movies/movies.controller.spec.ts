@@ -26,6 +26,7 @@ describe("MoviesController", () => {
 		getMovieCredits: vi.fn(),
 		getUserMovies: vi.fn(),
 		getMovieByTMDBId: vi.fn(),
+		getMovieWatchHistory: vi.fn(),
 		markWatched: vi.fn(),
 		indexTrackedMovie: vi.fn(),
 		unmarkWatched: vi.fn(),
@@ -241,6 +242,24 @@ describe("MoviesController", () => {
 	}): AuthenticatedRequest => {
 		return { user } as unknown as AuthenticatedRequest;
 	};
+
+	it("omits the date for an undated movie Watch", async () => {
+		const mockUser = {
+			did: "did:plc:abc123",
+			session: { did: "did:plc:abc123" },
+		};
+		mockMoviesService.getMovieWatchHistory.mockResolvedValue([
+			{ id: "watch-1", watchedDate: null },
+		]);
+
+		const result = await controller.getMovieWatchHistory(
+			mockUser.did,
+			"123",
+			createMockRequest(mockUser),
+		);
+
+		expect(result).toEqual([{ id: "watch-1", watchedDate: undefined }]);
+	});
 
 	describe("markWatched", () => {
 		it("should mark movie as watched and return tracked movie", async () => {

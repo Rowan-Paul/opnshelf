@@ -381,7 +381,7 @@ describe("SocialService", () => {
 		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValueOnce([{ followingDid: "did:plc:friend-1" }]);
-		prisma.trackedMovie.count = vi.fn().mockResolvedValue(2);
+		prisma.trackedMovie.count = vi.fn().mockResolvedValue(1);
 		prisma.trackedEpisode.count = vi.fn().mockResolvedValue(1);
 		prisma.review.count = vi.fn().mockResolvedValue(0);
 		prisma.$queryRaw = vi.fn().mockResolvedValue([
@@ -426,35 +426,17 @@ describe("SocialService", () => {
 				firstAirYear: null,
 				overview: "Movie overview",
 			},
-			{
-				actorDid: "did:plc:friend-1",
-				id: "movie-2",
-				type: "movie",
-				activityAt: new Date("2026-03-01T12:00:00.000Z"),
-				watchedDate: null,
-				createdAt: new Date("2026-03-01T12:00:00.000Z"),
-				movieId: "movie-2",
-				title: "Aftersun",
-				showId: null,
-				showTitle: null,
-				seasonNumber: null,
-				episodeNumber: null,
-				posterPath: "/poster-movie-2.jpg",
-				backdropPath: "/backdrop-movie-2.jpg",
-				releaseYear: 2022,
-				firstAirYear: null,
-				overview: "Another movie overview",
-			},
 		]);
 		prisma.user.findMany = vi
 			.fn()
 			.mockResolvedValue([
 				makeUser("did:plc:friend-1", "friend", "Friend", 10, 5),
 			]);
-		prisma.movie.findMany = vi.fn().mockResolvedValue([
-			{ movieId: "movie-1", colors: { primary: "#111111" } },
-			{ movieId: "movie-2", colors: { primary: "#222222" } },
-		]);
+		prisma.movie.findMany = vi
+			.fn()
+			.mockResolvedValue([
+				{ movieId: "movie-1", colors: { primary: "#111111" } },
+			]);
 		prisma.show.findMany = vi
 			.fn()
 			.mockResolvedValue([
@@ -466,7 +448,7 @@ describe("SocialService", () => {
 		expect(result).toMatchObject({
 			page: 1,
 			pageSize: 10,
-			total: 3,
+			total: 2,
 			totalPages: 1,
 			hasNextPage: false,
 			hasPreviousPage: false,
@@ -474,8 +456,25 @@ describe("SocialService", () => {
 		expect(result.items.map((item) => item.id)).toEqual([
 			"episode-1",
 			"movie-1",
-			"movie-2",
 		]);
+		expect(prisma.trackedMovie.count).toHaveBeenCalledWith({
+			where: {
+				userDid: { in: ["did:plc:friend-1"] },
+				watchedDate: { not: null },
+			},
+		});
+		expect(prisma.trackedEpisode.count).toHaveBeenCalledWith({
+			where: {
+				userDid: { in: ["did:plc:friend-1"] },
+				watchedDate: { not: null },
+			},
+		});
+		const activityQuery = (prisma.$queryRaw as Mock).mock.calls[0]?.[0];
+		const activityQueryText = Array.isArray(activityQuery?.strings)
+			? activityQuery.strings.join(" ")
+			: String(activityQuery);
+		expect(activityQueryText).toContain('tm."watchedDate" IS NOT NULL');
+		expect(activityQueryText).toContain('te."watchedDate" IS NOT NULL');
 		expect(result.items[0]).toMatchObject({
 			type: "episode",
 			showId: "show-1",

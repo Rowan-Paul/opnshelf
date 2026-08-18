@@ -50,21 +50,24 @@ function transformShelfToActivity(
 ): ActivityItem[] {
 	if (!shelfData?.items) return [];
 
-	return shelfData.items.slice(0, 10).map((item) => {
-		const isMovie = item.type === "movie";
-		const date = item.watchedDate || item.createdAt;
+	return shelfData.items
+		.filter((item) => item.watchedDate)
+		.slice(0, 10)
+		.map((item) => {
+			const isMovie = item.type === "movie";
+			const date = item.watchedDate as string;
 
-		return {
-			id: item.id,
-			title: isMovie
-				? item.title
-				: `${item.showTitle} S${item.seasonNumber}E${item.episodeNumber}`,
-			action: item.watchedDate ? "watched" : "added",
-			date: getRelativeTime(date),
-			type: isMovie ? "movie" : "show",
-			user: userName,
-		};
-	});
+			return {
+				id: item.id,
+				title: isMovie
+					? item.title
+					: `${item.showTitle} S${item.seasonNumber}E${item.episodeNumber}`,
+				action: "watched",
+				date: getRelativeTime(date),
+				type: isMovie ? "movie" : "show",
+				user: userName,
+			};
+		});
 }
 
 // Dashboard stats hook
