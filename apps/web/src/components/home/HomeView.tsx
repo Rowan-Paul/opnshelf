@@ -188,7 +188,7 @@ export function HomeView() {
 		shelfData?.items?.slice(0, 6).map((item) => {
 			const base = {
 				key: item.id, // unique shelf entry id for React key
-				isWatched: !!item.watchedDate,
+				isWatched: true,
 				watchedDate: item.watchedDate,
 			};
 			if (item.type === "movie") {

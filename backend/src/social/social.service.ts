@@ -471,10 +471,16 @@ export class SocialService {
 
 		const [movieCount, episodeCount, reviewCount] = await Promise.all([
 			this.prisma.trackedMovie.count({
-				where: { userDid: { in: followedDids } },
+				where: {
+					userDid: { in: followedDids },
+					watchedDate: { not: null },
+				},
 			}),
 			this.prisma.trackedEpisode.count({
-				where: { userDid: { in: followedDids } },
+				where: {
+					userDid: { in: followedDids },
+					watchedDate: { not: null },
+				},
 			}),
 			this.prisma.review.count({
 				where: { userDid: { in: followedDids } },
@@ -548,6 +554,7 @@ export class SocialService {
 				FROM "TrackedMovie" tm
 				INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
 				WHERE tm."userDid" IN (${followedDidValues})
+					AND tm."watchedDate" IS NOT NULL
 
 				UNION ALL
 
@@ -582,6 +589,7 @@ export class SocialService {
 					AND e."seasonNumber" = te."seasonNumber"
 					AND e."episodeNumber" = te."episodeNumber"
 				WHERE te."userDid" IN (${followedDidValues})
+					AND te."watchedDate" IS NOT NULL
 
 				UNION ALL
 

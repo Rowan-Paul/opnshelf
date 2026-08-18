@@ -311,7 +311,10 @@ export class MoviesController {
 			userDid,
 			movieId,
 		);
-		return history;
+		return history.map((item) => ({
+			id: item.id,
+			watchedDate: item.watchedDate?.toISOString(),
+		}));
 	}
 
 	@Delete("history/:trackedMovieId")

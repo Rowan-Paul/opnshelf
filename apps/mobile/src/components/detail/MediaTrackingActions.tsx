@@ -11,7 +11,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
-import { formatWatchDateTime } from "@/lib/watch-date";
+import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
 
 type MediaTrackingActionsProps =
 	| { mediaType: "movie"; movieId: string }
@@ -96,14 +96,13 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				status.isEpisodeWatched?.(props.seasonNumber, props.episodeNumber) ??
 				false;
 			const watchedDate = formatWatchDateTime(
-				[...showHistory]
-					.filter(
+				latestWatchDate(
+					showHistory.filter(
 						(ep) =>
 							ep.seasonNumber === props.seasonNumber &&
 							ep.episodeNumber === props.episodeNumber,
-					)
-					.sort((a, b) => b.watchedDate.localeCompare(a.watchedDate))[0]
-					?.watchedDate,
+					),
+				),
 			);
 			detail = watchedDate ? `Watched ${watchedDate}` : undefined;
 			break;

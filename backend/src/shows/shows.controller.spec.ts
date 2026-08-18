@@ -215,7 +215,14 @@ describe("ShowsController", () => {
 			did: "did:plc:abc123",
 			session: { did: "did:plc:abc123" },
 		};
-		const mockHistory = [{ id: "h1", seasonNumber: 1, episodeNumber: 2 }];
+		const mockHistory = [
+			{
+				id: "h1",
+				watchedDate: null,
+				seasonNumber: 1,
+				episodeNumber: 2,
+			},
+		];
 		mockShowsService.getEpisodeWatchHistory.mockResolvedValue(mockHistory);
 
 		const result = await controller.getShowWatchHistory(
@@ -224,7 +231,14 @@ describe("ShowsController", () => {
 			createMockRequest(mockUser),
 		);
 
-		expect(result).toEqual(mockHistory);
+		expect(result).toEqual([
+			{
+				id: "h1",
+				watchedDate: undefined,
+				seasonNumber: 1,
+				episodeNumber: 2,
+			},
+		]);
 	});
 
 	it("rejects episode watch history requests for another user", async () => {
