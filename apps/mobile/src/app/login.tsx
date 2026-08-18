@@ -110,9 +110,7 @@ export default function LoginScreen() {
 					/>
 
 					{showSuggestions && (isSearchingEmpty || suggestions.length > 0) ? (
-						<View
-							className={`overflow-hidden rounded-lg border border-border bg-card ${suggestionsQuery.isFetching ? "opacity-60" : ""}`}
-						>
+						<View className="overflow-hidden rounded-lg border border-border bg-card">
 							{isSearchingEmpty ? (
 								<View className="flex-row items-center justify-center gap-2 p-4">
 									<ActivityIndicator size="small" />
@@ -133,7 +131,7 @@ export default function LoginScreen() {
 												setHandle(actor.handle);
 												submit(() => login(actor.handle));
 											}}
-											className={`flex-row items-center gap-3 p-3 ${index > 0 ? "border-border border-t" : ""}`}
+											className={`flex-row items-center gap-3 p-3 ${index > 0 ? "border-border border-t" : ""} ${suggestionsQuery.isFetching ? "opacity-60" : ""}`}
 										>
 											<View className="size-9 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
 												{actor.avatar ? (

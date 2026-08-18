@@ -224,7 +224,7 @@ function LoginPage() {
 										<div
 											id={listId}
 											role="listbox"
-											className={`absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg transition-opacity ${suggestionsQuery.isFetching ? "opacity-60" : ""}`}
+											className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg"
 										>
 											{isSearchingEmpty ? (
 												<div className="flex items-center justify-center gap-2 p-4 text-(--foreground-muted) text-sm">
@@ -246,7 +246,7 @@ function LoginPage() {
 														}}
 														onClick={() => handleSuggestionPick(actor.handle)}
 														onMouseEnter={() => setActiveIndex(index)}
-														className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index === activeIndex ? "bg-(--background-subtle)" : ""}`}
+														className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index === activeIndex ? "bg-(--background-subtle)" : ""} ${suggestionsQuery.isFetching ? "opacity-60 transition-opacity" : ""}`}
 													>
 														<UserAvatar
 															src={actor.avatar}
