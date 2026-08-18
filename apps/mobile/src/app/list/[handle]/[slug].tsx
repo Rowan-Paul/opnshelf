@@ -56,7 +56,7 @@ export default function PublicListScreen() {
 
 			{resolvingHandle || isLoading ? (
 				<View className="px-3 pt-3">
-					<PosterGridSkeleton />
+					<PosterGridSkeleton columns={numColumns} />
 				</View>
 			) : handleError || isError || !list ? (
 				<ErrorState message="Couldn't load this list." />

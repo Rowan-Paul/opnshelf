@@ -38,9 +38,12 @@ const CHIP_ON = "border-(--accent) bg-(--accent)/10 text-(--accent)";
 const CHIP_OFF =
 	"border-(--border) text-(--foreground-muted) hover:border-(--border-strong)";
 
+const LIBRARY_GRID =
+	"grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7";
+
 function LibraryGrid({ items }: { items: LibraryItemDto[] }) {
 	return (
-		<div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+		<div className={`grid ${LIBRARY_GRID}`}>
 			{items.map((item) => (
 				<ActionableMediaCard
 					key={item.id}
@@ -84,7 +87,7 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 	}, [filtered, groupByFormat]);
 
 	if (isLoading) {
-		return <PosterGridSkeleton />;
+		return <PosterGridSkeleton gridClassName={LIBRARY_GRID} />;
 	}
 
 	if (!items || items.length === 0) {
