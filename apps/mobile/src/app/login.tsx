@@ -1,5 +1,5 @@
 import { authControllerSuggestionsOptions } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { User } from "lucide-react-native";
@@ -28,9 +28,16 @@ export default function LoginScreen() {
 	const suggestionsQuery = useQuery({
 		...authControllerSuggestionsOptions({ query: { q: debouncedHandle } }),
 		enabled: debouncedHandle.length >= 2,
+		// Keep the previous query's rows on screen while the next one loads, so
+		// typing dims the list instead of replacing it with a spinner.
+		placeholderData: keepPreviousData,
 	});
 	const suggestions = suggestionsQuery.data ?? [];
 	const showSuggestions = debouncedHandle.length >= 2 && !isSubmitting;
+	// Only the very first search has nothing to show, so that is the only time a
+	// spinner beats stale rows.
+	const isSearchingEmpty =
+		suggestionsQuery.isFetching && suggestions.length === 0;
 
 	// Already signed in: let the index gate decide onboarding vs tabs.
 	if (!isLoading && isAuthenticated && user) {
@@ -102,10 +109,11 @@ export default function LoginScreen() {
 						onSubmitEditing={() => submit(() => login(handle))}
 					/>
 
-					{showSuggestions &&
-					(suggestionsQuery.isFetching || suggestions.length > 0) ? (
-						<View className="overflow-hidden rounded-lg border border-border bg-card">
-							{suggestionsQuery.isFetching ? (
+					{showSuggestions && (isSearchingEmpty || suggestions.length > 0) ? (
+						<View
+							className={`overflow-hidden rounded-lg border border-border bg-card ${suggestionsQuery.isFetching ? "opacity-60" : ""}`}
+						>
+							{isSearchingEmpty ? (
 								<View className="flex-row items-center justify-center gap-2 p-4">
 									<ActivityIndicator size="small" />
 									<Text className="text-muted-foreground text-sm">

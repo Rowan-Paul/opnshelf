@@ -1,5 +1,5 @@
 import { authControllerSuggestionsOptions } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Link,
@@ -42,8 +42,15 @@ function LoginPage() {
 	const suggestionsQuery = useQuery({
 		...authControllerSuggestionsOptions({ query: { q: debouncedHandle } }),
 		enabled: debouncedHandle.length >= 2,
+		// Keep the previous query's rows on screen while the next one loads, so
+		// typing dims the list instead of replacing it with a spinner.
+		placeholderData: keepPreviousData,
 	});
 	const suggestions = suggestionsQuery.data ?? [];
+	// Only the very first search has nothing to show, so that is the only time a
+	// spinner beats stale rows.
+	const isSearchingEmpty =
+		suggestionsQuery.isFetching && suggestions.length === 0;
 	const shouldShowSuggestions = showSuggestions && debouncedHandle.length >= 2;
 	const listId = "handle-suggestions";
 
@@ -213,13 +220,13 @@ function LoginPage() {
 									}
 								/>
 								{shouldShowSuggestions &&
-									(suggestionsQuery.isFetching || suggestions.length > 0) && (
+									(isSearchingEmpty || suggestions.length > 0) && (
 										<div
 											id={listId}
 											role="listbox"
-											className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg"
+											className={`absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-(--border) bg-(--card) shadow-lg transition-opacity ${suggestionsQuery.isFetching ? "opacity-60" : ""}`}
 										>
-											{suggestionsQuery.isFetching ? (
+											{isSearchingEmpty ? (
 												<div className="flex items-center justify-center gap-2 p-4 text-(--foreground-muted) text-sm">
 													<Loader2 className="size-4 animate-spin" />
 													Searching...
