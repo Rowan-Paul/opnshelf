@@ -613,6 +613,27 @@ describe("MoviesService", () => {
 				}),
 			);
 		});
+
+		it("omits watchedAt when an undated Watch is requested", async () => {
+			mockPutRecord.mockResolvedValue({
+				data: {
+					uri: "at://did:plc:abc123/xyz.opnshelf.movie/rkey",
+					cid: "cid",
+				},
+			});
+
+			const result = await service.markWatched(
+				"did:plc:abc123",
+				{ did: "did:plc:abc123" },
+				"123",
+				null,
+			);
+
+			expect(result.record).not.toHaveProperty("watchedAt");
+			expect(mockPutRecord.mock.calls[0][0].record).not.toHaveProperty(
+				"watchedAt",
+			);
+		});
 	});
 
 	describe("unmarkWatched", () => {
@@ -881,6 +902,31 @@ describe("MoviesService", () => {
 				include: { movie: true },
 			});
 			expect(result).toEqual(mockTrackedMovie);
+		});
+
+		it("indexes a Watch without watchedAt as undated", async () => {
+			mockFetch.mockResolvedValue({
+				ok: true,
+				json: () => Promise.resolve({ id: 123, title: "Test Movie" }),
+			});
+			mockPrismaService.movie.upsert.mockResolvedValue({ movieId: "123" });
+			mockPrismaService.trackedMovie.upsert.mockResolvedValue({});
+
+			await service.indexTrackedMovie(
+				"at://did:plc:abc123/xyz.opnshelf.movie/rkey",
+				"cid",
+				"rkey",
+				"did:plc:abc123",
+				"123",
+				undefined,
+			);
+
+			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({ watchedDate: null }),
+					update: expect.objectContaining({ watchedDate: null }),
+				}),
+			);
 		});
 
 		it("keeps a deterministic shared watch rkey distinct across repositories", async () => {

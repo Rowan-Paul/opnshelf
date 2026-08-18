@@ -249,18 +249,21 @@ export class MoviesService {
 	 */
 	buildMovieWatchRecord(
 		movieId: string,
-		customWatchedAt?: string,
+		customWatchedAt?: string | null,
 		deterministicRkey?: string,
 	) {
 		const rkey = deterministicRkey ?? TID.nextStr();
 		const now = new Date().toISOString();
-		const watchedAt = customWatchedAt
-			? new Date(customWatchedAt).toISOString()
-			: now;
+		const watchedAt =
+			customWatchedAt === undefined
+				? now
+				: customWatchedAt === null
+					? undefined
+					: new Date(customWatchedAt).toISOString();
 		const record: MovieRecord = movieSchema.build({
 			movieId,
 			source: "tmdb",
-			watchedAt,
+			...(watchedAt === undefined ? {} : { watchedAt }),
 			createdAt: now,
 		});
 		return { rkey, record, collection: COLLECTION };
@@ -270,20 +273,23 @@ export class MoviesService {
 		_userDid: string,
 		session: ATSession,
 		movieId: string,
-		customWatchedAt?: string,
+		customWatchedAt?: string | null,
 	) {
 		// Generate unique TID for rkey (chronological sortable, collision-resistant)
 		const rkey = TID.nextStr();
-		const watchedAt = customWatchedAt
-			? new Date(customWatchedAt).toISOString()
-			: new Date().toISOString();
+		const watchedAt =
+			customWatchedAt === undefined
+				? new Date().toISOString()
+				: customWatchedAt === null
+					? undefined
+					: new Date(customWatchedAt).toISOString();
 		const now = new Date().toISOString();
 
 		// Build the AT Protocol record using the generated schema builder
 		const record: MovieRecord = movieSchema.build({
 			movieId,
 			source: "tmdb",
-			watchedAt,
+			...(watchedAt === undefined ? {} : { watchedAt }),
 			createdAt: now,
 		});
 
@@ -393,7 +399,7 @@ export class MoviesService {
 		rkey: string,
 		userDid: string,
 		movieId: string,
-		watchedAt: string,
+		watchedAt: string | undefined,
 	) {
 		// Fetch movie details from TMDB and upsert in database
 		const movieData = await this.getMovieDetails(movieId);
@@ -420,13 +426,13 @@ export class MoviesService {
 				cid,
 				userDid,
 				movieId: normalizedMovieId,
-				watchedDate: new Date(watchedAt),
+				watchedDate: watchedAt ? new Date(watchedAt) : null,
 				status: "watched",
 			},
 			update: {
 				uri,
 				cid,
-				watchedDate: new Date(watchedAt),
+				watchedDate: watchedAt ? new Date(watchedAt) : null,
 				status: "watched",
 			},
 			include: { movie: true },

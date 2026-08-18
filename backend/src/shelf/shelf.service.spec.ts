@@ -181,12 +181,14 @@ describe("ShelfService", () => {
 				? sql.strings.join(" ")
 				: String(sql);
 
-			expect(queryText).toContain('COALESCE(tm."watchedDate", tm."createdAt")');
-			expect(queryText).toContain('COALESCE(te."watchedDate", te."createdAt")');
+			expect(queryText).toContain('tm."watchedDate" IS NULL AS "isUndated"');
+			expect(queryText).toContain('te."watchedDate" IS NULL AS "isUndated"');
+			expect(queryText).not.toContain("COALESCE");
 			expect(queryText).toContain("ORDER BY");
-			expect(
-				queryText.match(new RegExp(sortOrder.toUpperCase(), "g")),
-			).toHaveLength(4);
+			expect(queryText).toContain('shelf."isUndated" ASC');
+			expect(queryText).toContain(
+				`shelf."sortDate" ${sortOrder.toUpperCase()} NULLS LAST`,
+			);
 			expect(queryText).toContain("OFFSET");
 			expect(queryText).toContain("LIMIT");
 			expect(sql.values.at(-2)).toBe(3);

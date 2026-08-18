@@ -398,6 +398,39 @@ describe("IngesterService", () => {
 			);
 		});
 
+		it("indexes a movie record without watchedAt as undated", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+			mockMoviesService.getMovieByTMDBId.mockResolvedValue({ movieId: "123" });
+
+			await recordHandler({
+				id: 20,
+				type: "record",
+				action: "create",
+				did: "did:plc:abc123",
+				rev: "rev-undated-movie",
+				collection: "xyz.opnshelf.movie",
+				rkey: "undated-movie",
+				record: {
+					$type: "xyz.opnshelf.movie",
+					movieId: "123",
+					source: "tmdb",
+					createdAt: "2024-01-15T10:00:00Z",
+				},
+				cid: "cid-undated-movie",
+				live: true,
+			});
+
+			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({ watchedDate: null }),
+					update: expect.objectContaining({ watchedDate: null }),
+				}),
+			);
+		});
+
 		it("should upsert tracked episode for xyz.opnshelf.episode create", async () => {
 			const recordHandler = setupRecordHandler();
 			mockPrismaService.user.findUnique.mockResolvedValue({
@@ -440,6 +473,41 @@ describe("IngesterService", () => {
 						episodeNumber: 1,
 						userDid: "did:plc:abc123",
 					}),
+				}),
+			);
+		});
+
+		it("indexes an episode record without watchedAt as undated", async () => {
+			const recordHandler = setupRecordHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+			});
+			mockShowsService.getShowByTMDBId.mockResolvedValue({ showId: "456" });
+
+			await recordHandler({
+				id: 21,
+				type: "record",
+				action: "create",
+				did: "did:plc:abc123",
+				rev: "rev-undated-episode",
+				collection: "xyz.opnshelf.episode",
+				rkey: "undated-episode",
+				record: {
+					$type: "xyz.opnshelf.episode",
+					showId: "456",
+					seasonNumber: 1,
+					episodeNumber: 1,
+					source: "tmdb",
+					createdAt: "2024-01-15T10:00:00Z",
+				},
+				cid: "cid-undated-episode",
+				live: true,
+			});
+
+			expect(mockPrismaService.trackedEpisode.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({ watchedDate: null }),
+					update: expect.objectContaining({ watchedDate: null }),
 				}),
 			);
 		});

@@ -38,6 +38,8 @@ interface FromFollowsRow {
 }
 
 const SECTION_LIMIT = 20;
+const ONBOARDING_ALL_TIME_LIMIT = 14;
+const ONBOARDING_CURRENT_LIMIT = SECTION_LIMIT - ONBOARDING_ALL_TIME_LIMIT;
 const SEED_COUNT = 3;
 const HIGH_RATING = 7;
 
@@ -73,6 +75,76 @@ export class DiscoverService {
 			.map((item) =>
 				mapTmdbItem(item, item.media_type === "tv" ? "tv" : "movie"),
 			);
+		return { results };
+	}
+
+	/**
+	 * A stable onboarding deck weighted toward recognizable titles while still
+	 * including titles that are current this week.
+	 */
+	async onboarding(): Promise<DiscoverSectionResponseDto> {
+		const fetchResults = async (url: string, cacheKey: string) => {
+			const response = await this.http.fetchCached(url, cacheKey);
+			if (!response.ok) {
+				throw tmdbErrorForResponse(
+					response,
+					"Failed to fetch onboarding titles",
+				);
+			}
+			return (await response.json<{ results: RawTmdbItem[] }>()).results;
+		};
+		const sources = await Promise.allSettled([
+			fetchResults(
+				`${this.tmdbBaseUrl}/discover/movie?api_key=${this.tmdbApiKey}&sort_by=vote_count.desc&include_adult=false&page=1`,
+				"onboarding:all-time:movies",
+			),
+			fetchResults(
+				`${this.tmdbBaseUrl}/discover/tv?api_key=${this.tmdbApiKey}&sort_by=vote_count.desc&include_adult=false&page=1`,
+				"onboarding:all-time:shows",
+			),
+			fetchResults(
+				`${this.tmdbBaseUrl}/trending/all/week?api_key=${this.tmdbApiKey}`,
+				"onboarding:trending:all:week",
+			),
+		]);
+		const failures = sources.filter(
+			(source): source is PromiseRejectedResult => source.status === "rejected",
+		);
+		if (failures.length === sources.length) {
+			throw (
+				failures[0]?.reason ?? new Error("Failed to fetch onboarding titles")
+			);
+		}
+		const sourceItems = (index: number): RawTmdbItem[] =>
+			sources[index].status === "fulfilled" ? sources[index].value : [];
+
+		const allTime = interleaveByMediaType(
+			validItems(sourceItems(0), "movie"),
+			validItems(sourceItems(1), "tv"),
+		);
+		const selectedAllTime = allTime.slice(0, ONBOARDING_ALL_TIME_LIMIT);
+		const used = new Set(selectedAllTime.map(itemKey));
+		const allCurrent = dedupeItems(
+			sourceItems(2).filter(isValidMixedItem),
+			used,
+		);
+		const selectedCurrent = allCurrent.slice(0, ONBOARDING_CURRENT_LIMIT);
+		const selected = [...selectedAllTime, ...selectedCurrent];
+		const selectedKeys = new Set(selected.map(itemKey));
+		const backfill = dedupeItems(
+			[
+				...allTime.slice(ONBOARDING_ALL_TIME_LIMIT),
+				...allCurrent.slice(ONBOARDING_CURRENT_LIMIT),
+			],
+			selectedKeys,
+		).slice(0, SECTION_LIMIT - selected.length);
+
+		const results = mergeOnboardingSources(selectedAllTime, [
+			...selectedCurrent,
+			...backfill,
+		])
+			.slice(0, SECTION_LIMIT)
+			.map((item) => mapTmdbItem(item, item.media_type as "movie" | "tv"));
 		return { results };
 	}
 
@@ -246,6 +318,89 @@ export class DiscoverService {
 		// Drop seeds whose recommendation row came back empty after exclusion.
 		return { rows: rows.filter((row) => row.results.length > 0) };
 	}
+}
+
+type TypedTmdbItem = RawTmdbItem & { media_type: "movie" | "tv" };
+
+function validItems(
+	items: RawTmdbItem[],
+	mediaType: "movie" | "tv",
+): TypedTmdbItem[] {
+	return dedupeItems(
+		items
+			.filter(isValidBaseItem)
+			.map((item) => ({ ...item, media_type: mediaType })),
+	);
+}
+
+function isValidMixedItem(item: RawTmdbItem): item is TypedTmdbItem {
+	return (
+		(item.media_type === "movie" || item.media_type === "tv") &&
+		isValidBaseItem(item)
+	);
+}
+
+function isValidBaseItem(item: RawTmdbItem): boolean {
+	return (
+		item.id > 0 && Boolean(item.poster_path) && Boolean(item.title ?? item.name)
+	);
+}
+
+function itemKey(item: TypedTmdbItem): string {
+	return `${item.media_type}:${item.id}`;
+}
+
+function dedupeItems(
+	items: TypedTmdbItem[],
+	seen = new Set<string>(),
+): TypedTmdbItem[] {
+	const results: TypedTmdbItem[] = [];
+	for (const item of items) {
+		const key = itemKey(item);
+		if (seen.has(key)) continue;
+		seen.add(key);
+		results.push(item);
+	}
+	return results;
+}
+
+function interleaveByMediaType(
+	movies: TypedTmdbItem[],
+	shows: TypedTmdbItem[],
+): TypedTmdbItem[] {
+	const results: TypedTmdbItem[] = [];
+	let movieIndex = 0;
+	let showIndex = 0;
+	while (movieIndex < movies.length || showIndex < shows.length) {
+		if (movieIndex < movies.length) results.push(movies[movieIndex++]);
+		if (showIndex < shows.length) results.push(shows[showIndex++]);
+	}
+	return results;
+}
+
+function mergeOnboardingSources(
+	allTime: TypedTmdbItem[],
+	current: TypedTmdbItem[],
+): TypedTmdbItem[] {
+	const allTimeQueue = [...allTime];
+	const currentQueue = [...current];
+	const sourcePattern = ["all-time", "all-time", "current"] as const;
+	const results: TypedTmdbItem[] = [];
+
+	while (allTimeQueue.length > 0 || currentQueue.length > 0) {
+		const source = sourcePattern[results.length % sourcePattern.length];
+		const preferred = source === "all-time" ? allTimeQueue : currentQueue;
+		const fallback = source === "all-time" ? currentQueue : allTimeQueue;
+		const expectedType =
+			results.at(-1)?.media_type === "movie" ? "tv" : "movie";
+		const queue = preferred.length > 0 ? preferred : fallback;
+		const matchingIndex = queue.findIndex(
+			(item) => item.media_type === expectedType,
+		);
+		results.push(...queue.splice(matchingIndex >= 0 ? matchingIndex : 0, 1));
+	}
+
+	return results;
 }
 
 function mapTmdbItem(

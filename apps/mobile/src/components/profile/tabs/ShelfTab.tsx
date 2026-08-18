@@ -16,6 +16,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
+import { groupShelfSections } from "@/lib/shelf-sections";
 import { useDebounce } from "@/lib/use-debounce";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useProfileShelf } from "@/lib/use-public-profile";
@@ -89,17 +90,7 @@ export function ShelfTab({
 	});
 
 	const items = data?.items ?? [];
-	const sections = items.reduce<Array<{ label: string; items: typeof items }>>(
-		(groups, item) => {
-			if (!item.watchedDate) return groups;
-			const label = sectionLabel(item.watchedDate);
-			const group = groups.at(-1);
-			if (group?.label === label) group.items.push(item);
-			else groups.push({ label, items: [item] });
-			return groups;
-		},
-		[],
-	);
+	const sections = groupShelfSections(items, sectionLabel);
 	const totalPages = data?.totalPages ?? 1;
 
 	const changeFilter = (next: Filter) => {
