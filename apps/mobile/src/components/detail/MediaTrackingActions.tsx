@@ -276,7 +276,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 										: "font-semibold text-primary-foreground"
 								}
 							>
-								{isUnmarkPending ? "Removing…" : "Adding…"}
+								Loading
 							</Text>
 						</>
 					) : isOnShelf ? (
