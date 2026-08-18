@@ -7,6 +7,7 @@ import {
 import {
 	Injectable,
 	Logger,
+	NotFoundException,
 	type OnModuleDestroy,
 	type OnModuleInit,
 } from "@nestjs/common";
@@ -83,6 +84,7 @@ import { ReviewsService } from "../reviews/reviews.service";
 import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
 import { ProfileService } from "../users/profile.service";
+import { UsersService } from "../users/users.service";
 
 /**
  * Prisma error codes that indicate a transient/infrastructure failure rather
@@ -197,6 +199,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly ratingsService: RatingsService,
 		private readonly socialService: SocialService,
 		private readonly profileService: ProfileService,
+		private readonly usersService: UsersService,
 	) {
 		this.tabUrl =
 			this.config.get<string>("TAB_URL") ??
@@ -252,11 +255,36 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		});
 
 		// Handle identity events
-		indexer.identity((evt: IdentityEvent) => {
+		indexer.identity(async (evt: IdentityEvent) => {
 			this.logger.debug(
 				`${evt.did} updated identity: ${evt.handle} (${evt.status})`,
 			);
-			return Promise.resolve();
+
+			if (evt.status !== "deleted") {
+				return;
+			}
+
+			const user = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+				select: { did: true },
+			});
+
+			if (user) {
+				try {
+					await this.usersService.deleteUserSync(evt.did);
+				} catch (error) {
+					// Another delivery may have removed the user after our lookup.
+					// Treat that race as an idempotent success; retry every other error.
+					if (!(error instanceof NotFoundException)) {
+						throw error;
+					}
+				}
+			}
+
+			// Delete local state before untracking. If either step fails, rejecting
+			// leaves the event unacknowledged so Tab can redeliver it.
+			await this.removeRepo(evt.did);
+			this.logger.log(`Removed deleted account ${evt.did} from local storage`);
 		});
 
 		// Handle errors

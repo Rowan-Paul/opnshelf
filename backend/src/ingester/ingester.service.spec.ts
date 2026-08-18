@@ -33,7 +33,7 @@ vi.mock("@atproto/tap", () => ({
 	})),
 }));
 
-import type { RecordEvent } from "@atproto/tap";
+import type { IdentityEvent, RecordEvent } from "@atproto/tap";
 import { SimpleIndexer, Tap } from "@atproto/tap";
 import { Prisma } from "../generated/client";
 import { LibraryService } from "../library/library.service";
@@ -44,6 +44,7 @@ import { SocialService } from "../social/social.service";
 import { ShowsService } from "../shows/shows.service";
 import { NotesService } from "../notes/notes.service";
 import { ProfileService } from "../users/profile.service";
+import { UsersService } from "../users/users.service";
 import { RatingsService } from "../ratings/ratings.service";
 import { ReviewsService } from "../reviews/reviews.service";
 import { TmdbNotFoundError, TmdbServiceError } from "../tmdb/tmdb-http";
@@ -111,6 +112,9 @@ describe("IngesterService", () => {
 	let mockRatingsService: {
 		indexRatingRecord: Mock;
 		deleteRatingRecord: Mock;
+	};
+	let mockUsersService: {
+		deleteUserSync: Mock;
 	};
 
 	const mockConfigService = {
@@ -192,6 +196,10 @@ describe("IngesterService", () => {
 			deleteRatingRecord: vi.fn(),
 		};
 
+		mockUsersService = {
+			deleteUserSync: vi.fn().mockResolvedValue(undefined),
+		};
+
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				IngesterService,
@@ -206,6 +214,7 @@ describe("IngesterService", () => {
 				{ provide: ProfileService, useValue: mockProfileService },
 				{ provide: ReviewsService, useValue: mockReviewsService },
 				{ provide: RatingsService, useValue: mockRatingsService },
+				{ provide: UsersService, useValue: mockUsersService },
 			],
 		}).compile();
 
@@ -242,6 +251,103 @@ describe("IngesterService", () => {
 			expect(mockTapInstance.removeRepos).toHaveBeenCalledWith([
 				"did:plc:abc123",
 			]);
+		});
+	});
+
+	describe("identity ingestion", () => {
+		const setupIdentityHandler = (): ((
+			evt: IdentityEvent,
+		) => Promise<void>) => {
+			let identityHandler: ((evt: IdentityEvent) => Promise<void>) | undefined;
+			(SimpleIndexer as Mock).mockImplementation(() => ({
+				record: vi.fn(),
+				identity: vi.fn((handler) => {
+					identityHandler = handler;
+				}),
+				error: vi.fn(),
+			}));
+			service.onModuleInit();
+			if (!identityHandler) {
+				throw new Error("identity handler was not registered");
+			}
+			return identityHandler;
+		};
+
+		const identityEvent = (status: IdentityEvent["status"]): IdentityEvent => ({
+			id: 5,
+			type: "identity",
+			did: "did:plc:deleted",
+			handle: "deleted.opnshelf.social",
+			isActive: status === "active",
+			status,
+		});
+
+		it("ignores identity statuses other than deleted", async () => {
+			const handler = setupIdentityHandler();
+
+			await handler(identityEvent("deactivated"));
+
+			expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
+			expect(mockUsersService.deleteUserSync).not.toHaveBeenCalled();
+			expect(mockTapInstance.removeRepos).not.toHaveBeenCalled();
+		});
+
+		it("deletes the local user before untracking the repo", async () => {
+			const handler = setupIdentityHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:deleted",
+			});
+
+			await handler(identityEvent("deleted"));
+
+			expect(mockUsersService.deleteUserSync).toHaveBeenCalledWith(
+				"did:plc:deleted",
+			);
+			expect(mockTapInstance.removeRepos).toHaveBeenCalledWith([
+				"did:plc:deleted",
+			]);
+			expect(
+				mockUsersService.deleteUserSync.mock.invocationCallOrder[0],
+			).toBeLessThan(mockTapInstance.removeRepos.mock.invocationCallOrder[0]);
+		});
+
+		it("untracks a deleted repo when the local user is already absent", async () => {
+			const handler = setupIdentityHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+			await handler(identityEvent("deleted"));
+
+			expect(mockUsersService.deleteUserSync).not.toHaveBeenCalled();
+			expect(mockTapInstance.removeRepos).toHaveBeenCalledWith([
+				"did:plc:deleted",
+			]);
+		});
+
+		it("rejects without untracking when local deletion fails", async () => {
+			const handler = setupIdentityHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:deleted",
+			});
+			mockUsersService.deleteUserSync.mockRejectedValue(
+				new Error("database unavailable"),
+			);
+
+			await expect(handler(identityEvent("deleted"))).rejects.toThrow(
+				"database unavailable",
+			);
+			expect(mockTapInstance.removeRepos).not.toHaveBeenCalled();
+		});
+
+		it("rejects when Tab cannot untrack the deleted repo", async () => {
+			const handler = setupIdentityHandler();
+			mockPrismaService.user.findUnique.mockResolvedValue(null);
+			mockTapInstance.removeRepos.mockRejectedValueOnce(
+				new Error("Tab unavailable"),
+			);
+
+			await expect(handler(identityEvent("deleted"))).rejects.toThrow(
+				"Tab unavailable",
+			);
 		});
 	});
 
