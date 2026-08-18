@@ -163,7 +163,7 @@ export default function OnboardingScreen() {
 	if (!isLoading && user?.needsEmailVerification) {
 		return <Redirect href="/verify-email" />;
 	}
-	if (!isLoading && user && !user.needsOnboarding) {
+	if (!isLoading && user && !user.needsOnboarding && step !== "done") {
 		return <Redirect href="/" />;
 	}
 
@@ -547,7 +547,6 @@ function DoneStep({
 					: old,
 			);
 			queryClient.invalidateQueries({ queryKey: meKey });
-			router.replace("/");
 		},
 		onError: (error) =>
 			toast.error(
@@ -570,11 +569,16 @@ function DoneStep({
 				</Text>
 				<Text className="text-center text-base text-muted-foreground leading-6">
 					Welcome to Opnshelf{user?.displayName ? `, ${user.displayName}` : ""}.
-					Start tracking what you watch.
+					Start tracking what you watch and discover what your friends are into.
 				</Text>
 			</View>
 
-			{completeOnboarding.isError ? (
+			{completeOnboarding.isPending ? (
+				<View className="flex-row items-center gap-2">
+					<ActivityIndicator size="small" color="#94a3b8" />
+					<Text className="text-muted-foreground text-sm">Finishing up…</Text>
+				</View>
+			) : completeOnboarding.isError ? (
 				<PrimaryButton
 					label="Try again"
 					onPress={() => completeOnboarding.mutate()}
@@ -582,10 +586,10 @@ function DoneStep({
 					icon={false}
 				/>
 			) : (
-				<View className="flex-row items-center gap-2">
-					<ActivityIndicator size="small" color="#94a3b8" />
-					<Text className="text-muted-foreground text-sm">Finishing up…</Text>
-				</View>
+				<PrimaryButton
+					label="Go to Dashboard"
+					onPress={() => router.replace("/")}
+				/>
 			)}
 		</View>
 	);
