@@ -136,35 +136,38 @@ export function ShelfTab({
 				autoCorrect={false}
 			/>
 
-			<View className="flex-row flex-wrap gap-2">
-				{FILTERS.map((f) => {
-					const isActive = filter === f.key;
-					const Icon = f.icon;
-					return (
-						<Pressable
-							key={f.key}
-							onPress={() => changeFilter(f.key)}
-							className={cn(
-								"flex-row items-center gap-1.5 rounded-full px-3 py-1.5",
-								isActive ? "bg-primary" : "bg-background-subtle",
-							)}
-						>
-							{Icon ? (
-								<Icon color={isActive ? "#3f2e00" : "#94a3b8"} size={14} />
-							) : null}
-							<Text
+			<View className="flex-row items-center justify-between gap-3">
+				<View className="flex-1 flex-row flex-wrap gap-2">
+					{FILTERS.map((f) => {
+						const isActive = filter === f.key;
+						const Icon = f.icon;
+						return (
+							<Pressable
+								key={f.key}
+								onPress={() => changeFilter(f.key)}
 								className={cn(
-									"font-medium text-sm",
-									isActive
-										? "text-primary-foreground"
-										: "text-muted-foreground",
+									"flex-row items-center gap-1.5 rounded-full px-3 py-1.5",
+									isActive ? "bg-primary" : "bg-background-subtle",
 								)}
 							>
-								{f.label}
-							</Text>
-						</Pressable>
-					);
-				})}
+								{Icon ? (
+									<Icon color={isActive ? "#3f2e00" : "#94a3b8"} size={14} />
+								) : null}
+								<Text
+									className={cn(
+										"font-medium text-sm",
+										isActive
+											? "text-primary-foreground"
+											: "text-muted-foreground",
+									)}
+								>
+									{f.label}
+								</Text>
+							</Pressable>
+						);
+					})}
+				</View>
+
 				<Pressable
 					onPress={() => setViewSheetVisible(true)}
 					accessibilityRole="button"
