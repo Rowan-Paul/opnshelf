@@ -60,7 +60,9 @@ Never hand-edit generated output. Change its source, run the owning command, and
 
 ## Git workflow
 
-- Start from the operator-specified branch; otherwise use `develop` for working changes and treat `main` as release-only.
+- For every issue, update `develop`, then create `issue/<number>-<short-name>` from it. Treat `main` as release-only.
 - Before editing, inspect `git status` and preserve all unrelated modifications and untracked files.
 - Keep commits focused on the requested change. Do not amend, rebase, force-push, merge, deploy, or publish unless the operator explicitly requests it.
+- When the operator requests publication, push the issue branch and open a ready pull request into `develop`. Wait for required CI, then squash-merge and delete the branch.
+- Move releases from `develop` to `main` through a separate pull request. Never open an issue-branch pull request into `main`.
 - Report changed files and the verification commands actually run, including any skipped or failing checks.
