@@ -91,6 +91,7 @@ export class ShelfService {
 		pageSize: number = 20,
 		type?: "movie" | "episode",
 		search?: string,
+		sortOrder: "asc" | "desc" = "desc",
 	): Promise<{
 		items: ShelfItem[];
 		total: number;
@@ -103,6 +104,8 @@ export class ShelfService {
 		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
 		const requestedPage = Math.max(page, 1);
 		const searchTerm = search?.trim();
+		const sortDirection =
+			sortOrder === "asc" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
 
 		// Build count queries conditionally based on type filter
 		const countPromises: Promise<number>[] = [];
@@ -258,10 +261,10 @@ export class ShelfService {
 						shelf."overview"
 					FROM ${shelfQuery} shelf
 					ORDER BY
-						shelf."sortDate" DESC,
-						shelf."createdAt" DESC,
-						shelf."type" DESC,
-						shelf."trackedId" DESC
+						shelf."sortDate" ${sortDirection},
+						shelf."createdAt" ${sortDirection},
+						shelf."type" ${sortDirection},
+						shelf."trackedId" ${sortDirection}
 					OFFSET ${offset}
 					LIMIT ${safePageSize}
 				`);

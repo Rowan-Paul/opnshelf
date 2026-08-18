@@ -4770,6 +4770,10 @@ export type ShelfControllerGetUserShelfData = {
          * Search by title (case-insensitive partial match)
          */
         search?: string;
+        /**
+         * Sort shelf items by date
+         */
+        sortOrder?: 'asc' | 'desc';
     };
     url: '/users/{userDid}/shelf';
 };

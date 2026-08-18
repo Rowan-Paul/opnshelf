@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import { MovieColorsDto } from "../movies/dto/movie.dto";
 
 export class ShelfItemMovieDto {
@@ -169,6 +169,15 @@ export class ShelfQueryDto {
 	@IsOptional()
 	@IsString()
 	search?: string;
+
+	@ApiPropertyOptional({
+		description: "Sort shelf items by date",
+		enum: ["asc", "desc"],
+		default: "desc",
+	})
+	@IsOptional()
+	@IsIn(["asc", "desc"])
+	sortOrder?: "asc" | "desc";
 }
 
 export class ShelfResponseDto {

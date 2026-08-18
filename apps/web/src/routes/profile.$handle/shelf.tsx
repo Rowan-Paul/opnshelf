@@ -9,17 +9,30 @@ import {
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { CalendarDays, ChevronDown, Film, Search, Tv } from "lucide-react";
+import { ChevronDown, Film, Search, SlidersHorizontal, Tv } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
+import { Button } from "#/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
 import { useAuth } from "#/lib/auth-context";
 import { useWatchActions } from "#/lib/hooks/useWatchActions";
 
 const searchSchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
 	type: z.enum(["all", "movie", "episode"]).optional().default("all"),
+	sort: z.enum(["newest", "oldest"]).optional().default("newest"),
 });
 
 export const Route = createFileRoute("/profile/$handle/shelf")({
@@ -47,6 +60,7 @@ export const Route = createFileRoute("/profile/$handle/shelf")({
 });
 
 type FilterType = "all" | "movie" | "episode";
+type SortOrder = "newest" | "oldest";
 
 function sectionLabel(date: string): string {
 	const watched = new Date(date);
@@ -81,6 +95,7 @@ function ProfileShelfPage() {
 
 	const page = search.page;
 	const filter = search.type;
+	const sort = search.sort;
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
@@ -101,6 +116,7 @@ function ProfileShelfPage() {
 			query: {
 				page,
 				pageSize: 24,
+				sortOrder: sort === "oldest" ? "asc" : "desc",
 				...(filter !== "all" ? { type: filter } : {}),
 				...(searchQuery.trim() ? { search: searchQuery.trim() } : {}),
 			},
@@ -108,9 +124,14 @@ function ProfileShelfPage() {
 		enabled: !!userDid,
 	});
 
-	const buildSearch = (newPage: number, newFilter: FilterType) => {
+	const buildSearch = (
+		newPage: number,
+		newFilter: FilterType,
+		newSort: SortOrder = sort,
+	) => {
 		const s: Record<string, unknown> = {};
 		if (newFilter !== "all") s.type = newFilter;
+		if (newSort !== "newest") s.sort = newSort;
 		if (newPage > 1) s.page = newPage;
 		return Object.keys(s).length > 0 ? s : undefined;
 	};
@@ -129,6 +150,15 @@ function ProfileShelfPage() {
 			to: "/profile/$handle/shelf",
 			params: { handle },
 			search: buildSearch(1, newFilter),
+			replace: true,
+		});
+	};
+
+	const handleSortChange = (newSort: SortOrder) => {
+		navigate({
+			to: "/profile/$handle/shelf",
+			params: { handle },
+			search: buildSearch(1, filter, newSort),
 			replace: true,
 		});
 	};
@@ -183,44 +213,69 @@ function ProfileShelfPage() {
 			</div>
 
 			{/* Filter Tabs */}
-			<div className="flex flex-wrap gap-2">
-				{(
-					[
-						{ key: "all", label: "All", icon: undefined },
-						{ key: "movie", label: "Movies", icon: Film },
-						{ key: "episode", label: "TV Episodes", icon: Tv },
-					] as const
-				).map((f) => {
-					const Icon = f.icon;
-					return (
-						<button
-							key={f.key}
-							type="button"
-							onClick={() => handleFilterChange(f.key)}
-							className={`flex items-center gap-2 rounded-full px-4 py-2 font-medium text-sm transition-colors ${
-								filter === f.key
-									? "bg-(--accent) text-[#3f2e00]"
-									: "bg-(--background-elevated) text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
-							}`}
-						>
-							{Icon && <Icon className="h-4 w-4" />}
-							{f.label}
-						</button>
-					);
-				})}
-				<button
-					type="button"
-					onClick={() => setShowDividers((visible) => !visible)}
-					aria-pressed={showDividers}
-					className={`flex items-center gap-2 rounded-full px-4 py-2 font-medium text-sm transition-colors ${
-						showDividers
-							? "bg-(--background-elevated) text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
-							: "bg-(--background-subtle) text-(--foreground-muted)"
-					}`}
-				>
-					<CalendarDays className="size-4" />
-					Dates
-				</button>
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<div className="flex flex-wrap gap-2">
+					{(
+						[
+							{ key: "all", label: "All", icon: undefined },
+							{ key: "movie", label: "Movies", icon: Film },
+							{ key: "episode", label: "TV Episodes", icon: Tv },
+						] as const
+					).map((f) => {
+						const Icon = f.icon;
+						return (
+							<button
+								key={f.key}
+								type="button"
+								onClick={() => handleFilterChange(f.key)}
+								className={`flex items-center gap-2 rounded-full px-4 py-2 font-medium text-sm transition-colors ${
+									filter === f.key
+										? "bg-(--accent) text-[#3f2e00]"
+										: "bg-(--background-elevated) text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+								}`}
+							>
+								{Icon && <Icon className="h-4 w-4" />}
+								{f.label}
+							</button>
+						);
+					})}
+				</div>
+
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="ghost" size="sm" className="rounded-full">
+							<SlidersHorizontal data-icon="inline-start" />
+							View
+							<ChevronDown data-icon="inline-end" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-52">
+						<DropdownMenuLabel>View</DropdownMenuLabel>
+						<DropdownMenuGroup>
+							<DropdownMenuCheckboxItem
+								checked={showDividers}
+								onCheckedChange={(checked) => setShowDividers(checked === true)}
+							>
+								Group by date
+							</DropdownMenuCheckboxItem>
+						</DropdownMenuGroup>
+						<DropdownMenuSeparator />
+						<DropdownMenuLabel>Sort</DropdownMenuLabel>
+						<DropdownMenuGroup>
+							<DropdownMenuRadioGroup
+								value={sort}
+								onValueChange={(value) => handleSortChange(value as SortOrder)}
+							>
+								<DropdownMenuRadioItem value="newest">
+									Newest first
+								</DropdownMenuRadioItem>
+								<DropdownMenuRadioItem value="oldest">
+									Oldest first
+								</DropdownMenuRadioItem>
+							</DropdownMenuRadioGroup>
+						</DropdownMenuGroup>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{/* Content */}
