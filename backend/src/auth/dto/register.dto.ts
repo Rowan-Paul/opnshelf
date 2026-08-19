@@ -11,7 +11,7 @@ import {
 export class RegisterDto {
 	@ApiProperty({
 		description:
-			"Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz",
+			"Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
 		example: "jane",
 	})
 	@IsString()

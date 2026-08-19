@@ -46,8 +46,10 @@ function TermsOfServicePage() {
 						</p>
 						<p>
 							The Service integrates with The Movie Database (TMDB) for media
-							metadata and uses your AT Protocol identity (such as a Bluesky
-							handle) for authentication.
+							metadata. Sign-in uses AT Protocol identity. Opnshelf runs its own
+							PDS (personal data server) and hosts the accounts it creates
+							there. You can also sign in with an AT Protocol handle you already
+							own, such as a Bluesky handle.
 						</p>
 					</section>
 
@@ -56,10 +58,18 @@ function TermsOfServicePage() {
 							3. Your Account
 						</h2>
 						<p>
-							You sign in using your existing AT Protocol account (e.g., a
-							Bluesky account). You are responsible for maintaining the security
-							of your AT Protocol credentials. Opnshelf does not store your
-							password.
+							You can create an Opnshelf account with a username, email address
+							and password, or with Google. Either way the account is created on
+							Opnshelf's own PDS. You can also sign in with an AT Protocol
+							handle you already own, such as a Bluesky handle. That provider
+							then keeps hosting your account.
+						</p>
+						<p>
+							If you sign up with a password, we pass it to the PDS that hosts
+							your account and never store it ourselves. You are responsible for
+							keeping your sign-in credentials secure. An account created with a
+							password must confirm its email address before the Service writes
+							any records for it.
 						</p>
 						<p>You must be at least 13 years of age to use the Service.</p>
 					</section>

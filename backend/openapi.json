@@ -6117,7 +6117,7 @@
         "properties": {
           "username": {
             "type": "string",
-            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz",
+            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
             "example": "jane"
           },
           "email": {
@@ -6170,7 +6170,7 @@
         "properties": {
           "username": {
             "type": "string",
-            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz",
+            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
             "example": "jane"
           },
           "captchaToken": {

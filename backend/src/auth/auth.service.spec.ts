@@ -602,7 +602,7 @@ describe("AuthService", () => {
 		it("creates a native-PDS account unverified and gated", async () => {
 			const profile = {
 				did: "did:plc:jane",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				displayName: null,
 				avatar: null,
 			};
@@ -651,7 +651,7 @@ describe("AuthService", () => {
 		it("does not un-gate an unverified native account that re-logs in via OAuth", async () => {
 			const profile = {
 				did: "did:plc:jane",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				displayName: null,
 				avatar: null,
 			};
