@@ -37,6 +37,7 @@ function LoginPage() {
 	const message = (search as { message?: string }).message;
 	const error = (search as { error?: string }).error;
 	const inputAreaRef = useRef<HTMLDivElement>(null);
+	const handleDomain = env.VITE_PDS_HANDLE_DOMAIN;
 
 	const debouncedHandle = useDebounce(handle, 300).trim();
 	const suggestionsQuery = useQuery({
@@ -142,10 +143,7 @@ function LoginPage() {
 					<div className="mb-4 flex justify-center">
 						<Logo className="size-16 rounded-2xl" />
 					</div>
-					<h1 className="text-display-2">Welcome to Opnshelf</h1>
-					<p className="mt-2 text-(--foreground-muted)">
-						Track what you watch with your AT Protocol account
-					</p>
+					<h1 className="text-display-2">Welcome back</h1>
 				</div>
 
 				{/* Redirect Notice */}
@@ -163,13 +161,13 @@ function LoginPage() {
 								htmlFor="handle"
 								className="mb-1.5 block font-medium text-sm"
 							>
-								Your Handle
+								Handle
 							</label>
 							<div ref={inputAreaRef} className="relative">
 								<input
 									id="handle"
 									type="text"
-									placeholder="username.bsky.social"
+									placeholder={`bob.${handleDomain}`}
 									value={handle}
 									onChange={(e) => {
 										setHandle(e.target.value);
@@ -268,7 +266,8 @@ function LoginPage() {
 									)}
 							</div>
 							<p className="mt-1 text-(--foreground-muted) text-xs">
-								Enter your Bluesky or AT Protocol handle
+								Already have a Bluesky or AT Protocol handle? That works here
+								too.
 							</p>
 						</div>
 
@@ -339,17 +338,6 @@ function LoginPage() {
 							Privacy Policy
 						</Link>
 						.
-					</p>
-					<p className="mt-4">
-						Powered by{" "}
-						<a
-							href="https://atproto.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-(--accent) hover:underline"
-						>
-							AT Protocol
-						</a>
 					</p>
 				</div>
 			</div>

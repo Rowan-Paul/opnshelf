@@ -94,14 +94,14 @@ describe("ReviewsController", () => {
 					id: "r1",
 					rkey: "rkey1",
 					path: "my-great-film",
-					user: { did: "did:1", handle: "alice.opnshelf.xyz" },
+					user: { did: "did:1", handle: "alice.opnshelf.social" },
 				},
 				{
 					...base,
 					id: "r2",
 					rkey: "rkey2",
 					path: null,
-					user: { did: "did:2", handle: "bob.opnshelf.xyz" },
+					user: { did: "did:2", handle: "bob.opnshelf.social" },
 				},
 			],
 			total: 2,
@@ -113,8 +113,12 @@ describe("ReviewsController", () => {
 			{ user: { did: "did:viewer" } } as never,
 		);
 
-		expect(result.items[0].reviewUrl).toBe("/reviews/alice.opnshelf.xyz/rkey1");
-		expect(result.items[1].reviewUrl).toBe("/reviews/bob.opnshelf.xyz/rkey2");
+		expect(result.items[0].reviewUrl).toBe(
+			"/reviews/alice.opnshelf.social/rkey1",
+		);
+		expect(result.items[1].reviewUrl).toBe(
+			"/reviews/bob.opnshelf.social/rkey2",
+		);
 	});
 
 	it("passes the authenticated owner through to Bluesky retry", async () => {

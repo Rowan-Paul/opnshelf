@@ -9,6 +9,7 @@ import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
+import { env } from "@/lib/env";
 import { useDebounce } from "@/lib/use-debounce";
 import { useTwStyle } from "@/lib/use-tw-style";
 
@@ -73,7 +74,7 @@ export default function LoginScreen() {
 							Welcome to Opnshelf
 						</Text>
 						<Text className="text-center text-base text-muted-foreground">
-							Track what you watch with your AT Protocol account
+							Track what you watch.
 						</Text>
 					</View>
 				</View>
@@ -97,11 +98,11 @@ export default function LoginScreen() {
 
 				<View className="gap-3">
 					<TextField
-						label="Your Handle"
-						helperText="Enter your Bluesky or AT Protocol handle"
+						label="Handle"
+						helperText="Already have a Bluesky or AT Protocol handle? That works here too."
 						value={handle}
 						onChangeText={setHandle}
-						placeholder="username.bsky.social"
+						placeholder={`bob.${env.pdsHandleDomain}`}
 						autoCapitalize="none"
 						autoCorrect={false}
 						returnKeyType="go"

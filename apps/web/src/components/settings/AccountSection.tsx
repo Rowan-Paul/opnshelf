@@ -230,7 +230,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 						readOnly
 					/>
 					<p className="text-(--foreground-muted) text-xs">
-						Your handle is managed by your Bluesky account
+						Your handle comes from the account you signed in with.
 					</p>
 				</div>
 
@@ -253,8 +253,8 @@ export function AccountSection({ user }: { user: UserDto }) {
 						</button>
 					</div>
 					<p className="text-(--foreground-muted) text-xs">
-						We automatically detect your Bluesky and Tangled profiles from your
-						PDS. Toggle to control visibility.
+						We automatically detect your Bluesky and Tangled profiles. Toggle to
+						control visibility.
 					</p>
 
 					{/* Bluesky */}

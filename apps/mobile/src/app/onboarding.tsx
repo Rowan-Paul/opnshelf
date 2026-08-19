@@ -329,7 +329,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 					</Text>
 				</View>
 				<Text className="text-muted-foreground text-xs">
-					Your handle is managed by your Atmosphere account.
+					Your handle comes from the account you signed in with.
 				</Text>
 			</View>
 		</StepScaffold>

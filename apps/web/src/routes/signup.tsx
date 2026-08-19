@@ -148,7 +148,7 @@ function SignupPage() {
 					</div>
 					<h1 className="text-display-2">Create your Opnshelf account</h1>
 					<p className="mt-2 text-(--foreground-muted)">
-						Your account lives on Opnshelf's AT Protocol server
+						Your account is hosted by Opnshelf
 					</p>
 				</div>
 
@@ -219,8 +219,7 @@ function SignupPage() {
 										</button>
 									</TooltipTrigger>
 									<TooltipContent className="max-w-64">
-										Your account is created on Opnshelf's AT Protocol server,
-										which requires an email for account recovery and
+										Opnshelf needs an email for account recovery and
 										verification. Opnshelf itself never stores it.
 									</TooltipContent>
 								</Tooltip>
