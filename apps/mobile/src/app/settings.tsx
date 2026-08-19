@@ -389,17 +389,17 @@ export default function SettingsScreen() {
 					variant: "destructive",
 					onPress: () => {
 						showDialog({
-							title: "Also delete PDS data?",
+							title: "Also delete your records?",
 							description:
-								"Delete your Opnshelf data from your PDS too, including watch history, follows, lists, and list items?",
+								"Delete the records Opnshelf saved to your account's data store (your PDS)? This covers watch history, follows, lists, and list items.",
 							actions: [
 								{ label: "Cancel" },
 								{
-									label: "Keep PDS data",
+									label: "Keep them",
 									onPress: () => void runDeletion(false),
 								},
 								{
-									label: "Delete everything",
+									label: "Delete them",
 									variant: "destructive",
 									onPress: () => void runDeletion(true),
 								},
@@ -631,7 +631,7 @@ export default function SettingsScreen() {
 					{/* Blog mirror */}
 					<SettingsSection
 						title="Blog mirror"
-						description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own AT Protocol blog publications."
+						description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own blogs."
 					>
 						<IntegrationPermissionRow
 							name="Blog mirroring"
@@ -653,8 +653,9 @@ export default function SettingsScreen() {
 							<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
 								<AlertTriangle color={PRIMARY} size={16} />
 								<Text className="flex-1 text-foreground text-sm leading-5">
-									The blog you selected is no longer in your PDS. New reviews
-									still mirror to it, but you may want to choose another below.
+									The blog you selected is no longer available on your account.
+									New reviews still mirror to it, but you may want to choose
+									another below.
 								</Text>
 							</View>
 						)}
