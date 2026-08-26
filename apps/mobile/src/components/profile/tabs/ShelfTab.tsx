@@ -1,14 +1,15 @@
 import type { ShelfResponseDto } from "@opnshelf/api";
 import {
-	CalendarDays,
+	Check,
 	ChevronDown,
 	Film,
 	Search,
+	SlidersHorizontal,
 	Tv,
 	X,
 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { Modal, Pressable, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard } from "@/components/media/MediaCard";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
@@ -23,6 +24,7 @@ import { useProfileShelf } from "@/lib/use-public-profile";
 import { useWatchActions } from "@/lib/use-watch-actions";
 
 type Filter = "all" | "movie" | "episode";
+type SortOrder = "newest" | "oldest";
 
 function sectionLabel(date: string): string {
 	const watched = new Date(date);
@@ -77,6 +79,8 @@ export function ShelfTab({
 	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState("");
 	const [showDividers, setShowDividers] = useState(true);
+	const [sort, setSort] = useState<SortOrder>("newest");
+	const [viewSheetVisible, setViewSheetVisible] = useState(false);
 	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
 		new Set(),
 	);
@@ -87,6 +91,7 @@ export function ShelfTab({
 		page,
 		type: filter === "all" ? undefined : filter,
 		search: debounced,
+		sortOrder: sort === "oldest" ? "asc" : "desc",
 	});
 
 	const items = data?.items ?? [];
@@ -95,6 +100,10 @@ export function ShelfTab({
 
 	const changeFilter = (next: Filter) => {
 		setFilter(next);
+		setPage(1);
+	};
+	const changeSort = (next: SortOrder) => {
+		setSort(next);
 		setPage(1);
 	};
 	const toggleSection = (label: string) => {
@@ -127,51 +136,60 @@ export function ShelfTab({
 				autoCorrect={false}
 			/>
 
-			<View className="flex-row flex-wrap gap-2">
-				{FILTERS.map((f) => {
-					const isActive = filter === f.key;
-					const Icon = f.icon;
-					return (
-						<Pressable
-							key={f.key}
-							onPress={() => changeFilter(f.key)}
-							className={cn(
-								"flex-row items-center gap-1.5 rounded-full px-3 py-1.5",
-								isActive ? "bg-primary" : "bg-background-subtle",
-							)}
-						>
-							{Icon ? (
-								<Icon color={isActive ? "#3f2e00" : "#94a3b8"} size={14} />
-							) : null}
-							<Text
+			<View className="flex-row items-center justify-between gap-3">
+				<View className="flex-1 flex-row flex-wrap gap-2">
+					{FILTERS.map((f) => {
+						const isActive = filter === f.key;
+						const Icon = f.icon;
+						return (
+							<Pressable
+								key={f.key}
+								onPress={() => changeFilter(f.key)}
 								className={cn(
-									"font-medium text-sm",
-									isActive
-										? "text-primary-foreground"
-										: "text-muted-foreground",
+									"flex-row items-center gap-1.5 rounded-full px-3 py-1.5",
+									isActive ? "bg-primary" : "bg-background-subtle",
 								)}
 							>
-								{f.label}
-							</Text>
-						</Pressable>
-					);
-				})}
+								{Icon ? (
+									<Icon color={isActive ? "#3f2e00" : "#94a3b8"} size={14} />
+								) : null}
+								<Text
+									className={cn(
+										"font-medium text-sm",
+										isActive
+											? "text-primary-foreground"
+											: "text-muted-foreground",
+									)}
+								>
+									{f.label}
+								</Text>
+							</Pressable>
+						);
+					})}
+				</View>
+
 				<Pressable
-					onPress={() => setShowDividers((visible) => !visible)}
-					accessibilityRole="switch"
-					accessibilityState={{ checked: showDividers }}
-					accessibilityLabel="Show date dividers"
-					className={cn(
-						"flex-row items-center gap-1.5 rounded-full px-3 py-1.5",
-						showDividers ? "bg-background-subtle" : "bg-background-elevated",
-					)}
+					onPress={() => setViewSheetVisible(true)}
+					accessibilityRole="button"
+					accessibilityLabel="View options"
+					className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
 				>
-					<CalendarDays color="#94a3b8" size={14} />
+					<SlidersHorizontal color="#94a3b8" size={14} />
 					<Text className="font-medium text-muted-foreground text-sm">
-						Dates
+						View
 					</Text>
+					<ChevronDown color="#94a3b8" size={14} />
 				</Pressable>
 			</View>
+
+			<ShelfViewSheet
+				visible={viewSheetVisible}
+				onDismiss={() => setViewSheetVisible(false)}
+				groupByDate={showDividers}
+				onGroupByDateChange={setShowDividers}
+				sort={sort}
+				onSortChange={changeSort}
+			/>
 
 			{isLoading ? (
 				<PosterGridSkeleton columns={columns} />
@@ -302,5 +320,101 @@ function ShelfWatchCard({
 				}
 			/>
 		</View>
+	);
+}
+
+const SORT_OPTIONS: { key: SortOrder; label: string }[] = [
+	{ key: "newest", label: "Newest first" },
+	{ key: "oldest", label: "Oldest first" },
+];
+
+/** Bottom sheet behind the "View" pill: date grouping + sort. Mirrors the web
+ * shelf's View dropdown. */
+function ShelfViewSheet({
+	visible,
+	onDismiss,
+	groupByDate,
+	onGroupByDateChange,
+	sort,
+	onSortChange,
+}: {
+	visible: boolean;
+	onDismiss: () => void;
+	groupByDate: boolean;
+	onGroupByDateChange: (grouped: boolean) => void;
+	sort: SortOrder;
+	onSortChange: (sort: SortOrder) => void;
+}) {
+	return (
+		<Modal
+			visible={visible}
+			animationType="slide"
+			transparent
+			onRequestClose={onDismiss}
+		>
+			<View className="flex-1 justify-end">
+				<Pressable className="flex-1" onPress={onDismiss} />
+				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
+					<View className="flex-row items-center justify-between">
+						<Text className="font-bold font-display text-foreground text-lg">
+							View
+						</Text>
+						<Pressable hitSlop={8} onPress={onDismiss}>
+							<X color="#94a3b8" size={22} />
+						</Pressable>
+					</View>
+
+					<Pressable
+						onPress={() => onGroupByDateChange(!groupByDate)}
+						accessibilityRole="switch"
+						accessibilityState={{ checked: groupByDate }}
+						className="flex-row items-center justify-between rounded-lg border border-border p-3"
+					>
+						<Text
+							className={cn(
+								"font-medium text-sm",
+								groupByDate ? "text-foreground" : "text-muted-foreground",
+							)}
+						>
+							Group by date
+						</Text>
+						{groupByDate ? (
+							<Check color="#f3bc00" size={18} strokeWidth={3} />
+						) : null}
+					</Pressable>
+
+					<Text className="font-semibold text-muted-foreground text-xs uppercase">
+						Sort
+					</Text>
+					<View className="gap-2">
+						{SORT_OPTIONS.map((option) => {
+							const isActive = sort === option.key;
+							return (
+								<Pressable
+									key={option.key}
+									onPress={() => {
+										onSortChange(option.key);
+										onDismiss();
+									}}
+									className="flex-row items-center justify-between rounded-lg border border-border p-3"
+								>
+									<Text
+										className={cn(
+											"font-medium text-sm",
+											isActive ? "text-foreground" : "text-muted-foreground",
+										)}
+									>
+										{option.label}
+									</Text>
+									{isActive ? (
+										<Check color="#f3bc00" size={18} strokeWidth={3} />
+									) : null}
+								</Pressable>
+							);
+						})}
+					</View>
+				</View>
+			</View>
+		</Modal>
 	);
 }

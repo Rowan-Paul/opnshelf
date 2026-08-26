@@ -32,8 +32,8 @@ function makeConfig(values: Record<string, string | undefined>): ConfigService {
 }
 
 const fullConfig = makeConfig({
-	PDS_URL: "https://opnshelf.xyz",
-	PDS_ADMIN_IDENTIFIER: "admin.opnshelf.xyz",
+	PDS_URL: "https://opnshelf.social",
+	PDS_ADMIN_IDENTIFIER: "admin.opnshelf.social",
 	PDS_ADMIN_PASSWORD: "pw",
 });
 

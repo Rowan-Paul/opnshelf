@@ -134,7 +134,7 @@ function LandingPage() {
 						{/* CTA Buttons */}
 						<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
 							<Link
-								to="/login"
+								to="/signup"
 								className="btn btn-primary inline-flex items-center gap-2 px-8 py-3 text-lg"
 							>
 								Get Started
@@ -271,10 +271,10 @@ function LandingPage() {
 							next. Your media history stays portable and under your control.
 						</p>
 						<Link
-							to="/login"
+							to="/signup"
 							className="btn btn-primary inline-flex items-center gap-2 px-8 py-3 text-lg"
 						>
-							Sign In
+							Create your account
 							<ArrowRight className="size-5" />
 						</Link>
 					</div>

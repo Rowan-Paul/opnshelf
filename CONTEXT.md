@@ -95,6 +95,10 @@ _Avoid_: Actor (too narrow — excludes directors/crew), User (an account holder
 An opnshelf account holder, identified by DID and handle, with a profile at `/profile/{handle}`. Found via social people search. In the ⌘K palette, User results appear under the **People** heading. Distinct from _Person_ (a TMDB cast/crew member with no opnshelf account).
 _Avoid_: Person (reserved for TMDB cast/crew), Member
 
+**Handle**:
+The domain-shaped name a User signs in with and is known by, and the only word sign-in surfaces use for it. A Handle created through Opnshelf signup is hosted by Opnshelf; a User may instead sign in with a Handle they already own elsewhere, including a Bluesky one, which sign-in offers as an alternative and never states as a requirement. Distinct from the *username*, the single label a User picks at signup, which becomes the first part of their Handle. A User cannot change their Handle inside Opnshelf. Entry surfaces name the protocol at most once, in the helper text on the already-have-one path; everywhere else the word is just "handle".
+_Avoid_: AT Protocol account, Bluesky account, Atmosphere account (each implies a prerequisite a User does not need, and the last two are untrue of Opnshelf-hosted Handles), DID (the stable identifier behind a Handle, not the thing a User types)
+
 **Core Opnshelf Access**:
 Permission to use Opnshelf-owned capabilities and records. A User grants this access when signing in; capabilities owned by another ecosystem require **External Integration Access** when the User chooses them.
 _Avoid_: Full access (incorrectly suggests access to unrelated AT Protocol services), basic access (undersells write access)

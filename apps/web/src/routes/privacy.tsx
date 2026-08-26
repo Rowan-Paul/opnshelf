@@ -41,10 +41,23 @@ function PrivacyPolicyPage() {
 							From your AT Protocol account
 						</h3>
 						<p>
+							Most Opnshelf accounts are created on Opnshelf's own PDS (personal
+							data server), so Opnshelf hosts your AT Protocol account and
+							authenticates it. If you instead sign in with a handle you already
+							own, such as a Bluesky handle, your existing provider
+							authenticates you.
+						</p>
+						<p>
 							When you sign in, we read your public AT Protocol profile
-							information, including your handle, display name, and avatar. We
-							do not store your password — authentication is handled entirely by
-							your AT Protocol identity provider (e.g., Bluesky).
+							information, including your handle, display name, and avatar.
+						</p>
+						<p>
+							Signing up with a password asks for a username, an email address
+							and a password. We pass the email address and the password to the
+							PDS and store neither. Our own database keeps your handle and
+							whether the email has been confirmed. Signing up with Google gives
+							us the email address on your Google account, which we hand to the
+							PDS the same way.
 						</p>
 
 						<h3 className="font-semibold text-(--foreground)">
@@ -67,6 +80,15 @@ function PrivacyPolicyPage() {
 							We collect standard server logs (IP address, browser user agent,
 							pages visited) to operate and improve the Service. These logs are
 							not sold or shared with third parties.
+						</p>
+						<p>
+							On the live site we also use PostHog to measure how the Service is
+							used: which features people use, how pages perform, and when a
+							visit ends. Analytics runs only on opnshelf.xyz and the data is
+							processed in the European Union. We strip the page address and the
+							referring page out of every event, because our addresses can
+							contain things you typed. Once you sign in, these events are
+							linked to your account identifier.
 						</p>
 					</section>
 
@@ -99,7 +121,7 @@ function PrivacyPolicyPage() {
 								<strong className="text-(--foreground)">
 									The Movie Database (TMDB)
 								</strong>{" "}
-								— for movie and TV metadata. Poster images and descriptions are
+								for movie and TV metadata. Poster images and descriptions are
 								served from TMDB's CDN. See{" "}
 								<a
 									href="https://www.themoviedb.org/privacy-policy"
@@ -112,8 +134,10 @@ function PrivacyPolicyPage() {
 								.
 							</li>
 							<li>
-								<strong className="text-(--foreground)">AT Protocol</strong> —
-								for decentralised identity and authentication. See{" "}
+								<strong className="text-(--foreground)">AT Protocol</strong> for
+								decentralised identity. Opnshelf runs its own PDS and hosts the
+								accounts it creates there. Public profile data, such as display
+								names and avatars, is read from Bluesky's public API. See{" "}
 								<a
 									href="https://atproto.com"
 									target="_blank"
@@ -121,6 +145,48 @@ function PrivacyPolicyPage() {
 									className="text-(--accent) hover:underline"
 								>
 									atproto.com
+								</a>
+								.
+							</li>
+							<li>
+								<strong className="text-(--foreground)">Google</strong>, if you
+								choose to sign up or sign in with Google. Google tells our PDS
+								your email address and whether it is verified. See{" "}
+								<a
+									href="https://policies.google.com/privacy"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-(--accent) hover:underline"
+								>
+									Google's privacy policy
+								</a>
+								.
+							</li>
+							<li>
+								<strong className="text-(--foreground)">Cloudflare</strong> for
+								the signup captcha (Turnstile) and for sending account email,
+								such as your verification code. See{" "}
+								<a
+									href="https://www.cloudflare.com/privacypolicy/"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-(--accent) hover:underline"
+								>
+									Cloudflare's privacy policy
+								</a>
+								.
+							</li>
+							<li>
+								<strong className="text-(--foreground)">PostHog</strong> for
+								product analytics on the live site, processed in the European
+								Union. See{" "}
+								<a
+									href="https://posthog.com/privacy"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-(--accent) hover:underline"
+								>
+									PostHog's privacy policy
 								</a>
 								.
 							</li>
@@ -133,8 +199,9 @@ function PrivacyPolicyPage() {
 						</h2>
 						<p>
 							Your data is retained for as long as your account is active. You
-							can request deletion of your account and associated data by
-							contacting us.
+							can delete your account yourself in Settings, which removes your
+							Opnshelf data. You can choose to delete the records Opnshelf saved
+							to your PDS at the same time.
 						</p>
 					</section>
 
@@ -163,9 +230,14 @@ function PrivacyPolicyPage() {
 							6. Cookies and Local Storage
 						</h2>
 						<p>
-							We use browser local storage to save your theme preference and
-							authentication session. We do not use third-party tracking cookies
-							or advertising cookies.
+							We keep you signed in with a session cookie. The cookie is
+							httpOnly, so only our API can read it. We use browser local
+							storage for your theme preference, for a random id that labels
+							this browser on your devices list, and to remember which prompts
+							you have dismissed on this browser. On the live site, analytics
+							sets a first-party cookie that recognises this browser between
+							visits. We do not use third-party tracking cookies or advertising
+							cookies.
 						</p>
 					</section>
 

@@ -12,6 +12,7 @@ import {
 	type LibraryFormat,
 	useUserLibrary,
 } from "@/lib/use-library";
+import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 
 export function libraryItemToCardItem(item: LibraryItemDto): MediaCardItem {
 	const media = item.media as Record<string, unknown>;
@@ -43,6 +44,7 @@ const FILTERS: { key: LibraryFormat | "all"; label: string }[] = [
  */
 export function LibraryTab({ userDid }: { userDid: string }) {
 	const [filter, setFilter] = useState<LibraryFormat | "all">("all");
+	const columns = useMediaCardColumns();
 	const { data, isLoading, isError } = useUserLibrary(userDid);
 
 	const items = useMemo(() => {
@@ -80,7 +82,7 @@ export function LibraryTab({ userDid }: { userDid: string }) {
 			</View>
 
 			{isLoading ? (
-				<PosterGridSkeleton />
+				<PosterGridSkeleton columns={columns} />
 			) : isError ? (
 				<ErrorState message="Couldn't load this library." />
 			) : items.length === 0 ? (
@@ -88,7 +90,11 @@ export function LibraryTab({ userDid }: { userDid: string }) {
 			) : (
 				<View className="flex-row flex-wrap">
 					{items.map((item) => (
-						<View key={item.id} className="w-1/3 px-1 pb-3">
+						<View
+							key={item.id}
+							className="px-1 pb-3"
+							style={{ width: `${100 / columns}%` }}
+						>
 							<MediaCard item={libraryItemToCardItem(item)} />
 						</View>
 					))}

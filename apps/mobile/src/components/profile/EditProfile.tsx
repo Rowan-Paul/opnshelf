@@ -95,7 +95,7 @@ export function EditProfile({ user }: { user: UserDto }) {
 					</Text>
 				</View>
 				<Text className="text-muted-foreground text-xs">
-					Your handle is managed by your Atmosphere account.
+					Your handle comes from the account you signed in with.
 				</Text>
 			</View>
 
@@ -121,8 +121,8 @@ export function EditProfile({ user }: { user: UserDto }) {
 					</Pressable>
 				</View>
 				<Text className="text-muted-foreground text-xs leading-5">
-					We automatically detect your Bluesky and Tangled profiles from your
-					PDS. Toggle to control visibility.
+					We automatically detect your Bluesky and Tangled profiles. Toggle to
+					control visibility.
 				</Text>
 
 				<SocialLinkRow

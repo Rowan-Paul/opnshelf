@@ -54,15 +54,21 @@ export function useProfileRecentMovies(userDid: string, limit = 10) {
 /** The user's public shelf (Shelf tab), filterable + paginated server-side. */
 export function useProfileShelf(
 	userDid: string,
-	options: { page?: number; type?: "movie" | "episode"; search?: string } = {},
+	options: {
+		page?: number;
+		type?: "movie" | "episode";
+		search?: string;
+		sortOrder?: "asc" | "desc";
+	} = {},
 ) {
-	const { page = 1, type, search } = options;
+	const { page = 1, type, search, sortOrder = "desc" } = options;
 	return useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
 			query: {
 				page,
 				pageSize: 24,
+				sortOrder,
 				...(type ? { type } : {}),
 				...(search?.trim() ? { search: search.trim() } : {}),
 			},

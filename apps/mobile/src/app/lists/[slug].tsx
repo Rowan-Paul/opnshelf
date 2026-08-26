@@ -398,7 +398,7 @@ export default function ListDetailScreen() {
 
 			{isLoading ? (
 				<View className="px-3 pt-3">
-					<PosterGridSkeleton />
+					<PosterGridSkeleton columns={numColumns} />
 				</View>
 			) : isError || !list ? (
 				<ErrorState message="Couldn't load this list." />

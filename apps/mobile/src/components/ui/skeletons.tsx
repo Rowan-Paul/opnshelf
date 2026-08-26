@@ -30,9 +30,16 @@ export function PosterGridSkeleton({
 	columns?: number;
 }) {
 	return (
-		<View className="flex-row flex-wrap gap-3">
+		// No gap: the real grids space cells with px-1 on an exact 1/columns
+		// width. A gap on top of a percentage width overflows the row and drops
+		// a card to the next line.
+		<View className="flex-row flex-wrap">
 			{IDX(rows * columns).map((i) => (
-				<View key={i} style={{ width: `${100 / columns - 2}%` }}>
+				<View
+					key={i}
+					className="px-1 pb-3"
+					style={{ width: `${100 / columns}%` }}
+				>
 					<View className="aspect-2/3 w-full rounded-lg bg-background-subtle" />
 					<View className="mt-2 h-3 w-4/5 rounded bg-background-subtle" />
 				</View>

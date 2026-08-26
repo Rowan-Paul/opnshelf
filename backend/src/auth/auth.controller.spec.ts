@@ -108,7 +108,7 @@ describe("AuthController", () => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
 				NODE_ENV: "test",
-				PDS_HANDLE_DOMAIN: "opnshelf.xyz",
+				PDS_HANDLE_DOMAIN: "opnshelf.social",
 			};
 			return config[key];
 		}),
@@ -693,7 +693,7 @@ describe("AuthController", () => {
 			const mockSession = { did: "did:plc:native" };
 			const mockProfile = {
 				did: "did:plc:native",
-				handle: "native.opnshelf.xyz",
+				handle: "native.opnshelf.social",
 				displayName: null,
 				avatar: null,
 			};
@@ -842,7 +842,7 @@ describe("AuthController", () => {
 		it("gates a native account whose email is not yet verified", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:jane",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				displayName: null,
 				avatar: null,
 				onboardingCompletedAt: null,
@@ -921,7 +921,7 @@ describe("AuthController", () => {
 		it("confirms the code, revokes bootstrap credentials, and starts Core OAuth", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				displayName: null,
 				emailVerifiedAt: null,
 			});
@@ -943,7 +943,7 @@ describe("AuthController", () => {
 				"did:plc:abc123",
 			);
 			expect(mockAuthService.authorize).toHaveBeenCalledWith(
-				"jane.opnshelf.xyz",
+				"jane.opnshelf.social",
 			);
 			expect(mockAuthService.revokeBySessionId).not.toHaveBeenCalled();
 		});
@@ -951,7 +951,7 @@ describe("AuthController", () => {
 		it("still hands an already verified native account into Core OAuth", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				displayName: null,
 				emailVerifiedAt: new Date(),
 			});
@@ -960,14 +960,14 @@ describe("AuthController", () => {
 
 			expect(mockAuthService.confirmEmailWithCode).toHaveBeenCalled();
 			expect(mockAuthService.authorize).toHaveBeenCalledWith(
-				"jane.opnshelf.xyz",
+				"jane.opnshelf.social",
 			);
 		});
 
 		it("maps an invalid code to BadRequestException and does not start OAuth", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				displayName: null,
 				emailVerifiedAt: null,
 			});
@@ -985,7 +985,7 @@ describe("AuthController", () => {
 		it("does not seed with the credential session", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				displayName: null,
 				emailVerifiedAt: null,
 			});
@@ -1001,7 +1001,7 @@ describe("AuthController", () => {
 		it("revokes the exact Bearer bootstrap after creating the Core authorization", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				emailVerifiedAt: null,
 			});
 			const req = createMockRequest({
@@ -1025,7 +1025,7 @@ describe("AuthController", () => {
 		it("retains the bootstrap when Core authorization cannot be created", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				emailVerifiedAt: null,
 			});
 			mockAuthService.authorize.mockRejectedValueOnce(
@@ -1293,10 +1293,10 @@ describe("AuthController", () => {
 		};
 		const account = {
 			did: "did:plc:jane",
-			handle: "jane.opnshelf.xyz",
+			handle: "jane.opnshelf.social",
 			accessJwt: "a",
 			refreshJwt: "r",
-			pdsUrl: "https://opnshelf.xyz",
+			pdsUrl: "https://opnshelf.social",
 		};
 
 		beforeEach(() => {
@@ -1306,7 +1306,7 @@ describe("AuthController", () => {
 				const config: Record<string, string> = {
 					FRONTEND_URL: "http://127.0.0.1:3000",
 					NODE_ENV: "test",
-					PDS_HANDLE_DOMAIN: "opnshelf.xyz",
+					PDS_HANDLE_DOMAIN: "opnshelf.social",
 				};
 				return config[key];
 			});
@@ -1335,7 +1335,7 @@ describe("AuthController", () => {
 			expect(mockTranquilAdmin.mintInviteCode).toHaveBeenCalledWith(1);
 			expect(mockAuthService.registerAccount).toHaveBeenCalledWith(
 				expect.objectContaining({
-					handle: "jane.opnshelf.xyz",
+					handle: "jane.opnshelf.social",
 					email: "jane@example.com",
 					inviteCode: "invite-code",
 				}),
@@ -1405,7 +1405,7 @@ describe("AuthController", () => {
 	describe("google signup", () => {
 		const account = {
 			did: "did:plc:jane",
-			handle: "jane.opnshelf.xyz",
+			handle: "jane.opnshelf.social",
 			redirectUrl:
 				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Arequest",
 			accessJwt: "a",
@@ -1417,7 +1417,7 @@ describe("AuthController", () => {
 				const config: Record<string, string> = {
 					FRONTEND_URL: "http://127.0.0.1:3000",
 					NODE_ENV: "test",
-					PDS_HANDLE_DOMAIN: "opnshelf.xyz",
+					PDS_HANDLE_DOMAIN: "opnshelf.social",
 				};
 				return config[key];
 			});
@@ -1541,7 +1541,7 @@ describe("AuthController", () => {
 			// value its auto-verify comparison accepts.
 			expect(mockAuthService.completeSsoRegistration).toHaveBeenCalledWith({
 				token: "pending-tok",
-				handle: "jane.opnshelf.xyz",
+				handle: "jane.opnshelf.social",
 				inviteCode: "invite-code",
 			});
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(

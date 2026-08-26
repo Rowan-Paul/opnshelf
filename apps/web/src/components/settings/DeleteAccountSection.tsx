@@ -155,8 +155,9 @@ export function DeleteAccountSection() {
 								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-red-600"
 							/>
 							<label htmlFor="delete-pds" className="text-sm leading-relaxed">
-								Also delete my Opnshelf data from my PDS, including watch
-								history, follows, lists, and list items.
+								Also delete the records Opnshelf saved to your account's data
+								store (your PDS). This covers watch history, follows, lists, and
+								list items.
 							</label>
 						</div>
 

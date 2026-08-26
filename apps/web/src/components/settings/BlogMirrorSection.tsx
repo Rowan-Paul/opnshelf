@@ -110,7 +110,7 @@ export function BlogMirrorSection() {
 				</div>
 				<p className="mb-6 text-(--foreground-muted) text-sm">
 					Your reviews always live on Opnshelf. Optionally, mirror new reviews
-					to one of your own AT Protocol publications as well.
+					to one of your own blogs as well.
 				</p>
 
 				<IntegrationPermissionRow
@@ -133,8 +133,9 @@ export function BlogMirrorSection() {
 					<div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
 						<AlertTriangle className="mt-0.5 size-4 shrink-0" />
 						<span>
-							Your selected publication is no longer in your PDS. New reviews
-							still point at it, but you may want to choose another below.
+							Your selected publication is no longer available on your account.
+							New reviews still point at it, but you may want to choose another
+							below.
 						</span>
 					</div>
 				)}

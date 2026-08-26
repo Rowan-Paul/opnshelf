@@ -60,6 +60,9 @@ import ActionableMediaCard from "../../components/ActionableMediaCard";
 
 type SortOption = "position" | "added" | "title" | "year";
 
+const LIST_ITEMS_GRID =
+	"grid-cols-3 gap-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5";
+
 const SORT_LABELS: Record<SortOption, string> = {
 	position: "Order",
 	added: "Added",
@@ -716,7 +719,9 @@ export function ProfileListsPage({
 							)}
 
 							{/* Loading State for List Items */}
-							{listLoading && <PosterGridSkeleton />}
+							{listLoading && (
+								<PosterGridSkeleton gridClassName={LIST_ITEMS_GRID} />
+							)}
 
 							{/* Error State for List Items */}
 							{listError && !listLoading && (
@@ -850,7 +855,7 @@ export function ProfileListsPage({
 								!listLoading &&
 								!listError &&
 								filteredItems.length > 0 && (
-									<div className="grid grid-cols-3 gap-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+									<div className={`grid ${LIST_ITEMS_GRID}`}>
 										{filteredItems
 											.filter(
 												(item, index, self) =>

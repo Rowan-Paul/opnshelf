@@ -71,7 +71,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			{
 				name: "description",
 				content:
-					"Track what you watch and discover what others are watching. A personal media tracker built on the AT Protocol.",
+					"Track what you watch and discover what others are watching. Log movies and shows, and share your taste with friends.",
 			},
 			// Apple's Smart App Banner. Only iOS Safari renders it, and only it
 			// knows whether the app is already installed, so it shows "OPEN"

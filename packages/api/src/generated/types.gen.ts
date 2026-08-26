@@ -179,7 +179,7 @@ export type WatchHistoryItemDto = {
 
 export type RegisterDto = {
     /**
-     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
      */
     username: string;
     /**
@@ -211,7 +211,7 @@ export type RegisterResponseDto = {
 
 export type GoogleRegisterDto = {
     /**
-     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.xyz
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
      */
     username: string;
     /**
