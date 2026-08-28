@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { AccountSection } from "./AccountSection";
@@ -50,11 +50,28 @@ describe("settings sections", () => {
 	it("renders the preference sections with the stored settings", () => {
 		render(<PreferencesSections />, { wrapper: Wrapper });
 
+		expect(screen.getByText("Appearance")).toBeDefined();
 		expect(screen.getByText("Time & Region")).toBeDefined();
 		expect(screen.getByText("Streaming")).toBeDefined();
-		expect(screen.getByText("Reading")).toBeDefined();
+		expect(screen.getByText("Reviews")).toBeDefined();
 		// timeFormat "24h" → the 24-hour switch is on.
 		expect(screen.getByRole("switch", { name: /24-hour time/i })).toBeDefined();
+	});
+
+	it("marks the picked appearance and persists it for the header toggle", () => {
+		render(<PreferencesSections />, { wrapper: Wrapper });
+
+		const dark = screen.getByRole("button", { name: "Dark" });
+		act(() => dark.click());
+
+		expect(dark.getAttribute("aria-pressed")).toBe("true");
+		expect(
+			screen
+				.getByRole("button", { name: "System" })
+				.getAttribute("aria-pressed"),
+		).toBe("false");
+		// The header ThemeToggle reads the same store, keyed on this entry.
+		expect(window.localStorage.getItem("theme")).toBe("dark");
 	});
 
 	it("renders the account section from the passed user", () => {
