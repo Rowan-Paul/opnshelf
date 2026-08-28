@@ -74,7 +74,11 @@ function ListItemCard({
 }) {
 	return (
 		<View className="flex-1">
-			<MediaCard item={listItemToMediaCardItem(item)} actions />
+			<MediaCard
+				item={listItemToMediaCardItem(item)}
+				actions
+				watchCount={item.watchCount}
+			/>
 			{/* Top-LEFT: the card's own watched toggle owns the top-right corner;
 			    stacking both there rendered the remove X on top of the gold check. */}
 			<Pressable

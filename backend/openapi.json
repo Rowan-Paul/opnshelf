@@ -8434,6 +8434,10 @@
             "type": "boolean",
             "description": "Whether the requesting viewer has watched this item (viewer-relative; false when unauthenticated)"
           },
+          "watchCount": {
+            "type": "number",
+            "description": "Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated)"
+          },
           "createdAt": {
             "type": "string"
           },
@@ -8448,6 +8452,7 @@
           "mediaId",
           "position",
           "watched",
+          "watchCount",
           "createdAt",
           "media"
         ]

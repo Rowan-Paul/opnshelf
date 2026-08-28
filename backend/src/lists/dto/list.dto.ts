@@ -200,6 +200,12 @@ export class MediaInListDto {
 	})
 	watched: boolean;
 
+	@ApiProperty({
+		description:
+			"Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated)",
+	})
+	watchCount: number;
+
 	@ApiProperty()
 	createdAt: string;
 

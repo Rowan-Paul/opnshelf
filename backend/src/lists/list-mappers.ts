@@ -49,7 +49,7 @@ type ListRecord = {
 export function mapItemToDto(
 	item: ListItemRecord,
 	episodeName?: string,
-	watched = false,
+	watchCount = 0,
 ): MediaInListDto {
 	const isShowLike = item.mediaType !== "movie";
 	const mediaTitle = isShowLike ? item.show?.title : item.movie?.title;
@@ -78,7 +78,8 @@ export function mapItemToDto(
 		episodeName,
 		notes: item.notes ?? undefined,
 		position: item.position,
-		watched,
+		watched: watchCount > 0,
+		watchCount,
 		createdAt: item.createdAt.toISOString(),
 		media: {
 			mediaType: item.mediaType,

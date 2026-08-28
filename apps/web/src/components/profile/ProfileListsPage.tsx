@@ -911,6 +911,7 @@ export function ProfileListsPage({
 														removeItemMutation.variables?.path?.mediaId ===
 															item.mediaId
 													}
+													watchCount={item.watchCount}
 												/>
 											))}
 									</div>
