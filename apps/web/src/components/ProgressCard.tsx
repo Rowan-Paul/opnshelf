@@ -35,24 +35,28 @@ export default function ProgressCard({
 	const isFullyWatched = progressPercentage >= 100;
 
 	return (
-		<section className="card p-5">
-			<h3 className="mb-4 font-display font-semibold">Your Progress</h3>
-			<div className="space-y-4">
+		<section className="card p-4">
+			<div className="space-y-2.5">
 				<div className="flex items-center justify-between">
-					<span className="text-(--foreground-muted) text-sm">
-						Episodes Watched
-					</span>
-					<span className="font-semibold">
-						{episodesWatched}/{totalEpisodes}
+					<h3 className="font-display font-semibold">Your Progress</h3>
+					<span className="text-(--foreground-muted) text-sm tabular-nums">
+						{episodesWatched}/{totalEpisodes} watched
 					</span>
 				</div>
-				<div className="h-2 w-full rounded-full bg-(--background-subtle)">
+				<div
+					className="h-1 w-full overflow-hidden rounded-full bg-(--background-subtle)"
+					role="progressbar"
+					aria-label="Episodes watched"
+					aria-valuemin={0}
+					aria-valuemax={totalEpisodes}
+					aria-valuenow={Math.min(episodesWatched, totalEpisodes)}
+				>
 					<div
 						className="h-full rounded-full bg-(--accent)"
 						style={{ width: `${progressPercentage}%` }}
 					/>
 				</div>
-				<div className="flex items-center justify-between text-sm">
+				<div className="flex items-center justify-between text-xs">
 					<span className="text-(--foreground-muted)">
 						{Math.round(progressPercentage)}% complete
 					</span>
@@ -66,7 +70,7 @@ export default function ProgressCard({
 						type="button"
 						onClick={onUnmarkWatched}
 						disabled={isUnmarkPending || processing}
-						className="btn btn-secondary mt-4 w-full gap-2"
+						className="btn btn-secondary mt-2 w-full gap-2"
 					>
 						{isUnmarkPending || processing ? (
 							<>
@@ -85,7 +89,7 @@ export default function ProgressCard({
 						type="button"
 						onClick={onMarkWatched}
 						disabled={isMarkPending || processing}
-						className="btn btn-secondary mt-4 w-full gap-2"
+						className="btn btn-secondary mt-2 w-full gap-2"
 					>
 						{isMarkPending || processing ? (
 							<>

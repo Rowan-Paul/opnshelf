@@ -698,14 +698,14 @@ export function ProfileListsPage({
 										</p>
 									)}
 									{isAuthenticated && total > 0 && (
-										<div className="space-y-1.5">
+										<div className="space-y-1">
 											<div className="flex items-center justify-between text-(--foreground-muted) text-xs">
 												<span>
 													{watchedCount} of {total} watched
 												</span>
 												<span>{Math.round((watchedCount / total) * 100)}%</span>
 											</div>
-											<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--background-subtle)">
+											<div className="h-1 w-full overflow-hidden rounded-full bg-(--background-subtle)">
 												<div
 													className="h-full rounded-full bg-(--accent) transition-all"
 													style={{
