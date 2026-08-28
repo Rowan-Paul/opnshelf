@@ -156,7 +156,19 @@ function AppearanceSetting() {
 	);
 }
 
-export default function SettingsScreen() {
+export type SettingsCategory =
+	| "profile"
+	| "preferences"
+	| "connections"
+	| "account"
+	| "help";
+
+/** Shared implementation for the focused settings category routes. */
+export function SettingsCategoryScreen({
+	section,
+}: {
+	section: SettingsCategory;
+}) {
 	const { showDialog } = useDialog();
 	const { user, signOut, runAuthorizationUrl } = useAuth();
 	const { open: openFeedback } = useFeedback();
@@ -425,7 +437,16 @@ export default function SettingsScreen() {
 		<>
 			<Stack.Screen
 				options={{
-					title: "Settings",
+					title:
+						section === "profile"
+							? "Profile"
+							: section === "preferences"
+								? "Preferences"
+								: section === "connections"
+									? "Connections"
+									: section === "account"
+										? "Account"
+										: "Help",
 					// While a PDS deletion job runs, lock the user on this screen:
 					// hide the back button and disable the iOS swipe-back gesture.
 					headerBackVisible: !isDeleting,
@@ -438,7 +459,7 @@ export default function SettingsScreen() {
 					contentContainerClassName="gap-6 py-6"
 					showsVerticalScrollIndicator={false}
 				>
-					{user && (
+					{section === "profile" && user && (
 						<View className="gap-1">
 							<Text className="font-semibold text-foreground text-lg">
 								{user.displayName ?? user.handle}
@@ -449,116 +470,112 @@ export default function SettingsScreen() {
 						</View>
 					)}
 
-					{/* Profile */}
-					<View className="gap-3 rounded-xl border border-border bg-card p-4">
-						<Text className="font-display font-semibold text-foreground text-lg">
-							Profile
-						</Text>
-						<Link href="/edit-profile" asChild>
-							<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
-								<UserPen color="#94a3b8" size={20} />
-								<Text className="flex-1 font-medium text-foreground">
-									Edit profile
-								</Text>
-								<ChevronRight color="#94a3b8" size={18} />
-							</Pressable>
-						</Link>
-						<Link href="/devices" asChild>
-							<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
-								<Smartphone color="#94a3b8" size={20} />
-								<Text className="flex-1 font-medium text-foreground">
-									Devices
-								</Text>
-								<ChevronRight color="#94a3b8" size={18} />
-							</Pressable>
-						</Link>
-					</View>
-
-					{/* Welcome tour */}
-					<View className="gap-3 rounded-xl border border-border bg-card p-4">
-						<Text className="font-display font-semibold text-foreground text-lg">
-							Welcome tour
-						</Text>
-						<Pressable
-							onPress={replayWelcomeTour}
-							className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
-						>
-							<Compass color="#94a3b8" size={20} />
-							<Text className="flex-1 font-medium text-foreground">
-								Take the tour again
+					{section === "profile" && (
+						<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<Text className="font-display font-semibold text-foreground text-lg">
+								Profile
 							</Text>
-							<ChevronRight color="#94a3b8" size={18} />
-						</Pressable>
-					</View>
-
-					{/* Appearance */}
-					<SettingsSection
-						title="Appearance"
-						description="Choose how Opnshelf looks. System follows your device."
-					>
-						<AppearanceSetting />
-					</SettingsSection>
-
-					{/* Time & Region */}
-					<SettingsSection
-						title="Time & Region"
-						description="Choose how dates and times are displayed."
-					>
-						{settingsLoading ? (
-							<View className="gap-5">
-								<View className="gap-2">
-									<View className="h-3.5 w-20 rounded bg-background-subtle" />
-									<View className="h-11 w-full rounded-lg bg-background-subtle" />
-								</View>
-								<View className="flex-row items-center justify-between">
-									<View className="gap-2">
-										<View className="h-3.5 w-28 rounded bg-background-subtle" />
-										<View className="h-2.5 w-40 rounded bg-background-subtle" />
-									</View>
-									<View className="h-6 w-11 rounded-full bg-background-subtle" />
-								</View>
-							</View>
-						) : settingsError ? (
-							<ErrorState message="Could not load your settings." />
-						) : (
-							<View className="gap-5">
-								<View className="gap-2">
-									<Text className="font-medium text-foreground text-sm">
-										Timezone
+							<Link href="/edit-profile" asChild>
+								<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
+									<UserPen color="#94a3b8" size={20} />
+									<Text className="flex-1 font-medium text-foreground">
+										Edit profile
 									</Text>
-									<TimezonePicker
-										value={settings?.timezone}
-										onChange={(timezone) =>
-											updateSettingsMutation.mutate({ body: { timezone } })
-										}
-										disabled={settingsBusy}
-									/>
-								</View>
+									<ChevronRight color="#94a3b8" size={18} />
+								</Pressable>
+							</Link>
+						</View>
+					)}
 
-								<View className="flex-row items-center justify-between">
-									<View className="flex-1 pr-4">
-										<Text className="font-medium text-foreground text-sm">
-											24-hour time
-										</Text>
-										<Text className="text-muted-foreground text-sm">
-											Display times in 24-hour format
-										</Text>
+					{section === "help" && (
+						<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<Text className="font-display font-semibold text-foreground text-lg">
+								Welcome tour
+							</Text>
+							<Pressable
+								onPress={replayWelcomeTour}
+								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+							>
+								<Compass color="#94a3b8" size={20} />
+								<Text className="flex-1 font-medium text-foreground">
+									Take the tour again
+								</Text>
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+						</View>
+					)}
+
+					{section === "preferences" && (
+						<>
+							<SettingsSection
+								title="Appearance"
+								description="Choose how Opnshelf looks. System follows your device."
+							>
+								<AppearanceSetting />
+							</SettingsSection>
+
+							{/* Time & Region */}
+							<SettingsSection
+								title="Time & Region"
+								description="Choose how dates and times are displayed."
+							>
+								{settingsLoading ? (
+									<View className="gap-5">
+										<View className="gap-2">
+											<View className="h-3.5 w-20 rounded bg-background-subtle" />
+											<View className="h-11 w-full rounded-lg bg-background-subtle" />
+										</View>
+										<View className="flex-row items-center justify-between">
+											<View className="gap-2">
+												<View className="h-3.5 w-28 rounded bg-background-subtle" />
+												<View className="h-2.5 w-40 rounded bg-background-subtle" />
+											</View>
+											<View className="h-6 w-11 rounded-full bg-background-subtle" />
+										</View>
 									</View>
-									<Switch
-										value={settings?.timeFormat === "24h"}
-										onValueChange={(checked) =>
-											updateSettingsMutation.mutate({
-												body: { timeFormat: checked ? "24h" : "12h" },
-											})
-										}
-										disabled={settingsBusy}
-										trackColor={{ false: "#3f3f46", true: PRIMARY }}
-										thumbColor="#ffffff"
-									/>
-								</View>
-							</View>
-						)}
-					</SettingsSection>
+								) : settingsError ? (
+									<ErrorState message="Could not load your settings." />
+								) : (
+									<View className="gap-5">
+										<View className="gap-2">
+											<Text className="font-medium text-foreground text-sm">
+												Timezone
+											</Text>
+											<TimezonePicker
+												value={settings?.timezone}
+												onChange={(timezone) =>
+													updateSettingsMutation.mutate({ body: { timezone } })
+												}
+												disabled={settingsBusy}
+											/>
+										</View>
+
+										<View className="flex-row items-center justify-between">
+											<View className="flex-1 pr-4">
+												<Text className="font-medium text-foreground text-sm">
+													24-hour time
+												</Text>
+												<Text className="text-muted-foreground text-sm">
+													Display times in 24-hour format
+												</Text>
+											</View>
+											<Switch
+												value={settings?.timeFormat === "24h"}
+												onValueChange={(checked) =>
+													updateSettingsMutation.mutate({
+														body: { timeFormat: checked ? "24h" : "12h" },
+													})
+												}
+												disabled={settingsBusy}
+												trackColor={{ false: "#3f3f46", true: PRIMARY }}
+												thumbColor="#ffffff"
+											/>
+										</View>
+									</View>
+								)}
+							</SettingsSection>
+						</>
+					)}
 
 					{/* Streaming country */}
 					<SettingsSection
@@ -628,228 +645,254 @@ export default function SettingsScreen() {
 						)}
 					</SettingsSection>
 
-					{/* Blog mirror */}
-					<SettingsSection
-						title="Blog mirror"
-						description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own blogs."
-					>
-						<IntegrationPermissionRow
-							name="Blog mirroring"
-							description={
-								storedPublicationUri
-									? "Allow Opnshelf to publish and update Review mirrors in the selected publication."
-									: "Choose a publication below before connecting Blog mirroring."
-							}
-							connected={settings?.blogIntegrationEnabled ?? false}
-							disabled={
-								permissionChangeMutation.isPending ||
-								(!(settings?.blogIntegrationEnabled ?? false) &&
-									!storedPublicationUri)
-							}
-							onConfirm={(action) => requestPermissionChange("blog", action)}
-						/>
+					{section === "connections" && (
+						<>
+							<SettingsSection
+								title="Blog mirror"
+								description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own blogs."
+							>
+								<IntegrationPermissionRow
+									name="Blog mirroring"
+									description={
+										storedPublicationUri
+											? "Allow Opnshelf to publish and update Review mirrors in the selected publication."
+											: "Choose a publication below before connecting Blog mirroring."
+									}
+									connected={settings?.blogIntegrationEnabled ?? false}
+									disabled={
+										permissionChangeMutation.isPending ||
+										(!(settings?.blogIntegrationEnabled ?? false) &&
+											!storedPublicationUri)
+									}
+									onConfirm={(action) =>
+										requestPermissionChange("blog", action)
+									}
+								/>
 
-						{storedTargetMissing && (
-							<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
-								<AlertTriangle color={PRIMARY} size={16} />
-								<Text className="flex-1 text-foreground text-sm leading-5">
-									The blog you selected is no longer available on your account.
-									New reviews still mirror to it, but you may want to choose
-									another below.
+								{storedTargetMissing && (
+									<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
+										<AlertTriangle color={PRIMARY} size={16} />
+										<Text className="flex-1 text-foreground text-sm leading-5">
+											The blog you selected is no longer available on your
+											account. New reviews still mirror to it, but you may want
+											to choose another below.
+										</Text>
+									</View>
+								)}
+
+								{publicationsLoading ? (
+									<ListRowsSkeleton rows={2} />
+								) : publicationsError ? (
+									<Text className="text-muted-foreground text-sm">
+										Could not load your publications right now.
+									</Text>
+								) : (
+									<View className="gap-2">
+										{(myPublications?.items ?? []).map((pub) => {
+											const checked = storedPublicationUri === pub.uri;
+											return (
+												<Pressable
+													key={pub.uri}
+													disabled={settingsBusy}
+													onPress={() => confirmPublicationService(pub)}
+													className={
+														checked
+															? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary/10 p-3"
+															: "flex-row items-center gap-3 rounded-lg border border-border p-3"
+													}
+													style={{ opacity: settingsBusy ? 0.6 : 1 }}
+												>
+													<View
+														className={
+															checked
+																? "size-5 items-center justify-center rounded-full border-2 border-primary"
+																: "size-5 items-center justify-center rounded-full border-2 border-border"
+														}
+													>
+														{checked ? (
+															<View className="size-2.5 rounded-full bg-primary" />
+														) : null}
+													</View>
+													<View className="flex-1">
+														<Text
+															className="font-medium text-foreground text-sm"
+															numberOfLines={1}
+														>
+															{pub.name}
+														</Text>
+														<Text
+															className="text-muted-foreground text-xs"
+															numberOfLines={1}
+														>
+															{pub.url}
+														</Text>
+													</View>
+												</Pressable>
+											);
+										})}
+										<Text className="pt-1 text-muted-foreground text-xs leading-5">
+											Disconnect above to stop mirroring. Your publication
+											choice stays saved for reconnection.
+										</Text>
+									</View>
+								)}
+							</SettingsSection>
+
+							<SettingsSection
+								title="Bluesky Cross-posts"
+								description="Connect once, then choose which Reviews should also appear on Bluesky when you publish them."
+							>
+								<IntegrationPermissionRow
+									name="Bluesky Cross-posts"
+									description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
+									connected={settings?.blueskyCrossPostEnabled ?? false}
+									disabled={permissionChangeMutation.isPending}
+									onConfirm={(action) =>
+										requestPermissionChange("bluesky", action)
+									}
+								/>
+							</SettingsSection>
+
+							{/* Import history */}
+							<View className="gap-3 rounded-xl border border-border bg-card p-4">
+								<Text className="font-display font-semibold text-foreground text-lg">
+									Import history
 								</Text>
+								<Link href="/trakt-import" asChild>
+									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
+										<Download color="#94a3b8" size={20} />
+										<Text className="flex-1 font-medium text-foreground">
+											{getTraktSettingsLabel(traktJob)}
+										</Text>
+										<ChevronRight color="#94a3b8" size={18} />
+									</Pressable>
+								</Link>
 							</View>
-						)}
+						</>
+					)}
 
-						{publicationsLoading ? (
-							<ListRowsSkeleton rows={2} />
-						) : publicationsError ? (
-							<Text className="text-muted-foreground text-sm">
-								Could not load your publications right now.
+					{section === "help" && (
+						<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<Text className="font-display font-semibold text-foreground text-lg">
+								Feedback
 							</Text>
-						) : (
-							<View className="gap-2">
-								{(myPublications?.items ?? []).map((pub) => {
-									const checked = storedPublicationUri === pub.uri;
-									return (
-										<Pressable
-											key={pub.uri}
-											disabled={settingsBusy}
-											onPress={() => confirmPublicationService(pub)}
-											className={
-												checked
-													? "flex-row items-center gap-3 rounded-lg border border-primary bg-primary/10 p-3"
-													: "flex-row items-center gap-3 rounded-lg border border-border p-3"
-											}
-											style={{ opacity: settingsBusy ? 0.6 : 1 }}
-										>
-											<View
-												className={
-													checked
-														? "size-5 items-center justify-center rounded-full border-2 border-primary"
-														: "size-5 items-center justify-center rounded-full border-2 border-border"
-												}
-											>
-												{checked ? (
-													<View className="size-2.5 rounded-full bg-primary" />
-												) : null}
-											</View>
-											<View className="flex-1">
-												<Text
-													className="font-medium text-foreground text-sm"
-													numberOfLines={1}
-												>
-													{pub.name}
-												</Text>
-												<Text
-													className="text-muted-foreground text-xs"
-													numberOfLines={1}
-												>
-													{pub.url}
-												</Text>
-											</View>
-										</Pressable>
-									);
-								})}
-								<Text className="pt-1 text-muted-foreground text-xs leading-5">
-									Disconnect above to stop mirroring. Your publication choice
-									stays saved for reconnection.
-								</Text>
-							</View>
-						)}
-					</SettingsSection>
-
-					<SettingsSection
-						title="Bluesky Cross-posts"
-						description="Connect once, then choose which Reviews should also appear on Bluesky when you publish them."
-					>
-						<IntegrationPermissionRow
-							name="Bluesky Cross-posts"
-							description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
-							connected={settings?.blueskyCrossPostEnabled ?? false}
-							disabled={permissionChangeMutation.isPending}
-							onConfirm={(action) => requestPermissionChange("bluesky", action)}
-						/>
-					</SettingsSection>
-
-					{/* Import history */}
-					<View className="gap-3 rounded-xl border border-border bg-card p-4">
-						<Text className="font-display font-semibold text-foreground text-lg">
-							Import history
-						</Text>
-						<Link href="/trakt-import" asChild>
-							<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
-								<Download color="#94a3b8" size={20} />
+							<Pressable
+								onPress={openFeedback}
+								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+							>
+								<MessageSquare color="#94a3b8" size={20} />
 								<Text className="flex-1 font-medium text-foreground">
-									{getTraktSettingsLabel(traktJob)}
+									Report a bug or send feedback
 								</Text>
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>
-						</Link>
-					</View>
-
-					{/* Feedback */}
-					<View className="gap-3 rounded-xl border border-border bg-card p-4">
-						<Text className="font-display font-semibold text-foreground text-lg">
-							Feedback
-						</Text>
-						<Pressable
-							onPress={openFeedback}
-							className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
-						>
-							<MessageSquare color="#94a3b8" size={20} />
-							<Text className="flex-1 font-medium text-foreground">
-								Report a bug or send feedback
-							</Text>
-							<ChevronRight color="#94a3b8" size={18} />
-						</Pressable>
-						<Text className="text-muted-foreground text-xs leading-5">
-							Tip: shake your phone anywhere in the app to send feedback.
-						</Text>
-					</View>
-
-					{/* Danger zone */}
-					<View className="gap-4 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
-						<View className="gap-1">
-							<Text className="font-display font-semibold text-destructive text-lg">
-								Danger Zone
-							</Text>
-							<Text className="text-destructive/80 text-sm leading-5">
-								Permanently delete your account and all associated data.
+							<Text className="text-muted-foreground text-xs leading-5">
+								Tip: shake your phone anywhere in the app to send feedback.
 							</Text>
 						</View>
+					)}
 
-						{isDeleting && deletionJob ? (
-							<View className="gap-3">
-								<View className="flex-row items-center gap-2">
-									<ActivityIndicator size="small" color="#ef4444" />
-									<Text className="flex-1 font-medium text-destructive text-sm">
-										{deletionMessage}
+					{section === "account" && (
+						<>
+							<Link href="/devices" asChild>
+								<Pressable className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-4">
+									<Smartphone color="#94a3b8" size={20} />
+									<Text className="flex-1 font-medium text-foreground">
+										Devices
+									</Text>
+									<ChevronRight color="#94a3b8" size={18} />
+								</Pressable>
+							</Link>
+							<View className="gap-4 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+								<View className="gap-1">
+									<Text className="font-display font-semibold text-destructive text-lg">
+										Danger Zone
+									</Text>
+									<Text className="text-destructive/80 text-sm leading-5">
+										Permanently delete your account and all associated data.
 									</Text>
 								</View>
-								{deletionProgress !== null && (
-									<View className="h-2 w-full overflow-hidden rounded-full bg-destructive/20">
-										<View
-											className="h-full rounded-full bg-destructive"
-											style={{ width: `${deletionProgress}%` }}
-										/>
+
+								{isDeleting && deletionJob ? (
+									<View className="gap-3">
+										<View className="flex-row items-center gap-2">
+											<ActivityIndicator size="small" color="#ef4444" />
+											<Text className="flex-1 font-medium text-destructive text-sm">
+												{deletionMessage}
+											</Text>
+										</View>
+										{deletionProgress !== null && (
+											<View className="h-2 w-full overflow-hidden rounded-full bg-destructive/20">
+												<View
+													className="h-full rounded-full bg-destructive"
+													style={{ width: `${deletionProgress}%` }}
+												/>
+											</View>
+										)}
 									</View>
-								)}
-							</View>
-						) : deletionJob?.status === "failed" ? (
-							<View className="gap-3">
-								<Text className="text-destructive text-sm">
-									{deletionJob.lastError ?? "Account deletion failed."}
-								</Text>
-								<Pressable
-									onPress={confirmDeleteAccount}
-									disabled={deleteAccountMutation.isPending}
-									className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-									style={{ opacity: deleteAccountMutation.isPending ? 0.6 : 1 }}
-								>
-									{deleteAccountMutation.isPending && (
-										<ActivityIndicator size="small" color="#ef4444" />
-									)}
-									<Text className="font-semibold text-base text-destructive">
-										Retry
-									</Text>
-								</Pressable>
-							</View>
-						) : (
-							<Pressable
-								onPress={confirmDeleteAccount}
-								disabled={deleteAccountMutation.isPending}
-								className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-								style={{ opacity: deleteAccountMutation.isPending ? 0.6 : 1 }}
-							>
-								{deleteAccountMutation.isPending ? (
-									<ActivityIndicator size="small" color="#ef4444" />
+								) : deletionJob?.status === "failed" ? (
+									<View className="gap-3">
+										<Text className="text-destructive text-sm">
+											{deletionJob.lastError ?? "Account deletion failed."}
+										</Text>
+										<Pressable
+											onPress={confirmDeleteAccount}
+											disabled={deleteAccountMutation.isPending}
+											className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
+											style={{
+												opacity: deleteAccountMutation.isPending ? 0.6 : 1,
+											}}
+										>
+											{deleteAccountMutation.isPending && (
+												<ActivityIndicator size="small" color="#ef4444" />
+											)}
+											<Text className="font-semibold text-base text-destructive">
+												Retry
+											</Text>
+										</Pressable>
+									</View>
 								) : (
-									<Trash2 color="#ef4444" size={18} />
+									<Pressable
+										onPress={confirmDeleteAccount}
+										disabled={deleteAccountMutation.isPending}
+										className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
+										style={{
+											opacity: deleteAccountMutation.isPending ? 0.6 : 1,
+										}}
+									>
+										{deleteAccountMutation.isPending ? (
+											<ActivityIndicator size="small" color="#ef4444" />
+										) : (
+											<Trash2 color="#ef4444" size={18} />
+										)}
+										<Text className="font-semibold text-base text-destructive">
+											Delete Account
+										</Text>
+									</Pressable>
 								)}
-								<Text className="font-semibold text-base text-destructive">
-									Delete Account
+							</View>
+
+							{/* Sign out — reversible, so a neutral outline; red stays reserved
+					    for the irreversible Delete Account above. */}
+							<Pressable
+								disabled={isSigningOut}
+								onPress={handleSignOut}
+								className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
+								style={{ opacity: isSigningOut ? 0.7 : 1 }}
+							>
+								{isSigningOut && (
+									<ActivityIndicator size="small" color="#94a3b8" />
+								)}
+								<Text className="font-semibold text-base text-foreground">
+									Sign out
 								</Text>
 							</Pressable>
-						)}
-					</View>
 
-					{/* Sign out — reversible, so a neutral outline; red stays reserved
-					    for the irreversible Delete Account above. */}
-					<Pressable
-						disabled={isSigningOut}
-						onPress={handleSignOut}
-						className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
-						style={{ opacity: isSigningOut ? 0.7 : 1 }}
-					>
-						{isSigningOut && <ActivityIndicator size="small" color="#94a3b8" />}
-						<Text className="font-semibold text-base text-foreground">
-							Sign out
-						</Text>
-					</Pressable>
-
-					<Text className="text-center text-muted-foreground text-xs">
-						{formatVersionLine()}
-					</Text>
+							<Text className="text-center text-muted-foreground text-xs">
+								{formatVersionLine()}
+							</Text>
+						</>
+					)}
 				</ScrollView>
 			</Screen>
 			{/* The blocking overlay during PDS deletion lives at the app root
@@ -869,4 +912,87 @@ function getTraktSettingsLabel(job: TraktImportJobDto | null | undefined) {
 		return `Match ${job.unmatchedGroups.length} ${job.unmatchedGroups.length === 1 ? "title" : "titles"}`;
 	}
 	return "View Trakt import";
+}
+
+const SETTINGS_AREAS: {
+	href:
+		| "/settings/profile"
+		| "/settings/preferences"
+		| "/settings/connections"
+		| "/settings/account"
+		| "/settings/help";
+	label: string;
+	description: string;
+	Icon: typeof UserPen;
+}[] = [
+	{
+		href: "/settings/profile",
+		label: "Profile",
+		description: "Name, photo and social links",
+		Icon: UserPen,
+	},
+	{
+		href: "/settings/preferences",
+		label: "Preferences",
+		description: "Appearance, time, streaming and reviews",
+		Icon: Compass,
+	},
+	{
+		href: "/settings/connections",
+		label: "Connections",
+		description: "Blog mirroring, Bluesky and Trakt",
+		Icon: Download,
+	},
+	{
+		href: "/settings/account",
+		label: "Account",
+		description: "Devices, sign out and account deletion",
+		Icon: Smartphone,
+	},
+	{
+		href: "/settings/help",
+		label: "Help",
+		description: "Welcome tour and feedback",
+		Icon: MessageSquare,
+	},
+];
+
+/** The settings index is deliberately a short catalogue, not a control panel. */
+export default function SettingsScreen() {
+	return (
+		<>
+			<Stack.Screen options={{ title: "Settings" }} />
+			<Screen topInset={false}>
+				<ScrollView
+					className="flex-1"
+					contentContainerClassName="gap-1 py-6"
+					showsVerticalScrollIndicator={false}
+				>
+					<Text className="pb-3 text-muted-foreground text-sm">
+						Choose an area to manage.
+					</Text>
+					<View className="overflow-hidden rounded-xl border border-border bg-card">
+						{SETTINGS_AREAS.map(({ href, label, description, Icon }, index) => (
+							<Link key={href} href={href} asChild>
+								<Pressable
+									className={`flex-row items-center gap-3 p-4 ${
+										index > 0 ? "border-border border-t" : ""
+									}`}
+								>
+									<Icon color="#94a3b8" size={20} />
+									<View className="flex-1 gap-0.5">
+										<Text className="font-medium text-foreground">{label}</Text>
+										<Text className="text-muted-foreground text-sm">
+											{description}
+										</Text>
+									</View>
+									<ChevronRight color="#94a3b8" size={18} />
+								</Pressable>
+							</Link>
+						))}
+					</View>
+				</ScrollView>
+			</Screen>
+		</>
+	);
 }

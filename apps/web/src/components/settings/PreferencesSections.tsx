@@ -1,11 +1,10 @@
 import CountrySelector from "#/components/CountrySelector";
 import TimezoneSelector from "#/components/TimezoneSelector";
-import { TOUR_REPLAY_EVENT } from "#/components/tour/WelcomeTour";
 import { Switch } from "#/components/ui/switch";
 import { useAuth } from "#/lib/auth-context";
 import { useUpdateSettings } from "./use-settings-mutations";
 
-/** Time & Region, Streaming and Reading — everything backed by user settings. */
+/** The compact, frequently revisited controls in Settings > Preferences. */
 export function PreferencesSections() {
 	const { userSettings } = useAuth();
 	const updateSettingsMutation = useUpdateSettings();
@@ -117,24 +116,6 @@ export function PreferencesSections() {
 						disabled={updateSettingsMutation.isPending}
 					/>
 				</div>
-			</section>
-
-			<section
-				id="welcome-tour"
-				className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
-			>
-				<h2 className="mb-1 font-semibold text-lg">Welcome tour</h2>
-				<p className="mb-6 text-(--foreground-muted) text-sm">
-					The six-step walk through Discover, Connections, Activity, Up Next and
-					your Shelf
-				</p>
-				<button
-					type="button"
-					className="btn btn-secondary"
-					onClick={() => window.dispatchEvent(new Event(TOUR_REPLAY_EVENT))}
-				>
-					Take the tour again
-				</button>
 			</section>
 		</>
 	);
