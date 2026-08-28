@@ -83,12 +83,13 @@ function PrivacyPolicyPage() {
 						</p>
 						<p>
 							On the live site we also use PostHog to measure how the Service is
-							used: which features people use, how pages perform, and when a
-							visit ends. Analytics runs only on opnshelf.xyz and the data is
-							processed in the European Union. We strip the page address and the
-							referring page out of every event, because our addresses can
-							contain things you typed. Once you sign in, these events are
-							linked to your account identifier.
+							used: which features people use, how pages perform, when a visit
+							ends, and diagnostic details when the app encounters an error.
+							Analytics runs only on opnshelf.xyz and the data is processed in
+							the European Union. We strip the page address and the referring
+							page out of every event, because our addresses can contain things
+							you typed. Once you sign in, these events are linked to your
+							account identifier.
 						</p>
 					</section>
 
@@ -178,8 +179,8 @@ function PrivacyPolicyPage() {
 							</li>
 							<li>
 								<strong className="text-(--foreground)">PostHog</strong> for
-								product analytics on the live site, processed in the European
-								Union. See{" "}
+								product analytics and error diagnostics on the live site and in
+								the mobile app, processed in the European Union. See{" "}
 								<a
 									href="https://posthog.com/privacy"
 									target="_blank"

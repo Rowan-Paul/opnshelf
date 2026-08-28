@@ -34,6 +34,7 @@ if (isPostHogEnabled) {
 			return event;
 		},
 	});
+	posthog.startExceptionAutocapture();
 }
 
 export { posthog };
