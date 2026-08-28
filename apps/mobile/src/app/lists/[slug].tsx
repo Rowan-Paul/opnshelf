@@ -464,11 +464,11 @@ export default function ListDetailScreen() {
 										</Text>
 									) : null}
 									{showProgress ? (
-										<View className="gap-1.5">
+										<View className="gap-1">
 											<Text className="text-muted-foreground text-xs">
 												{watchedCount} of {total} watched
 											</Text>
-											<View className="h-1.5 overflow-hidden rounded-full bg-background-subtle">
+											<View className="h-1 overflow-hidden rounded-full bg-background-subtle">
 												<View
 													className="h-full rounded-full bg-primary"
 													style={{ width: `${progressPct}%` }}
