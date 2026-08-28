@@ -28,6 +28,12 @@ export const posthog =
 		? new PostHog(apiKey, {
 				host,
 				captureAppLifecycleEvents: true,
+				errorTracking: {
+					autocapture: {
+						uncaughtExceptions: true,
+						unhandledRejections: true,
+					},
+				},
 				flushAt: 20,
 				flushInterval: 10000,
 			})
