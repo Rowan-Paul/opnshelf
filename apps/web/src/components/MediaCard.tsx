@@ -26,6 +26,8 @@ export interface MediaCardProps {
 	episodeInfo?: string;
 	progress?: number;
 	isWatched?: boolean;
+	/** Viewer-relative Watches represented by this card. */
+	watchCount?: number;
 	isInWatchlist?: boolean;
 	isInAnyList?: boolean;
 	watchedDate?: string;
@@ -62,6 +64,7 @@ export default function MediaCard({
 	episodeInfo,
 	progress,
 	isWatched = false,
+	watchCount,
 	watchedDate,
 	role,
 	year,
@@ -217,20 +220,31 @@ export default function MediaCard({
 											}
 										}}
 										disabled={isMarkWatchedPending || isUnmarkWatchedPending}
-										className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 sm:w-7 ${
+										className={`flex h-9 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 ${
 											isWatched
-												? "bg-green-500 text-white hover:bg-green-600"
-												: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
+												? `bg-(--accent) text-[#3f2e00] hover:brightness-95 ${watchCount && watchCount > 1 ? "gap-1 px-2.5 sm:px-2" : "w-9 sm:w-7"}`
+												: "w-9 bg-white/20 text-white backdrop-blur-sm hover:bg-white/40 sm:w-7"
 										}`}
 										aria-label={
-											isWatched ? "Remove from shelf" : "Add to shelf"
+											isWatched && watchCount
+												? `${watchCount} ${watchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+												: isWatched
+													? "Remove from shelf"
+													: "Add to shelf"
 										}
 										title={isWatched ? "Remove from shelf" : "Add to shelf"}
 									>
 										{isMarkWatchedPending || isUnmarkWatchedPending ? (
 											<Loader2 className="size-4 animate-spin sm:size-3.5" />
 										) : (
-											<Check className="size-4 sm:size-3.5" />
+											<>
+												<Check className="size-4 sm:size-3.5" />
+												{watchCount && watchCount > 1 ? (
+													<span className="font-bold text-xs tabular-nums">
+														{watchCount}
+													</span>
+												) : null}
+											</>
 										)}
 									</button>
 								)}
@@ -255,7 +269,7 @@ export default function MediaCard({
 							</div>
 							{/* Static watched indicator (no interactive callback) */}
 							{isWatched && !onMarkWatched && !onUnmarkWatched && (
-								<div className="flex h-8 w-8 items-center justify-center self-end rounded-full bg-green-500 text-white sm:h-6 sm:w-6">
+								<div className="flex h-8 w-8 items-center justify-center self-end rounded-full bg-(--accent) text-[#3f2e00] sm:h-6 sm:w-6">
 									<Check className="size-4 sm:size-3.5" />
 								</div>
 							)}

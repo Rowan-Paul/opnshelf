@@ -1226,6 +1226,10 @@ export type MediaInListDto = {
      * Whether the requesting viewer has watched this item (viewer-relative; false when unauthenticated)
      */
     watched: boolean;
+    /**
+     * Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated)
+     */
+    watchCount: number;
     createdAt: string;
     media: {
         [key: string]: unknown;

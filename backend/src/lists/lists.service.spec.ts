@@ -895,6 +895,7 @@ describe("ListsService", () => {
 			mockPrismaService.listItem.findMany.mockResolvedValue(rows);
 			mockPrismaService.trackedMovie.findMany.mockResolvedValue([
 				{ movieId: "123" },
+				{ movieId: "123" },
 			]);
 			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
 
@@ -905,9 +906,15 @@ describe("ListsService", () => {
 			);
 
 			expect(result?.watchedCount).toBe(1);
-			const byId = new Map(result?.items.map((i) => [i.id, i.watched]));
-			expect(byId.get("item-movie")).toBe(true);
-			expect(byId.get("item-show")).toBe(false);
+			const byId = new Map(result?.items.map((i) => [i.id, i]));
+			expect(byId.get("item-movie")).toMatchObject({
+				watched: true,
+				watchCount: 2,
+			});
+			expect(byId.get("item-show")).toMatchObject({
+				watched: false,
+				watchCount: 0,
+			});
 			expect(mockPrismaService.trackedMovie.findMany).toHaveBeenCalledWith({
 				where: {
 					userDid: "did:plc:abc123",

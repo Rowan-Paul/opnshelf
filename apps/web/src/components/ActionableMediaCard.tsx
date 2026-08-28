@@ -30,6 +30,7 @@ interface ActionableMediaCardProps {
 	layout?: "poster" | "backdrop";
 	interactive?: boolean;
 	isWatched?: boolean;
+	watchCount?: number;
 	onRemove?: () => void;
 	isRemoving?: boolean;
 }
@@ -57,6 +58,7 @@ export default function ActionableMediaCard({
 	layout = "poster",
 	interactive = true,
 	isWatched: isWatchedProp,
+	watchCount,
 	onRemove,
 	isRemoving = false,
 }: ActionableMediaCardProps) {
@@ -202,6 +204,7 @@ export default function ActionableMediaCard({
 				fill={fill}
 				layout={layout}
 				isWatched={watched}
+				watchCount={watchCount}
 				onMarkWatched={interactive ? handleMarkWatched : undefined}
 				onUnmarkWatched={interactive ? handleUnmarkWatched : undefined}
 				onManageLists={

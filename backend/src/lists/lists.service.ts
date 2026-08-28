@@ -244,7 +244,7 @@ export class ListsService {
 								`${item.mediaId}:${item.seasonNumber}:${item.episodeNumber}`,
 							)
 						: undefined;
-				return mapItemToDto(item, episodeName, watchState.isWatched(item));
+				return mapItemToDto(item, episodeName, watchState.watchCount(item));
 			}),
 			total,
 			watchedCount: watchState.watchedCount,
@@ -301,8 +301,8 @@ export class ListsService {
 
 	/**
 	 * Builds viewer-relative watched lookups for a whole list in a fixed number
-	 * of queries (independent of page size). Returns a predicate for per-item
-	 * `watched` and the list-wide `watchedCount`. When there is no viewer
+	 * of queries (independent of page size). Returns per-item Watch counts and the
+	 * list-wide `watchedCount`. When there is no viewer
 	 * (unauthenticated public request) everything is unwatched.
 	 */
 	private async buildWatchState(
@@ -310,10 +310,11 @@ export class ListsService {
 		listId: string,
 	): Promise<{
 		isWatched: (item: ItemScope) => boolean;
+		watchCount: (item: ItemScope) => number;
 		watchedCount: number;
 	}> {
 		if (!viewerDid) {
-			return { isWatched: () => false, watchedCount: 0 };
+			return { isWatched: () => false, watchCount: () => 0, watchedCount: 0 };
 		}
 
 		const scopes = await this.prisma.listItem.findMany({
@@ -327,7 +328,7 @@ export class ListsService {
 		});
 
 		if (scopes.length === 0) {
-			return { isWatched: () => false, watchedCount: 0 };
+			return { isWatched: () => false, watchCount: () => 0, watchedCount: 0 };
 		}
 
 		const movieIds = [
@@ -368,41 +369,58 @@ export class ListsService {
 				: Promise.resolve([]),
 		]);
 
-		const watchedMovieIds = new Set(watchedMovies.map((m) => m.movieId));
-		const watchedShows = new Set<string>();
-		const watchedSeasons = new Set<string>();
-		const watchedEpisodeKeys = new Set<string>();
+		const movieWatchCounts = new Map<string, number>();
+		for (const movie of watchedMovies) {
+			movieWatchCounts.set(
+				movie.movieId,
+				(movieWatchCounts.get(movie.movieId) ?? 0) + 1,
+			);
+		}
+		const showWatchCounts = new Map<string, number>();
+		const seasonWatchCounts = new Map<string, number>();
+		const episodeWatchCounts = new Map<string, number>();
 		for (const ep of watchedEpisodes) {
-			watchedShows.add(ep.showId);
-			watchedSeasons.add(`${ep.showId}:${ep.seasonNumber}`);
-			watchedEpisodeKeys.add(
-				`${ep.showId}:${ep.seasonNumber}:${ep.episodeNumber}`,
+			const seasonKey = `${ep.showId}:${ep.seasonNumber}`;
+			const episodeKey = `${seasonKey}:${ep.episodeNumber}`;
+			showWatchCounts.set(ep.showId, (showWatchCounts.get(ep.showId) ?? 0) + 1);
+			seasonWatchCounts.set(
+				seasonKey,
+				(seasonWatchCounts.get(seasonKey) ?? 0) + 1,
+			);
+			episodeWatchCounts.set(
+				episodeKey,
+				(episodeWatchCounts.get(episodeKey) ?? 0) + 1,
 			);
 		}
 
-		const isWatched = (item: ItemScope): boolean => {
+		const watchCount = (item: ItemScope): number => {
 			switch (item.mediaType) {
 				case "movie":
-					return watchedMovieIds.has(item.mediaId);
+					return movieWatchCounts.get(item.mediaId) ?? 0;
 				case "show":
-					return watchedShows.has(item.mediaId);
+					return showWatchCounts.get(item.mediaId) ?? 0;
 				case "season":
-					return watchedSeasons.has(`${item.mediaId}:${item.seasonNumber}`);
+					return (
+						seasonWatchCounts.get(`${item.mediaId}:${item.seasonNumber}`) ?? 0
+					);
 				case "episode":
-					return watchedEpisodeKeys.has(
-						`${item.mediaId}:${item.seasonNumber}:${item.episodeNumber}`,
+					return (
+						episodeWatchCounts.get(
+							`${item.mediaId}:${item.seasonNumber}:${item.episodeNumber}`,
+						) ?? 0
 					);
 				default:
-					return false;
+					return 0;
 			}
 		};
+		const isWatched = (item: ItemScope): boolean => watchCount(item) > 0;
 
 		const watchedCount = scopes.reduce(
 			(count, scope) => count + (isWatched(scope) ? 1 : 0),
 			0,
 		);
 
-		return { isWatched, watchedCount };
+		return { isWatched, watchCount, watchedCount };
 	}
 
 	/**

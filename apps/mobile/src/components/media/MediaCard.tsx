@@ -66,16 +66,20 @@ export type MediaCardItem = {
 export function MediaCard({
 	item,
 	actions = false,
+	watchCount,
 	onRemove,
 	isRemoving,
 }: {
 	item: MediaCardItem;
 	actions?: boolean;
+	/** Viewer-relative Watches represented by this card. */
+	watchCount?: number;
 	onRemove?: () => void;
 	/** Spins the remove button while this card's removal is in flight. */
 	isRemoving?: boolean;
 }) {
-	if (actions) return <MediaCardWithActions item={item} />;
+	if (actions)
+		return <MediaCardWithActions item={item} watchCount={watchCount} />;
 	return (
 		<MediaCardBase item={item} onRemove={onRemove} isRemoving={isRemoving} />
 	);
@@ -202,7 +206,13 @@ function MediaCardBase({
  * read-only path free of any data hooks. Episode cards (item.episode set) scope
  * every action to the single episode while keeping the show-based id.
  */
-function MediaCardWithActions({ item }: { item: MediaCardItem }) {
+function MediaCardWithActions({
+	item,
+	watchCount,
+}: {
+	item: MediaCardItem;
+	watchCount?: number;
+}) {
 	const { isAuthenticated } = useAuth();
 	const mediaId = String(item.id);
 	const ep = item.episode;
@@ -292,19 +302,36 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 			}}
 			disabled={isWatchPending}
 			accessibilityState={{ busy: isWatchPending, checked: watched }}
+			accessibilityLabel={
+				watched && watchCount
+					? `${watchCount} ${watchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+					: watched
+						? "Remove from shelf"
+						: "Add to shelf"
+			}
 			// Pending drops back to the neutral dark circle: one in-progress look
 			// whichever way the toggle is going, instead of a yellow "on shelf"
 			// badge while the removal is still in flight.
 			className={
 				watched && !isWatchPending
-					? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
+					? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${watchCount && watchCount > 1 ? "flex-row gap-1 px-2" : "w-7"}`
 					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 			}
 		>
 			{isWatchPending ? (
 				<ActivityIndicator size="small" color="#ffffff" />
 			) : watched ? (
-				<Check color="#3f2e00" size={16} strokeWidth={3} />
+				<>
+					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					{watchCount && watchCount > 1 ? (
+						<Text
+							className="font-bold text-[#3f2e00] text-xs"
+							style={{ fontVariant: ["tabular-nums"] }}
+						>
+							{watchCount}
+						</Text>
+					) : null}
+				</>
 			) : (
 				<Plus color="#ffffff" size={16} strokeWidth={2.5} />
 			)}
