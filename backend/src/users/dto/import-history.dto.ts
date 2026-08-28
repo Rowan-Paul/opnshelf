@@ -220,6 +220,14 @@ export class TraktImportIssueDto {
 
 	@ApiPropertyOptional()
 	message?: string;
+
+	@ApiProperty({ enum: ["match", "retry", "none"] })
+	recovery: "match" | "retry" | "none";
+
+	@ApiPropertyOptional({
+		description: "Identity group used for title matching",
+	})
+	matchKey?: string;
 }
 
 export class TraktUnmatchedGroupDto {

@@ -1063,6 +1063,11 @@ export type TraktImportIssueDto = {
     watchedAt?: string;
     reason?: string;
     message?: string;
+    recovery: 'match' | 'retry' | 'none';
+    /**
+     * Identity group used for title matching
+     */
+    matchKey?: string;
 };
 
 export type TraktUnmatchedGroupDto = {
@@ -3768,6 +3773,21 @@ export type UsersControllerRejectMyTraktMatchResponses = {
 };
 
 export type UsersControllerRejectMyTraktMatchResponse = UsersControllerRejectMyTraktMatchResponses[keyof UsersControllerRejectMyTraktMatchResponses];
+
+export type UsersControllerRetryMyTraktImportItemData = {
+    body?: never;
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/users/me/import/trakt/public/issues/{itemId}/retry';
+};
+
+export type UsersControllerRetryMyTraktImportItemResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerRetryMyTraktImportItemResponse = UsersControllerRetryMyTraktImportItemResponses[keyof UsersControllerRetryMyTraktImportItemResponses];
 
 export type UsersControllerImportMyBlueskyFollowsData = {
     body?: never;

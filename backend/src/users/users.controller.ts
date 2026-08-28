@@ -573,6 +573,19 @@ export class UsersController {
 		return this.usersService.rejectTraktMatch(did, matchKey);
 	}
 
+	@Post("me/import/trakt/public/issues/:itemId/retry")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Retry one recoverable Trakt import item" })
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async retryMyTraktImportItem(
+		@Param("itemId") itemId: string,
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.retryTraktImportItem(did, itemId);
+	}
+
 	@Post("me/import/bluesky-follows")
 	@UseGuards(AuthGuard)
 	@ApiOperation({

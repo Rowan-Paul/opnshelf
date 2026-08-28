@@ -13,6 +13,7 @@ import {
 	usersControllerPauseMyTraktImportMutation,
 	usersControllerRejectMyTraktMatchMutation,
 	usersControllerResumeMyTraktImportMutation,
+	usersControllerRetryMyTraktImportItemMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -304,7 +305,9 @@ function ImportResult({ job }: { job: TraktImportJobDto }) {
 					</ShelfLink>
 				</div>
 			</section>
-			{job.couldntImportCount > 0 ? <CouldntImportList /> : null}
+			{job.couldntImportCount > 0 ? (
+				<CouldntImportList onMatch={() => setMatching(true)} />
+			) : null}
 		</div>
 	);
 }
@@ -431,7 +434,7 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 								className="input pl-9"
 								value={searchText}
 								onChange={(event) => setSearchText(event.target.value)}
-								placeholder="Search TMDB"
+								placeholder="Search titles"
 							/>
 						</div>
 						<button
@@ -460,7 +463,7 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 							<Search className="mx-auto size-8 text-(--foreground-muted)" />
 							<p className="mt-3 font-semibold">No suggestion found</p>
 							<p className="mt-1 text-(--foreground-muted) text-sm">
-								You can search or conclude that TMDB has no match.
+								You can search for the title you had in mind.
 							</p>
 						</div>
 					)}
@@ -502,7 +505,7 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 						className="btn btn-ghost w-full"
 					>
 						<Search className="size-4" />
-						Search TMDB suggestions
+						Search titles
 					</button>
 					{searchMode ? (
 						<button
@@ -513,7 +516,7 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 							disabled={reject.isPending}
 							className="w-full py-2 text-(--foreground-muted) text-sm hover:text-(--foreground)"
 						>
-							No TMDB match exists
+							I can’t find a match
 						</button>
 					) : null}
 				</div>
@@ -553,7 +556,8 @@ function Candidate({ candidate }: { candidate: TraktMatchCandidateDto }) {
 	);
 }
 
-function CouldntImportList() {
+function CouldntImportList({ onMatch }: { onMatch: () => void }) {
+	const queryClient = useQueryClient();
 	const [page, setPage] = useState(1);
 	const { data } = useQuery({
 		...usersControllerGetMyTraktImportIssuesOptions({
@@ -561,6 +565,17 @@ function CouldntImportList() {
 		}),
 	});
 	const items = data?.items ?? [];
+	const retry = useMutation({
+		...usersControllerRetryMyTraktImportItemMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyCurrentTraktImportQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyTraktImportIssuesOptions().queryKey,
+			});
+		},
+	});
 	if (!data || items.length === 0) return null;
 	const lastPage = Math.max(1, Math.ceil(data.total / data.pageSize));
 	return (
@@ -583,7 +598,7 @@ function CouldntImportList() {
 								<Film className="size-4" />
 							)}
 						</div>
-						<div>
+						<div className="min-w-0 flex-1">
 							<p className="font-medium">
 								{item.title ?? "Unknown title"}
 								{item.year ? ` (${item.year})` : ""}
@@ -597,7 +612,30 @@ function CouldntImportList() {
 							<p className="mt-1 text-(--foreground-muted) text-sm">
 								{item.message ?? "No compatible TMDB item was available."}
 							</p>
+							{item.recovery === "none" ? (
+								<p className="mt-2 text-(--foreground-muted) text-sm">
+									This item can’t be repaired.
+								</p>
+							) : null}
 						</div>
+						{item.recovery === "match" ? (
+							<button
+								type="button"
+								className="btn btn-secondary shrink-0"
+								onClick={onMatch}
+							>
+								Match a title
+							</button>
+						) : item.recovery === "retry" ? (
+							<button
+								type="button"
+								className="btn btn-secondary shrink-0"
+								disabled={retry.isPending}
+								onClick={() => retry.mutate({ path: { itemId: item.id } })}
+							>
+								{retry.isPending ? "Trying again…" : "Try again"}
+							</button>
+						) : null}
 					</div>
 				))}
 			</div>
