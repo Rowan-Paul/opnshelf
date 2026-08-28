@@ -2,7 +2,42 @@ import CountrySelector from "#/components/CountrySelector";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { Switch } from "#/components/ui/switch";
 import { useAuth } from "#/lib/auth-context";
+import { type ThemeMode, useThemeMode } from "#/lib/theme";
 import { useUpdateSettings } from "./use-settings-mutations";
+
+const APPEARANCE_OPTIONS: { value: ThemeMode; label: string }[] = [
+	{ value: "auto", label: "System" },
+	{ value: "light", label: "Light" },
+	{ value: "dark", label: "Dark" },
+];
+
+/** Segmented row to pick the appearance preference, matching Mobile. */
+function AppearanceSetting() {
+	const { mode, hydrated, setMode } = useThemeMode();
+
+	return (
+		<div className="flex max-w-lg gap-2">
+			{APPEARANCE_OPTIONS.map((option) => {
+				const selected = hydrated && mode === option.value;
+				return (
+					<button
+						key={option.value}
+						type="button"
+						onClick={() => setMode(option.value)}
+						aria-pressed={selected}
+						className={`flex-1 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
+							selected
+								? "border-(--accent) bg-(--accent-subtle) font-semibold text-(--accent)"
+								: "border-(--border) font-medium hover:bg-(--background-subtle)"
+						}`}
+					>
+						{option.label}
+					</button>
+				);
+			})}
+		</div>
+	);
+}
 
 /** The compact, frequently revisited controls in Settings > Preferences. */
 export function PreferencesSections() {
@@ -11,6 +46,17 @@ export function PreferencesSections() {
 
 	return (
 		<>
+			<section
+				id="appearance"
+				className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
+			>
+				<h2 className="mb-1 font-semibold text-lg">Appearance</h2>
+				<p className="mb-6 text-(--foreground-muted) text-sm">
+					Choose how Opnshelf looks. System follows your device
+				</p>
+				<AppearanceSetting />
+			</section>
+
 			<section
 				id="time-region"
 				className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
@@ -85,12 +131,12 @@ export function PreferencesSections() {
 			</section>
 
 			<section
-				id="reading"
+				id="reviews"
 				className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
 			>
-				<h2 className="mb-1 font-semibold text-lg">Reading</h2>
+				<h2 className="mb-1 font-semibold text-lg">Reviews</h2>
 				<p className="mb-6 text-(--foreground-muted) text-sm">
-					Control how spoiler-flagged reviews appear to you
+					Control how Spoiler Shields behave on reviews
 				</p>
 
 				<div className="flex max-w-lg items-center justify-between">
