@@ -34,6 +34,9 @@ export class ShelfItemMovieDto {
 	@ApiPropertyOptional()
 	watchedDate?: string;
 
+	@ApiProperty({ description: "Number of Watches logged for this movie" })
+	watchCount: number;
+
 	@ApiProperty()
 	createdAt: string;
 }
@@ -81,6 +84,9 @@ export class ShelfItemEpisodeDto {
 	@ApiPropertyOptional()
 	watchedDate?: string;
 
+	@ApiProperty({ description: "Number of Watches logged for this episode" })
+	watchCount: number;
+
 	@ApiProperty()
 	createdAt: string;
 }
@@ -98,9 +104,10 @@ export const SHELF_ITEM_MOVIE_SCHEMA = {
 		overview: { type: "string" },
 		colors: { type: "object" },
 		watchedDate: { type: "string" },
+		watchCount: { type: "number" },
 		createdAt: { type: "string" },
 	},
-	required: ["id", "type", "movieId", "title", "createdAt"],
+	required: ["id", "type", "movieId", "title", "watchCount", "createdAt"],
 };
 
 export const SHELF_ITEM_EPISODE_SCHEMA = {
@@ -120,6 +127,7 @@ export const SHELF_ITEM_EPISODE_SCHEMA = {
 		overview: { type: "string" },
 		colors: { type: "object" },
 		watchedDate: { type: "string" },
+		watchCount: { type: "number" },
 		createdAt: { type: "string" },
 	},
 	required: [
@@ -129,6 +137,7 @@ export const SHELF_ITEM_EPISODE_SCHEMA = {
 		"showTitle",
 		"seasonNumber",
 		"episodeNumber",
+		"watchCount",
 		"createdAt",
 	],
 };

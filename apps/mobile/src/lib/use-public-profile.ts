@@ -1,7 +1,6 @@
 import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
-	moviesControllerGetUserMoviesPaginatedOptions,
 	notesControllerGetUserNotes,
 	notesControllerGetUserNotesInfiniteQueryKey,
 	notesControllerGetUserNotesOptions,
@@ -37,17 +36,6 @@ export function useRelationship(targetDid: string, enabled: boolean) {
 	return useQuery({
 		...socialControllerGetRelationshipOptions({ path: { targetDid } }),
 		enabled: enabled && !!targetDid,
-	});
-}
-
-/** Recent watched movies (Overview row). */
-export function useProfileRecentMovies(userDid: string, limit = 10) {
-	return useQuery({
-		...moviesControllerGetUserMoviesPaginatedOptions({
-			path: { userDid },
-			query: { limit },
-		}),
-		enabled: !!userDid,
 	});
 }
 

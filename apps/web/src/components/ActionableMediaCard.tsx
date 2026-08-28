@@ -132,6 +132,7 @@ export default function ActionableMediaCard({
 		: isEpisode
 			? episodeWatchHistory.length
 			: watchHistory?.length || 0;
+	const resolvedWatchCount = watchCount ?? confirmEntryCount;
 
 	const handleMarkWatched = () => {
 		if (isMovie) {
@@ -204,7 +205,7 @@ export default function ActionableMediaCard({
 				fill={fill}
 				layout={layout}
 				isWatched={watched}
-				watchCount={watchCount}
+				watchCount={resolvedWatchCount}
 				onMarkWatched={interactive ? handleMarkWatched : undefined}
 				onUnmarkWatched={interactive ? handleUnmarkWatched : undefined}
 				onManageLists={

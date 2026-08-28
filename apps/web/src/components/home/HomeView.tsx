@@ -189,6 +189,7 @@ export function HomeView() {
 			const base = {
 				key: item.id, // unique shelf entry id for React key
 				isWatched: true,
+				watchCount: item.watchCount,
 				watchedDate: item.watchedDate,
 			};
 			if (item.type === "movie") {
@@ -417,6 +418,7 @@ export function HomeView() {
 										type={item.type}
 										episodeInfo={item.episodeInfo}
 										isWatched={item.isWatched}
+										watchCount={item.watchCount}
 										watchedDate={
 											item.watchedDate
 												? formatWatchedDate(

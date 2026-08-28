@@ -9,6 +9,7 @@ import {
 	buildShowUrl,
 } from "#/lib/url-utils";
 import StarRating, { ratingToStars } from "./StarRating";
+import { WatchCountBadge } from "./WatchCountBadge";
 
 export interface MediaCardProps {
 	id: string | number;
@@ -205,7 +206,7 @@ export default function MediaCard({
 					)}
 
 					{/* Actions — top-right corner */}
-					{(onMarkWatched || onUnmarkWatched || onManageLists) && (
+					{(isWatched || onMarkWatched || onUnmarkWatched || onManageLists) && (
 						<div className="absolute top-2 right-2 flex flex-col gap-2 sm:gap-1.5">
 							<div className="flex items-center gap-2 sm:gap-1.5">
 								{(onMarkWatched || onUnmarkWatched) && (
@@ -269,9 +270,10 @@ export default function MediaCard({
 							</div>
 							{/* Static watched indicator (no interactive callback) */}
 							{isWatched && !onMarkWatched && !onUnmarkWatched && (
-								<div className="flex h-8 w-8 items-center justify-center self-end rounded-full bg-(--accent) text-[#3f2e00] sm:h-6 sm:w-6">
-									<Check className="size-4 sm:size-3.5" />
-								</div>
+								<WatchCountBadge
+									watchCount={watchCount}
+									className={`h-8 self-end sm:h-6 ${watchCount && watchCount > 1 ? "" : "w-8 sm:w-6"}`}
+								/>
 							)}
 						</div>
 					)}

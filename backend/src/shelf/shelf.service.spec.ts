@@ -73,6 +73,7 @@ describe("ShelfService", () => {
 				type: "movie",
 				watchedDate: new Date("2024-01-10T00:00:00.000Z"),
 				createdAt: new Date("2024-01-10T00:00:00.000Z"),
+				watchCount: 3n,
 				movieId: "movie-1",
 				showId: null,
 				title: "Movie One",
@@ -91,6 +92,7 @@ describe("ShelfService", () => {
 				type: "episode",
 				watchedDate: null,
 				createdAt: new Date("2024-01-09T00:00:00.000Z"),
+				watchCount: 2n,
 				movieId: null,
 				showId: "show-1",
 				title: "Show One",
@@ -130,6 +132,7 @@ describe("ShelfService", () => {
 			data: {
 				movieId: "movie-1",
 				title: "Movie One",
+				watchCount: 3,
 			},
 		});
 		expect(result.items[1]).toMatchObject({
@@ -139,6 +142,7 @@ describe("ShelfService", () => {
 				showId: "show-1",
 				seasonNumber: 2,
 				episodeNumber: 4,
+				watchCount: 2,
 			},
 		});
 	});

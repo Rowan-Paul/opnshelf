@@ -33,6 +33,23 @@ describe("MediaCard poster metadata", () => {
 		).toContain("3");
 	});
 
+	it("shows the Watch count on a read-only watched poster", () => {
+		render(
+			<MediaCard
+				id="1"
+				title="Test Movie"
+				posterUrl="/poster.jpg"
+				type="movie"
+				isWatched
+				watchCount={3}
+			/>,
+		);
+
+		expect(screen.getByLabelText("3 watches logged").textContent).toContain(
+			"3",
+		);
+	});
+
 	it.each([
 		{ label: "movie title", episodeInfo: undefined, heading: "Test Movie" },
 		{

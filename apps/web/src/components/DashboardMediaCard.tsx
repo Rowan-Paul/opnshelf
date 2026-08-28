@@ -25,6 +25,7 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 		episodeNumber,
 		showId,
 		isWatched,
+		watchCount,
 		title,
 		...rest
 	} = props;
@@ -83,6 +84,9 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 	const confirmEntryCount = isMovie
 		? movieWatchHistory?.length || 0
 		: episodeWatchHistory.length;
+	// Rows that already know the count (Shelf) pass it; the rest fall back to the
+	// viewer's own history so a card watched in-session badges its count too.
+	const resolvedWatchCount = watchCount ?? confirmEntryCount;
 
 	const confirmTitle = isMovie
 		? title || ""
@@ -130,6 +134,7 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
 				isWatched={isWatched}
+				watchCount={resolvedWatchCount}
 				onMarkWatched={handleMarkWatched}
 				onUnmarkWatched={handleUnmarkWatched}
 				onManageLists={() => setListDialogOpen(true)}

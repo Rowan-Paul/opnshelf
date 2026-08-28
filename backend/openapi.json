@@ -9723,6 +9723,9 @@
                     "watchedDate": {
                       "type": "string"
                     },
+                    "watchCount": {
+                      "type": "number"
+                    },
                     "createdAt": {
                       "type": "string"
                     }
@@ -9732,6 +9735,7 @@
                     "type",
                     "movieId",
                     "title",
+                    "watchCount",
                     "createdAt"
                   ]
                 },
@@ -9783,6 +9787,9 @@
                     "watchedDate": {
                       "type": "string"
                     },
+                    "watchCount": {
+                      "type": "number"
+                    },
                     "createdAt": {
                       "type": "string"
                     }
@@ -9794,6 +9801,7 @@
                     "showTitle",
                     "seasonNumber",
                     "episodeNumber",
+                    "watchCount",
                     "createdAt"
                   ]
                 }

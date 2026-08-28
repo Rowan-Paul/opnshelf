@@ -177,7 +177,11 @@ export default function ProfileTab() {
 										<View className="flex-row gap-3">
 											{shelfItems.map((item) => (
 												<View key={item.id} style={{ width: POSTER_W }}>
-													<MediaCard item={shelfItemToCardItem(item)} actions />
+													<MediaCard
+														item={shelfItemToCardItem(item)}
+														actions
+														watchCount={item.watchCount}
+													/>
 												</View>
 											))}
 										</View>
