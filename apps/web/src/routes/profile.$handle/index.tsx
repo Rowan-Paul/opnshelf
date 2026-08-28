@@ -1,8 +1,7 @@
 import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
-	moviesControllerGetUserMoviesPaginatedOptions,
-	showsControllerGetUserEpisodesPaginatedOptions,
+	shelfControllerGetUserShelfOptions,
 	slugifyName,
 	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
@@ -58,26 +57,32 @@ function ProfileOverviewPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	// Fetch recent movies
+	// Both preview rows read the shelf endpoint rather than the dedicated
+	// recent-movies/episodes ones: it's the source that carries the profile
+	// owner's Watch counts (and episode titles), so these posters badge the same
+	// way as the Shelf page and the Mobile Overview tab.
 	const { data: moviesData, isLoading: moviesLoading } = useQuery({
-		...moviesControllerGetUserMoviesPaginatedOptions({
+		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
-			query: { limit: 8 },
+			query: { page: 1, pageSize: 8, type: "movie", sortOrder: "desc" },
 		}),
 		enabled: !!userDid,
 	});
 
-	// Fetch recent episodes
 	const { data: episodesData, isLoading: episodesLoading } = useQuery({
-		...showsControllerGetUserEpisodesPaginatedOptions({
+		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
-			query: { limit: 8 },
+			query: { page: 1, pageSize: 8, type: "episode", sortOrder: "desc" },
 		}),
 		enabled: !!userDid,
 	});
 
-	const movies = moviesData?.items ?? [];
-	const episodes = episodesData?.items ?? [];
+	const movies = (moviesData?.items ?? []).filter(
+		(item) => item.type === "movie",
+	);
+	const episodes = (episodesData?.items ?? []).filter(
+		(item) => item.type === "episode",
+	);
 
 	// Fetch public lists
 	const { data: listsData } = useQuery({
@@ -137,13 +142,18 @@ function ProfileOverviewPage() {
 							{movies.map((item) => (
 								<div key={item.id} className="shrink-0">
 									<ActionableMediaCard
-										id={item.movie.movieId}
-										title={item.movie.title}
-										posterUrl={`https://image.tmdb.org/t/p/w500${item.movie.posterPath}`}
+										id={item.movieId}
+										title={item.title}
+										posterUrl={
+											item.posterPath
+												? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+												: ""
+										}
 										type="movie"
 										watchedDate={item.watchedDate}
 										interactive={isOwner}
 										isWatched={true}
+										watchCount={item.watchCount}
 									/>
 								</div>
 							))}
@@ -186,16 +196,25 @@ function ProfileOverviewPage() {
 							{episodes.map((item) => (
 								<div key={item.id} className="shrink-0">
 									<ActionableMediaCard
-										id={item.show.showId}
-										title={item.show.title}
-										posterUrl={`https://image.tmdb.org/t/p/w500${item.show.posterPath}`}
+										id={item.showId}
+										title={item.showTitle}
+										posterUrl={
+											item.posterPath
+												? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+												: ""
+										}
 										type="show"
 										seasonNumber={item.seasonNumber}
 										episodeNumber={item.episodeNumber}
-										episodeInfo={`S${item.seasonNumber}E${item.episodeNumber}`}
+										episodeInfo={
+											item.episodeTitle
+												? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeTitle}`
+												: `S${item.seasonNumber}E${item.episodeNumber}`
+										}
 										watchedDate={item.watchedDate}
 										interactive={isOwner}
 										isWatched={true}
+										watchCount={item.watchCount}
 									/>
 								</div>
 							))}
@@ -416,6 +435,7 @@ function ListPreview({
 									}
 									type={item.mediaType as "movie" | "show"}
 									interactive={isOwner}
+									watchCount={item.watchCount}
 								/>
 							</div>
 						);

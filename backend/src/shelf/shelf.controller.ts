@@ -46,6 +46,7 @@ export class ShelfController {
 					overview?: string;
 					colors?: unknown;
 					watchedDate: Date | null;
+					watchCount: number;
 					createdAt: Date;
 				};
 				return {
@@ -66,6 +67,7 @@ export class ShelfController {
 						  }
 						| undefined,
 					watchedDate: movieData.watchedDate?.toISOString(),
+					watchCount: movieData.watchCount,
 					createdAt: movieData.createdAt.toISOString(),
 				};
 			}
@@ -83,6 +85,7 @@ export class ShelfController {
 				overview?: string;
 				colors?: unknown;
 				watchedDate: Date | null;
+				watchCount: number;
 				createdAt: Date;
 			};
 			return {
@@ -107,6 +110,7 @@ export class ShelfController {
 					  }
 					| undefined,
 				watchedDate: episodeData.watchedDate?.toISOString(),
+				watchCount: episodeData.watchCount,
 				createdAt: episodeData.createdAt.toISOString(),
 			};
 		});

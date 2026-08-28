@@ -22,6 +22,7 @@ interface MovieData {
 	overview?: string;
 	colors?: unknown;
 	watchedDate: Date | null;
+	watchCount: number;
 	createdAt: Date;
 }
 
@@ -40,6 +41,7 @@ interface EpisodeData {
 	overview?: string;
 	colors?: unknown;
 	watchedDate: Date | null;
+	watchCount: number;
 	createdAt: Date;
 }
 
@@ -48,6 +50,7 @@ interface RawShelfRow {
 	type: "movie" | "episode";
 	watchedDate: Date | null;
 	createdAt: Date;
+	watchCount: bigint;
 	movieId: string | null;
 	showId: string | null;
 	title: string;
@@ -172,6 +175,7 @@ export class ShelfService {
 				'movie' AS "type",
 				tm."watchedDate" AS "watchedDate",
 				tm."createdAt" AS "createdAt",
+				COUNT(*) OVER (PARTITION BY tm."movieId") AS "watchCount",
 				tm."watchedDate" IS NULL AS "isUndated",
 				tm."watchedDate" AS "sortDate",
 				tm."movieId" AS "movieId",
@@ -200,6 +204,9 @@ export class ShelfService {
 				'episode' AS "type",
 				te."watchedDate" AS "watchedDate",
 				te."createdAt" AS "createdAt",
+				COUNT(*) OVER (
+					PARTITION BY te."showId", te."seasonNumber", te."episodeNumber"
+				) AS "watchCount",
 				te."watchedDate" IS NULL AS "isUndated",
 				te."watchedDate" AS "sortDate",
 				NULL::text AS "movieId",
@@ -247,6 +254,7 @@ export class ShelfService {
 						shelf."type",
 						shelf."watchedDate",
 						shelf."createdAt",
+						shelf."watchCount",
 						shelf."movieId",
 						shelf."showId",
 						shelf."title",
@@ -292,6 +300,7 @@ export class ShelfService {
 							overview: row.overview ?? undefined,
 							colors,
 							watchedDate: row.watchedDate,
+							watchCount: Number(row.watchCount),
 							createdAt: row.createdAt,
 						},
 					};
@@ -324,6 +333,7 @@ export class ShelfService {
 							overview: row.overview ?? undefined,
 							colors,
 							watchedDate: row.watchedDate,
+							watchCount: Number(row.watchCount),
 							createdAt: row.createdAt,
 						},
 					};

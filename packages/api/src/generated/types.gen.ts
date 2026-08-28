@@ -1806,6 +1806,7 @@ export type ShelfResponseDto = {
             [key: string]: unknown;
         };
         watchedDate?: string;
+        watchCount: number;
         createdAt: string;
     } | {
         id: string;
@@ -1824,6 +1825,7 @@ export type ShelfResponseDto = {
             [key: string]: unknown;
         };
         watchedDate?: string;
+        watchCount: number;
         createdAt: string;
     }>;
     /**

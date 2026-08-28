@@ -1,5 +1,6 @@
 import { Plus, X } from "lucide-react-native";
 import { Modal, Pressable, ScrollView, View } from "react-native";
+import { WatchCountBadge } from "@/components/media/WatchCountBadge";
 import { Text } from "@/components/ui/text";
 import { formatWatchDateTime } from "@/lib/watch-date";
 
@@ -11,8 +12,8 @@ export interface WatchHistoryEntry {
 /**
  * Bottom sheet listing every logged watch for a movie or episode, each with a
  * delete control, plus an "Add a watch" action. Mirrors the web "Your Activity"
- * card — lets users manage individual plays (re-watches) rather than the binary
- * on/off-shelf toggle. The parent owns the data + mutations; adding a dated
+ * card — lets users manage individual Watches (rewatches) rather than the
+ * binary on/off-shelf toggle. The parent owns the data + mutations; adding a dated
  * watch defers to the parent's date picker via `onAddWatch`.
  */
 export function WatchHistorySheet({
@@ -42,7 +43,7 @@ export function WatchHistorySheet({
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
-					<View className="flex-row items-center justify-between">
+					<View className="flex-row items-center justify-between gap-2">
 						<View className="min-w-0 flex-1">
 							<Text className="font-bold font-display text-foreground text-lg">
 								Watch history
@@ -56,6 +57,14 @@ export function WatchHistorySheet({
 								</Text>
 							) : null}
 						</View>
+						{/* Same pill the posters use, so the count reads the same whether
+						    you got here from a card or from the detail screen. */}
+						{entries.length > 0 ? (
+							<WatchCountBadge
+								watchCount={entries.length}
+								className={`h-7 ${entries.length > 1 ? "" : "w-7"}`}
+							/>
+						) : null}
 						<Pressable hitSlop={8} onPress={onDismiss}>
 							<X color="#94a3b8" size={22} />
 						</Pressable>

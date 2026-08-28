@@ -8,6 +8,7 @@ import { RatingSheet } from "@/components/detail/RatingSheet";
 import { AddToListSheet } from "@/components/lists/AddToListSheet";
 import { MediaQuickActionsSheet } from "@/components/media/MediaQuickActionsSheet";
 import { PosterImage } from "@/components/media/PosterImage";
+import { WatchCountBadge } from "@/components/media/WatchCountBadge";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { movieHref, showHref } from "@/lib/media-href";
@@ -67,6 +68,7 @@ export function MediaCard({
 	item,
 	actions = false,
 	watchCount,
+	isWatched,
 	onRemove,
 	isRemoving,
 }: {
@@ -74,6 +76,8 @@ export function MediaCard({
 	actions?: boolean;
 	/** Viewer-relative Watches represented by this card. */
 	watchCount?: number;
+	/** Static watched state for read-only poster collections such as Shelf. */
+	isWatched?: boolean;
 	onRemove?: () => void;
 	/** Spins the remove button while this card's removal is in flight. */
 	isRemoving?: boolean;
@@ -81,7 +85,19 @@ export function MediaCard({
 	if (actions)
 		return <MediaCardWithActions item={item} watchCount={watchCount} />;
 	return (
-		<MediaCardBase item={item} onRemove={onRemove} isRemoving={isRemoving} />
+		<MediaCardBase
+			item={item}
+			overlay={
+				isWatched ? (
+					<WatchCountBadge
+						watchCount={watchCount}
+						className={`absolute top-1.5 right-1.5 h-7 ${watchCount && watchCount > 1 ? "" : "w-7"}`}
+					/>
+				) : undefined
+			}
+			onRemove={onRemove}
+			isRemoving={isRemoving}
+		/>
 	);
 }
 
@@ -269,6 +285,17 @@ function MediaCardWithActions({
 		: ep
 			? !!watchStatus.isEpisodeWatched?.(ep.seasonNumber, ep.episodeNumber)
 			: !!watchStatus.isTracking;
+	const resolvedWatchCount =
+		watchCount ??
+		(isMovie
+			? watchStatus.totalMovieWatches
+			: ep
+				? (watchStatus.showWatchHistory?.filter(
+						(entry) =>
+							entry.seasonNumber === ep.seasonNumber &&
+							entry.episodeNumber === ep.episodeNumber,
+					).length ?? 0)
+				: (watchStatus.showWatchHistory?.length ?? 0));
 	const isWatchPending = isMovie
 		? watchActions.isMarkMoviePending || watchActions.isUnmarkMoviePending
 		: ep
@@ -303,8 +330,8 @@ function MediaCardWithActions({
 			disabled={isWatchPending}
 			accessibilityState={{ busy: isWatchPending, checked: watched }}
 			accessibilityLabel={
-				watched && watchCount
-					? `${watchCount} ${watchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+				watched && resolvedWatchCount
+					? `${resolvedWatchCount} ${resolvedWatchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
 					: watched
 						? "Remove from shelf"
 						: "Add to shelf"
@@ -314,7 +341,7 @@ function MediaCardWithActions({
 			// badge while the removal is still in flight.
 			className={
 				watched && !isWatchPending
-					? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${watchCount && watchCount > 1 ? "flex-row gap-1 px-2" : "w-7"}`
+					? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${resolvedWatchCount > 1 ? "flex-row gap-1 px-2" : "w-7"}`
 					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 			}
 		>
@@ -323,12 +350,12 @@ function MediaCardWithActions({
 			) : watched ? (
 				<>
 					<Check color="#3f2e00" size={16} strokeWidth={3} />
-					{watchCount && watchCount > 1 ? (
+					{resolvedWatchCount > 1 ? (
 						<Text
 							className="font-bold text-[#3f2e00] text-xs"
 							style={{ fontVariant: ["tabular-nums"] }}
 						>
-							{watchCount}
+							{resolvedWatchCount}
 						</Text>
 					) : null}
 				</>
