@@ -31,7 +31,46 @@ export type TraktImportIssueRow = {
 	watchedAt: Date | null;
 	reason: string | null;
 	message: string | null;
+	traktMediaKey: string | null;
 };
+
+const RETRYABLE_IMPORT_REASONS = new Set([
+	"metadata_unavailable",
+	"upstream_write_failed",
+	"unknown",
+	"write_failed",
+]);
+
+export function getTraktImportRecovery(
+	item: Pick<
+		TraktImportIssueRow,
+		| "outcome"
+		| "reason"
+		| "mediaType"
+		| "watchedAt"
+		| "seasonNumber"
+		| "episodeNumber"
+		| "traktMediaKey"
+	>,
+): "match" | "retry" | "none" {
+	const canMatch =
+		!!item.traktMediaKey &&
+		!!item.watchedAt &&
+		(item.mediaType === "movie" ||
+			(item.mediaType === "episode" &&
+				item.seasonNumber !== null &&
+				item.episodeNumber !== null));
+	if (
+		canMatch &&
+		(item.outcome === "unmatched" ||
+			item.reason === "missing_tmdb_id" ||
+			item.reason === "no_tmdb_match" ||
+			item.reason === "invalid_match")
+	) {
+		return "match";
+	}
+	return RETRYABLE_IMPORT_REASONS.has(item.reason ?? "") ? "retry" : "none";
+}
 
 export function mapTraktImportJob(
 	job: NonNullable<BackgroundJobRecord>,
@@ -87,6 +126,8 @@ export function mapTraktImportIssue(
 		watchedAt: item.watchedAt?.toISOString(),
 		reason: item.reason ?? undefined,
 		message: item.message ?? undefined,
+		recovery: getTraktImportRecovery(item),
+		matchKey: item.traktMediaKey ?? undefined,
 	};
 }
 

@@ -67,6 +67,7 @@ import { TRAKT_HISTORY_PAGE_SIZE, TraktApiClient } from "./trakt-api.client";
 import {
 	type BackgroundJobRecord,
 	buildProfileFromJobData,
+	getTraktImportRecovery,
 	mapTraktImportIssue,
 	mapTraktImportJob,
 } from "./trakt-job-dto";
@@ -1323,11 +1324,14 @@ export class ImportHistoryService {
 		query?: string,
 	): Promise<TraktMatchCandidateDto[]> {
 		const job = await this.requireTraktImportJob(userDid);
-		const source = await this.prisma.traktImportItem.findFirst({
-			where: { jobId: job.id, traktMediaKey: matchKey, outcome: "unmatched" },
+		const sources = await this.prisma.traktImportItem.findMany({
+			where: { jobId: job.id, traktMediaKey: matchKey },
 			orderBy: { sourceIndex: "asc" },
 		});
-		if (!source) throw new NotFoundException("Unmatched Trakt title not found");
+		const source = sources.find(
+			(item) => getTraktImportRecovery(item) === "match",
+		);
+		if (!source) throw new NotFoundException("Matchable Trakt title not found");
 		const searchQuery = query?.trim() || source.title || "";
 		if (!searchQuery) return [];
 
@@ -1374,12 +1378,15 @@ export class ImportHistoryService {
 		tmdbId: string,
 	): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		const rows = await this.prisma.traktImportItem.findMany({
-			where: { jobId: job.id, traktMediaKey: matchKey, outcome: "unmatched" },
+		const sourceRows = await this.prisma.traktImportItem.findMany({
+			where: { jobId: job.id, traktMediaKey: matchKey },
 			orderBy: { sourceIndex: "asc" },
 		});
+		const rows = sourceRows.filter(
+			(row) => getTraktImportRecovery(row) === "match",
+		);
 		if (rows.length === 0)
-			throw new NotFoundException("Unmatched Trakt title not found");
+			throw new NotFoundException("Matchable Trakt title not found");
 		const session = await this.restoreImportSession(userDid);
 		if (!session) throw new BadRequestException("Your sign-in session expired");
 		const mediaType = rows[0].mediaType === "movie" ? "movie" : "show";
@@ -1429,8 +1436,6 @@ export class ImportHistoryService {
 					data: {
 						outcome: "imported",
 						tmdbId,
-						reason: null,
-						message: null,
 						createdWatchRkey:
 							item.type === "movie"
 								? deterministicMovieWatchRkey(tmdbId, item.watchedAt)
@@ -1448,8 +1453,6 @@ export class ImportHistoryService {
 					data: {
 						outcome: "already_on_shelf",
 						tmdbId,
-						reason: null,
-						message: null,
 					},
 				});
 			} else {
@@ -1465,19 +1468,80 @@ export class ImportHistoryService {
 		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
+	async retryTraktImportItem(
+		userDid: string,
+		itemId: string,
+	): Promise<TraktImportJobDto> {
+		const job = await this.requireTraktImportJob(userDid);
+		const row = await this.prisma.traktImportItem.findFirst({
+			where: { id: itemId, jobId: job.id },
+		});
+		if (!row || getTraktImportRecovery(row) !== "retry") {
+			throw new NotFoundException("Retryable Trakt item not found");
+		}
+		if (
+			!row.watchedAt ||
+			!row.tmdbId ||
+			!Number.isInteger(Number(row.tmdbId))
+		) {
+			throw new BadRequestException("This item cannot be retried");
+		}
+		const item: NormalizedImportItemDto | null =
+			row.mediaType === "movie"
+				? {
+						type: "movie",
+						movieTmdbId: Number(row.tmdbId),
+						watchedAt: row.watchedAt.toISOString(),
+					}
+				: row.mediaType === "episode" &&
+						row.seasonNumber !== null &&
+						row.episodeNumber !== null
+					? {
+							type: "episode",
+							showTmdbId: Number(row.tmdbId),
+							seasonNumber: row.seasonNumber,
+							episodeNumber: row.episodeNumber,
+							watchedAt: row.watchedAt.toISOString(),
+						}
+					: null;
+		if (!item) throw new BadRequestException("This item cannot be retried");
+		const session = await this.restoreImportSession(userDid);
+		if (!session) throw new BadRequestException("Your sign-in session expired");
+		const result = await this.importNormalizedItems(userDid, session, [item]);
+		if (result.imported > 0) {
+			await this.prisma.traktImportItem.update({
+				where: { id: row.id },
+				data: { outcome: "imported" },
+			});
+		} else if (result.skipped > 0) {
+			await this.prisma.traktImportItem.update({
+				where: { id: row.id },
+				data: { outcome: "already_on_shelf" },
+			});
+		} else {
+			const error = result.errors[0];
+			await this.markTraktItemCouldntImport(
+				row.id,
+				error?.reason ?? error?.code ?? "write_failed",
+				error?.message ?? "This Watch could not be added",
+			);
+		}
+		return this.getRequiredCurrentTraktImport(userDid);
+	}
+
 	async rejectTraktMatch(
 		userDid: string,
 		matchKey: string,
 	): Promise<TraktImportJobDto> {
 		const job = await this.requireTraktImportJob(userDid);
-		await this.prisma.traktImportItem.updateMany({
-			where: { jobId: job.id, traktMediaKey: matchKey, outcome: "unmatched" },
-			data: {
-				outcome: "couldnt_import",
-				reason: "no_tmdb_match",
-				message: "You confirmed that no matching TMDB item exists.",
-			},
+		const rows = await this.prisma.traktImportItem.findMany({
+			where: { jobId: job.id, traktMediaKey: matchKey },
 		});
+		if (!rows.some((row) => getTraktImportRecovery(row) === "match")) {
+			throw new NotFoundException("Matchable Trakt title not found");
+		}
+		// Deferring a match is deliberately a no-op: this is a lifetime queue and
+		// the same title must remain available when the User later finds it.
 		return this.getRequiredCurrentTraktImport(userDid);
 	}
 
@@ -1506,6 +1570,9 @@ export class ImportHistoryService {
 			(item) => item.outcome === "already_on_shelf",
 		).length;
 		const unmatchedItems = items.filter((item) => item.outcome === "unmatched");
+		const matchableItems = items.filter(
+			(item) => getTraktImportRecovery(item) === "match",
+		);
 		const couldntImportCount = items.filter(
 			(item) => item.outcome === "couldnt_import",
 		).length;
@@ -1513,7 +1580,7 @@ export class ImportHistoryService {
 			string,
 			TraktImportJobDto["unmatchedGroups"][number]
 		>();
-		for (const item of unmatchedItems) {
+		for (const item of matchableItems) {
 			if (!item.traktMediaKey) continue;
 			const existing = groups.get(item.traktMediaKey);
 			if (existing) {

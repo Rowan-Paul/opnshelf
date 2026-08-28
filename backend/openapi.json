@@ -2582,6 +2582,37 @@
         ]
       }
     },
+    "/users/me/import/trakt/public/issues/{itemId}/retry": {
+      "post": {
+        "operationId": "UsersController_retryMyTraktImportItem",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Retry one recoverable Trakt import item",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/me/import/bluesky-follows": {
       "post": {
         "operationId": "UsersController_importMyBlueskyFollows",
@@ -7964,13 +7995,26 @@
           },
           "message": {
             "type": "string"
+          },
+          "recovery": {
+            "type": "string",
+            "enum": [
+              "match",
+              "retry",
+              "none"
+            ]
+          },
+          "matchKey": {
+            "type": "string",
+            "description": "Identity group used for title matching"
           }
         },
         "required": [
           "id",
           "sourceIndex",
           "outcome",
-          "mediaType"
+          "mediaType",
+          "recovery"
         ]
       },
       "TraktUnmatchedGroupDto": {
