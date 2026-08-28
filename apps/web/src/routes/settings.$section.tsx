@@ -7,8 +7,8 @@ import { DevicesSection } from "#/components/settings/DevicesSection";
 import { HelpSection } from "#/components/settings/HelpSection";
 import { ImportHistorySection } from "#/components/settings/ImportHistorySection";
 import { PreferencesSections } from "#/components/settings/PreferencesSections";
+import { SettingsPageShell } from "#/components/settings/SettingsPageShell";
 import { useAuth } from "#/lib/auth-context";
-import { SettingsPageShell } from "./settings";
 
 const SECTION_COPY = {
 	profile: {

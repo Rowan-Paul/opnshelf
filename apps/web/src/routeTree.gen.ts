@@ -21,6 +21,7 @@ import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
@@ -107,6 +108,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const SignupGoogleRoute = SignupGoogleRouteImport.update({
   id: '/signup_/google',
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/google': typeof SignupGoogleRoute
+  '/settings/': typeof SettingsIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -300,7 +307,6 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
-  '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
@@ -309,6 +315,7 @@ export interface FileRoutesByTo {
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/google': typeof SignupGoogleRoute
+  '/settings': typeof SettingsIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -347,6 +354,7 @@ export interface FileRoutesById {
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
   '/signup_/google': typeof SignupGoogleRoute
+  '/settings/': typeof SettingsIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -389,6 +397,7 @@ export interface FileRouteTypes {
     | '/profile/$handle'
     | '/settings/$section'
     | '/signup/google'
+    | '/settings/'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -419,7 +428,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/search'
-    | '/settings'
     | '/signup'
     | '/tos'
     | '/trakt-import'
@@ -428,6 +436,7 @@ export interface FileRouteTypes {
     | '/embed/review-editor'
     | '/settings/$section'
     | '/signup/google'
+    | '/settings'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -465,6 +474,7 @@ export interface FileRouteTypes {
     | '/profile/$handle'
     | '/settings/$section'
     | '/signup_/google'
+    | '/settings/'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -597,6 +607,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/signup_/google': {
       id: '/signup_/google'
@@ -785,10 +802,12 @@ declare module '@tanstack/react-router' {
 
 interface SettingsRouteChildren {
   SettingsSectionRoute: typeof SettingsSectionRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsSectionRoute: SettingsSectionRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
 }
 
 const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
