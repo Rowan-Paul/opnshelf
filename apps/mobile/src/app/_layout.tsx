@@ -96,7 +96,6 @@ export default function RootLayout() {
 				<Stack.Screen name="verify-email" />
 				<Stack.Screen name="onboarding" />
 				<Stack.Screen name="settings" options={{ headerShown: true }} />
-				<Stack.Screen name="settings/profile" options={{ headerShown: true }} />
 				<Stack.Screen
 					name="settings/preferences"
 					options={{ headerShown: true }}
