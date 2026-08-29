@@ -918,7 +918,7 @@ function getTraktSettingsLabel(job: TraktImportJobDto | null | undefined) {
 
 const SETTINGS_AREAS: {
 	href:
-		| "/settings/profile"
+		| "/edit-profile"
 		| "/settings/preferences"
 		| "/settings/connections"
 		| "/settings/account"
@@ -928,7 +928,7 @@ const SETTINGS_AREAS: {
 	Icon: typeof UserPen;
 }[] = [
 	{
-		href: "/settings/profile",
+		href: "/edit-profile",
 		label: "Profile",
 		description: "Name, photo and social links",
 		Icon: UserPen,
