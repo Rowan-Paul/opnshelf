@@ -1,5 +1,5 @@
-import { SettingsCategoryScreen } from "../settings";
+import { Redirect } from "expo-router";
 
 export default function ProfileSettingsScreen() {
-	return <SettingsCategoryScreen section="profile" />;
+	return <Redirect href="/edit-profile" />;
 }
