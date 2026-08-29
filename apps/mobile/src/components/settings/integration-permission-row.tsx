@@ -19,6 +19,19 @@ export function IntegrationPermissionRow({
 }) {
 	const { showDialog } = useDialog();
 	const action: PermissionAction = connected ? "disconnect" : "connect";
+	// Fading a filled primary button collapses the contrast between the amber
+	// fill and its dark label, so the disabled state gets its own muted fill
+	// instead of a lowered opacity.
+	const buttonClassName = disabled
+		? "rounded-lg border border-border bg-background-subtle px-3 py-2"
+		: connected
+			? "rounded-lg border border-border px-3 py-2"
+			: "rounded-lg bg-primary px-3 py-2";
+	const labelClassName = disabled
+		? "font-semibold text-muted-foreground text-sm"
+		: connected
+			? "font-semibold text-foreground text-sm"
+			: "font-semibold text-primary-foreground text-sm";
 
 	const requestChange = () => {
 		showDialog({
@@ -39,25 +52,25 @@ export function IntegrationPermissionRow({
 	return (
 		<View className="flex-row items-center gap-3 rounded-lg border border-border p-3">
 			<View className="min-w-0 flex-1 gap-1">
-				<View className="flex-row flex-wrap items-center gap-2">
-					<Text className="font-medium text-foreground text-sm">{name}</Text>
-					<View
+				{/* The badge sits on its own line so rows stay aligned no matter how
+				    long the integration name is. */}
+				<Text className="font-medium text-foreground text-sm">{name}</Text>
+				<View
+					className={
+						connected
+							? "self-start rounded-full bg-success/10 px-2 py-0.5"
+							: "self-start rounded-full bg-background-subtle px-2 py-0.5"
+					}
+				>
+					<Text
 						className={
 							connected
-								? "rounded-full bg-success/10 px-2 py-0.5"
-								: "rounded-full bg-background-subtle px-2 py-0.5"
+								? "font-medium text-success text-xs"
+								: "font-medium text-muted-foreground text-xs"
 						}
 					>
-						<Text
-							className={
-								connected
-									? "font-medium text-success text-xs"
-									: "font-medium text-muted-foreground text-xs"
-							}
-						>
-							{connected ? "Connected" : "Not connected"}
-						</Text>
-					</View>
+						{connected ? "Connected" : "Not connected"}
+					</Text>
 				</View>
 				<Text className="text-muted-foreground text-sm leading-5">
 					{description}
@@ -68,20 +81,9 @@ export function IntegrationPermissionRow({
 				accessibilityLabel={`${connected ? "Disconnect" : "Connect"} ${name}`}
 				disabled={disabled}
 				onPress={requestChange}
-				className={
-					connected
-						? "rounded-lg border border-border px-3 py-2"
-						: "rounded-lg bg-primary px-3 py-2"
-				}
-				style={{ opacity: disabled ? 0.5 : 1 }}
+				className={buttonClassName}
 			>
-				<Text
-					className={
-						connected
-							? "font-semibold text-foreground text-sm"
-							: "font-semibold text-primary-foreground text-sm"
-					}
-				>
+				<Text className={labelClassName}>
 					{connected ? "Disconnect" : "Connect"}
 				</Text>
 			</Pressable>
