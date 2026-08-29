@@ -513,7 +513,10 @@ export type ShowDto = {
 
 export type TrackedShowSummaryDto = {
     showId: string;
-    watchCount: number;
+    /**
+     * Episode Watches logged for this show, rewatches included. Not a count of distinct episodes, and not a Watch count for the show itself — only movies and episodes are Watched.
+     */
+    episodeWatchCount: number;
     latestWatchedDate?: string;
     show: ShowDto;
 };
@@ -529,7 +532,6 @@ export type UpNextEpisodeDto = {
 
 export type UpNextShowDto = {
     showId: string;
-    watchCount: number;
     /**
      * Total aired non-special episodes for the show
      */
@@ -1232,7 +1234,7 @@ export type MediaInListDto = {
      */
     watched: boolean;
     /**
-     * Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated)
+     * Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated). Always 0 for show and season entries: only movies and episodes are Watched, so those have no count of their own even when `watched` is true.
      */
     watchCount: number;
     createdAt: string;

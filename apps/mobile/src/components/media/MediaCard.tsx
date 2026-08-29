@@ -287,17 +287,22 @@ function MediaCardWithActions({
 		: ep
 			? !!watchStatus.isEpisodeWatched?.(ep.seasonNumber, ep.episodeNumber)
 			: !!watchStatus.isTracking;
-	const resolvedWatchCount =
-		watchCount ??
-		(isMovie
-			? watchStatus.totalMovieWatches
-			: ep
-				? (watchStatus.showWatchHistory?.filter(
-						(entry) =>
-							entry.seasonNumber === ep.seasonNumber &&
-							entry.episodeNumber === ep.episodeNumber,
-					).length ?? 0)
-				: (watchStatus.showWatchHistory?.length ?? 0));
+	// How many Watch records removal would delete. For a whole show that's every
+	// episode Watch behind the card, which is what the confirm dialog needs.
+	const removalEntryCount = isMovie
+		? watchStatus.totalMovieWatches
+		: ep
+			? (watchStatus.showWatchHistory?.filter(
+					(entry) =>
+						entry.seasonNumber === ep.seasonNumber &&
+						entry.episodeNumber === ep.episodeNumber,
+				).length ?? 0)
+			: (watchStatus.showWatchHistory?.length ?? 0);
+	// What the badge states. Only movies and episodes are Watched; a show is
+	// tracked through its episodes, so "watched N times" is not a quantity it
+	// has — `removalEntryCount` there counts episodes, a different thing.
+	const badgeWatchCount =
+		watchCount ?? (isMovie || ep ? removalEntryCount : undefined);
 	const isWatchPending = isMovie
 		? watchActions.isMarkMoviePending || watchActions.isUnmarkMoviePending
 		: ep
@@ -320,7 +325,7 @@ function MediaCardWithActions({
 				title: ep
 					? `${ep.episodeTitle ?? item.title} S${ep.seasonNumber}E${ep.episodeNumber}`
 					: item.title,
-				entryCount: resolvedWatchCount,
+				entryCount: removalEntryCount,
 				onConfirm: removeFromShelf,
 			});
 			return;
@@ -344,8 +349,8 @@ function MediaCardWithActions({
 			disabled={isWatchPending}
 			accessibilityState={{ busy: isWatchPending, checked: watched }}
 			accessibilityLabel={
-				watched && resolvedWatchCount
-					? `${resolvedWatchCount} ${resolvedWatchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+				watched && badgeWatchCount
+					? `${badgeWatchCount} ${badgeWatchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
 					: watched
 						? "Remove from shelf"
 						: "Add to shelf"
@@ -355,7 +360,7 @@ function MediaCardWithActions({
 			// badge while the removal is still in flight.
 			className={
 				watched && !isWatchPending
-					? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${resolvedWatchCount > 1 ? "flex-row gap-1 px-2" : "w-7"}`
+					? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${badgeWatchCount && badgeWatchCount > 1 ? "flex-row gap-1 px-2" : "w-7"}`
 					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 			}
 		>
@@ -364,12 +369,12 @@ function MediaCardWithActions({
 			) : watched ? (
 				<>
 					<Check color="#3f2e00" size={16} strokeWidth={3} />
-					{resolvedWatchCount > 1 ? (
+					{badgeWatchCount && badgeWatchCount > 1 ? (
 						<Text
 							className="font-bold text-[#3f2e00] text-xs"
 							style={{ fontVariant: ["tabular-nums"] }}
 						>
-							{resolvedWatchCount}
+							{badgeWatchCount}
 						</Text>
 					) : null}
 				</>

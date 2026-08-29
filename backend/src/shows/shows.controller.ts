@@ -211,7 +211,7 @@ export class ShowsController {
 		const trackedShows = await this.showsService.getUserShows(userDid);
 		return trackedShows.map((tracked) => ({
 			showId: tracked.showId,
-			watchCount: tracked.watchCount,
+			episodeWatchCount: tracked.episodeWatchCount,
 			latestWatchedDate: tracked.watchedDate?.toISOString(),
 			show: {
 				...tracked.show,

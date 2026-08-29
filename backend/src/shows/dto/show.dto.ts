@@ -103,8 +103,11 @@ export class TrackedShowSummaryDto {
 	@ApiProperty()
 	showId: string;
 
-	@ApiProperty()
-	watchCount: number;
+	@ApiProperty({
+		description:
+			"Episode Watches logged for this show, rewatches included. Not a count of distinct episodes, and not a Watch count for the show itself — only movies and episodes are Watched.",
+	})
+	episodeWatchCount: number;
 
 	@ApiPropertyOptional()
 	latestWatchedDate?: string;
@@ -208,9 +211,6 @@ export class UpNextEpisodeDto {
 export class UpNextShowDto {
 	@ApiProperty()
 	showId: string;
-
-	@ApiProperty()
-	watchCount: number;
 
 	@ApiProperty({ description: "Total aired non-special episodes for the show" })
 	totalEpisodes: number;

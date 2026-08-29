@@ -1082,10 +1082,10 @@ describe("ShowsService", () => {
 			expect(result[0]).toMatchObject({
 				id: "tracked-1",
 				showId: "123",
-				watchCount: 2,
+				episodeWatchCount: 2,
 			});
 			expect(result[0].show.colors).toEqual(colors);
-			expect(result[1]).toMatchObject({ showId: "456", watchCount: 1 });
+			expect(result[1]).toMatchObject({ showId: "456", episodeWatchCount: 1 });
 			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledTimes(
 				1,
 			);

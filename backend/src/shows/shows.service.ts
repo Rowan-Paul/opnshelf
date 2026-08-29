@@ -432,16 +432,18 @@ export class ShowsService {
 			orderBy: { watchedDate: "desc" },
 		});
 
+		// Counts TrackedEpisode rows, so rewatches count again: this is episode
+		// Watches for the show, not distinct episodes watched.
 		const showMap = new Map<
 			string,
-			(typeof trackedEpisodes)[0] & { watchCount: number }
+			(typeof trackedEpisodes)[0] & { episodeWatchCount: number }
 		>();
 		for (const tracked of trackedEpisodes) {
 			const existing = showMap.get(tracked.showId);
 			if (!existing) {
-				showMap.set(tracked.showId, { ...tracked, watchCount: 1 });
+				showMap.set(tracked.showId, { ...tracked, episodeWatchCount: 1 });
 			} else {
-				existing.watchCount += 1;
+				existing.episodeWatchCount += 1;
 			}
 		}
 
@@ -568,7 +570,6 @@ export class ShowsService {
 		// Assembly: join, filter, sort
 		const items: Array<{
 			showId: string;
-			watchCount: number;
 			totalEpisodes: number;
 			episodesWatched: number;
 			latestWatchedDate: string;
@@ -607,7 +608,6 @@ export class ShowsService {
 
 			items.push({
 				showId: anchor.showId,
-				watchCount: episodesWatched,
 				totalEpisodes,
 				episodesWatched,
 				latestWatchedDate: latestWatchedDate.toISOString(),
