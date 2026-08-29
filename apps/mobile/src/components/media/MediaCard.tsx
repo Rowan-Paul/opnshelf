@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 import { movieHref, showHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
+import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useListMembership } from "@/lib/use-lists";
 import { useNote } from "@/lib/use-note";
 import { useReview } from "@/lib/use-review";
@@ -230,6 +231,7 @@ function MediaCardWithActions({
 	watchCount?: number;
 }) {
 	const { isAuthenticated } = useAuth();
+	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const mediaId = String(item.id);
 	const ep = item.episode;
 	const isMovie = item.type === "movie" && !ep;
@@ -302,19 +304,31 @@ function MediaCardWithActions({
 			? watchActions.isMarkEpisodePending || watchActions.isUnmarkEpisodePending
 			: watchActions.isMarkShowPending || watchActions.isUnmarkShowPending;
 
+	const removeFromShelf = () => {
+		if (isMovie) watchActions.unmarkMovieWatched();
+		else if (ep)
+			watchActions.unmarkEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
+		else watchActions.unmarkShowWatched();
+	};
+
 	const toggleWatched = () => {
 		if (!isAuthenticated) return;
-		if (isMovie) {
-			if (watched) watchActions.unmarkMovieWatched();
-			else watchActions.markMovieWatched();
-		} else if (ep) {
-			if (watched)
-				watchActions.unmarkEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
-			else watchActions.markEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
-		} else {
-			if (watched) watchActions.unmarkShowWatched();
-			else watchActions.markShowWatched();
+		// Removal deletes every Watch behind this card, so a card standing for
+		// more than one asks first (same guard as the Web card).
+		if (watched) {
+			confirmRemoveWatches({
+				title: ep
+					? `${ep.episodeTitle ?? item.title} S${ep.seasonNumber}E${ep.episodeNumber}`
+					: item.title,
+				entryCount: resolvedWatchCount,
+				onConfirm: removeFromShelf,
+			});
+			return;
 		}
+		if (isMovie) watchActions.markMovieWatched();
+		else if (ep)
+			watchActions.markEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
+		else watchActions.markShowWatched();
 	};
 
 	// Movies/episodes toggle a single watched state; shows toggle "on shelf"

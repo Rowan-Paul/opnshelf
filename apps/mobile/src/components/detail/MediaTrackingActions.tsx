@@ -9,12 +9,14 @@ import {
 } from "@/components/detail/WatchHistorySheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
 
 type MediaTrackingActionsProps =
-	| { mediaType: "movie"; movieId: string }
+	/** `title` names the item in the remove-all-Watches confirmation. */
+	| { mediaType: "movie"; movieId: string; title?: string }
 	| { mediaType: "show"; showId: string; episodeCount?: number }
 	| {
 			mediaType: "season";
@@ -27,6 +29,7 @@ type MediaTrackingActionsProps =
 			showId: string;
 			seasonNumber: number;
 			episodeNumber: number;
+			title?: string;
 	  };
 
 /**
@@ -41,6 +44,7 @@ type MediaTrackingActionsProps =
  */
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const { isAuthenticated } = useAuth();
+	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const [datePickerVisible, setDatePickerVisible] = useState(false);
 	const [historyVisible, setHistoryVisible] = useState(false);
 
@@ -128,7 +132,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	const isPending = isMarkPending || isUnmarkPending;
 
-	// Movies and episodes can hold multiple plays, so they expose a manageable
+	// Movies and episodes can hold multiple Watches, so they expose a manageable
 	// watch history (list + per-entry delete); shows/seasons stay binary.
 	const canManageHistory =
 		props.mediaType === "movie" || props.mediaType === "episode";
@@ -184,10 +188,17 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 		}
 	};
 
+	// Movies and episodes are the two types that can hold several Watches, and
+	// removing takes all of them, so those two confirm first (the Web detail
+	// pages do the same). Shows and seasons are binary, so they just remove.
 	const removeFromShelf = () => {
 		switch (props.mediaType) {
 			case "movie":
-				actions.unmarkMovieWatched();
+				confirmRemoveWatches({
+					title: props.title ?? "this movie",
+					entryCount: historyEntries.length,
+					onConfirm: () => actions.unmarkMovieWatched(),
+				});
 				break;
 			case "show":
 				actions.unmarkShowWatched();
@@ -195,13 +206,17 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			case "season":
 				actions.unmarkSeasonWatched(props.seasonNumber);
 				break;
-			case "episode":
-				actions.unmarkEpisodeWatched(
-					props.seasonNumber,
-					props.episodeNumber,
-					"all",
-				);
+			case "episode": {
+				const { seasonNumber, episodeNumber, title } = props;
+				const episodeLabel = `S${seasonNumber}E${episodeNumber}`;
+				confirmRemoveWatches({
+					title: title ? `${title} ${episodeLabel}` : episodeLabel,
+					entryCount: historyEntries.length,
+					onConfirm: () =>
+						actions.unmarkEpisodeWatched(seasonNumber, episodeNumber, "all"),
+				});
 				break;
+			}
 		}
 	};
 

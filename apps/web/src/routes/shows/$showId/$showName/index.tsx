@@ -440,7 +440,7 @@ function ShowDetailPage() {
 								episodesWatched={uniqueEpisodesWatched}
 								totalEpisodes={totalEpisodes}
 								markLabel="Add show to shelf"
-								unmarkLabel="Remove all plays"
+								unmarkLabel="Remove all watches"
 								isMarkPending={isMarkShowPending}
 								isUnmarkPending={isUnmarkShowPending}
 								onMarkWatched={handleMarkShowWatched}

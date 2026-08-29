@@ -59,7 +59,7 @@ card repeats its full date and time without a timezone abbreviation.
 
 **Watch**:
 A single logged instance of a user watching a media item — a tracked record with watched status and an optional watch date. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. An undated Watch belongs on the Shelf but not in date-based Activity or statistics. Counts of dated "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
-_Avoid_: View, log entry (a watchlist add is a separate, un-watched state)
+_Avoid_: View, log entry (a watchlist add is a separate, un-watched state), play, watch entry (both were user-facing wording for a Watch; "Remove all watches?" is the copy)
 
 **Most-Watched Show**:
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.

@@ -20,7 +20,7 @@ interface ConfirmDialogProps {
 }
 
 /**
- * Generic destructive-action confirmation. For the "remove all plays" flow with
+ * Generic destructive-action confirmation. For the "remove all watches" flow with
  * its bespoke copy, see ConfirmRemoveDialog instead.
  */
 export default function ConfirmDialog({
