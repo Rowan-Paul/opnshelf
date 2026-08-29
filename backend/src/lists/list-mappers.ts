@@ -52,6 +52,11 @@ export function mapItemToDto(
 	watchCount = 0,
 ): MediaInListDto {
 	const isShowLike = item.mediaType !== "movie";
+	// Only a movie or an episode is Watched. A show or season entry aggregates
+	// its episodes' Watches, which is a different quantity, so it reports a
+	// watched state but no count for anything to state.
+	const hasOwnWatchCount =
+		item.mediaType === "movie" || item.mediaType === "episode";
 	const mediaTitle = isShowLike ? item.show?.title : item.movie?.title;
 	const mediaPosterPath = isShowLike
 		? item.show?.posterPath
@@ -79,7 +84,7 @@ export function mapItemToDto(
 		notes: item.notes ?? undefined,
 		position: item.position,
 		watched: watchCount > 0,
-		watchCount,
+		watchCount: hasOwnWatchCount ? watchCount : 0,
 		createdAt: item.createdAt.toISOString(),
 		media: {
 			mediaType: item.mediaType,

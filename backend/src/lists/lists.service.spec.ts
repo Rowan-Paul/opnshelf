@@ -897,7 +897,13 @@ describe("ListsService", () => {
 				{ movieId: "123" },
 				{ movieId: "123" },
 			]);
-			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
+			// Three episode Watches of the show entry: enough to make it watched,
+			// but never a Watch count for the show itself.
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{ showId: "456", seasonNumber: 1, episodeNumber: 1 },
+				{ showId: "456", seasonNumber: 1, episodeNumber: 1 },
+				{ showId: "456", seasonNumber: 1, episodeNumber: 2 },
+			]);
 
 			const result = await service.getList(
 				"did:plc:abc123",
@@ -905,14 +911,16 @@ describe("ListsService", () => {
 				"did:plc:abc123",
 			);
 
-			expect(result?.watchedCount).toBe(1);
+			expect(result?.watchedCount).toBe(2);
 			const byId = new Map(result?.items.map((i) => [i.id, i]));
 			expect(byId.get("item-movie")).toMatchObject({
 				watched: true,
 				watchCount: 2,
 			});
+			// Watched for the filter, but no count: 3 would be episode Watches,
+			// which is a different quantity from "watched 3 times".
 			expect(byId.get("item-show")).toMatchObject({
-				watched: false,
+				watched: true,
 				watchCount: 0,
 			});
 			expect(mockPrismaService.trackedMovie.findMany).toHaveBeenCalledWith({

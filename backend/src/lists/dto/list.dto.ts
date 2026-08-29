@@ -202,7 +202,7 @@ export class MediaInListDto {
 
 	@ApiProperty({
 		description:
-			"Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated)",
+			"Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated). Always 0 for show and season entries: only movies and episodes are Watched, so those have no count of their own even when `watched` is true.",
 	})
 	watchCount: number;
 

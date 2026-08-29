@@ -127,12 +127,19 @@ export default function ActionableMediaCard({
 					? (isEpisodeWatched?.(seasonNumber, episodeNumber) ?? false)
 					: (isTracking ?? false);
 
+	// How many Watch records unmarking would delete. For a whole show that's
+	// every episode Watch behind the card, which is what the confirm dialog
+	// needs to say.
 	const confirmEntryCount = isMovie
 		? movieWatchHistory?.length || 0
 		: isEpisode
 			? episodeWatchHistory.length
 			: watchHistory?.length || 0;
-	const resolvedWatchCount = watchCount ?? confirmEntryCount;
+	// What the badge states. Only movies and episodes are Watched; a show is
+	// tracked through its episodes, so "watched N times" is not a quantity it
+	// has — `confirmEntryCount` there counts episodes, a different thing.
+	const resolvedWatchCount =
+		watchCount ?? (isMovie || isEpisode ? confirmEntryCount : undefined);
 
 	const handleMarkWatched = () => {
 		if (isMovie) {

@@ -6880,8 +6880,9 @@
           "showId": {
             "type": "string"
           },
-          "watchCount": {
-            "type": "number"
+          "episodeWatchCount": {
+            "type": "number",
+            "description": "Episode Watches logged for this show, rewatches included. Not a count of distinct episodes, and not a Watch count for the show itself — only movies and episodes are Watched."
           },
           "latestWatchedDate": {
             "type": "string"
@@ -6892,7 +6893,7 @@
         },
         "required": [
           "showId",
-          "watchCount",
+          "episodeWatchCount",
           "show"
         ]
       },
@@ -6930,9 +6931,6 @@
           "showId": {
             "type": "string"
           },
-          "watchCount": {
-            "type": "number"
-          },
           "totalEpisodes": {
             "type": "number",
             "description": "Total aired non-special episodes for the show"
@@ -6956,7 +6954,6 @@
         },
         "required": [
           "showId",
-          "watchCount",
           "totalEpisodes",
           "episodesWatched",
           "latestWatchedDate",
@@ -8480,7 +8477,7 @@
           },
           "watchCount": {
             "type": "number",
-            "description": "Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated)"
+            "description": "Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated). Always 0 for show and season entries: only movies and episodes are Watched, so those have no count of their own even when `watched` is true."
           },
           "createdAt": {
             "type": "string"

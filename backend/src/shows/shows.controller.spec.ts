@@ -117,7 +117,7 @@ describe("ShowsController", () => {
 			mockShowsService.getUserShows.mockResolvedValue([
 				{
 					showId: "123",
-					watchCount: 2,
+					episodeWatchCount: 2,
 					watchedDate: new Date("2024-01-15T12:00:00.000Z"),
 					show: { showId: "123", title: "Test Show", colors },
 				},
@@ -128,7 +128,7 @@ describe("ShowsController", () => {
 			expect(result).toEqual([
 				{
 					showId: "123",
-					watchCount: 2,
+					episodeWatchCount: 2,
 					latestWatchedDate: "2024-01-15T12:00:00.000Z",
 					show: { showId: "123", title: "Test Show", colors },
 				},
