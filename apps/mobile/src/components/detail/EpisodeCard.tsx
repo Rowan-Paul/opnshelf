@@ -6,6 +6,7 @@ import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { formatRuntime, stillUrl } from "@/lib/tmdb";
+import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 
@@ -127,6 +128,7 @@ function EpisodeCardWithActions({
 	upNext?: boolean;
 }) {
 	const { isAuthenticated } = useAuth();
+	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const showId = String(episode.showId);
 
 	const status = useWatchStatus({ mediaType: "show", showId });
@@ -138,13 +140,27 @@ function EpisodeCardWithActions({
 	const pending =
 		actions.isMarkEpisodePending || actions.isUnmarkEpisodePending;
 
+	// Removal always takes every Watch of this episode, so a rewatch confirms
+	// first (same guard as the Web episode row).
+	const watchEntryCount =
+		status.showWatchHistory?.filter(
+			(entry) =>
+				entry.seasonNumber === episode.seasonNumber &&
+				entry.episodeNumber === episode.episodeNumber,
+		).length ?? 0;
+
 	const toggleShelf = () => {
 		if (onShelf) {
-			actions.unmarkEpisodeWatched(
-				episode.seasonNumber,
-				episode.episodeNumber,
-				"all",
-			);
+			confirmRemoveWatches({
+				title: `${episode.name} S${episode.seasonNumber}E${episode.episodeNumber}`,
+				entryCount: watchEntryCount,
+				onConfirm: () =>
+					actions.unmarkEpisodeWatched(
+						episode.seasonNumber,
+						episode.episodeNumber,
+						"all",
+					),
+			});
 		} else {
 			actions.markEpisodeWatched(episode.seasonNumber, episode.episodeNumber);
 		}

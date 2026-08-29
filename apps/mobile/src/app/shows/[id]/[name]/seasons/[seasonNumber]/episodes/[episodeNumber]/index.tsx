@@ -198,6 +198,7 @@ export default function EpisodeDetailScreen() {
 							showId={id}
 							seasonNumber={seasonNum}
 							episodeNumber={episodeNum}
+							title={data.name}
 						/>
 						<WatchlistFavoritesButtons
 							mediaType="show"

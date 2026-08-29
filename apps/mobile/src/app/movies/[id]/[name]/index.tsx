@@ -89,7 +89,11 @@ export default function MovieDetailScreen() {
 					{/* Shelf, watchlist and secondary tiles form one action cluster,
 					    kept tight (gap-2) like the show/season/episode screens. */}
 					<View className="gap-2">
-						<MediaTrackingActions mediaType="movie" movieId={id} />
+						<MediaTrackingActions
+							mediaType="movie"
+							movieId={id}
+							title={data.title}
+						/>
 						<WatchlistFavoritesButtons mediaType="movie" mediaId={id} />
 						{/* Secondary actions as one row of compact tiles. */}
 						<View className="flex-row gap-2 px-4">

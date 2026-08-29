@@ -30,10 +30,10 @@ export default function ConfirmRemoveDialog({
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<AlertTriangle className="size-5 text-amber-500" />
-						Remove all plays?
+						Remove all watches?
 					</DialogTitle>
 					<DialogDescription>
-						This will remove all <strong>{entryCount}</strong> watch entries for{" "}
+						This will remove all <strong>{entryCount}</strong> watches of{" "}
 						<strong>{title}</strong>. This action cannot be undone.
 					</DialogDescription>
 				</DialogHeader>
