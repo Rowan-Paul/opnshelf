@@ -17,6 +17,7 @@ interface ConfirmDialogProps {
 	pendingLabel?: string;
 	onConfirm: () => void;
 	isPending?: boolean;
+	variant?: "default" | "destructive";
 }
 
 /**
@@ -32,6 +33,7 @@ export default function ConfirmDialog({
 	pendingLabel,
 	onConfirm,
 	isPending = false,
+	variant = "destructive",
 }: ConfirmDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +57,11 @@ export default function ConfirmDialog({
 						type="button"
 						onClick={onConfirm}
 						disabled={isPending}
-						className="btn bg-red-600 text-white hover:bg-red-700"
+						className={
+							variant === "destructive"
+								? "btn bg-red-600 text-white hover:bg-red-700"
+								: "btn btn-primary"
+						}
 					>
 						{isPending ? (
 							<>

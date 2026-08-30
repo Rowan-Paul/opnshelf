@@ -9,6 +9,7 @@ import {
 	FORMAT_LABELS,
 	LIBRARY_FORMATS,
 	type LibraryFormat,
+	ShowProgressScope,
 } from "#/lib/hooks";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
 
@@ -43,19 +44,25 @@ const LIBRARY_GRID =
 
 function LibraryGrid({ items }: { items: LibraryItemDto[] }) {
 	return (
-		<div className={`grid ${LIBRARY_GRID}`}>
-			{items.map((item) => (
-				<ActionableMediaCard
-					key={item.id}
-					fill
-					id={String(item.mediaId)}
-					title={getTitle(item.media)}
-					posterUrl={getPosterUrl(item.media)}
-					backdropUrl={getBackdropUrl(item.media)}
-					type={item.mediaType === "movie" ? "movie" : "show"}
-				/>
-			))}
-		</div>
+		<ShowProgressScope
+			showIds={items
+				.filter((item) => item.mediaType === "show")
+				.map((item) => String(item.mediaId))}
+		>
+			<div className={`grid ${LIBRARY_GRID}`}>
+				{items.map((item) => (
+					<ActionableMediaCard
+						key={item.id}
+						fill
+						id={String(item.mediaId)}
+						title={getTitle(item.media)}
+						posterUrl={getPosterUrl(item.media)}
+						backdropUrl={getBackdropUrl(item.media)}
+						type={item.mediaType === "movie" ? "movie" : "show"}
+					/>
+				))}
+			</div>
+		</ShowProgressScope>
 	);
 }
 

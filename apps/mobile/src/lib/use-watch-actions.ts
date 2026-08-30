@@ -112,6 +112,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	// all in sync instead of each mutation listing its own subset.
 	const invalidateActivity = () => {
 		invalidateWatchActivityQueries(queryClient);
+		queryClient.invalidateQueries({ queryKey: ["shows", "progress"] });
 		// Refresh the Home-Screen Widget immediately rather than leaving it on
 		// the 30-minute periodic tick. Fires on settle (success and error), so
 		// the widget always converges to server truth after any watch mutation.

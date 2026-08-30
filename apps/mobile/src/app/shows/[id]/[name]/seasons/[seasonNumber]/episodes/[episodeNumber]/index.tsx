@@ -38,6 +38,7 @@ import {
 	yearFromDate,
 } from "@/lib/tmdb";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { useWatchStatus } from "@/lib/use-watch-status";
 import { webMediaUrl } from "@/lib/web-url";
 
@@ -79,15 +80,11 @@ export default function EpisodeDetailScreen() {
 	const currentSeasonCount =
 		seasons.find((s) => s.season_number === seasonNum)?.episode_count ?? 0;
 
-	// Season progress: distinct episodes watched within this season, out of
-	// the season's episode count. Reuses the same show watch history that
-	// backs the season screen's "Your Progress" card.
 	const watch = useWatchStatus({ mediaType: "show", showId: id });
-	const seasonEpisodesWatched = new Set(
-		(watch.showWatchHistory ?? [])
-			.filter((e) => e.seasonNumber === seasonNum)
-			.map((e) => e.episodeNumber),
-	).size;
+	const progressQuery = useShowProgress([id]);
+	const seasonProgress = findShowProgress(progressQuery.data, id)?.seasons.find(
+		(season) => season.seasonNumber === seasonNum,
+	);
 
 	let prevEpisode: { season: number; episode: number } | null = null;
 	if (episodeNum > 1) {
@@ -271,10 +268,7 @@ export default function EpisodeDetailScreen() {
 					</View>
 
 					{watch.isAuthenticated ? (
-						<ProgressCard
-							episodesWatched={seasonEpisodesWatched}
-							totalEpisodes={currentSeasonCount}
-						/>
+						<ProgressCard progress={seasonProgress} />
 					) : null}
 
 					<OverviewSection text={data.overview} />

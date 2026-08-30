@@ -12,7 +12,11 @@ import { useMemo } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
-import { usePersonDetails, usePersonFilmography } from "#/lib/hooks";
+import {
+	ShowProgressScope,
+	usePersonDetails,
+	usePersonFilmography,
+} from "#/lib/hooks";
 import {
 	buildPersonPageMeta,
 	getOpenGraphMetaDescriptors,
@@ -310,47 +314,15 @@ function PersonDetailPage() {
 						{knownForItems.length > 0 && (
 							<section>
 								<h2 className="mb-4 text-display-3">Known For</h2>
-								<div className={`grid ${POSTER_GRID}`}>
-									{knownForItems.map((item) => (
-										<ActionableMediaCard
-											key={`known-${item.id}-${item.media_type}`}
-											id={item.id}
-											title={item.title}
-											posterUrl={
-												item.poster_path
-													? `https://image.tmdb.org/t/p/w300${item.poster_path}`
-													: ""
-											}
-											type={item.media_type === "movie" ? "movie" : "show"}
-											tmdbRating={
-												item.vote_average
-													? Math.round(item.vote_average * 10) / 10
-													: undefined
-											}
-											role={getRoleText(item)}
-											year={getYear(item)}
-											layout="poster"
-											interactive={isAuthenticated}
-											fill
-										/>
-									))}
-								</div>
-							</section>
-						)}
-
-						{/* Full Filmography */}
-						<section>
-							<h2 className="mb-4 text-display-3">Filmography</h2>
-							{allFilmography.length === 0 ? (
-								<p className="text-(--foreground-muted) text-sm">
-									No filmography available.
-								</p>
-							) : (
-								<>
+								<ShowProgressScope
+									showIds={knownForItems
+										.filter((item) => item.media_type === "tv")
+										.map((item) => item.id)}
+								>
 									<div className={`grid ${POSTER_GRID}`}>
-										{allFilmography.map((item) => (
+										{knownForItems.map((item) => (
 											<ActionableMediaCard
-												key={`film-${item.id}-${item.media_type}`}
+												key={`known-${item.id}-${item.media_type}`}
 												id={item.id}
 												title={item.title}
 												posterUrl={
@@ -372,6 +344,50 @@ function PersonDetailPage() {
 											/>
 										))}
 									</div>
+								</ShowProgressScope>
+							</section>
+						)}
+
+						{/* Full Filmography */}
+						<section>
+							<h2 className="mb-4 text-display-3">Filmography</h2>
+							{allFilmography.length === 0 ? (
+								<p className="text-(--foreground-muted) text-sm">
+									No filmography available.
+								</p>
+							) : (
+								<>
+									<ShowProgressScope
+										showIds={allFilmography
+											.filter((item) => item.media_type === "tv")
+											.map((item) => item.id)}
+									>
+										<div className={`grid ${POSTER_GRID}`}>
+											{allFilmography.map((item) => (
+												<ActionableMediaCard
+													key={`film-${item.id}-${item.media_type}`}
+													id={item.id}
+													title={item.title}
+													posterUrl={
+														item.poster_path
+															? `https://image.tmdb.org/t/p/w300${item.poster_path}`
+															: ""
+													}
+													type={item.media_type === "movie" ? "movie" : "show"}
+													tmdbRating={
+														item.vote_average
+															? Math.round(item.vote_average * 10) / 10
+															: undefined
+													}
+													role={getRoleText(item)}
+													year={getYear(item)}
+													layout="poster"
+													interactive={isAuthenticated}
+													fill
+												/>
+											))}
+										</div>
+									</ShowProgressScope>
 									{hasNextPage && (
 										<div className="mt-6 flex justify-center">
 											<button

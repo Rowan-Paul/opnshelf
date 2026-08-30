@@ -17,12 +17,26 @@ import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
 type MediaTrackingActionsProps =
 	/** `title` names the item in the remove-all-Watches confirmation. */
 	| { mediaType: "movie"; movieId: string; title?: string }
-	| { mediaType: "show"; showId: string; episodeCount?: number }
+	| {
+			mediaType: "show";
+			showId: string;
+			episodeCount?: number;
+			progress?: {
+				state: "unwatched" | "partial" | "complete" | "unavailable";
+				episodesWatched: number;
+				episodesTotal: number;
+			};
+	  }
 	| {
 			mediaType: "season";
 			showId: string;
 			seasonNumber: number;
 			episodeCount: number;
+			progress?: {
+				state: "unwatched" | "partial" | "complete" | "unavailable";
+				episodesWatched: number;
+				episodesTotal: number;
+			};
 	  }
 	| {
 			mediaType: "episode";
@@ -63,6 +77,11 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	);
 
 	const showHistory = status.showWatchHistory ?? [];
+	const progress =
+		props.mediaType === "show" || props.mediaType === "season"
+			? props.progress
+			: undefined;
+	let isPartial = progress?.state === "partial";
 
 	let isOnShelf = false;
 	let detail: string | undefined;
@@ -76,23 +95,19 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			break;
 		}
 		case "show": {
-			isOnShelf = !!status.isTracking;
+			isOnShelf = progress?.state === "complete";
+			isPartial = progress?.state === "partial";
 			detail =
-				status.uniqueEpisodesWatched > 0
-					? `${status.uniqueEpisodesWatched} episode${status.uniqueEpisodesWatched === 1 ? "" : "s"} watched`
+				progress && progress.state !== "unavailable"
+					? `${progress.episodesWatched} of ${progress.episodesTotal} episodes watched`
 					: undefined;
 			break;
 		}
 		case "season": {
-			isOnShelf =
-				status.isSeasonFullyWatched?.(props.seasonNumber, props.episodeCount) ??
-				false;
-			const watchedInSeason = new Set(
-				showHistory
-					.filter((ep) => ep.seasonNumber === props.seasonNumber)
-					.map((ep) => `${ep.seasonNumber}-${ep.episodeNumber}`),
-			).size;
-			detail = `${watchedInSeason} / ${props.episodeCount} episodes watched`;
+			isOnShelf = progress?.state === "complete";
+			detail = progress
+				? `${progress.episodesWatched} of ${progress.episodesTotal} episodes watched`
+				: undefined;
 			break;
 		}
 		case "episode": {
@@ -245,18 +260,22 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	return (
 		<View className="gap-3 px-4">
-			{isOnShelf ? (
+			{isOnShelf || isPartial ? (
 				<Pressable
 					onPress={canManageHistory ? () => setHistoryVisible(true) : undefined}
 					disabled={!canManageHistory}
 					className="flex-row items-center gap-2 rounded-xl border border-border bg-card p-3"
 				>
 					<View className="rounded-full bg-primary/20 p-1.5">
-						<Check color="#22c55e" size={16} />
+						{isOnShelf ? (
+							<Check color="#22c55e" size={16} />
+						) : (
+							<Plus color="#f3bc00" size={16} />
+						)}
 					</View>
 					<View className="flex-1">
 						<Text className="font-semibold text-foreground text-sm">
-							On shelf
+							{isPartial ? "In progress" : "On shelf"}
 						</Text>
 						{detail ? (
 							<Text className="text-muted-foreground text-xs">{detail}</Text>
@@ -305,7 +324,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 						<>
 							<Plus color="#3f2e00" size={18} strokeWidth={2.5} />
 							<Text className="font-semibold text-primary-foreground">
-								Add to shelf
+								{isPartial ? "Mark remaining watched" : "Add to shelf"}
 							</Text>
 						</>
 					)}

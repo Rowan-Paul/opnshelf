@@ -34,6 +34,7 @@ import {
 	yearFromDate,
 } from "@/lib/tmdb";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { useUpNext } from "@/lib/use-up-next";
 import { useWatchStatus } from "@/lib/use-watch-status";
 import { webMediaUrl } from "@/lib/web-url";
@@ -65,18 +66,18 @@ export default function SeasonDetailScreen() {
 		enabled: Boolean(id),
 	});
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
+	const progressQuery = useShowProgress([id]);
+	const showProgress = findShowProgress(progressQuery.data, id);
+	const seasonProgress = showProgress?.seasons.find(
+		(season) => season.seasonNumber === seasonNum,
+	);
 
 	// Per-episode watched status (for the progress card) + the show's next
 	// unwatched episode (to flag the "Up Next" row), mirroring the web page.
 	const watch = useWatchStatus({ mediaType: "show", showId: id });
 	const { items: upNextItems } = useUpNext(20, id);
 
-	const totalEpisodes = data?.episodes.length ?? 0;
-	const episodesWatched = new Set(
-		(watch.showWatchHistory ?? [])
-			.filter((e) => e.seasonNumber === seasonNum)
-			.map((e) => e.episodeNumber),
-	).size;
+	const totalEpisodes = seasonProgress?.episodesTotal ?? 0;
 	const nextEpisode = upNextItems.find((i) => i.showId === id)?.nextEpisode;
 	const upNextEpisodeNumber =
 		nextEpisode?.seasonNumber === seasonNum
@@ -173,6 +174,7 @@ export default function SeasonDetailScreen() {
 							showId={id}
 							seasonNumber={seasonNum}
 							episodeCount={totalEpisodes}
+							progress={seasonProgress}
 						/>
 						<WatchlistFavoritesButtons
 							mediaType="show"
@@ -242,10 +244,7 @@ export default function SeasonDetailScreen() {
 					) : null}
 
 					{watch.isAuthenticated ? (
-						<ProgressCard
-							episodesWatched={episodesWatched}
-							totalEpisodes={totalEpisodes}
-						/>
+						<ProgressCard progress={seasonProgress} />
 					) : null}
 
 					<OverviewSection text={data.overview} />

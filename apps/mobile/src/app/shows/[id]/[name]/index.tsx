@@ -30,6 +30,7 @@ import {
 	yearFromDate,
 } from "@/lib/tmdb";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { webMediaUrl } from "@/lib/web-url";
 
 export default function ShowDetailScreen() {
@@ -48,6 +49,8 @@ export default function ShowDetailScreen() {
 		enabled: Boolean(id),
 	});
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
+	const progressQuery = useShowProgress([id]);
+	const progress = findShowProgress(progressQuery.data, id);
 
 	// Hide the placeholder "Season 0" specials when there are real seasons.
 	const seasons = (data?.seasons ?? []).filter(
@@ -105,6 +108,7 @@ export default function ShowDetailScreen() {
 							mediaType="show"
 							showId={id}
 							episodeCount={data.number_of_episodes}
+							progress={progress}
 						/>
 						<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
 						{/* Secondary actions as one row of compact tiles. */}
@@ -165,6 +169,9 @@ export default function ShowDetailScreen() {
 										posterPath: s.poster_path,
 										episodeCount: s.episode_count,
 										year: yearFromDate(s.air_date),
+										progress: progress?.seasons.find(
+											(season) => season.seasonNumber === s.season_number,
+										),
 									}}
 								/>
 							))}

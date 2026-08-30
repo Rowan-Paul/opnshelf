@@ -82,7 +82,10 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	// activity summary, up next, the tracked-movie/show lists and the profile
 	// stats behind the dashboard bar chart. One shared invalidation keeps them
 	// all in sync instead of each mutation listing its own subset.
-	const invalidateActivity = () => invalidateWatchActivityQueries(queryClient);
+	const invalidateActivity = () => {
+		invalidateWatchActivityQueries(queryClient);
+		queryClient.invalidateQueries({ queryKey: ["shows", "progress"] });
+	};
 
 	// Movie mutations
 	const markMovieWatched = useMutation({

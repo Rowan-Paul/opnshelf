@@ -13,6 +13,7 @@ interface SeasonAccordionProps {
 	isExpanded: boolean;
 	onToggle: () => void;
 	isFullyWatched: boolean;
+	progress?: { episodesWatched: number; episodesTotal: number };
 	onMarkSeasonWatched: () => void;
 	onUnmarkSeasonWatched: () => void;
 	isProcessingSeason: boolean;
@@ -25,6 +26,7 @@ export default function SeasonAccordion({
 	isExpanded,
 	onToggle,
 	isFullyWatched,
+	progress,
 	onMarkSeasonWatched,
 	onUnmarkSeasonWatched,
 	isProcessingSeason,
@@ -48,7 +50,9 @@ export default function SeasonAccordion({
 								{season.name || `Season ${season.season_number}`}
 							</h3>
 							<p className="text-(--foreground-muted) text-sm">
-								{episodeCount} episodes
+								{progress
+									? `${progress.episodesWatched} of ${progress.episodesTotal} episodes watched`
+									: `${episodeCount} episodes`}
 							</p>
 						</div>
 					</div>
@@ -99,7 +103,9 @@ export default function SeasonAccordion({
 								) : (
 									<>
 										<Eye className="size-3.5" />
-										Add to shelf
+										{progress && progress.episodesWatched > 0
+											? "Mark remaining watched"
+											: "Add to shelf"}
 									</>
 								)}
 							</button>

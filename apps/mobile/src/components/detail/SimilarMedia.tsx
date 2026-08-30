@@ -7,6 +7,7 @@ import { FlatList, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { Text } from "@/components/ui/text";
 import { yearFromDate } from "@/lib/tmdb";
+import { ShowProgressScope } from "@/lib/use-show-progress";
 
 type SimilarMediaProps =
 	| { mediaType: "movie"; mediaId: string }
@@ -78,18 +79,24 @@ function SimilarRail({
 			<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
 				{title}
 			</Text>
-			<FlatList
-				horizontal
-				data={items}
-				keyExtractor={(item) => `${item.type}-${item.id}`}
-				renderItem={({ item }) => (
-					<View className="w-28">
-						<MediaCard item={item} actions />
-					</View>
-				)}
-				showsHorizontalScrollIndicator={false}
-				contentContainerClassName="gap-3 px-4"
-			/>
+			<ShowProgressScope
+				showIds={items
+					.filter((item) => item.type === "show")
+					.map((item) => item.id)}
+			>
+				<FlatList
+					horizontal
+					data={items}
+					keyExtractor={(item) => `${item.type}-${item.id}`}
+					renderItem={({ item }) => (
+						<View className="w-28">
+							<MediaCard item={item} actions />
+						</View>
+					)}
+					showsHorizontalScrollIndicator={false}
+					contentContainerClassName="gap-3 px-4"
+				/>
+			</ShowProgressScope>
 		</View>
 	);
 }

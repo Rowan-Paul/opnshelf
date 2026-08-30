@@ -8,19 +8,22 @@ import { Text } from "@/components/ui/text";
  * Renders nothing until there's at least one episode.
  */
 export function ProgressCard({
-	episodesWatched,
-	totalEpisodes,
+	progress,
 }: {
-	episodesWatched: number;
-	totalEpisodes: number;
+	progress?: {
+		episodesWatched: number;
+		episodesTotal: number;
+		percentage: number;
+		remainingEpisodes: number;
+		state: "unwatched" | "partial" | "complete" | "unavailable";
+	};
 }) {
-	if (totalEpisodes <= 0) return null;
-
-	const pct = Math.max(
-		0,
-		Math.min(100, (episodesWatched / totalEpisodes) * 100),
-	);
-	const remaining = Math.max(0, totalEpisodes - episodesWatched);
+	if (
+		!progress ||
+		progress.state === "unavailable" ||
+		progress.episodesTotal <= 0
+	)
+		return null;
 
 	return (
 		<View className="px-4">
@@ -30,7 +33,7 @@ export function ProgressCard({
 						Your Progress
 					</Text>
 					<Text className="text-muted-foreground text-sm tabular-nums">
-						{episodesWatched}/{totalEpisodes} watched
+						{progress.episodesWatched}/{progress.episodesTotal} watched
 					</Text>
 				</View>
 				<View
@@ -39,22 +42,22 @@ export function ProgressCard({
 					accessibilityRole="progressbar"
 					accessibilityValue={{
 						min: 0,
-						max: totalEpisodes,
-						now: Math.min(episodesWatched, totalEpisodes),
+						max: progress.episodesTotal,
+						now: progress.episodesWatched,
 					}}
 					className="h-1 overflow-hidden rounded-full bg-background-subtle"
 				>
 					<View
 						className="h-full rounded-full bg-primary"
-						style={{ width: `${pct}%` }}
+						style={{ width: `${progress.percentage}%` }}
 					/>
 				</View>
 				<View className="flex-row items-center justify-between">
 					<Text className="text-muted-foreground text-xs">
-						{Math.round(pct)}% complete
+						{progress.percentage}% complete
 					</Text>
 					<Text className="text-muted-foreground text-xs">
-						{remaining} remaining
+						{progress.remainingEpisodes} remaining
 					</Text>
 				</View>
 			</View>

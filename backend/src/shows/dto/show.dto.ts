@@ -2,10 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
 	IsDateString,
+	IsArray,
 	IsInt,
 	IsNumberString,
 	IsOptional,
 	IsString,
+	ArrayMaxSize,
 	Max,
 	Min,
 } from "class-validator";
@@ -681,6 +683,53 @@ export class MarkShowWatchedDto {
 	@IsOptional()
 	@IsDateString()
 	watchedAt?: string | null;
+}
+
+export class ShowSeasonProgressDto {
+	@ApiProperty()
+	seasonNumber: number;
+	@ApiProperty()
+	episodesWatched: number;
+	@ApiProperty()
+	episodesTotal: number;
+	@ApiProperty({ enum: ["unwatched", "partial", "complete", "unavailable"] })
+	state: "unwatched" | "partial" | "complete" | "unavailable";
+	@ApiProperty({ description: "Aired episodes still not watched" })
+	remainingEpisodes: number;
+	@ApiProperty({ description: "Whole-number completion percentage" })
+	percentage: number;
+}
+
+export class ShowProgressDto {
+	@ApiProperty({ description: "TMDB show ID" })
+	showId: string;
+	@ApiProperty({ description: "Whether the viewer has any episode Watches" })
+	hasWatches: boolean;
+	@ApiProperty({ description: "Distinct aired regular episodes watched" })
+	episodesWatched: number;
+	@ApiProperty({ description: "Aired, non-special episodes" })
+	episodesTotal: number;
+	@ApiProperty({ enum: ["unwatched", "partial", "complete", "unavailable"] })
+	state: "unwatched" | "partial" | "complete" | "unavailable";
+	@ApiProperty({ description: "Aired episodes still not watched" })
+	remainingEpisodes: number;
+	@ApiProperty({ description: "Whole-number completion percentage" })
+	percentage: number;
+	@ApiProperty({ type: () => [ShowSeasonProgressDto] })
+	seasons: ShowSeasonProgressDto[];
+}
+
+export class ShowProgressBatchDto {
+	@ApiProperty({ type: [String], description: "Up to 50 TMDB show IDs" })
+	@IsArray()
+	@ArrayMaxSize(50)
+	@IsNumberString({ no_symbols: true }, { each: true })
+	showIds: string[];
+}
+
+export class ShowProgressBatchResponseDto {
+	@ApiProperty({ type: [ShowProgressDto] })
+	items: ShowProgressDto[];
 }
 
 export class MarkedEpisodesResponseDto {
