@@ -54,7 +54,7 @@ import {
 } from "#/components/ui/tooltip";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
-import { useCreateList } from "#/lib/hooks";
+import { ShowProgressScope, useCreateList } from "#/lib/hooks";
 import { cn } from "#/lib/utils";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
 
@@ -273,6 +273,11 @@ export function ProfileListsPage({
 					}),
 				});
 			}
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListsQueryKey({
+					path: { userDid },
+				}),
+			});
 		},
 		onError: (error) => {
 			toast.error(
@@ -855,66 +860,77 @@ export function ProfileListsPage({
 								!listLoading &&
 								!listError &&
 								filteredItems.length > 0 && (
-									<div className={`grid ${LIST_ITEMS_GRID}`}>
-										{filteredItems
+									<ShowProgressScope
+										showIds={filteredItems
 											.filter(
-												(item, index, self) =>
-													index === self.findIndex((i) => i.id === item.id),
+												(item) =>
+													item.mediaType === "show" &&
+													item.seasonNumber === undefined &&
+													item.episodeNumber === undefined,
 											)
-											.map((item: MediaInListDto) => (
-												<ActionableMediaCard
-													key={item.id}
-													fill
-													id={String(
-														(item.media as Record<string, unknown>).mediaId ??
-															item.mediaId,
-													)}
-													title={getTitle(item.media)}
-													seasonNumber={item.seasonNumber}
-													episodeNumber={item.episodeNumber}
-													episodeInfo={
-														item.seasonNumber !== undefined &&
-														item.episodeNumber !== undefined
-															? item.episodeName
-																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-																: `S${item.seasonNumber}E${item.episodeNumber}`
-															: item.seasonNumber !== undefined
-																? `Season ${item.seasonNumber}`
+											.map((item) => String(item.mediaId))}
+									>
+										<div className={`grid ${LIST_ITEMS_GRID}`}>
+											{filteredItems
+												.filter(
+													(item, index, self) =>
+														index === self.findIndex((i) => i.id === item.id),
+												)
+												.map((item: MediaInListDto) => (
+													<ActionableMediaCard
+														key={item.id}
+														fill
+														id={String(
+															(item.media as Record<string, unknown>).mediaId ??
+																item.mediaId,
+														)}
+														title={getTitle(item.media)}
+														seasonNumber={item.seasonNumber}
+														episodeNumber={item.episodeNumber}
+														episodeInfo={
+															item.seasonNumber !== undefined &&
+															item.episodeNumber !== undefined
+																? item.episodeName
+																	? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+																	: `S${item.seasonNumber}E${item.episodeNumber}`
+																: item.seasonNumber !== undefined
+																	? `Season ${item.seasonNumber}`
+																	: undefined
+														}
+														posterUrl={getPosterUrl(item.media)}
+														backdropUrl={getBackdropUrl(item.media)}
+														type={item.mediaType === "movie" ? "movie" : "show"}
+														tmdbRating={getRating(item.media)}
+														duration={formatDuration(
+															item.media.runtime as number | undefined,
+														)}
+														onRemove={
+															isOwner
+																? () =>
+																		removeItemMutation.mutate({
+																			path: {
+																				slug: selectedListSlug || "",
+																				mediaType: item.mediaType,
+																				mediaId: item.mediaId,
+																			},
+																			query: {
+																				seasonNumber: item.seasonNumber,
+																				episodeNumber: item.episodeNumber,
+																			},
+																		})
 																: undefined
-													}
-													posterUrl={getPosterUrl(item.media)}
-													backdropUrl={getBackdropUrl(item.media)}
-													type={item.mediaType === "movie" ? "movie" : "show"}
-													tmdbRating={getRating(item.media)}
-													duration={formatDuration(
-														item.media.runtime as number | undefined,
-													)}
-													onRemove={
-														isOwner
-															? () =>
-																	removeItemMutation.mutate({
-																		path: {
-																			slug: selectedListSlug || "",
-																			mediaType: item.mediaType,
-																			mediaId: item.mediaId,
-																		},
-																		query: {
-																			seasonNumber: item.seasonNumber,
-																			episodeNumber: item.episodeNumber,
-																		},
-																	})
-															: undefined
-													}
-													isRemoving={
-														isOwner &&
-														removeItemMutation.isPending &&
-														removeItemMutation.variables?.path?.mediaId ===
-															item.mediaId
-													}
-													watchCount={item.watchCount}
-												/>
-											))}
-									</div>
+														}
+														isRemoving={
+															isOwner &&
+															removeItemMutation.isPending &&
+															removeItemMutation.variables?.path?.mediaId ===
+																item.mediaId
+														}
+														watchCount={item.watchCount}
+													/>
+												))}
+										</div>
+									</ShowProgressScope>
 								)}
 						</div>
 					) : (

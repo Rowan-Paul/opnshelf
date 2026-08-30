@@ -9,6 +9,7 @@ import { listItemToMediaCardItem } from "@/lib/list-media";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useProfileList, usePublicProfile } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
@@ -61,44 +62,55 @@ export default function PublicListScreen() {
 			) : handleError || isError || !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : (
-				<FlashList
-					key={`grid-${numColumns}`}
-					data={items}
-					numColumns={numColumns}
-					keyExtractor={(item) => item.id}
-					renderItem={({ item }) => (
-						<View className="flex-1 px-1 pb-3">
-							<MediaCard
-								item={listItemToMediaCardItem(item)}
-								actions
-								watchCount={item.watchCount}
+				<ShowProgressScope
+					showIds={items
+						.filter(
+							(item) =>
+								item.mediaType === "show" &&
+								item.seasonNumber == null &&
+								item.episodeNumber == null,
+						)
+						.map((item) => item.mediaId)}
+				>
+					<FlashList
+						key={`grid-${numColumns}`}
+						data={items}
+						numColumns={numColumns}
+						keyExtractor={(item) => item.id}
+						renderItem={({ item }) => (
+							<View className="flex-1 px-1 pb-3">
+								<MediaCard
+									item={listItemToMediaCardItem(item)}
+									actions
+									watchCount={item.watchCount}
+								/>
+							</View>
+						)}
+						contentContainerStyle={gridStyle}
+						showsVerticalScrollIndicator={false}
+						refreshControl={
+							<RefreshControl
+								refreshing={refreshing}
+								onRefresh={onRefresh}
+								tintColor="#f3bc00"
+								colors={["#f3bc00"]}
 							/>
-						</View>
-					)}
-					contentContainerStyle={gridStyle}
-					showsVerticalScrollIndicator={false}
-					refreshControl={
-						<RefreshControl
-							refreshing={refreshing}
-							onRefresh={onRefresh}
-							tintColor="#f3bc00"
-							colors={["#f3bc00"]}
-						/>
-					}
-					ListHeaderComponent={
-						<View className="gap-3 px-1 pb-4">
-							{list.description ? (
-								<Text className="text-muted-foreground text-sm leading-5">
-									{list.description}
+						}
+						ListHeaderComponent={
+							<View className="gap-3 px-1 pb-4">
+								{list.description ? (
+									<Text className="text-muted-foreground text-sm leading-5">
+										{list.description}
+									</Text>
+								) : null}
+								<Text className="text-muted-foreground text-xs">
+									{list.total} item{list.total === 1 ? "" : "s"}
 								</Text>
-							) : null}
-							<Text className="text-muted-foreground text-xs">
-								{list.total} item{list.total === 1 ? "" : "s"}
-							</Text>
-						</View>
-					}
-					ListEmptyComponent={<EmptyState title="Empty list" />}
-				/>
+							</View>
+						}
+						ListEmptyComponent={<EmptyState title="Empty list" />}
+					/>
+				</ShowProgressScope>
 			)}
 		</View>
 	);

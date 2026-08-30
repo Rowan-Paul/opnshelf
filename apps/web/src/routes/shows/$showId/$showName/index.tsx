@@ -5,13 +5,14 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Play, Star } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
 import {
 	useEpisodeWatchActions,
 	useShowDetails,
+	useShowProgress,
 	useShowRecommendations,
 	useShowWatchHistory,
 	useShowWatchProviders,
@@ -113,6 +114,10 @@ function ShowDetailPage() {
 	);
 
 	const { data: watchHistory } = useShowWatchHistory(showId);
+	const { data: showProgressData } = useShowProgress([showId]);
+	const showProgress = showProgressData?.items.find(
+		(item) => item.showId === showId,
+	);
 	const {
 		processingEpisode,
 		unmarkingEpisode,
@@ -146,28 +151,15 @@ function ShowDetailPage() {
 		mediaId: showId,
 	});
 
-	const isTracking = !!watchHistory && watchHistory.length > 0;
+	const isTracking = showProgress?.state !== "unwatched";
+	const uniqueEpisodesWatched = showProgress?.episodesWatched ?? 0;
+	const totalEpisodes = showProgress?.episodesTotal ?? 0;
 
-	const uniqueEpisodesWatched = useMemo(() => {
-		if (!watchHistory || !Array.isArray(watchHistory)) return 0;
-		const unique = new Set(
-			watchHistory.map(
-				(ep: { seasonNumber: number; episodeNumber: number }) =>
-					`${ep.seasonNumber}-${ep.episodeNumber}`,
-			),
+	const isSeasonFullyWatched = (seasonNum: number) => {
+		const progress = showProgress?.seasons.find(
+			(season) => season.seasonNumber === seasonNum,
 		);
-		return unique.size;
-	}, [watchHistory]);
-
-	const totalEpisodes = show?.number_of_episodes || 0;
-
-	const isSeasonFullyWatched = (seasonNum: number, episodeCount: number) => {
-		if (!watchHistory || watchHistory.length === 0) return false;
-		if (episodeCount === 0) return false;
-		const watchedInSeason = watchHistory.filter(
-			(ep: { seasonNumber: number }) => ep.seasonNumber === seasonNum,
-		).length;
-		return watchedInSeason >= episodeCount;
+		return progress?.state === "complete";
 	};
 
 	const getCurrentEpisodeText = () => {
@@ -361,7 +353,9 @@ function ShowDetailPage() {
 												}}
 												isFullyWatched={isSeasonFullyWatched(
 													season.season_number,
-													season.episode_count || 0,
+												)}
+												progress={showProgress?.seasons.find(
+													(item) => item.seasonNumber === season.season_number,
 												)}
 												onMarkSeasonWatched={() =>
 													handleMarkSeasonWatched(
@@ -439,7 +433,11 @@ function ShowDetailPage() {
 							<ProgressCard
 								episodesWatched={uniqueEpisodesWatched}
 								totalEpisodes={totalEpisodes}
-								markLabel="Add show to shelf"
+								markLabel={
+									uniqueEpisodesWatched > 0
+										? "Mark remaining watched"
+										: "Add show to shelf"
+								}
 								unmarkLabel="Remove all watches"
 								isMarkPending={isMarkShowPending}
 								isUnmarkPending={isUnmarkShowPending}

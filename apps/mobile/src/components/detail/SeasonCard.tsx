@@ -7,7 +7,6 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { posterUrl } from "@/lib/tmdb";
 import { useWatchActions } from "@/lib/use-watch-actions";
-import { useWatchStatus } from "@/lib/use-watch-status";
 
 export type SeasonCardData = {
 	showId: number;
@@ -18,6 +17,11 @@ export type SeasonCardData = {
 	posterPath?: string | null;
 	episodeCount?: number;
 	year?: string;
+	progress?: {
+		episodesWatched: number;
+		episodesTotal: number;
+		state: "unwatched" | "partial" | "complete" | "unavailable";
+	};
 };
 
 /**
@@ -48,7 +52,11 @@ function SeasonCardBase({
 }) {
 	const meta = [
 		season.year,
-		season.episodeCount ? `${season.episodeCount} episodes` : undefined,
+		season.progress
+			? `${season.progress.episodesWatched} of ${season.progress.episodesTotal} episodes watched`
+			: season.episodeCount
+				? `${season.episodeCount} episodes`
+				: undefined,
 	]
 		.filter(Boolean)
 		.join(" · ");
@@ -87,13 +95,13 @@ function SeasonCardBase({
 function SeasonCardWithActions({ season }: { season: SeasonCardData }) {
 	const { isAuthenticated } = useAuth();
 	const showId = String(season.showId);
-	const episodeCount = season.episodeCount ?? 0;
+	const episodeCount =
+		season.progress?.episodesTotal ?? season.episodeCount ?? 0;
 
-	const status = useWatchStatus({ mediaType: "show", showId });
 	const actions = useWatchActions({ mediaType: "show", showId });
 
-	const onShelf =
-		status.isSeasonFullyWatched?.(season.seasonNumber, episodeCount) ?? false;
+	const onShelf = season.progress?.state === "complete";
+	const isPartial = season.progress?.state === "partial";
 	const pending = actions.isMarkSeasonPending || actions.isUnmarkSeasonPending;
 
 	const toggleShelf = () => {
@@ -120,6 +128,10 @@ function SeasonCardWithActions({ season }: { season: SeasonCardData }) {
 			>
 				{onShelf ? (
 					<Check color="#3f2e00" size={16} strokeWidth={3} />
+				) : isPartial ? (
+					<Text className="font-bold text-primary-foreground text-xs">
+						{season.progress?.episodesWatched}/{season.progress?.episodesTotal}
+					</Text>
 				) : (
 					<Plus color="#94a3b8" size={16} strokeWidth={2.5} />
 				)}

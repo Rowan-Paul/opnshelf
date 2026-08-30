@@ -94,6 +94,9 @@ describe("ShowsService", () => {
 		mockDeleteRecord.mockReset();
 		mockApplyWrites.mockReset();
 		mockFetch.mockReset();
+		mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
+		mockPrismaService.season.findMany.mockResolvedValue([]);
+		mockPrismaService.episode.findMany.mockResolvedValue([]);
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -803,6 +806,130 @@ describe("ShowsService", () => {
 		});
 	});
 
+	describe("getShowProgress", () => {
+		it("reports unavailable progress from incomplete persisted metadata without TMDB repair", async () => {
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{ showId: "123", seasonNumber: 1, episodeNumber: 1 },
+			]);
+			mockPrismaService.season.findMany.mockResolvedValue([]);
+			mockPrismaService.episode.findMany.mockResolvedValue([]);
+			const sync = vi
+				.spyOn(service, "syncShowMetadata")
+				.mockResolvedValue(undefined);
+
+			await expect(
+				service.getShowProgress("did:plc:viewer", ["123"]),
+			).resolves.toEqual([
+				{
+					showId: "123",
+					hasWatches: true,
+					episodesWatched: 1,
+					episodesTotal: 0,
+					state: "unavailable",
+					remainingEpisodes: 0,
+					percentage: 0,
+					seasons: [],
+				},
+			]);
+			expect(sync).not.toHaveBeenCalled();
+		});
+
+		it("never invokes TMDB while calculating complete persisted progress", async () => {
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{ showId: "123", seasonNumber: 1, episodeNumber: 1 },
+				{ showId: "123", seasonNumber: 1, episodeNumber: 1 },
+			]);
+			mockPrismaService.season.findMany.mockResolvedValue([]);
+			mockPrismaService.episode.findMany.mockResolvedValue([]);
+
+			await expect(
+				service.getShowProgress("did:plc:viewer", ["123"]),
+			).resolves.toEqual([
+				{
+					showId: "123",
+					hasWatches: true,
+					episodesWatched: 1,
+					episodesTotal: 0,
+					state: "unavailable",
+					remainingEpisodes: 0,
+					percentage: 0,
+					seasons: [],
+				},
+			]);
+		});
+
+		it("uses complete persisted metadata without TMDB fan-out", async () => {
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{ showId: "123", seasonNumber: 1, episodeNumber: 1 },
+				{ showId: "123", seasonNumber: 1, episodeNumber: 1 },
+			]);
+			mockPrismaService.season.findMany.mockResolvedValue([
+				{ showId: "123", seasonNumber: 1, episodeCount: 3 },
+			]);
+			mockPrismaService.episode.findMany.mockResolvedValue([
+				{
+					showId: "123",
+					seasonNumber: 1,
+					episodeNumber: 1,
+					airDate: new Date("2020-01-01"),
+				},
+				{
+					showId: "123",
+					seasonNumber: 1,
+					episodeNumber: 2,
+					airDate: new Date("2020-01-08"),
+				},
+				{
+					showId: "123",
+					seasonNumber: 1,
+					episodeNumber: 3,
+					airDate: new Date("2099-01-01"),
+				},
+			]);
+
+			await expect(
+				service.getShowProgress("did:plc:viewer", ["123"]),
+			).resolves.toEqual([
+				{
+					showId: "123",
+					hasWatches: true,
+					episodesWatched: 1,
+					episodesTotal: 2,
+					state: "partial",
+					remainingEpisodes: 1,
+					percentage: 50,
+					seasons: [
+						{
+							seasonNumber: 1,
+							episodesWatched: 1,
+							episodesTotal: 2,
+							state: "partial",
+							remainingEpisodes: 1,
+							percentage: 50,
+						},
+					],
+				},
+			]);
+			expect(mockFetch).not.toHaveBeenCalled();
+
+			const incomplete = await service.getShowProgress("did:plc:viewer", [
+				"456",
+			]);
+			expect(incomplete).toEqual([
+				{
+					showId: "456",
+					hasWatches: false,
+					episodesWatched: 0,
+					episodesTotal: 0,
+					state: "unavailable",
+					remainingEpisodes: 0,
+					percentage: 0,
+					seasons: [],
+				},
+			]);
+		});
+	});
+
 	describe("markSeasonWatched (bulk)", () => {
 		const mockSession = { did: "did:plc:abc123" };
 
@@ -812,6 +939,8 @@ describe("ShowsService", () => {
 		const stubTmdb = (episodeCount: number) => {
 			const episodes = Array.from({ length: episodeCount }, (_, i) => ({
 				episode_number: i + 1,
+				season_number: 1,
+				air_date: "2020-01-01",
 			}));
 			mockFetch.mockResolvedValue({
 				ok: true,
@@ -924,7 +1053,13 @@ describe("ShowsService", () => {
 						name: "Test Show",
 						number_of_seasons: 1,
 						seasons: [],
-						episodes: [{ episode_number: 1 }],
+						episodes: [
+							{
+								episode_number: 1,
+								season_number: 1,
+								air_date: "2020-01-01",
+							},
+						],
 						results: [],
 					}),
 			});

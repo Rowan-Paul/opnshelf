@@ -42,6 +42,7 @@ import { posthog } from "@/lib/posthog";
 import { profileUrl, yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
+import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 type Tab = "all" | "movies" | "shows" | "cast" | "people";
@@ -146,24 +147,30 @@ function DiscoverRail({
 			    virtualization needed. items-start: horizontal ScrollView content
 			    defaults to cross-axis stretch, which collapses aspect-ratio cards
 			    (see CircleFilterBar). */}
-			<ScrollView
-				horizontal
-				showsHorizontalScrollIndicator={false}
-				contentContainerClassName="items-start gap-3 px-4"
+			<ShowProgressScope
+				showIds={items
+					.filter((item) => item.type === "show")
+					.map((item) => item.id)}
 			>
-				{items.map((item, cardIndex) => {
-					const key = `${item.type}-${item.id}`;
-					return anchorFirstCard && cardIndex === 0 ? (
-						<TourAnchor key={key} id="media-card" className="w-28">
-							<MediaCard item={item} actions />
-						</TourAnchor>
-					) : (
-						<View key={key} className="w-28">
-							<MediaCard item={item} actions />
-						</View>
-					);
-				})}
-			</ScrollView>
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					contentContainerClassName="items-start gap-3 px-4"
+				>
+					{items.map((item, cardIndex) => {
+						const key = `${item.type}-${item.id}`;
+						return anchorFirstCard && cardIndex === 0 ? (
+							<TourAnchor key={key} id="media-card" className="w-28">
+								<MediaCard item={item} actions />
+							</TourAnchor>
+						) : (
+							<View key={key} className="w-28">
+								<MediaCard item={item} actions />
+							</View>
+						);
+					})}
+				</ScrollView>
+			</ShowProgressScope>
 		</View>
 	);
 }
@@ -407,20 +414,26 @@ export default function SearchScreen() {
 		}
 
 		return (
-			<FlashList
-				key={`grid-${numColumns}`}
-				data={gridData}
-				numColumns={numColumns}
-				keyExtractor={(item) => `${item.type}-${item.id}`}
-				renderItem={({ item }) => (
-					<View className="flex-1 px-1 pb-3">
-						<MediaCard item={item} actions />
-					</View>
-				)}
-				contentContainerStyle={gridListStyle}
-				keyboardShouldPersistTaps="handled"
-				refreshControl={refreshControl}
-			/>
+			<ShowProgressScope
+				showIds={gridData
+					.filter((item) => item.type === "show")
+					.map((item) => item.id)}
+			>
+				<FlashList
+					key={`grid-${numColumns}`}
+					data={gridData}
+					numColumns={numColumns}
+					keyExtractor={(item) => `${item.type}-${item.id}`}
+					renderItem={({ item }) => (
+						<View className="flex-1 px-1 pb-3">
+							<MediaCard item={item} actions />
+						</View>
+					)}
+					contentContainerStyle={gridListStyle}
+					keyboardShouldPersistTaps="handled"
+					refreshControl={refreshControl}
+				/>
+			</ShowProgressScope>
 		);
 	}
 

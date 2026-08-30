@@ -43,6 +43,7 @@ import { useDebounce } from "#/hooks/useDebounce";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
+import { ShowProgressScope } from "#/lib/hooks/useShowProgress";
 import { buildPersonUrl } from "#/lib/url-utils";
 
 const searchSchema = z.object({
@@ -136,25 +137,31 @@ function DiscoverRow({
 			<h2 className="mb-3 font-semibold text-lg">{title}</h2>
 			{/* Single horizontal row (carousel), matching the mobile discovery
 			    rails — discovery sections scroll sideways instead of wrapping. */}
-			<div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
-				{unique.map((item) => (
-					<div
-						key={`discover-${item.media_type}-${item.id}`}
-						className="w-32 shrink-0 sm:w-40"
-					>
-						<ActionableMediaCard
-							id={item.id}
-							title={getTitle(item)}
-							posterUrl={getPosterUrl(item)}
-							backdropUrl={getBackdropUrl(item)}
-							type={item.media_type === "movie" ? "movie" : "show"}
-							tmdbRating={item.vote_average || undefined}
-							layout="poster"
-							fill
-						/>
-					</div>
-				))}
-			</div>
+			<ShowProgressScope
+				showIds={unique
+					.filter((item) => item.media_type !== "movie")
+					.map((item) => item.id)}
+			>
+				<div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+					{unique.map((item) => (
+						<div
+							key={`discover-${item.media_type}-${item.id}`}
+							className="w-32 shrink-0 sm:w-40"
+						>
+							<ActionableMediaCard
+								id={item.id}
+								title={getTitle(item)}
+								posterUrl={getPosterUrl(item)}
+								backdropUrl={getBackdropUrl(item)}
+								type={item.media_type === "movie" ? "movie" : "show"}
+								tmdbRating={item.vote_average || undefined}
+								layout="poster"
+								fill
+							/>
+						</div>
+					))}
+				</div>
+			</ShowProgressScope>
 		</section>
 	);
 }
@@ -488,66 +495,82 @@ function SearchPage() {
 						{/* Combined Movies + TV Shows in "all" tab */}
 						{activeTab === "all" && results.length > 0 && (
 							<section>
-								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-									{results.map((item) => (
-										<ActionableMediaCard
-											key={`media-${item.id}-${item.media_type}`}
-											id={item.id}
-											title={getTitle(item)}
-											posterUrl={getPosterUrl(item)}
-											backdropUrl={getBackdropUrl(item)}
-											type={item.media_type === "movie" ? "movie" : "show"}
-											tmdbRating={item.vote_average || undefined}
-											globalRating={ratings.get(String(item.id))?.averageRating}
-											size="md"
-											layout="poster"
-										/>
-									))}
-								</div>
+								<ShowProgressScope
+									showIds={results
+										.filter((item) => item.media_type !== "movie")
+										.map((item) => item.id)}
+								>
+									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+										{results.map((item) => (
+											<ActionableMediaCard
+												key={`media-${item.id}-${item.media_type}`}
+												id={item.id}
+												title={getTitle(item)}
+												posterUrl={getPosterUrl(item)}
+												backdropUrl={getBackdropUrl(item)}
+												type={item.media_type === "movie" ? "movie" : "show"}
+												tmdbRating={item.vote_average || undefined}
+												globalRating={
+													ratings.get(String(item.id))?.averageRating
+												}
+												size="md"
+												layout="poster"
+											/>
+										))}
+									</div>
+								</ShowProgressScope>
 							</section>
 						)}
 
 						{/* Movies tab only */}
 						{activeTab === "movies" && movies.length > 0 && (
 							<section>
-								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-									{movies.map((item) => (
-										<ActionableMediaCard
-											key={`movie-${item.id}`}
-											id={item.id}
-											title={getTitle(item)}
-											posterUrl={getPosterUrl(item)}
-											backdropUrl={getBackdropUrl(item)}
-											type="movie"
-											tmdbRating={item.vote_average || undefined}
-											globalRating={ratings.get(String(item.id))?.averageRating}
-											size="md"
-											layout="poster"
-										/>
-									))}
-								</div>
+								<ShowProgressScope showIds={[]}>
+									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+										{movies.map((item) => (
+											<ActionableMediaCard
+												key={`movie-${item.id}`}
+												id={item.id}
+												title={getTitle(item)}
+												posterUrl={getPosterUrl(item)}
+												backdropUrl={getBackdropUrl(item)}
+												type="movie"
+												tmdbRating={item.vote_average || undefined}
+												globalRating={
+													ratings.get(String(item.id))?.averageRating
+												}
+												size="md"
+												layout="poster"
+											/>
+										))}
+									</div>
+								</ShowProgressScope>
 							</section>
 						)}
 
 						{/* TV Shows tab only */}
 						{activeTab === "shows" && shows.length > 0 && (
 							<section>
-								<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-									{shows.map((item) => (
-										<ActionableMediaCard
-											key={`show-${item.id}`}
-											id={item.id}
-											title={getTitle(item)}
-											posterUrl={getPosterUrl(item)}
-											backdropUrl={getBackdropUrl(item)}
-											type="show"
-											tmdbRating={item.vote_average || undefined}
-											globalRating={ratings.get(String(item.id))?.averageRating}
-											size="md"
-											layout="poster"
-										/>
-									))}
-								</div>
+								<ShowProgressScope showIds={shows.map((item) => item.id)}>
+									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+										{shows.map((item) => (
+											<ActionableMediaCard
+												key={`show-${item.id}`}
+												id={item.id}
+												title={getTitle(item)}
+												posterUrl={getPosterUrl(item)}
+												backdropUrl={getBackdropUrl(item)}
+												type="show"
+												tmdbRating={item.vote_average || undefined}
+												globalRating={
+													ratings.get(String(item.id))?.averageRating
+												}
+												size="md"
+												layout="poster"
+											/>
+										))}
+									</div>
+								</ShowProgressScope>
 							</section>
 						)}
 

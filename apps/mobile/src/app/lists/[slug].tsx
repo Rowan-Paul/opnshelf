@@ -49,6 +49,7 @@ import {
 } from "@/lib/use-lists";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { webListUrl } from "@/lib/web-url";
 
@@ -432,165 +433,176 @@ export default function ListDetailScreen() {
 					}
 				/>
 			) : (
-				<FlashList
-					key={`grid-${numColumns}`}
-					data={filteredItems}
-					numColumns={numColumns}
-					keyExtractor={(item) => item.id}
-					renderItem={({ item }) => (
-						<View className="flex-1 px-1 pb-3">
-							<ListItemCard item={item} onRemove={handleRemove} />
-						</View>
-					)}
-					contentContainerStyle={gridStyle}
-					showsVerticalScrollIndicator={false}
-					keyboardShouldPersistTaps="handled"
-					refreshControl={
-						<RefreshControl
-							refreshing={refreshing}
-							onRefresh={onRefresh}
-							tintColor="#f3bc00"
-							colors={["#f3bc00"]}
-						/>
-					}
-					onEndReachedThreshold={0.5}
-					onEndReached={() => {
-						if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-					}}
-					ListHeaderComponent={
-						<View className="gap-3 px-1 pb-4">
-							{/* Description + watched progress clustered in one info card. */}
-							{list.description || total > 0 ? (
-								<View className="gap-2.5 rounded-xl border border-border bg-card p-4">
-									{list.description ? (
-										<Text className="text-muted-foreground text-sm leading-5">
-											{list.description}
-										</Text>
-									) : null}
-									{showProgress ? (
-										<View className="gap-1">
-											<Text className="text-muted-foreground text-xs">
-												{watchedCount} of {total} watched
-											</Text>
-											<View className="h-1 overflow-hidden rounded-full bg-background-subtle">
-												<View
-													className="h-full rounded-full bg-primary"
-													style={{ width: `${progressPct}%` }}
-												/>
-											</View>
-										</View>
-									) : (
-										<Text className="text-muted-foreground text-xs">
-											{total} item{total === 1 ? "" : "s"}
-										</Text>
-									)}
-								</View>
-							) : null}
-
-							<TextField
-								leading={<Search color="#94a3b8" size={18} />}
-								trailing={
-									search.length > 0 ? (
-										<Pressable hitSlop={8} onPress={() => setSearch("")}>
-											<X color="#94a3b8" size={18} />
-										</Pressable>
-									) : null
-								}
-								value={search}
-								onChangeText={setSearch}
-								placeholder="Search list…"
-								autoCapitalize="none"
-								autoCorrect={false}
+				<ShowProgressScope
+					showIds={filteredItems
+						.filter(
+							(item) =>
+								item.mediaType === "show" &&
+								item.seasonNumber == null &&
+								item.episodeNumber == null,
+						)
+						.map((item) => item.mediaId)}
+				>
+					<FlashList
+						key={`grid-${numColumns}`}
+						data={filteredItems}
+						numColumns={numColumns}
+						keyExtractor={(item) => item.id}
+						renderItem={({ item }) => (
+							<View className="flex-1 px-1 pb-3">
+								<ListItemCard item={item} onRemove={handleRemove} />
+							</View>
+						)}
+						contentContainerStyle={gridStyle}
+						showsVerticalScrollIndicator={false}
+						keyboardShouldPersistTaps="handled"
+						refreshControl={
+							<RefreshControl
+								refreshing={refreshing}
+								onRefresh={onRefresh}
+								tintColor="#f3bc00"
+								colors={["#f3bc00"]}
 							/>
+						}
+						onEndReachedThreshold={0.5}
+						onEndReached={() => {
+							if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+						}}
+						ListHeaderComponent={
+							<View className="gap-3 px-1 pb-4">
+								{/* Description + watched progress clustered in one info card. */}
+								{list.description || total > 0 ? (
+									<View className="gap-2.5 rounded-xl border border-border bg-card p-4">
+										{list.description ? (
+											<Text className="text-muted-foreground text-sm leading-5">
+												{list.description}
+											</Text>
+										) : null}
+										{showProgress ? (
+											<View className="gap-1">
+												<Text className="text-muted-foreground text-xs">
+													{watchedCount} of {total} watched
+												</Text>
+												<View className="h-1 overflow-hidden rounded-full bg-background-subtle">
+													<View
+														className="h-full rounded-full bg-primary"
+														style={{ width: `${progressPct}%` }}
+													/>
+												</View>
+											</View>
+										) : (
+											<Text className="text-muted-foreground text-xs">
+												{total} item{total === 1 ? "" : "s"}
+											</Text>
+										)}
+									</View>
+								) : null}
 
-							<View className="flex-row items-center justify-between">
-								<Pressable
-									onPress={() => setSortVisible(true)}
-									className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
-								>
-									<ArrowUpDown color="#94a3b8" size={14} />
-									<Text className="font-medium text-muted-foreground text-sm">
-										{sortLabel(sort)}
-									</Text>
-								</Pressable>
+								<TextField
+									leading={<Search color="#94a3b8" size={18} />}
+									trailing={
+										search.length > 0 ? (
+											<Pressable hitSlop={8} onPress={() => setSearch("")}>
+												<X color="#94a3b8" size={18} />
+											</Pressable>
+										) : null
+									}
+									value={search}
+									onChangeText={setSearch}
+									placeholder="Search list…"
+									autoCapitalize="none"
+									autoCorrect={false}
+								/>
 
-								{total > 1 ? (
+								<View className="flex-row items-center justify-between">
 									<Pressable
-										onPress={startReorder}
-										disabled={preparingReorder}
+										onPress={() => setSortVisible(true)}
 										className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
 									>
-										{preparingReorder ? (
-											<ActivityIndicator color="#94a3b8" size="small" />
-										) : (
-											<ListOrdered
-												color={sort === "position" ? "#94a3b8" : "#64748b"}
-												size={14}
-											/>
-										)}
-										<Text
-											className={cn(
-												"font-medium text-sm",
-												sort === "position"
-													? "text-muted-foreground"
-													: "text-muted-foreground/50",
-											)}
-										>
-											Reorder
+										<ArrowUpDown color="#94a3b8" size={14} />
+										<Text className="font-medium text-muted-foreground text-sm">
+											{sortLabel(sort)}
 										</Text>
 									</Pressable>
-								) : null}
-							</View>
 
-							<View className="flex-row flex-wrap gap-2">
-								{FILTERS.map((f) => {
-									const isActive = filter === f.key;
-									return (
+									{total > 1 ? (
 										<Pressable
-											key={f.key}
-											onPress={() => setFilter(f.key)}
-											className={cn(
-												"rounded-full px-3 py-1.5",
-												isActive ? "bg-primary" : "bg-background-subtle",
-											)}
+											onPress={startReorder}
+											disabled={preparingReorder}
+											className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
 										>
+											{preparingReorder ? (
+												<ActivityIndicator color="#94a3b8" size="small" />
+											) : (
+												<ListOrdered
+													color={sort === "position" ? "#94a3b8" : "#64748b"}
+													size={14}
+												/>
+											)}
 											<Text
 												className={cn(
 													"font-medium text-sm",
-													isActive
-														? "text-primary-foreground"
-														: "text-muted-foreground",
+													sort === "position"
+														? "text-muted-foreground"
+														: "text-muted-foreground/50",
 												)}
 											>
-												{f.label}
+												Reorder
 											</Text>
 										</Pressable>
-									);
-								})}
+									) : null}
+								</View>
+
+								<View className="flex-row flex-wrap gap-2">
+									{FILTERS.map((f) => {
+										const isActive = filter === f.key;
+										return (
+											<Pressable
+												key={f.key}
+												onPress={() => setFilter(f.key)}
+												className={cn(
+													"rounded-full px-3 py-1.5",
+													isActive ? "bg-primary" : "bg-background-subtle",
+												)}
+											>
+												<Text
+													className={cn(
+														"font-medium text-sm",
+														isActive
+															? "text-primary-foreground"
+															: "text-muted-foreground",
+													)}
+												>
+													{f.label}
+												</Text>
+											</Pressable>
+										);
+									})}
+								</View>
 							</View>
-						</View>
-					}
-					ListEmptyComponent={
-						debouncedSearch || filter !== "all" ? (
-							<EmptyState
-								title="No matches"
-								message="Try a different search or filter."
-							/>
-						) : (
-							<EmptyState
-								title="Empty list"
-								message="Add movies and shows with the + button or from their detail screens."
-							/>
-						)
-					}
-					ListFooterComponent={
-						isFetchingNextPage ? (
-							<View className="py-6">
-								<ActivityIndicator color="#94a3b8" />
-							</View>
-						) : null
-					}
-				/>
+						}
+						ListEmptyComponent={
+							debouncedSearch || filter !== "all" ? (
+								<EmptyState
+									title="No matches"
+									message="Try a different search or filter."
+								/>
+							) : (
+								<EmptyState
+									title="Empty list"
+									message="Add movies and shows with the + button or from their detail screens."
+								/>
+							)
+						}
+						ListFooterComponent={
+							isFetchingNextPage ? (
+								<View className="py-6">
+									<ActivityIndicator color="#94a3b8" />
+								</View>
+							) : null
+						}
+					/>
+				</ShowProgressScope>
 			)}
 
 			<ListSortSheet

@@ -218,16 +218,37 @@ export class ShowsService {
 		});
 	}
 
-	async syncShowMetadata(showId: string): Promise<void> {
+	async syncShowMetadata(
+		showId: string,
+		options: { force?: boolean } = {},
+	): Promise<void> {
 		const STALE_MS = 24 * 60 * 60 * 1000;
-		const existingSeason = await this.prisma.season.findFirst({
-			where: { showId },
-			select: { updatedAt: true },
-			orderBy: { updatedAt: "desc" },
+		const existingSeasons = await this.prisma.season.findMany({
+			where: { showId, seasonNumber: { gt: 0 } },
+			select: {
+				seasonNumber: true,
+				episodeCount: true,
+				updatedAt: true,
+				_count: { select: { episodes: true } },
+			},
 		});
+		const newestMetadata = existingSeasons.reduce<Date | undefined>(
+			(newest, season) =>
+				!newest || season.updatedAt > newest ? season.updatedAt : newest,
+			undefined,
+		);
+		const catalogueComplete =
+			existingSeasons.length > 0 &&
+			existingSeasons.every(
+				(season) =>
+					season.episodeCount !== null &&
+					season._count.episodes === season.episodeCount,
+			);
 		if (
-			existingSeason &&
-			Date.now() - existingSeason.updatedAt.getTime() < STALE_MS
+			!options.force &&
+			catalogueComplete &&
+			newestMetadata &&
+			Date.now() - newestMetadata.getTime() < STALE_MS
 		) {
 			return;
 		}
@@ -238,6 +259,7 @@ export class ShowsService {
 		const tmdbSeasons = (show.seasons ?? []).filter(
 			(s) => s.season_number !== 0,
 		);
+		const failedSeasonNumbers: number[] = [];
 
 		for (const tmdbSeason of tmdbSeasons) {
 			let seasonDetail: TMDBSeason;
@@ -247,6 +269,7 @@ export class ShowsService {
 					tmdbSeason.season_number,
 				);
 			} catch {
+				failedSeasonNumbers.push(tmdbSeason.season_number);
 				this.logger.warn(
 					`Failed to fetch season ${tmdbSeason.season_number} for show ${showId}`,
 				);
@@ -308,6 +331,13 @@ export class ShowsService {
 					},
 				});
 			}
+		}
+		// A detail response is the catalogue lifecycle boundary. Returning it after
+		// a failed season fetch would cache a misleading denominator on clients.
+		if (failedSeasonNumbers.length > 0) {
+			throw new Error(
+				`Could not synchronize seasons ${failedSeasonNumbers.join(", ")} for show ${showId}`,
+			);
 		}
 	}
 
@@ -912,6 +942,143 @@ export class ShowsService {
 		});
 	}
 
+	private eligibleEpisodes(season: TMDBSeason) {
+		return (season.episodes ?? []).filter((episode) => {
+			if (!episode.air_date) return false;
+			const airedAt = new Date(episode.air_date).getTime();
+			return Number.isFinite(airedAt) && airedAt <= Date.now();
+		});
+	}
+
+	async getShowProgress(userDid: string, showIds: string[]) {
+		const ids = [...new Set(showIds)];
+		const now = new Date();
+		const watches = await this.prisma.trackedEpisode.findMany({
+			where: { userDid, showId: { in: ids } },
+			select: { showId: true, seasonNumber: true, episodeNumber: true },
+		});
+		const loadMetadata = () =>
+			Promise.all([
+				this.prisma.season.findMany({
+					where: { showId: { in: ids }, seasonNumber: { gt: 0 } },
+					select: { showId: true, seasonNumber: true, episodeCount: true },
+				}),
+				this.prisma.episode.findMany({
+					where: { showId: { in: ids }, seasonNumber: { gt: 0 } },
+					select: {
+						showId: true,
+						seasonNumber: true,
+						episodeNumber: true,
+						airDate: true,
+					},
+				}),
+			]);
+		const [seasons, episodes] = await loadMetadata();
+		const watchedByShow = new Map<string, Set<string>>();
+		for (const watch of watches) {
+			const entries = watchedByShow.get(watch.showId) ?? new Set<string>();
+			entries.add(`${watch.seasonNumber}:${watch.episodeNumber}`);
+			watchedByShow.set(watch.showId, entries);
+		}
+		const seasonsByShow = new Map<string, typeof seasons>();
+		for (const season of seasons) {
+			const entries = seasonsByShow.get(season.showId) ?? [];
+			entries.push(season);
+			seasonsByShow.set(season.showId, entries);
+		}
+		const episodesByShow = new Map<string, typeof episodes>();
+		for (const episode of episodes) {
+			const entries = episodesByShow.get(episode.showId) ?? [];
+			entries.push(episode);
+			episodesByShow.set(episode.showId, entries);
+		}
+		const hasCompleteMetadata = (showId: string) => {
+			const showSeasons = seasonsByShow.get(showId) ?? [];
+			const showEpisodes = episodesByShow.get(showId) ?? [];
+			return (
+				showSeasons.length > 0 &&
+				showSeasons.every(
+					(season) =>
+						season.episodeCount !== null &&
+						showEpisodes.filter(
+							(episode) => episode.seasonNumber === season.seasonNumber,
+						).length === season.episodeCount,
+				)
+			);
+		};
+
+		return ids.map((showId) => {
+			const showSeasons = seasonsByShow.get(showId) ?? [];
+			const showEpisodes = episodesByShow.get(showId) ?? [];
+			const isComplete = hasCompleteMetadata(showId);
+			const watched = watchedByShow.get(showId) ?? new Set<string>();
+			if (!isComplete) {
+				return {
+					showId,
+					hasWatches: watched.size > 0,
+					episodesWatched: watched.size,
+					episodesTotal: 0,
+					state: "unavailable" as const,
+					remainingEpisodes: 0,
+					percentage: 0,
+					seasons: [],
+				};
+			}
+
+			let episodesWatched = 0;
+			let episodesTotal = 0;
+			const seasonProgress = showSeasons.map((season) => {
+				const eligible = showEpisodes.filter(
+					(episode) =>
+						episode.seasonNumber === season.seasonNumber &&
+						episode.airDate !== null &&
+						episode.airDate <= now,
+				);
+				const watchedCount = eligible.filter((episode) =>
+					watched.has(`${season.seasonNumber}:${episode.episodeNumber}`),
+				).length;
+				episodesWatched += watchedCount;
+				episodesTotal += eligible.length;
+				const remainingEpisodes = Math.max(eligible.length - watchedCount, 0);
+				return {
+					seasonNumber: season.seasonNumber,
+					episodesWatched: watchedCount,
+					episodesTotal: eligible.length,
+					state:
+						eligible.length === 0 || watchedCount === 0
+							? ("unwatched" as const)
+							: watchedCount === eligible.length
+								? ("complete" as const)
+								: ("partial" as const),
+					remainingEpisodes,
+					percentage:
+						eligible.length === 0
+							? 0
+							: Math.round((watchedCount / eligible.length) * 100),
+				};
+			});
+			const remainingEpisodes = Math.max(episodesTotal - episodesWatched, 0);
+			return {
+				showId,
+				hasWatches: watched.size > 0,
+				episodesWatched,
+				episodesTotal,
+				state:
+					episodesTotal === 0 || episodesWatched === 0
+						? ("unwatched" as const)
+						: episodesWatched === episodesTotal
+							? ("complete" as const)
+							: ("partial" as const),
+				remainingEpisodes,
+				percentage:
+					episodesTotal === 0
+						? 0
+						: Math.round((episodesWatched / episodesTotal) * 100),
+				seasons: seasonProgress,
+			};
+		});
+	}
+
 	/**
 	 * Build an episode Watch record for the PDS.
 	 *
@@ -1280,7 +1447,14 @@ export class ShowsService {
 		customWatchedAt?: string | null,
 	) {
 		const season = await this.getSeasonDetails(showId, seasonNumber);
-		const episodes = season.episodes || [];
+		const watched = await this.prisma.trackedEpisode.findMany({
+			where: { userDid, showId, seasonNumber },
+			select: { episodeNumber: true },
+		});
+		const watchedNumbers = new Set(watched.map((entry) => entry.episodeNumber));
+		const episodes = this.eligibleEpisodes(season).filter(
+			(episode) => !watchedNumbers.has(episode.episode_number),
+		);
 		const requested = episodes.length;
 
 		if (requested === 0) {
@@ -1369,21 +1543,34 @@ export class ShowsService {
 			),
 		);
 
+		const existing = await this.prisma.trackedEpisode.findMany({
+			where: { userDid, showId },
+			select: { seasonNumber: true, episodeNumber: true },
+		});
+		const watched = new Set(
+			existing.map((entry) => `${entry.seasonNumber}:${entry.episodeNumber}`),
+		);
 		const records = seasons.flatMap((season, idx) => {
 			const seasonNumber = seasonNums[idx];
-			return (season?.episodes ?? []).map((episode) => ({
-				rkey: TID.nextStr(),
-				record: episodeSchema.build({
-					showId,
+			if (!season) return [];
+			return this.eligibleEpisodes(season)
+				.filter(
+					(episode) =>
+						!watched.has(`${seasonNumber}:${episode.episode_number}`),
+				)
+				.map((episode) => ({
+					rkey: TID.nextStr(),
+					record: episodeSchema.build({
+						showId,
+						seasonNumber,
+						episodeNumber: episode.episode_number,
+						source: "tmdb",
+						...(watchedAt === undefined ? {} : { watchedAt }),
+						createdAt: now,
+					}),
 					seasonNumber,
 					episodeNumber: episode.episode_number,
-					source: "tmdb",
-					...(watchedAt === undefined ? {} : { watchedAt }),
-					createdAt: now,
-				}),
-				seasonNumber,
-				episodeNumber: episode.episode_number,
-			}));
+				}));
 		});
 
 		const requested = records.length;

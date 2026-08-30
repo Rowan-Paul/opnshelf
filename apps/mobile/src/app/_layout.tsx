@@ -29,6 +29,8 @@ import { setWidgetApiUrl } from "../../modules/widget-bridge";
 
 SplashScreen.preventAutoHideAsync();
 
+export const unstable_settings = { anchor: "(tabs)" };
+
 /** Manual screen tracking for Expo Router + PostHog. */
 function useScreenTracking() {
 	const pathname = usePathname();

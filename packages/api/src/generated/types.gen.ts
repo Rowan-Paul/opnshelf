@@ -658,6 +658,61 @@ export type EpisodeHistoryItemDto = {
     episodeNumber: number;
 };
 
+export type ShowProgressBatchDto = {
+    /**
+     * Up to 50 TMDB show IDs
+     */
+    showIds: Array<string>;
+};
+
+export type ShowSeasonProgressDto = {
+    seasonNumber: number;
+    episodesWatched: number;
+    episodesTotal: number;
+    state: 'unwatched' | 'partial' | 'complete' | 'unavailable';
+    /**
+     * Aired episodes still not watched
+     */
+    remainingEpisodes: number;
+    /**
+     * Whole-number completion percentage
+     */
+    percentage: number;
+};
+
+export type ShowProgressDto = {
+    /**
+     * TMDB show ID
+     */
+    showId: string;
+    /**
+     * Whether the viewer has any episode Watches
+     */
+    hasWatches: boolean;
+    /**
+     * Distinct aired regular episodes watched
+     */
+    episodesWatched: number;
+    /**
+     * Aired, non-special episodes
+     */
+    episodesTotal: number;
+    state: 'unwatched' | 'partial' | 'complete' | 'unavailable';
+    /**
+     * Aired episodes still not watched
+     */
+    remainingEpisodes: number;
+    /**
+     * Whole-number completion percentage
+     */
+    percentage: number;
+    seasons: Array<ShowSeasonProgressDto>;
+};
+
+export type ShowProgressBatchResponseDto = {
+    items: Array<ShowProgressDto>;
+};
+
 export type MarkSeasonWatchedDto = {
     /**
      * TMDB show ID
@@ -3237,6 +3292,19 @@ export type ShowsControllerGetShowWatchHistoryResponses = {
 };
 
 export type ShowsControllerGetShowWatchHistoryResponse = ShowsControllerGetShowWatchHistoryResponses[keyof ShowsControllerGetShowWatchHistoryResponses];
+
+export type ShowsControllerGetShowProgressData = {
+    body: ShowProgressBatchDto;
+    path?: never;
+    query?: never;
+    url: '/shows/progress';
+};
+
+export type ShowsControllerGetShowProgressResponses = {
+    201: ShowProgressBatchResponseDto;
+};
+
+export type ShowsControllerGetShowProgressResponse = ShowsControllerGetShowProgressResponses[keyof ShowsControllerGetShowProgressResponses];
 
 export type ShowsControllerDeleteEpisodeWatchHistoryEntryData = {
     body?: never;

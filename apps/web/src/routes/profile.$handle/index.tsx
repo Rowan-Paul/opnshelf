@@ -17,6 +17,7 @@ import { SpoilerShield } from "#/components/SpoilerShield";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
+import { ShowProgressScope } from "#/lib/hooks/useShowProgress";
 
 // Horizontally-scrolling preview row (Recent Movies/Episodes, list previews).
 const SCROLL_ROW =
@@ -405,42 +406,53 @@ function ListPreview({
 					))}
 				</div>
 			) : items.length > 0 ? (
-				<div className={SCROLL_ROW}>
-					{items.map((item) => {
-						const media = item.media as Record<string, unknown>;
-						const posterPath = media.posterPath as string | undefined;
-						const title = (media.title as string) || "Unknown";
-						const mediaId = (media.mediaId as string) || item.mediaId;
-						const isEpisode =
-							item.seasonNumber != null && item.episodeNumber != null;
+				<ShowProgressScope
+					showIds={items
+						.filter(
+							(item) =>
+								item.mediaType === "show" &&
+								item.seasonNumber == null &&
+								item.episodeNumber == null,
+						)
+						.map((item) => item.mediaId)}
+				>
+					<div className={SCROLL_ROW}>
+						{items.map((item) => {
+							const media = item.media as Record<string, unknown>;
+							const posterPath = media.posterPath as string | undefined;
+							const title = (media.title as string) || "Unknown";
+							const mediaId = (media.mediaId as string) || item.mediaId;
+							const isEpisode =
+								item.seasonNumber != null && item.episodeNumber != null;
 
-						return (
-							<div key={item.id} className="shrink-0">
-								<ActionableMediaCard
-									id={mediaId}
-									title={title}
-									seasonNumber={item.seasonNumber}
-									episodeNumber={item.episodeNumber}
-									episodeInfo={
-										isEpisode
-											? item.episodeName
-												? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-												: `S${item.seasonNumber}E${item.episodeNumber}`
-											: undefined
-									}
-									posterUrl={
-										posterPath
-											? `https://image.tmdb.org/t/p/w500${posterPath}`
-											: ""
-									}
-									type={item.mediaType as "movie" | "show"}
-									interactive={isOwner}
-									watchCount={item.watchCount}
-								/>
-							</div>
-						);
-					})}
-				</div>
+							return (
+								<div key={item.id} className="shrink-0">
+									<ActionableMediaCard
+										id={mediaId}
+										title={title}
+										seasonNumber={item.seasonNumber}
+										episodeNumber={item.episodeNumber}
+										episodeInfo={
+											isEpisode
+												? item.episodeName
+													? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+													: `S${item.seasonNumber}E${item.episodeNumber}`
+												: undefined
+										}
+										posterUrl={
+											posterPath
+												? `https://image.tmdb.org/t/p/w500${posterPath}`
+												: ""
+										}
+										type={item.mediaType as "movie" | "show"}
+										interactive={isOwner}
+										watchCount={item.watchCount}
+									/>
+								</div>
+							);
+						})}
+					</div>
+				</ShowProgressScope>
 			) : (
 				<div className="card p-6 text-center">
 					<p className="text-(--foreground-muted)">{emptyText}</p>

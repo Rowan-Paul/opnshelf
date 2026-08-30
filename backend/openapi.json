@@ -1687,6 +1687,38 @@
         ]
       }
     },
+    "/shows/progress": {
+      "post": {
+        "operationId": "ShowsController_getShowProgress",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowProgressBatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowProgressBatchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get viewer progress for a batch of shows",
+        "tags": [
+          "shows"
+        ]
+      }
+    },
     "/shows/history/{trackedEpisodeId}": {
       "delete": {
         "operationId": "ShowsController_deleteEpisodeWatchHistoryEntry",
@@ -7224,6 +7256,128 @@
           "id",
           "seasonNumber",
           "episodeNumber"
+        ]
+      },
+      "ShowProgressBatchDto": {
+        "type": "object",
+        "properties": {
+          "showIds": {
+            "description": "Up to 50 TMDB show IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "showIds"
+        ]
+      },
+      "ShowSeasonProgressDto": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodesWatched": {
+            "type": "number"
+          },
+          "episodesTotal": {
+            "type": "number"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "unwatched",
+              "partial",
+              "complete",
+              "unavailable"
+            ]
+          },
+          "remainingEpisodes": {
+            "type": "number",
+            "description": "Aired episodes still not watched"
+          },
+          "percentage": {
+            "type": "number",
+            "description": "Whole-number completion percentage"
+          }
+        },
+        "required": [
+          "seasonNumber",
+          "episodesWatched",
+          "episodesTotal",
+          "state",
+          "remainingEpisodes",
+          "percentage"
+        ]
+      },
+      "ShowProgressDto": {
+        "type": "object",
+        "properties": {
+          "showId": {
+            "type": "string",
+            "description": "TMDB show ID"
+          },
+          "hasWatches": {
+            "type": "boolean",
+            "description": "Whether the viewer has any episode Watches"
+          },
+          "episodesWatched": {
+            "type": "number",
+            "description": "Distinct aired regular episodes watched"
+          },
+          "episodesTotal": {
+            "type": "number",
+            "description": "Aired, non-special episodes"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "unwatched",
+              "partial",
+              "complete",
+              "unavailable"
+            ]
+          },
+          "remainingEpisodes": {
+            "type": "number",
+            "description": "Aired episodes still not watched"
+          },
+          "percentage": {
+            "type": "number",
+            "description": "Whole-number completion percentage"
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowSeasonProgressDto"
+            }
+          }
+        },
+        "required": [
+          "showId",
+          "hasWatches",
+          "episodesWatched",
+          "episodesTotal",
+          "state",
+          "remainingEpisodes",
+          "percentage",
+          "seasons"
+        ]
+      },
+      "ShowProgressBatchResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowProgressDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       },
       "MarkSeasonWatchedDto": {

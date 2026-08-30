@@ -1,6 +1,28 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import ActionableMediaCard from "./ActionableMediaCard";
+
+const mocks = vi.hoisted(() => ({
+	showProgress: {
+		episodesWatched: 2,
+		episodesTotal: 2,
+		state: "complete",
+		percentage: 100,
+		remainingEpisodes: 0,
+	},
+	markShowWatched: vi.fn(),
+}));
+
+afterEach(() => {
+	mocks.showProgress = {
+		episodesWatched: 2,
+		episodesTotal: 2,
+		state: "complete",
+		percentage: 100,
+		remainingEpisodes: 0,
+	};
+	mocks.markShowWatched.mockReset();
+});
 
 vi.mock("@tanstack/react-router", () => ({
 	Link: ({ children }: { children: React.ReactNode }) => (
@@ -22,6 +44,8 @@ vi.mock("#/lib/hooks/useWatchActions", () => ({
 		unmarkMovieWatched: vi.fn(),
 		markEpisodeWatched: vi.fn(),
 		unmarkEpisodeWatched: vi.fn(),
+		markShowWatched: mocks.markShowWatched,
+		isMarkShowPending: false,
 	}),
 }));
 
@@ -57,9 +81,69 @@ vi.mock("#/lib/hooks", () => ({
 		watchHistory: showWatchHistory,
 		isEpisodeWatched: () => true,
 	}),
+	useShowProgressForShow: () => ({
+		data: {
+			items: [{ showId: "1", ...mocks.showProgress, seasons: [] }],
+		},
+		isLoading: false,
+		isError: false,
+	}),
 }));
 
 describe("ActionableMediaCard Watch count", () => {
+	it("renders partial show progress as a percentage", () => {
+		mocks.showProgress = {
+			episodesWatched: 135,
+			episodesTotal: 159,
+			state: "partial",
+			percentage: 85,
+			remainingEpisodes: 24,
+		};
+		render(
+			<ActionableMediaCard id="1" title="Test Show" posterUrl="" type="show" />,
+		);
+
+		expect(
+			screen.getByRole("button", {
+				name: "135 of 159 episodes watched. Mark remaining watched",
+			}).textContent,
+		).toBe("85%");
+	});
+
+	it("confirms before marking the remaining show episodes watched", () => {
+		mocks.showProgress = {
+			episodesWatched: 135,
+			episodesTotal: 159,
+			state: "partial",
+			percentage: 85,
+			remainingEpisodes: 24,
+		};
+		render(
+			<ActionableMediaCard id="1" title="Test Show" posterUrl="" type="show" />,
+		);
+
+		fireEvent.click(
+			screen.getByRole("button", {
+				name: "135 of 159 episodes watched. Mark remaining watched",
+			}),
+		);
+
+		expect(mocks.markShowWatched).not.toHaveBeenCalled();
+		expect(
+			screen.getByRole("heading", {
+				name: "Mark remaining episodes watched?",
+			}),
+		).toBeTruthy();
+		expect(
+			screen.getByText(
+				"This will add Watches for the 24 remaining aired episodes of Test Show.",
+			),
+		).toBeTruthy();
+
+		fireEvent.click(screen.getByRole("button", { name: "Mark remaining" }));
+		expect(mocks.markShowWatched).toHaveBeenCalledTimes(1);
+	});
+
 	it("states no count on a whole-show card", () => {
 		render(
 			<ActionableMediaCard id="1" title="Test Show" posterUrl="" type="show" />,

@@ -32,6 +32,7 @@ describe("ShowsController", () => {
 		unmarkEpisodeWatched: vi.fn(),
 		getShowByTMDBId: vi.fn(),
 		getEpisodeWatchHistory: vi.fn(),
+		getShowProgress: vi.fn(),
 		removeTrackedEpisodeById: vi.fn(),
 		syncShowMetadata: vi.fn().mockResolvedValue(undefined),
 		getLocalSeasons: vi.fn().mockResolvedValue([]),
@@ -46,6 +47,7 @@ describe("ShowsController", () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		mockShowsService.syncShowMetadata.mockResolvedValue(undefined);
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [ShowsController],
@@ -109,6 +111,56 @@ describe("ShowsController", () => {
 				crew: [],
 			},
 		});
+		expect(
+			mockShowsService.upsertShow.mock.invocationCallOrder[0],
+		).toBeLessThan(
+			mockShowsService.syncShowMetadata.mock.invocationCallOrder[0],
+		);
+		expect(
+			mockShowsService.syncShowMetadata.mock.invocationCallOrder[0],
+		).toBeLessThan(mockShowsService.getShowCredits.mock.invocationCallOrder[0]);
+	});
+
+	it("does not return a detail response when season metadata synchronization fails", async () => {
+		mockShowsService.getShowDetails.mockResolvedValue({
+			id: 123,
+			name: "Test Show",
+		});
+		mockShowsService.upsertShow.mockResolvedValue({ showId: "123" });
+		mockShowsService.syncShowMetadata.mockRejectedValue(
+			new Error("Could not synchronize seasons 2"),
+		);
+
+		await expect(controller.getShowDetails("123")).rejects.toThrow(
+			"Could not synchronize seasons 2",
+		);
+		expect(mockShowsService.getShowCredits).not.toHaveBeenCalled();
+	});
+
+	it("returns progress for the authenticated viewer's requested shows", async () => {
+		const items = [
+			{
+				showId: "123",
+				episodesWatched: 2,
+				episodesTotal: 10,
+				seasons: [],
+			},
+		];
+		mockShowsService.getShowProgress.mockResolvedValue(items);
+
+		await expect(
+			controller.getShowProgress(
+				{ showIds: ["123"] },
+				createMockRequest({
+					did: "did:plc:viewer",
+					session: { did: "did:plc:viewer" },
+				}),
+			),
+		).resolves.toEqual({ items });
+		expect(mockShowsService.getShowProgress).toHaveBeenCalledWith(
+			"did:plc:viewer",
+			["123"],
+		);
 	});
 
 	describe("getUserShows", () => {

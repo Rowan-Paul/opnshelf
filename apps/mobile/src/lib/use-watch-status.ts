@@ -11,6 +11,8 @@ import { latestWatchDate } from "@/lib/watch-date";
 interface WatchStatusShowOptions {
 	mediaType: "show";
 	showId: string;
+	/** Show poster grids use the batched progress endpoint instead. */
+	skipHistory?: boolean;
 }
 
 interface WatchStatusMovieOptions {
@@ -49,7 +51,7 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 		...showsControllerGetShowWatchHistoryOptions({
 			path: { userDid, showId: isShow ? options.showId : "" },
 		}),
-		enabled: isAuthenticated && isShow && !!userDid,
+		enabled: isAuthenticated && isShow && !!userDid && !options.skipHistory,
 	});
 
 	const isMovieWatched = useMemo(() => {

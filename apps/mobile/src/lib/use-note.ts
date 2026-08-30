@@ -2,6 +2,7 @@ import {
 	notesControllerDeleteNoteMutation,
 	notesControllerGetNoteOptions,
 	notesControllerGetNoteQueryKey,
+	notesControllerGetUserNotesQueryKey,
 	notesControllerUpsertNoteMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,17 @@ function resolveMediaType(
 	if (episodeNumber != null) return "episode";
 	if (seasonNumber != null) return "season";
 	return mediaType;
+}
+
+/** Refresh every paginated notes view for one user, including infinite caches. */
+export function invalidateUserNotesQueries(
+	queryClient: ReturnType<typeof useQueryClient>,
+	userDid: string,
+) {
+	if (!userDid) return;
+	queryClient.invalidateQueries({
+		queryKey: notesControllerGetUserNotesQueryKey({ path: { userDid } }),
+	});
 }
 
 /**
@@ -72,6 +84,7 @@ export function useNote(target: NoteTarget) {
 
 	const invalidate = () => {
 		queryClient.invalidateQueries({ queryKey: noteKey });
+		invalidateUserNotesQueries(queryClient, userDid);
 	};
 
 	const upsertMutation = useMutation({

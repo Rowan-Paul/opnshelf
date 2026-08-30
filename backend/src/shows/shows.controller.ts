@@ -38,6 +38,8 @@ import {
 	ReleaseCalendarQueryDto,
 	ReleaseCalendarResponseDto,
 	SearchShowsResultsDto,
+	ShowProgressBatchDto,
+	ShowProgressBatchResponseDto,
 	TMDBEpisodeDto,
 	TMDBSeasonDetailDto,
 	TMDBShowDetailDto,
@@ -83,13 +85,10 @@ export class ShowsController {
 	async getShowDetails(@Param("showId") showId: string) {
 		const showData = await this.showsService.getShowDetails(showId);
 		const show = await this.showsService.upsertShow(showData);
-		this.showsService
-			.syncShowMetadata(showId)
-			.catch((err) =>
-				this.logger.warn(
-					`Background sync failed for show ${showId}: ${err instanceof Error ? err.message : String(err)}`,
-				),
-			);
+		// Progress is derived from aired episode rows, not TMDB's show summary.
+		// Do this before returning the first successful detail response so every
+		// client receives one catalogue lifecycle rather than repairing it later.
+		await this.showsService.syncShowMetadata(showId);
 		const credits = await this.showsService.getShowCredits(showId);
 
 		return {
@@ -422,6 +421,20 @@ export class ShowsController {
 			seasonNumber: item.seasonNumber,
 			episodeNumber: item.episodeNumber,
 		}));
+	}
+
+	@Post("progress")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Get viewer progress for a batch of shows" })
+	@ApiBody({ type: ShowProgressBatchDto })
+	@ApiResponse({ status: 201, type: ShowProgressBatchResponseDto })
+	async getShowProgress(
+		@Body() dto: ShowProgressBatchDto,
+		@Req() req: AuthenticatedRequest,
+	) {
+		return {
+			items: await this.showsService.getShowProgress(req.user.did, dto.showIds),
+		};
 	}
 
 	@Delete("history/:trackedEpisodeId")
