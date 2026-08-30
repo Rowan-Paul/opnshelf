@@ -68,7 +68,14 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const status = useWatchStatus(
 		isMovie
 			? { mediaType: "movie", movieId: props.movieId }
-			: { mediaType: "show", showId },
+			: {
+					mediaType: "show",
+					showId,
+					// Show and season controls have authoritative aggregate progress.
+					// Full history is only needed to render/manage an individual episode.
+					skipHistory:
+						props.mediaType === "show" || props.mediaType === "season",
+				},
 	);
 	const actions = useWatchActions(
 		isMovie

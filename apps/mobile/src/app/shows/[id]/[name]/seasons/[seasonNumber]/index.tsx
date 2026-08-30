@@ -27,6 +27,7 @@ import { WatchProviders } from "@/components/detail/WatchProviders";
 import { DetailSkeleton, ListRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import {
 	backdropUrl,
 	formatLongDate,
@@ -36,10 +37,10 @@ import {
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { useUpNext } from "@/lib/use-up-next";
-import { useWatchStatus } from "@/lib/use-watch-status";
 import { webMediaUrl } from "@/lib/web-url";
 
 export default function SeasonDetailScreen() {
+	const { isAuthenticated } = useAuth();
 	const { id, name, seasonNumber, reviewId } = useLocalSearchParams<{
 		id: string;
 		// The slug segment. Carried through sibling links so in-app navigation
@@ -72,9 +73,8 @@ export default function SeasonDetailScreen() {
 		(season) => season.seasonNumber === seasonNum,
 	);
 
-	// Per-episode watched status (for the progress card) + the show's next
-	// unwatched episode (to flag the "Up Next" row), mirroring the web page.
-	const watch = useWatchStatus({ mediaType: "show", showId: id });
+	// Aggregate progress owns the season card; individual episode rows request
+	// history themselves because they need per-episode state and Watch management.
 	const { items: upNextItems } = useUpNext(20, id);
 
 	const totalEpisodes = seasonProgress?.episodesTotal ?? 0;
@@ -243,9 +243,7 @@ export default function SeasonDetailScreen() {
 						</View>
 					) : null}
 
-					{watch.isAuthenticated ? (
-						<ProgressCard progress={seasonProgress} />
-					) : null}
+					{isAuthenticated ? <ProgressCard progress={seasonProgress} /> : null}
 
 					<OverviewSection text={data.overview} />
 

@@ -50,6 +50,15 @@ function ProgressProbe() {
 	);
 }
 
+function ProgressErrorProbe() {
+	const progress = useShowProgress(["broken"]);
+	return (
+		<output>
+			{progress.isError ? "error" : progress.data ? "data" : "no-data"}
+		</output>
+	);
+}
+
 describe("useShowProgress", () => {
 	afterEach(() => {
 		cleanup();
@@ -76,11 +85,30 @@ describe("useShowProgress", () => {
 		await waitFor(() => expect(mocks.getProgress).toHaveBeenCalledTimes(1));
 		expect(mocks.getProgress).toHaveBeenCalledWith({
 			body: { showIds: ["one", "two"] },
+			throwOnError: true,
 		});
 		await waitFor(() =>
 			expect(screen.getByTestId("progress-one").textContent).toBe("1"),
 		);
 		expect(screen.getByTestId("progress-two").textContent).toBe("0");
+	});
+
+	it("keeps a failed request as an error instead of empty progress", async () => {
+		mocks.getProgress.mockRejectedValue(new Error("Service unavailable"));
+
+		render(
+			<QueryClientProvider client={createQueryClient()}>
+				<ProgressErrorProbe />
+			</QueryClientProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByRole("status").textContent).toBe("error"),
+		);
+		expect(mocks.getProgress).toHaveBeenCalledWith({
+			body: { showIds: ["broken"] },
+			throwOnError: true,
+		});
 	});
 
 	it("does not expose one viewer's cached progress after identity changes", async () => {

@@ -273,6 +273,11 @@ export function ProfileListsPage({
 					}),
 				});
 			}
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListsQueryKey({
+					path: { userDid },
+				}),
+			});
 		},
 		onError: (error) => {
 			toast.error(

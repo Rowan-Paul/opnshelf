@@ -51,18 +51,22 @@ export function useShowProgress(
 			queryFn: async () => {
 				const { data } = await showsControllerGetShowProgress({
 					body: { showIds: batch },
+					throwOnError: true,
 				});
-				return data ?? { items: [] };
+				if (!data) throw new Error("Show progress response was empty");
+				return data;
 			},
 		})),
 	});
+	const isError = queries.some((query) => query.isError);
 
 	return {
-		data: queries.length
-			? { items: queries.flatMap((query) => query.data?.items ?? []) }
-			: undefined,
+		data:
+			queries.length && !isError
+				? { items: queries.flatMap((query) => query.data?.items ?? []) }
+				: undefined,
 		isLoading: queries.some((query) => query.isLoading),
-		isError: queries.some((query) => query.isError),
+		isError,
 	};
 }
 

@@ -7,6 +7,8 @@ import {
 	listsControllerGetListQueryKey,
 	listsControllerGetListsForItemOptions,
 	listsControllerGetListsForItemQueryKey,
+	listsControllerGetPublicUserListQueryKey,
+	listsControllerGetPublicUserListsQueryKey,
 	listsControllerGetUserListsOptions,
 	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
@@ -46,6 +48,27 @@ function captureListChange(
 		media_type: mediaType,
 		list_kind: "custom",
 	});
+}
+
+/** Refresh the public profile list views for the current owner only. */
+export function invalidatePublicListQueries(
+	queryClient: ReturnType<typeof useQueryClient>,
+	userDid: string | undefined,
+	slug?: string,
+) {
+	if (!userDid) return;
+	queryClient.invalidateQueries({
+		queryKey: listsControllerGetPublicUserListsQueryKey({
+			path: { userDid },
+		}),
+	});
+	if (slug) {
+		queryClient.invalidateQueries({
+			queryKey: listsControllerGetPublicUserListQueryKey({
+				path: { userDid, slug },
+			}),
+		});
+	}
 }
 
 /** All of the current user's lists. */
@@ -95,6 +118,7 @@ export function useList(
 export function useCreateList() {
 	const queryClient = useQueryClient();
 	const toast = useToast();
+	const { user } = useAuth();
 	return useMutation({
 		mutationKey: ["lists", "create"],
 		...listsControllerCreateListMutation(),
@@ -106,6 +130,7 @@ export function useCreateList() {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetUserListsQueryKey(),
 			});
+			invalidatePublicListQueries(queryClient, user?.did);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to create list")),
@@ -116,6 +141,7 @@ export function useCreateList() {
 export function useUpdateList() {
 	const queryClient = useQueryClient();
 	const toast = useToast();
+	const { user } = useAuth();
 	return useMutation({
 		mutationKey: ["lists", "update"],
 		...listsControllerUpdateListMutation(),
@@ -129,6 +155,7 @@ export function useUpdateList() {
 					path: { slug: variables.path.slug },
 				}),
 			});
+			invalidatePublicListQueries(queryClient, user?.did, variables.path.slug);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to update list")),
@@ -139,14 +166,16 @@ export function useUpdateList() {
 export function useDeleteList() {
 	const queryClient = useQueryClient();
 	const toast = useToast();
+	const { user } = useAuth();
 	return useMutation({
 		mutationKey: ["lists", "delete"],
 		...listsControllerDeleteListMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
 			toast.success("List deleted");
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetUserListsQueryKey(),
 			});
+			invalidatePublicListQueries(queryClient, user?.did, variables.path.slug);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to delete list")),
@@ -157,6 +186,7 @@ export function useDeleteList() {
 export function useRemoveListItem(slug: string) {
 	const queryClient = useQueryClient();
 	const toast = useToast();
+	const { user } = useAuth();
 	return useMutation({
 		mutationKey: ["lists", slug, "removeItem"],
 		...listsControllerRemoveItemFromListMutation(),
@@ -172,6 +202,7 @@ export function useRemoveListItem(slug: string) {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetUserListsQueryKey(),
 			});
+			invalidatePublicListQueries(queryClient, user?.did, slug);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to remove from list")),
@@ -182,6 +213,7 @@ export function useRemoveListItem(slug: string) {
 export function useAddListItem(slug: string) {
 	const queryClient = useQueryClient();
 	const toast = useToast();
+	const { user } = useAuth();
 	return useMutation({
 		mutationKey: ["lists", slug, "addItem"],
 		...listsControllerAddItemToListMutation(),
@@ -197,6 +229,7 @@ export function useAddListItem(slug: string) {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetUserListsQueryKey(),
 			});
+			invalidatePublicListQueries(queryClient, user?.did, slug);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to add to list")),
@@ -207,6 +240,7 @@ export function useAddListItem(slug: string) {
 export function useReorderListItems(slug: string) {
 	const queryClient = useQueryClient();
 	const toast = useToast();
+	const { user } = useAuth();
 	return useMutation({
 		mutationKey: ["lists", slug, "reorder"],
 		...listsControllerReorderListItemsMutation(),
@@ -218,6 +252,7 @@ export function useReorderListItems(slug: string) {
 			queryClient.invalidateQueries({
 				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
 			});
+			invalidatePublicListQueries(queryClient, user?.did, slug);
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to save order")),
@@ -241,7 +276,7 @@ interface ListMembershipTarget {
  * + user-lists queries on settle.
  */
 export function useListMembership(target: ListMembershipTarget) {
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, user } = useAuth();
 	const queryClient = useQueryClient();
 	const toast = useToast();
 
@@ -283,9 +318,10 @@ export function useListMembership(target: ListMembershipTarget) {
 		);
 	};
 
-	const settle = () => {
+	const settle = (slug?: string) => {
 		queryClient.invalidateQueries({ queryKey: listsForItemKey });
 		queryClient.invalidateQueries({ queryKey: userListsKey });
+		invalidatePublicListQueries(queryClient, user?.did, slug);
 	};
 
 	const addMutation = useMutation({
@@ -307,7 +343,7 @@ export function useListMembership(target: ListMembershipTarget) {
 			}
 			toast.error(errorMessage(error, "Failed to add to list"));
 		},
-		onSettled: settle,
+		onSettled: (_data, _error, variables) => settle(variables?.path.slug),
 	});
 
 	const removeMutation = useMutation({
@@ -329,7 +365,7 @@ export function useListMembership(target: ListMembershipTarget) {
 			}
 			toast.error(errorMessage(error, "Failed to remove from list"));
 		},
-		onSettled: settle,
+		onSettled: (_data, _error, variables) => settle(variables?.path.slug),
 	});
 
 	const toggle = (slug: string, isInList: boolean) => {

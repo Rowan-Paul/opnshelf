@@ -1,5 +1,7 @@
 import {
 	socialControllerUnfollowMutation,
+	usersControllerGetPublicFollowersQueryKey,
+	usersControllerGetPublicFollowingQueryKey,
 	usersControllerGetPublicProfileOptions,
 	usersControllerGetPublicProfileQueryKey,
 } from "@opnshelf/api";
@@ -69,6 +71,12 @@ function ProfileConnectionsPage() {
 	const profileQueryKey = usersControllerGetPublicProfileQueryKey({
 		path: { handle },
 	});
+	const followersQueryKey = usersControllerGetPublicFollowersQueryKey({
+		path: { handle },
+	});
+	const followingQueryKey = usersControllerGetPublicFollowingQueryKey({
+		path: { handle },
+	});
 
 	const unfollowMutation = useMutation({
 		mutationKey: ["social", "unfollow", handle],
@@ -76,12 +84,8 @@ function ProfileConnectionsPage() {
 		onSuccess: () => {
 			posthog.capture("user_unfollowed", { source: "profile_connections" });
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });
-			queryClient.invalidateQueries({
-				queryKey: ["public-profile", "following", handle],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["public-profile", "followers", handle],
-			});
+			queryClient.invalidateQueries({ queryKey: followingQueryKey });
+			queryClient.invalidateQueries({ queryKey: followersQueryKey });
 		},
 	});
 
