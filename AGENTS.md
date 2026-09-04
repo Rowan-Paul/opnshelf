@@ -78,10 +78,15 @@ Never hand-edit generated output. Change its source, run the owning command, and
 ## Git workflow
 
 - Before editing, inspect `git status` and preserve all unrelated modifications and untracked files.
+- Keep one concern per issue and pull request. If a description needs an unrelated "also," split the work.
+- Before opening an issue, search open and closed issues for duplicates. Prefer adding new evidence to a matching issue, with operator approval, over opening another one.
+- Never open an issue or pull request unless the operator explicitly asks. For an issue, show the operator the final title and body before posting; use a specific plain-language title and include observed behavior, expected behavior, reproduction steps, scope, and relevant evidence. Redact secrets and private paths.
 - For every issue, create `issue/<number>-<short-name>` from an updated `develop`. In a shared or dirty tree, keep the current branch in place and use a separate worktree. Treat `main` as release-only.
 - Stage the paths you changed. Never `git add -A` or `git add .`: sessions share this tree and a blanket add swallows another one's unstaged work.
 - Commit subjects are plain imperative sentences, no `feat:` or `fix:` prefix. The body says why the old behavior was wrong and what changed, ends with `Closes #<number>` where an issue exists, and carries the `Co-Authored-By` trailer.
 - Keep commits focused on the requested change. Do not amend, rebase, force-push, merge, deploy, or publish unless the operator explicitly requests it.
-- When the operator requests publication, push the issue branch and open a ready pull request into `develop`. Wait for required CI, then squash-merge and delete the branch.
+- When the operator requests publication, push the issue branch and open a ready pull request into `develop`. The pull request explains the problem and solution, links its issue, and includes before/after images for visual UI changes or a short recording for motion and timing changes. End the body with the model and harness that performed the work.
+- When asked to babysit a pull request, poll checks and comments newer than the latest push. Verify automated findings against the source, fix confirmed problems, and explain dismissed false positives. Continue until required checks are terminal and report the pull request URL and final state.
+- Squash-merge and delete the branch only when the operator explicitly requests those actions. After the merge, close or update any tracking issue that remains open when the operator requested issue maintenance.
 - Move releases from `develop` to `main` through a separate pull request. Never open an issue-branch pull request into `main`.
 - Report changed files and the verification commands actually run, including any skipped or failing checks.

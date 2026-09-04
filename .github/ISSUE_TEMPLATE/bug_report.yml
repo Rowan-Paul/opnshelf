@@ -1,0 +1,98 @@
+name: Bug report
+description: Report broken behavior, a regression, or a reliability problem.
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search open and closed issues first. Keep the report focused on one problem and redact secrets or private paths.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched for an existing issue and did not find a duplicate.
+          required: true
+        - label: I included enough detail to reproduce or investigate the problem.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Web
+        - Mobile
+        - Backend
+        - API client or lexicons
+        - Mail relay
+        - Build, deployment, or CI
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal, deterministic reproduction.
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - Blocks use completely
+        - Major degradation or frequent failure
+        - Minor or occasional failure
+        - Cosmetic issue
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: develop @ abc1234
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the platform, OS, browser or app version, and anything else relevant.
+      placeholder: iOS 20, app 1.2.3; or macOS 17, Safari 20
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add the smallest useful logs, stack traces, screenshots, or recordings. Redact secrets and private paths.
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description: Include any temporary workaround you found.
