@@ -1,39 +1,28 @@
 import { rebaseAvatarUrl } from "../users/avatar-url";
 import { Agent } from "@atproto/api";
-import slugifyLib from "slugify";
 import { TID } from "@atproto/common";
-import {
-	ConflictException,
-	ForbiddenException,
-	Injectable,
-	Logger,
-	NotFoundException,
-} from "@nestjs/common";
-import { main as markdownDef } from "../lexicons/at/markpub/markdown.defs";
-import { main as mediaLinkDef } from "../lexicons/xyz/opnshelf/mediaLink.defs";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import {
 	$nsid as REVIEW_COLLECTION,
 	main as reviewSchema,
 } from "../lexicons/xyz/opnshelf/review";
 import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs";
-import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
 import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
-import {
-	$nsid as DOCUMENT_COLLECTION,
-	main as documentSchema,
-} from "../lexicons/site/standard/document";
-import type { Main as DocumentRecord } from "../lexicons/site/standard/document.defs";
 import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publication";
 import type { Main as PublicationRecord } from "../lexicons/site/standard/publication.defs";
 import { PrismaService } from "../prisma/prisma.service";
-import { documentToLeafletContent } from "./mirror/leaflet";
-import { documentToOffprintContent } from "./mirror/offprint";
-import { documentToPcktContent } from "./mirror/pckt";
 import {
-	markdownToDocument,
-	type DocumentBlock,
-	type InlineRun,
-} from "./mirror/markdown-to-doc";
+	BlogMirrorService,
+	detectPublicationService,
+	type PublicationService,
+} from "./blog-mirror.service";
+import {
+	type BlueskyCrossPostResult,
+	BlueskyCrossPostService,
+} from "./bluesky-cross-post.service";
+import { ReviewLikesService } from "./review-likes.service";
+import { ReviewMediaService } from "./review-media.service";
+import { excerptOf, PUBLIC_SITE_ORIGIN } from "./review-presentation";
 import type {
 	CreateReviewDto,
 	MediaReviewsQueryDto,
@@ -44,373 +33,26 @@ export interface ATSession {
 	did: string;
 }
 
-// Canonical public site. NEVER opnshelf.social (that is only the PDS host).
-const PUBLIC_SITE_ORIGIN = "https://opnshelf.xyz";
-const BLUESKY_APP_ORIGIN = "https://bsky.app";
-const BLUESKY_POST_COLLECTION = "app.bsky.feed.post";
-const BLUESKY_POST_MAX_GRAPHEMES = 300;
-const BLUESKY_CTA = "Read my review";
-const BLUESKY_THUMB_MAX_BYTES = 1_000_000;
+export type { BlueskyCrossPostResult } from "./bluesky-cross-post.service";
 
 const PUBLICATION_LIST_LIMIT = 100;
-const OFFPRINT_ARTICLE_COLLECTION = "app.offprint.document.article";
-
-type PublicationService = "leaflet" | "offprint" | "pckt" | "unknown";
-
-function detectPublicationService(publication: {
-	url?: string;
-	theme?: { $type?: string };
-}): PublicationService {
-	if (publication.theme?.$type?.startsWith("app.offprint.")) {
-		return "offprint";
-	}
-	if (publication.theme?.$type?.startsWith("blog.pckt.")) {
-		return "pckt";
-	}
-	try {
-		const host = new URL(publication.url ?? "").hostname;
-		if (host === "leaflet.pub" || host.endsWith(".leaflet.pub")) {
-			return "leaflet";
-		}
-		if (host === "offprint.app" || host.endsWith(".offprint.app")) {
-			return "offprint";
-		}
-		if (host === "pckt.blog" || host.endsWith(".pckt.blog")) {
-			return "pckt";
-		}
-	} catch {
-		// Unknown/invalid publication URLs fall back to the portable format.
-	}
-	return "unknown";
-}
-
-type MediaType = "movie" | "show" | "season" | "episode";
 
 /**
- * Display label and slug source for the media a Review points at.
- *
- * `title` is what a human reads and is composite for a season or episode
- * ("Breaking Bad — S1E1: Pilot"). `mediaTitle` is the title of the movie or
- * show that `mediaId` identifies, never composite, because it is what URL slugs
- * are built from — web slugs an episode URL from the show name alone, so
- * slugging the composite would produce a different URL for the same page
- * (ADR 0023).
+ * Reviews: the xyz.opnshelf.review record in the author's repo (ADR-0013), its
+ * local index, and the read paths that enrich it. The optional Blog Mirror,
+ * Bluesky Cross-post and Review Likes are delegated to their own services.
  */
-type MediaLabel = {
-	/** Composite for a season or episode: "Breaking Bad — S1E1: Pilot". */
-	label: string;
-	/** Title of the movie or show `mediaId` identifies. Never composite. */
-	mediaTitle: string;
-	posterPath: string | null;
-};
-
-/**
- * Canonical media-name slug. Must stay identical to `slugifyName` in
- * @opnshelf/api — see the parity test in reviews.media-url.spec.ts. The backend
- * cannot import that package (it would pull the whole generated client), so
- * this is a deliberate second copy guarded by a test.
- */
-export function slugifyMediaName(name: string): string {
-	// The `|| "-"` matters: an empty slug collapses the URL to `/movies/603/`,
-	// which matches no route. Kept identical to @opnshelf/api.
-	return slugifyLib(name, { lower: true, strict: true, trim: true }) || "-";
-}
-
-const MAX_SLUG_LENGTH = 80;
-
-// Slug for the blog-mirror document `path`. Falls back to "review" when a title
-// slugifies to nothing (e.g. an all-emoji title).
-function slugify(title: string): string {
-	const base = title
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-|-$/g, "")
-		.slice(0, MAX_SLUG_LENGTH)
-		.replace(/-$/, "");
-	return base || "review";
-}
-
-/** Strip a small plaintext excerpt out of markdown for previews/mirror. */
-function toPlainText(markdown: string): string {
-	return markdown
-		.replace(/```[\s\S]*?```/g, " ")
-		.replace(/`[^`]*`/g, " ")
-		.replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
-		.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-		.replace(/^#{1,6}\s+/gm, "")
-		.replace(/[*_~>#-]/g, " ")
-		.replace(/\s+/g, " ")
-		.trim();
-}
-
-function excerpt(plain: string, max = 280): string {
-	if (plain.length <= max) return plain;
-	return `${plain.slice(0, max - 1).trimEnd()}…`;
-}
-
-/** Short plaintext excerpt of a review body, computed on read (not stored). */
-function excerptOf(markdown: string): string {
-	return excerpt(toPlainText(markdown));
-}
-
-// Poster size for the metadata header of the blog mirror (a review-sized image,
-// not a full-bleed backdrop).
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w342";
-
-export type BlueskyCrossPostResult =
-	| { status: "not_requested" }
-	| { status: "posted"; uri: string; url: string }
-	| { status: "failed" };
-
-function graphemes(value: string): string[] {
-	const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-	return Array.from(segmenter.segment(value), (part) => part.segment);
-}
-
-function truncateGraphemes(value: string, max: number): string {
-	const parts = graphemes(value);
-	if (parts.length <= max) return value;
-	if (max <= 0) return "";
-	if (max === 1) return "…";
-	return `${parts.slice(0, max - 1).join("")}…`;
-}
-
-function crossPostText(mediaTitle: string, reviewTitle: string): string {
-	return `I reviewed ${mediaTitle} on Opnshelf: “${reviewTitle}”\n\n${BLUESKY_CTA}`;
-}
-
-/** Compose within Bluesky's 300-grapheme limit, trimming review title first. */
-export function composeBlueskyPostText(
-	mediaTitle: string,
-	reviewTitle: string,
-): string {
-	let resolvedReviewTitle = reviewTitle;
-	let resolvedMediaTitle = mediaTitle;
-	let text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
-
-	if (graphemes(text).length > BLUESKY_POST_MAX_GRAPHEMES) {
-		const withoutReview = crossPostText(resolvedMediaTitle, "");
-		const reviewBudget = Math.max(
-			0,
-			BLUESKY_POST_MAX_GRAPHEMES - graphemes(withoutReview).length,
-		);
-		resolvedReviewTitle = truncateGraphemes(reviewTitle, reviewBudget);
-		text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
-	}
-
-	if (graphemes(text).length > BLUESKY_POST_MAX_GRAPHEMES) {
-		const withoutMedia = crossPostText("", resolvedReviewTitle);
-		const mediaBudget = Math.max(
-			0,
-			BLUESKY_POST_MAX_GRAPHEMES - graphemes(withoutMedia).length,
-		);
-		resolvedMediaTitle = truncateGraphemes(mediaTitle, mediaBudget);
-		text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
-	}
-
-	return text;
-}
-
-/** Rich-text facet offsets are UTF-8 bytes, not JS UTF-16 indices. */
-export function blueskyLinkFacet(text: string, uri: string) {
-	const start = text.lastIndexOf(BLUESKY_CTA);
-	if (start < 0) {
-		throw new Error("Bluesky call to action missing from post text");
-	}
-	return {
-		index: {
-			byteStart: Buffer.byteLength(text.slice(0, start), "utf8"),
-			byteEnd: Buffer.byteLength(
-				text.slice(0, start + BLUESKY_CTA.length),
-				"utf8",
-			),
-		},
-		features: [
-			{
-				$type: "app.bsky.richtext.facet#link",
-				uri,
-			},
-		],
-	};
-}
-
-const MEDIA_TYPE_LABEL: Record<MediaType, string> = {
-	movie: "Movie",
-	show: "TV series",
-	season: "Season",
-	episode: "Episode",
-};
-
-/**
- * Public opnshelf page for a media item. The trailing slug is cosmetic — web
- * routes resolve by id (and season/episode numbers) — so a slug of the media
- * title is fine even for the composite season/episode titles.
- */
-/**
- * Public opnshelf.xyz URL for a Media Item. These go out in Bluesky
- * Cross-posts and Blog Mirrors, so they are the most visible URLs we emit and
- * must be byte-identical to what the Web App and Mobile App build (ADR 0023).
- *
- * `mediaTitle` must be the movie or show title, never the composite label: web
- * slugs an episode URL from the show name alone. And the slug uses the same
- * options as `slugifyName` in @opnshelf/api, not the blog-path `slugify` above,
- * which mangles accents ("Pokémon" -> "pok-mon").
- */
-export function mediaPageUrl(
-	mediaType: MediaType,
-	mediaId: string,
-	seasonNumber: number | undefined,
-	episodeNumber: number | undefined,
-	mediaTitle: string,
-): string {
-	const slug = slugifyMediaName(mediaTitle);
-	switch (mediaType) {
-		case "movie":
-			return `${PUBLIC_SITE_ORIGIN}/movies/${mediaId}/${slug}`;
-		case "show":
-			return `${PUBLIC_SITE_ORIGIN}/shows/${mediaId}/${slug}`;
-		case "season":
-			return `${PUBLIC_SITE_ORIGIN}/shows/${mediaId}/${slug}/seasons/${seasonNumber}`;
-		case "episode":
-			return `${PUBLIC_SITE_ORIGIN}/shows/${mediaId}/${slug}/seasons/${seasonNumber}/episodes/${episodeNumber}`;
-	}
-}
-
-/**
- * Frame the review body for the blog mirror: a small media header (poster +
- * linked title + type) on top and an opnshelf promo at the bottom. The footer is
- * a pitch, not a "read this review" backlink — the reader is already reading the
- * review here (e.g. on Leaflet), so it links to the media's opnshelf page to draw
- * them in. Any absent media info is simply omitted; the review body is always
- * present.
- */
-function buildMirrorContentMarkdown(params: {
-	body: string;
-	mediaTitle: string | null;
-	posterPath: string | null;
-	mediaUrl: string;
-	typeLabel: string;
-}): string {
-	const blocks: string[] = [];
-	if (params.mediaTitle) {
-		if (params.posterPath) {
-			blocks.push(
-				`[![${params.mediaTitle}](${TMDB_IMAGE_BASE}${params.posterPath})](${params.mediaUrl})`,
-			);
-		}
-		blocks.push(
-			`**[${params.mediaTitle}](${params.mediaUrl})** · ${params.typeLabel}`,
-		);
-	}
-	blocks.push(params.body);
-	blocks.push("---");
-	// Whole sentence is the link (bigger, more enticing click target).
-	blocks.push(
-		`*[Posted with opnshelf — track what you're watching and share your reviews on the open social web.](${params.mediaUrl})*`,
-	);
-	return blocks.join("\n\n");
-}
-
-function buildLeafletMirrorContent(params: {
-	body: string;
-	mediaTitle: string | null;
-	mediaUrl: string;
-	typeLabel: string;
-}): Record<string, unknown> {
-	const blocks: DocumentBlock[] = [];
-	if (params.mediaTitle) {
-		const header: InlineRun[] = [
-			{ type: "bold", text: params.mediaTitle },
-			{ type: "text", text: ` · ${params.typeLabel}` },
-		];
-		// The title is a single, generous link target; the poster is intentionally
-		// omitted until we have a blob-upload path for remote TMDB artwork.
-		header.splice(0, 1, {
-			type: "link",
-			text: params.mediaTitle,
-			href: params.mediaUrl,
-		});
-		blocks.push({ type: "paragraph", runs: header });
-	}
-	blocks.push(...markdownToDocument(params.body));
-	blocks.push({
-		type: "paragraph",
-		runs: [
-			{
-				type: "link",
-				text: "Posted with opnshelf — track what you're watching and share your reviews on the open social web.",
-				href: params.mediaUrl,
-			},
-		],
-	});
-	return documentToLeafletContent(blocks);
-}
-
-function buildOffprintMirrorContent(params: {
-	body: string;
-	mediaTitle: string | null;
-	mediaUrl: string;
-	typeLabel: string;
-}): Record<string, unknown> {
-	const blocks: DocumentBlock[] = [];
-	if (params.mediaTitle) {
-		blocks.push({
-			type: "paragraph",
-			runs: [
-				{ type: "link", text: params.mediaTitle, href: params.mediaUrl },
-				{ type: "text", text: ` · ${params.typeLabel}` },
-			],
-		});
-	}
-	blocks.push(...markdownToDocument(params.body));
-	blocks.push({
-		type: "paragraph",
-		runs: [
-			{
-				type: "link",
-				text: "Posted with opnshelf — track what you're watching and share your reviews on the open social web.",
-				href: params.mediaUrl,
-			},
-		],
-	});
-	return documentToOffprintContent(blocks);
-}
-
-function buildPcktMirrorContent(params: {
-	body: string;
-	mediaTitle: string | null;
-	mediaUrl: string;
-	typeLabel: string;
-}): Record<string, unknown> {
-	const blocks: DocumentBlock[] = [];
-	if (params.mediaTitle) {
-		blocks.push({
-			type: "paragraph",
-			runs: [
-				{ type: "link", text: params.mediaTitle, href: params.mediaUrl },
-				{ type: "text", text: ` · ${params.typeLabel}` },
-			],
-		});
-	}
-	blocks.push(...markdownToDocument(params.body));
-	blocks.push({
-		type: "paragraph",
-		runs: [
-			{
-				type: "link",
-				text: "Posted with opnshelf — track what you're watching and share your reviews on the open social web.",
-				href: params.mediaUrl,
-			},
-		],
-	});
-	return documentToPcktContent(blocks);
-}
-
 @Injectable()
 export class ReviewsService {
 	private readonly logger = new Logger(ReviewsService.name);
 
-	constructor(private prisma: PrismaService) {}
+	constructor(
+		private prisma: PrismaService,
+		private reviewMedia: ReviewMediaService,
+		private blogMirror: BlogMirrorService,
+		private blueskyCrossPost: BlueskyCrossPostService,
+		private reviewLikes: ReviewLikesService,
+	) {}
 
 	async getReview(reviewId: string) {
 		return this.prisma.review.findUnique({ where: { id: reviewId } });
@@ -439,7 +81,9 @@ export class ReviewsService {
 			throw new NotFoundException("Review not found");
 		}
 
-		const mediaByReviewId = await this.enrichMediaForReviews([review]);
+		const mediaByReviewId = await this.reviewMedia.enrichMediaForReviews([
+			review,
+		]);
 		const media = mediaByReviewId.get(review.id);
 
 		return {
@@ -468,234 +112,6 @@ export class ReviewsService {
 		};
 	}
 
-	/**
-	 * Resolve `{ title, posterPath }` for each review's media item by joining the
-	 * locally-indexed Movie/Show/Season/Episode tables. The cover is always the
-	 * underlying media poster — a Review carries no cover of its own.
-	 *
-	 * Returned as a Map keyed by review id.
-	 */
-	private async enrichMediaForReviews(
-		reviews: Array<{
-			id: string;
-			mediaType: string;
-			mediaId: string;
-			seasonNumber: number;
-			episodeNumber: number;
-		}>,
-	): Promise<Map<string, MediaLabel>> {
-		const movieIds = reviews
-			.filter((r) => r.mediaType === "movie")
-			.map((r) => r.mediaId);
-		const showIds = reviews
-			.filter((r) => r.mediaType === "show")
-			.map((r) => r.mediaId);
-		const seasonConditions = reviews
-			.filter((r) => r.mediaType === "season")
-			.map((r) => ({ showId: r.mediaId, seasonNumber: r.seasonNumber }));
-		const episodeConditions = reviews
-			.filter((r) => r.mediaType === "episode")
-			.map((r) => ({
-				showId: r.mediaId,
-				seasonNumber: r.seasonNumber,
-				episodeNumber: r.episodeNumber,
-			}));
-
-		const [movies, shows, seasons, episodes] = await Promise.all([
-			movieIds.length > 0
-				? this.prisma.movie.findMany({
-						where: { movieId: { in: movieIds } },
-					})
-				: Promise.resolve([]),
-			showIds.length > 0
-				? this.prisma.show.findMany({
-						where: { showId: { in: showIds } },
-					})
-				: Promise.resolve([]),
-			seasonConditions.length > 0
-				? this.prisma.season.findMany({
-						where: { OR: seasonConditions },
-						include: { show: true },
-					})
-				: Promise.resolve([]),
-			episodeConditions.length > 0
-				? this.prisma.episode.findMany({
-						where: { OR: episodeConditions },
-						include: { season: { include: { show: true } } },
-					})
-				: Promise.resolve([]),
-		]);
-
-		const movieMap = new Map<string, MediaLabel>();
-		for (const m of movies) {
-			movieMap.set(m.movieId, {
-				label: m.title,
-				mediaTitle: m.title,
-				posterPath: m.posterPath,
-			});
-		}
-		const showMap = new Map<string, MediaLabel>();
-		for (const s of shows) {
-			showMap.set(s.showId, {
-				label: s.title,
-				mediaTitle: s.title,
-				posterPath: s.posterPath,
-			});
-		}
-		const seasonMap = new Map<string, MediaLabel>();
-		for (const s of seasons) {
-			const key = `${s.showId}:${s.seasonNumber}`;
-			seasonMap.set(key, {
-				label: `${s.show.title} — ${s.name}`,
-				mediaTitle: s.show.title,
-				posterPath: s.posterPath ?? s.show.posterPath,
-			});
-		}
-		const episodeMap = new Map<string, MediaLabel>();
-		for (const e of episodes) {
-			const key = `${e.showId}:${e.seasonNumber}:${e.episodeNumber}`;
-			episodeMap.set(key, {
-				label: `${e.season.show.title} — S${e.seasonNumber}E${e.episodeNumber}: ${e.name}`,
-				mediaTitle: e.season.show.title,
-				// Cover is always the portrait media poster, never the landscape
-				// episode still — fall back season → show.
-				posterPath: e.season.posterPath ?? e.season.show.posterPath,
-			});
-		}
-
-		const byReviewId = new Map<string, MediaLabel>();
-		for (const review of reviews) {
-			let media: MediaLabel | undefined;
-			if (review.mediaType === "movie") {
-				media = movieMap.get(review.mediaId);
-			} else if (review.mediaType === "show") {
-				media = showMap.get(review.mediaId);
-			} else if (review.mediaType === "season") {
-				media = seasonMap.get(`${review.mediaId}:${review.seasonNumber}`);
-			} else if (review.mediaType === "episode") {
-				media = episodeMap.get(
-					`${review.mediaId}:${review.seasonNumber}:${review.episodeNumber}`,
-				);
-			}
-			if (media) {
-				byReviewId.set(review.id, media);
-			}
-		}
-
-		return byReviewId;
-	}
-
-	private async uploadBlueskyThumbnail(
-		agent: Agent,
-		posterPath: string | null,
-	): Promise<unknown | undefined> {
-		if (!posterPath) return undefined;
-		try {
-			const response = await fetch(`${TMDB_IMAGE_BASE}${posterPath}`);
-			if (!response.ok) return undefined;
-			const contentType = response.headers.get("content-type") ?? "";
-			if (!contentType.startsWith("image/")) return undefined;
-			const bytes = new Uint8Array(await response.arrayBuffer());
-			if (bytes.byteLength > BLUESKY_THUMB_MAX_BYTES) return undefined;
-			const uploaded = await agent.uploadBlob(bytes, { encoding: contentType });
-			return uploaded.data.blob;
-		} catch (error) {
-			this.logger.warn(
-				"Bluesky card thumbnail upload failed; posting without it",
-				error instanceof Error ? error.stack : undefined,
-			);
-			return undefined;
-		}
-	}
-
-	private async writeBlueskyCrossPost(
-		userDid: string,
-		agent: Agent,
-		review: {
-			id: string;
-			rkey: string;
-			title: string;
-			mediaType: string;
-			mediaId: string;
-			seasonNumber: number;
-			episodeNumber: number;
-			createdAt: Date;
-			blueskyPostUri: string | null;
-			blueskyPostCid: string | null;
-		},
-	): Promise<BlueskyCrossPostResult> {
-		if (review.blueskyPostUri) {
-			return {
-				status: "posted",
-				uri: review.blueskyPostUri,
-				url: `${BLUESKY_APP_ORIGIN}/profile/${userDid}/post/${review.rkey}`,
-			};
-		}
-
-		const [user, mediaByReviewId] = await Promise.all([
-			this.prisma.user.findUnique({
-				where: { did: userDid },
-				select: { handle: true, blueskyCrossPostEnabled: true },
-			}),
-			this.enrichMediaForReviews([review]),
-		]);
-		const media = mediaByReviewId.get(review.id);
-		if (!user || !media) {
-			throw new NotFoundException("Review media or author not found");
-		}
-		if (user.blueskyCrossPostEnabled === false) {
-			return { status: "not_requested" };
-		}
-
-		// Land readers on the media page with the review reader already open, so a
-		// first-time visitor sees the title it is about instead of a bare review.
-		const shareUrl = `${mediaPageUrl(
-			review.mediaType as MediaType,
-			review.mediaId,
-			review.seasonNumber || undefined,
-			review.episodeNumber || undefined,
-			media.mediaTitle,
-		)}?review=${encodeURIComponent(`/reviews/${user.handle}/${review.rkey}`)}`;
-		const text = composeBlueskyPostText(media.label, review.title);
-		const thumb = await this.uploadBlueskyThumbnail(agent, media.posterPath);
-		const external: Record<string, unknown> = {
-			uri: shareUrl,
-			title: `${review.title} — ${media.label}`,
-			description: `A review by @${user.handle} on Opnshelf.`,
-		};
-		if (thumb) external.thumb = thumb;
-
-		const response = await agent.com.atproto.repo.putRecord({
-			repo: userDid,
-			collection: BLUESKY_POST_COLLECTION,
-			rkey: review.rkey,
-			record: {
-				$type: BLUESKY_POST_COLLECTION,
-				text,
-				facets: [blueskyLinkFacet(text, shareUrl)],
-				embed: {
-					$type: "app.bsky.embed.external",
-					external,
-				},
-				createdAt: review.createdAt.toISOString(),
-			},
-		});
-
-		await this.prisma.review.update({
-			where: { id: review.id },
-			data: {
-				blueskyPostUri: response.data.uri,
-				blueskyPostCid: response.data.cid,
-			},
-		});
-
-		return {
-			status: "posted",
-			uri: response.data.uri,
-			url: `${BLUESKY_APP_ORIGIN}/profile/${userDid}/post/${review.rkey}`,
-		};
-	}
-
 	async retryBlueskyCrossPost(
 		userDid: string,
 		session: ATSession,
@@ -709,7 +125,7 @@ export class ReviewsService {
 			session as unknown as ConstructorParameters<typeof Agent>[0],
 		);
 		try {
-			return await this.writeBlueskyCrossPost(userDid, agent, review);
+			return await this.blueskyCrossPost.write(userDid, agent, review);
 		} catch (error) {
 			this.logger.warn(
 				`Bluesky Cross-post failed for review ${review.rkey}`,
@@ -796,7 +212,7 @@ export class ReviewsService {
 			]),
 		);
 
-		const mediaByReviewId = await this.enrichMediaForReviews(items);
+		const mediaByReviewId = await this.reviewMedia.enrichMediaForReviews(items);
 
 		const enrichedItems = items.map((review) => {
 			const media = mediaByReviewId.get(review.id);
@@ -921,7 +337,7 @@ export class ReviewsService {
 			ratingByAuthor.set(r.userDid, r.rating);
 		}
 
-		const mediaByReviewId = await this.enrichMediaForReviews(items);
+		const mediaByReviewId = await this.reviewMedia.enrichMediaForReviews(items);
 		const enrichedItems = items.map((review) => ({
 			...review,
 			description: excerptOf(review.markdown),
@@ -1007,250 +423,6 @@ export class ReviewsService {
 		});
 	}
 
-	private buildDocumentRecord(params: {
-		publicationUri: string;
-		title: string;
-		/** Raw review body — used for the description/textContent excerpt. */
-		body: string;
-		/** When set (Spoiler Flag), replaces the description/textContent excerpt. */
-		spoilerWarning?: string;
-		/** Framed markdown (media header + body + backlink) — the rendered content. */
-		contentMarkdown: string;
-		/** Reader-specific rich body, or Markdown content for portable mirrors. */
-		content?: DocumentRecord["content"];
-		mediaType: MediaType;
-		mediaId: string;
-		seasonNumber?: number;
-		episodeNumber?: number;
-		path: string;
-		publishedAt: string;
-		updatedAt?: string;
-	}): DocumentRecord {
-		// Preview text stays about the review itself, not the media header/backlink.
-		// A Spoiler Flag replaces it with the warning so previews can't leak.
-		const plain = params.spoilerWarning ?? toPlainText(params.body);
-
-		const content: DocumentRecord["content"] =
-			params.content ??
-			markdownDef.build({
-				text: { markdown: params.contentMarkdown },
-				flavor: "gfm",
-			});
-
-		const links: DocumentRecord["links"] = mediaLinkDef.build({
-			mediaType: params.mediaType,
-			mediaId: params.mediaId,
-			seasonNumber: params.seasonNumber,
-			episodeNumber: params.episodeNumber,
-		});
-
-		return documentSchema.build({
-			site: params.publicationUri as DocumentRecord["site"],
-			title: params.title,
-			path: params.path,
-			description: plain ? excerpt(plain) : undefined,
-			textContent: plain || undefined,
-			content,
-			links,
-			publishedAt: params.publishedAt as DocumentRecord["publishedAt"],
-			updatedAt: params.updatedAt as DocumentRecord["updatedAt"],
-		});
-	}
-
-	/**
-	 * Reconcile the optional standard.site blog mirror (ADR-0013) to the author's
-	 * current desired state, best-effort:
-	 *   - publication selected + no mirror  → create the document
-	 *   - publication selected + mirror     → rewrite the document
-	 *   - no publication + mirror           → delete the document
-	 * The mirror document reuses the review's rkey (rkey uniqueness is per
-	 * collection) so we never track a second key. On failure we log and leave the
-	 * stored pointer unchanged — the mirror is secondary to the opnshelf record.
-	 *
-	 * Returns the pointer to persist on the Review row.
-	 */
-	private async syncBlogMirror(
-		userDid: string,
-		agent: Agent,
-		review: {
-			id: string;
-			rkey: string;
-			title: string;
-			markdown: string;
-			spoiler: boolean;
-			mediaType: string;
-			mediaId: string;
-			seasonNumber: number;
-			episodeNumber: number;
-			createdAt: Date;
-			blogDocumentUri: string | null;
-			blogDocumentCid: string | null;
-			mirrorToBlog: boolean;
-		},
-	): Promise<{
-		blogDocumentUri: string | null;
-		blogDocumentCid: string | null;
-	}> {
-		const user = await this.prisma.user.findUnique({
-			where: { did: userDid },
-			select: {
-				blogIntegrationEnabled: true,
-				reviewsPublicationUri: true,
-				reviewsMirrorFormat: true,
-			},
-		});
-		// Disconnecting is an authorization change, not a content change. Keep any
-		// existing pointer untouched and do not write or delete external records.
-		if (user?.blogIntegrationEnabled === false) {
-			return {
-				blogDocumentUri: review.blogDocumentUri,
-				blogDocumentCid: review.blogDocumentCid,
-			};
-		}
-		// Opted out per-review, or no blog configured: ensure no mirror exists.
-		const publicationUri = review.mirrorToBlog
-			? (user?.reviewsPublicationUri ?? null)
-			: null;
-
-		try {
-			if (!publicationUri) {
-				if (review.blogDocumentUri) {
-					await agent.com.atproto.repo.deleteRecord({
-						repo: userDid,
-						collection: DOCUMENT_COLLECTION,
-						rkey: review.rkey,
-					});
-					// A missing native article is harmless; the standard document is the
-					// durable pointer we track locally.
-					await agent.com.atproto.repo
-						.deleteRecord({
-							repo: userDid,
-							collection: OFFPRINT_ARTICLE_COLLECTION,
-							rkey: review.rkey,
-						})
-						.catch(() => undefined);
-				}
-				return { blogDocumentUri: null, blogDocumentCid: null };
-			}
-
-			const mediaType = review.mediaType as MediaType;
-			const seasonNumber = review.seasonNumber || undefined;
-			const episodeNumber = review.episodeNumber || undefined;
-
-			// Resolve the media header (title + poster) and the opnshelf backlink.
-			const media = (await this.enrichMediaForReviews([review])).get(review.id);
-			const mediaLabel = media?.label ?? null;
-			const mediaTitle = media?.mediaTitle ?? null;
-			const mediaUrl = mediaTitle
-				? mediaPageUrl(
-						mediaType,
-						review.mediaId,
-						seasonNumber,
-						episodeNumber,
-						mediaTitle,
-					)
-				: PUBLIC_SITE_ORIGIN;
-
-			// Blog readers can't render a Spoiler Shield (ADR-0016): flagged reviews
-			// mirror in full, prefixed with a warning, and the warning also replaces
-			// the body excerpt in the document's description/textContent.
-			const spoilerWarning = review.spoiler
-				? `⚠️ Contains spoilers${mediaLabel ? ` for ${mediaLabel}` : ""}.`
-				: undefined;
-			const mirrorBody = spoilerWarning
-				? `${spoilerWarning}\n\n${review.markdown}`
-				: review.markdown;
-
-			const contentMarkdown = buildMirrorContentMarkdown({
-				body: mirrorBody,
-				// Display gets the composite label; only the URL uses the parent title.
-				mediaTitle: mediaLabel,
-				posterPath: media?.posterPath ?? null,
-				mediaUrl,
-				typeLabel: MEDIA_TYPE_LABEL[mediaType],
-			});
-			const content =
-				user?.reviewsMirrorFormat === "leaflet"
-					? (buildLeafletMirrorContent({
-							body: mirrorBody,
-							mediaTitle: mediaLabel,
-							mediaUrl,
-							typeLabel: MEDIA_TYPE_LABEL[mediaType],
-						}) as DocumentRecord["content"])
-					: user?.reviewsMirrorFormat === "offprint"
-						? (buildOffprintMirrorContent({
-								body: mirrorBody,
-								mediaTitle: mediaLabel,
-								mediaUrl,
-								typeLabel: MEDIA_TYPE_LABEL[mediaType],
-							}) as DocumentRecord["content"])
-						: user?.reviewsMirrorFormat === "pckt"
-							? (buildPcktMirrorContent({
-									body: mirrorBody,
-									mediaTitle: mediaLabel,
-									mediaUrl,
-									typeLabel: MEDIA_TYPE_LABEL[mediaType],
-								}) as DocumentRecord["content"])
-							: undefined;
-
-			const record = this.buildDocumentRecord({
-				publicationUri,
-				title: review.title,
-				body: review.markdown,
-				spoilerWarning,
-				contentMarkdown,
-				content,
-				mediaType,
-				mediaId: review.mediaId,
-				seasonNumber,
-				episodeNumber,
-				// ponytail: re-slugs on title edit; blog URL is not guaranteed stable
-				// across renames. Store the path on Review if that matters later.
-				path: `/${slugify(review.title)}`,
-				publishedAt: review.createdAt.toISOString(),
-				updatedAt: new Date().toISOString(),
-			});
-
-			const response = await agent.com.atproto.repo.putRecord({
-				repo: userDid,
-				collection: DOCUMENT_COLLECTION,
-				rkey: review.rkey,
-				record,
-				validate: false,
-			});
-			if (user?.reviewsMirrorFormat === "offprint") {
-				await agent.com.atproto.repo.putRecord({
-					repo: userDid,
-					collection: OFFPRINT_ARTICLE_COLLECTION,
-					rkey: review.rkey,
-					record: {
-						$type: OFFPRINT_ARTICLE_COLLECTION,
-						document: {
-							$type: "com.atproto.repo.strongRef",
-							uri: response.data.uri,
-							cid: response.data.cid,
-						},
-					},
-					validate: false,
-				});
-			}
-
-			return {
-				blogDocumentUri: response.data.uri,
-				blogDocumentCid: response.data.cid,
-			};
-		} catch (err) {
-			this.logger.warn(
-				`Blog mirror sync failed for review ${review.rkey}`,
-				err instanceof Error ? err.stack : undefined,
-			);
-			return {
-				blogDocumentUri: review.blogDocumentUri,
-				blogDocumentCid: review.blogDocumentCid,
-			};
-		}
-	}
-
 	async createReview(
 		userDid: string,
 		session: ATSession,
@@ -1304,7 +476,7 @@ export class ReviewsService {
 			},
 		});
 
-		const mirror = await this.syncBlogMirror(userDid, agent, created);
+		const mirror = await this.blogMirror.sync(userDid, agent, created);
 		let finalReview = created;
 		if (mirror.blogDocumentUri !== created.blogDocumentUri) {
 			finalReview = await this.prisma.review.update({
@@ -1318,7 +490,7 @@ export class ReviewsService {
 		};
 		if (dto.postToBluesky) {
 			try {
-				blueskyCrossPost = await this.writeBlueskyCrossPost(
+				blueskyCrossPost = await this.blueskyCrossPost.write(
 					userDid,
 					agent,
 					finalReview,
@@ -1377,7 +549,7 @@ export class ReviewsService {
 			validate: false,
 		});
 
-		const mirror = await this.syncBlogMirror(userDid, agent, {
+		const mirror = await this.blogMirror.sync(userDid, agent, {
 			...existing,
 			title,
 			markdown,
@@ -1421,20 +593,7 @@ export class ReviewsService {
 			rkey: review.rkey,
 		});
 
-		if (review.blogDocumentUri) {
-			try {
-				await agent.com.atproto.repo.deleteRecord({
-					repo: session.did,
-					collection: DOCUMENT_COLLECTION,
-					rkey: review.rkey,
-				});
-			} catch (err) {
-				this.logger.warn(
-					`Failed to delete blog mirror for review ${review.rkey}`,
-					err instanceof Error ? err.stack : undefined,
-				);
-			}
-		}
+		await this.blogMirror.delete(session.did, agent, review);
 
 		await this.prisma.review.delete({
 			where: { id: reviewId },
@@ -1445,8 +604,8 @@ export class ReviewsService {
 	 * Mirror all of a user's existing reviews to their currently-configured blog
 	 * (ADR-0013). Called when the author first selects a publication so reviews
 	 * written *before* enabling the blog also appear there — not just new ones.
-	 * Reviews opted out (mirrorToBlog === false) are skipped inside syncBlogMirror.
-	 * Best-effort: each review syncs independently; syncBlogMirror swallows its
+	 * Reviews opted out (mirrorToBlog === false) are skipped inside the mirror
+	 * sync. Best-effort: each review syncs independently; the sync swallows its
 	 * own failures, so one bad write never aborts the rest.
 	 *
 	 * ponytail: inline, one PDS write per mirrored review. Fine for the handful of
@@ -1459,7 +618,7 @@ export class ReviewsService {
 		);
 		const reviews = await this.prisma.review.findMany({ where: { userDid } });
 		for (const review of reviews) {
-			const mirror = await this.syncBlogMirror(userDid, agent, review);
+			const mirror = await this.blogMirror.sync(userDid, agent, review);
 			if (
 				mirror.blogDocumentUri !== review.blogDocumentUri ||
 				mirror.blogDocumentCid !== review.blogDocumentCid
@@ -1473,134 +632,15 @@ export class ReviewsService {
 	}
 
 	async likeReview(userDid: string, session: ATSession, reviewId: string) {
-		const review = await this.prisma.review.findUnique({
-			where: { id: reviewId },
-		});
-
-		if (!review) {
-			throw new NotFoundException("Review not found");
-		}
-
-		if (review.userDid === userDid) {
-			throw new ForbiddenException("Cannot like your own review");
-		}
-
-		const existingLike = await this.prisma.reviewLike.findUnique({
-			where: {
-				userDid_reviewId: {
-					userDid,
-					reviewId,
-				},
-			},
-		});
-
-		if (existingLike) {
-			throw new ConflictException("Already liked this review");
-		}
-
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
-
-		const rkey = TID.nextStr();
-		const record: ReviewLikeRecord = {
-			$type: REVIEW_LIKE_COLLECTION,
-			reviewUri: review.uri as unknown as ReviewLikeRecord["reviewUri"],
-			createdAt: new Date().toISOString(),
-		};
-
-		const response = await agent.com.atproto.repo.putRecord({
-			repo: session.did,
-			collection: REVIEW_LIKE_COLLECTION,
-			rkey,
-			record,
-			validate: false,
-		});
-
-		const like = await this.prisma.reviewLike.create({
-			data: {
-				rkey,
-				uri: response.data.uri,
-				cid: response.data.cid,
-				userDid,
-				reviewId,
-			},
-		});
-
-		return like;
+		return this.reviewLikes.like(userDid, session, reviewId);
 	}
 
 	async unlikeReview(userDid: string, session: ATSession, reviewId: string) {
-		const like = await this.prisma.reviewLike.findUnique({
-			where: {
-				userDid_reviewId: {
-					userDid,
-					reviewId,
-				},
-			},
-		});
-
-		if (!like) {
-			throw new NotFoundException("Like not found");
-		}
-
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
-
-		await agent.com.atproto.repo.deleteRecord({
-			repo: session.did,
-			collection: REVIEW_LIKE_COLLECTION,
-			rkey: like.rkey,
-		});
-
-		await this.prisma.reviewLike.delete({
-			where: { id: like.id },
-		});
+		return this.reviewLikes.unlike(userDid, session, reviewId);
 	}
 
 	async getReviewLikes(reviewId: string, requestingUserDid?: string) {
-		const [items, total, hasLiked] = await Promise.all([
-			this.prisma.reviewLike.findMany({
-				where: { reviewId },
-				orderBy: { createdAt: "desc" },
-				include: {
-					user: {
-						select: {
-							did: true,
-							handle: true,
-							displayName: true,
-							avatar: true,
-						},
-					},
-				},
-			}),
-			this.prisma.reviewLike.count({ where: { reviewId } }),
-			requestingUserDid
-				? this.prisma.reviewLike
-						.findUnique({
-							where: {
-								userDid_reviewId: {
-									userDid: requestingUserDid,
-									reviewId,
-								},
-							},
-						})
-						.then((l) => !!l)
-				: false,
-		]);
-
-		return {
-			items: items.map((like) => ({
-				userDid: like.user.did,
-				userHandle: like.user.handle,
-				userDisplayName: like.user.displayName ?? undefined,
-				userAvatar: like.user.avatar ?? undefined,
-				createdAt: like.createdAt.toISOString(),
-			})),
-			total,
-			hasLiked,
-		};
+		return this.reviewLikes.list(reviewId, requestingUserDid);
 	}
 
 	/**
@@ -1694,34 +734,10 @@ export class ReviewsService {
 		userDid: string,
 		record: ReviewLikeRecord,
 	): Promise<void> {
-		const review = await this.prisma.review.findFirst({
-			where: { uri: record.reviewUri },
-		});
-
-		if (!review) {
-			return;
-		}
-
-		await this.prisma.reviewLike.upsert({
-			where: { userDid_rkey: { userDid, rkey } },
-			create: {
-				rkey,
-				uri,
-				cid,
-				userDid,
-				reviewId: review.id,
-			},
-			update: {
-				cid,
-				uri,
-				reviewId: review.id,
-			},
-		});
+		return this.reviewLikes.indexRecord(uri, cid, rkey, userDid, record);
 	}
 
 	async deleteReviewLikeRecord(userDid: string, rkey: string): Promise<void> {
-		await this.prisma.reviewLike.deleteMany({
-			where: { userDid, rkey },
-		});
+		return this.reviewLikes.deleteRecord(userDid, rkey);
 	}
 }
