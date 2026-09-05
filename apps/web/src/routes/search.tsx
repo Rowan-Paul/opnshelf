@@ -11,8 +11,6 @@ import {
 	socialControllerFollowMutation,
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
-	type TmdbMovieResultDto,
-	type TmdbShowResultDto,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,37 +22,48 @@ import {
 } from "@tanstack/react-router";
 import {
 	Clapperboard,
-	Film,
 	Loader2,
 	Search,
-	Tv,
 	UserMinus,
 	UserPlus,
 	Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { Pagination } from "#/components/Pagination";
+import { SearchTabs } from "#/components/search/SearchTabs";
 import { PosterGridSkeleton, UserRowsSkeleton } from "#/components/skeletons";
 import { useDebounce } from "#/hooks/useDebounce";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
 import { ShowProgressScope } from "#/lib/hooks/useShowProgress";
+import {
+	buildSearchLocation,
+	collectShownKeys,
+	dedupeResults,
+	getBackdropUrl,
+	getCastTotalPages,
+	getPosterUrl,
+	getSearchTotalPages,
+	getTitle,
+	hasResultsForTab,
+	isSearchTabLoading,
+	resolveSearchTab,
+	type SearchTab,
+	searchLocationNeedsUpdate,
+	searchRouteSchema,
+	splitByMediaType,
+	toRatingItems,
+	toUnseenDiscoverItems,
+} from "#/lib/search-results";
 import { buildPersonUrl } from "#/lib/url-utils";
-
-const searchSchema = z.object({
-	q: z.string().optional(),
-	type: z.string().optional(),
-	page: z.coerce.number().min(1).optional().default(1),
-});
 
 export const Route = createFileRoute("/search")({
 	component: SearchPage,
-	validateSearch: searchSchema,
+	validateSearch: searchRouteSchema,
 	head: ({ match }) => {
 		const q = match.search.q;
 		return {
@@ -71,50 +80,6 @@ export const Route = createFileRoute("/search")({
 	},
 });
 
-type Tab = "all" | "movies" | "shows" | "people" | "cast";
-
-function getTitle(item: UnifiedSearchResultDto): string {
-	return item.title || item.name || "Unknown";
-}
-
-function getPosterUrl(item: UnifiedSearchResultDto): string {
-	return item.poster_path
-		? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-		: "";
-}
-
-function getBackdropUrl(item: UnifiedSearchResultDto): string | undefined {
-	return item.backdrop_path
-		? `https://image.tmdb.org/t/p/original${item.backdrop_path}`
-		: undefined;
-}
-
-/**
- * TMDB discover rows come back movie- or show-shaped; DiscoverRow speaks the
- * unified search shape, so widen them here instead of teaching it a second type.
- */
-function toUnifiedResult(
-	r: TmdbMovieResultDto | TmdbShowResultDto,
-	mediaType: "movie" | "tv",
-): UnifiedSearchResultDto {
-	const movie = mediaType === "movie" ? (r as TmdbMovieResultDto) : null;
-	const show = mediaType === "tv" ? (r as TmdbShowResultDto) : null;
-	return {
-		id: r.id,
-		media_type: mediaType,
-		title: movie?.title,
-		name: show?.name,
-		poster_path: r.poster_path,
-		backdrop_path: r.backdrop_path,
-		release_date: movie?.release_date,
-		first_air_date: show?.first_air_date,
-		overview: r.overview,
-		popularity: 0,
-		vote_average: r.vote_average ?? 0,
-		vote_count: 0,
-	};
-}
-
 function DiscoverRow({
 	title,
 	items,
@@ -125,13 +90,7 @@ function DiscoverRow({
 	// Cold-start: a section with no items renders nothing at all.
 	if (items.length === 0) return null;
 	// Dedupe so React keys stay unique across rows.
-	const seen = new Set<string>();
-	const unique = items.filter((r) => {
-		const k = `${r.media_type}-${r.id}`;
-		if (seen.has(k)) return false;
-		seen.add(k);
-		return true;
-	});
+	const unique = dedupeResults(items);
 	return (
 		<section>
 			<h2 className="mb-3 font-semibold text-lg">{title}</h2>
@@ -166,14 +125,6 @@ function DiscoverRow({
 	);
 }
 
-const tabs: { key: Tab; label: string; icon: typeof Film }[] = [
-	{ key: "all", label: "All", icon: Search },
-	{ key: "movies", label: "Movies", icon: Film },
-	{ key: "shows", label: "TV Shows", icon: Tv },
-	{ key: "cast", label: "Cast & Crew", icon: Clapperboard },
-	{ key: "people", label: "Users", icon: Users },
-];
-
 function SearchPage() {
 	const search = useSearch({ from: Route.id });
 	const navigate = useNavigate();
@@ -191,11 +142,11 @@ function SearchPage() {
 	const initialType = search.type || "";
 	const initialPage = search.page;
 
-	const validType = tabs.find((t) => t.key === initialType)?.key || "all";
-
 	const [query, setQuery] = useState(initialQuery);
 	const debouncedQuery = useDebounce(query, 400);
-	const [activeTab, setActiveTab] = useState<Tab>(validType as Tab);
+	const [activeTab, setActiveTab] = useState<SearchTab>(
+		resolveSearchTab(initialType),
+	);
 	const [page, setPage] = useState(initialPage);
 
 	// Sync URL query to local state on back/forward
@@ -204,8 +155,7 @@ function SearchPage() {
 	}, [initialQuery]);
 
 	useEffect(() => {
-		const urlType = tabs.find((t) => t.key === initialType)?.key || "all";
-		setActiveTab(urlType as Tab);
+		setActiveTab(resolveSearchTab(initialType));
 	}, [initialType]);
 
 	useEffect(() => {
@@ -214,22 +164,11 @@ function SearchPage() {
 
 	// Update URL when debounced query, tab, or page changes
 	useEffect(() => {
-		const newSearch: { q?: string; type?: string; page?: number } = {};
-		if (debouncedQuery) newSearch.q = debouncedQuery;
-		if (activeTab !== "all") newSearch.type = activeTab;
-		if (page > 1) newSearch.page = page;
-
-		const needsUpdate =
-			debouncedQuery !== (search.q || "") ||
-			(activeTab !== "all" ? activeTab : undefined) !==
-				(search.type || undefined) ||
-			(page > 1 ? page : undefined) !==
-				(search.page > 1 ? search.page : undefined);
-
-		if (needsUpdate) {
+		const state = { query: debouncedQuery, tab: activeTab, page };
+		if (searchLocationNeedsUpdate(state, search)) {
 			navigate({
 				to: "/search",
-				search: Object.keys(newSearch).length > 0 ? newSearch : undefined,
+				search: buildSearchLocation(state),
 				replace: true,
 			});
 		}
@@ -334,91 +273,62 @@ function SearchPage() {
 	// popular rows only show what the rows above them didn't.
 	const shownKeys = useMemo(
 		() =>
-			new Set(
-				[
-					...(fromFollowsData?.results ?? []),
-					...(trendingData?.results ?? []),
-					...(becauseYouWatchedData?.rows ?? []).flatMap((r) => r.results),
-				].map((r) => `${r.media_type}-${r.id}`),
-			),
+			collectShownKeys([
+				fromFollowsData?.results ?? [],
+				trendingData?.results ?? [],
+				...(becauseYouWatchedData?.rows ?? []).map((r) => r.results),
+			]),
 		[fromFollowsData, trendingData, becauseYouWatchedData],
 	);
 	const popularMovieItems = useMemo(
 		() =>
-			(popularMoviesData?.results ?? [])
-				.filter((r) => !shownKeys.has(`movie-${r.id}`))
-				.map((r) => toUnifiedResult(r, "movie")),
+			toUnseenDiscoverItems(
+				popularMoviesData?.results ?? [],
+				"movie",
+				shownKeys,
+			),
 		[popularMoviesData, shownKeys],
 	);
 	const popularShowItems = useMemo(
 		() =>
-			(popularShowsData?.results ?? [])
-				.filter((r) => !shownKeys.has(`tv-${r.id}`))
-				.map((r) => toUnifiedResult(r, "tv")),
+			toUnseenDiscoverItems(popularShowsData?.results ?? [], "tv", shownKeys),
 		[popularShowsData, shownKeys],
 	);
 
 	// TMDB multi-search can return the same id twice → dedupe before rendering
 	// so React keys stay unique (was "two children with the same key").
-	const results = useMemo(() => {
-		const seen = new Set<string>();
-		return (searchData?.results || []).filter((r: UnifiedSearchResultDto) => {
-			const k = `${r.media_type}-${r.id}`;
-			if (seen.has(k)) return false;
-			seen.add(k);
-			return true;
-		});
-	}, [searchData]);
-	const movies = useMemo(
-		() => results.filter((r) => r.media_type === "movie"),
-		[results],
+	const results = useMemo(
+		() => dedupeResults(searchData?.results || []),
+		[searchData],
 	);
-	const shows = useMemo(
-		() => results.filter((r) => r.media_type === "tv"),
-		[results],
-	);
+	const { movies, shows } = useMemo(() => splitByMediaType(results), [results]);
 	const people = peopleData?.items || [];
 	const cast = castData?.results || [];
 
-	const mediaItems = useMemo(
-		() =>
-			results
-				.filter(
-					(r: UnifiedSearchResultDto) =>
-						r.media_type === "movie" || r.media_type === "tv",
-				)
-				.map((r: UnifiedSearchResultDto) => ({
-					id: r.id,
-					type: (r.media_type === "movie" ? "movie" : "show") as
-						| "movie"
-						| "show",
-				})),
-		[results],
-	);
+	const mediaItems = useMemo(() => toRatingItems(results), [results]);
 	const { ratings } = useBatchRatingsQuery(mediaItems);
 
 	const hasQuery = debouncedQuery.length > 0;
-	const isLoading =
-		isSearching ||
-		(isAuthenticated && isSearchingPeople && activeTab === "people") ||
-		(isSearchingCast && activeTab === "cast");
-	const hasResults =
-		activeTab === "people"
-			? people.length > 0
-			: activeTab === "cast"
-				? cast.length > 0
-				: activeTab === "movies"
-					? movies.length > 0
-					: activeTab === "shows"
-						? shows.length > 0
-						: movies.length > 0 || shows.length > 0;
+	const isLoading = isSearchTabLoading({
+		tab: activeTab,
+		isAuthenticated,
+		isSearching,
+		isSearchingPeople,
+		isSearchingCast,
+	});
+	const hasResults = hasResultsForTab(activeTab, {
+		movies: movies.length,
+		shows: shows.length,
+		people: people.length,
+		cast: cast.length,
+	});
 
 	const handlePageChange = (newPage: number) => {
 		setPage(newPage);
 		window.scrollTo({ top: 0, behavior: "smooth" });
 	};
 
-	const handleTabChange = (tab: Tab) => {
+	const handleTabChange = (tab: SearchTab) => {
 		setActiveTab(tab);
 		setPage(1);
 	};
@@ -444,33 +354,11 @@ function SearchPage() {
 				</div>
 			</div>
 
-			{/* ponytail: tabs only filter search results, so they stay hidden on
-			    the discover state instead of filtering the rows too. */}
-			<div
-				className={`mb-6 border-(--border) border-b ${query ? "" : "hidden"}`}
-			>
-				<nav className="flex gap-1 overflow-x-auto">
-					{tabs.map((tab) => {
-						const Icon = tab.icon;
-						const isActive = activeTab === tab.key;
-						return (
-							<button
-								key={tab.key}
-								type="button"
-								onClick={() => handleTabChange(tab.key)}
-								className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 font-medium text-sm transition-colors ${
-									isActive
-										? "border-(--accent) text-(--accent)"
-										: "border-transparent text-(--foreground-muted) hover:border-(--border-strong) hover:text-(--foreground)"
-								}`}
-							>
-								<Icon className="h-4 w-4" />
-								{tab.label}
-							</button>
-						);
-					})}
-				</nav>
-			</div>
+			<SearchTabs
+				activeTab={activeTab}
+				hidden={!query}
+				onChange={handleTabChange}
+			/>
 
 			{hasQuery ? (
 				isLoading ? (
@@ -720,10 +608,7 @@ function SearchPage() {
 								<div className="flex justify-center pt-4">
 									<Pagination
 										page={page}
-										totalPages={Math.max(
-											1,
-											Math.ceil((searchData?.total_results || 0) / 20),
-										)}
+										totalPages={getSearchTotalPages(searchData?.total_results)}
 										onPageChange={handlePageChange}
 									/>
 								</div>
@@ -733,7 +618,7 @@ function SearchPage() {
 							<div className="flex justify-center pt-4">
 								<Pagination
 									page={page}
-									totalPages={Math.max(1, castData?.total_pages || 1)}
+									totalPages={getCastTotalPages(castData?.total_pages)}
 									onPageChange={handlePageChange}
 								/>
 							</div>

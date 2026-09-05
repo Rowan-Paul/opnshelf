@@ -81,6 +81,82 @@ export function CardRowsSkeleton({ rows = 4 }: { rows?: number }) {
 	);
 }
 
+/** Release Calendar page: mirrors both the mobile week list and the desktop
+ * grid + sidebar so nothing jumps once the real data lands. */
+export function CalendarSkeleton() {
+	return (
+		<>
+			{/* Mobile: Week Navigation */}
+			<div className="mb-6 flex items-center justify-between lg:hidden">
+				<div className={`size-12 rounded-lg ${PULSE}`} />
+				<div className={`h-6 w-32 ${PULSE}`} />
+				<div className={`size-12 rounded-lg ${PULSE}`} />
+			</div>
+
+			{/* Mobile: Week List View */}
+			<div className="space-y-6 lg:hidden">
+				{IDX(3).map((i) => (
+					<section key={i}>
+						<div className={`mb-3 h-5 w-24 ${PULSE}`} />
+						<div className="space-y-3">
+							{IDX(2).map((j) => (
+								<div
+									key={j}
+									className="flex items-center gap-3 rounded-xl border border-(--border) p-3"
+								>
+									<div className={`h-24 w-16 shrink-0 rounded-md ${PULSE}`} />
+									<div className="min-w-0 flex-1 space-y-2">
+										<div className={`h-3.5 w-3/4 ${PULSE}`} />
+										<div className={`h-3 w-1/3 ${PULSE}`} />
+									</div>
+								</div>
+							))}
+						</div>
+					</section>
+				))}
+			</div>
+
+			{/* Desktop: Calendar Grid + Sidebar */}
+			<div className="hidden gap-8 lg:grid lg:grid-cols-3">
+				<div className="lg:col-span-2">
+					<div
+						data-testid="calendar-skeleton-weekdays"
+						className="mb-2 grid grid-cols-7 gap-1"
+					>
+						{IDX(7).map((i) => (
+							<div key={i} className={`h-5 ${PULSE}`} />
+						))}
+					</div>
+					<div
+						data-testid="calendar-skeleton-days"
+						className="grid grid-cols-7 gap-1"
+					>
+						{IDX(35).map((i) => (
+							<div key={i} className={`h-24 rounded-lg ${PULSE}`} />
+						))}
+					</div>
+				</div>
+
+				<div className="space-y-3">
+					<div className={`mb-4 h-6 w-40 ${PULSE}`} />
+					{IDX(4).map((i) => (
+						<div
+							key={i}
+							className="flex items-center gap-3 rounded-xl border border-(--border) p-3"
+						>
+							<div className={`h-16 w-12 shrink-0 rounded-md ${PULSE}`} />
+							<div className="min-w-0 flex-1 space-y-2">
+								<div className={`h-3 w-2/3 ${PULSE}`} />
+								<div className={`h-2.5 w-1/3 ${PULSE}`} />
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		</>
+	);
+}
+
 /** Full detail page (movie/show/season/episode/person): mirrors MediaHero —
  * backdrop band, poster + title block, action row, then overview lines. */
 export function DetailPageSkeleton() {
