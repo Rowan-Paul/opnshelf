@@ -44,6 +44,7 @@ import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { beginHandoff } from "@/lib/auth-handoff";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
@@ -232,12 +233,15 @@ export function SettingsCategoryScreen({
 			),
 	});
 
-	const requestPermissionChange = (
+	const requestPermissionChange = async (
 		integration: "blog" | "bluesky",
 		action: "connect" | "disconnect",
 	) => {
+		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
+		// callback hands back a single-use code instead of the session id.
+		const codeChallenge = (await beginHandoff()) ?? undefined;
 		permissionChangeMutation.mutate({
-			body: { integration, action, platform: "mobile" },
+			body: { integration, action, platform: "mobile", codeChallenge },
 		});
 	};
 

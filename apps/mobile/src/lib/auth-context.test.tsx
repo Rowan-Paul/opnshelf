@@ -9,8 +9,13 @@ const mocks = vi.hoisted(() => ({
 	authControllerLogout: vi.fn(),
 	authControllerMe: vi.fn(),
 	authControllerRegister: vi.fn(),
+	beginHandoff: vi.fn(),
+	clearHandoff: vi.fn(),
+	getLoginUrl: vi.fn(),
 	getSessionToken: vi.fn(),
 	loadSessionToken: vi.fn(),
+	openAuthSessionAsync: vi.fn(),
+	redeemHandoffCode: vi.fn(),
 	posthogCapture: vi.fn(),
 	posthogIdentify: vi.fn(),
 	posthogReset: vi.fn(),
@@ -25,7 +30,7 @@ vi.mock("@opnshelf/api", () => ({
 	authControllerMe: mocks.authControllerMe,
 	authControllerMeQueryKey: () => ["auth", "me"],
 	authControllerRegister: mocks.authControllerRegister,
-	getLoginUrl: vi.fn(),
+	getLoginUrl: mocks.getLoginUrl,
 	getSessionToken: mocks.getSessionToken,
 	setOnUnauthorized: mocks.setOnUnauthorized,
 }));
@@ -35,7 +40,13 @@ vi.mock("expo-router", () => ({
 }));
 
 vi.mock("expo-web-browser", () => ({
-	openAuthSessionAsync: vi.fn(),
+	openAuthSessionAsync: mocks.openAuthSessionAsync,
+}));
+
+vi.mock("@/lib/auth-handoff", () => ({
+	beginHandoff: mocks.beginHandoff,
+	clearHandoff: mocks.clearHandoff,
+	redeemHandoffCode: mocks.redeemHandoffCode,
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -122,6 +133,131 @@ beforeEach(() => {
 	mocks.loadSessionToken.mockResolvedValue(null);
 	mocks.saveSessionToken.mockResolvedValue(undefined);
 	mocks.authControllerMe.mockResolvedValue({ data: nextUser });
+	mocks.beginHandoff.mockResolvedValue(null);
+	mocks.clearHandoff.mockResolvedValue(undefined);
+	mocks.getLoginUrl.mockReturnValue("https://api.test.invalid/auth/login");
+	mocks.openAuthSessionAsync.mockResolvedValue({ type: "cancel" });
+});
+
+describe("mobile handoff code", () => {
+	it("starts login with the backend-issued challenge in the URL", async () => {
+		mocks.beginHandoff.mockResolvedValue("challenge");
+		const harness = await renderAuth();
+
+		await act(async () => {
+			await harness.auth.login(" alice.test ");
+		});
+
+		expect(mocks.getLoginUrl).toHaveBeenCalledWith(
+			"alice.test",
+			expect.anything(),
+			"mobile",
+			"challenge",
+		);
+		expect(mocks.openAuthSessionAsync).toHaveBeenCalledWith(
+			"https://api.test.invalid/auth/login",
+			"opnshelf://auth/complete",
+		);
+
+		harness.unmount();
+	});
+
+	it("starts login without a challenge when the backend cannot issue one", async () => {
+		const harness = await renderAuth();
+
+		await act(async () => {
+			await harness.auth.login("alice.test");
+		});
+
+		expect(mocks.getLoginUrl).toHaveBeenCalledWith(
+			"alice.test",
+			expect.anything(),
+			"mobile",
+			undefined,
+		);
+
+		harness.unmount();
+	});
+
+	it("redeems a code from the redirect before installing the session", async () => {
+		mocks.openAuthSessionAsync.mockResolvedValue({
+			type: "success",
+			url: "opnshelf://auth/complete?code=handoff-code",
+		});
+		mocks.redeemHandoffCode.mockResolvedValue("exchanged-session");
+		const harness = await renderAuth();
+
+		let completed: boolean | undefined;
+		await act(async () => {
+			completed = await harness.auth.runAuthorizationUrl(
+				"https://pds.test/authorize",
+			);
+		});
+
+		expect(completed).toBe(true);
+		expect(mocks.redeemHandoffCode).toHaveBeenCalledWith("handoff-code");
+		expect(mocks.saveSessionToken).toHaveBeenCalledWith("exchanged-session");
+		expect(harness.queryClient.getQueryData(["auth", "me"])).toEqual(nextUser);
+
+		harness.unmount();
+	});
+
+	it("still accepts the legacy session redirect and drops any pending verifier", async () => {
+		mocks.openAuthSessionAsync.mockResolvedValue({
+			type: "success",
+			url: "opnshelf://auth/complete?session=legacy-session",
+		});
+		const harness = await renderAuth();
+
+		await act(async () => {
+			await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+		});
+
+		expect(mocks.redeemHandoffCode).not.toHaveBeenCalled();
+		expect(mocks.clearHandoff).toHaveBeenCalled();
+		expect(mocks.saveSessionToken).toHaveBeenCalledWith("legacy-session");
+
+		harness.unmount();
+	});
+
+	it("drops the pending verifier when the browser flow is cancelled or fails", async () => {
+		const harness = await renderAuth();
+
+		await act(async () => {
+			await expect(
+				harness.auth.runAuthorizationUrl("https://pds.test/authorize"),
+			).resolves.toBe(false);
+		});
+		expect(mocks.clearHandoff).toHaveBeenCalledTimes(1);
+
+		mocks.openAuthSessionAsync.mockResolvedValue({
+			type: "success",
+			url: "opnshelf://auth/complete?error=callback_failed",
+		});
+		await act(async () => {
+			await expect(
+				harness.auth.runAuthorizationUrl("https://pds.test/authorize"),
+			).rejects.toThrow("Auth flow failed: callback_failed");
+		});
+		expect(mocks.clearHandoff).toHaveBeenCalledTimes(2);
+		expect(mocks.saveSessionToken).not.toHaveBeenCalled();
+
+		harness.unmount();
+	});
+
+	it("completes a deep-linked handoff code through completeHandoff", async () => {
+		mocks.redeemHandoffCode.mockResolvedValue("deep-linked-session");
+		const harness = await renderAuth();
+
+		await act(async () => {
+			await harness.auth.completeHandoff("handoff-code");
+		});
+
+		expect(mocks.redeemHandoffCode).toHaveBeenCalledWith("handoff-code");
+		expect(mocks.saveSessionToken).toHaveBeenCalledWith("deep-linked-session");
+
+		harness.unmount();
+	});
 });
 
 describe("AuthProvider", () => {

@@ -1,5 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, MaxLength, MinLength } from "class-validator";
+import {
+	IsIn,
+	IsOptional,
+	IsString,
+	Matches,
+	MaxLength,
+	MinLength,
+} from "class-validator";
 
 export class VerifyEmailDto {
 	@ApiProperty({
@@ -9,6 +16,25 @@ export class VerifyEmailDto {
 	@MinLength(1)
 	@MaxLength(512)
 	code: string;
+
+	@ApiProperty({
+		enum: ["mobile"],
+		required: false,
+		description:
+			'Platform identifier ("mobile") so the Core OAuth callback redirects into the app',
+	})
+	@IsOptional()
+	@IsIn(["mobile"])
+	platform?: "mobile";
+
+	@ApiProperty({
+		required: false,
+		description:
+			"S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.",
+	})
+	@IsOptional()
+	@Matches(/^[A-Za-z0-9_-]{43}$/)
+	codeChallenge?: string;
 }
 
 export class VerifyEmailResponseDto {

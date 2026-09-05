@@ -22,6 +22,11 @@ import {
 	useState,
 } from "react";
 import { loadSessionToken, saveSessionToken } from "@/lib/api";
+import {
+	beginHandoff,
+	clearHandoff,
+	redeemHandoffCode,
+} from "@/lib/auth-handoff";
 import { posthog } from "@/lib/posthog";
 import { setWidgetHandle } from "../../modules/widget-bridge";
 
@@ -46,6 +51,11 @@ interface AuthContextType {
 	 * web auth session). Returns the fetched user so callers can route on it.
 	 */
 	completeSession: (sessionId: string) => Promise<UserDto | null>;
+	/**
+	 * Redeem a Mobile Handoff Code from the `auth/complete` redirect (ADR 0026)
+	 * for its session, then complete like `completeSession`.
+	 */
+	completeHandoff: (code: string) => Promise<UserDto | null>;
 	/**
 	 * Create a native account on opnshelf's PDS (captcha + invite gated). On
 	 * success the session is established but the account still needs email
@@ -186,6 +196,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[queryClient, resetIdentityCache],
 	);
 
+	const completeHandoff = useCallback(
+		async (code: string): Promise<UserDto | null> => {
+			const sessionId = await redeemHandoffCode(code);
+			return completeSession(sessionId);
+		},
+		[completeSession],
+	);
+
 	// Run the OAuth web flow and persist the returned session token. On Android
 	// the redirect to AUTH_REDIRECT_URL sometimes leaks to the deep-link handler
 	// instead of resolving here — the `auth/complete` route covers that case.
@@ -196,29 +214,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				AUTH_REDIRECT_URL,
 			);
 			if (result.type !== "success") {
+				await clearHandoff();
 				return false;
 			}
 			const url = new URL(result.url);
 			const error = url.searchParams.get("error");
 			if (error) {
+				await clearHandoff();
 				throw new Error(`Auth flow failed: ${error}`);
 			}
+			const code = url.searchParams.get("code");
+			if (code) {
+				await completeHandoff(code);
+				return true;
+			}
+			// Legacy handoff: a backend that predates the handoff code still sends
+			// the session id itself. Remove once every deployment mints codes.
 			const session = url.searchParams.get("session");
 			if (!session) {
+				await clearHandoff();
 				throw new Error("No session returned from auth flow");
 			}
+			await clearHandoff();
 			await completeSession(session);
 			return true;
 		},
-		[completeSession],
+		[completeHandoff, completeSession],
 	);
 
 	const login = useCallback(
 		async (handle?: string) => {
+			const codeChallenge = await beginHandoff();
 			const loginUrl = getLoginUrl(
 				handle?.trim() || undefined,
 				detectTimezone(),
 				"mobile",
+				codeChallenge ?? undefined,
 			);
 			await runAuthFlow(loginUrl);
 		},
@@ -298,6 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		isAuthenticated: !!user,
 		login,
 		completeSession,
+		completeHandoff,
 		runAuthorizationUrl: runAuthFlow,
 		register,
 		signOut,

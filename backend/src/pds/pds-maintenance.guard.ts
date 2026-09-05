@@ -59,8 +59,15 @@ export class PdsMaintenanceGuard implements CanActivate {
 
 		// These OAuth routes begin or complete an authentication exchange. Keeping
 		// them out of a maintenance window avoids sessions completing against a PDS
-		// that is being moved. Public read routes are not affected.
+		// that is being moved. Public read routes are not affected. The mobile
+		// exchange is a POST and so already blocked above; it is listed so the
+		// set of routes that complete an authentication stays in one place.
 		const path = request.path || request.url.split("?")[0];
-		return ["/auth/login", "/auth/signup", "/auth/callback"].includes(path);
+		return [
+			"/auth/login",
+			"/auth/signup",
+			"/auth/callback",
+			"/auth/mobile/exchange",
+		].includes(path);
 	}
 }

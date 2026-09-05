@@ -14,6 +14,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { beginHandoff } from "@/lib/auth-handoff";
 import { posthog } from "@/lib/posthog";
 
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -44,8 +45,11 @@ export default function VerifyEmailScreen() {
 	const verifyMutation = useMutation({
 		mutationKey: ["auth", "verify-email"],
 		mutationFn: async (verificationCode: string) => {
+			// Name the platform so the Core callback lands back in the app, with a
+			// handoff code (ADR 0026) rather than the session id in the link.
+			const codeChallenge = (await beginHandoff()) ?? undefined;
 			const { data } = await authControllerVerifyEmail({
-				body: { code: verificationCode },
+				body: { code: verificationCode, platform: "mobile", codeChallenge },
 				throwOnError: true,
 			});
 			return data;
