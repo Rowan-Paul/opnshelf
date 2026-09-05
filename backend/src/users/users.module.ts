@@ -10,6 +10,9 @@ import { ShowsModule } from "../shows/shows.module";
 import { SocialModule } from "../social/social.module";
 import { BackgroundJobWorkerService } from "./background-job-worker.service";
 import { ImportHistoryService } from "./import-history.service";
+import { TraktImportJobStore } from "./import/trakt-import-job.store";
+import { TraktImportWorker } from "./import/trakt-import-worker.service";
+import { WatchImportWriter } from "./import/watch-import-writer.service";
 import { ProfileService } from "./profile.service";
 import { TraktApiClient } from "./trakt-api.client";
 import { UserDeletionService } from "./user-deletion.service";
@@ -32,6 +35,9 @@ import { UsersService } from "./users.service";
 	providers: [
 		UsersService,
 		ImportHistoryService,
+		TraktImportJobStore,
+		WatchImportWriter,
+		TraktImportWorker,
 		TraktApiClient,
 		BackgroundJobWorkerService,
 		UserDeletionService,

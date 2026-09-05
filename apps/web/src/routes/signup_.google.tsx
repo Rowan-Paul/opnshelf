@@ -17,10 +17,7 @@ export const Route = createFileRoute("/signup_/google")({
 	head: () => ({
 		meta: [{ title: "Choose your handle | Opnshelf" }],
 	}),
-	// Both values are display only. The account is created from the verified
-	// pending registration the backend holds in an httpOnly cookie.
 	validateSearch: z.object({
-		email: z.string().optional(),
 		suggested: z.string().optional(),
 	}),
 	component: GoogleSignupPage,
@@ -38,7 +35,9 @@ function extractRegisterErrorMessage(error: unknown): string {
 }
 
 function GoogleSignupPage() {
-	const { email, suggested } = Route.useSearch();
+	const { suggested } = Route.useSearch();
+	const [email, setEmail] = useState<string | null>(null);
+	const [pendingLoaded, setPendingLoaded] = useState(false);
 	const [username, setUsername] = useState(suggested ?? "");
 	const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 	const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -76,7 +75,19 @@ function GoogleSignupPage() {
 		}
 	}, [isAuthenticated, navigate]);
 
-	if (authLoading || isAuthenticated) {
+	useEffect(() => {
+		fetch(`${env.VITE_API_URL}/auth/google/pending`, {
+			credentials: "include",
+		})
+			.then(async (response) => {
+				if (!response.ok) return;
+				const data = (await response.json()) as { email?: unknown };
+				if (typeof data.email === "string") setEmail(data.email);
+			})
+			.finally(() => setPendingLoaded(true));
+	}, []);
+
+	if (authLoading || isAuthenticated || !pendingLoaded) {
 		return <LoadingState />;
 	}
 

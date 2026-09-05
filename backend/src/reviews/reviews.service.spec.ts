@@ -93,18 +93,13 @@ vi.mock("../lexicons/xyz/opnshelf/review/like", () => ({
 	$nsid: "xyz.opnshelf.review.like",
 }));
 
-import {
-	ConflictException,
-	ForbiddenException,
-	NotFoundException,
-} from "@nestjs/common";
+import { NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import {
-	blueskyLinkFacet,
-	composeBlueskyPostText,
-	ReviewsService,
-	type ATSession,
-} from "./reviews.service";
+import { BlogMirrorService } from "./blog-mirror.service";
+import { BlueskyCrossPostService } from "./bluesky-cross-post.service";
+import { ReviewLikesService } from "./review-likes.service";
+import { ReviewMediaService } from "./review-media.service";
+import { ReviewsService, type ATSession } from "./reviews.service";
 
 describe("ReviewsService", () => {
 	let service: ReviewsService;
@@ -171,149 +166,15 @@ describe("ReviewsService", () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				ReviewsService,
+				ReviewMediaService,
+				BlogMirrorService,
+				BlueskyCrossPostService,
+				ReviewLikesService,
 				{ provide: PrismaService, useValue: mockPrismaService },
 			],
 		}).compile();
 
 		service = module.get<ReviewsService>(ReviewsService);
-	});
-
-	describe("Bluesky post composition", () => {
-		it("counts graphemes and truncates the Review title before media", () => {
-			const mediaTitle = "A".repeat(150);
-			const reviewTitle = `${"👨‍👩‍👧‍👦".repeat(200)} ending`;
-			const text = composeBlueskyPostText(mediaTitle, reviewTitle);
-			const count = Array.from(
-				new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(
-					text,
-				),
-			).length;
-			expect(count).toBeLessThanOrEqual(300);
-			expect(text).toContain(mediaTitle);
-			expect(text).toContain("…");
-		});
-
-		it("uses UTF-8 byte offsets for the linked call to action", () => {
-			const text = composeBlueskyPostText("Amélie 🎬", "Très bien");
-			const uri = "https://opnshelf.xyz/reviews/alice/key";
-			const facet = blueskyLinkFacet(text, uri);
-			const bytes = Buffer.from(text, "utf8");
-			expect(
-				bytes.subarray(facet.index.byteStart, facet.index.byteEnd).toString(),
-			).toBe("Read my review");
-			expect(facet.features[0].uri).toBe(uri);
-		});
-	});
-
-	describe("likeReview", () => {
-		it("creates a like record in PDS and DB targeting the review URI", async () => {
-			const review = {
-				id: "review-1",
-				uri: "at://did:plc:other/xyz.opnshelf.review/rkey1",
-				userDid: "did:plc:other",
-			};
-			mockPrismaService.review.findUnique.mockResolvedValue(review);
-			mockPrismaService.reviewLike.findUnique.mockResolvedValue(null);
-			mockPutRecord.mockResolvedValue({
-				data: {
-					uri: "at://did:plc:abc123/xyz.opnshelf.review.like/testtid123",
-					cid: "cid-like",
-				},
-			});
-			mockPrismaService.reviewLike.create.mockResolvedValue({
-				id: "like-1",
-				rkey: "testtid123",
-				uri: "at://did:plc:abc123/xyz.opnshelf.review.like/testtid123",
-				cid: "cid-like",
-				userDid: session.did,
-				reviewId: review.id,
-			});
-
-			const result = await service.likeReview(session.did, session, review.id);
-
-			expect(mockPutRecord).toHaveBeenCalledWith(
-				expect.objectContaining({
-					repo: session.did,
-					collection: "xyz.opnshelf.review.like",
-					rkey: "testtid123",
-					record: expect.objectContaining({
-						// reviewUri must point at the xyz.opnshelf.review record (ADR-0013).
-						reviewUri: "at://did:plc:other/xyz.opnshelf.review/rkey1",
-					}),
-				}),
-			);
-			expect(mockPrismaService.reviewLike.create).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: expect.objectContaining({
-						reviewId: review.id,
-						userDid: session.did,
-					}),
-				}),
-			);
-			expect(result).toBeDefined();
-		});
-
-		it("rejects liking own review with 403", async () => {
-			const review = {
-				id: "review-1",
-				uri: "at://did:plc:abc123/xyz.opnshelf.review/rkey1",
-				userDid: session.did,
-			};
-			mockPrismaService.review.findUnique.mockResolvedValue(review);
-
-			await expect(
-				service.likeReview(session.did, session, review.id),
-			).rejects.toThrow(ForbiddenException);
-		});
-
-		it("rejects duplicate like with 409", async () => {
-			const review = {
-				id: "review-1",
-				uri: "at://did:plc:other/xyz.opnshelf.review/rkey1",
-				userDid: "did:plc:other",
-			};
-			mockPrismaService.review.findUnique.mockResolvedValue(review);
-			mockPrismaService.reviewLike.findUnique.mockResolvedValue({
-				id: "like-1",
-			});
-
-			await expect(
-				service.likeReview(session.did, session, review.id),
-			).rejects.toThrow(ConflictException);
-		});
-	});
-
-	describe("unlikeReview", () => {
-		it("deletes like from PDS and DB", async () => {
-			const like = {
-				id: "like-1",
-				rkey: "like-rkey-1",
-				reviewId: "review-1",
-			};
-			mockPrismaService.reviewLike.findUnique.mockResolvedValue(like);
-			mockPrismaService.reviewLike.delete.mockResolvedValue({});
-
-			await service.unlikeReview(session.did, session, like.reviewId);
-
-			expect(mockDeleteRecord).toHaveBeenCalledWith(
-				expect.objectContaining({
-					repo: session.did,
-					collection: "xyz.opnshelf.review.like",
-					rkey: like.rkey,
-				}),
-			);
-			expect(mockPrismaService.reviewLike.delete).toHaveBeenCalledWith(
-				expect.objectContaining({ where: { id: like.id } }),
-			);
-		});
-
-		it("throws NotFoundException when like does not exist", async () => {
-			mockPrismaService.reviewLike.findUnique.mockResolvedValue(null);
-
-			await expect(
-				service.unlikeReview(session.did, session, "review-1"),
-			).rejects.toThrow(NotFoundException);
-		});
 	});
 
 	describe("getUserReviews", () => {
@@ -1286,30 +1147,6 @@ describe("ReviewsService", () => {
 					}),
 				}),
 			);
-		});
-	});
-
-	describe("getReviewLikes", () => {
-		it("returns likes with user info and hasLiked flag", async () => {
-			mockPrismaService.reviewLike.findMany.mockResolvedValue([
-				{
-					user: {
-						did: "did:plc:u1",
-						handle: "u1",
-						displayName: "User",
-						avatar: null,
-					},
-					createdAt: new Date("2024-01-01"),
-				},
-			]);
-			mockPrismaService.reviewLike.count.mockResolvedValue(1);
-			mockPrismaService.reviewLike.findUnique.mockResolvedValue(null);
-
-			const result = await service.getReviewLikes("review-1", "did:plc:viewer");
-
-			expect(result.total).toBe(1);
-			expect(result.hasLiked).toBe(false);
-			expect(result.items[0].userHandle).toBe("u1");
 		});
 	});
 });

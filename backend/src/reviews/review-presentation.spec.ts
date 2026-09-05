@@ -1,5 +1,9 @@
 import { slugifyName } from "../../../packages/api/src/media-slug";
-import { mediaPageUrl, slugifyMediaName } from "./reviews.service";
+import {
+	excerptOf,
+	mediaPageUrl,
+	slugifyMediaName,
+} from "./review-presentation";
 
 /**
  * These URLs go out in Bluesky Cross-posts and Blog Mirrors, so they are the
@@ -36,5 +40,24 @@ describe("media page URLs", () => {
 		expect(
 			mediaPageUrl("show", "60572", undefined, undefined, "Pokémon"),
 		).toContain("/shows/60572/pokemon");
+	});
+});
+
+describe("review excerpts", () => {
+	it("strips markdown down to preview text", () => {
+		expect(excerptOf("# Heading\n\n**Loved** [it](https://x.y) `a lot`")).toBe(
+			"Heading Loved it",
+		);
+	});
+
+	it("truncates long bodies to 280 characters with an ellipsis", () => {
+		const body = "word ".repeat(100).trim();
+		const result = excerptOf(body);
+		expect(result.length).toBe(280);
+		expect(result.endsWith("…")).toBe(true);
+	});
+
+	it("leaves short bodies untouched", () => {
+		expect(excerptOf("It was great.")).toBe("It was great.");
 	});
 });

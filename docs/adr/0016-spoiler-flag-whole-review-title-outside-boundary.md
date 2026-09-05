@@ -1,4 +1,4 @@
-# Spoiler Flag is whole-review, and the title sits outside the spoiler boundary
+# ADR 0016: Spoiler Flag is whole-review, and the title sits outside the spoiler boundary
 
 Reviews gain an author-declared Spoiler Flag: an optional `spoiler: boolean` on `xyz.opnshelf.review` (absent = no spoilers, so all pre-existing records and third-party writers degrade safely). We chose whole-review granularity over inline spoiler spans because inline markup would live inside the markdown `content` and render as literal garbage in every consumer that doesn't implement it — including all three blog-mirror formats (ADR-0014) and any third-party lexicon reader; a boolean can be extended with inline spans later, the reverse is a breaking retraction.
 

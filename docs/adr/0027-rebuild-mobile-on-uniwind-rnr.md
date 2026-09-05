@@ -1,4 +1,4 @@
-# ADR 0002: Rebuild the Mobile App Fresh on Uniwind + react-native-reusables
+# ADR 0027: Rebuild the Mobile App Fresh on Uniwind + react-native-reusables
 
 We deleted the original Expo app (tag `v0.1.0`, removed in `487a4dd feat: initial redesign`) to focus on the web rework, and have now decided to **rebuild it from scratch** rather than revive it from git history. The new `apps/mobile` is a fresh Expo Router app styled with **Uniwind + react-native-reusables**, reusing only the framework-agnostic `@opnshelf/api` package as the shared API contract.
 
@@ -9,5 +9,5 @@ Rebuilding fresh lets the mobile app share the web's design vocabulary directly:
 ## Consequences
 
 - Mobile and web stay in design lockstep through a shared token vocabulary; web design changes are portable to mobile rather than re-interpreted.
-- The app is built core-loop-first (auth → search → media detail → log/rate/review → shelf); features like lists, social, calendar, person pages, notes, and Trakt import are deliberately deferred to v1.1+.
+- The app is built core-loop-first (auth → search → media detail → log/rate/review → shelf); features like lists, standalone social and Trakt management beyond onboarding, calendar, person pages, and notes are deliberately deferred to v1.1+.
 - We are coupled to react-native-reusables' Uniwind support. If that support regresses, the fallback is NativeWind (RNR's original target).

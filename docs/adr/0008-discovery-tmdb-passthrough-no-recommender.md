@@ -1,4 +1,4 @@
-# Discovery similarity is TMDB-passthrough; no homegrown recommender (yet)
+# ADR 0008: Discovery similarity is TMDB-passthrough; no homegrown recommender (yet)
 
 For "better discovery" (#88) we surface similar/recommended titles by proxying TMDB's
 `/recommendations` (falling back to `/similar`) rather than building our own

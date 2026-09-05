@@ -206,3 +206,12 @@ export function includesOAuthCapabilities(
 			))
 	);
 }
+
+/** Core-only login scope; integrations are requested only when enabled. */
+export const OAUTH_SCOPE = buildOAuthScope();
+export const DECLARED_OAUTH_SCOPE = buildOAuthScope({
+	atStoreReviewEnabled: true,
+	blogEnabled: true,
+	blueskyEnabled: true,
+	reviewsMirrorFormat: "offprint",
+});

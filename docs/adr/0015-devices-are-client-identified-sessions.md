@@ -1,4 +1,4 @@
-# Devices are client-identified sessions, claimed by header
+# ADR 0015: Devices are client-identified sessions, claimed by header
 
 Users need to see what is signed in to their account and revoke it, but an `AuthSession` row carries no
 identity beyond its own opaque id. Rather than add a device registry, each client sends the platform's

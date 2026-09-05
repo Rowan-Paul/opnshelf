@@ -1,4 +1,4 @@
-# Mobile routes match the Web App's URLs
+# ADR 0023: Mobile routes match the Web App's URLs
 
 The **Mobile App**'s detail routes were id-only (`/movie/[id]`, `/show/[id]`,
 `/person/[id]`) while the **Web App**'s are plural and slugged

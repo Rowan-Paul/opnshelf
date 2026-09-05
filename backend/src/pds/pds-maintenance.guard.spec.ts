@@ -56,4 +56,13 @@ describe("PdsMaintenanceGuard", () => {
 			guard.canActivate(contextFor("GET", "/auth/callback")),
 		).toThrow(ServiceUnavailableException);
 	});
+
+	it("blocks the mobile handoff exchange during maintenance", () => {
+		const guard = new PdsMaintenanceGuard({
+			get: () => "true",
+		} as unknown as ConfigService);
+		expect(() =>
+			guard.canActivate(contextFor("POST", "/auth/mobile/exchange")),
+		).toThrow(ServiceUnavailableException);
+	});
 });

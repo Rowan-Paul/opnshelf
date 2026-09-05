@@ -32,10 +32,14 @@ async function bootstrap() {
 	// Enable cookie parsing
 	app.use(cookieParser());
 
-	// CORS with credentials for cookie-based auth
+	// CORS with credentials for cookie-based auth. Loopback origins (local Web
+	// dev server and Expo) are only trusted outside production.
 	const frontendUrl = process.env.FRONTEND_URL || "http://127.0.0.1:3000";
+	const loopbackOrigins = isProduction
+		? []
+		: ["http://127.0.0.1:3000", "http://127.0.0.1:8081"];
 	app.enableCors({
-		origin: [frontendUrl, "http://127.0.0.1:3000", "http://127.0.0.1:8081"],
+		origin: [frontendUrl, ...loopbackOrigins],
 		credentials: true,
 	});
 

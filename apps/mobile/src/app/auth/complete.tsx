@@ -10,10 +10,13 @@ import { useAuth } from "@/lib/auth-context";
  *
  * On iOS the redirect is captured by `WebBrowser.openAuthSessionAsync` and this
  * screen never renders. On Android the OS often delivers the redirect here as a
- * fresh intent instead, so this route persists the returned session and routes
- * the user on — without it expo-router shows "Unmatched Route".
+ * fresh intent instead, so this route redeems the handoff code (ADR 0026) and
+ * routes the user on — without it expo-router shows "Unmatched Route".
  */
 type CompleteParams = {
+	/** Single-use Mobile Handoff Code, redeemed with the stored verifier. */
+	code?: string;
+	/** Legacy: the session id itself, from a backend that predates the code. */
 	session?: string;
 	error?: string;
 	permission?: string;
@@ -41,8 +44,9 @@ function isMaintenanceError(error: unknown): boolean {
 }
 
 export default function AuthCompleteScreen() {
-	const { completeSession } = useAuth();
-	const { session, error, permission } = useLocalSearchParams<CompleteParams>();
+	const { completeSession, completeHandoff } = useAuth();
+	const { code, session, error, permission } =
+		useLocalSearchParams<CompleteParams>();
 	const [message, setMessage] = useState<string | null>(null);
 	// Guard against double-invocation (re-renders / strict mode) completing twice.
 	const handled = useRef(false);
@@ -61,12 +65,17 @@ export default function AuthCompleteScreen() {
 			);
 			return () => clearTimeout(timer);
 		}
-		if (!session) {
+		const complete = code
+			? completeHandoff(code)
+			: session
+				? completeSession(session)
+				: null;
+		if (!complete) {
 			router.replace("/login");
 			return;
 		}
 
-		completeSession(session)
+		complete
 			.then(() => {
 				// Hand off to the index gate, which routes to verify-email /
 				// onboarding / tabs based on the freshly fetched user.
@@ -83,7 +92,7 @@ export default function AuthCompleteScreen() {
 				);
 				setTimeout(() => router.replace("/login"), 1500);
 			});
-	}, [completeSession, session, error, permission]);
+	}, [completeHandoff, completeSession, code, session, error, permission]);
 
 	return (
 		<Screen>

@@ -7,7 +7,17 @@ import { AuthController } from "./auth.controller";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { AUTH_SERVICE } from "./auth.tokens";
+import { DeviceSessionsService } from "./device-sessions.service";
+import { DevicesController } from "./devices.controller";
+import { GoogleSignupController } from "./google-signup.controller";
+import { MobileHandoffController } from "./mobile-handoff.controller";
+import { MobileHandoffService } from "./mobile-handoff.service";
+import { NativeAccountService } from "./native-account.service";
+import { OAuthClientFactory } from "./oauth-client.factory";
 import { OptionalAuthGuard } from "./optional-auth.guard";
+import { PermissionsController } from "./permissions.controller";
+import { SignupController } from "./signup.controller";
+import { SignupRateLimiter } from "./signup-rate-limiter";
 
 @Module({
 	imports: [
@@ -16,9 +26,21 @@ import { OptionalAuthGuard } from "./optional-auth.guard";
 		forwardRef(() => IngesterModule),
 		forwardRef(() => UsersModule),
 	],
-	controllers: [AuthController],
+	controllers: [
+		AuthController,
+		SignupController,
+		GoogleSignupController,
+		MobileHandoffController,
+		PermissionsController,
+		DevicesController,
+	],
 	providers: [
 		AuthService,
+		OAuthClientFactory,
+		DeviceSessionsService,
+		MobileHandoffService,
+		NativeAccountService,
+		SignupRateLimiter,
 		AuthGuard,
 		OptionalAuthGuard,
 		{
@@ -26,6 +48,8 @@ import { OptionalAuthGuard } from "./optional-auth.guard";
 			useExisting: AuthService,
 		},
 	],
+	// Only AuthService, the guards and the AUTH_SERVICE token are consumed
+	// outside this module; the new units stay internal.
 	exports: [AuthService, AuthGuard, OptionalAuthGuard, AUTH_SERVICE],
 })
 export class AuthModule {}

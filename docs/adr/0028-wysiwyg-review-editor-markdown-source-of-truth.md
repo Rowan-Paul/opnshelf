@@ -1,4 +1,4 @@
-# WYSIWYG review editor with markdown as the source of truth
+# ADR 0028: WYSIWYG review editor with markdown as the source of truth
 
 Writing raw markdown is intimidating for non-technical reviewers, so the web review editor (`apps/web/src/components/ReviewDialog.tsx`) moves from a plain `<textarea>` + Write/Preview toggle to a WYSIWYG editor. Reviews are `site.standard.document` / `at.markpub.markdown` records that must stay portable and re-renderable across the standard.site ecosystem (see ADR-0002), so the editor's canonical format **must** remain clean markdown that round-trips losslessly — `stored markdown → edit → stored markdown` — rather than a proprietary rich-text model exported to markdown at the edges.
 
