@@ -16,7 +16,7 @@
     "slugify": "^1.6.9"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.91.1",
+    "@hey-api/openapi-ts": "^0.97.3",
     "@types/node": "^22.10.1",
     "typescript": "^5.9.3"
   },
