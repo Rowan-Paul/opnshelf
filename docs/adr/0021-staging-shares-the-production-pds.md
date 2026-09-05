@@ -29,7 +29,7 @@ The stack forces most of the decisions:
 ## Decision
 
 **Staging shares the production PDS.** Test writes are real, public records in a
-real repo, they federate, and per ADR 0015 a review posted on staging becomes a
+real repo, they federate, and per ADR 0029 a review posted on staging becomes a
 real Bluesky post. This is accepted, with one mitigation: staging is used with a
 separate account from the production one.
 

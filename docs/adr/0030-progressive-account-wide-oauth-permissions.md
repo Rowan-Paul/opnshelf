@@ -1,4 +1,4 @@
-# Progressive, account-wide OAuth permissions
+# ADR 0030: Progressive, account-wide OAuth permissions
 
 Opnshelf requests **Core Opnshelf Access** at sign-in through an evolving `xyz.opnshelf` permission set plus narrowly constrained image-blob access. Optional external ecosystems are excluded from that set and requested only when the User enables them: blog access after choosing a publication, and Bluesky posting when enabling a Cross-post. Each authorization atomically replaces one cumulative session containing Core Access, every previously enabled integration, and the new integration; a partial grant never replaces the working session.
 

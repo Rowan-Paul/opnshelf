@@ -1,4 +1,4 @@
-# Send transactional email via Cloudflare Email Sending, not Resend
+# ADR 0007: Send transactional email via Cloudflare Email Sending, not Resend
 
 We send all transactional email — the in-repo feedback notification and the Tranquil PDS account mail (verification, password reset) — through **Cloudflare Email Sending** instead of Resend. The driver is operational, not technical: Resend's free tier allows a single verified domain, and that slot is needed for other projects. Cloudflare's Email Sending (REST API for the NestJS backend, SMTP smarthost for the PDS) lets opnshelf send from its own domains while consolidating onto infrastructure already in use here (Turnstile, DNS).
 

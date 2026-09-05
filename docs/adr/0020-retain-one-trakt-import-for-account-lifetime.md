@@ -1,4 +1,4 @@
-# Retain one Trakt Import for the account lifetime
+# ADR 0020: Retain one Trakt Import for the account lifetime
 
 Each User may start one **Trakt Import** over a fixed snapshot of their public Trakt history taken when the Import starts. Watches added to Trakt afterward are outside that snapshot. Automatic retries, recovery after a fatal error, and resuming a user-paused Import continue the same job from its saved position; they do not create another job or rescan completed pages. This bounds retained import data by one source history per User, prevents changing Trakt pages from creating resume gaps, and avoids presenting repeated full-history imports as an ongoing Trakt sync.
 

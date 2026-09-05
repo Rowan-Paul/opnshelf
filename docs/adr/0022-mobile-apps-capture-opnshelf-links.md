@@ -1,4 +1,4 @@
-# Mobile Apps capture opnshelf.xyz links
+# ADR 0022: Mobile Apps capture opnshelf.xyz links
 
 We added Android App Links and iOS Universal Links, so tapping an `opnshelf.xyz`
 link opens the **Mobile App** when it is installed. This came out of a smaller

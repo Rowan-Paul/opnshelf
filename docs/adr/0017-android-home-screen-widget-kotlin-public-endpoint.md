@@ -1,4 +1,4 @@
-# Android Home-Screen Widget is hand-written Kotlin fed by the public profile endpoint
+# ADR 0017: Android Home-Screen Widget is hand-written Kotlin fed by the public profile endpoint
 
 The **Home-Screen Widget** (see CONTEXT.md) renders the signed-in user's 30-day activity graph plus total on the Android home screen. Two load-bearing decisions were made.
 

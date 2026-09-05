@@ -1,4 +1,4 @@
-# The Welcome Tour walks the real app, and is hand-rolled on both clients
+# ADR 0024: The Welcome Tour walks the real app, and is hand-rolled on both clients
 
 New users finish **Onboarding** knowing how to set a timezone and nothing about
 where anything is. **Discover**, **Connections**, **Activity**, **Up Next** and

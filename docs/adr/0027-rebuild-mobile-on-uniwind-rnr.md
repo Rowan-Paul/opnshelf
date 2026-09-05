@@ -1,4 +1,4 @@
-# ADR 0002: Rebuild the Mobile App Fresh on Uniwind + react-native-reusables
+# ADR 0027: Rebuild the Mobile App Fresh on Uniwind + react-native-reusables
 
 We deleted the original Expo app (tag `v0.1.0`, removed in `487a4dd feat: initial redesign`) to focus on the web rework, and have now decided to **rebuild it from scratch** rather than revive it from git history. The new `apps/mobile` is a fresh Expo Router app styled with **Uniwind + react-native-reusables**, reusing only the framework-agnostic `@opnshelf/api` package as the shared API contract.
 
