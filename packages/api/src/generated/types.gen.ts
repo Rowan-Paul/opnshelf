@@ -2905,6 +2905,20 @@ export type AuthControllerGoogleCallbackData = {
     url: '/auth/google/callback';
 };
 
+export type AuthControllerGooglePendingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/google/pending';
+};
+
+export type AuthControllerGooglePendingResponses = {
+    /**
+     * Pending Google signup identity
+     */
+    200: unknown;
+};
+
 export type AuthControllerGoogleRegisterData = {
     body: GoogleRegisterDto;
     path?: never;

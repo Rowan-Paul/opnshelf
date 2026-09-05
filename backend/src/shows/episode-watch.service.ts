@@ -1,14 +1,14 @@
 import { Agent } from "@atproto/api";
-import { TID } from "@atproto/common";
 import { Injectable, Logger } from "@nestjs/common";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
-import {
-	$nsid as COLLECTION,
-	main as episodeSchema,
-} from "../lexicons/xyz/opnshelf/episode";
+import { $nsid as COLLECTION } from "../lexicons/xyz/opnshelf/episode";
 import type { Main as EpisodeRecord } from "../lexicons/xyz/opnshelf/episode.defs";
 import { PrismaService } from "../prisma/prisma.service";
-import { eligibleEpisodes, resolveWatchedAt } from "./episode-watch-record";
+import {
+	buildEpisodeWatchRecord,
+	eligibleEpisodes,
+	resolveWatchedAt,
+} from "./episode-watch-record";
 import { ShowCatalogueService } from "./show-catalogue.service";
 import { ShowsTmdbService } from "./shows-tmdb.service";
 
@@ -49,18 +49,12 @@ export class EpisodeWatchService {
 		episodeNumber: number,
 		customWatchedAt?: string | null,
 	) {
-		const rkey = TID.nextStr();
-		const watchedAt = resolveWatchedAt(customWatchedAt);
-		const now = new Date().toISOString();
-
-		const record: EpisodeRecord = episodeSchema.build({
+		const { rkey, record } = buildEpisodeWatchRecord(
 			showId,
 			seasonNumber,
 			episodeNumber,
-			source: "tmdb",
-			...(watchedAt === undefined ? {} : { watchedAt }),
-			createdAt: now,
-		});
+			customWatchedAt,
+		);
 
 		const agent = new Agent(
 			session as unknown as ConstructorParameters<typeof Agent>[0],
@@ -375,18 +369,13 @@ export class EpisodeWatchService {
 		}
 
 		const watchedAt = resolveWatchedAt(customWatchedAt);
-		const now = new Date().toISOString();
-
 		const records = episodes.map((episode) => ({
-			rkey: TID.nextStr(),
-			record: episodeSchema.build({
+			...buildEpisodeWatchRecord(
 				showId,
 				seasonNumber,
-				episodeNumber: episode.episode_number,
-				source: "tmdb",
-				...(watchedAt === undefined ? {} : { watchedAt }),
-				createdAt: now,
-			}),
+				episode.episode_number,
+				watchedAt ?? null,
+			),
 			seasonNumber,
 			episodeNumber: episode.episode_number,
 		}));
@@ -427,11 +416,14 @@ export class EpisodeWatchService {
 		customWatchedAt?: string | null,
 	) {
 		const show = await this.showsTmdb.getShowDetails(showId);
+		if (!show || !show.id) {
+			throw new Error(
+				`Failed to fetch show details for showId ${showId}: invalid response from TMDB`,
+			);
+		}
 		const numberOfSeasons = show.number_of_seasons || 1;
 
 		const watchedAt = resolveWatchedAt(customWatchedAt);
-
-		const now = new Date().toISOString();
 
 		// Fetch every season's episode list in parallel — sequential fetches
 		// were a serial bottleneck before any PDS write. Seasons number in the
@@ -464,15 +456,12 @@ export class EpisodeWatchService {
 						!watched.has(`${seasonNumber}:${episode.episode_number}`),
 				)
 				.map((episode) => ({
-					rkey: TID.nextStr(),
-					record: episodeSchema.build({
+					...buildEpisodeWatchRecord(
 						showId,
 						seasonNumber,
-						episodeNumber: episode.episode_number,
-						source: "tmdb",
-						...(watchedAt === undefined ? {} : { watchedAt }),
-						createdAt: now,
-					}),
+						episode.episode_number,
+						watchedAt ?? null,
+					),
 					seasonNumber,
 					episodeNumber: episode.episode_number,
 				}));
@@ -487,11 +476,6 @@ export class EpisodeWatchService {
 
 		// Reuse the show details already fetched at the top of this method
 		// instead of issuing a second identical getShowDetails call.
-		if (!show || !show.id) {
-			throw new Error(
-				`Failed to fetch show details for showId ${showId}: invalid response from TMDB`,
-			);
-		}
 		const normalizedShowId = show.id.toString();
 
 		await this.catalogue.upsertShow(show);

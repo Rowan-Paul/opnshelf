@@ -14,7 +14,7 @@ import { z } from "zod";
 export const searchRouteSchema = z.object({
 	q: z.string().optional(),
 	type: z.string().optional(),
-	page: z.coerce.number().min(1).optional().default(1),
+	page: z.coerce.number().int().min(1).optional().default(1),
 });
 
 export type SearchRouteParams = z.infer<typeof searchRouteSchema>;

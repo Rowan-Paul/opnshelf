@@ -35,11 +35,6 @@ export function slugifyMediaName(name: string): string {
 }
 
 /**
- * Public opnshelf page for a media item. The trailing slug is cosmetic — web
- * routes resolve by id (and season/episode numbers) — so a slug of the media
- * title is fine even for the composite season/episode titles.
- */
-/**
  * Public opnshelf.xyz URL for a Media Item. These go out in Bluesky
  * Cross-posts and Blog Mirrors, so they are the most visible URLs we emit and
  * must be byte-identical to what the Web App and Mobile App build (ADR 0023).
@@ -84,7 +79,11 @@ export function toPlainText(markdown: string): string {
 
 export function excerpt(plain: string, max = 280): string {
 	if (plain.length <= max) return plain;
-	return `${plain.slice(0, max - 1).trimEnd()}…`;
+	let shortened = plain.slice(0, max - 1);
+	if (/^[\uD800-\uDBFF]$/.test(shortened.at(-1) ?? "")) {
+		shortened = shortened.slice(0, -1);
+	}
+	return `${shortened.trimEnd()}…`;
 }
 
 /** Short plaintext excerpt of a review body, computed on read (not stored). */

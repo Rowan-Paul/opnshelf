@@ -447,7 +447,7 @@ describe("ShowProgressService", () => {
 			expect(sync).not.toHaveBeenCalled();
 		});
 
-		it("never invokes TMDB while calculating complete persisted progress", async () => {
+		it("deduplicates repeated watches when persisted progress is unavailable", async () => {
 			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
 				{ showId: "123", seasonNumber: 1, episodeNumber: 1 },
 				{ showId: "123", seasonNumber: 1, episodeNumber: 1 },

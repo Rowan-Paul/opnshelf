@@ -1,5 +1,4 @@
 import type { ReleaseCalendarItemDto } from "@opnshelf/api";
-import { withUserLocale } from "./date-utils";
 import { buildEpisodeUrl, buildMovieUrl, buildShowUrl } from "./url-utils";
 
 /**
@@ -107,6 +106,11 @@ export function formatLocalDateKey(date: Date): string {
 	);
 }
 
+function parseDateKey(dateKey: string): Date {
+	const [year, month, day] = dateKey.split("-").map(Number);
+	return new Date(year, month - 1, day);
+}
+
 /**
  * The API window for a visible month: first day of the previous month through
  * the last day of the next month, as ISO date strings.
@@ -123,8 +127,8 @@ export function getCalendarDateRange(currentDate: Date): {
 	// Next month
 	const nextMonth = new Date(year, month + 2, 0); // Last day of next month
 
-	const startDate = prevMonth.toISOString().split("T")[0];
-	const endDate = nextMonth.toISOString().split("T")[0];
+	const startDate = formatLocalDateKey(prevMonth);
+	const endDate = formatLocalDateKey(nextMonth);
 
 	return { startDate, endDate };
 }
@@ -251,36 +255,37 @@ export function getWeekDays(
 /** e.g. "Mar 23 - Mar 29" */
 export function formatWeekRange(
 	weekStart: Date | null,
-	timezone?: string,
+	_timezone?: string,
 ): string {
 	if (!weekStart) return "";
 	const weekEnd = new Date(weekStart);
 	weekEnd.setDate(weekStart.getDate() + 6);
-	const options = withUserLocale({ month: "short", day: "numeric" }, timezone);
+	const options: Intl.DateTimeFormatOptions = {
+		month: "short",
+		day: "numeric",
+	};
 	return `${weekStart.toLocaleDateString("en-US", options)} - ${weekEnd.toLocaleDateString("en-US", options)}`;
 }
 
 /** "Today", or e.g. "Mon, Jan 15". */
 export function formatWeekDayLabel(
 	date: Date,
-	timezone?: string,
+	_timezone?: string,
 	today: Date = new Date(),
 ): string {
 	if (isSameDay(date, today)) return "Today";
 
-	return date.toLocaleDateString(
-		"en-US",
-		withUserLocale(
-			{ weekday: "short", month: "short", day: "numeric" },
-			timezone,
-		),
-	);
+	return date.toLocaleDateString("en-US", {
+		weekday: "short",
+		month: "short",
+		day: "numeric",
+	});
 }
 
 /** e.g. "Jan 15" for a `YYYY-MM-DD` day key. */
-export function formatReleaseDate(dateKey: string, timezone?: string): string {
-	return new Date(dateKey).toLocaleDateString(
-		"en-US",
-		withUserLocale({ month: "short", day: "numeric" }, timezone),
-	);
+export function formatReleaseDate(dateKey: string, _timezone?: string): string {
+	return parseDateKey(dateKey).toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+	});
 }

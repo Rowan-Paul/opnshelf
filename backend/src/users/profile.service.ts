@@ -481,8 +481,8 @@ export class ProfileService {
 			);
 		}
 
-		const buffer = Buffer.from(await response.arrayBuffer());
-		if (buffer.byteLength > MAX_AVATAR_BYTES) {
+		const buffer = await readBodyWithLimit(response, MAX_AVATAR_BYTES);
+		if (!buffer) {
 			throw new PayloadTooLargeException("Seeded avatar image exceeds 5 MB");
 		}
 
@@ -587,7 +587,9 @@ export class ProfileService {
 			throw new Error(`PDS returned ${response.status}`);
 		}
 
-		const data = (await response.json()) as { value?: unknown };
+		const body = await readBodyWithLimit(response, 1_000_000);
+		if (!body) throw new PayloadTooLargeException("PDS record is too large");
+		const data = JSON.parse(body.toString("utf8")) as { value?: unknown };
 		return data.value ?? null;
 	}
 

@@ -45,6 +45,7 @@ describe("SocialUsersService", () => {
 				],
 			},
 			select: expect.any(Object),
+			take: 500,
 		});
 		expect(result.items.map((item) => item.did)).toEqual([
 			"did:plc:exact",

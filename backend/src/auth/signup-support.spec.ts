@@ -9,6 +9,7 @@ import {
 describe("signup-support", () => {
 	const logger = new Logger("test");
 	beforeEach(() => {
+		vi.clearAllMocks();
 		vi.spyOn(logger, "error").mockImplementation(() => undefined);
 	});
 

@@ -19,7 +19,10 @@ export class OptionalAuthGuard implements CanActivate {
 		try {
 			return await this.authGuard.canActivate(context);
 		} catch (error) {
-			if (error instanceof UnauthorizedException) {
+			if (
+				error instanceof UnauthorizedException ||
+				error instanceof SyntaxError
+			) {
 				// No valid session — allow the request through without auth
 				return true;
 			}

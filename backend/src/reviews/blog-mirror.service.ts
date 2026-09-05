@@ -447,6 +447,8 @@ export class BlogMirrorService {
 					},
 					validate: false,
 				});
+			} else {
+				await this.deleteArticlePointer(userDid, agent, review.rkey);
 			}
 
 			return {
@@ -475,18 +477,36 @@ export class BlogMirrorService {
 		agent: Agent,
 		review: { rkey: string; blogDocumentUri: string | null },
 	): Promise<void> {
-		if (!review.blogDocumentUri) return;
 		try {
-			await agent.com.atproto.repo.deleteRecord({
-				repo,
-				collection: DOCUMENT_COLLECTION,
-				rkey: review.rkey,
-			});
+			if (review.blogDocumentUri) {
+				await agent.com.atproto.repo.deleteRecord({
+					repo,
+					collection: DOCUMENT_COLLECTION,
+					rkey: review.rkey,
+				});
+			}
 		} catch (err) {
 			this.logger.warn(
 				`Failed to delete blog mirror for review ${review.rkey}`,
 				err instanceof Error ? err.stack : undefined,
 			);
+		}
+		await this.deleteArticlePointer(repo, agent, review.rkey);
+	}
+
+	private async deleteArticlePointer(
+		repo: string,
+		agent: Agent,
+		rkey: string,
+	): Promise<void> {
+		try {
+			await agent.com.atproto.repo.deleteRecord({
+				repo,
+				collection: OFFPRINT_ARTICLE_COLLECTION,
+				rkey,
+			});
+		} catch {
+			// Best effort: the pointer may never have existed or already be absent.
 		}
 	}
 }

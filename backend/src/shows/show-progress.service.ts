@@ -270,7 +270,6 @@ export class ShowProgressService {
 
 			if (totalEpisodes > 0 && episodesWatched >= totalEpisodes) continue;
 
-			const colors = await this.catalogue.ensureShowHasColors(anchor.showId);
 			const latestWatchedDate = anchor.watchedDate ?? anchor.createdAt;
 
 			items.push({
@@ -298,7 +297,7 @@ export class ShowProgressService {
 					firstAirYear: anchor.show.firstAirYear ?? undefined,
 					firstAirDate: anchor.show.firstAirDate?.toISOString(),
 					overview: anchor.show.overview ?? undefined,
-					colors: colors ?? undefined,
+					colors: undefined,
 				},
 			});
 		}
@@ -333,6 +332,12 @@ export class ShowProgressService {
 		const start = (currentPage - 1) * safePageSize;
 		const pagedItems =
 			totalPages > 0 ? items.slice(start, start + safePageSize) : [];
+		await Promise.all(
+			pagedItems.map(async (item) => {
+				item.show.colors =
+					(await this.catalogue.ensureShowHasColors(item.showId)) ?? undefined;
+			}),
+		);
 
 		return {
 			items: pagedItems,

@@ -95,11 +95,15 @@ export class ReviewLikesService {
 			session as unknown as ConstructorParameters<typeof Agent>[0],
 		);
 
-		await agent.com.atproto.repo.deleteRecord({
-			repo: session.did,
-			collection: REVIEW_LIKE_COLLECTION,
-			rkey: like.rkey,
-		});
+		try {
+			await agent.com.atproto.repo.deleteRecord({
+				repo: session.did,
+				collection: REVIEW_LIKE_COLLECTION,
+				rkey: like.rkey,
+			});
+		} catch {
+			// Best effort: the local index must still be cleared if PDS is already clean.
+		}
 
 		await this.prisma.reviewLike.delete({
 			where: { id: like.id },

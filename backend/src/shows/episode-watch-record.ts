@@ -47,12 +47,7 @@ export function buildEpisodeWatchRecord(
 ) {
 	const rkey = deterministicRkey ?? TID.nextStr();
 	const now = new Date().toISOString();
-	const watchedAt =
-		customWatchedAt === undefined
-			? now
-			: customWatchedAt === null
-				? undefined
-				: new Date(customWatchedAt).toISOString();
+	const watchedAt = resolveWatchedAt(customWatchedAt);
 	const record: EpisodeRecord = episodeSchema.build({
 		showId,
 		seasonNumber,

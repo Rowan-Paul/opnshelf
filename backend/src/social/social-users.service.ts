@@ -5,6 +5,7 @@ import {
 	NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { safeFetch } from "../common/safe-fetch";
 import type {
 	FollowedWatcherActorDto,
 	PaginatedSocialUsersDto,
@@ -18,6 +19,9 @@ import {
 	MAX_SOCIAL_PAGE_SIZE,
 	paginateItems,
 } from "./social-pagination";
+
+const SEARCH_CANDIDATE_LIMIT = 500;
+const BLUESKY_FOLLOWS_MAX_PAGES = 100;
 
 export type SocialUserRecord = {
 	did: string;
@@ -136,6 +140,7 @@ export class SocialUsersService {
 				],
 			},
 			select: socialUserSelect,
+			take: SEARCH_CANDIDATE_LIMIT,
 		});
 
 		const sortedMatches = [...matches].sort((left, right) =>
@@ -321,45 +326,60 @@ export class SocialUsersService {
 	): Promise<string[]> {
 		const matchedDids: string[] = [];
 		let cursor: string | undefined;
+		let pageCount = 0;
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 30_000);
 
-		do {
-			let pageDids: string[];
-			let nextCursor: string | undefined;
+		try {
+			do {
+				pageCount += 1;
+				let pageDids: string[];
+				let nextCursor: string | undefined;
 
-			try {
-				const params = new URLSearchParams({
-					actor: did,
-					limit: "100",
-					...(cursor ? { cursor } : {}),
-				});
-				const response = await fetch(
-					`https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?${params}`,
-					{ headers: { Accept: "application/json" } },
-				);
-				if (!response.ok) break;
-				const data = (await response.json()) as {
-					follows?: { did?: string }[];
-					cursor?: string;
-				};
-				pageDids = (data.follows ?? [])
-					.map((f) => f.did)
-					.filter((d): d is string => typeof d === "string" && d.length > 0);
-				nextCursor = data.cursor;
-			} catch {
-				break;
-			}
+				try {
+					const params = new URLSearchParams({
+						actor: did,
+						limit: "100",
+						...(cursor ? { cursor } : {}),
+					});
+					const response = await safeFetch(
+						`https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?${params}`,
+						{
+							headers: { Accept: "application/json" },
+							signal: controller.signal,
+						},
+					);
+					if (!response.ok) break;
+					const data = (await response.json()) as {
+						follows?: { did?: string }[];
+						cursor?: string;
+					};
+					pageDids = (data.follows ?? [])
+						.map((f) => f.did)
+						.filter((d): d is string => typeof d === "string" && d.length > 0);
+					nextCursor = data.cursor;
+				} catch {
+					break;
+				}
 
-			const candidates = pageDids.filter((d) => !excludeDids.has(d));
-			if (candidates.length > 0) {
-				const found = await this.prisma.user.findMany({
-					where: { did: { in: candidates } },
-					select: { did: true },
-				});
-				matchedDids.push(...found.map((u) => u.did));
-			}
+				const candidates = pageDids.filter((d) => !excludeDids.has(d));
+				if (candidates.length > 0) {
+					const found = await this.prisma.user.findMany({
+						where: { did: { in: candidates } },
+						select: { did: true },
+					});
+					matchedDids.push(...found.map((u) => u.did));
+				}
 
-			cursor = nextCursor;
-		} while (cursor !== undefined && matchedDids.length < limit);
+				cursor = nextCursor;
+			} while (
+				cursor !== undefined &&
+				matchedDids.length < limit &&
+				pageCount < BLUESKY_FOLLOWS_MAX_PAGES
+			);
+		} finally {
+			clearTimeout(timeout);
+		}
 
 		return matchedDids;
 	}

@@ -7,6 +7,7 @@ import {
 	MaxLength,
 	MinLength,
 } from "class-validator";
+import { BASE64URL_32_BYTES } from "./mobile-handoff.dto";
 
 export class VerifyEmailDto {
 	@ApiProperty({
@@ -33,7 +34,8 @@ export class VerifyEmailDto {
 			"S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.",
 	})
 	@IsOptional()
-	@Matches(/^[A-Za-z0-9_-]{43}$/)
+	@IsString()
+	@Matches(BASE64URL_32_BYTES)
 	codeChallenge?: string;
 }
 

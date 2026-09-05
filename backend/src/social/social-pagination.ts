@@ -1,5 +1,3 @@
-import type { FollowedActivityFeedDto } from "./dto/social.dto";
-
 export type PaginatedResult<T> = {
 	items: T[];
 	page: number;
@@ -60,14 +58,9 @@ export function getPaginationMeta(
 export function emptyPaginatedResult(
 	page: number,
 	pageSize: number,
-): FollowedActivityFeedDto {
+): PaginatedResult<never> {
 	return {
+		...getPaginationMeta(0, page, pageSize),
 		items: [],
-		page,
-		pageSize,
-		total: 0,
-		totalPages: 0,
-		hasNextPage: false,
-		hasPreviousPage: false,
 	};
 }

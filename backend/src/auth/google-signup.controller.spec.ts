@@ -169,12 +169,17 @@ describe("GoogleSignupController", () => {
 
 			expect(res.cookie).toHaveBeenCalledWith(
 				"google_pending",
-				"pending-tok",
+				expect.any(String),
 				expect.objectContaining({ httpOnly: true }),
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/signup/google?email=jane%40gmail.com&suggested=jane-doe",
+				"http://127.0.0.1:3000/signup/google?suggested=jane-doe",
 			);
+			expect(
+				controller.googlePending(
+					createMockRequest({ cookies: { google_pending: "pending-tok" } }),
+				),
+			).toEqual({ email: "jane@gmail.com" });
 		});
 
 		it("refuses a callback whose state doesn't match the cookie", async () => {

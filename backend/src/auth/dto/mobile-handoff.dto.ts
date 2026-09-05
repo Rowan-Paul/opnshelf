@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsString, Matches, MaxLength, MinLength } from "class-validator";
 
 /** base64url of 32 random bytes: exactly 43 characters, no padding. */
-const BASE64URL_32_BYTES = /^[A-Za-z0-9_-]{43}$/;
+export const BASE64URL_32_BYTES = /^[A-Za-z0-9_-]{43}$/;
 
 export class MobileHandoffChallengeResponseDto {
 	@ApiProperty({

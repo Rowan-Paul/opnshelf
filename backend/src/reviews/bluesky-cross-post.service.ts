@@ -1,6 +1,7 @@
 import type { Agent } from "@atproto/api";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { safeFetch } from "../common/safe-fetch";
 import { ReviewMediaService } from "./review-media.service";
 import {
 	type MediaType,
@@ -11,6 +12,7 @@ import {
 const BLUESKY_APP_ORIGIN = "https://bsky.app";
 const BLUESKY_POST_COLLECTION = "app.bsky.feed.post";
 const BLUESKY_POST_MAX_GRAPHEMES = 300;
+const BLUESKY_POST_MAX_BYTES = 3_000;
 const BLUESKY_CTA = "Read my review";
 const BLUESKY_THUMB_MAX_BYTES = 1_000_000;
 
@@ -66,6 +68,27 @@ export function composeBlueskyPostText(
 			BLUESKY_POST_MAX_GRAPHEMES - graphemes(withoutReview).length,
 		);
 		resolvedReviewTitle = truncateGraphemes(reviewTitle, reviewBudget);
+		text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
+	}
+
+	while (
+		Buffer.byteLength(text, "utf8") > BLUESKY_POST_MAX_BYTES &&
+		resolvedReviewTitle.length > 0
+	) {
+		resolvedReviewTitle = truncateGraphemes(
+			reviewTitle,
+			graphemes(resolvedReviewTitle).length - 1,
+		);
+		text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
+	}
+	while (
+		Buffer.byteLength(text, "utf8") > BLUESKY_POST_MAX_BYTES &&
+		resolvedMediaTitle.length > 0
+	) {
+		resolvedMediaTitle = truncateGraphemes(
+			mediaTitle,
+			graphemes(resolvedMediaTitle).length - 1,
+		);
 		text = crossPostText(resolvedMediaTitle, resolvedReviewTitle);
 	}
 
@@ -125,12 +148,23 @@ export class BlueskyCrossPostService {
 	): Promise<unknown | undefined> {
 		if (!posterPath) return undefined;
 		try {
-			const response = await fetch(`${TMDB_IMAGE_BASE}${posterPath}`);
+			const response = await safeFetch(`${TMDB_IMAGE_BASE}${posterPath}`, {
+				signal: AbortSignal.timeout(10_000),
+			});
 			if (!response.ok) return undefined;
 			const contentType = response.headers.get("content-type") ?? "";
 			if (!contentType.startsWith("image/")) return undefined;
-			const bytes = new Uint8Array(await response.arrayBuffer());
-			if (bytes.byteLength > BLUESKY_THUMB_MAX_BYTES) return undefined;
+			const declaredLength = Number(response.headers.get("content-length"));
+			if (declaredLength > BLUESKY_THUMB_MAX_BYTES) return undefined;
+			if (!response.body) return undefined;
+			const chunks: Uint8Array[] = [];
+			let total = 0;
+			for await (const chunk of response.body) {
+				total += chunk.byteLength;
+				if (total > BLUESKY_THUMB_MAX_BYTES) return undefined;
+				chunks.push(chunk);
+			}
+			const bytes = Buffer.concat(chunks);
 			const uploaded = await agent.uploadBlob(bytes, { encoding: contentType });
 			return uploaded.data.blob;
 		} catch (error) {

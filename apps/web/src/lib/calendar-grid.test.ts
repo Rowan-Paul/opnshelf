@@ -192,7 +192,7 @@ describe("getMonthGrid", () => {
 });
 
 describe("getCalendarDateRange", () => {
-	inZone("UTC");
+	inZone("America/New_York");
 
 	it("spans the first of the previous month to the last of the next", () => {
 		expect(getCalendarDateRange(new Date(2026, 2, 15))).toEqual({
@@ -216,13 +216,12 @@ describe("getCalendarDateRange", () => {
 describe("isDateInWeek", () => {
 	inZone("Europe/Amsterdam");
 
-	const weekStart = new Date(2026, 8, 7);
-
 	it("is false without a selected week", () => {
 		expect(isDateInWeek(new Date(2026, 8, 7), null)).toBe(false);
 	});
 
 	it("includes Monday through Sunday and nothing outside", () => {
+		const weekStart = new Date(2026, 8, 7);
 		expect(isDateInWeek(new Date(2026, 8, 7), weekStart)).toBe(true);
 		expect(isDateInWeek(new Date(2026, 8, 13, 22), weekStart)).toBe(true);
 		expect(isDateInWeek(new Date(2026, 8, 6), weekStart)).toBe(false);
@@ -491,7 +490,10 @@ describe("formatting", () => {
 	});
 
 	it("formats a day key as a short date", () => {
-		expect(formatReleaseDate("2026-09-07", "Europe/Amsterdam")).toBe("Sep 7");
+		expect(formatReleaseDate("2026-09-07", "America/New_York")).toBe("Sep 7");
+		expect(formatWeekRange(new Date(2026, 8, 7), "America/New_York")).toBe(
+			"Sep 7 - Sep 13",
+		);
 	});
 
 	it("exposes Monday-first weekday labels and twelve month names", () => {

@@ -196,12 +196,16 @@ describe("BlogMirrorService", () => {
 		});
 	});
 
-	it("delete skips Reviews that never had a mirror", async () => {
+	it("delete still removes an Offprint pointer when no mirror is stored", async () => {
 		await service.delete("did:plc:abc123", agent, {
 			rkey: "rkey-1",
 			blogDocumentUri: null,
 		});
-		expect(mockDeleteRecord).not.toHaveBeenCalled();
+		expect(mockDeleteRecord).toHaveBeenCalledWith({
+			repo: "did:plc:abc123",
+			collection: "app.offprint.document.article",
+			rkey: "rkey-1",
+		});
 	});
 
 	it("delete swallows PDS failures", async () => {

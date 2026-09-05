@@ -160,7 +160,7 @@ describe("ActivityFeedService", () => {
 			service.getFollowedActivityFeed("did:plc:self", 3, 10),
 		).resolves.toEqual({
 			items: [],
-			page: 3,
+			page: 1,
 			pageSize: 10,
 			total: 0,
 			totalPages: 0,

@@ -12,6 +12,7 @@ import {
 	Req,
 	Res,
 	ServiceUnavailableException,
+	UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
@@ -55,6 +56,10 @@ type GoogleSignupError =
 @Controller()
 export class GoogleSignupController {
 	private readonly logger = new Logger(GoogleSignupController.name);
+	private readonly pendingGoogleEmails = new Map<
+		string,
+		{ email: string; expiresAt: number }
+	>();
 
 	constructor(
 		private readonly authService: AuthService,
@@ -172,11 +177,16 @@ export class GoogleSignupController {
 				pending.token,
 				this.googleCookieOptions(),
 			);
+			for (const [token, entry] of this.pendingGoogleEmails) {
+				if (entry.expiresAt <= Date.now())
+					this.pendingGoogleEmails.delete(token);
+			}
+			this.pendingGoogleEmails.set(pending.token, {
+				email: pending.email,
+				expiresAt: Date.now() + GOOGLE_COOKIE_MAX_AGE_MS,
+			});
 
 			const url = new URL("/signup/google", getFrontendUrl(this.configService));
-			// Display only. The account is created from the cookie-held token and
-			// the email the PDS already has, never from these params.
-			url.searchParams.set("email", pending.email);
 			const suggested = this.suggestUsername(pending.providerUsername);
 			if (suggested) {
 				url.searchParams.set("suggested", suggested);
@@ -213,6 +223,22 @@ export class GoogleSignupController {
 		}
 	}
 
+	@Get("auth/google/pending")
+	@ApiOperation({
+		operationId: "AuthController_googlePending",
+		summary: "Read the pending Google signup identity",
+	})
+	@ApiResponse({ status: 200, description: "Pending Google signup identity" })
+	googlePending(@Req() req: Request): { email: string } {
+		const token = this.readPendingToken(req);
+		const pending = token ? this.pendingGoogleEmails.get(token) : undefined;
+		if (!pending || pending.expiresAt <= Date.now()) {
+			if (token) this.pendingGoogleEmails.delete(token);
+			throw new UnauthorizedException("Google signup is not pending");
+		}
+		return { email: pending.email };
+	}
+
 	/**
 	 * Finish a Google signup: create the account on our PDS and hand straight
 	 * into Core OAuth.
@@ -245,8 +271,7 @@ export class GoogleSignupController {
 			throw new ForbiddenException("Captcha verification failed");
 		}
 
-		const cookies = req.cookies as Record<string, string | undefined>;
-		const pendingToken = cookies?.[GOOGLE_PENDING_COOKIE_NAME];
+		const pendingToken = this.readPendingToken(req);
 		if (!pendingToken) {
 			throw new BadRequestException(
 				"Your Google sign-in expired. Please start again.",
@@ -289,6 +314,7 @@ export class GoogleSignupController {
 		}
 
 		res.clearCookie(GOOGLE_PENDING_COOKIE_NAME, { path: "/" });
+		this.pendingGoogleEmails.delete(pendingToken);
 
 		await this.authService.upsertUser(
 			{
@@ -328,6 +354,14 @@ export class GoogleSignupController {
 			maxAge: GOOGLE_COOKIE_MAX_AGE_MS,
 			path: "/",
 		};
+	}
+
+	private readPendingToken(req: Request): string | null {
+		return (
+			(req.cookies as Record<string, string | undefined>)?.[
+				GOOGLE_PENDING_COOKIE_NAME
+			] ?? null
+		);
 	}
 
 	/** Turn a Google display name into something the username field accepts. */

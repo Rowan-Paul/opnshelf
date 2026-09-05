@@ -156,8 +156,9 @@ export class OAuthClientFactory implements OnModuleInit {
 		const backendUrl =
 			this.configService.get<string>("BACKEND_PUBLIC_URL") ||
 			"http://127.0.0.1:3001";
+		const backendHostname = new URL(backendUrl).hostname;
 		const isLocalhost =
-			backendUrl.includes("localhost") || backendUrl.includes("127.0.0.1");
+			backendHostname === "localhost" || backendHostname === "127.0.0.1";
 		const configuredPort = this.configService.get<number>("PORT");
 		const derivedPort = new URL(backendUrl).port;
 		const port = configuredPort || Number(derivedPort || 3001);

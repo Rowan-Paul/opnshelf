@@ -812,6 +812,21 @@
         ]
       }
     },
+    "/auth/google/pending": {
+      "get": {
+        "operationId": "AuthController_googlePending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Pending Google signup identity"
+          }
+        },
+        "summary": "Read the pending Google signup identity",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/google/register": {
       "post": {
         "operationId": "AuthController_googleRegister",

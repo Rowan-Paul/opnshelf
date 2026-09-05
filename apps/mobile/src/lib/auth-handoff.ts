@@ -31,7 +31,10 @@ export async function beginHandoff(): Promise<string | null> {
 		const { data } = await authControllerMobileChallenge({
 			throwOnError: true,
 		});
-		if (!data?.codeVerifier || !data.codeChallenge) return null;
+		if (!data?.codeVerifier || !data.codeChallenge) {
+			await clearHandoff();
+			return null;
+		}
 		inMemoryVerifier = data.codeVerifier;
 		await SecureStore.setItemAsync(VERIFIER_KEY, data.codeVerifier);
 		return data.codeChallenge;

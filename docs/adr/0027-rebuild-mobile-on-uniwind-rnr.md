@@ -9,5 +9,5 @@ Rebuilding fresh lets the mobile app share the web's design vocabulary directly:
 ## Consequences
 
 - Mobile and web stay in design lockstep through a shared token vocabulary; web design changes are portable to mobile rather than re-interpreted.
-- The app is built core-loop-first (auth → search → media detail → log/rate/review → shelf); features like lists, social, calendar, person pages, notes, and Trakt import are deliberately deferred to v1.1+.
+- The app is built core-loop-first (auth → search → media detail → log/rate/review → shelf); features like lists, standalone social and Trakt management beyond onboarding, calendar, person pages, and notes are deliberately deferred to v1.1+.
 - We are coupled to react-native-reusables' Uniwind support. If that support regresses, the fallback is NativeWind (RNR's original target).

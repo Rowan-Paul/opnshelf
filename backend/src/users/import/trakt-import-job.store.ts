@@ -232,7 +232,7 @@ export class TraktImportJobStore {
 			}
 		}
 
-		throw new Error(
+		throw new TraktJobCasError(
 			`Could not persist Trakt import controls for ${jobId} after ${TRAKT_JOB_CAS_RETRIES} concurrent updates.`,
 		);
 	}

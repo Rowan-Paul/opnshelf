@@ -120,6 +120,7 @@ export class NativeAccountService {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ did }),
+				signal: AbortSignal.timeout(30_000),
 			},
 		);
 		if (!res.ok) {

@@ -34,6 +34,12 @@ describe("Bluesky post composition", () => {
 		expect(text).toContain("Read my review");
 	});
 
+	it("also stays within the UTF-8 byte limit", () => {
+		const text = composeBlueskyPostText(`A${"\u0301".repeat(4_000)}`, "Short");
+		expect(Buffer.byteLength(text, "utf8")).toBeLessThanOrEqual(3_000);
+		expect(text).toContain("Read my review");
+	});
+
 	it("uses UTF-8 byte offsets for the linked call to action", () => {
 		const text = composeBlueskyPostText("Amélie 🎬", "Très bien");
 		const uri = "https://opnshelf.xyz/reviews/alice/key";

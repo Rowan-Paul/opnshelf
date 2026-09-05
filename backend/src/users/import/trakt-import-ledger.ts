@@ -224,7 +224,7 @@ export function rankMovieMatchCandidates(
 	results: TMDBMovie[],
 	sourceYear: number | null,
 ): TraktMatchCandidateDto[] {
-	return results
+	return [...results]
 		.sort(
 			(a, b) =>
 				candidateYearScore(b.release_date, sourceYear) -
@@ -246,7 +246,7 @@ export function rankShowMatchCandidates(
 	results: TMDBShow[],
 	sourceYear: number | null,
 ): TraktMatchCandidateDto[] {
-	return results
+	return [...results]
 		.sort(
 			(a, b) =>
 				candidateYearScore(b.first_air_date, sourceYear) -
