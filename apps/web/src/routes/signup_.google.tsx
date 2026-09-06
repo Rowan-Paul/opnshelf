@@ -78,6 +78,7 @@ function GoogleSignupPage() {
 	useEffect(() => {
 		fetch(`${env.VITE_API_URL}/auth/google/pending`, {
 			credentials: "include",
+			cache: "no-store",
 		})
 			.then(async (response) => {
 				if (!response.ok) return;

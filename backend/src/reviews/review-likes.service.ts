@@ -9,6 +9,7 @@ import {
 import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review/like";
 import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
 import { PrismaService } from "../prisma/prisma.service";
+import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import type { ATSession } from "./reviews.service";
 
 /**
@@ -101,8 +102,8 @@ export class ReviewLikesService {
 				collection: REVIEW_LIKE_COLLECTION,
 				rkey: like.rkey,
 			});
-		} catch {
-			// Best effort: the local index must still be cleared if PDS is already clean.
+		} catch (error) {
+			if (!isAtprotoRecordMissingError(error)) throw error;
 		}
 
 		await this.prisma.reviewLike.delete({

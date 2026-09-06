@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { safeFetch } from "../common/safe-fetch";
+import { Prisma } from "../generated/client";
 import type {
 	FollowedWatcherActorDto,
 	PaginatedSocialUsersDto,
@@ -32,6 +33,11 @@ export type SocialUserRecord = {
 		followers: number;
 		following: number;
 	};
+};
+
+type RankedSocialUserRow = Omit<SocialUserRecord, "_count"> & {
+	followersCount: number;
+	followingCount: number;
 };
 
 /**
@@ -131,21 +137,40 @@ export class SocialUsersService {
 		const safePageSize = clampPageSize(pageSize, MAX_SOCIAL_PAGE_SIZE);
 		const safePage = clampPage(page);
 
-		const matches = await this.prisma.user.findMany({
-			where: {
-				did: { not: viewerDid },
-				OR: [
-					{ handle: { contains: trimmedQuery, mode: "insensitive" } },
-					{ displayName: { contains: trimmedQuery, mode: "insensitive" } },
-				],
+		const rows = await this.prisma.$queryRaw<RankedSocialUserRow[]>(Prisma.sql`
+			SELECT
+				u."did", u."handle", u."displayName", u."avatar",
+				(SELECT COUNT(*)::int FROM "Follow" f WHERE f."followingDid" = u."did") AS "followersCount",
+				(SELECT COUNT(*)::int FROM "Follow" f WHERE f."followerDid" = u."did") AS "followingCount"
+			FROM "User" u
+			WHERE u."did" <> ${viewerDid}
+				AND (
+					strpos(lower(u."handle"), ${trimmedQuery}) > 0 OR
+					strpos(lower(COALESCE(u."displayName", '')), ${trimmedQuery}) > 0
+				)
+			ORDER BY
+				CASE
+					WHEN lower(u."handle") = ${trimmedQuery} THEN 0
+					WHEN strpos(lower(u."handle"), ${trimmedQuery}) = 1 THEN 1
+					WHEN strpos(lower(COALESCE(u."displayName", '')), ${trimmedQuery}) = 1 THEN 2
+					WHEN strpos(lower(u."handle"), ${trimmedQuery}) > 0 THEN 3
+					ELSE 4
+				END,
+				"followersCount" DESC,
+				lower(u."handle") ASC,
+				u."did" ASC
+			LIMIT ${SEARCH_CANDIDATE_LIMIT}
+		`);
+		const sortedMatches: SocialUserRecord[] = rows.map((row) => ({
+			did: row.did,
+			handle: row.handle,
+			displayName: row.displayName,
+			avatar: row.avatar,
+			_count: {
+				followers: row.followersCount,
+				following: row.followingCount,
 			},
-			select: socialUserSelect,
-			take: SEARCH_CANDIDATE_LIMIT,
-		});
-
-		const sortedMatches = [...matches].sort((left, right) =>
-			compareSocialSearch(left, right, trimmedQuery),
-		);
+		}));
 
 		const paginated = paginateItems(sortedMatches, safePage, safePageSize);
 		const cards = await this.buildSocialUserCards(
