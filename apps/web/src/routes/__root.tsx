@@ -1,4 +1,4 @@
-import { authControllerMeOptions, isUnauthorizedError } from "@opnshelf/api";
+import { isUnauthorizedError } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -16,6 +16,7 @@ import { WelcomeTour } from "#/components/tour/WelcomeTour";
 import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
+import { currentUserQueryOptions } from "#/lib/auth-query";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
 import {
 	DefaultErrorComponent,
@@ -50,7 +51,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 		try {
 			const user = await context.queryClient.fetchQuery(
-				authControllerMeOptions(ssrAuthOptions()),
+				currentUserQueryOptions(ssrAuthOptions()),
 			);
 			if (user?.needsOnboarding) {
 				throw redirect({ to: "/onboarding" });

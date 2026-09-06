@@ -27,6 +27,8 @@ export interface MediaCardProps {
 	seasonNumber?: number;
 	episodeNumber?: number;
 	posterUrl: string;
+	/** Opt in for initially visible/LCP cards; offscreen cards load lazily. */
+	imageLoading?: "eager" | "lazy";
 	backdropUrl?: string;
 	type: "movie" | "show";
 	tmdbRating?: number;
@@ -69,6 +71,7 @@ export default function MediaCard({
 	seasonNumber,
 	episodeNumber,
 	posterUrl,
+	imageLoading = "lazy",
 	backdropUrl,
 	type,
 	globalRating,
@@ -170,6 +173,8 @@ export default function MediaCard({
 					{/* Main image */}
 					<img
 						src={imageUrl}
+						loading={imageLoading}
+						decoding="async"
 						alt={title}
 						className={`h-full w-full object-cover transition-all duration-300 ${
 							imageLoaded ? "opacity-100" : "opacity-0"

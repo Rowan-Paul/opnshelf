@@ -369,6 +369,7 @@ describe("ShowProgressService", () => {
 			});
 
 			const result = await service.getUserReleaseCalendar("did:plc:abc123");
+			expect(mockPrismaService.show.findUnique).not.toHaveBeenCalled();
 
 			expect(result).toEqual({
 				items: [

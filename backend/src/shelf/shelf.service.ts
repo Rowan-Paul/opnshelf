@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { ColorExtractionService } from "../movies/color-extraction.service";
 
 interface ShelfItem {
 	id: string;
@@ -51,6 +50,7 @@ interface RawShelfRow {
 	watchedDate: Date | null;
 	createdAt: Date;
 	watchCount: bigint;
+	colors: unknown;
 	movieId: string | null;
 	showId: string | null;
 	title: string;
@@ -83,10 +83,7 @@ type ShelfActivitySummary = {
 
 @Injectable()
 export class ShelfService {
-	constructor(
-		private prisma: PrismaService,
-		private colorExtraction: ColorExtractionService,
-	) {}
+	constructor(private prisma: PrismaService) {}
 
 	async getUserShelf(
 		userDid: string,
@@ -175,7 +172,7 @@ export class ShelfService {
 				'movie' AS "type",
 				tm."watchedDate" AS "watchedDate",
 				tm."createdAt" AS "createdAt",
-				COUNT(*) OVER (PARTITION BY tm."movieId") AS "watchCount",
+				m.colors AS "colors",
 				tm."watchedDate" IS NULL AS "isUndated",
 				tm."watchedDate" AS "sortDate",
 				tm."movieId" AS "movieId",
@@ -204,9 +201,7 @@ export class ShelfService {
 				'episode' AS "type",
 				te."watchedDate" AS "watchedDate",
 				te."createdAt" AS "createdAt",
-				COUNT(*) OVER (
-					PARTITION BY te."showId", te."seasonNumber", te."episodeNumber"
-				) AS "watchCount",
+				s.colors AS "colors",
 				te."watchedDate" IS NULL AS "isUndated",
 				te."watchedDate" AS "sortDate",
 				NULL::text AS "movieId",
@@ -245,16 +240,42 @@ export class ShelfService {
 			)`;
 		}
 
+		// Materialize the ordered page before counting rewatches. This avoids
+		// windowing every Watch and keeps counts independent of page boundaries.
 		const rows =
 			total === 0
 				? []
 				: await this.prisma.$queryRaw<RawShelfRow[]>(Prisma.sql`
+					WITH page AS MATERIALIZED (
+						SELECT shelf.* FROM ${shelfQuery} shelf
+						ORDER BY shelf."isUndated" ASC,
+							shelf."sortDate" ${sortDirection} NULLS LAST,
+							shelf."createdAt" ${sortDirection},
+							shelf."type" ${sortDirection},
+							shelf."trackedId" ${sortDirection}
+						OFFSET ${offset} LIMIT ${safePageSize}
+					), movie_counts AS (
+						SELECT tm."movieId", COUNT(*) AS count
+						FROM "TrackedMovie" tm
+						WHERE tm."userDid" = ${userDid}
+							AND tm."movieId" IN (SELECT "movieId" FROM page WHERE type = 'movie')
+						GROUP BY tm."movieId"
+					), episode_counts AS (
+						SELECT te."showId", te."seasonNumber", te."episodeNumber", COUNT(*) AS count
+						FROM "TrackedEpisode" te
+						WHERE te."userDid" = ${userDid}
+							AND (te."showId", te."seasonNumber", te."episodeNumber") IN (
+								SELECT "showId", "seasonNumber", "episodeNumber" FROM page WHERE type = 'episode'
+							)
+						GROUP BY te."showId", te."seasonNumber", te."episodeNumber"
+					)
 					SELECT
 						shelf."trackedId",
 						shelf."type",
 						shelf."watchedDate",
 						shelf."createdAt",
-						shelf."watchCount",
+						CASE WHEN shelf.type = 'movie' THEN mc.count ELSE ec.count END AS "watchCount",
+							shelf.colors,
 						shelf."movieId",
 						shelf."showId",
 						shelf."title",
@@ -269,79 +290,80 @@ export class ShelfService {
 						shelf."firstAirYear",
 						shelf."firstAirDate",
 						shelf."overview"
-					FROM ${shelfQuery} shelf
+					FROM page shelf
+						LEFT JOIN movie_counts mc ON mc."movieId" = shelf."movieId"
+						LEFT JOIN episode_counts ec ON ec."showId" = shelf."showId"
+							AND ec."seasonNumber" = shelf."seasonNumber"
+							AND ec."episodeNumber" = shelf."episodeNumber"
 					ORDER BY
 						shelf."isUndated" ASC,
 						shelf."sortDate" ${sortDirection} NULLS LAST,
 						shelf."createdAt" ${sortDirection},
 						shelf."type" ${sortDirection},
 						shelf."trackedId" ${sortDirection}
-					OFFSET ${offset}
-					LIMIT ${safePageSize}
 				`);
 
-		const items = await Promise.all(
-			rows.map(async (row) => {
-				if (row.type === "movie" && row.movieId) {
-					const colors = await this.ensureMovieHasColors(row.movieId);
-					return {
+		// Catalogue hydration populates colors. List reads never download posters.
+		const items = rows.map((row) => {
+			if (row.type === "movie" && row.movieId) {
+				const colors = row.colors ?? null;
+				return {
+					id: row.trackedId,
+					type: "movie" as const,
+					watchedDate: row.watchedDate,
+					createdAt: row.createdAt,
+					data: {
 						id: row.trackedId,
-						type: "movie" as const,
+						movieId: row.movieId,
+						title: row.title,
+						posterPath: row.posterPath ?? undefined,
+						backdropPath: row.backdropPath ?? undefined,
+						releaseYear: row.releaseYear ?? undefined,
+						releaseDate: row.releaseDate ?? undefined,
+						overview: row.overview ?? undefined,
+						colors,
 						watchedDate: row.watchedDate,
+						watchCount: Number(row.watchCount),
 						createdAt: row.createdAt,
-						data: {
-							id: row.trackedId,
-							movieId: row.movieId,
-							title: row.title,
-							posterPath: row.posterPath ?? undefined,
-							backdropPath: row.backdropPath ?? undefined,
-							releaseYear: row.releaseYear ?? undefined,
-							releaseDate: row.releaseDate ?? undefined,
-							overview: row.overview ?? undefined,
-							colors,
-							watchedDate: row.watchedDate,
-							watchCount: Number(row.watchCount),
-							createdAt: row.createdAt,
-						},
-					};
-				}
+					},
+				};
+			}
 
-				if (
-					row.type === "episode" &&
-					row.showId &&
-					row.seasonNumber !== null &&
-					row.episodeNumber !== null
-				) {
-					const colors = await this.ensureShowHasColors(row.showId);
-					return {
+			if (
+				row.type === "episode" &&
+				row.showId &&
+				row.seasonNumber !== null &&
+				row.episodeNumber !== null
+			) {
+				const colors = row.colors ?? null;
+				return {
+					id: row.trackedId,
+					type: "episode" as const,
+					watchedDate: row.watchedDate,
+					createdAt: row.createdAt,
+					data: {
 						id: row.trackedId,
-						type: "episode" as const,
+						showId: row.showId,
+						showTitle: row.title,
+						seasonNumber: row.seasonNumber,
+						episodeNumber: row.episodeNumber,
+						episodeTitle: row.episodeName ?? undefined,
+						posterPath: row.posterPath ?? undefined,
+						backdropPath: row.backdropPath ?? undefined,
+						stillPath: row.stillPath ?? undefined,
+						firstAirYear: row.firstAirYear ?? undefined,
+						firstAirDate: row.firstAirDate ?? undefined,
+						overview: row.overview ?? undefined,
+						colors,
 						watchedDate: row.watchedDate,
+						watchCount: Number(row.watchCount),
 						createdAt: row.createdAt,
-						data: {
-							id: row.trackedId,
-							showId: row.showId,
-							showTitle: row.title,
-							seasonNumber: row.seasonNumber,
-							episodeNumber: row.episodeNumber,
-							episodeTitle: row.episodeName ?? undefined,
-							posterPath: row.posterPath ?? undefined,
-							backdropPath: row.backdropPath ?? undefined,
-							stillPath: row.stillPath ?? undefined,
-							firstAirYear: row.firstAirYear ?? undefined,
-							firstAirDate: row.firstAirDate ?? undefined,
-							overview: row.overview ?? undefined,
-							colors,
-							watchedDate: row.watchedDate,
-							watchCount: Number(row.watchCount),
-							createdAt: row.createdAt,
-						},
-					};
-				}
+					},
+				};
+			}
 
-				throw new Error(`Invalid shelf row for user ${userDid}`);
-			}),
-		);
+			throw new Error(`Invalid shelf row for user ${userDid}`);
+		});
 
 		return {
 			items,
@@ -414,92 +436,6 @@ export class ShelfService {
 			watchedLast30Days,
 			dailyActivity,
 		};
-	}
-
-	private async ensureMovieHasColors(movieId: string): Promise<{
-		primary?: string;
-		secondary?: string;
-		accent?: string;
-		muted?: string;
-	} | null> {
-		const movie = await this.prisma.movie.findUnique({
-			where: { movieId },
-			select: {
-				posterPath: true,
-				colors: true,
-			},
-		});
-
-		if (!movie) {
-			return null;
-		}
-
-		const existingColors = movie.colors as {
-			primary?: string;
-			secondary?: string;
-			accent?: string;
-			muted?: string;
-		} | null;
-
-		if (existingColors?.primary) {
-			return existingColors;
-		}
-
-		const colors = await this.colorExtraction.extractColorsFromPoster(
-			movie.posterPath,
-		);
-
-		if (colors) {
-			await this.prisma.movie.update({
-				where: { movieId },
-				data: { colors },
-			});
-		}
-
-		return colors ?? existingColors ?? null;
-	}
-
-	private async ensureShowHasColors(showId: string): Promise<{
-		primary?: string;
-		secondary?: string;
-		accent?: string;
-		muted?: string;
-	} | null> {
-		const show = await this.prisma.show.findUnique({
-			where: { showId },
-			select: {
-				posterPath: true,
-				colors: true,
-			},
-		});
-
-		if (!show) {
-			return null;
-		}
-
-		const existingColors = show.colors as {
-			primary?: string;
-			secondary?: string;
-			accent?: string;
-			muted?: string;
-		} | null;
-
-		if (existingColors?.primary) {
-			return existingColors;
-		}
-
-		const colors = await this.colorExtraction.extractColorsFromPoster(
-			show.posterPath,
-		);
-
-		if (colors) {
-			await this.prisma.show.update({
-				where: { showId },
-				data: { colors },
-			});
-		}
-
-		return colors ?? existingColors ?? null;
 	}
 
 	/**

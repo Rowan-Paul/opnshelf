@@ -6,6 +6,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { getShowWatchIndex } from "@/lib/show-watch-index";
 import { latestWatchDate } from "@/lib/watch-date";
 
 interface WatchStatusShowOptions {
@@ -66,35 +67,22 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 		[isShow, showWatchHistory],
 	);
 
-	const uniqueEpisodesWatched = useMemo(() => {
-		if (!isShow || !Array.isArray(showWatchHistory)) return 0;
-		return new Set(
-			showWatchHistory.map((ep) => `${ep.seasonNumber}-${ep.episodeNumber}`),
-		).size;
-	}, [isShow, showWatchHistory]);
-
-	const isEpisodeWatched = (seasonNum: number, episodeNum: number) => {
-		if (!isShow || !showWatchHistory) return false;
-		return showWatchHistory.some(
-			(ep) => ep.seasonNumber === seasonNum && ep.episodeNumber === episodeNum,
-		);
-	};
-
-	const isSeasonFullyWatched = (seasonNum: number, episodeCount: number) => {
-		if (!isShow || !showWatchHistory || episodeCount === 0) return false;
-		const watchedInSeason = showWatchHistory.filter(
-			(ep) => ep.seasonNumber === seasonNum,
-		).length;
-		return watchedInSeason >= episodeCount;
-	};
-
+	const watchIndex = showWatchHistory
+		? getShowWatchIndex(showWatchHistory)
+		: undefined;
+	const uniqueEpisodesWatched = isShow ? (watchIndex?.episodes.size ?? 0) : 0;
+	const episodeWatchCount = (seasonNum: number, episodeNum: number) =>
+		isShow ? (watchIndex?.episodes.get(`${seasonNum}-${episodeNum}`) ?? 0) : 0;
+	const isEpisodeWatched = (seasonNum: number, episodeNum: number) =>
+		episodeWatchCount(seasonNum, episodeNum) > 0;
+	const isSeasonFullyWatched = (seasonNum: number, episodeCount: number) =>
+		isShow &&
+		episodeCount > 0 &&
+		(watchIndex?.seasons.get(seasonNum) ?? 0) >= episodeCount;
 	const latestWatchedDate = useMemo(() => {
 		if (isMovie) return latestWatchDate(movieWatchHistory ?? []);
-		if (isShow && showWatchHistory && showWatchHistory.length > 0) {
-			return latestWatchDate(showWatchHistory);
-		}
-		return undefined;
-	}, [isMovie, isShow, movieWatchHistory, showWatchHistory]);
+		return isShow ? watchIndex?.latestWatchedDate : undefined;
+	}, [isMovie, isShow, movieWatchHistory, watchIndex]);
 
 	return {
 		isAuthenticated,
@@ -103,6 +91,7 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 		movieWatchHistory: isMovie ? movieWatchHistory : undefined,
 		totalMovieWatches: isMovie ? (movieWatchHistory?.length ?? 0) : 0,
 		// Show
+		episodeWatchCount,
 		isTracking: isShow ? isTracking : undefined,
 		showWatchHistory: isShow ? showWatchHistory : undefined,
 		uniqueEpisodesWatched: isShow ? uniqueEpisodesWatched : 0,

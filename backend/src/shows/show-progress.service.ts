@@ -390,30 +390,25 @@ export class ShowProgressService {
 			orderBy: { airDate: "asc" },
 		});
 
-		const watchingItems: ReleaseCalendarItem[] = await Promise.all(
-			episodes.map(async (episode) => {
-				const show = episode.season.show;
-				const colors = await this.catalogue.ensureShowHasColors(show.showId);
+		const watchingItems: ReleaseCalendarItem[] = episodes.map((episode) => {
+			const show = episode.season.show;
 
-				return {
-					source: "watching" as const,
-					mediaType: "show" as const,
-					releaseKind: "episode" as const,
-					releaseDate: episode.airDate?.toISOString().split("T")[0] ?? "",
-					title: show.title,
-					subtitle: `S${episode.seasonNumber} E${episode.episodeNumber} · ${episode.name}`,
-					overview: episode.overview ?? show.overview ?? undefined,
-					posterPath: show.posterPath ?? undefined,
-					backdropPath: show.backdropPath ?? undefined,
-					showId: show.showId,
-					seasonNumber: episode.seasonNumber,
-					episodeNumber: episode.episodeNumber,
-					colors: (colors ?? show.colors ?? undefined) as
-						| ReleaseCalendarColors
-						| undefined,
-				};
-			}),
-		);
+			return {
+				source: "watching" as const,
+				mediaType: "show" as const,
+				releaseKind: "episode" as const,
+				releaseDate: episode.airDate?.toISOString().split("T")[0] ?? "",
+				title: show.title,
+				subtitle: `S${episode.seasonNumber} E${episode.episodeNumber} · ${episode.name}`,
+				overview: episode.overview ?? show.overview ?? undefined,
+				posterPath: show.posterPath ?? undefined,
+				backdropPath: show.backdropPath ?? undefined,
+				showId: show.showId,
+				seasonNumber: episode.seasonNumber,
+				episodeNumber: episode.episodeNumber,
+				colors: (show.colors ?? undefined) as ReleaseCalendarColors | undefined,
+			};
+		});
 
 		// Get watchlist
 		const watchlist = await this.prisma.list.findFirst({
