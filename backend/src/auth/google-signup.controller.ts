@@ -31,6 +31,7 @@ import { AuthService } from "./auth.service";
 import {
 	GoogleRegisterDto,
 	GoogleRegisterResponseDto,
+	GooglePendingResponseDto,
 } from "./dto/google-register.dto";
 import { NativeAccountService } from "./native-account.service";
 import { SignupRateLimiter } from "./signup-rate-limiter";
@@ -185,6 +186,11 @@ export class GoogleSignupController {
 				email: pending.email,
 				expiresAt: Date.now() + GOOGLE_COOKIE_MAX_AGE_MS,
 			});
+			const expiry = setTimeout(
+				() => this.pendingGoogleEmails.delete(pending.token as string),
+				GOOGLE_COOKIE_MAX_AGE_MS,
+			);
+			expiry.unref?.();
 
 			const url = new URL("/signup/google", getFrontendUrl(this.configService));
 			const suggested = this.suggestUsername(pending.providerUsername);
@@ -228,8 +234,16 @@ export class GoogleSignupController {
 		operationId: "AuthController_googlePending",
 		summary: "Read the pending Google signup identity",
 	})
-	@ApiResponse({ status: 200, description: "Pending Google signup identity" })
-	googlePending(@Req() req: Request): { email: string } {
+	@ApiResponse({
+		status: 200,
+		description: "Pending Google signup identity",
+		type: GooglePendingResponseDto,
+	})
+	googlePending(
+		@Req() req: Request,
+		@Res({ passthrough: true }) res: Response,
+	): GooglePendingResponseDto {
+		res.setHeader("Cache-Control", "no-store");
 		const token = this.readPendingToken(req);
 		const pending = token ? this.pendingGoogleEmails.get(token) : undefined;
 		if (!pending || pending.expiresAt <= Date.now()) {

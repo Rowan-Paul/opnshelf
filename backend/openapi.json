@@ -818,7 +818,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Pending Google signup identity"
+            "description": "Pending Google signup identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GooglePendingResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Read the pending Google signup identity",
@@ -6466,6 +6473,18 @@
         "required": [
           "verified",
           "coreOAuthUrl"
+        ]
+      },
+      "GooglePendingResponseDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email verified by Google for the pending signup"
+          }
+        },
+        "required": [
+          "email"
         ]
       },
       "GoogleRegisterDto": {

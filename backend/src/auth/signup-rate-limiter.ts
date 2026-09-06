@@ -18,6 +18,8 @@ export class SignupRateLimiter {
 	private readonly resendAttempts = new Map<string, number[]>();
 	private static readonly RESEND_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 	private static readonly RESEND_MAX_PER_WINDOW = 5;
+	private static readonly SWEEP_INTERVAL_MS = 60_000;
+	private nextSweepAt = 0;
 
 	private evictExpired(
 		attempts: Map<string, number[]>,
@@ -30,14 +32,23 @@ export class SignupRateLimiter {
 		}
 	}
 
-	enforceRegisterRateLimit(ip: string): void {
-		const now = Date.now();
-		const windowStart = now - SignupRateLimiter.REGISTER_WINDOW_MS;
-		this.evictExpired(this.registerAttempts, windowStart);
+	private sweepExpired(now: number): void {
+		if (now < this.nextSweepAt) return;
+		this.nextSweepAt = now + SignupRateLimiter.SWEEP_INTERVAL_MS;
+		this.evictExpired(
+			this.registerAttempts,
+			now - SignupRateLimiter.REGISTER_WINDOW_MS,
+		);
 		this.evictExpired(
 			this.resendAttempts,
 			now - SignupRateLimiter.RESEND_WINDOW_MS,
 		);
+	}
+
+	enforceRegisterRateLimit(ip: string): void {
+		const now = Date.now();
+		const windowStart = now - SignupRateLimiter.REGISTER_WINDOW_MS;
+		this.sweepExpired(now);
 		const recent = (this.registerAttempts.get(ip) || []).filter(
 			(t) => t > windowStart,
 		);
@@ -54,11 +65,7 @@ export class SignupRateLimiter {
 	enforceResendRateLimit(did: string): void {
 		const now = Date.now();
 		const windowStart = now - SignupRateLimiter.RESEND_WINDOW_MS;
-		this.evictExpired(this.resendAttempts, windowStart);
-		this.evictExpired(
-			this.registerAttempts,
-			now - SignupRateLimiter.REGISTER_WINDOW_MS,
-		);
+		this.sweepExpired(now);
 		const recent = (this.resendAttempts.get(did) || []).filter(
 			(t) => t > windowStart,
 		);

@@ -1,5 +1,5 @@
 import type { Mock, Mocked } from "vitest";
-import type { HttpException } from "@nestjs/common";
+import { type HttpException, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
@@ -77,6 +77,7 @@ describe("GoogleSignupController", () => {
 			clearCookie: vi.fn().mockReturnThis(),
 			status: vi.fn().mockReturnThis(),
 			json: vi.fn().mockReturnThis(),
+			setHeader: vi.fn().mockReturnThis(),
 		} as unknown as Mocked<Response>;
 		return res;
 	};
@@ -175,11 +176,17 @@ describe("GoogleSignupController", () => {
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000/signup/google?suggested=jane-doe",
 			);
+			const pendingRes = createMockResponse();
 			expect(
 				controller.googlePending(
 					createMockRequest({ cookies: { google_pending: "pending-tok" } }),
+					pendingRes,
 				),
 			).toEqual({ email: "jane@gmail.com" });
+			expect(pendingRes.setHeader).toHaveBeenCalledWith(
+				"Cache-Control",
+				"no-store",
+			);
 		});
 
 		it("refuses a callback whose state doesn't match the cookie", async () => {
@@ -192,6 +199,33 @@ describe("GoogleSignupController", () => {
 			expect(res.redirect).toHaveBeenCalledWith(
 				"http://127.0.0.1:3000/signup?error=google_failed",
 			);
+		});
+
+		it("expires abandoned pending identities after the cookie TTL", async () => {
+			vi.useFakeTimers();
+			try {
+				const startedAt = Date.now();
+				await controller.googleCallback(
+					"code",
+					"st",
+					undefined,
+					createMockRequest({ cookies: { google_state: "st" } }),
+					createMockResponse(),
+				);
+				vi.advanceTimersByTime(15 * 60 * 1000);
+				// Move the clock back so the endpoint's timestamp guard cannot be what
+				// makes this pass: the scheduled deletion itself removed the entry.
+				vi.setSystemTime(startedAt);
+
+				expect(() =>
+					controller.googlePending(
+						createMockRequest({ cookies: { google_pending: "pending-tok" } }),
+						createMockResponse(),
+					),
+				).toThrow(UnauthorizedException);
+			} finally {
+				vi.useRealTimers();
+			}
 		});
 
 		it("stops before creating anything when Google hasn't verified the email", async () => {

@@ -312,6 +312,13 @@ export type VerifyEmailResponseDto = {
     coreOAuthUrl: string;
 };
 
+export type GooglePendingResponseDto = {
+    /**
+     * Email verified by Google for the pending signup
+     */
+    email: string;
+};
+
 export type GoogleRegisterDto = {
     /**
      * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
@@ -2916,8 +2923,10 @@ export type AuthControllerGooglePendingResponses = {
     /**
      * Pending Google signup identity
      */
-    200: unknown;
+    200: GooglePendingResponseDto;
 };
+
+export type AuthControllerGooglePendingResponse = AuthControllerGooglePendingResponses[keyof AuthControllerGooglePendingResponses];
 
 export type AuthControllerGoogleRegisterData = {
     body: GoogleRegisterDto;

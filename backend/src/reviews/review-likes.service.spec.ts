@@ -190,6 +190,38 @@ describe("ReviewLikesService", () => {
 				service.unlike(session.did, session, "review-1"),
 			).rejects.toThrow(NotFoundException);
 		});
+
+		it("keeps the local like when the PDS deletion fails", async () => {
+			mockPrismaService.reviewLike.findUnique.mockResolvedValue({
+				id: "like-1",
+				rkey: "like-rkey-1",
+				reviewId: "review-1",
+			});
+			const failure = new Error("PDS unavailable");
+			mockDeleteRecord.mockRejectedValue(failure);
+
+			await expect(
+				service.unlike(session.did, session, "review-1"),
+			).rejects.toBe(failure);
+			expect(mockPrismaService.reviewLike.delete).not.toHaveBeenCalled();
+		});
+
+		it("clears the local like when the PDS record is already absent", async () => {
+			mockPrismaService.reviewLike.findUnique.mockResolvedValue({
+				id: "like-1",
+				rkey: "like-rkey-1",
+				reviewId: "review-1",
+			});
+			mockDeleteRecord.mockRejectedValue({
+				status: 404,
+				error: "RecordNotFound",
+			});
+
+			await service.unlike(session.did, session, "review-1");
+			expect(mockPrismaService.reviewLike.delete).toHaveBeenCalledWith({
+				where: { id: "like-1" },
+			});
+		});
 	});
 
 	describe("list", () => {

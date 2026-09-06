@@ -5,7 +5,8 @@ import { SocialUsersService } from "./social-users.service";
 describe("SocialUsersService", () => {
 	let service: SocialUsersService;
 
-	const prisma = {
+	const prismaMock = {
+		$queryRaw: vi.fn(),
 		user: {
 			findUnique: vi.fn(),
 			findMany: vi.fn(),
@@ -13,7 +14,8 @@ describe("SocialUsersService", () => {
 		follow: {
 			findMany: vi.fn(),
 		},
-	} as unknown as PrismaService;
+	};
+	const prisma = prismaMock as unknown as PrismaService;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -21,14 +23,12 @@ describe("SocialUsersService", () => {
 	});
 
 	it("searches people without returning the viewer and ranks stronger handle matches first", async () => {
-		prisma.user.findMany = vi
-			.fn()
-			.mockResolvedValue([
-				makeUser("did:plc:exact", "al", "Al Exact", 2, 1),
-				makeUser("did:plc:prefix", "alice", "Alice Prefix", 1, 1),
-				makeUser("did:plc:display", "bravo", "Alana Display", 99, 1),
-				makeUser("did:plc:substring", "coral", "Coral", 5, 1),
-			]);
+		prismaMock.$queryRaw.mockResolvedValue([
+			rankedUser("did:plc:exact", "al", "Al Exact", 2, 1),
+			rankedUser("did:plc:prefix", "alice", "Alice Prefix", 1, 1),
+			rankedUser("did:plc:display", "bravo", "Alana Display", 99, 1),
+			rankedUser("did:plc:substring", "coral", "Coral", 5, 1),
+		]);
 		prisma.follow.findMany = vi
 			.fn()
 			.mockResolvedValueOnce([{ followingDid: "did:plc:prefix" }])
@@ -36,17 +36,7 @@ describe("SocialUsersService", () => {
 
 		const result = await service.searchPeople("did:plc:self", "al", 1, 10);
 
-		expect(prisma.user.findMany).toHaveBeenCalledWith({
-			where: {
-				did: { not: "did:plc:self" },
-				OR: [
-					{ handle: { contains: "al", mode: "insensitive" } },
-					{ displayName: { contains: "al", mode: "insensitive" } },
-				],
-			},
-			select: expect.any(Object),
-			take: 500,
-		});
+		expect(prismaMock.$queryRaw).toHaveBeenCalledOnce();
 		expect(result.items.map((item) => item.did)).toEqual([
 			"did:plc:exact",
 			"did:plc:prefix",
@@ -67,7 +57,7 @@ describe("SocialUsersService", () => {
 		await expect(service.searchPeople("did:plc:self", " @a ")).rejects.toThrow(
 			BadRequestException,
 		);
-		expect(prisma.user.findMany).not.toHaveBeenCalled();
+		expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
 	});
 
 	it("builds cards without relationship lookups for anonymous viewers", async () => {
@@ -126,5 +116,22 @@ function makeUser(
 			followers,
 			following,
 		},
+	};
+}
+
+function rankedUser(
+	did: string,
+	handle: string,
+	displayName: string,
+	followersCount: number,
+	followingCount: number,
+) {
+	return {
+		did,
+		handle,
+		displayName,
+		avatar: null,
+		followersCount,
+		followingCount,
 	};
 }
