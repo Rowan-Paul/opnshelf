@@ -142,12 +142,10 @@ function EpisodeCardWithActions({
 
 	// Removal always takes every Watch of this episode, so a rewatch confirms
 	// first (same guard as the Web episode row).
-	const watchEntryCount =
-		status.showWatchHistory?.filter(
-			(entry) =>
-				entry.seasonNumber === episode.seasonNumber &&
-				entry.episodeNumber === episode.episodeNumber,
-		).length ?? 0;
+	const watchEntryCount = status.episodeWatchCount(
+		episode.seasonNumber,
+		episode.episodeNumber,
+	);
 
 	const toggleShelf = () => {
 		if (onShelf) {
