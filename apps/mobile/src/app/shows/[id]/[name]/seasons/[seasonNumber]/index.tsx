@@ -6,7 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRef } from "react";
-import { FlatList, Pressable, RefreshControl, View } from "react-native";
+import {
+	FlatList,
+	findNodeHandle,
+	Pressable,
+	RefreshControl,
+	View,
+} from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
@@ -52,7 +58,6 @@ export default function SeasonDetailScreen() {
 	const showId = Number(id);
 	const seasonNum = Number(seasonNumber);
 	const listRef = useRef<FlatList>(null);
-	const scrollOffset = useRef(0);
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetSeasonDetailsOptions({
@@ -122,10 +127,6 @@ export default function SeasonDetailScreen() {
 				<FlatList
 					key={`${id}:${seasonNumber}`}
 					ref={listRef}
-					onScroll={(event) => {
-						scrollOffset.current = event.nativeEvent.contentOffset.y;
-					}}
-					scrollEventThrottle={16}
 					className="flex-1"
 					contentContainerStyle={{ paddingBottom: 48 }}
 					data={data.episodes}
@@ -321,9 +322,17 @@ export default function SeasonDetailScreen() {
 								mediaType="show"
 								mediaId={id}
 								seasonNumber={Number(seasonNumber)}
-								onFocusReview={() =>
-									listRef.current?.scrollToEnd({ animated: true })
-								}
+								onFocusReview={(section) => {
+									const scrollView = listRef.current?.getNativeScrollRef();
+									const scrollNode = scrollView && findNodeHandle(scrollView);
+									if (scrollNode == null) return;
+									section.measureLayout(scrollNode, (_x, y) => {
+										listRef.current?.scrollToOffset({
+											offset: Math.max(0, y - 12),
+											animated: true,
+										});
+									});
+								}}
 								focusReviewId={reviewId}
 								mediaWebUrl={
 									showData?.name

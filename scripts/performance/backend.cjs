@@ -33,7 +33,9 @@ const prisma = {
 async function main() {
  if(process.argv.includes('--verify')) {
    const assert=require('node:assert/strict');
-   const Original=source('backend/src/shelf/shelf.service.ts','HEAD').ShelfService;
+   const baselineRef = process.env.PERF_BASE_REF;
+   if (!baselineRef) throw new Error('--verify requires PERF_BASE_REF set to the pre-change commit');
+   const Original=source('backend/src/shelf/shelf.service.ts',baselineRef).ShelfService;
    const Current=source('backend/src/shelf/shelf.service.ts','').ShelfService;
    const original=new Original(prisma,{}),current=new Current(prisma);
    let cases=0;

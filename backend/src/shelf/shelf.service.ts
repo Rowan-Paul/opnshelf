@@ -303,7 +303,8 @@ export class ShelfService {
 						shelf."trackedId" ${sortDirection}
 				`);
 
-		// Catalogue hydration populates colors. List reads never download posters.
+		// Catalogue upserts populate colors; scripts/backfill-catalogue-colors.cjs
+		// repairs legacy NULL palettes. List reads never download posters.
 		const items = rows.map((row) => {
 			if (row.type === "movie" && row.movieId) {
 				const colors = row.colors ?? null;
