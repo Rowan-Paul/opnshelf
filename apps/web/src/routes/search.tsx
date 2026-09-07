@@ -389,8 +389,9 @@ function SearchPage() {
 										.map((item) => item.id)}
 								>
 									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-										{results.map((item) => (
+										{results.map((item, index) => (
 											<ActionableMediaCard
+												imageLoading={index < 6 ? "eager" : "lazy"}
 												key={`media-${item.id}-${item.media_type}`}
 												id={item.id}
 												title={getTitle(item)}
@@ -415,8 +416,9 @@ function SearchPage() {
 							<section>
 								<ShowProgressScope showIds={[]}>
 									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-										{movies.map((item) => (
+										{movies.map((item, index) => (
 											<ActionableMediaCard
+												imageLoading={index < 6 ? "eager" : "lazy"}
 												key={`movie-${item.id}`}
 												id={item.id}
 												title={getTitle(item)}
@@ -441,8 +443,9 @@ function SearchPage() {
 							<section>
 								<ShowProgressScope showIds={shows.map((item) => item.id)}>
 									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-										{shows.map((item) => (
+										{shows.map((item, index) => (
 											<ActionableMediaCard
+												imageLoading={index < 6 ? "eager" : "lazy"}
 												key={`show-${item.id}`}
 												id={item.id}
 												title={getTitle(item)}

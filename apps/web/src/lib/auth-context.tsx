@@ -1,5 +1,4 @@
 import {
-	authControllerMe,
 	authControllerMeOptions,
 	getLoginUrl,
 	getSignupUrl,
@@ -20,6 +19,7 @@ import {
 } from "react";
 import { env } from "#/env";
 import { posthog } from "#/integrations/posthog/provider";
+import { currentUserQueryOptions } from "./auth-query";
 
 interface AuthContextType {
 	user: UserDto | null;
@@ -39,32 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
 	// Fetch current user - catch 401s gracefully to prevent router error boundary loops
-	const { data: user, isLoading } = useQuery({
-		queryKey: authControllerMeOptions().queryKey,
-		queryFn: async ({ queryKey, signal }) => {
-			try {
-				const { data } = await authControllerMe({
-					...queryKey[0],
-					signal,
-					throwOnError: true,
-				});
-				return data ?? null;
-			} catch (error) {
-				if (
-					typeof error === "object" &&
-					error !== null &&
-					("status" in error || "statusCode" in error) &&
-					((error as Record<string, unknown>).status === 401 ||
-						(error as Record<string, unknown>).statusCode === 401)
-				) {
-					return null;
-				}
-				throw error;
-			}
-		},
-		retry: false,
-		staleTime: 5 * 60 * 1000, // 5 minutes
-	});
+	const { data: user, isLoading } = useQuery(currentUserQueryOptions());
 
 	// Fetch user settings
 	const { data: userSettings } = useQuery({

@@ -17,6 +17,7 @@ interface ActionableMediaCardProps {
 	title: string;
 	displayTitle?: string;
 	posterUrl: string;
+	imageLoading?: "eager" | "lazy";
 	backdropUrl?: string;
 	type: "movie" | "show";
 	tmdbRating?: number;
@@ -45,6 +46,7 @@ export default function ActionableMediaCard({
 	title,
 	displayTitle,
 	posterUrl,
+	imageLoading,
 	backdropUrl,
 	type,
 	tmdbRating,
@@ -218,6 +220,7 @@ export default function ActionableMediaCard({
 	return (
 		<>
 			<MediaCard
+				imageLoading={imageLoading}
 				id={id}
 				title={title}
 				displayTitle={displayTitle}
