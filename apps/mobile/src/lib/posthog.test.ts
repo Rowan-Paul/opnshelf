@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+	register: vi.fn(),
 	PostHog: vi.fn(),
 	env: {
 		apiUrl: "https://api.opnshelf.xyz",
@@ -11,10 +12,27 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("posthog-react-native", () => ({ default: mocks.PostHog }));
 vi.mock("./env", () => ({ env: mocks.env }));
+vi.mock("expo-updates", () => ({
+	updateId: "0199f40c-1111-4222-8333-444455556666",
+	channel: "production",
+	runtimeVersion: "1.2.0",
+}));
+vi.mock("expo-constants", () => ({
+	default: {
+		expoConfig: {
+			owner: "rowanpaul",
+			extra: { eas: { projectId: "87d86952-59ab-4711-9f5f-f9477b2d14f6" } },
+		},
+	},
+}));
 
 beforeEach(() => {
 	vi.resetModules();
-	mocks.PostHog.mockClear();
+	mocks.register.mockClear();
+	mocks.PostHog.mockReset();
+	mocks.PostHog.mockImplementation(function PostHogMock() {
+		return { register: mocks.register };
+	});
 	mocks.env.apiUrl = "https://api.opnshelf.xyz";
 	mocks.env.posthogApiKey = "test-project-key";
 	vi.stubGlobal("__DEV__", false);
@@ -38,6 +56,7 @@ describe("PostHog environment isolation", () => {
 		const { posthog } = await import("./posthog");
 		expect(posthog).toBeNull();
 		expect(mocks.PostHog).not.toHaveBeenCalled();
+		expect(mocks.register).not.toHaveBeenCalled();
 		expect(console.warn).not.toHaveBeenCalled();
 	});
 
@@ -71,5 +90,19 @@ describe("PostHog environment isolation", () => {
 		expect(posthog).toBeNull();
 		expect(mocks.PostHog).not.toHaveBeenCalled();
 		expect(console.warn).toHaveBeenCalledOnce();
+	});
+});
+
+describe("PostHog release tagging", () => {
+	it("registers the EAS release as super properties on every event", async () => {
+		await import("./posthog");
+		expect(mocks.register).toHaveBeenCalledOnce();
+		expect(mocks.register).toHaveBeenCalledWith({
+			"eas/update_id": "0199f40c-1111-4222-8333-444455556666",
+			"eas/channel": "production",
+			"eas/runtime_version": "1.2.0",
+			"eas/project_id": "87d86952-59ab-4711-9f5f-f9477b2d14f6",
+			"eas/account": "rowanpaul",
+		});
 	});
 });
