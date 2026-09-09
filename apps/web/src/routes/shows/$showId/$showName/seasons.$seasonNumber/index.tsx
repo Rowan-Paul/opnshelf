@@ -12,6 +12,7 @@ import {
 	useEpisodeWatchActions,
 	useSeasonDetails,
 	useShowDetails,
+	useShowProgress,
 	useShowRecommendations,
 	useShowWatchHistory,
 	useShowWatchProviders,
@@ -119,6 +120,10 @@ function SeasonDetailPage() {
 
 	const { data: upNextData } = useUserUpNext(user?.did || "", showId);
 	const { data: watchHistory } = useShowWatchHistory(showId);
+	const { data: showProgressData } = useShowProgress([showId]);
+	const seasonProgress = showProgressData?.items
+		.find((item) => item.showId === showId)
+		?.seasons.find((item) => item.seasonNumber === seasonNum);
 	const {
 		processingEpisode,
 		unmarkingEpisode,
@@ -150,8 +155,10 @@ function SeasonDetailPage() {
 		);
 	}, [watchHistory, seasonNum]);
 
-	const episodesWatched = seasonWatchHistory.length;
-	const totalEpisodes = season?.episodes?.length || 0;
+	const episodesWatched =
+		seasonProgress?.episodesWatched ?? seasonWatchHistory.length;
+	const totalEpisodes =
+		seasonProgress?.episodesTotal ?? season?.episodes?.length ?? 0;
 
 	// Up next for this show
 	const upNextForShow = upNextData?.items?.find(
@@ -477,7 +484,11 @@ function SeasonDetailPage() {
 							<ProgressCard
 								episodesWatched={episodesWatched}
 								totalEpisodes={totalEpisodes}
-								markLabel="Add Season to Shelf"
+								markLabel={
+									episodesWatched > 0
+										? "Mark remaining watched"
+										: "Add Season to Shelf"
+								}
 								unmarkLabel="Remove Season from Shelf"
 								isMarkPending={isMarkSeasonPending}
 								isUnmarkPending={isUnmarkShowPending}

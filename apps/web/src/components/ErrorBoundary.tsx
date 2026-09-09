@@ -1,5 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, Home, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
+import { posthog } from "#/integrations/posthog/provider";
 
 interface ErrorComponentProps {
 	error?: Error;
@@ -8,6 +10,12 @@ interface ErrorComponentProps {
 
 export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
 	const router = useRouter();
+
+	useEffect(() => {
+		if (error) {
+			posthog.captureException(error, { error_boundary: "tanstack_router" });
+		}
+	}, [error]);
 
 	const handleRetry = () => {
 		if (reset) {

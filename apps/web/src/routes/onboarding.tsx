@@ -2,8 +2,6 @@ import {
 	authControllerMeOptions,
 	authControllerResendVerificationMutation,
 	authControllerVerifyEmailMutation,
-	isKnownTraktImportStatus,
-	isTerminalTraktImportStatus,
 	socialControllerFollowMutation,
 	socialControllerGetSuggestionsOptions,
 	type UserDto,
@@ -32,6 +30,7 @@ import CountrySelector from "#/components/CountrySelector";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
+import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
 import { UserRowsSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
@@ -39,6 +38,17 @@ import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
 import { guessWatchCountry } from "#/lib/countries";
+import {
+	buildDisplayNameUpdate,
+	extractErrorMessage,
+	getResendLabel,
+	markOnboardingCompleted,
+	nextOnboardingStep,
+	type OnboardingStep,
+	RESEND_COOLDOWN_SECONDS,
+	resolveOnboardingCountry,
+	shouldResumeTraktImport,
+} from "#/lib/onboarding-steps";
 
 export const Route = createFileRoute("/onboarding")({
 	head: () => ({
@@ -46,15 +56,6 @@ export const Route = createFileRoute("/onboarding")({
 	}),
 	component: OnboardingPage,
 });
-
-type OnboardingStep =
-	| "welcome"
-	| "profile"
-	| "preferences"
-	| "trakt"
-	| "suggestions"
-	| "watched"
-	| "done";
 
 function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -99,14 +100,14 @@ function OnboardingPage() {
 		// Wait for the query to resolve (undefined while loading; null = no job).
 		if (currentImport === undefined) return;
 		resumeChecked.current = true;
-		if (
-			currentImport?.id &&
-			isKnownTraktImportStatus(currentImport.status) &&
-			!isTerminalTraktImportStatus(currentImport.status)
-		) {
+		if (shouldResumeTraktImport(currentImport)) {
 			setStep("trakt");
 		}
 	}, [authLoading, currentImport]);
+
+	// Every step hands off to its linear successor; the Trakt step's skip and
+	// complete paths both land on suggestions.
+	const goToNextStep = () => setStep((current) => nextOnboardingStep(current));
 
 	if (authLoading) {
 		return (
@@ -127,32 +128,28 @@ function OnboardingPage() {
 					<VerifyEmailStep />
 				) : (
 					<>
-						{step === "welcome" && (
-							<WelcomeStep onNext={() => setStep("profile")} />
-						)}
-						{step === "profile" && (
-							<ProfileStep onNext={() => setStep("preferences")} />
-						)}
+						{step === "welcome" && <WelcomeStep onNext={goToNextStep} />}
+						{step === "profile" && <ProfileStep onNext={goToNextStep} />}
 						{step === "preferences" && (
-							<PreferencesStep onNext={() => setStep("trakt")} />
+							<PreferencesStep onNext={goToNextStep} />
 						)}
 						{step === "trakt" && (
 							<TraktStep
 								onImportStarted={() => setImportStarted(true)}
-								onNext={() => setStep("suggestions")}
-								onSkip={() => setStep("suggestions")}
+								onNext={goToNextStep}
+								onSkip={goToNextStep}
 							/>
 						)}
 						{step === "suggestions" && (
 							<FollowSuggestionsStep
 								onFollowed={() => setFollowedAnyone(true)}
-								onNext={() => setStep("watched")}
+								onNext={goToNextStep}
 							/>
 						)}
 						{step === "watched" && (
 							<WatchedSwipeStep
 								onWatched={() => setWatchesAdded((count) => count + 1)}
-								onNext={() => setStep("done")}
+								onNext={goToNextStep}
 							/>
 						)}
 						{step === "done" && (
@@ -176,18 +173,6 @@ function OnboardingPage() {
    so this blocks the rest of onboarding. createAccount already emailed the
    code; here the user enters it (resend available).
    ------------------------------------------------------------------ */
-const RESEND_COOLDOWN_SECONDS = 60;
-
-/** Pull a human-readable message out of a NestJS error body (string or string[]). */
-function extractErrorMessage(error: unknown, fallback: string): string {
-	if (error && typeof error === "object" && "message" in error) {
-		const message = (error as { message?: unknown }).message;
-		if (Array.isArray(message)) return message.join(", ");
-		if (typeof message === "string" && message.length > 0) return message;
-	}
-	return fallback;
-}
-
 function VerifyEmailStep() {
 	const { user } = useAuth();
 	const [code, setCode] = useState("");
@@ -301,11 +286,7 @@ function VerifyEmailStep() {
 						disabled={resendMutation.isPending || cooldown > 0}
 						className="text-(--accent) hover:underline disabled:cursor-not-allowed disabled:text-(--foreground-muted) disabled:no-underline"
 					>
-						{cooldown > 0
-							? `Resend in ${cooldown}s`
-							: resendMutation.isPending
-								? "Sending..."
-								: "Resend code"}
+						{getResendLabel(cooldown, resendMutation.isPending)}
 					</button>
 				</p>
 			</div>
@@ -314,26 +295,8 @@ function VerifyEmailStep() {
 }
 
 /* ------------------------------------------------------------------
-   Step 1: Welcome
+   Step 1: Welcome lives in #/components/onboarding/WelcomeStep.
    ------------------------------------------------------------------ */
-function WelcomeStep({ onNext }: { onNext: () => void }) {
-	return (
-		<div className="card p-8 text-center">
-			<div className="mb-6 flex justify-center">
-				<Logo className="size-16 rounded-2xl" />
-			</div>
-			<h1 className="mb-3 text-display-2">Welcome to Opnshelf</h1>
-			<p className="mx-auto mb-8 max-w-sm text-(--foreground-muted)">
-				Let&apos;s get you set up in just a few steps. You can import your watch
-				history and connect with friends already here.
-			</p>
-			<button type="button" onClick={onNext} className="btn btn-primary w-full">
-				Get Started
-				<ArrowRight className="size-4" />
-			</button>
-		</div>
-	);
-}
 
 /* ------------------------------------------------------------------
    Step 2: Profile Setup
@@ -537,11 +500,13 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 				<button
 					type="button"
 					onClick={async () => {
-						if (displayName !== (user?.displayName ?? "")) {
+						const update = buildDisplayNameUpdate(
+							displayName,
+							user?.displayName,
+						);
+						if (update) {
 							try {
-								await updateProfileMutation.mutateAsync({
-									body: { displayName: displayName || undefined },
-								});
+								await updateProfileMutation.mutateAsync({ body: update });
 							} catch {
 								// Error handled by mutation onError
 								return;
@@ -584,12 +549,8 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 
 	useEffect(() => {
 		if (!settings) return;
-		// "US" is the column default, so during onboarding it means "never
-		// picked" far more often than "picked the US" — guess from the browser.
 		setCountry(
-			settings.watchCountry === "US"
-				? guessWatchCountry()
-				: settings.watchCountry,
+			resolveOnboardingCountry(settings.watchCountry, guessWatchCountry),
 		);
 		setTimezone(settings.timezone);
 	}, [settings]);
@@ -843,14 +804,9 @@ function DoneStep({
 			});
 			const meKey = authControllerMeOptions().queryKey;
 			// Optimistically update auth cache so needsOnboarding becomes false
-			queryClient.setQueryData(meKey, (old: UserDto | undefined) => {
-				if (!old) return old;
-				return {
-					...old,
-					onboardingCompletedAt: data.onboardingCompletedAt,
-					needsOnboarding: false,
-				};
-			});
+			queryClient.setQueryData(meKey, (old: UserDto | undefined) =>
+				markOnboardingCompleted(old, data.onboardingCompletedAt),
+			);
 			// Trigger a background refetch to keep cache in sync
 			queryClient.invalidateQueries({ queryKey: meKey });
 		},

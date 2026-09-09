@@ -17,10 +17,11 @@ interface ConfirmDialogProps {
 	pendingLabel?: string;
 	onConfirm: () => void;
 	isPending?: boolean;
+	variant?: "default" | "destructive";
 }
 
 /**
- * Generic destructive-action confirmation. For the "remove all plays" flow with
+ * Generic destructive-action confirmation. For the "remove all watches" flow with
  * its bespoke copy, see ConfirmRemoveDialog instead.
  */
 export default function ConfirmDialog({
@@ -32,6 +33,7 @@ export default function ConfirmDialog({
 	pendingLabel,
 	onConfirm,
 	isPending = false,
+	variant = "destructive",
 }: ConfirmDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +57,11 @@ export default function ConfirmDialog({
 						type="button"
 						onClick={onConfirm}
 						disabled={isPending}
-						className="btn bg-red-600 text-white hover:bg-red-700"
+						className={
+							variant === "destructive"
+								? "btn bg-red-600 text-white hover:bg-red-700"
+								: "btn btn-primary"
+						}
 					>
 						{isPending ? (
 							<>

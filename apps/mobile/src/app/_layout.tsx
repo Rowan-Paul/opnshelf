@@ -29,6 +29,8 @@ import { setWidgetApiUrl } from "../../modules/widget-bridge";
 
 SplashScreen.preventAutoHideAsync();
 
+export const unstable_settings = { anchor: "(tabs)" };
+
 /** Manual screen tracking for Expo Router + PostHog. */
 function useScreenTracking() {
 	const pathname = usePathname();
@@ -96,6 +98,16 @@ export default function RootLayout() {
 				<Stack.Screen name="verify-email" />
 				<Stack.Screen name="onboarding" />
 				<Stack.Screen name="settings" options={{ headerShown: true }} />
+				<Stack.Screen
+					name="settings/preferences"
+					options={{ headerShown: true }}
+				/>
+				<Stack.Screen
+					name="settings/connections"
+					options={{ headerShown: true }}
+				/>
+				<Stack.Screen name="settings/account" options={{ headerShown: true }} />
+				<Stack.Screen name="settings/help" options={{ headerShown: true }} />
 				<Stack.Screen name="edit-profile" options={{ headerShown: true }} />
 				<Stack.Screen name="calendar" options={{ headerShown: true }} />
 				<Stack.Screen name="lists/index" options={{ headerShown: true }} />

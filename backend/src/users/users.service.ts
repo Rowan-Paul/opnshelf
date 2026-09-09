@@ -650,6 +650,10 @@ export class UsersService {
 		return this.importHistoryService.rejectTraktMatch(userDid, matchKey);
 	}
 
+	async retryTraktImportItem(userDid: string, itemId: string) {
+		return this.importHistoryService.retryTraktImportItem(userDid, itemId);
+	}
+
 	async importBlueskyFollows(
 		userDid: string,
 	): Promise<ImportBlueskyFollowsResponseDto> {

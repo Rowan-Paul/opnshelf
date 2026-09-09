@@ -1,4 +1,4 @@
-# Bulk watch logging is best-effort batch-sync
+# ADR 0009: Bulk watch logging is best-effort batch-sync
 
 Marking a whole season or show watched used to loop one `putRecord` PDS call plus one DB
 `create` per episode — sequential, so a long-running show meant hundreds of round-trips and a

@@ -13,11 +13,13 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { Response } from "express";
+import type { Response as UpstreamResponse } from "undici";
 import {
 	$nsid as PROFILE_COLLECTION,
 	main as profileSchema,
 } from "../lexicons/xyz/opnshelf/profile.defs";
 import type { Main as ProfileRecord } from "../lexicons/xyz/opnshelf/profile.defs";
+import { SafeFetchError, safeFetch } from "../common/safe-fetch";
 import { PrismaService } from "../prisma/prisma.service";
 export interface ATSession {
 	did: string;
@@ -43,6 +45,9 @@ type StoredProfileRecord = {
 type PlainProfileBlob = NonNullable<ProfileRecord["avatar"]>;
 
 const PROFILE_RKEY = "self";
+/** Redirect hops tolerated when fetching an avatar blob from a PDS. */
+const MAX_AVATAR_REDIRECTS = 3;
+
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
 	"image/jpeg",
 	"image/png",
@@ -53,11 +58,15 @@ const ALLOWED_AVATAR_MIME_TYPES = new Set([
 export class ProfileService {
 	private readonly logger = new Logger(ProfileService.name);
 	private readonly idResolver = new IdResolver();
+	private readonly isProduction: boolean;
 
 	constructor(
 		private readonly prisma: PrismaService,
-		readonly _configService: ConfigService,
-	) {}
+		private readonly configService: ConfigService,
+	) {
+		this.isProduction =
+			this.configService.get<string>("NODE_ENV") === "production";
+	}
 
 	async seedProfileForNewUser(
 		userDid: string,
@@ -211,31 +220,86 @@ export class ProfileService {
 			throw new NotFoundException("Avatar not found");
 		}
 
+		// The stored mime type is copied from the user's own profile record.
+		// Only ever serve the image types we accept on upload, so this origin
+		// cannot be made to return HTML or scripts.
+		const storedMimeType = user.profileAvatarMimeType
+			? normalizeMimeType(user.profileAvatarMimeType)
+			: null;
+		if (
+			storedMimeType !== null &&
+			!ALLOWED_AVATAR_MIME_TYPES.has(storedMimeType)
+		) {
+			this.logger.warn(
+				`Refusing to serve avatar for ${did}: stored mime type "${storedMimeType}" is not allowed`,
+			);
+			throw new NotFoundException("Avatar not found");
+		}
+
+		// The PDS host comes from the user's DID document, which a did:web
+		// user fully controls. safeFetch refuses private or internal hosts,
+		// whether named directly, reached through a redirect, or hidden
+		// behind a public hostname that resolves to a private address.
 		const { pds } = await this.idResolver.did.resolveAtprotoData(did);
 		const url = new URL("/xrpc/com.atproto.sync.getBlob", pds);
 		url.searchParams.set("did", did);
 		url.searchParams.set("cid", cid);
 
-		const avatarResponse = await fetch(url.toString(), {
-			signal: AbortSignal.timeout(10_000),
-		});
+		let avatarResponse: UpstreamResponse;
+		try {
+			avatarResponse = await safeFetch(url, {
+				allowHttp: !this.isProduction,
+				maxRedirects: MAX_AVATAR_REDIRECTS,
+				signal: AbortSignal.timeout(10_000),
+			});
+		} catch (error) {
+			this.logger.warn(
+				`Refusing to load avatar for ${did} from PDS "${pds}": ${describeFetchError(error)}`,
+			);
+			throw new BadGatewayException("Failed to load avatar from PDS");
+		}
 		if (!avatarResponse.ok) {
+			await discardBody(avatarResponse);
 			if (avatarResponse.status === 404) {
 				throw new NotFoundException("Avatar blob not found");
 			}
 			throw new BadGatewayException("Failed to load avatar from PDS");
 		}
 
-		const buffer = Buffer.from(await avatarResponse.arrayBuffer());
+		const declaredLength = Number(
+			avatarResponse.headers.get("content-length") ?? 0,
+		);
+		if (declaredLength > MAX_AVATAR_BYTES) {
+			await discardBody(avatarResponse);
+			this.logger.warn(
+				`Refusing to serve avatar for ${did}: declared size ${declaredLength} exceeds ${MAX_AVATAR_BYTES} bytes`,
+			);
+			throw new BadGatewayException("Avatar blob exceeds size limit");
+		}
+
+		const mimeType =
+			storedMimeType ??
+			normalizeMimeType(avatarResponse.headers.get("content-type") ?? "");
+		if (!ALLOWED_AVATAR_MIME_TYPES.has(mimeType)) {
+			await discardBody(avatarResponse);
+			this.logger.warn(
+				`Refusing to serve avatar for ${did}: upstream mime type "${mimeType}" is not allowed`,
+			);
+			throw new NotFoundException("Avatar not found");
+		}
+
+		const buffer = await readBodyWithLimit(avatarResponse, MAX_AVATAR_BYTES);
+		if (!buffer) {
+			this.logger.warn(
+				`Refusing to serve avatar for ${did}: body exceeds ${MAX_AVATAR_BYTES} bytes`,
+			);
+			throw new BadGatewayException("Avatar blob exceeds size limit");
+		}
+
 		// Public image embedded by the web app on another origin — helmet's
 		// default same-origin CORP makes browsers block it otherwise.
 		response.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-		response.setHeader(
-			"Content-Type",
-			user.profileAvatarMimeType ??
-				avatarResponse.headers.get("content-type") ??
-				"application/octet-stream",
-		);
+		response.setHeader("Content-Type", mimeType);
 		response.setHeader("Content-Length", buffer.byteLength.toString());
 		response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
 		response.end(buffer);
@@ -249,8 +313,15 @@ export class ProfileService {
 		record: ProfileRecord,
 	): Promise<ProfileIndexResult | null> {
 		const normalizedDisplayName = normalizeDisplayName(record.displayName);
-		const avatarCid = getBlobCid(record.avatar);
+		// A blob outside the accepted image types is not an avatar: index the
+		// profile without one instead of storing a type we would refuse to serve.
 		const avatarMimeType = getBlobMimeType(record.avatar);
+		const avatarCid = avatarMimeType ? getBlobCid(record.avatar) : null;
+		if (record.avatar && !avatarMimeType) {
+			this.logger.warn(
+				`Ignoring avatar with disallowed mime type for ${userDid}`,
+			);
+		}
 
 		try {
 			const updated = await this.prisma.user.update({
@@ -393,7 +464,8 @@ export class ProfileService {
 	}
 
 	private async fetchExternalAvatar(url: string): Promise<UploadableImage> {
-		const response = await fetch(url, {
+		const response = await safeFetch(url, {
+			allowHttp: !this.isProduction,
 			signal: AbortSignal.timeout(10_000),
 		});
 		if (!response.ok) {
@@ -409,8 +481,8 @@ export class ProfileService {
 			);
 		}
 
-		const buffer = Buffer.from(await response.arrayBuffer());
-		if (buffer.byteLength > MAX_AVATAR_BYTES) {
+		const buffer = await readBodyWithLimit(response, MAX_AVATAR_BYTES);
+		if (!buffer) {
 			throw new PayloadTooLargeException("Seeded avatar image exceeds 5 MB");
 		}
 
@@ -501,7 +573,10 @@ export class ProfileService {
 		url.searchParams.set("collection", collection);
 		url.searchParams.set("rkey", rkey);
 
-		const response = await fetch(url.toString(), {
+		// Same PDS-from-DID-document trust boundary as streamAvatar. A blocked
+		// host throws, which the caller treats as "no record".
+		const response = await safeFetch(url, {
+			allowHttp: !this.isProduction,
 			signal: AbortSignal.timeout(5000),
 		});
 
@@ -512,7 +587,9 @@ export class ProfileService {
 			throw new Error(`PDS returned ${response.status}`);
 		}
 
-		const data = (await response.json()) as { value?: unknown };
+		const body = await readBodyWithLimit(response, 1_000_000);
+		if (!body) throw new PayloadTooLargeException("PDS record is too large");
+		const data = JSON.parse(body.toString("utf8")) as { value?: unknown };
 		return data.value ?? null;
 	}
 
@@ -573,7 +650,66 @@ function getBlobMimeType(blob: unknown): string | null {
 	}
 
 	const mimeType = (blob as { mimeType?: unknown }).mimeType;
-	return typeof mimeType === "string" ? mimeType : null;
+	if (typeof mimeType !== "string") {
+		return null;
+	}
+
+	const normalized = normalizeMimeType(mimeType);
+	return ALLOWED_AVATAR_MIME_TYPES.has(normalized) ? normalized : null;
+}
+
+/**
+ * Buffers a fetch body up to `limit` bytes. Returns `null` and cancels the
+ * stream as soon as the body exceeds the limit, so an oversized upstream
+ * response is never held in memory.
+ */
+async function readBodyWithLimit(
+	upstream: UpstreamResponse,
+	limit: number,
+): Promise<Buffer | null> {
+	if (!upstream.body) {
+		return Buffer.alloc(0);
+	}
+
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	for await (const chunk of upstream.body) {
+		total += chunk.byteLength;
+		if (total > limit) {
+			// Leaving the loop early calls the iterator's return(), which
+			// cancels the underlying stream.
+			return null;
+		}
+		chunks.push(chunk);
+	}
+
+	return Buffer.concat(chunks);
+}
+
+async function discardBody(upstream: UpstreamResponse): Promise<void> {
+	try {
+		await upstream.body?.cancel();
+	} catch {
+		// Nothing to release if the stream is already closed.
+	}
+}
+
+/**
+ * A log line for a failed upstream fetch. safeFetch's own errors already say
+ * why; undici wraps transport failures (including a blocked resolved address)
+ * in "fetch failed" with the real reason as `cause`.
+ */
+function describeFetchError(error: unknown): string {
+	if (error instanceof SafeFetchError) {
+		return error.message;
+	}
+	if (error instanceof Error) {
+		const cause = error.cause;
+		return cause instanceof Error
+			? `${error.message} (${cause.message})`
+			: error.message;
+	}
+	return String(error);
 }
 
 function serializeProfileRecord(record: ProfileRecord): ProfileRecord {

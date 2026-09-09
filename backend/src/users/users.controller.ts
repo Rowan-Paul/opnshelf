@@ -62,11 +62,16 @@ import {
 } from "../social/dto/social.dto";
 import { MAX_AVATAR_BYTES } from "./avatar.constants";
 
+// `files` and `fields` enforce the real constraint: one file, no text fields.
+// `parts` is a busboy backstop, and busboy counts the closing boundary as a
+// part transition, so `parts: N` rejects a body with exactly N parts. A
+// single-part avatar upload therefore needs `parts: 2`, not `parts: 1`.
+// Covered by users.controller.avatar.spec.ts.
 const AVATAR_MULTIPART_LIMITS = {
 	fileSize: MAX_AVATAR_BYTES,
 	files: 1,
 	fields: 0,
-	parts: 1,
+	parts: 2,
 	fieldNestingDepth: 1,
 };
 
@@ -571,6 +576,19 @@ export class UsersController {
 		const did = req.user?.did;
 		if (!did) throw new BadRequestException("User not found in request");
 		return this.usersService.rejectTraktMatch(did, matchKey);
+	}
+
+	@Post("me/import/trakt/public/issues/:itemId/retry")
+	@UseGuards(AuthGuard)
+	@ApiOperation({ summary: "Retry one recoverable Trakt import item" })
+	@ApiResponse({ status: 200, type: TraktImportJobDto })
+	async retryMyTraktImportItem(
+		@Param("itemId") itemId: string,
+		@Req() req: AuthenticatedRequest,
+	): Promise<TraktImportJobDto> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		return this.usersService.retryTraktImportItem(did, itemId);
 	}
 
 	@Post("me/import/bluesky-follows")

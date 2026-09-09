@@ -491,6 +491,13 @@
         "operationId": "AuthController_login",
         "parameters": [
           {
+            "name": "code_challenge",
+            "required": false,
+            "in": "query",
+            "description": "S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.",
+            "schema": {}
+          },
+          {
             "name": "timezone",
             "required": false,
             "in": "query",
@@ -528,6 +535,13 @@
         "operationId": "AuthController_signup",
         "parameters": [
           {
+            "name": "code_challenge",
+            "required": false,
+            "in": "query",
+            "description": "S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.",
+            "schema": {}
+          },
+          {
             "name": "timezone",
             "required": false,
             "in": "query",
@@ -548,121 +562,6 @@
           }
         },
         "summary": "Start AT Protocol OAuth signup via PDS",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/register": {
-      "post": {
-        "operationId": "AuthController_register",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegisterResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Captcha verification failed"
-          },
-          "409": {
-            "description": "Username or email already taken"
-          },
-          "429": {
-            "description": "Too many signup attempts"
-          }
-        },
-        "summary": "Create an account on opnshelf's PDS (captcha + invite gated)",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/google/start": {
-      "get": {
-        "operationId": "AuthController_googleStart",
-        "parameters": [],
-        "responses": {
-          "302": {
-            "description": "Redirect to Google"
-          }
-        },
-        "summary": "Start a Google-backed signup",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/google/callback": {
-      "get": {
-        "operationId": "AuthController_googleCallback",
-        "parameters": [],
-        "responses": {
-          "302": {
-            "description": "Redirect to the handle picker"
-          }
-        },
-        "summary": "Google OAuth callback for signup",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/google/register": {
-      "post": {
-        "operationId": "AuthController_googleRegister",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GoogleRegisterDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GoogleRegisterResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Google signup was not started"
-          },
-          "403": {
-            "description": "Captcha verification failed"
-          },
-          "409": {
-            "description": "Username already taken"
-          },
-          "429": {
-            "description": "Too many signup attempts"
-          }
-        },
-        "summary": "Create an account from a verified Google identity",
         "tags": [
           "auth"
         ]
@@ -718,38 +617,6 @@
         ]
       }
     },
-    "/auth/permissions": {
-      "post": {
-        "operationId": "AuthController_permissions",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PermissionChangeDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PermissionChangeResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Start an account-wide external integration permission change",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
     "/auth/me": {
       "get": {
         "operationId": "AuthController_me",
@@ -795,6 +662,62 @@
           }
         },
         "summary": "Get current authenticated user's Bluesky profile status",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully"
+          }
+        },
+        "summary": "Logout and clear session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Captcha verification failed"
+          },
+          "409": {
+            "description": "Username or email already taken"
+          },
+          "429": {
+            "description": "Too many signup attempts"
+          }
+        },
+        "summary": "Create an account on opnshelf's PDS (captcha + invite gated)",
         "tags": [
           "auth"
         ]
@@ -854,6 +777,191 @@
           }
         },
         "summary": "Resend the signup email verification code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/start": {
+      "get": {
+        "operationId": "AuthController_googleStart",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to Google"
+          }
+        },
+        "summary": "Start a Google-backed signup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "operationId": "AuthController_googleCallback",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to the handle picker"
+          }
+        },
+        "summary": "Google OAuth callback for signup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/pending": {
+      "get": {
+        "operationId": "AuthController_googlePending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Pending Google signup identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GooglePendingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read the pending Google signup identity",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google/register": {
+      "post": {
+        "operationId": "AuthController_googleRegister",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleRegisterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Google signup was not started"
+          },
+          "403": {
+            "description": "Captcha verification failed"
+          },
+          "409": {
+            "description": "Username already taken"
+          },
+          "429": {
+            "description": "Too many signup attempts"
+          }
+        },
+        "summary": "Create an account from a verified Google identity",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/mobile/challenge": {
+      "post": {
+        "operationId": "AuthController_mobileChallenge",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileHandoffChallengeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Mint a verifier/challenge pair for the mobile OAuth handoff",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/mobile/exchange": {
+      "post": {
+        "operationId": "AuthController_mobileExchange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MobileHandoffExchangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileHandoffExchangeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown, expired, or already used code, or wrong verifier"
+          }
+        },
+        "summary": "Exchange a mobile OAuth handoff code for its session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/permissions": {
+      "post": {
+        "operationId": "AuthController_permissions",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissionChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionChangeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Start an account-wide external integration permission change",
         "tags": [
           "auth"
         ]
@@ -930,21 +1038,6 @@
           }
         },
         "summary": "Sign out one device",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/logout": {
-      "post": {
-        "operationId": "AuthController_logout",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Logged out successfully"
-          }
-        },
-        "summary": "Logout and clear session",
         "tags": [
           "auth"
         ]
@@ -1682,6 +1775,38 @@
           }
         },
         "summary": "Get watch history for a specific show",
+        "tags": [
+          "shows"
+        ]
+      }
+    },
+    "/shows/progress": {
+      "post": {
+        "operationId": "ShowsController_getShowProgress",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowProgressBatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowProgressBatchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get viewer progress for a batch of shows",
         "tags": [
           "shows"
         ]
@@ -2577,6 +2702,37 @@
           }
         },
         "summary": "Confirm that an unmatched Trakt title has no TMDB match",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/me/import/trakt/public/issues/{itemId}/retry": {
+      "post": {
+        "operationId": "UsersController_retryMyTraktImportItem",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraktImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Retry one recoverable Trakt import item",
         "tags": [
           "users"
         ]
@@ -6112,101 +6268,6 @@
           "id"
         ]
       },
-      "RegisterDto": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
-            "example": "jane"
-          },
-          "email": {
-            "type": "string",
-            "description": "Email for the new PDS account"
-          },
-          "password": {
-            "type": "string",
-            "description": "Password for the new PDS account",
-            "minLength": 8
-          },
-          "captchaToken": {
-            "type": "string",
-            "description": "Cloudflare Turnstile token proving the request is human"
-          },
-          "timezone": {
-            "type": "string",
-            "description": "User's IANA timezone, e.g. Europe/Amsterdam"
-          }
-        },
-        "required": [
-          "username",
-          "email",
-          "password",
-          "captchaToken"
-        ]
-      },
-      "RegisterResponseDto": {
-        "type": "object",
-        "properties": {
-          "did": {
-            "type": "string"
-          },
-          "handle": {
-            "type": "string"
-          },
-          "sessionId": {
-            "type": "string",
-            "description": "Opaque session id (also set as an httpOnly cookie)"
-          }
-        },
-        "required": [
-          "did",
-          "handle",
-          "sessionId"
-        ]
-      },
-      "GoogleRegisterDto": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
-            "example": "jane"
-          },
-          "captchaToken": {
-            "type": "string",
-            "description": "Cloudflare Turnstile token proving the request is human"
-          },
-          "timezone": {
-            "type": "string",
-            "description": "User's IANA timezone, e.g. Europe/Amsterdam"
-          }
-        },
-        "required": [
-          "username",
-          "captchaToken"
-        ]
-      },
-      "GoogleRegisterResponseDto": {
-        "type": "object",
-        "properties": {
-          "did": {
-            "type": "string"
-          },
-          "handle": {
-            "type": "string"
-          },
-          "coreOAuthUrl": {
-            "type": "string",
-            "description": "Where to send the browser next: the PDS consent page for the OAuth request bound to this registration"
-          }
-        },
-        "required": [
-          "did",
-          "handle",
-          "coreOAuthUrl"
-        ]
-      },
       "ActorSuggestionDto": {
         "type": "object",
         "properties": {
@@ -6234,48 +6295,6 @@
           "handle",
           "displayName",
           "avatar"
-        ]
-      },
-      "PermissionChangeDto": {
-        "type": "object",
-        "properties": {
-          "integration": {
-            "type": "string",
-            "enum": [
-              "atstore",
-              "blog",
-              "bluesky"
-            ]
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "connect",
-              "disconnect"
-            ]
-          },
-          "platform": {
-            "type": "string",
-            "enum": [
-              "mobile"
-            ]
-          }
-        },
-        "required": [
-          "integration",
-          "action"
-        ]
-      },
-      "PermissionChangeResponseDto": {
-        "type": "object",
-        "properties": {
-          "authorizationUrl": {
-            "type": "string",
-            "description": "Authorization URL for the cumulative OAuth permission set"
-          }
-        },
-        "required": [
-          "authorizationUrl"
         ]
       },
       "UserDto": {
@@ -6363,12 +6382,76 @@
           "hasBlueskyProfile"
         ]
       },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
+            "example": "jane"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email for the new PDS account"
+          },
+          "password": {
+            "type": "string",
+            "description": "Password for the new PDS account",
+            "minLength": 8
+          },
+          "captchaToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token proving the request is human"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "User's IANA timezone, e.g. Europe/Amsterdam"
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "password",
+          "captchaToken"
+        ]
+      },
+      "RegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Opaque session id (also set as an httpOnly cookie)"
+          }
+        },
+        "required": [
+          "did",
+          "handle",
+          "sessionId"
+        ]
+      },
       "VerifyEmailDto": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
             "description": "The verification code from the signup email"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "mobile"
+            ],
+            "description": "Platform identifier (\"mobile\") so the Core OAuth callback redirects into the app"
+          },
+          "codeChallenge": {
+            "type": "string",
+            "description": "S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id."
           }
         },
         "required": [
@@ -6390,6 +6473,165 @@
         "required": [
           "verified",
           "coreOAuthUrl"
+        ]
+      },
+      "GooglePendingResponseDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email verified by Google for the pending signup"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "GoogleRegisterDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
+            "example": "jane"
+          },
+          "captchaToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token proving the request is human"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "User's IANA timezone, e.g. Europe/Amsterdam"
+          }
+        },
+        "required": [
+          "username",
+          "captchaToken"
+        ]
+      },
+      "GoogleRegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "coreOAuthUrl": {
+            "type": "string",
+            "description": "Where to send the browser next: the PDS consent page for the OAuth request bound to this registration"
+          }
+        },
+        "required": [
+          "did",
+          "handle",
+          "coreOAuthUrl"
+        ]
+      },
+      "MobileHandoffChallengeResponseDto": {
+        "type": "object",
+        "properties": {
+          "codeVerifier": {
+            "type": "string",
+            "description": "Secret the app keeps for itself and presents at the exchange. Never put it in a URL."
+          },
+          "codeChallenge": {
+            "type": "string",
+            "description": "S256 hash of the verifier. Append it as code_challenge to the login or signup URL, or send it as codeChallenge when starting a permission change."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Advisory: start the OAuth flow before this time or request a new pair."
+          }
+        },
+        "required": [
+          "codeVerifier",
+          "codeChallenge",
+          "expiresAt"
+        ]
+      },
+      "MobileHandoffExchangeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The single-use code from the opnshelf://auth/complete link"
+          },
+          "codeVerifier": {
+            "type": "string",
+            "description": "The verifier issued with the challenge that started the flow"
+          }
+        },
+        "required": [
+          "code",
+          "codeVerifier"
+        ]
+      },
+      "MobileHandoffExchangeResponseDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Opaque session id to use as the Bearer token"
+          },
+          "did": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId",
+          "did",
+          "handle"
+        ]
+      },
+      "PermissionChangeDto": {
+        "type": "object",
+        "properties": {
+          "integration": {
+            "type": "string",
+            "enum": [
+              "atstore",
+              "blog",
+              "bluesky"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "connect",
+              "disconnect"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "mobile"
+            ]
+          },
+          "codeChallenge": {
+            "type": "string",
+            "description": "S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id."
+          }
+        },
+        "required": [
+          "integration",
+          "action"
+        ]
+      },
+      "PermissionChangeResponseDto": {
+        "type": "object",
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "description": "Authorization URL for the cumulative OAuth permission set"
+          }
+        },
+        "required": [
+          "authorizationUrl"
         ]
       },
       "DeviceDto": {
@@ -6849,8 +7091,9 @@
           "showId": {
             "type": "string"
           },
-          "watchCount": {
-            "type": "number"
+          "episodeWatchCount": {
+            "type": "number",
+            "description": "Episode Watches logged for this show, rewatches included. Not a count of distinct episodes, and not a Watch count for the show itself — only movies and episodes are Watched."
           },
           "latestWatchedDate": {
             "type": "string"
@@ -6861,7 +7104,7 @@
         },
         "required": [
           "showId",
-          "watchCount",
+          "episodeWatchCount",
           "show"
         ]
       },
@@ -6899,9 +7142,6 @@
           "showId": {
             "type": "string"
           },
-          "watchCount": {
-            "type": "number"
-          },
           "totalEpisodes": {
             "type": "number",
             "description": "Total aired non-special episodes for the show"
@@ -6925,7 +7165,6 @@
         },
         "required": [
           "showId",
-          "watchCount",
           "totalEpisodes",
           "episodesWatched",
           "latestWatchedDate",
@@ -7196,6 +7435,128 @@
           "id",
           "seasonNumber",
           "episodeNumber"
+        ]
+      },
+      "ShowProgressBatchDto": {
+        "type": "object",
+        "properties": {
+          "showIds": {
+            "description": "Up to 50 TMDB show IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "showIds"
+        ]
+      },
+      "ShowSeasonProgressDto": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodesWatched": {
+            "type": "number"
+          },
+          "episodesTotal": {
+            "type": "number"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "unwatched",
+              "partial",
+              "complete",
+              "unavailable"
+            ]
+          },
+          "remainingEpisodes": {
+            "type": "number",
+            "description": "Aired episodes still not watched"
+          },
+          "percentage": {
+            "type": "number",
+            "description": "Whole-number completion percentage"
+          }
+        },
+        "required": [
+          "seasonNumber",
+          "episodesWatched",
+          "episodesTotal",
+          "state",
+          "remainingEpisodes",
+          "percentage"
+        ]
+      },
+      "ShowProgressDto": {
+        "type": "object",
+        "properties": {
+          "showId": {
+            "type": "string",
+            "description": "TMDB show ID"
+          },
+          "hasWatches": {
+            "type": "boolean",
+            "description": "Whether the viewer has any episode Watches"
+          },
+          "episodesWatched": {
+            "type": "number",
+            "description": "Distinct aired regular episodes watched"
+          },
+          "episodesTotal": {
+            "type": "number",
+            "description": "Aired, non-special episodes"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "unwatched",
+              "partial",
+              "complete",
+              "unavailable"
+            ]
+          },
+          "remainingEpisodes": {
+            "type": "number",
+            "description": "Aired episodes still not watched"
+          },
+          "percentage": {
+            "type": "number",
+            "description": "Whole-number completion percentage"
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowSeasonProgressDto"
+            }
+          }
+        },
+        "required": [
+          "showId",
+          "hasWatches",
+          "episodesWatched",
+          "episodesTotal",
+          "state",
+          "remainingEpisodes",
+          "percentage",
+          "seasons"
+        ]
+      },
+      "ShowProgressBatchResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowProgressDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       },
       "MarkSeasonWatchedDto": {
@@ -7964,13 +8325,26 @@
           },
           "message": {
             "type": "string"
+          },
+          "recovery": {
+            "type": "string",
+            "enum": [
+              "match",
+              "retry",
+              "none"
+            ]
+          },
+          "matchKey": {
+            "type": "string",
+            "description": "Identity group used for title matching"
           }
         },
         "required": [
           "id",
           "sourceIndex",
           "outcome",
-          "mediaType"
+          "mediaType",
+          "recovery"
         ]
       },
       "TraktUnmatchedGroupDto": {
@@ -8434,6 +8808,10 @@
             "type": "boolean",
             "description": "Whether the requesting viewer has watched this item (viewer-relative; false when unauthenticated)"
           },
+          "watchCount": {
+            "type": "number",
+            "description": "Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated). Always 0 for show and season entries: only movies and episodes are Watched, so those have no count of their own even when `watched` is true."
+          },
           "createdAt": {
             "type": "string"
           },
@@ -8448,6 +8826,7 @@
           "mediaId",
           "position",
           "watched",
+          "watchCount",
           "createdAt",
           "media"
         ]
@@ -9674,6 +10053,9 @@
                     "watchedDate": {
                       "type": "string"
                     },
+                    "watchCount": {
+                      "type": "number"
+                    },
                     "createdAt": {
                       "type": "string"
                     }
@@ -9683,6 +10065,7 @@
                     "type",
                     "movieId",
                     "title",
+                    "watchCount",
                     "createdAt"
                   ]
                 },
@@ -9734,6 +10117,9 @@
                     "watchedDate": {
                       "type": "string"
                     },
+                    "watchCount": {
+                      "type": "number"
+                    },
                     "createdAt": {
                       "type": "string"
                     }
@@ -9745,6 +10131,7 @@
                     "showTitle",
                     "seasonNumber",
                     "episodeNumber",
+                    "watchCount",
                     "createdAt"
                   ]
                 }

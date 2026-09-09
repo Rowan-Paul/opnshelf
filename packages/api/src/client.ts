@@ -121,21 +121,34 @@ export async function getBlueskyProfileStatus(): Promise<BlueskyProfileStatus> {
 	return data;
 }
 
-// Simple URL helper for login (not an API call)
-export function getLoginUrl(handle?: string, timezone?: string, platform?: string): string {
+// Simple URL helper for login (not an API call). `codeChallenge` is the S256
+// challenge from POST /auth/mobile/challenge; with it the mobile callback hands
+// the app a single-use code instead of the session id (ADR 0026).
+export function getLoginUrl(
+	handle?: string,
+	timezone?: string,
+	platform?: string,
+	codeChallenge?: string,
+): string {
 	const params = new URLSearchParams();
 	if (handle) params.set("handle", handle);
 	if (timezone) params.set("timezone", timezone);
 	if (platform) params.set("platform", platform);
+	if (codeChallenge) params.set("code_challenge", codeChallenge);
 	const queryString = params.toString();
 	return `${baseUrl}/auth/login${queryString ? `?${queryString}` : ""}`;
 }
 
 // URL helper for PDS signup (redirects to the PDS's built-in account creation page)
-export function getSignupUrl(timezone?: string, platform?: string): string {
+export function getSignupUrl(
+	timezone?: string,
+	platform?: string,
+	codeChallenge?: string,
+): string {
 	const params = new URLSearchParams();
 	if (timezone) params.set("timezone", timezone);
 	if (platform) params.set("platform", platform);
+	if (codeChallenge) params.set("code_challenge", codeChallenge);
 	const queryString = params.toString();
 	return `${baseUrl}/auth/signup${queryString ? `?${queryString}` : ""}`;
 }

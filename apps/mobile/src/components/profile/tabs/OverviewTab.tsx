@@ -20,11 +20,9 @@ import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
 import {
 	useProfileLists,
-	useProfileRecentMovies,
 	useProfileReviews,
 	useProfileShelf,
 } from "@/lib/use-public-profile";
-import { formatWatchDateTime } from "@/lib/watch-date";
 
 const POSTER_W = 120;
 
@@ -72,11 +70,14 @@ function SectionHeader({
 	);
 }
 
+/** A poster plus the profile owner's Watch count for it, when known. */
+type PosterRowItem = { card: MediaCardItem; watchCount?: number };
+
 function PosterRow({
 	items,
 	emptyText,
 }: {
-	items: MediaCardItem[];
+	items: PosterRowItem[];
 	emptyText: string;
 }) {
 	if (items.length === 0) {
@@ -89,13 +90,13 @@ function PosterRow({
 	return (
 		<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 			<View className="flex-row gap-3">
-				{items.map((item, index) => (
+				{items.map(({ card, watchCount }, index) => (
 					<View
 						// biome-ignore lint/suspicious/noArrayIndexKey: rewatches share a media key in this static, non-reordering row, so index disambiguates
-						key={`${item.type}-${item.id}-${item.episode?.seasonNumber ?? ""}-${item.episode?.episodeNumber ?? ""}-${index}`}
+						key={`${card.type}-${card.id}-${card.episode?.seasonNumber ?? ""}-${card.episode?.episodeNumber ?? ""}-${index}`}
 						style={{ width: POSTER_W }}
 					>
-						<MediaCard item={item} actions />
+						<MediaCard item={card} actions watchCount={watchCount} />
 					</View>
 				))}
 			</View>
@@ -117,25 +118,27 @@ export function OverviewTab({
 	userDid: string;
 	onNavigate: (tab: ProfileTab, shelfType?: "movie" | "episode") => void;
 }) {
-	const movies = useProfileRecentMovies(userDid, 10);
-	// Reads the shelf endpoint (filtered to episodes) rather than the dedicated
-	// recent-episodes endpoint, whose DTO lacks the episode title.
+	// Both rows read the shelf endpoint rather than the dedicated recent-movies /
+	// recent-episodes ones: its DTO carries the episode title and the profile
+	// owner's Watch counts, so these posters badge like the Shelf tab does.
+	const movies = useProfileShelf(userDid, { type: "movie" });
 	const episodes = useProfileShelf(userDid, { type: "episode" });
 	const lists = useProfileLists(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 4);
 
-	const movieItems: MediaCardItem[] = (movies.data?.items ?? []).map((m) => ({
-		id: Number(m.movie.movieId),
-		type: "movie",
-		title: m.movie.title,
-		posterPath: m.movie.posterPath,
-		year: m.movie.releaseYear ? String(m.movie.releaseYear) : undefined,
-		timestamp: formatWatchDateTime(m.watchedDate),
-	}));
-
-	const episodeItems: MediaCardItem[] = (episodes.data?.items ?? [])
+	const movieItems: PosterRowItem[] = (movies.data?.items ?? [])
 		.slice(0, 10)
-		.map(shelfItemToCardItem);
+		.map((item) => ({
+			card: shelfItemToCardItem(item),
+			watchCount: item.watchCount,
+		}));
+
+	const episodeItems: PosterRowItem[] = (episodes.data?.items ?? [])
+		.slice(0, 10)
+		.map((item) => ({
+			card: shelfItemToCardItem(item),
+			watchCount: item.watchCount,
+		}));
 
 	const watchlist = lists.data?.find((l) => l.slug === "watchlist");
 	const favorites = lists.data?.find((l) => l.slug === "favorites");

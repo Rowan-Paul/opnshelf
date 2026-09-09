@@ -361,18 +361,18 @@ function MovieDetailPage() {
 				mediaId={movieId}
 			/>
 
-			{/* Confirm remove all plays dialog */}
+			{/* Confirm remove all watches dialog */}
 			<Dialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<AlertTriangle className="size-5 text-amber-500" />
-							Remove all plays?
+							Remove all watches?
 						</DialogTitle>
 						<DialogDescription>
 							This will remove all{" "}
-							<strong>{movieWatchHistory?.length || 0}</strong> watch entries
-							for <strong>{movie.title}</strong>. This action cannot be undone.
+							<strong>{movieWatchHistory?.length || 0}</strong> watches of{" "}
+							<strong>{movie.title}</strong>. This action cannot be undone.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

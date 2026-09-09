@@ -21,7 +21,9 @@ import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
+import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
 import { Route as CirclesCircleIdRouteImport } from './routes/circles.$circleId'
@@ -107,10 +109,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SignupGoogleRoute = SignupGoogleRouteImport.update({
   id: '/signup_/google',
   path: '/signup/google',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsSectionRoute = SettingsSectionRouteImport.update({
+  id: '/$section',
+  path: '/$section',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const ProfileHandleRoute = ProfileHandleRouteImport.update({
   id: '/profile/$handle',
@@ -254,7 +266,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
@@ -262,7 +274,9 @@ export interface FileRoutesByFullPath {
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/settings/$section': typeof SettingsSectionRoute
   '/signup/google': typeof SignupGoogleRoute
+  '/settings/': typeof SettingsIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -293,14 +307,15 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
-  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/settings/$section': typeof SettingsSectionRoute
   '/signup/google': typeof SignupGoogleRoute
+  '/settings': typeof SettingsIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -329,7 +344,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
@@ -337,7 +352,9 @@ export interface FileRoutesById {
   '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
+  '/settings/$section': typeof SettingsSectionRoute
   '/signup_/google': typeof SignupGoogleRoute
+  '/settings/': typeof SettingsIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -378,7 +395,9 @@ export interface FileRouteTypes {
     | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
+    | '/settings/$section'
     | '/signup/google'
+    | '/settings/'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -409,14 +428,15 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/search'
-    | '/settings'
     | '/signup'
     | '/tos'
     | '/trakt-import'
     | '/auth/complete'
     | '/circles/$circleId'
     | '/embed/review-editor'
+    | '/settings/$section'
     | '/signup/google'
+    | '/settings'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -452,7 +472,9 @@ export interface FileRouteTypes {
     | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
+    | '/settings/$section'
     | '/signup_/google'
+    | '/settings/'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -484,7 +506,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   SignupRoute: typeof SignupRoute
   TosRoute: typeof TosRoute
   TraktImportRoute: typeof TraktImportRoute
@@ -586,12 +608,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/signup_/google': {
       id: '/signup_/google'
       path: '/signup/google'
       fullPath: '/signup/google'
       preLoaderRoute: typeof SignupGoogleRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/settings/$section': {
+      id: '/settings/$section'
+      path: '/$section'
+      fullPath: '/settings/$section'
+      preLoaderRoute: typeof SettingsSectionRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/profile/$handle': {
       id: '/profile/$handle'
@@ -764,6 +800,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SettingsRouteChildren {
+  SettingsSectionRoute: typeof SettingsSectionRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsSectionRoute: SettingsSectionRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 interface ProfileHandleListsRouteChildren {
   ProfileHandleListsListSlugRoute: typeof ProfileHandleListsListSlugRoute
   ProfileHandleListsIndexRoute: typeof ProfileHandleListsIndexRoute
@@ -846,7 +896,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   SignupRoute: SignupRoute,
   TosRoute: TosRoute,
   TraktImportRoute: TraktImportRoute,

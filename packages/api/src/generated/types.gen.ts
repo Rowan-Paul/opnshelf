@@ -177,62 +177,6 @@ export type WatchHistoryItemDto = {
     watchedDate?: string;
 };
 
-export type RegisterDto = {
-    /**
-     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
-     */
-    username: string;
-    /**
-     * Email for the new PDS account
-     */
-    email: string;
-    /**
-     * Password for the new PDS account
-     */
-    password: string;
-    /**
-     * Cloudflare Turnstile token proving the request is human
-     */
-    captchaToken: string;
-    /**
-     * User's IANA timezone, e.g. Europe/Amsterdam
-     */
-    timezone?: string;
-};
-
-export type RegisterResponseDto = {
-    did: string;
-    handle: string;
-    /**
-     * Opaque session id (also set as an httpOnly cookie)
-     */
-    sessionId: string;
-};
-
-export type GoogleRegisterDto = {
-    /**
-     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
-     */
-    username: string;
-    /**
-     * Cloudflare Turnstile token proving the request is human
-     */
-    captchaToken: string;
-    /**
-     * User's IANA timezone, e.g. Europe/Amsterdam
-     */
-    timezone?: string;
-};
-
-export type GoogleRegisterResponseDto = {
-    did: string;
-    handle: string;
-    /**
-     * Where to send the browser next: the PDS consent page for the OAuth request bound to this registration
-     */
-    coreOAuthUrl: string;
-};
-
 export type ActorSuggestionDto = {
     /**
      * The actor's DID
@@ -250,19 +194,6 @@ export type ActorSuggestionDto = {
      * URL of the actor's avatar, if set
      */
     avatar: string | null;
-};
-
-export type PermissionChangeDto = {
-    integration: 'atstore' | 'blog' | 'bluesky';
-    action: 'connect' | 'disconnect';
-    platform?: 'mobile';
-};
-
-export type PermissionChangeResponseDto = {
-    /**
-     * Authorization URL for the cumulative OAuth permission set
-     */
-    authorizationUrl: string;
 };
 
 export type UserDto = {
@@ -323,11 +254,51 @@ export type BlueskyProfileStatusDto = {
     hasBlueskyProfile: boolean;
 };
 
+export type RegisterDto = {
+    /**
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
+     */
+    username: string;
+    /**
+     * Email for the new PDS account
+     */
+    email: string;
+    /**
+     * Password for the new PDS account
+     */
+    password: string;
+    /**
+     * Cloudflare Turnstile token proving the request is human
+     */
+    captchaToken: string;
+    /**
+     * User's IANA timezone, e.g. Europe/Amsterdam
+     */
+    timezone?: string;
+};
+
+export type RegisterResponseDto = {
+    did: string;
+    handle: string;
+    /**
+     * Opaque session id (also set as an httpOnly cookie)
+     */
+    sessionId: string;
+};
+
 export type VerifyEmailDto = {
     /**
      * The verification code from the signup email
      */
     code: string;
+    /**
+     * Platform identifier ("mobile") so the Core OAuth callback redirects into the app
+     */
+    platform?: 'mobile';
+    /**
+     * S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.
+     */
+    codeChallenge?: string;
 };
 
 export type VerifyEmailResponseDto = {
@@ -339,6 +310,89 @@ export type VerifyEmailResponseDto = {
      * Core OAuth authorization URL. The bootstrap credential is revoked before this is returned.
      */
     coreOAuthUrl: string;
+};
+
+export type GooglePendingResponseDto = {
+    /**
+     * Email verified by Google for the pending signup
+     */
+    email: string;
+};
+
+export type GoogleRegisterDto = {
+    /**
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
+     */
+    username: string;
+    /**
+     * Cloudflare Turnstile token proving the request is human
+     */
+    captchaToken: string;
+    /**
+     * User's IANA timezone, e.g. Europe/Amsterdam
+     */
+    timezone?: string;
+};
+
+export type GoogleRegisterResponseDto = {
+    did: string;
+    handle: string;
+    /**
+     * Where to send the browser next: the PDS consent page for the OAuth request bound to this registration
+     */
+    coreOAuthUrl: string;
+};
+
+export type MobileHandoffChallengeResponseDto = {
+    /**
+     * Secret the app keeps for itself and presents at the exchange. Never put it in a URL.
+     */
+    codeVerifier: string;
+    /**
+     * S256 hash of the verifier. Append it as code_challenge to the login or signup URL, or send it as codeChallenge when starting a permission change.
+     */
+    codeChallenge: string;
+    /**
+     * Advisory: start the OAuth flow before this time or request a new pair.
+     */
+    expiresAt: string;
+};
+
+export type MobileHandoffExchangeDto = {
+    /**
+     * The single-use code from the opnshelf://auth/complete link
+     */
+    code: string;
+    /**
+     * The verifier issued with the challenge that started the flow
+     */
+    codeVerifier: string;
+};
+
+export type MobileHandoffExchangeResponseDto = {
+    /**
+     * Opaque session id to use as the Bearer token
+     */
+    sessionId: string;
+    did: string;
+    handle: string;
+};
+
+export type PermissionChangeDto = {
+    integration: 'atstore' | 'blog' | 'bluesky';
+    action: 'connect' | 'disconnect';
+    platform?: 'mobile';
+    /**
+     * S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.
+     */
+    codeChallenge?: string;
+};
+
+export type PermissionChangeResponseDto = {
+    /**
+     * Authorization URL for the cumulative OAuth permission set
+     */
+    authorizationUrl: string;
 };
 
 export type DeviceDto = {
@@ -513,7 +567,10 @@ export type ShowDto = {
 
 export type TrackedShowSummaryDto = {
     showId: string;
-    watchCount: number;
+    /**
+     * Episode Watches logged for this show, rewatches included. Not a count of distinct episodes, and not a Watch count for the show itself — only movies and episodes are Watched.
+     */
+    episodeWatchCount: number;
     latestWatchedDate?: string;
     show: ShowDto;
 };
@@ -529,7 +586,6 @@ export type UpNextEpisodeDto = {
 
 export type UpNextShowDto = {
     showId: string;
-    watchCount: number;
     /**
      * Total aired non-special episodes for the show
      */
@@ -654,6 +710,61 @@ export type EpisodeHistoryItemDto = {
     watchedDate?: string;
     seasonNumber: number;
     episodeNumber: number;
+};
+
+export type ShowProgressBatchDto = {
+    /**
+     * Up to 50 TMDB show IDs
+     */
+    showIds: Array<string>;
+};
+
+export type ShowSeasonProgressDto = {
+    seasonNumber: number;
+    episodesWatched: number;
+    episodesTotal: number;
+    state: 'unwatched' | 'partial' | 'complete' | 'unavailable';
+    /**
+     * Aired episodes still not watched
+     */
+    remainingEpisodes: number;
+    /**
+     * Whole-number completion percentage
+     */
+    percentage: number;
+};
+
+export type ShowProgressDto = {
+    /**
+     * TMDB show ID
+     */
+    showId: string;
+    /**
+     * Whether the viewer has any episode Watches
+     */
+    hasWatches: boolean;
+    /**
+     * Distinct aired regular episodes watched
+     */
+    episodesWatched: number;
+    /**
+     * Aired, non-special episodes
+     */
+    episodesTotal: number;
+    state: 'unwatched' | 'partial' | 'complete' | 'unavailable';
+    /**
+     * Aired episodes still not watched
+     */
+    remainingEpisodes: number;
+    /**
+     * Whole-number completion percentage
+     */
+    percentage: number;
+    seasons: Array<ShowSeasonProgressDto>;
+};
+
+export type ShowProgressBatchResponseDto = {
+    items: Array<ShowProgressDto>;
 };
 
 export type MarkSeasonWatchedDto = {
@@ -1063,6 +1174,11 @@ export type TraktImportIssueDto = {
     watchedAt?: string;
     reason?: string;
     message?: string;
+    recovery: 'match' | 'retry' | 'none';
+    /**
+     * Identity group used for title matching
+     */
+    matchKey?: string;
 };
 
 export type TraktUnmatchedGroupDto = {
@@ -1226,6 +1342,10 @@ export type MediaInListDto = {
      * Whether the requesting viewer has watched this item (viewer-relative; false when unauthenticated)
      */
     watched: boolean;
+    /**
+     * Number of matching Watches logged by the requesting viewer (viewer-relative; 0 when unauthenticated). Always 0 for show and season entries: only movies and episodes are Watched, so those have no count of their own even when `watched` is true.
+     */
+    watchCount: number;
     createdAt: string;
     media: {
         [key: string]: unknown;
@@ -1797,6 +1917,7 @@ export type ShelfResponseDto = {
             [key: string]: unknown;
         };
         watchedDate?: string;
+        watchCount: number;
         createdAt: string;
     } | {
         id: string;
@@ -1815,6 +1936,7 @@ export type ShelfResponseDto = {
             [key: string]: unknown;
         };
         watchedDate?: string;
+        watchCount: number;
         createdAt: string;
     }>;
     /**
@@ -2578,6 +2700,10 @@ export type AuthControllerLoginData = {
     path?: never;
     query: {
         /**
+         * S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.
+         */
+        code_challenge?: unknown;
+        /**
          * User's IANA timezone (e.g., Europe/London)
          */
         timezone?: unknown;
@@ -2598,6 +2724,10 @@ export type AuthControllerSignupData = {
     path?: never;
     query?: {
         /**
+         * S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.
+         */
+        code_challenge?: unknown;
+        /**
          * User's IANA timezone (e.g., Europe/London)
          */
         timezone?: unknown;
@@ -2608,80 +2738,6 @@ export type AuthControllerSignupData = {
     };
     url: '/auth/signup';
 };
-
-export type AuthControllerRegisterData = {
-    body: RegisterDto;
-    path?: never;
-    query?: never;
-    url: '/auth/register';
-};
-
-export type AuthControllerRegisterErrors = {
-    /**
-     * Captcha verification failed
-     */
-    403: unknown;
-    /**
-     * Username or email already taken
-     */
-    409: unknown;
-    /**
-     * Too many signup attempts
-     */
-    429: unknown;
-};
-
-export type AuthControllerRegisterResponses = {
-    201: RegisterResponseDto;
-};
-
-export type AuthControllerRegisterResponse = AuthControllerRegisterResponses[keyof AuthControllerRegisterResponses];
-
-export type AuthControllerGoogleStartData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/auth/google/start';
-};
-
-export type AuthControllerGoogleCallbackData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/auth/google/callback';
-};
-
-export type AuthControllerGoogleRegisterData = {
-    body: GoogleRegisterDto;
-    path?: never;
-    query?: never;
-    url: '/auth/google/register';
-};
-
-export type AuthControllerGoogleRegisterErrors = {
-    /**
-     * Google signup was not started
-     */
-    400: unknown;
-    /**
-     * Captcha verification failed
-     */
-    403: unknown;
-    /**
-     * Username already taken
-     */
-    409: unknown;
-    /**
-     * Too many signup attempts
-     */
-    429: unknown;
-};
-
-export type AuthControllerGoogleRegisterResponses = {
-    201: GoogleRegisterResponseDto;
-};
-
-export type AuthControllerGoogleRegisterResponse = AuthControllerGoogleRegisterResponses[keyof AuthControllerGoogleRegisterResponses];
 
 export type AuthControllerSuggestionsData = {
     body?: never;
@@ -2710,19 +2766,6 @@ export type AuthControllerCallbackData = {
     query?: never;
     url: '/auth/callback';
 };
-
-export type AuthControllerPermissionsData = {
-    body: PermissionChangeDto;
-    path?: never;
-    query?: never;
-    url: '/auth/permissions';
-};
-
-export type AuthControllerPermissionsResponses = {
-    200: PermissionChangeResponseDto;
-};
-
-export type AuthControllerPermissionsResponse = AuthControllerPermissionsResponses[keyof AuthControllerPermissionsResponses];
 
 export type AuthControllerMeData = {
     body?: never;
@@ -2763,6 +2806,48 @@ export type AuthControllerBlueskyProfileStatusResponses = {
 };
 
 export type AuthControllerBlueskyProfileStatusResponse = AuthControllerBlueskyProfileStatusResponses[keyof AuthControllerBlueskyProfileStatusResponses];
+
+export type AuthControllerLogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/logout';
+};
+
+export type AuthControllerLogoutResponses = {
+    /**
+     * Logged out successfully
+     */
+    200: unknown;
+};
+
+export type AuthControllerRegisterData = {
+    body: RegisterDto;
+    path?: never;
+    query?: never;
+    url: '/auth/register';
+};
+
+export type AuthControllerRegisterErrors = {
+    /**
+     * Captcha verification failed
+     */
+    403: unknown;
+    /**
+     * Username or email already taken
+     */
+    409: unknown;
+    /**
+     * Too many signup attempts
+     */
+    429: unknown;
+};
+
+export type AuthControllerRegisterResponses = {
+    201: RegisterResponseDto;
+};
+
+export type AuthControllerRegisterResponse = AuthControllerRegisterResponses[keyof AuthControllerRegisterResponses];
 
 export type AuthControllerVerifyEmailData = {
     body: VerifyEmailDto;
@@ -2813,6 +2898,114 @@ export type AuthControllerResendVerificationResponses = {
     200: unknown;
 };
 
+export type AuthControllerGoogleStartData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/google/start';
+};
+
+export type AuthControllerGoogleCallbackData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/google/callback';
+};
+
+export type AuthControllerGooglePendingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/google/pending';
+};
+
+export type AuthControllerGooglePendingResponses = {
+    /**
+     * Pending Google signup identity
+     */
+    200: GooglePendingResponseDto;
+};
+
+export type AuthControllerGooglePendingResponse = AuthControllerGooglePendingResponses[keyof AuthControllerGooglePendingResponses];
+
+export type AuthControllerGoogleRegisterData = {
+    body: GoogleRegisterDto;
+    path?: never;
+    query?: never;
+    url: '/auth/google/register';
+};
+
+export type AuthControllerGoogleRegisterErrors = {
+    /**
+     * Google signup was not started
+     */
+    400: unknown;
+    /**
+     * Captcha verification failed
+     */
+    403: unknown;
+    /**
+     * Username already taken
+     */
+    409: unknown;
+    /**
+     * Too many signup attempts
+     */
+    429: unknown;
+};
+
+export type AuthControllerGoogleRegisterResponses = {
+    201: GoogleRegisterResponseDto;
+};
+
+export type AuthControllerGoogleRegisterResponse = AuthControllerGoogleRegisterResponses[keyof AuthControllerGoogleRegisterResponses];
+
+export type AuthControllerMobileChallengeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/mobile/challenge';
+};
+
+export type AuthControllerMobileChallengeResponses = {
+    200: MobileHandoffChallengeResponseDto;
+};
+
+export type AuthControllerMobileChallengeResponse = AuthControllerMobileChallengeResponses[keyof AuthControllerMobileChallengeResponses];
+
+export type AuthControllerMobileExchangeData = {
+    body: MobileHandoffExchangeDto;
+    path?: never;
+    query?: never;
+    url: '/auth/mobile/exchange';
+};
+
+export type AuthControllerMobileExchangeErrors = {
+    /**
+     * Unknown, expired, or already used code, or wrong verifier
+     */
+    400: unknown;
+};
+
+export type AuthControllerMobileExchangeResponses = {
+    200: MobileHandoffExchangeResponseDto;
+};
+
+export type AuthControllerMobileExchangeResponse = AuthControllerMobileExchangeResponses[keyof AuthControllerMobileExchangeResponses];
+
+export type AuthControllerPermissionsData = {
+    body: PermissionChangeDto;
+    path?: never;
+    query?: never;
+    url: '/auth/permissions';
+};
+
+export type AuthControllerPermissionsResponses = {
+    200: PermissionChangeResponseDto;
+};
+
+export type AuthControllerPermissionsResponse = AuthControllerPermissionsResponses[keyof AuthControllerPermissionsResponses];
+
 export type AuthControllerRevokeOtherDevicesData = {
     body?: never;
     path?: never;
@@ -2853,20 +3046,6 @@ export type AuthControllerRevokeDeviceResponses = {
 };
 
 export type AuthControllerRevokeDeviceResponse = AuthControllerRevokeDeviceResponses[keyof AuthControllerRevokeDeviceResponses];
-
-export type AuthControllerLogoutData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/auth/logout';
-};
-
-export type AuthControllerLogoutResponses = {
-    /**
-     * Logged out successfully
-     */
-    200: unknown;
-};
 
 export type ShowsControllerSearchShowsData = {
     body?: never;
@@ -3224,6 +3403,19 @@ export type ShowsControllerGetShowWatchHistoryResponses = {
 };
 
 export type ShowsControllerGetShowWatchHistoryResponse = ShowsControllerGetShowWatchHistoryResponses[keyof ShowsControllerGetShowWatchHistoryResponses];
+
+export type ShowsControllerGetShowProgressData = {
+    body: ShowProgressBatchDto;
+    path?: never;
+    query?: never;
+    url: '/shows/progress';
+};
+
+export type ShowsControllerGetShowProgressResponses = {
+    201: ShowProgressBatchResponseDto;
+};
+
+export type ShowsControllerGetShowProgressResponse = ShowsControllerGetShowProgressResponses[keyof ShowsControllerGetShowProgressResponses];
 
 export type ShowsControllerDeleteEpisodeWatchHistoryEntryData = {
     body?: never;
@@ -3764,6 +3956,21 @@ export type UsersControllerRejectMyTraktMatchResponses = {
 };
 
 export type UsersControllerRejectMyTraktMatchResponse = UsersControllerRejectMyTraktMatchResponses[keyof UsersControllerRejectMyTraktMatchResponses];
+
+export type UsersControllerRetryMyTraktImportItemData = {
+    body?: never;
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/users/me/import/trakt/public/issues/{itemId}/retry';
+};
+
+export type UsersControllerRetryMyTraktImportItemResponses = {
+    200: TraktImportJobDto;
+};
+
+export type UsersControllerRetryMyTraktImportItemResponse = UsersControllerRetryMyTraktImportItemResponses[keyof UsersControllerRetryMyTraktImportItemResponses];
 
 export type UsersControllerImportMyBlueskyFollowsData = {
     body?: never;

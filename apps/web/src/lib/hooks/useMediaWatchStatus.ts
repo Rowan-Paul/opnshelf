@@ -10,6 +10,8 @@ import { useAuth } from "#/lib/auth-context";
 interface UseMediaWatchStatusShowOptions {
 	mediaType: "show";
 	showId: string;
+	/** Show poster grids use the batched progress endpoint instead. */
+	skipHistory?: boolean;
 }
 
 interface UseMediaWatchStatusMovieOptions {
@@ -51,7 +53,8 @@ export function useMediaWatchStatus(options: UseMediaWatchStatusOptions) {
 				showId: options.mediaType === "show" ? options.showId : "",
 			},
 		}),
-		enabled: isAuthenticated && options.mediaType === "show",
+		enabled:
+			isAuthenticated && options.mediaType === "show" && !options.skipHistory,
 	});
 
 	// Movie derived state

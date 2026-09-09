@@ -7,6 +7,7 @@ import { AddToListSheet } from "@/components/lists/AddToListSheet";
 import { MediaQuickActionsSheet } from "@/components/media/MediaQuickActionsSheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useListMembership } from "@/lib/use-lists";
 import { useNote } from "@/lib/use-note";
 import { useReview } from "@/lib/use-review";
@@ -34,6 +35,7 @@ export function MediaActionBar({
 	episode?: { seasonNumber: number; episodeNumber: number };
 }) {
 	const { isAuthenticated } = useAuth();
+	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const isMovie = type === "movie" && !ep;
 
 	const watchStatus = useWatchStatus(
@@ -73,19 +75,39 @@ export function MediaActionBar({
 			? watchActions.isMarkEpisodePending || watchActions.isUnmarkEpisodePending
 			: watchActions.isMarkShowPending || watchActions.isUnmarkShowPending;
 
+	// Watches this feed item's toggle would delete, so a rewatch can warn before
+	// wiping them all (the removal itself is always mode "all").
+	const watchEntryCount = isMovie
+		? watchStatus.totalMovieWatches
+		: ep
+			? (watchStatus.showWatchHistory?.filter(
+					(entry) =>
+						entry.seasonNumber === ep.seasonNumber &&
+						entry.episodeNumber === ep.episodeNumber,
+				).length ?? 0)
+			: (watchStatus.showWatchHistory?.length ?? 0);
+
+	const removeFromShelf = () => {
+		if (isMovie) watchActions.unmarkMovieWatched();
+		else if (ep)
+			watchActions.unmarkEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
+		else watchActions.unmarkShowWatched();
+	};
+
 	const toggleWatched = () => {
 		if (!isAuthenticated) return;
-		if (isMovie) {
-			if (watched) watchActions.unmarkMovieWatched();
-			else watchActions.markMovieWatched();
-		} else if (ep) {
-			if (watched)
-				watchActions.unmarkEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
-			else watchActions.markEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
-		} else {
-			if (watched) watchActions.unmarkShowWatched();
-			else watchActions.markShowWatched();
+		if (watched) {
+			confirmRemoveWatches({
+				title: ep ? `${title} S${ep.seasonNumber}E${ep.episodeNumber}` : title,
+				entryCount: watchEntryCount,
+				onConfirm: removeFromShelf,
+			});
+			return;
 		}
+		if (isMovie) watchActions.markMovieWatched();
+		else if (ep)
+			watchActions.markEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
+		else watchActions.markShowWatched();
 	};
 
 	if (!isAuthenticated) return null;

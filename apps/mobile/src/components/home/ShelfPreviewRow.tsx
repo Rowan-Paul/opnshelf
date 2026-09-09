@@ -68,7 +68,11 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 					<View className="flex-row gap-3">
 						{items.map((item) => (
 							<View key={item.id} style={{ width: POSTER_W }}>
-								<MediaCard item={shelfItemToCardItem(item)} actions />
+								<MediaCard
+									item={shelfItemToCardItem(item)}
+									actions
+									watchCount={item.watchCount}
+								/>
 							</View>
 						))}
 					</View>

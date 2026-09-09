@@ -1,5 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Clock, ListPlus, Loader2, Play, Star, X } from "lucide-react";
+import {
+	Check,
+	Clock,
+	ListPlus,
+	Loader2,
+	Play,
+	Plus,
+	Star,
+	X,
+} from "lucide-react";
 import { useState } from "react";
 import { posthog } from "#/integrations/posthog/provider";
 import {
@@ -9,6 +18,7 @@ import {
 	buildShowUrl,
 } from "#/lib/url-utils";
 import StarRating, { ratingToStars } from "./StarRating";
+import { WatchCountBadge } from "./WatchCountBadge";
 
 export interface MediaCardProps {
 	id: string | number;
@@ -17,6 +27,8 @@ export interface MediaCardProps {
 	seasonNumber?: number;
 	episodeNumber?: number;
 	posterUrl: string;
+	/** Opt in for initially visible/LCP cards; offscreen cards load lazily. */
+	imageLoading?: "eager" | "lazy";
 	backdropUrl?: string;
 	type: "movie" | "show";
 	tmdbRating?: number;
@@ -26,6 +38,12 @@ export interface MediaCardProps {
 	episodeInfo?: string;
 	progress?: number;
 	isWatched?: boolean;
+	/** Viewer-relative Watches represented by this card. */
+	watchCount?: number;
+	/** Distinct aired episode completion, used only for whole-show cards. */
+	episodeProgress?: { watched: number; total: number; percentage: number };
+	isProgressLoading?: boolean;
+	isProgressUnavailable?: boolean;
 	isInWatchlist?: boolean;
 	isInAnyList?: boolean;
 	watchedDate?: string;
@@ -53,6 +71,7 @@ export default function MediaCard({
 	seasonNumber,
 	episodeNumber,
 	posterUrl,
+	imageLoading = "lazy",
 	backdropUrl,
 	type,
 	globalRating,
@@ -62,6 +81,10 @@ export default function MediaCard({
 	episodeInfo,
 	progress,
 	isWatched = false,
+	watchCount,
+	episodeProgress,
+	isProgressLoading = false,
+	isProgressUnavailable = false,
 	watchedDate,
 	role,
 	year,
@@ -120,6 +143,8 @@ export default function MediaCard({
 	})();
 
 	const displayName = displayTitle || title;
+	const episodeProgressPercent = episodeProgress?.percentage;
+	const displayedProgress = episodeProgressPercent ?? progress;
 
 	return (
 		<article
@@ -148,6 +173,8 @@ export default function MediaCard({
 					{/* Main image */}
 					<img
 						src={imageUrl}
+						loading={imageLoading}
+						decoding="async"
 						alt={title}
 						className={`h-full w-full object-cover transition-all duration-300 ${
 							imageLoaded ? "opacity-100" : "opacity-0"
@@ -202,38 +229,74 @@ export default function MediaCard({
 					)}
 
 					{/* Actions — top-right corner */}
-					{(onMarkWatched || onUnmarkWatched || onManageLists) && (
+					{(isWatched ||
+						onManageLists ||
+						((onMarkWatched || onUnmarkWatched) && !isProgressUnavailable)) && (
 						<div className="absolute top-2 right-2 flex flex-col gap-2 sm:gap-1.5">
 							<div className="flex items-center gap-2 sm:gap-1.5">
-								{(onMarkWatched || onUnmarkWatched) && (
-									<button
-										type="button"
-										onClick={(e) => {
-											e.preventDefault();
-											if (isWatched && onUnmarkWatched) {
-												onUnmarkWatched();
-											} else if (onMarkWatched) {
-												onMarkWatched();
+								{(onMarkWatched || onUnmarkWatched) &&
+									!isProgressUnavailable && (
+										<button
+											type="button"
+											onClick={(e) => {
+												e.preventDefault();
+												if (isWatched && onUnmarkWatched) {
+													onUnmarkWatched();
+												} else if (onMarkWatched) {
+													onMarkWatched();
+												}
+											}}
+											disabled={
+												isMarkWatchedPending ||
+												isUnmarkWatchedPending ||
+												isProgressLoading
 											}
-										}}
-										disabled={isMarkWatchedPending || isUnmarkWatchedPending}
-										className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 sm:w-7 ${
-											isWatched
-												? "bg-green-500 text-white hover:bg-green-600"
-												: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
-										}`}
-										aria-label={
-											isWatched ? "Remove from shelf" : "Add to shelf"
-										}
-										title={isWatched ? "Remove from shelf" : "Add to shelf"}
-									>
-										{isMarkWatchedPending || isUnmarkWatchedPending ? (
-											<Loader2 className="size-4 animate-spin sm:size-3.5" />
-										) : (
-											<Check className="size-4 sm:size-3.5" />
-										)}
-									</button>
-								)}
+											className={`flex h-9 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 ${
+												episodeProgress
+													? "min-w-12 bg-(--accent) px-2 text-[#3f2e00] hover:brightness-95 sm:min-w-10 sm:px-1.5"
+													: isWatched
+														? `bg-(--accent) text-[#3f2e00] hover:brightness-95 ${watchCount && watchCount > 1 ? "gap-1 px-2.5 sm:px-2" : "w-9 sm:w-7"}`
+														: "w-9 bg-white/20 text-white backdrop-blur-sm hover:bg-white/40 sm:w-7"
+											}`}
+											aria-label={
+												episodeProgress
+													? `${episodeProgress.watched} of ${episodeProgress.total} episodes watched. Mark remaining watched`
+													: isWatched && watchCount
+														? `${watchCount} ${watchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+														: isWatched
+															? "Remove from shelf"
+															: "Add to shelf"
+											}
+											title={
+												episodeProgress
+													? "Mark remaining watched"
+													: isWatched
+														? "Remove from shelf"
+														: "Add to shelf"
+											}
+										>
+											{isProgressLoading ? (
+												<span className="h-4 w-6 animate-pulse rounded-full bg-white/35 sm:h-3.5" />
+											) : isMarkWatchedPending || isUnmarkWatchedPending ? (
+												<Loader2 className="size-4 animate-spin sm:size-3.5" />
+											) : episodeProgress ? (
+												<span className="font-bold text-xs tabular-nums sm:text-[11px]">
+													{episodeProgressPercent}%
+												</span>
+											) : isWatched ? (
+												<>
+													<Check className="size-4 sm:size-3.5" />
+													{watchCount && watchCount > 1 ? (
+														<span className="font-bold text-xs tabular-nums">
+															{watchCount}
+														</span>
+													) : null}
+												</>
+											) : (
+												<Plus className="size-4 sm:size-3.5" />
+											)}
+										</button>
+									)}
 								{onManageLists && (
 									<button
 										type="button"
@@ -255,19 +318,20 @@ export default function MediaCard({
 							</div>
 							{/* Static watched indicator (no interactive callback) */}
 							{isWatched && !onMarkWatched && !onUnmarkWatched && (
-								<div className="flex h-8 w-8 items-center justify-center self-end rounded-full bg-green-500 text-white sm:h-6 sm:w-6">
-									<Check className="size-4 sm:size-3.5" />
-								</div>
+								<WatchCountBadge
+									watchCount={watchCount}
+									className={`h-8 self-end sm:h-6 ${watchCount && watchCount > 1 ? "" : "w-8 sm:w-6"}`}
+								/>
 							)}
 						</div>
 					)}
 
 					{/* Progress bar */}
-					{progress !== undefined && progress > 0 && (
+					{displayedProgress !== undefined && displayedProgress > 0 && (
 						<div className="absolute right-0 bottom-0 left-0 h-1 bg-black/30">
 							<div
 								className="h-full bg-(--accent)"
-								style={{ width: `${progress}%` }}
+								style={{ width: `${displayedProgress}%` }}
 							/>
 						</div>
 					)}

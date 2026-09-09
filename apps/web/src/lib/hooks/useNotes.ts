@@ -2,6 +2,7 @@ import {
 	notesControllerDeleteNoteMutation,
 	notesControllerGetNoteOptions,
 	notesControllerGetNoteQueryKey,
+	notesControllerGetUserNotesQueryKey,
 	notesControllerUpsertNoteMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,17 @@ function resolveMediaType(
 		: seasonNumber != null
 			? "season"
 			: mediaType;
+}
+
+/** Refresh every paginated notes view for one user, including infinite caches. */
+export function invalidateUserNotesQueries(
+	queryClient: ReturnType<typeof useQueryClient>,
+	userDid: string,
+) {
+	if (!userDid) return;
+	queryClient.invalidateQueries({
+		queryKey: notesControllerGetUserNotesQueryKey({ path: { userDid } }),
+	});
 }
 
 export function useNote({
@@ -92,6 +104,7 @@ export function useUpsertNote({
 		onSuccess: () => {
 			toast.success("Note saved");
 			queryClient.invalidateQueries({ queryKey: noteKey });
+			invalidateUserNotesQueries(queryClient, userDid);
 		},
 		onError: (error) => {
 			toast.error(
@@ -139,6 +152,7 @@ export function useDeleteNote({
 		onSuccess: () => {
 			toast.success("Note deleted");
 			queryClient.invalidateQueries({ queryKey: noteKey });
+			invalidateUserNotesQueries(queryClient, userDid);
 		},
 		onError: (error) => {
 			toast.error(

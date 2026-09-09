@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
+import ConfirmDialog from "#/components/ConfirmDialog";
 import ConfirmRemoveDialog from "#/components/ConfirmRemoveDialog";
 import ManageListsDialog from "#/components/ManageListsDialog";
 import MediaCard from "#/components/MediaCard";
 import { useAuth } from "#/lib/auth-context";
 import { formatDateTime } from "#/lib/date-utils";
-import { useListItemStatus, useMediaWatchStatus } from "#/lib/hooks";
+import {
+	useListItemStatus,
+	useMediaWatchStatus,
+	useShowProgressForShow,
+} from "#/lib/hooks";
 import { useWatchActions } from "#/lib/hooks/useWatchActions";
 
 interface ActionableMediaCardProps {
@@ -12,6 +17,7 @@ interface ActionableMediaCardProps {
 	title: string;
 	displayTitle?: string;
 	posterUrl: string;
+	imageLoading?: "eager" | "lazy";
 	backdropUrl?: string;
 	type: "movie" | "show";
 	tmdbRating?: number;
@@ -30,6 +36,7 @@ interface ActionableMediaCardProps {
 	layout?: "poster" | "backdrop";
 	interactive?: boolean;
 	isWatched?: boolean;
+	watchCount?: number;
 	onRemove?: () => void;
 	isRemoving?: boolean;
 }
@@ -39,6 +46,7 @@ export default function ActionableMediaCard({
 	title,
 	displayTitle,
 	posterUrl,
+	imageLoading,
 	backdropUrl,
 	type,
 	tmdbRating,
@@ -57,11 +65,13 @@ export default function ActionableMediaCard({
 	layout = "poster",
 	interactive = true,
 	isWatched: isWatchedProp,
+	watchCount,
 	onRemove,
 	isRemoving = false,
 }: ActionableMediaCardProps) {
 	const [listDialogOpen, setListDialogOpen] = useState(false);
 	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+	const [confirmRemainingOpen, setConfirmRemainingOpen] = useState(false);
 
 	const { userSettings } = useAuth();
 	const userTimezone = userSettings?.timezone;
@@ -97,15 +107,28 @@ export default function ActionableMediaCard({
 
 	const watchStatusOptions = isMovie
 		? ({ mediaType: "movie", movieId: mediaId } as const)
-		: ({ mediaType: "show", showId: mediaId } as const);
+		: ({
+				mediaType: "show",
+				showId: mediaId,
+				skipHistory: !isEpisode,
+			} as const);
 
 	const {
 		isWatched: queryIsWatched,
-		isTracking,
 		movieWatchHistory,
 		watchHistory,
 		isEpisodeWatched,
 	} = useMediaWatchStatus(watchStatusOptions);
+	const progressQuery = useShowProgressForShow(mediaId, !isMovie && !isEpisode);
+	const showProgress = progressQuery.data?.items.find(
+		(item) => item.showId === mediaId,
+	);
+	const isPartialShow =
+		!isMovie && !isEpisode && showProgress?.state === "partial";
+	const isCompleteShow =
+		!isMovie && !isEpisode && showProgress?.state === "complete";
+	const isProgressUnavailable =
+		progressQuery.isError || showProgress?.state === "unavailable";
 
 	const episodeWatchHistory = useMemo(() => {
 		if (isMovie || !watchHistory || !Array.isArray(watchHistory)) return [];
@@ -123,13 +146,21 @@ export default function ActionableMediaCard({
 				? (queryIsWatched ?? false)
 				: isEpisode
 					? (isEpisodeWatched?.(seasonNumber, episodeNumber) ?? false)
-					: (isTracking ?? false);
+					: isCompleteShow;
 
+	// How many Watch records unmarking would delete. For a whole show that's
+	// every episode Watch behind the card, which is what the confirm dialog
+	// needs to say.
 	const confirmEntryCount = isMovie
 		? movieWatchHistory?.length || 0
 		: isEpisode
 			? episodeWatchHistory.length
-			: watchHistory?.length || 0;
+			: 0;
+	// What the badge states. Only movies and episodes are Watched; a show is
+	// tracked through its episodes, so "watched N times" is not a quantity it
+	// has — `confirmEntryCount` there counts episodes, a different thing.
+	const resolvedWatchCount =
+		watchCount ?? (isMovie || isEpisode ? confirmEntryCount : undefined);
 
 	const handleMarkWatched = () => {
 		if (isMovie) {
@@ -140,9 +171,16 @@ export default function ActionableMediaCard({
 			episodeNumber !== undefined
 		) {
 			watchActions.markEpisodeWatched(seasonNumber, episodeNumber);
+		} else if (isPartialShow) {
+			setConfirmRemainingOpen(true);
 		} else {
 			watchActions.markShowWatched();
 		}
+	};
+
+	const handleConfirmRemaining = () => {
+		watchActions.markShowWatched();
+		setConfirmRemainingOpen(false);
 	};
 
 	const handleUnmarkWatched = () => {
@@ -182,6 +220,7 @@ export default function ActionableMediaCard({
 	return (
 		<>
 			<MediaCard
+				imageLoading={imageLoading}
 				id={id}
 				title={title}
 				displayTitle={displayTitle}
@@ -202,6 +241,18 @@ export default function ActionableMediaCard({
 				fill={fill}
 				layout={layout}
 				isWatched={watched}
+				watchCount={resolvedWatchCount}
+				episodeProgress={
+					isPartialShow
+						? {
+								watched: showProgress.episodesWatched,
+								total: showProgress.episodesTotal,
+								percentage: showProgress.percentage,
+							}
+						: undefined
+				}
+				isProgressLoading={!isMovie && !isEpisode && progressQuery.isLoading}
+				isProgressUnavailable={!isMovie && !isEpisode && isProgressUnavailable}
 				onMarkWatched={interactive ? handleMarkWatched : undefined}
 				onUnmarkWatched={interactive ? handleUnmarkWatched : undefined}
 				onManageLists={
@@ -238,6 +289,18 @@ export default function ActionableMediaCard({
 							? `Manage lists for "${title}"`
 							: `Add "${title}" to lists`
 					}
+				/>
+			)}
+			{interactive && (
+				<ConfirmDialog
+					open={confirmRemainingOpen}
+					onOpenChange={setConfirmRemainingOpen}
+					title="Mark remaining episodes watched?"
+					description={`This will add Watches for the ${showProgress?.remainingEpisodes ?? 0} remaining aired episodes of ${displayTitle || title}.`}
+					confirmLabel="Mark remaining"
+					onConfirm={handleConfirmRemaining}
+					isPending={watchActions.isMarkShowPending}
+					variant="default"
 				/>
 			)}
 			{interactive && (

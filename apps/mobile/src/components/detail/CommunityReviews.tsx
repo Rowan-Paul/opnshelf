@@ -323,11 +323,14 @@ export function CommunityReviews({
 	seasonNumber,
 	episodeNumber,
 	scrollRef,
+	onFocusReview,
 	focusReviewId,
 	mediaWebUrl,
 }: CommunityReviewsProps & {
 	/** Parent ScrollView, so a deep-linked review can be scrolled into view. */
 	scrollRef?: RefObject<ScrollView | null>;
+	/** Virtualized parents own scrolling to their review footer. */
+	onFocusReview?: (section: View) => void;
 	/** Review to scroll to + highlight (from a `?reviewId=` deep link). */
 	focusReviewId?: string;
 	/**
@@ -394,9 +397,14 @@ export function CommunityReviews({
 		if (focusReviewId) pinUntil.current = Date.now() + 2500;
 	}, [focusReviewId]);
 
+	const sectionRef = useRef<View>(null);
 	const handleSectionLayout = (e: LayoutChangeEvent) => {
 		sectionY.current = e.nativeEvent.layout.y;
 		if (hasFocusReview && Date.now() < pinUntil.current) {
+			if (onFocusReview && sectionRef.current) {
+				onFocusReview(sectionRef.current);
+				return;
+			}
 			scrollRef?.current?.scrollTo({
 				y: Math.max(0, sectionY.current - 12),
 				animated: true,
@@ -429,7 +437,11 @@ export function CommunityReviews({
 	};
 
 	return (
-		<View className="gap-3 px-4" onLayout={handleSectionLayout}>
+		<View
+			ref={sectionRef}
+			className="gap-3 px-4"
+			onLayout={handleSectionLayout}
+		>
 			<View className="flex-row items-center justify-between">
 				<View className="flex-row items-center gap-2">
 					<MessageSquare color={ACCENT} size={18} />

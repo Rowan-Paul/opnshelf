@@ -1,4 +1,4 @@
-# Unified social IA: Activity + Connections, shared across web and mobile
+# ADR 0012: Unified social IA: Activity + Connections, shared across web and mobile
 
 The social surface had drifted into a per-platform tangle: web had a `/following` page mashing the feed and people together plus a `Following` nav item, while mobile had an `Activity` tab, a `Find` button, a `/friends` screen titled "Connections", and a separate `/circles` screen. The same handful of ideas were split differently on each platform, three different words ("Following", "Connections", "Find") pointed at roughly one thing, and a newly-created **Circle** was a dead end — you couldn't see or edit who was in it.
 

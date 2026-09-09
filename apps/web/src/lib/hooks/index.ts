@@ -7,5 +7,6 @@ export * from "./useMedia";
 export * from "./useMediaWatchStatus";
 export * from "./useNotes";
 export * from "./usePerson";
+export * from "./useShowProgress";
 export * from "./useWatchActions";
 export * from "./useWatchers";

@@ -19,13 +19,15 @@ We **do not sell** data and **do not** use data for cross-app tracking
 | Follow relationships | User content | Yes | App functionality | Provided by user |
 | IP address, user agent (server logs) | Diagnostics | No | Security, abuse prevention | Automatic |
 | Product analytics (PostHog, EU) | Analytics / product interaction | Yes | Analytics, improve the Service | Automatic |
+| Error details and stack traces (PostHog, EU) | Diagnostics / crash logs | Yes | App stability, improve the Service | Automatic |
 
 ## Apple App Privacy mapping
 - **Data Used to Track You:** none.
 - **Data Linked to You:** Contact Info (none — no email at signup), User Content
   (shelf, ratings, reviews, notes, lists), Identifiers (atproto DID/handle),
-  Usage Data (PostHog product analytics).
-- **Data Not Linked to You:** Diagnostics (server logs / crash & performance).
+  Usage Data (PostHog product analytics), Diagnostics (PostHog error details
+  and stack traces).
+- **Data Not Linked to You:** Diagnostics (server logs).
 
 ## Google Play Data safety mapping
 - **Data shared with third parties:** none (PostHog is our processor, not a sale).
@@ -33,7 +35,8 @@ We **do not sell** data and **do not** use data for cross-app tracking
   - Personal info → Name (display name), User IDs (handle/DID).
   - App activity → In-app actions, other user-generated content (shelf, reviews,
     ratings, notes, lists), App interactions (PostHog analytics).
-  - App info & performance → Diagnostics (server logs).
+  - App info & performance → Crash logs (PostHog error details and stack
+    traces), Diagnostics (server logs).
 - **Security practices:** data encrypted in transit; user can request deletion
   (atproto data lives in the user's own PDS and can be deleted there).
 

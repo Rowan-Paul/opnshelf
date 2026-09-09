@@ -1,4 +1,4 @@
-# "Watched" activity counts logged Watches, in the owner's timezone, shared across surfaces
+# ADR 0005: "Watched" activity counts logged Watches, in the owner's timezone, shared across surfaces
 
 We unified the definition of "watched activity" (the 30-day activity graph, "watched this year", most-watched show) so the public profile and the private dashboard render identical numbers. A Watch counts only when an item has a `watched` status **and** a `watchedDate`; items added to a watchlist no longer count. Day/year windows are bucketed in the **profile owner's** timezone. `UsersService` reuses `ShelfService.getUserActivitySummary` so there is a single source of truth.
 

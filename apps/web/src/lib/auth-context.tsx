@@ -1,5 +1,4 @@
 import {
-	authControllerMe,
 	authControllerMeOptions,
 	getLoginUrl,
 	getSignupUrl,
@@ -20,6 +19,7 @@ import {
 } from "react";
 import { env } from "#/env";
 import { posthog } from "#/integrations/posthog/provider";
+import { currentUserQueryOptions } from "./auth-query";
 
 interface AuthContextType {
 	user: UserDto | null;
@@ -40,30 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	// Fetch current user - catch 401s gracefully to prevent router error boundary loops
 	const { data: user, isLoading } = useQuery({
-		queryKey: authControllerMeOptions().queryKey,
-		queryFn: async ({ queryKey, signal }) => {
-			try {
-				const { data } = await authControllerMe({
-					...queryKey[0],
-					signal,
-					throwOnError: true,
-				});
-				return data ?? null;
-			} catch (error) {
-				if (
-					typeof error === "object" &&
-					error !== null &&
-					("status" in error || "statusCode" in error) &&
-					((error as Record<string, unknown>).status === 401 ||
-						(error as Record<string, unknown>).statusCode === 401)
-				) {
-					return null;
-				}
-				throw error;
-			}
-		},
-		retry: false,
-		staleTime: 5 * 60 * 1000, // 5 minutes
+		...currentUserQueryOptions(),
+		// SSR cannot see the API's host-only session cookie. Verify once on
+		// browser mount even when its signed-out result was hydrated as fresh.
+		// Navigation still shares the five-minute cache while this stays mounted.
+		refetchOnMount: "always",
 	});
 
 	// Fetch user settings

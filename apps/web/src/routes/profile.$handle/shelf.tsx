@@ -378,6 +378,7 @@ function ShelfWatchCard({
 			undatedWatch={!item.watchedDate}
 			interactive={false}
 			isWatched
+			watchCount={item.watchCount}
 			onRemove={isOwner ? remove : undefined}
 		/>
 	);

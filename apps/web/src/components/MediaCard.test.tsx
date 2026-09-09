@@ -13,6 +13,43 @@ vi.mock("#/integrations/posthog/provider", () => ({
 }));
 
 describe("MediaCard poster metadata", () => {
+	it("shows the Watch count inside the watched control", () => {
+		render(
+			<MediaCard
+				id="1"
+				title="Test Movie"
+				posterUrl="/poster.jpg"
+				type="movie"
+				isWatched
+				watchCount={3}
+				onUnmarkWatched={vi.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByRole("button", {
+				name: "3 watches logged. Remove from shelf",
+			}).textContent,
+		).toContain("3");
+	});
+
+	it("shows the Watch count on a read-only watched poster", () => {
+		render(
+			<MediaCard
+				id="1"
+				title="Test Movie"
+				posterUrl="/poster.jpg"
+				type="movie"
+				isWatched
+				watchCount={3}
+			/>,
+		);
+
+		expect(screen.getByLabelText("3 watches logged").textContent).toContain(
+			"3",
+		);
+	});
+
 	it.each([
 		{ label: "movie title", episodeInfo: undefined, heading: "Test Movie" },
 		{

@@ -12,7 +12,13 @@
 			"**/app.config.ts",
 			"!**/src/global.css",
 			"!**/src/uniwind-env.d.ts",
-			"!**/.expo/**/*"
+			"!!**/.expo",
+			"!!**/android",
+			"!!**/ios",
+			"!!**/modules",
+			"!!**/node_modules",
+			"!!**/store",
+			"!!**/targets"
 		]
 	},
 	"formatter": {

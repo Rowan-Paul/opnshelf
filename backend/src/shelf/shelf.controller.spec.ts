@@ -33,6 +33,7 @@ describe("ShelfController", () => {
 						movieId: "movie-1",
 						title: "Movie One",
 						watchedDate: new Date("2024-01-10T00:00:00.000Z"),
+						watchCount: 3,
 						createdAt: new Date("2024-01-11T00:00:00.000Z"),
 					},
 				},
@@ -45,6 +46,7 @@ describe("ShelfController", () => {
 						seasonNumber: 2,
 						episodeNumber: 5,
 						watchedDate: null,
+						watchCount: 2,
 						createdAt: new Date("2024-02-01T00:00:00.000Z"),
 					},
 				},
@@ -76,6 +78,7 @@ describe("ShelfController", () => {
 			type: "movie",
 			movieId: "movie-1",
 			watchedDate: "2024-01-10T00:00:00.000Z",
+			watchCount: 3,
 			createdAt: "2024-01-11T00:00:00.000Z",
 		});
 		expect(result.items[1]).toMatchObject({
@@ -85,6 +88,7 @@ describe("ShelfController", () => {
 			seasonNumber: 2,
 			episodeNumber: 5,
 			watchedDate: undefined,
+			watchCount: 2,
 			createdAt: "2024-02-01T00:00:00.000Z",
 		});
 		// Regression guard for the cursor -> page migration.

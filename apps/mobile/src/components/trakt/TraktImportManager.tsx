@@ -13,6 +13,7 @@ import {
 	usersControllerPauseMyTraktImportMutation,
 	usersControllerRejectMyTraktMatchMutation,
 	usersControllerResumeMyTraktImportMutation,
+	usersControllerRetryMyTraktImportItemMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -223,7 +224,9 @@ function Result({ job }: { job: TraktImportJobDto }) {
 					<Text className="font-semibold text-foreground">View your Shelf</Text>
 				</Pressable>
 			</View>
-			{job.couldntImportCount > 0 ? <CouldntImportList /> : null}
+			{job.couldntImportCount > 0 ? (
+				<CouldntImportList onMatch={() => setMatching(true)} />
+			) : null}
 		</View>
 	);
 }
@@ -313,7 +316,7 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 							setCandidateIndex(0);
 							setSubmittedSearch(searchText.trim());
 						}}
-						placeholder="Search TMDB"
+						placeholder="Search titles"
 						placeholderTextColor={MUTED}
 						className="rounded-xl border border-border px-4 py-3 text-foreground"
 					/>
@@ -377,7 +380,7 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 				className="items-center py-2"
 			>
 				<Text className="font-medium text-muted-foreground text-sm">
-					Search TMDB
+					Search titles
 				</Text>
 			</Pressable>
 			{searchMode ? (
@@ -387,7 +390,7 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 					className="items-center py-2"
 				>
 					<Text className="text-muted-foreground text-sm">
-						No TMDB match exists
+						I can’t find a match
 					</Text>
 				</Pressable>
 			) : null}
@@ -429,12 +432,24 @@ function Candidate({ candidate }: { candidate: TraktMatchCandidateDto }) {
 	);
 }
 
-function CouldntImportList() {
+function CouldntImportList({ onMatch }: { onMatch: () => void }) {
+	const queryClient = useQueryClient();
 	const [page, setPage] = useState(1);
 	const { data } = useQuery({
 		...usersControllerGetMyTraktImportIssuesOptions({
 			query: { page, pageSize: 25, outcome: "couldnt_import" },
 		}),
+	});
+	const retry = useMutation({
+		...usersControllerRetryMyTraktImportItemMutation(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyCurrentTraktImportQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMyTraktImportIssuesOptions().queryKey,
+			});
+		},
 	});
 	if (!data?.items.length) return null;
 	const lastPage = Math.max(1, Math.ceil(data.total / data.pageSize));
@@ -448,7 +463,7 @@ function CouldntImportList() {
 				{Math.min(page * data.pageSize, data.total)} of {data.total}
 			</Text>
 			{data.items.map((item) => (
-				<View key={item.id} className="gap-1 border-border border-t py-3">
+				<View key={item.id} className="gap-2 border-border border-t py-3">
 					<Text className="font-medium text-foreground">
 						{item.title ?? "Unknown title"}
 						{item.year ? ` (${item.year})` : ""}
@@ -456,6 +471,31 @@ function CouldntImportList() {
 					<Text className="text-muted-foreground text-sm">
 						{item.message ?? "No compatible TMDB item was available."}
 					</Text>
+					{item.recovery === "none" ? (
+						<Text className="text-muted-foreground text-sm">
+							This item can’t be repaired.
+						</Text>
+					) : null}
+					{item.recovery === "match" ? (
+						<Pressable
+							onPress={onMatch}
+							className="self-start rounded-lg border border-border px-3 py-2"
+						>
+							<Text className="font-semibold text-foreground text-sm">
+								Match a title
+							</Text>
+						</Pressable>
+					) : item.recovery === "retry" ? (
+						<Pressable
+							disabled={retry.isPending}
+							onPress={() => retry.mutate({ path: { itemId: item.id } })}
+							className="self-start rounded-lg border border-border px-3 py-2"
+						>
+							<Text className="font-semibold text-foreground text-sm">
+								{retry.isPending ? "Trying again…" : "Try again"}
+							</Text>
+						</Pressable>
+					) : null}
 				</View>
 			))}
 			{lastPage > 1 ? (

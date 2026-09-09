@@ -2,9 +2,9 @@
 
 Mobile onboarding implements the **same seven steps as web**: welcome → profile (display name + avatar) → watch-country preference → optional Trakt import → follow suggestions → add watched Media Items → done. This replaces the lean welcome-only stub the rebuilt app shipped with, which deferred Trakt and social features to in-app discovery. We chose parity because the supporting screens and hooks already exist on mobile. The watched-Media-Items step also uses the shared discovery and Watch APIs. Keeping both clients' first-run flow identical avoids a per-platform product split.
 
-## Why this supersedes part of ADR 0002
+## Why this supersedes part of ADR 0027
 
-ADR 0002 deliberately deferred Trakt import and social to "v1.1+" to build mobile core-loop-first. That deferral is now stale — `apps/mobile/src/app/trakt-import.tsx`, `friends.tsx`, and the social hooks already shipped — so onboarding can use them today. ADR 0002 stays as the record of why they were once deferred; this ADR records that, for the onboarding flow, they no longer are.
+ADR 0027 deliberately deferred Trakt import and social to "v1.1+" to build mobile core-loop-first. That deferral is now stale — `apps/mobile/src/app/trakt-import.tsx`, `friends.tsx`, and the social hooks already shipped — so onboarding can use them today. ADR 0027 stays as the record of why they were once deferred; this ADR records that, for the onboarding flow, they no longer are.
 
 ## Consequences
 

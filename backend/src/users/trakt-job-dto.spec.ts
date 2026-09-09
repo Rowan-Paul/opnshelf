@@ -65,6 +65,7 @@ describe("mapTraktImportIssue", () => {
 		episodeTitle: "Good News About Hell",
 		seasonNumber: 1,
 		episodeNumber: 1,
+		traktMediaKey: "show:severance",
 		watchedAt: new Date("2026-03-22T12:00:00.000Z"),
 		reason: null,
 		message: null,
@@ -77,6 +78,26 @@ describe("mapTraktImportIssue", () => {
 		expect(dto.mediaType).toBe("episode");
 		expect(dto.watchedAt).toBe("2026-03-22T12:00:00.000Z");
 		expect(dto.reason).toBeUndefined();
+		expect(dto.recovery).toBe("match");
+	});
+
+	it("classifies operational and structural import issues without exposing recovery rules to clients", () => {
+		expect(
+			mapTraktImportIssue({
+				...row,
+				outcome: "couldnt_import",
+				reason: "metadata_unavailable",
+				message: "Try later",
+			}).recovery,
+		).toBe("retry");
+		expect(
+			mapTraktImportIssue({
+				...row,
+				outcome: "couldnt_import",
+				reason: "invalid_watched_at",
+				watchedAt: null,
+			}).recovery,
+		).toBe("none");
 	});
 
 	it("collapses any other outcome to couldnt_import and unknown media", () => {

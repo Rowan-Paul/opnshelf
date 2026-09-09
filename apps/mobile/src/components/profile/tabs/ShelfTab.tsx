@@ -310,6 +310,8 @@ function ShelfWatchCard({
 		<View className="px-1 pb-3" style={{ width: `${100 / columns}%` }}>
 			<MediaCard
 				item={shelfItemToCardItem(item)}
+				isWatched
+				watchCount={item.watchCount}
 				onRemove={isOwner ? remove : undefined}
 				// Each card mounts its own mutation, so removing several at once
 				// spins only the cards actually being removed.

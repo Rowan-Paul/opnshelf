@@ -1,4 +1,4 @@
-# Circles are local-only, not PDS records
+# ADR 0010: Circles are local-only, not PDS records
 
 A **Circle** is a private, named grouping of Users you follow, used to filter your Activity Feed. Unlike every other user-owned entity in opnshelf — Follows, media Lists, Reviews — which dual-writes to the user's PDS, a Circle is stored **only** in local Postgres and is never federated.
 

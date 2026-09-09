@@ -1,6 +1,4 @@
-import type { Mock, Mocked } from "vitest";
-import { CredentialSession } from "@atproto/api";
-import { NodeOAuthClient } from "@atproto/oauth-client-node";
+import type { Mock } from "vitest";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 
@@ -105,12 +103,13 @@ vi.mock("@atproto/api", () => ({
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
-import { AuthService, DECLARED_OAUTH_SCOPE, OAUTH_SCOPE } from "./auth.service";
+import { AuthService } from "./auth.service";
+import { DeviceSessionsService } from "./device-sessions.service";
+import { OAuthClientFactory } from "./oauth-client.factory";
+import { OAUTH_SCOPE } from "./oauth-scopes";
 
 describe("AuthService", () => {
 	let service: AuthService;
-	let prismaService: Mocked<PrismaService>;
-	let configService: Mocked<ConfigService>;
 
 	const mockPrismaService = {
 		$transaction: vi.fn(),
@@ -158,719 +157,17 @@ describe("AuthService", () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				AuthService,
+				OAuthClientFactory,
+				DeviceSessionsService,
 				{ provide: PrismaService, useValue: mockPrismaService },
 				{ provide: ConfigService, useValue: mockConfigService },
 			],
 		}).compile();
 
 		service = module.get<AuthService>(AuthService);
-		prismaService = module.get(PrismaService);
-		configService = module.get(ConfigService);
 
-		// Initialize the OAuth client
-		service.onModuleInit();
-	});
-
-	describe("onModuleInit", () => {
-		it("should initialize the OAuth client with shared metadata", () => {
-			expect(NodeOAuthClient).toHaveBeenCalledWith({
-				clientMetadata: {
-					client_id: `http://localhost?redirect_uri=${encodeURIComponent("http://127.0.0.1:3001/auth/callback")}&scope=${encodeURIComponent(DECLARED_OAUTH_SCOPE)}`,
-					client_name: "Opnshelf",
-					client_uri: "http://127.0.0.1:3001",
-					redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
-					scope: DECLARED_OAUTH_SCOPE,
-					grant_types: ["authorization_code", "refresh_token"],
-					response_types: ["code"],
-					application_type: "native",
-					token_endpoint_auth_method: "none",
-					dpop_bound_access_tokens: true,
-				},
-				stateStore: {
-					set: expect.any(Function),
-					get: expect.any(Function),
-					del: expect.any(Function),
-				},
-				sessionStore: {
-					set: expect.any(Function),
-					get: expect.any(Function),
-					del: expect.any(Function),
-				},
-				requestLock: expect.any(Function),
-				allowHttp: true,
-			});
-		});
-	});
-
-	describe("getSessionById", () => {
-		it("should return session record when found", async () => {
-			const mockSession = {
-				id: "session-123",
-				userDid: "did:plc:abc123",
-				sessionData: "{}",
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
-			mockPrismaService.authSession.findUnique.mockResolvedValue(mockSession);
-
-			const result = await service.getSessionById("session-123");
-
-			expect(result).toEqual(mockSession);
-			expect(mockPrismaService.authSession.findUnique).toHaveBeenCalledWith({
-				where: { id: "session-123" },
-			});
-		});
-
-		it("should return null when session not found", async () => {
-			mockPrismaService.authSession.findUnique.mockResolvedValue(null);
-
-			const result = await service.getSessionById("nonexistent");
-
-			expect(result).toBeNull();
-		});
-	});
-
-	describe("revoke", () => {
-		it("atomically deletes every session for the DID and clears matching live managers", async () => {
-			mockPrismaService.$queryRaw.mockResolvedValue([
-				{ id: "session-123" },
-				{ id: "session-456" },
-			]);
-			const oauthClients = Reflect.get(service, "oauthClients") as Map<
-				string,
-				unknown
-			>;
-			const credentialSessions = Reflect.get(
-				service,
-				"credentialSessions",
-			) as Map<string, unknown>;
-			oauthClients.set("session-123", {});
-			oauthClients.set("unrelated", {});
-			credentialSessions.set("session-456", {});
-			credentialSessions.set("unrelated", {});
-
-			await expect(service.revoke("did:plc:abc123")).resolves.toBe(2);
-
-			expect(mockPrismaService.$queryRaw).toHaveBeenCalledOnce();
-			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
-				strings: string[];
-				values: unknown[];
-			};
-			expect(query.strings.join(" ")).toContain('DELETE FROM "AuthSession"');
-			expect(query.strings.join(" ")).toContain('RETURNING "id"');
-			expect(query.values).toEqual(["did:plc:abc123"]);
-			expect(mockPrismaService.authSession.findMany).not.toHaveBeenCalled();
-			expect(mockPrismaService.authSession.deleteMany).not.toHaveBeenCalled();
-			expect(oauthClients.has("session-123")).toBe(false);
-			expect(credentialSessions.has("session-456")).toBe(false);
-			expect(oauthClients.has("unrelated")).toBe(true);
-			expect(credentialSessions.has("unrelated")).toBe(true);
-		});
-
-		it("propagates the original database error", async () => {
-			const databaseError = new Error("DB error");
-			mockPrismaService.$queryRaw.mockRejectedValue(databaseError);
-
-			await expect(service.revoke("did:plc:abc123")).rejects.toBe(
-				databaseError,
-			);
-		});
-	});
-
-	describe("revokeBySessionId", () => {
-		it("deletes the session by id and clears its live managers", async () => {
-			mockPrismaService.$queryRaw.mockResolvedValue([{ id: "session-123" }]);
-			const oauthClients = Reflect.get(service, "oauthClients") as Map<
-				string,
-				unknown
-			>;
-			const credentialSessions = Reflect.get(
-				service,
-				"credentialSessions",
-			) as Map<string, unknown>;
-			oauthClients.set("session-123", {});
-			oauthClients.set("unrelated", {});
-			credentialSessions.set("session-123", {});
-			credentialSessions.set("unrelated", {});
-
-			await expect(service.revokeBySessionId("session-123")).resolves.toBe(1);
-
-			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
-				values: unknown[];
-			};
-			expect(query.values).toEqual(["session-123"]);
-			expect(oauthClients.has("session-123")).toBe(false);
-			expect(credentialSessions.has("session-123")).toBe(false);
-			expect(oauthClients.has("unrelated")).toBe(true);
-			expect(credentialSessions.has("unrelated")).toBe(true);
-		});
-
-		it("propagates the original database error", async () => {
-			const databaseError = new Error("DB error");
-			mockPrismaService.$queryRaw.mockRejectedValue(databaseError);
-
-			await expect(service.revokeBySessionId("session-123")).rejects.toBe(
-				databaseError,
-			);
-		});
-	});
-
-	describe("parseDeviceHeaders", () => {
-		it("decodes the label, caps its length and strips control characters", () => {
-			const long = "A".repeat(100);
-			expect(
-				service.parseDeviceHeaders({
-					id: "device-a",
-					name: encodeURIComponent("Rowan's iPhone\u0000\u001f"),
-					platform: "IOS",
-				}),
-			).toEqual({
-				deviceId: "device-a",
-				name: "Rowan's iPhone",
-				platform: "ios",
-			});
-			expect(
-				service.parseDeviceHeaders({ id: "device-a", name: long })?.name,
-			).toHaveLength(64);
-		});
-
-		it("ignores a malformed label rather than failing the request", () => {
-			expect(
-				service.parseDeviceHeaders({ id: "device-a", name: "%E0%A4%A" }),
-			).toEqual({ deviceId: "device-a", name: null, platform: null });
-		});
-
-		it("rejects a missing or oversized id, and an unknown platform", () => {
-			expect(service.parseDeviceHeaders({})).toBeNull();
-			expect(service.parseDeviceHeaders({ id: "   " })).toBeNull();
-			expect(service.parseDeviceHeaders({ id: "x".repeat(129) })).toBeNull();
-			expect(
-				service.parseDeviceHeaders({ id: "device-a", platform: "toaster" })
-					?.platform,
-			).toBeNull();
-		});
-	});
-
-	describe("stampDevice", () => {
-		it("revokes the same install's older sessions but never the current one", async () => {
-			mockPrismaService.authSession.findMany.mockResolvedValue([
-				{ id: "older-session" },
-			]);
-			mockPrismaService.$transaction.mockResolvedValue([]);
-
-			await service.stampDevice({
-				sessionId: "session-123",
-				userDid: "did:plc:abc123",
-				deviceId: "device-a",
-				name: "Pixel 8",
-				platform: "android",
-			});
-
-			expect(mockPrismaService.authSession.findMany).toHaveBeenCalledWith({
-				where: {
-					userDid: "did:plc:abc123",
-					deviceId: "device-a",
-					id: { not: "session-123" },
-				},
-				select: { id: true },
-			});
-			expect(mockPrismaService.$transaction).toHaveBeenCalledOnce();
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
-				where: { id: { in: ["older-session"] } },
-			});
-			expect(mockPrismaService.authSession.update).toHaveBeenCalledWith({
-				where: { id: "session-123" },
-				data: {
-					deviceId: "device-a",
-					deviceName: "Pixel 8",
-					devicePlatform: "android",
-				},
-			});
-		});
-
-		it("swallows failures so a valid request still succeeds", async () => {
-			mockPrismaService.authSession.findMany.mockRejectedValue(
-				new Error("DB error"),
-			);
-
-			await expect(
-				service.stampDevice({
-					sessionId: "session-123",
-					userDid: "did:plc:abc123",
-					deviceId: "device-a",
-					name: null,
-					platform: null,
-				}),
-			).resolves.toBeUndefined();
-		});
-	});
-
-	describe("listDevices", () => {
-		it("flags the caller's own device and never returns the session id", async () => {
-			const lastUsedAt = new Date("2026-08-01T10:00:00.000Z");
-			const createdAt = new Date("2026-07-20T10:00:00.000Z");
-			mockPrismaService.authSession.findMany.mockResolvedValue([
-				{
-					id: "session-123",
-					deviceId: "device-a",
-					deviceName: "iPhone 15 Pro",
-					devicePlatform: "ios",
-					lastUsedAt,
-					createdAt,
-				},
-				{
-					id: "session-456",
-					deviceId: "device-b",
-					deviceName: null,
-					devicePlatform: null,
-					lastUsedAt,
-					createdAt,
-				},
-			]);
-
-			const devices = await service.listDevices(
-				"did:plc:abc123",
-				"session-123",
-			);
-
-			expect(devices).toEqual([
-				{
-					deviceId: "device-a",
-					name: "iPhone 15 Pro",
-					platform: "ios",
-					isCurrent: true,
-					lastUsedAt,
-					createdAt,
-				},
-				{
-					deviceId: "device-b",
-					name: null,
-					platform: null,
-					isCurrent: false,
-					lastUsedAt,
-					createdAt,
-				},
-			]);
-			expect(JSON.stringify(devices)).not.toContain("session-123");
-			// Expired rows linger until the cleanup job, so they must be filtered.
-			expect(
-				mockPrismaService.authSession.findMany.mock.calls[0][0].where,
-			).toMatchObject({
-				userDid: "did:plc:abc123",
-				expiresAt: { gt: expect.any(Date) },
-			});
-		});
-	});
-
-	describe("revokeDevice", () => {
-		it("scopes the revoke to the caller's own DID", async () => {
-			mockPrismaService.$queryRaw.mockResolvedValue([{ id: "session-456" }]);
-
-			const revoked = await service.revokeDevice("did:plc:abc123", "device-b");
-
-			expect(revoked).toBe(1);
-			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
-				values: unknown[];
-			};
-			expect(query.values).toEqual(["did:plc:abc123", "device-b"]);
-		});
-
-		it("reports nothing revoked for another user's device", async () => {
-			await expect(
-				service.revokeDevice("did:plc:abc123", "someone-elses-device"),
-			).resolves.toBe(0);
-			expect(mockPrismaService.$queryRaw).toHaveBeenCalledOnce();
-		});
-	});
-
-	describe("revokeOtherDevices", () => {
-		it("keeps the current session and drops the rest", async () => {
-			mockPrismaService.$queryRaw.mockResolvedValue([
-				{ id: "session-456" },
-				{ id: "session-789" },
-			]);
-
-			const revoked = await service.revokeOtherDevices(
-				"did:plc:abc123",
-				"session-123",
-			);
-
-			expect(revoked).toBe(2);
-			const query = mockPrismaService.$queryRaw.mock.calls[0]?.[0] as {
-				values: unknown[];
-			};
-			expect(query.values).toEqual(["did:plc:abc123", "session-123"]);
-		});
-	});
-
-	describe("upsertUser", () => {
-		it("should upsert user with profile data", async () => {
-			const profile = {
-				did: "did:plc:abc123",
-				handle: "user.bsky.social",
-				displayName: "Test User",
-				avatar: "https://example.com/avatar.jpg",
-			};
-			const mockUser = {
-				...profile,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
-			mockPrismaService.user.findUnique.mockResolvedValue(null);
-			mockPrismaService.user.upsert.mockResolvedValue(mockUser);
-
-			const result = await service.upsertUser(profile);
-
-			expect(result).toEqual({
-				user: mockUser,
-				isNewUser: true,
-			});
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith({
-				where: { did: profile.did },
-				update: {
-					handle: profile.handle,
-				},
-				create: {
-					did: profile.did,
-					handle: profile.handle,
-					displayName: profile.displayName,
-					avatar: profile.avatar,
-					timezone: "UTC",
-					emailVerifiedAt: null,
-					isNativePds: false,
-				},
-			});
-		});
-
-		it("should handle null displayName and avatar", async () => {
-			const profile = {
-				did: "did:plc:abc123",
-				handle: "user.bsky.social",
-				displayName: null,
-				avatar: null,
-			};
-			mockPrismaService.user.upsert.mockResolvedValue({
-				...profile,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			});
-			mockPrismaService.user.findUnique.mockResolvedValue(null);
-
-			await service.upsertUser(profile);
-
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith({
-				where: { did: profile.did },
-				update: {
-					handle: profile.handle,
-				},
-				create: {
-					did: profile.did,
-					handle: profile.handle,
-					displayName: null,
-					avatar: null,
-					timezone: "UTC",
-					emailVerifiedAt: null,
-					isNativePds: false,
-				},
-			});
-		});
-
-		it("preserves an existing user's saved timezone during sign-in", async () => {
-			const profile = {
-				did: "did:plc:abc123",
-				handle: "user.bsky.social",
-				displayName: null,
-				avatar: null,
-			};
-			mockPrismaService.user.findUnique.mockResolvedValue({
-				did: profile.did,
-				emailVerifiedAt: new Date(),
-				isNativePds: false,
-				avatar: null,
-			});
-			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
-
-			await service.upsertUser(profile, "Europe/Amsterdam");
-
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
-				expect.objectContaining({
-					update: { handle: profile.handle },
-				}),
-			);
-		});
-
-		it("creates a native-PDS account unverified and gated", async () => {
-			const profile = {
-				did: "did:plc:jane",
-				handle: "jane.opnshelf.social",
-				displayName: null,
-				avatar: null,
-			};
-			mockPrismaService.user.findUnique.mockResolvedValue(null);
-			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
-
-			await service.upsertUser(profile, undefined, { isNativePds: true });
-
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
-				expect.objectContaining({
-					create: expect.objectContaining({
-						isNativePds: true,
-						emailVerifiedAt: null,
-					}),
-				}),
-			);
-		});
-
-		it("backfills emailVerifiedAt on re-login for a legacy external account", async () => {
-			const profile = {
-				did: "did:plc:abc123",
-				handle: "user.bsky.social",
-				displayName: "Test User",
-				avatar: null,
-			};
-			// Existing external row stuck at null (created before verified-on-creation).
-			mockPrismaService.user.findUnique.mockResolvedValue({
-				did: profile.did,
-				emailVerifiedAt: null,
-				isNativePds: false,
-			});
-			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
-
-			await service.upsertUser(profile, undefined, { emailVerified: true });
-
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
-				expect.objectContaining({
-					update: expect.objectContaining({
-						handle: profile.handle,
-						emailVerifiedAt: expect.any(Date),
-					}),
-				}),
-			);
-		});
-
-		it("does not un-gate an unverified native account that re-logs in via OAuth", async () => {
-			const profile = {
-				did: "did:plc:jane",
-				handle: "jane.opnshelf.social",
-				displayName: null,
-				avatar: null,
-			};
-			// Native account still awaiting email verification.
-			mockPrismaService.user.findUnique.mockResolvedValue({
-				did: profile.did,
-				emailVerifiedAt: null,
-				isNativePds: true,
-			});
-			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
-
-			await service.upsertUser(profile, undefined, { emailVerified: true });
-
-			// Only the handle is touched — the verification timestamp stays null.
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
-				expect.objectContaining({ update: { handle: profile.handle } }),
-			);
-		});
-
-		it("does not clobber an existing emailVerifiedAt on re-login", async () => {
-			const profile = {
-				did: "did:plc:abc123",
-				handle: "user.bsky.social",
-				displayName: null,
-				avatar: null,
-			};
-			mockPrismaService.user.findUnique.mockResolvedValue({
-				did: profile.did,
-				emailVerifiedAt: new Date("2026-01-01T00:00:00.000Z"),
-				isNativePds: false,
-			});
-			mockPrismaService.user.upsert.mockResolvedValue({ ...profile });
-
-			await service.upsertUser(profile, undefined, { emailVerified: true });
-
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledWith(
-				expect.objectContaining({ update: { handle: profile.handle } }),
-			);
-		});
-
-		it("should recover from handle uniqueness conflicts by reassigning stale handle owner", async () => {
-			const profile = {
-				did: "did:plc:new123",
-				handle: "user.bsky.social",
-				displayName: "New User",
-				avatar: "https://example.com/avatar.jpg",
-			};
-			const mockUser = {
-				...profile,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
-			const handleConflictError = {
-				code: "P2002",
-				meta: {
-					constraint: {
-						fields: ["handle"],
-					},
-				},
-			};
-
-			mockPrismaService.$transaction.mockImplementation(
-				async (fn: (tx: typeof mockPrismaService) => unknown) =>
-					fn(mockPrismaService),
-			);
-			mockPrismaService.user.findUnique
-				.mockResolvedValueOnce(null)
-				.mockResolvedValueOnce({
-					did: "did:plc:old123",
-					handle: "user.bsky.social",
-					displayName: null,
-					avatar: null,
-					timezone: "UTC",
-					timeFormat: "24h",
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
-			mockPrismaService.user.upsert
-				.mockRejectedValueOnce(handleConflictError)
-				.mockResolvedValueOnce(mockUser);
-			mockPrismaService.user.update.mockResolvedValue({
-				did: "did:plc:old123",
-				handle: "legacy-did-plc-old123-1234",
-				displayName: null,
-				avatar: null,
-				timezone: "UTC",
-				timeFormat: "24h",
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			});
-
-			const result = await service.upsertUser(profile);
-
-			expect(result).toEqual({
-				user: mockUser,
-				isNewUser: true,
-			});
-			expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
-			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-				where: { handle: profile.handle },
-			});
-			expect(mockPrismaService.user.update).toHaveBeenCalledWith(
-				expect.objectContaining({
-					where: { did: "did:plc:old123" },
-				}),
-			);
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
-		});
-
-		it("should recover when Prisma reports the conflict as a string target (Prisma 7/Postgres)", async () => {
-			const profile = {
-				did: "did:plc:new123",
-				handle: "user.bsky.social",
-				displayName: "New User",
-				avatar: null,
-			};
-			const mockUser = {
-				...profile,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
-			// Real Prisma 7 / Postgres shape: target is the constraint name string.
-			const handleConflictError = {
-				code: "P2002",
-				meta: { target: "User_handle_key" },
-			};
-
-			mockPrismaService.$transaction.mockImplementation(
-				async (fn: (tx: typeof mockPrismaService) => unknown) =>
-					fn(mockPrismaService),
-			);
-			mockPrismaService.user.findUnique
-				.mockResolvedValueOnce(null)
-				.mockResolvedValueOnce({
-					did: "did:plc:old123",
-					handle: "user.bsky.social",
-					emailVerifiedAt: null,
-					isNativePds: false,
-					avatar: null,
-				});
-			mockPrismaService.user.upsert
-				.mockRejectedValueOnce(handleConflictError)
-				.mockResolvedValueOnce(mockUser);
-			mockPrismaService.user.update.mockResolvedValue({});
-
-			const result = await service.upsertUser(profile);
-
-			expect(result).toEqual({ user: mockUser, isNewUser: true });
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
-		});
-
-		it("should recover when the Postgres adapter nests the constraint fields", async () => {
-			const profile = {
-				did: "did:plc:new123",
-				handle: "user.bsky.social",
-				displayName: "New User",
-				avatar: null,
-			};
-			const mockUser = {
-				...profile,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
-			const handleConflictError = {
-				code: "P2002",
-				meta: {
-					driverAdapterError: {
-						cause: {
-							kind: "UniqueConstraintViolation",
-							constraint: { fields: ["handle"] },
-						},
-					},
-				},
-			};
-
-			mockPrismaService.$transaction.mockImplementation(
-				async (fn: (tx: typeof mockPrismaService) => unknown) =>
-					fn(mockPrismaService),
-			);
-			mockPrismaService.user.findUnique
-				.mockResolvedValueOnce(null)
-				.mockResolvedValueOnce({
-					did: "did:plc:old123",
-					handle: profile.handle,
-					emailVerifiedAt: null,
-					isNativePds: false,
-					avatar: null,
-				});
-			mockPrismaService.user.upsert
-				.mockRejectedValueOnce(handleConflictError)
-				.mockResolvedValueOnce(mockUser);
-			mockPrismaService.user.update.mockResolvedValue({});
-
-			const result = await service.upsertUser(profile);
-
-			expect(result).toEqual({ user: mockUser, isNewUser: true });
-			expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
-			expect(mockPrismaService.user.update).toHaveBeenCalledWith(
-				expect.objectContaining({ where: { did: "did:plc:old123" } }),
-			);
-			expect(mockPrismaService.user.upsert).toHaveBeenCalledTimes(2);
-		});
-	});
-
-	describe("parseOAuthAppState", () => {
-		it("should parse valid state payload", () => {
-			expect(
-				service.parseOAuthAppState(
-					'{"platform":"mobile","timezone":"Europe/London"}',
-				),
-			).toEqual({
-				platform: "mobile",
-				timezone: "Europe/London",
-			});
-		});
-
-		it("should return empty state for invalid payload", () => {
-			expect(service.parseOAuthAppState("not-json")).toEqual({});
-		});
+		// Initialize the OAuth client, as Nest does at boot.
+		module.get(OAuthClientFactory).onModuleInit();
 	});
 
 	describe("getUser", () => {
@@ -899,119 +196,6 @@ describe("AuthService", () => {
 			const result = await service.getUser("did:plc:nonexistent");
 
 			expect(result).toBeNull();
-		});
-	});
-
-	describe("getClientMetadata", () => {
-		it("should return localhost metadata for development", () => {
-			const metadata = service.getClientMetadata();
-
-			expect(metadata).toMatchObject({
-				client_id:
-					"http://127.0.0.1:3001/.well-known/oauth-client-metadata.json",
-				client_name: "Opnshelf",
-				client_uri: "http://127.0.0.1:3001",
-				redirect_uris: ["http://127.0.0.1:3001/auth/callback"],
-				scope: DECLARED_OAUTH_SCOPE,
-				grant_types: ["authorization_code", "refresh_token"],
-				response_types: ["code"],
-				application_type: "native",
-				token_endpoint_auth_method: "none",
-				dpop_bound_access_tokens: true,
-			});
-		});
-
-		it("should return production metadata for non-localhost URLs", () => {
-			(mockConfigService.get as Mock).mockImplementation((key: string) => {
-				if (key === "BACKEND_PUBLIC_URL") return "https://api.opnshelf.xyz";
-				if (key === "PORT") return 443;
-				return undefined;
-			});
-
-			const metadata = service.getClientMetadata();
-
-			expect(metadata).toMatchObject({
-				client_id:
-					"https://api.opnshelf.xyz/.well-known/oauth-client-metadata.json",
-				client_name: "Opnshelf",
-				client_uri: "https://api.opnshelf.xyz",
-				redirect_uris: ["https://api.opnshelf.xyz/auth/callback"],
-				application_type: "web",
-			});
-		});
-	});
-
-	describe("cleanupExpiredStates", () => {
-		it("should delete expired auth states", async () => {
-			mockPrismaService.authState.deleteMany.mockResolvedValue({ count: 5 });
-
-			await service.cleanupExpiredStates();
-
-			expect(mockPrismaService.authState.deleteMany).toHaveBeenCalledWith({
-				where: {
-					expiresAt: { lt: expect.any(Date) },
-				},
-			});
-		});
-	});
-
-	describe("cleanupExpiredSessions", () => {
-		it("should delete expired auth sessions", async () => {
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 3 });
-
-			await service.cleanupExpiredSessions();
-
-			expect(mockPrismaService.authSession.deleteMany).toHaveBeenCalledWith({
-				where: {
-					expiresAt: { lt: expect.any(Date) },
-				},
-			});
-		});
-	});
-
-	describe("touchSession", () => {
-		it("should extend expiry when lastUsedAt is stale", async () => {
-			mockPrismaService.authSession.update.mockResolvedValue({});
-			const stale = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
-
-			await service.touchSession("session-123", stale);
-
-			expect(mockPrismaService.authSession.update).toHaveBeenCalledWith({
-				where: { id: "session-123" },
-				data: {
-					lastUsedAt: expect.any(Date),
-					expiresAt: expect.any(Date),
-				},
-			});
-		});
-
-		it("should not write when lastUsedAt is recent", async () => {
-			const recent = new Date(); // within the slide window
-
-			await service.touchSession("session-123", recent);
-
-			expect(mockPrismaService.authSession.update).not.toHaveBeenCalled();
-		});
-
-		it("does not log the session credential when the update fails", async () => {
-			const sessionId = "sentinel-session-credential";
-			const logger = (
-				service as unknown as {
-					logger: { warn: (...args: unknown[]) => void };
-				}
-			).logger;
-			const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-			mockPrismaService.authSession.update.mockRejectedValue(
-				new Error(`database update failed for ${sessionId}`),
-			);
-
-			await service.touchSession(
-				sessionId,
-				new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-			);
-
-			expect(warn).toHaveBeenCalledWith("Failed to touch session");
-			expect(JSON.stringify(warn.mock.calls)).not.toContain(sessionId);
 		});
 	});
 
@@ -1200,108 +384,68 @@ describe("AuthService", () => {
 		});
 	});
 
-	describe("restore", () => {
-		it("should restore the freshest live session for the DID", async () => {
-			const mockSession = { did: "did:plc:abc123" };
-			mockPrismaService.authSession.findFirst.mockResolvedValue({
-				id: "slot-1",
-				userDid: "did:plc:abc123",
-				kind: "oauth",
-				sessionData: "{}",
+	describe("isKnownSession", () => {
+		it("is true for the slot minted by an OAuth callback", async () => {
+			sharedOAuthClient.callback.mockResolvedValue({
+				session: { did: "did:plc:abc123" },
+				state: "xyz",
 			});
-			sharedOAuthClient.restore.mockResolvedValue(mockSession);
 
-			const result = await service.restore("did:plc:abc123");
-
-			expect(mockPrismaService.authSession.findFirst).toHaveBeenCalled();
-			expect(sharedOAuthClient.restore).toHaveBeenCalledWith("did:plc:abc123");
-			expect(result).toEqual(mockSession);
-		});
-
-		it("should return undefined when there is no live session", async () => {
-			mockPrismaService.authSession.findFirst.mockResolvedValue(null);
-
-			const result = await service.restore("did:plc:abc123");
-
-			expect(result).toBeUndefined();
-		});
-
-		it("should return undefined when the client restore fails", async () => {
-			mockPrismaService.authSession.findFirst.mockResolvedValue({
-				id: "slot-1",
-				userDid: "did:plc:abc123",
-				kind: "oauth",
-				sessionData: "{}",
-			});
-			sharedOAuthClient.restore.mockRejectedValue(
-				new Error("Session not found"),
+			const { sessionId } = await service.callback(
+				new URLSearchParams("code=abc&state=xyz"),
 			);
 
-			const result = await service.restore("did:plc:abc123");
-
-			expect(result).toBeUndefined();
+			expect(service.isKnownSession(sessionId)).toBe(true);
 		});
 	});
 
-	describe("restoreBySession", () => {
-		it("reuses one credential session manager for repeated requests from a device", async () => {
-			mockPrismaService.authSession.upsert.mockResolvedValue({});
-			const record = {
-				id: "credential-slot-1",
-				userDid: "did:plc:abc123",
-				kind: "credential",
-				sessionData: JSON.stringify({
-					did: "did:plc:abc123",
-					handle: "alice.opnshelf.social",
-					accessJwt: "stale-access",
-					refreshJwt: "stale-refresh",
-					active: true,
-					pdsUrl: "https://opnshelf.social",
-				}),
+	describe("completePermissionChange", () => {
+		it("saves the account-wide preferences and drops every other session", async () => {
+			const tx = {
+				user: { update: vi.fn() },
+				authSession: { deleteMany: vi.fn() },
 			};
-
-			const first = await service.restoreBySession(record);
-			const second = await service.restoreBySession(record);
-
-			expect(CredentialSession).toHaveBeenCalledTimes(1);
-			expect(
-				credentialSessionHarness.instances[0]?.resumeSession,
-			).toHaveBeenCalledTimes(1);
-			expect(second).toBe(first);
-		});
-
-		it("does not log the session credential when a credential session expires", async () => {
-			const sessionId = "sentinel-credential-slot";
-			const did = "did:plc:abc123";
-			const logger = (
-				service as unknown as {
-					logger: { warn: (...args: unknown[]) => void };
-				}
-			).logger;
-			const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-			mockPrismaService.authSession.upsert.mockResolvedValue({});
-			mockPrismaService.authSession.deleteMany.mockResolvedValue({ count: 1 });
-			const record = {
-				id: sessionId,
-				userDid: did,
-				kind: "credential",
-				sessionData: JSON.stringify({
-					did,
-					handle: "alice.opnshelf.social",
-					accessJwt: "stale-access",
-					refreshJwt: "stale-refresh",
-					active: true,
-					pdsUrl: "https://opnshelf.social",
-				}),
-			};
-
-			await service.restoreBySession(record);
-			credentialSessionHarness.instances[0]?.persistSession("expired");
-
-			expect(warn).toHaveBeenCalledWith(
-				`Credential session expired for ${did}; revoking device session`,
+			mockPrismaService.$transaction.mockImplementation(
+				async (fn: (tx: unknown) => Promise<void>) => fn(tx),
 			);
-			expect(JSON.stringify(warn.mock.calls)).not.toContain(sessionId);
+			const oauthClients = Reflect.get(
+				Reflect.get(service, "sessions") as object,
+				"oauthClients",
+			) as Map<string, unknown>;
+			oauthClients.set("retained", {});
+			oauthClients.set("superseded", {});
+
+			await service.completePermissionChange("did:plc:abc123", "retained", {
+				blogEnabled: true,
+				blueskyEnabled: false,
+			});
+
+			expect(tx.user.update).toHaveBeenCalledWith({
+				where: { did: "did:plc:abc123" },
+				data: { blogIntegrationEnabled: true, blueskyCrossPostEnabled: false },
+			});
+			expect(tx.authSession.deleteMany).toHaveBeenCalledWith({
+				where: { userDid: "did:plc:abc123", id: { not: "retained" } },
+			});
+			expect([...oauthClients.keys()]).toEqual(["retained"]);
+		});
+	});
+
+	describe("disableIntegration", () => {
+		it("clears the saved preference for blog and Bluesky only", async () => {
+			await service.disableIntegration("did:plc:abc123", "blog");
+			await service.disableIntegration("did:plc:abc123", "bluesky");
+			await service.disableIntegration("did:plc:abc123", "atstore");
+
+			expect(mockPrismaService.user.update).toHaveBeenCalledTimes(2);
+			expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+				where: { did: "did:plc:abc123" },
+				data: { blogIntegrationEnabled: false },
+			});
+			expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+				where: { did: "did:plc:abc123" },
+				data: { blueskyCrossPostEnabled: false },
+			});
 		});
 	});
 
@@ -1357,64 +501,6 @@ describe("AuthService", () => {
 
 		it("should return false when there is no session", async () => {
 			await expect(service.hasBlueskyProfile(undefined)).resolves.toBe(false);
-		});
-	});
-
-	describe("delegated Google SSO", () => {
-		it("binds the verified id_token to the prepared OAuth request", async () => {
-			const mockFetch = vi.fn().mockResolvedValue({
-				ok: true,
-				json: async () => ({
-					token: "pending-token",
-					email: "jane@example.com",
-					emailVerified: true,
-					providerUsername: "Jane",
-				}),
-			});
-			vi.stubGlobal("fetch", mockFetch);
-
-			const result = await service.startSsoRegistration(
-				"verified-id-token",
-				"urn:ietf:params:oauth:request_uri:abc",
-			);
-
-			expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
-				provider: "google",
-				id_token: "verified-id-token",
-				request_uri: "urn:ietf:params:oauth:request_uri:abc",
-			});
-			expect(result).toEqual({
-				token: "pending-token",
-				email: "jane@example.com",
-				emailVerified: true,
-				providerUsername: "Jane",
-				redirectUrl: null,
-			});
-			vi.unstubAllGlobals();
-		});
-
-		it("resolves the PDS consent redirect returned after registration", async () => {
-			const mockFetch = vi.fn().mockResolvedValue({
-				ok: true,
-				json: async () => ({
-					did: "did:plc:jane",
-					handle: "jane.opnshelf.social",
-					redirectUrl:
-						"/app/oauth/consent?request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3Aabc",
-				}),
-			});
-			vi.stubGlobal("fetch", mockFetch);
-
-			const result = await service.completeSsoRegistration({
-				token: "pending-token",
-				handle: "jane.opnshelf.social",
-				inviteCode: "invite-code",
-			});
-
-			expect(result.redirectUrl).toBe(
-				"https://opnshelf.social/app/oauth/consent?request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3Aabc",
-			);
-			vi.unstubAllGlobals();
 		});
 	});
 

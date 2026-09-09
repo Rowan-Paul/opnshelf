@@ -1,8 +1,7 @@
 import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListsOptions,
-	moviesControllerGetUserMoviesPaginatedOptions,
-	showsControllerGetUserEpisodesPaginatedOptions,
+	shelfControllerGetUserShelfOptions,
 	slugifyName,
 	type UserReviewDto,
 	usersControllerGetPublicProfileOptions,
@@ -18,6 +17,7 @@ import { SpoilerShield } from "#/components/SpoilerShield";
 import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
+import { ShowProgressScope } from "#/lib/hooks/useShowProgress";
 
 // Horizontally-scrolling preview row (Recent Movies/Episodes, list previews).
 const SCROLL_ROW =
@@ -58,26 +58,32 @@ function ProfileOverviewPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	// Fetch recent movies
+	// Both preview rows read the shelf endpoint rather than the dedicated
+	// recent-movies/episodes ones: it's the source that carries the profile
+	// owner's Watch counts (and episode titles), so these posters badge the same
+	// way as the Shelf page and the Mobile Overview tab.
 	const { data: moviesData, isLoading: moviesLoading } = useQuery({
-		...moviesControllerGetUserMoviesPaginatedOptions({
+		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
-			query: { limit: 8 },
+			query: { page: 1, pageSize: 8, type: "movie", sortOrder: "desc" },
 		}),
 		enabled: !!userDid,
 	});
 
-	// Fetch recent episodes
 	const { data: episodesData, isLoading: episodesLoading } = useQuery({
-		...showsControllerGetUserEpisodesPaginatedOptions({
+		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
-			query: { limit: 8 },
+			query: { page: 1, pageSize: 8, type: "episode", sortOrder: "desc" },
 		}),
 		enabled: !!userDid,
 	});
 
-	const movies = moviesData?.items ?? [];
-	const episodes = episodesData?.items ?? [];
+	const movies = (moviesData?.items ?? []).filter(
+		(item) => item.type === "movie",
+	);
+	const episodes = (episodesData?.items ?? []).filter(
+		(item) => item.type === "episode",
+	);
 
 	// Fetch public lists
 	const { data: listsData } = useQuery({
@@ -137,13 +143,18 @@ function ProfileOverviewPage() {
 							{movies.map((item) => (
 								<div key={item.id} className="shrink-0">
 									<ActionableMediaCard
-										id={item.movie.movieId}
-										title={item.movie.title}
-										posterUrl={`https://image.tmdb.org/t/p/w500${item.movie.posterPath}`}
+										id={item.movieId}
+										title={item.title}
+										posterUrl={
+											item.posterPath
+												? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+												: ""
+										}
 										type="movie"
 										watchedDate={item.watchedDate}
 										interactive={isOwner}
 										isWatched={true}
+										watchCount={item.watchCount}
 									/>
 								</div>
 							))}
@@ -186,16 +197,25 @@ function ProfileOverviewPage() {
 							{episodes.map((item) => (
 								<div key={item.id} className="shrink-0">
 									<ActionableMediaCard
-										id={item.show.showId}
-										title={item.show.title}
-										posterUrl={`https://image.tmdb.org/t/p/w500${item.show.posterPath}`}
+										id={item.showId}
+										title={item.showTitle}
+										posterUrl={
+											item.posterPath
+												? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+												: ""
+										}
 										type="show"
 										seasonNumber={item.seasonNumber}
 										episodeNumber={item.episodeNumber}
-										episodeInfo={`S${item.seasonNumber}E${item.episodeNumber}`}
+										episodeInfo={
+											item.episodeTitle
+												? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeTitle}`
+												: `S${item.seasonNumber}E${item.episodeNumber}`
+										}
 										watchedDate={item.watchedDate}
 										interactive={isOwner}
 										isWatched={true}
+										watchCount={item.watchCount}
 									/>
 								</div>
 							))}
@@ -386,41 +406,53 @@ function ListPreview({
 					))}
 				</div>
 			) : items.length > 0 ? (
-				<div className={SCROLL_ROW}>
-					{items.map((item) => {
-						const media = item.media as Record<string, unknown>;
-						const posterPath = media.posterPath as string | undefined;
-						const title = (media.title as string) || "Unknown";
-						const mediaId = (media.mediaId as string) || item.mediaId;
-						const isEpisode =
-							item.seasonNumber != null && item.episodeNumber != null;
+				<ShowProgressScope
+					showIds={items
+						.filter(
+							(item) =>
+								item.mediaType === "show" &&
+								item.seasonNumber == null &&
+								item.episodeNumber == null,
+						)
+						.map((item) => item.mediaId)}
+				>
+					<div className={SCROLL_ROW}>
+						{items.map((item) => {
+							const media = item.media as Record<string, unknown>;
+							const posterPath = media.posterPath as string | undefined;
+							const title = (media.title as string) || "Unknown";
+							const mediaId = (media.mediaId as string) || item.mediaId;
+							const isEpisode =
+								item.seasonNumber != null && item.episodeNumber != null;
 
-						return (
-							<div key={item.id} className="shrink-0">
-								<ActionableMediaCard
-									id={mediaId}
-									title={title}
-									seasonNumber={item.seasonNumber}
-									episodeNumber={item.episodeNumber}
-									episodeInfo={
-										isEpisode
-											? item.episodeName
-												? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-												: `S${item.seasonNumber}E${item.episodeNumber}`
-											: undefined
-									}
-									posterUrl={
-										posterPath
-											? `https://image.tmdb.org/t/p/w500${posterPath}`
-											: ""
-									}
-									type={item.mediaType as "movie" | "show"}
-									interactive={isOwner}
-								/>
-							</div>
-						);
-					})}
-				</div>
+							return (
+								<div key={item.id} className="shrink-0">
+									<ActionableMediaCard
+										id={mediaId}
+										title={title}
+										seasonNumber={item.seasonNumber}
+										episodeNumber={item.episodeNumber}
+										episodeInfo={
+											isEpisode
+												? item.episodeName
+													? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+													: `S${item.seasonNumber}E${item.episodeNumber}`
+												: undefined
+										}
+										posterUrl={
+											posterPath
+												? `https://image.tmdb.org/t/p/w500${posterPath}`
+												: ""
+										}
+										type={item.mediaType as "movie" | "show"}
+										interactive={isOwner}
+										watchCount={item.watchCount}
+									/>
+								</div>
+							);
+						})}
+					</div>
+				</ShowProgressScope>
 			) : (
 				<div className="card p-6 text-center">
 					<p className="text-(--foreground-muted)">{emptyText}</p>

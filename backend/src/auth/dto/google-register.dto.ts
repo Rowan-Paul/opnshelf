@@ -25,3 +25,10 @@ export class GoogleRegisterResponseDto {
 	})
 	coreOAuthUrl: string;
 }
+
+export class GooglePendingResponseDto {
+	@ApiProperty({
+		description: "Email verified by Google for the pending signup",
+	})
+	email: string;
+}

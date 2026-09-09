@@ -12,6 +12,7 @@ import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { beginHandoff } from "@/lib/auth-handoff";
 import { posthog } from "@/lib/posthog";
 
 const PLATFORM = { platform: "mobile" } as const;
@@ -62,7 +63,7 @@ export function AtStoreReviewPrompt() {
 		onError: () => toast.error("Could not request review permission"),
 	});
 
-	const leaveReview = () => {
+	const leaveReview = async () => {
 		if (process.env.EXPO_OS === "ios") {
 			void Haptics.selectionAsync();
 		}
@@ -71,11 +72,15 @@ export function AtStoreReviewPrompt() {
 			router.push("/atstore-review" as Href);
 			return;
 		}
+		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
+		// callback hands back a single-use code instead of the session id.
+		const codeChallenge = (await beginHandoff()) ?? undefined;
 		permissionMutation.mutate({
 			body: {
 				integration: "atstore",
 				action: "connect",
 				platform: "mobile",
+				codeChallenge,
 			},
 		});
 	};

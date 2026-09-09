@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsOptional } from "class-validator";
+import { IsIn, IsOptional, IsString, Matches } from "class-validator";
+import { BASE64URL_32_BYTES } from "./mobile-handoff.dto";
 
 export const OAUTH_INTEGRATIONS = ["atstore", "blog", "bluesky"] as const;
 export const OAUTH_PERMISSION_ACTIONS = ["connect", "disconnect"] as const;
@@ -21,6 +22,16 @@ export class PermissionChangeDto {
 	@IsOptional()
 	@IsIn(OAUTH_PERMISSION_PLATFORMS)
 	platform?: "mobile";
+
+	@ApiProperty({
+		required: false,
+		description:
+			"S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the app a single-use code instead of the session id.",
+	})
+	@IsOptional()
+	@IsString()
+	@Matches(BASE64URL_32_BYTES)
+	codeChallenge?: string;
 }
 
 export class PermissionChangeResponseDto {

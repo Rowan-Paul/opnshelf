@@ -9,24 +9,41 @@ import {
 } from "@/components/detail/WatchHistorySheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
 
 type MediaTrackingActionsProps =
-	| { mediaType: "movie"; movieId: string }
-	| { mediaType: "show"; showId: string; episodeCount?: number }
+	/** `title` names the item in the remove-all-Watches confirmation. */
+	| { mediaType: "movie"; movieId: string; title?: string }
+	| {
+			mediaType: "show";
+			showId: string;
+			episodeCount?: number;
+			progress?: {
+				state: "unwatched" | "partial" | "complete" | "unavailable";
+				episodesWatched: number;
+				episodesTotal: number;
+			};
+	  }
 	| {
 			mediaType: "season";
 			showId: string;
 			seasonNumber: number;
 			episodeCount: number;
+			progress?: {
+				state: "unwatched" | "partial" | "complete" | "unavailable";
+				episodesWatched: number;
+				episodesTotal: number;
+			};
 	  }
 	| {
 			mediaType: "episode";
 			showId: string;
 			seasonNumber: number;
 			episodeNumber: number;
+			title?: string;
 	  };
 
 /**
@@ -41,6 +58,7 @@ type MediaTrackingActionsProps =
  */
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const { isAuthenticated } = useAuth();
+	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const [datePickerVisible, setDatePickerVisible] = useState(false);
 	const [historyVisible, setHistoryVisible] = useState(false);
 
@@ -50,7 +68,14 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const status = useWatchStatus(
 		isMovie
 			? { mediaType: "movie", movieId: props.movieId }
-			: { mediaType: "show", showId },
+			: {
+					mediaType: "show",
+					showId,
+					// Show and season controls have authoritative aggregate progress.
+					// Full history is only needed to render/manage an individual episode.
+					skipHistory:
+						props.mediaType === "show" || props.mediaType === "season",
+				},
 	);
 	const actions = useWatchActions(
 		isMovie
@@ -59,6 +84,11 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	);
 
 	const showHistory = status.showWatchHistory ?? [];
+	const progress =
+		props.mediaType === "show" || props.mediaType === "season"
+			? props.progress
+			: undefined;
+	let isPartial = progress?.state === "partial";
 
 	let isOnShelf = false;
 	let detail: string | undefined;
@@ -72,23 +102,19 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			break;
 		}
 		case "show": {
-			isOnShelf = !!status.isTracking;
+			isOnShelf = progress?.state === "complete";
+			isPartial = progress?.state === "partial";
 			detail =
-				status.uniqueEpisodesWatched > 0
-					? `${status.uniqueEpisodesWatched} episode${status.uniqueEpisodesWatched === 1 ? "" : "s"} watched`
+				progress && progress.state !== "unavailable"
+					? `${progress.episodesWatched} of ${progress.episodesTotal} episodes watched`
 					: undefined;
 			break;
 		}
 		case "season": {
-			isOnShelf =
-				status.isSeasonFullyWatched?.(props.seasonNumber, props.episodeCount) ??
-				false;
-			const watchedInSeason = new Set(
-				showHistory
-					.filter((ep) => ep.seasonNumber === props.seasonNumber)
-					.map((ep) => `${ep.seasonNumber}-${ep.episodeNumber}`),
-			).size;
-			detail = `${watchedInSeason} / ${props.episodeCount} episodes watched`;
+			isOnShelf = progress?.state === "complete";
+			detail = progress
+				? `${progress.episodesWatched} of ${progress.episodesTotal} episodes watched`
+				: undefined;
 			break;
 		}
 		case "episode": {
@@ -128,7 +154,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	const isPending = isMarkPending || isUnmarkPending;
 
-	// Movies and episodes can hold multiple plays, so they expose a manageable
+	// Movies and episodes can hold multiple Watches, so they expose a manageable
 	// watch history (list + per-entry delete); shows/seasons stay binary.
 	const canManageHistory =
 		props.mediaType === "movie" || props.mediaType === "episode";
@@ -184,10 +210,17 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 		}
 	};
 
+	// Movies and episodes are the two types that can hold several Watches, and
+	// removing takes all of them, so those two confirm first (the Web detail
+	// pages do the same). Shows and seasons are binary, so they just remove.
 	const removeFromShelf = () => {
 		switch (props.mediaType) {
 			case "movie":
-				actions.unmarkMovieWatched();
+				confirmRemoveWatches({
+					title: props.title ?? "this movie",
+					entryCount: historyEntries.length,
+					onConfirm: () => actions.unmarkMovieWatched(),
+				});
 				break;
 			case "show":
 				actions.unmarkShowWatched();
@@ -195,13 +228,17 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			case "season":
 				actions.unmarkSeasonWatched(props.seasonNumber);
 				break;
-			case "episode":
-				actions.unmarkEpisodeWatched(
-					props.seasonNumber,
-					props.episodeNumber,
-					"all",
-				);
+			case "episode": {
+				const { seasonNumber, episodeNumber, title } = props;
+				const episodeLabel = `S${seasonNumber}E${episodeNumber}`;
+				confirmRemoveWatches({
+					title: title ? `${title} ${episodeLabel}` : episodeLabel,
+					entryCount: historyEntries.length,
+					onConfirm: () =>
+						actions.unmarkEpisodeWatched(seasonNumber, episodeNumber, "all"),
+				});
 				break;
+			}
 		}
 	};
 
@@ -230,18 +267,22 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	return (
 		<View className="gap-3 px-4">
-			{isOnShelf ? (
+			{isOnShelf || isPartial ? (
 				<Pressable
 					onPress={canManageHistory ? () => setHistoryVisible(true) : undefined}
 					disabled={!canManageHistory}
 					className="flex-row items-center gap-2 rounded-xl border border-border bg-card p-3"
 				>
 					<View className="rounded-full bg-primary/20 p-1.5">
-						<Check color="#22c55e" size={16} />
+						{isOnShelf ? (
+							<Check color="#22c55e" size={16} />
+						) : (
+							<Plus color="#f3bc00" size={16} />
+						)}
 					</View>
 					<View className="flex-1">
 						<Text className="font-semibold text-foreground text-sm">
-							On shelf
+							{isPartial ? "In progress" : "On shelf"}
 						</Text>
 						{detail ? (
 							<Text className="text-muted-foreground text-xs">{detail}</Text>
@@ -290,7 +331,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 						<>
 							<Plus color="#3f2e00" size={18} strokeWidth={2.5} />
 							<Text className="font-semibold text-primary-foreground">
-								Add to shelf
+								{isPartial ? "Mark remaining watched" : "Add to shelf"}
 							</Text>
 						</>
 					)}

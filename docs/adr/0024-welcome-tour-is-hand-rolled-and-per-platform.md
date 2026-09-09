@@ -1,4 +1,4 @@
-# The Welcome Tour walks the real app, and is hand-rolled on both clients
+# ADR 0024: The Welcome Tour walks the real app, and is hand-rolled on both clients
 
 New users finish **Onboarding** knowing how to set a timezone and nothing about
 where anything is. **Discover**, **Connections**, **Activity**, **Up Next** and
@@ -94,7 +94,7 @@ cmdk's focus trap.
 - The tour is authed-only. Long-press quick actions are gated on
   `isAuthenticated`, so touring a guest teaches a gesture that does nothing.
   Mobile guests get it after they sign in.
-- Existing users are pulled across five surfaces mid-session, losing scroll
+- Existing users are pulled across four distinct surfaces mid-session, losing scroll
   position and whatever they were doing. We accept this to keep one step list
   and one code path; the alternative was branching the sequence on
   `onboardingCompletedAt` age.

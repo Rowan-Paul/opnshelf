@@ -373,7 +373,7 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
  * WYSIWYG markdown editor (Milkdown, headless CommonMark preset) for authoring
  * reviews. Markdown is the source of truth: the editor parses markdown in via
  * `defaultValueCtx` and serializes markdown out on every change, so editing an
- * existing review round-trips losslessly (see ADR-0005). Client-only — it must
+ * existing review round-trips losslessly (see ADR-0028). Client-only — it must
  * not be rendered during SSR; ReviewDialog gates it behind a mount check.
  */
 export default function MarkdownEditor(props: MarkdownEditorProps) {

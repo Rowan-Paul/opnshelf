@@ -8,14 +8,21 @@ import { RatingSheet } from "@/components/detail/RatingSheet";
 import { AddToListSheet } from "@/components/lists/AddToListSheet";
 import { MediaQuickActionsSheet } from "@/components/media/MediaQuickActionsSheet";
 import { PosterImage } from "@/components/media/PosterImage";
+import { WatchCountBadge } from "@/components/media/WatchCountBadge";
+import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { movieHref, showHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
+import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useListMembership } from "@/lib/use-lists";
 import { useNote } from "@/lib/use-note";
 import { useReview } from "@/lib/use-review";
+import {
+	findShowProgress,
+	useShowProgressForShow,
+} from "@/lib/use-show-progress";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 
@@ -66,18 +73,37 @@ export type MediaCardItem = {
 export function MediaCard({
 	item,
 	actions = false,
+	watchCount,
+	isWatched,
 	onRemove,
 	isRemoving,
 }: {
 	item: MediaCardItem;
 	actions?: boolean;
+	/** Viewer-relative Watches represented by this card. */
+	watchCount?: number;
+	/** Static watched state for read-only poster collections such as Shelf. */
+	isWatched?: boolean;
 	onRemove?: () => void;
 	/** Spins the remove button while this card's removal is in flight. */
 	isRemoving?: boolean;
 }) {
-	if (actions) return <MediaCardWithActions item={item} />;
+	if (actions)
+		return <MediaCardWithActions item={item} watchCount={watchCount} />;
 	return (
-		<MediaCardBase item={item} onRemove={onRemove} isRemoving={isRemoving} />
+		<MediaCardBase
+			item={item}
+			overlay={
+				isWatched ? (
+					<WatchCountBadge
+						watchCount={watchCount}
+						className={`absolute top-1.5 right-1.5 h-7 ${watchCount && watchCount > 1 ? "" : "w-7"}`}
+					/>
+				) : undefined
+			}
+			onRemove={onRemove}
+			isRemoving={isRemoving}
+		/>
 	);
 }
 
@@ -91,6 +117,7 @@ const href = (item: MediaCardItem): Href =>
 function MediaCardBase({
 	item,
 	overlay,
+	progress,
 	onLongPress,
 	onRemove,
 	isRemoving,
@@ -98,6 +125,8 @@ function MediaCardBase({
 	item: MediaCardItem;
 	/** Optional corner overlay rendered on top of the poster. */
 	overlay?: React.ReactNode;
+	/** Viewer completion percentage rendered along the poster's bottom edge. */
+	progress?: number;
 	onLongPress?: () => void;
 	onRemove?: () => void;
 	isRemoving?: boolean;
@@ -121,6 +150,14 @@ function MediaCardBase({
 						className="aspect-2/3 w-full"
 					/>
 					{overlay}
+					{progress !== undefined && progress > 0 ? (
+						<View className="absolute right-0 bottom-0 left-0 h-1 bg-black/30">
+							<View
+								className="h-full bg-primary"
+								style={{ width: `${progress}%` }}
+							/>
+						</View>
+					) : null}
 					{onRemove ? (
 						<Pressable
 							hitSlop={8}
@@ -202,8 +239,16 @@ function MediaCardBase({
  * read-only path free of any data hooks. Episode cards (item.episode set) scope
  * every action to the single episode while keeping the show-based id.
  */
-function MediaCardWithActions({ item }: { item: MediaCardItem }) {
+function MediaCardWithActions({
+	item,
+	watchCount,
+}: {
+	item: MediaCardItem;
+	watchCount?: number;
+}) {
 	const { isAuthenticated } = useAuth();
+	const { showDialog } = useDialog();
+	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const mediaId = String(item.id);
 	const ep = item.episode;
 	const isMovie = item.type === "movie" && !ep;
@@ -211,13 +256,22 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 	const watchStatus = useWatchStatus(
 		isMovie
 			? { mediaType: "movie", movieId: mediaId }
-			: { mediaType: "show", showId: mediaId },
+			: { mediaType: "show", showId: mediaId, skipHistory: !ep },
 	);
 	const watchActions = useWatchActions(
 		isMovie
 			? { mediaType: "movie", movieId: mediaId }
 			: { mediaType: "show", showId: mediaId },
 	);
+	const progressQuery = useShowProgressForShow(mediaId, !isMovie && !ep);
+	const showProgress = findShowProgress(progressQuery.data, mediaId);
+	const isPartialShow = !isMovie && !ep && showProgress?.state === "partial";
+	const isCompleteShow = !isMovie && !ep && showProgress?.state === "complete";
+	const isProgressUnavailable =
+		progressQuery.isError || showProgress?.state === "unavailable";
+	const showProgressPercent = isPartialShow
+		? showProgress.percentage
+		: undefined;
 	// Episodes carry their coordinates so rating/note/list resolve to the episode
 	// (mediaType stays "show" + mediaId = showId; the coords narrow it).
 	const coords = ep
@@ -258,64 +312,140 @@ function MediaCardWithActions({ item }: { item: MediaCardItem }) {
 		? !!watchStatus.isWatched
 		: ep
 			? !!watchStatus.isEpisodeWatched?.(ep.seasonNumber, ep.episodeNumber)
-			: !!watchStatus.isTracking;
+			: isCompleteShow;
+	// How many Watch records removal would delete. For a whole show that's every
+	// episode Watch behind the card, which is what the confirm dialog needs.
+	const removalEntryCount = isMovie
+		? watchStatus.totalMovieWatches
+		: ep
+			? (watchStatus.showWatchHistory?.filter(
+					(entry) =>
+						entry.seasonNumber === ep.seasonNumber &&
+						entry.episodeNumber === ep.episodeNumber,
+				).length ?? 0)
+			: 0;
+	// What the badge states. Only movies and episodes are Watched; a show is
+	// tracked through its episodes, so "watched N times" is not a quantity it
+	// has — `removalEntryCount` there counts episodes, a different thing.
+	const badgeWatchCount =
+		watchCount ?? (isMovie || ep ? removalEntryCount : undefined);
 	const isWatchPending = isMovie
 		? watchActions.isMarkMoviePending || watchActions.isUnmarkMoviePending
 		: ep
 			? watchActions.isMarkEpisodePending || watchActions.isUnmarkEpisodePending
 			: watchActions.isMarkShowPending || watchActions.isUnmarkShowPending;
 
+	const removeFromShelf = () => {
+		if (isMovie) watchActions.unmarkMovieWatched();
+		else if (ep)
+			watchActions.unmarkEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
+		else watchActions.unmarkShowWatched();
+	};
+
 	const toggleWatched = () => {
 		if (!isAuthenticated) return;
-		if (isMovie) {
-			if (watched) watchActions.unmarkMovieWatched();
-			else watchActions.markMovieWatched();
-		} else if (ep) {
-			if (watched)
-				watchActions.unmarkEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
-			else watchActions.markEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
-		} else {
-			if (watched) watchActions.unmarkShowWatched();
-			else watchActions.markShowWatched();
+		// Removal deletes every Watch behind this card, so a card standing for
+		// more than one asks first (same guard as the Web card).
+		if (watched) {
+			confirmRemoveWatches({
+				title: ep
+					? `${ep.episodeTitle ?? item.title} S${ep.seasonNumber}E${ep.episodeNumber}`
+					: item.title,
+				entryCount: removalEntryCount,
+				onConfirm: removeFromShelf,
+			});
+			return;
 		}
+		if (isMovie) watchActions.markMovieWatched();
+		else if (ep)
+			watchActions.markEpisodeWatched(ep.seasonNumber, ep.episodeNumber);
+		else if (isPartialShow && showProgress) {
+			const remaining = showProgress.remainingEpisodes;
+			showDialog({
+				title: "Mark remaining episodes watched?",
+				description: `This will add Watches for the ${remaining} remaining aired episodes of ${item.title}.`,
+				actions: [
+					{ label: "Cancel" },
+					{
+						label: "Mark remaining",
+						onPress: watchActions.markShowWatched,
+					},
+				],
+			});
+		} else watchActions.markShowWatched();
 	};
 
 	// Movies/episodes toggle a single watched state; shows toggle "on shelf"
 	// (tracking) via markShowWatched — all three handled by toggleWatched above.
-	const cornerToggle = isAuthenticated ? (
-		<Pressable
-			hitSlop={8}
-			onPress={(e) => {
-				// Keep the tap on the overlay button, never the card's Link.
-				e.stopPropagation();
-				toggleWatched();
-			}}
-			disabled={isWatchPending}
-			accessibilityState={{ busy: isWatchPending, checked: watched }}
-			// Pending drops back to the neutral dark circle: one in-progress look
-			// whichever way the toggle is going, instead of a yellow "on shelf"
-			// badge while the removal is still in flight.
-			className={
-				watched && !isWatchPending
-					? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
-					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
-			}
-		>
-			{isWatchPending ? (
-				<ActivityIndicator size="small" color="#ffffff" />
-			) : watched ? (
-				<Check color="#3f2e00" size={16} strokeWidth={3} />
-			) : (
-				<Plus color="#ffffff" size={16} strokeWidth={2.5} />
-			)}
-		</Pressable>
-	) : null;
+	const cornerToggle =
+		isAuthenticated && !(!isMovie && !ep && isProgressUnavailable) ? (
+			<Pressable
+				hitSlop={8}
+				onPress={(e) => {
+					// Keep the tap on the overlay button, never the card's Link.
+					e.stopPropagation();
+					toggleWatched();
+				}}
+				disabled={
+					isWatchPending || (!isMovie && !ep && progressQuery.isLoading)
+				}
+				accessibilityState={{
+					busy: isWatchPending || (!isMovie && !ep && progressQuery.isLoading),
+					checked: watched,
+				}}
+				accessibilityLabel={
+					isPartialShow
+						? `${showProgress?.episodesWatched} of ${showProgress?.episodesTotal} episodes watched. Mark remaining watched`
+						: watched && badgeWatchCount
+							? `${badgeWatchCount} ${badgeWatchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+							: watched
+								? "Remove from shelf"
+								: "Add to shelf"
+				}
+				// Pending drops back to the neutral dark circle: one in-progress look
+				// whichever way the toggle is going, instead of a yellow "on shelf"
+				// badge while the removal is still in flight.
+				className={
+					(isPartialShow || watched) && !isWatchPending
+						? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${isPartialShow || (badgeWatchCount && badgeWatchCount > 1) ? "flex-row px-2" : "w-7"}`
+						: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+				}
+			>
+				{!isMovie && !ep && progressQuery.isLoading ? (
+					<View className="h-3.5 w-5 animate-pulse rounded-full bg-white/35" />
+				) : isWatchPending ? (
+					<ActivityIndicator size="small" color="#ffffff" />
+				) : isPartialShow ? (
+					<Text
+						className="font-bold text-primary-foreground text-xs"
+						style={{ fontVariant: ["tabular-nums"] }}
+					>
+						{showProgressPercent}%
+					</Text>
+				) : watched ? (
+					<>
+						<Check color="#3f2e00" size={16} strokeWidth={3} />
+						{badgeWatchCount && badgeWatchCount > 1 ? (
+							<Text
+								className="font-bold text-[#3f2e00] text-xs"
+								style={{ fontVariant: ["tabular-nums"] }}
+							>
+								{badgeWatchCount}
+							</Text>
+						) : null}
+					</>
+				) : (
+					<Plus color="#ffffff" size={16} strokeWidth={2.5} />
+				)}
+			</Pressable>
+		) : null;
 
 	return (
 		<>
 			<MediaCardBase
 				item={item}
 				overlay={cornerToggle}
+				progress={showProgressPercent}
 				onLongPress={
 					isAuthenticated
 						? () => {

@@ -8,13 +8,6 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ColorExtractionService } from "../movies/color-extraction.service";
 import { ShelfService } from "./shelf.service";
 
-type ShelfServiceInternals = {
-	ensureMovieHasColors: (
-		movieId: string,
-	) => Promise<{ primary?: string } | null>;
-	ensureShowHasColors: (showId: string) => Promise<{ primary?: string } | null>;
-};
-
 describe("ShelfService", () => {
 	let service: ShelfService;
 
@@ -73,6 +66,8 @@ describe("ShelfService", () => {
 				type: "movie",
 				watchedDate: new Date("2024-01-10T00:00:00.000Z"),
 				createdAt: new Date("2024-01-10T00:00:00.000Z"),
+				watchCount: 3n,
+				colors: { primary: "#111111" },
 				movieId: "movie-1",
 				showId: null,
 				title: "Movie One",
@@ -91,6 +86,8 @@ describe("ShelfService", () => {
 				type: "episode",
 				watchedDate: null,
 				createdAt: new Date("2024-01-09T00:00:00.000Z"),
+				watchCount: 2n,
+				colors: { primary: "#222222" },
 				movieId: null,
 				showId: "show-1",
 				title: "Show One",
@@ -105,17 +102,14 @@ describe("ShelfService", () => {
 				overview: "Episode overview",
 			},
 		]);
-		vi.spyOn(
-			service as unknown as ShelfServiceInternals,
-			"ensureMovieHasColors",
-		).mockResolvedValue({ primary: "#111111" });
-		vi.spyOn(
-			service as unknown as ShelfServiceInternals,
-			"ensureShowHasColors",
-		).mockResolvedValue({ primary: "#222222" });
 
 		const result = await service.getUserShelf("did:plc:test", 1, 20);
 
+		expect(mockPrismaService.movie.findUnique).not.toHaveBeenCalled();
+		expect(mockPrismaService.show.findUnique).not.toHaveBeenCalled();
+		expect(
+			mockColorExtractionService.extractColorsFromPoster,
+		).not.toHaveBeenCalled();
 		expect(result).toMatchObject({
 			total: 2,
 			page: 1,
@@ -130,6 +124,7 @@ describe("ShelfService", () => {
 			data: {
 				movieId: "movie-1",
 				title: "Movie One",
+				watchCount: 3,
 			},
 		});
 		expect(result.items[1]).toMatchObject({
@@ -139,6 +134,7 @@ describe("ShelfService", () => {
 				showId: "show-1",
 				seasonNumber: 2,
 				episodeNumber: 4,
+				watchCount: 2,
 			},
 		});
 	});
@@ -191,8 +187,8 @@ describe("ShelfService", () => {
 			);
 			expect(queryText).toContain("OFFSET");
 			expect(queryText).toContain("LIMIT");
-			expect(sql.values.at(-2)).toBe(3);
-			expect(sql.values.at(-1)).toBe(3);
+			expect(sql.values).toContain(3);
+			expect(queryText).not.toContain("OVER (");
 		},
 	);
 

@@ -1,0 +1,17 @@
+# Keeps the SHA-pinned GitHub Actions in .github/workflows current. Only the
+# github-actions ecosystem is covered: npm updates are handled by hand because
+# the pnpm workspace carries overrides and a Dependabot feed would be noise.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "Update GitHub Actions"

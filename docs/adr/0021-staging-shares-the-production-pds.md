@@ -29,7 +29,7 @@ The stack forces most of the decisions:
 ## Decision
 
 **Staging shares the production PDS.** Test writes are real, public records in a
-real repo, they federate, and per ADR 0015 a review posted on staging becomes a
+real repo, they federate, and per ADR 0029 a review posted on staging becomes a
 real Bluesky post. This is accepted, with one mitigation: staging is used with a
 separate account from the production one.
 
@@ -143,8 +143,12 @@ account deletion are the only two flows staging can never test, and they are
 among the most fragile. The accepted risk is that a staging bug can create or
 delete real accounts on `opnshelf.social`.
 
-**Staging sends no analytics.** `EXPO_PUBLIC_POSTHOG_KEY` and
-`VITE_POSTHOG_KEY` are left unset so test traffic does not pollute product data.
+**Staging sends no analytics.** Web initializes PostHog only on `opnshelf.xyz`.
+Mobile initializes it only outside development mode and when its API URL is
+`https://api.opnshelf.xyz` (an optional trailing slash is allowed). Both clients
+also require a configured key. The mobile `preview` profile keeps a placeholder
+key, but the API URL guard excludes Staging even if a real key is supplied.
+There is no separate Staging PostHog project.
 
 ## Consequences
 
