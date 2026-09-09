@@ -1,4 +1,4 @@
-import { getHttpStatus } from "./http-errors";
+import { getHttpStatus, isUnauthorizedError } from "./http-errors";
 
 /**
  * What a client reports to PostHog when a TanStack mutation fails.
@@ -39,8 +39,8 @@ export function describeMutationFailure(
 	error: unknown,
 	mutationKey: ReadonlyArray<unknown> | undefined,
 ): MutationFailureReport | null {
+	if (isUnauthorizedError(error)) return null;
 	const status = getHttpStatus(error);
-	if (status === 401) return null;
 
 	const key = formatMutationKey(mutationKey);
 	const suffix = status === undefined ? "" : ` with HTTP ${status}`;

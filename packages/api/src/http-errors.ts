@@ -12,7 +12,13 @@ export function getHttpStatus(error: unknown): number | undefined {
 	return undefined;
 }
 
-/** True when a thrown API error is a 401. */
+/**
+ * True when a thrown API error is a 401. Checks both fields independently
+ * rather than going through `getHttpStatus`, so an error that carries both
+ * still counts as unauthorized when either one says so.
+ */
 export function isUnauthorizedError(error: unknown): boolean {
-	return getHttpStatus(error) === 401;
+	if (typeof error !== "object" || error === null) return false;
+	const { status, statusCode } = error as Record<string, unknown>;
+	return status === 401 || statusCode === 401;
 }

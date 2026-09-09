@@ -89,6 +89,13 @@ describe("app QueryClient mutation failure reporting", () => {
 			["users", "me", "profile", "update"],
 			Object.assign(new Error("Unauthorized"), { statusCode: 401 }),
 		);
+		await failMutation(
+			["users", "me", "profile", "update"],
+			Object.assign(new Error("Unauthorized"), {
+				status: 400,
+				statusCode: 401,
+			}),
+		);
 
 		expect(mocks.captureException).not.toHaveBeenCalled();
 	});
