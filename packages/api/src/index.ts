@@ -33,8 +33,13 @@ export { createClient, createConfig } from "./generated/client/index";
 // Export client configuration utilities
 export { client } from "./generated/client.gen";
 export * from "./generated/index";
-export { isUnauthorizedError } from "./http-errors";
+export { getHttpStatus, isUnauthorizedError } from "./http-errors";
 export { slugifyName } from "./media-slug";
+export {
+	describeMutationFailure,
+	MutationFailedError,
+	type MutationFailureReport,
+} from "./mutation-failure";
 export { onboardingDiscoveryOptions } from "./onboarding-discovery";
 export {
 	getYouTubeEmbedUrl,
