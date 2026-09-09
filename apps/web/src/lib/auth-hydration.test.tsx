@@ -5,7 +5,8 @@ import {
 	QueryClient,
 	QueryClientProvider,
 } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { AuthProvider, useAuth } from "./auth-context";
 import { currentUserQueryOptions } from "./auth-query";
@@ -31,7 +32,8 @@ vi.mock("#/integrations/posthog/provider", () => ({
 afterEach(cleanup);
 
 function Home() {
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, isLoading } = useAuth();
+	if (isLoading) return <div>Checking session</div>;
 	return <div>{isAuthenticated ? "Your Home" : "Public landing page"}</div>;
 }
 
@@ -45,6 +47,16 @@ it("checks the browser session after hydrating a signed-out server render", asyn
 		await server.fetchQuery(currentUserQueryOptions());
 		hydrate(browser, dehydrate(server));
 
+		expect(
+			renderToString(
+				<QueryClientProvider client={server}>
+					<AuthProvider>
+						<Home />
+					</AuthProvider>
+				</QueryClientProvider>,
+			),
+		).not.toContain("Public landing page");
+
 		// OAuth succeeded: the browser can send that cookie directly to the API.
 		me.mockResolvedValue({ data: { did: "did:plc:test" } } as Awaited<
 			ReturnType<typeof authControllerMe>
@@ -56,6 +68,7 @@ it("checks the browser session after hydrating a signed-out server render", asyn
 				</AuthProvider>
 			</QueryClientProvider>,
 		);
+		expect(screen.queryByText("Public landing page")).toBeNull();
 		expect(await screen.findByText("Your Home")).toBeTruthy();
 		// Browser navigation still reuses the authenticated result.
 		await browser.fetchQuery(currentUserQueryOptions());
@@ -65,5 +78,61 @@ it("checks the browser session after hydrating a signed-out server render", asyn
 		server.clear();
 		browser.clear();
 		me.mockReset();
+	}
+});
+
+it.each([
+	"signed out",
+	"unavailable",
+])("finishes checking when the browser session is %s", async (result) => {
+	const browser = new QueryClient();
+	browser.setQueryData(["auth", "me"], null);
+	vi.mocked(authControllerMe).mockRejectedValue({
+		status: result === "signed out" ? 401 : 503,
+	});
+	try {
+		render(
+			<QueryClientProvider client={browser}>
+				<AuthProvider>
+					<Home />
+				</AuthProvider>
+			</QueryClientProvider>,
+		);
+		expect(screen.queryByText("Public landing page")).toBeNull();
+		expect(await screen.findByText("Public landing page")).toBeTruthy();
+	} finally {
+		cleanup();
+		browser.clear();
+		vi.mocked(authControllerMe).mockReset();
+	}
+});
+
+it("keeps a cached Home visible during session refetches", async () => {
+	const browser = new QueryClient();
+	browser.setQueryData(["auth", "me"], {
+		did: "did:plc:test",
+	});
+	vi.mocked(authControllerMe).mockImplementation(
+		() => new Promise<never>(() => {}),
+	);
+	try {
+		render(
+			<QueryClientProvider client={browser}>
+				<AuthProvider>
+					<Home />
+				</AuthProvider>
+			</QueryClientProvider>,
+		);
+		expect(screen.getByText("Your Home")).toBeTruthy();
+		await act(async () => {
+			void browser.invalidateQueries({
+				queryKey: currentUserQueryOptions().queryKey,
+			});
+		});
+		expect(screen.getByText("Your Home")).toBeTruthy();
+	} finally {
+		cleanup();
+		browser.clear();
+		vi.mocked(authControllerMe).mockReset();
 	}
 });
