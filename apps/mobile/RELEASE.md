@@ -16,17 +16,14 @@ eas init                 # links the project, writes extra.eas.projectId to app.
 Commit the `extra.eas.projectId` that `eas init` adds.
 
 ### 2. Build-time environment variables (EAS)
-`eas.json` no longer hardcodes the production API URL. Set these as EAS
-environment variables, scoped to the `preview` and `production` environments,
-so cloud builds pick them up:
+`eas.json` configures the Staging API URL and a placeholder analytics key for
+`preview`. Set the production values in the EAS `production` environment:
 ```bash
-eas env:create --environment preview     --name EXPO_PUBLIC_API_URL    --value "https://<prod-backend-host>"
-eas env:create --environment production   --name EXPO_PUBLIC_API_URL    --value "https://<prod-backend-host>"
+eas env:create --environment production   --name EXPO_PUBLIC_API_URL    --value "https://api.opnshelf.xyz"
 eas env:create --environment production   --name EXPO_PUBLIC_POSTHOG_KEY --value "<posthog key>"  --visibility sensitive
 ```
-(Repeat `EXPO_PUBLIC_POSTHOG_KEY` for `preview` if you want analytics there.)
-The `<prod-backend-host>` is the Railway backend URL — **not** `opnshelf.xyz`,
-which is the web frontend.
+PostHog is disabled on Staging, even if a real key is supplied. It requires a
+non-development build using `https://api.opnshelf.xyz` and a configured key.
 
 ### 3. CI secret
 Add an Expo access token (`eas whoami`-capable, Personal/Robot token) as the
