@@ -9,7 +9,10 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { AuthProvider, useAuth } from "./auth-context";
-import { currentUserQueryOptions } from "./auth-query";
+import {
+	currentUserQueryOptions,
+	SESSION_CHECK_DEADLINE_MS,
+} from "./auth-query";
 
 vi.mock("@opnshelf/api", () => ({
 	authControllerMe: vi.fn(),
@@ -29,7 +32,10 @@ vi.mock("#/integrations/posthog/provider", () => ({
 	posthog: { reset: vi.fn() },
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.useRealTimers();
+});
 
 function Home() {
 	const { isAuthenticated, isLoading } = useAuth();
@@ -99,6 +105,38 @@ it.each([
 			</QueryClientProvider>,
 		);
 		expect(screen.queryByText("Public landing page")).toBeNull();
+		expect(await screen.findByText("Public landing page")).toBeTruthy();
+	} finally {
+		cleanup();
+		browser.clear();
+		vi.mocked(authControllerMe).mockReset();
+	}
+});
+
+it("finishes checking when the browser session request never answers", async () => {
+	vi.useFakeTimers({ shouldAdvanceTime: true });
+	const browser = new QueryClient();
+	browser.setQueryData(["auth", "me"], null);
+	vi.mocked(authControllerMe).mockImplementation(
+		(options) =>
+			new Promise<never>((_, reject) => {
+				options?.signal?.addEventListener("abort", () =>
+					reject(options.signal?.reason),
+				);
+			}),
+	);
+	try {
+		render(
+			<QueryClientProvider client={browser}>
+				<AuthProvider>
+					<Home />
+				</AuthProvider>
+			</QueryClientProvider>,
+		);
+		expect(screen.getByText("Checking session")).toBeTruthy();
+		await act(async () => {
+			vi.advanceTimersByTime(SESSION_CHECK_DEADLINE_MS);
+		});
 		expect(await screen.findByText("Public landing page")).toBeTruthy();
 	} finally {
 		cleanup();
