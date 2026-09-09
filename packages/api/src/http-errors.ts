@@ -1,13 +1,18 @@
 /**
- * True when a thrown API error is a 401. The generated client surfaces the code
- * as `status` on some paths and `statusCode` on others, so check both.
+ * HTTP status carried by a thrown API error, or undefined when the failure
+ * never produced a response (network error, aborted request). The generated
+ * client surfaces the code as `status` on some paths and `statusCode` on
+ * others, so check both.
  */
+export function getHttpStatus(error: unknown): number | undefined {
+	if (typeof error !== "object" || error === null) return undefined;
+	const { status, statusCode } = error as Record<string, unknown>;
+	if (typeof status === "number") return status;
+	if (typeof statusCode === "number") return statusCode;
+	return undefined;
+}
+
+/** True when a thrown API error is a 401. */
 export function isUnauthorizedError(error: unknown): boolean {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		("status" in error || "statusCode" in error) &&
-		((error as Record<string, unknown>).status === 401 ||
-			(error as Record<string, unknown>).statusCode === 401)
-	);
+	return getHttpStatus(error) === 401;
 }

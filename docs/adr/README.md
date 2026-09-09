@@ -48,3 +48,4 @@ Numbering notes:
 | [0028-wysiwyg-review-editor-markdown-source-of-truth.md](0028-wysiwyg-review-editor-markdown-source-of-truth.md) | 0028 | WYSIWYG review editor with markdown as the source of truth (formerly numbered 0005) | Accepted (implicit) |
 | [0029-review-bluesky-cross-posts-are-independent-posts.md](0029-review-bluesky-cross-posts-are-independent-posts.md) | 0029 | Review Bluesky Cross-posts are independent posts (formerly numbered 0015) | Accepted (implicit) |
 | [0030-progressive-account-wide-oauth-permissions.md](0030-progressive-account-wide-oauth-permissions.md) | 0030 | Progressive, account-wide OAuth permissions (formerly numbered 0019) | Accepted (implicit) |
+| [0031-mutation-failures-are-reported-to-posthog.md](0031-mutation-failures-are-reported-to-posthog.md) | 0031 | Failed mutations are reported to PostHog as exceptions | Accepted |
