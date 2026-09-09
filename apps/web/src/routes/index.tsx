@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { HomeView } from "#/components/home/HomeView";
-import LoadingState from "#/components/LoadingState";
 import StoreBadges from "#/components/StoreBadges";
 import { useAuth } from "#/lib/auth-context";
 
@@ -83,7 +82,8 @@ function IndexPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	if (authLoading) return <LoadingState />;
+	// Wait for the browser session before choosing personal or public content.
+	if (authLoading) return null;
 	if (isAuthenticated) return <HomeView />;
 	return <LandingPage />;
 }
