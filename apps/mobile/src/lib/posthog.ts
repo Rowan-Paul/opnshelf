@@ -1,3 +1,5 @@
+import Constants from "expo-constants";
+import * as Updates from "expo-updates";
 import PostHog from "posthog-react-native";
 import { env } from "./env";
 
@@ -38,3 +40,22 @@ export const posthog =
 				flushInterval: 10000,
 			})
 		: null;
+
+/**
+ * Release tagging. Every event carries the EAS release it came from, so an
+ * exception in PostHog links straight to the update or build on expo.dev
+ * instead of being matched to a deploy by timestamp. The keys are the ones
+ * PostHog's Expo integration recognises; keep them verbatim.
+ *
+ * `updateId` and `channel` are null while the embedded bundle of a store build
+ * runs; `runtimeVersion` still says which native build that was. Registered
+ * right after construction, so the SDK's own "Application Opened" event
+ * carries the properties too.
+ */
+void posthog?.register({
+	"eas/update_id": Updates.updateId,
+	"eas/channel": Updates.channel,
+	"eas/runtime_version": Updates.runtimeVersion,
+	"eas/project_id": Constants.expoConfig?.extra?.eas?.projectId ?? null,
+	"eas/account": Constants.expoConfig?.owner ?? null,
+});

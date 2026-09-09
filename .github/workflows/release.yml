@@ -174,3 +174,25 @@ jobs:
             --channel production \
             --environment production \
             --message "${{ needs.release.outputs.tag }}"
+
+      # A native build uploads its own source maps from the Xcode and Gradle
+      # bundle phases (posthog-react-native/expo in app.config.ts). An OTA update
+      # ships new JS without a native build, so its maps have to go up from here
+      # or every exception on this update stays minified. `eas update` leaves the
+      # exported bundles in dist/. Skips with a warning while the secret is
+      # missing so a release is never blocked on telemetry.
+      - name: Upload source maps to PostHog
+        env:
+          POSTHOG_CLI_API_KEY: ${{ secrets.POSTHOG_CLI_API_KEY }}
+          POSTHOG_CLI_PROJECT_ID: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
+          POSTHOG_CLI_HOST: https://eu.posthog.com
+        run: |
+          if [ -z "$POSTHOG_CLI_API_KEY" ] || [ -z "$POSTHOG_CLI_PROJECT_ID" ]; then
+            echo "::warning::POSTHOG_CLI_API_KEY or POSTHOG_CLI_PROJECT_ID is not set; skipping the PostHog source map upload."
+            exit 0
+          fi
+          version=$(pnpm exec expo config --type public --json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+          pnpm exec posthog-cli hermes upload \
+            --directory dist \
+            --release-name com.rowanpaul.opnshelf \
+            --release-version "$version"
