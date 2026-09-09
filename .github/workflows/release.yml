@@ -187,8 +187,8 @@ jobs:
           POSTHOG_CLI_PROJECT_ID: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
           POSTHOG_CLI_HOST: https://eu.posthog.com
         run: |
-          if [ -z "$POSTHOG_CLI_API_KEY" ]; then
-            echo "::warning::POSTHOG_CLI_API_KEY is not set; skipping the PostHog source map upload."
+          if [ -z "$POSTHOG_CLI_API_KEY" ] || [ -z "$POSTHOG_CLI_PROJECT_ID" ]; then
+            echo "::warning::POSTHOG_CLI_API_KEY or POSTHOG_CLI_PROJECT_ID is not set; skipping the PostHog source map upload."
             exit 0
           fi
           version=$(pnpm exec expo config --type public --json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
