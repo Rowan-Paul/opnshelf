@@ -5,7 +5,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
 import { useDialog } from "@/components/ui/dialog";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
@@ -33,7 +33,12 @@ export default function CircleDetailScreen() {
 	const { data: circles = [] } = useCircles();
 	const circle = circles.find((c) => c.id === circleId);
 
-	const { data: membersData } = useCircleMembers(circleId);
+	const {
+		data: membersData,
+		isLoading: membersLoading,
+		isError: membersError,
+		refetch: refetchMembers,
+	} = useCircleMembers(circleId);
 	const members = membersData?.items ?? [];
 
 	const following = useFollowing(user?.handle ?? "");
@@ -96,6 +101,7 @@ export default function CircleDetailScreen() {
 						/>
 					</View>
 					<Pressable
+						accessibilityLabel="Delete circle"
 						onPress={confirmDelete}
 						className="size-11 items-center justify-center rounded-lg border border-border"
 					>
@@ -107,8 +113,13 @@ export default function CircleDetailScreen() {
 					<Text className="font-display font-semibold text-foreground">
 						Members ({members.length})
 					</Text>
-					{!membersData ? (
+					{membersLoading ? (
 						<UserRowsSkeleton />
+					) : membersError ? (
+						<ErrorState
+							message="Couldn't load this Circle's members."
+							onRetry={() => void refetchMembers()}
+						/>
 					) : members.length === 0 ? (
 						<Text className="text-muted-foreground text-sm">
 							No one in this circle yet. Add people below.

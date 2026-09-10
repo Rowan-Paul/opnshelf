@@ -2,6 +2,7 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { getContext } from "./integrations/tanstack-query/root-provider";
 import { setupApiClient } from "./lib/api";
+import { getScrollRestorationKey } from "./lib/scroll-restoration";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -17,14 +18,7 @@ export function getRouter() {
 		routeTree,
 		context,
 		scrollRestoration: true,
-		// Social keeps its feed position for the session (ADR 0032): returning
-		// from Find people or Circles restores where the reader left off, the
-		// same way the Mobile tab stays mounted. Other pages keep the default
-		// per-history-entry key.
-		getScrollRestorationKey: (location) =>
-			location.pathname === "/social"
-				? location.href
-				: (location.state.__TSR_key ?? location.href),
+		getScrollRestorationKey,
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,
 	});

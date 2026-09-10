@@ -48,6 +48,7 @@ export default function CirclesScreen() {
 						/>
 					</View>
 					<Pressable
+						accessibilityLabel="Create circle"
 						onPress={create}
 						disabled={!name.trim() || createCircle.isPending}
 						className="size-11 items-center justify-center rounded-lg bg-primary"

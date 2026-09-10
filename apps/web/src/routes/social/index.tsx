@@ -7,7 +7,7 @@ import {
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Compass, Plus, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { ActivityFeed } from "#/components/following/ActivityFeed";
 import { CircleFilterBar } from "#/components/following/CircleFilterBar";
@@ -87,8 +87,14 @@ function SocialPage() {
 	});
 	const activities = feed.data?.pages.flatMap((page) => page.items) ?? [];
 
+	// Once per visit: infinite-query page appends and refetches also change
+	// `feed.data`, and none of those are a new view.
+	const activityViewed = useRef(false);
 	useEffect(() => {
-		if (feed.data) posthog.capture("activity_viewed", { surface: "social" });
+		if (feed.data && !activityViewed.current) {
+			activityViewed.current = true;
+			posthog.capture("activity_viewed", { surface: "social" });
+		}
 	}, [feed.data]);
 
 	return (

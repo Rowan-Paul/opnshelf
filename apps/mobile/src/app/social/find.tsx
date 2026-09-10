@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
@@ -33,6 +33,11 @@ export default function FindPeopleScreen() {
 	const people: SocialUserCardDto[] = hasQuery
 		? (searchQuery.data?.items ?? [])
 		: (suggestionsQuery.data?.items ?? []);
+	const isLoading = hasQuery
+		? searchQuery.isLoading
+		: suggestionsQuery.isLoading;
+	const isError = hasQuery ? searchQuery.isError : suggestionsQuery.isError;
+	const retry = hasQuery ? searchQuery.refetch : suggestionsQuery.refetch;
 
 	return (
 		<View className="flex-1 bg-background">
@@ -82,9 +87,17 @@ export default function FindPeopleScreen() {
 					</Text>
 				</View>
 
-				{(hasQuery && searchQuery.isLoading) ||
-				(!hasQuery && suggestionsQuery.isLoading) ? (
+				{isLoading ? (
 					<UserRowsSkeleton />
+				) : isError && people.length === 0 ? (
+					<ErrorState
+						message={
+							hasQuery
+								? "Couldn't search people."
+								: "Couldn't load suggestions."
+						}
+						onRetry={() => void retry()}
+					/>
 				) : people.length === 0 ? (
 					<EmptyState
 						icon={Users}

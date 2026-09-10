@@ -14,7 +14,7 @@ import {
 	Users,
 	X,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityCard } from "@/components/social/ActivityCard";
@@ -79,8 +79,13 @@ export default function SocialScreen() {
 
 	const items: FollowedActivityItemDto[] =
 		data?.pages.flatMap((page) => page.items) ?? [];
+	// Once per mount: page appends and refetches also change `data`.
+	const activityViewed = useRef(false);
 	useEffect(() => {
-		if (data) posthog?.capture("activity_viewed", { surface: "social" });
+		if (data && !activityViewed.current) {
+			activityViewed.current = true;
+			posthog?.capture("activity_viewed", { surface: "social" });
+		}
 	}, [data]);
 
 	const onRefresh = async () => {
