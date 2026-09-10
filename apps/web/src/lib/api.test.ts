@@ -60,3 +60,33 @@ describe("setupApiClient", () => {
 		});
 	});
 });
+
+describe("hasSessionCookie", () => {
+	it("finds the current host-only session cookie among others", async () => {
+		const { hasSessionCookie } = await import("./api");
+
+		expect(hasSessionCookie("theme=dark; opnshelf_session=abc; ph=1")).toBe(
+			true,
+		);
+	});
+
+	it("still accepts the legacy parent-domain cookie", async () => {
+		const { hasSessionCookie } = await import("./api");
+
+		expect(hasSessionCookie("session=abc")).toBe(true);
+	});
+
+	it("ignores an empty value and unrelated cookies", async () => {
+		const { hasSessionCookie } = await import("./api");
+
+		expect(hasSessionCookie("opnshelf_session=; theme=dark")).toBe(false);
+		expect(hasSessionCookie("opnshelf_session_hint=1; theme=dark")).toBe(false);
+	});
+
+	it("is false without a Cookie header", async () => {
+		const { hasSessionCookie } = await import("./api");
+
+		expect(hasSessionCookie(undefined)).toBe(false);
+		expect(hasSessionCookie("")).toBe(false);
+	});
+});

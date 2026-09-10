@@ -1,4 +1,4 @@
-import { isUnauthorizedError } from "@opnshelf/api";
+import { isUnauthorizedError, type UserDto } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -14,7 +14,7 @@ import { AccountDeletionGate } from "#/components/AccountDeletionGate";
 import { MobileAppBanner } from "#/components/MobileAppBanner";
 import { WelcomeTour } from "#/components/tour/WelcomeTour";
 import { Toaster } from "#/components/ui/sonner";
-import { ssrAuthOptions } from "#/lib/api";
+import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
 import { currentUserQueryOptions } from "#/lib/auth-query";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
@@ -49,10 +49,21 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			return;
 		}
 
-		try {
-			const user = await context.queryClient.fetchQuery(
-				currentUserQueryOptions(ssrAuthOptions()),
+		const sessionQuery = currentUserQueryOptions(ssrAuthOptions());
+		if (!ssrCanResolveSession()) {
+			// No session cookie to forward, so the API could only answer 401.
+			// Record the signed-out result it would have cached instead of asking;
+			// AuthProvider verifies the browser session on mount either way. The
+			// generated key is tagged with UserDto, so copy it untagged to seed null.
+			context.queryClient.setQueryData<UserDto | null>(
+				[...sessionQuery.queryKey],
+				null,
 			);
+			return;
+		}
+
+		try {
+			const user = await context.queryClient.fetchQuery(sessionQuery);
 			if (user?.needsOnboarding) {
 				throw redirect({ to: "/onboarding" });
 			}

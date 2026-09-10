@@ -81,6 +81,43 @@ export const ssrAuthOptions = createIsomorphicFn()
 	})
 	.client((): SsrAuthOptions => ({}));
 
+/**
+ * Cookie names the API reads a web session from (backend `auth/session-id.ts`):
+ * the current host-only cookie and the legacy parent-domain one.
+ */
+const SESSION_COOKIE_NAMES = ["opnshelf_session", "session"];
+
+/** Whether a raw `Cookie` header carries a non-empty session cookie. */
+export function hasSessionCookie(cookieHeader: string | undefined): boolean {
+	if (!cookieHeader) return false;
+	return cookieHeader.split(";").some((pair) => {
+		const separator = pair.indexOf("=");
+		if (separator === -1) return false;
+		const name = pair.slice(0, separator).trim();
+		const value = pair.slice(separator + 1).trim();
+		return SESSION_COOKIE_NAMES.includes(name) && value.length > 0;
+	});
+}
+
+/**
+ * Whether the current render can learn who is signed in from the API.
+ *
+ * In the browser, always: the API's own cookie rides along with the request.
+ *
+ * On the server, only when the incoming request carries a session cookie for
+ * `ssrAuthOptions` to forward. The current cookie is host-only on the API
+ * hostname, so in production the browser never sends it to the Web server and
+ * the API would answer 401 for certain. Skipping that request matters beyond
+ * latency: every anonymous SSR call shares the Web server's single IP-keyed
+ * rate-limit bucket, and a crawler rendering pages faster than that limit
+ * pushed every visitor's render into a 429 error page (#290). Local dev shares
+ * 127.0.0.1 between Web and API, and legacy parent-domain cookies still reach
+ * the Web server, so those renders keep the check.
+ */
+export const ssrCanResolveSession = createIsomorphicFn()
+	.server((): boolean => hasSessionCookie(getRequestHeader("cookie")))
+	.client((): boolean => true);
+
 // Export configured status
 export const apiConfig = {
 	baseUrl: env.VITE_API_URL,
