@@ -3,6 +3,7 @@ import { Users } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -45,9 +46,7 @@ export function ConnectionsTab({
 
 	const active = tab === "followers" ? followers : following;
 	useEndReached(() => {
-		if (active.hasNextPage && !active.isFetchingNextPage) {
-			void active.fetchNextPage();
-		}
+		if (canLoadMore(active)) void active.fetchNextPage();
 	});
 
 	return (
@@ -85,7 +84,7 @@ export function ConnectionsTab({
 
 			{active.isLoading ? (
 				<UserRowsSkeleton />
-			) : active.isError ? (
+			) : active.isError && active.items.length === 0 ? (
 				<ErrorState message="Couldn't load this list." />
 			) : active.items.length === 0 ? (
 				<EmptyState
@@ -107,7 +106,12 @@ export function ConnectionsTab({
 				</View>
 			)}
 
-			{active.isFetchingNextPage ? <UserRowsSkeleton rows={2} /> : null}
+			<LoadMoreFooter
+				isFetchingNextPage={active.isFetchingNextPage}
+				isFetchNextPageError={active.isFetchNextPageError}
+				onRetry={() => void active.fetchNextPage()}
+				skeleton={<UserRowsSkeleton rows={2} />}
+			/>
 		</View>
 	);
 }

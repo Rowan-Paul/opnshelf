@@ -21,7 +21,7 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
-import { fromTmdbPage } from "../common/pagination";
+import { fromTmdbPage, parsePage } from "../common/pagination";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
 	DiscoverShowsDto,
@@ -62,9 +62,15 @@ export class ShowsController {
 	@Get("search")
 	@ApiOperation({ summary: "Search shows from TMDB" })
 	@ApiQuery({ name: "query", required: true, description: "Search term" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchShowsResultsDto })
-	async searchShows(@Query("query") query: string) {
-		return fromTmdbPage(await this.showsService.searchShows(query));
+	async searchShows(
+		@Query("query") query: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.showsService.searchShows(query, parsePage(page)),
+		);
 	}
 
 	@Get("discover")
@@ -134,9 +140,15 @@ export class ShowsController {
 
 	@Get("tmdb/:showId/recommendations")
 	@ApiOperation({ summary: "Get TMDB recommendations (similar shows)" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchShowsResultsDto })
-	async getRecommendations(@Param("showId") showId: string) {
-		return fromTmdbPage(await this.showsService.getRecommendations(showId));
+	async getRecommendations(
+		@Param("showId") showId: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.showsService.getRecommendations(showId, parsePage(page)),
+		);
 	}
 
 	@Get("tmdb/:showId/season/:seasonNumber")

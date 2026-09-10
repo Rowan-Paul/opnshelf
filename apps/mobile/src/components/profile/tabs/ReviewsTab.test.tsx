@@ -221,6 +221,36 @@ describe("ReviewsTab", () => {
 		expect(fetchNextPage).not.toHaveBeenCalled();
 	});
 
+	it("stops chaining after a failed next page and retries from the footer", () => {
+		const fetchNextPage = vi.fn();
+		testDoubles.useReviews.mockReturnValue({
+			data: { pages: [{ items: [review("1", "First")], hasNextPage: true }] },
+			isLoading: false,
+			isError: false,
+			fetchNextPage,
+			hasNextPage: true,
+			isFetchingNextPage: false,
+			isFetchNextPageError: true,
+		});
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(
+				<ReviewsTab userDid="did:one" handle="one" isOwner={false} />,
+			);
+		});
+		// Loaded items stay on screen; nearing the end must not loop the request.
+		expect(renderedText(renderer)).toContain("First");
+		act(() => testDoubles.endReached.current?.());
+		expect(fetchNextPage).not.toHaveBeenCalled();
+
+		const retry = renderer.root
+			.findAllByType("pressable" as never)
+			.find((node) => node.props.accessibilityLabel === "Retry loading more");
+		expect(retry).toBeDefined();
+		act(() => retry?.props.onPress());
+		expect(fetchNextPage).toHaveBeenCalledTimes(1);
+	});
+
 	it("invalidates both the Overview preview and infinite list after a mutation", () => {
 		testDoubles.useReviews.mockReturnValue({
 			data: {

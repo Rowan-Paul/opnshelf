@@ -13,6 +13,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -203,6 +212,15 @@
             "name": "movieId",
             "required": true,
             "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
             "schema": {
               "type": "string"
             }
@@ -1043,6 +1061,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1233,6 +1260,15 @@
             "name": "showId",
             "required": true,
             "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
             "schema": {
               "type": "string"
             }

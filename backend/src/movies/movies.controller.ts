@@ -21,7 +21,7 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
-import { fromTmdbPage } from "../common/pagination";
+import { fromTmdbPage, parsePage } from "../common/pagination";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
 	DiscoverMoviesDto,
@@ -46,9 +46,15 @@ export class MoviesController {
 	@Get("search")
 	@ApiOperation({ summary: "Search movies from TMDB" })
 	@ApiQuery({ name: "query", required: true, description: "Search term" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchResultsDto })
-	async searchMovies(@Query("query") query: string) {
-		return fromTmdbPage(await this.moviesService.searchMovies(query));
+	async searchMovies(
+		@Query("query") query: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.moviesService.searchMovies(query, parsePage(page)),
+		);
 	}
 
 	@Get("discover")
@@ -120,9 +126,15 @@ export class MoviesController {
 
 	@Get("tmdb/:movieId/recommendations")
 	@ApiOperation({ summary: "Get TMDB recommendations (similar movies)" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchResultsDto })
-	async getRecommendations(@Param("movieId") movieId: string) {
-		return fromTmdbPage(await this.moviesService.getRecommendations(movieId));
+	async getRecommendations(
+		@Param("movieId") movieId: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.moviesService.getRecommendations(movieId, parsePage(page)),
+		);
 	}
 
 	@Get("user/:userDid")

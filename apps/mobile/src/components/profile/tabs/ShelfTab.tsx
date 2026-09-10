@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard } from "@/components/media/MediaCard";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -96,6 +97,7 @@ export function ShelfTab({
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
+		isFetchNextPageError,
 	} = useInfiniteProfileShelf(userDid, {
 		type: filter === "all" ? undefined : filter,
 		search: debounced,
@@ -104,8 +106,9 @@ export function ShelfTab({
 
 	const items = data?.pages.flatMap((page) => page.items) ?? [];
 	const sections = groupShelfSections(items, sectionLabel);
+	const loadMore = { hasNextPage, isFetchingNextPage, isFetchNextPageError };
 	useEndReached(() => {
-		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+		if (canLoadMore(loadMore)) void fetchNextPage();
 	});
 
 	const changeFilter = (next: Filter) => setFilter(next);
@@ -194,7 +197,7 @@ export function ShelfTab({
 
 			{isLoading ? (
 				<PosterGridSkeleton columns={columns} />
-			) : isError ? (
+			) : isError && items.length === 0 ? (
 				<ErrorState message="Couldn't load this shelf." />
 			) : items.length === 0 ? (
 				<EmptyState
@@ -255,9 +258,11 @@ export function ShelfTab({
 				</View>
 			)}
 
-			{isFetchingNextPage ? (
-				<PosterGridSkeleton rows={1} columns={columns} />
-			) : null}
+			<LoadMoreFooter
+				{...loadMore}
+				onRetry={() => void fetchNextPage()}
+				skeleton={<PosterGridSkeleton rows={1} columns={columns} />}
+			/>
 		</View>
 	);
 }

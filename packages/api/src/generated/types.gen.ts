@@ -2589,6 +2589,10 @@ export type MoviesControllerSearchMoviesData = {
          * Search term
          */
         query: string;
+        /**
+         * Page number
+         */
+        page?: string;
     };
     url: '/movies/search';
 };
@@ -2680,7 +2684,12 @@ export type MoviesControllerGetRecommendationsData = {
     path: {
         movieId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Page number
+         */
+        page?: string;
+    };
     url: '/movies/tmdb/{movieId}/recommendations';
 };
 
@@ -3214,6 +3223,10 @@ export type ShowsControllerSearchShowsData = {
          * Search term
          */
         query: string;
+        /**
+         * Page number
+         */
+        page?: string;
     };
     url: '/shows/search';
 };
@@ -3305,7 +3318,12 @@ export type ShowsControllerGetRecommendationsData = {
     path: {
         showId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Page number
+         */
+        page?: string;
+    };
     url: '/shows/tmdb/{showId}/recommendations';
 };
 

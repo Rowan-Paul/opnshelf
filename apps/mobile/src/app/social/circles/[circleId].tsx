@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
 import { useDialog } from "@/components/ui/dialog";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -50,9 +51,7 @@ export default function CircleDetailScreen() {
 	// the next page of people you follow. This screen owns the container, so
 	// it listens through the prop rather than `useEndReached`.
 	const loadMoreFollowing = () => {
-		if (following.hasNextPage && !following.isFetchingNextPage) {
-			void following.fetchNextPage();
-		}
+		if (canLoadMore(following)) void following.fetchNextPage();
 	};
 
 	const addMember = useAddCircleMember();
@@ -204,7 +203,12 @@ export default function CircleDetailScreen() {
 							);
 						})
 					)}
-					{following.isFetchingNextPage ? <UserRowsSkeleton rows={2} /> : null}
+					<LoadMoreFooter
+						isFetchingNextPage={following.isFetchingNextPage}
+						isFetchNextPageError={following.isFetchNextPageError}
+						onRetry={() => void following.fetchNextPage()}
+						skeleton={<UserRowsSkeleton rows={2} />}
+					/>
 				</View>
 			</EndReachedScrollView>
 		</View>

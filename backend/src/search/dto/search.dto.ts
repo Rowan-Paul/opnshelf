@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import { PaginationMetaDto } from "../../common/pagination";
 
 export type MediaType = "movie" | "tv";
@@ -76,23 +76,26 @@ export class UnifiedDiscoverResponseDto extends PaginationMetaDto {
 	items: UnifiedSearchResultDto[];
 }
 
+export const DISCOVER_SORT_OPTIONS = [
+	"popularity.desc",
+	"popularity.asc",
+	"vote_average.desc",
+	"vote_average.asc",
+	"release_date.desc",
+	"release_date.asc",
+	"primary_release_date.desc",
+	"primary_release_date.asc",
+] as const;
+
 export class DiscoverQueryDto {
 	@ApiProperty({
 		required: false,
-		enum: [
-			"popularity.desc",
-			"popularity.asc",
-			"vote_average.desc",
-			"vote_average.asc",
-			"release_date.desc",
-			"release_date.asc",
-			"primary_release_date.desc",
-			"primary_release_date.asc",
-		],
+		enum: DISCOVER_SORT_OPTIONS,
 		default: "popularity.desc",
 	})
 	@IsOptional()
 	@IsString()
+	@IsIn(DISCOVER_SORT_OPTIONS)
 	sortBy?: string;
 
 	@ApiProperty({ required: false, minimum: 1, default: 1 })

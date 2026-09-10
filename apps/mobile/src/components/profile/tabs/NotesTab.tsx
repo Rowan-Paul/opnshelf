@@ -2,6 +2,7 @@ import type { UserNoteDto } from "@opnshelf/api";
 import { StickyNote } from "lucide-react-native";
 import { View } from "react-native";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -29,11 +30,13 @@ export function NotesTab({
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
+		isFetchNextPageError,
 	} = useInfiniteProfileNotes(userDid);
 
 	const notes = data?.pages.flatMap((page) => page.items) ?? [];
+	const loadMore = { hasNextPage, isFetchingNextPage, isFetchNextPageError };
 	useEndReached(() => {
-		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+		if (canLoadMore(loadMore)) void fetchNextPage();
 	});
 
 	return (
@@ -59,7 +62,11 @@ export function NotesTab({
 				</View>
 			)}
 
-			{isFetchingNextPage ? <ReviewsSkeleton rows={1} /> : null}
+			<LoadMoreFooter
+				{...loadMore}
+				onRetry={() => void fetchNextPage()}
+				skeleton={<ReviewsSkeleton rows={1} />}
+			/>
 		</View>
 	);
 }

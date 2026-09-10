@@ -25,11 +25,12 @@ import {
 	Users,
 	X,
 } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { Screen } from "@/components/ui/screen";
 import {
 	PosterGridSkeleton,
@@ -369,10 +370,16 @@ export default function SearchScreen() {
 	const gridData =
 		activeTab === "movies" ? movies : activeTab === "shows" ? shows : allMedia;
 	const loadMore = () => {
-		if (activeQuery.hasNextPage && !activeQuery.isFetchingNextPage) {
-			void activeQuery.fetchNextPage();
-		}
+		if (canLoadMore(activeQuery)) void activeQuery.fetchNextPage();
 	};
+	const footer = (skeleton: ReactNode) => (
+		<LoadMoreFooter
+			isFetchingNextPage={activeQuery.isFetchingNextPage}
+			isFetchNextPageError={activeQuery.isFetchNextPageError}
+			onRetry={() => void activeQuery.fetchNextPage()}
+			skeleton={skeleton}
+		/>
+	);
 
 	const refreshControl = (
 		<RefreshControl
@@ -424,11 +431,7 @@ export default function SearchScreen() {
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
 					onEndReached={loadMore}
-					ListFooterComponent={
-						activeQuery.isFetchingNextPage ? (
-							<UserRowsSkeleton rows={2} />
-						) : null
-					}
+					ListFooterComponent={footer(<UserRowsSkeleton rows={2} />)}
 				/>
 			);
 		}
@@ -457,11 +460,7 @@ export default function SearchScreen() {
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
 					onEndReached={loadMore}
-					ListFooterComponent={
-						activeQuery.isFetchingNextPage ? (
-							<UserRowsSkeleton rows={2} />
-						) : null
-					}
+					ListFooterComponent={footer(<UserRowsSkeleton rows={2} />)}
 				/>
 			);
 		}
@@ -497,11 +496,9 @@ export default function SearchScreen() {
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
 					onEndReached={loadMore}
-					ListFooterComponent={
-						activeQuery.isFetchingNextPage ? (
-							<PosterGridSkeleton rows={1} columns={numColumns} />
-						) : null
-					}
+					ListFooterComponent={footer(
+						<PosterGridSkeleton rows={1} columns={numColumns} />,
+					)}
 				/>
 			</ShowProgressScope>
 		);

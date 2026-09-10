@@ -57,24 +57,6 @@ export const moviesControllerSearchMoviesOptions = (options: Options<MoviesContr
     queryKey: moviesControllerSearchMoviesQueryKey(options)
 });
 
-export const moviesControllerDiscoverMoviesQueryKey = (options?: Options<MoviesControllerDiscoverMoviesData>) => createQueryKey('moviesControllerDiscoverMovies', options);
-
-/**
- * Discover popular movies from TMDB
- */
-export const moviesControllerDiscoverMoviesOptions = (options?: Options<MoviesControllerDiscoverMoviesData>) => queryOptions<MoviesControllerDiscoverMoviesResponse, DefaultError, MoviesControllerDiscoverMoviesResponse, ReturnType<typeof moviesControllerDiscoverMoviesQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await moviesControllerDiscoverMovies({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: moviesControllerDiscoverMoviesQueryKey(options)
-});
-
 const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
     const params = { ...queryKey[0] };
     if (page.body) {
@@ -103,6 +85,51 @@ const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'hea
     }
     return params as unknown as typeof page;
 };
+
+export const moviesControllerSearchMoviesInfiniteQueryKey = (options: Options<MoviesControllerSearchMoviesData>): QueryKey<Options<MoviesControllerSearchMoviesData>> => createQueryKey('moviesControllerSearchMovies', options, true);
+
+/**
+ * Search movies from TMDB
+ */
+export const moviesControllerSearchMoviesInfiniteOptions = (options: Options<MoviesControllerSearchMoviesData>) => infiniteQueryOptions<MoviesControllerSearchMoviesResponse, DefaultError, InfiniteData<MoviesControllerSearchMoviesResponse>, QueryKey<Options<MoviesControllerSearchMoviesData>>, string | Pick<QueryKey<Options<MoviesControllerSearchMoviesData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<MoviesControllerSearchMoviesData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await moviesControllerSearchMovies({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: moviesControllerSearchMoviesInfiniteQueryKey(options)
+});
+
+export const moviesControllerDiscoverMoviesQueryKey = (options?: Options<MoviesControllerDiscoverMoviesData>) => createQueryKey('moviesControllerDiscoverMovies', options);
+
+/**
+ * Discover popular movies from TMDB
+ */
+export const moviesControllerDiscoverMoviesOptions = (options?: Options<MoviesControllerDiscoverMoviesData>) => queryOptions<MoviesControllerDiscoverMoviesResponse, DefaultError, MoviesControllerDiscoverMoviesResponse, ReturnType<typeof moviesControllerDiscoverMoviesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await moviesControllerDiscoverMovies({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: moviesControllerDiscoverMoviesQueryKey(options)
+});
 
 export const moviesControllerDiscoverMoviesInfiniteQueryKey = (options?: Options<MoviesControllerDiscoverMoviesData>): QueryKey<Options<MoviesControllerDiscoverMoviesData>> => createQueryKey('moviesControllerDiscoverMovies', options, true);
 
@@ -201,6 +228,33 @@ export const moviesControllerGetRecommendationsOptions = (options: Options<Movie
         return data;
     },
     queryKey: moviesControllerGetRecommendationsQueryKey(options)
+});
+
+export const moviesControllerGetRecommendationsInfiniteQueryKey = (options: Options<MoviesControllerGetRecommendationsData>): QueryKey<Options<MoviesControllerGetRecommendationsData>> => createQueryKey('moviesControllerGetRecommendations', options, true);
+
+/**
+ * Get TMDB recommendations (similar movies)
+ */
+export const moviesControllerGetRecommendationsInfiniteOptions = (options: Options<MoviesControllerGetRecommendationsData>) => infiniteQueryOptions<MoviesControllerGetRecommendationsResponse, DefaultError, InfiniteData<MoviesControllerGetRecommendationsResponse>, QueryKey<Options<MoviesControllerGetRecommendationsData>>, string | Pick<QueryKey<Options<MoviesControllerGetRecommendationsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<MoviesControllerGetRecommendationsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await moviesControllerGetRecommendations({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: moviesControllerGetRecommendationsInfiniteQueryKey(options)
 });
 
 export const moviesControllerGetUserMoviesQueryKey = (options: Options<MoviesControllerGetUserMoviesData>) => createQueryKey('moviesControllerGetUserMovies', options);
@@ -694,6 +748,33 @@ export const showsControllerSearchShowsOptions = (options: Options<ShowsControll
     queryKey: showsControllerSearchShowsQueryKey(options)
 });
 
+export const showsControllerSearchShowsInfiniteQueryKey = (options: Options<ShowsControllerSearchShowsData>): QueryKey<Options<ShowsControllerSearchShowsData>> => createQueryKey('showsControllerSearchShows', options, true);
+
+/**
+ * Search shows from TMDB
+ */
+export const showsControllerSearchShowsInfiniteOptions = (options: Options<ShowsControllerSearchShowsData>) => infiniteQueryOptions<ShowsControllerSearchShowsResponse, DefaultError, InfiniteData<ShowsControllerSearchShowsResponse>, QueryKey<Options<ShowsControllerSearchShowsData>>, string | Pick<QueryKey<Options<ShowsControllerSearchShowsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<ShowsControllerSearchShowsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await showsControllerSearchShows({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerSearchShowsInfiniteQueryKey(options)
+});
+
 export const showsControllerDiscoverShowsQueryKey = (options?: Options<ShowsControllerDiscoverShowsData>) => createQueryKey('showsControllerDiscoverShows', options);
 
 /**
@@ -809,6 +890,33 @@ export const showsControllerGetRecommendationsOptions = (options: Options<ShowsC
         return data;
     },
     queryKey: showsControllerGetRecommendationsQueryKey(options)
+});
+
+export const showsControllerGetRecommendationsInfiniteQueryKey = (options: Options<ShowsControllerGetRecommendationsData>): QueryKey<Options<ShowsControllerGetRecommendationsData>> => createQueryKey('showsControllerGetRecommendations', options, true);
+
+/**
+ * Get TMDB recommendations (similar shows)
+ */
+export const showsControllerGetRecommendationsInfiniteOptions = (options: Options<ShowsControllerGetRecommendationsData>) => infiniteQueryOptions<ShowsControllerGetRecommendationsResponse, DefaultError, InfiniteData<ShowsControllerGetRecommendationsResponse>, QueryKey<Options<ShowsControllerGetRecommendationsData>>, string | Pick<QueryKey<Options<ShowsControllerGetRecommendationsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<ShowsControllerGetRecommendationsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await showsControllerGetRecommendations({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetRecommendationsInfiniteQueryKey(options)
 });
 
 export const showsControllerGetSeasonDetailsQueryKey = (options: Options<ShowsControllerGetSeasonDetailsData>) => createQueryKey('showsControllerGetSeasonDetails', options);

@@ -16,6 +16,12 @@ describe("DiscoverQueryDto", () => {
 		expect(dto.year).toBe(2020);
 	});
 
+	it("rejects an unsupported sort", async () => {
+		const dto = plainToInstance(DiscoverQueryDto, { sortBy: "budget.desc" });
+		const errors = await validate(dto, { whitelist: true });
+		expect(errors.map((e) => e.property)).toEqual(["sortBy"]);
+	});
+
 	it("rejects a page below one", async () => {
 		const dto = plainToInstance(DiscoverQueryDto, { page: "0" });
 		const errors = await validate(dto, { whitelist: true });

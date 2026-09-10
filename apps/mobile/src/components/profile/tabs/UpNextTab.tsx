@@ -1,5 +1,6 @@
 import { Tv } from "lucide-react-native";
 import { View } from "react-native";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
@@ -33,11 +34,13 @@ export function UpNextTab({
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
+		isFetchNextPageError,
 	} = useInfiniteProfileUpNext(userDid);
 
 	const items = data?.pages.flatMap((page) => page.items) ?? [];
+	const loadMore = { hasNextPage, isFetchingNextPage, isFetchNextPageError };
 	useEndReached(() => {
-		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+		if (canLoadMore(loadMore)) void fetchNextPage();
 	});
 
 	return (
@@ -50,7 +53,7 @@ export function UpNextTab({
 
 			{isLoading ? (
 				<UpNextSkeleton rows={4} />
-			) : isError ? (
+			) : isError && items.length === 0 ? (
 				<ErrorState message="Couldn't load Up Next." />
 			) : items.length === 0 ? (
 				<EmptyState
@@ -70,7 +73,11 @@ export function UpNextTab({
 				</View>
 			)}
 
-			{isFetchingNextPage ? <UpNextSkeleton rows={1} /> : null}
+			<LoadMoreFooter
+				{...loadMore}
+				onRetry={() => void fetchNextPage()}
+				skeleton={<UpNextSkeleton rows={1} />}
+			/>
 		</View>
 	);
 }

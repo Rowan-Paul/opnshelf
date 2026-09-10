@@ -87,31 +87,13 @@ export function clampPage(page: number) {
 	return Math.max(page, 1);
 }
 
-export function clampPageSize(pageSize: number, maxPageSize: number) {
-	return Math.min(Math.max(pageSize, 1), maxPageSize);
+/** Parses a raw `?page=` query value: anything unusable becomes page 1. */
+export function parsePage(value: unknown): number {
+	return clampPage(Math.floor(Number(value)) || 1);
 }
 
-/**
- * Resolves a raw `page`/`pageSize` pair into the clamped values plus the
- * Prisma `skip`/`take` for that page. Pair with `getPaginationMeta` once the
- * total is known.
- */
-export function resolvePageWindow(
-	page: number | undefined,
-	pageSize: number | undefined,
-	{
-		defaultPageSize = DEFAULT_PAGE_SIZE,
-		maxPageSize = MAX_PAGE_SIZE,
-	}: { defaultPageSize?: number; maxPageSize?: number } = {},
-) {
-	const safePage = clampPage(page ?? 1);
-	const safePageSize = clampPageSize(pageSize ?? defaultPageSize, maxPageSize);
-	return {
-		page: safePage,
-		pageSize: safePageSize,
-		skip: (safePage - 1) * safePageSize,
-		take: safePageSize,
-	};
+export function clampPageSize(pageSize: number, maxPageSize: number) {
+	return Math.min(Math.max(pageSize, 1), maxPageSize);
 }
 
 export function paginateItems<T>(

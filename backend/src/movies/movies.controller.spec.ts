@@ -80,7 +80,7 @@ describe("MoviesController", () => {
 				hasNextPage: true,
 				hasPreviousPage: false,
 			});
-			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("test");
+			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("test", 1);
 		});
 
 		it("should handle empty search results", async () => {
@@ -114,7 +114,7 @@ describe("MoviesController", () => {
 			const result = await controller.searchMovies("Dune");
 
 			expect(result.items).toEqual(mockResults.results);
-			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("Dune");
+			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("Dune", 1);
 			expect(mockMoviesService.searchMovies).not.toHaveBeenCalledWith(
 				expect.objectContaining({ query: "Dune" }),
 			);

@@ -59,6 +59,7 @@ export function useFollowing(handle: string, pageSize = 20) {
 		fetchNextPage: query.fetchNextPage,
 		hasNextPage: query.hasNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,
+		isFetchNextPageError: query.isFetchNextPageError,
 		refetch: query.refetch,
 	};
 }
@@ -82,6 +83,7 @@ export function useFollowers(handle: string, pageSize = 20) {
 		fetchNextPage: query.fetchNextPage,
 		hasNextPage: query.hasNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,
+		isFetchNextPageError: query.isFetchNextPageError,
 	};
 }
 

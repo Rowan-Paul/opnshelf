@@ -8,6 +8,7 @@ import { Search, Sparkles, Users, X } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -38,13 +39,7 @@ export default function FindPeopleScreen() {
 	// This screen owns the scroll container, so it listens through the prop
 	// rather than `useEndReached` (which only works below the container).
 	const loadMoreResults = () => {
-		if (
-			hasQuery &&
-			searchQuery.hasNextPage &&
-			!searchQuery.isFetchingNextPage
-		) {
-			void searchQuery.fetchNextPage();
-		}
+		if (hasQuery && canLoadMore(searchQuery)) void searchQuery.fetchNextPage();
 	};
 	const suggestionsQuery = useSuggestions(!hasQuery);
 	const people: SocialUserCardDto[] = hasQuery
@@ -137,8 +132,13 @@ export default function FindPeopleScreen() {
 					</View>
 				)}
 
-				{hasQuery && searchQuery.isFetchingNextPage ? (
-					<UserRowsSkeleton rows={2} />
+				{hasQuery ? (
+					<LoadMoreFooter
+						isFetchingNextPage={searchQuery.isFetchingNextPage}
+						isFetchNextPageError={searchQuery.isFetchNextPageError}
+						onRetry={() => void searchQuery.fetchNextPage()}
+						skeleton={<UserRowsSkeleton rows={2} />}
+					/>
 				) : null}
 			</EndReachedScrollView>
 		</View>

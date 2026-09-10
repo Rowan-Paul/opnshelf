@@ -158,7 +158,8 @@ export class ReviewsService {
 
 		const items = await this.prisma.review.findMany({
 			where,
-			orderBy: { createdAt: "desc" },
+			// `id` breaks createdAt ties so offset pages never overlap or skip.
+			orderBy: [{ createdAt: "desc" }, { id: "desc" }],
 			skip: (pagination.page - 1) * pagination.pageSize,
 			take: pagination.pageSize,
 			include: {
@@ -292,7 +293,11 @@ export class ReviewsService {
 
 		const items = await this.prisma.review.findMany({
 			where,
-			orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
+			orderBy: [
+				{ likes: { _count: "desc" } },
+				{ createdAt: "desc" },
+				{ id: "desc" },
+			],
 			skip: (pagination.page - 1) * pagination.pageSize,
 			take: pagination.pageSize,
 			include,

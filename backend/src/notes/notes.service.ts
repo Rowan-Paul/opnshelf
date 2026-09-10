@@ -55,7 +55,8 @@ export class NotesService {
 
 		const items = await this.prisma.note.findMany({
 			where,
-			orderBy: { updatedAt: "desc" },
+			// `id` breaks updatedAt ties so offset pages never overlap or skip.
+			orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
 			skip: (pagination.page - 1) * pagination.pageSize,
 			take: pagination.pageSize,
 		});

@@ -38,6 +38,7 @@ import {
 import { useState } from "react";
 import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
@@ -447,19 +448,18 @@ function Candidate({ candidate }: { candidate: TraktMatchCandidateDto }) {
  */
 function CouldntImportList({ onMatch }: { onMatch: () => void }) {
 	const queryClient = useQueryClient();
-	const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-		useInfiniteQuery({
-			...usersControllerGetMyTraktImportIssuesInfiniteOptions({
-				query: { pageSize: 25, outcome: "couldnt_import" },
-			}),
-			initialPageParam: 1,
-			getNextPageParam: (lastPage) =>
-				lastPage.hasNextPage ? lastPage.page + 1 : undefined,
-		});
-	const items = data?.pages.flatMap((page) => page.items) ?? [];
-	const total = data?.pages[0]?.total ?? 0;
+	const issues = useInfiniteQuery({
+		...usersControllerGetMyTraktImportIssuesInfiniteOptions({
+			query: { pageSize: 25, outcome: "couldnt_import" },
+		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+	});
+	const items = issues.data?.pages.flatMap((page) => page.items) ?? [];
+	const total = issues.data?.pages[0]?.total ?? 0;
 	useEndReached(() => {
-		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+		if (canLoadMore(issues)) void issues.fetchNextPage();
 	});
 	const retry = useMutation({
 		...usersControllerRetryMyTraktImportItemMutation(),
@@ -517,7 +517,12 @@ function CouldntImportList({ onMatch }: { onMatch: () => void }) {
 					) : null}
 				</View>
 			))}
-			{isFetchingNextPage ? <ListRowsSkeleton rows={1} /> : null}
+			<LoadMoreFooter
+				isFetchingNextPage={issues.isFetchingNextPage}
+				isFetchNextPageError={issues.isFetchNextPageError}
+				onRetry={() => void issues.fetchNextPage()}
+				skeleton={<ListRowsSkeleton rows={1} />}
+			/>
 		</View>
 	);
 }

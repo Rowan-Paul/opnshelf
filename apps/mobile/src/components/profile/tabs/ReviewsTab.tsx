@@ -18,6 +18,7 @@ import { ProfileReviewRating } from "@/components/profile/ProfileReviewRating";
 import { ReviewBody } from "@/components/ReviewBody";
 import { SpoilerShield } from "@/components/reviews/SpoilerShield";
 import { useDialog } from "@/components/ui/dialog";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { ReviewsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -56,11 +57,13 @@ export function ReviewsTab({
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
+		isFetchNextPageError,
 	} = useInfiniteProfileReviews(userDid);
 
 	const reviews = data?.pages.flatMap((page) => page.items) ?? [];
+	const loadMore = { hasNextPage, isFetchingNextPage, isFetchNextPageError };
 	useEndReached(() => {
-		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+		if (canLoadMore(loadMore)) void fetchNextPage();
 	});
 
 	return (
@@ -94,7 +97,11 @@ export function ReviewsTab({
 				</View>
 			)}
 
-			{isFetchingNextPage ? <ReviewsSkeleton rows={1} /> : null}
+			<LoadMoreFooter
+				{...loadMore}
+				onRetry={() => void fetchNextPage()}
+				skeleton={<ReviewsSkeleton rows={1} />}
+			/>
 		</View>
 	);
 }

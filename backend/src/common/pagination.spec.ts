@@ -4,6 +4,7 @@ import {
 	fromTmdbPage,
 	getPaginationMeta,
 	paginateItems,
+	parsePage,
 } from "./pagination";
 
 describe("pagination", () => {
@@ -46,6 +47,14 @@ describe("pagination", () => {
 			hasNextPage: false,
 			hasPreviousPage: true,
 		});
+	});
+
+	it("parses raw page query values with a floor of one", () => {
+		expect(parsePage("3")).toBe(3);
+		expect(parsePage("2.9")).toBe(2);
+		expect(parsePage(undefined)).toBe(1);
+		expect(parsePage("0")).toBe(1);
+		expect(parsePage("abc")).toBe(1);
 	});
 
 	it("re-expresses a TMDB page in the shared contract", () => {
