@@ -1,4 +1,9 @@
 import { Injectable } from "@nestjs/common";
+import {
+	type PaginatedResult,
+	TMDB_PAGE_SIZE,
+	type TmdbPage,
+} from "../common/pagination";
 import { MoviesService } from "../movies/movies.service";
 import { ShowsService } from "../shows/shows.service";
 import {
@@ -55,11 +60,7 @@ export class SearchService {
 			showResults.results,
 		);
 
-		return {
-			results: unifiedResults,
-			total_results: movieResults.total_results + showResults.total_results,
-			page,
-		};
+		return unifiedPage(unifiedResults, page, movieResults, showResults);
 	}
 
 	async discoverAll(
@@ -77,11 +78,7 @@ export class SearchService {
 			showResults.results,
 		);
 
-		return {
-			results: unifiedResults,
-			total_results: movieResults.total_results + showResults.total_results,
-			page,
-		};
+		return unifiedPage(unifiedResults, page, movieResults, showResults);
 	}
 
 	private mergeResults(
@@ -135,4 +132,23 @@ export class SearchService {
 
 		return combined;
 	}
+}
+
+/** One merged page of movies + shows in the shared pagination contract. */
+function unifiedPage(
+	items: UnifiedSearchResultDto[],
+	page: number,
+	movies: TmdbPage<unknown>,
+	shows: TmdbPage<unknown>,
+): PaginatedResult<UnifiedSearchResultDto> {
+	const totalPages = Math.max(movies.total_pages, shows.total_pages);
+	return {
+		items,
+		page,
+		pageSize: TMDB_PAGE_SIZE * 2,
+		total: movies.total_results + shows.total_results,
+		totalPages,
+		hasNextPage: totalPages > 0 && page < totalPages,
+		hasPreviousPage: page > 1,
+	};
 }

@@ -19,7 +19,7 @@ import {
 	DEFAULT_SOCIAL_PAGE_SIZE,
 	MAX_SOCIAL_PAGE_SIZE,
 	paginateItems,
-} from "./social-pagination";
+} from "../common/pagination";
 
 const SEARCH_CANDIDATE_LIMIT = 500;
 const BLUESKY_FOLLOWS_MAX_PAGES = 100;

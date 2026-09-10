@@ -84,14 +84,14 @@ export default function AddListItemsDialog({
 			surface: "list_item_picker",
 			tab: "all",
 			query_length: debouncedQuery.trim().length,
-			result_count: searchData.results?.length ?? 0,
+			result_count: searchData.items?.length ?? 0,
 		});
 	}, [debouncedQuery, open, searchData]);
 
 	// Movies + shows only in v1.
 	const results = useMemo(() => {
 		const seen = new Set<string>();
-		return (searchData?.results ?? []).filter((r: UnifiedSearchResultDto) => {
+		return (searchData?.items ?? []).filter((r: UnifiedSearchResultDto) => {
 			if (r.media_type !== "movie" && r.media_type !== "tv") return false;
 			const k = `${r.media_type}-${r.id}`;
 			if (seen.has(k)) return false;

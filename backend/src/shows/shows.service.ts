@@ -192,14 +192,6 @@ export class ShowsService {
 		return this.progress.getUserReleaseCalendar(userDid, query);
 	}
 
-	async getUserEpisodesPaginated(
-		userDid: string,
-		limit: number = 20,
-		cursor?: string,
-	) {
-		return this.progress.getUserEpisodesPaginated(userDid, limit, cursor);
-	}
-
 	async getEpisodeWatchHistory(userDid: string, showId: string) {
 		return this.progress.getEpisodeWatchHistory(userDid, showId);
 	}

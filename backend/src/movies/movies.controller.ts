@@ -21,13 +21,12 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
+import { fromTmdbPage, parsePage } from "../common/pagination";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
-	type DiscoverMoviesDto,
+	DiscoverMoviesDto,
 	FullCreditsDto,
 	MovieDto,
-	PaginatedMoviesQueryDto,
-	PaginatedMoviesResponseDto,
 	SearchResultsDto,
 	TMDBMovieDetailDto,
 	TrackedMovieDto,
@@ -47,19 +46,27 @@ export class MoviesController {
 	@Get("search")
 	@ApiOperation({ summary: "Search movies from TMDB" })
 	@ApiQuery({ name: "query", required: true, description: "Search term" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchResultsDto })
-	async searchMovies(@Query("query") query: string) {
-		return this.moviesService.searchMovies(query);
+	async searchMovies(
+		@Query("query") query: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.moviesService.searchMovies(query, parsePage(page)),
+		);
 	}
 
 	@Get("discover")
 	@ApiOperation({ summary: "Discover popular movies from TMDB" })
 	@ApiResponse({ status: 200, type: SearchResultsDto })
 	async discoverMovies(@Query() discoverDto: DiscoverMoviesDto) {
-		return this.moviesService.discoverMovies(
-			discoverDto.sortBy,
-			discoverDto.page ?? 1,
-			discoverDto.year,
+		return fromTmdbPage(
+			await this.moviesService.discoverMovies(
+				discoverDto.sortBy,
+				discoverDto.page ?? 1,
+				discoverDto.year,
+			),
 		);
 	}
 
@@ -119,9 +126,15 @@ export class MoviesController {
 
 	@Get("tmdb/:movieId/recommendations")
 	@ApiOperation({ summary: "Get TMDB recommendations (similar movies)" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchResultsDto })
-	async getRecommendations(@Param("movieId") movieId: string) {
-		return this.moviesService.getRecommendations(movieId);
+	async getRecommendations(
+		@Param("movieId") movieId: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.moviesService.getRecommendations(movieId, parsePage(page)),
+		);
 	}
 
 	@Get("user/:userDid")
@@ -137,46 +150,6 @@ export class MoviesController {
 				colors: tracked.movie.colors ?? undefined,
 			},
 		}));
-	}
-
-	@Get("user/:userDid/paginated")
-	@ApiOperation({ summary: "Get paginated tracked movies for a user" })
-	@ApiResponse({ status: 200, type: PaginatedMoviesResponseDto })
-	async getUserMoviesPaginated(
-		@Param("userDid") userDid: string,
-		@Query() query: PaginatedMoviesQueryDto,
-	) {
-		const limit = query.limit ?? 20;
-		const result = await this.moviesService.getUserMoviesPaginated(
-			userDid,
-			limit,
-			query.cursor,
-		);
-
-		// Ensure colors for all movies
-		const itemsWithColors = await Promise.all(
-			result.items.map(async (item) => {
-				const colors = await this.moviesService.ensureMovieHasColors(
-					item.movieId,
-				);
-				return {
-					...item,
-					watchedDate: item.watchedDate?.toISOString(),
-					createdAt: item.createdAt.toISOString(),
-					updatedAt: item.updatedAt.toISOString(),
-					movie: {
-						...item.movie,
-						colors: colors ?? undefined,
-					},
-				};
-			}),
-		);
-
-		return {
-			items: itemsWithColors,
-			nextCursor: result.nextCursor,
-			total: result.total,
-		};
 	}
 
 	@Post("watched")

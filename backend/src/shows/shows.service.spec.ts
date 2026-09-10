@@ -304,10 +304,6 @@ describe("ShowsService", () => {
 				getUserShows: vi.spyOn(progress, "getUserShows"),
 				getUserUpNext: vi.spyOn(progress, "getUserUpNext"),
 				getUserReleaseCalendar: vi.spyOn(progress, "getUserReleaseCalendar"),
-				getUserEpisodesPaginated: vi.spyOn(
-					progress,
-					"getUserEpisodesPaginated",
-				),
 				getEpisodeWatchHistory: vi.spyOn(progress, "getEpisodeWatchHistory"),
 				getShowProgress: vi.spyOn(progress, "getShowProgress"),
 			};
@@ -351,12 +347,6 @@ describe("ShowsService", () => {
 			expect(spies.getUserReleaseCalendar).toHaveBeenCalledWith(
 				"did:plc:abc123",
 				{ startDate: "2024-01-01" },
-			);
-			await service.getUserEpisodesPaginated("did:plc:abc123", 5, "cursor");
-			expect(spies.getUserEpisodesPaginated).toHaveBeenCalledWith(
-				"did:plc:abc123",
-				5,
-				"cursor",
 			);
 			await service.getEpisodeWatchHistory("did:plc:abc123", "123");
 			expect(spies.getEpisodeWatchHistory).toHaveBeenCalledWith(

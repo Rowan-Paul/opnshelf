@@ -14,7 +14,7 @@ import {
 	DEFAULT_FEED_PAGE_SIZE,
 	DEFAULT_SOCIAL_PAGE_SIZE,
 	DEFAULT_WATCHERS_PAGE_SIZE,
-} from "./social-pagination";
+} from "../common/pagination";
 import { SocialUsersService } from "./social-users.service";
 
 export type { ATSession };

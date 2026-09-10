@@ -73,12 +73,12 @@ export function AddItemsToListSheet({
 			surface: "list_item_picker",
 			tab: "all",
 			query_length: debouncedQuery.length,
-			result_count: searchQuery.data.results?.length ?? 0,
+			result_count: searchQuery.data.items?.length ?? 0,
 		});
 	}, [debouncedQuery.length, hasQuery, searchQuery.data, visible]);
 
 	const results = useMemo(
-		() => searchQuery.data?.results ?? [],
+		() => searchQuery.data?.items ?? [],
 		[searchQuery.data],
 	);
 

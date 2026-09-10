@@ -3,7 +3,7 @@ import { UnifiedSearchResultDto } from "../../search/dto/search.dto";
 
 export class DiscoverSectionResponseDto {
 	@ApiProperty({ type: [UnifiedSearchResultDto] })
-	results: UnifiedSearchResultDto[];
+	items: UnifiedSearchResultDto[];
 }
 
 export class BecauseYouWatchedRowDto {
@@ -17,7 +17,7 @@ export class BecauseYouWatchedRowDto {
 	seedTitle: string;
 
 	@ApiProperty({ type: [UnifiedSearchResultDto] })
-	results: UnifiedSearchResultDto[];
+	items: UnifiedSearchResultDto[];
 }
 
 export class BecauseYouWatchedResponseDto {

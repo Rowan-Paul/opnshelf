@@ -75,7 +75,7 @@ export class DiscoverService {
 			.map((item) =>
 				mapTmdbItem(item, item.media_type === "tv" ? "tv" : "movie"),
 			);
-		return { results };
+		return { items: results };
 	}
 
 	/**
@@ -145,7 +145,7 @@ export class DiscoverService {
 		])
 			.slice(0, SECTION_LIMIT)
 			.map((item) => mapTmdbItem(item, item.media_type as "movie" | "tv"));
-		return { results };
+		return { items: results };
 	}
 
 	/**
@@ -159,7 +159,7 @@ export class DiscoverService {
 			select: { followingDid: true },
 		});
 		const followedDids = follows.map((f) => f.followingDid);
-		if (followedDids.length === 0) return { results: [] };
+		if (followedDids.length === 0) return { items: [] };
 
 		const dids = Prisma.join(followedDids.map((d) => Prisma.sql`${d}`));
 
@@ -221,7 +221,7 @@ export class DiscoverService {
 		const results = [...movieRows, ...showRows]
 			.slice(0, SECTION_LIMIT)
 			.map(mapFromFollowsRow);
-		return { results };
+		return { items: results };
 	}
 
 	/**
@@ -310,13 +310,13 @@ export class DiscoverService {
 					seedId: Number(seed.id),
 					seedMediaType: seed.mediaType,
 					seedTitle: seed.title,
-					results,
+					items: results,
 				};
 			}),
 		);
 
 		// Drop seeds whose recommendation row came back empty after exclusion.
-		return { rows: rows.filter((row) => row.results.length > 0) };
+		return { rows: rows.filter((row) => row.items.length > 0) };
 	}
 }
 

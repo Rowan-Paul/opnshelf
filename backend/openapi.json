@@ -13,6 +13,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -36,7 +45,45 @@
     "/movies/discover": {
       "get": {
         "operationId": "MoviesController_discoverMovies",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort order for results",
+            "schema": {
+              "default": "popularity.desc",
+              "type": "string",
+              "enum": [
+                "popularity.desc",
+                "popularity.asc",
+                "release_date.desc",
+                "release_date.asc",
+                "vote_average.desc",
+                "vote_average.asc"
+              ]
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Filter by release year",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -168,6 +215,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -217,56 +273,6 @@
           }
         },
         "summary": "Get tracked movies for a user",
-        "tags": [
-          "movies"
-        ]
-      }
-    },
-    "/movies/user/{userDid}/paginated": {
-      "get": {
-        "operationId": "MoviesController_getUserMoviesPaginated",
-        "parameters": [
-          {
-            "name": "userDid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of items to return",
-            "schema": {
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "cursor",
-            "required": false,
-            "in": "query",
-            "description": "Cursor for pagination (last item ID from previous page)",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedMoviesResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get paginated tracked movies for a user",
         "tags": [
           "movies"
         ]
@@ -1055,6 +1061,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1078,7 +1093,45 @@
     "/shows/discover": {
       "get": {
         "operationId": "ShowsController_discoverShows",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort order for results",
+            "schema": {
+              "default": "popularity.desc",
+              "type": "string",
+              "enum": [
+                "popularity.desc",
+                "popularity.asc",
+                "first_air_date.desc",
+                "first_air_date.asc",
+                "vote_average.desc",
+                "vote_average.asc"
+              ]
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Filter by first air date year",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -1207,6 +1260,15 @@
             "name": "showId",
             "required": true,
             "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
             "schema": {
               "type": "string"
             }
@@ -1442,7 +1504,7 @@
             "name": "page",
             "required": false,
             "in": "query",
-            "description": "Page number to return",
+            "description": "Page number to return (1-based)",
             "schema": {
               "default": 1,
               "type": "number"
@@ -1561,56 +1623,6 @@
           }
         },
         "summary": "Get releases for watched shows and watchlist items within a date range",
-        "tags": [
-          "shows"
-        ]
-      }
-    },
-    "/shows/user/{userDid}/episodes": {
-      "get": {
-        "operationId": "ShowsController_getUserEpisodesPaginated",
-        "parameters": [
-          {
-            "name": "userDid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of items to return",
-            "schema": {
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "cursor",
-            "required": false,
-            "in": "query",
-            "description": "Cursor for pagination (last item ID from previous page)",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedEpisodesResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get paginated watched episodes for a user",
         "tags": [
           "shows"
         ]
@@ -2547,31 +2559,35 @@
         "operationId": "UsersController_getMyTraktImportIssues",
         "parameters": [
           {
-            "name": "outcome",
+            "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number to return (1-based)",
             "schema": {
-              "enum": [
-                "unmatched",
-                "couldnt_import"
-              ],
-              "type": "string"
+              "default": 1,
+              "type": "number"
             }
           },
           {
             "name": "pageSize",
             "required": false,
             "in": "query",
+            "description": "Number of items to return per page",
             "schema": {
+              "default": 25,
               "type": "number"
             }
           },
           {
-            "name": "page",
+            "name": "outcome",
             "required": false,
             "in": "query",
             "schema": {
-              "type": "number"
+              "type": "string",
+              "enum": [
+                "unmatched",
+                "couldnt_import"
+              ]
             }
           }
         ],
@@ -3992,22 +4008,23 @@
             }
           },
           {
-            "name": "limit",
+            "name": "page",
             "required": false,
             "in": "query",
-            "description": "Number of items to return",
+            "description": "Page number to return (1-based)",
             "schema": {
-              "default": 20,
+              "default": 1,
               "type": "number"
             }
           },
           {
-            "name": "cursor",
+            "name": "pageSize",
             "required": false,
             "in": "query",
-            "description": "Cursor for pagination",
+            "description": "Number of items to return per page",
             "schema": {
-              "type": "string"
+              "default": 20,
+              "type": "number"
             }
           }
         ],
@@ -4033,6 +4050,26 @@
       "get": {
         "operationId": "ReviewsController_getMediaReviews",
         "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number to return (1-based)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
           {
             "name": "mediaType",
             "required": true,
@@ -4073,25 +4110,6 @@
             "description": "Episode number for episode items",
             "schema": {
               "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of items to return",
-            "schema": {
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "cursor",
-            "required": false,
-            "in": "query",
-            "description": "Cursor for pagination",
-            "schema": {
-              "type": "string"
             }
           },
           {
@@ -4957,22 +4975,23 @@
             }
           },
           {
-            "name": "limit",
+            "name": "page",
             "required": false,
             "in": "query",
-            "description": "Number of items to return",
+            "description": "Page number to return (1-based)",
             "schema": {
-              "default": 20,
+              "default": 1,
               "type": "number"
             }
           },
           {
-            "name": "cursor",
+            "name": "pageSize",
             "required": false,
             "in": "query",
-            "description": "Cursor for pagination",
+            "description": "Number of items to return per page",
             "schema": {
-              "type": "string"
+              "default": 20,
+              "type": "number"
             }
           }
         ],
@@ -5458,25 +5477,46 @@
         "operationId": "SearchController_discoverAll",
         "parameters": [
           {
-            "name": "year",
+            "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Year filter",
-            "schema": {}
+            "description": "Sort by",
+            "schema": {
+              "default": "popularity.desc",
+              "type": "string",
+              "enum": [
+                "popularity.desc",
+                "popularity.asc",
+                "vote_average.desc",
+                "vote_average.asc",
+                "release_date.desc",
+                "release_date.asc",
+                "primary_release_date.desc",
+                "primary_release_date.asc"
+              ]
+            }
           },
           {
             "name": "page",
             "required": false,
             "in": "query",
             "description": "Page number",
-            "schema": {}
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
           },
           {
-            "name": "sortBy",
+            "name": "year",
             "required": false,
             "in": "query",
-            "description": "Sort by",
-            "schema": {}
+            "description": "Year filter",
+            "schema": {
+              "minimum": 1900,
+              "maximum": 2100,
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -5805,23 +5845,45 @@
       "SearchResultsDto": {
         "type": "object",
         "properties": {
-          "results": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TMDBMovieResultDto"
             }
-          },
-          "total_results": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
           }
         },
         "required": [
-          "results",
-          "total_results",
-          "page"
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "TMDBGenreDto": {
@@ -6227,30 +6289,6 @@
           "createdAt",
           "updatedAt",
           "movie"
-        ]
-      },
-      "PaginatedMoviesResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TrackedMovieDto"
-            }
-          },
-          "nextCursor": {
-            "type": "object",
-            "description": "Cursor for next page (null if no more items)"
-          },
-          "total": {
-            "type": "number",
-            "description": "Total count of items"
-          }
-        },
-        "required": [
-          "items",
-          "nextCursor",
-          "total"
         ]
       },
       "WatchHistoryItemDto": {
@@ -6723,23 +6761,45 @@
       "SearchShowsResultsDto": {
         "type": "object",
         "properties": {
-          "results": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TMDBShowResultDto"
             }
-          },
-          "total_results": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
           }
         },
         "required": [
-          "results",
-          "total_results",
-          "page"
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "TMDBSeasonSummaryDto": {
@@ -7176,15 +7236,9 @@
       "PaginatedUpNextResponseDto": {
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UpNextShowDto"
-            }
-          },
           "total": {
             "type": "number",
-            "description": "Total count of items"
+            "description": "Total count of items across all pages"
           },
           "page": {
             "type": "number",
@@ -7192,29 +7246,35 @@
           },
           "pageSize": {
             "type": "number",
-            "description": "Number of items returned per page"
+            "description": "Number of items per page"
           },
           "totalPages": {
             "type": "number",
             "description": "Total number of available pages"
           },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
           "hasPreviousPage": {
             "type": "boolean",
             "description": "Whether a previous page exists"
           },
-          "hasNextPage": {
-            "type": "boolean",
-            "description": "Whether a next page exists"
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpNextShowDto"
+            }
           }
         },
         "required": [
-          "items",
           "total",
           "page",
           "pageSize",
           "totalPages",
+          "hasNextPage",
           "hasPreviousPage",
-          "hasNextPage"
+          "items"
         ]
       },
       "ReleaseCalendarItemDto": {
@@ -7304,6 +7364,34 @@
           "total"
         ]
       },
+      "MarkEpisodeWatchedDto": {
+        "type": "object",
+        "properties": {
+          "showId": {
+            "type": "string",
+            "description": "TMDB show ID"
+          },
+          "seasonNumber": {
+            "type": "number",
+            "description": "TMDB season number"
+          },
+          "episodeNumber": {
+            "type": "number",
+            "description": "TMDB episode number"
+          },
+          "watchedAt": {
+            "type": "string",
+            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "showId",
+          "seasonNumber",
+          "episodeNumber"
+        ]
+      },
       "TrackedEpisodeDto": {
         "type": "object",
         "properties": {
@@ -7360,58 +7448,6 @@
           "createdAt",
           "updatedAt",
           "show"
-        ]
-      },
-      "PaginatedEpisodesResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TrackedEpisodeDto"
-            }
-          },
-          "nextCursor": {
-            "type": "object",
-            "description": "Cursor for next page (null if no more items)"
-          },
-          "total": {
-            "type": "number",
-            "description": "Total count of items"
-          }
-        },
-        "required": [
-          "items",
-          "nextCursor",
-          "total"
-        ]
-      },
-      "MarkEpisodeWatchedDto": {
-        "type": "object",
-        "properties": {
-          "showId": {
-            "type": "string",
-            "description": "TMDB show ID"
-          },
-          "seasonNumber": {
-            "type": "number",
-            "description": "TMDB season number"
-          },
-          "episodeNumber": {
-            "type": "number",
-            "description": "TMDB episode number"
-          },
-          "watchedAt": {
-            "type": "string",
-            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "required": [
-          "showId",
-          "seasonNumber",
-          "episodeNumber"
         ]
       },
       "EpisodeHistoryItemDto": {
@@ -8533,27 +8569,45 @@
       "PaginatedTraktImportIssuesDto": {
         "type": "object",
         "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TraktImportIssueDto"
             }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "pageSize": {
-            "type": "number"
           }
         },
         "required": [
-          "items",
           "total",
           "page",
-          "pageSize"
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "TraktMatchCandidateDto": {
@@ -9440,26 +9494,45 @@
       "PaginatedReviewsResponseDto": {
         "type": "object",
         "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UserReviewDto"
             }
-          },
-          "nextCursor": {
-            "type": "string",
-            "nullable": true,
-            "description": "Cursor for next page (null if no more items)"
-          },
-          "total": {
-            "type": "number",
-            "description": "Total count of items"
           }
         },
         "required": [
-          "items",
-          "nextCursor",
-          "total"
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "MediaReviewItemDto": {
@@ -9547,26 +9620,45 @@
       "MediaReviewsResponseDto": {
         "type": "object",
         "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MediaReviewItemDto"
             }
-          },
-          "total": {
-            "type": "number",
-            "description": "Total review count"
-          },
-          "nextCursor": {
-            "type": "string",
-            "nullable": true,
-            "description": "Cursor for next page (null if no more items)"
           }
         },
         "required": [
-          "items",
           "total",
-          "nextCursor"
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "CanonicalReviewAuthorDto": {
@@ -10486,26 +10578,45 @@
       "PaginatedNotesResponseDto": {
         "type": "object",
         "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UserNoteDto"
             }
-          },
-          "nextCursor": {
-            "type": "string",
-            "nullable": true,
-            "description": "Cursor for next page (null if no more items)"
-          },
-          "total": {
-            "type": "number",
-            "description": "Total count of items"
           }
         },
         "required": [
-          "items",
-          "nextCursor",
-          "total"
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "UpsertNoteDto": {
@@ -10829,45 +10940,89 @@
       "UnifiedSearchResponseDto": {
         "type": "object",
         "properties": {
-          "results": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UnifiedSearchResultDto"
             }
-          },
-          "total_results": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
           }
         },
         "required": [
-          "results",
-          "total_results",
-          "page"
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "UnifiedDiscoverResponseDto": {
         "type": "object",
         "properties": {
-          "results": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UnifiedSearchResultDto"
             }
-          },
-          "total_results": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
           }
         },
         "required": [
-          "results",
-          "total_results",
-          "page"
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "PersonSearchResultDto": {
@@ -10898,27 +11053,45 @@
       "PersonSearchResponseDto": {
         "type": "object",
         "properties": {
-          "results": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PersonSearchResultDto"
             }
-          },
-          "page": {
-            "type": "number"
-          },
-          "total_results": {
-            "type": "number"
-          },
-          "total_pages": {
-            "type": "number"
           }
         },
         "required": [
-          "results",
+          "total",
           "page",
-          "total_results",
-          "total_pages"
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "PersonFilmographyRoleDto": {
@@ -11056,31 +11229,45 @@
       "PersonFilmographyResponseDto": {
         "type": "object",
         "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PersonFilmographyItemDto"
             }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "pageSize": {
-            "type": "number"
-          },
-          "totalPages": {
-            "type": "number"
           }
         },
         "required": [
-          "items",
           "total",
           "page",
           "pageSize",
-          "totalPages"
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
         ]
       },
       "CreateFeedbackDto": {
@@ -11135,7 +11322,7 @@
       "DiscoverSectionResponseDto": {
         "type": "object",
         "properties": {
-          "results": {
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UnifiedSearchResultDto"
@@ -11143,7 +11330,7 @@
           }
         },
         "required": [
-          "results"
+          "items"
         ]
       },
       "BecauseYouWatchedRowDto": {
@@ -11162,7 +11349,7 @@
           "seedTitle": {
             "type": "string"
           },
-          "results": {
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/UnifiedSearchResultDto"
@@ -11173,7 +11360,7 @@
           "seedId",
           "seedMediaType",
           "seedTitle",
-          "results"
+          "items"
         ]
       },
       "BecauseYouWatchedResponseDto": {

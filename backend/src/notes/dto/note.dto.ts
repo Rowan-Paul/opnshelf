@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsInt, IsOptional, IsString, MaxLength } from "class-validator";
+import { PageQueryDto, PaginationMetaDto } from "../../common/pagination";
 
 export class UpsertNoteDto {
 	@ApiProperty({
@@ -90,23 +91,7 @@ export class GetNoteQueryDto {
 	episodeNumber?: number;
 }
 
-export class PaginatedNotesQueryDto {
-	@ApiPropertyOptional({
-		description: "Number of items to return",
-		default: 20,
-	})
-	@IsOptional()
-	@Type(() => Number)
-	@IsInt()
-	limit?: number;
-
-	@ApiPropertyOptional({
-		description: "Cursor for pagination (last item ID from previous page)",
-	})
-	@IsOptional()
-	@IsString()
-	cursor?: string;
-}
+export class PaginatedNotesQueryDto extends PageQueryDto {}
 
 export class UserNoteDto {
 	@ApiProperty()
@@ -149,17 +134,7 @@ export class UserNoteDto {
 	updatedAt: string;
 }
 
-export class PaginatedNotesResponseDto {
+export class PaginatedNotesResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [UserNoteDto] })
 	items: UserNoteDto[];
-
-	@ApiProperty({
-		type: String,
-		nullable: true,
-		description: "Cursor for next page (null if no more items)",
-	})
-	nextCursor: string | null;
-
-	@ApiProperty({ description: "Total count of items" })
-	total: number;
 }

@@ -8,6 +8,7 @@ import {
 	IsString,
 	MaxLength,
 } from "class-validator";
+import { PageQueryDto, PaginationMetaDto } from "../../common/pagination";
 
 export class CreateReviewDto {
 	@ApiProperty({
@@ -266,23 +267,7 @@ export class CanonicalReviewResponseDto {
 	updatedAt: string;
 }
 
-export class PaginatedReviewsQueryDto {
-	@ApiPropertyOptional({
-		description: "Number of items to return",
-		default: 20,
-	})
-	@IsOptional()
-	@Type(() => Number)
-	@IsInt()
-	limit?: number;
-
-	@ApiPropertyOptional({
-		description: "Cursor for pagination (last item ID from previous page)",
-	})
-	@IsOptional()
-	@IsString()
-	cursor?: string;
-}
+export class PaginatedReviewsQueryDto extends PageQueryDto {}
 
 export class UserReviewDto {
 	@ApiProperty()
@@ -355,22 +340,12 @@ export class UserReviewDto {
 	updatedAt: string;
 }
 
-export class PaginatedReviewsResponseDto {
+export class PaginatedReviewsResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [UserReviewDto] })
 	items: UserReviewDto[];
-
-	@ApiProperty({
-		type: String,
-		nullable: true,
-		description: "Cursor for next page (null if no more items)",
-	})
-	nextCursor: string | null;
-
-	@ApiProperty({ description: "Total count of items" })
-	total: number;
 }
 
-export class MediaReviewsQueryDto {
+export class MediaReviewsQueryDto extends PageQueryDto {
 	@ApiProperty({
 		description: "Media type",
 		enum: ["movie", "show", "season", "episode"],
@@ -395,22 +370,6 @@ export class MediaReviewsQueryDto {
 	@Type(() => Number)
 	@IsInt()
 	episodeNumber?: number;
-
-	@ApiPropertyOptional({
-		description: "Number of items to return",
-		default: 20,
-	})
-	@IsOptional()
-	@Type(() => Number)
-	@IsInt()
-	limit?: number;
-
-	@ApiPropertyOptional({
-		description: "Cursor for pagination",
-	})
-	@IsOptional()
-	@IsString()
-	cursor?: string;
 
 	@ApiPropertyOptional({
 		description:
@@ -494,19 +453,9 @@ export class MediaReviewItemDto {
 	updatedAt: string;
 }
 
-export class MediaReviewsResponseDto {
+export class MediaReviewsResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [MediaReviewItemDto] })
 	items: MediaReviewItemDto[];
-
-	@ApiProperty({ description: "Total review count" })
-	total: number;
-
-	@ApiProperty({
-		type: String,
-		nullable: true,
-		description: "Cursor for next page (null if no more items)",
-	})
-	nextCursor: string | null;
 }
 
 export class ReviewLikeItemDto {

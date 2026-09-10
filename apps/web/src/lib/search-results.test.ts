@@ -5,10 +5,9 @@ import {
 	collectShownKeys,
 	dedupeResults,
 	getBackdropUrl,
-	getCastTotalPages,
 	getPosterUrl,
-	getSearchTotalPages,
 	getTitle,
+	getTotalPages,
 	hasResultsForTab,
 	isSearchTab,
 	isSearchTabLoading,
@@ -381,17 +380,9 @@ describe("isSearchTabLoading", () => {
 });
 
 describe("page counts", () => {
-	it("rounds the multi-search total up to whole pages, never below one", () => {
-		expect(getSearchTotalPages(undefined)).toBe(1);
-		expect(getSearchTotalPages(0)).toBe(1);
-		expect(getSearchTotalPages(20)).toBe(1);
-		expect(getSearchTotalPages(21)).toBe(2);
-		expect(getSearchTotalPages(199)).toBe(10);
-	});
-
-	it("passes the cast page count through with a floor of one", () => {
-		expect(getCastTotalPages(undefined)).toBe(1);
-		expect(getCastTotalPages(0)).toBe(1);
-		expect(getCastTotalPages(7)).toBe(7);
+	it("passes the server page count through with a floor of one", () => {
+		expect(getTotalPages(undefined)).toBe(1);
+		expect(getTotalPages(0)).toBe(1);
+		expect(getTotalPages(7)).toBe(7);
 	});
 });

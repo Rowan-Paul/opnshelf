@@ -7,10 +7,19 @@ const testDoubles = vi.hoisted(() => ({
 	invalidateQueries: vi.fn(),
 	previewQueryKey: vi.fn(() => ["reviews", "preview"]),
 	infiniteQueryKey: vi.fn(() => ["reviews", "infinite"]),
+	endReached: { current: undefined as (() => void) | undefined },
 }));
 
 vi.mock("@/lib/use-public-profile", () => ({
 	useInfiniteProfileReviews: testDoubles.useReviews,
+}));
+
+// Captures the tab's end-reached callback so the test can act as the scroll
+// container nearing its bottom.
+vi.mock("@/lib/use-end-reached", () => ({
+	useEndReached: (callback: () => void) => {
+		testDoubles.endReached.current = callback;
+	},
 }));
 
 vi.mock("@opnshelf/api", () => ({
@@ -137,24 +146,14 @@ beforeEach(() => {
 	testDoubles.invalidateQueries.mockReset();
 	testDoubles.previewQueryKey.mockClear();
 	testDoubles.infiniteQueryKey.mockClear();
+	testDoubles.endReached.current = undefined;
 });
 
 describe("ReviewsTab", () => {
-	it("retains reviews in page order and coalesces rapid load-more presses", async () => {
-		let resolveLoad: (() => void) | undefined;
-		const load = new Promise<void>((resolve) => {
-			resolveLoad = resolve;
-		});
-		const fetchNextPage = vi.fn(() => load);
+	it("appends the next page in order when the scroll container nears its end", () => {
+		const fetchNextPage = vi.fn();
 		let state = {
-			data: {
-				pages: [
-					{
-						items: [review("1", "First")],
-						nextCursor: "next" as string | null,
-					},
-				],
-			},
+			data: { pages: [{ items: [review("1", "First")], hasNextPage: true }] },
 			isLoading: false,
 			isError: false,
 			fetchNextPage,
@@ -168,31 +167,17 @@ describe("ReviewsTab", () => {
 				<ReviewsTab userDid="did:one" handle="one" isOwner={false} />,
 			);
 		});
-		const buttons = renderer.root.findAllByType("pressable" as never);
-		const loadButton = buttons.find((node) =>
-			node
-				.findAllByType("text" as never)
-				.some((text) => text.children.includes("Load more")),
-		);
-		expect(loadButton).toBeDefined();
-		let firstLoad!: Promise<void>;
-		act(() => {
-			firstLoad = loadButton?.props.onPress();
-			loadButton?.props.onPress();
-		});
+		expect(renderedText(renderer)).not.toContain("Load more");
+
+		act(() => testDoubles.endReached.current?.());
 		expect(fetchNextPage).toHaveBeenCalledTimes(1);
 
-		resolveLoad?.();
-		await act(async () => firstLoad);
 		state = {
 			...state,
 			data: {
 				pages: [
-					{ items: [review("1", "First")], nextCursor: "next" },
-					{
-						items: [review("2", "Second")],
-						nextCursor: null as string | null,
-					},
+					{ items: [review("1", "First")], hasNextPage: true },
+					{ items: [review("2", "Second")], hasNextPage: false },
 				],
 			},
 			hasNextPage: false,
@@ -207,15 +192,19 @@ describe("ReviewsTab", () => {
 		expect(text.filter((value) => value === "First")).toHaveLength(1);
 		expect(text.filter((value) => value === "Second")).toHaveLength(1);
 		expect(text.indexOf("First")).toBeLessThan(text.indexOf("Second"));
-		expect(text).not.toContain("Load more");
+
+		// Nothing left to load: nearing the end again is a no-op.
+		act(() => testDoubles.endReached.current?.());
+		expect(fetchNextPage).toHaveBeenCalledTimes(1);
 	});
 
-	it("shows a disabled loading control while fetching the next page", () => {
+	it("shows a trailing skeleton and skips duplicate loads while fetching", () => {
+		const fetchNextPage = vi.fn();
 		testDoubles.useReviews.mockReturnValue({
-			data: { pages: [{ items: [review("1", "First")], nextCursor: "next" }] },
+			data: { pages: [{ items: [review("1", "First")], hasNextPage: true }] },
 			isLoading: false,
 			isError: false,
-			fetchNextPage: vi.fn(),
+			fetchNextPage,
 			hasNextPage: true,
 			isFetchingNextPage: true,
 		});
@@ -225,18 +214,47 @@ describe("ReviewsTab", () => {
 				<ReviewsTab userDid="did:one" handle="one" isOwner={false} />,
 			);
 		});
-		const loadingButton = renderer.root
-			.findAllByType("pressable" as never)
-			.find(
-				(node) => node.findAllByType("activity-indicator" as never).length > 0,
+		expect(renderer.root.findAllByType("skeleton" as never)).toHaveLength(1);
+		expect(renderedText(renderer)).toContain("First");
+
+		act(() => testDoubles.endReached.current?.());
+		expect(fetchNextPage).not.toHaveBeenCalled();
+	});
+
+	it("stops chaining after a failed next page and retries from the footer", () => {
+		const fetchNextPage = vi.fn();
+		testDoubles.useReviews.mockReturnValue({
+			data: { pages: [{ items: [review("1", "First")], hasNextPage: true }] },
+			isLoading: false,
+			isError: false,
+			fetchNextPage,
+			hasNextPage: true,
+			isFetchingNextPage: false,
+			isFetchNextPageError: true,
+		});
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(
+				<ReviewsTab userDid="did:one" handle="one" isOwner={false} />,
 			);
-		expect(loadingButton?.props.disabled).toBe(true);
+		});
+		// Loaded items stay on screen; nearing the end must not loop the request.
+		expect(renderedText(renderer)).toContain("First");
+		act(() => testDoubles.endReached.current?.());
+		expect(fetchNextPage).not.toHaveBeenCalled();
+
+		const retry = renderer.root
+			.findAllByType("pressable" as never)
+			.find((node) => node.props.accessibilityLabel === "Retry loading more");
+		expect(retry).toBeDefined();
+		act(() => retry?.props.onPress());
+		expect(fetchNextPage).toHaveBeenCalledTimes(1);
 	});
 
 	it("invalidates both the Overview preview and infinite list after a mutation", () => {
 		testDoubles.useReviews.mockReturnValue({
 			data: {
-				pages: [{ items: [review("1", "First")], nextCursor: null }],
+				pages: [{ items: [review("1", "First")], hasNextPage: false }],
 			},
 			isLoading: false,
 			isError: false,

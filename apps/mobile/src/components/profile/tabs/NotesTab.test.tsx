@@ -2,10 +2,21 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotesTab } from "./NotesTab";
 
-const profile = vi.hoisted(() => ({ useNotes: vi.fn() }));
+const profile = vi.hoisted(() => ({
+	useNotes: vi.fn(),
+	endReached: { current: undefined as (() => void) | undefined },
+}));
 
 vi.mock("@/lib/use-public-profile", () => ({
 	useInfiniteProfileNotes: profile.useNotes,
+}));
+
+// Captures the tab's end-reached callback so the test can act as the scroll
+// container nearing its bottom.
+vi.mock("@/lib/use-end-reached", () => ({
+	useEndReached: (callback: () => void) => {
+		profile.endReached.current = callback;
+	},
 }));
 
 vi.mock("react-native", async () => {
@@ -78,24 +89,16 @@ function renderedText(renderer: ReactTestRenderer) {
 		.filter((child): child is string => typeof child === "string");
 }
 
-beforeEach(() => profile.useNotes.mockReset());
+beforeEach(() => {
+	profile.useNotes.mockReset();
+	profile.endReached.current = undefined;
+});
 
 describe("NotesTab", () => {
-	it("appends the next page once and disables rapid duplicate loads", async () => {
-		let resolveLoad: (() => void) | undefined;
-		const load = new Promise<void>((resolve) => {
-			resolveLoad = resolve;
-		});
-		const fetchNextPage = vi.fn(() => load);
+	it("appends the next page when the scroll container nears its end", () => {
+		const fetchNextPage = vi.fn();
 		let state = {
-			data: {
-				pages: [
-					{
-						items: [note("1", "First")],
-						nextCursor: "next" as string | null,
-					},
-				],
-			},
+			data: { pages: [{ items: [note("1", "First")], hasNextPage: true }] },
 			isLoading: false,
 			isError: false,
 			fetchNextPage,
@@ -107,34 +110,25 @@ describe("NotesTab", () => {
 		act(() => {
 			renderer = create(<NotesTab userDid="did:one" isOwner={false} />);
 		});
-		const button = renderer.root.findByType("pressable" as never);
-		let firstLoad!: Promise<void>;
-		act(() => {
-			firstLoad = button.props.onPress();
-			button.props.onPress();
-		});
+		expect(renderer.root.findAllByType("pressable" as never)).toHaveLength(0);
+
+		act(() => profile.endReached.current?.());
 		expect(fetchNextPage).toHaveBeenCalledTimes(1);
 
+		// While the page is in flight a trailing skeleton stands in for it and
+		// another end-reached signal does not start a second request.
 		state = { ...state, isFetchingNextPage: true };
 		act(() => renderer.update(<NotesTab userDid="did:one" isOwner={false} />));
-		expect(renderer.root.findByType("pressable" as never).props.disabled).toBe(
-			true,
-		);
-		expect(
-			renderer.root.findAllByType("activity-indicator" as never),
-		).toHaveLength(1);
+		expect(renderer.root.findAllByType("skeleton" as never)).toHaveLength(1);
+		act(() => profile.endReached.current?.());
+		expect(fetchNextPage).toHaveBeenCalledTimes(1);
 
-		resolveLoad?.();
-		await act(async () => firstLoad);
 		state = {
 			...state,
 			data: {
 				pages: [
-					{ items: [note("1", "First")], nextCursor: "next" },
-					{
-						items: [note("2", "Second")],
-						nextCursor: null as string | null,
-					},
+					{ items: [note("1", "First")], hasNextPage: true },
+					{ items: [note("2", "Second")], hasNextPage: false },
 				],
 			},
 			isFetchingNextPage: false,
@@ -146,14 +140,16 @@ describe("NotesTab", () => {
 		expect(text.filter((value) => value === "First")).toHaveLength(1);
 		expect(text.filter((value) => value === "Second")).toHaveLength(1);
 		expect(text.indexOf("First")).toBeLessThan(text.indexOf("Second"));
-		expect(renderer.root.findAllByType("pressable" as never)).toHaveLength(0);
+		expect(renderer.root.findAllByType("skeleton" as never)).toHaveLength(0);
 	});
 
 	it("does not show the previous user's pages while a new profile loads", () => {
 		profile.useNotes.mockImplementation((userDid: string) => {
 			if (userDid === "did:a") {
 				return {
-					data: { pages: [{ items: [note("a", "A note")], nextCursor: null }] },
+					data: {
+						pages: [{ items: [note("a", "A note")], hasNextPage: false }],
+					},
 					isLoading: false,
 					isError: false,
 					fetchNextPage: vi.fn(),

@@ -50,3 +50,4 @@ Numbering notes:
 | [0030-progressive-account-wide-oauth-permissions.md](0030-progressive-account-wide-oauth-permissions.md) | 0030 | Progressive, account-wide OAuth permissions (formerly numbered 0019) | Accepted (implicit) |
 | [0031-mutation-failures-are-reported-to-posthog.md](0031-mutation-failures-are-reported-to-posthog.md) | 0031 | Failed mutations are reported to PostHog as exceptions | Accepted |
 | [0032-social-is-one-shared-hub.md](0032-social-is-one-shared-hub.md) | 0032 | Social is one shared hub | Accepted; implemented |
+| [0033-one-pagination-contract-mobile-scrolls-web-pages.md](0033-one-pagination-contract-mobile-scrolls-web-pages.md) | 0033 | One pagination contract; Mobile scrolls, Web pages | Accepted; implemented |

@@ -20,7 +20,7 @@ import {
 	DEFAULT_SOCIAL_PAGE_SIZE,
 	getPaginationMeta,
 	MAX_SOCIAL_PAGE_SIZE,
-} from "./social-pagination";
+} from "../common/pagination";
 import { SocialUsersService } from "./social-users.service";
 
 export interface ATSession {

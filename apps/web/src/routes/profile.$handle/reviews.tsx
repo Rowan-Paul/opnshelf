@@ -17,7 +17,7 @@ import { ReviewBody } from "#/components/ReviewBody";
 import { ReviewDialog } from "#/components/ReviewDialog";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { useAuth } from "#/lib/auth-context";
-import { useUserReviews } from "#/lib/hooks/useReviews";
+import { useInfiniteUserReviews } from "#/lib/hooks/useReviews";
 
 export const Route = createFileRoute("/profile/$handle/reviews")({
 	loader: async ({ context, params }) => {
@@ -52,12 +52,10 @@ function ProfileReviewsPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	const [cursor, setCursor] = useState<string | undefined>(undefined);
+	const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
+		useInfiniteUserReviews({ userDid });
 
-	const { data, isLoading } = useUserReviews({ userDid, limit: 20, cursor });
-
-	const reviews = data?.items ?? [];
-	const hasMore = data?.nextCursor != null;
+	const reviews = data?.pages.flatMap((page) => page.items) ?? [];
 
 	return (
 		<div className="space-y-6">
@@ -95,14 +93,15 @@ function ProfileReviewsPage() {
 				</div>
 			)}
 
-			{hasMore && (
+			{hasNextPage && (
 				<div className="flex justify-center">
 					<button
 						type="button"
-						onClick={() => setCursor(data?.nextCursor ?? undefined)}
+						disabled={isFetchingNextPage}
+						onClick={() => void fetchNextPage()}
 						className="btn btn-secondary"
 					>
-						Load more
+						{isFetchingNextPage ? "Loading…" : "Load more"}
 					</button>
 				</div>
 			)}
@@ -133,10 +132,7 @@ function ReviewCard({
 
 	const invalidateList = () =>
 		queryClient.invalidateQueries({
-			queryKey: reviewsControllerGetUserReviewsQueryKey({
-				path: { userDid },
-				query: { limit: 20 },
-			}),
+			queryKey: reviewsControllerGetUserReviewsQueryKey({ path: { userDid } }),
 		});
 
 	const handleDelete = () => {

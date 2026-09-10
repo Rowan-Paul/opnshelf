@@ -164,8 +164,8 @@ export function useDashboardContent(userDid: string | null) {
 	const statsQuery = useDashboardStats(userDid || "");
 
 	return {
-		movies: moviesQuery.data?.results || [],
-		shows: showsQuery.data?.results || [],
+		movies: moviesQuery.data?.items || [],
+		shows: showsQuery.data?.items || [],
 		stats: statsQuery.data,
 		isLoading:
 			moviesQuery.isLoading || showsQuery.isLoading || statsQuery.isLoading,

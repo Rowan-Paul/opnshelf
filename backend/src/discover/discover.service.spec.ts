@@ -67,19 +67,18 @@ describe("DiscoverService onboarding", () => {
 		);
 		const second = await service.onboarding();
 
-		expect(first.results).toHaveLength(20);
-		expect(first.results.filter((item) => item.id < 200)).toHaveLength(14);
-		expect(first.results.filter((item) => item.id >= 200)).toHaveLength(6);
+		expect(first.items).toHaveLength(20);
+		expect(first.items.filter((item) => item.id < 200)).toHaveLength(14);
+		expect(first.items.filter((item) => item.id >= 200)).toHaveLength(6);
+		expect(first.items.map((item) => `${item.media_type}:${item.id}`)).toEqual(
+			second.items.map((item) => `${item.media_type}:${item.id}`),
+		);
 		expect(
-			first.results.map((item) => `${item.media_type}:${item.id}`),
-		).toEqual(second.results.map((item) => `${item.media_type}:${item.id}`));
-		expect(
-			new Set(first.results.map((item) => `${item.media_type}:${item.id}`))
-				.size,
+			new Set(first.items.map((item) => `${item.media_type}:${item.id}`)).size,
 		).toBe(20);
-		for (let index = 1; index < first.results.length; index++) {
-			expect(first.results[index].media_type).not.toBe(
-				first.results[index - 1].media_type,
+		for (let index = 1; index < first.items.length; index++) {
+			expect(first.items[index].media_type).not.toBe(
+				first.items[index - 1].media_type,
 			);
 		}
 		expect(
@@ -111,10 +110,8 @@ describe("DiscoverService onboarding", () => {
 
 		const result = await service.onboarding();
 
-		expect(result.results).toHaveLength(20);
-		expect(result.results.every((item) => Boolean(item.poster_path))).toBe(
-			true,
-		);
+		expect(result.items).toHaveLength(20);
+		expect(result.items.every((item) => Boolean(item.poster_path))).toBe(true);
 	});
 
 	it("throws when every TMDB source fails", async () => {

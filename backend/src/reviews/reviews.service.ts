@@ -10,6 +10,13 @@ import type { Main as ReviewRecord } from "../lexicons/xyz/opnshelf/review.defs"
 import type { Main as ReviewLikeRecord } from "../lexicons/xyz/opnshelf/review/like.defs";
 import { $nsid as PUBLICATION_COLLECTION } from "../lexicons/site/standard/publication";
 import type { Main as PublicationRecord } from "../lexicons/site/standard/publication.defs";
+import {
+	clampPage,
+	clampPageSize,
+	DEFAULT_PAGE_SIZE,
+	getPaginationMeta,
+	MAX_PAGE_SIZE,
+} from "../common/pagination";
 import { PrismaService } from "../prisma/prisma.service";
 import {
 	BlogMirrorService,
@@ -137,20 +144,24 @@ export class ReviewsService {
 
 	async getUserReviews(
 		userDid: string,
-		limit = 20,
-		cursor?: string,
+		page?: number,
+		pageSize?: number,
 		requestingUserDid?: string,
 	) {
-		const take = limit + 1;
+		const where = { userDid };
+		const total = await this.prisma.review.count({ where });
+		const pagination = getPaginationMeta(
+			total,
+			clampPage(page ?? 1),
+			clampPageSize(pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
+		);
 
-		const reviews = await this.prisma.review.findMany({
-			where: { userDid },
-			orderBy: { createdAt: "desc" },
-			take,
-			...(cursor && {
-				skip: 1,
-				cursor: { id: cursor },
-			}),
+		const items = await this.prisma.review.findMany({
+			where,
+			// `id` breaks createdAt ties so offset pages never overlap or skip.
+			orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+			skip: (pagination.page - 1) * pagination.pageSize,
+			take: pagination.pageSize,
 			include: {
 				_count: { select: { likes: true } },
 				likes: requestingUserDid
@@ -161,14 +172,6 @@ export class ReviewsService {
 						}
 					: (false as const),
 			},
-		});
-
-		const hasMore = reviews.length > limit;
-		const items = hasMore ? reviews.slice(0, limit) : reviews;
-		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
-
-		const total = await this.prisma.review.count({
-			where: { userDid },
 		});
 
 		// A profile page can mix movies, shows, seasons, and episodes. Fetch the
@@ -236,26 +239,15 @@ export class ReviewsService {
 			};
 		});
 
-		return {
-			items: enrichedItems,
-			nextCursor,
-			total,
-		};
+		return { items: enrichedItems, pagination };
 	}
 
 	async getMediaReviews(
 		query: MediaReviewsQueryDto,
 		requestingUserDid?: string,
 	) {
-		const {
-			mediaType,
-			mediaId,
-			seasonNumber,
-			episodeNumber,
-			limit = 20,
-			pinnedReviewId,
-		} = query;
-		const take = limit + 1;
+		const { mediaType, mediaId, seasonNumber, episodeNumber, pinnedReviewId } =
+			query;
 
 		const where = {
 			mediaType,
@@ -269,7 +261,7 @@ export class ReviewsService {
 		// with identical like counts — the rating comes from the separate Rating
 		// entity joined by (userDid + media coordinates), never from the review
 		// (reviews carry no score). DB-level order stays (likeCount desc, createdAt
-		// desc) so cursor pagination remains stable; the rating only reorders ties
+		// desc) so page boundaries stay stable; the rating only reorders ties
 		// within a returned page.
 		const include = {
 			user: {
@@ -292,20 +284,24 @@ export class ReviewsService {
 				: (false as const),
 		};
 
-		const reviews = await this.prisma.review.findMany({
+		const total = await this.prisma.review.count({ where });
+		const pagination = getPaginationMeta(
+			total,
+			clampPage(query.page ?? 1),
+			clampPageSize(query.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
+		);
+
+		const items = await this.prisma.review.findMany({
 			where,
-			orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
-			take,
-			...(query.cursor && {
-				skip: 1,
-				cursor: { id: query.cursor },
-			}),
+			orderBy: [
+				{ likes: { _count: "desc" } },
+				{ createdAt: "desc" },
+				{ id: "desc" },
+			],
+			skip: (pagination.page - 1) * pagination.pageSize,
+			take: pagination.pageSize,
 			include,
 		});
-
-		const hasMore = reviews.length > limit;
-		const items = hasMore ? reviews.slice(0, limit) : reviews;
-		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
 
 		// Deep-link support: guarantee a specifically requested review is present
 		// even when community ordering would push it past this page.
@@ -318,8 +314,6 @@ export class ReviewsService {
 				items.unshift(pinned);
 			}
 		}
-
-		const total = await this.prisma.review.count({ where });
 
 		// Join each author's separate Rating for this exact media item. There is no
 		// stored pointer from a review to a rating — they correlate only by
@@ -348,7 +342,7 @@ export class ReviewsService {
 
 		// Apply the rating tiebreak among equal-likeCount neighbours, preserving
 		// the DB createdAt order for items with no/identical ratings. Stable sort
-		// keeps the cursor-defining order intact across pages.
+		// keeps the page-defining order intact across pages.
 		enrichedItems.sort((a, b) => {
 			if (b.likeCount !== a.likeCount) return 0;
 			const ra = a.authorRating ?? -1;
@@ -366,8 +360,7 @@ export class ReviewsService {
 					posterPath: media?.posterPath ?? null,
 				};
 			}),
-			total,
-			nextCursor,
+			pagination,
 		};
 	}
 
