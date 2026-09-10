@@ -114,6 +114,11 @@ function ProfileLayout() {
 			posthog.capture("user_followed", { source: "profile" });
 			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					(query.queryKey[0] as { _id?: string } | undefined)?._id ===
+					"socialControllerGetFeed",
+			});
 		},
 	});
 
@@ -124,6 +129,11 @@ function ProfileLayout() {
 			posthog.capture("user_unfollowed", { source: "profile" });
 			queryClient.invalidateQueries({ queryKey: relationshipQueryKey });
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					(query.queryKey[0] as { _id?: string } | undefined)?._id ===
+					"socialControllerGetFeed",
+			});
 		},
 	});
 

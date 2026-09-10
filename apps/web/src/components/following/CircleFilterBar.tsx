@@ -1,7 +1,6 @@
 import type { CircleDto } from "@opnshelf/api";
+import { Link } from "@tanstack/react-router";
 import { Settings2 } from "lucide-react";
-import { useState } from "react";
-import { ManageCirclesDialog } from "./ManageCirclesDialog";
 
 interface CircleFilterBarProps {
 	circles: CircleDto[];
@@ -14,8 +13,6 @@ export function CircleFilterBar({
 	activeCircleId,
 	onSelect,
 }: CircleFilterBarProps) {
-	const [manageOpen, setManageOpen] = useState(false);
-
 	const pillClass = (active: boolean) =>
 		`rounded-full px-3 py-1 text-sm transition-colors ${
 			active
@@ -42,20 +39,14 @@ export function CircleFilterBar({
 					{circle.name}
 				</button>
 			))}
-			<button
-				type="button"
+			<Link
+				to="/social/circles"
+				search={activeCircleId ? { circleId: activeCircleId } : {}}
 				className="ml-auto inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
-				onClick={() => setManageOpen(true)}
 			>
 				<Settings2 className="size-4" />
 				Manage
-			</button>
-
-			<ManageCirclesDialog
-				open={manageOpen}
-				onOpenChange={setManageOpen}
-				circles={circles}
-			/>
+			</Link>
 		</div>
 	);
 }

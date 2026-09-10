@@ -11,24 +11,26 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TraktImportRouteImport } from './routes/trakt-import'
 import { Route as TosRouteImport } from './routes/tos'
+import { Route as SocialRouteImport } from './routes/social'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SocialIndexRouteImport } from './routes/social/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SocialFindRouteImport } from './routes/social/find'
 import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
-import { Route as CirclesCircleIdRouteImport } from './routes/circles.$circleId'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
+import { Route as SocialCirclesIndexRouteImport } from './routes/social/circles/index'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
+import { Route as SocialCirclesCircleIdRouteImport } from './routes/social/circles/$circleId'
 import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
 import { Route as ReviewsHandleRkeyRouteImport } from './routes/reviews.$handle.$rkey'
 import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle/up-next'
@@ -57,6 +59,11 @@ const TraktImportRoute = TraktImportRouteImport.update({
 const TosRoute = TosRouteImport.update({
   id: '/tos',
   path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialRoute = SocialRouteImport.update({
+  id: '/social',
+  path: '/social',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -89,19 +96,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConnectionsRoute = ConnectionsRouteImport.update({
-  id: '/connections',
-  path: '/connections',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ActivityRoute = ActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -109,10 +106,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SocialIndexRoute = SocialIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SocialRoute,
+} as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SettingsRoute,
+} as any)
+const SocialFindRoute = SocialFindRouteImport.update({
+  id: '/find',
+  path: '/find',
+  getParentRoute: () => SocialRoute,
 } as any)
 const SignupGoogleRoute = SignupGoogleRouteImport.update({
   id: '/signup_/google',
@@ -134,20 +141,25 @@ const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
   path: '/embed/review-editor',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CirclesCircleIdRoute = CirclesCircleIdRouteImport.update({
-  id: '/circles/$circleId',
-  path: '/circles/$circleId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
   path: '/auth/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SocialCirclesIndexRoute = SocialCirclesIndexRouteImport.update({
+  id: '/circles/',
+  path: '/circles/',
+  getParentRoute: () => SocialRoute,
+} as any)
 const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProfileHandleRoute,
+} as any)
+const SocialCirclesCircleIdRoute = SocialCirclesCircleIdRouteImport.update({
+  id: '/circles/$circleId',
+  path: '/circles/$circleId',
+  getParentRoute: () => SocialRoute,
 } as any)
 const ShowsShowIdShowNameRoute = ShowsShowIdShowNameRouteImport.update({
   id: '/shows/$showId/$showName',
@@ -259,24 +271,24 @@ const ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
-  '/connections': typeof ConnectionsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
+  '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
   '/auth/complete': typeof AuthCompleteRoute
-  '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/google': typeof SignupGoogleRoute
+  '/social/find': typeof SocialFindRoute
   '/settings/': typeof SettingsIndexRoute
+  '/social/': typeof SocialIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -287,7 +299,9 @@ export interface FileRoutesByFullPath {
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
+  '/social/circles/$circleId': typeof SocialCirclesCircleIdRoute
   '/profile/$handle/': typeof ProfileHandleIndexRoute
+  '/social/circles/': typeof SocialCirclesIndexRoute
   '/movies/$movieId/$movieName/credits': typeof MoviesMovieIdMovieNameCreditsRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
   '/shows/$showId/$showName/credits': typeof ShowsShowIdShowNameCreditsRoute
@@ -300,9 +314,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
-  '/connections': typeof ConnectionsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
@@ -311,11 +323,12 @@ export interface FileRoutesByTo {
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
   '/auth/complete': typeof AuthCompleteRoute
-  '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/google': typeof SignupGoogleRoute
+  '/social/find': typeof SocialFindRoute
   '/settings': typeof SettingsIndexRoute
+  '/social': typeof SocialIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -324,7 +337,9 @@ export interface FileRoutesByTo {
   '/profile/$handle/shelf': typeof ProfileHandleShelfRoute
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
+  '/social/circles/$circleId': typeof SocialCirclesCircleIdRoute
   '/profile/$handle': typeof ProfileHandleIndexRoute
+  '/social/circles': typeof SocialCirclesIndexRoute
   '/movies/$movieId/$movieName/credits': typeof MoviesMovieIdMovieNameCreditsRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
   '/shows/$showId/$showName/credits': typeof ShowsShowIdShowNameCreditsRoute
@@ -337,24 +352,24 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
   '/calendar': typeof CalendarRoute
-  '/connections': typeof ConnectionsRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
+  '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
   '/auth/complete': typeof AuthCompleteRoute
-  '/circles/$circleId': typeof CirclesCircleIdRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
   '/signup_/google': typeof SignupGoogleRoute
+  '/social/find': typeof SocialFindRoute
   '/settings/': typeof SettingsIndexRoute
+  '/social/': typeof SocialIndexRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -365,7 +380,9 @@ export interface FileRoutesById {
   '/profile/$handle/up-next': typeof ProfileHandleUpNextRoute
   '/reviews/$handle/$rkey': typeof ReviewsHandleRkeyRoute
   '/shows/$showId/$showName': typeof ShowsShowIdShowNameRouteWithChildren
+  '/social/circles/$circleId': typeof SocialCirclesCircleIdRoute
   '/profile/$handle/': typeof ProfileHandleIndexRoute
+  '/social/circles/': typeof SocialCirclesIndexRoute
   '/movies/$movieId/$movieName/credits': typeof MoviesMovieIdMovieNameCreditsRoute
   '/profile/$handle/lists/$listSlug': typeof ProfileHandleListsListSlugRoute
   '/shows/$showId/$showName/credits': typeof ShowsShowIdShowNameCreditsRoute
@@ -380,24 +397,24 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/activity'
     | '/calendar'
-    | '/connections'
     | '/login'
     | '/onboarding'
     | '/privacy'
     | '/search'
     | '/settings'
     | '/signup'
+    | '/social'
     | '/tos'
     | '/trakt-import'
     | '/auth/complete'
-    | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
     | '/settings/$section'
     | '/signup/google'
+    | '/social/find'
     | '/settings/'
+    | '/social/'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -408,7 +425,9 @@ export interface FileRouteTypes {
     | '/profile/$handle/up-next'
     | '/reviews/$handle/$rkey'
     | '/shows/$showId/$showName'
+    | '/social/circles/$circleId'
     | '/profile/$handle/'
+    | '/social/circles/'
     | '/movies/$movieId/$movieName/credits'
     | '/profile/$handle/lists/$listSlug'
     | '/shows/$showId/$showName/credits'
@@ -421,9 +440,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/activity'
     | '/calendar'
-    | '/connections'
     | '/login'
     | '/onboarding'
     | '/privacy'
@@ -432,11 +449,12 @@ export interface FileRouteTypes {
     | '/tos'
     | '/trakt-import'
     | '/auth/complete'
-    | '/circles/$circleId'
     | '/embed/review-editor'
     | '/settings/$section'
     | '/signup/google'
+    | '/social/find'
     | '/settings'
+    | '/social'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -445,7 +463,9 @@ export interface FileRouteTypes {
     | '/profile/$handle/shelf'
     | '/profile/$handle/up-next'
     | '/reviews/$handle/$rkey'
+    | '/social/circles/$circleId'
     | '/profile/$handle'
+    | '/social/circles'
     | '/movies/$movieId/$movieName/credits'
     | '/profile/$handle/lists/$listSlug'
     | '/shows/$showId/$showName/credits'
@@ -457,24 +477,24 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/activity'
     | '/calendar'
-    | '/connections'
     | '/login'
     | '/onboarding'
     | '/privacy'
     | '/search'
     | '/settings'
     | '/signup'
+    | '/social'
     | '/tos'
     | '/trakt-import'
     | '/auth/complete'
-    | '/circles/$circleId'
     | '/embed/review-editor'
     | '/profile/$handle'
     | '/settings/$section'
     | '/signup_/google'
+    | '/social/find'
     | '/settings/'
+    | '/social/'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -485,7 +505,9 @@ export interface FileRouteTypes {
     | '/profile/$handle/up-next'
     | '/reviews/$handle/$rkey'
     | '/shows/$showId/$showName'
+    | '/social/circles/$circleId'
     | '/profile/$handle/'
+    | '/social/circles/'
     | '/movies/$movieId/$movieName/credits'
     | '/profile/$handle/lists/$listSlug'
     | '/shows/$showId/$showName/credits'
@@ -499,19 +521,17 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ActivityRoute: typeof ActivityRoute
   CalendarRoute: typeof CalendarRoute
-  ConnectionsRoute: typeof ConnectionsRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   SignupRoute: typeof SignupRoute
+  SocialRoute: typeof SocialRouteWithChildren
   TosRoute: typeof TosRoute
   TraktImportRoute: typeof TraktImportRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
-  CirclesCircleIdRoute: typeof CirclesCircleIdRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   SignupGoogleRoute: typeof SignupGoogleRoute
@@ -536,6 +556,13 @@ declare module '@tanstack/react-router' {
       path: '/tos'
       fullPath: '/tos'
       preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/social': {
+      id: '/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof SocialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -580,25 +607,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/connections': {
-      id: '/connections'
-      path: '/connections'
-      fullPath: '/connections'
-      preLoaderRoute: typeof ConnectionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/activity': {
-      id: '/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof ActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -608,12 +621,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/social/': {
+      id: '/social/'
+      path: '/'
+      fullPath: '/social/'
+      preLoaderRoute: typeof SocialIndexRouteImport
+      parentRoute: typeof SocialRoute
+    }
     '/settings/': {
       id: '/settings/'
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
+    }
+    '/social/find': {
+      id: '/social/find'
+      path: '/find'
+      fullPath: '/social/find'
+      preLoaderRoute: typeof SocialFindRouteImport
+      parentRoute: typeof SocialRoute
     }
     '/signup_/google': {
       id: '/signup_/google'
@@ -643,13 +670,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbedReviewEditorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/circles/$circleId': {
-      id: '/circles/$circleId'
-      path: '/circles/$circleId'
-      fullPath: '/circles/$circleId'
-      preLoaderRoute: typeof CirclesCircleIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth/complete': {
       id: '/auth/complete'
       path: '/auth/complete'
@@ -657,12 +677,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/social/circles/': {
+      id: '/social/circles/'
+      path: '/circles'
+      fullPath: '/social/circles/'
+      preLoaderRoute: typeof SocialCirclesIndexRouteImport
+      parentRoute: typeof SocialRoute
+    }
     '/profile/$handle/': {
       id: '/profile/$handle/'
       path: '/'
       fullPath: '/profile/$handle/'
       preLoaderRoute: typeof ProfileHandleIndexRouteImport
       parentRoute: typeof ProfileHandleRoute
+    }
+    '/social/circles/$circleId': {
+      id: '/social/circles/$circleId'
+      path: '/circles/$circleId'
+      fullPath: '/social/circles/$circleId'
+      preLoaderRoute: typeof SocialCirclesCircleIdRouteImport
+      parentRoute: typeof SocialRoute
     }
     '/shows/$showId/$showName': {
       id: '/shows/$showId/$showName'
@@ -814,6 +848,23 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
   SettingsRouteChildren,
 )
 
+interface SocialRouteChildren {
+  SocialFindRoute: typeof SocialFindRoute
+  SocialIndexRoute: typeof SocialIndexRoute
+  SocialCirclesCircleIdRoute: typeof SocialCirclesCircleIdRoute
+  SocialCirclesIndexRoute: typeof SocialCirclesIndexRoute
+}
+
+const SocialRouteChildren: SocialRouteChildren = {
+  SocialFindRoute: SocialFindRoute,
+  SocialIndexRoute: SocialIndexRoute,
+  SocialCirclesCircleIdRoute: SocialCirclesCircleIdRoute,
+  SocialCirclesIndexRoute: SocialCirclesIndexRoute,
+}
+
+const SocialRouteWithChildren =
+  SocialRoute._addFileChildren(SocialRouteChildren)
+
 interface ProfileHandleListsRouteChildren {
   ProfileHandleListsListSlugRoute: typeof ProfileHandleListsListSlugRoute
   ProfileHandleListsIndexRoute: typeof ProfileHandleListsIndexRoute
@@ -889,19 +940,17 @@ const ShowsShowIdShowNameRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ActivityRoute: ActivityRoute,
   CalendarRoute: CalendarRoute,
-  ConnectionsRoute: ConnectionsRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRouteWithChildren,
   SignupRoute: SignupRoute,
+  SocialRoute: SocialRouteWithChildren,
   TosRoute: TosRoute,
   TraktImportRoute: TraktImportRoute,
   AuthCompleteRoute: AuthCompleteRoute,
-  CirclesCircleIdRoute: CirclesCircleIdRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   SignupGoogleRoute: SignupGoogleRoute,

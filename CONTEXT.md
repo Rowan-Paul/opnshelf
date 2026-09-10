@@ -69,7 +69,7 @@ The first-run setup a user completes _after_ account creation and email verifica
 _Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup), Welcome Tour (that comes after, over the live UI)
 
 **Welcome Tour**:
-The one-shot orientation that runs after **Onboarding** by walking the user through the real app: **Discover**, **Connections**, **Activity**, **Up Next** and **Shelf**, plus a client-specific tail — long-press quick actions and shake-to-feedback on the **Mobile App**, the ⌘K palette and its feedback dialog on the **Web App**. The orientation steps are the same on both clients because the routes and names already are; only the tail differs. Authed-only. Seen-state is an int version per client, stored on the User, so bumping a version replays that client's whole tour and it never replays on reinstall. Skip is on every step and counts as completed, and a Settings entry re-runs it. See ADR 0024.
+The one-shot orientation that runs after **Onboarding** by walking the user through the real app: **Discover**, **Social**, **Up Next** and **Shelf**, plus a client-specific tail — long-press quick actions and shake-to-feedback on the **Mobile App**, the ⌘K palette and its feedback dialog on the **Web App**. The orientation steps are the same on both clients because the routes and names already are; only the tail differs. Authed-only. Seen-state is an int version per client, stored on the User, so bumping a version replays that client's whole tour and it never replays on reinstall. Skip is on every step and counts as completed, and a Settings entry re-runs it. See ADR 0024.
 _Avoid_: Onboarding (that's the account-setup wizard that precedes it), tutorial, walkthrough, product tour, coach marks
 
 **Tour Step**:
@@ -85,7 +85,7 @@ A single item in the followed-users feed — a followed user's **Watch** (movie 
 _Avoid_: Event, feed post
 
 **Activity Feed**:
-The reverse-chronological stream of **Activities** from everyone the authenticated user follows. The full feed is the mobile Activity tab and the web "following" page; the home dashboard shows a short preview of the same feed.
+The reverse-chronological stream of **Activities** from Users the authenticated user follows, optionally filtered by **Circle**. It is the primary content of **Social**; **Home** shows a short preview of the same feed.
 
 **Person**:
 A cast or crew member sourced from TMDB — actor, director, writer, composer, etc. — not just actors. Has a TMDB person id and a detail page at `/people/{id}/{name-slug}`. A Person is **not** an opnshelf account holder; see _User_. In the ⌘K palette, Person results appear under the **Cast & Crew** heading (not "Actors", since the set includes directors and crew).
@@ -127,13 +127,21 @@ _Avoid_: Prompt (that is the Home card), toast, notification, alert
 A home-screen widget on Android and iOS, placed by the user from the system widget picker, that renders the signed-in user's 30-day profile activity graph plus its total Watch count. It shows the signed-in user's own graph only — never another user's — and deep-links to that user's **Profile** on tap. When signed out it shows a sign-in placeholder that opens the login screen. It is the only thing called a "widget": the in-app profile/dashboard component it mirrors is just the *activity graph*, never a widget, despite the historical slang.
 _Avoid_: Home widget (collides with **Home**), activity widget (collides with **Activity**), shelf widget (it renders the activity graph, not **Shelf** contents)
 
+**Social**:
+The shared social hub on the **Web App** and **Mobile App**, bringing together the **Activity Feed**, finding Users to follow, and **Circles**. Its primary content is the Activity Feed; finding people is the primary content for a User who follows nobody.
+_Avoid_: Activity or Connections (as names for the whole hub), Network
+
+**Find people**:
+The supporting page within **Social** for finding Users to follow, with access to the signed-in User's **Following / Followers** lists. Distinct from **Discover**, which is for Media Items.
+_Avoid_: Discover (reserved for media discovery)
+
 **Connections**:
-The destination for growing and organising your network: finding people (people search) and your **Circles**. The "manage people" counterpart to **Activity** (the "consume the feed" surface). The full **Following**/**Followers** lists are canonical on the **Profile**, not hosted here; Connections may show small recent-following and recent-followers *previews* (a glance + "see all" entry point that links to the canonical profile list), but never the managed lists themselves. One name on both web and mobile — supersedes the old split of "Following" (web page), "Connections" (mobile screen) and "Find" (mobile button).
-_Avoid_: Find, Friends, People (collides with the User/Person split), Network, the old "Following" page name
+The capabilities within **Social** for finding Users to follow and organising followed Users into **Circles**. No longer a separate top-level destination; distinct from the **Following / Followers** lists.
+_Avoid_: Friends (there is no mutual-friend relationship), Network
 
 **Following / Followers**:
 The list of Users a given User follows / is followed by. Canonically rendered on that User's **Profile** (a single shared list component), reached from the profile's follower/following counts. On your own Profile the rows carry manage affordances (unfollow, add-to-**Circle**); on others' it is read-only. Counts shown on a Profile are that User's own totals — never derived from the items in a followed list.
-_Avoid_: Connections (reserved for the hub destination)
+_Avoid_: Connections (broader than either list)
 
 **Circle**:
 A private, personal, named grouping of Users you follow — used to filter your Activity Feed (e.g. see only "Family" or "Cinephiles" activity). Visible only to its owner; **not** a PDS record (it is local-only view state, never federated). Membership requires an active Follow and is dropped when you unfollow. A followed User may belong to many Circles. Distinct from a _List_ (media curation) and a _Format_ (Library axis).

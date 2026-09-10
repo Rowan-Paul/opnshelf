@@ -29,7 +29,7 @@ Numbering notes:
 | [0009-bulk-watch-best-effort-batch-sync.md](0009-bulk-watch-best-effort-batch-sync.md) | 0009 | Bulk watch logging is best-effort batch-sync | Accepted (implicit) |
 | [0010-circles-are-local-only-not-pds-records.md](0010-circles-are-local-only-not-pds-records.md) | 0010 | Circles are local-only, not PDS records | Accepted (implicit) |
 | [0011-library-ownership-separate-from-lists.md](0011-library-ownership-separate-from-lists.md) | 0011 | The Library (ownership) is modelled separately from Lists (curation) | Accepted (implicit) |
-| [0012-unified-social-ia-activity-and-connections.md](0012-unified-social-ia-activity-and-connections.md) | 0012 | Unified social IA: Activity + Connections, shared across web and mobile | Accepted (implicit) |
+| [0012-unified-social-ia-activity-and-connections.md](0012-unified-social-ia-activity-and-connections.md) | 0012 | Unified social IA: Activity + Connections, shared across web and mobile | Partially superseded by 0032 |
 | [0013-reviews-as-opnshelf-lexicon-with-optional-blog-mirror.md](0013-reviews-as-opnshelf-lexicon-with-optional-blog-mirror.md) | 0013 | Reviews as `xyz.opnshelf.review` with optional standard.site blog mirror | Accepted (implicit); supersedes 0002 and 0003 |
 | [0014-per-reader-blog-mirror-content.md](0014-per-reader-blog-mirror-content.md) | 0014 | Per-reader blog-mirror content (Leaflet, Offprint, Pckt) | Implemented |
 | [0015-devices-are-client-identified-sessions.md](0015-devices-are-client-identified-sessions.md) | 0015 | Devices are client-identified sessions, claimed by header | Accepted (implicit) |
@@ -41,7 +41,7 @@ Numbering notes:
 | [0021-staging-shares-the-production-pds.md](0021-staging-shares-the-production-pds.md) | 0021 | Staging shares the production PDS but never shares Tab | Accepted |
 | [0022-mobile-apps-capture-opnshelf-links.md](0022-mobile-apps-capture-opnshelf-links.md) | 0022 | Mobile Apps capture opnshelf.xyz links | Accepted (implicit) |
 | [0023-mobile-routes-match-web-urls.md](0023-mobile-routes-match-web-urls.md) | 0023 | Mobile routes match the Web App's URLs | Accepted (implicit) |
-| [0024-welcome-tour-is-hand-rolled-and-per-platform.md](0024-welcome-tour-is-hand-rolled-and-per-platform.md) | 0024 | The Welcome Tour walks the real app, and is hand-rolled on both clients | Accepted (implicit) |
+| [0024-welcome-tour-is-hand-rolled-and-per-platform.md](0024-welcome-tour-is-hand-rolled-and-per-platform.md) | 0024 | The Welcome Tour walks the real app, and is hand-rolled on both clients | Partially superseded by 0032 |
 | [0025-in-memory-rate-limiting-assumes-one-backend-replica.md](0025-in-memory-rate-limiting-assumes-one-backend-replica.md) | 0025 | In-memory rate limiting assumes one backend replica | Accepted |
 | [0026-mobile-oauth-completion-uses-a-single-use-handoff-code.md](0026-mobile-oauth-completion-uses-a-single-use-handoff-code.md) | 0026 | Mobile OAuth completion uses a single-use handoff code | Accepted |
 | [0027-rebuild-mobile-on-uniwind-rnr.md](0027-rebuild-mobile-on-uniwind-rnr.md) | 0027 | Rebuild the Mobile App fresh on Uniwind + react-native-reusables (formerly numbered 0002) | Accepted (implicit); its deferral of Trakt Import and social features from onboarding is superseded by 0006 |
@@ -49,3 +49,4 @@ Numbering notes:
 | [0029-review-bluesky-cross-posts-are-independent-posts.md](0029-review-bluesky-cross-posts-are-independent-posts.md) | 0029 | Review Bluesky Cross-posts are independent posts (formerly numbered 0015) | Accepted (implicit) |
 | [0030-progressive-account-wide-oauth-permissions.md](0030-progressive-account-wide-oauth-permissions.md) | 0030 | Progressive, account-wide OAuth permissions (formerly numbered 0019) | Accepted (implicit) |
 | [0031-mutation-failures-are-reported-to-posthog.md](0031-mutation-failures-are-reported-to-posthog.md) | 0031 | Failed mutations are reported to PostHog as exceptions | Accepted |
+| [0032-social-is-one-shared-hub.md](0032-social-is-one-shared-hub.md) | 0032 | Social is one shared hub | Accepted; implemented |

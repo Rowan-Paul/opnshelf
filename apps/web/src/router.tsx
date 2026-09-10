@@ -17,6 +17,14 @@ export function getRouter() {
 		routeTree,
 		context,
 		scrollRestoration: true,
+		// Social keeps its feed position for the session (ADR 0032): returning
+		// from Find people or Circles restores where the reader left off, the
+		// same way the Mobile tab stays mounted. Other pages keep the default
+		// per-history-entry key.
+		getScrollRestorationKey: (location) =>
+			location.pathname === "/social"
+				? location.href
+				: (location.state.__TSR_key ?? location.href),
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,
 	});

@@ -215,7 +215,10 @@ function SearchPage() {
 			queryClient.invalidateQueries({
 				predicate: (q) => {
 					const key = q.queryKey[0] as { _id?: string } | undefined;
-					return key?._id === "socialControllerSearchPeople";
+					return (
+						key?._id === "socialControllerSearchPeople" ||
+						key?._id === "socialControllerGetFeed"
+					);
 				},
 			});
 		},
@@ -233,7 +236,10 @@ function SearchPage() {
 			queryClient.invalidateQueries({
 				predicate: (q) => {
 					const key = q.queryKey[0] as { _id?: string } | undefined;
-					return key?._id === "socialControllerSearchPeople";
+					return (
+						key?._id === "socialControllerSearchPeople" ||
+						key?._id === "socialControllerGetFeed"
+					);
 				},
 			});
 		},

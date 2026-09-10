@@ -3,9 +3,10 @@ import {
 	socialControllerGetFollowingOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { z } from "zod";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { useAuth } from "#/lib/auth-context";
 import {
@@ -17,10 +18,11 @@ import {
 	useRenameCircle,
 } from "#/lib/hooks/useCircles";
 
-export const Route = createFileRoute("/circles/$circleId")({
-	head: () => ({
-		meta: [{ title: "Circle | Opnshelf" }],
-	}),
+const socialSearchSchema = z.object({ circleId: z.string().optional() });
+
+export const Route = createFileRoute("/social/circles/$circleId")({
+	validateSearch: socialSearchSchema,
+	head: () => ({ meta: [{ title: "Circle | Opnshelf" }] }),
 	component: CircleDetailPage,
 });
 
@@ -52,20 +54,13 @@ function UserLine({
 
 function CircleDetailPage() {
 	const { circleId } = Route.useParams();
+	const { circleId: selectedCircleId } = Route.useSearch();
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
-
-	useEffect(() => {
-		if (!authLoading && !isAuthenticated) navigate({ to: "/login" });
-	}, [authLoading, isAuthenticated, navigate]);
-
-	const { data: circles = [] } = useCircles();
-	const circle = circles.find((c) => c.id === circleId);
-
+	const circlesQuery = useCircles();
+	const circle = circlesQuery.data?.find((item) => item.id === circleId);
 	const { data: membersData } = useCircleMembers(circleId);
 	const members = membersData?.items ?? [];
-
-	// Your following, to add people not yet in this circle.
 	const { data: followingData } = useQuery({
 		...socialControllerGetFollowingOptions({
 			path: { handle: user?.handle || "" },
@@ -74,27 +69,33 @@ function CircleDetailPage() {
 		enabled: !!user?.handle,
 	});
 	const addable = (followingData?.items ?? []).filter(
-		(u) => !(u.circleIds ?? []).includes(circleId),
+		(item) => !(item.circleIds ?? []).includes(circleId),
 	);
-
 	const addMember = useAddCircleMember();
 	const removeMember = useRemoveCircleMember();
 	const renameCircle = useRenameCircle();
 	const deleteCircle = useDeleteCircle();
-
 	const [name, setName] = useState("");
+
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) navigate({ to: "/login" });
+	}, [authLoading, isAuthenticated, navigate]);
 	useEffect(() => {
 		if (circle) setName(circle.name);
 	}, [circle]);
+	useEffect(() => {
+		if (circlesQuery.isSuccess && !circle) {
+			navigate({ to: "/social", search: {}, replace: true });
+		}
+	}, [circle, circlesQuery.isSuccess, navigate]);
 
-	const handleRename = () => {
+	const rename = () => {
 		const trimmed = name.trim();
-		if (trimmed && circle && trimmed !== circle.name) {
+		if (circle && trimmed && trimmed !== circle.name) {
 			renameCircle.mutate({ path: { circleId }, body: { name: trimmed } });
 		}
 	};
-
-	const handleDelete = () => {
+	const remove = () => {
 		if (
 			!window.confirm(`Delete "${circle?.name}"? This won't unfollow anyone.`)
 		) {
@@ -102,36 +103,38 @@ function CircleDetailPage() {
 		}
 		deleteCircle.mutate(
 			{ path: { circleId } },
-			{ onSuccess: () => navigate({ to: "/connections" }) },
+			{
+				onSuccess: () => navigate({ to: "/social", search: {}, replace: true }),
+			},
 		);
 	};
 
 	return (
 		<div className="container-app py-8">
-			<button
-				type="button"
-				onClick={() => navigate({ to: "/connections" })}
+			<Link
+				to="/social/circles"
+				search={selectedCircleId ? { circleId: selectedCircleId } : {}}
 				className="mb-4 inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
 			>
-				<ArrowLeft className="size-4" /> Connections
-			</button>
-
-			<div className="mx-auto max-w-2xl space-y-8">
+				<ArrowLeft className="size-4" /> Circles
+			</Link>
+			<div className="space-y-8">
 				<div className="flex items-center gap-2">
 					<input
 						className="input flex-1 font-display font-semibold text-lg"
 						value={name}
 						maxLength={50}
 						onChange={(event) => setName(event.target.value)}
-						onBlur={handleRename}
-						onKeyDown={(event) => {
-							if (event.key === "Enter") event.currentTarget.blur();
-						}}
+						onBlur={rename}
+						onKeyDown={(event) =>
+							event.key === "Enter" && event.currentTarget.blur()
+						}
 					/>
 					<button
 						type="button"
 						className="btn bg-red-600 text-white hover:bg-red-700"
-						onClick={handleDelete}
+						onClick={remove}
+						disabled={deleteCircle.isPending}
 						title="Delete circle"
 					>
 						<Trash2 className="size-4" />
@@ -147,7 +150,7 @@ function CircleDetailPage() {
 							No one in this circle yet. Add people below.
 						</p>
 					) : (
-						<div className="space-y-2">
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 							{members.map((member) => (
 								<UserLine
 									key={member.did}
@@ -156,6 +159,10 @@ function CircleDetailPage() {
 										<button
 											type="button"
 											className="btn btn-secondary btn-sm"
+											disabled={
+												removeMember.isPending &&
+												removeMember.variables?.path?.targetDid === member.did
+											}
 											onClick={() =>
 												removeMember.mutate({
 													path: { circleId, targetDid: member.did },
@@ -178,15 +185,15 @@ function CircleDetailPage() {
 							Everyone you follow is already in this circle.
 						</p>
 					) : (
-						<div className="space-y-2">
-							{addable.map((u) => {
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+							{addable.map((person) => {
 								const pending =
 									addMember.isPending &&
-									addMember.variables?.path?.targetDid === u.did;
+									addMember.variables?.path?.targetDid === person.did;
 								return (
 									<UserLine
-										key={u.did}
-										user={u}
+										key={person.did}
+										user={person}
 										action={
 											<button
 												type="button"
@@ -194,17 +201,16 @@ function CircleDetailPage() {
 												disabled={pending}
 												onClick={() =>
 													addMember.mutate({
-														path: { circleId, targetDid: u.did },
+														path: { circleId, targetDid: person.did },
 													})
 												}
 											>
 												{pending ? (
 													<Loader2 className="size-3 animate-spin" />
 												) : (
-													<>
-														<Plus className="mr-1 size-3" /> Add
-													</>
+													<Plus className="mr-1 size-3" />
 												)}
+												Add
 											</button>
 										}
 									/>

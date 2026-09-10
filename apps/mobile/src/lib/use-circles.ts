@@ -4,7 +4,6 @@ import {
 	socialControllerDeleteCircleMutation,
 	socialControllerGetCircleMembersOptions,
 	socialControllerListCirclesOptions,
-	socialControllerListCirclesQueryKey,
 	socialControllerRemoveCircleMemberMutation,
 	socialControllerRenameCircleMutation,
 } from "@opnshelf/api";
@@ -57,16 +56,14 @@ export function useCircleMembers(circleId: string) {
 }
 
 export function useCreateCircle() {
-	const queryClient = useQueryClient();
+	const invalidate = useInvalidateCircles();
 	const toast = useToast();
 	return useMutation({
 		mutationKey: ["circles", "create"],
 		...socialControllerCreateCircleMutation(),
 		onSuccess: () => {
 			toast.success("Circle created");
-			queryClient.invalidateQueries({
-				queryKey: socialControllerListCirclesQueryKey(),
-			});
+			invalidate();
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to create circle")),
@@ -74,15 +71,13 @@ export function useCreateCircle() {
 }
 
 export function useRenameCircle() {
-	const queryClient = useQueryClient();
+	const invalidate = useInvalidateCircles();
 	const toast = useToast();
 	return useMutation({
 		mutationKey: ["circles", "rename"],
 		...socialControllerRenameCircleMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: socialControllerListCirclesQueryKey(),
-			});
+			invalidate();
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to rename circle")),

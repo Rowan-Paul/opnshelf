@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
 import { posthog } from "@/lib/posthog";
 import { useRelationship } from "@/lib/use-public-profile";
+import { invalidateSocialQueries } from "@/lib/use-social";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
@@ -58,6 +59,7 @@ export function ProfileHeader({
 		queryClient.invalidateQueries({
 			queryKey: usersControllerGetPublicProfileQueryKey({ path: { handle } }),
 		});
+		void invalidateSocialQueries(queryClient);
 	};
 
 	const followMutation = useMutation({

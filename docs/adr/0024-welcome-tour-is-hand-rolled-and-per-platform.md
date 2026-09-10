@@ -1,5 +1,7 @@
 # ADR 0024: The Welcome Tour walks the real app, and is hand-rolled on both clients
 
+Status: The separate Connections and Activity steps are superseded by the single Social step in [ADR 0032](0032-social-is-one-shared-hub.md). Other decisions remain in force.
+
 New users finish **Onboarding** knowing how to set a timezone and nothing about
 where anything is. **Discover**, **Connections**, **Activity**, **Up Next** and
 **Shelf** are each one tap away and none of them announce themselves, and the

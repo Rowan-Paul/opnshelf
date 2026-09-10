@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 
 /**
- * Welcome Tour (ADR 0024). Six steps that walk the real app: each one navigates
+ * Welcome Tour (ADRs 0024 and 0032). Five steps that walk the real app: each one navigates
  * to a surface and points at something structural there, never at content, so a
  * brand-new account sees the same tour as a full one.
  *
@@ -33,7 +33,7 @@ const CARD_WIDTH = 336;
 
 interface TourStep {
 	/** Route this step drives the app to. */
-	to: "/" | "/search" | "/connections" | "/activity";
+	to: "/" | "/search" | "/social";
 	/** `data-tour` value of the element to spotlight. */
 	anchor: string;
 	title: string;
@@ -54,16 +54,10 @@ export const TOUR_STEPS: readonly TourStep[] = [
 		body: "⌘K opens this from wherever you are, and it jumps to pages and settings too. Feedback lives in the same list, at the bottom.",
 	},
 	{
-		to: "/connections",
-		anchor: "connections",
-		title: "Find people",
-		body: "Follow the people whose taste you trust, and group them into circles when your feed gets busy.",
-	},
-	{
-		to: "/activity",
-		anchor: "activity",
-		title: "See what they watch",
-		body: "Every watch and review from the people you follow, newest first. It fills in once you follow someone.",
+		to: "/social",
+		anchor: "social",
+		title: "Your Social hub",
+		body: "See every watch and review from the people you follow, newest first. Find people and manage your circles here too.",
 	},
 	{
 		to: "/",

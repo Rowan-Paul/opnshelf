@@ -10,6 +10,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { invalidateSocialQueries } from "#/components/following/useSocialFollowActions";
 
 // The viewer's circles (private groupings of users they follow).
 export function useCircles() {
@@ -34,17 +35,7 @@ export function useCircleMembers(circleId: string) {
 function invalidateCircleQueries(
 	queryClient: ReturnType<typeof useQueryClient>,
 ) {
-	return queryClient.refetchQueries({
-		predicate: (query) => {
-			const id = (query.queryKey[0] as { _id?: string } | undefined)?._id;
-			return (
-				id === "socialControllerListCircles" ||
-				id === "socialControllerGetCircleMembers" ||
-				id === "socialControllerGetFollowing" ||
-				id === "socialControllerGetFeed"
-			);
-		},
-	});
+	return invalidateSocialQueries(queryClient);
 }
 
 export function useCreateCircle() {
