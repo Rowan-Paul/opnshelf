@@ -77,9 +77,18 @@ a minified bundle. Two pieces turn them back into TypeScript:
   with a debug id. PostHog matches an exception to its map through that id.
 - `posthog-react-native/expo` in `app.config.ts` hooks the Xcode and Gradle
   bundle phases and runs `posthog-cli hermes upload` after each native build.
-  The CLI is a devDependency (`@posthog/cli`); the phase fails the build when
-  it cannot find it or, without `POSTHOG_CLI_DRY_RUN`, when credentials are
-  missing.
+  The phase fails the build when it cannot find the CLI or, without
+  `POSTHOG_CLI_DRY_RUN`, when credentials are missing. The lookup runs before
+  the dry-run check, so even a dry-run build needs the CLI on disk.
+
+`@posthog/cli` is a devDependency of this app **and of the repository root**.
+The Xcode phase locates the CLI through `npm root`, and because the root
+`package.json` declares `workspaces`, npm answers with the root `node_modules`
+rather than this app's. pnpm only creates a `.bin/posthog-cli` shim where the
+package is a direct dependency, so without the root entry every iOS build ends
+in `posthog-cli not found` (EAS build d44d5f1b, Sept 2026). The Gradle phase
+checks the app's own `node_modules/.bin` first and never had the problem. Keep
+both entries on the same version.
 
 An OTA update is a JS-only export, so nothing native runs. The Release
 workflow's OTA job uploads `dist/` itself right after `eas update`. Publishing
