@@ -4,7 +4,6 @@ import { Compass, Home, LogIn, User, Users } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
-import { UpdateBanner } from "@/components/UpdateBanner";
 import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
@@ -35,103 +34,101 @@ export default function TabLayout() {
 
 	return (
 		<TraktSyncBanner>
-			<UpdateBanner>
-				<ShakeToFeedback />
-				<Tabs
-					initialRouteName={guest ? "search" : "index"}
-					screenOptions={{
-						headerShown: false,
-						tabBarActiveTintColor: theme.colors.primary,
-						tabBarInactiveTintColor: theme.colors.text,
-						tabBarStyle: {
-							backgroundColor: theme.colors.card,
-							borderTopColor: theme.colors.border,
-						},
-					}}
-				>
-					<Tabs.Protected guard={!guest}>
-						<Tabs.Screen
-							name="index"
-							options={{
-								title: "Home",
-								tabBarIcon: ({ color, size }) => (
-									<Home color={color} size={size} />
-								),
-							}}
-						/>
-					</Tabs.Protected>
+			<ShakeToFeedback />
+			<Tabs
+				initialRouteName={guest ? "search" : "index"}
+				screenOptions={{
+					headerShown: false,
+					tabBarActiveTintColor: theme.colors.primary,
+					tabBarInactiveTintColor: theme.colors.text,
+					tabBarStyle: {
+						backgroundColor: theme.colors.card,
+						borderTopColor: theme.colors.border,
+					},
+				}}
+			>
+				<Tabs.Protected guard={!guest}>
 					<Tabs.Screen
-						name="search"
+						name="index"
 						options={{
-							title: "Discover",
+							title: "Home",
 							tabBarIcon: ({ color, size }) => (
-								<Compass color={color} size={size} />
+								<Home color={color} size={size} />
 							),
 						}}
 					/>
-					<Tabs.Protected guard={!guest}>
-						<Tabs.Screen
-							name="social"
-							options={{
-								title: "Social",
-								tabBarIcon: ({ color, size }) => (
-									<Users color={color} size={size} />
-								),
-							}}
-						/>
-					</Tabs.Protected>
+				</Tabs.Protected>
+				<Tabs.Screen
+					name="search"
+					options={{
+						title: "Discover",
+						tabBarIcon: ({ color, size }) => (
+							<Compass color={color} size={size} />
+						),
+					}}
+				/>
+				<Tabs.Protected guard={!guest}>
 					<Tabs.Screen
-						name="profile"
-						// For guests this tab is a Sign in entry point: tapping it opens the
-						// login screen instead of the (account-based) profile screen.
-						listeners={
-							guest
-								? {
-										tabPress: (e) => {
-											e.preventDefault();
-											router.push("/login");
-										},
-									}
-								: undefined
-						}
-						options={
-							guest
-								? {
-										title: "Sign in",
-										tabBarIcon: ({ color, size }) => (
-											<LogIn color={color} size={size} />
-										),
-									}
-								: {
-										title: "Profile",
-										// The viewer's own avatar (or the circular avatar placeholder
-										// used elsewhere for missing pictures) disambiguates Profile from
-										// the Connections (Users) tab.
-										tabBarIcon: ({ size, focused }) => (
-											<View
-												className="items-center justify-center overflow-hidden rounded-full bg-background-subtle"
-												style={{
-													width: size,
-													height: size,
-													borderWidth: focused ? 2 : 0,
-													borderColor: theme.colors.primary,
-												}}
-											>
-												{user?.avatar ? (
-													<Image
-														source={{ uri: user.avatar }}
-														style={{ width: size, height: size }}
-													/>
-												) : (
-													<User color="#94a3b8" size={Math.round(size * 0.6)} />
-												)}
-											</View>
-										),
-									}
-						}
+						name="social"
+						options={{
+							title: "Social",
+							tabBarIcon: ({ color, size }) => (
+								<Users color={color} size={size} />
+							),
+						}}
 					/>
-				</Tabs>
-			</UpdateBanner>
+				</Tabs.Protected>
+				<Tabs.Screen
+					name="profile"
+					// For guests this tab is a Sign in entry point: tapping it opens the
+					// login screen instead of the (account-based) profile screen.
+					listeners={
+						guest
+							? {
+									tabPress: (e) => {
+										e.preventDefault();
+										router.push("/login");
+									},
+								}
+							: undefined
+					}
+					options={
+						guest
+							? {
+									title: "Sign in",
+									tabBarIcon: ({ color, size }) => (
+										<LogIn color={color} size={size} />
+									),
+								}
+							: {
+									title: "Profile",
+									// The viewer's own avatar (or the circular avatar placeholder
+									// used elsewhere for missing pictures) disambiguates Profile from
+									// the Connections (Users) tab.
+									tabBarIcon: ({ size, focused }) => (
+										<View
+											className="items-center justify-center overflow-hidden rounded-full bg-background-subtle"
+											style={{
+												width: size,
+												height: size,
+												borderWidth: focused ? 2 : 0,
+												borderColor: theme.colors.primary,
+											}}
+										>
+											{user?.avatar ? (
+												<Image
+													source={{ uri: user.avatar }}
+													style={{ width: size, height: size }}
+												/>
+											) : (
+												<User color="#94a3b8" size={Math.round(size * 0.6)} />
+											)}
+										</View>
+									),
+								}
+					}
+				/>
+			</Tabs>
 		</TraktSyncBanner>
 	);
 }
