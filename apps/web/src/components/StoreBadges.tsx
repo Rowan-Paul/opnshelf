@@ -1,4 +1,4 @@
-import { detectPlatform, type Platform } from "#/lib/platform";
+import { type Platform, usePlatform } from "#/lib/platform";
 
 // Storefront-less URLs: both stores redirect to the visitor's own country.
 export const APP_STORE_URL = "https://apps.apple.com/app/opnshelf/id6758867162";
@@ -25,7 +25,8 @@ export default function StoreBadges({
 	/** Injected in tests; defaults to the visiting device. */
 	platform?: Platform;
 }) {
-	const { os } = platform ?? detectPlatform();
+	const detected = usePlatform();
+	const { os } = platform ?? detected;
 	const showAppStore = os === "ios" || os === "other";
 	const showPlay = os === "android" || os === "other";
 
