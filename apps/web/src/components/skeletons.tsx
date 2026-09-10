@@ -61,9 +61,15 @@ export function UserRowsSkeleton({ rows = 4 }: { rows?: number }) {
 }
 
 /** Card rows with thumb + text lines (activity feeds, episode lists). */
-export function CardRowsSkeleton({ rows = 4 }: { rows?: number }) {
+export function CardRowsSkeleton({
+	rows = 4,
+	className = "space-y-3",
+}: {
+	rows?: number;
+	className?: string;
+}) {
 	return (
-		<div className="space-y-3">
+		<div className={className}>
 			{IDX(rows).map((i) => (
 				<div
 					key={i}

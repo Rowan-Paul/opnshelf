@@ -1,7 +1,7 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
 import { slugifyName } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
-import { Clock } from "lucide-react";
+import { Clock, Film } from "lucide-react";
 import StarRating from "#/components/StarRating";
 import { UserAvatar } from "./UserAvatar";
 
@@ -11,64 +11,97 @@ interface MiniActivityCardProps {
 	userTimeFormat?: "12h" | "24h";
 }
 
+/**
+ * Compact row for the Home preview of the Activity Feed. Same anatomy as the
+ * Social page's `ActivityCard` (poster, actor + action sentence, timestamp)
+ * without the synopsis and inline actions.
+ */
 export function MiniActivityCard({
 	activity,
 	userTimezone,
 	userTimeFormat,
 }: MiniActivityCardProps) {
+	const posterSrc = activity.posterPath
+		? `https://image.tmdb.org/t/p/w185${activity.posterPath}`
+		: activity.backdropPath
+			? `https://image.tmdb.org/t/p/w185${activity.backdropPath}`
+			: undefined;
+	const mediaLink = activity.movieId
+		? {
+				to: "/movies/$movieId/$movieName" as const,
+				params: {
+					movieId: String(activity.movieId),
+					movieName: slugifyName(activity.title || ""),
+				},
+			}
+		: {
+				to: "/shows/$showId/$showName" as const,
+				params: {
+					showId: String(activity.showId),
+					showName: slugifyName(activity.showTitle || ""),
+				},
+			};
+	const hash = activity.reviewId ? `review-${activity.reviewId}` : undefined;
+
 	return (
-		<div className="flex items-start gap-3 p-4 first:pt-5 last:pb-5">
-			<UserAvatar
-				src={activity.actor.avatar}
-				alt={String(activity.actor.displayName) || activity.actor.handle}
-			/>
-			<div className="min-w-0 flex-1">
-				{/* Header */}
-				<p className="text-sm">
-					<Link
-						to={"/activity" as const}
-						className="font-semibold hover:text-(--accent)"
+		// Whole row is clickable through the stretched title link (an ::after
+		// overlay), so this is the positioning context; actor links sit above it.
+		<div className="relative flex items-start gap-3 p-4 transition-colors first:pt-5 last:pb-5 hover:bg-(--background-subtle)/50">
+			<div className="shrink-0">
+				{posterSrc ? (
+					<img
+						src={posterSrc}
+						alt=""
+						className="h-16 w-11 rounded-md object-cover"
+					/>
+				) : (
+					<div
+						aria-hidden
+						className="flex h-16 w-11 items-center justify-center rounded-md bg-(--background-subtle) text-(--foreground-muted)"
 					>
-						{String(activity.actor.displayName) || activity.actor.handle}
+						<Film className="size-4" />
+					</div>
+				)}
+			</div>
+
+			<div className="min-w-0 flex-1">
+				<div className="flex items-center gap-2">
+					<Link
+						to="/profile/$handle"
+						params={{ handle: activity.actor.handle }}
+						className="relative z-10 shrink-0"
+					>
+						<UserAvatar
+							src={activity.actor.avatar}
+							alt={String(activity.actor.displayName) || activity.actor.handle}
+							size="sm"
+						/>
 					</Link>
-					<span className="text-(--foreground-muted)">
-						{" "}
-						{activity.type === "movie"
-							? "watched"
-							: activity.type === "review"
-								? "reviewed"
-								: "watched episode"}{" "}
-					</span>
-					{activity.movieId ? (
+					<p className="min-w-0 text-sm">
 						<Link
-							to="/movies/$movieId/$movieName"
-							hash={
-								activity.reviewId ? `review-${activity.reviewId}` : undefined
-							}
-							params={{
-								movieId: String(activity.movieId),
-								movieName: slugifyName(activity.title || ""),
-							}}
-							className="font-medium hover:text-(--accent)"
+							to="/profile/$handle"
+							params={{ handle: activity.actor.handle }}
+							className="relative z-10 font-semibold hover:text-(--accent)"
 						>
-							{activity.title}
+							{String(activity.actor.displayName) || activity.actor.handle}
 						</Link>
-					) : (
+						<span className="text-(--foreground-muted)">
+							{" "}
+							{activity.type === "movie"
+								? "watched"
+								: activity.type === "review"
+									? "reviewed"
+									: "watched episode"}{" "}
+						</span>
 						<Link
-							to="/shows/$showId/$showName"
-							hash={
-								activity.reviewId ? `review-${activity.reviewId}` : undefined
-							}
-							params={{
-								showId: String(activity.showId),
-								showName: slugifyName(activity.showTitle || ""),
-							}}
-							className="font-medium hover:text-(--accent)"
+							{...mediaLink}
+							hash={hash}
+							className="font-medium after:absolute after:inset-0 hover:text-(--accent)"
 						>
-							{activity.showTitle}
+							{activity.movieId ? activity.title : activity.showTitle}
 						</Link>
-					)}
-				</p>
+					</p>
+				</div>
 
 				{/* Episode identifier */}
 				{activity.type === "episode" &&
@@ -83,7 +116,7 @@ export function MiniActivityCard({
 								seasonNumber: String(activity.seasonNumber || 0),
 								episodeNumber: String(activity.episodeNumber || 0),
 							}}
-							className="mt-0.5 block font-semibold text-(--foreground) text-sm hover:text-(--accent)"
+							className="relative z-10 mt-1 block font-semibold text-(--foreground) text-sm hover:text-(--accent)"
 						>
 							{activity.seasonNumber && activity.episodeNumber
 								? `S${activity.seasonNumber}E${activity.episodeNumber}`

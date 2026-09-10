@@ -1,7 +1,7 @@
 import type { Href } from "expo-router";
 
 /**
- * Welcome Tour data and gate (ADR 0024). Kept apart from the overlay component
+ * Welcome Tour data and gate (ADRs 0024 and 0032). Kept apart from the overlay component
  * so the gate can be tested without a React Native runtime.
  *
  * Seen-state is `welcomeTourMobileVersion` on the User, separate from the web
@@ -43,16 +43,10 @@ export const TOUR_STEPS: readonly TourStep[] = [
 		body: "Long-press any poster for quick actions: mark it watched, rate it, or drop it in a list. And anywhere in the app, shake your phone to send us feedback.",
 	},
 	{
-		route: "/connections",
-		anchor: "connections",
-		title: "Find people",
-		body: "Follow the people whose taste you trust, and group them into circles when your feed gets busy.",
-	},
-	{
-		route: "/activity",
-		anchor: "activity",
-		title: "See what they watch",
-		body: "Every watch and review from the people you follow, newest first. It fills in once you follow someone.",
+		route: "/social",
+		anchor: "social",
+		title: "Your Social hub",
+		body: "See every watch and review from the people you follow, newest first. Find people and manage your circles here too.",
 	},
 	{
 		route: "/",

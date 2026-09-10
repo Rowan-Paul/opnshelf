@@ -26,9 +26,11 @@ export function LoadingState({ label }: { label?: string }) {
 export function ErrorState({
 	title = "Something went wrong",
 	message,
+	onRetry,
 }: {
 	title?: string;
 	message?: string;
+	onRetry?: () => void;
 }) {
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
@@ -40,6 +42,14 @@ export function ErrorState({
 				<Text className="text-center text-muted-foreground text-sm">
 					{message}
 				</Text>
+			) : null}
+			{onRetry ? (
+				<Pressable
+					onPress={onRetry}
+					className="mt-2 rounded-lg border border-border px-4 py-2.5"
+				>
+					<Text className="font-semibold text-primary text-sm">Try again</Text>
+				</Pressable>
 			) : null}
 		</View>
 	);

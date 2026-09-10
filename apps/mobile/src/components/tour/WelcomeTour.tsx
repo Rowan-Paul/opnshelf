@@ -27,7 +27,7 @@ import {
 } from "@/lib/welcome-tour";
 
 /**
- * Welcome Tour overlay (ADR 0024). Six steps that walk the real app: each one
+ * Welcome Tour overlay (ADRs 0024 and 0032). Five steps that walk the real app: each one
  * drives the app to a surface and points at something structural there, never at
  * content, so a brand-new account sees the same tour as a full one. The step
  * list and the gate live in `@/lib/welcome-tour`.

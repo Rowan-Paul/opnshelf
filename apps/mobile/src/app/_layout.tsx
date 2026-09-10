@@ -92,6 +92,15 @@ export default function RootLayout() {
 				}}
 			>
 				<Stack.Screen name="(tabs)" />
+				<Stack.Screen name="social/find" options={{ headerShown: true }} />
+				<Stack.Screen
+					name="social/circles/index"
+					options={{ headerShown: true }}
+				/>
+				<Stack.Screen
+					name="social/circles/[circleId]"
+					options={{ headerShown: true }}
+				/>
 				<Stack.Screen name="login" />
 				<Stack.Screen name="auth/complete" />
 				<Stack.Screen name="signup" />

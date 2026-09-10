@@ -7,6 +7,7 @@ import {
 	socialControllerUnfollowMutation,
 } from "@opnshelf/api";
 import {
+	type QueryClient,
 	useInfiniteQuery,
 	useMutation,
 	useQuery,
@@ -24,7 +25,20 @@ const SOCIAL_QUERY_IDS = [
 	"socialControllerGetWatchers",
 	"socialControllerGetRelationship",
 	"socialControllerGetSuggestions",
+	"socialControllerGetFeed",
+	"socialControllerListCircles",
+	"socialControllerGetCircleMembers",
 ];
+
+/** Refresh every social surface after a follow state changes. */
+export function invalidateSocialQueries(queryClient: QueryClient) {
+	return queryClient.invalidateQueries({
+		predicate: (q) => {
+			const key = q.queryKey[0] as { _id?: string } | undefined;
+			return !!key?._id && SOCIAL_QUERY_IDS.includes(key._id);
+		},
+	});
+}
 
 /** Infinite list of users `handle` follows. */
 export function useFollowing(handle: string, pageSize = 20) {
@@ -45,6 +59,7 @@ export function useFollowing(handle: string, pageSize = 20) {
 		fetchNextPage: query.fetchNextPage,
 		hasNextPage: query.hasNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,
+		refetch: query.refetch,
 	};
 }
 
@@ -107,15 +122,6 @@ export function useFollowToggle(onFollowed?: () => void) {
 	const queryClient = useQueryClient();
 	const toast = useToast();
 
-	const invalidateSocial = () => {
-		queryClient.invalidateQueries({
-			predicate: (q) => {
-				const key = q.queryKey[0] as { _id?: string } | undefined;
-				return !!key?._id && SOCIAL_QUERY_IDS.includes(key._id);
-			},
-		});
-	};
-
 	const followMutation = useMutation({
 		mutationKey: ["social", "follow"],
 		...socialControllerFollowMutation(),
@@ -125,7 +131,7 @@ export function useFollowToggle(onFollowed?: () => void) {
 		},
 		onError: (error) =>
 			toast.error(error instanceof Error ? error.message : "Failed to follow"),
-		onSettled: invalidateSocial,
+		onSettled: () => invalidateSocialQueries(queryClient),
 	});
 
 	const unfollowMutation = useMutation({
@@ -138,7 +144,7 @@ export function useFollowToggle(onFollowed?: () => void) {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to unfollow",
 			),
-		onSettled: invalidateSocial,
+		onSettled: () => invalidateSocialQueries(queryClient),
 	});
 
 	/** Toggle follow state for a user. `currentlyFollowing` is the pre-tap state. */

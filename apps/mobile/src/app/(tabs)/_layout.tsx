@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Redirect, router, Tabs } from "expo-router";
-import { Compass, Home, LogIn, Rss, User, Users } from "lucide-react-native";
+import { Compass, Home, LogIn, User, Users } from "lucide-react-native";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
@@ -71,18 +71,9 @@ export default function TabLayout() {
 					/>
 					<Tabs.Protected guard={!guest}>
 						<Tabs.Screen
-							name="activity"
+							name="social"
 							options={{
-								title: "Activity",
-								tabBarIcon: ({ color, size }) => (
-									<Rss color={color} size={size} />
-								),
-							}}
-						/>
-						<Tabs.Screen
-							name="connections"
-							options={{
-								title: "Connections",
+								title: "Social",
 								tabBarIcon: ({ color, size }) => (
 									<Users color={color} size={size} />
 								),

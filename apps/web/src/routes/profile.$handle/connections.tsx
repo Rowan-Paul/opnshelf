@@ -86,6 +86,11 @@ function ProfileConnectionsPage() {
 			queryClient.invalidateQueries({ queryKey: profileQueryKey });
 			queryClient.invalidateQueries({ queryKey: followingQueryKey });
 			queryClient.invalidateQueries({ queryKey: followersQueryKey });
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					(query.queryKey[0] as { _id?: string } | undefined)?._id ===
+					"socialControllerGetFeed",
+			});
 		},
 	});
 

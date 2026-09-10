@@ -314,10 +314,10 @@ export function SearchCommand({
 					run: () => goTo("/calendar"),
 				},
 				{
-					key: "following",
-					label: "Following",
+					key: "social",
+					label: "Social",
 					Icon: Users,
-					run: () => goTo("/activity"),
+					run: () => goTo("/social"),
 				},
 				...(currentUserHandle
 					? [
@@ -705,9 +705,9 @@ export function SearchCommand({
 								<Calendar />
 								<span>Calendar</span>
 							</CommandItem>
-							<CommandItem value="following" onSelect={() => goTo("/activity")}>
+							<CommandItem value="social" onSelect={() => goTo("/social")}>
 								<Users />
-								<span>Following</span>
+								<span>Social</span>
 							</CommandItem>
 							{currentUserHandle && (
 								<CommandItem

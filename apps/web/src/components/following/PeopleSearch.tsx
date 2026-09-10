@@ -1,6 +1,7 @@
 import type { SocialUserCardDto } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Search, Sparkles, UserPlus } from "lucide-react";
+import { Search, Sparkles, UserPlus } from "lucide-react";
+import { UserRowsSkeleton } from "#/components/skeletons";
 import { UserAvatar } from "./UserAvatar";
 
 interface PeopleSearchProps {
@@ -13,6 +14,11 @@ interface PeopleSearchProps {
 	isLoading: boolean;
 	suggestions: SocialUserCardDto[];
 	isSuggestionsLoading: boolean;
+	error?: Error | null;
+	suggestionsError?: Error | null;
+	onRetry?: () => void;
+	onRetrySuggestions?: () => void;
+	inline?: boolean;
 	onFollow: (did: string) => void;
 	onUnfollow: (did: string) => void;
 	pendingFollowDid?: string;
@@ -37,6 +43,11 @@ export function PeopleSearch({
 	isLoading,
 	suggestions,
 	isSuggestionsLoading,
+	error,
+	suggestionsError,
+	onRetry,
+	onRetrySuggestions,
+	inline = false,
 	onFollow,
 	onUnfollow,
 	pendingFollowDid,
@@ -56,19 +67,27 @@ export function PeopleSearch({
 						onFocus={onFocus}
 						onBlur={onBlur}
 					/>
-					{isLoading && (
-						<Loader2 className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-(--foreground-muted)" />
-					)}
 				</div>
 			</div>
 
 			{isSearching && (
-				<div className="absolute top-full right-0 left-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-lg border border-(--border) bg-(--background) shadow-lg">
+				<div
+					className={
+						inline
+							? "mt-3 rounded-lg border border-(--border) bg-(--background)"
+							: "absolute top-full right-0 left-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-lg border border-(--border) bg-(--background) shadow-lg"
+					}
+				>
 					{query.trim().length === 0 ? (
-						isSuggestionsLoading ? (
-							<div className="p-4 text-center text-(--foreground-muted)">
-								Loading recommendations...
+						isSuggestionsLoading && suggestions.length === 0 ? (
+							<div className="p-3">
+								<UserRowsSkeleton rows={3} />
 							</div>
+						) : suggestionsError && suggestions.length === 0 ? (
+							<PeopleLoadError
+								message="Failed to load suggested people"
+								onRetry={onRetrySuggestions}
+							/>
 						) : suggestions.length === 0 ? (
 							<div className="p-4 text-center text-(--foreground-muted)">
 								No recommendations right now
@@ -90,9 +109,18 @@ export function PeopleSearch({
 								))}
 							</div>
 						)
+					) : isLoading && results.length === 0 ? (
+						<div className="p-3">
+							<UserRowsSkeleton rows={3} />
+						</div>
+					) : error && results.length === 0 ? (
+						<PeopleLoadError
+							message="Failed to search people"
+							onRetry={onRetry}
+						/>
 					) : results.length === 0 ? (
 						<div className="p-4 text-center text-(--foreground-muted)">
-							{isLoading ? "Searching..." : "No users found"}
+							No users found
 						</div>
 					) : (
 						<div className="space-y-1 p-2">
@@ -109,6 +137,29 @@ export function PeopleSearch({
 						</div>
 					)}
 				</div>
+			)}
+		</div>
+	);
+}
+
+function PeopleLoadError({
+	message,
+	onRetry,
+}: {
+	message: string;
+	onRetry?: () => void;
+}) {
+	return (
+		<div className="p-4 text-center text-(--foreground-muted)" role="alert">
+			<p>{message}</p>
+			{onRetry && (
+				<button
+					type="button"
+					className="btn btn-secondary mt-3"
+					onClick={onRetry}
+				>
+					Retry
+				</button>
 			)}
 		</div>
 	);
@@ -146,11 +197,7 @@ function UserSearchRow({
 					onClick={() => onUnfollow(person.did)}
 					disabled={pendingUnfollowDid === person.did}
 				>
-					{pendingUnfollowDid === person.did ? (
-						<Loader2 className="size-3 animate-spin" />
-					) : (
-						"Unfollow"
-					)}
+					{pendingUnfollowDid === person.did ? "Unfollowing…" : "Unfollow"}
 				</button>
 			) : (
 				<button
@@ -160,7 +207,7 @@ function UserSearchRow({
 					disabled={pendingFollowDid === person.did}
 				>
 					{pendingFollowDid === person.did ? (
-						<Loader2 className="size-3 animate-spin" />
+						"Following…"
 					) : (
 						<>
 							<UserPlus className="mr-1 size-3" />
