@@ -7,6 +7,8 @@ describe("isUpdateBannerSuppressed", () => {
 		"/signup",
 		"/verify-email",
 		"/onboarding",
+		"/onboarding/",
+		"/auth",
 		"/auth/complete",
 	])("hides the banner on %s", (pathname) => {
 		expect(isUpdateBannerSuppressed(pathname)).toBe(true);
@@ -20,6 +22,8 @@ describe("isUpdateBannerSuppressed", () => {
 		"/settings/account",
 		"/movies/123/some-title",
 		"/lists/watchlist",
+		"/login-help",
+		"/signup-bonus",
 		"/authors",
 	])("shows the banner on %s", (pathname) => {
 		expect(isUpdateBannerSuppressed(pathname)).toBe(false);
