@@ -2,7 +2,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { posthog } from "#/integrations/posthog/provider";
-import { detectPlatform } from "#/lib/platform";
+import { usePlatform } from "#/lib/platform";
 import {
 	dismissMobileApp,
 	isMobileAppDismissed,
@@ -26,7 +26,7 @@ export function MobileAppBanner() {
 	const isLanding = useRouterState({
 		select: (s) => s.location.pathname === "/",
 	});
-	const { os, isMobile, isIosSafari } = detectPlatform();
+	const { os, isMobile, isIosSafari } = usePlatform();
 
 	if (!isMobile || isIosSafari || isLanding) return null;
 	// Wait for hydration before reading localStorage; this only delays showing.

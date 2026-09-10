@@ -2,7 +2,7 @@ import { Smartphone } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { posthog } from "#/integrations/posthog/provider";
-import { detectPlatform } from "#/lib/platform";
+import { usePlatform } from "#/lib/platform";
 import {
 	dismissMobileApp,
 	isMobileAppDismissed,
@@ -22,7 +22,7 @@ import StoreBadges from "./StoreBadges";
 export function MobileAppPrompt() {
 	const hydrated = useHydrated();
 	const [dismissed, setDismissed] = useState(false);
-	const platform = detectPlatform();
+	const platform = usePlatform();
 
 	if (platform.isMobile) return null;
 	if (!hydrated || dismissed || isMobileAppDismissed()) return null;
