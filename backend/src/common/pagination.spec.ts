@@ -55,6 +55,8 @@ describe("pagination", () => {
 		expect(parsePage(undefined)).toBe(1);
 		expect(parsePage("0")).toBe(1);
 		expect(parsePage("abc")).toBe(1);
+		expect(parsePage("Infinity")).toBe(1);
+		expect(parsePage("-Infinity")).toBe(1);
 	});
 
 	it("re-expresses a TMDB page in the shared contract", () => {

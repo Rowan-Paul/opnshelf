@@ -89,7 +89,9 @@ export function clampPage(page: number) {
 
 /** Parses a raw `?page=` query value: anything unusable becomes page 1. */
 export function parsePage(value: unknown): number {
-	return clampPage(Math.floor(Number(value)) || 1);
+	const page = Number(value);
+	if (!Number.isFinite(page)) return 1;
+	return clampPage(Math.floor(page) || 1);
 }
 
 export function clampPageSize(pageSize: number, maxPageSize: number) {

@@ -403,7 +403,9 @@ export default function SearchScreen() {
 				</View>
 			);
 		}
-		if (activeQuery.isError) {
+		// Only an initial failure gets the full-page error. A failed later page
+		// keeps the loaded results and shows the footer's Retry instead.
+		if (activeQuery.isError && !activeQuery.data) {
 			return <ErrorState message="Couldn't load search results. Try again." />;
 		}
 
