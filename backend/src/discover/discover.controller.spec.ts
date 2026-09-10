@@ -13,7 +13,7 @@ import { DiscoverService } from "./discover.service";
 
 describe("DiscoverController", () => {
 	it("forwards onboarding deck requests to the service", async () => {
-		const expected = { results: [{ id: 1, media_type: "movie" }] };
+		const expected = { items: [{ id: 1, media_type: "movie" }] };
 		const discoverService = { onboarding: vi.fn().mockResolvedValue(expected) };
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [DiscoverController],

@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Plus, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
 import { useDialog } from "@/components/ui/dialog";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
@@ -17,6 +17,7 @@ import {
 	useRemoveCircleMember,
 	useRenameCircle,
 } from "@/lib/use-circles";
+import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useFollowing } from "@/lib/use-social";
 
 /**
@@ -45,6 +46,14 @@ export default function CircleDetailScreen() {
 	const addable = following.items.filter(
 		(u) => !(u.circleIds ?? []).includes(circleId),
 	);
+	// The addable list is the tail of the screen, so nearing the bottom pulls
+	// the next page of people you follow. This screen owns the container, so
+	// it listens through the prop rather than `useEndReached`.
+	const loadMoreFollowing = () => {
+		if (following.hasNextPage && !following.isFetchingNextPage) {
+			void following.fetchNextPage();
+		}
+	};
 
 	const addMember = useAddCircleMember();
 	const removeMember = useRemoveCircleMember();
@@ -88,7 +97,10 @@ export default function CircleDetailScreen() {
 				options={{ headerShown: true, title: circle?.name ?? "Circle" }}
 			/>
 
-			<ScrollView contentContainerClassName="px-4 py-4 gap-6">
+			<EndReachedScrollView
+				contentContainerClassName="px-4 py-4 gap-6"
+				onEndReached={loadMoreFollowing}
+			>
 				<View className="flex-row items-center gap-2">
 					<View className="flex-1">
 						<TextField
@@ -192,21 +204,9 @@ export default function CircleDetailScreen() {
 							);
 						})
 					)}
-					{following.hasNextPage ? (
-						<Pressable
-							onPress={() => following.fetchNextPage()}
-							disabled={following.isFetchingNextPage}
-							className="self-start rounded-lg border border-border px-3 py-2"
-						>
-							<Text className="font-medium text-primary text-sm">
-								{following.isFetchingNextPage
-									? "Loading people…"
-									: "Load more people"}
-							</Text>
-						</Pressable>
-					) : null}
+					{following.isFetchingNextPage ? <UserRowsSkeleton rows={2} /> : null}
 				</View>
-			</ScrollView>
+			</EndReachedScrollView>
 		</View>
 	);
 }

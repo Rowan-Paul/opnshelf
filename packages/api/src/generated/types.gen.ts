@@ -15,9 +15,31 @@ export type TmdbMovieResultDto = {
 };
 
 export type SearchResultsDto = {
-    results: Array<TmdbMovieResultDto>;
-    total_results: number;
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<TmdbMovieResultDto>;
 };
 
 export type TmdbGenreDto = {
@@ -156,20 +178,6 @@ export type TrackedMovieDto = {
     createdAt: string;
     updatedAt: string;
     movie: MovieDto;
-};
-
-export type PaginatedMoviesResponseDto = {
-    items: Array<TrackedMovieDto>;
-    /**
-     * Cursor for next page (null if no more items)
-     */
-    nextCursor: {
-        [key: string]: unknown;
-    };
-    /**
-     * Total count of items
-     */
-    total: number;
 };
 
 export type WatchHistoryItemDto = {
@@ -440,9 +448,31 @@ export type TmdbShowResultDto = {
 };
 
 export type SearchShowsResultsDto = {
-    results: Array<TmdbShowResultDto>;
-    total_results: number;
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<TmdbShowResultDto>;
 };
 
 export type TmdbSeasonSummaryDto = {
@@ -601,9 +631,8 @@ export type UpNextShowDto = {
 };
 
 export type PaginatedUpNextResponseDto = {
-    items: Array<UpNextShowDto>;
     /**
-     * Total count of items
+     * Total count of items across all pages
      */
     total: number;
     /**
@@ -611,7 +640,7 @@ export type PaginatedUpNextResponseDto = {
      */
     page: number;
     /**
-     * Number of items returned per page
+     * Number of items per page
      */
     pageSize: number;
     /**
@@ -619,13 +648,14 @@ export type PaginatedUpNextResponseDto = {
      */
     totalPages: number;
     /**
-     * Whether a previous page exists
-     */
-    hasPreviousPage: boolean;
-    /**
      * Whether a next page exists
      */
     hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<UpNextShowDto>;
 };
 
 export type ReleaseCalendarItemDto = {
@@ -656,36 +686,6 @@ export type ReleaseCalendarResponseDto = {
     total: number;
 };
 
-export type TrackedEpisodeDto = {
-    id: string;
-    rkey: string;
-    uri: string;
-    cid: string;
-    userDid: string;
-    showId: string;
-    seasonNumber: number;
-    episodeNumber: number;
-    status: string;
-    watchedDate?: string;
-    createdAt: string;
-    updatedAt: string;
-    show: ShowDto;
-};
-
-export type PaginatedEpisodesResponseDto = {
-    items: Array<TrackedEpisodeDto>;
-    /**
-     * Cursor for next page (null if no more items)
-     */
-    nextCursor: {
-        [key: string]: unknown;
-    };
-    /**
-     * Total count of items
-     */
-    total: number;
-};
-
 export type MarkEpisodeWatchedDto = {
     /**
      * TMDB show ID
@@ -703,6 +703,22 @@ export type MarkEpisodeWatchedDto = {
      * Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.
      */
     watchedAt?: string | null;
+};
+
+export type TrackedEpisodeDto = {
+    id: string;
+    rkey: string;
+    uri: string;
+    cid: string;
+    userDid: string;
+    showId: string;
+    seasonNumber: number;
+    episodeNumber: number;
+    status: string;
+    watchedDate?: string;
+    createdAt: string;
+    updatedAt: string;
+    show: ShowDto;
 };
 
 export type EpisodeHistoryItemDto = {
@@ -1231,10 +1247,31 @@ export type StartTraktImportResponseDto = {
 };
 
 export type PaginatedTraktImportIssuesDto = {
-    items: Array<TraktImportIssueDto>;
+    /**
+     * Total count of items across all pages
+     */
     total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
+    /**
+     * Number of items per page
+     */
     pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<TraktImportIssueDto>;
 };
 
 export type TraktMatchCandidateDto = {
@@ -1611,15 +1648,31 @@ export type UserReviewDto = {
 };
 
 export type PaginatedReviewsResponseDto = {
-    items: Array<UserReviewDto>;
     /**
-     * Cursor for next page (null if no more items)
-     */
-    nextCursor: string | null;
-    /**
-     * Total count of items
+     * Total count of items across all pages
      */
     total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<UserReviewDto>;
 };
 
 export type MediaReviewItemDto = {
@@ -1671,15 +1724,31 @@ export type MediaReviewItemDto = {
 };
 
 export type MediaReviewsResponseDto = {
-    items: Array<MediaReviewItemDto>;
     /**
-     * Total review count
+     * Total count of items across all pages
      */
     total: number;
     /**
-     * Cursor for next page (null if no more items)
+     * Current page number after server-side clamping
      */
-    nextCursor: string | null;
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<MediaReviewItemDto>;
 };
 
 export type CanonicalReviewAuthorDto = {
@@ -2104,15 +2173,31 @@ export type UserNoteDto = {
 };
 
 export type PaginatedNotesResponseDto = {
-    items: Array<UserNoteDto>;
     /**
-     * Cursor for next page (null if no more items)
-     */
-    nextCursor: string | null;
-    /**
-     * Total count of items
+     * Total count of items across all pages
      */
     total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<UserNoteDto>;
 };
 
 export type UpsertNoteDto = {
@@ -2262,15 +2347,59 @@ export type UnifiedSearchResultDto = {
 };
 
 export type UnifiedSearchResponseDto = {
-    results: Array<UnifiedSearchResultDto>;
-    total_results: number;
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<UnifiedSearchResultDto>;
 };
 
 export type UnifiedDiscoverResponseDto = {
-    results: Array<UnifiedSearchResultDto>;
-    total_results: number;
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<UnifiedSearchResultDto>;
 };
 
 export type PersonSearchResultDto = {
@@ -2285,10 +2414,31 @@ export type PersonSearchResultDto = {
 };
 
 export type PersonSearchResponseDto = {
-    results: Array<PersonSearchResultDto>;
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
-    total_results: number;
-    total_pages: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<PersonSearchResultDto>;
 };
 
 export type PersonFilmographyRoleDto = {
@@ -2367,11 +2517,31 @@ export type TmdbPersonDetailDto = {
 };
 
 export type PersonFilmographyResponseDto = {
-    items: Array<PersonFilmographyItemDto>;
+    /**
+     * Total count of items across all pages
+     */
     total: number;
+    /**
+     * Current page number after server-side clamping
+     */
     page: number;
+    /**
+     * Number of items per page
+     */
     pageSize: number;
+    /**
+     * Total number of available pages
+     */
     totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<PersonFilmographyItemDto>;
 };
 
 export type CreateFeedbackDto = {
@@ -2397,14 +2567,14 @@ export type FeedbackResponseDto = {
 };
 
 export type DiscoverSectionResponseDto = {
-    results: Array<UnifiedSearchResultDto>;
+    items: Array<UnifiedSearchResultDto>;
 };
 
 export type BecauseYouWatchedRowDto = {
     seedId: number;
     seedMediaType: 'movie' | 'tv';
     seedTitle: string;
-    results: Array<UnifiedSearchResultDto>;
+    items: Array<UnifiedSearchResultDto>;
 };
 
 export type BecauseYouWatchedResponseDto = {
@@ -2432,7 +2602,20 @@ export type MoviesControllerSearchMoviesResponse = MoviesControllerSearchMoviesR
 export type MoviesControllerDiscoverMoviesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Sort order for results
+         */
+        sortBy?: 'popularity.desc' | 'popularity.asc' | 'release_date.desc' | 'release_date.asc' | 'vote_average.desc' | 'vote_average.asc';
+        /**
+         * Filter by release year
+         */
+        year?: number;
+        /**
+         * Page number
+         */
+        page?: number;
+    };
     url: '/movies/discover';
 };
 
@@ -2521,30 +2704,6 @@ export type MoviesControllerGetUserMoviesResponses = {
 };
 
 export type MoviesControllerGetUserMoviesResponse = MoviesControllerGetUserMoviesResponses[keyof MoviesControllerGetUserMoviesResponses];
-
-export type MoviesControllerGetUserMoviesPaginatedData = {
-    body?: never;
-    path: {
-        userDid: string;
-    };
-    query?: {
-        /**
-         * Number of items to return
-         */
-        limit?: number;
-        /**
-         * Cursor for pagination (last item ID from previous page)
-         */
-        cursor?: string;
-    };
-    url: '/movies/user/{userDid}/paginated';
-};
-
-export type MoviesControllerGetUserMoviesPaginatedResponses = {
-    200: PaginatedMoviesResponseDto;
-};
-
-export type MoviesControllerGetUserMoviesPaginatedResponse = MoviesControllerGetUserMoviesPaginatedResponses[keyof MoviesControllerGetUserMoviesPaginatedResponses];
 
 export type MoviesControllerMarkWatchedData = {
     body: {
@@ -3068,7 +3227,20 @@ export type ShowsControllerSearchShowsResponse = ShowsControllerSearchShowsRespo
 export type ShowsControllerDiscoverShowsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Sort order for results
+         */
+        sortBy?: 'popularity.desc' | 'popularity.asc' | 'first_air_date.desc' | 'first_air_date.asc' | 'vote_average.desc' | 'vote_average.asc';
+        /**
+         * Filter by first air date year
+         */
+        year?: number;
+        /**
+         * Page number
+         */
+        page?: number;
+    };
     url: '/shows/discover';
 };
 
@@ -3229,7 +3401,7 @@ export type ShowsControllerGetUserUpNextData = {
     };
     query?: {
         /**
-         * Page number to return
+         * Page number to return (1-based)
          */
         page?: number;
         /**
@@ -3281,30 +3453,6 @@ export type ShowsControllerGetUserReleaseCalendarResponses = {
 };
 
 export type ShowsControllerGetUserReleaseCalendarResponse = ShowsControllerGetUserReleaseCalendarResponses[keyof ShowsControllerGetUserReleaseCalendarResponses];
-
-export type ShowsControllerGetUserEpisodesPaginatedData = {
-    body?: never;
-    path: {
-        userDid: string;
-    };
-    query?: {
-        /**
-         * Number of items to return
-         */
-        limit?: number;
-        /**
-         * Cursor for pagination (last item ID from previous page)
-         */
-        cursor?: string;
-    };
-    url: '/shows/user/{userDid}/episodes';
-};
-
-export type ShowsControllerGetUserEpisodesPaginatedResponses = {
-    200: PaginatedEpisodesResponseDto;
-};
-
-export type ShowsControllerGetUserEpisodesPaginatedResponse = ShowsControllerGetUserEpisodesPaginatedResponses[keyof ShowsControllerGetUserEpisodesPaginatedResponses];
 
 export type ShowsControllerMarkWatchedData = {
     body: MarkEpisodeWatchedDto;
@@ -3897,9 +4045,15 @@ export type UsersControllerGetMyTraktImportIssuesData = {
     body?: never;
     path?: never;
     query?: {
-        outcome?: 'unmatched' | 'couldnt_import';
-        pageSize?: number;
+        /**
+         * Page number to return (1-based)
+         */
         page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        outcome?: 'unmatched' | 'couldnt_import';
     };
     url: '/users/me/import/trakt/public/issues';
 };
@@ -4691,13 +4845,13 @@ export type ReviewsControllerGetUserReviewsData = {
     };
     query?: {
         /**
-         * Number of items to return
+         * Page number to return (1-based)
          */
-        limit?: number;
+        page?: number;
         /**
-         * Cursor for pagination
+         * Number of items to return per page
          */
-        cursor?: string;
+        pageSize?: number;
     };
     url: '/reviews/user/{userDid}/reviews';
 };
@@ -4716,6 +4870,14 @@ export type ReviewsControllerGetMediaReviewsData = {
     path?: never;
     query: {
         /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        /**
          * Media type
          */
         mediaType: 'movie' | 'show' | 'season' | 'episode';
@@ -4731,14 +4893,6 @@ export type ReviewsControllerGetMediaReviewsData = {
          * Episode number for episode items
          */
         episodeNumber?: number;
-        /**
-         * Number of items to return
-         */
-        limit?: number;
-        /**
-         * Cursor for pagination
-         */
-        cursor?: string;
         /**
          * Guarantee this review id is included in the response even if community ordering would push it past the first page (used by deep links).
          */
@@ -5230,13 +5384,13 @@ export type NotesControllerGetUserNotesData = {
     };
     query?: {
         /**
-         * Number of items to return
+         * Page number to return (1-based)
          */
-        limit?: number;
+        page?: number;
         /**
-         * Cursor for pagination
+         * Number of items to return per page
          */
-        cursor?: string;
+        pageSize?: number;
     };
     url: '/notes/user/{userDid}/notes';
 };
@@ -5504,17 +5658,17 @@ export type SearchControllerDiscoverAllData = {
     path?: never;
     query?: {
         /**
-         * Year filter
+         * Sort by
          */
-        year?: unknown;
+        sortBy?: 'popularity.desc' | 'popularity.asc' | 'vote_average.desc' | 'vote_average.asc' | 'release_date.desc' | 'release_date.asc' | 'primary_release_date.desc' | 'primary_release_date.asc';
         /**
          * Page number
          */
-        page?: unknown;
+        page?: number;
         /**
-         * Sort by
+         * Year filter
          */
-        sortBy?: unknown;
+        year?: number;
     };
     url: '/search/discover';
 };

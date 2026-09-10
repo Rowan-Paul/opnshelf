@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import {
-	type DiscoverQueryDto,
+	DiscoverQueryDto,
 	UnifiedDiscoverResponseDto,
 	UnifiedSearchResponseDto,
 } from "./dto/search.dto";

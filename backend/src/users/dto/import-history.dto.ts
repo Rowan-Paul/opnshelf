@@ -8,10 +8,12 @@ import {
 	IsInt,
 	IsOptional,
 	IsString,
+	Max,
 	Min,
 	ValidateIf,
 	ValidateNested,
 } from "class-validator";
+import { PaginationMetaDto } from "../../common/pagination";
 
 export class NormalizedImportItemDto {
 	@ApiProperty({ enum: ["movie", "episode"] })
@@ -270,18 +272,37 @@ export class TraktMatchCandidateDto {
 	overview?: string;
 }
 
-export class PaginatedTraktImportIssuesDto {
+export class TraktImportIssuesQueryDto {
+	@ApiPropertyOptional({
+		description: "Page number to return (1-based)",
+		default: 1,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	page?: number;
+
+	@ApiPropertyOptional({
+		description: "Number of items to return per page",
+		default: 25,
+	})
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	@Max(100)
+	pageSize?: number;
+
+	@ApiPropertyOptional({ enum: ["unmatched", "couldnt_import"] })
+	@IsOptional()
+	@IsIn(["unmatched", "couldnt_import"])
+	outcome?: "unmatched" | "couldnt_import";
+}
+
+export class PaginatedTraktImportIssuesDto extends PaginationMetaDto {
 	@ApiProperty({ type: [TraktImportIssueDto] })
 	items: TraktImportIssueDto[];
-
-	@ApiProperty()
-	total: number;
-
-	@ApiProperty()
-	page: number;
-
-	@ApiProperty()
-	pageSize: number;
 }
 
 export class ConfirmTraktMatchDto {

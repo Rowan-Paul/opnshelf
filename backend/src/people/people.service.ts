@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { fromTmdbPage, paginateItems } from "../common/pagination";
 import { PeopleTmdbService } from "./people-tmdb.service";
 import type {
 	TmdbPersonDetailDto,
@@ -14,25 +15,14 @@ export class PeopleService {
 		query: string,
 		page: number = 1,
 	): Promise<PersonSearchResponseDto> {
-		const {
-			results,
-			page: tmdbPage,
-			total_results,
-			total_pages,
-		} = await this.peopleTmdbService.searchPeople(query, page);
-
-		return {
-			results: results.map((p) => ({
-				id: p.id,
-				name: p.name,
-				profile_path: p.profile_path,
-				known_for_department: p.known_for_department,
-				popularity: p.popularity,
-			})),
-			page: tmdbPage,
-			total_results,
-			total_pages,
-		};
+		const tmdbPage = await this.peopleTmdbService.searchPeople(query, page);
+		return fromTmdbPage(tmdbPage, (p) => ({
+			id: p.id,
+			name: p.name,
+			profile_path: p.profile_path,
+			known_for_department: p.known_for_department,
+			popularity: p.popularity,
+		}));
 	}
 
 	async getPersonDetails(personId: string): Promise<TmdbPersonDetailDto> {
@@ -59,19 +49,6 @@ export class PeopleService {
 	): Promise<PersonFilmographyResponseDto> {
 		const filmography =
 			await this.peopleTmdbService.getCombinedFilmography(personId);
-
-		const total = filmography.length;
-		const totalPages = Math.ceil(total / pageSize);
-		const startIndex = (page - 1) * pageSize;
-		const endIndex = startIndex + pageSize;
-		const paginatedItems = filmography.slice(startIndex, endIndex);
-
-		return {
-			items: paginatedItems,
-			total,
-			page,
-			pageSize,
-			totalPages,
-		};
+		return paginateItems(filmography, page, pageSize);
 	}
 }

@@ -19,8 +19,9 @@ import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
 import { groupShelfSections } from "@/lib/shelf-sections";
 import { useDebounce } from "@/lib/use-debounce";
+import { useEndReached } from "@/lib/use-end-reached";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
-import { useProfileShelf } from "@/lib/use-public-profile";
+import { useInfiniteProfileShelf } from "@/lib/use-public-profile";
 import { useWatchActions } from "@/lib/use-watch-actions";
 
 type Filter = "all" | "movie" | "episode";
@@ -62,9 +63,10 @@ const FILTERS: { key: Filter; label: string; icon?: typeof Film }[] = [
 ];
 
 /**
- * Shelf tab: server-paginated grid of the user's watched movies + episodes,
- * with type filter pills and a search box. Mirrors the web shelf page.
- * Rendered inside the parent screen's scroll view, so it does not own a list.
+ * Shelf tab: grid of the user's watched movies + episodes, loaded page by page
+ * as the reader scrolls, with type filter pills and a search box. Mirrors the
+ * web shelf page (which pages by URL instead). Rendered inside the parent
+ * screen's `EndReachedScrollView`, so it does not own a list.
  */
 export function ShelfTab({
 	userDid,
@@ -76,7 +78,6 @@ export function ShelfTab({
 	initialFilter?: Filter;
 }) {
 	const [filter, setFilter] = useState<Filter>(initialFilter);
-	const [page, setPage] = useState(1);
 	const [search, setSearch] = useState("");
 	const [showDividers, setShowDividers] = useState(true);
 	const [sort, setSort] = useState<SortOrder>("newest");
@@ -87,25 +88,28 @@ export function ShelfTab({
 	const debounced = useDebounce(search.trim(), 350);
 	const columns = useMediaCardColumns();
 
-	const { data, isLoading, isError } = useProfileShelf(userDid, {
-		page,
+	// Filters live in the query key, so changing one starts over from page 1.
+	const {
+		data,
+		isLoading,
+		isError,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useInfiniteProfileShelf(userDid, {
 		type: filter === "all" ? undefined : filter,
 		search: debounced,
 		sortOrder: sort === "oldest" ? "asc" : "desc",
 	});
 
-	const items = data?.items ?? [];
+	const items = data?.pages.flatMap((page) => page.items) ?? [];
 	const sections = groupShelfSections(items, sectionLabel);
-	const totalPages = data?.totalPages ?? 1;
+	useEndReached(() => {
+		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+	});
 
-	const changeFilter = (next: Filter) => {
-		setFilter(next);
-		setPage(1);
-	};
-	const changeSort = (next: SortOrder) => {
-		setSort(next);
-		setPage(1);
-	};
+	const changeFilter = (next: Filter) => setFilter(next);
+	const changeSort = (next: SortOrder) => setSort(next);
 	const toggleSection = (label: string) => {
 		setCollapsedSections((current) => {
 			const next = new Set(current);
@@ -127,10 +131,7 @@ export function ShelfTab({
 					) : null
 				}
 				value={search}
-				onChangeText={(v) => {
-					setSearch(v);
-					setPage(1);
-				}}
+				onChangeText={setSearch}
 				placeholder="Search shelf…"
 				autoCapitalize="none"
 				autoCorrect={false}
@@ -254,32 +255,8 @@ export function ShelfTab({
 				</View>
 			)}
 
-			{totalPages > 1 ? (
-				<View className="flex-row items-center justify-center gap-4 pt-2">
-					<Pressable
-						disabled={page <= 1}
-						onPress={() => setPage((p) => Math.max(1, p - 1))}
-						className={cn(
-							"rounded-lg border border-border px-4 py-2",
-							page <= 1 && "opacity-40",
-						)}
-					>
-						<Text className="font-medium text-foreground text-sm">Prev</Text>
-					</Pressable>
-					<Text className="text-muted-foreground text-sm">
-						{page} / {totalPages}
-					</Text>
-					<Pressable
-						disabled={page >= totalPages}
-						onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
-						className={cn(
-							"rounded-lg border border-border px-4 py-2",
-							page >= totalPages && "opacity-40",
-						)}
-					>
-						<Text className="font-medium text-foreground text-sm">Next</Text>
-					</Pressable>
-				</View>
+			{isFetchingNextPage ? (
+				<PosterGridSkeleton rows={1} columns={columns} />
 			) : null}
 		</View>
 	);

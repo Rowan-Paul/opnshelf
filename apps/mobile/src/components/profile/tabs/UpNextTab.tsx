@@ -4,12 +4,13 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
-import { useProfileUpNext } from "@/lib/use-public-profile";
+import { useEndReached } from "@/lib/use-end-reached";
+import { useInfiniteProfileUpNext } from "@/lib/use-public-profile";
 
 /**
- * Up Next tab: in-progress shows with their next episode + watch progress.
- * Owners get an "Add to shelf" button that marks the next episode watched.
- * Mirrors the web up-next page.
+ * Up Next tab: in-progress shows with their next episode + watch progress,
+ * loaded page by page as the reader scrolls. Owners get an "Add to shelf"
+ * button that marks the next episode watched. Mirrors the web up-next page.
  */
 export function UpNextTab({
 	userDid,
@@ -25,9 +26,19 @@ export function UpNextTab({
 	 */
 	showHeading?: boolean;
 }) {
-	const { data, isLoading, isError } = useProfileUpNext(userDid);
+	const {
+		data,
+		isLoading,
+		isError,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useInfiniteProfileUpNext(userDid);
 
-	const items = data?.items ?? [];
+	const items = data?.pages.flatMap((page) => page.items) ?? [];
+	useEndReached(() => {
+		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+	});
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -58,6 +69,8 @@ export function UpNextTab({
 					))}
 				</View>
 			)}
+
+			{isFetchingNextPage ? <UpNextSkeleton rows={1} /> : null}
 		</View>
 	);
 }

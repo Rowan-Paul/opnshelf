@@ -10,7 +10,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Href } from "expo-router";
 import { Heart, Pencil, Star, Trash2 } from "lucide-react-native";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
@@ -25,13 +25,14 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
+import { useEndReached } from "@/lib/use-end-reached";
 import { useInfiniteProfileReviews } from "@/lib/use-public-profile";
 
 /**
- * Reviews tab: the user's reviews, cursor-paginated with a Load more button.
- * Renders the markdown body via the shared mobile Markdown renderer. The owner
- * can edit (review editor sheet) and delete each review, mirroring the web
- * Reviews page.
+ * Reviews tab: the user's reviews, loaded page by page as the reader scrolls
+ * (the enclosing screen's `EndReachedScrollView` drives it). Renders the
+ * markdown body via the shared mobile Markdown renderer. The owner can edit
+ * (review editor sheet) and delete each review, mirroring the web Reviews page.
  *
  * `showHeading` is off for the full-screen drill-down route, where the native
  * stack header already shows "Reviews" (avoids a duplicate title); it stays on
@@ -48,7 +49,6 @@ export function ReviewsTab({
 	isOwner: boolean;
 	showHeading?: boolean;
 }) {
-	const loadMorePending = useRef(false);
 	const {
 		data,
 		isLoading,
@@ -59,15 +59,9 @@ export function ReviewsTab({
 	} = useInfiniteProfileReviews(userDid);
 
 	const reviews = data?.pages.flatMap((page) => page.items) ?? [];
-	const handleLoadMore = async () => {
-		if (loadMorePending.current || isFetchingNextPage) return;
-		loadMorePending.current = true;
-		try {
-			await fetchNextPage();
-		} finally {
-			loadMorePending.current = false;
-		}
-	};
+	useEndReached(() => {
+		if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+	});
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -100,21 +94,7 @@ export function ReviewsTab({
 				</View>
 			)}
 
-			{hasNextPage ? (
-				<Pressable
-					disabled={isFetchingNextPage}
-					onPress={handleLoadMore}
-					className="items-center rounded-lg border border-border py-2.5"
-				>
-					{isFetchingNextPage ? (
-						<ActivityIndicator size="small" />
-					) : (
-						<Text className="font-medium text-foreground text-sm">
-							Load more
-						</Text>
-					)}
-				</Pressable>
-			) : null}
+			{isFetchingNextPage ? <ReviewsSkeleton rows={1} /> : null}
 		</View>
 	);
 }

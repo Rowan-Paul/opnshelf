@@ -6,6 +6,7 @@ import {
 	reviewsControllerGetMediaReviewsQueryKey,
 	reviewsControllerGetReviewLikesOptions,
 	reviewsControllerGetReviewLikesQueryKey,
+	reviewsControllerGetUserReviewsInfiniteOptions,
 	reviewsControllerGetUserReviewsOptions,
 	reviewsControllerGetUserReviewsQueryKey,
 	reviewsControllerLikeReviewMutation,
@@ -13,7 +14,12 @@ import {
 	reviewsControllerUnlikeReviewMutation,
 	reviewsControllerUpdateReviewMutation,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 
@@ -67,20 +73,33 @@ export function useMediaReviews({
 
 interface UseUserReviewsOptions {
 	userDid: string;
-	limit?: number;
-	cursor?: string;
+	pageSize?: number;
 }
 
-export function useUserReviews({
-	userDid,
-	limit,
-	cursor,
-}: UseUserReviewsOptions) {
+/** First page of a user's reviews (Overview preview). */
+export function useUserReviews({ userDid, pageSize }: UseUserReviewsOptions) {
 	return useQuery({
 		...reviewsControllerGetUserReviewsOptions({
 			path: { userDid },
-			query: { limit, cursor },
+			query: { pageSize },
 		}),
+		enabled: !!userDid,
+	});
+}
+
+/** A user's reviews accumulated page by page (Reviews page "Load more"). */
+export function useInfiniteUserReviews({
+	userDid,
+	pageSize = 20,
+}: UseUserReviewsOptions) {
+	return useInfiniteQuery({
+		...reviewsControllerGetUserReviewsInfiniteOptions({
+			path: { userDid },
+			query: { pageSize },
+		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 		enabled: !!userDid,
 	});
 }
@@ -117,9 +136,10 @@ function useReviewInvalidation({
 		},
 	});
 
+	// Path-only key: a prefix match that covers every page size and the
+	// infinite cache alike.
 	const userReviewsKey = reviewsControllerGetUserReviewsQueryKey({
 		path: { userDid },
-		query: { limit: 20 },
 	});
 
 	return () => {

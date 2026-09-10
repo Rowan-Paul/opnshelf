@@ -1,10 +1,14 @@
 import {
-	notesControllerGetUserNotesOptions,
+	notesControllerGetUserNotesInfiniteOptions,
 	notesControllerGetUserNotesQueryKey,
 	slugifyName,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -115,7 +119,6 @@ function NoteCard({
 
 	const noteListKey = notesControllerGetUserNotesQueryKey({
 		path: { userDid },
-		query: { limit: 20 },
 	});
 
 	const invalidateList = () =>
@@ -218,18 +221,19 @@ function ProfileNotesPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	const [cursor, setCursor] = useState<string | undefined>(undefined);
+	const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
+		useInfiniteQuery({
+			...notesControllerGetUserNotesInfiniteOptions({
+				path: { userDid },
+				query: { pageSize: 20 },
+			}),
+			initialPageParam: 1,
+			getNextPageParam: (lastPage) =>
+				lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+			enabled: !!userDid,
+		});
 
-	const { data, isLoading } = useQuery({
-		...notesControllerGetUserNotesOptions({
-			path: { userDid },
-			query: { limit: 20, ...(cursor ? { cursor } : {}) },
-		}),
-		enabled: !!userDid,
-	});
-
-	const notes = data?.items ?? [];
-	const hasMore = data?.nextCursor != null;
+	const notes = data?.pages.flatMap((page) => page.items) ?? [];
 
 	return (
 		<div className="space-y-6">
@@ -267,14 +271,15 @@ function ProfileNotesPage() {
 				</div>
 			)}
 
-			{hasMore && (
+			{hasNextPage && (
 				<div className="flex justify-center">
 					<button
 						type="button"
-						onClick={() => setCursor(data?.nextCursor ?? undefined)}
+						disabled={isFetchingNextPage}
+						onClick={() => void fetchNextPage()}
 						className="btn btn-secondary"
 					>
-						Load more
+						{isFetchingNextPage ? "Loading…" : "Load more"}
 					</button>
 				</div>
 			)}

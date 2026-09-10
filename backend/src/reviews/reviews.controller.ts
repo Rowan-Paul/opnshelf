@@ -15,7 +15,6 @@ import {
 	ApiBearerAuth,
 	ApiOkResponse,
 	ApiOperation,
-	ApiQuery,
 	ApiTags,
 	ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
@@ -46,16 +45,6 @@ export class ReviewsController {
 	@Get("user/:userDid/reviews")
 	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get paginated reviews for a user" })
-	@ApiQuery({
-		name: "limit",
-		required: false,
-		description: "Number of items to return",
-	})
-	@ApiQuery({
-		name: "cursor",
-		required: false,
-		description: "Cursor for pagination",
-	})
 	@ApiOkResponse({
 		description: "Reviews retrieved",
 		type: PaginatedReviewsResponseDto,
@@ -65,15 +54,15 @@ export class ReviewsController {
 		@Query() query: PaginatedReviewsQueryDto,
 		@Req() req: AuthenticatedRequest,
 	): Promise<PaginatedReviewsResponseDto> {
-		const limit = query.limit ?? 20;
 		const result = await this.reviewsService.getUserReviews(
 			userDid,
-			limit,
-			query.cursor,
+			query.page,
+			query.pageSize,
 			req.user?.did,
 		);
 
 		return {
+			...result.pagination,
 			items: result.items.map((review) => ({
 				id: review.id,
 				rkey: review.rkey,
@@ -95,8 +84,6 @@ export class ReviewsController {
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
 			})),
-			nextCursor: result.nextCursor,
-			total: result.total,
 		};
 	}
 
@@ -117,6 +104,7 @@ export class ReviewsController {
 		);
 
 		return {
+			...result.pagination,
 			items: result.items.map((review) => ({
 				id: review.id,
 				rkey: review.rkey,
@@ -139,8 +127,6 @@ export class ReviewsController {
 				createdAt: review.createdAt.toISOString(),
 				updatedAt: review.updatedAt.toISOString(),
 			})),
-			total: result.total,
-			nextCursor: result.nextCursor,
 		};
 	}
 

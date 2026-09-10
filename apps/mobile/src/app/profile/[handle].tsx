@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import {
 	type ProfileTab,
@@ -17,6 +17,7 @@ import { UpNextTab } from "@/components/profile/tabs/UpNextTab";
 import { ProfileHeaderSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
+import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { usePublicProfile } from "@/lib/use-public-profile";
 
 /**
@@ -99,7 +100,7 @@ export default function ProfileScreen() {
 					message="This user doesn't exist or their profile is unavailable."
 				/>
 			) : (
-				<ScrollView
+				<EndReachedScrollView
 					stickyHeaderIndices={[1]}
 					showsVerticalScrollIndicator={false}
 				>
@@ -148,7 +149,7 @@ export default function ProfileScreen() {
 							initialTab={connectionsTab}
 						/>
 					)}
-				</ScrollView>
+				</EndReachedScrollView>
 			)}
 		</View>
 	);

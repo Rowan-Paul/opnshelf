@@ -149,7 +149,7 @@ function MovieDetailPage() {
 		"Unknown";
 
 	const similarMovies =
-		similarMoviesData?.results
+		similarMoviesData?.items
 			?.filter((m) => m.id !== Number(movieId))
 			?.slice(0, 6)
 			?.map((m) => ({

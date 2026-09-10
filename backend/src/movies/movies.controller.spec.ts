@@ -62,29 +62,50 @@ describe("MoviesController", () => {
 					{ id: 1, title: "Test Movie", release_date: "2024-01-01" },
 					{ id: 2, title: "Another Movie", release_date: "2024-02-01" },
 				],
-				total_pages: 1,
-				total_results: 2,
+				page: 1,
+				total_pages: 3,
+				total_results: 42,
 			};
 			mockMoviesService.searchMovies.mockResolvedValue(mockResults);
 
 			const result = await controller.searchMovies("test");
 
-			expect(result).toEqual(mockResults);
+			// TMDB's envelope is re-expressed in the shared pagination contract.
+			expect(result).toEqual({
+				items: mockResults.results,
+				page: 1,
+				pageSize: 20,
+				total: 42,
+				totalPages: 3,
+				hasNextPage: true,
+				hasPreviousPage: false,
+			});
 			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("test");
 		});
 
 		it("should handle empty search results", async () => {
-			const mockResults = { results: [], total_pages: 0, total_results: 0 };
+			const mockResults = {
+				results: [],
+				page: 1,
+				total_pages: 0,
+				total_results: 0,
+			};
 			mockMoviesService.searchMovies.mockResolvedValue(mockResults);
 
 			const result = await controller.searchMovies("nonexistent");
 
-			expect(result).toEqual(mockResults);
+			expect(result).toMatchObject({
+				items: [],
+				total: 0,
+				totalPages: 0,
+				hasNextPage: false,
+			});
 		});
 
 		it("should pass query string directly to service without DTO wrapping", async () => {
 			const mockResults = {
 				results: [{ id: 1, title: "Dune", release_date: "2024-01-01" }],
+				page: 1,
 				total_pages: 1,
 				total_results: 1,
 			};
@@ -92,7 +113,7 @@ describe("MoviesController", () => {
 
 			const result = await controller.searchMovies("Dune");
 
-			expect(result).toEqual(mockResults);
+			expect(result.items).toEqual(mockResults.results);
 			expect(mockMoviesService.searchMovies).toHaveBeenCalledWith("Dune");
 			expect(mockMoviesService.searchMovies).not.toHaveBeenCalledWith(
 				expect.objectContaining({ query: "Dune" }),

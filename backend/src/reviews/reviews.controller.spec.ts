@@ -62,8 +62,14 @@ describe("ReviewsController", () => {
 					updatedAt: new Date("2026-01-02"),
 				},
 			],
-			nextCursor: null,
-			total: 1,
+			pagination: {
+				total: 1,
+				page: 1,
+				pageSize: 20,
+				totalPages: 1,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
 		});
 
 		const result = await controller.getUserReviews(
@@ -104,8 +110,14 @@ describe("ReviewsController", () => {
 					user: { did: "did:2", handle: "bob.opnshelf.social" },
 				},
 			],
-			total: 2,
-			nextCursor: null,
+			pagination: {
+				total: 2,
+				page: 1,
+				pageSize: 20,
+				totalPages: 1,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
 		});
 
 		const result = await controller.getMediaReviews(

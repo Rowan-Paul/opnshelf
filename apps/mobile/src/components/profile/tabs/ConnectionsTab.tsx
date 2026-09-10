@@ -7,13 +7,14 @@ import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
+import { useEndReached } from "@/lib/use-end-reached";
 import { useFollowers, useFollowing, useFollowToggle } from "@/lib/use-social";
 
 /**
  * Connections tab: Followers / Following sub-tabs for the profile being viewed.
  * Reuses the shared infinite social hooks (keyed by handle) and the follow
- * toggle. Each row links to that user's profile. Mirrors the web Connections
- * page.
+ * toggle; the active list loads its next page as the reader scrolls. Each row
+ * links to that user's profile. Mirrors the web Connections page.
  */
 export function ConnectionsTab({
 	handle,
@@ -43,6 +44,11 @@ export function ConnectionsTab({
 	const { toggle } = useFollowToggle();
 
 	const active = tab === "followers" ? followers : following;
+	useEndReached(() => {
+		if (active.hasNextPage && !active.isFetchingNextPage) {
+			void active.fetchNextPage();
+		}
+	});
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -100,6 +106,8 @@ export function ConnectionsTab({
 					))}
 				</View>
 			)}
+
+			{active.isFetchingNextPage ? <UserRowsSkeleton rows={2} /> : null}
 		</View>
 	);
 }

@@ -7,6 +7,7 @@ import {
 	deterministicEpisodeWatchRkey,
 	deterministicMovieWatchRkey,
 } from "../common/watch-rkey";
+import { getPaginationMeta, resolvePageWindow } from "../common/pagination";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";
@@ -274,13 +275,15 @@ export class ImportHistoryService {
 
 	async getTraktImportIssues(
 		userDid: string,
-		page = 1,
-		pageSize = 25,
+		page?: number,
+		pageSize?: number,
 		outcome?: "unmatched" | "couldnt_import",
 	): Promise<PaginatedTraktImportIssuesDto> {
 		const job = await this.jobStore.requireJob(userDid);
-		const safePage = Math.max(1, Math.floor(page));
-		const safePageSize = Math.min(100, Math.max(1, Math.floor(pageSize)));
+		const window = resolvePageWindow(page, pageSize, {
+			defaultPageSize: 25,
+			maxPageSize: 100,
+		});
 		const where = {
 			jobId: job.id,
 			outcome: outcome ?? { in: ["unmatched", "couldnt_import"] },
@@ -289,16 +292,14 @@ export class ImportHistoryService {
 			this.prisma.traktImportItem.findMany({
 				where,
 				orderBy: { sourceIndex: "asc" },
-				skip: (safePage - 1) * safePageSize,
-				take: safePageSize,
+				skip: window.skip,
+				take: window.take,
 			}),
 			this.prisma.traktImportItem.count({ where }),
 		]);
 		return {
+			...getPaginationMeta(total, window.page, window.pageSize),
 			items: items.map((item) => mapTraktImportIssue(item)),
-			total,
-			page: safePage,
-			pageSize: safePageSize,
 		};
 	}
 

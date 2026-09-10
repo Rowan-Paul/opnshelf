@@ -56,7 +56,7 @@ export function WatchedMediaSwipe({
 
 	const discovery = useQuery(onboardingDiscoveryOptions());
 	const items = useMemo(
-		() => (discovery.data?.results ?? []).map(toOnboardingMediaItem),
+		() => (discovery.data?.items ?? []).map(toOnboardingMediaItem),
 		[discovery.data],
 	);
 	const current = items[index];

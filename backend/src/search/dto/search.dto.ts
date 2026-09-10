@@ -1,4 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { PaginationMetaDto } from "../../common/pagination";
 
 export type MediaType = "movie" | "tv";
 
@@ -58,26 +61,19 @@ export class UnifiedSearchResultDto {
 	video?: boolean;
 }
 
-export class UnifiedSearchResponseDto {
+/**
+ * Movies and shows merged per page: each page interleaves one TMDB movie page
+ * with one TMDB show page, so `pageSize` is two TMDB pages wide and
+ * `totalPages` is the deeper of the two result sets.
+ */
+export class UnifiedSearchResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [UnifiedSearchResultDto] })
-	results: UnifiedSearchResultDto[];
-
-	@ApiProperty()
-	total_results: number;
-
-	@ApiProperty()
-	page: number;
+	items: UnifiedSearchResultDto[];
 }
 
-export class UnifiedDiscoverResponseDto {
+export class UnifiedDiscoverResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [UnifiedSearchResultDto] })
-	results: UnifiedSearchResultDto[];
-
-	@ApiProperty()
-	total_results: number;
-
-	@ApiProperty()
-	page: number;
+	items: UnifiedSearchResultDto[];
 }
 
 export class DiscoverQueryDto {
@@ -95,11 +91,22 @@ export class DiscoverQueryDto {
 		],
 		default: "popularity.desc",
 	})
+	@IsOptional()
+	@IsString()
 	sortBy?: string;
 
 	@ApiProperty({ required: false, minimum: 1, default: 1 })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
 	page?: number;
 
 	@ApiProperty({ required: false, minimum: 1900, maximum: 2100 })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1900)
+	@Max(2100)
 	year?: number;
 }

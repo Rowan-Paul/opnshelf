@@ -6,6 +6,13 @@ import {
 	main as noteSchema,
 } from "../lexicons/xyz/opnshelf/note";
 import type { Main as NoteRecord } from "../lexicons/xyz/opnshelf/note.defs";
+import {
+	clampPage,
+	clampPageSize,
+	DEFAULT_PAGE_SIZE,
+	getPaginationMeta,
+	MAX_PAGE_SIZE,
+} from "../common/pagination";
 import { PrismaService } from "../prisma/prisma.service";
 import type { UpsertNoteDto } from "./dto/note.dto";
 
@@ -37,25 +44,20 @@ export class NotesService {
 		});
 	}
 
-	async getUserNotes(userDid: string, limit: number = 20, cursor?: string) {
-		const take = limit + 1;
+	async getUserNotes(userDid: string, page?: number, pageSize?: number) {
+		const where = { userDid };
+		const total = await this.prisma.note.count({ where });
+		const pagination = getPaginationMeta(
+			total,
+			clampPage(page ?? 1),
+			clampPageSize(pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
+		);
 
-		const notes = await this.prisma.note.findMany({
-			where: { userDid },
+		const items = await this.prisma.note.findMany({
+			where,
 			orderBy: { updatedAt: "desc" },
-			take,
-			...(cursor && {
-				skip: 1,
-				cursor: { id: cursor },
-			}),
-		});
-
-		const hasMore = notes.length > limit;
-		const items = hasMore ? notes.slice(0, limit) : notes;
-		const nextCursor = hasMore ? items[items.length - 1]?.id : null;
-
-		const total = await this.prisma.note.count({
-			where: { userDid },
+			skip: (pagination.page - 1) * pagination.pageSize,
+			take: pagination.pageSize,
 		});
 
 		// Fetch related movie/show data for each note
@@ -111,8 +113,7 @@ export class NotesService {
 
 		return {
 			items: enrichedItems,
-			nextCursor,
-			total,
+			pagination,
 		};
 	}
 

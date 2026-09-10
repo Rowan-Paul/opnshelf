@@ -1,12 +1,12 @@
 import {
 	type SocialUserCardDto,
-	socialControllerSearchPeopleOptions,
+	socialControllerSearchPeopleInfiniteOptions,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link, Stack } from "expo-router";
 import { Search, Sparkles, Users, X } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
@@ -14,6 +14,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { useDebounce } from "@/lib/use-debounce";
+import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useFollowToggle, useSuggestions } from "@/lib/use-social";
 
 /** Search and recommendations live under Social so the feed remains the tab. */
@@ -23,15 +24,31 @@ export default function FindPeopleScreen() {
 	const [query, setQuery] = useState("");
 	const debouncedQuery = useDebounce(query.trim(), 350);
 	const hasQuery = debouncedQuery.length > 0;
-	const searchQuery = useQuery({
-		...socialControllerSearchPeopleOptions({
+	// Search results load page by page as the reader scrolls; suggestions are a
+	// single curated set.
+	const searchQuery = useInfiniteQuery({
+		...socialControllerSearchPeopleInfiniteOptions({
 			query: { q: debouncedQuery, pageSize: 20 },
 		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 		enabled: hasQuery,
 	});
+	// This screen owns the scroll container, so it listens through the prop
+	// rather than `useEndReached` (which only works below the container).
+	const loadMoreResults = () => {
+		if (
+			hasQuery &&
+			searchQuery.hasNextPage &&
+			!searchQuery.isFetchingNextPage
+		) {
+			void searchQuery.fetchNextPage();
+		}
+	};
 	const suggestionsQuery = useSuggestions(!hasQuery);
 	const people: SocialUserCardDto[] = hasQuery
-		? (searchQuery.data?.items ?? [])
+		? (searchQuery.data?.pages.flatMap((page) => page.items) ?? [])
 		: (suggestionsQuery.data?.items ?? []);
 	const isLoading = hasQuery
 		? searchQuery.isLoading
@@ -42,9 +59,10 @@ export default function FindPeopleScreen() {
 	return (
 		<View className="flex-1 bg-background">
 			<Stack.Screen options={{ headerShown: true, title: "Find people" }} />
-			<ScrollView
+			<EndReachedScrollView
 				keyboardShouldPersistTaps="handled"
 				contentContainerClassName="gap-4 px-4 py-4 pb-8"
+				onEndReached={loadMoreResults}
 			>
 				<TextField
 					leading={<Search color="#94a3b8" size={18} />}
@@ -118,7 +136,11 @@ export default function FindPeopleScreen() {
 						))}
 					</View>
 				)}
-			</ScrollView>
+
+				{hasQuery && searchQuery.isFetchingNextPage ? (
+					<UserRowsSkeleton rows={2} />
+				) : null}
+			</EndReachedScrollView>
 		</View>
 	);
 }

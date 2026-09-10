@@ -100,16 +100,6 @@ export class NotesController {
 
 	@Get("user/:userDid/notes")
 	@ApiOperation({ summary: "Get paginated notes for a user" })
-	@ApiQuery({
-		name: "limit",
-		required: false,
-		description: "Number of items to return",
-	})
-	@ApiQuery({
-		name: "cursor",
-		required: false,
-		description: "Cursor for pagination",
-	})
 	@ApiOkResponse({
 		description: "Notes retrieved",
 		type: PaginatedNotesResponseDto,
@@ -118,14 +108,14 @@ export class NotesController {
 		@Param("userDid") userDid: string,
 		@Query() query: PaginatedNotesQueryDto,
 	): Promise<PaginatedNotesResponseDto> {
-		const limit = query.limit ?? 20;
 		const result = await this.notesService.getUserNotes(
 			userDid,
-			limit,
-			query.cursor,
+			query.page,
+			query.pageSize,
 		);
 
 		return {
+			...result.pagination,
 			items: result.items.map((note) => ({
 				id: note.id,
 				content: note.content,
@@ -138,8 +128,6 @@ export class NotesController {
 				createdAt: note.createdAt.toISOString(),
 				updatedAt: note.updatedAt.toISOString(),
 			})),
-			nextCursor: result.nextCursor,
-			total: result.total,
 		};
 	}
 

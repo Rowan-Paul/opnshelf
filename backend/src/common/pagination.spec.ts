@@ -1,11 +1,12 @@
 import {
 	clampPage,
 	clampPageSize,
+	fromTmdbPage,
 	getPaginationMeta,
 	paginateItems,
-} from "./social-pagination";
+} from "./pagination";
 
-describe("social pagination", () => {
+describe("pagination", () => {
 	it("clamps pages and page sizes to their bounds", () => {
 		expect(clampPage(0)).toBe(1);
 		expect(clampPage(4)).toBe(4);
@@ -45,5 +46,30 @@ describe("social pagination", () => {
 			hasNextPage: false,
 			hasPreviousPage: true,
 		});
+	});
+
+	it("re-expresses a TMDB page in the shared contract", () => {
+		expect(
+			fromTmdbPage(
+				{
+					results: [{ id: 1 }, { id: 2 }],
+					page: 2,
+					total_results: 45,
+					total_pages: 3,
+				},
+				(item) => item.id,
+			),
+		).toEqual({
+			items: [1, 2],
+			page: 2,
+			pageSize: 20,
+			total: 45,
+			totalPages: 3,
+			hasNextPage: true,
+			hasPreviousPage: true,
+		});
+		expect(
+			fromTmdbPage({ results: [], page: 1, total_results: 0, total_pages: 0 }),
+		).toMatchObject({ hasNextPage: false, hasPreviousPage: false });
 	});
 });
