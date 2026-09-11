@@ -49,7 +49,13 @@ export default function SignupHandleScreen() {
 		pendingToken?: string;
 		email?: string;
 	}>();
-	const provider = params.provider as Provider | undefined;
+	// Deep links and restored router params can carry anything. An unchecked
+	// cast would let any non-"apple" string select the Google endpoint, which
+	// would post an Apple pending registration to it.
+	const provider: Provider | undefined =
+		params.provider === "apple" || params.provider === "google"
+			? params.provider
+			: undefined;
 	const { pendingToken, email } = params;
 
 	const { isAuthenticated, isLoading, runAuthorizationUrl } = useAuth();
@@ -94,7 +100,15 @@ export default function SignupHandleScreen() {
 		},
 		onSuccess: async (coreOAuthUrl) => {
 			const completed = await runAuthorizationUrl(coreOAuthUrl);
-			if (completed) router.replace("/");
+			if (completed) {
+				router.replace("/");
+				return;
+			}
+			// The browser was dismissed without finishing. isSubmitting stays true
+			// while the mutation reads as successful, so without this reset the
+			// screen is stuck behind a disabled button with no way forward.
+			registerMutation.reset();
+			toast.error("Sign-in wasn't completed. Try again.");
 		},
 		onError: (error) => {
 			toast.error(extractRegisterErrorMessage(error));

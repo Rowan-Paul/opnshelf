@@ -246,9 +246,14 @@ describe("AppleSignupController", () => {
 		});
 
 		it("hands an already-linked identity to the PDS with a provider hint", async () => {
-			mockNativeAccounts.startSsoRegistration.mockRejectedValue(
-				new Error("This account is already linked to an existing user."),
-			);
+			// The real shape: pdsSsoPost rejects with a plain object, not an Error,
+			// so String(error) would be "[object Object]" and the check would miss.
+			mockNativeAccounts.startSsoRegistration.mockRejectedValue({
+				status: 400,
+				error: "InvalidRequest",
+				message:
+					"This account is already linked to an existing user. Please sign in instead.",
+			});
 			const res = createMockResponse();
 
 			await controller.appleCallback(
@@ -465,9 +470,14 @@ describe("AppleSignupController", () => {
 		});
 
 		it("turns an already-linked identity into a sign-in with a provider hint", async () => {
-			mockNativeAccounts.startSsoRegistration.mockRejectedValue(
-				new Error("This account is already linked to an existing user."),
-			);
+			// The real shape: pdsSsoPost rejects with a plain object, not an Error,
+			// so String(error) would be "[object Object]" and the check would miss.
+			mockNativeAccounts.startSsoRegistration.mockRejectedValue({
+				status: 400,
+				error: "InvalidRequest",
+				message:
+					"This account is already linked to an existing user. Please sign in instead.",
+			});
 
 			const result = await controller.appleNative({
 				identityToken: "native-identity-token",
@@ -479,9 +489,11 @@ describe("AppleSignupController", () => {
 		});
 
 		it("rejects a credential the PDS will not verify", async () => {
-			mockNativeAccounts.startSsoRegistration.mockRejectedValue(
-				new Error("id_token verification failed"),
-			);
+			mockNativeAccounts.startSsoRegistration.mockRejectedValue({
+				status: 400,
+				error: "InvalidRequest",
+				message: "id_token verification failed",
+			});
 
 			await expect(
 				controller.appleNative({ identityToken: "forged" }),
@@ -615,6 +627,68 @@ describe("AppleSignupController", () => {
 			);
 			expect(payload.codeChallenge).toBeUndefined();
 			expect(payload.platform).toBe("mobile");
+		});
+	});
+	describe("without a configured state secret", () => {
+		/** Build a controller whose config lacks PROVIDER_STATE_SECRET. */
+		const controllerWithEnv = async (nodeEnv: string) => {
+			const module = await Test.createTestingModule({
+				controllers: [AppleSignupController],
+				providers: [
+					SignupRateLimiter,
+					{ provide: AuthService, useValue: mockAuthService },
+					{ provide: NativeAccountService, useValue: mockNativeAccounts },
+					{
+						provide: ConfigService,
+						useValue: {
+							get: (key: string) =>
+								({
+									FRONTEND_URL: "http://127.0.0.1:3000",
+									NODE_ENV: nodeEnv,
+									PDS_HANDLE_DOMAIN: "opnshelf.social",
+								})[key],
+						},
+					},
+					{ provide: TranquilAdminService, useValue: mockTranquilAdmin },
+					{ provide: CaptchaService, useValue: mockCaptcha },
+					{ provide: AppleOAuthService, useValue: mockAppleOAuth },
+				],
+			}).compile();
+			return module.get<AppleSignupController>(AppleSignupController);
+		};
+
+		it("refuses the browser flow in production", async () => {
+			const prod = await controllerWithEnv("production");
+			const res = createMockResponse();
+			prod.appleStart(res);
+
+			// A per-process key would break every signup in flight on each deploy,
+			// silently and only for Apple.
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/signup?error=apple_unavailable",
+			);
+			expect(mockAppleOAuth.buildAuthUrl).not.toHaveBeenCalled();
+		});
+
+		it("still allows it in development", async () => {
+			const dev = await controllerWithEnv("development");
+			const res = createMockResponse();
+			dev.appleStart(res);
+			expect(mockAppleOAuth.buildAuthUrl).toHaveBeenCalledTimes(1);
+		});
+
+		it("leaves the native path working in production, which needs no state", async () => {
+			const prod = await controllerWithEnv("production");
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-token",
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+
+			const result = await prod.appleNative({ identityToken: "native-token" });
+			expect(result.pendingToken).toBe("pending-token");
 		});
 	});
 });

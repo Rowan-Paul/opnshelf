@@ -37,6 +37,8 @@ export default function SignupScreen() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+	// See login.tsx: a provider flow and a password signup must not run at once.
+	const [providerBusy, setProviderBusy] = useState(false);
 
 	const siteKey = env.turnstileSiteKey;
 	const handleDomain = env.pdsHandleDomain;
@@ -89,6 +91,7 @@ export default function SignupScreen() {
 	const trimmedUsername = username.trim().toLowerCase();
 	const canSubmit =
 		!isSubmitting &&
+		!providerBusy &&
 		trimmedUsername.length >= 3 &&
 		email.trim().length > 0 &&
 		password.length >= 8 &&
@@ -123,7 +126,10 @@ export default function SignupScreen() {
 					</Text>
 				</View>
 
-				<ProviderButtons />
+				<ProviderButtons
+					disabled={isSubmitting}
+					onBusyChange={setProviderBusy}
+				/>
 
 				<View className="flex-row items-center gap-3">
 					<View className="h-px flex-1 bg-border" />

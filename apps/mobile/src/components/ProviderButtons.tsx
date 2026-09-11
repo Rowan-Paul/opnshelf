@@ -1,6 +1,12 @@
+import * as AppleAuthentication from "expo-apple-authentication";
 import { router } from "expo-router";
-import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+	ActivityIndicator,
+	Pressable,
+	useColorScheme,
+	View,
+} from "react-native";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -14,18 +20,38 @@ import {
 	supportsNativeApple,
 } from "@/lib/provider-signin";
 
+interface ProviderButtonsProps {
+	/** Set while the surrounding screen runs its own auth flow. */
+	disabled?: boolean;
+	/**
+	 * Reports whether a provider flow is running, so the screen can disable its
+	 * own controls. Two flows at once would each complete a session and race
+	 * navigation.
+	 */
+	onBusyChange?: (busy: boolean) => void;
+}
+
 /**
  * "Continue with Apple" / "Continue with Google" (ADR 0027).
  *
  * Apple and Google are equally prominent here because App Store guideline 4.8
  * is the reason the Google button can exist in this app at all.
  */
-export function ProviderButtons() {
+export function ProviderButtons({
+	disabled = false,
+	onBusyChange,
+}: ProviderButtonsProps) {
 	const { runAuthorizationUrl } = useAuth();
 	const toast = useToast();
+	const colorScheme = useColorScheme();
 	const [busy, setBusy] = useState<Provider | null>(null);
 
 	const googleAvailable = isGoogleConfigured();
+	const locked = disabled || busy !== null;
+
+	useEffect(() => {
+		onBusyChange?.(busy !== null);
+	}, [busy, onBusyChange]);
 
 	/**
 	 * Apple on Android has no native credential, so it runs the same browser
@@ -42,7 +68,7 @@ export function ProviderButtons() {
 	};
 
 	const onPress = async (provider: Provider) => {
-		if (busy) return;
+		if (locked) return;
 		setBusy(provider);
 		try {
 			if (provider === "apple" && !supportsNativeApple()) {
@@ -83,24 +109,46 @@ export function ProviderButtons() {
 	// iPhone.
 	return (
 		<View className="gap-3">
-			<Pressable
-				disabled={busy !== null}
-				onPress={() => onPress("apple")}
-				className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
-				style={{ opacity: busy !== null ? 0.6 : 1 }}
-			>
-				{busy === "apple" && <ActivityIndicator size="small" />}
-				<Text className="font-semibold text-base text-foreground">
-					Continue with Apple
-				</Text>
-			</Pressable>
+			{supportsNativeApple() ? (
+				// Apple's guidelines require their own button wherever native Sign in
+				// with Apple is offered, and guideline 4.8 is the whole reason this
+				// screen has provider buttons — so this is not the place to draw our
+				// own. Android keeps the custom one, where no such rule applies.
+				<AppleAuthentication.AppleAuthenticationButton
+					buttonType={
+						AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
+					}
+					buttonStyle={
+						colorScheme === "dark"
+							? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+							: AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+					}
+					cornerRadius={8}
+					style={{ height: 48, opacity: locked ? 0.6 : 1 }}
+					onPress={() => {
+						if (!locked) void onPress("apple");
+					}}
+				/>
+			) : (
+				<Pressable
+					disabled={locked}
+					onPress={() => onPress("apple")}
+					className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
+					style={{ opacity: locked ? 0.6 : 1 }}
+				>
+					{busy === "apple" && <ActivityIndicator size="small" />}
+					<Text className="font-semibold text-base text-foreground">
+						Continue with Apple
+					</Text>
+				</Pressable>
+			)}
 
 			{googleAvailable ? (
 				<Pressable
-					disabled={busy !== null}
+					disabled={locked}
 					onPress={() => onPress("google")}
 					className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
-					style={{ opacity: busy !== null ? 0.6 : 1 }}
+					style={{ opacity: locked ? 0.6 : 1 }}
 				>
 					{busy === "google" && <ActivityIndicator size="small" />}
 					<Text className="font-semibold text-base text-foreground">

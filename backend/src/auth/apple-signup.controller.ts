@@ -44,7 +44,11 @@ import { NativeAccountService } from "./native-account.service";
 import { isValidCodeChallenge } from "./oauth-app-state";
 import { signProviderState, verifyProviderState } from "./provider-state";
 import { SignupRateLimiter } from "./signup-rate-limiter";
-import { getClientIp, mapCreateAccountError } from "./signup-support";
+import {
+	getClientIp,
+	mapCreateAccountError,
+	ssoErrorMessage,
+} from "./signup-support";
 
 /** Holds the PDS pending-registration token between Apple and the handle picker. */
 const APPLE_PENDING_COOKIE_NAME = "apple_pending";
@@ -82,6 +86,14 @@ export class AppleSignupController {
 		{ email: string; expiresAt: number }
 	>();
 	private readonly stateSecret: string;
+	/**
+	 * False when the browser flow cannot be trusted to work: production without
+	 * a configured PROVIDER_STATE_SECRET. A per-process key signs correctly but
+	 * dies with the process, so every signup in flight breaks on each deploy —
+	 * silently, and only for Apple. Better to report Apple as unavailable than
+	 * to offer a button that intermittently loses people mid-signup.
+	 */
+	private readonly browserFlowAvailable: boolean;
 
 	constructor(
 		private readonly authService: AuthService,
@@ -93,17 +105,20 @@ export class AppleSignupController {
 		private readonly rateLimiter: SignupRateLimiter,
 	) {
 		const configured = this.configService.get<string>("PROVIDER_STATE_SECRET");
-		if (configured) {
-			this.stateSecret = configured;
-		} else {
-			// A per-process key still signs correctly, but every restart
-			// invalidates the signups in flight — the exact failure mode ADR 0028
-			// rejected an in-memory map for. Fine locally, not in production.
-			this.stateSecret = randomBytes(32).toString("base64url");
+		this.stateSecret = configured || randomBytes(32).toString("base64url");
+		this.browserFlowAvailable =
+			Boolean(configured) || !isProduction(this.configService);
+
+		if (!configured) {
 			const message =
 				"PROVIDER_STATE_SECRET is not set; Apple signup state will not survive a restart.";
-			if (isProduction(this.configService)) this.logger.error(message);
-			else this.logger.warn(message);
+			if (this.browserFlowAvailable) {
+				this.logger.warn(`${message} Using a per-process key (development).`);
+			} else {
+				this.logger.error(
+					`${message} The Apple browser flow is disabled until it is set.`,
+				);
+			}
 		}
 	}
 
@@ -132,7 +147,7 @@ export class AppleSignupController {
 		@Query("platform") platform?: string,
 		@Query("code_challenge") codeChallenge?: string,
 	): void {
-		if (!this.appleOAuth.configured) {
+		if (!this.appleOAuth.configured || !this.browserFlowAvailable) {
 			res.redirect(this.buildSignupErrorUrl("apple_unavailable"));
 			return;
 		}
@@ -236,7 +251,7 @@ export class AppleSignupController {
 				new URL("/signup/apple", getFrontendUrl(this.configService)).toString(),
 			);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
+			const message = ssoErrorMessage(error);
 			// The PDS says this Apple identity already belongs to an account. That
 			// is a sign-in, not an error: hand the browser to the PDS's own page
 			// with a provider hint so it skips the picker.
@@ -445,7 +460,7 @@ export class AppleSignupController {
 				"apple",
 			);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
+			const message = ssoErrorMessage(error);
 			// Already linked is a sign-in, not a failure: send the app to the PDS's
 			// own page with a provider hint so it skips the picker.
 			if (message.includes("already linked")) {

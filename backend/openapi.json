@@ -922,7 +922,24 @@
     "/auth/apple/start": {
       "get": {
         "operationId": "AuthController_appleStart",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "platform",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "302": {
             "description": "Redirect to Apple"

@@ -62,13 +62,24 @@ set_secret() {
 	echo "  → $4 on $2/$3"
 }
 
+# Rotating this invalidates every Apple signup in flight, so it is written only
+# when absent. Re-running the script must be safe.
+has_variable() {
+	railway variable list --project "$1" --service "$2" --environment "$3" --kv 2>/dev/null |
+		grep -q "^$4="
+}
+
 echo
 echo "Opnshelf backend:"
 for ENVIRONMENT in production staging; do
-	# A distinct secret per environment: a staging leak must not let anyone mint
-	# state that production would accept.
-	openssl rand -base64 32 |
-		set_secret "$OPNSHELF_PROJECT" "Server" "$ENVIRONMENT" "PROVIDER_STATE_SECRET"
+	if has_variable "$OPNSHELF_PROJECT" "Server" "$ENVIRONMENT" "PROVIDER_STATE_SECRET"; then
+		echo "  · PROVIDER_STATE_SECRET already set on Server/$ENVIRONMENT, left alone"
+	else
+		# A distinct secret per environment: a staging leak must not let anyone
+		# mint state that production would accept.
+		openssl rand -base64 32 |
+			set_secret "$OPNSHELF_PROJECT" "Server" "$ENVIRONMENT" "PROVIDER_STATE_SECRET"
+	fi
 	set_secret "$OPNSHELF_PROJECT" "Server" "$ENVIRONMENT" "APPLE_PRIVATE_KEY" <"$KEY_PATH"
 done
 
@@ -84,6 +95,9 @@ cat <<'DONE'
 
 ✓ Done. Nothing was printed, and no deploys were triggered (--skip-deploys),
   so the values land on the next deploy of each service.
+
+  PROVIDER_STATE_SECRET is only written when absent, so re-running this is
+  safe. To rotate it deliberately, delete it in Railway first.
 
   Remaining, both outside Railway:
     - EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID and EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID in

@@ -23,6 +23,10 @@ export default function LoginScreen() {
 	const { reason } = useLocalSearchParams<LoginParams>();
 	const [handle, setHandle] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	// A provider flow and a handle sign-in both end in completeSession, so
+	// running them at once races session state and navigation.
+	const [providerBusy, setProviderBusy] = useState(false);
+	const authBusy = isSubmitting || providerBusy;
 	const [error, setError] = useState<string | null>(null);
 	const avatarStyle = useTwStyle("size-9");
 
@@ -97,7 +101,7 @@ export default function LoginScreen() {
 					</View>
 				)}
 
-				<ProviderButtons />
+				<ProviderButtons disabled={authBusy} onBusyChange={setProviderBusy} />
 
 				<View className="flex-row items-center gap-3">
 					<View className="h-px flex-1 bg-border" />
@@ -115,7 +119,7 @@ export default function LoginScreen() {
 						autoCapitalize="none"
 						autoCorrect={false}
 						returnKeyType="go"
-						editable={!isSubmitting}
+						editable={!authBusy}
 						onSubmitEditing={() => submit(() => login(handle))}
 					/>
 
@@ -136,7 +140,7 @@ export default function LoginScreen() {
 									{suggestions.map((actor, index) => (
 										<Pressable
 											key={actor.did}
-											disabled={isSubmitting}
+											disabled={authBusy}
 											onPress={() => {
 												setHandle(actor.handle);
 												submit(() => login(actor.handle));
@@ -176,10 +180,10 @@ export default function LoginScreen() {
 					) : null}
 
 					<Pressable
-						disabled={isSubmitting}
+						disabled={authBusy}
 						onPress={() => submit(() => login(handle))}
 						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
-						style={{ opacity: isSubmitting ? 0.7 : 1 }}
+						style={{ opacity: authBusy ? 0.7 : 1 }}
 					>
 						{isSubmitting && <ActivityIndicator size="small" color="#3f2e00" />}
 						<Text className="font-semibold text-base text-primary-foreground">
@@ -188,7 +192,7 @@ export default function LoginScreen() {
 					</Pressable>
 
 					<Pressable
-						disabled={isSubmitting}
+						disabled={authBusy}
 						onPress={() => router.push("/signup")}
 						className="items-center justify-center rounded-lg border border-border px-4 py-3"
 					>
@@ -198,7 +202,7 @@ export default function LoginScreen() {
 					</Pressable>
 
 					<Pressable
-						disabled={isSubmitting}
+						disabled={authBusy}
 						onPress={() =>
 							router.canGoBack() ? router.back() : router.replace("/search")
 						}

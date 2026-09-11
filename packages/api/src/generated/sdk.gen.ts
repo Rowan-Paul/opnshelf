@@ -196,7 +196,7 @@ export const authControllerGoogleNative = <ThrowOnError extends boolean = false>
 /**
  * Begin Continue with Apple
  */
-export const authControllerAppleStart = <ThrowOnError extends boolean = false>(options?: Options<AuthControllerAppleStartData, ThrowOnError>) => (options?.client ?? client).get<unknown, unknown, ThrowOnError>({ url: '/auth/apple/start', ...options });
+export const authControllerAppleStart = <ThrowOnError extends boolean = false>(options: Options<AuthControllerAppleStartData, ThrowOnError>) => (options.client ?? client).get<unknown, unknown, ThrowOnError>({ url: '/auth/apple/start', ...options });
 
 /**
  * Read the pending Apple signup identity

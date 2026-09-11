@@ -644,12 +644,12 @@ export const authControllerGoogleNativeMutation = (options?: Partial<Options<Aut
     return mutationOptions;
 };
 
-export const authControllerAppleStartQueryKey = (options?: Options<AuthControllerAppleStartData>) => createQueryKey('authControllerAppleStart', options);
+export const authControllerAppleStartQueryKey = (options: Options<AuthControllerAppleStartData>) => createQueryKey('authControllerAppleStart', options);
 
 /**
  * Begin Continue with Apple
  */
-export const authControllerAppleStartOptions = (options?: Options<AuthControllerAppleStartData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof authControllerAppleStartQueryKey>>({
+export const authControllerAppleStartOptions = (options: Options<AuthControllerAppleStartData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof authControllerAppleStartQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await authControllerAppleStart({
             ...options,

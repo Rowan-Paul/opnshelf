@@ -40,7 +40,13 @@ export function supportsNativeApple(): boolean {
 }
 
 export function isGoogleConfigured(): boolean {
-	return Boolean(env.googleWebClientId);
+	if (!env.googleWebClientId) return false;
+	// On iOS the config plugin is registered only when the iOS client id exists
+	// (app.config.ts derives its URL scheme from it), so without one the native
+	// module has no scheme to return to and sign-in cannot complete. Hiding the
+	// button beats offering one that dead-ends.
+	if (Platform.OS === "ios" && !env.googleIosClientId) return false;
+	return true;
 }
 
 let googleConfigured = false;
@@ -76,6 +82,11 @@ async function getAppleIdentityToken(): Promise<string | null> {
 		});
 		// Present on every sign-in, unlike credential.email which Apple only
 		// populates the first time. The email we use comes from this token.
+		if (!credential.identityToken) {
+			// Distinct from cancellation: the user did authorise, and silently
+			// treating this as a back-out would hide a real failure.
+			throw new Error("Apple returned no identity token");
+		}
 		return credential.identityToken;
 	} catch (error) {
 		if (
@@ -98,7 +109,10 @@ async function getGoogleIdentityToken(): Promise<string | null> {
 		});
 		const response = await GoogleSignin.signIn();
 		if (response.type === "cancelled") return null;
-		return response.data.idToken ?? null;
+		if (!response.data.idToken) {
+			throw new Error("Google returned no identity token");
+		}
+		return response.data.idToken;
 	} catch (error) {
 		if (
 			isErrorWithCode(error) &&
@@ -125,6 +139,8 @@ export async function signInWithProvider(
 			? await getAppleIdentityToken()
 			: await getGoogleIdentityToken();
 
+	// Null means the user backed out, and nothing else: both getters throw when
+	// a token is missing for any other reason.
 	if (!identityToken) return { kind: "cancelled" };
 
 	const call =

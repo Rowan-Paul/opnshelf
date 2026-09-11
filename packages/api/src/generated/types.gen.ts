@@ -3212,7 +3212,10 @@ export type AuthControllerGoogleNativeResponse = AuthControllerGoogleNativeRespo
 export type AuthControllerAppleStartData = {
     body?: never;
     path?: never;
-    query?: never;
+    query: {
+        platform: string;
+        code_challenge: string;
+    };
     url: '/auth/apple/start';
 };
 

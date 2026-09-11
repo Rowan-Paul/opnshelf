@@ -37,7 +37,11 @@ import {
 import { NativeSsoDto, NativeSsoResponseDto } from "./dto/native-sso.dto";
 import { NativeAccountService } from "./native-account.service";
 import { SignupRateLimiter } from "./signup-rate-limiter";
-import { getClientIp, mapCreateAccountError } from "./signup-support";
+import {
+	getClientIp,
+	mapCreateAccountError,
+	ssoErrorMessage,
+} from "./signup-support";
 
 /** CSRF state for the Google consent round trip. */
 const GOOGLE_STATE_COOKIE_NAME = "google_state";
@@ -204,10 +208,7 @@ export class GoogleSignupController {
 			// ponytail: substring match on the PDS message. It is the only way to
 			// tell "already has an account" from a bad token, and getting it wrong
 			// only costs a returning user a vaguer error.
-			const message =
-				err && typeof err === "object" && "message" in err
-					? String((err as { message?: unknown }).message)
-					: "";
+			const message = ssoErrorMessage(err);
 			if (message.includes("already linked")) {
 				// Not an error: this Google account already has an opnshelf account,
 				// so the same button has to sign them in. Only the PDS can mint a
@@ -410,7 +411,7 @@ export class GoogleSignupController {
 				"google",
 			);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
+			const message = ssoErrorMessage(error);
 			// Already linked is a sign-in, not a failure: send the app to the PDS's
 			// own page with a provider hint so it skips the picker.
 			if (message.includes("already linked")) {
