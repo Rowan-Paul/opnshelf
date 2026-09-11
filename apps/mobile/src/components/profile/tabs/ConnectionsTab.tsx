@@ -3,17 +3,19 @@ import { Users } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { UserRow } from "@/components/social/UserRow";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
+import { useEndReached } from "@/lib/use-end-reached";
 import { useFollowers, useFollowing, useFollowToggle } from "@/lib/use-social";
 
 /**
  * Connections tab: Followers / Following sub-tabs for the profile being viewed.
  * Reuses the shared infinite social hooks (keyed by handle) and the follow
- * toggle. Each row links to that user's profile. Mirrors the web Connections
- * page.
+ * toggle; the active list loads its next page as the reader scrolls. Each row
+ * links to that user's profile. Mirrors the web Connections page.
  */
 export function ConnectionsTab({
 	handle,
@@ -43,6 +45,9 @@ export function ConnectionsTab({
 	const { toggle } = useFollowToggle();
 
 	const active = tab === "followers" ? followers : following;
+	useEndReached(() => {
+		if (canLoadMore(active)) void active.fetchNextPage();
+	});
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -79,7 +84,7 @@ export function ConnectionsTab({
 
 			{active.isLoading ? (
 				<UserRowsSkeleton />
-			) : active.isError ? (
+			) : active.isError && active.items.length === 0 ? (
 				<ErrorState message="Couldn't load this list." />
 			) : active.items.length === 0 ? (
 				<EmptyState
@@ -100,6 +105,13 @@ export function ConnectionsTab({
 					))}
 				</View>
 			)}
+
+			<LoadMoreFooter
+				isFetchingNextPage={active.isFetchingNextPage}
+				isFetchNextPageError={active.isFetchNextPageError}
+				onRetry={() => void active.fetchNextPage()}
+				skeleton={<UserRowsSkeleton rows={2} />}
+			/>
 		</View>
 	);
 }

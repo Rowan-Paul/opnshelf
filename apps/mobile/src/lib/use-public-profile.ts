@@ -7,7 +7,9 @@ import {
 	reviewsControllerGetUserReviews,
 	reviewsControllerGetUserReviewsInfiniteQueryKey,
 	reviewsControllerGetUserReviewsOptions,
+	shelfControllerGetUserShelfInfiniteOptions,
 	shelfControllerGetUserShelfOptions,
+	showsControllerGetUserUpNextInfiniteOptions,
 	showsControllerGetUserUpNextOptions,
 	socialControllerGetRelationshipOptions,
 	usersControllerGetPublicProfileOptions,
@@ -39,39 +41,86 @@ export function useRelationship(targetDid: string, enabled: boolean) {
 	});
 }
 
-/** The user's public shelf (Shelf tab), filterable + paginated server-side. */
+export type ProfileShelfFilters = {
+	type?: "movie" | "episode";
+	search?: string;
+	sortOrder?: "asc" | "desc";
+};
+
+const SHELF_PAGE_SIZE = 24;
+
+function shelfQuery(
+	{ type, search, sortOrder = "desc" }: ProfileShelfFilters,
+	page?: number,
+) {
+	return {
+		...(page ? { page } : {}),
+		pageSize: SHELF_PAGE_SIZE,
+		sortOrder,
+		...(type ? { type } : {}),
+		...(search?.trim() ? { search: search.trim() } : {}),
+	};
+}
+
+/** First page of the user's public shelf (Home and self-profile previews). */
 export function useProfileShelf(
 	userDid: string,
-	options: {
-		page?: number;
-		type?: "movie" | "episode";
-		search?: string;
-		sortOrder?: "asc" | "desc";
-	} = {},
+	options: ProfileShelfFilters & { page?: number } = {},
 ) {
-	const { page = 1, type, search, sortOrder = "desc" } = options;
+	const { page = 1, ...filters } = options;
 	return useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
-			query: {
-				page,
-				pageSize: 24,
-				sortOrder,
-				...(type ? { type } : {}),
-				...(search?.trim() ? { search: search.trim() } : {}),
-			},
+			query: shelfQuery(filters, page),
 		}),
 		enabled: !!userDid,
 	});
 }
 
-/** Up Next (in-progress shows + their next episode). */
+/**
+ * The user's public shelf accumulated page by page (Shelf tab). Every filter is
+ * part of the query key, so changing one restarts from page 1 instead of
+ * appending onto pages fetched under the old filter.
+ */
+export function useInfiniteProfileShelf(
+	userDid: string,
+	filters: ProfileShelfFilters = {},
+) {
+	return useInfiniteQuery({
+		...shelfControllerGetUserShelfInfiniteOptions({
+			path: { userDid },
+			query: shelfQuery(filters),
+		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+		enabled: !!userDid,
+	});
+}
+
+const UP_NEXT_PAGE_SIZE = 20;
+
+/** First page of Up Next (in-progress shows + their next episode). */
 export function useProfileUpNext(userDid: string, page = 1) {
 	return useQuery({
 		...showsControllerGetUserUpNextOptions({
 			path: { userDid },
-			query: { page, pageSize: 20 },
+			query: { page, pageSize: UP_NEXT_PAGE_SIZE },
 		}),
+		enabled: !!userDid,
+	});
+}
+
+/** Up Next accumulated page by page (Up Next tab). */
+export function useInfiniteProfileUpNext(userDid: string) {
+	return useInfiniteQuery({
+		...showsControllerGetUserUpNextInfiniteOptions({
+			path: { userDid },
+			query: { pageSize: UP_NEXT_PAGE_SIZE },
+		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 		enabled: !!userDid,
 	});
 }
@@ -92,76 +141,68 @@ export function useProfileList(userDid: string, slug: string, enabled = true) {
 	});
 }
 
-/** The user's notes (Notes tab), cursor-paginated. */
-export function useProfileNotes(userDid: string, cursor?: string, limit = 20) {
+/** One page of the user's notes. */
+export function useProfileNotes(userDid: string, page = 1, pageSize = 20) {
 	return useQuery({
 		...notesControllerGetUserNotesOptions({
 			path: { userDid },
-			query: { limit, ...(cursor ? { cursor } : {}) },
+			query: { page, pageSize },
 		}),
 		enabled: !!userDid,
 	});
 }
 
-/** The user's notes as accumulated cursor pages (Notes tab). */
-export function useInfiniteProfileNotes(userDid: string, limit = 20) {
-	const options = { path: { userDid }, query: { limit } };
+/** The user's notes accumulated page by page (Notes tab). */
+export function useInfiniteProfileNotes(userDid: string, pageSize = 20) {
+	const options = { path: { userDid }, query: { pageSize } };
 
 	return useInfiniteQuery({
 		queryKey: notesControllerGetUserNotesInfiniteQueryKey(options),
 		queryFn: async ({ pageParam, signal }) => {
 			const { data } = await notesControllerGetUserNotes({
 				...options,
-				query: {
-					...options.query,
-					...(pageParam !== undefined ? { cursor: pageParam } : {}),
-				},
+				query: { ...options.query, page: pageParam },
 				signal,
 				throwOnError: true,
 			});
 			return data;
 		},
-		initialPageParam: undefined as string | undefined,
-		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 		enabled: !!userDid,
 	});
 }
 
-/** The user's reviews (Reviews tab + Overview preview), cursor-paginated. */
-export function useProfileReviews(
-	userDid: string,
-	cursor?: string,
-	limit = 20,
-) {
+/** One page of the user's reviews (Overview preview). */
+export function useProfileReviews(userDid: string, page = 1, pageSize = 20) {
 	return useQuery({
 		...reviewsControllerGetUserReviewsOptions({
 			path: { userDid },
-			query: { limit, ...(cursor ? { cursor } : {}) },
+			query: { page, pageSize },
 		}),
 		enabled: !!userDid,
 	});
 }
 
-/** The user's reviews as accumulated cursor pages (Reviews tab). */
-export function useInfiniteProfileReviews(userDid: string, limit = 20) {
-	const options = { path: { userDid }, query: { limit } };
+/** The user's reviews accumulated page by page (Reviews tab). */
+export function useInfiniteProfileReviews(userDid: string, pageSize = 20) {
+	const options = { path: { userDid }, query: { pageSize } };
 
 	return useInfiniteQuery({
 		queryKey: reviewsControllerGetUserReviewsInfiniteQueryKey(options),
 		queryFn: async ({ pageParam, signal }) => {
 			const { data } = await reviewsControllerGetUserReviews({
 				...options,
-				query: {
-					...options.query,
-					...(pageParam !== undefined ? { cursor: pageParam } : {}),
-				},
+				query: { ...options.query, page: pageParam },
 				signal,
 				throwOnError: true,
 			});
 			return data;
 		},
-		initialPageParam: undefined as string | undefined,
-		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 		enabled: !!userDid,
 	});
 }

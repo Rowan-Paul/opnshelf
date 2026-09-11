@@ -304,7 +304,11 @@ describe("ReviewsService", () => {
 			expect(result.items[0].description).toBe("It was great.");
 			expect(mockPrismaService.review.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
-					orderBy: [{ likes: { _count: "desc" } }, { createdAt: "desc" }],
+					orderBy: [
+						{ likes: { _count: "desc" } },
+						{ createdAt: "desc" },
+						{ id: "desc" },
+					],
 				}),
 			);
 		});

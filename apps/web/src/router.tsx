@@ -2,6 +2,7 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { getContext } from "./integrations/tanstack-query/root-provider";
 import { setupApiClient } from "./lib/api";
+import { getScrollRestorationKey } from "./lib/scroll-restoration";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -17,6 +18,7 @@ export function getRouter() {
 		routeTree,
 		context,
 		scrollRestoration: true,
+		getScrollRestorationKey,
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,
 	});

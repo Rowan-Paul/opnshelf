@@ -31,7 +31,7 @@ function SimilarMovies({ mediaId }: { mediaId: string }) {
 		moviesControllerGetRecommendationsOptions({ path: { movieId: mediaId } }),
 	);
 
-	const items: MediaCardItem[] = (data?.results ?? [])
+	const items: MediaCardItem[] = (data?.items ?? [])
 		.filter((m) => m.id !== Number(mediaId))
 		.slice(0, 12)
 		.map((m) => ({
@@ -51,7 +51,7 @@ function SimilarShows({ mediaId }: { mediaId: string }) {
 		showsControllerGetRecommendationsOptions({ path: { showId: mediaId } }),
 	);
 
-	const items: MediaCardItem[] = (data?.results ?? [])
+	const items: MediaCardItem[] = (data?.items ?? [])
 		.filter((s) => s.id !== Number(mediaId))
 		.slice(0, 12)
 		.map((s) => ({

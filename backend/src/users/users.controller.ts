@@ -38,6 +38,7 @@ import {
 	ImportHistoryDto,
 	ImportHistoryResponseDto,
 	PaginatedTraktImportIssuesDto,
+	TraktImportIssuesQueryDto,
 	StartTraktImportDto,
 	StartTraktImportResponseDto,
 	TraktImportJobDto,
@@ -508,27 +509,18 @@ export class UsersController {
 	@Get("me/import/trakt/public/issues")
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "List every unresolved Trakt import item" })
-	@ApiQuery({ name: "page", required: false, type: Number })
-	@ApiQuery({ name: "pageSize", required: false, type: Number })
-	@ApiQuery({
-		name: "outcome",
-		required: false,
-		enum: ["unmatched", "couldnt_import"],
-	})
 	@ApiResponse({ status: 200, type: PaginatedTraktImportIssuesDto })
 	async getMyTraktImportIssues(
-		@Query("page") page: string | undefined,
-		@Query("pageSize") pageSize: string | undefined,
-		@Query("outcome") outcome: "unmatched" | "couldnt_import" | undefined,
+		@Query() query: TraktImportIssuesQueryDto,
 		@Req() req: AuthenticatedRequest,
 	): Promise<PaginatedTraktImportIssuesDto> {
 		const did = req.user?.did;
 		if (!did) throw new BadRequestException("User not found in request");
 		return this.usersService.getTraktImportIssues(
 			did,
-			Number(page ?? 1),
-			Number(pageSize ?? 25),
-			outcome,
+			query.page,
+			query.pageSize,
+			query.outcome,
 		);
 	}
 

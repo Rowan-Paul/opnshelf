@@ -21,6 +21,7 @@ import { AccountDeletionGate } from "@/components/AccountDeletionGate";
 import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
 import { WelcomeTour } from "@/components/tour/WelcomeTour";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
 import { posthog } from "@/lib/posthog";
@@ -83,72 +84,91 @@ export default function RootLayout() {
 	return (
 		<Providers>
 			<ScreenTracker />
-			{/* Custom `header` replaces the platform-native header on every screen
-			    with headerShown: true, so iOS and Android render the same bar. */}
-			<Stack
-				screenOptions={{
-					headerShown: false,
-					header: (props) => <AppHeader {...props} />,
-				}}
-			>
-				<Stack.Screen name="(tabs)" />
-				<Stack.Screen name="login" />
-				<Stack.Screen name="auth/complete" />
-				<Stack.Screen name="signup" />
-				<Stack.Screen name="verify-email" />
-				<Stack.Screen name="onboarding" />
-				<Stack.Screen name="settings" options={{ headerShown: true }} />
-				<Stack.Screen
-					name="settings/preferences"
-					options={{ headerShown: true }}
-				/>
-				<Stack.Screen
-					name="settings/connections"
-					options={{ headerShown: true }}
-				/>
-				<Stack.Screen name="settings/account" options={{ headerShown: true }} />
-				<Stack.Screen name="settings/help" options={{ headerShown: true }} />
-				<Stack.Screen name="edit-profile" options={{ headerShown: true }} />
-				<Stack.Screen name="calendar" options={{ headerShown: true }} />
-				<Stack.Screen name="lists/index" options={{ headerShown: true }} />
-				<Stack.Screen name="lists/[slug]" options={{ headerShown: true }} />
-				<Stack.Screen
-					name="list/[handle]/[slug]"
-					options={{ headerShown: true }}
-				/>
-				<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
-				<Stack.Screen
-					name="atstore-review"
-					options={{
-						presentation: "formSheet",
-						sheetAllowedDetents: [0.75, 1],
-						sheetGrabberVisible: true,
-						contentStyle: { backgroundColor: "transparent" },
+			{/* Above the navigator so a downloaded OTA update is announced on every
+			    screen, not just the tabs; hidden on the auth/onboarding routes. */}
+			<UpdateBanner>
+				{/* Custom `header` replaces the platform-native header on every screen
+				    with headerShown: true, so iOS and Android render the same bar. */}
+				<Stack
+					screenOptions={{
+						headerShown: false,
+						header: (props) => <AppHeader {...props} />,
 					}}
-				/>
-				<Stack.Screen name="profile/[handle]" options={{ headerShown: true }} />
-				<Stack.Screen
-					name="profile/[handle]/shelf"
-					options={{ headerShown: true }}
-				/>
-				<Stack.Screen
-					name="profile/[handle]/up-next"
-					options={{ headerShown: true }}
-				/>
-				<Stack.Screen
-					name="profile/[handle]/reviews"
-					options={{ headerShown: true }}
-				/>
-				<Stack.Screen
-					name="profile/[handle]/connections"
-					options={{ headerShown: true }}
-				/>
-				<Stack.Screen name="movies/[id]/[name]/index" />
-				<Stack.Screen name="people/[id]/[name]" />
-				<Stack.Screen name="shows/[id]/[name]/index" />
-				<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/index" />
-				<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/episodes/[episodeNumber]/index" />
-			</Stack>
+				>
+					<Stack.Screen name="(tabs)" />
+					<Stack.Screen name="social/find" options={{ headerShown: true }} />
+					<Stack.Screen
+						name="social/circles/index"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="social/circles/[circleId]"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen name="login" />
+					<Stack.Screen name="auth/complete" />
+					<Stack.Screen name="signup" />
+					<Stack.Screen name="verify-email" />
+					<Stack.Screen name="onboarding" />
+					<Stack.Screen name="settings" options={{ headerShown: true }} />
+					<Stack.Screen
+						name="settings/preferences"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="settings/connections"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="settings/account"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen name="settings/help" options={{ headerShown: true }} />
+					<Stack.Screen name="edit-profile" options={{ headerShown: true }} />
+					<Stack.Screen name="calendar" options={{ headerShown: true }} />
+					<Stack.Screen name="lists/index" options={{ headerShown: true }} />
+					<Stack.Screen name="lists/[slug]" options={{ headerShown: true }} />
+					<Stack.Screen
+						name="list/[handle]/[slug]"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
+					<Stack.Screen
+						name="atstore-review"
+						options={{
+							presentation: "formSheet",
+							sheetAllowedDetents: [0.75, 1],
+							sheetGrabberVisible: true,
+							contentStyle: { backgroundColor: "transparent" },
+						}}
+					/>
+					<Stack.Screen
+						name="profile/[handle]"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="profile/[handle]/shelf"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="profile/[handle]/up-next"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="profile/[handle]/reviews"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="profile/[handle]/connections"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen name="movies/[id]/[name]/index" />
+					<Stack.Screen name="people/[id]/[name]" />
+					<Stack.Screen name="shows/[id]/[name]/index" />
+					<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/index" />
+					<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/episodes/[episodeNumber]/index" />
+				</Stack>
+			</UpdateBanner>
 			<AccountDeletionGate />
 			{/* Above the tabs: the tour walks the user across them and has to
 			    survive each navigation (ADR 0024). */}

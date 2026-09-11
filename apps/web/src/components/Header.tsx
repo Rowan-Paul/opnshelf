@@ -8,10 +8,10 @@ import {
 	List,
 	LogOut,
 	Menu,
-	Rss,
 	Settings,
 	Star,
 	StickyNote,
+	User,
 	Users,
 	X,
 } from "lucide-react";
@@ -41,11 +41,18 @@ export default function Header() {
 	const navigation = [
 		{ name: "Home", href: "/", icon: Home },
 		{ name: "Discover", href: "/search", icon: Compass },
-		{ name: "Activity", href: "/activity", icon: Rss },
-		{ name: "Connections", href: "/connections", icon: Users },
+		{ name: "Social", href: "/social", icon: Users },
 	];
 
-	const visibleNavigation = isAuthenticated || isLoading ? navigation : [];
+	const visibleNavigation =
+		isAuthenticated || isLoading
+			? [
+					...navigation,
+					...(user
+						? [{ name: "Profile", href: `/profile/${user.handle}`, icon: User }]
+						: []),
+				]
+			: [];
 
 	const profileNavigation = [
 		{ name: "Shelf", to: "/profile/$handle/shelf" as const, icon: Film },

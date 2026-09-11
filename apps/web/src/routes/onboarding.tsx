@@ -680,6 +680,11 @@ function FollowSuggestionsStep({
 			queryClient.invalidateQueries({
 				queryKey: socialControllerGetSuggestionsOptions().queryKey,
 			});
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					(query.queryKey[0] as { _id?: string } | undefined)?._id ===
+					"socialControllerGetFeed",
+			});
 			toast.success("Followed");
 		},
 		onError: (error) => {

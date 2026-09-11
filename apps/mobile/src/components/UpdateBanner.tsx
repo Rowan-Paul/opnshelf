@@ -1,3 +1,4 @@
+import { usePathname } from "expo-router";
 import * as Updates from "expo-updates";
 import { RefreshCw } from "lucide-react-native";
 import type { ReactNode } from "react";
@@ -8,17 +9,24 @@ import {
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
+import { isUpdateBannerSuppressed } from "@/lib/update-banner-routes";
 
 /** Minimum gap between foreground update checks, so backgrounding/foregrounding
  * repeatedly doesn't hammer the update server. */
 const CHECK_COOLDOWN_MS = 5 * 60 * 1000;
 
 /**
- * Wraps the tab surface with a slim banner announcing a downloaded OTA update,
- * mirroring TraktSyncBanner's structure: while the banner shows it consumes the
- * top safe-area inset and zeroes it for the wrapped subtree, so screen content
- * sits flush under the banner instead of double-gapped. Composes with
- * TraktSyncBanner — whichever banner is outermost consumes the inset once.
+ * Wraps the root navigator with a slim banner announcing a downloaded OTA
+ * update, so it shows on every screen — tabs, pushed detail and settings
+ * screens, and guest sessions alike. It mirrors TraktSyncBanner's structure:
+ * while the banner shows it consumes the top safe-area inset and zeroes it for
+ * the wrapped subtree, so screen content and AppHeader sit flush under the
+ * banner instead of double-gapped. TraktSyncBanner (inside the tabs) reads the
+ * zeroed inset, so the two stack without a gap between them.
+ *
+ * The banner stays hidden on the auth and onboarding routes (see
+ * `isUpdateBannerSuppressed`), where a restart would discard in-progress
+ * input; the update check itself keeps running there.
  *
  * Checks for an update on mount and whenever the app returns to the
  * foreground (debounced), fetches it silently in the background, and once
@@ -31,6 +39,7 @@ const CHECK_COOLDOWN_MS = 5 * 60 * 1000;
  */
 export function UpdateBanner({ children }: { children: ReactNode }) {
 	const insets = useSafeAreaInsets();
+	const pathname = usePathname();
 	const { isUpdatePending } = Updates.useUpdates();
 	const lastCheckAtRef = useRef(0);
 
@@ -72,7 +81,11 @@ export function UpdateBanner({ children }: { children: ReactNode }) {
 		return () => subscription.remove();
 	}, [checkForUpdate]);
 
-	if (!Updates.isEnabled || !isUpdatePending) {
+	if (
+		!Updates.isEnabled ||
+		!isUpdatePending ||
+		isUpdateBannerSuppressed(pathname)
+	) {
 		return <>{children}</>;
 	}
 

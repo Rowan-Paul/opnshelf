@@ -1,7 +1,7 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
 import { slugifyName } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
-import { Clock } from "lucide-react";
+import { Clock, Film } from "lucide-react";
 import FeedItemActions from "#/components/FeedItemActions";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import StarRating from "#/components/StarRating";
@@ -18,57 +18,35 @@ export function ActivityCard({
 	userTimezone,
 	userTimeFormat,
 }: ActivityCardProps) {
+	const posterSrc = activity.posterPath
+		? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
+		: activity.backdropPath
+			? `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
+			: undefined;
 	return (
-		<article className="card w-full p-5 transition-shadow hover:shadow-md">
+		// Whole card is clickable through the stretched title link below (an ::after
+		// overlay covering the card), so this is the positioning context. Secondary
+		// targets (actor, episode, actions, spoiler reveal) sit above it with z-10.
+		<article className="card relative w-full p-5 transition-shadow hover:shadow-md">
 			<div className="flex gap-4">
-				{/* Poster on the left */}
-				{(activity.posterPath || activity.backdropPath) && (
-					<div className="shrink-0">
-						{activity.movieId ? (
-							<Link
-								to="/movies/$movieId/$movieName"
-								hash={
-									activity.reviewId ? `review-${activity.reviewId}` : undefined
-								}
-								params={{
-									movieId: String(activity.movieId),
-									movieName: slugifyName(activity.title || ""),
-								}}
-							>
-								<img
-									src={
-										activity.posterPath
-											? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
-											: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
-									}
-									alt={activity.title || activity.showTitle || ""}
-									className="h-32 w-20 rounded-lg object-cover"
-								/>
-							</Link>
-						) : (
-							<Link
-								to="/shows/$showId/$showName"
-								hash={
-									activity.reviewId ? `review-${activity.reviewId}` : undefined
-								}
-								params={{
-									showId: String(activity.showId),
-									showName: slugifyName(activity.showTitle || ""),
-								}}
-							>
-								<img
-									src={
-										activity.posterPath
-											? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
-											: `https://image.tmdb.org/t/p/w300${activity.backdropPath}`
-									}
-									alt={activity.title || activity.showTitle || ""}
-									className="h-32 w-20 rounded-lg object-cover"
-								/>
-							</Link>
-						)}
-					</div>
-				)}
+				{/* Poster on the left. Always rendered so cards keep one shape;
+				    a placeholder stands in when TMDB has no image. */}
+				<div className="shrink-0">
+					{posterSrc ? (
+						<img
+							src={posterSrc}
+							alt=""
+							className="h-32 w-20 rounded-lg object-cover"
+						/>
+					) : (
+						<div
+							aria-hidden
+							className="flex h-32 w-20 items-center justify-center rounded-lg bg-(--background-subtle) text-(--foreground-muted)"
+						>
+							<Film className="size-6" />
+						</div>
+					)}
+				</div>
 
 				{/* Content next to poster */}
 				<div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -77,6 +55,7 @@ export function ActivityCard({
 						<Link
 							to="/profile/$handle"
 							params={{ handle: activity.actor.handle }}
+							className="relative z-10"
 						>
 							<UserAvatar
 								src={activity.actor.avatar}
@@ -91,7 +70,7 @@ export function ActivityCard({
 								<Link
 									to="/profile/$handle"
 									params={{ handle: activity.actor.handle }}
-									className="font-semibold text-(--foreground) hover:text-(--accent)"
+									className="relative z-10 font-semibold text-(--foreground) hover:text-(--accent)"
 								>
 									{String(activity.actor.displayName) || activity.actor.handle}
 								</Link>
@@ -114,7 +93,7 @@ export function ActivityCard({
 											movieId: String(activity.movieId),
 											movieName: slugifyName(activity.title || ""),
 										}}
-										className="font-medium text-(--foreground) hover:text-(--accent)"
+										className="font-medium text-(--foreground) after:absolute after:inset-0 hover:text-(--accent)"
 									>
 										{activity.title}
 									</Link>
@@ -130,7 +109,7 @@ export function ActivityCard({
 											showId: String(activity.showId),
 											showName: slugifyName(activity.showTitle || ""),
 										}}
-										className="font-medium text-(--foreground) hover:text-(--accent)"
+										className="font-medium text-(--foreground) after:absolute after:inset-0 hover:text-(--accent)"
 									>
 										{activity.showTitle}
 									</Link>
@@ -163,7 +142,7 @@ export function ActivityCard({
 									seasonNumber: String(activity.seasonNumber || 0),
 									episodeNumber: String(activity.episodeNumber || 0),
 								}}
-								className="font-semibold text-(--foreground) text-base hover:text-(--accent)"
+								className="relative z-10 font-semibold text-(--foreground) text-base hover:text-(--accent)"
 							>
 								{activity.seasonNumber && activity.episodeNumber
 									? `S${activity.seasonNumber}E${activity.episodeNumber}`
@@ -184,14 +163,16 @@ export function ActivityCard({
 								showValue
 							/>
 							{activity.reviewContent && (
-								<SpoilerShield
-									spoiler={!!activity.reviewSpoiler}
-									authorDid={activity.actor.did}
-								>
-									<p className="line-clamp-3 text-(--foreground-muted) text-sm">
-										{activity.reviewContent}
-									</p>
-								</SpoilerShield>
+								<div className="relative z-10">
+									<SpoilerShield
+										spoiler={!!activity.reviewSpoiler}
+										authorDid={activity.actor.did}
+									>
+										<p className="line-clamp-3 text-(--foreground-muted) text-sm">
+											{activity.reviewContent}
+										</p>
+									</SpoilerShield>
+								</div>
 							)}
 						</div>
 					)}
@@ -210,7 +191,7 @@ export function ActivityCard({
 
 					{/* Actions */}
 					{activity.type !== "review" && (
-						<div className="flex flex-wrap items-center gap-4 pt-1">
+						<div className="relative z-10 flex flex-wrap items-center gap-4 pt-1">
 							{activity.type === "movie" ? (
 								<FeedItemActions
 									type="movie"

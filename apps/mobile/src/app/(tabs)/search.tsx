@@ -4,16 +4,16 @@ import {
 	discoverControllerTrendingOptions,
 	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
-	peopleControllerSearchPeopleOptions,
-	searchControllerSearchAllOptions,
+	peopleControllerSearchPeopleInfiniteOptions,
+	searchControllerSearchAllInfiniteOptions,
 	showsControllerDiscoverShowsOptions,
-	socialControllerSearchPeopleOptions,
+	socialControllerSearchPeopleInfiniteOptions,
 	type TmdbMovieResultDto,
 	type TmdbShowResultDto,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import {
@@ -25,13 +25,17 @@ import {
 	Users,
 	X,
 } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { Screen } from "@/components/ui/screen";
-import { PosterGridSkeleton } from "@/components/ui/skeletons";
+import {
+	PosterGridSkeleton,
+	UserRowsSkeleton,
+} from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -93,6 +97,25 @@ function CastCrewRow({ person }: { person: PersonSearchResultDto }) {
 			</Pressable>
 		</Link>
 	);
+}
+
+/** Every list endpoint speaks the shared contract: page on while `hasNextPage`. */
+function nextPage(lastPage: { page: number; hasNextPage: boolean }) {
+	return lastPage.hasNextPage ? lastPage.page + 1 : undefined;
+}
+
+/**
+ * Flatten accumulated pages and drop repeats. The unified search merges two
+ * TMDB result sets per page, so an item can straddle a page boundary.
+ */
+function uniqueBy<T>(items: T[], keyOf: (item: T) => string): T[] {
+	const seen = new Set<string>();
+	return items.filter((item) => {
+		const key = keyOf(item);
+		if (seen.has(key)) return false;
+		seen.add(key);
+		return true;
+	});
 }
 
 function toMediaCardItem(r: UnifiedSearchResultDto): MediaCardItem {
@@ -191,23 +214,23 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 	const popularMovies = useQuery(moviesControllerDiscoverMoviesOptions());
 	const popularShows = useQuery(showsControllerDiscoverShowsOptions());
 
-	const followsItems = (fromFollows.data?.results ?? []).map(toMediaCardItem);
-	const trendingItems = (trending.data?.results ?? []).map(toMediaCardItem);
+	const followsItems = (fromFollows.data?.items ?? []).map(toMediaCardItem);
+	const trendingItems = (trending.data?.items ?? []).map(toMediaCardItem);
 	const rows = becauseYouWatched.data?.rows ?? [];
 
 	// Popular overlaps trending heavily (half the movie rail, measured), so the
 	// popular rails only show what the rails above them didn't.
 	const shownKeys = new Set(
 		[
-			...(fromFollows.data?.results ?? []),
-			...(trending.data?.results ?? []),
-			...rows.flatMap((r) => r.results),
+			...(fromFollows.data?.items ?? []),
+			...(trending.data?.items ?? []),
+			...rows.flatMap((r) => r.items),
 		].map((r) => `${r.media_type}-${r.id}`),
 	);
-	const movieItems = (popularMovies.data?.results ?? [])
+	const movieItems = (popularMovies.data?.items ?? [])
 		.filter((r) => !shownKeys.has(`movie-${r.id}`))
 		.map((r) => toDiscoverCardItem(r, "movie"));
-	const showItems = (popularShows.data?.results ?? [])
+	const showItems = (popularShows.data?.items ?? [])
 		.filter((r) => !shownKeys.has(`tv-${r.id}`))
 		.map((r) => toDiscoverCardItem(r, "show"));
 
@@ -218,7 +241,7 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 		...rows.map((row) => ({
 			key: `${row.seedMediaType}-${row.seedId}`,
 			title: `Because you watched ${row.seedTitle}`,
-			items: row.results.map(toMediaCardItem),
+			items: row.items.map(toMediaCardItem),
 		})),
 		{ key: "trending", title: "Trending this week", items: trendingItems },
 		{ key: "movies", title: "Popular movies", items: movieItems },
@@ -271,27 +294,43 @@ export default function SearchScreen() {
 	const gridListStyle = useTwStyle("px-3 pb-8");
 	const numColumns = useMediaCardColumns();
 
-	const mediaQuery = useQuery({
-		...searchControllerSearchAllOptions({ query: { query: debouncedQuery } }),
+	// Every results list loads its next page as the reader nears the bottom.
+	const mediaQuery = useInfiniteQuery({
+		...searchControllerSearchAllInfiniteOptions({
+			query: { query: debouncedQuery },
+		}),
+		initialPageParam: 1,
+		getNextPageParam: nextPage,
 		enabled: hasQuery && activeTab !== "people" && activeTab !== "cast",
 	});
 
-	const peopleQuery = useQuery({
-		...socialControllerSearchPeopleOptions({
+	const peopleQuery = useInfiniteQuery({
+		...socialControllerSearchPeopleInfiniteOptions({
 			query: { q: debouncedQuery, pageSize: 20 },
 		}),
+		initialPageParam: 1,
+		getNextPageParam: nextPage,
 		enabled: hasQuery && activeTab === "people",
 	});
 
 	// Cast & Crew (TMDB people) — public, only fetched on its own tab.
-	const castQuery = useQuery({
-		...peopleControllerSearchPeopleOptions({
+	const castQuery = useInfiniteQuery({
+		...peopleControllerSearchPeopleInfiniteOptions({
 			query: { query: debouncedQuery },
 		}),
+		initialPageParam: 1,
+		getNextPageParam: nextPage,
 		enabled: hasQuery && activeTab === "cast",
 	});
 
-	const results = mediaQuery.data?.results ?? [];
+	const results = useMemo(
+		() =>
+			uniqueBy(
+				mediaQuery.data?.pages.flatMap((page) => page.items) ?? [],
+				(r) => `${r.media_type}-${r.id}`,
+			),
+		[mediaQuery.data],
+	);
 	const movies = useMemo(
 		() => results.filter((r) => r.media_type === "movie").map(toMediaCardItem),
 		[results],
@@ -301,8 +340,14 @@ export default function SearchScreen() {
 		[results],
 	);
 	const allMedia = useMemo(() => results.map(toMediaCardItem), [results]);
-	const people = peopleQuery.data?.items ?? [];
-	const cast = castQuery.data?.results ?? [];
+	const people = peopleQuery.data?.pages.flatMap((page) => page.items) ?? [];
+	const cast = useMemo(
+		() =>
+			uniqueBy(castQuery.data?.pages.flatMap((page) => page.items) ?? [], (p) =>
+				String(p.id),
+			),
+		[castQuery.data],
+	);
 	useEffect(() => {
 		if (!hasQuery || !mediaQuery.data) return;
 		posthog?.capture("search_performed", {
@@ -324,6 +369,17 @@ export default function SearchScreen() {
 	const activeQuery = isPeople ? peopleQuery : isCast ? castQuery : mediaQuery;
 	const gridData =
 		activeTab === "movies" ? movies : activeTab === "shows" ? shows : allMedia;
+	const loadMore = () => {
+		if (canLoadMore(activeQuery)) void activeQuery.fetchNextPage();
+	};
+	const footer = (skeleton: ReactNode) => (
+		<LoadMoreFooter
+			isFetchingNextPage={activeQuery.isFetchingNextPage}
+			isFetchNextPageError={activeQuery.isFetchNextPageError}
+			onRetry={() => void activeQuery.fetchNextPage()}
+			skeleton={skeleton}
+		/>
+	);
 
 	const refreshControl = (
 		<RefreshControl
@@ -347,7 +403,9 @@ export default function SearchScreen() {
 				</View>
 			);
 		}
-		if (activeQuery.isError) {
+		// Only an initial failure gets the full-page error. A failed later page
+		// keeps the loaded results and shows the footer's Retry instead.
+		if (activeQuery.isError && !activeQuery.data) {
 			return <ErrorState message="Couldn't load search results. Try again." />;
 		}
 
@@ -373,6 +431,9 @@ export default function SearchScreen() {
 					contentContainerStyle={peopleListStyle}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
+					onEndReachedThreshold={0.5}
+					onEndReached={loadMore}
+					ListFooterComponent={footer(<UserRowsSkeleton rows={2} />)}
 				/>
 			);
 		}
@@ -399,6 +460,9 @@ export default function SearchScreen() {
 					contentContainerStyle={peopleListStyle}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
+					onEndReachedThreshold={0.5}
+					onEndReached={loadMore}
+					ListFooterComponent={footer(<UserRowsSkeleton rows={2} />)}
 				/>
 			);
 		}
@@ -432,6 +496,11 @@ export default function SearchScreen() {
 					contentContainerStyle={gridListStyle}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
+					onEndReachedThreshold={0.5}
+					onEndReached={loadMore}
+					ListFooterComponent={footer(
+						<PosterGridSkeleton rows={1} columns={numColumns} />,
+					)}
 				/>
 			</ShowProgressScope>
 		);

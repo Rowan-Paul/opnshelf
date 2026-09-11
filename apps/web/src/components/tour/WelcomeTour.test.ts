@@ -38,8 +38,19 @@ describe("shouldRunTour", () => {
 });
 
 describe("TOUR_STEPS", () => {
-	it("is six steps, each with an anchor", () => {
-		expect(TOUR_STEPS).toHaveLength(6);
+	it("is five steps, each with an anchor", () => {
+		expect(TOUR_STEPS).toHaveLength(5);
 		for (const step of TOUR_STEPS) expect(step.anchor).not.toBe("");
+	});
+
+	it("replaces Connections and Activity with Social without bumping the version", () => {
+		expect(TOUR_VERSION).toBe(1);
+		expect(TOUR_STEPS.filter((step) => step.anchor === "social")).toHaveLength(
+			1,
+		);
+		expect(TOUR_STEPS.some((step) => step.anchor === "connections")).toBe(
+			false,
+		);
+		expect(TOUR_STEPS.some((step) => step.anchor === "activity")).toBe(false);
 	});
 });

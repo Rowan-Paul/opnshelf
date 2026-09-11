@@ -21,9 +21,10 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
+import { fromTmdbPage, parsePage } from "../common/pagination";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
-	type DiscoverShowsDto,
+	DiscoverShowsDto,
 	EpisodeHistoryItemDto,
 	LocalEpisodeDto,
 	LocalSeasonDto,
@@ -31,8 +32,6 @@ import {
 	MarkEpisodeWatchedDto,
 	MarkSeasonWatchedDto,
 	MarkShowWatchedDto,
-	PaginatedEpisodesQueryDto,
-	PaginatedEpisodesResponseDto,
 	PaginatedUpNextQueryDto,
 	PaginatedUpNextResponseDto,
 	ReleaseCalendarQueryDto,
@@ -63,19 +62,27 @@ export class ShowsController {
 	@Get("search")
 	@ApiOperation({ summary: "Search shows from TMDB" })
 	@ApiQuery({ name: "query", required: true, description: "Search term" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchShowsResultsDto })
-	async searchShows(@Query("query") query: string) {
-		return this.showsService.searchShows(query);
+	async searchShows(
+		@Query("query") query: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.showsService.searchShows(query, parsePage(page)),
+		);
 	}
 
 	@Get("discover")
 	@ApiOperation({ summary: "Discover popular shows from TMDB" })
 	@ApiResponse({ status: 200, type: SearchShowsResultsDto })
 	async discoverShows(@Query() discoverDto: DiscoverShowsDto) {
-		return this.showsService.discoverShows(
-			discoverDto.sortBy,
-			discoverDto.page ?? 1,
-			discoverDto.year,
+		return fromTmdbPage(
+			await this.showsService.discoverShows(
+				discoverDto.sortBy,
+				discoverDto.page ?? 1,
+				discoverDto.year,
+			),
 		);
 	}
 
@@ -133,9 +140,15 @@ export class ShowsController {
 
 	@Get("tmdb/:showId/recommendations")
 	@ApiOperation({ summary: "Get TMDB recommendations (similar shows)" })
+	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchShowsResultsDto })
-	async getRecommendations(@Param("showId") showId: string) {
-		return this.showsService.getRecommendations(showId);
+	async getRecommendations(
+		@Param("showId") showId: string,
+		@Query("page") page?: string,
+	) {
+		return fromTmdbPage(
+			await this.showsService.getRecommendations(showId, parsePage(page)),
+		);
 	}
 
 	@Get("tmdb/:showId/season/:seasonNumber")
@@ -247,44 +260,6 @@ export class ShowsController {
 		@Query() query: ReleaseCalendarQueryDto,
 	) {
 		return this.showsService.getUserReleaseCalendar(userDid, query);
-	}
-
-	@Get("user/:userDid/episodes")
-	@ApiOperation({ summary: "Get paginated watched episodes for a user" })
-	@ApiResponse({ status: 200, type: PaginatedEpisodesResponseDto })
-	async getUserEpisodesPaginated(
-		@Param("userDid") userDid: string,
-		@Query() query: PaginatedEpisodesQueryDto,
-	) {
-		const limit = query.limit ?? 20;
-		const result = await this.showsService.getUserEpisodesPaginated(
-			userDid,
-			limit,
-			query.cursor,
-		);
-
-		// Ensure colors for all shows
-		const itemsWithColors = await Promise.all(
-			result.items.map(async (item) => {
-				const colors = await this.showsService.ensureShowHasColors(item.showId);
-				return {
-					...item,
-					watchedDate: item.watchedDate?.toISOString(),
-					createdAt: item.createdAt.toISOString(),
-					updatedAt: item.updatedAt.toISOString(),
-					show: {
-						...item.show,
-						colors: colors ?? undefined,
-					},
-				};
-			}),
-		);
-
-		return {
-			items: itemsWithColors,
-			nextCursor: result.nextCursor,
-			total: result.total,
-		};
 	}
 
 	@Post("watched")

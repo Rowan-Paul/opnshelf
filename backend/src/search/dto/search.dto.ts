@@ -1,4 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { PaginationMetaDto } from "../../common/pagination";
 
 export type MediaType = "movie" | "tv";
 
@@ -58,48 +61,55 @@ export class UnifiedSearchResultDto {
 	video?: boolean;
 }
 
-export class UnifiedSearchResponseDto {
+/**
+ * Movies and shows merged per page: each page interleaves one TMDB movie page
+ * with one TMDB show page, so `pageSize` is two TMDB pages wide and
+ * `totalPages` is the deeper of the two result sets.
+ */
+export class UnifiedSearchResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [UnifiedSearchResultDto] })
-	results: UnifiedSearchResultDto[];
-
-	@ApiProperty()
-	total_results: number;
-
-	@ApiProperty()
-	page: number;
+	items: UnifiedSearchResultDto[];
 }
 
-export class UnifiedDiscoverResponseDto {
+export class UnifiedDiscoverResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [UnifiedSearchResultDto] })
-	results: UnifiedSearchResultDto[];
-
-	@ApiProperty()
-	total_results: number;
-
-	@ApiProperty()
-	page: number;
+	items: UnifiedSearchResultDto[];
 }
+
+export const DISCOVER_SORT_OPTIONS = [
+	"popularity.desc",
+	"popularity.asc",
+	"vote_average.desc",
+	"vote_average.asc",
+	"release_date.desc",
+	"release_date.asc",
+	"primary_release_date.desc",
+	"primary_release_date.asc",
+] as const;
 
 export class DiscoverQueryDto {
 	@ApiProperty({
 		required: false,
-		enum: [
-			"popularity.desc",
-			"popularity.asc",
-			"vote_average.desc",
-			"vote_average.asc",
-			"release_date.desc",
-			"release_date.asc",
-			"primary_release_date.desc",
-			"primary_release_date.asc",
-		],
+		enum: DISCOVER_SORT_OPTIONS,
 		default: "popularity.desc",
 	})
+	@IsOptional()
+	@IsString()
+	@IsIn(DISCOVER_SORT_OPTIONS)
 	sortBy?: string;
 
 	@ApiProperty({ required: false, minimum: 1, default: 1 })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
 	page?: number;
 
 	@ApiProperty({ required: false, minimum: 1900, maximum: 2100 })
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1900)
+	@Max(2100)
 	year?: number;
 }

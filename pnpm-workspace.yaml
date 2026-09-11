@@ -51,3 +51,4 @@ allowBuilds:
   unrs-resolver: true
   msgpackr-extract: false
   '@swc/core': true
+  '@posthog/cli': true

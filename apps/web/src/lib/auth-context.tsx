@@ -39,7 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
 	// Fetch current user - catch 401s gracefully to prevent router error boundary loops
-	const { data: user, isLoading } = useQuery({
+	const {
+		data: user,
+		isLoading,
+		isFetchedAfterMount,
+	} = useQuery({
 		...currentUserQueryOptions(),
 		// SSR cannot see the API's host-only session cookie. Verify once on
 		// browser mount even when its signed-out result was hydrated as fresh.
@@ -101,7 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const value: AuthContextType = {
 		user: user ?? null,
 		userSettings: userSettings ?? null,
-		isLoading: isLoading || isLoggingOut,
+		// A signed-out SSR result cannot establish the browser session.
+		// Keep cached users visible while the mount-time verification runs.
+		isLoading: isLoading || (!user && !isFetchedAfterMount) || isLoggingOut,
 		isAuthenticated: !!user,
 		login,
 		signup,

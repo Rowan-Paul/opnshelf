@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+
 export type Platform = {
 	/** Which Store Listing to offer. "other" means show both badges. */
 	os: "ios" | "android" | "other";
@@ -51,17 +53,40 @@ export function platformFromUserAgent(ua: string): Platform {
 }
 
 /**
- * The visiting device's platform. Client-side only.
- *
- * This used to read the request header during SSR so the right badge landed in
- * the server HTML. That branch was dead: every caller is either behind a
- * `localStorage` check (the Banner and the Prompt) or on a page that renders
- * client-side anyway, so it never ran. Deleted rather than kept warm.
- *
- * On the server it reports desktop, which shows both badges — the safe default,
- * since it offers more than the visitor needs rather than the wrong one.
+ * Best-effort platform from the live `navigator`, or desktop where there is no
+ * navigator (SSR). Not for use during render: see `usePlatform`.
  */
-export function detectPlatform(): Platform {
+function detectPlatform(): Platform {
 	if (typeof navigator === "undefined") return DESKTOP;
 	return platformFromUserAgent(navigator.userAgent);
+}
+
+// The User-Agent never changes for the life of the page, so one read serves
+// every subscriber. `useSyncExternalStore` also requires a stable snapshot.
+let detected: Platform | undefined;
+function getSnapshot(): Platform {
+	detected ??= detectPlatform();
+	return detected;
+}
+function getServerSnapshot(): Platform {
+	return DESKTOP;
+}
+function subscribe(): () => void {
+	return () => {};
+}
+
+/**
+ * The visiting device's platform, safe to branch on during render.
+ *
+ * The server does not know the device and renders desktop, which shows both
+ * store badges — the safe default, since it offers more than the visitor needs
+ * rather than the wrong one. React hydrates against that same desktop snapshot
+ * and only then re-renders with the real platform, so a phone narrows to its
+ * own badge a frame later. Reading `navigator` straight from render instead
+ * made the first client tree differ from the server HTML on every phone that
+ * opened the landing page, which React reports as error #418 and repairs by
+ * throwing the server HTML away and re-rendering the page.
+ */
+export function usePlatform(): Platform {
+	return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

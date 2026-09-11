@@ -11,11 +11,11 @@ describe("invalidateUserNotesQueries", () => {
 		const client = new QueryClient();
 		const pageKey = notesControllerGetUserNotesQueryKey({
 			path: { userDid: "did:plc:viewer" },
-			query: { limit: 10, cursor: "page-2" },
+			query: { page: 2, pageSize: 10 },
 		});
 		const infiniteKey = notesControllerGetUserNotesInfiniteQueryKey({
 			path: { userDid: "did:plc:viewer" },
-			query: { limit: 20 },
+			query: { pageSize: 20 },
 		});
 		const otherUserKey = notesControllerGetUserNotesQueryKey({
 			path: { userDid: "did:plc:other" },

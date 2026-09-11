@@ -74,13 +74,13 @@ afterEach(() => {
 });
 
 describe("infinite public profile hooks", () => {
-	it("accumulates review pages and forwards the next cursor", async () => {
+	it("accumulates review pages and requests the next page number", async () => {
 		api.getReviews
 			.mockResolvedValueOnce({
-				data: { items: [{ id: "review-1" }], nextCursor: "page-2" },
+				data: { items: [{ id: "review-1" }], page: 1, hasNextPage: true },
 			})
 			.mockResolvedValueOnce({
-				data: { items: [{ id: "review-2" }], nextCursor: null },
+				data: { items: [{ id: "review-2" }], page: 2, hasNextPage: false },
 			});
 		const hook = renderQueryHook(() => useInfiniteProfileReviews("did:one", 5));
 
@@ -92,7 +92,7 @@ describe("infinite public profile hooks", () => {
 			1,
 			expect.objectContaining({
 				path: { userDid: "did:one" },
-				query: { limit: 5 },
+				query: { pageSize: 5, page: 1 },
 			}),
 		);
 
@@ -107,7 +107,7 @@ describe("infinite public profile hooks", () => {
 			2,
 			expect.objectContaining({
 				path: { userDid: "did:one" },
-				query: { limit: 5, cursor: "page-2" },
+				query: { pageSize: 5, page: 2 },
 			}),
 		);
 		expect(
@@ -120,11 +120,11 @@ describe("infinite public profile hooks", () => {
 	it("retains note pages after a next-page error and permits retry", async () => {
 		api.getNotes
 			.mockResolvedValueOnce({
-				data: { items: [{ id: "note-1" }], nextCursor: "page-2" },
+				data: { items: [{ id: "note-1" }], page: 1, hasNextPage: true },
 			})
 			.mockRejectedValueOnce(new Error("temporary"))
 			.mockResolvedValueOnce({
-				data: { items: [{ id: "note-2" }], nextCursor: null },
+				data: { items: [{ id: "note-2" }], page: 2, hasNextPage: false },
 			});
 		const hook = renderQueryHook(() => useInfiniteProfileNotes("did:one"));
 
@@ -145,7 +145,7 @@ describe("infinite public profile hooks", () => {
 		);
 		expect(api.getNotes).toHaveBeenNthCalledWith(
 			3,
-			expect.objectContaining({ query: { limit: 20, cursor: "page-2" } }),
+			expect.objectContaining({ query: { pageSize: 20, page: 2 } }),
 		);
 		hook.unmount();
 	});
@@ -153,7 +153,7 @@ describe("infinite public profile hooks", () => {
 	it("uses distinct cache entries when the profile identity changes", async () => {
 		api.getNotes.mockImplementation(({ path }: { path: { userDid: string } }) =>
 			Promise.resolve({
-				data: { items: [{ id: path.userDid }], nextCursor: null },
+				data: { items: [{ id: path.userDid }], page: 1, hasNextPage: false },
 			}),
 		);
 		let userDid = "did:a";
@@ -173,7 +173,7 @@ describe("infinite public profile hooks", () => {
 
 	it("matches review invalidation under the generated endpoint family", async () => {
 		api.getReviews.mockResolvedValue({
-			data: { items: [{ id: "review-1" }], nextCursor: null },
+			data: { items: [{ id: "review-1" }], page: 1, hasNextPage: false },
 		});
 		const hook = renderQueryHook(() => useInfiniteProfileReviews("did:one"));
 		await waitForUpdate(() => {
@@ -184,7 +184,7 @@ describe("infinite public profile hooks", () => {
 		await hook.client.invalidateQueries({
 			queryKey: reviewsControllerGetUserReviewsInfiniteQueryKey({
 				path: { userDid: "did:one" },
-				query: { limit: 20 },
+				query: { pageSize: 20 },
 			}),
 		});
 		await waitForUpdate(() => expect(api.getReviews).toHaveBeenCalledTimes(2));

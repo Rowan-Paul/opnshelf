@@ -227,14 +227,7 @@ export function isSearchTabLoading({
 	);
 }
 
-export const SEARCH_PAGE_SIZE = 20;
-
-/** Page count for the TMDB multi-search, never below one. */
-export function getSearchTotalPages(totalResults: number | undefined): number {
-	return Math.max(1, Math.ceil((totalResults || 0) / SEARCH_PAGE_SIZE));
-}
-
-/** Page count for the Cast & Crew search, never below one. */
-export function getCastTotalPages(totalPages: number | undefined): number {
+/** Page count for a paginated search response, never below one. */
+export function getTotalPages(totalPages: number | undefined): number {
 	return Math.max(1, totalPages || 1);
 }

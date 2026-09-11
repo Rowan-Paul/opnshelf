@@ -4,8 +4,10 @@ import { type Href, Link } from "expo-router";
 import { Clock, User } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { StarRating } from "@/components/detail/StarRating";
+import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
+import { backdropUrl, posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /** Absolute date + time, mirroring web ("Jun 18, 3:42 PM"). */
@@ -59,12 +61,11 @@ export function activityMediaHref(activity: FollowedActivityItemDto): Href {
 }
 
 /**
- * A single activity entry shared by the home dashboard preview and the dedicated
- * Activity tab: actor avatar (taps to profile), an action sentence with the
- * media title (taps to the media detail), an optional episode line and review
- * rating, and a relative timestamp. The container styling is supplied by the
- * caller so the same row reads either as a divider-separated list (dashboard) or
- * a standalone card (Activity tab).
+ * Compact activity row for the Home preview of the Activity Feed. Same anatomy
+ * as the Social tab's `ActivityCard` (poster, actor + action sentence, optional
+ * episode line and rating, timestamp) without the synopsis and inline actions.
+ * The whole row taps through to the media page; the actor avatar and name win
+ * their own taps to the profile. The container styling is supplied by the caller.
  */
 export function ActivityRow({
 	activity,
@@ -73,7 +74,7 @@ export function ActivityRow({
 	activity: FollowedActivityItemDto;
 	containerClassName?: string;
 }) {
-	const avatarStyle = useTwStyle("size-10");
+	const avatarStyle = useTwStyle("size-7");
 	const displayName =
 		typeof activity.actor.displayName === "string"
 			? activity.actor.displayName
@@ -93,6 +94,9 @@ export function ActivityRow({
 	const mediaTitle =
 		activity.type === "episode" ? activity.showTitle : activity.title;
 	const isMovieish = !!activity.movieId;
+	const poster =
+		posterUrl(activity.posterPath) ?? backdropUrl(activity.backdropPath);
+	const href = activityMediaHref(activity);
 
 	const episodeLabel =
 		activity.type === "episode"
@@ -107,68 +111,75 @@ export function ActivityRow({
 			: undefined;
 
 	return (
-		<View className={containerClassName}>
-			<Link href={`/profile/${activity.actor.handle}` as const} asChild>
-				<Pressable className="size-10 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
-					{avatar ? (
-						<Image
-							source={{ uri: avatar }}
-							style={avatarStyle}
-							contentFit="cover"
-						/>
-					) : (
-						<User color="#94a3b8" size={18} />
-					)}
-				</Pressable>
-			</Link>
+		<Link href={href} asChild>
+			<Pressable className={containerClassName}>
+				<View className="h-16 w-11 overflow-hidden rounded-md border border-border bg-background-subtle">
+					<PosterImage url={poster} className="h-16 w-11" />
+				</View>
 
-			<View className="min-w-0 flex-1">
-				<Text className="text-foreground text-sm">
-					<Link href={`/profile/${activity.actor.handle}` as const}>
-						<Text className="font-semibold text-foreground text-sm">
-							{name}
+				<View className="min-w-0 flex-1">
+					<View className="flex-row items-center gap-2">
+						<Link href={`/profile/${activity.actor.handle}` as const} asChild>
+							<Pressable className="size-7 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+								{avatar ? (
+									<Image
+										source={{ uri: avatar }}
+										style={avatarStyle}
+										contentFit="cover"
+									/>
+								) : (
+									<User color="#94a3b8" size={14} />
+								)}
+							</Pressable>
+						</Link>
+						<Text className="min-w-0 flex-1 text-foreground text-sm">
+							<Link href={`/profile/${activity.actor.handle}` as const}>
+								<Text className="font-semibold text-foreground text-sm">
+									{name}
+								</Text>
+							</Link>
+							<Text className="text-muted-foreground text-sm"> {verb} </Text>
+							<Link href={href}>
+								<Text className="font-medium text-foreground text-sm">
+									{mediaTitle}
+								</Text>
+							</Link>
 						</Text>
-					</Link>
-					<Text className="text-muted-foreground text-sm"> {verb} </Text>
-					<Link href={activityMediaHref(activity)}>
-						<Text className="font-medium text-foreground text-sm">
-							{mediaTitle}
-						</Text>
-					</Link>
-				</Text>
-
-				{episodeLabel ? (
-					<Link href={activityMediaHref(activity)} asChild>
-						<Pressable>
-							<Text
-								className="mt-0.5 font-semibold text-foreground text-sm"
-								numberOfLines={1}
-							>
-								{episodeLabel}
-							</Text>
-						</Pressable>
-					</Link>
-				) : null}
-
-				{activity.type === "review" && activity.rating ? (
-					<View className="mt-1">
-						<StarRating rating={activity.rating} size={14} />
 					</View>
-				) : null}
 
-				<View className="mt-1 flex-row items-center gap-1.5">
-					<Clock color="#94a3b8" size={12} />
-					<Text className="text-muted-foreground text-xs">
-						{formatActivityDate(activity.activityAt)}
+					{episodeLabel ? (
+						<Link href={href} asChild>
+							<Pressable>
+								<Text
+									className="mt-1 font-semibold text-foreground text-sm"
+									numberOfLines={1}
+								>
+									{episodeLabel}
+								</Text>
+							</Pressable>
+						</Link>
+					) : null}
+
+					{activity.type === "review" && activity.rating ? (
+						<View className="mt-1">
+							<StarRating rating={activity.rating} size={14} />
+						</View>
+					) : null}
+
+					<View className="mt-1 flex-row items-center gap-1.5">
+						<Clock color="#94a3b8" size={12} />
+						<Text className="text-muted-foreground text-xs">
+							{formatActivityDate(activity.activityAt)}
+						</Text>
+					</View>
+				</View>
+
+				<View className="shrink-0 rounded-full bg-background-subtle px-2 py-0.5">
+					<Text className="font-medium text-muted-foreground text-xs">
+						{isMovieish ? "Movie" : "TV"}
 					</Text>
 				</View>
-			</View>
-
-			<View className="shrink-0 rounded-full bg-background-subtle px-2 py-0.5">
-				<Text className="font-medium text-muted-foreground text-xs">
-					{isMovieish ? "Movie" : "TV"}
-				</Text>
-			</View>
-		</View>
+			</Pressable>
+		</Link>
 	);
 }

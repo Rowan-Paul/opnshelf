@@ -11,6 +11,7 @@ import {
 	Max,
 	Min,
 } from "class-validator";
+import { PaginationMetaDto } from "../../common/pagination";
 import {
 	MovieColorsDto,
 	TMDBCastDto,
@@ -384,15 +385,9 @@ export class TMDBShowDetailDto extends TMDBShowResultDto {
 	trailer?: TMDBTrailerDto;
 }
 
-export class SearchShowsResultsDto {
+export class SearchShowsResultsDto extends PaginationMetaDto {
 	@ApiProperty({ type: [TMDBShowResultDto] })
-	results: TMDBShowResultDto[];
-
-	@ApiProperty()
-	total_results: number;
-
-	@ApiProperty()
-	page: number;
+	items: TMDBShowResultDto[];
 }
 
 export class MarkEpisodeWatchedDto {
@@ -437,38 +432,9 @@ export class EpisodeHistoryItemDto {
 	episodeNumber: number;
 }
 
-export class PaginatedEpisodesQueryDto {
-	@ApiPropertyOptional({
-		description: "Number of items to return",
-		default: 20,
-	})
-	@IsOptional()
-	@Type(() => Number)
-	@IsInt()
-	limit?: number;
-
-	@ApiPropertyOptional({
-		description: "Cursor for pagination (last item ID from previous page)",
-	})
-	@IsOptional()
-	@IsString()
-	cursor?: string;
-}
-
-export class PaginatedEpisodesResponseDto {
-	@ApiProperty({ type: [TrackedEpisodeDto] })
-	items: TrackedEpisodeDto[];
-
-	@ApiProperty({ description: "Cursor for next page (null if no more items)" })
-	nextCursor: string | null;
-
-	@ApiProperty({ description: "Total count of items" })
-	total: number;
-}
-
 export class PaginatedUpNextQueryDto {
 	@ApiPropertyOptional({
-		description: "Page number to return",
+		description: "Page number to return (1-based)",
 		default: 1,
 	})
 	@IsOptional()
@@ -514,29 +480,9 @@ export class PaginatedUpNextQueryDto {
 	showId?: string;
 }
 
-export class PaginatedUpNextResponseDto {
+export class PaginatedUpNextResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [UpNextShowDto] })
 	items: UpNextShowDto[];
-
-	@ApiProperty({ description: "Total count of items" })
-	total: number;
-
-	@ApiProperty({
-		description: "Current page number after server-side clamping",
-	})
-	page: number;
-
-	@ApiProperty({ description: "Number of items returned per page" })
-	pageSize: number;
-
-	@ApiProperty({ description: "Total number of available pages" })
-	totalPages: number;
-
-	@ApiProperty({ description: "Whether a previous page exists" })
-	hasPreviousPage: boolean;
-
-	@ApiProperty({ description: "Whether a next page exists" })
-	hasNextPage: boolean;
 }
 
 export class LocalSeasonDto {

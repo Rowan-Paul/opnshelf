@@ -8,6 +8,7 @@ import {
 	usersControllerConfirmMyTraktMatchMutation,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMyCurrentTraktImportQueryKey,
+	usersControllerGetMyTraktImportIssuesInfiniteOptions,
 	usersControllerGetMyTraktImportIssuesOptions,
 	usersControllerGetMyTraktMatchCandidatesOptions,
 	usersControllerPauseMyTraktImportMutation,
@@ -15,7 +16,12 @@ import {
 	usersControllerResumeMyTraktImportMutation,
 	usersControllerRetryMyTraktImportItemMutation,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import {
@@ -32,8 +38,11 @@ import {
 import { useState } from "react";
 import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
+import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
+import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { useEndReached } from "@/lib/use-end-reached";
 
 const PRIMARY = "#f3bc00";
 const MUTED = "#94a3b8";
@@ -432,13 +441,25 @@ function Candidate({ candidate }: { candidate: TraktMatchCandidateDto }) {
 	);
 }
 
+/**
+ * Unresolved items, loaded page by page as the screen scrolls (the Trakt import
+ * route's `EndReachedScrollView` drives it). Retrying an item invalidates the
+ * whole family, so the accumulated list refetches from page 1.
+ */
 function CouldntImportList({ onMatch }: { onMatch: () => void }) {
 	const queryClient = useQueryClient();
-	const [page, setPage] = useState(1);
-	const { data } = useQuery({
-		...usersControllerGetMyTraktImportIssuesOptions({
-			query: { page, pageSize: 25, outcome: "couldnt_import" },
+	const issues = useInfiniteQuery({
+		...usersControllerGetMyTraktImportIssuesInfiniteOptions({
+			query: { pageSize: 25, outcome: "couldnt_import" },
 		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+	});
+	const items = issues.data?.pages.flatMap((page) => page.items) ?? [];
+	const total = issues.data?.pages[0]?.total ?? 0;
+	useEndReached(() => {
+		if (canLoadMore(issues)) void issues.fetchNextPage();
 	});
 	const retry = useMutation({
 		...usersControllerRetryMyTraktImportItemMutation(),
@@ -451,18 +472,16 @@ function CouldntImportList({ onMatch }: { onMatch: () => void }) {
 			});
 		},
 	});
-	if (!data?.items.length) return null;
-	const lastPage = Math.max(1, Math.ceil(data.total / data.pageSize));
+	if (items.length === 0) return null;
 	return (
 		<View className="gap-3 rounded-2xl border border-border bg-card p-5">
 			<Text className="font-display font-semibold text-foreground text-xl">
 				Items that couldn’t be imported
 			</Text>
 			<Text className="text-muted-foreground text-sm">
-				Showing {(page - 1) * data.pageSize + 1}–
-				{Math.min(page * data.pageSize, data.total)} of {data.total}
+				Showing {items.length} of {total}
 			</Text>
-			{data.items.map((item) => (
+			{items.map((item) => (
 				<View key={item.id} className="gap-2 border-border border-t py-3">
 					<Text className="font-medium text-foreground">
 						{item.title ?? "Unknown title"}
@@ -498,24 +517,12 @@ function CouldntImportList({ onMatch }: { onMatch: () => void }) {
 					) : null}
 				</View>
 			))}
-			{lastPage > 1 ? (
-				<View className="flex-row justify-end gap-2">
-					<Pressable
-						disabled={page === 1}
-						onPress={() => setPage((value) => value - 1)}
-						className="rounded-lg border border-border px-3 py-2"
-					>
-						<Text className="text-foreground">Previous</Text>
-					</Pressable>
-					<Pressable
-						disabled={page === lastPage}
-						onPress={() => setPage((value) => value + 1)}
-						className="rounded-lg border border-border px-3 py-2"
-					>
-						<Text className="text-foreground">Next</Text>
-					</Pressable>
-				</View>
-			) : null}
+			<LoadMoreFooter
+				isFetchingNextPage={issues.isFetchingNextPage}
+				isFetchNextPageError={issues.isFetchNextPageError}
+				onRetry={() => void issues.fetchNextPage()}
+				skeleton={<ListRowsSkeleton rows={1} />}
+			/>
 		</View>
 	);
 }

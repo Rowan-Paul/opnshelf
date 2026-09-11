@@ -20,7 +20,7 @@ const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.2.0",
+	version: "1.3.0",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -110,6 +110,13 @@ const config: ExpoConfig = {
 		// Links targets/widget (the WidgetKit Home-Screen Widget) into the
 		// generated Xcode project — ios/ is prebuild output and never checked in.
 		"@bacons/apple-targets",
+		// Hooks the native bundle step so each build uploads its Hermes source
+		// maps to PostHog, turning minified exception frames back into TypeScript
+		// (RELEASE.md, "Source maps"). The upload reads POSTHOG_CLI_* from the
+		// build environment and fails the build when they are missing, so
+		// profiles without credentials set POSTHOG_CLI_DRY_RUN=true in eas.json.
+		// Native dSYM upload stays off: the exception reports (ADR 0031) are JS.
+		"posthog-react-native/expo",
 	],
 	experiments: {
 		typedRoutes: true,

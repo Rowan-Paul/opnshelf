@@ -233,7 +233,7 @@ function EpisodeDetailPage() {
 		})) || [];
 
 	const similarShows =
-		discoverShowsData?.results
+		discoverShowsData?.items
 			?.filter((s) => s.id !== Number(showId))
 			?.slice(0, 6)
 			?.map((s) => ({

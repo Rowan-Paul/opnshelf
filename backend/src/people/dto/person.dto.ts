@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { PaginationMetaDto } from "../../common/pagination";
 import { IsDateString, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class PersonFilmographyRoleDto {
@@ -121,21 +122,9 @@ export class TmdbPersonDetailDto {
 	filmography: PersonFilmographyItemDto[];
 }
 
-export class PersonFilmographyResponseDto {
+export class PersonFilmographyResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [PersonFilmographyItemDto] })
 	items: PersonFilmographyItemDto[];
-
-	@ApiProperty()
-	total: number;
-
-	@ApiProperty()
-	page: number;
-
-	@ApiProperty()
-	pageSize: number;
-
-	@ApiProperty()
-	totalPages: number;
 }
 
 export class PersonSearchResultDto {
@@ -157,18 +146,9 @@ export class PersonSearchResultDto {
 	popularity?: number;
 }
 
-export class PersonSearchResponseDto {
+export class PersonSearchResponseDto extends PaginationMetaDto {
 	@ApiProperty({ type: [PersonSearchResultDto] })
-	results: PersonSearchResultDto[];
-
-	@ApiProperty()
-	page: number;
-
-	@ApiProperty()
-	total_results: number;
-
-	@ApiProperty()
-	total_pages: number;
+	items: PersonSearchResultDto[];
 }
 
 export class PersonFilmographyQueryDto {

@@ -28,7 +28,7 @@ import {
 	getPaginationMeta,
 	MAX_FEED_PAGE_SIZE,
 	MAX_WATCHERS_PAGE_SIZE,
-} from "./social-pagination";
+} from "../common/pagination";
 import { SocialUsersService } from "./social-users.service";
 
 /**

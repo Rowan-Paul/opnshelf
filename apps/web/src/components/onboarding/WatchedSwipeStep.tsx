@@ -40,7 +40,7 @@ export function WatchedSwipeStep({
 	);
 	const items = useMemo(() => {
 		const seen = new Set<string>();
-		return (data?.results ?? []).filter((item) => {
+		return (data?.items ?? []).filter((item) => {
 			const key = `${item.media_type}-${item.id}`;
 			if (!posterFor(item) || seen.has(key)) return false;
 			seen.add(key);

@@ -614,8 +614,8 @@ export class UsersService {
 
 	async getTraktImportIssues(
 		userDid: string,
-		page: number,
-		pageSize: number,
+		page?: number,
+		pageSize?: number,
 		outcome?: "unmatched" | "couldnt_import",
 	) {
 		return this.importHistoryService.getTraktImportIssues(

@@ -208,7 +208,7 @@ export function SearchCommand({
 			surface: "command",
 			tab: "all",
 			query_length: debouncedQuery.length,
-			result_count: searchData.results?.length ?? 0,
+			result_count: searchData.items?.length ?? 0,
 		});
 	}, [debouncedQuery, searchData]);
 
@@ -243,16 +243,16 @@ export function SearchCommand({
 	});
 
 	const movies =
-		searchData?.results?.filter(
+		searchData?.items?.filter(
 			(item: UnifiedSearchResultDto) => item.media_type === "movie",
 		) || [];
 
 	const shows =
-		searchData?.results?.filter(
+		searchData?.items?.filter(
 			(item: UnifiedSearchResultDto) => item.media_type === "tv",
 		) || [];
 
-	const cast = castData?.results || [];
+	const cast = castData?.items || [];
 
 	const hasSearchQuery = debouncedQuery.length > 0;
 	const hasSearchResults =
@@ -314,10 +314,10 @@ export function SearchCommand({
 					run: () => goTo("/calendar"),
 				},
 				{
-					key: "following",
-					label: "Following",
+					key: "social",
+					label: "Social",
 					Icon: Users,
-					run: () => goTo("/activity"),
+					run: () => goTo("/social"),
 				},
 				...(currentUserHandle
 					? [
@@ -705,9 +705,9 @@ export function SearchCommand({
 								<Calendar />
 								<span>Calendar</span>
 							</CommandItem>
-							<CommandItem value="following" onSelect={() => goTo("/activity")}>
+							<CommandItem value="social" onSelect={() => goTo("/social")}>
 								<Users />
-								<span>Following</span>
+								<span>Social</span>
 							</CommandItem>
 							{currentUserHandle && (
 								<CommandItem

@@ -45,10 +45,9 @@ import {
 	collectShownKeys,
 	dedupeResults,
 	getBackdropUrl,
-	getCastTotalPages,
 	getPosterUrl,
-	getSearchTotalPages,
 	getTitle,
+	getTotalPages,
 	hasResultsForTab,
 	isSearchTabLoading,
 	resolveSearchTab,
@@ -187,7 +186,7 @@ function SearchPage() {
 			surface: "search",
 			tab: activeTab,
 			query_length: debouncedQuery.length,
-			result_count: searchData.results?.length ?? 0,
+			result_count: searchData.items?.length ?? 0,
 		});
 	}, [activeTab, debouncedQuery, searchData]);
 
@@ -215,7 +214,10 @@ function SearchPage() {
 			queryClient.invalidateQueries({
 				predicate: (q) => {
 					const key = q.queryKey[0] as { _id?: string } | undefined;
-					return key?._id === "socialControllerSearchPeople";
+					return (
+						key?._id === "socialControllerSearchPeople" ||
+						key?._id === "socialControllerGetFeed"
+					);
 				},
 			});
 		},
@@ -233,7 +235,10 @@ function SearchPage() {
 			queryClient.invalidateQueries({
 				predicate: (q) => {
 					const key = q.queryKey[0] as { _id?: string } | undefined;
-					return key?._id === "socialControllerSearchPeople";
+					return (
+						key?._id === "socialControllerSearchPeople" ||
+						key?._id === "socialControllerGetFeed"
+					);
 				},
 			});
 		},
@@ -274,36 +279,31 @@ function SearchPage() {
 	const shownKeys = useMemo(
 		() =>
 			collectShownKeys([
-				fromFollowsData?.results ?? [],
-				trendingData?.results ?? [],
-				...(becauseYouWatchedData?.rows ?? []).map((r) => r.results),
+				fromFollowsData?.items ?? [],
+				trendingData?.items ?? [],
+				...(becauseYouWatchedData?.rows ?? []).map((r) => r.items),
 			]),
 		[fromFollowsData, trendingData, becauseYouWatchedData],
 	);
 	const popularMovieItems = useMemo(
 		() =>
-			toUnseenDiscoverItems(
-				popularMoviesData?.results ?? [],
-				"movie",
-				shownKeys,
-			),
+			toUnseenDiscoverItems(popularMoviesData?.items ?? [], "movie", shownKeys),
 		[popularMoviesData, shownKeys],
 	);
 	const popularShowItems = useMemo(
-		() =>
-			toUnseenDiscoverItems(popularShowsData?.results ?? [], "tv", shownKeys),
+		() => toUnseenDiscoverItems(popularShowsData?.items ?? [], "tv", shownKeys),
 		[popularShowsData, shownKeys],
 	);
 
 	// TMDB multi-search can return the same id twice → dedupe before rendering
 	// so React keys stay unique (was "two children with the same key").
 	const results = useMemo(
-		() => dedupeResults(searchData?.results || []),
+		() => dedupeResults(searchData?.items || []),
 		[searchData],
 	);
 	const { movies, shows } = useMemo(() => splitByMediaType(results), [results]);
 	const people = peopleData?.items || [];
-	const cast = castData?.results || [];
+	const cast = castData?.items || [];
 
 	const mediaItems = useMemo(() => toRatingItems(results), [results]);
 	const { ratings } = useBatchRatingsQuery(mediaItems);
@@ -611,7 +611,7 @@ function SearchPage() {
 								<div className="flex justify-center pt-4">
 									<Pagination
 										page={page}
-										totalPages={getSearchTotalPages(searchData?.total_results)}
+										totalPages={getTotalPages(searchData?.totalPages)}
 										onPageChange={handlePageChange}
 									/>
 								</div>
@@ -621,7 +621,7 @@ function SearchPage() {
 							<div className="flex justify-center pt-4">
 								<Pagination
 									page={page}
-									totalPages={getCastTotalPages(castData?.total_pages)}
+									totalPages={getTotalPages(castData?.totalPages)}
 									onPageChange={handlePageChange}
 								/>
 							</div>
@@ -633,7 +633,7 @@ function SearchPage() {
 					{isAuthenticated && (
 						<DiscoverRow
 							title="From your follows"
-							items={fromFollowsData?.results ?? []}
+							items={fromFollowsData?.items ?? []}
 						/>
 					)}
 
@@ -646,13 +646,13 @@ function SearchPage() {
 										Because you watched <em>{row.seedTitle}</em>
 									</>
 								}
-								items={row.results}
+								items={row.items}
 							/>
 						))}
 
 					<DiscoverRow
 						title="Trending this week"
-						items={trendingData?.results ?? []}
+						items={trendingData?.items ?? []}
 					/>
 
 					<DiscoverRow title="Popular movies" items={popularMovieItems} />

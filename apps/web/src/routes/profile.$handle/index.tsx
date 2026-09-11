@@ -95,7 +95,7 @@ function ProfileOverviewPage() {
 
 	const { data: reviewsData, isLoading: reviewsLoading } = useUserReviews({
 		userDid,
-		limit: 4,
+		pageSize: 4,
 	});
 
 	const watchlist = listsData?.find((l) => l.slug === "watchlist");

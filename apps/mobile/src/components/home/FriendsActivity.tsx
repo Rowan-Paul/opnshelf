@@ -12,7 +12,7 @@ const SKELETON_ROWS = 3;
 
 /**
  * Loading placeholder mirroring the loaded card: a single bordered container
- * with divider-separated rows (like `ActivityRow`'s avatar + text-line
+ * with divider-separated rows (like `ActivityRow`'s poster + text-line
  * layout), rather than the shared `UserRowsSkeleton` (separately bordered
  * cards) which doesn't match this widget's single-card shape.
  */
@@ -24,8 +24,8 @@ function FriendsActivitySkeleton() {
 					key={i}
 					className={`flex-row items-start gap-3 p-4 ${i === SKELETON_ROWS - 1 ? "" : "border-border border-b"}`}
 				>
-					<View className="h-10 w-10 rounded-full bg-background-subtle" />
-					<View className="flex-1 gap-2">
+					<View className="h-16 w-11 rounded-md bg-background-subtle" />
+					<View className="flex-1 gap-2 pt-1">
 						<View className="h-3 w-3/4 rounded bg-background-subtle" />
 						<View className="h-2.5 w-1/3 rounded bg-background-subtle" />
 					</View>
@@ -43,8 +43,8 @@ function FriendsActivitySkeleton() {
  * procedure the web dashboard uses so the two surfaces stay in sync.
  *
  * Rendered inside the dashboard ScrollView, so it shows a fixed preview slice
- * rather than owning its own scrolling list; "View all" links to the dedicated
- * Activity tab.
+ * rather than owning its own scrolling list; "View all" links to the Social
+ * tab.
  */
 export function FriendsActivity() {
 	const { data, isLoading } = useQuery({
@@ -58,7 +58,7 @@ export function FriendsActivity() {
 
 	return (
 		<View>
-			<SectionHeader icon={Users} title="Activity" href="/activity" />
+			<SectionHeader icon={Users} title="Social" href="/social" />
 			{isLoading ? (
 				<FriendsActivitySkeleton />
 			) : recentItems.length === 0 ? (

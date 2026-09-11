@@ -255,7 +255,7 @@ describe("NotesService", () => {
 	});
 
 	describe("getUserNotes", () => {
-		it("paginates with take=limit+1 and exposes the next cursor when there are more", async () => {
+		it("returns the requested page window with page metadata", async () => {
 			const rows = [
 				{
 					id: "n1",
@@ -264,30 +264,32 @@ describe("NotesService", () => {
 					content: "a",
 					updatedAt: new Date(),
 				},
-				{
-					id: "n2",
-					mediaType: "movie",
-					mediaId: "2",
-					content: "b",
-					updatedAt: new Date(),
-				},
 			];
-			// limit 1 -> take 2; returning 2 rows signals hasMore
-			mockPrismaService.note.findMany.mockResolvedValue(rows);
 			mockPrismaService.note.count.mockResolvedValue(5);
+			mockPrismaService.note.findMany.mockResolvedValue(rows);
 			mockPrismaService.movie.findMany.mockResolvedValue([
 				{ movieId: "1", title: "One", posterPath: "/one.jpg" },
 			]);
 			mockPrismaService.show.findMany.mockResolvedValue([]);
 
-			const result = await service.getUserNotes(session.did, 1);
+			const result = await service.getUserNotes(session.did, 2, 1);
 
 			expect(mockPrismaService.note.findMany).toHaveBeenCalledWith(
-				expect.objectContaining({ take: 2, where: { userDid: session.did } }),
+				expect.objectContaining({
+					where: { userDid: session.did },
+					skip: 1,
+					take: 1,
+				}),
 			);
 			expect(result.items).toHaveLength(1);
-			expect(result.nextCursor).toBe("n1");
-			expect(result.total).toBe(5);
+			expect(result.pagination).toEqual({
+				total: 5,
+				page: 2,
+				pageSize: 1,
+				totalPages: 5,
+				hasNextPage: true,
+				hasPreviousPage: true,
+			});
 			// movie note enriched with its title/poster
 			expect(result.items[0]).toMatchObject({
 				id: "n1",
@@ -296,23 +298,24 @@ describe("NotesService", () => {
 			});
 		});
 
-		it("returns a null cursor when the page is not full", async () => {
+		it("reports no next page once the last page is returned", async () => {
+			mockPrismaService.note.count.mockResolvedValue(1);
 			mockPrismaService.note.findMany.mockResolvedValue([
 				{
 					id: "n1",
 					mediaType: "show",
 					mediaId: "9",
-					content: "a",
+					content: "x",
 					updatedAt: new Date(),
 				},
 			]);
-			mockPrismaService.note.count.mockResolvedValue(1);
 			mockPrismaService.movie.findMany.mockResolvedValue([]);
 			mockPrismaService.show.findMany.mockResolvedValue([]);
 
-			const result = await service.getUserNotes(session.did, 20);
+			const result = await service.getUserNotes(session.did);
 
-			expect(result.nextCursor).toBeNull();
+			expect(result.pagination.hasNextPage).toBe(false);
+			expect(result.pagination.pageSize).toBe(20);
 			expect(result.items).toHaveLength(1);
 		});
 	});

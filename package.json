@@ -21,6 +21,7 @@
     "backend"
   ],
   "devDependencies": {
+    "@posthog/cli": "^0.18.1",
     "husky": "^9.1.7",
     "turbo": "^2.10.12"
   },
