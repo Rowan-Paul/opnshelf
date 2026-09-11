@@ -16,6 +16,30 @@ import type { ExpoConfig } from "expo/config";
 const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL ?? "https://opnshelf.xyz";
 const SITE_HOST = new URL(SITE_URL).host;
 
+/**
+ * Native Google sign-in, included only when there is an iOS client id to build
+ * it from. The plugin throws without an `iosUrlScheme`, so registering it
+ * unconditionally would break `expo prebuild` on any checkout that has not set
+ * the Google variables — and Google is optional by design: unset hides the
+ * button, matching the backend's own `configured` check.
+ *
+ * The scheme is the iOS client id reversed, which is a pure rewrite of it:
+ * `<id>.apps.googleusercontent.com` -> `com.googleusercontent.apps.<id>`.
+ * Deriving it beats carrying a second variable that must agree with the first.
+ */
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const googleSignInPlugin = GOOGLE_IOS_CLIENT_ID
+	? ([
+			"@react-native-google-signin/google-signin",
+			{
+				iosUrlScheme: `com.googleusercontent.apps.${GOOGLE_IOS_CLIENT_ID.replace(
+					/\.apps\.googleusercontent\.com$/,
+					"",
+				)}`,
+			},
+		] as [string, Record<string, string>])
+	: null;
+
 const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
@@ -96,10 +120,7 @@ const config: ExpoConfig = {
 	},
 	plugins: [
 		"expo-router",
-		// Native Google sign-in. Configured with the *web* client id as its
-		// serverClientId, so the id_token audience stays the one client the PDS
-		// validates against and no PDS config changes (ADR 0027).
-		"@react-native-google-signin/google-signin",
+		...(googleSignInPlugin ? [googleSignInPlugin] : []),
 		// Expo leaves R8 off, so a release bundle shipped 51 MB of unminified DEX
 		// and Play scored its App optimization "Low" (1% obfuscation, no shrink).
 		// Turning R8 and resource shrinking on is what lifts that score; each
