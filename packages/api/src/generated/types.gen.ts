@@ -351,6 +351,37 @@ export type GoogleRegisterResponseDto = {
     coreOAuthUrl: string;
 };
 
+export type ApplePendingResponseDto = {
+    /**
+     * Email verified by Apple for the pending signup. May be an Apple private relay address.
+     */
+    email: string;
+};
+
+export type AppleRegisterDto = {
+    /**
+     * Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social
+     */
+    username: string;
+    /**
+     * Cloudflare Turnstile token proving the request is human
+     */
+    captchaToken: string;
+    /**
+     * User's IANA timezone, e.g. Europe/Amsterdam
+     */
+    timezone?: string;
+};
+
+export type AppleRegisterResponseDto = {
+    did: string;
+    handle: string;
+    /**
+     * Where to send the browser next: the PDS consent page for the OAuth request bound to this registration
+     */
+    coreOAuthUrl: string;
+};
+
 export type MobileHandoffChallengeResponseDto = {
     /**
      * Secret the app keeps for itself and presents at the exchange. Never put it in a URL.
@@ -3127,6 +3158,61 @@ export type AuthControllerGoogleRegisterResponses = {
 };
 
 export type AuthControllerGoogleRegisterResponse = AuthControllerGoogleRegisterResponses[keyof AuthControllerGoogleRegisterResponses];
+
+export type AuthControllerAppleStartData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/apple/start';
+};
+
+export type AuthControllerApplePendingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/apple/pending';
+};
+
+export type AuthControllerApplePendingResponses = {
+    /**
+     * Pending Apple signup identity
+     */
+    200: ApplePendingResponseDto;
+};
+
+export type AuthControllerApplePendingResponse = AuthControllerApplePendingResponses[keyof AuthControllerApplePendingResponses];
+
+export type AuthControllerAppleRegisterData = {
+    body: AppleRegisterDto;
+    path?: never;
+    query?: never;
+    url: '/auth/apple/register';
+};
+
+export type AuthControllerAppleRegisterErrors = {
+    /**
+     * Apple signup was not started
+     */
+    400: unknown;
+    /**
+     * Captcha verification failed
+     */
+    403: unknown;
+    /**
+     * Username already taken
+     */
+    409: unknown;
+    /**
+     * Too many signup attempts
+     */
+    429: unknown;
+};
+
+export type AuthControllerAppleRegisterResponses = {
+    201: AppleRegisterResponseDto;
+};
+
+export type AuthControllerAppleRegisterResponse = AuthControllerAppleRegisterResponses[keyof AuthControllerAppleRegisterResponses];
 
 export type AuthControllerMobileChallengeData = {
     body?: never;

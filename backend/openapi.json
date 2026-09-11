@@ -884,6 +884,87 @@
         ]
       }
     },
+    "/auth/apple/start": {
+      "get": {
+        "operationId": "AuthController_appleStart",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to Apple"
+          }
+        },
+        "summary": "Begin Continue with Apple",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/apple/pending": {
+      "get": {
+        "operationId": "AuthController_applePending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Pending Apple signup identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplePendingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read the pending Apple signup identity",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/apple/register": {
+      "post": {
+        "operationId": "AuthController_appleRegister",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppleRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppleRegisterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Apple signup was not started"
+          },
+          "403": {
+            "description": "Captcha verification failed"
+          },
+          "409": {
+            "description": "Username already taken"
+          },
+          "429": {
+            "description": "Too many signup attempts"
+          }
+        },
+        "summary": "Create an account from a verified Apple identity",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/mobile/challenge": {
       "post": {
         "operationId": "AuthController_mobileChallenge",
@@ -6548,6 +6629,60 @@
         ]
       },
       "GoogleRegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "coreOAuthUrl": {
+            "type": "string",
+            "description": "Where to send the browser next: the PDS consent page for the OAuth request bound to this registration"
+          }
+        },
+        "required": [
+          "did",
+          "handle",
+          "coreOAuthUrl"
+        ]
+      },
+      "ApplePendingResponseDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email verified by Apple for the pending signup. May be an Apple private relay address."
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "AppleRegisterDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Desired username (the subdomain label). Combined with the PDS handle domain, e.g. 'jane' -> jane.opnshelf.social",
+            "example": "jane"
+          },
+          "captchaToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token proving the request is human"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "User's IANA timezone, e.g. Europe/Amsterdam"
+          }
+        },
+        "required": [
+          "username",
+          "captchaToken"
+        ]
+      },
+      "AppleRegisterResponseDto": {
         "type": "object",
         "properties": {
           "did": {
