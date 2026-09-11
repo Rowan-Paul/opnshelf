@@ -89,6 +89,24 @@ const config: ExpoConfig = {
 	},
 	plugins: [
 		"expo-router",
+		// Expo leaves R8 off, so a release bundle shipped 51 MB of unminified DEX
+		// and Play scored its App optimization "Low" (1% obfuscation, no shrink).
+		// Turning R8 and resource shrinking on is what lifts that score; each
+		// native library ships its own consumer keep rules, so no extra ProGuard
+		// rules are needed until a release build proves otherwise (RELEASING.md,
+		// "Gotchas"). Native config: needs a store build, not an OTA update.
+		[
+			"expo-build-properties",
+			{
+				android: {
+					enableMinifyInReleaseBuilds: true,
+					enableShrinkResourcesInReleaseBuilds: true,
+				},
+			},
+		],
+		// R8 needs more Gradle daemon memory than Expo's template allows; the
+		// plugin explains why it cannot go through expo-build-properties.
+		"./plugins/with-gradle-jvm-args",
 		"expo-secure-store",
 		"expo-font",
 		"expo-image",
