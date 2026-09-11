@@ -51,3 +51,4 @@ Numbering notes:
 | [0031-mutation-failures-are-reported-to-posthog.md](0031-mutation-failures-are-reported-to-posthog.md) | 0031 | Failed mutations are reported to PostHog as exceptions | Accepted |
 | [0032-social-is-one-shared-hub.md](0032-social-is-one-shared-hub.md) | 0032 | Social is one shared hub | Accepted; implemented |
 | [0033-one-pagination-contract-mobile-scrolls-web-pages.md](0033-one-pagination-contract-mobile-scrolls-web-pages.md) | 0033 | One pagination contract; Mobile scrolls, Web pages | Accepted; implemented |
+| [0034-progress-belongs-to-the-poster.md](0034-progress-belongs-to-the-poster.md) | 0034 | Watch progress belongs to the poster it describes | Accepted; implemented |
