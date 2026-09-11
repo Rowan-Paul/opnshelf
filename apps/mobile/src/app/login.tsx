@@ -5,6 +5,7 @@ import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { User } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { ProviderButtons } from "@/components/ProviderButtons";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -95,6 +96,14 @@ export default function LoginScreen() {
 						<Text className="text-destructive text-sm">{error}</Text>
 					</View>
 				)}
+
+				<ProviderButtons />
+
+				<View className="flex-row items-center gap-3">
+					<View className="h-px flex-1 bg-border" />
+					<Text className="text-muted-foreground text-xs uppercase">or</Text>
+					<View className="h-px flex-1 bg-border" />
+				</View>
 
 				<View className="gap-3">
 					<TextField

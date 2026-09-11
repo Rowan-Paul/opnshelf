@@ -9,6 +9,7 @@ import {
 	HttpStatus,
 	Logger,
 	Post,
+	Query,
 	Req,
 	Res,
 	ServiceUnavailableException,
@@ -40,6 +41,7 @@ import {
 } from "./dto/apple-register.dto";
 import { NativeSsoDto, NativeSsoResponseDto } from "./dto/native-sso.dto";
 import { NativeAccountService } from "./native-account.service";
+import { isValidCodeChallenge } from "./oauth-app-state";
 import { signProviderState, verifyProviderState } from "./provider-state";
 import { SignupRateLimiter } from "./signup-rate-limiter";
 import { getClientIp, mapCreateAccountError } from "./signup-support";
@@ -125,13 +127,29 @@ export class AppleSignupController {
 		summary: "Begin Continue with Apple",
 	})
 	@ApiResponse({ status: 302, description: "Redirect to Apple" })
-	appleStart(@Res() res: Response): void {
+	appleStart(
+		@Res() res: Response,
+		@Query("platform") platform?: string,
+		@Query("code_challenge") codeChallenge?: string,
+	): void {
 		if (!this.appleOAuth.configured) {
 			res.redirect(this.buildSignupErrorUrl("apple_unavailable"));
 			return;
 		}
+		// The Android app starts here and needs to come back to the app, so its
+		// platform and handoff challenge ride inside the signed state.
+		const isMobile = platform === "mobile";
+		const carriedChallenge =
+			isMobile && codeChallenge && isValidCodeChallenge(codeChallenge)
+				? codeChallenge
+				: undefined;
 		res.redirect(
-			this.appleOAuth.buildAuthUrl(signProviderState(this.stateSecret)),
+			this.appleOAuth.buildAuthUrl(
+				signProviderState(this.stateSecret, {
+					platform: isMobile ? "mobile" : undefined,
+					codeChallenge: carriedChallenge,
+				}),
+			),
 		);
 	}
 
@@ -155,7 +173,8 @@ export class AppleSignupController {
 			return;
 		}
 
-		if (!verifyProviderState(this.stateSecret, body.state)) {
+		const state = verifyProviderState(this.stateSecret, body.state);
+		if (!state) {
 			this.logger.warn("Rejected an Apple callback with unusable state");
 			res.redirect(this.buildSignupErrorUrl("apple_failed"));
 			return;
@@ -164,7 +183,14 @@ export class AppleSignupController {
 		let coreOAuthUrl: string | undefined;
 		try {
 			const idToken = await this.appleOAuth.exchangeCode(body.code);
-			coreOAuthUrl = await this.authService.authorizeWithPds();
+			// Replaying platform/codeChallenge into the atproto leg is what lets
+			// the Android app receive a Mobile Handoff Code at the end instead of
+			// stranding the user on a web page (ADR 0026).
+			coreOAuthUrl = await this.authService.authorizeWithPds(
+				state.platform
+					? { platform: state.platform, codeChallenge: state.codeChallenge }
+					: undefined,
+			);
 			const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
 			if (!requestUri) {
 				throw new Error("Core OAuth URL carried no request_uri");

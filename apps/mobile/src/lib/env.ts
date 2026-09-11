@@ -11,6 +11,8 @@ type Extra = {
 	turnstileSiteKey?: string;
 	pdsHandleDomain?: string;
 	siteUrl?: string;
+	googleWebClientId?: string;
+	googleIosClientId?: string;
 };
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
@@ -38,4 +40,13 @@ export const env = {
 	// widget so its hostname matches the site key's allowed hostnames.
 	siteUrl:
 		process.env.EXPO_PUBLIC_SITE_URL ?? extra.siteUrl ?? "https://opnshelf.xyz",
+	// Google's *web* client id, handed to the native SDK as serverClientId so
+	// the id_token audience stays the one the PDS validates. Unset hides the
+	// Google button, matching the backend's own `configured` check.
+	googleWebClientId:
+		process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? extra.googleWebClientId,
+	// Google's iOS client id, needed by the native SDK itself and never seen in
+	// a token audience.
+	googleIosClientId:
+		process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? extra.googleIosClientId,
 } as const;

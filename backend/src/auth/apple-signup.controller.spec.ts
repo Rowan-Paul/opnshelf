@@ -556,4 +556,65 @@ describe("AppleSignupController", () => {
 			);
 		});
 	});
+	describe("carrying the mobile handoff through the browser leg", () => {
+		const CHALLENGE = "a".repeat(43);
+
+		it("replays platform and challenge into the atproto leg", async () => {
+			const res = createMockResponse();
+			controller.appleStart(res, "mobile", CHALLENGE);
+			const state = mockAppleOAuth.buildAuthUrl.mock.calls[0][0] as string;
+
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: null,
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: "https://pds.test/app/oauth/consent?request_uri=abc",
+			});
+
+			await controller.appleCallback(
+				{ code: "apple-code", state },
+				createMockResponse(),
+			);
+
+			// Without this the Android app never gets a handoff code back and the
+			// user is stranded on a web page.
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith({
+				platform: "mobile",
+				codeChallenge: CHALLENGE,
+			});
+		});
+
+		it("carries nothing for a web flow", async () => {
+			const res = createMockResponse();
+			controller.appleStart(res);
+			const state = mockAppleOAuth.buildAuthUrl.mock.calls[0][0] as string;
+
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: null,
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: "https://pds.test/app/oauth/consent?request_uri=abc",
+			});
+
+			await controller.appleCallback(
+				{ code: "apple-code", state },
+				createMockResponse(),
+			);
+
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith(undefined);
+		});
+
+		it("ignores a malformed challenge rather than carrying it", () => {
+			const res = createMockResponse();
+			controller.appleStart(res, "mobile", "too-short");
+			const state = mockAppleOAuth.buildAuthUrl.mock.calls[0][0] as string;
+			const payload = JSON.parse(
+				Buffer.from(state.split(".")[0], "base64url").toString("utf8"),
+			);
+			expect(payload.codeChallenge).toBeUndefined();
+			expect(payload.platform).toBe("mobile");
+		});
+	});
 });

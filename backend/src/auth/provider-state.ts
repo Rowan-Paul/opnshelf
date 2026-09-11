@@ -8,6 +8,17 @@ export interface ProviderStatePayload {
 	nonce: string;
 	/** Millisecond epoch the state was minted, for expiry. */
 	issuedAt: number;
+	/**
+	 * Set when the flow started in the Mobile App. Apple on Android has no
+	 * native credential to fall back on, so it runs this browser leg and still
+	 * has to end up back in the app — which means the platform and the Mobile
+	 * Handoff Code challenge (ADR 0026) have to survive the round trip. A
+	 * cookie cannot carry them: Apple's cross-site POST would not send it, and
+	 * ADR 0026 notes cookies do not survive an iOS auth session either.
+	 */
+	platform?: "mobile";
+	/** S256 challenge for the Mobile Handoff Code, when platform is mobile. */
+	codeChallenge?: string;
 }
 
 /**
@@ -23,10 +34,15 @@ export interface ProviderStatePayload {
  * real CSRF protection in the `authState` table, and not fine here where
  * nothing else is guarding.
  */
-export function signProviderState(secret: string): string {
+export function signProviderState(
+	secret: string,
+	carry: Pick<ProviderStatePayload, "platform" | "codeChallenge"> = {},
+): string {
 	const payload: ProviderStatePayload = {
 		nonce: randomBytes(16).toString("base64url"),
 		issuedAt: Date.now(),
+		...(carry.platform ? { platform: carry.platform } : {}),
+		...(carry.codeChallenge ? { codeChallenge: carry.codeChallenge } : {}),
 	};
 	const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
 	return `${body}.${hmac(secret, body)}`;

@@ -1,0 +1,113 @@
+import { router } from "expo-router";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, View } from "react-native";
+import { Text } from "@/components/ui/text";
+import { useToast } from "@/components/ui/toast";
+import { useAuth } from "@/lib/auth-context";
+import { beginHandoff } from "@/lib/auth-handoff";
+import { env } from "@/lib/env";
+import {
+	isGoogleConfigured,
+	type Provider,
+	ProviderUnavailableError,
+	signInWithProvider,
+	supportsNativeApple,
+} from "@/lib/provider-signin";
+
+/**
+ * "Continue with Apple" / "Continue with Google" (ADR 0027).
+ *
+ * Apple and Google are equally prominent here because App Store guideline 4.8
+ * is the reason the Google button can exist in this app at all.
+ */
+export function ProviderButtons() {
+	const { runAuthorizationUrl } = useAuth();
+	const toast = useToast();
+	const [busy, setBusy] = useState<Provider | null>(null);
+
+	const googleAvailable = isGoogleConfigured();
+
+	/**
+	 * Apple on Android has no native credential, so it runs the same browser
+	 * leg the web uses. The handoff challenge goes with it, or the flow would
+	 * finish in the browser and never come back to the app (ADR 0026).
+	 */
+	const runAppleInBrowser = async () => {
+		const codeChallenge = await beginHandoff();
+		const url = new URL("/auth/apple/start", env.apiUrl);
+		url.searchParams.set("platform", "mobile");
+		if (codeChallenge) url.searchParams.set("code_challenge", codeChallenge);
+		const completed = await runAuthorizationUrl(url.toString());
+		if (completed) router.replace("/");
+	};
+
+	const onPress = async (provider: Provider) => {
+		if (busy) return;
+		setBusy(provider);
+		try {
+			if (provider === "apple" && !supportsNativeApple()) {
+				await runAppleInBrowser();
+				return;
+			}
+
+			const result = await signInWithProvider(provider);
+			if (result.kind === "cancelled") return;
+			if (result.kind === "authorize") {
+				const completed = await runAuthorizationUrl(result.authorizationUrl);
+				if (completed) router.replace("/");
+				return;
+			}
+			router.push({
+				pathname: "/signup-handle",
+				params: {
+					provider,
+					pendingToken: result.pendingToken,
+					email: result.email,
+				},
+			});
+		} catch (error) {
+			if (error instanceof ProviderUnavailableError) {
+				toast.error(error.message);
+				return;
+			}
+			toast.error(
+				`Couldn't sign in with ${provider === "apple" ? "Apple" : "Google"}. Try again.`,
+			);
+		} finally {
+			setBusy(null);
+		}
+	};
+
+	// Apple is offered on every platform: natively on iOS, through the browser
+	// elsewhere. Hiding it on Android would lock out anyone who signed up on an
+	// iPhone.
+	return (
+		<View className="gap-3">
+			<Pressable
+				disabled={busy !== null}
+				onPress={() => onPress("apple")}
+				className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
+				style={{ opacity: busy !== null ? 0.6 : 1 }}
+			>
+				{busy === "apple" && <ActivityIndicator size="small" />}
+				<Text className="font-semibold text-base text-foreground">
+					Continue with Apple
+				</Text>
+			</Pressable>
+
+			{googleAvailable ? (
+				<Pressable
+					disabled={busy !== null}
+					onPress={() => onPress("google")}
+					className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
+					style={{ opacity: busy !== null ? 0.6 : 1 }}
+				>
+					{busy === "google" && <ActivityIndicator size="small" />}
+					<Text className="font-semibold text-base text-foreground">
+						Continue with Google
+					</Text>
+				</Pressable>
+			) : null}
+		</View>
+	);
+}
