@@ -46,7 +46,7 @@ export function PosterProgress({
 			className="absolute right-0 bottom-0 left-0 h-1 bg-black/55"
 			accessible
 			accessibilityRole="progressbar"
-			accessibilityLabel={`${label}: ${watched} of ${progress.episodesTotal} aired episodes watched`}
+			accessibilityLabel={`${label}: ${watched} of ${progress.episodesTotal} episodes watched`}
 			accessibilityValue={{ min: 0, max: 100, now: percentage }}
 		>
 			<View className="h-full bg-primary" style={{ width: `${percentage}%` }} />

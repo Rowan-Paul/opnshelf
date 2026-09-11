@@ -114,8 +114,8 @@ export function DetailHero({
 								className="mt-1 text-muted-foreground text-xs"
 								style={{ fontVariant: ["tabular-nums"] }}
 							>
-								{progress.episodesWatched} of {progress.episodesTotal} aired
-								episodes watched · {percentage}% watched
+								{progress.episodesWatched} of {progress.episodesTotal} episodes
+								watched · {percentage}% watched
 							</Text>
 						) : null}
 					</View>

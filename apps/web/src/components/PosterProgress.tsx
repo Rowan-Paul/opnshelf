@@ -45,7 +45,7 @@ export function PosterProgress({
 		<div
 			className="absolute inset-x-0 bottom-0 h-1 bg-black/55"
 			role="progressbar"
-			aria-label={`${label}: ${watched} of ${progress.episodesTotal} aired episodes watched`}
+			aria-label={`${label}: ${watched} of ${progress.episodesTotal} episodes watched`}
 			aria-valuemin={0}
 			aria-valuemax={100}
 			aria-valuenow={percentage}
