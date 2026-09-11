@@ -24,7 +24,6 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
-import { ProgressCard } from "@/components/detail/ProgressCard";
 import { RateReviewButton } from "@/components/detail/RateReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
@@ -33,7 +32,6 @@ import { WatchProviders } from "@/components/detail/WatchProviders";
 import { DetailSkeleton, ListRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { useAuth } from "@/lib/auth-context";
 import {
 	backdropUrl,
 	formatLongDate,
@@ -46,7 +44,6 @@ import { useUpNext } from "@/lib/use-up-next";
 import { webMediaUrl } from "@/lib/web-url";
 
 export default function SeasonDetailScreen() {
-	const { isAuthenticated } = useAuth();
 	const { id, name, seasonNumber, reviewId } = useLocalSearchParams<{
 		id: string;
 		// The slug segment. Carried through sibling links so in-app navigation
@@ -177,6 +174,13 @@ export default function SeasonDetailScreen() {
 								posterUrl={posterUrl(data.poster_path)}
 								posterHref={`/shows/${id}/${name}`}
 								rating={data.vote_average}
+								progress={
+									seasonProgress?.state !== "unavailable"
+										? seasonProgress
+										: undefined
+								}
+								progressLabel="Season progress"
+								isProgressLoading={progressQuery.isLoading}
 							>
 								<View className="gap-3">
 									<View className="flex-row flex-wrap items-center gap-x-1">
@@ -279,10 +283,6 @@ export default function SeasonDetailScreen() {
 										<ChevronRight color="#94a3b8" size={18} />
 									</Pressable>
 								</View>
-							) : null}
-
-							{isAuthenticated ? (
-								<ProgressCard progress={seasonProgress} />
 							) : null}
 
 							<OverviewSection text={data.overview} />

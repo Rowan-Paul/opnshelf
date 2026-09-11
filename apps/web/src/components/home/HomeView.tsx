@@ -259,6 +259,18 @@ export function HomeView() {
 					: undefined,
 				year: item.show.firstAirYear,
 				episodeInfo: `${item.show.title} • S${item.nextEpisode.seasonNumber}E${item.nextEpisode.episodeNumber}`,
+				episodeProgress: {
+					watched: item.episodesWatched,
+					total: item.totalEpisodes,
+					percentage:
+						item.totalEpisodes > 0
+							? Math.round((item.episodesWatched / item.totalEpisodes) * 100)
+							: 0,
+				},
+				progressText:
+					item.totalEpisodes > 0
+						? `${item.episodesWatched} of ${item.totalEpisodes} · ${Math.round((item.episodesWatched / item.totalEpisodes) * 100)}% watched`
+						: undefined,
 			};
 		}) || [];
 
@@ -343,6 +355,8 @@ export function HomeView() {
 										backdropUrl={item.backdropUrl}
 										type={item.type}
 										episodeInfo={item.episodeInfo}
+										episodeProgress={item.episodeProgress}
+										progressText={item.progressText}
 										layout="backdrop"
 										size="md"
 									/>

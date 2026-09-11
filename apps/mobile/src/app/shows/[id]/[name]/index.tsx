@@ -86,6 +86,9 @@ export default function ShowDetailScreen() {
 						backdropUrl={backdropUrl(data.backdrop_path)}
 						posterUrl={posterUrl(data.poster_path)}
 						rating={data.vote_average}
+						progress={progress?.state !== "unavailable" ? progress : undefined}
+						progressLabel="Show progress"
+						isProgressLoading={progressQuery.isLoading}
 					>
 						<MetadataPills
 							items={[

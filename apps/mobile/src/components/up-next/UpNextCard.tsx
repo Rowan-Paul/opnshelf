@@ -3,9 +3,14 @@ import { Link } from "expo-router";
 import { Calendar, Plus } from "lucide-react-native";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
+import { PosterProgress } from "@/components/media/poster-progress";
 import { Text } from "@/components/ui/text";
 import { showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
+import {
+	findShowProgress,
+	useShowProgressForShow,
+} from "@/lib/use-show-progress";
 import { useMarkUpNextEpisode } from "@/lib/use-up-next";
 
 function formatAirDate(iso?: string): string | undefined {
@@ -38,10 +43,23 @@ export function UpNextCard({
 }) {
 	const markEpisode = useMarkUpNextEpisode();
 	const { show, nextEpisode: ep } = item;
-	const progress =
-		item.totalEpisodes > 0
-			? Math.round((item.episodesWatched / item.totalEpisodes) * 100)
-			: 0;
+	const viewerProgressQuery = useShowProgressForShow(show.showId, !isOwner);
+	const viewerProgress = findShowProgress(
+		viewerProgressQuery.data,
+		show.showId,
+	);
+	const progressData = isOwner
+		? {
+				episodesWatched: item.episodesWatched,
+				episodesTotal: item.totalEpisodes,
+				percentage:
+					item.totalEpisodes > 0
+						? Math.round((item.episodesWatched / item.totalEpisodes) * 100)
+						: 0,
+			}
+		: viewerProgress?.state !== "unavailable"
+			? viewerProgress
+			: undefined;
 	const airDate = formatAirDate(ep.airDate);
 
 	return (
@@ -63,6 +81,11 @@ export function UpNextCard({
 					<PosterImage
 						url={posterUrl(show.posterPath)}
 						className="absolute inset-0"
+					/>
+					<PosterProgress
+						progress={progressData}
+						label="Show progress"
+						isLoading={!isOwner && viewerProgressQuery.isLoading}
 					/>
 				</View>
 
@@ -93,17 +116,15 @@ export function UpNextCard({
 					</View>
 
 					<View className="mt-2 gap-2">
-						<View className="flex-row items-center gap-2">
-							<View className="h-1.5 flex-1 overflow-hidden rounded-full bg-background-subtle">
-								<View
-									className="h-full rounded-full bg-primary"
-									style={{ width: `${progress}%` }}
-								/>
-							</View>
-							<Text className="text-muted-foreground text-xs">
-								{item.episodesWatched}/{item.totalEpisodes}
+						{progressData && progressData.episodesTotal > 0 ? (
+							<Text
+								className="text-muted-foreground text-xs"
+								style={{ fontVariant: ["tabular-nums"] }}
+							>
+								{progressData.episodesWatched} of {progressData.episodesTotal} ·
+								{progressData.percentage}% watched
 							</Text>
-						</View>
+						) : null}
 						{isOwner ? (
 							<Pressable
 								onPress={(e) => {
