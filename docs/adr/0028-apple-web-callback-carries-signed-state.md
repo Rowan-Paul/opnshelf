@@ -10,9 +10,19 @@ issues a **cross-site POST** to the callback, and `google_state` is
 flow; it is simply absent.
 
 So Apple's browser callback carries an HMAC-signed, base64url-encoded payload
-in the provider `state` parameter — a nonce plus a timestamp — and the callback
-verifies the signature instead of comparing against a cookie. This covers both
-places Apple uses a browser: the web app, and the Android app (ADR 0027).
+in the provider `state` parameter and verifies the signature instead of
+comparing against a cookie. This covers both places Apple uses a browser: the
+web app, and the Android app (ADR 0027).
+
+The payload is a nonce and a timestamp, plus — when the flow started in the
+Mobile App — `platform` and the **Mobile Handoff Code** challenge from ADR
+0026. Those two are not decoration. Apple on Android has no native credential
+to fall back on, so it runs this browser leg and still has to end up back in
+the app; without them the atproto leg mints no handoff code and the user is
+stranded on a web page. The signed state is the only carrier available, for the
+same reason the CSRF value is: a cookie is not sent on Apple's cross-site POST,
+and ADR 0026 already records that cookies do not survive an iOS auth session.
+A `code_challenge` that fails validation is dropped rather than carried.
 
 ## Considered options
 
