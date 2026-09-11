@@ -89,7 +89,7 @@ describe("MediaCard poster metadata", () => {
 		);
 
 		const bar = screen.getByRole("progressbar", {
-			name: "Show progress: 3 of 12 episodes watched",
+			name: "Show progress: 3 of 12 aired episodes watched",
 		});
 
 		expect(bar.getAttribute("aria-valuenow")).toBe("25");

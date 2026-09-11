@@ -170,8 +170,8 @@ export default function MediaHero({
 
 						{showProgressSummary && (
 							<p className="mt-3 text-(--foreground-muted) text-sm tabular-nums">
-								{progress.episodesWatched} of {progress.episodesTotal} episodes
-								watched · {percentage}% watched
+								{progress.episodesWatched} of {progress.episodesTotal} aired
+								episodes watched · {percentage}% watched
 							</p>
 						)}
 
