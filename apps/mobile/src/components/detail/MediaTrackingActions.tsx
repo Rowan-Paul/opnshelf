@@ -267,7 +267,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	return (
 		<View className="gap-3 px-4">
-			{isOnShelf || isPartial ? (
+			{canManageHistory && (isOnShelf || isPartial) ? (
 				<Pressable
 					onPress={canManageHistory ? () => setHistoryVisible(true) : undefined}
 					disabled={!canManageHistory}

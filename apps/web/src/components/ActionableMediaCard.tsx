@@ -243,7 +243,11 @@ export default function ActionableMediaCard({
 				isWatched={watched}
 				watchCount={resolvedWatchCount}
 				episodeProgress={
-					isPartialShow
+					!isMovie &&
+					!isEpisode &&
+					showProgress &&
+					showProgress.state !== "unavailable" &&
+					showProgress.episodesTotal > 0
 						? {
 								watched: showProgress.episodesWatched,
 								total: showProgress.episodesTotal,

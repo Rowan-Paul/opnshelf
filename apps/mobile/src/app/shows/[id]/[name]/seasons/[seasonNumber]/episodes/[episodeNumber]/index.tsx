@@ -21,7 +21,6 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
-import { ProgressCard } from "@/components/detail/ProgressCard";
 import { RateReviewButton } from "@/components/detail/RateReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
@@ -39,7 +38,6 @@ import {
 } from "@/lib/tmdb";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
-import { useWatchStatus } from "@/lib/use-watch-status";
 import { webMediaUrl } from "@/lib/web-url";
 
 export default function EpisodeDetailScreen() {
@@ -79,8 +77,13 @@ export default function EpisodeDetailScreen() {
 		.sort((a, b) => a.season_number - b.season_number);
 	const currentSeasonCount =
 		seasons.find((s) => s.season_number === seasonNum)?.episode_count ?? 0;
+	// The hero poster stands for the season, because the progress bar and summary
+	// it carries are season-scoped. Specials live outside `seasons`, so look the
+	// season up in the unfiltered list and fall back to the show poster.
+	const currentSeasonPosterPath = (showData?.seasons ?? []).find(
+		(s) => s.season_number === seasonNum,
+	)?.poster_path;
 
-	const watch = useWatchStatus({ mediaType: "show", showId: id });
 	const progressQuery = useShowProgress([id]);
 	const seasonProgress = findShowProgress(progressQuery.data, id)?.seasons.find(
 		(season) => season.seasonNumber === seasonNum,
@@ -145,9 +148,18 @@ export default function EpisodeDetailScreen() {
 					<DetailHero
 						title={data.name}
 						backdropUrl={stillUrl(data.still_path, "w780")}
-						posterUrl={posterUrl(showData?.poster_path)}
-						posterHref={`/shows/${id}/${name}`}
+						posterUrl={posterUrl(
+							currentSeasonPosterPath ?? showData?.poster_path,
+						)}
+						posterHref={`/shows/${id}/${name}/seasons/${seasonNum}`}
 						rating={data.vote_average}
+						progress={
+							seasonProgress?.state !== "unavailable"
+								? seasonProgress
+								: undefined
+						}
+						progressLabel="Season progress"
+						isProgressLoading={progressQuery.isLoading}
 					>
 						<View className="gap-3">
 							<View className="flex-row flex-wrap items-center gap-x-1">
@@ -266,10 +278,6 @@ export default function EpisodeDetailScreen() {
 							<ChevronRight color="#94a3b8" size={18} />
 						</Pressable>
 					</View>
-
-					{watch.isAuthenticated ? (
-						<ProgressCard progress={seasonProgress} />
-					) : null}
 
 					<OverviewSection text={data.overview} />
 					<DetailsCard
