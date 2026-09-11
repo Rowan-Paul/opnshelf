@@ -405,4 +405,155 @@ describe("AppleSignupController", () => {
 			expect(mockNativeAccounts.completeSsoRegistration).not.toHaveBeenCalled();
 		});
 	});
+	describe("native sign-in", () => {
+		it("hands a new user's pending registration back to the app", async () => {
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-token",
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+
+			const result = await controller.appleNative({
+				identityToken: "native-identity-token",
+			});
+
+			expect(mockNativeAccounts.startSsoRegistration).toHaveBeenCalledWith(
+				"native-identity-token",
+				"urn:ietf:params:oauth:request_uri:abc",
+				"apple",
+			);
+			// A native client has no cookie jar, so the token travels in the body.
+			expect(result).toEqual({
+				pendingToken: "pending-token",
+				email: "user@privaterelay.appleid.com",
+			});
+		});
+
+		it("never exchanges a code: the OS already did", async () => {
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-token",
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+
+			await controller.appleNative({ identityToken: "native-identity-token" });
+
+			expect(mockAppleOAuth.exchangeCode).not.toHaveBeenCalled();
+		});
+
+		it("sends a returning user to the PDS to finish authorizing", async () => {
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: null,
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: "https://pds.test/app/oauth/consent?request_uri=abc",
+			});
+
+			const result = await controller.appleNative({
+				identityToken: "native-identity-token",
+			});
+
+			expect(result).toEqual({
+				redirectUrl: "https://pds.test/app/oauth/consent?request_uri=abc",
+			});
+			expect(result.pendingToken).toBeUndefined();
+		});
+
+		it("turns an already-linked identity into a sign-in with a provider hint", async () => {
+			mockNativeAccounts.startSsoRegistration.mockRejectedValue(
+				new Error("This account is already linked to an existing user."),
+			);
+
+			const result = await controller.appleNative({
+				identityToken: "native-identity-token",
+			});
+
+			expect(
+				new URL(result.redirectUrl as string).searchParams.get("sso"),
+			).toBe("apple");
+		});
+
+		it("rejects a credential the PDS will not verify", async () => {
+			mockNativeAccounts.startSsoRegistration.mockRejectedValue(
+				new Error("id_token verification failed"),
+			);
+
+			await expect(
+				controller.appleNative({ identityToken: "forged" }),
+			).rejects.toThrow(/could not be verified/);
+		});
+
+		it("refuses an unverified email before anything is created", async () => {
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-token",
+				email: "user@example.com",
+				emailVerified: false,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+
+			await expect(
+				controller.appleNative({ identityToken: "native-identity-token" }),
+			).rejects.toThrow(/verified/);
+		});
+
+		it("accepts the pending token from the body when there is no cookie", async () => {
+			mockNativeAccounts.completeSsoRegistration.mockResolvedValue({
+				did: "did:plc:abc",
+				handle: "rowan.opnshelf.social",
+				redirectUrl: CORE_OAUTH_URL,
+				accessJwt: null,
+				refreshJwt: null,
+			});
+
+			const result = await controller.appleRegister(
+				{
+					username: "rowan",
+					captchaToken: "captcha",
+					timezone: "Europe/Amsterdam",
+					pendingToken: "pending-from-app",
+				},
+				createMockRequest({ ip: "3.3.3.5" }),
+				createMockResponse(),
+			);
+
+			expect(mockNativeAccounts.completeSsoRegistration).toHaveBeenCalledWith(
+				expect.objectContaining({ token: "pending-from-app" }),
+			);
+			expect(result.handle).toBe("rowan.opnshelf.social");
+		});
+
+		it("prefers the cookie over a body token when both are present", async () => {
+			mockNativeAccounts.completeSsoRegistration.mockResolvedValue({
+				did: "did:plc:abc",
+				handle: "rowan.opnshelf.social",
+				redirectUrl: CORE_OAUTH_URL,
+				accessJwt: null,
+				refreshJwt: null,
+			});
+
+			await controller.appleRegister(
+				{
+					username: "rowan",
+					captchaToken: "captcha",
+					timezone: "Europe/Amsterdam",
+					pendingToken: "pending-from-app",
+				},
+				createMockRequest({
+					ip: "3.3.3.6",
+					cookies: { apple_pending: "pending-from-cookie" },
+				}),
+				createMockResponse(),
+			);
+
+			expect(mockNativeAccounts.completeSsoRegistration).toHaveBeenCalledWith(
+				expect.objectContaining({ token: "pending-from-cookie" }),
+			);
+		});
+	});
 });

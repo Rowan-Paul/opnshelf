@@ -1,4 +1,5 @@
-import { ApiProperty, OmitType } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, OmitType } from "@nestjs/swagger";
+import { IsOptional, IsString, MaxLength } from "class-validator";
 import { RegisterDto } from "./register.dto";
 
 /**
@@ -10,7 +11,21 @@ import { RegisterDto } from "./register.dto";
 export class AppleRegisterDto extends OmitType(RegisterDto, [
 	"email",
 	"password",
-] as const) {}
+] as const) {
+	/**
+	 * Native clients hold the pending registration themselves — they have no
+	 * cookie jar — and send it back here. The browser flow leaves this unset and
+	 * the `apple_pending` cookie is used instead.
+	 */
+	@ApiPropertyOptional({
+		description:
+			"Pending registration token, for native clients that cannot use a cookie",
+	})
+	@IsOptional()
+	@IsString()
+	@MaxLength(512)
+	pendingToken?: string;
+}
 
 export class AppleRegisterResponseDto {
 	@ApiProperty()

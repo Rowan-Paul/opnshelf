@@ -15,6 +15,7 @@ import {
 	UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Throttle } from "@nestjs/throttler";
 import {
 	ApiExcludeEndpoint,
 	ApiOperation,
@@ -37,6 +38,7 @@ import {
 	ApplePendingResponseDto,
 	AppleRegisterResponseDto,
 } from "./dto/apple-register.dto";
+import { NativeSsoDto, NativeSsoResponseDto } from "./dto/native-sso.dto";
 import { NativeAccountService } from "./native-account.service";
 import { signProviderState, verifyProviderState } from "./provider-state";
 import { SignupRateLimiter } from "./signup-rate-limiter";
@@ -276,7 +278,7 @@ export class AppleSignupController {
 			throw new ForbiddenException("Captcha verification failed");
 		}
 
-		const pendingToken = this.readPendingToken(req);
+		const pendingToken = this.readPendingToken(req, dto);
 		if (!pendingToken) {
 			throw new BadRequestException(
 				"Your Apple sign-in expired. Please start again.",
@@ -379,11 +381,85 @@ export class AppleSignupController {
 		};
 	}
 
-	private readPendingToken(req: Request): string | null {
+	/**
+	 * Sign in with a credential the operating system produced (ADR 0027).
+	 *
+	 * No browser round trip happens here, so there is no state to verify: the
+	 * identity token's signature is the proof and the PDS is what checks it,
+	 * exactly as it does for the browser flow. Throttled because the token
+	 * arrives unauthenticated.
+	 */
+	@Post("auth/apple/native")
+	@HttpCode(HttpStatus.OK)
+	@Throttle({ default: { limit: 10, ttl: 60_000 } })
+	@ApiOperation({
+		operationId: "AuthController_appleNative",
+		summary: "Sign in with a native Apple credential",
+	})
+	@ApiResponse({ status: 200, type: NativeSsoResponseDto })
+	@ApiResponse({
+		status: 400,
+		description: "The credential could not be verified",
+	})
+	async appleNative(@Body() dto: NativeSsoDto): Promise<NativeSsoResponseDto> {
+		const coreOAuthUrl = await this.authService.authorizeWithPds();
+		const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
+		if (!requestUri) {
+			this.logger.error("Core OAuth URL carried no request_uri");
+			throw new ServiceUnavailableException("Sign-in is not available");
+		}
+
+		let pending: Awaited<
+			ReturnType<typeof this.nativeAccounts.startSsoRegistration>
+		>;
+		try {
+			pending = await this.nativeAccounts.startSsoRegistration(
+				dto.identityToken,
+				requestUri,
+				"apple",
+			);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			// Already linked is a sign-in, not a failure: send the app to the PDS's
+			// own page with a provider hint so it skips the picker.
+			if (message.includes("already linked")) {
+				const signInUrl = new URL(coreOAuthUrl);
+				signInUrl.searchParams.set("sso", "apple");
+				return { redirectUrl: signInUrl.toString() };
+			}
+			this.logger.warn(`Native Apple sign-in rejected: ${message}`);
+			throw new BadRequestException("That Apple sign-in could not be verified");
+		}
+
+		// A returning user: continue in a browser at the PDS's consent (or TOTP)
+		// screen. That screen is the authorization boundary and cannot be skipped.
+		if (pending.redirectUrl) {
+			return { redirectUrl: pending.redirectUrl };
+		}
+		if (!pending.token) {
+			throw new ServiceUnavailableException("Sign-in is not available");
+		}
+		if (!pending.email || !pending.emailVerified) {
+			throw new BadRequestException(
+				"Apple has not verified that email address",
+			);
+		}
+
+		// Handed to the app's own handle picker: a native client has no cookie
+		// jar, so it holds the pending registration and sends it back to register.
+		return { pendingToken: pending.token, email: pending.email };
+	}
+
+	private readPendingToken(
+		req: Request,
+		dto?: { pendingToken?: string },
+	): string | null {
 		return (
 			(req.cookies as Record<string, string | undefined>)?.[
 				APPLE_PENDING_COOKIE_NAME
-			] ?? null
+			] ??
+			dto?.pendingToken ??
+			null
 		);
 	}
 }

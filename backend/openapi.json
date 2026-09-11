@@ -884,6 +884,41 @@
         ]
       }
     },
+    "/auth/google/native": {
+      "post": {
+        "operationId": "AuthController_googleNative",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NativeSsoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeSsoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The credential could not be verified"
+          }
+        },
+        "summary": "Sign in with a native Google credential",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/apple/start": {
       "get": {
         "operationId": "AuthController_appleStart",
@@ -960,6 +995,41 @@
           }
         },
         "summary": "Create an account from a verified Apple identity",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/apple/native": {
+      "post": {
+        "operationId": "AuthController_appleNative",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NativeSsoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeSsoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The credential could not be verified"
+          }
+        },
+        "summary": "Sign in with a native Apple credential",
         "tags": [
           "auth"
         ]
@@ -6621,6 +6691,10 @@
           "timezone": {
             "type": "string",
             "description": "User's IANA timezone, e.g. Europe/Amsterdam"
+          },
+          "pendingToken": {
+            "type": "string",
+            "description": "Pending registration token, for native clients that cannot use a cookie"
           }
         },
         "required": [
@@ -6647,6 +6721,35 @@
           "handle",
           "coreOAuthUrl"
         ]
+      },
+      "NativeSsoDto": {
+        "type": "object",
+        "properties": {
+          "identityToken": {
+            "type": "string",
+            "description": "The identity token the platform's sign-in API returned"
+          }
+        },
+        "required": [
+          "identityToken"
+        ]
+      },
+      "NativeSsoResponseDto": {
+        "type": "object",
+        "properties": {
+          "redirectUrl": {
+            "type": "string",
+            "description": "Set for a returning user: open this in a browser to finish authorizing. Absent for a new user."
+          },
+          "pendingToken": {
+            "type": "string",
+            "description": "Set for a new user: hand to the native handle picker, then send back with the registration. Absent for a returning user."
+          },
+          "email": {
+            "type": "string",
+            "description": "Set for a new user: the address the provider verified, shown on the handle picker."
+          }
+        }
       },
       "ApplePendingResponseDto": {
         "type": "object",
@@ -6675,6 +6778,10 @@
           "timezone": {
             "type": "string",
             "description": "User's IANA timezone, e.g. Europe/Amsterdam"
+          },
+          "pendingToken": {
+            "type": "string",
+            "description": "Pending registration token, for native clients that cannot use a cookie"
           }
         },
         "required": [

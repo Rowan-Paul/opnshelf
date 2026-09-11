@@ -340,6 +340,10 @@ export type GoogleRegisterDto = {
      * User's IANA timezone, e.g. Europe/Amsterdam
      */
     timezone?: string;
+    /**
+     * Pending registration token, for native clients that cannot use a cookie
+     */
+    pendingToken?: string;
 };
 
 export type GoogleRegisterResponseDto = {
@@ -349,6 +353,28 @@ export type GoogleRegisterResponseDto = {
      * Where to send the browser next: the PDS consent page for the OAuth request bound to this registration
      */
     coreOAuthUrl: string;
+};
+
+export type NativeSsoDto = {
+    /**
+     * The identity token the platform's sign-in API returned
+     */
+    identityToken: string;
+};
+
+export type NativeSsoResponseDto = {
+    /**
+     * Set for a returning user: open this in a browser to finish authorizing. Absent for a new user.
+     */
+    redirectUrl?: string;
+    /**
+     * Set for a new user: hand to the native handle picker, then send back with the registration. Absent for a returning user.
+     */
+    pendingToken?: string;
+    /**
+     * Set for a new user: the address the provider verified, shown on the handle picker.
+     */
+    email?: string;
 };
 
 export type ApplePendingResponseDto = {
@@ -371,6 +397,10 @@ export type AppleRegisterDto = {
      * User's IANA timezone, e.g. Europe/Amsterdam
      */
     timezone?: string;
+    /**
+     * Pending registration token, for native clients that cannot use a cookie
+     */
+    pendingToken?: string;
 };
 
 export type AppleRegisterResponseDto = {
@@ -3159,6 +3189,26 @@ export type AuthControllerGoogleRegisterResponses = {
 
 export type AuthControllerGoogleRegisterResponse = AuthControllerGoogleRegisterResponses[keyof AuthControllerGoogleRegisterResponses];
 
+export type AuthControllerGoogleNativeData = {
+    body: NativeSsoDto;
+    path?: never;
+    query?: never;
+    url: '/auth/google/native';
+};
+
+export type AuthControllerGoogleNativeErrors = {
+    /**
+     * The credential could not be verified
+     */
+    400: unknown;
+};
+
+export type AuthControllerGoogleNativeResponses = {
+    200: NativeSsoResponseDto;
+};
+
+export type AuthControllerGoogleNativeResponse = AuthControllerGoogleNativeResponses[keyof AuthControllerGoogleNativeResponses];
+
 export type AuthControllerAppleStartData = {
     body?: never;
     path?: never;
@@ -3213,6 +3263,26 @@ export type AuthControllerAppleRegisterResponses = {
 };
 
 export type AuthControllerAppleRegisterResponse = AuthControllerAppleRegisterResponses[keyof AuthControllerAppleRegisterResponses];
+
+export type AuthControllerAppleNativeData = {
+    body: NativeSsoDto;
+    path?: never;
+    query?: never;
+    url: '/auth/apple/native';
+};
+
+export type AuthControllerAppleNativeErrors = {
+    /**
+     * The credential could not be verified
+     */
+    400: unknown;
+};
+
+export type AuthControllerAppleNativeResponses = {
+    200: NativeSsoResponseDto;
+};
+
+export type AuthControllerAppleNativeResponse = AuthControllerAppleNativeResponses[keyof AuthControllerAppleNativeResponses];
 
 export type AuthControllerMobileChallengeData = {
     body?: never;
