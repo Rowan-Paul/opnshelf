@@ -73,6 +73,26 @@ release, which is what keeps the GitHub version and the store version equal.
   Fixed by `android.blockedPermissions` in `app.config.ts` — keep that entry
   as long as `expo-sensors` is a dependency. The error message never mentions
   the permission; don't waste time re-saving console declarations.
+- **Play Console "App optimization: Low"** on the bundle's Details tab (1%
+  obfuscation, no shrink or optimization percentage, "R8 configuration: -"):
+  Expo ships R8 switched off, so the release DEX goes out unminified. Fixed by
+  `expo-build-properties` in `app.config.ts` (`enableMinifyInReleaseBuilds`,
+  `enableShrinkResourcesInReleaseBuilds`). Two consequences: it is native
+  config, so it only takes effect in a store build, never an OTA update; and
+  R8 breakage shows up as runtime crashes in release builds only, never in
+  development. After touching native dependencies, run a `preview` build on a
+  device and walk sign-in, deep links, shake-to-feedback, and a PostHog event
+  before promoting. If a library loses classes it needs at runtime, add a
+  `-keep` rule through the plugin's `extraProguardRules` rather than editing
+  the generated `android/` directory. The "Upgrade to AGP 9.0" line on that
+  tab is Google's generic advice; the AGP version is pinned by React Native's
+  Gradle plugin and is not ours to bump.
+- **Gradle hangs in `minifyReleaseWithR8` spewing `OutOfMemoryError:
+  Metaspace`:** Expo's template caps the daemon at a 512 MB Metaspace and R8
+  needs more; the daemon dies instead of failing the task. Raised to 1 GB (and
+  a 4 GB heap) by `plugins/with-gradle-jvm-args.js`. If it comes back after a
+  dependency bump, raise the values there, never in the generated
+  `android/gradle.properties`.
 - **Android credentials:** the Play service-account key must live at
   `apps/mobile/google-service-account.json` — exactly that name, referenced
   from `eas.json`. Not committed.

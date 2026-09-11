@@ -10,6 +10,7 @@
 		"includes": [
 			"**/src/**/*",
 			"**/app.config.ts",
+			"**/plugins/**/*",
 			"!**/src/global.css",
 			"!**/src/uniwind-env.d.ts",
 			"!!**/.expo",
