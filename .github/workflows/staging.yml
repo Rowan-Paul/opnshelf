@@ -131,10 +131,12 @@ jobs:
       # EXPO_PUBLIC_API_URL pointing at the *production* API. Builds are unhurt
       # because build.preview.env wins over it, but an update resolved from that
       # environment would write to production, which per ADR 0021 is real data.
+      # Relative to apps/mobile: this job sets that as its default
+      # working-directory, so a repo-root path would not resolve.
       - name: Load the preview environment from eas.json
         run: |
           node -e "
-            const env = require('./apps/mobile/eas.json').build.preview.env ?? {};
+            const env = require('./eas.json').build.preview.env ?? {};
             const lines = Object.entries(env)
               .filter(([k]) => k.startsWith('EXPO_PUBLIC_'))
               .map(([k, v]) => k + '=' + v);
