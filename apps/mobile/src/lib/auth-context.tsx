@@ -67,6 +67,15 @@ interface AuthContextType {
 	signOut: () => Promise<void>;
 }
 
+/**
+ * How long to wait for a sign-in this path did not complete to land a session
+ * somewhere else. Long enough for the auth/complete deep-link route to run its
+ * exchange over a slow network, short enough that a real cancellation does not
+ * feel stuck.
+ */
+const SETTLE_TIMEOUT_MS = 3000;
+const SETTLE_POLL_MS = 150;
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 /** Best-effort timezone detection for the login/signup URLs. */
@@ -205,22 +214,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[completeSession],
 	);
 
-	// Run the OAuth web flow and persist the returned session token.
-	//
-	// On Android the redirect to AUTH_REDIRECT_URL can reach the `auth/complete`
-	// deep-link route *as well as* resolving here, not instead of it. Both paths
-	// then race for one verifier and one single-use code, so either may find
-	// nothing left to redeem on a sign-in that succeeded. Returns true only when
-	// a session actually exists.
+	/**
+	 * Wait for a sign-in this path did not complete to settle somewhere else,
+	 * and report whether it did.
+	 *
+	 * The browser closing is not the end of the story on Android: the redirect
+	 * can reach the `auth/complete` deep-link route *as well as* resolving here,
+	 * and that route completes the sign-in in parallel. Concluding "not signed
+	 * in" the moment the browser closes reports a failure for a sign-in that is
+	 * a few hundred milliseconds from succeeding - and clearing the handoff
+	 * first takes the verifier that route is about to redeem with.
+	 *
+	 * Costs up to SETTLE_TIMEOUT_MS on a genuine cancellation, and returns the
+	 * instant a session appears, so the path that matters stays fast.
+	 */
+	const settleElsewhere = useCallback(async (tokenBefore: string | null) => {
+		const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+		while (Date.now() < deadline) {
+			// A *different* token, not merely any token: a stale one survives a
+			// failed `me` fetch, and treating that as success turns a cancelled
+			// sign-in into a silent bounce back to the signed-out home screen.
+			const token = await loadSessionToken();
+			if (token && token !== tokenBefore) return true;
+			await new Promise((resolve) => setTimeout(resolve, SETTLE_POLL_MS));
+		}
+		// Nobody completed it, so the handoff is genuinely spent.
+		await clearHandoff();
+		return false;
+	}, []);
+
+	/**
+	 * Run the OAuth web flow and persist the returned session token.
+	 *
+	 * Returns true only when a session exists afterwards, whichever path
+	 * produced it. Callers render failure on false, so a false that merely
+	 * means "not completed *here*" becomes a wrong error message - which is
+	 * what it did on Android, at three separate call sites.
+	 */
 	const runAuthFlow = useCallback(
 		async (authUrl: string) => {
+			// Snapshot first: settling compares against this rather than asking
+			// whether any token exists.
+			const tokenBefore = await loadSessionToken();
 			const result = await WebBrowser.openAuthSessionAsync(
 				authUrl,
 				AUTH_REDIRECT_URL,
 			);
 			if (result.type !== "success") {
-				await clearHandoff();
-				return false;
+				return settleElsewhere(tokenBefore);
 			}
 			const url = new URL(result.url);
 			const error = url.searchParams.get("error");
@@ -234,13 +275,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					await completeHandoff(code);
 				} catch (error) {
 					if (!(error instanceof NoPendingHandoffError)) throw error;
-					// Lost the race described above, or never had a handoff at all -
-					// the two are indistinguishable from here. A session means the
-					// other path got there first and there is nothing to report; no
-					// session means it is still in flight or never started, and the
-					// deep-link route reports its own failures either way. Claiming
-					// success without one would route to a signed-out home screen.
-					return (await loadSessionToken()) !== null;
+					// Something else took the verifier, or there never was one. Both
+					// look identical from here, so wait and see whether a session
+					// lands rather than guessing.
+					return settleElsewhere(tokenBefore);
 				}
 				return true;
 			}
@@ -255,7 +293,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			await completeSession(session);
 			return true;
 		},
-		[completeHandoff, completeSession],
+		[completeHandoff, completeSession, settleElsewhere],
 	);
 
 	const login = useCallback(
