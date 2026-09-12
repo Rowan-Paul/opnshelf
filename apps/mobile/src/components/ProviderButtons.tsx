@@ -10,12 +10,13 @@ import {
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { AuthFlowError, authErrorMessage } from "@/lib/auth-error";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { env } from "@/lib/env";
+import { ProviderUnavailableError } from "@/lib/provider-error";
 import {
 	isGoogleConfigured,
 	type Provider,
-	ProviderUnavailableError,
 	signInWithProvider,
 	supportsNativeApple,
 } from "@/lib/provider-signin";
@@ -94,6 +95,13 @@ export function ProviderButtons({
 		} catch (error) {
 			if (error instanceof ProviderUnavailableError) {
 				toast.error(error.message);
+				return;
+			}
+			// The browser leg came back with a reason. Saying "try again" when the
+			// answer is "Apple never verified that address" sends the user round a
+			// loop that cannot succeed.
+			if (error instanceof AuthFlowError) {
+				toast.error(authErrorMessage(error.code));
 				return;
 			}
 			toast.error(

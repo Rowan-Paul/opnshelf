@@ -11,8 +11,11 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { Platform } from "react-native";
 import { beginHandoff } from "./auth-handoff";
 import { env } from "./env";
+import { ProviderUnavailableError } from "./provider-error";
 
 export type Provider = "apple" | "google";
+
+export { ProviderUnavailableError };
 
 /**
  * What the backend decided about a native credential.
@@ -28,9 +31,6 @@ export type ProviderSignInResult =
 	| { kind: "authorize"; authorizationUrl: string }
 	| { kind: "register"; pendingToken: string; email: string }
 	| { kind: "cancelled" };
-
-/** Thrown when the user could sign in, but not on this device. */
-export class ProviderUnavailableError extends Error {}
 
 /**
  * Apple's own credential UI is iOS-only. Android falls back to the browser

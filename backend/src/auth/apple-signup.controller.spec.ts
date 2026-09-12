@@ -1,4 +1,4 @@
-import { UnauthorizedException } from "@nestjs/common";
+import { ConflictException, UnauthorizedException } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { ConfigService } from "@nestjs/config";
@@ -98,6 +98,11 @@ describe("AppleSignupController", () => {
 
 	/** A state this controller instance would accept. */
 	const validState = () => signProviderState(STATE_SECRET);
+	/** The same, for a flow the Android app started (ADR 0027). */
+	const mobileState = () =>
+		signProviderState(STATE_SECRET, { platform: "mobile" });
+	const MOBILE_ERROR = (code: string) =>
+		`opnshelf://auth/complete?error=${code}`;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -106,6 +111,12 @@ describe("AppleSignupController", () => {
 		mockTranquilAdmin.disableInviteCodes.mockResolvedValue(undefined);
 		mockCaptcha.verify.mockResolvedValue(true);
 		mockAuthService.authorizeWithPds.mockResolvedValue(CORE_OAUTH_URL);
+		// clearAllMocks wipes calls, not implementations, so a test that makes
+		// this reject would otherwise poison every test declared after it.
+		mockAppleOAuth.exchangeCode.mockResolvedValue("apple-id-token");
+		mockAppleOAuth.buildAuthUrl.mockReturnValue(
+			"https://appleid.apple.com/auth/authorize",
+		);
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [AppleSignupController],
@@ -290,6 +301,87 @@ describe("AppleSignupController", () => {
 		});
 	});
 
+	describe("errors in a flow the Android app started", () => {
+		// Every one of these used to redirect to the Web App's signup form. Inside
+		// the in-app browser that is a dead end: no way back to the app, and the
+		// form can mint a web session the app never sees.
+		it("reports an unconfigured Apple back into the app", () => {
+			mockAppleOAuth.configured = false;
+			const res = createMockResponse();
+			controller.appleStart(res, "mobile");
+			expect(res.redirect).toHaveBeenCalledWith(
+				MOBILE_ERROR("apple_unavailable"),
+			);
+		});
+
+		it("returns a cancelled authorization to the app", async () => {
+			const res = createMockResponse();
+			await controller.appleCallback(
+				{ error: "user_cancelled_authorize", state: mobileState() },
+				res,
+			);
+			expect(res.redirect).toHaveBeenCalledWith(MOBILE_ERROR("apple_failed"));
+		});
+
+		it("returns an unverified email to the app", async () => {
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-token",
+				email: "user@example.com",
+				emailVerified: false,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+			const res = createMockResponse();
+			await controller.appleCallback(
+				{ code: "apple-code", state: mobileState() },
+				res,
+			);
+			expect(res.redirect).toHaveBeenCalledWith(
+				MOBILE_ERROR("apple_email_unverified"),
+			);
+		});
+
+		it("returns a failed exchange to the app", async () => {
+			mockAppleOAuth.exchangeCode.mockRejectedValue(new Error("apple said no"));
+			const res = createMockResponse();
+			await controller.appleCallback(
+				{ code: "apple-code", state: mobileState() },
+				res,
+			);
+			expect(res.redirect).toHaveBeenCalledWith(MOBILE_ERROR("apple_failed"));
+		});
+
+		it("tells the web handle picker it is being rendered inside the app", async () => {
+			// A new user finishes on the web page even on Android, so that page has
+			// to know not to offer links out of the flow.
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-token",
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+			const res = createMockResponse();
+			await controller.appleCallback(
+				{ code: "apple-code", state: mobileState() },
+				res,
+			);
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/signup/apple?platform=mobile",
+			);
+		});
+
+		it("falls back to the web when the state is unusable", async () => {
+			// Nothing else says where the flow came from, and inventing a deep link
+			// for an unsigned state would let anyone bounce a browser into the app.
+			const res = createMockResponse();
+			await controller.appleCallback({ code: "apple-code" }, res);
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/signup?error=apple_failed",
+			);
+		});
+	});
+
 	describe("the pending identity", () => {
 		it("reports the email parked by the callback", async () => {
 			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
@@ -374,9 +466,14 @@ describe("AppleSignupController", () => {
 		});
 
 		it("frees the unused invite code when the handle is taken", async () => {
-			mockNativeAccounts.completeSsoRegistration.mockRejectedValue(
-				new Error("Handle already taken"),
-			);
+			// The shape the PDS actually rejects with: a plain object carrying an
+			// XRPC error code. An Error here would take mapCreateAccountError's
+			// default branch and prove nothing about the 409.
+			mockNativeAccounts.completeSsoRegistration.mockRejectedValue({
+				status: 400,
+				error: "HandleNotAvailable",
+				message: "Handle already taken",
+			});
 			const res = createMockResponse();
 
 			await expect(
@@ -388,7 +485,7 @@ describe("AppleSignupController", () => {
 					}),
 					res,
 				),
-			).rejects.toThrow();
+			).rejects.toThrow(ConflictException);
 
 			expect(mockTranquilAdmin.disableInviteCodes).toHaveBeenCalledWith([
 				"invite-code",

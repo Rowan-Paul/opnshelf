@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 	loadSessionToken: vi.fn(),
 	openAuthSessionAsync: vi.fn(),
 	redeemHandoffCode: vi.fn(),
+	pendingRedemption: vi.fn(),
 	posthogCapture: vi.fn(),
 	posthogIdentify: vi.fn(),
 	posthogReset: vi.fn(),
@@ -48,6 +49,7 @@ vi.mock("@/lib/auth-handoff", () => ({
 	beginHandoff: mocks.beginHandoff,
 	clearHandoff: mocks.clearHandoff,
 	redeemHandoffCode: mocks.redeemHandoffCode,
+	pendingRedemption: mocks.pendingRedemption,
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -132,6 +134,7 @@ beforeEach(() => {
 	mocks.authControllerLogout.mockResolvedValue({ data: {} });
 	mocks.getSessionToken.mockReturnValue(null);
 	mocks.loadSessionToken.mockResolvedValue(null);
+	mocks.pendingRedemption.mockReturnValue(null);
 	mocks.saveSessionToken.mockResolvedValue(undefined);
 	mocks.authControllerMe.mockResolvedValue({ data: nextUser });
 	mocks.beginHandoff.mockResolvedValue(null);
@@ -270,6 +273,38 @@ describe("mobile handoff code", () => {
 			expect(completed).toBe(false);
 			harness.unmount();
 		});
+
+		it("waits for an exchange that outlasts the settle budget", async () => {
+			// The budget is a timeout, not a join: on a slow network the other
+			// path's exchange can take longer than it, and the user would be told
+			// sign-in failed while it was still succeeding.
+			let stored: string | null = null;
+			let finish!: () => void;
+			const exchange = new Promise<string>((resolve) => {
+				finish = () => {
+					stored = "session-from-the-deep-link";
+					resolve("session-from-the-deep-link");
+				};
+			});
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.pendingRedemption.mockReturnValue(exchange);
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				// Longer than SETTLE_TIMEOUT_MS: polling alone would have given up.
+				setTimeout(finish, 4000);
+				return { type: "dismiss" };
+			});
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(true);
+			harness.unmount();
+		}, 10_000);
 
 		it("still reports failure when no session ever lands", async () => {
 			mocks.loadSessionToken.mockResolvedValue(null);

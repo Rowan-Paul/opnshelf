@@ -58,10 +58,16 @@ export default function SignupHandleScreen() {
 			: undefined;
 	const { pendingToken, email } = params;
 
-	const { isAuthenticated, isLoading, runAuthorizationUrl } = useAuth();
+	const { isAuthenticated, isLoading, login, runAuthorizationUrl } = useAuth();
 	const toast = useToast();
 	const [username, setUsername] = useState("");
 	const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+	/**
+	 * Set once the account exists on the PDS. From that point the handle is
+	 * taken, the pending registration is spent and the captcha token is used, so
+	 * offering "Create account" again is offering something that cannot succeed.
+	 */
+	const [createdHandle, setCreatedHandle] = useState<string | null>(null);
 
 	const siteKey = env.turnstileSiteKey;
 	const handleDomain = env.pdsHandleDomain;
@@ -96,9 +102,12 @@ export default function SignupHandleScreen() {
 			// The account exists but holds no scopes yet. Its PDS consent page is
 			// what grants them, and its callback seeds the profile and default
 			// lists, so the flow has to run before the app is usable.
-			return data.coreOAuthUrl;
+			return data;
 		},
-		onSuccess: async (coreOAuthUrl) => {
+		onSuccess: async ({ handle, coreOAuthUrl }) => {
+			// Before the browser opens: the account is already created by now, and
+			// this screen must never offer to create it again.
+			setCreatedHandle(handle);
 			const completed = await runAuthorizationUrl(coreOAuthUrl);
 			if (completed) {
 				router.replace("/");
@@ -116,13 +125,34 @@ export default function SignupHandleScreen() {
 		},
 	});
 
+	/**
+	 * Finish an account that exists but was never authorized.
+	 *
+	 * A fresh login rather than a replay of the registration's coreOAuthUrl:
+	 * that URL's request_uri is single-use and may already be spent, whereas the
+	 * account is real now and can simply sign in.
+	 */
+	const continueMutation = useMutation({
+		mutationKey: ["auth", "provider-continue", provider],
+		mutationFn: async (handle: string) => login(handle),
+		onSuccess: (completed) => {
+			if (completed) {
+				router.replace("/");
+				return;
+			}
+			toast.error("Sign-in wasn't completed. Try again.");
+		},
+		onError: (error) => toast.error(extractRegisterErrorMessage(error)),
+	});
+
 	const isSubmitting = registerMutation.isPending || registerMutation.isSuccess;
 
 	if (
 		!isLoading &&
 		isAuthenticated &&
 		!registerMutation.isPending &&
-		!registerMutation.isSuccess
+		!registerMutation.isSuccess &&
+		!continueMutation.isPending
 	) {
 		return <Redirect href="/" />;
 	}
@@ -151,6 +181,44 @@ export default function SignupHandleScreen() {
 	};
 
 	const providerName = provider === "apple" ? "Apple" : "Google";
+
+	// The account exists; only the authorization is missing. Re-showing the form
+	// would send the user round a loop that fails three ways at once: the handle
+	// is taken, the pending registration is spent, and Turnstile only honours a
+	// token once.
+	if (createdHandle) {
+		return (
+			<Screen>
+				<ScrollView contentContainerClassName="flex-grow justify-center gap-6 py-8">
+					<View className="gap-2">
+						<Text className="font-bold font-display text-4xl text-foreground">
+							Almost there
+						</Text>
+						<Text className="text-base text-muted-foreground">
+							Your account {createdHandle} is ready. Finish signing in to grant
+							Opnshelf access to it.
+						</Text>
+					</View>
+
+					<Pressable
+						disabled={continueMutation.isPending}
+						onPress={() => continueMutation.mutate(createdHandle)}
+						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
+						style={{ opacity: continueMutation.isPending ? 0.6 : 1 }}
+					>
+						{continueMutation.isPending && (
+							<ActivityIndicator size="small" color="#3f2e00" />
+						)}
+						<Text className="font-semibold text-base text-primary-foreground">
+							{continueMutation.isPending
+								? "Signing in"
+								: "Continue signing in"}
+						</Text>
+					</Pressable>
+				</ScrollView>
+			</Screen>
+		);
+	}
 
 	return (
 		<Screen>
