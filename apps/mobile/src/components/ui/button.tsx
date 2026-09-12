@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { forwardRef, type ReactNode } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
 	type PressableProps,
+	type View as RNView,
 	useColorScheme,
 	View,
 } from "react-native";
@@ -24,13 +25,24 @@ const SPINNER = {
 	foreground: { light: "#0f172a", dark: "#f8fafc" },
 } as const;
 
-/** Every disabled button dims by the same amount. It was 0.5, 0.6 and 0.7. */
+/** Every dimmed button dims by the same amount. It was 0.5, 0.6 and 0.7. */
 const DISABLED_OPACITY = 0.6;
 
 const VARIANT = {
 	primary: { box: "bg-primary", label: "text-primary-foreground" },
 	secondary: { box: "border border-border", label: "text-foreground" },
 	destructive: { box: "border border-destructive", label: "text-destructive" },
+} as const;
+
+/**
+ * Primary is the exception to dimming. Fading the amber fill collapses the
+ * contrast against its dark label, so a disabled primary gets a muted fill
+ * instead - a rule `integration-permission-row` worked out on its own before
+ * this primitive existed.
+ */
+const DISABLED_PRIMARY = {
+	box: "border border-border bg-background-subtle",
+	label: "text-muted-foreground",
 } as const;
 
 /**
@@ -55,6 +67,8 @@ export interface ButtonProps
 	loadingLabel?: string;
 	/** Rendered before the label, usually an icon. */
 	leading?: ReactNode;
+	/** Rendered after the label. Hidden while loading, where the spinner sits. */
+	trailing?: ReactNode;
 	/** Layout classes for the button itself: `flex-1`, `mt-2`, `self-start`. */
 	className?: string;
 }
@@ -71,19 +85,27 @@ export interface ButtonProps
  * spinner that takes part in the layout shoves the label sideways the moment
  * you tap.
  */
-export function Button({
-	label,
-	variant = "primary",
-	size = "md",
-	disabled = false,
-	loading = false,
-	loadingLabel,
-	leading,
-	className,
-	...props
-}: ButtonProps) {
+export const Button = forwardRef<RNView, ButtonProps>(function Button(
+	{
+		label,
+		variant = "primary",
+		size = "md",
+		disabled = false,
+		loading = false,
+		loadingLabel,
+		leading,
+		trailing,
+		className,
+		...props
+	},
+	// Forwarded because `<Link asChild>` clones this and needs the handle.
+	ref,
+) {
 	const dark = useColorScheme() === "dark";
 	const locked = disabled || loading;
+	// Loading keeps the filled look: it is momentary, and the spinner needs the
+	// same contrast the label has.
+	const muted = variant === "primary" && disabled && !loading;
 	const spinner =
 		variant === "primary"
 			? SPINNER.primary
@@ -95,24 +117,25 @@ export function Button({
 
 	return (
 		<Pressable
+			ref={ref}
 			accessibilityRole="button"
 			accessibilityLabel={label}
 			accessibilityState={{ disabled: locked, busy: loading }}
 			disabled={locked}
 			className={cn(
 				"flex-row items-center justify-center gap-2 rounded-lg",
-				VARIANT[variant].box,
+				muted ? DISABLED_PRIMARY.box : VARIANT[variant].box,
 				SIZE[size].box,
 				className,
 			)}
-			style={{ opacity: locked ? DISABLED_OPACITY : 1 }}
+			style={{ opacity: locked && !muted ? DISABLED_OPACITY : 1 }}
 			{...props}
 		>
 			{leading}
 			<Text
 				className={cn(
 					"font-semibold",
-					VARIANT[variant].label,
+					muted ? DISABLED_PRIMARY.label : VARIANT[variant].label,
 					SIZE[size].label,
 				)}
 			>
@@ -122,7 +145,9 @@ export function Button({
 				<View className="absolute right-4 justify-center">
 					<ActivityIndicator size="small" color={spinner} />
 				</View>
-			) : null}
+			) : (
+				trailing
+			)}
 		</Pressable>
 	);
-}
+});

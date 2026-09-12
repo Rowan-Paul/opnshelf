@@ -72,7 +72,9 @@ describe("Button", () => {
 
 	it("dims the same amount when merely disabled", () => {
 		// It was 0.5 on some screens, 0.6 on others and 0.7 on the rest.
-		const renderer = render(<Button label="Save" disabled />);
+		const renderer = render(
+			<Button label="Save" variant="secondary" disabled />,
+		);
 		expect(button(renderer).props.style.opacity).toBe(0.6);
 		expect(button(renderer).props.accessibilityState.busy).toBe(false);
 	});
@@ -114,6 +116,27 @@ describe("Button", () => {
 			spinners(render(<Button label="A" loading variant="secondary" />))[0]
 				.props.color,
 		).toBe("#f8fafc");
+	});
+
+	it("mutes a disabled primary instead of fading it", () => {
+		// Fading the amber fill collapses the contrast against its dark label.
+		const renderer = render(<Button label="Save" disabled />);
+		expect(button(renderer).props.className).toContain("bg-background-subtle");
+		expect(button(renderer).props.className).not.toContain("bg-primary");
+		expect(button(renderer).props.style.opacity).toBe(1);
+	});
+
+	it("keeps the fill while loading, where the spinner needs the contrast", () => {
+		const renderer = render(<Button label="Save" loading />);
+		expect(button(renderer).props.className).toContain("bg-primary");
+		expect(button(renderer).props.style.opacity).toBe(0.6);
+	});
+
+	it("still fades the outline variants, which have no fill to mute", () => {
+		const renderer = render(
+			<Button label="Save" variant="secondary" disabled />,
+		);
+		expect(button(renderer).props.style.opacity).toBe(0.6);
 	});
 
 	it("gives every variant the same box", () => {

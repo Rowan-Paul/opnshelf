@@ -36,6 +36,7 @@ import {
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
+import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
@@ -841,40 +842,21 @@ export function SettingsCategoryScreen({
 										<Text className="text-destructive text-sm">
 											{deletionJob.lastError ?? "Account deletion failed."}
 										</Text>
-										<Pressable
+										<Button
+											label="Retry"
+											variant="destructive"
+											loading={deleteAccountMutation.isPending}
 											onPress={confirmDeleteAccount}
-											disabled={deleteAccountMutation.isPending}
-											className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-											style={{
-												opacity: deleteAccountMutation.isPending ? 0.6 : 1,
-											}}
-										>
-											{deleteAccountMutation.isPending && (
-												<ActivityIndicator size="small" color="#ef4444" />
-											)}
-											<Text className="font-semibold text-base text-destructive">
-												Retry
-											</Text>
-										</Pressable>
+										/>
 									</View>
 								) : (
-									<Pressable
+									<Button
+										label="Delete Account"
+										variant="destructive"
+										loading={deleteAccountMutation.isPending}
+										leading={<Trash2 color="#ef4444" size={18} />}
 										onPress={confirmDeleteAccount}
-										disabled={deleteAccountMutation.isPending}
-										className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-										style={{
-											opacity: deleteAccountMutation.isPending ? 0.6 : 1,
-										}}
-									>
-										{deleteAccountMutation.isPending ? (
-											<ActivityIndicator size="small" color="#ef4444" />
-										) : (
-											<Trash2 color="#ef4444" size={18} />
-										)}
-										<Text className="font-semibold text-base text-destructive">
-											Delete Account
-										</Text>
-									</Pressable>
+									/>
 								)}
 							</View>
 

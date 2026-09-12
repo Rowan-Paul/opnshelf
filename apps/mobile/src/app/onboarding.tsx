@@ -23,6 +23,7 @@ import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { UserRow } from "@/components/social/UserRow";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
+import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
@@ -72,18 +73,13 @@ function PrimaryButton({
 }) {
 	const isDisabled = disabled || loading;
 	return (
-		<Pressable
+		<Button
+			label={label}
+			loading={loading}
 			disabled={isDisabled}
+			trailing={icon ? <ArrowRight color="#3f2e00" size={18} /> : undefined}
 			onPress={onPress}
-			className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5"
-			style={{ opacity: isDisabled ? 0.6 : 1 }}
-		>
-			{loading ? <ActivityIndicator size="small" color="#3f2e00" /> : null}
-			<Text className="font-semibold text-base text-primary-foreground">
-				{label}
-			</Text>
-			{icon && !loading ? <ArrowRight color="#3f2e00" size={18} /> : null}
-		</Pressable>
+		/>
 	);
 }
 

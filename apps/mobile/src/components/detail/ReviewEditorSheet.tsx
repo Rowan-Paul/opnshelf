@@ -9,6 +9,7 @@ import {
 } from "react-native-keyboard-controller";
 import { MilkdownWebView } from "@/components/detail/MilkdownWebView";
 import { StarRating } from "@/components/detail/StarRating";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
@@ -304,20 +305,16 @@ export function ReviewEditorSheet({
 						) : null}
 
 						{isEditing && onDelete ? (
-							<Pressable
+							<Button
+								label="Delete review"
+								variant="destructive"
+								loading={isDeleting}
+								leading={<Trash2 color="#ef4444" size={18} />}
 								onPress={onDelete}
-								disabled={isDeleting}
-								className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-								style={{ opacity: isDeleting ? 0.6 : 1 }}
-							>
-								<Trash2 color="#ef4444" size={18} />
-								<Text className="font-semibold text-destructive">
-									Delete review
-								</Text>
-							</Pressable>
+							/>
 						) : null}
 
-						<Pressable
+						<Button
 							onPress={() =>
 								onSave({
 									title,
@@ -327,14 +324,11 @@ export function ReviewEditorSheet({
 									postToBluesky,
 								})
 							}
+							label="Save"
+							loadingLabel="Saving…"
+							loading={isSaving}
 							disabled={!canSave}
-							className="items-center rounded-lg bg-primary py-3"
-							style={{ opacity: canSave ? 1 : 0.5 }}
-						>
-							<Text className="font-semibold text-primary-foreground">
-								{isSaving ? "Saving…" : "Save"}
-							</Text>
-						</Pressable>
+						/>
 					</View>
 				</KeyboardAvoidingView>
 			</KeyboardProvider>

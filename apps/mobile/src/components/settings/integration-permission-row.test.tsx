@@ -15,6 +15,8 @@ vi.mock("react-native", async () => {
 			createElement("pressable", props, props.children as never),
 		View: (props: Record<string, unknown>) =>
 			createElement("view", props, props.children as never),
+		// The Button primitive picks its spinner tint from the scheme.
+		useColorScheme: () => "light",
 	};
 });
 
