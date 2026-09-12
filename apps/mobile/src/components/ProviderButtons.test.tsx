@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 	signInWithProvider: vi.fn(),
 	supportsNativeApple: vi.fn(),
 	isGoogleConfigured: vi.fn(),
+	colorScheme: vi.fn(),
 }));
 
 vi.mock("expo-apple-authentication", async () => {
@@ -21,7 +22,11 @@ vi.mock("expo-apple-authentication", async () => {
 		AppleAuthenticationButton: (props: Record<string, unknown>) =>
 			createElement("apple-button", props),
 		AppleAuthenticationButtonType: { CONTINUE: "CONTINUE" },
-		AppleAuthenticationButtonStyle: { WHITE: "WHITE", BLACK: "BLACK" },
+		AppleAuthenticationButtonStyle: {
+			WHITE: "WHITE",
+			WHITE_OUTLINE: "WHITE_OUTLINE",
+			BLACK: "BLACK",
+		},
 	};
 });
 
@@ -36,17 +41,24 @@ vi.mock("react-native", async () => {
 			createElement("activity-indicator", props),
 		Pressable: (props: Record<string, unknown>) =>
 			createElement("pressable", props, props.children as never),
+		Text: (props: Record<string, unknown>) =>
+			createElement("text", props, props.children as never),
 		View: (props: Record<string, unknown>) =>
 			createElement("view", props, props.children as never),
-		useColorScheme: () => "light",
+		useColorScheme: () => mocks.colorScheme(),
 	};
 });
 
-vi.mock("@/components/ui/text", async () => {
+// The marks are real SVG components; the renderer only needs them to be
+// elements, and react-native-svg does not parse outside a native build.
+vi.mock("react-native-svg", async () => {
 	const { createElement } = await import("react");
 	return {
-		Text: (props: Record<string, unknown>) =>
-			createElement("text", props, props.children as never),
+		default: (props: Record<string, unknown>) =>
+			createElement("svg", props, props.children as never),
+		Svg: (props: Record<string, unknown>) =>
+			createElement("svg", props, props.children as never),
+		Path: (props: Record<string, unknown>) => createElement("path", props),
 	};
 });
 
@@ -110,6 +122,7 @@ async function press(renderer: ReactTestRenderer, label: string) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mocks.colorScheme.mockReturnValue("light");
 	mocks.supportsNativeApple.mockReturnValue(false);
 	mocks.isGoogleConfigured.mockReturnValue(true);
 	mocks.beginHandoff.mockResolvedValue("challenge");
@@ -199,6 +212,67 @@ describe("ProviderButtons", () => {
 
 		expect(mocks.toastError).not.toHaveBeenCalled();
 		expect(mocks.replace).not.toHaveBeenCalled();
+	});
+
+	describe("the button pair", () => {
+		/** The style props both buttons are rendered with. */
+		function boxes(renderer: ReactTestRenderer) {
+			return renderer.root
+				.findAll((node) => hostType(node) === "pressable")
+				.map((node) => node.props.style as Record<string, unknown>);
+		}
+
+		it("gives both providers the same box", () => {
+			// Apple asks that their button be no less prominent than the
+			// alternatives, and an uneven pair steers the choice regardless.
+			const renderer = render();
+			const [appleBox, googleBox] = boxes(renderer);
+
+			expect(appleBox.height).toBe(googleBox.height);
+			expect(appleBox.borderRadius).toBe(googleBox.borderRadius);
+			// --radius-lg, the radius every other button in the app uses.
+			expect(appleBox.borderRadius).toBe(16);
+		});
+
+		it("paints Google in its published colours, per theme", () => {
+			// Branding requirements, not theme tokens:
+			// https://developers.google.com/identity/branding-guidelines
+			const light = boxes(render())[1];
+			expect(light.backgroundColor).toBe("#FFFFFF");
+			expect(light.borderColor).toBe("#747775");
+
+			mocks.colorScheme.mockReturnValue("dark");
+			const dark = boxes(render())[1];
+			expect(dark.backgroundColor).toBe("#131314");
+			expect(dark.borderColor).toBe("#8E918F");
+		});
+
+		it("matches the native Apple button to the theme the same way", () => {
+			mocks.supportsNativeApple.mockReturnValue(true);
+			const outlined = render().root.find(
+				(node) => hostType(node) === "apple-button",
+			);
+			expect(outlined.props.buttonStyle).toBe("WHITE_OUTLINE");
+			// 12, not 16: Apple's button draws a rounder corner than a CALayer
+			// one, so the number that *looks* like the app's 16 is smaller.
+			expect(outlined.props.cornerRadius).toBe(12);
+			expect(outlined.props.style.height).toBe(48);
+
+			mocks.colorScheme.mockReturnValue("dark");
+			const filled = render().root.find(
+				(node) => hostType(node) === "apple-button",
+			);
+			expect(filled.props.buttonStyle).toBe("BLACK");
+		});
+
+		it("shows each provider's mark", () => {
+			// Google's rules require the official multi-colour G; Apple's require
+			// their logo wherever their name appears.
+			const renderer = render();
+			expect(
+				renderer.root.findAll((node) => hostType(node) === "svg"),
+			).toHaveLength(2);
+		});
 	});
 
 	it("hides Google when it is not configured", () => {

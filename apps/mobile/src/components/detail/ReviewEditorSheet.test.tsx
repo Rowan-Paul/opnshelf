@@ -29,6 +29,8 @@ vi.mock("react-native", async () => {
 		Pressable: component("pressable"),
 		Switch: component("switch"),
 		View: component("view"),
+		// The Button primitive picks its spinner tint from the scheme.
+		useColorScheme: () => "light",
 	};
 });
 

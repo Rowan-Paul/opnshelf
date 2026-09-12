@@ -1,9 +1,10 @@
 import type { UpNextShowDto } from "@opnshelf/api";
 import { Link } from "expo-router";
 import { Calendar, Plus } from "lucide-react-native";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { PosterProgress } from "@/components/media/poster-progress";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
@@ -126,7 +127,11 @@ export function UpNextCard({
 							</Text>
 						) : null}
 						{isOwner ? (
-							<Pressable
+							<Button
+								label="Add to shelf"
+								size="sm"
+								loading={markEpisode.isPending}
+								leading={<Plus color="#3f2e00" size={16} strokeWidth={3} />}
 								onPress={(e) => {
 									e.stopPropagation();
 									markEpisode.mutate({
@@ -137,20 +142,7 @@ export function UpNextCard({
 										},
 									});
 								}}
-								disabled={markEpisode.isPending}
-								accessibilityState={{ busy: markEpisode.isPending }}
-								className="flex-row items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5"
-								style={{ opacity: markEpisode.isPending ? 0.6 : 1 }}
-							>
-								{markEpisode.isPending ? (
-									<ActivityIndicator size="small" color="#3f2e00" />
-								) : (
-									<Plus color="#3f2e00" size={16} strokeWidth={3} />
-								)}
-								<Text className="font-semibold text-primary-foreground text-sm">
-									Add to shelf
-								</Text>
-							</Pressable>
+							/>
 						) : null}
 					</View>
 				</View>

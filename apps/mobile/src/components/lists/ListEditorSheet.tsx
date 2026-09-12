@@ -5,6 +5,7 @@ import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -90,25 +91,18 @@ export function ListEditorSheet({
 							maxLength={2000}
 						/>
 
-						<Pressable
+						<Button
+							label={isEditing ? "Save changes" : "Create list"}
+							loadingLabel="Saving…"
+							loading={isSaving}
+							disabled={!canSave}
 							onPress={() =>
 								onSave({
 									name: name.trim(),
 									description: description.trim() || undefined,
 								})
 							}
-							disabled={!canSave}
-							className="items-center rounded-lg bg-primary py-3"
-							style={{ opacity: canSave ? 1 : 0.5 }}
-						>
-							<Text className="font-semibold text-primary-foreground">
-								{isSaving
-									? "Saving…"
-									: isEditing
-										? "Save changes"
-										: "Create list"}
-							</Text>
-						</Pressable>
+						/>
 					</View>
 				</KeyboardAvoidingView>
 			</KeyboardProvider>

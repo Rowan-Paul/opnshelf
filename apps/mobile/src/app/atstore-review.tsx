@@ -8,6 +8,7 @@ import { router, useNavigation } from "expo-router";
 import { Star } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -156,31 +157,25 @@ export default function AtStoreReviewScreen() {
 			/>
 
 			<View className="flex-row gap-3">
-				<Pressable
-					accessibilityRole="button"
+				<Button
+					label="Cancel"
+					variant="secondary"
+					className="flex-1"
 					onPress={close}
-					className="flex-1 items-center rounded-lg border border-border px-4 py-3"
-				>
-					<Text className="font-semibold text-foreground">Cancel</Text>
-				</Pressable>
-				<Pressable
-					accessibilityRole="button"
-					disabled={rating === null || publishMutation.isPending}
+				/>
+				<Button
+					label="Publish review"
+					loadingLabel="Publishing…"
+					className="flex-1"
+					loading={publishMutation.isPending}
+					disabled={rating === null}
 					onPress={() =>
 						rating !== null &&
 						publishMutation.mutate({
 							body: { rating, text: text || undefined },
 						})
 					}
-					className="flex-1 items-center rounded-lg bg-primary px-4 py-3"
-					style={{
-						opacity: rating === null || publishMutation.isPending ? 0.45 : 1,
-					}}
-				>
-					<Text className="font-semibold text-[#3f2e00]">
-						{publishMutation.isPending ? "Publishing…" : "Publish review"}
-					</Text>
-				</Pressable>
+				/>
 			</View>
 		</ScrollView>
 	);

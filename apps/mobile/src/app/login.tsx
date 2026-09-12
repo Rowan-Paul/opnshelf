@@ -6,6 +6,7 @@ import { User } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { ProviderButtons } from "@/components/ProviderButtons";
+import { Button } from "@/components/ui/button";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -179,27 +180,20 @@ export default function LoginScreen() {
 						</View>
 					) : null}
 
-					<Pressable
+					<Button
+						label="Sign In"
+						loadingLabel="Connecting..."
+						loading={isSubmitting}
 						disabled={authBusy}
 						onPress={() => submit(() => login(handle))}
-						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
-						style={{ opacity: authBusy ? 0.7 : 1 }}
-					>
-						{isSubmitting && <ActivityIndicator size="small" color="#3f2e00" />}
-						<Text className="font-semibold text-base text-primary-foreground">
-							{isSubmitting ? "Connecting..." : "Sign In"}
-						</Text>
-					</Pressable>
+					/>
 
-					<Pressable
+					<Button
+						label="Create New Account"
+						variant="secondary"
 						disabled={authBusy}
 						onPress={() => router.push("/signup")}
-						className="items-center justify-center rounded-lg border border-border px-4 py-3"
-					>
-						<Text className="font-semibold text-base text-foreground">
-							Create New Account
-						</Text>
-					</Pressable>
+					/>
 
 					<Pressable
 						disabled={authBusy}

@@ -5,6 +5,7 @@ import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -90,29 +91,22 @@ export function NoteEditorSheet({
 						/>
 
 						{isEditing && onDelete ? (
-							<Pressable
+							<Button
+								label="Delete note"
+								variant="destructive"
+								loading={isDeleting}
+								leading={<Trash2 color="#ef4444" size={18} />}
 								onPress={onDelete}
-								disabled={isDeleting}
-								className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-3"
-								style={{ opacity: isDeleting ? 0.6 : 1 }}
-							>
-								<Trash2 color="#ef4444" size={18} />
-								<Text className="font-semibold text-destructive">
-									Delete note
-								</Text>
-							</Pressable>
+							/>
 						) : null}
 
-						<Pressable
-							onPress={() => onSave(content)}
+						<Button
+							label="Save"
+							loadingLabel="Saving…"
+							loading={isSaving}
 							disabled={!canSave}
-							className="items-center rounded-lg bg-primary py-3"
-							style={{ opacity: canSave ? 1 : 0.5 }}
-						>
-							<Text className="font-semibold text-primary-foreground">
-								{isSaving ? "Saving…" : "Save"}
-							</Text>
-						</Pressable>
+							onPress={() => onSave(content)}
+						/>
 					</View>
 				</KeyboardAvoidingView>
 			</KeyboardProvider>
