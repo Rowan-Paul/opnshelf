@@ -66,10 +66,19 @@ async function takeVerifier(): Promise<string | null> {
  * Redeem the code from the redirect for the session id. The verifier is
  * consumed whatever the outcome; the backend consumes the code the same way.
  */
+/**
+ * The verifier was already consumed, so another path is completing this
+ * sign-in. On Android the OS can deliver the redirect to the auth/complete
+ * deep link *and* resolve the auth session, and whichever runs first takes
+ * both the verifier and the single-use code. The loser has nothing to do and
+ * nothing to report.
+ */
+export class HandoffAlreadyClaimedError extends Error {}
+
 export async function redeemHandoffCode(code: string): Promise<string> {
 	const codeVerifier = await takeVerifier();
 	if (!codeVerifier) {
-		throw new Error("No pending sign-in to complete");
+		throw new HandoffAlreadyClaimedError("No pending sign-in to complete");
 	}
 	const { data } = await authControllerMobileExchange({
 		body: { code, codeVerifier },

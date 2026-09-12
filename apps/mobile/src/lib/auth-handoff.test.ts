@@ -1,6 +1,11 @@
 import * as SecureStore from "expo-secure-store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { beginHandoff, clearHandoff, redeemHandoffCode } from "./auth-handoff";
+import {
+	beginHandoff,
+	clearHandoff,
+	HandoffAlreadyClaimedError,
+	redeemHandoffCode,
+} from "./auth-handoff";
 
 const mocks = vi.hoisted(() => ({
 	challenge: vi.fn(),
@@ -67,9 +72,11 @@ describe("redeemHandoffCode", () => {
 			throwOnError: true,
 		});
 		expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(VERIFIER_KEY);
-		// The verifier is single-use on this side too.
-		await expect(redeemHandoffCode("handoff-code")).rejects.toThrow(
-			"No pending sign-in to complete",
+		// The verifier is single-use on this side too. The typed error is what
+		// lets runAuthFlow tell "another path already completed this sign-in"
+		// apart from a real failure - on Android both can run at once.
+		await expect(redeemHandoffCode("handoff-code")).rejects.toBeInstanceOf(
+			HandoffAlreadyClaimedError,
 		);
 	});
 

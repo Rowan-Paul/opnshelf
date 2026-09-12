@@ -25,6 +25,7 @@ import { loadSessionToken, saveSessionToken } from "@/lib/api";
 import {
 	beginHandoff,
 	clearHandoff,
+	HandoffAlreadyClaimedError,
 	redeemHandoffCode,
 } from "@/lib/auth-handoff";
 import { posthog } from "@/lib/posthog";
@@ -225,7 +226,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			}
 			const code = url.searchParams.get("code");
 			if (code) {
-				await completeHandoff(code);
+				try {
+					await completeHandoff(code);
+				} catch (error) {
+					// Both paths can fire on Android: the OS delivers the redirect to
+					// the auth/complete deep link *and* resolves the auth session
+					// here. Whichever runs first takes the verifier and the
+					// single-use code, so the other fails on a sign-in that actually
+					// succeeded. The deep-link route owns its own errors, so losing
+					// this race is not something to report.
+					if (!(error instanceof HandoffAlreadyClaimedError)) throw error;
+				}
 				return true;
 			}
 			// Legacy handoff: a backend that predates the handoff code still sends
