@@ -20,6 +20,7 @@
         "EXPO_PUBLIC_API_URL": "https://api.staging.opnshelf.xyz",
         "EXPO_PUBLIC_SITE_URL": "https://staging.opnshelf.xyz",
         "EXPO_PUBLIC_POSTHOG_KEY": "phc_your_api_key_here",
+        "EXPO_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAADYeUs1YOwWNmMY3",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "1037827407261-jk3mg813avu91j6ic25ucrpf6j72iuq5.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1037827407261-4p0icuv936s5et3s9q9khan69q029nc6.apps.googleusercontent.com",
         "POSTHOG_CLI_DRY_RUN": "true"
