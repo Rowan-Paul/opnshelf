@@ -62,6 +62,8 @@ const LABEL_FONT = "Inter-SemiBold";
 const GOOGLE = {
 	light: { fill: "#FFFFFF", stroke: "#747775", text: "#1F1F1F" },
 	dark: { fill: "#131314", stroke: "#8E918F", text: "#E3E3E3" },
+	/** Google specifies 10px between the mark and the label on Android. */
+	gap: 10,
 } as const;
 
 /**
@@ -103,6 +105,7 @@ function ProviderButton({
 	textColor,
 	busy,
 	disabled,
+	gap = 12,
 	onPress,
 }: {
 	label: string;
@@ -112,6 +115,8 @@ function ProviderButton({
 	textColor: string;
 	busy: boolean;
 	disabled: boolean;
+	/** Mark-to-label spacing, which each vendor specifies for itself. */
+	gap?: number;
 	onPress: () => void;
 }) {
 	return (
@@ -130,7 +135,7 @@ function ProviderButton({
 				flexDirection: "row",
 				alignItems: "center",
 				justifyContent: "center",
-				gap: 12,
+				gap,
 				opacity: disabled ? 0.6 : 1,
 			}}
 		>
@@ -280,6 +285,7 @@ export function ProviderButtons({
 				<ProviderButton
 					label="Continue with Google"
 					mark={<GoogleMark size={MARK_SIZE} />}
+					gap={GOOGLE.gap}
 					fill={google.fill}
 					stroke={google.stroke}
 					textColor={google.text}
