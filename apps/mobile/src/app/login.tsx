@@ -209,7 +209,7 @@ export default function LoginScreen() {
 						className="items-center py-2"
 					>
 						<Text className="text-muted-foreground text-sm">
-							Continue without an account
+							Browse without an account
 						</Text>
 					</Pressable>
 				</View>
