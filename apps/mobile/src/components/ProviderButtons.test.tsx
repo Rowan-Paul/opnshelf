@@ -253,7 +253,9 @@ describe("ProviderButtons", () => {
 				(node) => hostType(node) === "apple-button",
 			);
 			expect(outlined.props.buttonStyle).toBe("WHITE_OUTLINE");
-			expect(outlined.props.cornerRadius).toBe(16);
+			// 12, not 16: Apple's button draws a rounder corner than a CALayer
+			// one, so the number that *looks* like the app's 16 is smaller.
+			expect(outlined.props.cornerRadius).toBe(12);
 			expect(outlined.props.style.height).toBe(48);
 
 			mocks.colorScheme.mockReturnValue("dark");

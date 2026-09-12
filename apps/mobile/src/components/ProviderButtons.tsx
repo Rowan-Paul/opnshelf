@@ -30,6 +30,16 @@ import {
  */
 const BUTTON_HEIGHT = 48;
 const BUTTON_RADIUS = 16;
+/**
+ * Apple's button, matched to BUTTON_RADIUS by eye rather than by number.
+ *
+ * `AppleAuthenticationButton` does not draw a CALayer corner: at 16 it renders
+ * a near-semicircular cap far rounder than a 16px `borderRadius` beside it,
+ * and at 8 it renders tighter. 12 is the value that lines up at
+ * BUTTON_HEIGHT - verified against a screenshot, so re-check it if that
+ * height changes.
+ */
+const APPLE_CORNER_RADIUS = 12;
 const MARK_SIZE = 18;
 /**
  * The weighted family registered in `app/_layout.tsx`, not `font-semibold`.
@@ -247,7 +257,7 @@ export function ProviderButtons({
 							? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
 							: AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
 					}
-					cornerRadius={BUTTON_RADIUS}
+					cornerRadius={APPLE_CORNER_RADIUS}
 					style={{ height: BUTTON_HEIGHT, opacity: locked ? 0.6 : 1 }}
 					onPress={() => {
 						if (!locked) void onPress("apple");

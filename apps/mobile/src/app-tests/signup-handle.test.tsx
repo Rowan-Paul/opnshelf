@@ -1,7 +1,15 @@
+/**
+ * Lives outside `src/app` on purpose. Expo Router builds its routes from a
+ * `require.context` over that directory whose regex matches every `.tsx` file,
+ * with no exclusion for tests - so a test file beside its screen becomes a
+ * route, and Vitest gets bundled into the app. It red-screens on launch with
+ * "Vitest failed to access its internal state", which no test can catch
+ * because the test suite is exactly where it still works.
+ */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import SignupHandleScreen from "./signup-handle";
+import SignupHandleScreen from "@/app/signup-handle";
 
 const mocks = vi.hoisted(() => ({
 	appleRegister: vi.fn(),
