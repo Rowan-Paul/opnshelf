@@ -2,29 +2,41 @@ import Svg, { Path } from "react-native-svg";
 
 /**
  * Apple's logo mark, for the Android button only — on iOS the system draws its
- * own button and this is never used.
+ * own button and this never renders.
  *
- * Apple's rules call for a solid mark matched to the button background, so it
- * takes a colour rather than carrying its own. Same path as the Web App's
- * `AppleMark`, so the two stay identical.
- *
- * Apple asks that a custom button use the logo asset from their design
- * resources. This path is a trace of it, inherited from the Web App; replacing
- * both with the downloaded asset is the one step that needs a signed-in Apple
- * Developer account.
+ * The path is Apple's own, unmodified, from Apple Design Resources
+ * (Logo-Sign-in-with-Apple.dmg, "Sign in with Apple - Logo Only"). Their
+ * guidelines require their supplied artwork and forbid redrawing the logo, so
+ * do not tidy, re-trace or re-point this path.
  */
+
+/**
+ * Apple centres the glyph on a 56x56 canvas, most of which is padding. The
+ * viewBox is cropped to the glyph's own bounds so `size` means the logo rather
+ * than the whitespace around it. Cropping the canvas leaves the proportions
+ * untouched; the 15:19 ratio below is the glyph's own.
+ */
+const GLYPH = { x: 20.5, y: 16, width: 15, height: 19 } as const;
+
 export function AppleMark({
 	size = 18,
 	color,
 }: {
+	/** Height of the logo. Width follows from Apple's proportions. */
 	size?: number;
-	color: string;
+	/** Apple supplies solid black and solid white only, matched to the button. */
+	color: "#000000" | "#FFFFFF";
 }) {
 	return (
-		<Svg width={size} height={size} viewBox="0 0 24 24">
+		<Svg
+			width={(size * GLYPH.width) / GLYPH.height}
+			height={size}
+			viewBox={`${GLYPH.x} ${GLYPH.y} ${GLYPH.width} ${GLYPH.height}`}
+		>
 			<Path
 				fill={color}
-				d="M17.05 12.54c-.02-2.2 1.8-3.26 1.88-3.31-1.02-1.5-2.61-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.75-.78-2.87-.76-1.48.02-2.84.86-3.6 2.18-1.53 2.66-.39 6.6 1.1 8.76.73 1.06 1.6 2.25 2.74 2.2 1.1-.04 1.52-.71 2.85-.71 1.33 0 1.7.71 2.87.69 1.18-.02 1.93-1.08 2.65-2.14.83-1.22 1.18-2.41 1.2-2.47-.03-.01-2.3-.88-2.32-3.51M14.88 5.9c.6-.74 1.01-1.76.9-2.78-.87.04-1.93.58-2.56 1.31-.56.65-1.05 1.69-.92 2.69.97.07 1.96-.49 2.58-1.22"
+				fillRule="evenodd"
+				d="M28.2226562,20.3846154 C29.0546875,20.3846154 30.0976562,19.8048315 30.71875,19.0317864 C31.28125,18.3312142 31.6914062,17.352829 31.6914062,16.3744437 C31.6914062,16.2415766 31.6796875,16.1087095 31.65625,16 C30.7304687,16.0362365 29.6171875,16.640178 28.9492187,17.4494596 C28.421875,18.06548 27.9414062,19.0317864 27.9414062,20.0222505 C27.9414062,20.1671964 27.9648438,20.3121424 27.9765625,20.3604577 C28.0351562,20.3725366 28.1289062,20.3846154 28.2226562,20.3846154 Z M25.2929688,35 C26.4296875,35 26.9335938,34.214876 28.3515625,34.214876 C29.7929688,34.214876 30.109375,34.9758423 31.375,34.9758423 C32.6171875,34.9758423 33.4492188,33.792117 34.234375,32.6325493 C35.1132812,31.3038779 35.4765625,29.9993643 35.5,29.9389701 C35.4179688,29.9148125 33.0390625,28.9122695 33.0390625,26.0979021 C33.0390625,23.6579784 34.9140625,22.5588048 35.0195312,22.474253 C33.7773438,20.6382708 31.890625,20.5899555 31.375,20.5899555 C29.9804688,20.5899555 28.84375,21.4596313 28.1289062,21.4596313 C27.3554688,21.4596313 26.3359375,20.6382708 25.1289062,20.6382708 C22.8320312,20.6382708 20.5,22.5950413 20.5,26.2911634 C20.5,28.5861411 21.3671875,31.013986 22.4335938,32.5842339 C23.3476562,33.9129053 24.1445312,35 25.2929688,35 Z"
 			/>
 		</Svg>
 	);
