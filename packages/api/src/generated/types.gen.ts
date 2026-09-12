@@ -361,11 +361,11 @@ export type NativeSsoDto = {
      */
     identityToken: string;
     /**
-     * "mobile" when called by the app
+     * Platform identifier ("mobile") so the Core OAuth callback redirects into the Mobile App
      */
-    platform?: string;
+    platform?: 'mobile';
     /**
-     * Mobile Handoff Code challenge
+     * S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the Mobile App a single-use code instead of the session id.
      */
     codeChallenge?: string;
 };

@@ -146,8 +146,8 @@ export async function signInWithProvider(
 
 	// Mint the handoff challenge before the exchange: the backend has to put it
 	// in the OAuth request it creates here, or the consent callback later reads
-	// the flow as web and redirects to the site instead of back into the app.
-	const codeChallenge = await beginHandoff();
+	// the flow as web and redirects to the Web App instead of back here.
+	const codeChallenge = (await beginHandoff()) ?? undefined;
 
 	const call =
 		provider === "apple"
@@ -157,7 +157,7 @@ export async function signInWithProvider(
 		body: {
 			identityToken,
 			platform: "mobile",
-			...(codeChallenge ? { codeChallenge } : {}),
+			codeChallenge,
 		},
 		throwOnError: true,
 	});

@@ -1,4 +1,6 @@
 import { UnauthorizedException } from "@nestjs/common";
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
 import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
@@ -22,6 +24,7 @@ import { CaptchaService } from "../pds/captcha.service";
 import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { AppleSignupController } from "./apple-signup.controller";
 import { AuthService } from "./auth.service";
+import { NativeSsoDto } from "./dto/native-sso.dto";
 import { NativeAccountService } from "./native-account.service";
 import { signProviderState } from "./provider-state";
 import { SignupRateLimiter } from "./signup-rate-limiter";
@@ -731,17 +734,31 @@ describe("AppleSignupController", () => {
 			});
 		});
 
-		it("drops a malformed challenge rather than carrying it", async () => {
-			await controller.appleNative({
-				identityToken: "native-token",
-				platform: "mobile",
-				codeChallenge: "too-short",
-			});
+		// The handler never sees a malformed challenge: the global ValidationPipe
+		// rejects it against @Matches(BASE64URL_32_BYTES) first, as it does for
+		// every other route that accepts one.
+		it("rejects a malformed challenge at the request boundary", async () => {
+			const errors = await validate(
+				plainToInstance(NativeSsoDto, {
+					identityToken: "native-token",
+					platform: "mobile",
+					codeChallenge: "too-short",
+				}),
+			);
 
-			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith({
-				platform: "mobile",
-				codeChallenge: undefined,
-			});
+			expect(errors.map((e) => e.property)).toContain("codeChallenge");
+		});
+
+		it("accepts a well-formed challenge at the request boundary", async () => {
+			const errors = await validate(
+				plainToInstance(NativeSsoDto, {
+					identityToken: "native-token",
+					platform: "mobile",
+					codeChallenge: CHALLENGE,
+				}),
+			);
+
+			expect(errors).toHaveLength(0);
 		});
 
 		it("carries nothing for a caller that is not the app", async () => {

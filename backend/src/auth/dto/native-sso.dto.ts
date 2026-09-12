@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsOptional, IsString, MaxLength } from "class-validator";
+import {
+	IsIn,
+	IsOptional,
+	IsString,
+	Matches,
+	MaxLength,
+} from "class-validator";
+import type { OAuthAppState } from "../oauth-app-state";
+import { BASE64URL_32_BYTES } from "./mobile-handoff.dto";
 
 /**
  * A credential the operating system produced, handed straight to us by the
@@ -14,25 +22,41 @@ export class NativeSsoDto {
 	@MaxLength(8192)
 	identityToken: string;
 
-	/**
-	 * Set by the Mobile App. Without it the OAuth request carries no platform,
-	 * so the consent callback treats the flow as web and redirects to the site
-	 * instead of back into the app.
-	 */
-	@ApiPropertyOptional({ description: '"mobile" when called by the app' })
+	@ApiProperty({
+		enum: ["mobile"],
+		required: false,
+		description:
+			'Platform identifier ("mobile") so the Core OAuth callback redirects into the Mobile App',
+	})
 	@IsOptional()
 	@IsIn(["mobile"])
 	platform?: "mobile";
 
-	/**
-	 * S256 challenge for the Mobile Handoff Code (ADR 0026). Rides in the OAuth
-	 * state so the callback hands back a single-use code rather than a session.
-	 */
-	@ApiPropertyOptional({ description: "Mobile Handoff Code challenge" })
+	@ApiProperty({
+		required: false,
+		description:
+			"S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the Mobile App a single-use code instead of the session id.",
+	})
 	@IsOptional()
 	@IsString()
-	@MaxLength(128)
+	@Matches(BASE64URL_32_BYTES)
 	codeChallenge?: string;
+}
+
+/**
+ * The OAuth app state a native sign-in has to create its authorization request
+ * with. Undefined for anything that is not the Mobile App, which is how the
+ * callback tells a native flow from a web one.
+ *
+ * Without this the request carries no platform, the callback reads the flow as
+ * web, and the Mobile App is left on the Web App's onboarding page with a live
+ * account and no session (ADR 0026).
+ */
+export function nativeSsoAppState(
+	dto: NativeSsoDto,
+): OAuthAppState | undefined {
+	if (dto.platform !== "mobile") return undefined;
+	return { platform: "mobile", codeChallenge: dto.codeChallenge };
 }
 
 export class NativeSsoResponseDto {

@@ -388,4 +388,64 @@ describe("GoogleSignupController", () => {
 			);
 		});
 	});
+	describe("native sign-in's return path", () => {
+		const CORE_OAUTH_URL =
+			"https://pds.test/oauth/authorize?request_uri=urn:ietf:params:oauth:request_uri:abc";
+		const CHALLENGE = "c".repeat(43);
+
+		beforeEach(() => {
+			mockAuthService.authorizeWithPds.mockResolvedValue(CORE_OAUTH_URL);
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-tok",
+				email: "user@example.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+		});
+
+		it("carries platform and challenge into the OAuth request", async () => {
+			await controller.googleNative({
+				identityToken: "native-token",
+				platform: "mobile",
+				codeChallenge: CHALLENGE,
+			});
+
+			// Without these the consent callback reads the flow as web and sends
+			// the user to the Web App, leaving a live account and no session.
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith({
+				platform: "mobile",
+				codeChallenge: CHALLENGE,
+			});
+		});
+
+		it("still binds the platform when no challenge is supplied", async () => {
+			await controller.googleNative({
+				identityToken: "native-token",
+				platform: "mobile",
+			});
+
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith({
+				platform: "mobile",
+				codeChallenge: undefined,
+			});
+		});
+
+		it("carries nothing for a caller that is not the Mobile App", async () => {
+			await controller.googleNative({ identityToken: "native-token" });
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith(undefined);
+		});
+
+		it("hands the pending registration back in the body", async () => {
+			const result = await controller.googleNative({
+				identityToken: "native-token",
+				platform: "mobile",
+			});
+
+			expect(result).toEqual({
+				pendingToken: "pending-tok",
+				email: "user@example.com",
+			});
+		});
+	});
 });
