@@ -123,10 +123,18 @@ jobs:
         # read. EXPO_PUBLIC_* values are inlined into the bundle as it is
         # published, so leaving them out would ship a staging update that calls
         # the production API - and per ADR 0021 those writes are real.
+        #
+        # This list has to be kept in step with `build.preview.env` by hand, and
+        # the failure is silent: an update missing a variable just ships a
+        # bundle where that feature is switched off. The Google client ids went
+        # in here one commit late and the staging app lost its Google button
+        # until it did.
         env:
           EXPO_PUBLIC_API_URL: https://api.staging.opnshelf.xyz
           EXPO_PUBLIC_SITE_URL: https://staging.opnshelf.xyz
           EXPO_PUBLIC_POSTHOG_KEY: phc_your_api_key_here
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 1037827407261-jk3mg813avu91j6ic25ucrpf6j72iuq5.apps.googleusercontent.com
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: 1037827407261-4p0icuv936s5et3s9q9khan69q029nc6.apps.googleusercontent.com
         # No --non-interactive: `eas update` hands it to `expo export`, which
         # rejects it and tells you to set CI instead. Actions already sets
         # CI=true on every step, so the flag was only ever noise in the log.
