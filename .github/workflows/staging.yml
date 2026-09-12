@@ -127,10 +127,12 @@ jobs:
       # eas.json and not into the copy, and staging lost its Google button. So
       # read eas.json instead: one source of truth, and it is the one in git.
       #
-      # Not `--environment preview`: the EAS "preview" environment has
-      # EXPO_PUBLIC_API_URL pointing at the *production* API. Builds are unhurt
-      # because build.preview.env wins over it, but an update resolved from that
-      # environment would write to production, which per ADR 0021 is real data.
+      # Not `--environment preview`: that environment is a second copy of these
+      # values, maintained by hand in the EAS dashboard, and it is the copy that
+      # silently drifts. It held the *production* API URL until it was corrected
+      # alongside this comment, and it still has no Google client ids, so an
+      # update resolved from it would ship staging without a Google button
+      # again. eas.json is the copy that lives in git and gets reviewed.
       # Relative to apps/mobile: this job sets that as its default
       # working-directory, so a repo-root path would not resolve.
       - name: Load the preview environment from eas.json
