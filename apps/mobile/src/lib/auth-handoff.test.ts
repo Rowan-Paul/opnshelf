@@ -1,6 +1,11 @@
 import * as SecureStore from "expo-secure-store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { beginHandoff, clearHandoff, redeemHandoffCode } from "./auth-handoff";
+import {
+	beginHandoff,
+	clearHandoff,
+	NoPendingHandoffError,
+	redeemHandoffCode,
+} from "./auth-handoff";
 
 const mocks = vi.hoisted(() => ({
 	challenge: vi.fn(),
@@ -67,9 +72,10 @@ describe("redeemHandoffCode", () => {
 			throwOnError: true,
 		});
 		expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(VERIFIER_KEY);
-		// The verifier is single-use on this side too.
-		await expect(redeemHandoffCode("handoff-code")).rejects.toThrow(
-			"No pending sign-in to complete",
+		// Single-use on this side too, and typed so callers can tell it from a
+		// real failure.
+		await expect(redeemHandoffCode("handoff-code")).rejects.toBeInstanceOf(
+			NoPendingHandoffError,
 		);
 	});
 

@@ -3,6 +3,7 @@ import {
 	authControllerMobileExchange,
 } from "@opnshelf/api";
 import * as SecureStore from "expo-secure-store";
+import { NoPendingHandoffError } from "./handoff-error";
 
 /**
  * Mobile Handoff Code (ADR 0026).
@@ -69,7 +70,7 @@ async function takeVerifier(): Promise<string | null> {
 export async function redeemHandoffCode(code: string): Promise<string> {
 	const codeVerifier = await takeVerifier();
 	if (!codeVerifier) {
-		throw new Error("No pending sign-in to complete");
+		throw new NoPendingHandoffError("No pending sign-in to complete");
 	}
 	const { data } = await authControllerMobileExchange({
 		body: { code, codeVerifier },
@@ -80,3 +81,5 @@ export async function redeemHandoffCode(code: string): Promise<string> {
 	}
 	return data.sessionId;
 }
+
+export { NoPendingHandoffError };

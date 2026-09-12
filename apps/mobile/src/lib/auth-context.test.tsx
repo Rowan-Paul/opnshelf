@@ -4,6 +4,7 @@ import type { ReactTestRenderer } from "react-test-renderer";
 import { act, create } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider, useAuth } from "./auth-context";
+import { NoPendingHandoffError } from "./handoff-error";
 
 const mocks = vi.hoisted(() => ({
 	authControllerLogout: vi.fn(),
@@ -198,6 +199,72 @@ describe("mobile handoff code", () => {
 		expect(mocks.redeemHandoffCode).toHaveBeenCalledWith("handoff-code");
 		expect(mocks.saveSessionToken).toHaveBeenCalledWith("exchanged-session");
 		expect(harness.queryClient.getQueryData(["auth", "me"])).toEqual(nextUser);
+
+		harness.unmount();
+	});
+
+	// Android can deliver the redirect to the auth/complete deep link *and*
+	// resolve this auth session. Both race for one verifier, so either may find
+	// nothing left to redeem on a sign-in that actually worked.
+	describe("when something else already claimed the handoff", () => {
+		beforeEach(() => {
+			mocks.openAuthSessionAsync.mockResolvedValue({
+				type: "success",
+				url: "opnshelf://auth/complete?code=handoff-code",
+			});
+			mocks.redeemHandoffCode.mockRejectedValue(
+				new NoPendingHandoffError("No pending sign-in to complete"),
+			);
+		});
+
+		it("reports success when a session did land", async () => {
+			mocks.loadSessionToken.mockResolvedValue("session-from-the-other-path");
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(true);
+			harness.unmount();
+		});
+
+		it("reports no completion rather than a failure when none did", async () => {
+			mocks.loadSessionToken.mockResolvedValue(null);
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			// Neither true nor a throw: claiming success would route to a
+			// signed-out home screen, and throwing would report a failure the
+			// deep-link route may be about to resolve.
+			expect(completed).toBe(false);
+			harness.unmount();
+		});
+	});
+
+	it("still surfaces a redemption failure that is not a lost race", async () => {
+		mocks.openAuthSessionAsync.mockResolvedValue({
+			type: "success",
+			url: "opnshelf://auth/complete?code=handoff-code",
+		});
+		mocks.redeemHandoffCode.mockRejectedValue(new Error("exchange exploded"));
+		mocks.loadSessionToken.mockResolvedValue("a-session");
+		const harness = await renderAuth();
+
+		await expect(
+			act(async () => {
+				await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			}),
+		).rejects.toThrow("exchange exploded");
 
 		harness.unmount();
 	});

@@ -4,6 +4,7 @@ import { ActivityIndicator, View } from "react-native";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { NoPendingHandoffError } from "@/lib/handoff-error";
 
 /**
  * Deep-link landing for the PDS OAuth redirect (`opnshelf://auth/complete`).
@@ -84,6 +85,15 @@ export default function AuthCompleteScreen() {
 				);
 			})
 			.catch((err) => {
+				// The auth session can complete the same sign-in: on Android both
+				// paths run and race for one verifier. Losing it here is not a
+				// failure, and reporting one would bounce a signed-in user to the
+				// login screen. Hand to the index gate, which sends them to login
+				// only if no session actually landed.
+				if (err instanceof NoPendingHandoffError) {
+					router.replace("/" as Href);
+					return;
+				}
 				console.error("Failed to complete auth:", err);
 				setMessage(
 					isMaintenanceError(err)
