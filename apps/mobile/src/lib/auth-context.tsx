@@ -25,9 +25,9 @@ import { loadSessionToken, saveSessionToken } from "@/lib/api";
 import {
 	beginHandoff,
 	clearHandoff,
-	HandoffAlreadyClaimedError,
 	redeemHandoffCode,
 } from "@/lib/auth-handoff";
+import { NoPendingHandoffError } from "@/lib/handoff-error";
 import { posthog } from "@/lib/posthog";
 import { setWidgetHandle } from "../../modules/widget-bridge";
 
@@ -205,9 +205,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[completeSession],
 	);
 
-	// Run the OAuth web flow and persist the returned session token. On Android
-	// the redirect to AUTH_REDIRECT_URL sometimes leaks to the deep-link handler
-	// instead of resolving here — the `auth/complete` route covers that case.
+	// Run the OAuth web flow and persist the returned session token.
+	//
+	// On Android the redirect to AUTH_REDIRECT_URL can reach the `auth/complete`
+	// deep-link route *as well as* resolving here, not instead of it. Both paths
+	// then race for one verifier and one single-use code, so either may find
+	// nothing left to redeem on a sign-in that succeeded. Returns true only when
+	// a session actually exists.
 	const runAuthFlow = useCallback(
 		async (authUrl: string) => {
 			const result = await WebBrowser.openAuthSessionAsync(
@@ -229,13 +233,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				try {
 					await completeHandoff(code);
 				} catch (error) {
-					// Both paths can fire on Android: the OS delivers the redirect to
-					// the auth/complete deep link *and* resolves the auth session
-					// here. Whichever runs first takes the verifier and the
-					// single-use code, so the other fails on a sign-in that actually
-					// succeeded. The deep-link route owns its own errors, so losing
-					// this race is not something to report.
-					if (!(error instanceof HandoffAlreadyClaimedError)) throw error;
+					if (!(error instanceof NoPendingHandoffError)) throw error;
+					// Lost the race described above, or never had a handoff at all -
+					// the two are indistinguishable from here. A session means the
+					// other path got there first and there is nothing to report; no
+					// session means it is still in flight or never started, and the
+					// deep-link route reports its own failures either way. Claiming
+					// success without one would route to a signed-out home screen.
+					return (await loadSessionToken()) !== null;
 				}
 				return true;
 			}

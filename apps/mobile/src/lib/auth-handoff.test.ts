@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	beginHandoff,
 	clearHandoff,
-	HandoffAlreadyClaimedError,
+	NoPendingHandoffError,
 	redeemHandoffCode,
 } from "./auth-handoff";
 
@@ -72,11 +72,10 @@ describe("redeemHandoffCode", () => {
 			throwOnError: true,
 		});
 		expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(VERIFIER_KEY);
-		// The verifier is single-use on this side too. The typed error is what
-		// lets runAuthFlow tell "another path already completed this sign-in"
-		// apart from a real failure - on Android both can run at once.
+		// Single-use on this side too, and typed so callers can tell it from a
+		// real failure.
 		await expect(redeemHandoffCode("handoff-code")).rejects.toBeInstanceOf(
-			HandoffAlreadyClaimedError,
+			NoPendingHandoffError,
 		);
 	});
 
