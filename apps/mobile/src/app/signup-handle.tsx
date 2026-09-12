@@ -5,8 +5,9 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { Button } from "@/components/ui/button";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -200,21 +201,12 @@ export default function SignupHandleScreen() {
 						</Text>
 					</View>
 
-					<Pressable
-						disabled={continueMutation.isPending}
+					<Button
+						label="Continue signing in"
+						loadingLabel="Signing in"
+						loading={continueMutation.isPending}
 						onPress={() => continueMutation.mutate(createdHandle)}
-						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
-						style={{ opacity: continueMutation.isPending ? 0.6 : 1 }}
-					>
-						{continueMutation.isPending && (
-							<ActivityIndicator size="small" color="#3f2e00" />
-						)}
-						<Text className="font-semibold text-base text-primary-foreground">
-							{continueMutation.isPending
-								? "Signing in"
-								: "Continue signing in"}
-						</Text>
-					</Pressable>
+					/>
 				</ScrollView>
 			</Screen>
 		);
@@ -270,17 +262,13 @@ export default function SignupHandleScreen() {
 						onError={onCaptchaError}
 					/>
 
-					<Pressable
+					<Button
+						label="Create account"
+						loadingLabel="Creating account"
+						loading={isSubmitting}
 						disabled={!canSubmit}
 						onPress={handleSubmit}
-						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
-						style={{ opacity: canSubmit ? 1 : 0.6 }}
-					>
-						{isSubmitting && <ActivityIndicator size="small" color="#3f2e00" />}
-						<Text className="font-semibold text-base text-primary-foreground">
-							{isSubmitting ? "Creating account" : "Create account"}
-						</Text>
-					</Pressable>
+					/>
 				</View>
 
 				<Pressable
