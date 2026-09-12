@@ -1,13 +1,15 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
+	Text,
 	useColorScheme,
 	View,
 } from "react-native";
-import { Text } from "@/components/ui/text";
+import { AppleMark } from "@/components/marks/AppleMark";
+import { GoogleMark } from "@/components/marks/GoogleMark";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { AuthFlowError, authErrorMessage } from "@/lib/auth-error";
@@ -21,6 +23,50 @@ import {
 	supportsNativeApple,
 } from "@/lib/provider-signin";
 
+/**
+ * Shared geometry. Both providers get the same box, because Apple asks that
+ * their button be no less prominent than the alternatives and a lopsided pair
+ * steers the choice anyway. 16 is `--radius-lg`, the app's button radius.
+ */
+const BUTTON_HEIGHT = 48;
+const BUTTON_RADIUS = 16;
+const MARK_SIZE = 18;
+/**
+ * The weighted family registered in `app/_layout.tsx`, not `font-semibold`.
+ * React Native cannot synthesize a weight, so each one is its own family, and
+ * these labels carry vendor-mandated colours that must not be overridden by
+ * the themed Text primitive's own `text-foreground`.
+ */
+const LABEL_FONT = "Inter-SemiBold";
+
+/**
+ * Google's published button specification, verbatim.
+ *
+ * https://developers.google.com/identity/branding-guidelines
+ *
+ * The fill, stroke and text colours are branding requirements and are not
+ * theme tokens — they must be these values, in these themes. The type size is
+ * the one deliberate departure: the spec's 14/20 pairs with Google's own 40pt
+ * reference button, and this one is 48 to sit level with Apple's.
+ */
+const GOOGLE = {
+	light: { fill: "#FFFFFF", stroke: "#747775", text: "#1F1F1F" },
+	dark: { fill: "#131314", stroke: "#8E918F", text: "#E3E3E3" },
+} as const;
+
+/**
+ * Apple's approved button colours for a custom button, which is Android only —
+ * iOS uses `AppleAuthenticationButton` and lets the system draw it.
+ *
+ * Apple permits black, white, and white with an outline. These mirror Google's
+ * two themes so the pair reads as one control in both, rather than as a vendor
+ * button next to an app button.
+ */
+const APPLE = {
+	light: { fill: "#FFFFFF", stroke: "#000000", content: "#000000" },
+	dark: { fill: "#000000", stroke: "#000000", content: "#FFFFFF" },
+} as const;
+
 interface ProviderButtonsProps {
 	/** Set while the surrounding screen runs its own auth flow. */
 	disabled?: boolean;
@@ -33,10 +79,78 @@ interface ProviderButtonsProps {
 }
 
 /**
+ * One provider button: mark, label, and nothing else.
+ *
+ * The spinner is absolutely positioned rather than inserted into the row,
+ * because a spinner that takes part in the layout shoves the label sideways
+ * the moment you tap.
+ */
+function ProviderButton({
+	label,
+	mark,
+	fill,
+	stroke,
+	textColor,
+	busy,
+	disabled,
+	onPress,
+}: {
+	label: string;
+	mark: ReactNode;
+	fill: string;
+	stroke: string;
+	textColor: string;
+	busy: boolean;
+	disabled: boolean;
+	onPress: () => void;
+}) {
+	return (
+		<Pressable
+			accessibilityRole="button"
+			accessibilityLabel={label}
+			accessibilityState={{ disabled, busy }}
+			disabled={disabled}
+			onPress={onPress}
+			style={{
+				height: BUTTON_HEIGHT,
+				borderRadius: BUTTON_RADIUS,
+				backgroundColor: fill,
+				borderWidth: 1,
+				borderColor: stroke,
+				flexDirection: "row",
+				alignItems: "center",
+				justifyContent: "center",
+				gap: 12,
+				opacity: disabled ? 0.6 : 1,
+			}}
+		>
+			{mark}
+			<Text style={{ color: textColor, fontFamily: LABEL_FONT, fontSize: 16 }}>
+				{label}
+			</Text>
+			{busy ? (
+				<View
+					style={{
+						position: "absolute",
+						right: 16,
+						top: 0,
+						bottom: 0,
+						justifyContent: "center",
+					}}
+				>
+					<ActivityIndicator size="small" color={textColor} />
+				</View>
+			) : null}
+		</Pressable>
+	);
+}
+
+/**
  * "Continue with Apple" / "Continue with Google" (ADR 0027).
  *
- * Apple and Google are equally prominent here because App Store guideline 4.8
- * is the reason the Google button can exist in this app at all.
+ * Both labels are approved by their respective vendor, and both buttons are
+ * the same size on purpose: App Store guideline 4.8 is the reason the Google
+ * button can exist in this app at all, so neither may read as the default.
  */
 export function ProviderButtons({
 	disabled = false,
@@ -44,11 +158,13 @@ export function ProviderButtons({
 }: ProviderButtonsProps) {
 	const { runAuthorizationUrl } = useAuth();
 	const toast = useToast();
-	const colorScheme = useColorScheme();
+	const dark = useColorScheme() === "dark";
 	const [busy, setBusy] = useState<Provider | null>(null);
 
 	const googleAvailable = isGoogleConfigured();
 	const locked = disabled || busy !== null;
+	const google = dark ? GOOGLE.dark : GOOGLE.light;
+	const apple = dark ? APPLE.dark : APPLE.light;
 
 	useEffect(() => {
 		onBusyChange?.(busy !== null);
@@ -118,51 +234,49 @@ export function ProviderButtons({
 	return (
 		<View className="gap-3">
 			{supportsNativeApple() ? (
-				// Apple's guidelines require their own button wherever native Sign in
-				// with Apple is offered, and guideline 4.8 is the whole reason this
-				// screen has provider buttons — so this is not the place to draw our
-				// own. Android keeps the custom one, where no such rule applies.
+				// Drawn by the system, so it is compliant by construction — the only
+				// things set here are the two Apple exposes as adjustable. The style
+				// tracks the theme the same way Google's does: a light surface with
+				// an outline, or a dark one.
 				<AppleAuthentication.AppleAuthenticationButton
 					buttonType={
 						AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
 					}
 					buttonStyle={
-						colorScheme === "dark"
-							? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-							: AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+						dark
+							? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+							: AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
 					}
-					cornerRadius={8}
-					style={{ height: 48, opacity: locked ? 0.6 : 1 }}
+					cornerRadius={BUTTON_RADIUS}
+					style={{ height: BUTTON_HEIGHT, opacity: locked ? 0.6 : 1 }}
 					onPress={() => {
 						if (!locked) void onPress("apple");
 					}}
 				/>
 			) : (
-				<Pressable
+				<ProviderButton
+					label="Continue with Apple"
+					mark={<AppleMark size={MARK_SIZE} color={apple.content} />}
+					fill={apple.fill}
+					stroke={apple.stroke}
+					textColor={apple.content}
+					busy={busy === "apple"}
 					disabled={locked}
 					onPress={() => onPress("apple")}
-					className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
-					style={{ opacity: locked ? 0.6 : 1 }}
-				>
-					{busy === "apple" && <ActivityIndicator size="small" />}
-					<Text className="font-semibold text-base text-foreground">
-						Continue with Apple
-					</Text>
-				</Pressable>
+				/>
 			)}
 
 			{googleAvailable ? (
-				<Pressable
+				<ProviderButton
+					label="Continue with Google"
+					mark={<GoogleMark size={MARK_SIZE} />}
+					fill={google.fill}
+					stroke={google.stroke}
+					textColor={google.text}
+					busy={busy === "google"}
 					disabled={locked}
 					onPress={() => onPress("google")}
-					className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
-					style={{ opacity: locked ? 0.6 : 1 }}
-				>
-					{busy === "google" && <ActivityIndicator size="small" />}
-					<Text className="font-semibold text-base text-foreground">
-						Continue with Google
-					</Text>
-				</Pressable>
+				/>
 			) : null}
 		</View>
 	);
