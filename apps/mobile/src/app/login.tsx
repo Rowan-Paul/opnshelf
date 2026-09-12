@@ -50,7 +50,7 @@ export default function LoginScreen() {
 		return <Redirect href="/" />;
 	}
 
-	const submit = async (action: () => Promise<void>) => {
+	const submit = async (action: () => Promise<unknown>) => {
 		if (isSubmitting) {
 			return;
 		}

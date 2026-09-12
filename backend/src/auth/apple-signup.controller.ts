@@ -28,9 +28,12 @@ import { AppleOAuthService } from "../pds/apple-oauth.service";
 import { CaptchaService } from "../pds/captcha.service";
 import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import {
+	type AuthPlatform,
 	flowCookieOptions,
 	getFrontendUrl,
 	isProduction,
+	type ProviderSignupErrorCode,
+	resolveProviderSignupErrorRedirect,
 	TIMEZONE_COOKIE_NAME,
 } from "./auth-flow";
 import { AuthService } from "./auth.service";
@@ -57,11 +60,6 @@ import {
 /** Holds the PDS pending-registration token between Apple and the handle picker. */
 const APPLE_PENDING_COOKIE_NAME = "apple_pending";
 const APPLE_COOKIE_MAX_AGE_MS = 15 * 60 * 1000;
-
-type AppleSignupError =
-	| "apple_unavailable"
-	| "apple_failed"
-	| "apple_email_unverified";
 
 /** Apple's form_post body. `user` arrives only on a first authorization. */
 interface AppleCallbackBody {
@@ -126,11 +124,24 @@ export class AppleSignupController {
 		}
 	}
 
-	/** Bounce back to the signup form with a code it turns into a toast. */
-	private buildSignupErrorUrl(errorCode: AppleSignupError): string {
-		const url = new URL("/signup", getFrontendUrl(this.configService));
-		url.searchParams.set("error", errorCode);
-		return url.toString();
+	/**
+	 * Bounce back with a code the caller turns into a message: the signup form
+	 * for the web, the app's deep link for the Mobile App.
+	 *
+	 * The platform is not optional in practice. Android runs this same browser
+	 * leg inside an in-app browser, so a web URL here leaves the user staring at
+	 * the Web App's signup form with no way back into the app — and worse, able
+	 * to finish signing up into a session the app never sees.
+	 */
+	private buildSignupErrorUrl(
+		errorCode: ProviderSignupErrorCode,
+		platform: AuthPlatform,
+	): string {
+		return resolveProviderSignupErrorRedirect(
+			getFrontendUrl(this.configService),
+			errorCode,
+			platform,
+		);
 	}
 
 	/**
@@ -151,13 +162,18 @@ export class AppleSignupController {
 		@Query("platform") platform?: string,
 		@Query("code_challenge") codeChallenge?: string,
 	): void {
-		if (!this.appleOAuth.configured || !this.browserFlowAvailable) {
-			res.redirect(this.buildSignupErrorUrl("apple_unavailable"));
-			return;
-		}
 		// The Android app starts here and needs to come back to the app, so its
 		// platform and handoff challenge ride inside the signed state.
 		const isMobile = platform === "mobile";
+		if (!this.appleOAuth.configured || !this.browserFlowAvailable) {
+			res.redirect(
+				this.buildSignupErrorUrl(
+					"apple_unavailable",
+					isMobile ? "mobile" : undefined,
+				),
+			);
+			return;
+		}
 		const carriedChallenge =
 			isMobile && codeChallenge && isValidCodeChallenge(codeChallenge)
 				? codeChallenge
@@ -185,17 +201,23 @@ export class AppleSignupController {
 		@Body() body: AppleCallbackBody,
 		@Res() res: Response,
 	): Promise<void> {
+		// Before anything else, including the cancellation branch: the state is
+		// the only thing that says which app started this, and a cancelled Android
+		// authorization still has to end up back in the app. Apple returns the
+		// state it was given on failures too.
+		const state = verifyProviderState(this.stateSecret, body.state);
+		const platform: AuthPlatform = state?.platform;
+
 		if (body.error || !body.code) {
 			// `user_cancelled_authorize` lands here too: the user backed out, which
 			// is not worth distinguishing from a failure on the signup form.
-			res.redirect(this.buildSignupErrorUrl("apple_failed"));
+			res.redirect(this.buildSignupErrorUrl("apple_failed", platform));
 			return;
 		}
 
-		const state = verifyProviderState(this.stateSecret, body.state);
 		if (!state) {
 			this.logger.warn("Rejected an Apple callback with unusable state");
-			res.redirect(this.buildSignupErrorUrl("apple_failed"));
+			res.redirect(this.buildSignupErrorUrl("apple_failed", platform));
 			return;
 		}
 
@@ -238,7 +260,9 @@ export class AppleSignupController {
 			// Without that the account would be created and then gated behind a code
 			// Tranquil cannot email, so refuse before anything exists.
 			if (!pending.email || !pending.emailVerified) {
-				res.redirect(this.buildSignupErrorUrl("apple_email_unverified"));
+				res.redirect(
+					this.buildSignupErrorUrl("apple_email_unverified", platform),
+				);
 				return;
 			}
 
@@ -251,9 +275,15 @@ export class AppleSignupController {
 
 			// No `?suggested=`: Apple never reports a username, so the handle field
 			// starts empty and Onboarding collects the display name later (ADR 0027).
-			res.redirect(
-				new URL("/signup/apple", getFrontendUrl(this.configService)).toString(),
+			const picker = new URL(
+				"/signup/apple",
+				getFrontendUrl(this.configService),
 			);
+			// The Android app renders this page inside an in-app browser, where a
+			// link back to the web signup form is a dead end. Telling the page which
+			// it is lets it offer a way back into the app instead.
+			if (platform === "mobile") picker.searchParams.set("platform", "mobile");
+			res.redirect(picker.toString());
 		} catch (error) {
 			const message = ssoErrorMessage(error);
 			// The PDS says this Apple identity already belongs to an account. That
@@ -266,7 +296,7 @@ export class AppleSignupController {
 				return;
 			}
 			this.logger.error("Apple callback failed", error);
-			res.redirect(this.buildSignupErrorUrl("apple_failed"));
+			res.redirect(this.buildSignupErrorUrl("apple_failed", platform));
 		}
 	}
 

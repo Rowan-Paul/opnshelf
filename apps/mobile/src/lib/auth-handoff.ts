@@ -64,10 +64,48 @@ async function takeVerifier(): Promise<string | null> {
 }
 
 /**
+ * The redemption currently running, if any.
+ *
+ * Android can deliver one redirect twice - resolving the auth session *and*
+ * opening the `auth/complete` route - so two callers redeem the same code at
+ * once. Both read the verifier before either clears it, both post the
+ * exchange, and the backend consumes the code once: the loser gets a plain
+ * HTTP error rather than NoPendingHandoffError, slips past the guard that
+ * exists for exactly this case, and tells a signed-in user that sign-in
+ * failed. Sharing one promise means there is no loser.
+ */
+let inFlightRedemption: { code: string; result: Promise<string> } | null = null;
+
+/**
+ * The exchange another path already started, if one is running.
+ *
+ * Lets a caller that did not receive the code wait for the one that did,
+ * instead of guessing from a clock how long it should take.
+ */
+export function pendingRedemption(): Promise<string> | null {
+	return inFlightRedemption?.result ?? null;
+}
+
+/**
  * Redeem the code from the redirect for the session id. The verifier is
  * consumed whatever the outcome; the backend consumes the code the same way.
+ *
+ * Concurrent callers redeeming the same code share one exchange.
  */
-export async function redeemHandoffCode(code: string): Promise<string> {
+export function redeemHandoffCode(code: string): Promise<string> {
+	if (inFlightRedemption?.code === code) {
+		return inFlightRedemption.result;
+	}
+	const result = exchangeHandoffCode(code).finally(() => {
+		// Cleared either way: a failure has to stay retryable, and a later
+		// arrival for a spent code should find no verifier and be told so.
+		if (inFlightRedemption?.code === code) inFlightRedemption = null;
+	});
+	inFlightRedemption = { code, result };
+	return result;
+}
+
+async function exchangeHandoffCode(code: string): Promise<string> {
 	const codeVerifier = await takeVerifier();
 	if (!codeVerifier) {
 		throw new NoPendingHandoffError("No pending sign-in to complete");

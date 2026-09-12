@@ -92,6 +92,44 @@ describe("redeemHandoffCode", () => {
 		});
 	});
 
+	it("shares one exchange between two callers redeeming the same code", async () => {
+		// Android's double delivery: the auth session and the auth/complete route
+		// both redeem. Two exchanges would mean the backend consumes the code for
+		// one of them and rejects the other with a plain HTTP error, which no
+		// caller recognises as "someone else finished it".
+		vi.mocked(SecureStore.getItemAsync).mockResolvedValue("stored-verifier");
+		let release!: (value: { data: { sessionId: string } }) => void;
+		mocks.exchange.mockReturnValue(
+			new Promise((resolve) => {
+				release = resolve;
+			}),
+		);
+
+		const first = redeemHandoffCode("handoff-code");
+		const second = redeemHandoffCode("handoff-code");
+		release({ data: { sessionId: "session-789" } });
+
+		await expect(Promise.all([first, second])).resolves.toEqual([
+			"session-789",
+			"session-789",
+		]);
+		expect(mocks.exchange).toHaveBeenCalledTimes(1);
+	});
+
+	it("still rejects a second redemption once the first has finished", async () => {
+		// Only overlapping calls share; a late arrival for a spent code must get
+		// the typed error, because by then there really is nothing to redeem.
+		vi.mocked(SecureStore.getItemAsync).mockResolvedValue("stored-verifier");
+		mocks.exchange.mockResolvedValue({ data: { sessionId: "session-789" } });
+
+		await redeemHandoffCode("handoff-code");
+		vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+
+		await expect(redeemHandoffCode("handoff-code")).rejects.toBeInstanceOf(
+			NoPendingHandoffError,
+		);
+	});
+
 	it("clears the verifier even when the exchange is rejected", async () => {
 		vi.mocked(SecureStore.getItemAsync).mockResolvedValue("stored-verifier");
 		mocks.exchange.mockRejectedValue({ status: 400 });

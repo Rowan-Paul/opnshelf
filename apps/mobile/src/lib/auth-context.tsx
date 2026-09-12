@@ -22,9 +22,11 @@ import {
 	useState,
 } from "react";
 import { loadSessionToken, saveSessionToken } from "@/lib/api";
+import { AuthFlowError } from "@/lib/auth-error";
 import {
 	beginHandoff,
 	clearHandoff,
+	pendingRedemption,
 	redeemHandoffCode,
 } from "@/lib/auth-handoff";
 import { NoPendingHandoffError } from "@/lib/handoff-error";
@@ -41,8 +43,11 @@ interface AuthContextType {
 	isLoading: boolean;
 	/** Convenience flag derived from `user`. */
 	isAuthenticated: boolean;
-	/** Start the login OAuth flow. Optional handle pre-fills the PDS. */
-	login: (handle?: string) => Promise<void>;
+	/**
+	 * Start the login OAuth flow. Optional handle pre-fills the PDS. Resolves
+	 * true only when a session exists afterwards, like runAuthorizationUrl.
+	 */
+	login: (handle?: string) => Promise<boolean>;
 	/** Continue an authorization request already created by the backend. */
 	runAuthorizationUrl: (authorizationUrl: string) => Promise<boolean>;
 	/**
@@ -229,6 +234,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	 * instant a session appears, so the path that matters stays fast.
 	 */
 	const settleElsewhere = useCallback(async (tokenBefore: string | null) => {
+		// Join the other path if it is already exchanging, rather than racing a
+		// clock it knows nothing about: a slow network can push that exchange past
+		// the whole budget, and the user would be told sign-in failed while it was
+		// still succeeding.
+		const pending = pendingRedemption();
+		if (pending) await pending.catch(() => undefined);
+
 		const deadline = Date.now() + SETTLE_TIMEOUT_MS;
 		while (Date.now() < deadline) {
 			// A *different* token, not merely any token: a stale one survives a
@@ -267,7 +279,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			const error = url.searchParams.get("error");
 			if (error) {
 				await clearHandoff();
-				throw new Error(`Auth flow failed: ${error}`);
+				// Typed so callers can tell the user what actually went wrong
+				// instead of falling back to "couldn't sign in".
+				throw new AuthFlowError(error);
 			}
 			const code = url.searchParams.get("code");
 			if (code) {
@@ -305,7 +319,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				"mobile",
 				codeChallenge ?? undefined,
 			);
-			await runAuthFlow(loginUrl);
+			return runAuthFlow(loginUrl);
 		},
 		[runAuthFlow],
 	);

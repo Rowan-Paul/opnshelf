@@ -71,3 +71,12 @@ in, and there is only ever one authentication protocol to reason about.
   minting its own atproto tokens, which is the thing the OAuth model exists to
   prevent. In practice consent is remembered, so the bounce is interactive only
   the first time, and on every sign-in for accounts with TOTP.
+- **Every exit from the browser leg has to land back in the app, not only the
+  successful one.** The Android app runs Apple inside an in-app browser, so an
+  error redirect to the Web App's signup form strands the user there: nothing
+  on that page returns to the app, and the form can still complete a signup
+  into a *web* session the app never sees. The signed state (ADR 0028) carries
+  `platform` for exactly this — which means it has to be verified before the
+  cancellation branch, not after, and the web handle picker has to be told it
+  is being rendered inside the app so its "Start again" link bounces through
+  `opnshelf://auth/complete` instead of linking to `/signup`.

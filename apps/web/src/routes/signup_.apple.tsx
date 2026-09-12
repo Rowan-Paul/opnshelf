@@ -4,6 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { AppleMark } from "#/components/AppleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
@@ -15,6 +16,14 @@ import { useAuth } from "#/lib/auth-context";
 export const Route = createFileRoute("/signup_/apple")({
 	head: () => ({
 		meta: [{ title: "Choose your handle | Opnshelf" }],
+	}),
+	validateSearch: z.object({
+		/**
+		 * Set by the backend when the Android app started this flow: Sign in with
+		 * Apple has no native credential there, so the app runs the browser leg in
+		 * an in-app browser and lands here (ADR 0027).
+		 */
+		platform: z.literal("mobile").optional(),
 	}),
 	component: AppleSignupPage,
 });
@@ -30,7 +39,17 @@ function extractRegisterErrorMessage(error: unknown): string {
 	return fallback;
 }
 
+/**
+ * Leaving this page for the web signup form is a dead end inside the app's
+ * in-app browser: nothing there can return to the app, and finishing signup
+ * would mint a web session the app never sees. The app's redirect URL is what
+ * closes the browser, so bounce through it instead.
+ */
+const MOBILE_START_AGAIN = "opnshelf://auth/complete?error=apple_failed";
+
 function AppleSignupPage() {
+	const { platform } = Route.useSearch();
+	const isMobile = platform === "mobile";
 	const [email, setEmail] = useState<string | null>(null);
 	const [pendingLoaded, setPendingLoaded] = useState(false);
 	// Apple never reports a username, so unlike the Google picker this starts
@@ -98,9 +117,15 @@ function AppleSignupPage() {
 					<p className="mt-2 text-(--foreground-muted)">
 						This page only works right after signing in with Apple.
 					</p>
-					<Link to="/signup" className="btn btn-primary mt-6">
-						Back to sign up
-					</Link>
+					{isMobile ? (
+						<a href={MOBILE_START_AGAIN} className="btn btn-primary mt-6">
+							Back to the app
+						</a>
+					) : (
+						<Link to="/signup" className="btn btn-primary mt-6">
+							Back to sign up
+						</Link>
+					)}
 				</div>
 			</div>
 		);
@@ -204,9 +229,18 @@ function AppleSignupPage() {
 
 					<p className="mt-6 text-center text-(--foreground-muted) text-sm">
 						Wrong Apple account?{" "}
-						<Link to="/signup" className="text-(--accent) hover:underline">
-							Start again
-						</Link>
+						{isMobile ? (
+							<a
+								href={MOBILE_START_AGAIN}
+								className="text-(--accent) hover:underline"
+							>
+								Start again
+							</a>
+						) : (
+							<Link to="/signup" className="text-(--accent) hover:underline">
+								Start again
+							</Link>
+						)}
 					</p>
 				</div>
 			</div>

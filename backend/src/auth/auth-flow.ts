@@ -10,6 +10,17 @@ export type OAuthErrorCode =
 	| "auth_failed"
 	| "callback_failed"
 	| "permission_declined";
+
+/**
+ * Why a provider signup could not continue. Separate from OAuthErrorCode
+ * because these reach the user before any OAuth request exists, but they
+ * travel the same two routes: the Web App's signup form, or the Mobile App's
+ * deep link.
+ */
+export type ProviderSignupErrorCode =
+	| "apple_unavailable"
+	| "apple_failed"
+	| "apple_email_unverified";
 export type AuthPlatform = "mobile" | undefined;
 
 export function isProduction(configService: ConfigService): boolean {
@@ -80,7 +91,9 @@ export function buildWebErrorUrl(
 	return url.toString();
 }
 
-export function buildMobileErrorUrl(errorCode: OAuthErrorCode): string {
+export function buildMobileErrorUrl(
+	errorCode: OAuthErrorCode | ProviderSignupErrorCode,
+): string {
 	return `opnshelf://auth/complete?error=${encodeURIComponent(errorCode)}`;
 }
 
@@ -94,4 +107,26 @@ export function resolveErrorRedirect(
 		return buildMobileErrorUrl(errorCode);
 	}
 	return buildWebErrorUrl(frontendUrl, errorCode);
+}
+
+/**
+ * Where a failed provider signup lands. The Mobile App gets its deep link so
+ * the in-app browser closes and the app reports the failure itself; anything
+ * else gets the Web App's signup form.
+ *
+ * Without the platform branch a Mobile App user is left inside the in-app
+ * browser looking at the Web App's signup form, which can mint a web session
+ * the app never sees.
+ */
+export function resolveProviderSignupErrorRedirect(
+	frontendUrl: string,
+	errorCode: ProviderSignupErrorCode,
+	platform: AuthPlatform,
+): string {
+	if (platform === "mobile") {
+		return buildMobileErrorUrl(errorCode);
+	}
+	const url = new URL("/signup", frontendUrl);
+	url.searchParams.set("error", errorCode);
+	return url.toString();
 }
