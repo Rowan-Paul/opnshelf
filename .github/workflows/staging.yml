@@ -118,23 +118,34 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: ${{ github.workspace }}
 
+      # `eas update` does not read `build.preview.env` from eas.json, and
+      # EXPO_PUBLIC_* values are inlined into the bundle as it is published, so
+      # an update that does not carry them ships a bundle where those features
+      # are switched off - silently, since nothing fails.
+      #
+      # These were duplicated here by hand until the Google client ids went into
+      # eas.json and not into the copy, and staging lost its Google button. So
+      # read eas.json instead: one source of truth, and it is the one in git.
+      #
+      # Not `--environment preview`: the EAS "preview" environment has
+      # EXPO_PUBLIC_API_URL pointing at the *production* API. Builds are unhurt
+      # because build.preview.env wins over it, but an update resolved from that
+      # environment would write to production, which per ADR 0021 is real data.
+      - name: Load the preview environment from eas.json
+        run: |
+          node -e "
+            const env = require('./apps/mobile/eas.json').build.preview.env ?? {};
+            const lines = Object.entries(env)
+              .filter(([k]) => k.startsWith('EXPO_PUBLIC_'))
+              .map(([k, v]) => k + '=' + v);
+            if (!lines.length) {
+              console.error('No EXPO_PUBLIC_* found in build.preview.env');
+              process.exit(1);
+            }
+            console.log(lines.join('\\n'));
+          " | tee -a "$GITHUB_ENV"
+
       - name: Publish the update
-        # Mirrors `build.preview.env` in eas.json, which `eas update` does not
-        # read. EXPO_PUBLIC_* values are inlined into the bundle as it is
-        # published, so leaving them out would ship a staging update that calls
-        # the production API - and per ADR 0021 those writes are real.
-        #
-        # This list has to be kept in step with `build.preview.env` by hand, and
-        # the failure is silent: an update missing a variable just ships a
-        # bundle where that feature is switched off. The Google client ids went
-        # in here one commit late and the staging app lost its Google button
-        # until it did.
-        env:
-          EXPO_PUBLIC_API_URL: https://api.staging.opnshelf.xyz
-          EXPO_PUBLIC_SITE_URL: https://staging.opnshelf.xyz
-          EXPO_PUBLIC_POSTHOG_KEY: phc_your_api_key_here
-          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 1037827407261-jk3mg813avu91j6ic25ucrpf6j72iuq5.apps.googleusercontent.com
-          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: 1037827407261-4p0icuv936s5et3s9q9khan69q029nc6.apps.googleusercontent.com
         # No --non-interactive: `eas update` hands it to `expo export`, which
         # rejects it and tells you to set CI instead. Actions already sets
         # CI=true on every step, so the flag was only ever noise in the log.
