@@ -228,10 +228,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	 * Costs up to SETTLE_TIMEOUT_MS on a genuine cancellation, and returns the
 	 * instant a session appears, so the path that matters stays fast.
 	 */
-	const settleElsewhere = useCallback(async () => {
+	const settleElsewhere = useCallback(async (tokenBefore: string | null) => {
 		const deadline = Date.now() + SETTLE_TIMEOUT_MS;
 		while (Date.now() < deadline) {
-			if (await loadSessionToken()) return true;
+			// A *different* token, not merely any token: a stale one survives a
+			// failed `me` fetch, and treating that as success turns a cancelled
+			// sign-in into a silent bounce back to the signed-out home screen.
+			const token = await loadSessionToken();
+			if (token && token !== tokenBefore) return true;
 			await new Promise((resolve) => setTimeout(resolve, SETTLE_POLL_MS));
 		}
 		// Nobody completed it, so the handoff is genuinely spent.
@@ -249,12 +253,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	 */
 	const runAuthFlow = useCallback(
 		async (authUrl: string) => {
+			// Snapshot first: settling compares against this rather than asking
+			// whether any token exists.
+			const tokenBefore = await loadSessionToken();
 			const result = await WebBrowser.openAuthSessionAsync(
 				authUrl,
 				AUTH_REDIRECT_URL,
 			);
 			if (result.type !== "success") {
-				return settleElsewhere();
+				return settleElsewhere(tokenBefore);
 			}
 			const url = new URL(result.url);
 			const error = url.searchParams.get("error");
@@ -271,7 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					// Something else took the verifier, or there never was one. Both
 					// look identical from here, so wait and see whether a session
 					// lands rather than guessing.
-					return settleElsewhere();
+					return settleElsewhere(tokenBefore);
 				}
 				return true;
 			}

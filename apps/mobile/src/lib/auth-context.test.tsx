@@ -214,10 +214,13 @@ describe("mobile handoff code", () => {
 		});
 
 		it("reports success once the other path lands a session", async () => {
-			// Absent when the browser closes, present shortly after.
-			mocks.loadSessionToken
-				.mockResolvedValueOnce(null)
-				.mockResolvedValue("session-from-the-deep-link");
+			// The deep-link route lands its session while the browser is closing.
+			let stored: string | null = null;
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				stored = "session-from-the-deep-link";
+				return { type: "dismiss" };
+			});
 			const harness = await renderAuth();
 
 			let completed: boolean | undefined;
@@ -232,9 +235,12 @@ describe("mobile handoff code", () => {
 		});
 
 		it("leaves the handoff alone while that is still possible", async () => {
-			mocks.loadSessionToken
-				.mockResolvedValueOnce(null)
-				.mockResolvedValue("session-from-the-deep-link");
+			let stored: string | null = null;
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				stored = "session-from-the-deep-link";
+				return { type: "dismiss" };
+			});
 			const harness = await renderAuth();
 
 			await act(async () => {
@@ -244,6 +250,24 @@ describe("mobile handoff code", () => {
 			// Clearing it here would take the verifier the deep-link route is
 			// about to redeem with.
 			expect(mocks.clearHandoff).not.toHaveBeenCalled();
+			harness.unmount();
+		});
+
+		it("does not mistake a stale token for a completed sign-in", async () => {
+			// A token can outlive its session: a non-401 failure on `me` leaves
+			// the app signed out with the token still in SecureStore. Returning
+			// true here sends a cancelling user back to a signed-out home screen.
+			mocks.loadSessionToken.mockResolvedValue("stale-token-from-last-time");
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(false);
 			harness.unmount();
 		});
 
@@ -279,7 +303,14 @@ describe("mobile handoff code", () => {
 		});
 
 		it("reports success when a session did land", async () => {
-			mocks.loadSessionToken.mockResolvedValue("session-from-the-other-path");
+			// The other path redeems the code and stores its session, so this one
+			// finds the verifier gone and a token that was not there before.
+			let stored: string | null = null;
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.redeemHandoffCode.mockImplementation(async () => {
+				stored = "session-from-the-other-path";
+				throw new NoPendingHandoffError("No pending sign-in to complete");
+			});
 			const harness = await renderAuth();
 
 			let completed: boolean | undefined;
