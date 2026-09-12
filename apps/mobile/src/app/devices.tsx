@@ -8,7 +8,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { Laptop, LogOut, Smartphone, Tablet } from "lucide-react-native";
-import { Pressable, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
@@ -143,33 +144,26 @@ export default function DevicesScreen() {
 											</Text>
 										</View>
 									) : (
-										<Pressable
+										<Button
 											accessibilityLabel={`Sign out ${device.name ?? "unknown device"}`}
-											accessibilityRole="button"
+											label="Sign out"
+											variant="destructive"
+											size="sm"
 											disabled={busy}
 											onPress={() => confirmRevokeOne(device)}
-											className="rounded-lg border border-destructive/40 px-3 py-2"
-										>
-											<Text className="font-medium text-destructive text-sm">
-												Sign out
-											</Text>
-										</Pressable>
+										/>
 									)}
 								</View>
 							))}
 
 							{others.length > 0 ? (
-								<Pressable
-									accessibilityRole="button"
+								<Button
+									label="Sign out all other devices"
+									variant="destructive"
 									disabled={busy}
+									leading={<LogOut color="#ef4444" size={18} />}
 									onPress={confirmRevokeOthers}
-									className="flex-row items-center justify-center gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3"
-								>
-									<LogOut color="#ef4444" size={18} />
-									<Text className="font-medium text-destructive">
-										Sign out all other devices
-									</Text>
-								</Pressable>
+								/>
 							) : null}
 						</View>
 					)}

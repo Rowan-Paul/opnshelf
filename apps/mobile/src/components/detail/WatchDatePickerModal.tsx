@@ -4,6 +4,7 @@ import DateTimePicker, {
 import { Calendar, Clock, X } from "lucide-react-native";
 import { useState } from "react";
 import { Modal, Platform, Pressable, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 
 interface WatchDatePickerModalProps {
@@ -149,16 +150,13 @@ export function WatchDatePickerModal({
 						>
 							<Text className="font-semibold text-foreground">Cancel</Text>
 						</Pressable>
-						<Pressable
+						<Button
+							label="Add watch"
+							loadingLabel="Saving…"
+							loading={isLoading}
+							className="flex-1"
 							onPress={handleConfirm}
-							disabled={isLoading}
-							className="flex-1 items-center rounded-lg bg-primary py-3"
-							style={{ opacity: isLoading ? 0.7 : 1 }}
-						>
-							<Text className="font-semibold text-primary-foreground">
-								{isLoading ? "Saving…" : "Add watch"}
-							</Text>
-						</Pressable>
+						/>
 					</View>
 				</Pressable>
 			</Pressable>

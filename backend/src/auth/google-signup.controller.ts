@@ -15,6 +15,7 @@ import {
 	UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Throttle } from "@nestjs/throttler";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
@@ -33,9 +34,18 @@ import {
 	GoogleRegisterResponseDto,
 	GooglePendingResponseDto,
 } from "./dto/google-register.dto";
+import {
+	nativeSsoAppState,
+	NativeSsoDto,
+	NativeSsoResponseDto,
+} from "./dto/native-sso.dto";
 import { NativeAccountService } from "./native-account.service";
 import { SignupRateLimiter } from "./signup-rate-limiter";
-import { getClientIp, mapCreateAccountError } from "./signup-support";
+import {
+	getClientIp,
+	mapCreateAccountError,
+	ssoErrorMessage,
+} from "./signup-support";
 
 /** CSRF state for the Google consent round trip. */
 const GOOGLE_STATE_COOKIE_NAME = "google_state";
@@ -202,10 +212,7 @@ export class GoogleSignupController {
 			// ponytail: substring match on the PDS message. It is the only way to
 			// tell "already has an account" from a bad token, and getting it wrong
 			// only costs a returning user a vaguer error.
-			const message =
-				err && typeof err === "object" && "message" in err
-					? String((err as { message?: unknown }).message)
-					: "";
+			const message = ssoErrorMessage(err);
 			if (message.includes("already linked")) {
 				// Not an error: this Google account already has an opnshelf account,
 				// so the same button has to sign them in. Only the PDS can mint a
@@ -285,7 +292,7 @@ export class GoogleSignupController {
 			throw new ForbiddenException("Captcha verification failed");
 		}
 
-		const pendingToken = this.readPendingToken(req);
+		const pendingToken = this.readPendingToken(req, dto);
 		if (!pendingToken) {
 			throw new BadRequestException(
 				"Your Google sign-in expired. Please start again.",
@@ -370,11 +377,89 @@ export class GoogleSignupController {
 		};
 	}
 
-	private readPendingToken(req: Request): string | null {
+	/**
+	 * Sign in with a credential the operating system produced (ADR 0027).
+	 *
+	 * No browser round trip happens here, so there is no state to verify: the
+	 * identity token's signature is the proof and the PDS is what checks it,
+	 * exactly as it does for the browser flow. Throttled because the token
+	 * arrives unauthenticated.
+	 */
+	@Post("auth/google/native")
+	@HttpCode(HttpStatus.OK)
+	@Throttle({ default: { limit: 10, ttl: 60_000 } })
+	@ApiOperation({
+		operationId: "AuthController_googleNative",
+		summary: "Sign in with a native Google credential",
+	})
+	@ApiResponse({ status: 200, type: NativeSsoResponseDto })
+	@ApiResponse({
+		status: 400,
+		description: "The credential could not be verified",
+	})
+	async googleNative(@Body() dto: NativeSsoDto): Promise<NativeSsoResponseDto> {
+		const coreOAuthUrl = await this.authService.authorizeWithPds(
+			nativeSsoAppState(dto),
+		);
+		const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
+		if (!requestUri) {
+			this.logger.error("Core OAuth URL carried no request_uri");
+			throw new ServiceUnavailableException("Sign-in is not available");
+		}
+
+		let pending: Awaited<
+			ReturnType<typeof this.nativeAccounts.startSsoRegistration>
+		>;
+		try {
+			pending = await this.nativeAccounts.startSsoRegistration(
+				dto.identityToken,
+				requestUri,
+				"google",
+			);
+		} catch (error) {
+			const message = ssoErrorMessage(error);
+			// Already linked is a sign-in, not a failure: send the app to the PDS's
+			// own page with a provider hint so it skips the picker.
+			if (message.includes("already linked")) {
+				const signInUrl = new URL(coreOAuthUrl);
+				signInUrl.searchParams.set("sso", "google");
+				return { redirectUrl: signInUrl.toString() };
+			}
+			this.logger.warn(`Native Google sign-in rejected: ${message}`);
+			throw new BadRequestException(
+				"That Google sign-in could not be verified",
+			);
+		}
+
+		// A returning user: continue in a browser at the PDS's consent (or TOTP)
+		// screen. That screen is the authorization boundary and cannot be skipped.
+		if (pending.redirectUrl) {
+			return { redirectUrl: pending.redirectUrl };
+		}
+		if (!pending.token) {
+			throw new ServiceUnavailableException("Sign-in is not available");
+		}
+		if (!pending.email || !pending.emailVerified) {
+			throw new BadRequestException(
+				"Google has not verified that email address",
+			);
+		}
+
+		// Handed to the app's own handle picker: a native client has no cookie
+		// jar, so it holds the pending registration and sends it back to register.
+		return { pendingToken: pending.token, email: pending.email };
+	}
+
+	private readPendingToken(
+		req: Request,
+		dto?: { pendingToken?: string },
+	): string | null {
 		return (
 			(req.cookies as Record<string, string | undefined>)?.[
 				GOOGLE_PENDING_COOKIE_NAME
-			] ?? null
+			] ??
+			dto?.pendingToken ??
+			null
 		);
 	}
 

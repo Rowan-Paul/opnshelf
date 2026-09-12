@@ -9,6 +9,7 @@ import {
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AppleMark } from "#/components/AppleMark";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
@@ -306,6 +307,13 @@ function LoginPage() {
 						>
 							<GoogleMark className="size-4" />
 							Continue with Google
+						</a>
+						<a
+							href={`${env.VITE_API_URL}/auth/apple/start`}
+							className="btn btn-secondary w-full"
+						>
+							<AppleMark className="size-4" />
+							Continue with Apple
 						</a>
 
 						<button

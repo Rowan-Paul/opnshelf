@@ -13,9 +13,14 @@ import {
 import { Calendar, Loader2, Plus, Tv } from "lucide-react";
 import { z } from "zod";
 import { Pagination } from "#/components/Pagination";
+import { PosterProgress } from "#/components/PosterProgress";
 import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
-import { useMarkEpisodeWatched } from "#/lib/hooks";
+import {
+	findShowProgress,
+	useMarkEpisodeWatched,
+	useShowProgress,
+} from "#/lib/hooks";
 
 const searchSchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
@@ -90,6 +95,8 @@ function ProfileUpNextPage() {
 	const markEpisodeMutation = useMarkEpisodeWatched();
 
 	const items = data?.items ?? [];
+	const { data: viewerProgressData, isLoading: isViewerProgressLoading } =
+		useShowProgress(isOwner ? [] : items.map((item) => item.showId));
 
 	const handlePageChange = (newPage: number) => {
 		navigate({
@@ -132,10 +139,24 @@ function ProfileUpNextPage() {
 					{items.map((item) => {
 						const show = item.show;
 						const nextEp = item.nextEpisode;
-						const progress =
-							item.totalEpisodes > 0
-								? Math.round((item.episodesWatched / item.totalEpisodes) * 100)
-								: 0;
+						const viewerProgress = findShowProgress(
+							viewerProgressData,
+							item.showId,
+						);
+						const progressData = isOwner
+							? {
+									episodesWatched: item.episodesWatched,
+									episodesTotal: item.totalEpisodes,
+									percentage:
+										item.totalEpisodes > 0
+											? Math.round(
+													(item.episodesWatched / item.totalEpisodes) * 100,
+												)
+											: 0,
+								}
+							: viewerProgress?.state !== "unavailable"
+								? viewerProgress
+								: undefined;
 
 						return (
 							<div
@@ -153,7 +174,7 @@ function ProfileUpNextPage() {
 									}}
 									className="shrink-0"
 								>
-									<div className="h-32 w-22 overflow-hidden rounded-lg bg-(--background-subtle) sm:h-36 sm:w-24">
+									<div className="relative h-32 w-22 overflow-hidden rounded-lg bg-(--background-subtle) sm:h-36 sm:w-24">
 										{show.posterPath ? (
 											<img
 												src={`https://image.tmdb.org/t/p/w500${show.posterPath}`}
@@ -166,6 +187,11 @@ function ProfileUpNextPage() {
 												<Tv className="size-8 text-(--foreground-muted)" />
 											</div>
 										)}
+										<PosterProgress
+											progress={progressData}
+											label="Show progress"
+											isLoading={!isOwner && isViewerProgressLoading}
+										/>
 									</div>
 								</Link>
 
@@ -219,21 +245,17 @@ function ProfileUpNextPage() {
 										)}
 									</div>
 
-									{/* Progress + Action */}
+									{/* Progress summary + Action */}
 									<div className="mt-3 flex items-center gap-4">
-										<div className="flex min-w-0 flex-1 items-center gap-2">
-											<div className="h-2 flex-1 overflow-hidden rounded-full bg-(--background-subtle)">
-												<div
-													className="h-full rounded-full bg-(--accent) transition-all"
-													style={{
-														width: `${progress}%`,
-													}}
-												/>
-											</div>
-											<span className="shrink-0 text-(--foreground-muted) text-xs">
-												{item.episodesWatched} / {item.totalEpisodes}
-											</span>
-										</div>
+										{progressData && progressData.episodesTotal > 0 ? (
+											<p className="min-w-0 flex-1 text-(--foreground-muted) text-xs tabular-nums">
+												{progressData.episodesWatched} of{" "}
+												{progressData.episodesTotal} · {progressData.percentage}
+												% watched
+											</p>
+										) : (
+											<div className="min-w-0 flex-1" />
+										)}
 
 										{isOwner && (
 											<button

@@ -1,12 +1,13 @@
 import { Link } from "expo-router";
 import { Calendar, Check, ChevronRight, Plus, X } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
 import {
 	type WatchHistoryEntry,
 	WatchHistorySheet,
 } from "@/components/detail/WatchHistorySheet";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
@@ -251,11 +252,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 		return (
 			<View className="px-4">
 				<Link href="/login" asChild>
-					<Pressable className="items-center rounded-lg bg-primary py-3">
-						<Text className="font-semibold text-primary-foreground">
-							Sign in to add to shelf
-						</Text>
-					</Pressable>
+					<Button label="Sign in to add to shelf" />
 				</Link>
 			</View>
 		);
@@ -267,7 +264,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	return (
 		<View className="gap-3 px-4">
-			{isOnShelf || isPartial ? (
+			{canManageHistory && (isOnShelf || isPartial) ? (
 				<Pressable
 					onPress={canManageHistory ? () => setHistoryVisible(true) : undefined}
 					disabled={!canManageHistory}
@@ -293,49 +290,27 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			) : null}
 
 			<View className="flex-row gap-2">
-				<Pressable
-					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
-					disabled={isPending}
-					accessibilityState={{ busy: isPending }}
-					className={
+				<Button
+					label={
 						isOnShelf
-							? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card py-3"
-							: "flex-1 flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
+							? "Remove from shelf"
+							: isPartial
+								? "Mark remaining watched"
+								: "Add to shelf"
 					}
-					style={{ opacity: isPending ? 0.7 : 1 }}
-				>
-					{isPending ? (
-						<>
-							<ActivityIndicator
-								size="small"
-								color={isOnShelf ? "#94a3b8" : "#3f2e00"}
-							/>
-							<Text
-								className={
-									isOnShelf
-										? "font-semibold text-foreground"
-										: "font-semibold text-primary-foreground"
-								}
-							>
-								Loading
-							</Text>
-						</>
-					) : isOnShelf ? (
-						<>
+					loadingLabel="Loading"
+					variant={isOnShelf ? "secondary" : "primary"}
+					className="flex-1"
+					loading={isPending}
+					leading={
+						isOnShelf ? (
 							<X color="#ef4444" size={18} />
-							<Text className="font-semibold text-foreground">
-								Remove from shelf
-							</Text>
-						</>
-					) : (
-						<>
+						) : (
 							<Plus color="#3f2e00" size={18} strokeWidth={2.5} />
-							<Text className="font-semibold text-primary-foreground">
-								{isPartial ? "Mark remaining watched" : "Add to shelf"}
-							</Text>
-						</>
-					)}
-				</Pressable>
+						)
+					}
+					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
+				/>
 				{showCalendar ? (
 					<Pressable
 						onPress={() => setDatePickerVisible(true)}

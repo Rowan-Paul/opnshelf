@@ -22,11 +22,14 @@ import {
 	useState,
 } from "react";
 import { loadSessionToken, saveSessionToken } from "@/lib/api";
+import { AuthFlowError } from "@/lib/auth-error";
 import {
 	beginHandoff,
 	clearHandoff,
+	pendingRedemption,
 	redeemHandoffCode,
 } from "@/lib/auth-handoff";
+import { NoPendingHandoffError } from "@/lib/handoff-error";
 import { posthog } from "@/lib/posthog";
 import { setWidgetHandle } from "../../modules/widget-bridge";
 
@@ -40,8 +43,11 @@ interface AuthContextType {
 	isLoading: boolean;
 	/** Convenience flag derived from `user`. */
 	isAuthenticated: boolean;
-	/** Start the login OAuth flow. Optional handle pre-fills the PDS. */
-	login: (handle?: string) => Promise<void>;
+	/**
+	 * Start the login OAuth flow. Optional handle pre-fills the PDS. Resolves
+	 * true only when a session exists afterwards, like runAuthorizationUrl.
+	 */
+	login: (handle?: string) => Promise<boolean>;
 	/** Continue an authorization request already created by the backend. */
 	runAuthorizationUrl: (authorizationUrl: string) => Promise<boolean>;
 	/**
@@ -65,6 +71,15 @@ interface AuthContextType {
 	/** Explicit sign-out: clears the persisted token + query cache. */
 	signOut: () => Promise<void>;
 }
+
+/**
+ * How long to wait for a sign-in this path did not complete to land a session
+ * somewhere else. Long enough for the auth/complete deep-link route to run its
+ * exchange over a slow network, short enough that a real cancellation does not
+ * feel stuck.
+ */
+const SETTLE_TIMEOUT_MS = 3000;
+const SETTLE_POLL_MS = 150;
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -204,28 +219,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[completeSession],
 	);
 
-	// Run the OAuth web flow and persist the returned session token. On Android
-	// the redirect to AUTH_REDIRECT_URL sometimes leaks to the deep-link handler
-	// instead of resolving here — the `auth/complete` route covers that case.
+	/**
+	 * Wait for a sign-in this path did not complete to settle somewhere else,
+	 * and report whether it did.
+	 *
+	 * The browser closing is not the end of the story on Android: the redirect
+	 * can reach the `auth/complete` deep-link route *as well as* resolving here,
+	 * and that route completes the sign-in in parallel. Concluding "not signed
+	 * in" the moment the browser closes reports a failure for a sign-in that is
+	 * a few hundred milliseconds from succeeding - and clearing the handoff
+	 * first takes the verifier that route is about to redeem with.
+	 *
+	 * Costs up to SETTLE_TIMEOUT_MS on a genuine cancellation, and returns the
+	 * instant a session appears, so the path that matters stays fast.
+	 */
+	const settleElsewhere = useCallback(async (tokenBefore: string | null) => {
+		// Join the other path if it is already exchanging, rather than racing a
+		// clock it knows nothing about: a slow network can push that exchange past
+		// the whole budget, and the user would be told sign-in failed while it was
+		// still succeeding.
+		const pending = pendingRedemption();
+		if (pending) await pending.catch(() => undefined);
+
+		const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+		while (Date.now() < deadline) {
+			// A *different* token, not merely any token: a stale one survives a
+			// failed `me` fetch, and treating that as success turns a cancelled
+			// sign-in into a silent bounce back to the signed-out home screen.
+			const token = await loadSessionToken();
+			if (token && token !== tokenBefore) return true;
+			await new Promise((resolve) => setTimeout(resolve, SETTLE_POLL_MS));
+		}
+		// Nobody completed it, so the handoff is genuinely spent.
+		await clearHandoff();
+		return false;
+	}, []);
+
+	/**
+	 * Run the OAuth web flow and persist the returned session token.
+	 *
+	 * Returns true only when a session exists afterwards, whichever path
+	 * produced it. Callers render failure on false, so a false that merely
+	 * means "not completed *here*" becomes a wrong error message - which is
+	 * what it did on Android, at three separate call sites.
+	 */
 	const runAuthFlow = useCallback(
 		async (authUrl: string) => {
+			// Snapshot first: settling compares against this rather than asking
+			// whether any token exists.
+			const tokenBefore = await loadSessionToken();
 			const result = await WebBrowser.openAuthSessionAsync(
 				authUrl,
 				AUTH_REDIRECT_URL,
 			);
 			if (result.type !== "success") {
-				await clearHandoff();
-				return false;
+				return settleElsewhere(tokenBefore);
 			}
 			const url = new URL(result.url);
 			const error = url.searchParams.get("error");
 			if (error) {
 				await clearHandoff();
-				throw new Error(`Auth flow failed: ${error}`);
+				// Typed so callers can tell the user what actually went wrong
+				// instead of falling back to "couldn't sign in".
+				throw new AuthFlowError(error);
 			}
 			const code = url.searchParams.get("code");
 			if (code) {
-				await completeHandoff(code);
+				try {
+					await completeHandoff(code);
+				} catch (error) {
+					if (!(error instanceof NoPendingHandoffError)) throw error;
+					// Something else took the verifier, or there never was one. Both
+					// look identical from here, so wait and see whether a session
+					// lands rather than guessing.
+					return settleElsewhere(tokenBefore);
+				}
 				return true;
 			}
 			// Legacy handoff: a backend that predates the handoff code still sends
@@ -239,7 +307,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			await completeSession(session);
 			return true;
 		},
-		[completeHandoff, completeSession],
+		[completeHandoff, completeSession, settleElsewhere],
 	);
 
 	const login = useCallback(
@@ -251,7 +319,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				"mobile",
 				codeChallenge ?? undefined,
 			);
-			await runAuthFlow(loginUrl);
+			return runAuthFlow(loginUrl);
 		},
 		[runAuthFlow],
 	);

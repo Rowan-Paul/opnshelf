@@ -91,7 +91,7 @@ vi.mock("#/lib/hooks", () => ({
 }));
 
 describe("ActionableMediaCard Watch count", () => {
-	it("renders partial show progress as a percentage", () => {
+	it("renders partial show progress on the poster without a percentage badge", () => {
 		mocks.showProgress = {
 			episodesWatched: 135,
 			episodesTotal: 159,
@@ -107,7 +107,12 @@ describe("ActionableMediaCard Watch count", () => {
 			screen.getByRole("button", {
 				name: "135 of 159 episodes watched. Mark remaining watched",
 			}).textContent,
-		).toBe("85%");
+		).not.toContain("85%");
+		expect(
+			screen
+				.getByRole("progressbar", { name: /show progress/i })
+				.getAttribute("aria-valuenow"),
+		).toBe("85");
 	});
 
 	it("confirms before marking the remaining show episodes watched", () => {
@@ -152,6 +157,11 @@ describe("ActionableMediaCard Watch count", () => {
 		expect(
 			screen.getByRole("button", { name: "Remove from shelf" }).textContent,
 		).not.toContain("3");
+		expect(
+			screen
+				.getByRole("progressbar", { name: /show progress/i })
+				.getAttribute("aria-valuenow"),
+		).toBe("100");
 	});
 
 	it("states that episode's own count on an episode card of the same show", () => {

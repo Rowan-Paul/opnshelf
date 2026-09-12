@@ -28,11 +28,20 @@ one deliberate twist: the backend mints the pair.
    nothing: the exchange only has to compare a hash to a challenge. The app
    keeps the verifier in memory and briefly in SecureStore (Android may render
    `auth/complete` in a fresh process).
-2. The app appends `code_challenge` to `GET /auth/login` or `GET /auth/signup`,
-   or sends `codeChallenge` in `POST /auth/permissions` and
-   `POST /auth/verify-email`. The backend validates it (base64url, 43 chars)
+2. The app appends `code_challenge` to `GET /auth/login`, `GET /auth/signup` or
+   `GET /auth/apple/start`, or sends `codeChallenge` in `POST /auth/permissions`,
+   `POST /auth/verify-email`, `POST /auth/apple/native` and
+   `POST /auth/google/native`. The backend validates it (base64url, 43 chars)
    and carries it in the OAuth `state` payload next to `platform`, never in a
    cookie.
+
+   Every route that starts a flow the app expects to return from has to carry
+   it, and the check is that the flow ends at the Core OAuth callback: a route
+   that omits it produces an authorization request with no `platform`, so that
+   callback reads the flow as web and redirects to the Web App instead of the
+   deep link. The provider routes were added by ADR 0027; the native pair got
+   this a commit late, and the symptom was an account created successfully and
+   a Mobile App left on the Web App's onboarding page, signed out.
 3. At the callback, when the state holds a challenge, the backend mints a
    single-use code bound to `{ sessionId, codeChallenge }` in an in-memory map
    with a 60-second TTL and redirects to

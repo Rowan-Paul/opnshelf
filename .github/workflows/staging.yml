@@ -118,15 +118,38 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: ${{ github.workspace }}
 
+      # `eas update` does not read `build.preview.env` from eas.json, and
+      # EXPO_PUBLIC_* values are inlined into the bundle as it is published, so
+      # an update that does not carry them ships a bundle where those features
+      # are switched off - silently, since nothing fails.
+      #
+      # These were duplicated here by hand until the Google client ids went into
+      # eas.json and not into the copy, and staging lost its Google button. So
+      # read eas.json instead: one source of truth, and it is the one in git.
+      #
+      # Not `--environment preview`: that environment is a second copy of these
+      # values, maintained by hand in the EAS dashboard, and it is the copy that
+      # silently drifts. It held the *production* API URL until it was corrected
+      # alongside this comment, and it still has no Google client ids, so an
+      # update resolved from it would ship staging without a Google button
+      # again. eas.json is the copy that lives in git and gets reviewed.
+      # Relative to apps/mobile: this job sets that as its default
+      # working-directory, so a repo-root path would not resolve.
+      - name: Load the preview environment from eas.json
+        run: |
+          node -e "
+            const env = require('./eas.json').build.preview.env ?? {};
+            const lines = Object.entries(env)
+              .filter(([k]) => k.startsWith('EXPO_PUBLIC_'))
+              .map(([k, v]) => k + '=' + v);
+            if (!lines.length) {
+              console.error('No EXPO_PUBLIC_* found in build.preview.env');
+              process.exit(1);
+            }
+            console.log(lines.join('\\n'));
+          " | tee -a "$GITHUB_ENV"
+
       - name: Publish the update
-        # Mirrors `build.preview.env` in eas.json, which `eas update` does not
-        # read. EXPO_PUBLIC_* values are inlined into the bundle as it is
-        # published, so leaving them out would ship a staging update that calls
-        # the production API - and per ADR 0021 those writes are real.
-        env:
-          EXPO_PUBLIC_API_URL: https://api.staging.opnshelf.xyz
-          EXPO_PUBLIC_SITE_URL: https://staging.opnshelf.xyz
-          EXPO_PUBLIC_POSTHOG_KEY: phc_your_api_key_here
         # No --non-interactive: `eas update` hands it to `expo export`, which
         # rejects it and tells you to set CI instead. Actions already sets
         # CI=true on every step, so the flag was only ever noise in the log.

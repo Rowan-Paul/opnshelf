@@ -9,6 +9,7 @@ import {
 	View,
 } from "react-native";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useProfileSetup } from "@/lib/use-profile";
@@ -67,23 +68,18 @@ export function EditProfile({ user }: { user: UserDto }) {
 					placeholder="Your display name"
 					autoCapitalize="words"
 				/>
-				<Pressable
+				<Button
+					label="Save"
+					size="sm"
+					className="self-start"
+					loading={updateProfile.isPending}
+					disabled={saveDisabled}
 					onPress={() =>
 						updateProfile.mutate({
 							body: { displayName: displayName || undefined },
 						})
 					}
-					disabled={saveDisabled}
-					className="flex-row items-center justify-center gap-2 self-start rounded-lg bg-primary px-4 py-2.5"
-					style={{ opacity: saveDisabled ? 0.6 : 1 }}
-				>
-					{updateProfile.isPending ? (
-						<ActivityIndicator size="small" color="#3f2e00" />
-					) : null}
-					<Text className="font-semibold text-primary-foreground text-sm">
-						Save
-					</Text>
-				</Pressable>
+				/>
 			</View>
 
 			{/* Handle (read-only) */}
