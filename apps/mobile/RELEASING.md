@@ -38,6 +38,40 @@ release from April 2026 predated it; updates published against it were inert
 until a new binary shipped (July 2026, vc 57). If in doubt, check adoption
 with the EAS update insights before assuming an update landed.
 
+## Where the app's environment comes from
+
+`EXPO_PUBLIC_*` values are inlined into the JavaScript bundle as it is built or
+published. Nothing reads them at runtime, so a wrong value is baked in and only
+a new build or update replaces it.
+
+Two places define them, and they are not the same place:
+
+1. **`eas.json`, `build.<profile>.env`** - in git, reviewed, the source of
+   truth.
+2. **The EAS environments** (`development` / `preview` / `production`) - edited
+   by hand in the dashboard or with `eas env:set`. Read with `eas env:list
+   preview`.
+
+`eas update` does not read a build profile's `env` at all, which is why the
+staging workflow parses `eas.json` itself rather than passing
+`--environment preview`. With `--environment`, EAS uses the server-side
+environment and [ignores your `.env` files][expo-env-faq].
+
+**Keep the two from disagreeing.** Expo does not document which one wins when
+both define a name, so a disagreement is a value you cannot predict from the
+repo. Two have bitten already:
+
+- The Google client ids went into `eas.json` and not into the dashboard copy,
+  and staging shipped without a Google button.
+- The `preview` environment held `EXPO_PUBLIC_API_URL=https://api.opnshelf.xyz`
+  - the *production* API - until 2026-09-12. Per ADR 0021 staging shares the
+  production PDS, so a preview build resolving that variable writes real data.
+
+When you add an `EXPO_PUBLIC_*` value, put it in `eas.json` and then check
+`eas env:list <environment>` for a stale copy of the same name.
+
+[expo-env-faq]: https://docs.expo.dev/eas/environment-variables/faq/
+
 ## Store build (native changes, config-plugin changes, version bumps)
 
 ```sh
