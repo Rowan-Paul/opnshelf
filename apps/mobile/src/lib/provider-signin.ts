@@ -9,6 +9,7 @@ import {
 } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Platform } from "react-native";
+import { beginHandoff } from "./auth-handoff";
 import { env } from "./env";
 
 export type Provider = "apple" | "google";
@@ -143,12 +144,21 @@ export async function signInWithProvider(
 	// a token is missing for any other reason.
 	if (!identityToken) return { kind: "cancelled" };
 
+	// Mint the handoff challenge before the exchange: the backend has to put it
+	// in the OAuth request it creates here, or the consent callback later reads
+	// the flow as web and redirects to the Web App instead of back here.
+	const codeChallenge = (await beginHandoff()) ?? undefined;
+
 	const call =
 		provider === "apple"
 			? authControllerAppleNative
 			: authControllerGoogleNative;
 	const { data } = await call({
-		body: { identityToken },
+		body: {
+			identityToken,
+			platform: "mobile",
+			codeChallenge,
+		},
 		throwOnError: true,
 	});
 

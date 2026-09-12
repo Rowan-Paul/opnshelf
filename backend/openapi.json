@@ -6745,6 +6745,17 @@
           "identityToken": {
             "type": "string",
             "description": "The identity token the platform's sign-in API returned"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "mobile"
+            ],
+            "description": "Platform identifier (\"mobile\") so the Core OAuth callback redirects into the Mobile App"
+          },
+          "codeChallenge": {
+            "type": "string",
+            "description": "S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the Mobile App a single-use code instead of the session id."
           }
         },
         "required": [

@@ -360,6 +360,14 @@ export type NativeSsoDto = {
      * The identity token the platform's sign-in API returned
      */
     identityToken: string;
+    /**
+     * Platform identifier ("mobile") so the Core OAuth callback redirects into the Mobile App
+     */
+    platform?: 'mobile';
+    /**
+     * S256 challenge from POST /auth/mobile/challenge. Mobile only: the callback then hands the Mobile App a single-use code instead of the session id.
+     */
+    codeChallenge?: string;
 };
 
 export type NativeSsoResponseDto = {

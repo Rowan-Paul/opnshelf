@@ -39,7 +39,11 @@ import {
 	ApplePendingResponseDto,
 	AppleRegisterResponseDto,
 } from "./dto/apple-register.dto";
-import { NativeSsoDto, NativeSsoResponseDto } from "./dto/native-sso.dto";
+import {
+	nativeSsoAppState,
+	NativeSsoDto,
+	NativeSsoResponseDto,
+} from "./dto/native-sso.dto";
 import { NativeAccountService } from "./native-account.service";
 import { isValidCodeChallenge } from "./oauth-app-state";
 import { signProviderState, verifyProviderState } from "./provider-state";
@@ -443,7 +447,9 @@ export class AppleSignupController {
 		description: "The credential could not be verified",
 	})
 	async appleNative(@Body() dto: NativeSsoDto): Promise<NativeSsoResponseDto> {
-		const coreOAuthUrl = await this.authService.authorizeWithPds();
+		const coreOAuthUrl = await this.authService.authorizeWithPds(
+			nativeSsoAppState(dto),
+		);
 		const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
 		if (!requestUri) {
 			this.logger.error("Core OAuth URL carried no request_uri");

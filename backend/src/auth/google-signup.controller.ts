@@ -34,7 +34,11 @@ import {
 	GoogleRegisterResponseDto,
 	GooglePendingResponseDto,
 } from "./dto/google-register.dto";
-import { NativeSsoDto, NativeSsoResponseDto } from "./dto/native-sso.dto";
+import {
+	nativeSsoAppState,
+	NativeSsoDto,
+	NativeSsoResponseDto,
+} from "./dto/native-sso.dto";
 import { NativeAccountService } from "./native-account.service";
 import { SignupRateLimiter } from "./signup-rate-limiter";
 import {
@@ -394,7 +398,9 @@ export class GoogleSignupController {
 		description: "The credential could not be verified",
 	})
 	async googleNative(@Body() dto: NativeSsoDto): Promise<NativeSsoResponseDto> {
-		const coreOAuthUrl = await this.authService.authorizeWithPds();
+		const coreOAuthUrl = await this.authService.authorizeWithPds(
+			nativeSsoAppState(dto),
+		);
 		const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
 		if (!requestUri) {
 			this.logger.error("Core OAuth URL carried no request_uri");
