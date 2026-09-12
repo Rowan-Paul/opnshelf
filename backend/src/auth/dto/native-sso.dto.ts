@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, MaxLength } from "class-validator";
+import { IsIn, IsOptional, IsString, MaxLength } from "class-validator";
 
 /**
  * A credential the operating system produced, handed straight to us by the
@@ -13,6 +13,26 @@ export class NativeSsoDto {
 	@IsString()
 	@MaxLength(8192)
 	identityToken: string;
+
+	/**
+	 * Set by the Mobile App. Without it the OAuth request carries no platform,
+	 * so the consent callback treats the flow as web and redirects to the site
+	 * instead of back into the app.
+	 */
+	@ApiPropertyOptional({ description: '"mobile" when called by the app' })
+	@IsOptional()
+	@IsIn(["mobile"])
+	platform?: "mobile";
+
+	/**
+	 * S256 challenge for the Mobile Handoff Code (ADR 0026). Rides in the OAuth
+	 * state so the callback hands back a single-use code rather than a session.
+	 */
+	@ApiPropertyOptional({ description: "Mobile Handoff Code challenge" })
+	@IsOptional()
+	@IsString()
+	@MaxLength(128)
+	codeChallenge?: string;
 }
 
 export class NativeSsoResponseDto {

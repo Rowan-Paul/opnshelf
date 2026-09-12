@@ -443,7 +443,21 @@ export class AppleSignupController {
 		description: "The credential could not be verified",
 	})
 	async appleNative(@Body() dto: NativeSsoDto): Promise<NativeSsoResponseDto> {
-		const coreOAuthUrl = await this.authService.authorizeWithPds();
+		// Carry the app's platform and handoff challenge into the OAuth request.
+		// Without them the consent callback reads the flow as web and redirects to
+		// the site, stranding the user in the in-app browser with a live account
+		// and no session (ADR 0026).
+		const coreOAuthUrl = await this.authService.authorizeWithPds(
+			dto.platform === "mobile"
+				? {
+						platform: "mobile",
+						codeChallenge:
+							dto.codeChallenge && isValidCodeChallenge(dto.codeChallenge)
+								? dto.codeChallenge
+								: undefined,
+					}
+				: undefined,
+		);
 		const requestUri = new URL(coreOAuthUrl).searchParams.get("request_uri");
 		if (!requestUri) {
 			this.logger.error("Core OAuth URL carried no request_uri");

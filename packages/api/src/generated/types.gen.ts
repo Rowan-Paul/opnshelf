@@ -360,6 +360,14 @@ export type NativeSsoDto = {
      * The identity token the platform's sign-in API returned
      */
     identityToken: string;
+    /**
+     * "mobile" when called by the app
+     */
+    platform?: string;
+    /**
+     * Mobile Handoff Code challenge
+     */
+    codeChallenge?: string;
 };
 
 export type NativeSsoResponseDto = {

@@ -691,4 +691,62 @@ describe("AppleSignupController", () => {
 			expect(result.pendingToken).toBe("pending-token");
 		});
 	});
+	describe("the native flow's return path", () => {
+		const CHALLENGE = "b".repeat(43);
+
+		beforeEach(() => {
+			mockNativeAccounts.startSsoRegistration.mockResolvedValue({
+				token: "pending-token",
+				email: "user@privaterelay.appleid.com",
+				emailVerified: true,
+				providerUsername: null,
+				redirectUrl: null,
+			});
+		});
+
+		it("carries platform and challenge into the OAuth request", async () => {
+			await controller.appleNative({
+				identityToken: "native-token",
+				platform: "mobile",
+				codeChallenge: CHALLENGE,
+			});
+
+			// Without these the consent callback reads the flow as web and sends
+			// the user to the site, leaving a live account and no session.
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith({
+				platform: "mobile",
+				codeChallenge: CHALLENGE,
+			});
+		});
+
+		it("still binds the platform when no challenge is supplied", async () => {
+			await controller.appleNative({
+				identityToken: "native-token",
+				platform: "mobile",
+			});
+
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith({
+				platform: "mobile",
+				codeChallenge: undefined,
+			});
+		});
+
+		it("drops a malformed challenge rather than carrying it", async () => {
+			await controller.appleNative({
+				identityToken: "native-token",
+				platform: "mobile",
+				codeChallenge: "too-short",
+			});
+
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith({
+				platform: "mobile",
+				codeChallenge: undefined,
+			});
+		});
+
+		it("carries nothing for a caller that is not the app", async () => {
+			await controller.appleNative({ identityToken: "native-token" });
+			expect(mockAuthService.authorizeWithPds).toHaveBeenCalledWith(undefined);
+		});
+	});
 });

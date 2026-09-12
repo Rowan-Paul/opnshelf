@@ -6745,6 +6745,14 @@
           "identityToken": {
             "type": "string",
             "description": "The identity token the platform's sign-in API returned"
+          },
+          "platform": {
+            "type": "string",
+            "description": "\"mobile\" when called by the app"
+          },
+          "codeChallenge": {
+            "type": "string",
+            "description": "Mobile Handoff Code challenge"
           }
         },
         "required": [
