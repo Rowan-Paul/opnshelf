@@ -3,19 +3,19 @@ import { IsOptional, IsString, MaxLength } from "class-validator";
 import { RegisterDto } from "./register.dto";
 
 /**
- * Google signup carries no email or password: the email comes from the verified
+ * Apple signup carries no email or password: the email comes from the verified
  * `id_token` held server-side, and an SSO account has no password. Everything
  * else (the username rules above all) is shared with password signup so handle
  * validation never forks in two.
  */
-export class GoogleRegisterDto extends OmitType(RegisterDto, [
+export class AppleRegisterDto extends OmitType(RegisterDto, [
 	"email",
 	"password",
 ] as const) {
 	/**
 	 * Native clients hold the pending registration themselves — they have no
 	 * cookie jar — and send it back here. The browser flow leaves this unset and
-	 * the `google_pending` cookie is used instead.
+	 * the `apple_pending` cookie is used instead.
 	 */
 	@ApiPropertyOptional({
 		description:
@@ -27,7 +27,7 @@ export class GoogleRegisterDto extends OmitType(RegisterDto, [
 	pendingToken?: string;
 }
 
-export class GoogleRegisterResponseDto {
+export class AppleRegisterResponseDto {
 	@ApiProperty()
 	did: string;
 
@@ -41,9 +41,10 @@ export class GoogleRegisterResponseDto {
 	coreOAuthUrl: string;
 }
 
-export class GooglePendingResponseDto {
+export class ApplePendingResponseDto {
 	@ApiProperty({
-		description: "Email verified by Google for the pending signup",
+		description:
+			"Email verified by Apple for the pending signup. May be an Apple private relay address.",
 	})
 	email: string;
 }

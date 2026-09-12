@@ -1,8 +1,11 @@
+import {
+	authControllerAppleRegister,
+	authControllerGoogleRegister,
+} from "@opnshelf/api";
 import { useMutation } from "@tanstack/react-query";
-import { Redirect, router } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
-import { ProviderButtons } from "@/components/ProviderButtons";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
@@ -10,6 +13,7 @@ import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { env } from "@/lib/env";
+import type { Provider } from "@/lib/provider-signin";
 
 /** Pull a human-readable message out of a NestJS error body (string or string[]). */
 function extractRegisterErrorMessage(error: unknown): string {
@@ -30,20 +34,37 @@ function detectTimezone(): string | undefined {
 	}
 }
 
-export default function SignupScreen() {
-	const { isAuthenticated, isLoading, register } = useAuth();
+/**
+ * The handle picker for a native provider sign-in.
+ *
+ * The web flow parks its pending registration in a cookie and renders the same
+ * step at /signup/{provider}; a native client has no cookie jar, so it carries
+ * the pending token in navigation params instead and sends it back with the
+ * registration. Rendered natively rather than in a webview because mobile
+ * onboarding parity is the standing commitment (ADR 0006).
+ */
+export default function SignupHandleScreen() {
+	const params = useLocalSearchParams<{
+		provider?: string;
+		pendingToken?: string;
+		email?: string;
+	}>();
+	// Deep links and restored router params can carry anything. An unchecked
+	// cast would let any non-"apple" string select the Google endpoint, which
+	// would post an Apple pending registration to it.
+	const provider: Provider | undefined =
+		params.provider === "apple" || params.provider === "google"
+			? params.provider
+			: undefined;
+	const { pendingToken, email } = params;
+
+	const { isAuthenticated, isLoading, runAuthorizationUrl } = useAuth();
 	const toast = useToast();
 	const [username, setUsername] = useState("");
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
 	const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-	// See login.tsx: a provider flow and a password signup must not run at once.
-	const [providerBusy, setProviderBusy] = useState(false);
 
 	const siteKey = env.turnstileSiteKey;
 	const handleDomain = env.pdsHandleDomain;
-	// With no site key the widget reports an empty token immediately, so the
-	// captcha is effectively "ready" as soon as that fires.
 	const captchaReady = !siteKey || captchaToken !== null;
 
 	const onVerify = useCallback((token: string) => setCaptchaToken(token), []);
@@ -57,12 +78,37 @@ export default function SignupScreen() {
 	);
 
 	const registerMutation = useMutation({
-		mutationKey: ["auth", "register"],
-		mutationFn: register,
-		onSuccess: () => {
-			// Account exists and the session is live, but the PDS won't accept any
-			// record writes until the email is verified — funnel through there.
-			router.replace("/verify-email");
+		mutationKey: ["auth", "provider-register", provider],
+		mutationFn: async (input: {
+			username: string;
+			captchaToken: string;
+			timezone?: string;
+			pendingToken: string;
+		}) => {
+			const call =
+				provider === "apple"
+					? authControllerAppleRegister
+					: authControllerGoogleRegister;
+			const { data } = await call({ body: input, throwOnError: true });
+			if (!data?.coreOAuthUrl) {
+				throw new Error("Registration returned nowhere to continue");
+			}
+			// The account exists but holds no scopes yet. Its PDS consent page is
+			// what grants them, and its callback seeds the profile and default
+			// lists, so the flow has to run before the app is usable.
+			return data.coreOAuthUrl;
+		},
+		onSuccess: async (coreOAuthUrl) => {
+			const completed = await runAuthorizationUrl(coreOAuthUrl);
+			if (completed) {
+				router.replace("/");
+				return;
+			}
+			// The browser was dismissed without finishing. isSubmitting stays true
+			// while the mutation reads as successful, so without this reset the
+			// screen is stuck behind a disabled button with no way forward.
+			registerMutation.reset();
+			toast.error("Sign-in wasn't completed. Try again.");
 		},
 		onError: (error) => {
 			toast.error(extractRegisterErrorMessage(error));
@@ -70,15 +116,8 @@ export default function SignupScreen() {
 		},
 	});
 
-	// Stay locked through the whole submit lifecycle: while pending and after
-	// success (the gap before we navigate away would otherwise let a fast
-	// double-tap register twice).
 	const isSubmitting = registerMutation.isPending || registerMutation.isSuccess;
 
-	// Already signed in (and not mid-signup): let the index gate route us. We
-	// must exclude the in-flight register too — its `me` fetch flips
-	// `isAuthenticated` before onSuccess navigates, which would otherwise bounce
-	// through "/" instead of going straight to /verify-email.
 	if (
 		!isLoading &&
 		isAuthenticated &&
@@ -88,14 +127,15 @@ export default function SignupScreen() {
 		return <Redirect href="/" />;
 	}
 
+	// Reached without a pending registration (a stale back-navigation). There is
+	// nothing to finish, so send them back rather than showing a dead form.
+	if (!pendingToken || !provider) {
+		return <Redirect href="/signup" />;
+	}
+
 	const trimmedUsername = username.trim().toLowerCase();
 	const canSubmit =
-		!isSubmitting &&
-		!providerBusy &&
-		trimmedUsername.length >= 3 &&
-		email.trim().length > 0 &&
-		password.length >= 8 &&
-		captchaReady;
+		!isSubmitting && trimmedUsername.length >= 3 && captchaReady;
 
 	const handleSubmit = () => {
 		if (!canSubmit) {
@@ -104,12 +144,13 @@ export default function SignupScreen() {
 		}
 		registerMutation.mutate({
 			username: trimmedUsername,
-			email: email.trim(),
-			password,
 			captchaToken: captchaToken ?? "",
 			timezone: detectTimezone(),
+			pendingToken,
 		});
 	};
+
+	const providerName = provider === "apple" ? "Apple" : "Google";
 
 	return (
 		<Screen>
@@ -119,23 +160,20 @@ export default function SignupScreen() {
 			>
 				<View className="gap-2">
 					<Text className="font-bold font-display text-4xl text-foreground">
-						Create your account
+						Pick your handle
 					</Text>
 					<Text className="text-base text-muted-foreground">
-						Your account is hosted by Opnshelf.
+						One more step and your Opnshelf account is ready.
 					</Text>
 				</View>
 
-				<ProviderButtons
-					disabled={isSubmitting}
-					onBusyChange={setProviderBusy}
-				/>
-
-				<View className="flex-row items-center gap-3">
-					<View className="h-px flex-1 bg-border" />
-					<Text className="text-muted-foreground text-xs uppercase">or</Text>
-					<View className="h-px flex-1 bg-border" />
-				</View>
+				{email ? (
+					<View className="rounded-lg border border-border px-3 py-2">
+						<Text className="text-muted-foreground text-sm">
+							Signed in with {providerName} as {email}
+						</Text>
+					</View>
+				) : null}
 
 				<View className="gap-4">
 					<TextField
@@ -155,31 +193,6 @@ export default function SignupScreen() {
 						helperText={`This becomes your handle: ${
 							trimmedUsername || "yourname"
 						}.${handleDomain}`}
-					/>
-
-					<TextField
-						label="Email"
-						value={email}
-						onChangeText={setEmail}
-						placeholder="you@example.com"
-						autoCapitalize="none"
-						autoCorrect={false}
-						keyboardType="email-address"
-						autoComplete="email"
-						editable={!isSubmitting}
-						helperText="Opnshelf needs an email for account recovery and verification. Opnshelf itself never stores it."
-					/>
-
-					<TextField
-						label="Password"
-						value={password}
-						onChangeText={setPassword}
-						placeholder="At least 8 characters"
-						autoCapitalize="none"
-						autoCorrect={false}
-						secureTextEntry
-						autoComplete="new-password"
-						editable={!isSubmitting}
 					/>
 
 					<TurnstileWidget
@@ -204,12 +217,12 @@ export default function SignupScreen() {
 
 				<Pressable
 					disabled={isSubmitting}
-					onPress={() => router.replace("/login")}
+					onPress={() => router.replace("/signup")}
 					className="items-center justify-center"
 				>
 					<Text className="text-muted-foreground text-sm">
-						Already have an account?{" "}
-						<Text className="font-semibold text-accent">Sign in</Text>
+						Wrong {providerName} account?{" "}
+						<Text className="font-semibold text-accent">Start again</Text>
 					</Text>
 				</Pressable>
 			</ScrollView>

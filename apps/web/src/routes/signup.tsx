@@ -13,6 +13,7 @@ import { ArrowRight, HelpCircle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { AppleMark } from "#/components/AppleMark";
 import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
@@ -26,12 +27,16 @@ import { env } from "#/env";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
-/** Codes the backend redirects back with when a Google signup can't continue. */
+/** Codes the backend redirects back with when a provider signup can't continue. */
 const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
 	google_unavailable: "Google sign-up isn't available right now.",
 	google_failed: "We couldn't finish signing you up with Google. Try again.",
 	google_email_unverified:
 		"Google hasn't verified that email address. Sign up with a password instead.",
+	apple_unavailable: "Apple sign-up isn't available right now.",
+	apple_failed: "We couldn't finish signing you up with Apple. Try again.",
+	apple_email_unverified:
+		"Apple hasn't verified that email address. Sign up with a password instead.",
 };
 
 export const Route = createFileRoute("/signup")({
@@ -155,13 +160,22 @@ function SignupPage() {
 				<div className="card p-6">
 					{/* A plain link, not a fetch: the backend needs a top-level
 					    navigation to redirect the browser to Google. */}
-					<a
-						href={`${env.VITE_API_URL}/auth/google/start`}
-						className="btn btn-secondary w-full"
-					>
-						<GoogleMark className="size-4" />
-						Continue with Google
-					</a>
+					<div className="space-y-3">
+						<a
+							href={`${env.VITE_API_URL}/auth/google/start`}
+							className="btn btn-secondary w-full"
+						>
+							<GoogleMark className="size-4" />
+							Continue with Google
+						</a>
+						<a
+							href={`${env.VITE_API_URL}/auth/apple/start`}
+							className="btn btn-secondary w-full"
+						>
+							<AppleMark className="size-4" />
+							Continue with Apple
+						</a>
+					</div>
 
 					<div className="my-6 flex items-center gap-3">
 						<span className="h-px flex-1 bg-(--border)" />

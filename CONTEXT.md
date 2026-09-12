@@ -99,6 +99,45 @@ _Avoid_: Person (reserved for TMDB cast/crew), Member
 The domain-shaped name a User signs in with and is known by, and the only word sign-in surfaces use for it. A Handle created through Opnshelf signup is hosted by Opnshelf; a User may instead sign in with a Handle they already own elsewhere, including a Bluesky one, which sign-in offers as an alternative and never states as a requirement. Distinct from the *username*, the single label a User picks at signup, which becomes the first part of their Handle. A User cannot change their Handle inside Opnshelf. Entry surfaces name the protocol at most once, in the helper text on the already-have-one path; everywhere else the word is just "handle".
 _Avoid_: AT Protocol account, Bluesky account, Atmosphere account (each implies a prerequisite a User does not need, and the last two are untrue of Opnshelf-hosted Handles), DID (the stable identifier behind a Handle, not the thing a User types)
 
+**Provider Sign-In**:
+Signing in or creating an account with an outside identity provider — Google or
+Apple — rather than with a **Handle**. It establishes who someone is; it never
+replaces **Core Opnshelf Access**, which the PDS still grants separately
+afterwards. Native on the **Mobile App** wherever the operating system offers a
+credential, browser-based everywhere else (ADR 0027).
+_Avoid_: Social login (these are identity providers, not social graphs), SSO
+(means one sign-on across one organisation's apps, which this is not), OAuth
+(Opnshelf's own PDS authorization is also OAuth — they are different legs of the
+same signup)
+
+**Provider Identity**:
+A provider paired with the stable subject identifier it assigns a person. It is
+the only thing account matching uses — email is never matched on, and Apple may
+supply a relay address anyway — so the same human signing in with Google and
+with Apple holds two separate accounts with two separate **Handles**.
+_Avoid_: Linked account (that is a Provider Identity attached to an account that
+already exists), provider account
+
+**Identity Token**:
+The signed, short-lived assertion a provider issues about a **Provider
+Identity**, which Opnshelf forwards to the PDS as proof of who someone is. Not a
+credential for calling the provider's own API.
+_Avoid_: Access token (that calls the provider's API and proves nothing about
+identity), id_token (wire spelling)
+
+**Pending Registration**:
+Someone a provider has verified who has not yet chosen a **Handle**. Short-lived,
+and abandoned by doing nothing. No account, DID, or repo exists yet, so there is
+nothing to clean up.
+_Avoid_: Pending signup, half-registered user (nothing is stored against a user
+that does not exist yet)
+
+**Handle Picker**:
+The screen where a **Pending Registration** becomes an account by choosing a
+username. It is the only step of **Provider Sign-In** a new person sees, and the
+reason a provider-supplied display name is never needed — **Onboarding**
+collects the display name a few steps later.
+
 **Core Opnshelf Access**:
 Permission to use Opnshelf-owned capabilities and records. A User grants this access when signing in; capabilities owned by another ecosystem require **External Integration Access** when the User chooses them.
 _Avoid_: Full access (incorrectly suggests access to unrelated AT Protocol services), basic access (undersells write access)
@@ -213,6 +252,13 @@ The separate opnshelf account used only on **Staging**, kept apart from the prod
 
 - **"Review" vs "Rating"**: These are two independent entities. "Rating" is the numeric 1–10 score, one per user per media. "Review" is long-form text (an `xyz.opnshelf.review` record) and carries no score. Either can exist without the other; opnshelf re-associates them on a media page by matching `userDid` + media coordinates.
 - **`TAB_URL` on Staging**: Must point at Staging's own Tab, never production's. Tab channels carry no consumer id and share one cursor, so a Staging backend on production's Tab acks events production never receives, and those records vanish from the production index with no error. See ADR 0021.
+
+- **Provider Sign-In vs Core Opnshelf Access**: Both read as "logging in", and
+  a provider signup passes through both in a row. **Provider Sign-In** answers
+  *who are you*, and is the only part Google or Apple has anything to do with.
+  **Core Opnshelf Access** answers *what may Opnshelf do on your behalf*, and is
+  granted by the PDS on its own consent screen. A returning user re-does the
+  first and, because consent is remembered, usually not the second.
 
 - **Welcome Tour vs Prompt**: Both interrupt on **Home**, and their state rules are opposites on purpose. A **Prompt** is dismissed per device (localStorage, with a cooldown) because a device-scoped ask must not follow you to another screen. A **Welcome Tour** is stamped on the User, so it does not replay on reinstall or after a browser-storage clear. Do not reuse the prompt-slot machinery for the tour.
 

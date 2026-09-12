@@ -3,10 +3,13 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 
+/** An identity provider the PDS can verify an id_token from. */
+export type SsoProvider = "google" | "apple";
+
 /**
  * Accounts Opnshelf creates on its own Tranquil PDS: password signup with an
  * invite code, the emailed verification step that unlocks record writes, and
- * the delegated Google registration the PDS verifies for us. Sign-in through
+ * the delegated provider registrations the PDS verifies for us. Sign-in through
  * an external PDS never touches this service.
  */
 @Injectable()
@@ -141,16 +144,21 @@ export class NativeAccountService {
 	}
 
 	/**
-	 * Trade a Google `id_token` for a pending PDS registration.
+	 * Trade a provider `id_token` for a pending PDS registration.
 	 *
 	 * `POST /oauth/sso/register-token` is our own addition to the Tranquil fork.
-	 * The PDS verifies the token against Google's JWKS itself (signature,
+	 * The PDS verifies the token against the provider's JWKS itself (signature,
 	 * audience, issuer, expiry), so opnshelf can never assert an identity it
 	 * hasn't proven. The returned token is what `completeSsoRegistration` spends.
+	 *
+	 * The same call serves the browser and native flows: by this point both hold
+	 * nothing but a signed identity token, and the PDS accepts either audience
+	 * (ADR 0027).
 	 */
 	async startSsoRegistration(
 		idToken: string,
 		requestUri: string,
+		provider: SsoProvider = "google",
 	): Promise<{
 		token: string | null;
 		email: string | null;
@@ -159,7 +167,7 @@ export class NativeAccountService {
 		redirectUrl: string | null;
 	}> {
 		const data = (await this.pdsSsoPost("register-token", {
-			provider: "google",
+			provider,
 			id_token: idToken,
 			request_uri: requestUri,
 		})) as {
