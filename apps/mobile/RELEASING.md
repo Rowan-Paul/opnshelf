@@ -70,6 +70,54 @@ repo. Two have bitten already:
 When you add an `EXPO_PUBLIC_*` value, put it in `eas.json` and then check
 `eas env:list <environment>` for a stale copy of the same name.
 
+### An EAS variable can span environments, and `env:set` rewrites all of them
+
+This is the part that looks like a per-environment setting and is not. An EAS
+variable is one record with one value and a *set* of environments.
+`EXPO_PUBLIC_API_URL` was attached to all three, so
+
+```sh
+eas env:set --name EXPO_PUBLIC_API_URL --value http://127.0.0.1:3001 \
+  --environment development
+```
+
+changed the value for `production` and `preview` as well. `--environment` picks
+which environments the variable is attached to, not which one the value applies
+to. The confirmation line — "Updated variable EXPO_PUBLIC_API_URL" — says
+nothing about the blast radius, and `eas env:list development` afterwards looks
+exactly right.
+
+Always check the attachment before setting, and the result afterwards:
+
+```sh
+eas env:list production --format long   # the "Environments" line is the one that matters
+```
+
+To give one environment its own value, detach the shared variable and create a
+separate one per environment:
+
+```sh
+eas env:update --variable-name EXPO_PUBLIC_API_URL \
+  --variable-environment production --environment production \
+  --value https://api.opnshelf.xyz
+eas env:create --name EXPO_PUBLIC_API_URL \
+  --value https://api.staging.opnshelf.xyz --environment preview
+```
+
+They are now three separate variables:
+
+| Environment | `EXPO_PUBLIC_API_URL` |
+|---|---|
+| `production` | `https://api.opnshelf.xyz` |
+| `preview` | `https://api.staging.opnshelf.xyz` |
+| `development` | `http://127.0.0.1:3001` |
+
+**The production one is load-bearing on its own.** The `production` build
+profile in `eas.json` has no `env` block, so a store build takes its API URL
+only from that variable. There is no second copy to fall back on, and the app's
+own default is `http://127.0.0.1:3001` — a store binary built while that value
+was wrong points at nothing, and only a new binary fixes it.
+
 [expo-env-faq]: https://docs.expo.dev/eas/environment-variables/faq/
 
 ## Store build (native changes, config-plugin changes, version bumps)
