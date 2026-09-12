@@ -203,6 +203,67 @@ describe("mobile handoff code", () => {
 		harness.unmount();
 	});
 
+	// The scenario none of these tests modelled until it shipped three times:
+	// Android delivers the redirect to the auth/complete deep-link route, the
+	// browser closes without resolving here, and that route completes the
+	// sign-in a moment later. Reporting failure the instant the browser closes
+	// is what produced "Sign-in wasn't completed" on a successful sign-in.
+	describe("when the deep-link route completes the sign-in instead", () => {
+		beforeEach(() => {
+			mocks.openAuthSessionAsync.mockResolvedValue({ type: "dismiss" });
+		});
+
+		it("reports success once the other path lands a session", async () => {
+			// Absent when the browser closes, present shortly after.
+			mocks.loadSessionToken
+				.mockResolvedValueOnce(null)
+				.mockResolvedValue("session-from-the-deep-link");
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(true);
+			harness.unmount();
+		});
+
+		it("leaves the handoff alone while that is still possible", async () => {
+			mocks.loadSessionToken
+				.mockResolvedValueOnce(null)
+				.mockResolvedValue("session-from-the-deep-link");
+			const harness = await renderAuth();
+
+			await act(async () => {
+				await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			});
+
+			// Clearing it here would take the verifier the deep-link route is
+			// about to redeem with.
+			expect(mocks.clearHandoff).not.toHaveBeenCalled();
+			harness.unmount();
+		});
+
+		it("still reports failure when no session ever lands", async () => {
+			mocks.loadSessionToken.mockResolvedValue(null);
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(false);
+			expect(mocks.clearHandoff).toHaveBeenCalled();
+			harness.unmount();
+		});
+	});
+
 	// Android can deliver the redirect to the auth/complete deep link *and*
 	// resolve this auth session. Both race for one verifier, so either may find
 	// nothing left to redeem on a sign-in that actually worked.
