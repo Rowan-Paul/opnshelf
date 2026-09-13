@@ -4,6 +4,7 @@ import type { ReactTestRenderer } from "react-test-renderer";
 import { act, create } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider, useAuth } from "./auth-context";
+import { NoPendingHandoffError } from "./handoff-error";
 
 const mocks = vi.hoisted(() => ({
 	authControllerLogout: vi.fn(),
@@ -16,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 	loadSessionToken: vi.fn(),
 	openAuthSessionAsync: vi.fn(),
 	redeemHandoffCode: vi.fn(),
+	pendingRedemption: vi.fn(),
 	posthogCapture: vi.fn(),
 	posthogIdentify: vi.fn(),
 	posthogReset: vi.fn(),
@@ -47,6 +49,7 @@ vi.mock("@/lib/auth-handoff", () => ({
 	beginHandoff: mocks.beginHandoff,
 	clearHandoff: mocks.clearHandoff,
 	redeemHandoffCode: mocks.redeemHandoffCode,
+	pendingRedemption: mocks.pendingRedemption,
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -131,6 +134,7 @@ beforeEach(() => {
 	mocks.authControllerLogout.mockResolvedValue({ data: {} });
 	mocks.getSessionToken.mockReturnValue(null);
 	mocks.loadSessionToken.mockResolvedValue(null);
+	mocks.pendingRedemption.mockReturnValue(null);
 	mocks.saveSessionToken.mockResolvedValue(undefined);
 	mocks.authControllerMe.mockResolvedValue({ data: nextUser });
 	mocks.beginHandoff.mockResolvedValue(null);
@@ -198,6 +202,196 @@ describe("mobile handoff code", () => {
 		expect(mocks.redeemHandoffCode).toHaveBeenCalledWith("handoff-code");
 		expect(mocks.saveSessionToken).toHaveBeenCalledWith("exchanged-session");
 		expect(harness.queryClient.getQueryData(["auth", "me"])).toEqual(nextUser);
+
+		harness.unmount();
+	});
+
+	// The scenario none of these tests modelled until it shipped three times:
+	// Android delivers the redirect to the auth/complete deep-link route, the
+	// browser closes without resolving here, and that route completes the
+	// sign-in a moment later. Reporting failure the instant the browser closes
+	// is what produced "Sign-in wasn't completed" on a successful sign-in.
+	describe("when the deep-link route completes the sign-in instead", () => {
+		beforeEach(() => {
+			mocks.openAuthSessionAsync.mockResolvedValue({ type: "dismiss" });
+		});
+
+		it("reports success once the other path lands a session", async () => {
+			// The deep-link route lands its session while the browser is closing.
+			let stored: string | null = null;
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				stored = "session-from-the-deep-link";
+				return { type: "dismiss" };
+			});
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(true);
+			harness.unmount();
+		});
+
+		it("leaves the handoff alone while that is still possible", async () => {
+			let stored: string | null = null;
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				stored = "session-from-the-deep-link";
+				return { type: "dismiss" };
+			});
+			const harness = await renderAuth();
+
+			await act(async () => {
+				await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			});
+
+			// Clearing it here would take the verifier the deep-link route is
+			// about to redeem with.
+			expect(mocks.clearHandoff).not.toHaveBeenCalled();
+			harness.unmount();
+		});
+
+		it("does not mistake a stale token for a completed sign-in", async () => {
+			// A token can outlive its session: a non-401 failure on `me` leaves
+			// the app signed out with the token still in SecureStore. Returning
+			// true here sends a cancelling user back to a signed-out home screen.
+			mocks.loadSessionToken.mockResolvedValue("stale-token-from-last-time");
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(false);
+			harness.unmount();
+		});
+
+		it("waits for an exchange that outlasts the settle budget", async () => {
+			// The budget is a timeout, not a join: on a slow network the other
+			// path's exchange can take longer than it, and the user would be told
+			// sign-in failed while it was still succeeding.
+			let stored: string | null = null;
+			let finish!: () => void;
+			const exchange = new Promise<string>((resolve) => {
+				finish = () => {
+					stored = "session-from-the-deep-link";
+					resolve("session-from-the-deep-link");
+				};
+			});
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.pendingRedemption.mockReturnValue(exchange);
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				// Longer than SETTLE_TIMEOUT_MS: polling alone would have given up.
+				setTimeout(finish, 4000);
+				return { type: "dismiss" };
+			});
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(true);
+			harness.unmount();
+		}, 10_000);
+
+		it("still reports failure when no session ever lands", async () => {
+			mocks.loadSessionToken.mockResolvedValue(null);
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(false);
+			expect(mocks.clearHandoff).toHaveBeenCalled();
+			harness.unmount();
+		});
+	});
+
+	// Android can deliver the redirect to the auth/complete deep link *and*
+	// resolve this auth session. Both race for one verifier, so either may find
+	// nothing left to redeem on a sign-in that actually worked.
+	describe("when something else already claimed the handoff", () => {
+		beforeEach(() => {
+			mocks.openAuthSessionAsync.mockResolvedValue({
+				type: "success",
+				url: "opnshelf://auth/complete?code=handoff-code",
+			});
+			mocks.redeemHandoffCode.mockRejectedValue(
+				new NoPendingHandoffError("No pending sign-in to complete"),
+			);
+		});
+
+		it("reports success when a session did land", async () => {
+			// The other path redeems the code and stores its session, so this one
+			// finds the verifier gone and a token that was not there before.
+			let stored: string | null = null;
+			mocks.loadSessionToken.mockImplementation(async () => stored);
+			mocks.redeemHandoffCode.mockImplementation(async () => {
+				stored = "session-from-the-other-path";
+				throw new NoPendingHandoffError("No pending sign-in to complete");
+			});
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			expect(completed).toBe(true);
+			harness.unmount();
+		});
+
+		it("reports no completion rather than a failure when none did", async () => {
+			mocks.loadSessionToken.mockResolvedValue(null);
+			const harness = await renderAuth();
+
+			let completed: boolean | undefined;
+			await act(async () => {
+				completed = await harness.auth.runAuthorizationUrl(
+					"https://pds.test/authorize",
+				);
+			});
+
+			// Neither true nor a throw: claiming success would route to a
+			// signed-out home screen, and throwing would report a failure the
+			// deep-link route may be about to resolve.
+			expect(completed).toBe(false);
+			harness.unmount();
+		});
+	});
+
+	it("still surfaces a redemption failure that is not a lost race", async () => {
+		mocks.openAuthSessionAsync.mockResolvedValue({
+			type: "success",
+			url: "opnshelf://auth/complete?code=handoff-code",
+		});
+		mocks.redeemHandoffCode.mockRejectedValue(new Error("exchange exploded"));
+		mocks.loadSessionToken.mockResolvedValue("a-session");
+		const harness = await renderAuth();
+
+		await expect(
+			act(async () => {
+				await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			}),
+		).rejects.toThrow("exchange exploded");
 
 		harness.unmount();
 	});

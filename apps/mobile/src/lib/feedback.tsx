@@ -16,6 +16,7 @@ import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -166,16 +167,13 @@ function FeedbackSheet({
 							autoFocus
 						/>
 
-						<Pressable
-							onPress={submit}
+						<Button
+							label="Send"
+							loadingLabel="Sending…"
+							loading={mutation.isPending}
 							disabled={!canSubmit}
-							className="items-center rounded-lg bg-primary px-4 py-3"
-							style={{ opacity: canSubmit ? 1 : 0.5 }}
-						>
-							<Text className="font-semibold text-[#3f2e00] text-base">
-								{mutation.isPending ? "Sending…" : "Send"}
-							</Text>
-						</Pressable>
+							onPress={submit}
+						/>
 					</View>
 				</KeyboardAvoidingView>
 			</KeyboardProvider>

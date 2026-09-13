@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { Film, TimerReset } from "lucide-react-native";
 import { Pressable, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 
 export function TraktHomePrompt() {
@@ -70,11 +71,10 @@ export function TraktHomePrompt() {
 					</Text>
 				</Pressable>
 				<Link href="/trakt-import" asChild>
-					<Pressable className="rounded-xl bg-primary px-4 py-2.5">
-						<Text className="font-semibold text-primary-foreground text-sm">
-							{needsResume ? "Resume import" : "Match titles"}
-						</Text>
-					</Pressable>
+					<Button
+						label={needsResume ? "Resume import" : "Match titles"}
+						size="sm"
+					/>
 				</Link>
 			</View>
 		</View>

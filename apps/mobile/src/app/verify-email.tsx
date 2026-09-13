@@ -8,7 +8,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Redirect } from "expo-router";
 import { MailCheck } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -147,17 +148,13 @@ export default function VerifyEmailScreen() {
 						onSubmitEditing={handleSubmit}
 					/>
 
-					<Pressable
-						disabled={isSubmitting || !trimmedCode}
+					<Button
+						label="Verify and continue"
+						loadingLabel="Verifying"
+						loading={isSubmitting}
+						disabled={!trimmedCode}
 						onPress={handleSubmit}
-						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3"
-						style={{ opacity: isSubmitting || !trimmedCode ? 0.6 : 1 }}
-					>
-						{isSubmitting && <ActivityIndicator size="small" color="#3f2e00" />}
-						<Text className="font-semibold text-base text-primary-foreground">
-							{isSubmitting ? "Verifying" : "Verify and continue"}
-						</Text>
-					</Pressable>
+					/>
 				</View>
 
 				<View className="flex-row items-center justify-center">

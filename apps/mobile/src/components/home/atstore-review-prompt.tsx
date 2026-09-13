@@ -9,6 +9,7 @@ import { type Href, router } from "expo-router";
 import { Store } from "lucide-react-native";
 import { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -115,17 +116,12 @@ export function AtStoreReviewPrompt() {
 						No thanks
 					</Text>
 				</Pressable>
-				<Pressable
-					accessibilityRole="button"
-					disabled={permissionMutation.isPending}
+				<Button
+					label="Leave a review"
+					size="sm"
+					loading={permissionMutation.isPending}
 					onPress={leaveReview}
-					className="rounded-lg bg-primary px-4 py-2.5"
-					style={{ opacity: permissionMutation.isPending ? 0.5 : 1 }}
-				>
-					<Text className="font-semibold text-[#3f2e00] text-sm">
-						Leave a review
-					</Text>
-				</Pressable>
+				/>
 			</View>
 		</View>
 	);

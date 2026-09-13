@@ -32,7 +32,7 @@ import { FriendWatchers } from "../../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
 import MediaHero from "../../../../../components/MediaHero";
 import PersonGrid from "../../../../../components/PersonGrid";
-import ProgressCard from "../../../../../components/ProgressCard";
+import { ProgressShelfButton } from "../../../../../components/ProgressShelfButton";
 import { ReviewDialog } from "../../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../../components/shows/EpisodeList";
@@ -120,7 +120,8 @@ function SeasonDetailPage() {
 
 	const { data: upNextData } = useUserUpNext(user?.did || "", showId);
 	const { data: watchHistory } = useShowWatchHistory(showId);
-	const { data: showProgressData } = useShowProgress([showId]);
+	const { data: showProgressData, isLoading: isProgressLoading } =
+		useShowProgress([showId]);
 	const seasonProgress = showProgressData?.items
 		.find((item) => item.showId === showId)
 		?.seasons.find((item) => item.seasonNumber === seasonNum);
@@ -319,6 +320,13 @@ function SeasonDetailPage() {
 				title={`${show.name} — ${season.name}`}
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
+				progress={
+					isAuthenticated && seasonProgress?.state !== "unavailable"
+						? seasonProgress
+						: undefined
+				}
+				progressLabel="Season progress"
+				isProgressLoading={isAuthenticated && isProgressLoading}
 				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
 				metaItems={
 					<>
@@ -358,6 +366,21 @@ function SeasonDetailPage() {
 								<Play className="size-4" />
 								{getContinueButtonText()}
 							</Link>
+							<ProgressShelfButton
+								episodesWatched={episodesWatched}
+								episodesTotal={totalEpisodes}
+								markLabel={
+									episodesWatched > 0
+										? "Mark remaining watched"
+										: "Add season to shelf"
+								}
+								unmarkLabel="Remove season from shelf"
+								isMarkPending={isMarkSeasonPending}
+								isUnmarkPending={isUnmarkShowPending}
+								processing={processingSeason}
+								onMarkWatched={handleMarkSeasonWatched}
+								onUnmarkWatched={handleUnmarkSeasonWatched}
+							/>
 							<MediaActionsBar
 								mediaType="show"
 								mediaId={showId}
@@ -478,25 +501,6 @@ function SeasonDetailPage() {
 							mediaType="show"
 							mediaId={`${showId}:season:${seasonNum}`}
 						/>
-
-						{/* Your Progress */}
-						{isAuthenticated && (
-							<ProgressCard
-								episodesWatched={episodesWatched}
-								totalEpisodes={totalEpisodes}
-								markLabel={
-									episodesWatched > 0
-										? "Mark remaining watched"
-										: "Add Season to Shelf"
-								}
-								unmarkLabel="Remove Season from Shelf"
-								isMarkPending={isMarkSeasonPending}
-								isUnmarkPending={isUnmarkShowPending}
-								processing={processingSeason}
-								onMarkWatched={handleMarkSeasonWatched}
-								onUnmarkWatched={handleUnmarkSeasonWatched}
-							/>
-						)}
 
 						{/* Details */}
 						<DetailsCard

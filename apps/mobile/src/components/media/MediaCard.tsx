@@ -8,6 +8,7 @@ import { RatingSheet } from "@/components/detail/RatingSheet";
 import { AddToListSheet } from "@/components/lists/AddToListSheet";
 import { MediaQuickActionsSheet } from "@/components/media/MediaQuickActionsSheet";
 import { PosterImage } from "@/components/media/PosterImage";
+import { PosterProgress } from "@/components/media/poster-progress";
 import { WatchCountBadge } from "@/components/media/WatchCountBadge";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
@@ -90,6 +91,17 @@ export function MediaCard({
 }) {
 	if (actions)
 		return <MediaCardWithActions item={item} watchCount={watchCount} />;
+	if (item.type === "show" && !item.episode) {
+		return (
+			<ReadOnlyShowMediaCard
+				item={item}
+				watchCount={watchCount}
+				isWatched={isWatched}
+				onRemove={onRemove}
+				isRemoving={isRemoving}
+			/>
+		);
+	}
 	return (
 		<MediaCardBase
 			item={item}
@@ -107,6 +119,45 @@ export function MediaCard({
 	);
 }
 
+function ReadOnlyShowMediaCard({
+	item,
+	watchCount,
+	isWatched,
+	onRemove,
+	isRemoving,
+}: {
+	item: MediaCardItem;
+	watchCount?: number;
+	isWatched?: boolean;
+	onRemove?: () => void;
+	isRemoving?: boolean;
+}) {
+	const progressQuery = useShowProgressForShow(item.id);
+	const progress = findShowProgress(progressQuery.data, item.id);
+	const availableProgress =
+		progress?.state !== "unavailable" && (progress?.episodesTotal ?? 0) > 0
+			? progress
+			: undefined;
+
+	return (
+		<MediaCardBase
+			item={item}
+			overlay={
+				isWatched ? (
+					<WatchCountBadge
+						watchCount={watchCount}
+						className={`absolute top-1.5 right-1.5 h-7 ${watchCount && watchCount > 1 ? "" : "w-7"}`}
+					/>
+				) : undefined
+			}
+			progress={availableProgress}
+			isProgressLoading={progressQuery.isLoading}
+			onRemove={onRemove}
+			isRemoving={isRemoving}
+		/>
+	);
+}
+
 const href = (item: MediaCardItem): Href =>
 	item.href ??
 	(item.type === "movie"
@@ -118,6 +169,7 @@ function MediaCardBase({
 	item,
 	overlay,
 	progress,
+	isProgressLoading,
 	onLongPress,
 	onRemove,
 	isRemoving,
@@ -125,8 +177,13 @@ function MediaCardBase({
 	item: MediaCardItem;
 	/** Optional corner overlay rendered on top of the poster. */
 	overlay?: React.ReactNode;
-	/** Viewer completion percentage rendered along the poster's bottom edge. */
-	progress?: number;
+	/** Viewer episode completion rendered along the poster's bottom edge. */
+	progress?: {
+		episodesWatched: number;
+		episodesTotal: number;
+		percentage?: number;
+	};
+	isProgressLoading?: boolean;
 	onLongPress?: () => void;
 	onRemove?: () => void;
 	isRemoving?: boolean;
@@ -150,14 +207,11 @@ function MediaCardBase({
 						className="aspect-2/3 w-full"
 					/>
 					{overlay}
-					{progress !== undefined && progress > 0 ? (
-						<View className="absolute right-0 bottom-0 left-0 h-1 bg-black/30">
-							<View
-								className="h-full bg-primary"
-								style={{ width: `${progress}%` }}
-							/>
-						</View>
-					) : null}
+					<PosterProgress
+						progress={progress}
+						label="Show progress"
+						isLoading={isProgressLoading}
+					/>
 					{onRemove ? (
 						<Pressable
 							hitSlop={8}
@@ -269,9 +323,13 @@ function MediaCardWithActions({
 	const isCompleteShow = !isMovie && !ep && showProgress?.state === "complete";
 	const isProgressUnavailable =
 		progressQuery.isError || showProgress?.state === "unavailable";
-	const showProgressPercent = isPartialShow
-		? showProgress.percentage
-		: undefined;
+	const availableShowProgress =
+		!isMovie &&
+		!ep &&
+		showProgress?.state !== "unavailable" &&
+		(showProgress?.episodesTotal ?? 0) > 0
+			? showProgress
+			: undefined;
 	// Episodes carry their coordinates so rating/note/list resolve to the episode
 	// (mediaType stays "show" + mediaId = showId; the coords narrow it).
 	const coords = ep
@@ -407,7 +465,7 @@ function MediaCardWithActions({
 				// badge while the removal is still in flight.
 				className={
 					(isPartialShow || watched) && !isWatchPending
-						? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${isPartialShow || (badgeWatchCount && badgeWatchCount > 1) ? "flex-row px-2" : "w-7"}`
+						? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${badgeWatchCount && badgeWatchCount > 1 ? "flex-row px-2" : "w-7"}`
 						: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
 				}
 			>
@@ -416,12 +474,7 @@ function MediaCardWithActions({
 				) : isWatchPending ? (
 					<ActivityIndicator size="small" color="#ffffff" />
 				) : isPartialShow ? (
-					<Text
-						className="font-bold text-primary-foreground text-xs"
-						style={{ fontVariant: ["tabular-nums"] }}
-					>
-						{showProgressPercent}%
-					</Text>
+					<Plus color="#3f2e00" size={16} strokeWidth={2.5} />
 				) : watched ? (
 					<>
 						<Check color="#3f2e00" size={16} strokeWidth={3} />
@@ -445,7 +498,8 @@ function MediaCardWithActions({
 			<MediaCardBase
 				item={item}
 				overlay={cornerToggle}
-				progress={showProgressPercent}
+				progress={availableShowProgress}
+				isProgressLoading={!isMovie && !ep && progressQuery.isLoading}
 				onLongPress={
 					isAuthenticated
 						? () => {

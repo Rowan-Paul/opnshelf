@@ -4,6 +4,11 @@ import { Star } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
+import {
+	PosterProgress,
+	type PosterProgressValue,
+	progressPercentage,
+} from "@/components/media/poster-progress";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/lib/theme-context";
 import { useTwStyle } from "@/lib/use-tw-style";
@@ -22,6 +27,9 @@ export function DetailHero({
 	posterUrl,
 	posterHref,
 	rating,
+	progress,
+	progressLabel = "Show progress",
+	isProgressLoading = false,
 	children,
 }: {
 	title: string;
@@ -31,6 +39,9 @@ export function DetailHero({
 	/** When set, the poster becomes a link (e.g. season/episode → show page). */
 	posterHref?: Href;
 	rating?: number;
+	progress?: PosterProgressValue;
+	progressLabel?: "Show progress" | "Season progress";
+	isProgressLoading?: boolean;
 	children?: ReactNode;
 }) {
 	const { scheme } = useTheme();
@@ -39,9 +50,16 @@ export function DetailHero({
 	const bg = scheme === "dark" ? "2,6,23" : "248,250,252";
 	const scrimStyle = useTwStyle("absolute inset-0");
 
+	const percentage = progress ? progressPercentage(progress) : undefined;
+	const showProgressSummary = progress && progress.episodesTotal > 0;
 	const poster = (
 		<View className="h-40 w-28 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
 			<PosterImage url={posterUrl} className="h-40 w-28" />
+			<PosterProgress
+				progress={progress}
+				label={progressLabel}
+				isLoading={isProgressLoading}
+			/>
 		</View>
 	);
 
@@ -90,6 +108,15 @@ export function DetailHero({
 									{rating.toFixed(1)}
 								</Text>
 							</View>
+						) : null}
+						{showProgressSummary ? (
+							<Text
+								className="mt-1 text-muted-foreground text-xs"
+								style={{ fontVariant: ["tabular-nums"] }}
+							>
+								{progress.episodesWatched} of {progress.episodesTotal} episodes
+								watched · {percentage}% watched
+							</Text>
 						) : null}
 					</View>
 				</View>

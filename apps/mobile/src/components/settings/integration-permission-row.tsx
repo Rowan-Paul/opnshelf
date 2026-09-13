@@ -1,4 +1,5 @@
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 
@@ -19,19 +20,6 @@ export function IntegrationPermissionRow({
 }) {
 	const { showDialog } = useDialog();
 	const action: PermissionAction = connected ? "disconnect" : "connect";
-	// Fading a filled primary button collapses the contrast between the amber
-	// fill and its dark label, so the disabled state gets its own muted fill
-	// instead of a lowered opacity.
-	const buttonClassName = disabled
-		? "rounded-lg border border-border bg-background-subtle px-3 py-2"
-		: connected
-			? "rounded-lg border border-border px-3 py-2"
-			: "rounded-lg bg-primary px-3 py-2";
-	const labelClassName = disabled
-		? "font-semibold text-muted-foreground text-sm"
-		: connected
-			? "font-semibold text-foreground text-sm"
-			: "font-semibold text-primary-foreground text-sm";
 
 	const requestChange = () => {
 		showDialog({
@@ -76,17 +64,14 @@ export function IntegrationPermissionRow({
 					{description}
 				</Text>
 			</View>
-			<Pressable
-				accessibilityRole="button"
+			<Button
 				accessibilityLabel={`${connected ? "Disconnect" : "Connect"} ${name}`}
+				label={connected ? "Disconnect" : "Connect"}
+				variant={connected ? "secondary" : "primary"}
+				size="sm"
 				disabled={disabled}
 				onPress={requestChange}
-				className={buttonClassName}
-			>
-				<Text className={labelClassName}>
-					{connected ? "Disconnect" : "Connect"}
-				</Text>
-			</Pressable>
+			/>
 		</View>
 	);
 }

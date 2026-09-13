@@ -16,11 +16,35 @@ import type { ExpoConfig } from "expo/config";
 const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL ?? "https://opnshelf.xyz";
 const SITE_HOST = new URL(SITE_URL).host;
 
+/**
+ * Native Google sign-in, included only when there is an iOS client id to build
+ * it from. The plugin throws without an `iosUrlScheme`, so registering it
+ * unconditionally would break `expo prebuild` on any checkout that has not set
+ * the Google variables — and Google is optional by design: unset hides the
+ * button, matching the backend's own `configured` check.
+ *
+ * The scheme is the iOS client id reversed, which is a pure rewrite of it:
+ * `<id>.apps.googleusercontent.com` -> `com.googleusercontent.apps.<id>`.
+ * Deriving it beats carrying a second variable that must agree with the first.
+ */
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const googleSignInPlugin = GOOGLE_IOS_CLIENT_ID
+	? ([
+			"@react-native-google-signin/google-signin",
+			{
+				iosUrlScheme: `com.googleusercontent.apps.${GOOGLE_IOS_CLIENT_ID.replace(
+					/\.apps\.googleusercontent\.com$/,
+					"",
+				)}`,
+			},
+		] as [string, Record<string, string>])
+	: null;
+
 const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.3.0",
+	version: "1.4.0",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -41,6 +65,13 @@ const config: ExpoConfig = {
 		associatedDomains: [`applinks:${SITE_HOST}`],
 		// Required by @bacons/apple-targets to sign the widget extension target.
 		appleTeamId: "FNW3B5Q58G",
+		// Native Sign in with Apple (ADR 0027). Adds the
+		// com.apple.developer.applesignin entitlement, so the next build
+		// regenerates the provisioning profile - this cannot ship as an OTA
+		// update. The Service ID used by the browser flow must have this App ID
+		// as its primary app, or the two produce different Apple subjects and one
+		// person ends up with two accounts.
+		usesAppleSignIn: true,
 		infoPlist: {
 			ITSAppUsesNonExemptEncryption: false,
 		},
@@ -89,6 +120,25 @@ const config: ExpoConfig = {
 	},
 	plugins: [
 		"expo-router",
+		...(googleSignInPlugin ? [googleSignInPlugin] : []),
+		// Expo leaves R8 off, so a release bundle shipped 51 MB of unminified DEX
+		// and Play scored its App optimization "Low" (1% obfuscation, no shrink).
+		// Turning R8 and resource shrinking on is what lifts that score; each
+		// native library ships its own consumer keep rules, so no extra ProGuard
+		// rules are needed until a release build proves otherwise (RELEASING.md,
+		// "Gotchas"). Native config: needs a store build, not an OTA update.
+		[
+			"expo-build-properties",
+			{
+				android: {
+					enableMinifyInReleaseBuilds: true,
+					enableShrinkResourcesInReleaseBuilds: true,
+				},
+			},
+		],
+		// R8 needs more Gradle daemon memory than Expo's template allows; the
+		// plugin explains why it cannot go through expo-build-properties.
+		"./plugins/with-gradle-jvm-args",
 		"expo-secure-store",
 		"expo-font",
 		"expo-image",
@@ -130,6 +180,13 @@ const config: ExpoConfig = {
 		pdsHandleDomain:
 			process.env.EXPO_PUBLIC_PDS_HANDLE_DOMAIN ?? "opnshelf.social",
 		siteUrl: process.env.EXPO_PUBLIC_SITE_URL ?? "https://opnshelf.xyz",
+		// The *web* Google client id, passed to the native SDK as its
+		// serverClientId so the id_token it returns is addressed to the client
+		// the PDS validates against. Public, not a secret.
+		googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+		// The iOS Google client id the native SDK needs for its own sake. It
+		// never appears in a token audience. Public, not a secret.
+		googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
 		eas: {
 			projectId: "87d86952-59ab-4711-9f5f-f9477b2d14f6",
 		},

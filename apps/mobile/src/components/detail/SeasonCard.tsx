@@ -3,6 +3,7 @@ import { Check, ChevronRight, Plus } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
+import { PosterProgress } from "@/components/media/poster-progress";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { posterUrl } from "@/lib/tmdb";
@@ -71,6 +72,14 @@ function SeasonCardBase({
 					<PosterImage
 						url={posterUrl(season.posterPath, "w185")}
 						className="aspect-2/3 w-14"
+					/>
+					<PosterProgress
+						progress={
+							season.progress?.state !== "unavailable"
+								? season.progress
+								: undefined
+						}
+						label="Season progress"
 					/>
 				</View>
 				<View className="flex-1">

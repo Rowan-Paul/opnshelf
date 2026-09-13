@@ -3,6 +3,7 @@ import { IngesterModule } from "../ingester/ingester.module";
 import { PdsModule } from "../pds/pds.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { UsersModule } from "../users/users.module";
+import { AppleSignupController } from "./apple-signup.controller";
 import { AuthController } from "./auth.controller";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
@@ -30,6 +31,7 @@ import { SignupRateLimiter } from "./signup-rate-limiter";
 		AuthController,
 		SignupController,
 		GoogleSignupController,
+		AppleSignupController,
 		MobileHandoffController,
 		PermissionsController,
 		DevicesController,

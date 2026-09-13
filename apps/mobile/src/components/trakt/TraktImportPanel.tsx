@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TraktImportBanner } from "@/components/trakt/TraktImportBanner";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTraktImport } from "@/lib/use-trakt-import";
@@ -84,16 +85,13 @@ export function TraktImportPanel({
 					returnKeyType="search"
 					onSubmitEditing={handleFetch}
 				/>
-				<Pressable
+				<Button
+					label="Fetch history"
+					loadingLabel="Fetching…"
+					loading={fetchPreview.isPending}
+					disabled={!trimmed}
 					onPress={handleFetch}
-					disabled={!trimmed || fetchPreview.isPending}
-					className="flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
-					style={{ opacity: !trimmed || fetchPreview.isPending ? 0.5 : 1 }}
-				>
-					<Text className="font-semibold text-primary-foreground">
-						{fetchPreview.isPending ? "Fetching…" : "Fetch history"}
-					</Text>
-				</Pressable>
+				/>
 			</View>
 
 			{preview ? (
@@ -139,19 +137,13 @@ export function TraktImportPanel({
 						</View>
 					) : null}
 
-					<Pressable
+					<Button
+						label={importActive ? "Import in progress…" : "Start import"}
+						loading={startImport.isPending}
+						disabled={importActive}
+						leading={<Download color="#3f2e00" size={18} />}
 						onPress={handleStart}
-						disabled={startImport.isPending || importActive}
-						className="flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3"
-						style={{
-							opacity: startImport.isPending || importActive ? 0.6 : 1,
-						}}
-					>
-						<Download color="#3f2e00" size={18} />
-						<Text className="font-semibold text-primary-foreground">
-							{importActive ? "Import in progress…" : "Start import"}
-						</Text>
-					</Pressable>
+					/>
 				</View>
 			) : null}
 
@@ -169,14 +161,7 @@ export function TraktImportPanel({
 	// on and it finishes in the background (the site-wide banner tracks it).
 	const footer =
 		importDone && onDone ? (
-			<Pressable
-				onPress={onDone}
-				className="flex-row items-center justify-center gap-2 rounded-lg bg-primary py-3.5"
-			>
-				<Text className="font-semibold text-base text-primary-foreground">
-					Continue
-				</Text>
-			</Pressable>
+			<Button label="Continue" onPress={onDone} />
 		) : importActive && onSkip ? (
 			<Pressable
 				onPress={onSkip}

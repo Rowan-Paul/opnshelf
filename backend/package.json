@@ -19,6 +19,7 @@
     "lint": "biome lint",
     "check": "biome check",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify:apple": "node -e \"require('ts-node').register({ project: 'tsconfig.json', experimentalResolver: true }); require('./scripts/verify-apple-config.ts')\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "dev": "nest start --watch",

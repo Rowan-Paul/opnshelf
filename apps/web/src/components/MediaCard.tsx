@@ -17,6 +17,7 @@ import {
 	buildSeasonUrl,
 	buildShowUrl,
 } from "#/lib/url-utils";
+import { PosterProgress } from "./PosterProgress";
 import StarRating, { ratingToStars } from "./StarRating";
 import { WatchCountBadge } from "./WatchCountBadge";
 
@@ -36,7 +37,7 @@ export interface MediaCardProps {
 	userRating?: number;
 	duration?: string;
 	episodeInfo?: string;
-	progress?: number;
+	progressText?: string;
 	isWatched?: boolean;
 	/** Viewer-relative Watches represented by this card. */
 	watchCount?: number;
@@ -79,7 +80,7 @@ export default function MediaCard({
 	userRating,
 	duration,
 	episodeInfo,
-	progress,
+	progressText,
 	isWatched = false,
 	watchCount,
 	episodeProgress,
@@ -143,8 +144,19 @@ export default function MediaCard({
 	})();
 
 	const displayName = displayTitle || title;
-	const episodeProgressPercent = episodeProgress?.percentage;
-	const displayedProgress = episodeProgressPercent ?? progress;
+	const posterProgress = episodeProgress
+		? {
+				episodesWatched: episodeProgress.watched,
+				episodesTotal: episodeProgress.total,
+				percentage: episodeProgress.percentage,
+			}
+		: undefined;
+	const isPartialShow =
+		episodeProgress !== undefined &&
+		seasonNumber === undefined &&
+		episodeNumber === undefined &&
+		episodeProgress.watched > 0 &&
+		episodeProgress.watched < episodeProgress.total;
 
 	return (
 		<article
@@ -252,15 +264,13 @@ export default function MediaCard({
 												isProgressLoading
 											}
 											className={`flex h-9 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 ${
-												episodeProgress
-													? "min-w-12 bg-(--accent) px-2 text-[#3f2e00] hover:brightness-95 sm:min-w-10 sm:px-1.5"
-													: isWatched
-														? `bg-(--accent) text-[#3f2e00] hover:brightness-95 ${watchCount && watchCount > 1 ? "gap-1 px-2.5 sm:px-2" : "w-9 sm:w-7"}`
-														: "w-9 bg-white/20 text-white backdrop-blur-sm hover:bg-white/40 sm:w-7"
+												isPartialShow || isWatched
+													? `bg-(--accent) text-[#3f2e00] hover:brightness-95 ${watchCount && watchCount > 1 ? "gap-1 px-2.5 sm:px-2" : "w-9 sm:w-7"}`
+													: "w-9 bg-white/20 text-white backdrop-blur-sm hover:bg-white/40 sm:w-7"
 											}`}
 											aria-label={
-												episodeProgress
-													? `${episodeProgress.watched} of ${episodeProgress.total} episodes watched. Mark remaining watched`
+												isPartialShow
+													? `${episodeProgress?.watched} of ${episodeProgress?.total} episodes watched. Mark remaining watched`
 													: isWatched && watchCount
 														? `${watchCount} ${watchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
 														: isWatched
@@ -268,7 +278,7 @@ export default function MediaCard({
 															: "Add to shelf"
 											}
 											title={
-												episodeProgress
+												isPartialShow
 													? "Mark remaining watched"
 													: isWatched
 														? "Remove from shelf"
@@ -279,10 +289,6 @@ export default function MediaCard({
 												<span className="h-4 w-6 animate-pulse rounded-full bg-white/35 sm:h-3.5" />
 											) : isMarkWatchedPending || isUnmarkWatchedPending ? (
 												<Loader2 className="size-4 animate-spin sm:size-3.5" />
-											) : episodeProgress ? (
-												<span className="font-bold text-xs tabular-nums sm:text-[11px]">
-													{episodeProgressPercent}%
-												</span>
 											) : isWatched ? (
 												<>
 													<Check className="size-4 sm:size-3.5" />
@@ -326,15 +332,11 @@ export default function MediaCard({
 						</div>
 					)}
 
-					{/* Progress bar */}
-					{displayedProgress !== undefined && displayedProgress > 0 && (
-						<div className="absolute right-0 bottom-0 left-0 h-1 bg-black/30">
-							<div
-								className="h-full bg-(--accent)"
-								style={{ width: `${displayedProgress}%` }}
-							/>
-						</div>
-					)}
+					<PosterProgress
+						progress={posterProgress}
+						label="Show progress"
+						isLoading={isProgressLoading}
+					/>
 
 					{/* Hover actions */}
 					{onWatch && (
@@ -361,6 +363,11 @@ export default function MediaCard({
 							</h3>
 							{episodeInfo && (
 								<p className="mt-1 text-sm text-white/70">{episodeInfo}</p>
+							)}
+							{progressText && (
+								<p className="mt-1 text-white/60 text-xs tabular-nums">
+									{progressText}
+								</p>
 							)}
 							{watchedDate && (
 								<p className="mt-1 flex items-center gap-1 text-white/50 text-xs">

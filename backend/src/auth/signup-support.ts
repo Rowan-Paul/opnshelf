@@ -86,3 +86,19 @@ export function mapConfirmEmailError(
 			);
 	}
 }
+
+/**
+ * The message from a rejection raised by `NativeAccountService.pdsSsoPost`.
+ *
+ * That method rejects with a plain object literal (`{ status, error, message }`)
+ * rather than an Error, so the usual `error instanceof Error ? error.message :
+ * String(error)` yields the string "[object Object]" and every `.includes(...)`
+ * check against it silently misses.
+ */
+export function ssoErrorMessage(error: unknown): string {
+	if (error instanceof Error) return error.message;
+	if (error && typeof error === "object" && "message" in error) {
+		return String((error as { message?: unknown }).message ?? "");
+	}
+	return String(error);
+}

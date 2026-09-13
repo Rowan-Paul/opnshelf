@@ -32,7 +32,7 @@ import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
-import ProgressCard from "../../../../components/ProgressCard";
+import { ProgressShelfButton } from "../../../../components/ProgressShelfButton";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import EpisodeList from "../../../../components/shows/EpisodeList";
@@ -114,7 +114,8 @@ function ShowDetailPage() {
 	);
 
 	const { data: watchHistory } = useShowWatchHistory(showId);
-	const { data: showProgressData } = useShowProgress([showId]);
+	const { data: showProgressData, isLoading: isProgressLoading } =
+		useShowProgress([showId]);
 	const showProgress = showProgressData?.items.find(
 		(item) => item.showId === showId,
 	);
@@ -254,6 +255,15 @@ function ShowDetailPage() {
 				title={show.name}
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
+				progress={
+					isAuthenticated &&
+					showProgress &&
+					showProgress.state !== "unavailable"
+						? showProgress
+						: undefined
+				}
+				progressLabel="Show progress"
+				isProgressLoading={isAuthenticated && isProgressLoading}
 				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
 				metaItems={
 					<>
@@ -308,6 +318,20 @@ function ShowDetailPage() {
 								<Play className="size-4" />
 								{getCurrentEpisodeText()}
 							</Link>
+							<ProgressShelfButton
+								episodesWatched={uniqueEpisodesWatched}
+								episodesTotal={totalEpisodes}
+								markLabel={
+									uniqueEpisodesWatched > 0
+										? "Mark remaining watched"
+										: "Add show to shelf"
+								}
+								unmarkLabel="Remove all watches"
+								isMarkPending={isMarkShowPending}
+								isUnmarkPending={isUnmarkShowPending}
+								onMarkWatched={handleMarkShowWatched}
+								onUnmarkWatched={handleUnmarkShowWatched}
+							/>
 							<MediaActionsBar mediaType="show" mediaId={showId} />
 						</>
 					) : (
@@ -427,24 +451,6 @@ function ShowDetailPage() {
 					{/* Right Column - Sidebar */}
 					<div className="space-y-6">
 						<FriendWatchers mediaType="show" mediaId={showId} />
-
-						{/* Your Progress */}
-						{isAuthenticated && (
-							<ProgressCard
-								episodesWatched={uniqueEpisodesWatched}
-								totalEpisodes={totalEpisodes}
-								markLabel={
-									uniqueEpisodesWatched > 0
-										? "Mark remaining watched"
-										: "Add show to shelf"
-								}
-								unmarkLabel="Remove all watches"
-								isMarkPending={isMarkShowPending}
-								isUnmarkPending={isUnmarkShowPending}
-								onMarkWatched={handleMarkShowWatched}
-								onUnmarkWatched={handleUnmarkShowWatched}
-							/>
-						)}
 
 						<DetailsCard
 							items={[

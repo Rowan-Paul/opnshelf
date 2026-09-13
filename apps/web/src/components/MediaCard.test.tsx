@@ -76,4 +76,35 @@ describe("MediaCard poster metadata", () => {
 			Node.DOCUMENT_POSITION_FOLLOWING,
 		);
 	});
+
+	it("announces the poster bar against the show's episode counts", () => {
+		render(
+			<MediaCard
+				id="1"
+				title="Test Show"
+				posterUrl="/poster.jpg"
+				type="show"
+				episodeProgress={{ watched: 3, total: 12, percentage: 25 }}
+			/>,
+		);
+
+		const bar = screen.getByRole("progressbar", {
+			name: "Show progress: 3 of 12 episodes watched",
+		});
+
+		expect(bar.getAttribute("aria-valuenow")).toBe("25");
+	});
+
+	it("omits the poster bar when the card carries no episode progress", () => {
+		render(
+			<MediaCard
+				id="1"
+				title="Test Movie"
+				posterUrl="/poster.jpg"
+				type="movie"
+			/>,
+		);
+
+		expect(screen.queryByRole("progressbar")).toBeNull();
+	});
 });

@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { CaptchaService } from "./captcha.service";
+import { AppleOAuthService } from "./apple-oauth.service";
 import { GoogleOAuthService } from "./google-oauth.service";
 import { TranquilAdminService } from "./tranquil-admin.service";
 
@@ -9,7 +10,17 @@ import { TranquilAdminService } from "./tranquil-admin.service";
  * "Continue with Google" signups.
  */
 @Module({
-	providers: [TranquilAdminService, CaptchaService, GoogleOAuthService],
-	exports: [TranquilAdminService, CaptchaService, GoogleOAuthService],
+	providers: [
+		TranquilAdminService,
+		CaptchaService,
+		GoogleOAuthService,
+		AppleOAuthService,
+	],
+	exports: [
+		TranquilAdminService,
+		CaptchaService,
+		GoogleOAuthService,
+		AppleOAuthService,
+	],
 })
 export class PdsModule {}

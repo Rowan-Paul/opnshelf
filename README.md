@@ -149,6 +149,8 @@ Notes:
 | `PDS_HANDLE_DOMAIN` | Handle domain the PDS serves accounts on |
 | `PDS_ADMIN_IDENTIFIER`, `PDS_ADMIN_PASSWORD` | PDS admin account used to mint single-use invite codes at signup |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | "Continue with Google" signup; empty hides the button |
+| `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | "Continue with Apple" signup; empty hides the button |
+| `PROVIDER_STATE_SECRET` | Signs the CSRF state for Apple's `form_post` callback, which cannot use a cookie. Unset, signups in flight break on every restart |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server secret; empty disables captcha verification (local only) |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `FEEDBACK_NOTIFICATION_EMAIL` | Feedback notification email via Cloudflare Email Sending; empty logs and skips |
 | `BACKEND_PUBLIC_URL` | Public URL for OAuth callbacks |
@@ -224,6 +226,7 @@ Locally they live in the `.env` files. Values themselves are never in the repo.
 | Cloudflare Turnstile | Human check before an invite code is minted at signup | Server-side verify against `challenges.cloudflare.com` in `backend/src/pds/captcha.service.ts`; widget in `apps/web/src/components/TurnstileWidget.tsx` and the Mobile App signup WebView | `TURNSTILE_SECRET_KEY` (backend), `VITE_TURNSTILE_SITE_KEY` (web), `EXPO_PUBLIC_TURNSTILE_SITE_KEY` (mobile) |
 | Cloudflare Email Sending | Feedback notification email to an admin inbox (ADR 0007). The PDS sends its own mail through `services/mail-relay` | REST call from `backend/src/email/email.service.ts`, used by `backend/src/feedback/feedback.service.ts` | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `FEEDBACK_NOTIFICATION_EMAIL` |
 | Google OAuth | "Continue with Google" signup. Same OAuth client as the PDS's own Google SSO, with the backend callback added as a second redirect URI | Consent and token exchange in `backend/src/pds/google-oauth.service.ts` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| Sign in with Apple | "Continue with Apple" signup. Same Apple Service ID as the PDS's own Apple SSO, with the backend callback added as a second Return URL. The Service ID must have the iOS App ID as its primary app, or native and browser sign-ins produce different Apple subjects and one person gets two accounts | Authorize URL, ES256 client secret and token exchange in `backend/src/pds/apple-oauth.service.ts` | `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` |
 | Bluesky public API | Follow suggestions and Bluesky follow import (`app.bsky.graph.getFollows`), handle typeahead on sign-in, profile lookups | Unauthenticated HTTPS to `public.api.bsky.app/xrpc` from `backend/src/social/social.service.ts`, `backend/src/users/users.service.ts`, `backend/src/auth/auth.service.ts` | none |
 | PostHog | Product analytics, clients only; the backend does not report | `apps/web/src/integrations/posthog/provider.tsx` (initialises only on the production origin), `apps/mobile/src/lib/posthog.ts` | `VITE_POSTHOG_KEY`, `EXPO_PUBLIC_POSTHOG_KEY`, `EXPO_PUBLIC_POSTHOG_HOST` |
 | PostgreSQL | Index of everything above plus sessions, jobs and local-only state such as Circles | Prisma from `backend/src/prisma/prisma.service.ts`. Local: docker-compose. Deployed: one Railway Postgres per environment | `DATABASE_URL` |

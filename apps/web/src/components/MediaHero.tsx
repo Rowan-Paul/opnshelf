@@ -1,6 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+	PosterProgress,
+	type PosterProgressValue,
+	progressPercentage,
+} from "./PosterProgress";
 
 interface Breadcrumb {
 	label: string;
@@ -15,6 +20,9 @@ interface MediaHeroProps {
 	actions?: ReactNode;
 	breadcrumbs?: Breadcrumb[];
 	currentProgress?: ReactNode;
+	progress?: PosterProgressValue;
+	progressLabel?: "Show progress" | "Season progress";
+	isProgressLoading?: boolean;
 	backLabel?: string;
 }
 
@@ -26,8 +34,21 @@ export default function MediaHero({
 	actions,
 	breadcrumbs,
 	currentProgress,
+	progress,
+	progressLabel = "Show progress",
+	isProgressLoading = false,
 	backLabel = "Back to Dashboard",
 }: MediaHeroProps) {
+	const percentage = progress ? progressPercentage(progress) : undefined;
+	const showProgressSummary = progress && progress.episodesTotal > 0;
+	const progressOverlay = (
+		<PosterProgress
+			progress={progress}
+			label={progressLabel}
+			isLoading={isProgressLoading}
+		/>
+	);
+
 	return (
 		<div className="relative z-10 min-h-[50vh] overflow-hidden">
 			{/* Backdrop Image */}
@@ -98,7 +119,7 @@ export default function MediaHero({
 				<div className="grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
 					{/* Poster */}
 					<div className="hidden lg:block">
-						<div className="aspect-2/3 overflow-hidden rounded-xl shadow-2xl">
+						<div className="relative aspect-2/3 overflow-hidden rounded-xl shadow-2xl">
 							{posterUrl ? (
 								<img
 									src={posterUrl}
@@ -110,6 +131,7 @@ export default function MediaHero({
 									<span className="text-gray-400">No Poster</span>
 								</div>
 							)}
+							{progressOverlay}
 						</div>
 					</div>
 
@@ -117,7 +139,7 @@ export default function MediaHero({
 					<div className="flex flex-col justify-end pb-8 lg:pb-16">
 						{/* Mobile Poster */}
 						<div className="mb-6 flex gap-4 lg:hidden">
-							<div className="h-40 w-28 shrink-0 overflow-hidden rounded-lg">
+							<div className="relative h-40 w-28 shrink-0 overflow-hidden rounded-lg">
 								{posterUrl ? (
 									<img
 										src={posterUrl}
@@ -127,6 +149,7 @@ export default function MediaHero({
 								) : (
 									<div className="h-full w-full bg-linear-to-br from-gray-700 to-gray-800" />
 								)}
+								{progressOverlay}
 							</div>
 							<div className="flex min-w-0 flex-col justify-center overflow-hidden">
 								<h1 className="break-words text-display-2">{title}</h1>
@@ -143,6 +166,13 @@ export default function MediaHero({
 							<div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
 								{metaItems}
 							</div>
+						)}
+
+						{showProgressSummary && (
+							<p className="mt-3 text-(--foreground-muted) text-sm tabular-nums">
+								{progress.episodesWatched} of {progress.episodesTotal} episodes
+								watched · {percentage}% watched
+							</p>
 						)}
 
 						{/* Current Progress */}

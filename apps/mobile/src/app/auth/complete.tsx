@@ -4,6 +4,8 @@ import { ActivityIndicator, View } from "react-native";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { authErrorMessage } from "@/lib/auth-error";
+import { NoPendingHandoffError } from "@/lib/handoff-error";
 
 /**
  * Deep-link landing for the PDS OAuth redirect (`opnshelf://auth/complete`).
@@ -21,21 +23,6 @@ type CompleteParams = {
 	error?: string;
 	permission?: string;
 };
-
-function errorMessage(code: string): string {
-	switch (code) {
-		case "handle_required":
-			return "Please provide your handle to sign in.";
-		case "auth_failed":
-			return "Authentication failed. Please check your handle and try again.";
-		case "callback_failed":
-			return "Something went wrong during sign in. Please try again.";
-		case "permission_declined":
-			return "Review permission was not granted.";
-		default:
-			return "An unexpected error occurred. Please try again.";
-	}
-}
 
 function isMaintenanceError(error: unknown): boolean {
 	if (!error || typeof error !== "object") return false;
@@ -58,7 +45,7 @@ export default function AuthCompleteScreen() {
 		handled.current = true;
 
 		if (error) {
-			setMessage(errorMessage(error));
+			setMessage(authErrorMessage(error));
 			const timer = setTimeout(
 				() => router.replace(permission === "atstore" ? "/" : "/login"),
 				1500,
@@ -84,6 +71,15 @@ export default function AuthCompleteScreen() {
 				);
 			})
 			.catch((err) => {
+				// The auth session can complete the same sign-in: on Android both
+				// paths run and race for one verifier. Losing it here is not a
+				// failure, and reporting one would bounce a signed-in user to the
+				// login screen. Hand to the index gate, which sends them to login
+				// only if no session actually landed.
+				if (err instanceof NoPendingHandoffError) {
+					router.replace("/" as Href);
+					return;
+				}
 				console.error("Failed to complete auth:", err);
 				setMessage(
 					isMaintenanceError(err)

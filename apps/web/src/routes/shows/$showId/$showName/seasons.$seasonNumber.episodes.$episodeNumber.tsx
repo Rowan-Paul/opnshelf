@@ -26,6 +26,7 @@ import { formatDate } from "#/lib/date-utils";
 import {
 	useEpisodeDetails,
 	useShowDetails,
+	useShowProgress,
 	useShowRecommendations,
 	useShowWatchHistory,
 	useShowWatchProviders,
@@ -44,7 +45,6 @@ import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
-import ProgressCard from "../../../../components/ProgressCard";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import { DetailPageSkeleton } from "../../../../components/skeletons";
@@ -117,6 +117,11 @@ function EpisodeDetailPage() {
 	} = useEpisodeDetails(showId, seasonNumber, episodeNumber);
 
 	const { data: watchHistory } = useShowWatchHistory(showId);
+	const { data: showProgressData, isLoading: isProgressLoading } =
+		useShowProgress([showId]);
+	const seasonProgress = showProgressData?.items
+		.find((item) => item.showId === showId)
+		?.seasons.find((item) => item.seasonNumber === seasonNum);
 
 	const {
 		markEpisodeWatched,
@@ -163,19 +168,6 @@ function EpisodeDetailPage() {
 
 	const isWatched = episodeWatchHistory.length > 0;
 
-	// Season progress: distinct episodes watched within this season, out of
-	// the season's episode count (reuses the same show watch history query
-	// already fetched above, and the same episode_count source used for
-	// prev/next episode navigation).
-	const seasonEpisodesWatched = useMemo(() => {
-		if (!watchHistory || !Array.isArray(watchHistory)) return 0;
-		return new Set(
-			watchHistory
-				.filter((ep: { seasonNumber: number }) => ep.seasonNumber === seasonNum)
-				.map((ep: { episodeNumber: number }) => ep.episodeNumber),
-		).size;
-	}, [watchHistory, seasonNum]);
-
 	if (showLoading || episodeLoading) return <DetailPageSkeleton />;
 	if (showError || episodeError || !show || !episode) {
 		return (
@@ -194,8 +186,14 @@ function EpisodeDetailPage() {
 			: show.poster_path
 				? `https://image.tmdb.org/t/p/original${show.poster_path}`
 				: "";
-	const posterUrl = show.poster_path
-		? `https://image.tmdb.org/t/p/w500${show.poster_path}`
+	// The hero poster stands for the season, because the progress bar and summary
+	// it carries are season-scoped. Falls back to the show poster when the season
+	// has no artwork of its own.
+	const seasonPosterPath =
+		show.seasons?.find((s) => s.season_number === seasonNum)?.poster_path ??
+		show.poster_path;
+	const posterUrl = seasonPosterPath
+		? `https://image.tmdb.org/t/p/w500${seasonPosterPath}`
 		: "";
 
 	const director =
@@ -319,6 +317,13 @@ function EpisodeDetailPage() {
 				title={`${show.name} — ${episode.name}`}
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
+				progress={
+					isAuthenticated && seasonProgress?.state !== "unavailable"
+						? seasonProgress
+						: undefined
+				}
+				progressLabel="Season progress"
+				isProgressLoading={isAuthenticated && isProgressLoading}
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
@@ -489,15 +494,6 @@ function EpisodeDetailPage() {
 							mediaType="show"
 							mediaId={`${showId}:season:${seasonNum}:episode:${episodeNum}`}
 						/>
-
-						{/* Season Progress */}
-						{isAuthenticated && currentSeasonEpisodeCount > 0 && (
-							<ProgressCard
-								episodesWatched={seasonEpisodesWatched}
-								totalEpisodes={currentSeasonEpisodeCount}
-								hideActions
-							/>
-						)}
 
 						{/* Your Activity */}
 						{isAuthenticated && (

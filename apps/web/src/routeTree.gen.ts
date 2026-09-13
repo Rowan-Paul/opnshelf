@@ -24,6 +24,7 @@ import { Route as SocialIndexRouteImport } from './routes/social/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SocialFindRouteImport } from './routes/social/find'
 import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
+import { Route as SignupAppleRouteImport } from './routes/signup_.apple'
 import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
@@ -124,6 +125,11 @@ const SocialFindRoute = SocialFindRouteImport.update({
 const SignupGoogleRoute = SignupGoogleRouteImport.update({
   id: '/signup_/google',
   path: '/signup/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupAppleRoute = SignupAppleRouteImport.update({
+  id: '/signup_/apple',
+  path: '/signup/apple',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsSectionRoute = SettingsSectionRouteImport.update({
@@ -285,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
+  '/signup/apple': typeof SignupAppleRoute
   '/signup/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
   '/settings/': typeof SettingsIndexRoute
@@ -325,6 +332,7 @@ export interface FileRoutesByTo {
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/settings/$section': typeof SettingsSectionRoute
+  '/signup/apple': typeof SignupAppleRoute
   '/signup/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
   '/settings': typeof SettingsIndexRoute
@@ -366,6 +374,7 @@ export interface FileRoutesById {
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
+  '/signup_/apple': typeof SignupAppleRoute
   '/signup_/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
   '/settings/': typeof SettingsIndexRoute
@@ -411,6 +420,7 @@ export interface FileRouteTypes {
     | '/embed/review-editor'
     | '/profile/$handle'
     | '/settings/$section'
+    | '/signup/apple'
     | '/signup/google'
     | '/social/find'
     | '/settings/'
@@ -451,6 +461,7 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/embed/review-editor'
     | '/settings/$section'
+    | '/signup/apple'
     | '/signup/google'
     | '/social/find'
     | '/settings'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/embed/review-editor'
     | '/profile/$handle'
     | '/settings/$section'
+    | '/signup_/apple'
     | '/signup_/google'
     | '/social/find'
     | '/settings/'
@@ -534,6 +546,7 @@ export interface RootRouteChildren {
   AuthCompleteRoute: typeof AuthCompleteRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
+  SignupAppleRoute: typeof SignupAppleRoute
   SignupGoogleRoute: typeof SignupGoogleRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ReviewsHandleRkeyRoute: typeof ReviewsHandleRkeyRoute
@@ -647,6 +660,13 @@ declare module '@tanstack/react-router' {
       path: '/signup/google'
       fullPath: '/signup/google'
       preLoaderRoute: typeof SignupGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup_/apple': {
+      id: '/signup_/apple'
+      path: '/signup/apple'
+      fullPath: '/signup/apple'
+      preLoaderRoute: typeof SignupAppleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/$section': {
@@ -953,6 +973,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCompleteRoute: AuthCompleteRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
+  SignupAppleRoute: SignupAppleRoute,
   SignupGoogleRoute: SignupGoogleRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ReviewsHandleRkeyRoute: ReviewsHandleRkeyRoute,

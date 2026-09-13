@@ -16,12 +16,23 @@ eas init                 # links the project, writes extra.eas.projectId to app.
 Commit the `extra.eas.projectId` that `eas init` adds.
 
 ### 2. Build-time environment variables (EAS)
-`eas.json` configures the Staging API URL and a placeholder analytics key for
-`preview`. Set the production values in the EAS `production` environment:
+`build.preview.env` in `eas.json` holds the whole Staging environment: the API
+and site URLs, a placeholder analytics key, the Turnstile site key, and both
+Google client ids. It has to be complete, because `eas update` does not read
+the EAS-hosted environments and publishes whatever this block contains — a
+value that lives only in the EAS `preview` environment reaches builds and never
+reaches an update, which is how Staging lost first its Google button and then
+its captcha.
+
+Set the production values in the EAS `production` environment instead:
 ```bash
-eas env:create --environment production   --name EXPO_PUBLIC_API_URL    --value "https://api.opnshelf.xyz"
-eas env:create --environment production   --name EXPO_PUBLIC_POSTHOG_KEY --value "<posthog key>"  --visibility sensitive
+eas env:set --environment production --name EXPO_PUBLIC_API_URL     --value "https://api.opnshelf.xyz"
+eas env:set --environment production --name EXPO_PUBLIC_POSTHOG_KEY --value "<posthog key>" --visibility sensitive
 ```
+(`eas env:create` is deprecated in favour of `env:set`.) Production updates are
+safe to resolve that way because `release.yml` publishes with `--environment
+production`; the Staging workflow deliberately does not.
+
 PostHog is disabled on Staging, even if a real key is supplied. It requires a
 non-development build using `https://api.opnshelf.xyz` and a configured key.
 

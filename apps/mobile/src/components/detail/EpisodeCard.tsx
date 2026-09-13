@@ -3,6 +3,7 @@ import { Check, Plus, Star } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { formatRuntime, stillUrl } from "@/lib/tmdb";
@@ -165,35 +166,23 @@ function EpisodeCardWithActions({
 	};
 
 	const action = isAuthenticated ? (
-		<Pressable
+		<Button
+			label={onShelf ? "On shelf" : "Add to shelf"}
+			variant={onShelf ? "primary" : "secondary"}
+			size="sm"
+			loading={pending}
+			leading={
+				onShelf ? (
+					<Check color="#3f2e00" size={16} strokeWidth={3} />
+				) : (
+					<Plus color="#94a3b8" size={16} strokeWidth={2.5} />
+				)
+			}
 			onPress={(e) => {
 				e.stopPropagation();
 				toggleShelf();
 			}}
-			disabled={pending}
-			className={
-				onShelf
-					? "flex-row items-center justify-center gap-1.5 rounded-lg bg-primary py-2"
-					: "flex-row items-center justify-center gap-1.5 rounded-lg border border-border py-2"
-			}
-			style={{ opacity: pending ? 0.6 : 1 }}
-		>
-			{onShelf ? (
-				<>
-					<Check color="#3f2e00" size={16} strokeWidth={3} />
-					<Text className="font-semibold text-primary-foreground text-sm">
-						On shelf
-					</Text>
-				</>
-			) : (
-				<>
-					<Plus color="#94a3b8" size={16} strokeWidth={2.5} />
-					<Text className="font-semibold text-foreground text-sm">
-						Add to shelf
-					</Text>
-				</>
-			)}
-		</Pressable>
+		/>
 	) : undefined;
 
 	return <EpisodeCardBase episode={episode} action={action} upNext={upNext} />;

@@ -38,6 +38,7 @@ import {
 import { useState } from "react";
 import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
+import { Button } from "@/components/ui/button";
 import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
@@ -356,19 +357,18 @@ function MatchCard({ group }: { group: TraktUnmatchedGroupDto }) {
 			</View>
 			{candidate ? (
 				<View className="flex-row gap-2">
-					<Pressable
+					<Button
+						label="Yes"
+						disabled={confirm.isPending}
+						leading={<Check color="#3f2e00" size={18} />}
+						className="flex-1"
 						onPress={() =>
 							confirm.mutate({
 								path: { matchKey: group.matchKey },
 								body: { tmdbId: candidate.tmdbId },
 							})
 						}
-						disabled={confirm.isPending}
-						className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-primary py-3"
-					>
-						<Check color="#3f2e00" size={18} />
-						<Text className="font-semibold text-primary-foreground">Yes</Text>
-					</Pressable>
+					/>
 					<Pressable
 						onPress={() => {
 							if (candidateIndex + 1 < candidates.length) {
@@ -562,14 +562,12 @@ function ActionButton({
 	onPress: () => void;
 }) {
 	return (
-		<Pressable
+		<Button
+			label={label}
+			loading={pending}
+			disabled={disabled}
+			leading={icon}
 			onPress={onPress}
-			disabled={pending || disabled}
-			className="flex-row items-center justify-center gap-2 rounded-xl bg-primary py-3"
-			style={{ opacity: pending || disabled ? 0.5 : 1 }}
-		>
-			{pending ? <ActivityIndicator color="#3f2e00" /> : icon}
-			<Text className="font-semibold text-primary-foreground">{label}</Text>
-		</Pressable>
+		/>
 	);
 }

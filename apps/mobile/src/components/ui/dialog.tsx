@@ -7,6 +7,7 @@ import {
 	useState,
 } from "react";
 import { Modal, Pressable, View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 
@@ -135,12 +136,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 								</Pressable>
 							))}
 							{dialog?.input ? (
-								<Pressable
-									onPress={submitInput}
-									className="rounded-lg bg-primary px-3.5 py-2.5"
-								>
-									<Text className="font-semibold text-[#3f2e00]">Add link</Text>
-								</Pressable>
+								<Button label="Add link" size="sm" onPress={submitInput} />
 							) : null}
 						</View>
 					</View>
