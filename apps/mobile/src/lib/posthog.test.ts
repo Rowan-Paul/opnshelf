@@ -106,3 +106,27 @@ describe("PostHog release tagging", () => {
 		});
 	});
 });
+
+describe("PostHog exception titles", () => {
+	it("names exceptions from their captured message, including categorical mutation reports", async () => {
+		await import("./posthog");
+		const { describeMutationFailure } = await import("@opnshelf/api");
+		const beforeSend = mocks.PostHog.mock.calls[0][1].before_send;
+		const report = describeMutationFailure(
+			new Error("private server response"),
+			["updateProfile"],
+		);
+		expect(report).not.toBeNull();
+		for (const message of [
+			"ThrottlerException: Too Many Requests",
+			report?.error.message,
+		]) {
+			const event = {
+				event: "$exception",
+				properties: { $exception_list: [{ type: "Error", value: message }] },
+			};
+			expect(beforeSend(event).properties.$issue_name).toBe(message);
+			expect(JSON.stringify(event)).not.toContain("private server response");
+		}
+	});
+});
