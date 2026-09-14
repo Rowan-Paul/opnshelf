@@ -17,6 +17,14 @@ export function nameExceptionIssue<
 	)
 		return event;
 	const message = exception.value.trim();
-	if (message) event.properties.$issue_name = message.slice(0, 255);
+	if (message) event.properties.$issue_name = limitToTitleLength(message);
 	return event;
+}
+
+/** Cut to PostHog's 255-character title limit without splitting a surrogate pair. */
+function limitToTitleLength(message: string): string {
+	if (message.length <= 255) return message;
+	const title = message.slice(0, 255);
+	const last = title.charCodeAt(254);
+	return last >= 0xd800 && last <= 0xdbff ? title.slice(0, 254) : title;
 }

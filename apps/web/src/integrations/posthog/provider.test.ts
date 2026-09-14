@@ -83,4 +83,16 @@ describe("PostHog exception titles", () => {
 		});
 		expect(event.properties.$issue_name).toBe("x".repeat(255));
 	});
+
+	it("keeps the title valid Unicode when the limit falls inside a character", async () => {
+		await import("./provider");
+		const beforeSend = mocks.init.mock.calls[0][1].before_send;
+		const event = beforeSend({
+			event: "$exception",
+			properties: {
+				$exception_list: [{ value: `${"x".repeat(254)}\u{1f600}x` }],
+			},
+		});
+		expect(event.properties.$issue_name).toBe("x".repeat(254));
+	});
 });
