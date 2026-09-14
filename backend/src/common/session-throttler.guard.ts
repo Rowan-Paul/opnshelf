@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { isIP } from "node:net";
 import { Inject, Injectable } from "@nestjs/common";
 import { ThrottlerGuard } from "@nestjs/throttler";
 import { AuthService } from "../auth/auth.service";
@@ -21,8 +23,8 @@ import { extractSessionId } from "../auth/session-id";
  * process restart lands there once; AuthGuard then restores it and every
  * later request keys on the session.
  *
- * ponytail: anonymous SSR traffic still collapses onto the container IP.
- * Forward the client IP from the SSR fetch wrapper if guests start hitting 429.
+ * Anonymous SSR requests use the visitor IP only when the Web server signs
+ * it with SSR_RATE_LIMIT_SECRET. Unverified headers stay in the peer-IP bucket.
  */
 @Injectable()
 export class SessionThrottlerGuard extends ThrottlerGuard {
@@ -35,6 +37,30 @@ export class SessionThrottlerGuard extends ThrottlerGuard {
 		const sessionId = extractSessionId(req as never);
 		return sessionId && this.authService.isKnownSession(sessionId)
 			? `session:${sessionId}`
-			: `ip:${(req as { ip?: string }).ip ?? "unknown"}`;
+			: `ip:${verifiedSsrIp(req) ?? (req as { ip?: string }).ip ?? "unknown"}`;
 	}
+}
+
+/** A forwarded identity is not authentication; it only selects an IP bucket. */
+function verifiedSsrIp(req: Record<string, unknown>): string | undefined {
+	const secret = process.env.SSR_RATE_LIMIT_SECRET;
+	if (!secret || secret.length < 32) return;
+	const headers = req.headers as Record<string, unknown> | undefined;
+	const ip = headers?.["x-opnshelf-client-ip"];
+	const timestamp = headers?.["x-opnshelf-client-time"];
+	const signature = headers?.["x-opnshelf-client-signature"];
+	if (
+		typeof ip !== "string" ||
+		!isIP(ip) ||
+		typeof timestamp !== "string" ||
+		!/^\d{13}$/.test(timestamp) ||
+		Math.abs(Date.now() - Number(timestamp)) > 60_000 ||
+		typeof signature !== "string" ||
+		!/^[a-f0-9]{64}$/.test(signature)
+	)
+		return;
+	const expected = createHmac("sha256", secret)
+		.update(`${ip}\n${timestamp}`)
+		.digest();
+	if (timingSafeEqual(expected, Buffer.from(signature, "hex"))) return ip;
 }
