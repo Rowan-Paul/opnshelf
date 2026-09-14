@@ -90,3 +90,17 @@ Never hand-edit generated output. Change its source, run the owning command, and
 - Squash-merge and delete the branch only when the operator explicitly requests those actions. After the merge, close or update any tracking issue that remains open when the operator requested issue maintenance.
 - Move releases from `develop` to `main` through a separate pull request. Never open an issue-branch pull request into `main`.
 - Report changed files and the verification commands actually run, including any skipped or failing checks.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues on `Rowan-Paul/opnshelf`, driven through the `gh` CLI and bound by the Git workflow rules above. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage labels, unchanged: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md` and one `docs/adr/` index. See `docs/agents/domain.md`.
