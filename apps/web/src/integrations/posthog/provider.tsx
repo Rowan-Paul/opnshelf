@@ -1,3 +1,4 @@
+import { nameExceptionIssue } from "@opnshelf/api";
 import { PostHogProvider as BasePostHogProvider } from "@posthog/react";
 import posthog from "posthog-js";
 import type { ReactNode } from "react";
@@ -31,7 +32,7 @@ if (isPostHogEnabled) {
 			delete event.properties.$current_url;
 			delete event.properties.$pathname;
 			delete event.properties.$referrer;
-			return event;
+			return nameExceptionIssue(event);
 		},
 	});
 	posthog.startExceptionAutocapture();
