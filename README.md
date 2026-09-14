@@ -150,6 +150,7 @@ Notes:
 | `PDS_ADMIN_IDENTIFIER`, `PDS_ADMIN_PASSWORD` | PDS admin account used to mint single-use invite codes at signup |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | "Continue with Google" signup; empty hides the button |
 | `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | "Continue with Apple" signup; empty hides the button |
+| `SSR_RATE_LIMIT_SECRET` | Server-only shared Web/API signing secret, at least 32 characters. Leave unset until the [trusted-edge verification](docs/runbooks/ssr-rate-limiting.md) passes; use separate values per environment |
 | `PROVIDER_STATE_SECRET` | Signs the CSRF state for Apple's `form_post` callback, which cannot use a cookie. Unset, signups in flight break on every restart |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server secret; empty disables captcha verification (local only) |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `FEEDBACK_NOTIFICATION_EMAIL` | Feedback notification email via Cloudflare Email Sending; empty logs and skips |
@@ -162,6 +163,7 @@ Notes:
 
 | Variable | Description |
 |----------|-------------|
+| `SSR_RATE_LIMIT_SECRET` | Server-only shared Web/API signing secret, at least 32 characters. Leave unset until the [trusted-edge verification](docs/runbooks/ssr-rate-limiting.md) passes; use separate values per environment |
 | `VITE_API_URL` | Backend API URL |
 | `VITE_POSTHOG_KEY` | PostHog analytics key |
 | `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key for the signup captcha (public, domain-locked) |

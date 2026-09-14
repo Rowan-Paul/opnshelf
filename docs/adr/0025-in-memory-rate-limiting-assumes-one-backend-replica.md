@@ -7,7 +7,7 @@ The backend rate-limits in process memory in three places.
 100 requests per 60 seconds and passes no `storage` option, so
 `@nestjs/throttler` keeps its counters in its default in-memory store.
 `SessionThrottlerGuard` (`backend/src/common/session-throttler.guard.ts`) only
-changes the bucket key — a known session id, otherwise the peer IP — not where
+changes the bucket key — a known session id, otherwise a verified SSR visitor IP or the peer IP — not where
 the counts live. `SignupRateLimiter` (`backend/src/auth/signup-rate-limiter.ts`),
 shared by the signup controllers, then adds two hand-rolled limiters as private
 `Map`s on that singleton:
@@ -62,5 +62,38 @@ Before scaling, do the following in the same change:
   `plans/README.md` already lists "multi-replica background-job claiming" as a
   scaling investigation with the same trigger; treat the two together when the
   time comes.
-- No new dependency and no code change today. This record exists so the
-  assumption is written down where the scaling decision will find it.
+- The storage decision adds no dependency. The SSR identity amendment below
+  changes bucket selection without changing storage.
+
+## Amendment: preserve visitor identity through SSR (PR #318)
+
+The #296 fix removed anonymous SSR session checks but left public loaders
+sharing the Web container's IP. On September 12, 2026, the show and episode
+requests for Futurama S9E3 returned 429 while unrelated renders used the same
+source IP. The browser's own session check succeeded. Bucket isolation, not a
+higher quota or a different store, addresses that failure.
+
+Web signs the edge-provided visitor IP and timestamp with HMAC-SHA256 using a
+server-only secret shared with the API. The API accepts signatures within 60
+seconds of its clock, allowing clock skew in either direction. Known sessions
+retain priority; invalid or absent signatures fall back to the peer IP. This
+proof selects a bucket only and never grants authentication or authorization.
+It can be replayed within that window against the same bucket, not used to
+mint arbitrary buckets. The separate signup limiter still uses its existing IP
+policy. We do not introduce a general signed-token abstraction: provider CSRF
+state and this transport proof have different payload and validity rules.
+
+This adds a trust boundary: Web may assert a visitor IP only if the edge
+replaces client-supplied `X-Real-IP`. Railway documents supplying that header,
+but its overwrite behavior has **not been verified** for this deployment.
+Activation is conditional on the spoof test in the [runbook](../runbooks/ssr-rate-limiting.md).
+Until it passes, leave `SSR_RATE_LIMIT_SECRET` unset. If it fails, do not enable
+forwarding: establish a proxy boundary that overwrites the header first.
+Direct public access to the Web listening port would invalidate this trust.
+
+We reject trusting unsigned visitor headers on the public API: that would let
+callers choose unlimited buckets. Increasing the shared quota would only move
+the failure threshold. The cost of authenticated forwarding is one runtime
+secret per environment, shared between two services. Either deployment order
+is compatible; forwarding activates only when both services support it and
+have matching keys. Mobile continues to call the API directly.

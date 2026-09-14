@@ -1,18 +1,26 @@
 # SSR visitor rate limiting
 
-Issue #314 was observed after #296 shipped: public show and episode loaders
-still called the API from the Web container without a session. At
-2026-09-12 19:04:16 UTC, Railway recorded `node` requests for
-`/shows/tmdb/615` and `/shows/tmdb/615/season/9/episode/3` returning 429
-from the same source IP as unrelated SSR requests. The browser's `/auth/me`
-call succeeded. PostHog recorded the episode route error immediately afterward.
+Implements [ADR 0025's SSR identity amendment](../adr/0025-in-memory-rate-limiting-assumes-one-backend-replica.md).
 
-Web's shared API request interceptor now signs Railway's `X-Real-IP` with
-HMAC-SHA256. The API accepts a valid signature for 60 seconds and uses that
-visitor's ordinary IP bucket. Known sessions retain priority. Missing,
-malformed, expired, or forged signatures retain the peer-IP limit. The
-signature does not authenticate a user or bypass any limiter. Counters remain
-in memory on one backend replica, as specified by ADR 0025.
+## Required trusted-edge verification
+
+**Not yet verified:** Railway documents supplying `X-Real-IP`, but does not
+promise in the linked specification that client-supplied values are replaced.
+Leave `SSR_RATE_LIMIT_SECRET` unset until the following test passes in the
+actual target environment. The signing code alone cannot establish this trust.
+
+1. With forwarding disabled, use an operator-approved temporary server-side
+   probe behind the same Railway edge and routing as Web. Record only the
+   received `X-Real-IP`, never cookies, authorization, or signing headers.
+2. From one known client, make a baseline request, then requests carrying
+   `X-Real-IP: 198.51.100.123` and `X-Real-IP: 203.0.113.123`, including a
+   duplicate-header request. Check what Web receives, not the edge's `srcIp`
+   log field: that field alone cannot establish header replacement.
+3. Pass only if all requests arrive with the actual client address, independent
+   of the supplied header. Record the date, environment, and result in the
+   rollout PR, then remove the probe. Repeat if the ingress/proxy chain changes.
+4. If any supplied address survives, do not activate forwarding. Establish an
+   ingress that overwrites this header and prevents bypass, then repeat.
 
 ## Activation with the next authorized deployment
 
@@ -22,9 +30,9 @@ in memory on one backend replica, as specified by ADR 0025.
   Staging and production. Never commit or print the value.
 - This is a runtime server variable. Do not prefix it with `VITE_`, pass it as
   a Docker build argument, or expose it to the browser.
-- Deploy Server before Web. Until both have the same key and updated code,
-  requests keep the existing peer-IP behavior. A missing or short key disables
-  forwarding; it does not disable rate limiting.
+- Deploying Server before Web is recommended, not required. Until both have the same key and updated code,
+  requests keep the existing peer-IP behavior. A missing key disables forwarding; it does not disable rate limiting.
+  Web rejects a configured key shorter than 32 characters; the API ignores it.
 - Web must be reached through Railway's edge, which supplies `X-Real-IP`.
   Do not expose the Web listening port directly to untrusted callers when
   forwarding is enabled. Local development should leave the key unset unless
