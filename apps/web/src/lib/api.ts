@@ -1,4 +1,4 @@
-import { configureApiClient, setDeviceIdentity } from "@opnshelf/api";
+import { client, configureApiClient, setDeviceIdentity } from "@opnshelf/api";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { env } from "#/env";
@@ -34,6 +34,7 @@ export function setupApiClient() {
 
 	const apiUrl = env.VITE_API_URL;
 	configureApiClient(apiUrl);
+	client.interceptors.request.use(forwardSsrClientIp);
 
 	// Claim this browser profile as a Device (ADR-0015). Browser-only: there's no
 	// localStorage during SSR, and the stamp only needs to happen once per client.
@@ -122,3 +123,14 @@ export const ssrCanResolveSession = createIsomorphicFn()
 export const apiConfig = {
 	baseUrl: env.VITE_API_URL,
 };
+
+// The interceptor runs inside each request, never closing over a visitor in
+// global client configuration. Public loaders need this too, not just auth.
+const forwardSsrClientIp = createIsomorphicFn()
+	.server(async (request: Request): Promise<Request> => {
+		if (new URL(request.url).origin !== new URL(env.VITE_API_URL).origin)
+			return request;
+		const { signSsrClientIp } = await import("./ssr-client-ip.server");
+		return signSsrClientIp(request, getRequestHeader("x-real-ip"));
+	})
+	.client((request: Request): Request => request);
