@@ -243,6 +243,8 @@ export function ProfileListsOverview({
 		data: lists,
 		isLoading,
 		error,
+		refetch: refetchLists,
+		isFetching,
 	} = useQuery({
 		...listsControllerGetPublicUserListsOptions({ path: { userDid } }),
 		enabled: !!userDid,
@@ -312,7 +314,10 @@ export function ProfileListsOverview({
 
 			{isLoading && <ListCardSkeleton />}
 
-			{error && !isLoading && (
+			{/* Only when there is nothing to show. A refetch that fails on top of
+			    loaded lists gets the strip below instead, so the reader keeps the
+			    lists they already had. */}
+			{error && !isLoading && !lists && (
 				<div className="flex h-64 flex-col items-center justify-center gap-4">
 					<AlertCircle className="size-12 text-red-500" />
 					<div className="text-center">
@@ -323,8 +328,26 @@ export function ProfileListsOverview({
 							{error instanceof Error ? error.message : "An error occurred"}
 						</p>
 					</div>
-					<Button onClick={() => window.location.reload()} variant="outline">
+					<Button onClick={() => refetchLists()} variant="outline">
 						Retry
+					</Button>
+				</div>
+			)}
+
+			{error && lists && (
+				<div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-subtle) px-4 py-2.5">
+					<AlertCircle className="size-4 shrink-0 text-red-500" />
+					<p className="text-(--foreground-muted) text-sm">
+						Couldn't refresh these lists. Showing what loaded last.
+					</p>
+					<Button
+						className="ml-auto"
+						disabled={isFetching}
+						onClick={() => refetchLists()}
+						size="sm"
+						variant="ghost"
+					>
+						{isFetching ? "Retrying…" : "Retry"}
 					</Button>
 				</div>
 			)}

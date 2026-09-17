@@ -211,6 +211,7 @@ export function ProfileListsPage({
 		isLoading: listLoading,
 		error: listError,
 		refetch: refetchList,
+		isFetching: listFetching,
 	} = useQuery({
 		...listsControllerGetPublicUserListOptions({
 			path: { userDid, slug: selectedListSlug },
@@ -659,25 +660,25 @@ export function ProfileListsPage({
 								</div>
 							)}
 
-							{/* Error State for List Items */}
+							{/* This branch only renders once the list has loaded, so an
+							    error here is a refetch that failed on top of items the
+							    reader can still see. Replacing them with a full error
+							    panel threw away good data; a strip says what happened
+							    and leaves the list alone. */}
 							{listError && !listLoading && (
-								<div className="flex h-64 flex-col items-center justify-center gap-4">
-									<AlertCircle className="size-12 text-red-500" />
-									<div className="text-center">
-										<h3 className="font-semibold text-(--foreground)">
-											Failed to load list items
-										</h3>
-										<p className="text-(--foreground-muted) text-sm">
-											{listError instanceof Error
-												? listError.message
-												: "An error occurred"}
-										</p>
-									</div>
+								<div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-subtle) px-4 py-2.5">
+									<AlertCircle className="size-4 shrink-0 text-red-500" />
+									<p className="text-(--foreground-muted) text-sm">
+										Couldn't refresh this list. Showing what loaded last.
+									</p>
 									<Button
-										onClick={() => window.location.reload()}
-										variant="outline"
+										className="ml-auto"
+										disabled={listFetching}
+										onClick={() => refetchList()}
+										size="sm"
+										variant="ghost"
 									>
-										Retry
+										{listFetching ? "Retrying…" : "Retry"}
 									</Button>
 								</div>
 							)}
