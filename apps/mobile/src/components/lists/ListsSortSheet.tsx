@@ -54,7 +54,12 @@ export function ListsSortSheet({
 						<Text className="font-bold font-display text-foreground text-lg">
 							Sort lists
 						</Text>
-						<Pressable hitSlop={8} onPress={onDismiss}>
+						<Pressable
+							accessibilityRole="button"
+							accessibilityLabel="Close sort options"
+							hitSlop={8}
+							onPress={onDismiss}
+						>
 							<X color="#94a3b8" size={22} />
 						</Pressable>
 					</View>
