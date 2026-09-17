@@ -4,6 +4,7 @@ import {
 	notesControllerGetUserNotes,
 	notesControllerGetUserNotesInfiniteQueryKey,
 	notesControllerGetUserNotesOptions,
+	retryUnlessNotFound,
 	reviewsControllerGetUserReviews,
 	reviewsControllerGetUserReviewsInfiniteQueryKey,
 	reviewsControllerGetUserReviewsOptions,
@@ -138,6 +139,9 @@ export function useProfileList(userDid: string, slug: string, enabled = true) {
 	return useQuery({
 		...listsControllerGetPublicUserListOptions({ path: { userDid, slug } }),
 		enabled: !!userDid && !!slug && enabled,
+		// A renamed list leaves its old slug dead, and the endpoint answers 404
+		// for it. Retrying that only delays the not-found state.
+		retry: retryUnlessNotFound,
 	});
 }
 

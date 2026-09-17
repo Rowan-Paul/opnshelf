@@ -1,4 +1,5 @@
 import {
+	getHttpStatus,
 	listsControllerDeleteListMutation,
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListQueryKey,
@@ -7,6 +8,7 @@ import {
 	listsControllerReorderListItemsMutation,
 	listsControllerUpdateListMutation,
 	type MediaInListDto,
+	retryUnlessNotFound,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -208,12 +210,18 @@ export function ProfileListsPage({
 		data: listDetails,
 		isLoading: listLoading,
 		error: listError,
+		refetch: refetchList,
 	} = useQuery({
 		...listsControllerGetPublicUserListOptions({
 			path: { userDid, slug: selectedListSlug },
 			query: { sort },
 		}),
 		enabled: !!userDid,
+		// Renaming a list regenerates its slug, so a bookmark or a back button
+		// lands on a dead one often enough to be worth handling well. That is a
+		// 404, and retrying it just held the skeleton on screen for the length
+		// of the backoff before the not-found state appeared.
+		retry: retryUnlessNotFound,
 	});
 
 	// Create list mutation (only works for owner)
@@ -908,6 +916,26 @@ export function ProfileListsPage({
 						</div>
 					) : listLoading ? (
 						<ListDetailSkeleton />
+					) : listError && getHttpStatus(listError) !== 404 ? (
+						// A 500 or a dropped connection is not a missing list, and
+						// telling the reader it is sends them off to look for a list
+						// that is still there. Only a 404 means gone.
+						<div className="flex h-96 flex-col items-center justify-center gap-4 rounded-xl border-(--border) border-2 border-dashed">
+							<AlertCircle className="size-12 text-red-500" />
+							<div className="text-center">
+								<h3 className="font-display font-semibold text-lg">
+									Couldn't load this list
+								</h3>
+								<p className="mt-1 text-(--foreground-muted)">
+									{listError instanceof Error
+										? listError.message
+										: "An error occurred"}
+								</p>
+							</div>
+							<Button onClick={() => refetchList()} variant="outline">
+								Try again
+							</Button>
+						</div>
 					) : (
 						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
 							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--background-subtle)">

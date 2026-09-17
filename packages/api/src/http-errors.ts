@@ -22,3 +22,16 @@ export function isUnauthorizedError(error: unknown): boolean {
 	const { status, statusCode } = error as Record<string, unknown>;
 	return status === 401 || statusCode === 401;
 }
+
+/**
+ * Retry policy for a query whose resource can legitimately be missing. A 404
+ * is a definitive answer, so retrying it only delays the not-found state by
+ * the length of the backoff; every other failure keeps React Query's default
+ * three attempts.
+ */
+export function retryUnlessNotFound(
+	failureCount: number,
+	error: unknown,
+): boolean {
+	return getHttpStatus(error) !== 404 && failureCount < 3;
+}

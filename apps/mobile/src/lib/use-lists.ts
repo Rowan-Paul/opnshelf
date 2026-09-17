@@ -1,4 +1,5 @@
 import {
+	getHttpStatus,
 	type ListsForItemDto,
 	listsControllerAddItemToListMutation,
 	listsControllerCreateListMutation,
@@ -14,6 +15,7 @@ import {
 	listsControllerRemoveItemFromListMutation,
 	listsControllerReorderListItemsMutation,
 	listsControllerUpdateListMutation,
+	retryUnlessNotFound,
 } from "@opnshelf/api";
 import {
 	useInfiniteQuery,
@@ -99,12 +101,12 @@ export function useList(
 		}),
 		enabled: !!slug,
 		initialPageParam: 1,
-		// A missing list answers 200 with a null body rather than 404, and a
-		// renamed list leaves its old slug dead, so a stale link lands here.
-		// Dereferencing that null crashed the screen instead of showing the
-		// not-found state.
+		// A renamed list leaves its old slug dead, so a stale link lands here.
+		// The endpoint answers 404 for that, which surfaces as `isError` and
+		// leaves no page behind to dereference.
 		getNextPageParam: (lastPage) =>
-			lastPage?.hasNextPage ? lastPage.page + 1 : undefined,
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+		retry: retryUnlessNotFound,
 	});
 	const first = query.data?.pages[0];
 	return {
@@ -112,6 +114,9 @@ export function useList(
 		items: query.data?.pages.flatMap((p) => p.items) ?? [],
 		isLoading: query.isLoading,
 		isError: query.isError,
+		// A dead slug is worth saying out loud: "this list is gone" is a
+		// different instruction to the reader than "try again".
+		isNotFound: getHttpStatus(query.error) === 404,
 		fetchNextPage: query.fetchNextPage,
 		hasNextPage: query.hasNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,

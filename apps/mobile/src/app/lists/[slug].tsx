@@ -3,6 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
 	ArrowUpDown,
+	List as ListIcon,
 	ListOrdered,
 	Pencil,
 	Plus,
@@ -110,6 +111,7 @@ export default function ListDetailScreen() {
 		items,
 		isLoading,
 		isError,
+		isNotFound,
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
@@ -336,6 +338,14 @@ export default function ListDetailScreen() {
 				<View className="px-3 pt-3">
 					<PosterGridSkeleton columns={numColumns} />
 				</View>
+			) : isNotFound ? (
+				// Same wording as Web: renaming a list regenerates its slug, so a
+				// stale link is a missing list rather than a broken app.
+				<EmptyState
+					icon={ListIcon}
+					title="List not found"
+					message="This list doesn't exist, or it isn't public."
+				/>
 			) : isError || !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : reorderMode ? (

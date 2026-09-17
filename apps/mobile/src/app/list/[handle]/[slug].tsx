@@ -1,5 +1,7 @@
+import { getHttpStatus } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams } from "expo-router";
+import { List as ListIcon } from "lucide-react-native";
 import { RefreshControl, View } from "react-native";
 import { ListInfoCard } from "@/components/lists/ListInfoCard";
 import { MediaCard } from "@/components/media/MediaCard";
@@ -51,7 +53,11 @@ export default function PublicListScreen() {
 		data: list,
 		isLoading,
 		isError,
+		error,
 	} = useProfileList(userDid, slug ?? "", !!userDid && !!slug);
+	// A renamed list regenerates its slug, so a shared link can outlive the
+	// list it points at. That reads as missing, not as a broken app.
+	const isNotFound = getHttpStatus(error) === 404;
 
 	const items = list?.items ?? [];
 	const resolvingHandle = !isDid && profileQuery.isLoading;
@@ -67,6 +73,12 @@ export default function PublicListScreen() {
 				<View className="px-3 pt-3">
 					<PosterGridSkeleton columns={numColumns} />
 				</View>
+			) : isNotFound ? (
+				<EmptyState
+					icon={ListIcon}
+					title="List not found"
+					message="This list doesn't exist, or it isn't public."
+				/>
 			) : handleError || isError || !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : (

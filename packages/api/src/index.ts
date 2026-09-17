@@ -34,7 +34,11 @@ export { createClient, createConfig } from "./generated/client/index";
 // Export client configuration utilities
 export { client } from "./generated/client.gen";
 export * from "./generated/index";
-export { getHttpStatus, isUnauthorizedError } from "./http-errors";
+export {
+	getHttpStatus,
+	isUnauthorizedError,
+	retryUnlessNotFound,
+} from "./http-errors";
 export { slugifyName } from "./media-slug";
 export {
 	describeMutationFailure,
