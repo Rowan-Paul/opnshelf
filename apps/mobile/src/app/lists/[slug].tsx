@@ -24,6 +24,7 @@ import {
 import { HeaderBackButton } from "@/components/AppHeader";
 import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
+import { ListInfoCard } from "@/components/lists/ListInfoCard";
 import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
 import { MediaCard } from "@/components/media/MediaCard";
 import { PosterImage } from "@/components/media/PosterImage";
@@ -343,9 +344,7 @@ export default function ListDetailScreen() {
 
 	const canManage = list && !list.isDefault;
 	const total = list?.total ?? 0;
-	const watchedCount = list?.watchedCount ?? 0;
 	const showProgress = isAuthenticated && total > 0;
-	const progressPct = total > 0 ? Math.round((watchedCount / total) * 100) : 0;
 
 	return (
 		<View className="flex-1 bg-background">
@@ -470,33 +469,7 @@ export default function ListDetailScreen() {
 						}}
 						ListHeaderComponent={
 							<View className="gap-3 px-1 pb-4">
-								{/* Description + watched progress clustered in one info card. */}
-								{list.description || total > 0 ? (
-									<View className="gap-2.5 rounded-xl border border-border bg-card p-4">
-										{list.description ? (
-											<Text className="text-muted-foreground text-sm leading-5">
-												{list.description}
-											</Text>
-										) : null}
-										{showProgress ? (
-											<View className="gap-1">
-												<Text className="text-muted-foreground text-xs">
-													{watchedCount} of {total} watched
-												</Text>
-												<View className="h-1 overflow-hidden rounded-full bg-background-subtle">
-													<View
-														className="h-full rounded-full bg-primary"
-														style={{ width: `${progressPct}%` }}
-													/>
-												</View>
-											</View>
-										) : (
-											<Text className="text-muted-foreground text-xs">
-												{total} item{total === 1 ? "" : "s"}
-											</Text>
-										)}
-									</View>
-								) : null}
+								<ListInfoCard {...list} showProgress={showProgress} />
 
 								<TextField
 									leading={<Search color="#94a3b8" size={18} />}

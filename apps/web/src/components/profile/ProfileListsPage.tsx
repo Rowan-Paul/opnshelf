@@ -54,6 +54,7 @@ import {
 } from "#/components/ui/tooltip";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
+import { formatRelativeTime } from "#/lib/date-utils";
 import { ShowProgressScope, useCreateList } from "#/lib/hooks";
 import { cn } from "#/lib/utils";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
@@ -693,15 +694,24 @@ export function ProfileListsPage({
 								</div>
 							)}
 
-							{/* Description + watched progress clustered into one card.
-							    Progress is viewer-relative and hidden when signed out. */}
-							{(activeList.description || (isAuthenticated && total > 0)) && (
+							{/* One info card summarising the list: description, who made it,
+							    when it last changed, and completion. Progress is
+							    viewer-relative, so signed-out readers get the item count
+							    instead. "Created by you" is noise, hence owner-only hiding —
+							    Mobile's ListInfoCard renders the same card. */}
+							{listDetails && (
 								<div className="card space-y-2.5 p-4">
 									{activeList.description && (
 										<p className="text-(--foreground-muted) text-sm">
 											{activeList.description}
 										</p>
 									)}
+									<div className="flex flex-wrap gap-x-3 gap-y-1 text-(--foreground-muted) text-xs">
+										{!isOwner && <span>Created by @{handle}</span>}
+										<span>
+											Updated {formatRelativeTime(listDetails.updatedAt)}
+										</span>
+									</div>
 									{isAuthenticated && total > 0 && (
 										<div className="space-y-1">
 											<div className="flex items-center justify-between text-(--foreground-muted) text-xs">
@@ -710,7 +720,14 @@ export function ProfileListsPage({
 												</span>
 												<span>{Math.round((watchedCount / total) * 100)}%</span>
 											</div>
-											<div className="h-1 w-full overflow-hidden rounded-full bg-(--background-subtle)">
+											<div
+												className="h-1 w-full overflow-hidden rounded-full bg-(--background-subtle)"
+												role="progressbar"
+												aria-label="List progress"
+												aria-valuemin={0}
+												aria-valuemax={total}
+												aria-valuenow={watchedCount}
+											>
 												<div
 													className="h-full rounded-full bg-(--accent) transition-all"
 													style={{
@@ -719,6 +736,11 @@ export function ProfileListsPage({
 												/>
 											</div>
 										</div>
+									)}
+									{(!isAuthenticated || total === 0) && (
+										<p className="text-(--foreground-muted) text-xs">
+											{total} item{total === 1 ? "" : "s"}
+										</p>
 									)}
 								</div>
 							)}

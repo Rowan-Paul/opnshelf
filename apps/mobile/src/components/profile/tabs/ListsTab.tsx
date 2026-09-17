@@ -15,11 +15,15 @@ import { useProfileLists } from "@/lib/use-public-profile";
  * Mirrors the web profile Lists page, which also routes to a per-list screen.
  *
  * The standalone list route resolves the owner from its `[handle]` segment and
- * works for both real handles and raw DIDs. Since the parent profile screen
- * passes only `userDid` here (not the handle), we pass the `userDid` as that
- * segment — the route handles DID segments directly, so links work for any user.
+ * also accepts raw DIDs from older deep links.
  */
-export function ListsTab({ userDid }: { userDid: string }) {
+export function ListsTab({
+	userDid,
+	handle,
+}: {
+	userDid: string;
+	handle: string;
+}) {
 	const { data, isLoading, isError } = useProfileLists(userDid);
 
 	return (
@@ -37,7 +41,12 @@ export function ListsTab({ userDid }: { userDid: string }) {
 			) : (
 				<View className="gap-3">
 					{data.map((list) => (
-						<ListRow key={list.id} list={list} userDid={userDid} />
+						<ListRow
+							key={list.id}
+							list={list}
+							userDid={userDid}
+							handle={handle}
+						/>
 					))}
 				</View>
 			)}
@@ -45,14 +54,22 @@ export function ListsTab({ userDid }: { userDid: string }) {
 	);
 }
 
-function ListRow({ list, userDid }: { list: ListSummaryDto; userDid: string }) {
+function ListRow({
+	list,
+	userDid,
+	handle,
+}: {
+	list: ListSummaryDto;
+	userDid: string;
+	handle: string;
+}) {
 	const { user } = useAuth();
 	// Own lists open the manageable owner screen (sort/reorder/add/edit);
 	// other users' lists open the read-only public route.
 	const href = (
 		user?.did === userDid
 			? `/lists/${list.slug}`
-			: `/list/${encodeURIComponent(userDid)}/${list.slug}`
+			: `/list/${encodeURIComponent(handle)}/${list.slug}`
 	) as Href;
 
 	return (

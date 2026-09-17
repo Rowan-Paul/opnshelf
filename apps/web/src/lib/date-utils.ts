@@ -112,35 +112,39 @@ function wallClockOffsetMs(atMs: number, timezone: string): number {
 	return wall - atMs;
 }
 
-const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", {
-	numeric: "auto",
-});
-
-const timeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
-	["year", 31536000000],
-	["month", 2592000000],
-	["week", 604800000],
-	["day", 86400000],
-	["hour", 3600000],
-	["minute", 60000],
-	["second", 1000],
+const RELATIVE_UNITS: [label: string, ms: number][] = [
+	["year", 365 * 24 * 60 * 60 * 1000],
+	["month", 30 * 24 * 60 * 60 * 1000],
+	["week", 7 * 24 * 60 * 60 * 1000],
+	["day", 24 * 60 * 60 * 1000],
+	["hour", 60 * 60 * 1000],
+	["minute", 60 * 1000],
 ];
 
+/**
+ * "3 hours ago" for past timestamps. Byte-for-byte identical to Mobile's
+ * `apps/mobile/src/lib/relative-time.ts`: the list info card and the devices
+ * row render on both clients, so the same instant has to read the same on
+ * both. Plain arithmetic rather than Intl.RelativeTimeFormat because Hermes
+ * ships only part of Intl, so the Mobile copy cannot use it and this one has
+ * to match. Change both together, or the clients drift apart again.
+ *
+ * Units round rather than truncate, so 45 days reads "2 months ago" — the
+ * nearest unit, not the floor.
+ */
 export function formatRelativeTime(dateString: string): string {
 	if (!dateString) return "";
-	try {
-		const date = new Date(dateString);
-		const now = new Date();
-		const diff = date.getTime() - now.getTime();
-		for (const [unit, ms] of timeUnits) {
-			const value = Math.round(diff / ms);
-			if (Math.abs(value) >= 1) {
-				return relativeTimeFormatter.format(value, unit);
-			}
+	const time = new Date(dateString).getTime();
+	if (Number.isNaN(time)) return "";
+	const elapsed = Date.now() - time;
+	// A clock running ahead reports a future timestamp; "just now" beats
+	// "in -2 minutes".
+	if (elapsed < 60_000) return "just now";
+	for (const [label, ms] of RELATIVE_UNITS) {
+		const value = Math.round(elapsed / ms);
+		if (value >= 1) {
+			return `${value} ${label}${value === 1 ? "" : "s"} ago`;
 		}
-
-		return "just now";
-	} catch {
-		return dateString;
 	}
+	return "just now";
 }
