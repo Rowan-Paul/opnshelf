@@ -685,7 +685,11 @@ export function ProfileListsPage({
 
 							{/* Reorder Mode — vertical list with drag handles + up/down
 							    buttons so it works with both mouse and keyboard. */}
-							{reorderMode && !listLoading && !listError && (
+							{/* Not gated on listError: this branch only renders once the
+							    list has loaded, and React Query keeps the last data when a
+							    refetch fails. Hiding the items on that error left the strip
+							    above floating over nothing. */}
+							{reorderMode && !listLoading && (
 								<div className="space-y-3">
 									{/* Copy toggles by pointer type: HTML5 drag never fires from
 									    touch, so coarse pointers only get the arrow-button path. */}
@@ -816,104 +820,98 @@ export function ProfileListsPage({
 							)}
 
 							{/* Empty State */}
-							{!reorderMode &&
-								!listLoading &&
-								!listError &&
-								filteredItems.length === 0 && (
-									<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
-										<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
-											<List className="size-6 text-(--foreground-subtle)" />
-										</div>
-										<h3 className="mt-3 font-display font-semibold">
-											{searchQuery || filter !== "all"
-												? "No results found"
-												: "List is empty"}
-										</h3>
-										<p className="mt-1 text-(--foreground-muted) text-sm">
-											{searchQuery || filter !== "all"
-												? "Try adjusting your filters"
-												: "Add movies and shows to this list to see them here"}
-										</p>
+							{!reorderMode && !listLoading && filteredItems.length === 0 && (
+								<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
+									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
+										<List className="size-6 text-(--foreground-subtle)" />
 									</div>
-								)}
+									<h3 className="mt-3 font-display font-semibold">
+										{searchQuery || filter !== "all"
+											? "No results found"
+											: "List is empty"}
+									</h3>
+									<p className="mt-1 text-(--foreground-muted) text-sm">
+										{searchQuery || filter !== "all"
+											? "Try adjusting your filters"
+											: "Add movies and shows to this list to see them here"}
+									</p>
+								</div>
+							)}
 
 							{/* Items Grid/List */}
-							{!reorderMode &&
-								!listLoading &&
-								!listError &&
-								filteredItems.length > 0 && (
-									<ShowProgressScope
-										showIds={filteredItems
+							{!reorderMode && !listLoading && filteredItems.length > 0 && (
+								<ShowProgressScope
+									showIds={filteredItems
+										.filter(
+											(item) =>
+												item.mediaType === "show" &&
+												item.seasonNumber === undefined &&
+												item.episodeNumber === undefined,
+										)
+										.map((item) => String(item.mediaId))}
+								>
+									<div className={`grid ${LIST_ITEMS_GRID}`}>
+										{filteredItems
 											.filter(
-												(item) =>
-													item.mediaType === "show" &&
-													item.seasonNumber === undefined &&
-													item.episodeNumber === undefined,
+												(item, index, self) =>
+													index === self.findIndex((i) => i.id === item.id),
 											)
-											.map((item) => String(item.mediaId))}
-									>
-										<div className={`grid ${LIST_ITEMS_GRID}`}>
-											{filteredItems
-												.filter(
-													(item, index, self) =>
-														index === self.findIndex((i) => i.id === item.id),
-												)
-												.map((item: MediaInListDto) => (
-													<ActionableMediaCard
-														key={item.id}
-														fill
-														id={String(
-															(item.media as Record<string, unknown>).mediaId ??
-																item.mediaId,
-														)}
-														title={getTitle(item.media)}
-														seasonNumber={item.seasonNumber}
-														episodeNumber={item.episodeNumber}
-														episodeInfo={
-															item.seasonNumber !== undefined &&
-															item.episodeNumber !== undefined
-																? item.episodeName
-																	? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-																	: `S${item.seasonNumber}E${item.episodeNumber}`
-																: item.seasonNumber !== undefined
-																	? `Season ${item.seasonNumber}`
-																	: undefined
-														}
-														posterUrl={getPosterUrl(item.media)}
-														backdropUrl={getBackdropUrl(item.media)}
-														type={item.mediaType === "movie" ? "movie" : "show"}
-														tmdbRating={getRating(item.media)}
-														duration={formatDuration(
-															item.media.runtime as number | undefined,
-														)}
-														onRemove={
-															isOwner
-																? () =>
-																		removeItemMutation.mutate({
-																			path: {
-																				slug: selectedListSlug,
-																				mediaType: item.mediaType,
-																				mediaId: item.mediaId,
-																			},
-																			query: {
-																				seasonNumber: item.seasonNumber,
-																				episodeNumber: item.episodeNumber,
-																			},
-																		})
+											.map((item: MediaInListDto) => (
+												<ActionableMediaCard
+													key={item.id}
+													fill
+													id={String(
+														(item.media as Record<string, unknown>).mediaId ??
+															item.mediaId,
+													)}
+													title={getTitle(item.media)}
+													seasonNumber={item.seasonNumber}
+													episodeNumber={item.episodeNumber}
+													episodeInfo={
+														item.seasonNumber !== undefined &&
+														item.episodeNumber !== undefined
+															? item.episodeName
+																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+																: `S${item.seasonNumber}E${item.episodeNumber}`
+															: item.seasonNumber !== undefined
+																? `Season ${item.seasonNumber}`
 																: undefined
-														}
-														isRemoving={
-															isOwner &&
-															removeItemMutation.isPending &&
-															removeItemMutation.variables?.path?.mediaId ===
-																item.mediaId
-														}
-														watchCount={item.watchCount}
-													/>
-												))}
-										</div>
-									</ShowProgressScope>
-								)}
+													}
+													posterUrl={getPosterUrl(item.media)}
+													backdropUrl={getBackdropUrl(item.media)}
+													type={item.mediaType === "movie" ? "movie" : "show"}
+													tmdbRating={getRating(item.media)}
+													duration={formatDuration(
+														item.media.runtime as number | undefined,
+													)}
+													onRemove={
+														isOwner
+															? () =>
+																	removeItemMutation.mutate({
+																		path: {
+																			slug: selectedListSlug,
+																			mediaType: item.mediaType,
+																			mediaId: item.mediaId,
+																		},
+																		query: {
+																			seasonNumber: item.seasonNumber,
+																			episodeNumber: item.episodeNumber,
+																		},
+																	})
+															: undefined
+													}
+													isRemoving={
+														isOwner &&
+														removeItemMutation.isPending &&
+														removeItemMutation.variables?.path?.mediaId ===
+															item.mediaId
+													}
+													watchCount={item.watchCount}
+												/>
+											))}
+									</div>
+								</ShowProgressScope>
+							)}
 						</div>
 					) : listLoading ? (
 						<ListDetailSkeleton />

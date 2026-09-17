@@ -6,7 +6,11 @@ import { RefreshControl, View } from "react-native";
 import { ListInfoCard } from "@/components/lists/ListInfoCard";
 import { MediaCard } from "@/components/media/MediaCard";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
-import { EmptyState, ErrorState } from "@/components/ui/states";
+import {
+	EmptyState,
+	ErrorState,
+	StaleDataNotice,
+} from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
 import { listItemToMediaCardItem } from "@/lib/list-media";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
@@ -54,6 +58,8 @@ export default function PublicListScreen() {
 		isLoading,
 		isError,
 		error,
+		refetch,
+		isFetching,
 	} = useProfileList(userDid, slug ?? "", !!userDid && !!slug);
 	// A renamed list regenerates its slug, so a shared link can outlive the
 	// list it points at. That reads as missing, not as a broken app.
@@ -69,6 +75,16 @@ export default function PublicListScreen() {
 				options={{ headerShown: true, title: list?.name ?? "List" }}
 			/>
 
+			{/* A failed refetch keeps the last data, so the grid below still holds
+			    the list the reader came for. */}
+			{isError && list ? (
+				<StaleDataNotice
+					isRetrying={isFetching}
+					message="Couldn't refresh this list. Showing what loaded last."
+					onRetry={() => refetch()}
+				/>
+			) : null}
+
 			{resolvingHandle || isLoading ? (
 				<View className="px-3 pt-3">
 					<PosterGridSkeleton columns={numColumns} />
@@ -79,7 +95,7 @@ export default function PublicListScreen() {
 					title="List not found"
 					message="This list doesn't exist, or it isn't public."
 				/>
-			) : handleError || isError || !list ? (
+			) : handleError || !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : (
 				<ShowProgressScope

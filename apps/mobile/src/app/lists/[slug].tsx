@@ -30,7 +30,11 @@ import { ReorderableItemList } from "@/components/lists/ReorderableItemList";
 import { MediaCard } from "@/components/media/MediaCard";
 import { useDialog } from "@/components/ui/dialog";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
-import { EmptyState, ErrorState } from "@/components/ui/states";
+import {
+	EmptyState,
+	ErrorState,
+	StaleDataNotice,
+} from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -112,6 +116,8 @@ export default function ListDetailScreen() {
 		isLoading,
 		isError,
 		isNotFound,
+		refetch,
+		isFetching,
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
@@ -334,6 +340,17 @@ export default function ListDetailScreen() {
 				}}
 			/>
 
+			{/* React Query keeps the last data when a refetch fails, so the list
+			    below is still worth showing. Replacing it with a full error state
+			    threw away items the reader could still act on. */}
+			{isError && list ? (
+				<StaleDataNotice
+					isRetrying={isFetching}
+					message="Couldn't refresh this list. Showing what loaded last."
+					onRetry={() => refetch()}
+				/>
+			) : null}
+
 			{isLoading ? (
 				<View className="px-3 pt-3">
 					<PosterGridSkeleton columns={numColumns} />
@@ -346,7 +363,7 @@ export default function ListDetailScreen() {
 					title="List not found"
 					message="This list doesn't exist, or it isn't public."
 				/>
-			) : isError || !list ? (
+			) : !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : reorderMode ? (
 				<ScrollView

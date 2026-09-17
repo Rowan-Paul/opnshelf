@@ -120,6 +120,8 @@ export function useList(
 		fetchNextPage: query.fetchNextPage,
 		hasNextPage: query.hasNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,
+		refetch: query.refetch,
+		isFetching: query.isFetching,
 	};
 }
 
