@@ -62,6 +62,31 @@ export function ListRowsSkeleton({ rows = 2 }: { rows?: number }) {
 	);
 }
 
+/**
+ * Matches ListSummaryRow's geometry: same row height, same poster block at the
+ * leading edge, same three text lines. ListRowsSkeleton is a plain bordered box
+ * and would shift the whole screen once the covers land.
+ */
+export function ListSummaryRowsSkeleton({ rows = 3 }: { rows?: number }) {
+	return (
+		<View className="gap-2">
+			{IDX(rows).map((i) => (
+				<View
+					key={i}
+					className="h-24 flex-row items-center gap-3 rounded-xl border border-border bg-card px-3"
+				>
+					<View className="h-[72px] w-12 rounded-md bg-background-subtle" />
+					<View className="flex-1 gap-2">
+						<View className="h-3.5 w-2/5 rounded bg-background-subtle" />
+						<View className="h-2.5 w-3/5 rounded bg-background-subtle" />
+						<View className="h-2.5 w-1/4 rounded bg-background-subtle" />
+					</View>
+				</View>
+			))}
+		</View>
+	);
+}
+
 /** Avatar + two text lines (connections, people search, follow suggestions). */
 export function UserRowsSkeleton({ rows = 4 }: { rows?: number }) {
 	return (

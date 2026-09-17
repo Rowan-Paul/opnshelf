@@ -1,4 +1,5 @@
 import {
+	listsControllerDeleteListMutation,
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListQueryKey,
 	listsControllerGetPublicUserListsQueryKey,
@@ -24,6 +25,7 @@ import {
 	Pencil,
 	Plus,
 	Search,
+	Trash2,
 	Tv,
 	X,
 } from "lucide-react";
@@ -283,6 +285,37 @@ export function ProfileListsPage({
 			);
 		},
 	});
+
+	// Deleting a list: Mobile has had this, Web has not. Owner-only, and never
+	// offered for default lists — same gating as Edit.
+	const deleteListMutation = useMutation({
+		...listsControllerDeleteListMutation(),
+		onSuccess: () => {
+			toast.success("List deleted");
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListsQueryKey({
+					path: { userDid },
+				}),
+			});
+			navigate({ to: "/profile/$handle/lists", params: { handle } });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to delete list",
+			);
+		},
+	});
+
+	const confirmDeleteList = () => {
+		if (
+			!window.confirm(
+				`Delete "${listDetails?.name ?? "this list"}"? This can't be undone.`,
+			)
+		) {
+			return;
+		}
+		deleteListMutation.mutate({ path: { slug: selectedListSlug } });
+	};
 
 	const openEditDialog = () => {
 		setEditName(listDetails?.name ?? "");
@@ -929,37 +962,51 @@ export function ProfileListsPage({
 								/>
 							</div>
 						</div>
-						<div className="flex justify-end gap-2">
+						<div className="flex items-center justify-between gap-2">
+							{/* Destructive action sits apart from Save so the two are not
+							    adjacent targets. */}
 							<Button
 								variant="outline"
-								onClick={() => setShowEditDialog(false)}
+								onClick={confirmDeleteList}
+								disabled={deleteListMutation.isPending}
+								className="gap-1.5 text-red-600 hover:text-red-600"
 							>
-								Cancel
+								<Trash2 className="size-4" />
+								{deleteListMutation.isPending ? "Deleting..." : "Delete"}
 							</Button>
-							<Button
-								onClick={() =>
-									updateListMutation.mutate({
-										path: { slug: selectedListSlug },
-										body: {
-											name: editName.trim(),
-											description: editDescription.trim() || undefined,
-										},
-									})
-								}
-								disabled={!editName.trim() || updateListMutation.isPending}
-							>
-								{updateListMutation.isPending ? (
-									<>
-										<Loader2
-											data-icon="inline-start"
-											className="animate-spin"
-										/>
-										Saving...
-									</>
-								) : (
-									"Save changes"
-								)}
-							</Button>
+
+							<span className="flex gap-2">
+								<Button
+									variant="outline"
+									onClick={() => setShowEditDialog(false)}
+								>
+									Cancel
+								</Button>
+								<Button
+									onClick={() =>
+										updateListMutation.mutate({
+											path: { slug: selectedListSlug },
+											body: {
+												name: editName.trim(),
+												description: editDescription.trim() || undefined,
+											},
+										})
+									}
+									disabled={!editName.trim() || updateListMutation.isPending}
+								>
+									{updateListMutation.isPending ? (
+										<>
+											<Loader2
+												data-icon="inline-start"
+												className="animate-spin"
+											/>
+											Saving...
+										</>
+									) : (
+										"Save changes"
+									)}
+								</Button>
+							</span>
 						</div>
 					</DialogContent>
 				</Dialog>

@@ -1,41 +1,20 @@
 import type { ListSummaryDto } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { Link, Stack } from "expo-router";
-import { ChevronRight, ListPlus, Plus } from "lucide-react-native";
-import { useState } from "react";
+import { Stack } from "expo-router";
+import { ListPlus, Plus } from "lucide-react-native";
+import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, View } from "react-native";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
-import { ListRowsSkeleton } from "@/components/ui/skeletons";
+import { ListSummaryRow } from "@/components/lists/ListSummaryRow";
+import {
+	ListsSortButton,
+	ListsSortSheet,
+} from "@/components/lists/ListsSortSheet";
+import { ListSummaryRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
-import { Text } from "@/components/ui/text";
+import { type ListsSort, sortLists } from "@/lib/lists-sort";
 import { useCreateList, useUserLists } from "@/lib/use-lists";
 import { useTwStyle } from "@/lib/use-tw-style";
-
-function ListRow({ list }: { list: ListSummaryDto }) {
-	return (
-		<Link href={`/lists/${list.slug}` as const} asChild>
-			<Pressable className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-4">
-				<View className="min-w-0 flex-1">
-					<Text
-						className="font-semibold text-base text-foreground"
-						numberOfLines={1}
-					>
-						{list.name}
-					</Text>
-					{list.description ? (
-						<Text className="text-muted-foreground text-sm" numberOfLines={1}>
-							{list.description}
-						</Text>
-					) : null}
-					<Text className="mt-0.5 text-muted-foreground text-xs">
-						{list.itemCount} item{list.itemCount === 1 ? "" : "s"}
-					</Text>
-				</View>
-				<ChevronRight color="#94a3b8" size={18} />
-			</Pressable>
-		</Link>
-	);
-}
 
 export default function ListsScreen() {
 	const listStyle = useTwStyle("px-4 pb-8");
@@ -48,6 +27,13 @@ export default function ListsScreen() {
 	} = useUserLists();
 	const createList = useCreateList();
 	const [editorVisible, setEditorVisible] = useState(false);
+	const [sort, setSort] = useState<ListsSort>("default");
+	const [sortSheetVisible, setSortSheetVisible] = useState(false);
+
+	const sorted = useMemo(
+		() => (lists ? sortLists(lists, sort) : undefined),
+		[lists, sort],
+	);
 
 	const handleCreate = (input: { name: string; description?: string }) => {
 		createList.mutate({ body: input });
@@ -55,9 +41,9 @@ export default function ListsScreen() {
 	};
 
 	function renderBody() {
-		if (isLoading) return <ListRowsSkeleton rows={3} />;
+		if (isLoading) return <ListSummaryRowsSkeleton rows={3} />;
 		if (isError) return <ErrorState message="Couldn't load your lists." />;
-		if (!lists || lists.length === 0) {
+		if (!sorted || sorted.length === 0) {
 			return (
 				<EmptyState
 					icon={ListPlus}
@@ -68,11 +54,17 @@ export default function ListsScreen() {
 		}
 		return (
 			<FlashList
-				data={lists}
-				keyExtractor={(item) => item.id}
-				renderItem={({ item }) => (
+				// Remount when the sort changes. FlashList recycles cells against
+				// the previous layout, and reordering the same data made it stack
+				// two rows at one offset — a list silently disappeared. Sorting is
+				// a deliberate, occasional action, so a remount is cheap and exact.
+				key={sort}
+				data={sorted}
+				extraData={sort}
+				keyExtractor={(item: ListSummaryDto) => item.id}
+				renderItem={({ item }: { item: ListSummaryDto }) => (
 					<View className="pb-2">
-						<ListRow list={item} />
+						<ListSummaryRow list={item} href={`/lists/${item.slug}` as const} />
 					</View>
 				)}
 				contentContainerStyle={listStyle}
@@ -104,7 +96,22 @@ export default function ListsScreen() {
 					),
 				}}
 			/>
+			{lists && lists.length > 1 ? (
+				<View className="px-4 pt-3 pb-1">
+					<ListsSortButton
+						sort={sort}
+						onPress={() => setSortSheetVisible(true)}
+					/>
+				</View>
+			) : null}
 			<View className="flex-1 pt-2">{renderBody()}</View>
+
+			<ListsSortSheet
+				visible={sortSheetVisible}
+				onDismiss={() => setSortSheetVisible(false)}
+				value={sort}
+				onChange={setSort}
+			/>
 
 			<ListEditorSheet
 				visible={editorVisible}
