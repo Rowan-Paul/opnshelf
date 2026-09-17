@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
+	ArrowUpDown,
 	Clock,
 	Film,
 	Heart,
@@ -16,7 +17,7 @@ import {
 	Star,
 	Tv,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
 import {
@@ -26,9 +27,50 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
 import { formatRelativeTime } from "#/lib/date-utils";
 import { useCreateList } from "#/lib/hooks";
 import { cn } from "#/lib/utils";
+
+type SortOption = "default" | "updated" | "name" | "items";
+
+/**
+ * "Default" is the server's own order — default lists first, then by name —
+ * so it stays the thing you see until you ask for something else. The rest are
+ * client-side: the whole list set is already loaded, so sorting it needs no
+ * round trip and no new query key.
+ */
+const SORT_LABELS: Record<SortOption, string> = {
+	default: "Default order",
+	updated: "Recently updated",
+	name: "Name",
+	items: "Most items",
+};
+
+function sortLists(
+	lists: ListSummaryDto[],
+	sort: SortOption,
+): ListSummaryDto[] {
+	if (sort === "default") return lists;
+	const sorted = [...lists];
+	if (sort === "updated") {
+		sorted.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+	} else if (sort === "name") {
+		sorted.sort((a, b) => a.name.localeCompare(b.name));
+	} else {
+		// Ties keep a stable, readable order rather than whatever the API sent.
+		sorted.sort(
+			(a, b) => b.itemCount - a.itemCount || a.name.localeCompare(b.name),
+		);
+	}
+	return sorted;
+}
 
 /** Cards and their skeleton share this, so the placeholder lands on the real shape. */
 const OVERVIEW_GRID = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
@@ -195,6 +237,7 @@ export function ProfileListsOverview({
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [newListName, setNewListName] = useState("");
 	const [newListDescription, setNewListDescription] = useState("");
+	const [sort, setSort] = useState<SortOption>("default");
 
 	const {
 		data: lists,
@@ -204,6 +247,11 @@ export function ProfileListsOverview({
 		...listsControllerGetPublicUserListsOptions({ path: { userDid } }),
 		enabled: !!userDid,
 	});
+
+	const sortedLists = useMemo(
+		() => (lists ? sortLists(lists, sort) : undefined),
+		[lists, sort],
+	);
 
 	const handleCreateList = async () => {
 		if (!newListName.trim()) return;
@@ -228,17 +276,37 @@ export function ProfileListsOverview({
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between gap-4">
+			{/* Sort sits under the title rather than opposite it: it is a view
+			    control, and this mirrors the detail page, which runs Order,
+			    Reorder and the filter pills along the left under its header.
+			    Creating a list is offered by the card at the end of the grid, so
+			    there is no second button competing up here. */}
+			<div className="space-y-3">
 				<h1 className="text-display-2">Lists</h1>
-				{isOwner && (
-					<button
-						type="button"
-						onClick={() => setShowCreateModal(true)}
-						className="btn btn-primary gap-2 rounded-full!"
-					>
-						<Plus className="size-4" />
-						Create List
-					</button>
+				{lists && lists.length > 1 && (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<button
+								type="button"
+								className="inline-flex items-center gap-1.5 rounded-full bg-(--background-subtle) px-3 py-1.5 font-medium text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
+							>
+								<ArrowUpDown className="size-3.5" />
+								{SORT_LABELS[sort]}
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="start">
+							<DropdownMenuRadioGroup
+								value={sort}
+								onValueChange={(value) => setSort(value as SortOption)}
+							>
+								{(Object.keys(SORT_LABELS) as SortOption[]).map((option) => (
+									<DropdownMenuRadioItem key={option} value={option}>
+										{SORT_LABELS[option]}
+									</DropdownMenuRadioItem>
+								))}
+							</DropdownMenuRadioGroup>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				)}
 			</div>
 
@@ -265,12 +333,22 @@ export function ProfileListsOverview({
 				<div className="card p-8 text-center">
 					<List className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
 					<p className="text-(--foreground-muted)">No lists yet.</p>
+					{isOwner && (
+						<button
+							type="button"
+							onClick={() => setShowCreateModal(true)}
+							className="btn btn-primary mt-4 gap-2 rounded-full!"
+						>
+							<Plus className="size-4" />
+							Create List
+						</button>
+					)}
 				</div>
 			)}
 
-			{lists && lists.length > 0 && (
+			{sortedLists && sortedLists.length > 0 && (
 				<div className={OVERVIEW_GRID}>
-					{lists.map((list) => (
+					{sortedLists.map((list) => (
 						<ListCard key={list.id} list={list} handle={handle} />
 					))}
 					{isOwner && (

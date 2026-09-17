@@ -4,10 +4,11 @@ import {
 	listsControllerGetPublicUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	listsControllerReorderListItemsMutation,
+	listsControllerUpdateListMutation,
 	type MediaInListDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	ArrowDown,
@@ -20,6 +21,7 @@ import {
 	List,
 	ListOrdered,
 	Loader2,
+	Pencil,
 	Plus,
 	Search,
 	Tv,
@@ -30,6 +32,13 @@ import { toast } from "sonner";
 import AddListItemsDialog from "#/components/AddListItemsDialog";
 import { PosterGridSkeleton } from "#/components/skeletons";
 import { Button } from "#/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -184,9 +193,13 @@ export function ProfileListsPage({
 	const [sort, setSort] = useState<SortOption>("position");
 	const [filter, setFilter] = useState<FilterOption>("all");
 	const [showAddDialog, setShowAddDialog] = useState(false);
+	const [showEditDialog, setShowEditDialog] = useState(false);
+	const [editName, setEditName] = useState("");
+	const [editDescription, setEditDescription] = useState("");
 	const [reorderMode, setReorderMode] = useState(false);
 	const [reorderItems, setReorderItems] = useState<MediaInListDto[]>([]);
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
+	const [dropIndex, setDropIndex] = useState<number | null>(null);
 
 	// Fetch selected list details with items using public endpoint
 	const {
@@ -234,6 +247,48 @@ export function ProfileListsPage({
 			);
 		},
 	});
+
+	const navigate = useNavigate();
+
+	// Rename / re-describe the list. Renaming regenerates the slug server-side,
+	// so the URL we are on goes stale and we have to follow the new one or the
+	// next refetch 404s.
+	const updateListMutation = useMutation({
+		...listsControllerUpdateListMutation(),
+		onSuccess: (updated) => {
+			toast.success("List updated");
+			setShowEditDialog(false);
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListsQueryKey({
+					path: { userDid },
+				}),
+			});
+			if (updated.slug !== selectedListSlug) {
+				navigate({
+					to: "/profile/$handle/lists/$listSlug",
+					params: { handle, listSlug: updated.slug },
+					replace: true,
+				});
+				return;
+			}
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListQueryKey({
+					path: { userDid, slug: selectedListSlug },
+				}),
+			});
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to update list",
+			);
+		},
+	});
+
+	const openEditDialog = () => {
+		setEditName(listDetails?.name ?? "");
+		setEditDescription(listDetails?.description ?? "");
+		setShowEditDialog(true);
+	};
 
 	// Reorder items mutation (owner only, position order only)
 	const reorderMutation = useMutation({
@@ -330,6 +385,7 @@ export function ProfileListsPage({
 		if (dragIndex === null) return;
 		moveReorderItem(dragIndex, targetIndex);
 		setDragIndex(null);
+		setDropIndex(null);
 	};
 
 	const saveReorder = () => {
@@ -425,14 +481,28 @@ export function ProfileListsPage({
 									) : (
 										isOwner &&
 										isAuthenticated && (
-											<button
-												type="button"
-												onClick={() => setShowAddDialog(true)}
-												className="btn btn-primary btn-sm gap-1.5 rounded-full!"
-											>
-												<Plus className="size-3.5" />
-												Add items
-											</button>
+											<span className="flex items-center gap-2">
+												{/* Default lists are named by the product, so only
+												    custom ones can be renamed — matching Mobile. */}
+												{!listDetails.isDefault && (
+													<button
+														type="button"
+														onClick={openEditDialog}
+														className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+													>
+														<Pencil className="size-3.5" />
+														Edit
+													</button>
+												)}
+												<button
+													type="button"
+													onClick={() => setShowAddDialog(true)}
+													className="btn btn-primary btn-sm gap-1.5 rounded-full!"
+												>
+													<Plus className="size-3.5" />
+													Add items
+												</button>
+											</span>
 										)
 									)}
 								</span>
@@ -492,8 +562,11 @@ export function ProfileListsPage({
 											</DropdownMenuContent>
 										</DropdownMenu>
 
-										{/* Reorder */}
-										{sort === "position" ? (
+										{/* Reorder. Owner-gated: reordering is an owner-only
+										    mutation, and before this the control was offered to
+										    every visitor and only failed at save. */}
+										{!isOwner || !isAuthenticated ? null : sort ===
+											"position" ? (
 											<button
 												type="button"
 												onClick={enterReorderMode}
@@ -571,7 +644,7 @@ export function ProfileListsPage({
 							{/* Reorder Mode — vertical list with drag handles + up/down
 							    buttons so it works with both mouse and keyboard. */}
 							{reorderMode && !listLoading && !listError && (
-								<div className="space-y-2">
+								<div className="space-y-3">
 									{/* Copy toggles by pointer type: HTML5 drag never fires from
 									    touch, so coarse pointers only get the arrow-button path. */}
 									<p className="text-(--foreground-muted) text-xs">
@@ -579,74 +652,124 @@ export function ProfileListsPage({
 											Use the arrow buttons to reorder, then press Done to save.
 										</span>
 										<span className="hidden [@media(pointer:fine)]:inline">
-											Drag rows or use the arrow buttons to reorder, then press
-											Done to save.
+											Drag a poster onto the position you want, or use the arrow
+											buttons, then press Done to save.
 										</span>
 									</p>
-									{reorderItems.map((item, index) => (
-										// biome-ignore lint/a11y/noStaticElementInteractions: drag handlers; keyboard reorder is provided via the up/down buttons
-										<div
-											key={item.id}
-											draggable
-											onDragStart={() => setDragIndex(index)}
-											onDragOver={(e) => e.preventDefault()}
-											onDrop={() => handleDrop(index)}
-											onDragEnd={() => setDragIndex(null)}
-											className={cn(
-												"flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-elevated) p-2",
-												dragIndex === index && "opacity-50",
-											)}
-										>
-											{/* Drag handle is useless on touch (no HTML5 drag events); show only for fine pointers. */}
-											<GripVertical className="hidden size-4 shrink-0 cursor-grab text-(--foreground-muted) [@media(pointer:fine)]:block" />
-											<div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-(--background-subtle)">
-												{getPosterUrl(item.media) ? (
-													<img
-														src={getPosterUrl(item.media)}
-														alt={getTitle(item.media)}
-														className="h-full w-full object-cover"
-														loading="lazy"
-													/>
-												) : (
-													<div className="flex h-full w-full items-center justify-center text-(--foreground-subtle)">
-														{item.mediaType === "movie" ? (
-															<Film className="size-4" />
-														) : (
-															<Tv className="size-4" />
-														)}
-													</div>
+
+									{/* Same grid as the real list, so entering reorder rearranges
+									    nothing — the posters stay exactly where they were. */}
+									{/* biome-ignore lint/a11y/noStaticElementInteractions: clears the drop hint when the pointer leaves the grid */}
+									<div
+										className={`grid ${LIST_ITEMS_GRID}`}
+										onDragLeave={(e) => {
+											if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+												setDropIndex(null);
+											}
+										}}
+									>
+										{reorderItems.map((item, index) => (
+											// biome-ignore lint/a11y/noStaticElementInteractions: drag handlers; keyboard reorder is provided via the arrow buttons
+											<div
+												key={item.id}
+												draggable
+												onDragStart={() => setDragIndex(index)}
+												onDragOver={(e) => {
+													e.preventDefault();
+													if (dropIndex !== index) setDropIndex(index);
+												}}
+												onDrop={() => handleDrop(index)}
+												onDragEnd={() => {
+													setDragIndex(null);
+													setDropIndex(null);
+												}}
+												className={cn(
+													// Not clipped: the drop line sits in the grid
+													// gutter, outside the card's own box.
+													"group relative cursor-grab rounded-lg border-2 transition-all active:cursor-grabbing",
+													dragIndex === index
+														? "border-(--accent) opacity-40"
+														: "border-transparent",
 												)}
-											</div>
-											<div className="min-w-0 flex-1">
-												<p className="truncate font-medium text-sm">
+											>
+												{/* Where the poster will land. `moveItem` splices the
+												    dragged item out and back in at the target, so
+												    dragging forward drops it after that card and
+												    backward drops it before — hence the side flip. */}
+												{dragIndex !== null &&
+													dropIndex === index &&
+													dragIndex !== index && (
+														<span
+															aria-hidden="true"
+															className={cn(
+																"absolute inset-y-0 z-10 w-1 rounded-full bg-(--accent)",
+																// Centred in the grid gutter, not flush against
+																// a card. Offsets are measured from the padding
+																// box, so each is half the gap, plus half the
+																// line, plus the 2px border: 8px gutter -> 8,
+																// 16px gutter -> 12.
+																dragIndex < index
+																	? "-right-2 sm:-right-3"
+																	: "-left-2 sm:-left-3",
+															)}
+														/>
+													)}
+												<div className="relative aspect-[2/3] overflow-hidden rounded-md bg-(--background-subtle)">
+													{getPosterUrl(item.media) ? (
+														<img
+															src={getPosterUrl(item.media)}
+															alt={getTitle(item.media)}
+															className="size-full object-cover"
+															loading="lazy"
+															draggable={false}
+														/>
+													) : (
+														<div className="flex size-full items-center justify-center text-(--foreground-subtle)">
+															{item.mediaType === "movie" ? (
+																<Film className="size-6" />
+															) : (
+																<Tv className="size-6" />
+															)}
+														</div>
+													)}
+
+													{/* Position is the whole point of this mode, so it
+													    stays visible rather than appearing on hover. */}
+													<span className="absolute top-1.5 left-1.5 rounded-full bg-black/70 px-2 py-0.5 font-medium text-[11px] text-white tabular-nums">
+														{index + 1}/{reorderItems.length}
+													</span>
+
+													<GripVertical className="absolute top-1.5 right-1.5 hidden size-4 text-white/80 drop-shadow [@media(pointer:fine)]:block" />
+
+													{/* The only reorder path on touch, and the keyboard
+													    path everywhere. Always rendered, not hover-gated. */}
+													<div className="absolute inset-x-1.5 bottom-1.5 flex justify-between gap-1">
+														<button
+															type="button"
+															aria-label={`Move ${getTitle(item.media)} earlier`}
+															disabled={index === 0}
+															onClick={() => moveReorderItem(index, index - 1)}
+															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
+														>
+															<ArrowUp className="size-3.5 -rotate-90" />
+														</button>
+														<button
+															type="button"
+															aria-label={`Move ${getTitle(item.media)} later`}
+															disabled={index === reorderItems.length - 1}
+															onClick={() => moveReorderItem(index, index + 1)}
+															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
+														>
+															<ArrowDown className="size-3.5 -rotate-90" />
+														</button>
+													</div>
+												</div>
+												<p className="truncate px-1 pt-1.5 text-xs">
 													{getTitle(item.media)}
 												</p>
-												<p className="text-(--foreground-muted) text-xs">
-													{index + 1} / {reorderItems.length}
-												</p>
 											</div>
-											<div className="flex shrink-0 items-center gap-1">
-												<button
-													type="button"
-													aria-label="Move up"
-													disabled={index === 0}
-													onClick={() => moveReorderItem(index, index - 1)}
-													className="btn btn-secondary btn-sm size-8 rounded-full! p-0!"
-												>
-													<ArrowUp className="size-3.5" />
-												</button>
-												<button
-													type="button"
-													aria-label="Move down"
-													disabled={index === reorderItems.length - 1}
-													onClick={() => moveReorderItem(index, index + 1)}
-													className="btn btn-secondary btn-sm size-8 rounded-full! p-0!"
-												>
-													<ArrowDown className="size-3.5" />
-												</button>
-											</div>
-										</div>
-									))}
+										))}
+									</div>
 								</div>
 							)}
 
@@ -767,6 +890,80 @@ export function ProfileListsPage({
 					)}
 				</div>
 			</div>
+
+			{isOwner && (
+				<Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+					<DialogContent className="sm:max-w-[425px]">
+						<DialogHeader>
+							<DialogTitle>Edit List</DialogTitle>
+							<DialogDescription>
+								Rename this list or change its description.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="space-y-4 py-4">
+							<div className="space-y-2">
+								<label htmlFor="edit-list-name" className="font-medium text-sm">
+									List Name
+								</label>
+								<input
+									id="edit-list-name"
+									type="text"
+									className="input"
+									value={editName}
+									onChange={(e) => setEditName(e.target.value)}
+								/>
+							</div>
+							<div className="space-y-2">
+								<label
+									htmlFor="edit-list-description"
+									className="font-medium text-sm"
+								>
+									Description (optional)
+								</label>
+								<textarea
+									id="edit-list-description"
+									placeholder="What's this list about?"
+									className="input min-h-[80px] resize-none"
+									value={editDescription}
+									onChange={(e) => setEditDescription(e.target.value)}
+								/>
+							</div>
+						</div>
+						<div className="flex justify-end gap-2">
+							<Button
+								variant="outline"
+								onClick={() => setShowEditDialog(false)}
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={() =>
+									updateListMutation.mutate({
+										path: { slug: selectedListSlug },
+										body: {
+											name: editName.trim(),
+											description: editDescription.trim() || undefined,
+										},
+									})
+								}
+								disabled={!editName.trim() || updateListMutation.isPending}
+							>
+								{updateListMutation.isPending ? (
+									<>
+										<Loader2
+											data-icon="inline-start"
+											className="animate-spin"
+										/>
+										Saving...
+									</>
+								) : (
+									"Save changes"
+								)}
+							</Button>
+						</div>
+					</DialogContent>
+				</Dialog>
+			)}
 
 			{/* Add Items Dialog */}
 			{isOwner && selectedListSlug && (
