@@ -79,20 +79,40 @@ export class ListsService {
 			orderBy: [{ isDefault: "desc" }, { name: "asc" }],
 			include: {
 				_count: { select: { items: true } },
+				// The cover is the list's first item in manual order, so the Lists
+				// overview can show artwork without a request per list. `take: 1`
+				// on the relation is one windowed query for every list, not one
+				// each. The order must match `getList`'s `position` sort, or the
+				// cover would be a different item than the detail page leads with.
+				items: {
+					take: 1,
+					orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+					select: {
+						movie: { select: { posterPath: true } },
+						show: { select: { posterPath: true } },
+					},
+				},
 			},
 		});
 
-		return lists.map((list) => ({
-			id: list.id,
-			rkey: list.rkey,
-			name: list.name,
-			description: list.description ?? undefined,
-			slug: list.slug,
-			isDefault: list.isDefault,
-			itemCount: list._count.items,
-			createdAt: list.createdAt.toISOString(),
-			updatedAt: list.updatedAt.toISOString(),
-		}));
+		return lists.map((list) => {
+			const first = list.items[0];
+			return {
+				id: list.id,
+				rkey: list.rkey,
+				name: list.name,
+				description: list.description ?? undefined,
+				slug: list.slug,
+				isDefault: list.isDefault,
+				itemCount: list._count.items,
+				// Seasons and episodes hang off a show, so the show's poster stands
+				// in for them.
+				coverPosterPath:
+					first?.movie?.posterPath ?? first?.show?.posterPath ?? undefined,
+				createdAt: list.createdAt.toISOString(),
+				updatedAt: list.updatedAt.toISOString(),
+			};
+		});
 	}
 
 	async getPublicUserLists(userDid: string): Promise<ListSummaryDto[]> {

@@ -1,45 +1,35 @@
 import {
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListQueryKey,
-	listsControllerGetPublicUserListsOptions,
 	listsControllerGetPublicUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	listsControllerReorderListItemsMutation,
 	type MediaInListDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
 	Check,
-	Clock,
+	ChevronLeft,
 	Film,
 	GripVertical,
-	Heart,
 	List,
 	ListOrdered,
 	Loader2,
 	Plus,
 	Search,
-	Star,
 	Tv,
 	X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import AddListItemsDialog from "#/components/AddListItemsDialog";
-import { PosterGridSkeleton, RowListSkeleton } from "#/components/skeletons";
+import { PosterGridSkeleton } from "#/components/skeletons";
 import { Button } from "#/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "#/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -55,7 +45,7 @@ import {
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { formatRelativeTime } from "#/lib/date-utils";
-import { ShowProgressScope, useCreateList } from "#/lib/hooks";
+import { ShowProgressScope } from "#/lib/hooks";
 import { cn } from "#/lib/utils";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
 
@@ -86,38 +76,6 @@ function moveItem<T>(arr: T[], from: number, to: number): T[] {
 	const [moved] = next.splice(from, 1);
 	next.splice(to, 0, moved);
 	return next;
-}
-
-const colorClasses: Record<string, string> = {
-	blue: "bg-blue-500",
-	red: "bg-red-500",
-	purple: "bg-purple-500",
-	green: "bg-green-500",
-	yellow: "bg-yellow-500",
-	gray: "bg-gray-500",
-};
-
-const iconComponents: Record<
-	string,
-	React.ComponentType<{ className?: string }>
-> = {
-	blue: Clock,
-	red: Heart,
-	purple: Star,
-	green: Film,
-	yellow: Tv,
-	gray: List,
-};
-
-function getListColor(name: string): string {
-	const nameLower = name.toLowerCase();
-	if (nameLower.includes("watch") || nameLower.includes("later")) return "blue";
-	if (nameLower.includes("fav") || nameLower.includes("love")) return "red";
-	if (nameLower.includes("best") || nameLower.includes("top")) return "purple";
-	if (nameLower.includes("sci") || nameLower.includes("action")) return "green";
-	if (nameLower.includes("comedy") || nameLower.includes("fun"))
-		return "yellow";
-	return "gray";
 }
 
 function formatDuration(minutes?: number): string | undefined {
@@ -163,10 +121,54 @@ function getRating(media: Record<string, unknown>): number | undefined {
 	return undefined;
 }
 
+/**
+ * Stands in for the toolbar and the poster grid at their real sizes, so the
+ * page does not jump when the list arrives. The toolbar block matches the
+ * sticky bar's height and border; the grid reuses the page's own columns.
+ *
+ * Mounted as the route's `pendingComponent` as well as this page's own loading
+ * branch: the loader awaits the list, so without that the router would sit on
+ * the previous page instead of showing anything.
+ */
+export function ListDetailSkeleton() {
+	const pulse = "animate-pulse rounded bg-(--background-subtle)";
+	return (
+		<div className="space-y-5">
+			{/* Same running order as the real page — back link, toolbar,
+			    description, controls, grid — so nothing below shifts when the list
+			    lands. A list with no description costs one line of drift; leaving
+			    the line out costs it for every list that has one. */}
+			<div className={cn("h-5 w-20", pulse)} />
+			<div className="space-y-6">
+				<div className="-mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-(--border) border-b py-3">
+					<div className={cn("h-7 w-40", pulse)} />
+					<div className={cn("h-3 w-32", pulse)} />
+					<div className={cn("h-3 w-36", pulse)} />
+				</div>
+				<div className={cn("h-5 w-2/5", pulse)} />
+				<div className="space-y-3">
+					<div className={cn("h-10 w-full", pulse)} />
+					<div className="flex gap-2">
+						<div className={cn("h-8 w-20 rounded-full", pulse)} />
+						<div className={cn("ml-auto h-8 w-24 rounded-full", pulse)} />
+					</div>
+					<div className="flex flex-wrap gap-2">
+						{["all", "movies", "shows", "unwatched"].map((key) => (
+							<div key={key} className={cn("h-8 w-20 rounded-full", pulse)} />
+						))}
+					</div>
+				</div>
+				<PosterGridSkeleton gridClassName={LIST_ITEMS_GRID} />
+			</div>
+		</div>
+	);
+}
+
 interface ProfileListsPageProps {
 	userDid: string;
 	handle: string;
-	selectedListSlug?: string | null;
+	/** Always present: this page is only mounted by the `$listSlug` route. */
+	selectedListSlug: string;
 	isOwner: boolean;
 }
 
@@ -176,12 +178,8 @@ export function ProfileListsPage({
 	selectedListSlug,
 	isOwner,
 }: ProfileListsPageProps) {
-	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 
-	const [showCreateModal, setShowCreateModal] = useState(false);
-	const [newListName, setNewListName] = useState("");
-	const [newListDescription, setNewListDescription] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sort, setSort] = useState<SortOption>("position");
 	const [filter, setFilter] = useState<FilterOption>("all");
@@ -189,28 +187,6 @@ export function ProfileListsPage({
 	const [reorderMode, setReorderMode] = useState(false);
 	const [reorderItems, setReorderItems] = useState<MediaInListDto[]>([]);
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
-	const listContentRef = useRef<HTMLDivElement>(null);
-
-	// Fetch public lists for this user
-	const {
-		data: userLists,
-		isLoading: listsLoading,
-		error: listsError,
-	} = useQuery({
-		...listsControllerGetPublicUserListsOptions({ path: { userDid } }),
-		enabled: !!userDid,
-	});
-
-	// Default to the first list when lists load and none is selected
-	useEffect(() => {
-		if (userLists && userLists.length > 0 && !selectedListSlug) {
-			navigate({
-				to: "/profile/$handle/lists/$listSlug",
-				params: { handle, listSlug: userLists[0].slug },
-				replace: true,
-			});
-		}
-	}, [navigate, selectedListSlug, userLists, handle]);
 
 	// Fetch selected list details with items using public endpoint
 	const {
@@ -219,14 +195,13 @@ export function ProfileListsPage({
 		error: listError,
 	} = useQuery({
 		...listsControllerGetPublicUserListOptions({
-			path: { userDid, slug: selectedListSlug || "" },
+			path: { userDid, slug: selectedListSlug },
 			query: { sort },
 		}),
-		enabled: !!userDid && !!selectedListSlug,
+		enabled: !!userDid,
 	});
 
 	// Create list mutation (only works for owner)
-	const createListMutation = useCreateList();
 	const queryClient = useQueryClient();
 
 	// Remove item from list mutation (only works for owner)
@@ -300,11 +275,6 @@ export function ProfileListsPage({
 		if (sort !== "position") setReorderMode(false);
 	}, [sort]);
 
-	const activeList = useMemo(() => {
-		if (!userLists) return null;
-		return userLists.find((list) => list.slug === selectedListSlug);
-	}, [userLists, selectedListSlug]);
-
 	// Filter items based on search query + media/unwatched filter
 	const filteredItems = useMemo(() => {
 		if (!listDetails?.items) return [];
@@ -319,29 +289,6 @@ export function ProfileListsPage({
 			return true;
 		});
 	}, [listDetails?.items, searchQuery, filter]);
-
-	const handleSelectList = (slug: string) => {
-		navigate({
-			to: "/profile/$handle/lists/$listSlug",
-			params: { handle, listSlug: slug },
-			replace: true,
-			// The router's default scroll-to-top lands AFTER the scrollIntoView
-			// below, yanking the viewport back up. Same-page selection keeps its
-			// own scroll handling.
-			resetScroll: false,
-		});
-		// Below lg the sidebar stacks above the content, so a tap otherwise
-		// leaves the user looking at the sidebar. Only scroll in that layout;
-		// rAF lets the selected list render before we scroll to it.
-		if (window.matchMedia("(max-width: 1023px)").matches) {
-			requestAnimationFrame(() => {
-				listContentRef.current?.scrollIntoView({
-					behavior: "smooth",
-					block: "start",
-				});
-			});
-		}
-	};
 
 	// Dedupe defensively — reorder ids must be unique.
 	const dedupedItems = useMemo(() => {
@@ -393,205 +340,109 @@ export function ProfileListsPage({
 		});
 	};
 
-	const handleCreateList = async () => {
-		if (!newListName.trim()) return;
-
-		try {
-			const newList = await createListMutation.mutateAsync({
-				body: {
-					name: newListName.trim(),
-					description: newListDescription.trim() || undefined,
-				},
-			});
-			setShowCreateModal(false);
-			setNewListName("");
-			setNewListDescription("");
-			if (newList?.slug) {
-				navigate({
-					to: "/profile/$handle/lists/$listSlug",
-					params: { handle, listSlug: newList.slug },
-					replace: true,
-				});
-			}
-		} catch (error) {
-			console.error("Failed to create list:", error);
-		}
-	};
-
-	// Show loading state
-	if (listsLoading) {
-		return (
-			<div className="py-8">
-				<RowListSkeleton rows={4} />
-			</div>
-		);
-	}
-
-	// Show error state
-	if (listsError) {
-		return (
-			<div className="py-8">
-				<div className="flex h-64 flex-col items-center justify-center gap-4">
-					<AlertCircle className="size-12 text-red-500" />
-					<div className="text-center">
-						<h3 className="font-semibold text-(--foreground)">
-							Failed to load lists
-						</h3>
-						<p className="text-(--foreground-muted) text-sm">
-							{listsError instanceof Error
-								? listsError.message
-								: "An error occurred"}
-						</p>
-					</div>
-					<Button onClick={() => window.location.reload()} variant="outline">
-						Retry
-					</Button>
-				</div>
-			</div>
-		);
-	}
-
-	// Show empty state when user has no lists
-	if (userLists && userLists.length === 0) {
-		return (
-			<div className="py-8">
-				<h1 className="text-display-2">Lists</h1>
-
-				<div className="card p-8 text-center">
-					<List className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
-					<p className="text-(--foreground-muted)">No lists yet.</p>
-				</div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="space-y-8">
-			{/* Header */}
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<h1 className="text-display-2">Lists</h1>
+		<div className="space-y-5">
+			<Link
+				to="/profile/$handle/lists"
+				params={{ handle }}
+				className="inline-flex items-center gap-1.5 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+			>
+				<ChevronLeft className="size-4" />
+				All lists
+			</Link>
 
-				{isOwner && isAuthenticated && (
-					<button
-						type="button"
-						onClick={() => setShowCreateModal(true)}
-						className="btn btn-primary gap-2 rounded-full!"
-					>
-						<Plus className="size-4" />
-						Create List
-					</button>
-				)}
-			</div>
-
-			<div className="grid gap-8 lg:grid-cols-4">
-				{/* Lists Sidebar */}
-				<div className="space-y-3">
-					{userLists?.map((list) => {
-						const color = getListColor(list.name);
-						const Icon = iconComponents[color] || List;
-						const isSelected = selectedListSlug === list.slug;
-						return (
-							<button
-								key={list.id}
-								type="button"
-								onClick={() => handleSelectList(list.slug)}
-								className={`card card-interactive w-full p-4 text-left transition-all ${
-									isSelected
-										? "border-(--accent) border-2 bg-(--accent-subtle) shadow-sm"
-										: "hover:border-(--accent)/40"
-								}`}
-							>
-								<div className="flex items-start gap-3">
-									<div
-										className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colorClasses[color]} text-white`}
-									>
-										<Icon className="h-5 w-5" />
-									</div>
-									<div className="min-w-0 flex-1">
-										<div className="flex items-center gap-2">
-											<h3 className="truncate font-semibold text-(--foreground)">
-												{list.name}
-											</h3>
-											{list.isDefault && (
-												<span className="badge badge-subtle text-[10px]">
-													Default
-												</span>
-											)}
-										</div>
-										<p className="mt-0.5 line-clamp-1 text-(--foreground-muted) text-xs">
-											{list.description || "No description"}
-										</p>
-										<p className="mt-1 text-(--foreground-subtle) text-xs">
-											{list.itemCount} items
-										</p>
-									</div>
-								</div>
-							</button>
-						);
-					})}
-				</div>
-
-				{/* List Content */}
-				{/* scroll-mt clears the sticky h-16 header (+ breathing room) when
-				    handleSelectList scrolls this into view on stacked layouts. */}
-				<div ref={listContentRef} className="scroll-mt-20 lg:col-span-3">
-					{activeList ? (
+			<div>
+				<div>
+					{listDetails ? (
 						<div className="space-y-6">
-							{/* List Header — controls live below it, mirroring the mobile
-							    layout: full-width search, then one row of pills. */}
-							<div className="flex items-center justify-between gap-4">
-								<div className="flex items-center gap-3">
-									<div
-										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${colorClasses[getListColor(activeList.name)]} text-white`}
-									>
-										{(() => {
-											const ListIcon =
-												iconComponents[getListColor(activeList.name)] || List;
-											return <ListIcon className="h-4.5 w-4.5" />;
-										})()}
-									</div>
-									<h2 className="text-display-3">{activeList.name}</h2>
-								</div>
+							{/* Everything the old info card carried lives in this one bar:
+							    name, completion, provenance and the actions. It sticks under
+							    the app header so the posters stay reachable while scrolling.
+							    `top-16` clears that header. */}
+							<div className="sticky top-16 z-10 -mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-(--border) border-b bg-(--background)/95 py-3 backdrop-blur">
+								<h2 className="font-semibold text-xl">{listDetails.name}</h2>
 
-								{reorderMode ? (
-									<div className="flex items-center gap-2">
-										<button
-											type="button"
-											onClick={cancelReorder}
-											disabled={reorderMutation.isPending}
-											className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+								{/* Progress is viewer-relative, so it is absent when signed
+								    out; the item count stands in for it. */}
+								{isAuthenticated && total > 0 ? (
+									<span className="flex items-center gap-2">
+										<span
+											className="h-1 w-24 overflow-hidden rounded-full bg-(--background-subtle)"
+											role="progressbar"
+											aria-label="List progress"
+											aria-valuemin={0}
+											aria-valuemax={total}
+											aria-valuenow={watchedCount}
 										>
-											<X className="size-3.5" />
-											Cancel
-										</button>
-										<button
-											type="button"
-											onClick={saveReorder}
-											disabled={reorderMutation.isPending}
-											className="btn btn-primary btn-sm gap-1.5 rounded-full!"
-										>
-											{reorderMutation.isPending ? (
-												<Loader2 className="size-3.5 animate-spin" />
-											) : (
-												<Check className="size-3.5" />
-											)}
-											Done
-										</button>
-									</div>
+											<span
+												className="block h-full rounded-full bg-(--accent) transition-all"
+												style={{
+													width: `${Math.min(100, (watchedCount / total) * 100)}%`,
+												}}
+											/>
+										</span>
+										<span className="text-(--foreground-muted) text-xs tabular-nums">
+											{watchedCount}/{total} watched
+										</span>
+									</span>
 								) : (
-									isOwner &&
-									isAuthenticated && (
-										<button
-											type="button"
-											onClick={() => setShowAddDialog(true)}
-											className="btn btn-primary btn-sm gap-1.5 rounded-full!"
-										>
-											<Plus className="size-3.5" />
-											Add items
-										</button>
-									)
+									<span className="text-(--foreground-muted) text-xs">
+										{total} item{total === 1 ? "" : "s"}
+									</span>
 								)}
+
+								<span className="text-(--foreground-subtle) text-xs">
+									{!isOwner && `Created by @${handle} · `}
+									Updated {formatRelativeTime(listDetails.updatedAt)}
+								</span>
+
+								<span className="ml-auto">
+									{reorderMode ? (
+										<div className="flex items-center gap-2">
+											<button
+												type="button"
+												onClick={cancelReorder}
+												disabled={reorderMutation.isPending}
+												className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+											>
+												<X className="size-3.5" />
+												Cancel
+											</button>
+											<button
+												type="button"
+												onClick={saveReorder}
+												disabled={reorderMutation.isPending}
+												className="btn btn-primary btn-sm gap-1.5 rounded-full!"
+											>
+												{reorderMutation.isPending ? (
+													<Loader2 className="size-3.5 animate-spin" />
+												) : (
+													<Check className="size-3.5" />
+												)}
+												Done
+											</button>
+										</div>
+									) : (
+										isOwner &&
+										isAuthenticated && (
+											<button
+												type="button"
+												onClick={() => setShowAddDialog(true)}
+												className="btn btn-primary btn-sm gap-1.5 rounded-full!"
+											>
+												<Plus className="size-3.5" />
+												Add items
+											</button>
+										)
+									)}
+								</span>
 							</div>
+
+							{listDetails.description && (
+								<p className="text-(--foreground-muted) text-sm">
+									{listDetails.description}
+								</p>
+							)}
 
 							{!reorderMode && (
 								<div className="space-y-3">
@@ -692,62 +543,6 @@ export function ProfileListsPage({
 										)}
 									</div>
 								</div>
-							)}
-
-							{/* One info card summarising the list: description, who made it,
-							    when it last changed, and completion. Progress is
-							    viewer-relative, so signed-out readers get the item count
-							    instead. "Created by you" is noise, hence owner-only hiding —
-							    Mobile's ListInfoCard renders the same card. */}
-							{listDetails && (
-								<div className="card space-y-2.5 p-4">
-									{activeList.description && (
-										<p className="text-(--foreground-muted) text-sm">
-											{activeList.description}
-										</p>
-									)}
-									<div className="flex flex-wrap gap-x-3 gap-y-1 text-(--foreground-muted) text-xs">
-										{!isOwner && <span>Created by @{handle}</span>}
-										<span>
-											Updated {formatRelativeTime(listDetails.updatedAt)}
-										</span>
-									</div>
-									{isAuthenticated && total > 0 && (
-										<div className="space-y-1">
-											<div className="flex items-center justify-between text-(--foreground-muted) text-xs">
-												<span>
-													{watchedCount} of {total} watched
-												</span>
-												<span>{Math.round((watchedCount / total) * 100)}%</span>
-											</div>
-											<div
-												className="h-1 w-full overflow-hidden rounded-full bg-(--background-subtle)"
-												role="progressbar"
-												aria-label="List progress"
-												aria-valuemin={0}
-												aria-valuemax={total}
-												aria-valuenow={watchedCount}
-											>
-												<div
-													className="h-full rounded-full bg-(--accent) transition-all"
-													style={{
-														width: `${Math.min(100, (watchedCount / total) * 100)}%`,
-													}}
-												/>
-											</div>
-										</div>
-									)}
-									{(!isAuthenticated || total === 0) && (
-										<p className="text-(--foreground-muted) text-xs">
-											{total} item{total === 1 ? "" : "s"}
-										</p>
-									)}
-								</div>
-							)}
-
-							{/* Loading State for List Items */}
-							{listLoading && (
-								<PosterGridSkeleton gridClassName={LIST_ITEMS_GRID} />
 							)}
 
 							{/* Error State for List Items */}
@@ -931,7 +726,7 @@ export function ProfileListsPage({
 																? () =>
 																		removeItemMutation.mutate({
 																			path: {
-																				slug: selectedListSlug || "",
+																				slug: selectedListSlug,
 																				mediaType: item.mediaType,
 																				mediaId: item.mediaId,
 																			},
@@ -955,16 +750,18 @@ export function ProfileListsPage({
 									</ShowProgressScope>
 								)}
 						</div>
+					) : listLoading ? (
+						<ListDetailSkeleton />
 					) : (
 						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
 							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--background-subtle)">
 								<List className="size-8 text-(--foreground-subtle)" />
 							</div>
 							<h3 className="mt-4 font-display font-semibold text-lg">
-								Select a list
+								List not found
 							</h3>
 							<p className="mt-1 text-(--foreground-muted)">
-								Choose a list from the sidebar to view its contents
+								This list doesn't exist, or it isn't public.
 							</p>
 						</div>
 					)}
@@ -980,74 +777,6 @@ export function ProfileListsPage({
 					slug={selectedListSlug}
 					existingItems={listDetails?.items ?? []}
 				/>
-			)}
-
-			{/* Create List Modal */}
-			{isOwner && (
-				<Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-					<DialogContent className="sm:max-w-[425px]">
-						<DialogHeader>
-							<DialogTitle>Create New List</DialogTitle>
-							<DialogDescription>
-								Create a custom list to organize your movies and shows.
-							</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-4 py-4">
-							<div className="space-y-2">
-								<label htmlFor="list-name" className="font-medium text-sm">
-									List Name
-								</label>
-								<input
-									id="list-name"
-									type="text"
-									placeholder="My Awesome List"
-									className="input"
-									value={newListName}
-									onChange={(e) => setNewListName(e.target.value)}
-								/>
-							</div>
-							<div className="space-y-2">
-								<label
-									htmlFor="list-description"
-									className="font-medium text-sm"
-								>
-									Description (optional)
-								</label>
-								<textarea
-									id="list-description"
-									placeholder="What's this list about?"
-									className="input min-h-[80px] resize-none"
-									value={newListDescription}
-									onChange={(e) => setNewListDescription(e.target.value)}
-								/>
-							</div>
-						</div>
-						<div className="flex justify-end gap-2">
-							<Button
-								variant="outline"
-								onClick={() => setShowCreateModal(false)}
-							>
-								Cancel
-							</Button>
-							<Button
-								onClick={handleCreateList}
-								disabled={!newListName.trim() || createListMutation.isPending}
-							>
-								{createListMutation.isPending ? (
-									<>
-										<Loader2
-											data-icon="inline-start"
-											className="animate-spin"
-										/>
-										Creating...
-									</>
-								) : (
-									"Create List"
-								)}
-							</Button>
-						</div>
-					</DialogContent>
-				</Dialog>
 			)}
 		</div>
 	);
