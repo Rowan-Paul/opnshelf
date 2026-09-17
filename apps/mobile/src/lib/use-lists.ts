@@ -99,8 +99,12 @@ export function useList(
 		}),
 		enabled: !!slug,
 		initialPageParam: 1,
+		// A missing list answers 200 with a null body rather than 404, and a
+		// renamed list leaves its old slug dead, so a stale link lands here.
+		// Dereferencing that null crashed the screen instead of showing the
+		// not-found state.
 		getNextPageParam: (lastPage) =>
-			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+			lastPage?.hasNextPage ? lastPage.page + 1 : undefined,
 	});
 	const first = query.data?.pages[0];
 	return {
