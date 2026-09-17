@@ -3,6 +3,7 @@ import {
 	Controller,
 	Delete,
 	Get,
+	NotFoundException,
 	Param,
 	Post,
 	Put,
@@ -103,9 +104,9 @@ export class ListsController {
 		@Param("slug") slug: string,
 		@Query() query: GetListQueryDto,
 		@Req() req: Request,
-	): Promise<ListWithItemsDto | null> {
+	): Promise<ListWithItemsDto> {
 		const viewerDid = (req as AuthenticatedRequest).user?.did ?? null;
-		return this.listsService.getPublicList(
+		const list = await this.listsService.getPublicList(
 			userDid,
 			slug,
 			viewerDid,
@@ -113,6 +114,11 @@ export class ListsController {
 			query.pageSize,
 			query.sort,
 		);
+		// The service returns null for "no such list"; the status code is this
+		// layer's call, and 404 is what this route already advertises. Answering
+		// 200 with a null body made clients dereference nothing.
+		if (!list) throw new NotFoundException("List not found");
+		return list;
 	}
 
 	@Get(":slug")
@@ -130,8 +136,8 @@ export class ListsController {
 		@Req() req: AuthenticatedRequest,
 		@Param("slug") slug: string,
 		@Query() query: GetListQueryDto,
-	): Promise<ListWithItemsDto | null> {
-		return this.listsService.getList(
+	): Promise<ListWithItemsDto> {
+		const list = await this.listsService.getList(
 			req.user.did,
 			slug,
 			req.user.did,
@@ -139,6 +145,8 @@ export class ListsController {
 			query.pageSize,
 			query.sort,
 		);
+		if (!list) throw new NotFoundException("List not found");
+		return list;
 	}
 
 	@Put(":slug")

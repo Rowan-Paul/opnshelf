@@ -3,8 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
 	ArrowUpDown,
-	ChevronDown,
-	ChevronUp,
+	List as ListIcon,
 	ListOrdered,
 	Pencil,
 	Plus,
@@ -18,18 +17,24 @@ import {
 	ActivityIndicator,
 	Pressable,
 	RefreshControl,
+	ScrollView,
 	Share,
 	View,
 } from "react-native";
 import { HeaderBackButton } from "@/components/AppHeader";
 import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
+import { ListInfoCard } from "@/components/lists/ListInfoCard";
 import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
+import { ReorderableItemList } from "@/components/lists/ReorderableItemList";
 import { MediaCard } from "@/components/media/MediaCard";
-import { PosterImage } from "@/components/media/PosterImage";
 import { useDialog } from "@/components/ui/dialog";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
-import { EmptyState, ErrorState } from "@/components/ui/states";
+import {
+	EmptyState,
+	ErrorState,
+	StaleDataNotice,
+} from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -37,7 +42,6 @@ import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
 import { getMediaTitle, listItemToMediaCardItem } from "@/lib/list-media";
 import { posthog } from "@/lib/posthog";
-import { posterUrl } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import {
 	type ListSort,
@@ -93,72 +97,6 @@ function ListItemCard({
 	);
 }
 
-/** Compact reorder row: poster, title, and up/down arrows. */
-function ReorderRow({
-	item,
-	isFirst,
-	isLast,
-	onUp,
-	onDown,
-}: {
-	item: MediaInListDto;
-	isFirst: boolean;
-	isLast: boolean;
-	onUp: () => void;
-	onDown: () => void;
-}) {
-	const card = listItemToMediaCardItem(item);
-	const sub = card.episode
-		? `S${card.episode.seasonNumber}E${card.episode.episodeNumber} · ${card.episode.showTitle}`
-		: (card.label ?? card.year);
-	return (
-		<View className="flex-row items-center gap-3 border-border border-b py-2">
-			<View className="h-16 w-11 overflow-hidden rounded-md">
-				<PosterImage
-					url={posterUrl(card.posterPath, "w185")}
-					className="h-16 w-11"
-				/>
-			</View>
-			<View className="min-w-0 flex-1">
-				<Text className="font-medium text-foreground text-sm" numberOfLines={2}>
-					{card.title}
-				</Text>
-				{sub ? (
-					<Text className="text-muted-foreground text-xs" numberOfLines={1}>
-						{sub}
-					</Text>
-				) : null}
-			</View>
-			<View className="flex-row items-center gap-1">
-				{/* #94a3b8 like every other muted icon — the old #e2e8f0 was a
-				    dark-theme grey, near-invisible on the light theme. */}
-				<Pressable
-					hitSlop={6}
-					disabled={isFirst}
-					onPress={onUp}
-					className={cn(
-						"size-9 items-center justify-center rounded-full bg-background-subtle",
-						isFirst && "opacity-30",
-					)}
-				>
-					<ChevronUp color="#94a3b8" size={20} />
-				</Pressable>
-				<Pressable
-					hitSlop={6}
-					disabled={isLast}
-					onPress={onDown}
-					className={cn(
-						"size-9 items-center justify-center rounded-full bg-background-subtle",
-						isLast && "opacity-30",
-					)}
-				>
-					<ChevronDown color="#94a3b8" size={20} />
-				</Pressable>
-			</View>
-		</View>
-	);
-}
-
 export default function ListDetailScreen() {
 	const { showDialog } = useDialog();
 	const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -177,6 +115,9 @@ export default function ListDetailScreen() {
 		items,
 		isLoading,
 		isError,
+		isNotFound,
+		refetch,
+		isFetching,
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
@@ -343,9 +284,7 @@ export default function ListDetailScreen() {
 
 	const canManage = list && !list.isDefault;
 	const total = list?.total ?? 0;
-	const watchedCount = list?.watchedCount ?? 0;
 	const showProgress = isAuthenticated && total > 0;
-	const progressPct = total > 0 ? Math.round((watchedCount / total) * 100) : 0;
 
 	return (
 		<View className="flex-1 bg-background">
@@ -401,37 +340,41 @@ export default function ListDetailScreen() {
 				}}
 			/>
 
+			{/* React Query keeps the last data when a refetch fails, so the list
+			    below is still worth showing. Replacing it with a full error state
+			    threw away items the reader could still act on. */}
+			{isError && list ? (
+				<StaleDataNotice
+					isRetrying={isFetching}
+					message="Couldn't refresh this list. Showing what loaded last."
+					onRetry={() => refetch()}
+				/>
+			) : null}
+
 			{isLoading ? (
 				<View className="px-3 pt-3">
 					<PosterGridSkeleton columns={numColumns} />
 				</View>
-			) : isError || !list ? (
+			) : isNotFound ? (
+				// Same wording as Web: renaming a list regenerates its slug, so a
+				// stale link is a missing list rather than a broken app.
+				<EmptyState
+					icon={ListIcon}
+					title="List not found"
+					message="This list doesn't exist, or it isn't public."
+				/>
+			) : !list ? (
 				<ErrorState message="Couldn't load this list." />
 			) : reorderMode ? (
-				<FlashList
-					// Distinct keys on the two FlashLists: numColumns (3 grid ↔ 1 row)
-					// can't change on a live list, it corrupts the layout — the key
-					// remounts instead.
-					key="reorder"
-					data={orderedItems}
-					keyExtractor={(item) => item.id}
+				<ScrollView
 					contentContainerStyle={reorderStyle}
 					showsVerticalScrollIndicator={false}
-					renderItem={({ item, index }) => (
-						<ReorderRow
-							item={item}
-							isFirst={index === 0}
-							isLast={index === orderedItems.length - 1}
-							onUp={() => moveItem(index, index - 1)}
-							onDown={() => moveItem(index, index + 1)}
-						/>
-					)}
-					ListHeaderComponent={
-						<Text className="pb-3 text-muted-foreground text-sm">
-							Use the arrows to reorder, then tap Done to save.
-						</Text>
-					}
-				/>
+				>
+					<Text className="pb-3 text-muted-foreground text-sm">
+						Hold a row to drag it, or use the arrows, then tap Done to save.
+					</Text>
+					<ReorderableItemList items={orderedItems} onReorder={moveItem} />
+				</ScrollView>
 			) : (
 				<ShowProgressScope
 					showIds={filteredItems
@@ -470,33 +413,7 @@ export default function ListDetailScreen() {
 						}}
 						ListHeaderComponent={
 							<View className="gap-3 px-1 pb-4">
-								{/* Description + watched progress clustered in one info card. */}
-								{list.description || total > 0 ? (
-									<View className="gap-2.5 rounded-xl border border-border bg-card p-4">
-										{list.description ? (
-											<Text className="text-muted-foreground text-sm leading-5">
-												{list.description}
-											</Text>
-										) : null}
-										{showProgress ? (
-											<View className="gap-1">
-												<Text className="text-muted-foreground text-xs">
-													{watchedCount} of {total} watched
-												</Text>
-												<View className="h-1 overflow-hidden rounded-full bg-background-subtle">
-													<View
-														className="h-full rounded-full bg-primary"
-														style={{ width: `${progressPct}%` }}
-													/>
-												</View>
-											</View>
-										) : (
-											<Text className="text-muted-foreground text-xs">
-												{total} item{total === 1 ? "" : "s"}
-											</Text>
-										)}
-									</View>
-								) : null}
+								<ListInfoCard {...list} showProgress={showProgress} />
 
 								<TextField
 									leading={<Search color="#94a3b8" size={18} />}

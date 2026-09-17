@@ -290,6 +290,12 @@ export class ListSummaryDto {
 	@ApiProperty()
 	itemCount: number;
 
+	@ApiPropertyOptional({
+		description:
+			"TMDB poster path of the list's first item in manual (`position`) order, used as the list's cover. Absent for an empty list, or when that item has no poster.",
+	})
+	coverPosterPath?: string;
+
 	@ApiProperty()
 	createdAt: string;
 

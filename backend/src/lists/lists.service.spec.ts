@@ -317,6 +317,7 @@ describe("ListsService", () => {
 					slug: "watchlist-abc123",
 					isDefault: true,
 					_count: { items: 5 },
+					items: [{ movie: { posterPath: "/poster.jpg" }, show: null }],
 					createdAt: new Date("2024-01-01"),
 					updatedAt: new Date("2024-01-02"),
 				},
@@ -325,11 +326,54 @@ describe("ListsService", () => {
 			const result = await service.getUserLists("did:plc:abc123");
 
 			expect(result[0].itemCount).toBe(5);
+			expect(result[0].coverPosterPath).toBe("/poster.jpg");
 			expect(mockPrismaService.list.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
 				orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-				include: { _count: { select: { items: true } } },
+				include: {
+					_count: { select: { items: true } },
+					items: {
+						take: 1,
+						orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+						select: {
+							movie: { select: { posterPath: true } },
+							show: { select: { posterPath: true } },
+						},
+					},
+				},
 			});
+		});
+
+		it("falls back to the show poster, and omits the cover when there is none", async () => {
+			mockPrismaService.list.findMany.mockResolvedValue([
+				{
+					id: "list-show",
+					rkey: "shows",
+					name: "Shows",
+					slug: "shows",
+					isDefault: false,
+					_count: { items: 1 },
+					items: [{ movie: null, show: { posterPath: "/show.jpg" } }],
+					createdAt: new Date("2024-01-01"),
+					updatedAt: new Date("2024-01-02"),
+				},
+				{
+					id: "list-empty",
+					rkey: "empty",
+					name: "Empty",
+					slug: "empty",
+					isDefault: false,
+					_count: { items: 0 },
+					items: [],
+					createdAt: new Date("2024-01-01"),
+					updatedAt: new Date("2024-01-02"),
+				},
+			]);
+
+			const result = await service.getUserLists("did:plc:abc123");
+
+			expect(result[0].coverPosterPath).toBe("/show.jpg");
+			expect(result[1].coverPosterPath).toBeUndefined();
 		});
 
 		it("should expose public list summaries via the same ordering", async () => {
@@ -342,6 +386,7 @@ describe("ListsService", () => {
 					slug: "favorites",
 					isDefault: true,
 					_count: { items: 2 },
+					items: [],
 					createdAt: new Date("2024-01-01"),
 					updatedAt: new Date("2024-01-02"),
 				},
