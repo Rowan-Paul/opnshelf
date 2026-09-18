@@ -64,8 +64,10 @@ import ActionableMediaCard from "../../components/ActionableMediaCard";
 
 type SortOption = "position" | "added" | "title" | "year";
 
+// Same columns and gutters as the Shelf page, so a poster is the same size
+// wherever the reader meets it.
 const LIST_ITEMS_GRID =
-	"grid-cols-3 gap-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5";
+	"grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6";
 
 const SORT_LABELS: Record<SortOption, string> = {
 	position: "Order",
