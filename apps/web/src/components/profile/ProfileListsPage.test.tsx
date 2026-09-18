@@ -85,6 +85,8 @@ it.each([
 	touch("pointerdown");
 	touch("pointermove");
 	touch(ending);
+	// A release after cancellation must not complete the stale drag.
+	if (ending !== "pointerup") touch("pointerup");
 	fireEvent.click(screen.getByRole("button", { name: "Done" }));
 	expect(mutate).toHaveBeenCalledWith({
 		path: { slug: "test" },
