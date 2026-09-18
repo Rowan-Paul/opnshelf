@@ -31,7 +31,7 @@ import {
 	Tv,
 	X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AddListItemsDialog from "#/components/AddListItemsDialog";
 import { PosterGridSkeleton } from "#/components/skeletons";
@@ -204,6 +204,22 @@ export function ProfileListsPage({
 	const [reorderItems, setReorderItems] = useState<MediaInListDto[]>([]);
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
 	const [dropIndex, setDropIndex] = useState<number | null>(null);
+	const touchPointer = useRef<number | null>(null);
+	const reorderGrid = useRef<HTMLDivElement>(null);
+
+	const touchTargetIndex = (x: number, y: number) => {
+		const target = document
+			.elementFromPoint(x, y)
+			?.closest<HTMLElement>("[data-reorder-index]");
+		return target && reorderGrid.current?.contains(target)
+			? Number(target.dataset.reorderIndex)
+			: null;
+	};
+	const clearDrag = () => {
+		touchPointer.current = null;
+		setDragIndex(null);
+		setDropIndex(null);
+	};
 
 	// Fetch selected list details with items using public endpoint
 	const {
@@ -691,22 +707,16 @@ export function ProfileListsPage({
 							    above floating over nothing. */}
 							{reorderMode && !listLoading && (
 								<div className="space-y-3">
-									{/* Copy toggles by pointer type: HTML5 drag never fires from
-									    touch, so coarse pointers only get the arrow-button path. */}
 									<p className="text-(--foreground-muted) text-xs">
-										<span className="[@media(pointer:fine)]:hidden">
-											Use the arrow buttons to reorder, then press Done to save.
-										</span>
-										<span className="hidden [@media(pointer:fine)]:inline">
-											Drag a poster onto the position you want, or use the arrow
-											buttons, then press Done to save.
-										</span>
+										Drag a poster onto the position you want, or use the arrow
+										buttons, then press Done to save.
 									</p>
 
 									{/* Same grid as the real list, so entering reorder rearranges
 									    nothing — the posters stay exactly where they were. */}
 									{/* biome-ignore lint/a11y/noStaticElementInteractions: clears the drop hint when the pointer leaves the grid */}
 									<div
+										ref={reorderGrid}
 										className={`grid ${LIST_ITEMS_GRID}`}
 										onDragLeave={(e) => {
 											if (!e.currentTarget.contains(e.relatedTarget as Node)) {
@@ -718,6 +728,36 @@ export function ProfileListsPage({
 											// biome-ignore lint/a11y/noStaticElementInteractions: drag handlers; keyboard reorder is provided via the arrow buttons
 											<div
 												key={item.id}
+												data-reorder-index={index}
+												onPointerDown={(e) => {
+													if (
+														e.pointerType === "mouse" ||
+														!e.isPrimary ||
+														touchPointer.current !== null ||
+														(e.target as Element).closest("button")
+													)
+														return;
+													touchPointer.current = e.pointerId;
+													e.currentTarget.setPointerCapture(e.pointerId);
+													setDragIndex(index);
+												}}
+												onPointerMove={(e) => {
+													if (touchPointer.current !== e.pointerId) return;
+													setDropIndex(touchTargetIndex(e.clientX, e.clientY));
+												}}
+												onPointerUp={(e) => {
+													if (touchPointer.current !== e.pointerId) return;
+													const target = touchTargetIndex(e.clientX, e.clientY);
+													if (target !== null) handleDrop(target);
+													clearDrag();
+													e.currentTarget.releasePointerCapture(e.pointerId);
+												}}
+												onPointerCancel={(e) => {
+													if (touchPointer.current === e.pointerId) clearDrag();
+												}}
+												onLostPointerCapture={(e) => {
+													if (touchPointer.current === e.pointerId) clearDrag();
+												}}
 												draggable
 												onDragStart={() => setDragIndex(index)}
 												onDragOver={(e) => {
@@ -732,7 +772,7 @@ export function ProfileListsPage({
 												className={cn(
 													// Not clipped: the drop line sits in the grid
 													// gutter, outside the card's own box.
-													"group relative cursor-grab rounded-lg border-2 transition-all active:cursor-grabbing",
+													"group relative cursor-grab touch-none select-none rounded-lg border-2 transition-all active:cursor-grabbing",
 													dragIndex === index
 														? "border-(--accent) opacity-40"
 														: "border-transparent",
@@ -785,9 +825,9 @@ export function ProfileListsPage({
 														{index + 1}/{reorderItems.length}
 													</span>
 
-													<GripVertical className="absolute top-1.5 right-1.5 hidden size-4 text-white/80 drop-shadow [@media(pointer:fine)]:block" />
+													<GripVertical className="absolute top-1.5 right-1.5 size-4 text-white/80 drop-shadow" />
 
-													{/* The only reorder path on touch, and the keyboard
+													{/* An alternative to dragging on touch, and the keyboard
 													    path everywhere. Always rendered, not hover-gated. */}
 													<div className="absolute inset-x-1.5 bottom-1.5 flex justify-between gap-1">
 														<button
