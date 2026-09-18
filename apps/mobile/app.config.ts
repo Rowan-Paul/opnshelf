@@ -49,6 +49,11 @@ const config: ExpoConfig = {
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
 	userInterfaceStyle: "automatic",
+	// iOS and Android only. Left unset, an export also bundles a web target,
+	// and `eas update` leaves its plain sourcemap in dist/ alongside the Hermes
+	// ones. That fails the release's PostHog upload, which requires every map in
+	// the directory it is given to be a Hermes map.
+	platforms: ["ios", "android"],
 	updates: {
 		url: "https://u.expo.dev/87d86952-59ab-4711-9f5f-f9477b2d14f6",
 	},
@@ -113,10 +118,6 @@ const config: ExpoConfig = {
 		// Google Play classifies it as a health feature and rejects API submits.
 		// We only use the accelerometer (shake-to-feedback), so block it.
 		blockedPermissions: ["android.permission.ACTIVITY_RECOGNITION"],
-	},
-	web: {
-		bundler: "metro",
-		favicon: "./assets/images/favicon.png",
 	},
 	plugins: [
 		"expo-router",
