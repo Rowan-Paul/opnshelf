@@ -44,7 +44,7 @@ const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.4.0",
+	version: "1.5.0",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -128,12 +128,20 @@ const config: ExpoConfig = {
 		// native library ships its own consumer keep rules, so no extra ProGuard
 		// rules are needed until a release build proves otherwise (RELEASING.md,
 		// "Gotchas"). Native config: needs a store build, not an OTA update.
+		// `enableSceneSupport` opts iOS into the UIScene life cycle: Xcode 27
+		// builds against the iOS 26 SDK, and UIKit refuses to launch an app built
+		// with that SDK unless it adopts scenes. Expo backported the opt-in to
+		// 57.0.23 (https://expo.fyi/ios-scene-lifecycle); SDK 58 makes it the
+		// default. Native config: needs a store build, not an OTA update.
 		[
 			"expo-build-properties",
 			{
 				android: {
 					enableMinifyInReleaseBuilds: true,
 					enableShrinkResourcesInReleaseBuilds: true,
+				},
+				ios: {
+					enableSceneSupport: true,
 				},
 			},
 		],
