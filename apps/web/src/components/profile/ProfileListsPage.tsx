@@ -64,8 +64,10 @@ import ActionableMediaCard from "../../components/ActionableMediaCard";
 
 type SortOption = "position" | "added" | "title" | "year";
 
+// Same columns and gutters as the Shelf page, so a poster is the same size
+// wherever the reader meets it.
 const LIST_ITEMS_GRID =
-	"grid-cols-3 gap-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5";
+	"grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6";
 
 const SORT_LABELS: Record<SortOption, string> = {
 	position: "Order",
@@ -122,6 +124,45 @@ function getTitle(media: Record<string, unknown>): string {
 	if (media.title && typeof media.title === "string") return media.title;
 	if (media.name && typeof media.name === "string") return media.name;
 	return "Unknown";
+}
+
+/**
+ * The scope line a season or episode entry carries above its show's name: the
+ * grid card and the reorder card both read it, so an episode never renders as
+ * nothing but the show it belongs to.
+ */
+function getEpisodeInfo(item: MediaInListDto): string | undefined {
+	if (item.seasonNumber == null) return undefined;
+	if (item.episodeNumber == null) return `Season ${item.seasonNumber}`;
+	const scope = `S${item.seasonNumber}E${item.episodeNumber}`;
+	return item.episodeName ? `${scope} — ${item.episodeName}` : scope;
+}
+
+/** One-line name for announcements, where two stacked lines are not an option. */
+function getItemLabel(item: MediaInListDto): string {
+	const scope = getEpisodeInfo(item);
+	const title = getTitle(item.media);
+	return scope ? `${title} ${scope}` : title;
+}
+
+/**
+ * Caption under a reorder poster. Mirrors the grid card: the episode or season
+ * scope leads, the show drops to the muted line under it.
+ */
+function ReorderCaption({ item }: { item: MediaInListDto }) {
+	const scope = getEpisodeInfo(item);
+	return (
+		<>
+			<p className="truncate px-1 pt-1.5 text-xs">
+				{scope ?? getTitle(item.media)}
+			</p>
+			{scope && (
+				<p className="truncate px-1 text-(--foreground-muted) text-[11px]">
+					{getTitle(item.media)}
+				</p>
+			)}
+		</>
+	);
 }
 
 function getRating(media: Record<string, unknown>): number | undefined {
@@ -832,7 +873,7 @@ export function ProfileListsPage({
 													<div className="absolute inset-x-1.5 bottom-1.5 flex justify-between gap-1">
 														<button
 															type="button"
-															aria-label={`Move ${getTitle(item.media)} earlier`}
+															aria-label={`Move ${getItemLabel(item)} earlier`}
 															disabled={index === 0}
 															onClick={() => moveReorderItem(index, index - 1)}
 															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
@@ -841,7 +882,7 @@ export function ProfileListsPage({
 														</button>
 														<button
 															type="button"
-															aria-label={`Move ${getTitle(item.media)} later`}
+															aria-label={`Move ${getItemLabel(item)} later`}
 															disabled={index === reorderItems.length - 1}
 															onClick={() => moveReorderItem(index, index + 1)}
 															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
@@ -850,9 +891,7 @@ export function ProfileListsPage({
 														</button>
 													</div>
 												</div>
-												<p className="truncate px-1 pt-1.5 text-xs">
-													{getTitle(item.media)}
-												</p>
+												<ReorderCaption item={item} />
 											</div>
 										))}
 									</div>
@@ -907,16 +946,7 @@ export function ProfileListsPage({
 													title={getTitle(item.media)}
 													seasonNumber={item.seasonNumber}
 													episodeNumber={item.episodeNumber}
-													episodeInfo={
-														item.seasonNumber !== undefined &&
-														item.episodeNumber !== undefined
-															? item.episodeName
-																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-																: `S${item.seasonNumber}E${item.episodeNumber}`
-															: item.seasonNumber !== undefined
-																? `Season ${item.seasonNumber}`
-																: undefined
-													}
+													episodeInfo={getEpisodeInfo(item)}
 													posterUrl={getPosterUrl(item.media)}
 													backdropUrl={getBackdropUrl(item.media)}
 													type={item.mediaType === "movie" ? "movie" : "show"}

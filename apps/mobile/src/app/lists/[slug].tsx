@@ -26,7 +26,7 @@ import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
 import { ListInfoCard } from "@/components/lists/ListInfoCard";
 import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
-import { ReorderableItemList } from "@/components/lists/ReorderableItemList";
+import { ReorderableItemGrid } from "@/components/lists/ReorderableItemGrid";
 import { MediaCard } from "@/components/media/MediaCard";
 import { useDialog } from "@/components/ui/dialog";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
@@ -102,7 +102,8 @@ export default function ListDetailScreen() {
 	const { slug } = useLocalSearchParams<{ slug: string }>();
 	const router = useRouter();
 	const gridStyle = useTwStyle("px-3 pt-3 pb-12");
-	const reorderStyle = useTwStyle("px-4 pt-3 pb-12");
+	// Matches the read-only grid: the cells carry their own px-1 on top.
+	const reorderStyle = useTwStyle("px-3 pt-3 pb-12");
 	const numColumns = useMediaCardColumns();
 	const { user, isAuthenticated } = useAuth();
 	const toast = useToast();
@@ -371,9 +372,13 @@ export default function ListDetailScreen() {
 					showsVerticalScrollIndicator={false}
 				>
 					<Text className="pb-3 text-muted-foreground text-sm">
-						Hold a row to drag it, or use the arrows, then tap Done to save.
+						Hold a poster to drag it, or use the arrows, then tap Done to save.
 					</Text>
-					<ReorderableItemList items={orderedItems} onReorder={moveItem} />
+					<ReorderableItemGrid
+						items={orderedItems}
+						columns={numColumns}
+						onReorder={moveItem}
+					/>
 				</ScrollView>
 			) : (
 				<ShowProgressScope
