@@ -124,6 +124,45 @@ function getTitle(media: Record<string, unknown>): string {
 	return "Unknown";
 }
 
+/**
+ * The scope line a season or episode entry carries above its show's name: the
+ * grid card and the reorder card both read it, so an episode never renders as
+ * nothing but the show it belongs to.
+ */
+function getEpisodeInfo(item: MediaInListDto): string | undefined {
+	if (item.seasonNumber == null) return undefined;
+	if (item.episodeNumber == null) return `Season ${item.seasonNumber}`;
+	const scope = `S${item.seasonNumber}E${item.episodeNumber}`;
+	return item.episodeName ? `${scope} — ${item.episodeName}` : scope;
+}
+
+/** One-line name for announcements, where two stacked lines are not an option. */
+function getItemLabel(item: MediaInListDto): string {
+	const scope = getEpisodeInfo(item);
+	const title = getTitle(item.media);
+	return scope ? `${title} ${scope}` : title;
+}
+
+/**
+ * Caption under a reorder poster. Mirrors the grid card: the episode or season
+ * scope leads, the show drops to the muted line under it.
+ */
+function ReorderCaption({ item }: { item: MediaInListDto }) {
+	const scope = getEpisodeInfo(item);
+	return (
+		<>
+			<p className="truncate px-1 pt-1.5 text-xs">
+				{scope ?? getTitle(item.media)}
+			</p>
+			{scope && (
+				<p className="truncate px-1 text-(--foreground-muted) text-[11px]">
+					{getTitle(item.media)}
+				</p>
+			)}
+		</>
+	);
+}
+
 function getRating(media: Record<string, unknown>): number | undefined {
 	if (media.vote_average && typeof media.vote_average === "number") {
 		return media.vote_average;
@@ -832,7 +871,7 @@ export function ProfileListsPage({
 													<div className="absolute inset-x-1.5 bottom-1.5 flex justify-between gap-1">
 														<button
 															type="button"
-															aria-label={`Move ${getTitle(item.media)} earlier`}
+															aria-label={`Move ${getItemLabel(item)} earlier`}
 															disabled={index === 0}
 															onClick={() => moveReorderItem(index, index - 1)}
 															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
@@ -841,7 +880,7 @@ export function ProfileListsPage({
 														</button>
 														<button
 															type="button"
-															aria-label={`Move ${getTitle(item.media)} later`}
+															aria-label={`Move ${getItemLabel(item)} later`}
 															disabled={index === reorderItems.length - 1}
 															onClick={() => moveReorderItem(index, index + 1)}
 															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
@@ -850,9 +889,7 @@ export function ProfileListsPage({
 														</button>
 													</div>
 												</div>
-												<p className="truncate px-1 pt-1.5 text-xs">
-													{getTitle(item.media)}
-												</p>
+												<ReorderCaption item={item} />
 											</div>
 										))}
 									</div>
@@ -907,16 +944,7 @@ export function ProfileListsPage({
 													title={getTitle(item.media)}
 													seasonNumber={item.seasonNumber}
 													episodeNumber={item.episodeNumber}
-													episodeInfo={
-														item.seasonNumber !== undefined &&
-														item.episodeNumber !== undefined
-															? item.episodeName
-																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-																: `S${item.seasonNumber}E${item.episodeNumber}`
-															: item.seasonNumber !== undefined
-																? `Season ${item.seasonNumber}`
-																: undefined
-													}
+													episodeInfo={getEpisodeInfo(item)}
 													posterUrl={getPosterUrl(item.media)}
 													backdropUrl={getBackdropUrl(item.media)}
 													type={item.mediaType === "movie" ? "movie" : "show"}
