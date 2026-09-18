@@ -111,6 +111,12 @@ POSTHOG_CLI_API_KEY=... POSTHOG_CLI_PROJECT_ID=... POSTHOG_CLI_HOST=https://eu.p
   pnpm exec posthog-cli hermes upload --directory dist \
     --release-name com.rowanpaul.opnshelf --release-version "<app version>"
 ```
+`--directory dist` works only because the export is native-only. `app.config.ts`
+pins `platforms` to iOS and Android for that reason: with web included, the
+export also writes a plain `.js.map` next to the Hermes ones, and the CLI
+rejects the whole directory on the first non-Hermes map it reads, uploading
+nothing (release v1.4.1, Sept 2026). `app.config.test.ts` guards it.
+
 Staging publishes no maps: PostHog is off there (ADR 0021).
 
 Every event also carries `eas/update_id`, `eas/channel`, and
