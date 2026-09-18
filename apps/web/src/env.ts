@@ -4,6 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
 	server: {
 		SERVER_URL: z.url().optional(),
+		SSR_RATE_LIMIT_SECRET: z.string().min(32).optional(),
 	},
 
 	/**
@@ -30,7 +31,16 @@ export const env = createEnv({
 	 * What object holds the environment variables at runtime. This is usually
 	 * `process.env` or `import.meta.env`.
 	 */
-	runtimeEnv: import.meta.env,
+	runtimeEnv: {
+		...import.meta.env,
+		// Deployment secrets are runtime values, not Vite build-time constants.
+		...(import.meta.env.SSR
+			? {
+					SERVER_URL: process.env.SERVER_URL,
+					SSR_RATE_LIMIT_SECRET: process.env.SSR_RATE_LIMIT_SECRET,
+				}
+			: {}),
+	},
 
 	/**
 	 * By default, this library will feed the environment variables directly to

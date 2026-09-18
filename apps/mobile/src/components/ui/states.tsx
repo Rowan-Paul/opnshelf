@@ -56,6 +56,40 @@ export function ErrorState({
 }
 
 /**
+ * A refetch that failed on top of data already on screen. React Query keeps the
+ * last value, so the content is still good; this says the refresh did not land
+ * and leaves it alone. Web shows the same strip above the same content.
+ */
+export function StaleDataNotice({
+	message,
+	onRetry,
+	isRetrying,
+}: {
+	message: string;
+	onRetry?: () => void;
+	isRetrying?: boolean;
+}) {
+	return (
+		<View className="mx-3 mt-3 flex-row items-center gap-2 rounded-lg border border-border bg-background-subtle px-3 py-2">
+			<AlertTriangle color="#ef4444" size={16} />
+			<Text className="flex-1 text-muted-foreground text-xs">{message}</Text>
+			{onRetry ? (
+				<Pressable
+					accessibilityRole="button"
+					disabled={isRetrying}
+					hitSlop={6}
+					onPress={onRetry}
+				>
+					<Text className="font-semibold text-primary text-xs">
+						{isRetrying ? "Retrying…" : "Retry"}
+					</Text>
+				</Pressable>
+			) : null}
+		</View>
+	);
+}
+
+/**
  * Full-screen empty state with a customizable icon and copy, plus an optional
  * link out (e.g. dead-end dashboard sections pointing at Discover).
  */

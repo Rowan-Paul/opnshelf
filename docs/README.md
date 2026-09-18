@@ -9,9 +9,10 @@ external dependencies and how to test a change are in the
 
 | Where | What |
 | --- | --- |
+| [`agents/`](agents/) | Configuration the engineering skills read: [issue tracker](agents/issue-tracker.md), [triage labels](agents/triage-labels.md), [domain docs](agents/domain.md). |
 | [`adr/`](adr/README.md) | Architectural decision records. The index lists every ADR with its number, title and status. |
 | [`prd/`](prd/) | Product briefs: [community reviews with likes](prd/community-reviews-with-likes.md), [renaming the list-item lexicon](prd/rename-listitem-lexicon.md), [Review Bluesky Cross-post](prd/review-bluesky-cross-post.md). |
-| [`runbooks/`](runbooks/) | Operational procedures. Currently the [PDS Railway cutover](runbooks/pds-railway-cutover.md) for ADR 0019. |
+| [`runbooks/`](runbooks/) | Operational procedures. The [PDS Railway cutover](runbooks/pds-railway-cutover.md) for ADR 0019 and [SSR rate limiting](runbooks/ssr-rate-limiting.md) for ADR 0025. |
 | [`cloudflare-email-migration-playbook.md`](cloudflare-email-migration-playbook.md) | Reusable playbook behind ADR 0007 for moving a project's email to Cloudflare Email Sending. |
 | [`../plans/`](../plans/README.md) | Numbered implementation plans with a status table. Read a plan in full before executing it and update its status row when done. |
 

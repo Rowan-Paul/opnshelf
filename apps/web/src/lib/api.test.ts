@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiMocks = vi.hoisted(() => ({
 	configureApiClient: vi.fn(),
+	client: { interceptors: { request: { use: vi.fn() } } },
 	setDeviceIdentity: vi.fn(),
 	setOnUnauthorized: vi.fn(),
 }));

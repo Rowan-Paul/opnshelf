@@ -1,37 +1,40 @@
 import {
+	getHttpStatus,
+	listsControllerDeleteListMutation,
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListQueryKey,
-	listsControllerGetPublicUserListsOptions,
 	listsControllerGetPublicUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	listsControllerReorderListItemsMutation,
+	listsControllerUpdateListMutation,
 	type MediaInListDto,
+	retryUnlessNotFound,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
 	Check,
-	Clock,
+	ChevronLeft,
 	Film,
 	GripVertical,
-	Heart,
 	List,
 	ListOrdered,
 	Loader2,
+	Pencil,
 	Plus,
 	Search,
-	Star,
+	Trash2,
 	Tv,
 	X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import AddListItemsDialog from "#/components/AddListItemsDialog";
-import { PosterGridSkeleton, RowListSkeleton } from "#/components/skeletons";
+import { PosterGridSkeleton } from "#/components/skeletons";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -54,7 +57,8 @@ import {
 } from "#/components/ui/tooltip";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
-import { ShowProgressScope, useCreateList } from "#/lib/hooks";
+import { formatRelativeTime } from "#/lib/date-utils";
+import { ShowProgressScope } from "#/lib/hooks";
 import { cn } from "#/lib/utils";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
 
@@ -85,38 +89,6 @@ function moveItem<T>(arr: T[], from: number, to: number): T[] {
 	const [moved] = next.splice(from, 1);
 	next.splice(to, 0, moved);
 	return next;
-}
-
-const colorClasses: Record<string, string> = {
-	blue: "bg-blue-500",
-	red: "bg-red-500",
-	purple: "bg-purple-500",
-	green: "bg-green-500",
-	yellow: "bg-yellow-500",
-	gray: "bg-gray-500",
-};
-
-const iconComponents: Record<
-	string,
-	React.ComponentType<{ className?: string }>
-> = {
-	blue: Clock,
-	red: Heart,
-	purple: Star,
-	green: Film,
-	yellow: Tv,
-	gray: List,
-};
-
-function getListColor(name: string): string {
-	const nameLower = name.toLowerCase();
-	if (nameLower.includes("watch") || nameLower.includes("later")) return "blue";
-	if (nameLower.includes("fav") || nameLower.includes("love")) return "red";
-	if (nameLower.includes("best") || nameLower.includes("top")) return "purple";
-	if (nameLower.includes("sci") || nameLower.includes("action")) return "green";
-	if (nameLower.includes("comedy") || nameLower.includes("fun"))
-		return "yellow";
-	return "gray";
 }
 
 function formatDuration(minutes?: number): string | undefined {
@@ -162,10 +134,54 @@ function getRating(media: Record<string, unknown>): number | undefined {
 	return undefined;
 }
 
+/**
+ * Stands in for the toolbar and the poster grid at their real sizes, so the
+ * page does not jump when the list arrives. The toolbar block matches the
+ * sticky bar's height and border; the grid reuses the page's own columns.
+ *
+ * Mounted as the route's `pendingComponent` as well as this page's own loading
+ * branch: the loader awaits the list, so without that the router would sit on
+ * the previous page instead of showing anything.
+ */
+export function ListDetailSkeleton() {
+	const pulse = "animate-pulse rounded bg-(--background-subtle)";
+	return (
+		<div className="space-y-5">
+			{/* Same running order as the real page — back link, toolbar,
+			    description, controls, grid — so nothing below shifts when the list
+			    lands. A list with no description costs one line of drift; leaving
+			    the line out costs it for every list that has one. */}
+			<div className={cn("h-5 w-20", pulse)} />
+			<div className="space-y-6">
+				<div className="-mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-(--border) border-b py-3">
+					<div className={cn("h-7 w-40", pulse)} />
+					<div className={cn("h-3 w-32", pulse)} />
+					<div className={cn("h-3 w-36", pulse)} />
+				</div>
+				<div className={cn("h-5 w-2/5", pulse)} />
+				<div className="space-y-3">
+					<div className={cn("h-10 w-full", pulse)} />
+					<div className="flex gap-2">
+						<div className={cn("h-8 w-20 rounded-full", pulse)} />
+						<div className={cn("ml-auto h-8 w-24 rounded-full", pulse)} />
+					</div>
+					<div className="flex flex-wrap gap-2">
+						{["all", "movies", "shows", "unwatched"].map((key) => (
+							<div key={key} className={cn("h-8 w-20 rounded-full", pulse)} />
+						))}
+					</div>
+				</div>
+				<PosterGridSkeleton gridClassName={LIST_ITEMS_GRID} />
+			</div>
+		</div>
+	);
+}
+
 interface ProfileListsPageProps {
 	userDid: string;
 	handle: string;
-	selectedListSlug?: string | null;
+	/** Always present: this page is only mounted by the `$listSlug` route. */
+	selectedListSlug: string;
 	isOwner: boolean;
 }
 
@@ -175,57 +191,41 @@ export function ProfileListsPage({
 	selectedListSlug,
 	isOwner,
 }: ProfileListsPageProps) {
-	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 
-	const [showCreateModal, setShowCreateModal] = useState(false);
-	const [newListName, setNewListName] = useState("");
-	const [newListDescription, setNewListDescription] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sort, setSort] = useState<SortOption>("position");
 	const [filter, setFilter] = useState<FilterOption>("all");
 	const [showAddDialog, setShowAddDialog] = useState(false);
+	const [showEditDialog, setShowEditDialog] = useState(false);
+	const [editName, setEditName] = useState("");
+	const [editDescription, setEditDescription] = useState("");
 	const [reorderMode, setReorderMode] = useState(false);
 	const [reorderItems, setReorderItems] = useState<MediaInListDto[]>([]);
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
-	const listContentRef = useRef<HTMLDivElement>(null);
-
-	// Fetch public lists for this user
-	const {
-		data: userLists,
-		isLoading: listsLoading,
-		error: listsError,
-	} = useQuery({
-		...listsControllerGetPublicUserListsOptions({ path: { userDid } }),
-		enabled: !!userDid,
-	});
-
-	// Default to the first list when lists load and none is selected
-	useEffect(() => {
-		if (userLists && userLists.length > 0 && !selectedListSlug) {
-			navigate({
-				to: "/profile/$handle/lists/$listSlug",
-				params: { handle, listSlug: userLists[0].slug },
-				replace: true,
-			});
-		}
-	}, [navigate, selectedListSlug, userLists, handle]);
+	const [dropIndex, setDropIndex] = useState<number | null>(null);
 
 	// Fetch selected list details with items using public endpoint
 	const {
 		data: listDetails,
 		isLoading: listLoading,
 		error: listError,
+		refetch: refetchList,
+		isFetching: listFetching,
 	} = useQuery({
 		...listsControllerGetPublicUserListOptions({
-			path: { userDid, slug: selectedListSlug || "" },
+			path: { userDid, slug: selectedListSlug },
 			query: { sort },
 		}),
-		enabled: !!userDid && !!selectedListSlug,
+		enabled: !!userDid,
+		// Renaming a list regenerates its slug, so a bookmark or a back button
+		// lands on a dead one often enough to be worth handling well. That is a
+		// 404, and retrying it just held the skeleton on screen for the length
+		// of the backoff before the not-found state appeared.
+		retry: retryUnlessNotFound,
 	});
 
 	// Create list mutation (only works for owner)
-	const createListMutation = useCreateList();
 	const queryClient = useQueryClient();
 
 	// Remove item from list mutation (only works for owner)
@@ -258,6 +258,79 @@ export function ProfileListsPage({
 			);
 		},
 	});
+
+	const navigate = useNavigate();
+
+	// Rename / re-describe the list. Renaming regenerates the slug server-side,
+	// so the URL we are on goes stale and we have to follow the new one or the
+	// next refetch 404s.
+	const updateListMutation = useMutation({
+		...listsControllerUpdateListMutation(),
+		onSuccess: (updated) => {
+			toast.success("List updated");
+			setShowEditDialog(false);
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListsQueryKey({
+					path: { userDid },
+				}),
+			});
+			if (updated.slug !== selectedListSlug) {
+				navigate({
+					to: "/profile/$handle/lists/$listSlug",
+					params: { handle, listSlug: updated.slug },
+					replace: true,
+				});
+				return;
+			}
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListQueryKey({
+					path: { userDid, slug: selectedListSlug },
+				}),
+			});
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to update list",
+			);
+		},
+	});
+
+	// Deleting a list: Mobile has had this, Web has not. Owner-only, and never
+	// offered for default lists — same gating as Edit.
+	const deleteListMutation = useMutation({
+		...listsControllerDeleteListMutation(),
+		onSuccess: () => {
+			toast.success("List deleted");
+			queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListsQueryKey({
+					path: { userDid },
+				}),
+			});
+			navigate({ to: "/profile/$handle/lists", params: { handle } });
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to delete list",
+			);
+		},
+	});
+
+	const confirmDeleteList = () => {
+		if (
+			!window.confirm(
+				`Delete "${listDetails?.name ?? "this list"}"? This can't be undone.`,
+			)
+		) {
+			return;
+		}
+		deleteListMutation.mutate({ path: { slug: selectedListSlug } });
+	};
+
+	const openEditDialog = () => {
+		setEditName(listDetails?.name ?? "");
+		setEditDescription(listDetails?.description ?? "");
+		setShowEditDialog(true);
+	};
 
 	// Reorder items mutation (owner only, position order only)
 	const reorderMutation = useMutation({
@@ -299,11 +372,6 @@ export function ProfileListsPage({
 		if (sort !== "position") setReorderMode(false);
 	}, [sort]);
 
-	const activeList = useMemo(() => {
-		if (!userLists) return null;
-		return userLists.find((list) => list.slug === selectedListSlug);
-	}, [userLists, selectedListSlug]);
-
 	// Filter items based on search query + media/unwatched filter
 	const filteredItems = useMemo(() => {
 		if (!listDetails?.items) return [];
@@ -318,29 +386,6 @@ export function ProfileListsPage({
 			return true;
 		});
 	}, [listDetails?.items, searchQuery, filter]);
-
-	const handleSelectList = (slug: string) => {
-		navigate({
-			to: "/profile/$handle/lists/$listSlug",
-			params: { handle, listSlug: slug },
-			replace: true,
-			// The router's default scroll-to-top lands AFTER the scrollIntoView
-			// below, yanking the viewport back up. Same-page selection keeps its
-			// own scroll handling.
-			resetScroll: false,
-		});
-		// Below lg the sidebar stacks above the content, so a tap otherwise
-		// leaves the user looking at the sidebar. Only scroll in that layout;
-		// rAF lets the selected list render before we scroll to it.
-		if (window.matchMedia("(max-width: 1023px)").matches) {
-			requestAnimationFrame(() => {
-				listContentRef.current?.scrollIntoView({
-					behavior: "smooth",
-					block: "start",
-				});
-			});
-		}
-	};
 
 	// Dedupe defensively — reorder ids must be unique.
 	const dedupedItems = useMemo(() => {
@@ -382,6 +427,7 @@ export function ProfileListsPage({
 		if (dragIndex === null) return;
 		moveReorderItem(dragIndex, targetIndex);
 		setDragIndex(null);
+		setDropIndex(null);
 	};
 
 	const saveReorder = () => {
@@ -392,205 +438,123 @@ export function ProfileListsPage({
 		});
 	};
 
-	const handleCreateList = async () => {
-		if (!newListName.trim()) return;
-
-		try {
-			const newList = await createListMutation.mutateAsync({
-				body: {
-					name: newListName.trim(),
-					description: newListDescription.trim() || undefined,
-				},
-			});
-			setShowCreateModal(false);
-			setNewListName("");
-			setNewListDescription("");
-			if (newList?.slug) {
-				navigate({
-					to: "/profile/$handle/lists/$listSlug",
-					params: { handle, listSlug: newList.slug },
-					replace: true,
-				});
-			}
-		} catch (error) {
-			console.error("Failed to create list:", error);
-		}
-	};
-
-	// Show loading state
-	if (listsLoading) {
-		return (
-			<div className="py-8">
-				<RowListSkeleton rows={4} />
-			</div>
-		);
-	}
-
-	// Show error state
-	if (listsError) {
-		return (
-			<div className="py-8">
-				<div className="flex h-64 flex-col items-center justify-center gap-4">
-					<AlertCircle className="size-12 text-red-500" />
-					<div className="text-center">
-						<h3 className="font-semibold text-(--foreground)">
-							Failed to load lists
-						</h3>
-						<p className="text-(--foreground-muted) text-sm">
-							{listsError instanceof Error
-								? listsError.message
-								: "An error occurred"}
-						</p>
-					</div>
-					<Button onClick={() => window.location.reload()} variant="outline">
-						Retry
-					</Button>
-				</div>
-			</div>
-		);
-	}
-
-	// Show empty state when user has no lists
-	if (userLists && userLists.length === 0) {
-		return (
-			<div className="py-8">
-				<h1 className="text-display-2">Lists</h1>
-
-				<div className="card p-8 text-center">
-					<List className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
-					<p className="text-(--foreground-muted)">No lists yet.</p>
-				</div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="space-y-8">
-			{/* Header */}
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<h1 className="text-display-2">Lists</h1>
+		<div className="space-y-5">
+			<Link
+				to="/profile/$handle/lists"
+				params={{ handle }}
+				className="inline-flex items-center gap-1.5 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+			>
+				<ChevronLeft className="size-4" />
+				All lists
+			</Link>
 
-				{isOwner && isAuthenticated && (
-					<button
-						type="button"
-						onClick={() => setShowCreateModal(true)}
-						className="btn btn-primary gap-2 rounded-full!"
-					>
-						<Plus className="size-4" />
-						Create List
-					</button>
-				)}
-			</div>
-
-			<div className="grid gap-8 lg:grid-cols-4">
-				{/* Lists Sidebar */}
-				<div className="space-y-3">
-					{userLists?.map((list) => {
-						const color = getListColor(list.name);
-						const Icon = iconComponents[color] || List;
-						const isSelected = selectedListSlug === list.slug;
-						return (
-							<button
-								key={list.id}
-								type="button"
-								onClick={() => handleSelectList(list.slug)}
-								className={`card card-interactive w-full p-4 text-left transition-all ${
-									isSelected
-										? "border-(--accent) border-2 bg-(--accent-subtle) shadow-sm"
-										: "hover:border-(--accent)/40"
-								}`}
-							>
-								<div className="flex items-start gap-3">
-									<div
-										className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colorClasses[color]} text-white`}
-									>
-										<Icon className="h-5 w-5" />
-									</div>
-									<div className="min-w-0 flex-1">
-										<div className="flex items-center gap-2">
-											<h3 className="truncate font-semibold text-(--foreground)">
-												{list.name}
-											</h3>
-											{list.isDefault && (
-												<span className="badge badge-subtle text-[10px]">
-													Default
-												</span>
-											)}
-										</div>
-										<p className="mt-0.5 line-clamp-1 text-(--foreground-muted) text-xs">
-											{list.description || "No description"}
-										</p>
-										<p className="mt-1 text-(--foreground-subtle) text-xs">
-											{list.itemCount} items
-										</p>
-									</div>
-								</div>
-							</button>
-						);
-					})}
-				</div>
-
-				{/* List Content */}
-				{/* scroll-mt clears the sticky h-16 header (+ breathing room) when
-				    handleSelectList scrolls this into view on stacked layouts. */}
-				<div ref={listContentRef} className="scroll-mt-20 lg:col-span-3">
-					{activeList ? (
+			<div>
+				<div>
+					{listDetails ? (
 						<div className="space-y-6">
-							{/* List Header — controls live below it, mirroring the mobile
-							    layout: full-width search, then one row of pills. */}
-							<div className="flex items-center justify-between gap-4">
-								<div className="flex items-center gap-3">
-									<div
-										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${colorClasses[getListColor(activeList.name)]} text-white`}
-									>
-										{(() => {
-											const ListIcon =
-												iconComponents[getListColor(activeList.name)] || List;
-											return <ListIcon className="h-4.5 w-4.5" />;
-										})()}
-									</div>
-									<h2 className="text-display-3">{activeList.name}</h2>
-								</div>
+							{/* Everything the old info card carried lives in this one bar:
+							    name, completion, provenance and the actions. It sticks under
+							    the app header so the posters stay reachable while scrolling.
+							    `top-16` clears that header. */}
+							<div className="sticky top-16 z-10 -mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-(--border) border-b bg-(--background)/95 py-3 backdrop-blur">
+								<h2 className="font-semibold text-xl">{listDetails.name}</h2>
 
-								{reorderMode ? (
-									<div className="flex items-center gap-2">
-										<button
-											type="button"
-											onClick={cancelReorder}
-											disabled={reorderMutation.isPending}
-											className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+								{/* Progress is viewer-relative, so it is absent when signed
+								    out; the item count stands in for it. */}
+								{isAuthenticated && total > 0 ? (
+									<span className="flex items-center gap-2">
+										<span
+											className="h-1 w-24 overflow-hidden rounded-full bg-(--background-subtle)"
+											role="progressbar"
+											aria-label="List progress"
+											aria-valuemin={0}
+											aria-valuemax={total}
+											aria-valuenow={watchedCount}
 										>
-											<X className="size-3.5" />
-											Cancel
-										</button>
-										<button
-											type="button"
-											onClick={saveReorder}
-											disabled={reorderMutation.isPending}
-											className="btn btn-primary btn-sm gap-1.5 rounded-full!"
-										>
-											{reorderMutation.isPending ? (
-												<Loader2 className="size-3.5 animate-spin" />
-											) : (
-												<Check className="size-3.5" />
-											)}
-											Done
-										</button>
-									</div>
+											<span
+												className="block h-full rounded-full bg-(--accent) transition-all"
+												style={{
+													width: `${Math.min(100, (watchedCount / total) * 100)}%`,
+												}}
+											/>
+										</span>
+										<span className="text-(--foreground-muted) text-xs tabular-nums">
+											{watchedCount}/{total} watched
+										</span>
+									</span>
 								) : (
-									isOwner &&
-									isAuthenticated && (
-										<button
-											type="button"
-											onClick={() => setShowAddDialog(true)}
-											className="btn btn-primary btn-sm gap-1.5 rounded-full!"
-										>
-											<Plus className="size-3.5" />
-											Add items
-										</button>
-									)
+									<span className="text-(--foreground-muted) text-xs">
+										{total} item{total === 1 ? "" : "s"}
+									</span>
 								)}
+
+								<span className="text-(--foreground-subtle) text-xs">
+									{!isOwner && `Created by @${handle} · `}
+									Updated {formatRelativeTime(listDetails.updatedAt)}
+								</span>
+
+								<span className="ml-auto">
+									{reorderMode ? (
+										<div className="flex items-center gap-2">
+											<button
+												type="button"
+												onClick={cancelReorder}
+												disabled={reorderMutation.isPending}
+												className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+											>
+												<X className="size-3.5" />
+												Cancel
+											</button>
+											<button
+												type="button"
+												onClick={saveReorder}
+												disabled={reorderMutation.isPending}
+												className="btn btn-primary btn-sm gap-1.5 rounded-full!"
+											>
+												{reorderMutation.isPending ? (
+													<Loader2 className="size-3.5 animate-spin" />
+												) : (
+													<Check className="size-3.5" />
+												)}
+												Done
+											</button>
+										</div>
+									) : (
+										isOwner &&
+										isAuthenticated && (
+											<span className="flex items-center gap-2">
+												{/* Default lists are named by the product, so only
+												    custom ones can be renamed — matching Mobile. */}
+												{!listDetails.isDefault && (
+													<button
+														type="button"
+														onClick={openEditDialog}
+														className="btn btn-secondary btn-sm gap-1.5 rounded-full!"
+													>
+														<Pencil className="size-3.5" />
+														Edit
+													</button>
+												)}
+												<button
+													type="button"
+													onClick={() => setShowAddDialog(true)}
+													className="btn btn-primary btn-sm gap-1.5 rounded-full!"
+												>
+													<Plus className="size-3.5" />
+													Add items
+												</button>
+											</span>
+										)
+									)}
+								</span>
 							</div>
+
+							{listDetails.description && (
+								<p className="text-(--foreground-muted) text-sm">
+									{listDetails.description}
+								</p>
+							)}
 
 							{!reorderMode && (
 								<div className="space-y-3">
@@ -640,8 +604,11 @@ export function ProfileListsPage({
 											</DropdownMenuContent>
 										</DropdownMenu>
 
-										{/* Reorder */}
-										{sort === "position" ? (
+										{/* Reorder. Owner-gated: reordering is an owner-only
+										    mutation, and before this the control was offered to
+										    every visitor and only failed at save. */}
+										{!isOwner || !isAuthenticated ? null : sort ===
+											"position" ? (
 											<button
 												type="button"
 												onClick={enterReorderMode}
@@ -693,68 +660,37 @@ export function ProfileListsPage({
 								</div>
 							)}
 
-							{/* Description + watched progress clustered into one card.
-							    Progress is viewer-relative and hidden when signed out. */}
-							{(activeList.description || (isAuthenticated && total > 0)) && (
-								<div className="card space-y-2.5 p-4">
-									{activeList.description && (
-										<p className="text-(--foreground-muted) text-sm">
-											{activeList.description}
-										</p>
-									)}
-									{isAuthenticated && total > 0 && (
-										<div className="space-y-1">
-											<div className="flex items-center justify-between text-(--foreground-muted) text-xs">
-												<span>
-													{watchedCount} of {total} watched
-												</span>
-												<span>{Math.round((watchedCount / total) * 100)}%</span>
-											</div>
-											<div className="h-1 w-full overflow-hidden rounded-full bg-(--background-subtle)">
-												<div
-													className="h-full rounded-full bg-(--accent) transition-all"
-													style={{
-														width: `${Math.min(100, (watchedCount / total) * 100)}%`,
-													}}
-												/>
-											</div>
-										</div>
-									)}
-								</div>
-							)}
-
-							{/* Loading State for List Items */}
-							{listLoading && (
-								<PosterGridSkeleton gridClassName={LIST_ITEMS_GRID} />
-							)}
-
-							{/* Error State for List Items */}
+							{/* This branch only renders once the list has loaded, so an
+							    error here is a refetch that failed on top of items the
+							    reader can still see. Replacing them with a full error
+							    panel threw away good data; a strip says what happened
+							    and leaves the list alone. */}
 							{listError && !listLoading && (
-								<div className="flex h-64 flex-col items-center justify-center gap-4">
-									<AlertCircle className="size-12 text-red-500" />
-									<div className="text-center">
-										<h3 className="font-semibold text-(--foreground)">
-											Failed to load list items
-										</h3>
-										<p className="text-(--foreground-muted) text-sm">
-											{listError instanceof Error
-												? listError.message
-												: "An error occurred"}
-										</p>
-									</div>
+								<div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-subtle) px-4 py-2.5">
+									<AlertCircle className="size-4 shrink-0 text-red-500" />
+									<p className="text-(--foreground-muted) text-sm">
+										Couldn't refresh this list. Showing what loaded last.
+									</p>
 									<Button
-										onClick={() => window.location.reload()}
-										variant="outline"
+										className="ml-auto"
+										disabled={listFetching}
+										onClick={() => refetchList()}
+										size="sm"
+										variant="ghost"
 									>
-										Retry
+										{listFetching ? "Retrying…" : "Retry"}
 									</Button>
 								</div>
 							)}
 
 							{/* Reorder Mode — vertical list with drag handles + up/down
 							    buttons so it works with both mouse and keyboard. */}
-							{reorderMode && !listLoading && !listError && (
-								<div className="space-y-2">
+							{/* Not gated on listError: this branch only renders once the
+							    list has loaded, and React Query keeps the last data when a
+							    refetch fails. Hiding the items on that error left the strip
+							    above floating over nothing. */}
+							{reorderMode && !listLoading && (
+								<div className="space-y-3">
 									{/* Copy toggles by pointer type: HTML5 drag never fires from
 									    touch, so coarse pointers only get the arrow-button path. */}
 									<p className="text-(--foreground-muted) text-xs">
@@ -762,176 +698,242 @@ export function ProfileListsPage({
 											Use the arrow buttons to reorder, then press Done to save.
 										</span>
 										<span className="hidden [@media(pointer:fine)]:inline">
-											Drag rows or use the arrow buttons to reorder, then press
-											Done to save.
+											Drag a poster onto the position you want, or use the arrow
+											buttons, then press Done to save.
 										</span>
 									</p>
-									{reorderItems.map((item, index) => (
-										// biome-ignore lint/a11y/noStaticElementInteractions: drag handlers; keyboard reorder is provided via the up/down buttons
-										<div
-											key={item.id}
-											draggable
-											onDragStart={() => setDragIndex(index)}
-											onDragOver={(e) => e.preventDefault()}
-											onDrop={() => handleDrop(index)}
-											onDragEnd={() => setDragIndex(null)}
-											className={cn(
-												"flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-elevated) p-2",
-												dragIndex === index && "opacity-50",
-											)}
-										>
-											{/* Drag handle is useless on touch (no HTML5 drag events); show only for fine pointers. */}
-											<GripVertical className="hidden size-4 shrink-0 cursor-grab text-(--foreground-muted) [@media(pointer:fine)]:block" />
-											<div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-(--background-subtle)">
-												{getPosterUrl(item.media) ? (
-													<img
-														src={getPosterUrl(item.media)}
-														alt={getTitle(item.media)}
-														className="h-full w-full object-cover"
-														loading="lazy"
-													/>
-												) : (
-													<div className="flex h-full w-full items-center justify-center text-(--foreground-subtle)">
-														{item.mediaType === "movie" ? (
-															<Film className="size-4" />
-														) : (
-															<Tv className="size-4" />
-														)}
-													</div>
+
+									{/* Same grid as the real list, so entering reorder rearranges
+									    nothing — the posters stay exactly where they were. */}
+									{/* biome-ignore lint/a11y/noStaticElementInteractions: clears the drop hint when the pointer leaves the grid */}
+									<div
+										className={`grid ${LIST_ITEMS_GRID}`}
+										onDragLeave={(e) => {
+											if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+												setDropIndex(null);
+											}
+										}}
+									>
+										{reorderItems.map((item, index) => (
+											// biome-ignore lint/a11y/noStaticElementInteractions: drag handlers; keyboard reorder is provided via the arrow buttons
+											<div
+												key={item.id}
+												draggable
+												onDragStart={() => setDragIndex(index)}
+												onDragOver={(e) => {
+													e.preventDefault();
+													if (dropIndex !== index) setDropIndex(index);
+												}}
+												onDrop={() => handleDrop(index)}
+												onDragEnd={() => {
+													setDragIndex(null);
+													setDropIndex(null);
+												}}
+												className={cn(
+													// Not clipped: the drop line sits in the grid
+													// gutter, outside the card's own box.
+													"group relative cursor-grab rounded-lg border-2 transition-all active:cursor-grabbing",
+													dragIndex === index
+														? "border-(--accent) opacity-40"
+														: "border-transparent",
 												)}
-											</div>
-											<div className="min-w-0 flex-1">
-												<p className="truncate font-medium text-sm">
+											>
+												{/* Where the poster will land. `moveItem` splices the
+												    dragged item out and back in at the target, so
+												    dragging forward drops it after that card and
+												    backward drops it before — hence the side flip. */}
+												{dragIndex !== null &&
+													dropIndex === index &&
+													dragIndex !== index && (
+														<span
+															aria-hidden="true"
+															className={cn(
+																"absolute inset-y-0 z-10 w-1 rounded-full bg-(--accent)",
+																// Centred in the grid gutter, not flush against
+																// a card. Offsets are measured from the padding
+																// box, so each is half the gap, plus half the
+																// line, plus the 2px border: 8px gutter -> 8,
+																// 16px gutter -> 12.
+																dragIndex < index
+																	? "-right-2 sm:-right-3"
+																	: "-left-2 sm:-left-3",
+															)}
+														/>
+													)}
+												<div className="relative aspect-[2/3] overflow-hidden rounded-md bg-(--background-subtle)">
+													{getPosterUrl(item.media) ? (
+														<img
+															src={getPosterUrl(item.media)}
+															alt={getTitle(item.media)}
+															className="size-full object-cover"
+															loading="lazy"
+															draggable={false}
+														/>
+													) : (
+														<div className="flex size-full items-center justify-center text-(--foreground-subtle)">
+															{item.mediaType === "movie" ? (
+																<Film className="size-6" />
+															) : (
+																<Tv className="size-6" />
+															)}
+														</div>
+													)}
+
+													{/* Position is the whole point of this mode, so it
+													    stays visible rather than appearing on hover. */}
+													<span className="absolute top-1.5 left-1.5 rounded-full bg-black/70 px-2 py-0.5 font-medium text-[11px] text-white tabular-nums">
+														{index + 1}/{reorderItems.length}
+													</span>
+
+													<GripVertical className="absolute top-1.5 right-1.5 hidden size-4 text-white/80 drop-shadow [@media(pointer:fine)]:block" />
+
+													{/* The only reorder path on touch, and the keyboard
+													    path everywhere. Always rendered, not hover-gated. */}
+													<div className="absolute inset-x-1.5 bottom-1.5 flex justify-between gap-1">
+														<button
+															type="button"
+															aria-label={`Move ${getTitle(item.media)} earlier`}
+															disabled={index === 0}
+															onClick={() => moveReorderItem(index, index - 1)}
+															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
+														>
+															<ArrowUp className="size-3.5 -rotate-90" />
+														</button>
+														<button
+															type="button"
+															aria-label={`Move ${getTitle(item.media)} later`}
+															disabled={index === reorderItems.length - 1}
+															onClick={() => moveReorderItem(index, index + 1)}
+															className="flex size-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
+														>
+															<ArrowDown className="size-3.5 -rotate-90" />
+														</button>
+													</div>
+												</div>
+												<p className="truncate px-1 pt-1.5 text-xs">
 													{getTitle(item.media)}
 												</p>
-												<p className="text-(--foreground-muted) text-xs">
-													{index + 1} / {reorderItems.length}
-												</p>
 											</div>
-											<div className="flex shrink-0 items-center gap-1">
-												<button
-													type="button"
-													aria-label="Move up"
-													disabled={index === 0}
-													onClick={() => moveReorderItem(index, index - 1)}
-													className="btn btn-secondary btn-sm size-8 rounded-full! p-0!"
-												>
-													<ArrowUp className="size-3.5" />
-												</button>
-												<button
-													type="button"
-													aria-label="Move down"
-													disabled={index === reorderItems.length - 1}
-													onClick={() => moveReorderItem(index, index + 1)}
-													className="btn btn-secondary btn-sm size-8 rounded-full! p-0!"
-												>
-													<ArrowDown className="size-3.5" />
-												</button>
-											</div>
-										</div>
-									))}
+										))}
+									</div>
 								</div>
 							)}
 
 							{/* Empty State */}
-							{!reorderMode &&
-								!listLoading &&
-								!listError &&
-								filteredItems.length === 0 && (
-									<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
-										<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
-											<List className="size-6 text-(--foreground-subtle)" />
-										</div>
-										<h3 className="mt-3 font-display font-semibold">
-											{searchQuery || filter !== "all"
-												? "No results found"
-												: "List is empty"}
-										</h3>
-										<p className="mt-1 text-(--foreground-muted) text-sm">
-											{searchQuery || filter !== "all"
-												? "Try adjusting your filters"
-												: "Add movies and shows to this list to see them here"}
-										</p>
+							{!reorderMode && !listLoading && filteredItems.length === 0 && (
+								<div className="flex h-64 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
+									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
+										<List className="size-6 text-(--foreground-subtle)" />
 									</div>
-								)}
+									<h3 className="mt-3 font-display font-semibold">
+										{searchQuery || filter !== "all"
+											? "No results found"
+											: "List is empty"}
+									</h3>
+									<p className="mt-1 text-(--foreground-muted) text-sm">
+										{searchQuery || filter !== "all"
+											? "Try adjusting your filters"
+											: "Add movies and shows to this list to see them here"}
+									</p>
+								</div>
+							)}
 
 							{/* Items Grid/List */}
-							{!reorderMode &&
-								!listLoading &&
-								!listError &&
-								filteredItems.length > 0 && (
-									<ShowProgressScope
-										showIds={filteredItems
+							{!reorderMode && !listLoading && filteredItems.length > 0 && (
+								<ShowProgressScope
+									showIds={filteredItems
+										.filter(
+											(item) =>
+												item.mediaType === "show" &&
+												item.seasonNumber === undefined &&
+												item.episodeNumber === undefined,
+										)
+										.map((item) => String(item.mediaId))}
+								>
+									<div className={`grid ${LIST_ITEMS_GRID}`}>
+										{filteredItems
 											.filter(
-												(item) =>
-													item.mediaType === "show" &&
-													item.seasonNumber === undefined &&
-													item.episodeNumber === undefined,
+												(item, index, self) =>
+													index === self.findIndex((i) => i.id === item.id),
 											)
-											.map((item) => String(item.mediaId))}
-									>
-										<div className={`grid ${LIST_ITEMS_GRID}`}>
-											{filteredItems
-												.filter(
-													(item, index, self) =>
-														index === self.findIndex((i) => i.id === item.id),
-												)
-												.map((item: MediaInListDto) => (
-													<ActionableMediaCard
-														key={item.id}
-														fill
-														id={String(
-															(item.media as Record<string, unknown>).mediaId ??
-																item.mediaId,
-														)}
-														title={getTitle(item.media)}
-														seasonNumber={item.seasonNumber}
-														episodeNumber={item.episodeNumber}
-														episodeInfo={
-															item.seasonNumber !== undefined &&
-															item.episodeNumber !== undefined
-																? item.episodeName
-																	? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
-																	: `S${item.seasonNumber}E${item.episodeNumber}`
-																: item.seasonNumber !== undefined
-																	? `Season ${item.seasonNumber}`
-																	: undefined
-														}
-														posterUrl={getPosterUrl(item.media)}
-														backdropUrl={getBackdropUrl(item.media)}
-														type={item.mediaType === "movie" ? "movie" : "show"}
-														tmdbRating={getRating(item.media)}
-														duration={formatDuration(
-															item.media.runtime as number | undefined,
-														)}
-														onRemove={
-															isOwner
-																? () =>
-																		removeItemMutation.mutate({
-																			path: {
-																				slug: selectedListSlug || "",
-																				mediaType: item.mediaType,
-																				mediaId: item.mediaId,
-																			},
-																			query: {
-																				seasonNumber: item.seasonNumber,
-																				episodeNumber: item.episodeNumber,
-																			},
-																		})
+											.map((item: MediaInListDto) => (
+												<ActionableMediaCard
+													key={item.id}
+													fill
+													id={String(
+														(item.media as Record<string, unknown>).mediaId ??
+															item.mediaId,
+													)}
+													title={getTitle(item.media)}
+													seasonNumber={item.seasonNumber}
+													episodeNumber={item.episodeNumber}
+													episodeInfo={
+														item.seasonNumber !== undefined &&
+														item.episodeNumber !== undefined
+															? item.episodeName
+																? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeName}`
+																: `S${item.seasonNumber}E${item.episodeNumber}`
+															: item.seasonNumber !== undefined
+																? `Season ${item.seasonNumber}`
 																: undefined
-														}
-														isRemoving={
-															isOwner &&
-															removeItemMutation.isPending &&
-															removeItemMutation.variables?.path?.mediaId ===
-																item.mediaId
-														}
-														watchCount={item.watchCount}
-													/>
-												))}
-										</div>
-									</ShowProgressScope>
-								)}
+													}
+													posterUrl={getPosterUrl(item.media)}
+													backdropUrl={getBackdropUrl(item.media)}
+													type={item.mediaType === "movie" ? "movie" : "show"}
+													tmdbRating={getRating(item.media)}
+													duration={formatDuration(
+														item.media.runtime as number | undefined,
+													)}
+													onRemove={
+														isOwner
+															? () =>
+																	removeItemMutation.mutate({
+																		path: {
+																			slug: selectedListSlug,
+																			mediaType: item.mediaType,
+																			mediaId: item.mediaId,
+																		},
+																		query: {
+																			seasonNumber: item.seasonNumber,
+																			episodeNumber: item.episodeNumber,
+																		},
+																	})
+															: undefined
+													}
+													isRemoving={
+														isOwner &&
+														removeItemMutation.isPending &&
+														removeItemMutation.variables?.path?.mediaId ===
+															item.mediaId
+													}
+													watchCount={item.watchCount}
+												/>
+											))}
+									</div>
+								</ShowProgressScope>
+							)}
+						</div>
+					) : listLoading ? (
+						<ListDetailSkeleton />
+					) : listError && getHttpStatus(listError) !== 404 ? (
+						// A 500 or a dropped connection is not a missing list, and
+						// telling the reader it is sends them off to look for a list
+						// that is still there. Only a 404 means gone.
+						<div className="flex h-96 flex-col items-center justify-center gap-4 rounded-xl border-(--border) border-2 border-dashed">
+							<AlertCircle className="size-12 text-red-500" />
+							<div className="text-center">
+								<h3 className="font-display font-semibold text-lg">
+									Couldn't load this list
+								</h3>
+								<p className="mt-1 text-(--foreground-muted)">
+									{listError instanceof Error
+										? listError.message
+										: "An error occurred"}
+								</p>
+							</div>
+							<Button onClick={() => refetchList()} variant="outline">
+								Try again
+							</Button>
 						</div>
 					) : (
 						<div className="flex h-96 flex-col items-center justify-center rounded-xl border-(--border) border-2 border-dashed">
@@ -939,15 +941,103 @@ export function ProfileListsPage({
 								<List className="size-8 text-(--foreground-subtle)" />
 							</div>
 							<h3 className="mt-4 font-display font-semibold text-lg">
-								Select a list
+								List not found
 							</h3>
 							<p className="mt-1 text-(--foreground-muted)">
-								Choose a list from the sidebar to view its contents
+								This list doesn't exist, or it isn't public.
 							</p>
 						</div>
 					)}
 				</div>
 			</div>
+
+			{isOwner && (
+				<Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+					<DialogContent className="sm:max-w-[425px]">
+						<DialogHeader>
+							<DialogTitle>Edit List</DialogTitle>
+							<DialogDescription>
+								Rename this list or change its description.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="space-y-4 py-4">
+							<div className="space-y-2">
+								<label htmlFor="edit-list-name" className="font-medium text-sm">
+									List Name
+								</label>
+								<input
+									id="edit-list-name"
+									type="text"
+									className="input"
+									value={editName}
+									onChange={(e) => setEditName(e.target.value)}
+								/>
+							</div>
+							<div className="space-y-2">
+								<label
+									htmlFor="edit-list-description"
+									className="font-medium text-sm"
+								>
+									Description (optional)
+								</label>
+								<textarea
+									id="edit-list-description"
+									placeholder="What's this list about?"
+									className="input min-h-[80px] resize-none"
+									value={editDescription}
+									onChange={(e) => setEditDescription(e.target.value)}
+								/>
+							</div>
+						</div>
+						<div className="flex items-center justify-between gap-2">
+							{/* Destructive action sits apart from Save so the two are not
+							    adjacent targets. */}
+							<Button
+								variant="outline"
+								onClick={confirmDeleteList}
+								disabled={deleteListMutation.isPending}
+								className="gap-1.5 text-red-600 hover:text-red-600"
+							>
+								<Trash2 className="size-4" />
+								{deleteListMutation.isPending ? "Deleting..." : "Delete"}
+							</Button>
+
+							<span className="flex gap-2">
+								<Button
+									variant="outline"
+									onClick={() => setShowEditDialog(false)}
+								>
+									Cancel
+								</Button>
+								<Button
+									onClick={() =>
+										updateListMutation.mutate({
+											path: { slug: selectedListSlug },
+											body: {
+												name: editName.trim(),
+												description: editDescription.trim() || undefined,
+											},
+										})
+									}
+									disabled={!editName.trim() || updateListMutation.isPending}
+								>
+									{updateListMutation.isPending ? (
+										<>
+											<Loader2
+												data-icon="inline-start"
+												className="animate-spin"
+											/>
+											Saving...
+										</>
+									) : (
+										"Save changes"
+									)}
+								</Button>
+							</span>
+						</div>
+					</DialogContent>
+				</Dialog>
+			)}
 
 			{/* Add Items Dialog */}
 			{isOwner && selectedListSlug && (
@@ -958,74 +1048,6 @@ export function ProfileListsPage({
 					slug={selectedListSlug}
 					existingItems={listDetails?.items ?? []}
 				/>
-			)}
-
-			{/* Create List Modal */}
-			{isOwner && (
-				<Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-					<DialogContent className="sm:max-w-[425px]">
-						<DialogHeader>
-							<DialogTitle>Create New List</DialogTitle>
-							<DialogDescription>
-								Create a custom list to organize your movies and shows.
-							</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-4 py-4">
-							<div className="space-y-2">
-								<label htmlFor="list-name" className="font-medium text-sm">
-									List Name
-								</label>
-								<input
-									id="list-name"
-									type="text"
-									placeholder="My Awesome List"
-									className="input"
-									value={newListName}
-									onChange={(e) => setNewListName(e.target.value)}
-								/>
-							</div>
-							<div className="space-y-2">
-								<label
-									htmlFor="list-description"
-									className="font-medium text-sm"
-								>
-									Description (optional)
-								</label>
-								<textarea
-									id="list-description"
-									placeholder="What's this list about?"
-									className="input min-h-[80px] resize-none"
-									value={newListDescription}
-									onChange={(e) => setNewListDescription(e.target.value)}
-								/>
-							</div>
-						</div>
-						<div className="flex justify-end gap-2">
-							<Button
-								variant="outline"
-								onClick={() => setShowCreateModal(false)}
-							>
-								Cancel
-							</Button>
-							<Button
-								onClick={handleCreateList}
-								disabled={!newListName.trim() || createListMutation.isPending}
-							>
-								{createListMutation.isPending ? (
-									<>
-										<Loader2
-											data-icon="inline-start"
-											className="animate-spin"
-										/>
-										Creating...
-									</>
-								) : (
-									"Create List"
-								)}
-							</Button>
-						</div>
-					</DialogContent>
-				</Dialog>
 			)}
 		</div>
 	);

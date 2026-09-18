@@ -131,7 +131,7 @@ export default function ProfileScreen() {
 					) : tab === "up-next" ? (
 						<UpNextTab userDid={userDid} isOwner={isOwner} />
 					) : tab === "lists" ? (
-						<ListsTab userDid={userDid} />
+						<ListsTab userDid={userDid} handle={profile.handle} />
 					) : tab === "library" ? (
 						<LibraryTab userDid={userDid} />
 					) : tab === "notes" ? (
