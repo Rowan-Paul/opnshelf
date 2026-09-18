@@ -9,12 +9,22 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 		data: {
 			name: "Test list",
 			updatedAt: "2026-09-01",
-			total: 3,
-			items: ["Alpha", "Beta", "Gamma"].map((title) => ({
-				id: title,
-				mediaType: "movie",
-				media: { title },
-			})),
+			total: 4,
+			items: [
+				...["Alpha", "Beta", "Gamma"].map((title) => ({
+					id: title,
+					mediaType: "movie",
+					media: { title },
+				})),
+				{
+					id: "Delta",
+					mediaType: "episode",
+					media: { name: "Stranger Things" },
+					seasonNumber: 1,
+					episodeNumber: 2,
+					episodeName: "Chapter Two",
+				},
+			],
 		},
 	}),
 	useMutation: () => ({ mutate }),
@@ -46,9 +56,9 @@ afterEach(() => {
 });
 
 it.each([
-	["pointerup", ["Beta", "Gamma", "Alpha"]],
-	["pointercancel", ["Alpha", "Beta", "Gamma"]],
-	["lostpointercapture", ["Alpha", "Beta", "Gamma"]],
+	["pointerup", ["Beta", "Gamma", "Alpha", "Delta"]],
+	["pointercancel", ["Alpha", "Beta", "Gamma", "Delta"]],
+	["lostpointercapture", ["Alpha", "Beta", "Gamma", "Delta"]],
 ])("handles touch drag ending with %s", (ending, ids) => {
 	render(
 		<ProfileListsPage
@@ -91,5 +101,23 @@ it.each([
 	expect(mutate).toHaveBeenCalledWith({
 		path: { slug: "test" },
 		body: { ids },
+	});
+});
+
+it("keeps the episode scope on reorder cards", () => {
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner
+		/>,
+	);
+	fireEvent.click(screen.getByRole("button", { name: "Reorder" }));
+	// getBy* throws when it finds nothing, so these are the assertions.
+	screen.getByText("S1E2 — Chapter Two");
+	screen.getByText("Stranger Things");
+	screen.getByRole("button", {
+		name: "Move Stranger Things S1E2 — Chapter Two earlier",
 	});
 });
