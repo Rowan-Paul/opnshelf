@@ -2,16 +2,19 @@ import DateTimePicker, {
 	type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { Calendar, Clock, X } from "lucide-react-native";
-import { useState } from "react";
-import { Modal, Platform, Pressable, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Modal, Platform, Pressable, useColorScheme, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 
 interface WatchDatePickerModalProps {
 	visible: boolean;
 	onDismiss: () => void;
-	/** Confirm with the chosen datetime as an ISO 8601 string. */
-	onConfirm: (isoDate: string) => void;
+	/**
+	 * Confirm with the chosen datetime as an ISO 8601 string, or `null` for an
+	 * undated Watch — "I watched this, I'm not saying when".
+	 */
+	onConfirm: (isoDate: string | null) => void;
 	isLoading?: boolean;
 }
 
@@ -31,9 +34,22 @@ export function WatchDatePickerModal({
 	onConfirm,
 	isLoading = false,
 }: WatchDatePickerModalProps) {
+	// The picker paints its own text: hardcoding a variant renders dark-mode
+	// text on the light card, which leaves the whole calendar unreadable.
+	const themeVariant = useColorScheme() === "dark" ? "dark" : "light";
 	const [date, setDate] = useState(() => new Date());
+
 	// On Android the picker is a one-shot dialog, so we drive it in two phases.
 	const [androidMode, setAndroidMode] = useState<"date" | "time" | null>(null);
+
+	// Re-seed "now" on every open: the modal stays mounted with its parent
+	// screen, so without this a second open still offers the first pick.
+	useEffect(() => {
+		if (visible) {
+			setDate(new Date());
+			setAndroidMode(null);
+		}
+	}, [visible]);
 
 	const handleChange = (event: DateTimePickerEvent, selected?: Date) => {
 		if (Platform.OS === "android") {
@@ -102,7 +118,7 @@ export function WatchDatePickerModal({
 							display="inline"
 							maximumDate={new Date()}
 							onChange={handleChange}
-							themeVariant="dark"
+							themeVariant={themeVariant}
 						/>
 					) : (
 						<View className="gap-2">
@@ -138,6 +154,7 @@ export function WatchDatePickerModal({
 									display="default"
 									maximumDate={new Date()}
 									onChange={handleChange}
+									themeVariant={themeVariant}
 								/>
 							) : null}
 						</View>
@@ -158,6 +175,19 @@ export function WatchDatePickerModal({
 							onPress={handleConfirm}
 						/>
 					</View>
+
+					{/* A complete answer in itself, so it submits on one tap. */}
+					<Pressable
+						onPress={() => onConfirm(null)}
+						disabled={isLoading}
+						hitSlop={8}
+						accessibilityRole="button"
+						className="items-center py-1"
+					>
+						<Text className="text-muted-foreground text-sm underline">
+							No date
+						</Text>
+					</Pressable>
 				</Pressable>
 			</Pressable>
 		</Modal>

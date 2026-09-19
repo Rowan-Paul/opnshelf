@@ -26,6 +26,7 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	DiscoverMoviesDto,
 	FullCreditsDto,
+	MarkWatchedDto,
 	MovieDto,
 	SearchResultsDto,
 	TMDBMovieDetailDto,
@@ -155,29 +156,14 @@ export class MoviesController {
 	@Post("watched")
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "Mark a movie as watched" })
-	@ApiBody({
-		schema: {
-			type: "object",
-			required: ["movieId"],
-			properties: {
-				movieId: { type: "string", description: "TMDB movie ID" },
-				watchedAt: {
-					type: "string",
-					format: "date-time",
-					nullable: true,
-					description:
-						"Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time.",
-				},
-			},
-		},
-	})
+	@ApiBody({ type: MarkWatchedDto })
 	@ApiResponse({ status: 201, type: TrackedMovieDto })
 	@ApiResponse({ status: 401, description: "Not authenticated" })
 	async markWatched(
-		@Body("movieId") movieId: string,
-		@Body("watchedAt") watchedAt: string | null | undefined,
+		@Body() body: MarkWatchedDto,
 		@Req() req: AuthenticatedRequest,
 	) {
+		const { movieId, watchedAt } = body;
 		const user = req.user;
 
 		// Write to user's PDS

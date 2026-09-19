@@ -21,7 +21,7 @@ import { useDialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
-import { optimisticWatchDate } from "@/lib/watch-date";
+import { insertWatchEntry, optimisticWatchDate } from "@/lib/watch-date";
 import { requestWidgetUpdate } from "../../modules/widget-bridge";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
@@ -145,13 +145,17 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				variables.body.watchedAt,
 				new Date().toISOString(),
 			);
-			if (watchedDate) {
+			// Only patch a history list that has actually been fetched. Seeding
+			// one from nothing would cache a one-entry "history", and onError
+			// cannot roll that back — it restores only a defined snapshot.
+			if (prevHistory !== undefined) {
 				queryClient.setQueryData<WatchHistoryItemDto[]>(
 					movieHistoryKey,
-					(old) => [
-						{ id: `optimistic-${Date.now()}`, watchedDate },
-						...(old ?? []),
-					],
+					(old) =>
+						insertWatchEntry(old ?? [], {
+							id: `optimistic-${Date.now()}`,
+							watchedDate,
+						}),
 				);
 			}
 			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) => {
@@ -280,18 +284,17 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				watchedAt,
 				new Date().toISOString(),
 			);
-			if (watchedDate) {
+			// Only patch an already-fetched history list; see the movie branch.
+			if (prevHistory !== undefined) {
 				queryClient.setQueryData<EpisodeHistoryItemDto[]>(
 					showHistoryKey,
-					(old) => [
-						{
+					(old) =>
+						insertWatchEntry(old ?? [], {
 							episodeNumber,
 							id: `optimistic-${Date.now()}`,
 							seasonNumber,
 							watchedDate,
-						},
-						...(old ?? []),
-					],
+						}),
 				);
 			}
 			return { prevHistory };
@@ -450,7 +453,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	// --- Handlers ---
-	const markMovieWatched = (watchedAt?: string) => {
+	const markMovieWatched = (watchedAt?: string | null) => {
 		if (!isAuthenticated || options.mediaType !== "movie") return;
 		markMovie.mutate({ body: { movieId: options.movieId, watchedAt } });
 	};
@@ -466,7 +469,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markEpisodeWatched = (
 		seasonNumber: number,
 		episodeNumber: number,
-		watchedAt?: string,
+		watchedAt?: string | null,
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
 		markEpisode.mutate({
@@ -486,7 +489,10 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
-	const markShowWatched = (watchedAt?: string, episodeCount?: number) => {
+	const markShowWatched = (
+		watchedAt?: string | null,
+		episodeCount?: number,
+	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
 		const showId = options.showId;
 		const run = () => markShow.mutate({ body: { showId, watchedAt } });
@@ -514,7 +520,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 	const markSeasonWatched = (
 		seasonNumber: number,
-		watchedAt?: string,
+		watchedAt?: string | null,
 		episodeCount?: number,
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;

@@ -315,7 +315,7 @@ describe("MoviesController", () => {
 			mockMoviesService.indexTrackedMovie.mockResolvedValue(mockTrackedMovie);
 
 			const req = createMockRequest(mockUser);
-			const result = await controller.markWatched("456", undefined, req);
+			const result = await controller.markWatched({ movieId: "456" }, req);
 
 			expect(mockMoviesService.markWatched).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -367,7 +367,10 @@ describe("MoviesController", () => {
 			mockMoviesService.indexTrackedMovie.mockResolvedValue(mockTrackedMovie);
 
 			const req = createMockRequest(mockUser);
-			const result = await controller.markWatched("456", customDate, req);
+			const result = await controller.markWatched(
+				{ movieId: "456", watchedAt: customDate },
+				req,
+			);
 
 			expect(mockMoviesService.markWatched).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -398,7 +401,7 @@ describe("MoviesController", () => {
 			);
 
 			const req = createMockRequest(mockUser);
-			const result = await controller.markWatched("789", undefined, req);
+			const result = await controller.markWatched({ movieId: "789" }, req);
 
 			expect(result).toEqual({
 				uri: "at://did:plc:abc123/xyz.opnshelf.movie/movie-789-1234567890",
@@ -426,7 +429,10 @@ describe("MoviesController", () => {
 			mockMoviesService.markWatched.mockResolvedValue(mockMarkWatchedResult);
 
 			const req = createMockRequest(mockUser);
-			await controller.markWatched("999999", "2024-06-15T12:00:00Z", req);
+			await controller.markWatched(
+				{ movieId: "999999", watchedAt: "2024-06-15T12:00:00Z" },
+				req,
+			);
 
 			expect(mockMoviesService.markWatched).toHaveBeenCalledWith(
 				"did:plc:abc123",

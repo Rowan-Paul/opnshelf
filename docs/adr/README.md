@@ -54,3 +54,4 @@ Numbering notes:
 | [0034-progress-belongs-to-the-poster.md](0034-progress-belongs-to-the-poster.md) | 0034 | Watch progress belongs to the poster it describes | Accepted; implemented |
 | [0035-lists-are-an-overview-and-a-detail-page.md](0035-lists-are-an-overview-and-a-detail-page.md) | 0035 | Lists are an overview and a detail page | Accepted; implemented |
 | [0036-batch-reads-are-gets-with-query-arrays.md](0036-batch-reads-are-gets-with-query-arrays.md) | 0036 | Batch reads are GETs that take their ids in a query array | Accepted and implemented |
+| [0037-undated-watches-sort-after-dated-watches.md](0037-undated-watches-sort-after-dated-watches.md) | 0037 | Undated Watches sort after dated Watches | Accepted and implemented |

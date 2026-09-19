@@ -180,6 +180,17 @@ export type TrackedMovieDto = {
     movie: MovieDto;
 };
 
+export type MarkWatchedDto = {
+    /**
+     * TMDB movie ID
+     */
+    movieId: string;
+    /**
+     * Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.
+     */
+    watchedAt?: string | null;
+};
+
 export type WatchHistoryItemDto = {
     id: string;
     watchedDate?: string;
@@ -2770,16 +2781,7 @@ export type MoviesControllerGetUserMoviesResponses = {
 export type MoviesControllerGetUserMoviesResponse = MoviesControllerGetUserMoviesResponses[keyof MoviesControllerGetUserMoviesResponses];
 
 export type MoviesControllerMarkWatchedData = {
-    body: {
-        /**
-         * TMDB movie ID
-         */
-        movieId: string;
-        /**
-         * Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time.
-         */
-        watchedAt?: string | null;
-    };
+    body: MarkWatchedDto;
     path?: never;
     query?: never;
     url: '/movies/watched';

@@ -200,6 +200,14 @@ function SeasonDetailPage() {
 		setTimeout(() => setProcessingSeason(false), 2000);
 	};
 
+	// null => one undated Watch per aired episode in the season.
+	const handleMarkSeasonWatchedAt = (watchedAt: string | null) => {
+		if (!isAuthenticated) return;
+		setProcessingSeason(true);
+		markSeasonWatched(seasonNum, watchedAt, totalEpisodes);
+		setTimeout(() => setProcessingSeason(false), 2000);
+	};
+
 	const handleUnmarkSeasonWatched = () => {
 		if (!isAuthenticated) return;
 		setProcessingSeason(true);
@@ -380,6 +388,7 @@ function SeasonDetailPage() {
 								processing={processingSeason}
 								onMarkWatched={handleMarkSeasonWatched}
 								onUnmarkWatched={handleUnmarkSeasonWatched}
+								onMarkWatchedAt={handleMarkSeasonWatchedAt}
 							/>
 							<MediaActionsBar
 								mediaType="show"
