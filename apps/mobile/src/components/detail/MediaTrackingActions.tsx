@@ -186,7 +186,8 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			? actions.isDeleteMovieEntryPending
 			: actions.isDeleteEpisodeEntryPending;
 
-	const addToShelf = (watchedAt?: string) => {
+	// `null` creates an undated Watch; `undefined` means "now".
+	const addToShelf = (watchedAt?: string | null) => {
 		switch (props.mediaType) {
 			case "movie":
 				actions.markMovieWatched(watchedAt);
@@ -243,7 +244,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 		}
 	};
 
-	const handleDateConfirm = (iso: string) => {
+	const handleDateConfirm = (iso: string | null) => {
 		setDatePickerVisible(false);
 		addToShelf(iso);
 	};

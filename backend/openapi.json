@@ -287,22 +287,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "movieId"
-                ],
-                "properties": {
-                  "movieId": {
-                    "type": "string",
-                    "description": "TMDB movie ID"
-                  },
-                  "watchedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time."
-                  }
-                }
+                "$ref": "#/components/schemas/MarkWatchedDto"
               }
             }
           }
@@ -6482,6 +6467,24 @@
           "createdAt",
           "updatedAt",
           "movie"
+        ]
+      },
+      "MarkWatchedDto": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "string",
+            "description": "TMDB movie ID"
+          },
+          "watchedAt": {
+            "type": "string",
+            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "movieId"
         ]
       },
       "WatchHistoryItemDto": {

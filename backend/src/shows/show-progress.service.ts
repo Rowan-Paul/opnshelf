@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowCatalogueService } from "./show-catalogue.service";
+import { watchDateOrderBy } from "../common/watch-ordering";
 
 type TrackedEpisodeWithShow = {
 	id: string;
@@ -96,7 +97,7 @@ export class ShowProgressService {
 		const trackedEpisodes = await this.prisma.trackedEpisode.findMany({
 			where: { userDid },
 			include: { show: true },
-			orderBy: { watchedDate: "desc" },
+			orderBy: watchDateOrderBy(),
 		});
 
 		// Counts TrackedEpisode rows, so rewatches count again: this is episode
@@ -133,8 +134,7 @@ export class ShowProgressService {
 				...(showIdFilter ? { showId: showIdFilter } : {}),
 			},
 			orderBy: [
-				{ watchedDate: "desc" },
-				{ createdAt: "desc" },
+				...watchDateOrderBy(),
 				{ seasonNumber: "desc" },
 				{ episodeNumber: "desc" },
 			],
@@ -541,7 +541,7 @@ export class ShowProgressService {
 	async getEpisodeWatchHistory(userDid: string, showId: string) {
 		return this.prisma.trackedEpisode.findMany({
 			where: { userDid, showId },
-			orderBy: { watchedDate: "desc" },
+			orderBy: watchDateOrderBy(),
 		});
 	}
 

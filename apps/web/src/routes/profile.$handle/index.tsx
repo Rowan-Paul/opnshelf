@@ -152,6 +152,7 @@ function ProfileOverviewPage() {
 										}
 										type="movie"
 										watchedDate={item.watchedDate}
+										undatedWatch={!item.watchedDate}
 										interactive={isOwner}
 										isWatched={true}
 										watchCount={item.watchCount}
@@ -213,6 +214,7 @@ function ProfileOverviewPage() {
 												: `S${item.seasonNumber}E${item.episodeNumber}`
 										}
 										watchedDate={item.watchedDate}
+										undatedWatch={!item.watchedDate}
 										interactive={isOwner}
 										isWatched={true}
 										watchCount={item.watchCount}

@@ -145,15 +145,18 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				variables.body.watchedAt,
 				new Date().toISOString(),
 			);
-			if (watchedDate) {
-				queryClient.setQueryData<WatchHistoryItemDto[]>(
-					movieHistoryKey,
-					(old) => [
-						{ id: `optimistic-${Date.now()}`, watchedDate },
-						...(old ?? []),
-					],
-				);
-			}
+			// Undated Watches sort after dated ones (ADR 0037), so append rather
+			// than prepend: the optimistic row lands where the refetch will put
+			// it instead of jumping on settle.
+			queryClient.setQueryData<WatchHistoryItemDto[]>(
+				movieHistoryKey,
+				(old) => {
+					const entry = { id: `optimistic-${Date.now()}`, watchedDate };
+					return watchedDate
+						? [entry, ...(old ?? [])]
+						: [...(old ?? []), entry];
+				},
+			);
 			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) => {
 				if (!Array.isArray(old)) return old;
 				if (old.some((m) => String(m.movieId) === movieId)) return old;
@@ -280,20 +283,22 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				watchedAt,
 				new Date().toISOString(),
 			);
-			if (watchedDate) {
-				queryClient.setQueryData<EpisodeHistoryItemDto[]>(
-					showHistoryKey,
-					(old) => [
-						{
-							episodeNumber,
-							id: `optimistic-${Date.now()}`,
-							seasonNumber,
-							watchedDate,
-						},
-						...(old ?? []),
-					],
-				);
-			}
+			// Undated Watches sort last (ADR 0037) — append so the optimistic row
+			// does not jump position when the refetch lands.
+			queryClient.setQueryData<EpisodeHistoryItemDto[]>(
+				showHistoryKey,
+				(old) => {
+					const entry = {
+						episodeNumber,
+						id: `optimistic-${Date.now()}`,
+						seasonNumber,
+						watchedDate,
+					};
+					return watchedDate
+						? [entry, ...(old ?? [])]
+						: [...(old ?? []), entry];
+				},
+			);
 			return { prevHistory };
 		},
 		onError: (error, _vars, context) => {
@@ -450,7 +455,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	// --- Handlers ---
-	const markMovieWatched = (watchedAt?: string) => {
+	const markMovieWatched = (watchedAt?: string | null) => {
 		if (!isAuthenticated || options.mediaType !== "movie") return;
 		markMovie.mutate({ body: { movieId: options.movieId, watchedAt } });
 	};
@@ -466,7 +471,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markEpisodeWatched = (
 		seasonNumber: number,
 		episodeNumber: number,
-		watchedAt?: string,
+		watchedAt?: string | null,
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
 		markEpisode.mutate({
@@ -486,7 +491,10 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
-	const markShowWatched = (watchedAt?: string, episodeCount?: number) => {
+	const markShowWatched = (
+		watchedAt?: string | null,
+		episodeCount?: number,
+	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
 		const showId = options.showId;
 		const run = () => markShow.mutate({ body: { showId, watchedAt } });
@@ -514,7 +522,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 	const markSeasonWatched = (
 		seasonNumber: number,
-		watchedAt?: string,
+		watchedAt?: string | null,
 		episodeCount?: number,
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;

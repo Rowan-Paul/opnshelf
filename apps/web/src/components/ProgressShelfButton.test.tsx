@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ProgressShelfButton } from "./ProgressShelfButton";
 
+vi.mock("#/lib/auth-context", () => ({
+	useAuth: () => ({ userSettings: { timezone: "Europe/Amsterdam" } }),
+}));
+
 function renderButton(
 	props: Partial<Parameters<typeof ProgressShelfButton>[0]> = {},
 ) {
@@ -84,5 +88,72 @@ describe("ProgressShelfButton", () => {
 
 		fireEvent.click(button);
 		expect(onMarkWatched).not.toHaveBeenCalled();
+	});
+
+	describe("watch date picker", () => {
+		it.each([
+			["unwatched", 0, "Add to shelf"],
+			// Futurama's shape: some episodes logged, more still to mark.
+			["partially watched", 4, "Add to shelf"],
+		])("opens the picker from the mark button when %s", (_case, episodesWatched, label) => {
+			const { onMarkWatched } = renderButton({
+				episodesWatched,
+				onMarkWatchedAt: vi.fn(),
+			});
+
+			fireEvent.click(screen.getByRole("button", { name: label }));
+
+			expect(screen.getByRole("button", { name: "No date" })).toBeTruthy();
+			// Opening the picker must not log a Watch on its own.
+			expect(onMarkWatched).not.toHaveBeenCalled();
+		});
+
+		it("creates undated Watches when the user picks No date", () => {
+			const onMarkWatchedAt = vi.fn();
+			renderButton({ episodesWatched: 4, onMarkWatchedAt });
+
+			fireEvent.click(screen.getByRole("button", { name: "Add to shelf" }));
+			fireEvent.click(screen.getByRole("button", { name: "No date" }));
+
+			expect(onMarkWatchedAt).toHaveBeenCalledWith(null);
+		});
+
+		it("unmarks directly once every episode is watched", () => {
+			// A date is meaningless next to "Remove from shelf".
+			const { onUnmarkWatched } = renderButton({
+				episodesWatched: 10,
+				onMarkWatchedAt: vi.fn(),
+			});
+
+			fireEvent.click(
+				screen.getByRole("button", { name: /remove from shelf/i }),
+			);
+
+			expect(onUnmarkWatched).toHaveBeenCalledOnce();
+			expect(screen.queryByRole("button", { name: "No date" })).toBeNull();
+		});
+
+		it("marks on click when no date handler is supplied", () => {
+			const { onMarkWatched } = renderButton({ episodesWatched: 4 });
+
+			fireEvent.click(screen.getByRole("button", { name: /add to shelf/i }));
+
+			expect(onMarkWatched).toHaveBeenCalledOnce();
+			expect(screen.queryByRole("button", { name: "No date" })).toBeNull();
+		});
+
+		it("does not open the picker while a mark is in flight", () => {
+			renderButton({
+				episodesWatched: 4,
+				isMarkPending: true,
+				onMarkWatchedAt: vi.fn(),
+			});
+
+			const button = screen.getByRole("button", { name: /loading/i });
+			expect(button.hasAttribute("disabled")).toBe(true);
+
+			fireEvent.click(button);
+			expect(screen.queryByRole("button", { name: "No date" })).toBeNull();
+		});
 	});
 });

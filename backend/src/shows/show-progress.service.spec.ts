@@ -243,11 +243,12 @@ describe("ShowProgressService", () => {
 			const result = await service.getUserUpNext("did:plc:abc123");
 
 			// The anchor query must select the newest watch per show, not the
-			// furthest episode: watchedDate desc first, distinct on showId.
+			// furthest episode: watchedDate desc first, distinct on showId. An
+			// undated Watch must never win the anchor, so nulls sort last.
 			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [
-						{ watchedDate: "desc" },
+						{ watchedDate: { sort: "desc", nulls: "last" } },
 						{ createdAt: "desc" },
 						{ seasonNumber: "desc" },
 						{ episodeNumber: "desc" },
@@ -573,7 +574,10 @@ describe("ShowProgressService", () => {
 			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
 				include: { show: true },
-				orderBy: { watchedDate: "desc" },
+				orderBy: [
+					{ watchedDate: { sort: "desc", nulls: "last" } },
+					{ createdAt: "desc" },
+				],
 			});
 			expect(result).toHaveLength(2);
 			expect(result[0]).toMatchObject({
