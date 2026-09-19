@@ -1,6 +1,6 @@
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { ShowProgressQueryDto } from "./show.dto";
+import { MAX_SHOW_PROGRESS_IDS, ShowProgressQueryDto } from "./show.dto";
 
 describe("ShowProgressQueryDto", () => {
 	// `?showIds=1399` arrives as a string, `?showIds=1399&showIds=1396` as an
@@ -24,7 +24,10 @@ describe("ShowProgressQueryDto", () => {
 	it.each([
 		["a missing parameter", undefined],
 		["a non-numeric ID", ["not-a-show"]],
-		["more than the batch limit", Array.from({ length: 51 }, (_, i) => `${i}`)],
+		[
+			"more than the batch limit",
+			Array.from({ length: MAX_SHOW_PROGRESS_IDS + 1 }, (_, i) => `${i}`),
+		],
 	])("rejects %s", async (_case, showIds) => {
 		const errors = await validate(
 			plainToInstance(ShowProgressQueryDto, { showIds }),

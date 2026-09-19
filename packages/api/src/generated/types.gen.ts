@@ -3681,7 +3681,7 @@ export type ShowsControllerGetShowProgressData = {
     path?: never;
     query: {
         /**
-         * Up to 50 TMDB show IDs
+         * Repeated TMDB show ID to fetch viewer progress for
          */
         showIds: Array<string>;
     };
@@ -5710,7 +5710,7 @@ export type RatingsControllerGetBatchRatingsData = {
          */
         mediaType: 'movie' | 'show';
         /**
-         * Repeated media ID to fetch ratings for (maximum 50 characters per ID)
+         * Repeated media ID to fetch ratings for
          */
         mediaIds: Array<string>;
     };

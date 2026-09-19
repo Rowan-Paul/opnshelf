@@ -666,11 +666,20 @@ export class ShowProgressDto {
 	seasons: ShowSeasonProgressDto[];
 }
 
+export const MAX_SHOW_PROGRESS_IDS = 50;
+
 export class ShowProgressQueryDto {
-	@ApiProperty({ type: [String], description: "Up to 50 TMDB show IDs" })
+	// Spelled out as a raw array schema rather than `type: [String]` so the
+	// published contract carries every limit the validators below enforce.
+	@ApiProperty({
+		description: "Repeated TMDB show ID to fetch viewer progress for",
+		type: "array",
+		items: { type: "string", pattern: "^\\d+$" },
+		maxItems: MAX_SHOW_PROGRESS_IDS,
+	})
 	@IsQueryArray()
 	@IsArray()
-	@ArrayMaxSize(50)
+	@ArrayMaxSize(MAX_SHOW_PROGRESS_IDS)
 	@IsNumberString({ no_symbols: true }, { each: true })
 	showIds: string[];
 }

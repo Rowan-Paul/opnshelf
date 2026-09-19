@@ -157,11 +157,15 @@ export class BatchRatingQueryDto {
 	@IsIn(["movie", "show"])
 	mediaType: "movie" | "show";
 
+	// Spelled out as a raw array schema rather than `type: [String]` so the
+	// published contract carries every limit the validators below enforce.
 	@ApiProperty({
-		description:
-			"Repeated media ID to fetch ratings for (maximum 50 characters per ID)",
-		type: [String],
+		description: "Repeated media ID to fetch ratings for",
+		type: "array",
+		items: { type: "string", maxLength: MAX_MEDIA_ID_LENGTH },
+		minItems: 1,
 		maxItems: MAX_BATCH_RATING_IDS,
+		uniqueItems: true,
 	})
 	@IsQueryArray()
 	@IsArray()
