@@ -26,16 +26,16 @@ export function insertWatchEntry<T extends { watchedDate?: string | null }>(
 ): T[] {
 	const next = [...entries];
 	const watchedDate = entry.watchedDate;
-	if (!watchedDate) {
-		next.push(entry);
-		return next;
-	}
 
-	const at = next.findIndex(
-		(existing) =>
-			!existing.watchedDate ||
-			existing.watchedDate.localeCompare(watchedDate) < 0,
-	);
+	// The server orders by watchedDate (nulls last) then createdAt descending,
+	// and a Watch being logged right now has the newest createdAt. So it leads
+	// its equals: before existing entries with the same date, and before
+	// existing undated entries.
+	const at = next.findIndex((existing) => {
+		if (!watchedDate) return !existing.watchedDate;
+		if (!existing.watchedDate) return true;
+		return existing.watchedDate.localeCompare(watchedDate) <= 0;
+	});
 	if (at === -1) next.push(entry);
 	else next.splice(at, 0, entry);
 	return next;

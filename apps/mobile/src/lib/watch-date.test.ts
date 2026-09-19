@@ -51,7 +51,7 @@ describe("optimisticWatchDate", () => {
 });
 
 describe("insertWatchEntry", () => {
-	type Entry = { watchedDate?: string | null };
+	type Entry = { id?: string; watchedDate?: string | null };
 	const dated = (watchedDate: string): Entry => ({ watchedDate });
 
 	it("places a newer Watch above older ones", () => {
@@ -97,6 +97,36 @@ describe("insertWatchEntry", () => {
 			dated("2024-01-01T00:00:00.000Z"),
 			{ watchedDate: null },
 		]);
+	});
+
+	it("leads existing Watches with the same date", () => {
+		// The server tie-breaks equal watchedDate on createdAt descending, and
+		// the Watch being logged now is the newest. Ids make the position of the
+		// inserted entry observable.
+		const list: Entry[] = [
+			{ id: "old-same", watchedDate: "2026-05-01T00:00:00.000Z" },
+			{ id: "older", watchedDate: "2024-01-01T00:00:00.000Z" },
+		];
+
+		const result = insertWatchEntry(list, {
+			id: "new",
+			watchedDate: "2026-05-01T00:00:00.000Z",
+		});
+
+		expect(result.map((e) => e.id)).toEqual(["new", "old-same", "older"]);
+	});
+
+	it("leads existing undated Watches", () => {
+		// Same tie-break, applied within the undated block, which still sits
+		// after every dated Watch.
+		const list: Entry[] = [
+			{ id: "dated", watchedDate: "2026-05-01T00:00:00.000Z" },
+			{ id: "old-undated", watchedDate: null },
+		];
+
+		const result = insertWatchEntry(list, { id: "new", watchedDate: null });
+
+		expect(result.map((e) => e.id)).toEqual(["dated", "new", "old-undated"]);
 	});
 
 	it("does not mutate the list it was given", () => {
