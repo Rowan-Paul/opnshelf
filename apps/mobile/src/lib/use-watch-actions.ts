@@ -21,7 +21,7 @@ import { useDialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
-import { optimisticWatchDate } from "@/lib/watch-date";
+import { insertWatchEntry, optimisticWatchDate } from "@/lib/watch-date";
 import { requestWidgetUpdate } from "../../modules/widget-bridge";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
@@ -148,19 +148,14 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			// Only patch a history list that has actually been fetched. Seeding
 			// one from nothing would cache a one-entry "history", and onError
 			// cannot roll that back — it restores only a defined snapshot.
-			//
-			// Undated Watches sort after dated ones (ADR 0037), so append rather
-			// than prepend: the optimistic row lands where the refetch will put
-			// it instead of jumping on settle.
 			if (prevHistory !== undefined) {
 				queryClient.setQueryData<WatchHistoryItemDto[]>(
 					movieHistoryKey,
-					(old) => {
-						const entry = { id: `optimistic-${Date.now()}`, watchedDate };
-						return watchedDate
-							? [entry, ...(old ?? [])]
-							: [...(old ?? []), entry];
-					},
+					(old) =>
+						insertWatchEntry(old ?? [], {
+							id: `optimistic-${Date.now()}`,
+							watchedDate,
+						}),
 				);
 			}
 			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) => {
@@ -290,22 +285,16 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				new Date().toISOString(),
 			);
 			// Only patch an already-fetched history list; see the movie branch.
-			// Undated Watches sort last (ADR 0037) — append so the optimistic row
-			// does not jump position when the refetch lands.
 			if (prevHistory !== undefined) {
 				queryClient.setQueryData<EpisodeHistoryItemDto[]>(
 					showHistoryKey,
-					(old) => {
-						const entry = {
+					(old) =>
+						insertWatchEntry(old ?? [], {
 							episodeNumber,
 							id: `optimistic-${Date.now()}`,
 							seasonNumber,
 							watchedDate,
-						};
-						return watchedDate
-							? [entry, ...(old ?? [])]
-							: [...(old ?? []), entry];
-					},
+						}),
 				);
 			}
 			return { prevHistory };
