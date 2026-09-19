@@ -145,18 +145,24 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				variables.body.watchedAt,
 				new Date().toISOString(),
 			);
+			// Only patch a history list that has actually been fetched. Seeding
+			// one from nothing would cache a one-entry "history", and onError
+			// cannot roll that back — it restores only a defined snapshot.
+			//
 			// Undated Watches sort after dated ones (ADR 0037), so append rather
 			// than prepend: the optimistic row lands where the refetch will put
 			// it instead of jumping on settle.
-			queryClient.setQueryData<WatchHistoryItemDto[]>(
-				movieHistoryKey,
-				(old) => {
-					const entry = { id: `optimistic-${Date.now()}`, watchedDate };
-					return watchedDate
-						? [entry, ...(old ?? [])]
-						: [...(old ?? []), entry];
-				},
-			);
+			if (prevHistory !== undefined) {
+				queryClient.setQueryData<WatchHistoryItemDto[]>(
+					movieHistoryKey,
+					(old) => {
+						const entry = { id: `optimistic-${Date.now()}`, watchedDate };
+						return watchedDate
+							? [entry, ...(old ?? [])]
+							: [...(old ?? []), entry];
+					},
+				);
+			}
 			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) => {
 				if (!Array.isArray(old)) return old;
 				if (old.some((m) => String(m.movieId) === movieId)) return old;
@@ -283,22 +289,25 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				watchedAt,
 				new Date().toISOString(),
 			);
+			// Only patch an already-fetched history list; see the movie branch.
 			// Undated Watches sort last (ADR 0037) — append so the optimistic row
 			// does not jump position when the refetch lands.
-			queryClient.setQueryData<EpisodeHistoryItemDto[]>(
-				showHistoryKey,
-				(old) => {
-					const entry = {
-						episodeNumber,
-						id: `optimistic-${Date.now()}`,
-						seasonNumber,
-						watchedDate,
-					};
-					return watchedDate
-						? [entry, ...(old ?? [])]
-						: [...(old ?? []), entry];
-				},
-			);
+			if (prevHistory !== undefined) {
+				queryClient.setQueryData<EpisodeHistoryItemDto[]>(
+					showHistoryKey,
+					(old) => {
+						const entry = {
+							episodeNumber,
+							id: `optimistic-${Date.now()}`,
+							seasonNumber,
+							watchedDate,
+						};
+						return watchedDate
+							? [entry, ...(old ?? [])]
+							: [...(old ?? []), entry];
+					},
+				);
+			}
 			return { prevHistory };
 		},
 		onError: (error, _vars, context) => {

@@ -240,6 +240,13 @@ export class ShowProgressService {
 			totalEpisodes: number;
 			episodesWatched: number;
 			latestWatchedDate: string;
+			/**
+			 * Internal only, stripped before the response: `latestWatchedDate`
+			 * falls back to `createdAt` for an undated anchor, so sorting on it
+			 * alone would rank an undated Watch by the moment it was logged —
+			 * the invented date ADR 0037 rejects.
+			 */
+			isUndated: boolean;
 			lastWatched: { seasonNumber: number; episodeNumber: number };
 			nextEpisode: {
 				seasonNumber: number;
@@ -276,6 +283,7 @@ export class ShowProgressService {
 				showId: anchor.showId,
 				totalEpisodes,
 				episodesWatched,
+				isUndated: anchor.watchedDate === null,
 				latestWatchedDate: latestWatchedDate.toISOString(),
 				lastWatched: {
 					seasonNumber: anchor.seasonNumber,
@@ -315,6 +323,9 @@ export class ShowProgressService {
 					return dir * (pA - pB);
 				}
 				default:
+					// ADR 0037: undated Watches sort after dated ones whichever way
+					// the list runs, so this comparison sits outside `dir`.
+					if (a.isUndated !== b.isUndated) return a.isUndated ? 1 : -1;
 					return (
 						dir *
 						(new Date(a.latestWatchedDate).getTime() -
@@ -330,8 +341,9 @@ export class ShowProgressService {
 		const currentPage =
 			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
 		const start = (currentPage - 1) * safePageSize;
-		const pagedItems =
-			totalPages > 0 ? items.slice(start, start + safePageSize) : [];
+		const pagedItems = (
+			totalPages > 0 ? items.slice(start, start + safePageSize) : []
+		).map(({ isUndated: _isUndated, ...item }) => item);
 		await Promise.all(
 			pagedItems.map(async (item) => {
 				item.show.colors =

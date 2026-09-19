@@ -36,6 +36,12 @@ export function WatchDatePicker({
 		nowAsDatetimeLocal(userTimezone),
 	);
 
+	// `max` only marks the input invalid; it does not stop a plain button's
+	// click handler, and the field is typeable. Gate Confirm on the same value
+	// so a future date cannot be submitted.
+	const latestAllowed = nowAsDatetimeLocal(userTimezone);
+	const isFuture = watchedAt > latestAllowed;
+
 	// Re-seed on every open so a picker left mounted never offers a stale "now".
 	const handleOpenChange = (isOpen: boolean) => {
 		if (isOpen) setWatchedAt(nowAsDatetimeLocal(userTimezone));
@@ -71,7 +77,7 @@ export function WatchDatePicker({
 						type="datetime-local"
 						value={watchedAt}
 						// You cannot have watched something you have not watched yet.
-						max={nowAsDatetimeLocal(userTimezone)}
+						max={latestAllowed}
 						onChange={(e) => setWatchedAt(e.target.value)}
 						className="w-full rounded-md border bg-(--background) px-3 py-2 text-sm outline-hidden focus:ring-(--accent) focus:ring-2"
 					/>
@@ -88,7 +94,7 @@ export function WatchDatePicker({
 						type="button"
 						onClick={handleConfirm}
 						// An empty field is not a way to say "undated": "No date" is.
-						disabled={isPending || watchedAt === ""}
+						disabled={isPending || watchedAt === "" || isFuture}
 						className="btn btn-primary flex-1"
 					>
 						{isPending ? (

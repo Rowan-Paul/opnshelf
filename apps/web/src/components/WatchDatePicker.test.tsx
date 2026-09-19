@@ -68,12 +68,29 @@ describe("WatchDatePicker", () => {
 		expect(onConfirm).not.toHaveBeenCalled();
 	});
 
-	it("does not offer a future watch date", () => {
+	it("caps the input at the current time", () => {
 		renderPicker(vi.fn());
 
 		const input = screen.getByLabelText(
 			"When did you watch this?",
 		) as HTMLInputElement;
 		expect(input.max).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+	});
+
+	it("refuses to submit a future watch date", () => {
+		const onConfirm = vi.fn();
+		renderPicker(onConfirm);
+
+		// `max` only marks the field invalid; the field is typeable and Confirm
+		// is a plain button, so the guard has to be on the button itself.
+		fireEvent.change(screen.getByLabelText("When did you watch this?"), {
+			target: { value: "2099-01-01T00:00" },
+		});
+
+		const confirm = screen.getByRole("button", { name: "Confirm" });
+		expect((confirm as HTMLButtonElement).disabled).toBe(true);
+
+		fireEvent.click(confirm);
+		expect(onConfirm).not.toHaveBeenCalled();
 	});
 });
