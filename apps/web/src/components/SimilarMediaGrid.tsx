@@ -22,7 +22,7 @@ export default function SimilarMediaGrid({
 	title = "Similar",
 }: SimilarMediaGridProps) {
 	const { isAuthenticated } = useAuth();
-	const { ratings } = useBatchRatingsQuery(items);
+	const { ratingFor } = useBatchRatingsQuery(items);
 
 	if (items.length === 0) return null;
 
@@ -42,7 +42,7 @@ export default function SimilarMediaGrid({
 								title={item.title}
 								posterUrl={item.posterUrl}
 								type={item.type}
-								globalRating={ratings.get(String(item.id))?.averageRating}
+								globalRating={ratingFor(item.type, item.id)?.averageRating}
 								tmdbRating={item.tmdbRating}
 								size="sm"
 								layout="poster"

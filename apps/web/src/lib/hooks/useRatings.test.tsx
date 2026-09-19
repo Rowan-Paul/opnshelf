@@ -15,8 +15,8 @@ vi.mock("#/integrations/posthog/provider", () => ({
 
 function RatingProbe({ id }: { id: string }) {
 	// A fresh array every render, the way a route body builds one.
-	const { ratings } = useBatchRatingsQuery([{ id, type: "movie" }]);
-	return <output>{ratings.get(id)?.averageRating ?? "loading"}</output>;
+	const { ratingFor } = useBatchRatingsQuery([{ id, type: "movie" }]);
+	return <output>{ratingFor("movie", id)?.averageRating ?? "loading"}</output>;
 }
 
 function createQueryClient() {
@@ -57,6 +57,32 @@ describe("useBatchRatingsQuery", () => {
 		});
 	});
 
+	it("keeps a movie and a show that share a TMDB id apart", async () => {
+		mocks.getBatchRatings.mockImplementation(({ body }) =>
+			Promise.resolve({
+				data: {
+					items: [
+						{
+							mediaId: "550",
+							averageRating: body.mediaType === "movie" ? 8 : 4,
+							ratingCount: 1,
+						},
+					],
+				},
+			}),
+		);
+
+		render(
+			<QueryClientProvider client={createQueryClient()}>
+				<CollisionProbe />
+			</QueryClientProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByRole("status").textContent).toBe("8/4"),
+		);
+	});
+
 	it("asks for movies and shows separately, deduped", async () => {
 		mocks.getBatchRatings.mockResolvedValue({ data: { items: [] } });
 
@@ -77,6 +103,20 @@ describe("useBatchRatingsQuery", () => {
 		});
 	});
 });
+
+function CollisionProbe() {
+	const { ratingFor } = useBatchRatingsQuery([
+		{ id: "550", type: "movie" },
+		{ id: "550", type: "show" },
+	]);
+	return (
+		<output>
+			{`${ratingFor("movie", "550")?.averageRating ?? "-"}/${
+				ratingFor("show", "550")?.averageRating ?? "-"
+			}`}
+		</output>
+	);
+}
 
 function MixedProbe() {
 	useBatchRatingsQuery([

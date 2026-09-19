@@ -306,7 +306,7 @@ function SearchPage() {
 	const cast = castData?.items || [];
 
 	const mediaItems = useMemo(() => toRatingItems(results), [results]);
-	const { ratings } = useBatchRatingsQuery(mediaItems);
+	const { ratingFor } = useBatchRatingsQuery(mediaItems);
 
 	const hasQuery = debouncedQuery.length > 0;
 	const isLoading = isSearchTabLoading({
@@ -400,7 +400,10 @@ function SearchPage() {
 												type={item.media_type === "movie" ? "movie" : "show"}
 												tmdbRating={item.vote_average || undefined}
 												globalRating={
-													ratings.get(String(item.id))?.averageRating
+													ratingFor(
+														item.media_type === "movie" ? "movie" : "show",
+														item.id,
+													)?.averageRating
 												}
 												size="md"
 												layout="poster"
@@ -427,7 +430,7 @@ function SearchPage() {
 												type="movie"
 												tmdbRating={item.vote_average || undefined}
 												globalRating={
-													ratings.get(String(item.id))?.averageRating
+													ratingFor("movie", item.id)?.averageRating
 												}
 												size="md"
 												layout="poster"
@@ -453,9 +456,7 @@ function SearchPage() {
 												backdropUrl={getBackdropUrl(item)}
 												type="show"
 												tmdbRating={item.vote_average || undefined}
-												globalRating={
-													ratings.get(String(item.id))?.averageRating
-												}
+												globalRating={ratingFor("show", item.id)?.averageRating}
 												size="md"
 												layout="poster"
 											/>

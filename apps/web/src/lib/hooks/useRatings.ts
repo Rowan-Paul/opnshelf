@@ -279,6 +279,7 @@ export interface BatchRating {
 	ratingCount: number;
 }
 
+/** The one media type's ids, deduped and sorted, in request-sized batches. */
 function batchesFor(items: BatchRatingItem[], mediaType: "movie" | "show") {
 	const ids = [
 		...new Set(
@@ -309,6 +310,9 @@ export function useBatchRatingsQuery(items: BatchRatingItem[]) {
 		queries: batches.map((batch) => ({
 			queryKey: ["ratings", "batch", batch.mediaType, batch.mediaIds],
 			staleTime: 60_000,
+			// A missing global rating costs a poster its badge and nothing else,
+			// so a failed batch is not worth three more requests.
+			retry: false,
 			queryFn: async () => {
 				const { data } = await ratingsControllerGetBatchRatings({
 					body: { mediaType: batch.mediaType, mediaIds: batch.mediaIds },
@@ -320,12 +324,20 @@ export function useBatchRatingsQuery(items: BatchRatingItem[]) {
 		})),
 	});
 
+	// A response item carries only its mediaId, and TMDB hands movies and shows
+	// separate id spaces, so a movie and a show can both be 550. The asking
+	// batch is the only thing that knows which one came back.
 	const ratings = new Map<string, BatchRating>();
-	for (const query of queries) {
+	for (const [index, query] of queries.entries()) {
+		const { mediaType } = batches[index];
 		for (const item of query.data?.items ?? []) {
-			ratings.set(item.mediaId, item);
+			ratings.set(`${mediaType}:${item.mediaId}`, item);
 		}
 	}
 
-	return { ratings, isLoading: queries.some((query) => query.isLoading) };
+	return {
+		ratingFor: (type: "movie" | "show", id: string | number) =>
+			ratings.get(`${type}:${id}`),
+		isLoading: queries.some((query) => query.isLoading),
+	};
 }
