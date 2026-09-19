@@ -3,6 +3,7 @@ import {
 	Controller,
 	Delete,
 	Get,
+	Header,
 	Param,
 	Post,
 	Query,
@@ -20,7 +21,7 @@ import {
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
-	BatchRatingRequestDto,
+	BatchRatingQueryDto,
 	BatchRatingResponseDto,
 	GetRatingQueryDto,
 	MediaRatingQueryDto,
@@ -116,16 +117,22 @@ export class RatingsController {
 		};
 	}
 
-	@Post("batch")
+	// A public aggregate, so a shared cache may hold it — but React Query
+	// invalidation cannot evict the browser's HTTP cache, and a stale average
+	// right after you rate reads as a dead click. `no-cache` keeps the stored
+	// copy and makes every use revalidate; Express answers the unchanged ones
+	// from its own ETag with a 304.
+	@Get("batch")
+	@Header("Cache-Control", "no-cache")
 	@ApiOperation({ summary: "Get batch aggregate ratings for multiple media" })
 	@ApiOkResponse({
 		description: "Batch ratings retrieved",
 		type: BatchRatingResponseDto,
 	})
 	async getBatchRatings(
-		@Body() dto: BatchRatingRequestDto,
+		@Query() query: BatchRatingQueryDto,
 	): Promise<BatchRatingResponseDto> {
-		return this.ratingsService.getBatchRatings(dto);
+		return this.ratingsService.getBatchRatings(query);
 	}
 
 	@Post()

@@ -1,7 +1,7 @@
 import type { RatingResponseDto } from "@opnshelf/api";
 import {
 	ratingsControllerClearRatingMutation,
-	ratingsControllerGetBatchRatings,
+	ratingsControllerGetBatchRatingsOptions,
 	ratingsControllerGetMediaRatingOptions,
 	ratingsControllerGetMediaRatingQueryKey,
 	ratingsControllerGetRatingOptions,
@@ -296,31 +296,23 @@ function batchesFor(items: BatchRatingItem[], mediaType: "movie" | "show") {
 }
 
 /**
- * Aggregate ratings for a list of posters. The endpoint takes its ids in a POST
- * body, but it is a read, so it belongs in QueryClient like `useShowProgress`:
- * the batch is keyed by its ids, not by the identity of the array a render
- * happened to build. Driving it as a mutation from an effect meant every
- * re-render of a detail page fired another POST, and any of those left in
- * flight when the user navigated away failed as a reported mutation failure.
+ * Aggregate ratings for a list of posters. A read on a GET, so the generated
+ * `queryOptions` key it by the ids asked for rather than by the identity of the
+ * array a render happened to build: a re-rendering detail page reuses the
+ * cached batch instead of firing another request.
  */
 export function useBatchRatingsQuery(items: BatchRatingItem[]) {
 	const batches = [...batchesFor(items, "movie"), ...batchesFor(items, "show")];
 
 	const queries = useQueries({
 		queries: batches.map((batch) => ({
-			queryKey: ["ratings", "batch", batch.mediaType, batch.mediaIds],
+			...ratingsControllerGetBatchRatingsOptions({
+				query: { mediaType: batch.mediaType, mediaIds: batch.mediaIds },
+			}),
 			staleTime: 60_000,
 			// A missing global rating costs a poster its badge and nothing else,
 			// so a failed batch is not worth three more requests.
 			retry: false,
-			queryFn: async () => {
-				const { data } = await ratingsControllerGetBatchRatings({
-					body: { mediaType: batch.mediaType, mediaIds: batch.mediaIds },
-					throwOnError: true,
-				});
-				if (!data) throw new Error("Batch ratings response was empty");
-				return data;
-			},
 		})),
 	});
 

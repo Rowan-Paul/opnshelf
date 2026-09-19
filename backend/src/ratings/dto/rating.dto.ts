@@ -14,6 +14,7 @@ import {
 	MaxLength,
 	Min,
 } from "class-validator";
+import { IsQueryArray } from "../../common/query-array";
 
 export const MAX_BATCH_RATING_IDS = 100;
 
@@ -148,7 +149,7 @@ export class MediaRatingResponseDto {
 	ratingCount: number;
 }
 
-export class BatchRatingRequestDto {
+export class BatchRatingQueryDto {
 	@ApiProperty({
 		description: "Media type",
 		enum: ["movie", "show"],
@@ -156,12 +157,17 @@ export class BatchRatingRequestDto {
 	@IsIn(["movie", "show"])
 	mediaType: "movie" | "show";
 
+	// Spelled out as a raw array schema rather than `type: [String]` so the
+	// published contract carries every limit the validators below enforce.
 	@ApiProperty({
-		description:
-			"Array of media IDs to fetch ratings for (maximum 50 characters per ID)",
-		type: [String],
+		description: "Repeated media ID to fetch ratings for",
+		type: "array",
+		items: { type: "string", maxLength: MAX_MEDIA_ID_LENGTH },
+		minItems: 1,
 		maxItems: MAX_BATCH_RATING_IDS,
+		uniqueItems: true,
 	})
+	@IsQueryArray()
 	@IsArray()
 	@ArrayNotEmpty()
 	@ArrayMaxSize(MAX_BATCH_RATING_IDS)

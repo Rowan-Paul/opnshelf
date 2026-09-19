@@ -53,3 +53,4 @@ Numbering notes:
 | [0033-one-pagination-contract-mobile-scrolls-web-pages.md](0033-one-pagination-contract-mobile-scrolls-web-pages.md) | 0033 | One pagination contract; Mobile scrolls, Web pages | Accepted; implemented |
 | [0034-progress-belongs-to-the-poster.md](0034-progress-belongs-to-the-poster.md) | 0034 | Watch progress belongs to the poster it describes | Accepted; implemented |
 | [0035-lists-are-an-overview-and-a-detail-page.md](0035-lists-are-an-overview-and-a-detail-page.md) | 0035 | Lists are an overview and a detail page | Accepted; implemented |
+| [0036-batch-reads-are-gets-with-query-arrays.md](0036-batch-reads-are-gets-with-query-arrays.md) | 0036 | Batch reads are GETs that take their ids in a query array | Accepted and implemented |

@@ -10,8 +10,21 @@ import {
 
 const api = vi.hoisted(() => ({ getProgress: vi.fn() }));
 
+// Stands in for the generated `queryOptions`: an id-keyed key plus a queryFn
+// that calls the GET. The hook must supply both from the batch it asked for.
 vi.mock("@opnshelf/api", () => ({
-	showsControllerGetShowProgress: api.getProgress,
+	showsControllerGetShowProgressOptions: (options: {
+		query: { showIds: string[] };
+	}) => ({
+		queryKey: [{ _id: "showsControllerGetShowProgress", query: options.query }],
+		queryFn: async () => {
+			const { data } = await api.getProgress({
+				...options,
+				throwOnError: true,
+			});
+			return data;
+		},
+	}),
 }));
 
 vi.mock("@/lib/auth-context", () => ({
@@ -84,7 +97,7 @@ describe("show progress scopes", () => {
 		});
 
 		expect(api.getProgress).toHaveBeenCalledWith({
-			body: { showIds: ["one", "two"] },
+			query: { showIds: ["one", "two"] },
 			throwOnError: true,
 		});
 		client.clear();
@@ -115,7 +128,7 @@ describe("show progress scopes", () => {
 			);
 		});
 		expect(api.getProgress).toHaveBeenCalledWith({
-			body: { showIds: ["broken"] },
+			query: { showIds: ["broken"] },
 			throwOnError: true,
 		});
 		client.clear();

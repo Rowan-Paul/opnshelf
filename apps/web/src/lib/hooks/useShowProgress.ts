@@ -1,8 +1,8 @@
 import {
 	type ShowProgressBatchResponseDto,
-	showsControllerGetShowProgress,
+	showsControllerGetShowProgressOptions,
 } from "@opnshelf/api";
-import { useQueries } from "@tanstack/react-query";
+import { hashKey, useQueries } from "@tanstack/react-query";
 import {
 	createContext,
 	createElement,
@@ -48,17 +48,14 @@ export function useShowProgress(
 	);
 	const queries = useQueries({
 		queries: batches.map((batch) => ({
-			queryKey: ["shows", "progress", viewerDid, batch],
+			...showsControllerGetShowProgressOptions({ query: { showIds: batch } }),
+			// Progress is viewer-scoped but the URL carries no DID, so two viewers
+			// asking for the same shows would otherwise share one cache entry.
+			// Hashing the viewer in separates them without disturbing the generated
+			// key, which invalidation and the generated queryFn both read.
+			queryKeyHashFn: (key: readonly unknown[]) => hashKey([...key, viewerDid]),
 			enabled: Boolean(viewerDid),
 			staleTime: 30_000,
-			queryFn: async () => {
-				const { data } = await showsControllerGetShowProgress({
-					body: { showIds: batch },
-					throwOnError: true,
-				});
-				if (!data) throw new Error("Show progress response was empty");
-				return data;
-			},
 		})),
 	});
 	const isError = queries.some((query) => query.isError);
