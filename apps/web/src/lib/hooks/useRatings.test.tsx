@@ -5,8 +5,23 @@ import { useBatchRatingsQuery } from "./useRatings";
 
 const mocks = vi.hoisted(() => ({ getBatchRatings: vi.fn() }));
 
+// Stands in for the generated `queryOptions`: an id-keyed key plus a queryFn
+// that calls the GET. The hook must supply both from the batch it asked for.
 vi.mock("@opnshelf/api", () => ({
-	ratingsControllerGetBatchRatings: mocks.getBatchRatings,
+	ratingsControllerGetBatchRatingsOptions: (options: {
+		query: { mediaType: "movie" | "show"; mediaIds: string[] };
+	}) => ({
+		queryKey: [
+			{ _id: "ratingsControllerGetBatchRatings", query: options.query },
+		],
+		queryFn: async () => {
+			const { data } = await mocks.getBatchRatings({
+				...options,
+				throwOnError: true,
+			});
+			return data;
+		},
+	}),
 }));
 
 vi.mock("#/integrations/posthog/provider", () => ({
@@ -52,19 +67,19 @@ describe("useBatchRatingsQuery", () => {
 
 		expect(mocks.getBatchRatings).toHaveBeenCalledTimes(1);
 		expect(mocks.getBatchRatings).toHaveBeenCalledWith({
-			body: { mediaType: "movie", mediaIds: ["42"] },
+			query: { mediaType: "movie", mediaIds: ["42"] },
 			throwOnError: true,
 		});
 	});
 
 	it("keeps a movie and a show that share a TMDB id apart", async () => {
-		mocks.getBatchRatings.mockImplementation(({ body }) =>
+		mocks.getBatchRatings.mockImplementation(({ query }) =>
 			Promise.resolve({
 				data: {
 					items: [
 						{
 							mediaId: "550",
-							averageRating: body.mediaType === "movie" ? 8 : 4,
+							averageRating: query.mediaType === "movie" ? 8 : 4,
 							ratingCount: 1,
 						},
 					],
@@ -94,11 +109,11 @@ describe("useBatchRatingsQuery", () => {
 
 		await waitFor(() => expect(mocks.getBatchRatings).toHaveBeenCalledTimes(2));
 		expect(mocks.getBatchRatings).toHaveBeenCalledWith({
-			body: { mediaType: "movie", mediaIds: ["1"] },
+			query: { mediaType: "movie", mediaIds: ["1"] },
 			throwOnError: true,
 		});
 		expect(mocks.getBatchRatings).toHaveBeenCalledWith({
-			body: { mediaType: "show", mediaIds: ["2"] },
+			query: { mediaType: "show", mediaIds: ["2"] },
 			throwOnError: true,
 		});
 	});

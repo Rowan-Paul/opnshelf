@@ -12,8 +12,21 @@ const mocks = vi.hoisted(() => ({
 	auth: { isAuthenticated: true, user: { did: "did:plc:one" } },
 }));
 
+// Stands in for the generated `queryOptions`: an id-keyed key plus a queryFn
+// that calls the GET. The hook must supply both from the batch it asked for.
 vi.mock("@opnshelf/api", () => ({
-	showsControllerGetShowProgress: mocks.getProgress,
+	showsControllerGetShowProgressOptions: (options: {
+		query: { showIds: string[] };
+	}) => ({
+		queryKey: [{ _id: "showsControllerGetShowProgress", query: options.query }],
+		queryFn: async () => {
+			const { data } = await mocks.getProgress({
+				...options,
+				throwOnError: true,
+			});
+			return data;
+		},
+	}),
 }));
 
 vi.mock("#/lib/auth-context", () => ({
@@ -84,7 +97,7 @@ describe("useShowProgress", () => {
 
 		await waitFor(() => expect(mocks.getProgress).toHaveBeenCalledTimes(1));
 		expect(mocks.getProgress).toHaveBeenCalledWith({
-			body: { showIds: ["one", "two"] },
+			query: { showIds: ["one", "two"] },
 			throwOnError: true,
 		});
 		await waitFor(() =>
@@ -106,7 +119,7 @@ describe("useShowProgress", () => {
 			expect(screen.getByRole("status").textContent).toBe("error"),
 		);
 		expect(mocks.getProgress).toHaveBeenCalledWith({
-			body: { showIds: ["broken"] },
+			query: { showIds: ["broken"] },
 			throwOnError: true,
 		});
 	});

@@ -3,6 +3,7 @@ import {
 	Controller,
 	Delete,
 	Get,
+	Header,
 	HttpCode,
 	HttpStatus,
 	Logger,
@@ -37,8 +38,8 @@ import {
 	ReleaseCalendarQueryDto,
 	ReleaseCalendarResponseDto,
 	SearchShowsResultsDto,
-	ShowProgressBatchDto,
 	ShowProgressBatchResponseDto,
+	ShowProgressQueryDto,
 	TMDBEpisodeDto,
 	TMDBSeasonDetailDto,
 	TMDBShowDetailDto,
@@ -352,6 +353,26 @@ export class ShowsController {
 		);
 	}
 
+	// Above the `:showId` catch-all below, which would otherwise swallow
+	// "progress". Per-viewer, so only that viewer's own browser may store it;
+	// `no-cache` makes each use revalidate against the ETag.
+	@Get("progress")
+	@UseGuards(AuthGuard)
+	@Header("Cache-Control", "private, no-cache")
+	@ApiOperation({ summary: "Get viewer progress for a batch of shows" })
+	@ApiResponse({ status: 200, type: ShowProgressBatchResponseDto })
+	async getShowProgress(
+		@Query() query: ShowProgressQueryDto,
+		@Req() req: AuthenticatedRequest,
+	) {
+		return {
+			items: await this.showsService.getShowProgress(
+				req.user.did,
+				query.showIds,
+			),
+		};
+	}
+
 	@Get(":showId")
 	@ApiOperation({ summary: "Get show from database" })
 	@ApiResponse({ status: 200, type: TrackedShowSummaryDto })
@@ -396,20 +417,6 @@ export class ShowsController {
 			seasonNumber: item.seasonNumber,
 			episodeNumber: item.episodeNumber,
 		}));
-	}
-
-	@Post("progress")
-	@UseGuards(AuthGuard)
-	@ApiOperation({ summary: "Get viewer progress for a batch of shows" })
-	@ApiBody({ type: ShowProgressBatchDto })
-	@ApiResponse({ status: 201, type: ShowProgressBatchResponseDto })
-	async getShowProgress(
-		@Body() dto: ShowProgressBatchDto,
-		@Req() req: AuthenticatedRequest,
-	) {
-		return {
-			items: await this.showsService.getShowProgress(req.user.did, dto.showIds),
-		};
 	}
 
 	@Delete("history/:trackedEpisodeId")

@@ -12,6 +12,7 @@ import {
 	Min,
 } from "class-validator";
 import { PaginationMetaDto } from "../../common/pagination";
+import { IsQueryArray } from "../../common/query-array";
 import {
 	MovieColorsDto,
 	TMDBCastDto,
@@ -665,8 +666,9 @@ export class ShowProgressDto {
 	seasons: ShowSeasonProgressDto[];
 }
 
-export class ShowProgressBatchDto {
+export class ShowProgressQueryDto {
 	@ApiProperty({ type: [String], description: "Up to 50 TMDB show IDs" })
+	@IsQueryArray()
 	@IsArray()
 	@ArrayMaxSize(50)
 	@IsNumberString({ no_symbols: true }, { each: true })

@@ -354,6 +354,11 @@ export const showsControllerMarkWatched = <ThrowOnError extends boolean = false>
 export const showsControllerUnmarkWatched = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerUnmarkWatchedData, ThrowOnError>) => (options.client ?? client).delete<ShowsControllerUnmarkWatchedResponses, unknown, ThrowOnError>({ url: '/shows/watched/{showId}', ...options });
 
 /**
+ * Get viewer progress for a batch of shows
+ */
+export const showsControllerGetShowProgress = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetShowProgressData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetShowProgressResponses, unknown, ThrowOnError>({ url: '/shows/progress', ...options });
+
+/**
  * Get show from database
  */
 export const showsControllerGetShow = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetShowData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetShowResponses, unknown, ThrowOnError>({ url: '/shows/{showId}', ...options });
@@ -362,18 +367,6 @@ export const showsControllerGetShow = <ThrowOnError extends boolean = false>(opt
  * Get watch history for a specific show
  */
 export const showsControllerGetShowWatchHistory = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetShowWatchHistoryData, ThrowOnError>) => (options.client ?? client).get<ShowsControllerGetShowWatchHistoryResponses, ShowsControllerGetShowWatchHistoryErrors, ThrowOnError>({ url: '/shows/user/{userDid}/show/{showId}/history', ...options });
-
-/**
- * Get viewer progress for a batch of shows
- */
-export const showsControllerGetShowProgress = <ThrowOnError extends boolean = false>(options: Options<ShowsControllerGetShowProgressData, ThrowOnError>) => (options.client ?? client).post<ShowsControllerGetShowProgressResponses, unknown, ThrowOnError>({
-    url: '/shows/progress',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
 
 /**
  * Delete a specific episode watch history entry
@@ -934,14 +927,7 @@ export const ratingsControllerGetMediaRating = <ThrowOnError extends boolean = f
 /**
  * Get batch aggregate ratings for multiple media
  */
-export const ratingsControllerGetBatchRatings = <ThrowOnError extends boolean = false>(options: Options<RatingsControllerGetBatchRatingsData, ThrowOnError>) => (options.client ?? client).post<RatingsControllerGetBatchRatingsResponses, unknown, ThrowOnError>({
-    url: '/ratings/batch',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
+export const ratingsControllerGetBatchRatings = <ThrowOnError extends boolean = false>(options: Options<RatingsControllerGetBatchRatingsData, ThrowOnError>) => (options.client ?? client).get<RatingsControllerGetBatchRatingsResponses, unknown, ThrowOnError>({ url: '/ratings/batch', ...options });
 
 /**
  * Set (create or update) a rating
