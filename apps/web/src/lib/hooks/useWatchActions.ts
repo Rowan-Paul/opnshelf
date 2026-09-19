@@ -324,7 +324,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		},
 	});
 
-	const handleMarkMovieWatched = (watchedAt?: string) => {
+	const handleMarkMovieWatched = (watchedAt?: string | null) => {
 		if (!isAuthenticated || options.mediaType !== "movie") return;
 		markMovieWatched.mutate({ body: { movieId: options.movieId, watchedAt } });
 	};
@@ -347,7 +347,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const handleMarkEpisodeWatched = (
 		seasonNumber: number,
 		episodeNumber: number,
-		watchedAt?: string,
+		watchedAt?: string | null,
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
 		markEpisodeWatched.mutate({
@@ -367,7 +367,10 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		});
 	};
 
-	const handleMarkShowWatched = (watchedAt?: string, episodeCount?: number) => {
+	const handleMarkShowWatched = (
+		watchedAt?: string | null,
+		episodeCount?: number,
+	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;
 		if (
 			episodeCount !== undefined &&
@@ -391,7 +394,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 	const handleMarkSeasonWatched = (
 		seasonNumber: number,
-		watchedAt?: string,
+		watchedAt?: string | null,
 		episodeCount?: number,
 	) => {
 		if (!isAuthenticated || options.mediaType !== "show") return;

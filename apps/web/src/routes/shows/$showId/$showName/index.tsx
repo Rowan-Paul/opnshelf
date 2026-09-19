@@ -201,6 +201,12 @@ function ShowDetailPage() {
 		markShowWatched(undefined, totalEpisodes);
 	};
 
+	// null => one undated Watch per aired episode.
+	const handleMarkShowWatchedAt = (watchedAt: string | null) => {
+		if (!isAuthenticated) return;
+		markShowWatched(watchedAt, totalEpisodes);
+	};
+
 	const handleUnmarkShowWatched = () => {
 		if (!isAuthenticated) return;
 		unmarkShowWatched();
@@ -331,6 +337,7 @@ function ShowDetailPage() {
 								isUnmarkPending={isUnmarkShowPending}
 								onMarkWatched={handleMarkShowWatched}
 								onUnmarkWatched={handleUnmarkShowWatched}
+								onMarkWatchedAt={handleMarkShowWatchedAt}
 							/>
 							<MediaActionsBar mediaType="show" mediaId={showId} />
 						</>

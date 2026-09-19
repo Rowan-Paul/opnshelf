@@ -662,7 +662,10 @@ describe("MoviesService", () => {
 
 			expect(mockPrismaService.trackedMovie.findFirst).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123", movieId: "123" },
-				orderBy: { watchedDate: "desc" },
+				orderBy: [
+					{ watchedDate: { sort: "desc", nulls: "last" } },
+					{ createdAt: "desc" },
+				],
 			});
 			expect(mockDeleteRecord).toHaveBeenCalledWith({
 				repo: "did:plc:abc123",
@@ -701,7 +704,10 @@ describe("MoviesService", () => {
 
 			expect(mockPrismaService.trackedMovie.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123", movieId: "123" },
-				orderBy: { watchedDate: "desc" },
+				orderBy: [
+					{ watchedDate: { sort: "desc", nulls: "last" } },
+					{ createdAt: "desc" },
+				],
 			});
 			expect(mockDeleteRecord).toHaveBeenCalledTimes(2);
 			expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledTimes(
@@ -1029,7 +1035,10 @@ describe("MoviesService", () => {
 			expect(mockPrismaService.trackedMovie.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
 				include: { movie: true },
-				orderBy: { watchedDate: "desc" },
+				orderBy: [
+					{ watchedDate: { sort: "desc", nulls: "last" } },
+					{ createdAt: "desc" },
+				],
 			});
 			expect(result).toHaveLength(2);
 			expect(result[0].movieId).toBe("123");

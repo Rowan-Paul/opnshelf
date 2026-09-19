@@ -440,7 +440,9 @@ export function HomeView() {
 														userTimezone,
 														userTimeFormat,
 													)
-												: undefined
+												: item.isWatched
+													? "No date"
+													: undefined
 										}
 										layout="backdrop"
 										size="md"

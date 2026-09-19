@@ -82,6 +82,101 @@ describe("ShowProgressService", () => {
 	});
 
 	describe("getUserUpNext", () => {
+		it("ranks an undated show below a dated one even when logged later", async () => {
+			// show-1 was genuinely watched in 2024. show-2 is undated — the whole
+			// show marked watched during onboarding, so its createdAt is today.
+			// latestWatchedDate falls back to createdAt for show-2, so sorting on
+			// that alone would put the undated show first (ADR 0037 forbids it).
+			mockPrismaService.trackedEpisode.findMany = vi.fn().mockResolvedValue([
+				{
+					id: "t1",
+					showId: "show-1",
+					seasonNumber: 1,
+					episodeNumber: 1,
+					watchedDate: new Date("2024-05-01T00:00:00.000Z"),
+					createdAt: new Date("2024-05-01T00:00:00.000Z"),
+					show: {
+						showId: "show-1",
+						title: "Dated Show",
+						posterPath: null,
+						backdropPath: null,
+						firstAirYear: 2024,
+						firstAirDate: new Date("2024-01-01T00:00:00.000Z"),
+						overview: null,
+						colors: null,
+					},
+				},
+				{
+					id: "t2",
+					showId: "show-2",
+					seasonNumber: 1,
+					episodeNumber: 1,
+					watchedDate: null,
+					createdAt: new Date("2026-09-19T00:00:00.000Z"),
+					show: {
+						showId: "show-2",
+						title: "Undated Show",
+						posterPath: null,
+						backdropPath: null,
+						firstAirYear: 2024,
+						firstAirDate: new Date("2024-01-01T00:00:00.000Z"),
+						overview: null,
+						colors: null,
+					},
+				},
+			]);
+
+			mockPrismaService.$queryRaw = vi.fn().mockResolvedValue([
+				{
+					showId: "show-1",
+					seasonNumber: 1,
+					episodeNumber: 2,
+					name: "Next 1",
+					airDate: new Date("2024-05-02T00:00:00.000Z"),
+					overview: null,
+					stillPath: null,
+				},
+				{
+					showId: "show-2",
+					seasonNumber: 1,
+					episodeNumber: 2,
+					name: "Next 2",
+					airDate: new Date("2024-05-02T00:00:00.000Z"),
+					overview: null,
+					stillPath: null,
+				},
+			]);
+
+			mockPrismaService.episode = {
+				...mockPrismaService.episode,
+				groupBy: vi.fn().mockResolvedValue([
+					{ showId: "show-1", _count: 10 },
+					{ showId: "show-2", _count: 10 },
+				]),
+			};
+			mockPrismaService.trackedEpisode.groupBy = vi.fn().mockResolvedValue([
+				{ showId: "show-1", seasonNumber: 1, episodeNumber: 1 },
+				{ showId: "show-2", seasonNumber: 1, episodeNumber: 1 },
+			]);
+
+			const desc = await service.getUserUpNext("did:plc:abc123");
+			expect(desc.items.map((i) => i.showId)).toEqual(["show-1", "show-2"]);
+
+			// "After every dated Watch" holds in both directions, so flipping the
+			// sort order must not float the undated show to the top.
+			const asc = await service.getUserUpNext(
+				"did:plc:abc123",
+				1,
+				8,
+				"lastWatched",
+				"asc",
+			);
+			expect(asc.items.map((i) => i.showId)).toEqual(["show-1", "show-2"]);
+
+			// The internal flag must not leak into the response.
+			expect(desc.items[0]).not.toHaveProperty("isUndated");
+		});
+
 		it("should return next episodes and omit caught-up shows", async () => {
 			// Query 1: anchors via distinct
 			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
@@ -243,11 +338,12 @@ describe("ShowProgressService", () => {
 			const result = await service.getUserUpNext("did:plc:abc123");
 
 			// The anchor query must select the newest watch per show, not the
-			// furthest episode: watchedDate desc first, distinct on showId.
+			// furthest episode: watchedDate desc first, distinct on showId. An
+			// undated Watch must never win the anchor, so nulls sort last.
 			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [
-						{ watchedDate: "desc" },
+						{ watchedDate: { sort: "desc", nulls: "last" } },
 						{ createdAt: "desc" },
 						{ seasonNumber: "desc" },
 						{ episodeNumber: "desc" },
@@ -573,7 +669,10 @@ describe("ShowProgressService", () => {
 			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123" },
 				include: { show: true },
-				orderBy: { watchedDate: "desc" },
+				orderBy: [
+					{ watchedDate: { sort: "desc", nulls: "last" } },
+					{ createdAt: "desc" },
+				],
 			});
 			expect(result).toHaveLength(2);
 			expect(result[0]).toMatchObject({

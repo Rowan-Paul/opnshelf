@@ -11,6 +11,7 @@ import {
 } from "./episode-watch-record";
 import { ShowCatalogueService } from "./show-catalogue.service";
 import { ShowsTmdbService } from "./shows-tmdb.service";
+import { watchDateOrderBy } from "../common/watch-ordering";
 
 export interface ATSession {
 	did: string;
@@ -162,7 +163,7 @@ export class EpisodeWatchService {
 		if (mode === "all") {
 			const trackedEpisodes = await this.prisma.trackedEpisode.findMany({
 				where,
-				orderBy: { watchedDate: "desc" },
+				orderBy: watchDateOrderBy(),
 			});
 
 			let firstFailure: unknown;
@@ -190,7 +191,7 @@ export class EpisodeWatchService {
 
 		const latestWatch = await this.prisma.trackedEpisode.findFirst({
 			where,
-			orderBy: { watchedDate: "desc" },
+			orderBy: watchDateOrderBy(),
 		});
 		if (!latestWatch) {
 			return { showId, mode };
