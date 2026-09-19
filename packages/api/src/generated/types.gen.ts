@@ -180,6 +180,17 @@ export type TrackedMovieDto = {
     movie: MovieDto;
 };
 
+export type MarkWatchedDto = {
+    /**
+     * TMDB movie ID
+     */
+    movieId: string;
+    /**
+     * Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.
+     */
+    watchedAt?: string | null;
+};
+
 export type WatchHistoryItemDto = {
     id: string;
     watchedDate?: string;
@@ -790,20 +801,6 @@ export type TrackedEpisodeDto = {
     show: ShowDto;
 };
 
-export type EpisodeHistoryItemDto = {
-    id: string;
-    watchedDate?: string;
-    seasonNumber: number;
-    episodeNumber: number;
-};
-
-export type ShowProgressBatchDto = {
-    /**
-     * Up to 50 TMDB show IDs
-     */
-    showIds: Array<string>;
-};
-
 export type ShowSeasonProgressDto = {
     seasonNumber: number;
     episodesWatched: number;
@@ -850,6 +847,13 @@ export type ShowProgressDto = {
 
 export type ShowProgressBatchResponseDto = {
     items: Array<ShowProgressDto>;
+};
+
+export type EpisodeHistoryItemDto = {
+    id: string;
+    watchedDate?: string;
+    seasonNumber: number;
+    episodeNumber: number;
 };
 
 export type MarkSeasonWatchedDto = {
@@ -2319,17 +2323,6 @@ export type MediaRatingResponseDto = {
     ratingCount: number;
 };
 
-export type BatchRatingRequestDto = {
-    /**
-     * Media type
-     */
-    mediaType: 'movie' | 'show';
-    /**
-     * Array of media IDs to fetch ratings for (maximum 50 characters per ID)
-     */
-    mediaIds: Array<string>;
-};
-
 export type BatchRatingItemDto = {
     mediaId: string;
     /**
@@ -2788,16 +2781,7 @@ export type MoviesControllerGetUserMoviesResponses = {
 export type MoviesControllerGetUserMoviesResponse = MoviesControllerGetUserMoviesResponses[keyof MoviesControllerGetUserMoviesResponses];
 
 export type MoviesControllerMarkWatchedData = {
-    body: {
-        /**
-         * TMDB movie ID
-         */
-        movieId: string;
-        /**
-         * Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time.
-         */
-        watchedAt?: string | null;
-    };
+    body: MarkWatchedDto;
     path?: never;
     query?: never;
     url: '/movies/watched';
@@ -3694,6 +3678,24 @@ export type ShowsControllerUnmarkWatchedResponses = {
 
 export type ShowsControllerUnmarkWatchedResponse = ShowsControllerUnmarkWatchedResponses[keyof ShowsControllerUnmarkWatchedResponses];
 
+export type ShowsControllerGetShowProgressData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Repeated TMDB show ID to fetch viewer progress for
+         */
+        showIds: Array<string>;
+    };
+    url: '/shows/progress';
+};
+
+export type ShowsControllerGetShowProgressResponses = {
+    200: ShowProgressBatchResponseDto;
+};
+
+export type ShowsControllerGetShowProgressResponse = ShowsControllerGetShowProgressResponses[keyof ShowsControllerGetShowProgressResponses];
+
 export type ShowsControllerGetShowData = {
     body?: never;
     path: {
@@ -3740,19 +3742,6 @@ export type ShowsControllerGetShowWatchHistoryResponses = {
 };
 
 export type ShowsControllerGetShowWatchHistoryResponse = ShowsControllerGetShowWatchHistoryResponses[keyof ShowsControllerGetShowWatchHistoryResponses];
-
-export type ShowsControllerGetShowProgressData = {
-    body: ShowProgressBatchDto;
-    path?: never;
-    query?: never;
-    url: '/shows/progress';
-};
-
-export type ShowsControllerGetShowProgressResponses = {
-    201: ShowProgressBatchResponseDto;
-};
-
-export type ShowsControllerGetShowProgressResponse = ShowsControllerGetShowProgressResponses[keyof ShowsControllerGetShowProgressResponses];
 
 export type ShowsControllerDeleteEpisodeWatchHistoryEntryData = {
     body?: never;
@@ -5715,9 +5704,18 @@ export type RatingsControllerGetMediaRatingResponses = {
 export type RatingsControllerGetMediaRatingResponse = RatingsControllerGetMediaRatingResponses[keyof RatingsControllerGetMediaRatingResponses];
 
 export type RatingsControllerGetBatchRatingsData = {
-    body: BatchRatingRequestDto;
+    body?: never;
     path?: never;
-    query?: never;
+    query: {
+        /**
+         * Media type
+         */
+        mediaType: 'movie' | 'show';
+        /**
+         * Repeated media ID to fetch ratings for
+         */
+        mediaIds: Array<string>;
+    };
     url: '/ratings/batch';
 };
 

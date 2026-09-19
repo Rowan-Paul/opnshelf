@@ -1193,6 +1193,24 @@ export const showsControllerUnmarkWatchedMutation = (options?: Partial<Options<S
     return mutationOptions;
 };
 
+export const showsControllerGetShowProgressQueryKey = (options: Options<ShowsControllerGetShowProgressData>) => createQueryKey('showsControllerGetShowProgress', options);
+
+/**
+ * Get viewer progress for a batch of shows
+ */
+export const showsControllerGetShowProgressOptions = (options: Options<ShowsControllerGetShowProgressData>) => queryOptions<ShowsControllerGetShowProgressResponse, DefaultError, ShowsControllerGetShowProgressResponse, ReturnType<typeof showsControllerGetShowProgressQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await showsControllerGetShowProgress({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: showsControllerGetShowProgressQueryKey(options)
+});
+
 export const showsControllerGetShowQueryKey = (options: Options<ShowsControllerGetShowData>) => createQueryKey('showsControllerGetShow', options);
 
 /**
@@ -1228,23 +1246,6 @@ export const showsControllerGetShowWatchHistoryOptions = (options: Options<Shows
     },
     queryKey: showsControllerGetShowWatchHistoryQueryKey(options)
 });
-
-/**
- * Get viewer progress for a batch of shows
- */
-export const showsControllerGetShowProgressMutation = (options?: Partial<Options<ShowsControllerGetShowProgressData>>): UseMutationOptions<ShowsControllerGetShowProgressResponse, DefaultError, Options<ShowsControllerGetShowProgressData>> => {
-    const mutationOptions: UseMutationOptions<ShowsControllerGetShowProgressResponse, DefaultError, Options<ShowsControllerGetShowProgressData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await showsControllerGetShowProgress({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
 
 /**
  * Delete a specific episode watch history entry
@@ -3074,22 +3075,23 @@ export const ratingsControllerGetMediaRatingOptions = (options: Options<RatingsC
     queryKey: ratingsControllerGetMediaRatingQueryKey(options)
 });
 
+export const ratingsControllerGetBatchRatingsQueryKey = (options: Options<RatingsControllerGetBatchRatingsData>) => createQueryKey('ratingsControllerGetBatchRatings', options);
+
 /**
  * Get batch aggregate ratings for multiple media
  */
-export const ratingsControllerGetBatchRatingsMutation = (options?: Partial<Options<RatingsControllerGetBatchRatingsData>>): UseMutationOptions<RatingsControllerGetBatchRatingsResponse, DefaultError, Options<RatingsControllerGetBatchRatingsData>> => {
-    const mutationOptions: UseMutationOptions<RatingsControllerGetBatchRatingsResponse, DefaultError, Options<RatingsControllerGetBatchRatingsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await ratingsControllerGetBatchRatings({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
+export const ratingsControllerGetBatchRatingsOptions = (options: Options<RatingsControllerGetBatchRatingsData>) => queryOptions<RatingsControllerGetBatchRatingsResponse, DefaultError, RatingsControllerGetBatchRatingsResponse, ReturnType<typeof ratingsControllerGetBatchRatingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await ratingsControllerGetBatchRatings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: ratingsControllerGetBatchRatingsQueryKey(options)
+});
 
 /**
  * Set (create or update) a rating

@@ -1,9 +1,40 @@
+import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { BatchRatingRequestDto, MAX_BATCH_RATING_IDS } from "./rating.dto";
+import { BatchRatingQueryDto, MAX_BATCH_RATING_IDS } from "./rating.dto";
 
-describe("BatchRatingRequestDto", () => {
-	const validateDto = (input: Partial<BatchRatingRequestDto>) =>
-		validate(Object.assign(new BatchRatingRequestDto(), input));
+describe("BatchRatingQueryDto", () => {
+	const validateDto = (input: Partial<BatchRatingQueryDto>) =>
+		validate(Object.assign(new BatchRatingQueryDto(), input));
+
+	// Express hands `?mediaIds=550` back as a string and `?mediaIds=550&mediaIds=680`
+	// as an array, so a one-poster page must not read as a malformed batch.
+	it("widens a single query value into a one-element array", async () => {
+		const dto = plainToInstance(BatchRatingQueryDto, {
+			mediaType: "movie",
+			mediaIds: "550",
+		});
+
+		expect(dto.mediaIds).toEqual(["550"]);
+		await expect(validate(dto)).resolves.toHaveLength(0);
+	});
+
+	it("keeps a repeated query value as the array it arrived as", async () => {
+		const dto = plainToInstance(BatchRatingQueryDto, {
+			mediaType: "movie",
+			mediaIds: ["550", "680"],
+		});
+
+		expect(dto.mediaIds).toEqual(["550", "680"]);
+		await expect(validate(dto)).resolves.toHaveLength(0);
+	});
+
+	it("rejects a missing mediaIds parameter", async () => {
+		const errors = await validate(
+			plainToInstance(BatchRatingQueryDto, { mediaType: "movie" }),
+		);
+
+		expect(errors.some((error) => error.property === "mediaIds")).toBe(true);
+	});
 
 	it("accepts a valid batch request", async () => {
 		await expect(
@@ -12,7 +43,6 @@ describe("BatchRatingRequestDto", () => {
 	});
 
 	it.each([
-		["a non-array", "123"],
 		["an empty array", []],
 		[
 			"more than the batch limit",

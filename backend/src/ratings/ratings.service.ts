@@ -8,7 +8,7 @@ import {
 import type { Main as RatingRecord } from "../lexicons/xyz/opnshelf/rating.defs";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
-	BatchRatingRequestDto,
+	BatchRatingQueryDto,
 	MediaRatingQueryDto,
 	SetRatingDto,
 } from "./dto/rating.dto";
@@ -65,7 +65,7 @@ export class RatingsService {
 		};
 	}
 
-	async getBatchRatings(dto: BatchRatingRequestDto) {
+	async getBatchRatings(dto: BatchRatingQueryDto) {
 		const { mediaType, mediaIds } = dto;
 		const uniqueMediaIds = [...new Set(mediaIds)];
 		if (uniqueMediaIds.length === 0) {

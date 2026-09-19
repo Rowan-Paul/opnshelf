@@ -287,22 +287,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "movieId"
-                ],
-                "properties": {
-                  "movieId": {
-                    "type": "string",
-                    "description": "TMDB movie ID"
-                  },
-                  "watchedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch; omission uses the current time."
-                  }
-                }
+                "$ref": "#/components/schemas/MarkWatchedDto"
               }
             }
           }
@@ -1882,6 +1867,43 @@
         ]
       }
     },
+    "/shows/progress": {
+      "get": {
+        "operationId": "ShowsController_getShowProgress",
+        "parameters": [
+          {
+            "name": "showIds",
+            "required": true,
+            "in": "query",
+            "description": "Repeated TMDB show ID to fetch viewer progress for",
+            "schema": {
+              "maxItems": 50,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowProgressBatchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get viewer progress for a batch of shows",
+        "tags": [
+          "shows"
+        ]
+      }
+    },
     "/shows/{showId}": {
       "get": {
         "operationId": "ShowsController_getShow",
@@ -1955,38 +1977,6 @@
           }
         },
         "summary": "Get watch history for a specific show",
-        "tags": [
-          "shows"
-        ]
-      }
-    },
-    "/shows/progress": {
-      "post": {
-        "operationId": "ShowsController_getShowProgress",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShowProgressBatchDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShowProgressBatchResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get viewer progress for a batch of shows",
         "tags": [
           "shows"
         ]
@@ -5400,19 +5390,39 @@
       }
     },
     "/ratings/batch": {
-      "post": {
+      "get": {
         "operationId": "RatingsController_getBatchRatings",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchRatingRequestDto"
+        "parameters": [
+          {
+            "name": "mediaType",
+            "required": true,
+            "in": "query",
+            "description": "Media type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "show"
+              ]
+            }
+          },
+          {
+            "name": "mediaIds",
+            "required": true,
+            "in": "query",
+            "description": "Repeated media ID to fetch ratings for",
+            "schema": {
+              "minItems": 1,
+              "maxItems": 100,
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 50
               }
             }
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "Batch ratings retrieved",
@@ -6457,6 +6467,24 @@
           "createdAt",
           "updatedAt",
           "movie"
+        ]
+      },
+      "MarkWatchedDto": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "string",
+            "description": "TMDB movie ID"
+          },
+          "watchedAt": {
+            "type": "string",
+            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "movieId"
         ]
       },
       "WatchHistoryItemDto": {
@@ -7720,44 +7748,6 @@
           "show"
         ]
       },
-      "EpisodeHistoryItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "watchedDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "seasonNumber": {
-            "type": "number"
-          },
-          "episodeNumber": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "id",
-          "seasonNumber",
-          "episodeNumber"
-        ]
-      },
-      "ShowProgressBatchDto": {
-        "type": "object",
-        "properties": {
-          "showIds": {
-            "description": "Up to 50 TMDB show IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "showIds"
-        ]
-      },
       "ShowSeasonProgressDto": {
         "type": "object",
         "properties": {
@@ -7863,6 +7853,29 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "EpisodeHistoryItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "watchedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "seasonNumber",
+          "episodeNumber"
         ]
       },
       "MarkSeasonWatchedDto": {
@@ -10993,31 +11006,6 @@
         },
         "required": [
           "ratingCount"
-        ]
-      },
-      "BatchRatingRequestDto": {
-        "type": "object",
-        "properties": {
-          "mediaType": {
-            "type": "string",
-            "description": "Media type",
-            "enum": [
-              "movie",
-              "show"
-            ]
-          },
-          "mediaIds": {
-            "description": "Array of media IDs to fetch ratings for (maximum 50 characters per ID)",
-            "maxItems": 100,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "mediaType",
-          "mediaIds"
         ]
       },
       "BatchRatingItemDto": {

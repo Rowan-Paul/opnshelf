@@ -19,6 +19,7 @@ import {
 	type TMDBSearchResponse,
 	type WatchProvidersResponse,
 } from "./movies-tmdb.service";
+import { watchDateOrderBy } from "../common/watch-ordering";
 
 export interface ATSession {
 	did: string;
@@ -79,7 +80,7 @@ export class MoviesService {
 		const trackedMovies = await this.prisma.trackedMovie.findMany({
 			where: { userDid },
 			include: { movie: true },
-			orderBy: { watchedDate: "desc" },
+			orderBy: watchDateOrderBy(),
 		});
 
 		// Group by movieId and take the latest watch for each movie
@@ -103,7 +104,7 @@ export class MoviesService {
 	async getMovieWatchHistory(userDid: string, movieId: string) {
 		return this.prisma.trackedMovie.findMany({
 			where: { userDid, movieId },
-			orderBy: { watchedDate: "desc" },
+			orderBy: watchDateOrderBy(),
 		});
 	}
 
@@ -300,7 +301,7 @@ export class MoviesService {
 			// Get all tracked movies for this user and movie
 			const trackedMovies = await this.prisma.trackedMovie.findMany({
 				where: { userDid, movieId },
-				orderBy: { watchedDate: "desc" },
+				orderBy: watchDateOrderBy(),
 			});
 
 			let firstFailure: unknown;
@@ -328,7 +329,7 @@ export class MoviesService {
 			// Get the most recent watch
 			const latestWatch = await this.prisma.trackedMovie.findFirst({
 				where: { userDid, movieId },
-				orderBy: { watchedDate: "desc" },
+				orderBy: watchDateOrderBy(),
 			});
 
 			if (!latestWatch) {

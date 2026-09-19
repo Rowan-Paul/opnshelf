@@ -1,15 +1,19 @@
 import type { RatingResponseDto } from "@opnshelf/api";
 import {
 	ratingsControllerClearRatingMutation,
-	ratingsControllerGetBatchRatingsMutation,
+	ratingsControllerGetBatchRatingsOptions,
 	ratingsControllerGetMediaRatingOptions,
 	ratingsControllerGetMediaRatingQueryKey,
 	ratingsControllerGetRatingOptions,
 	ratingsControllerGetRatingQueryKey,
 	ratingsControllerSetRatingMutation,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import {
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 
@@ -262,72 +266,70 @@ export function useMediaRating({
 	});
 }
 
-export function useBatchRatings() {
-	return useMutation({
-		mutationKey: ["ratings", "batch"],
-		...ratingsControllerGetBatchRatingsMutation(),
-	});
-}
+/** The backend rejects a batch over this many ids, and rejects duplicates. */
+const MAX_BATCH_SIZE = 100;
 
 interface BatchRatingItem {
 	id: string | number;
 	type: "movie" | "show";
 }
 
+export interface BatchRating {
+	averageRating?: number;
+	ratingCount: number;
+}
+
+/** The one media type's ids, deduped and sorted, in request-sized batches. */
+function batchesFor(items: BatchRatingItem[], mediaType: "movie" | "show") {
+	const ids = [
+		...new Set(
+			items.filter((item) => item.type === mediaType).map((i) => String(i.id)),
+		),
+	].sort();
+	return Array.from(
+		{ length: Math.ceil(ids.length / MAX_BATCH_SIZE) },
+		(_, index) => ({
+			mediaType,
+			mediaIds: ids.slice(index * MAX_BATCH_SIZE, (index + 1) * MAX_BATCH_SIZE),
+		}),
+	);
+}
+
+/**
+ * Aggregate ratings for a list of posters. A read on a GET, so the generated
+ * `queryOptions` key it by the ids asked for rather than by the identity of the
+ * array a render happened to build: a re-rendering detail page reuses the
+ * cached batch instead of firing another request.
+ */
 export function useBatchRatingsQuery(items: BatchRatingItem[]) {
-	const mutation = useBatchRatings();
-	const [ratings, setRatings] = useState<
-		Map<string, { averageRating?: number; ratingCount: number }>
-	>(new Map());
+	const batches = [...batchesFor(items, "movie"), ...batchesFor(items, "show")];
 
-	useEffect(() => {
-		const movieIds = items
-			.filter((i) => i.type === "movie")
-			.map((i) => String(i.id));
-		const showIds = items
-			.filter((i) => i.type === "show")
-			.map((i) => String(i.id));
+	const queries = useQueries({
+		queries: batches.map((batch) => ({
+			...ratingsControllerGetBatchRatingsOptions({
+				query: { mediaType: batch.mediaType, mediaIds: batch.mediaIds },
+			}),
+			staleTime: 60_000,
+			// A missing global rating costs a poster its badge and nothing else,
+			// so a failed batch is not worth three more requests.
+			retry: false,
+		})),
+	});
 
-		const promises: Promise<void>[] = [];
-
-		if (movieIds.length > 0) {
-			promises.push(
-				mutation
-					.mutateAsync({ body: { mediaType: "movie", mediaIds: movieIds } })
-					.then((res) => {
-						setRatings((prev) => {
-							const next = new Map(prev);
-							for (const item of res.items) {
-								next.set(item.mediaId, item);
-							}
-							return next;
-						});
-					}),
-			);
+	// A response item carries only its mediaId, and TMDB hands movies and shows
+	// separate id spaces, so a movie and a show can both be 550. The asking
+	// batch is the only thing that knows which one came back.
+	const ratings = new Map<string, BatchRating>();
+	for (const [index, query] of queries.entries()) {
+		const { mediaType } = batches[index];
+		for (const item of query.data?.items ?? []) {
+			ratings.set(`${mediaType}:${item.mediaId}`, item);
 		}
+	}
 
-		if (showIds.length > 0) {
-			promises.push(
-				mutation
-					.mutateAsync({ body: { mediaType: "show", mediaIds: showIds } })
-					.then((res) => {
-						setRatings((prev) => {
-							const next = new Map(prev);
-							for (const item of res.items) {
-								next.set(item.mediaId, item);
-							}
-							return next;
-						});
-					}),
-			);
-		}
-
-		if (promises.length > 0) {
-			Promise.all(promises).catch(() => {
-				// silently ignore batch rating errors
-			});
-		}
-	}, [items, mutation.mutateAsync]);
-
-	return { ratings, isLoading: mutation.isPending };
+	return {
+		ratingFor: (type: "movie" | "show", id: string | number) =>
+			ratings.get(`${type}:${id}`),
+		isLoading: queries.some((query) => query.isLoading),
+	};
 }

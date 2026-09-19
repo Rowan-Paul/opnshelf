@@ -372,22 +372,6 @@ export class MarkWatchedDto {
 	watchedAt?: string | null;
 }
 
-export class UnmarkWatchedDto {
-	@ApiProperty({ description: "Movie ID to unmark" })
-	@IsString()
-	movieId: string;
-
-	@ApiPropertyOptional({
-		description:
-			'Mode: "latest" removes most recent watch, "all" removes all watches',
-		enum: ["latest", "all"],
-		default: "latest",
-	})
-	@IsOptional()
-	@IsString()
-	mode?: "latest" | "all";
-}
-
 export class WatchHistoryItemDto {
 	@ApiProperty()
 	id: string;

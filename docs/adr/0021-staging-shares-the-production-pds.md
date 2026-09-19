@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; the Android production rollout percentage is superseded by ADR 0038.
 
 ## Context
 

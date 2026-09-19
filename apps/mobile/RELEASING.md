@@ -125,12 +125,12 @@ was wrong points at nothing, and only a new binary fixes it.
 ```sh
 cd apps/mobile
 eas build --platform android --profile production   # versionCode auto-increments
-eas submit --platform android --latest               # → Play production, 10%
+eas submit --platform android --latest               # → Play production, 100%
 ```
 
-Android submissions land on the **production track** at a 10% staged rollout
-(`rollout` in `eas.json`), so once Google approves it they are live for real
-users with no further gate. Ramp to 100%, or halt, in Play Console.
+Android submissions land on the **production track** as completed releases, so
+once Google approves them they are live for every eligible user with no further
+rollout step. A release can still be halted in Play Console.
 
 iOS: same commands with `--platform ios`, but `eas submit` only uploads to App
 Store Connect. The build reaches TestFlight from there; releasing to the App
