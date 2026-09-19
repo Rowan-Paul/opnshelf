@@ -1,15 +1,19 @@
 import type { RatingResponseDto } from "@opnshelf/api";
 import {
 	ratingsControllerClearRatingMutation,
-	ratingsControllerGetBatchRatingsMutation,
+	ratingsControllerGetBatchRatings,
 	ratingsControllerGetMediaRatingOptions,
 	ratingsControllerGetMediaRatingQueryKey,
 	ratingsControllerGetRatingOptions,
 	ratingsControllerGetRatingQueryKey,
 	ratingsControllerSetRatingMutation,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import {
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 
@@ -262,72 +266,66 @@ export function useMediaRating({
 	});
 }
 
-export function useBatchRatings() {
-	return useMutation({
-		mutationKey: ["ratings", "batch"],
-		...ratingsControllerGetBatchRatingsMutation(),
-	});
-}
+/** The backend rejects a batch over this many ids, and rejects duplicates. */
+const MAX_BATCH_SIZE = 100;
 
 interface BatchRatingItem {
 	id: string | number;
 	type: "movie" | "show";
 }
 
+export interface BatchRating {
+	averageRating?: number;
+	ratingCount: number;
+}
+
+function batchesFor(items: BatchRatingItem[], mediaType: "movie" | "show") {
+	const ids = [
+		...new Set(
+			items.filter((item) => item.type === mediaType).map((i) => String(i.id)),
+		),
+	].sort();
+	return Array.from(
+		{ length: Math.ceil(ids.length / MAX_BATCH_SIZE) },
+		(_, index) => ({
+			mediaType,
+			mediaIds: ids.slice(index * MAX_BATCH_SIZE, (index + 1) * MAX_BATCH_SIZE),
+		}),
+	);
+}
+
+/**
+ * Aggregate ratings for a list of posters. The endpoint takes its ids in a POST
+ * body, but it is a read, so it belongs in QueryClient like `useShowProgress`:
+ * the batch is keyed by its ids, not by the identity of the array a render
+ * happened to build. Driving it as a mutation from an effect meant every
+ * re-render of a detail page fired another POST, and any of those left in
+ * flight when the user navigated away failed as a reported mutation failure.
+ */
 export function useBatchRatingsQuery(items: BatchRatingItem[]) {
-	const mutation = useBatchRatings();
-	const [ratings, setRatings] = useState<
-		Map<string, { averageRating?: number; ratingCount: number }>
-	>(new Map());
+	const batches = [...batchesFor(items, "movie"), ...batchesFor(items, "show")];
 
-	useEffect(() => {
-		const movieIds = items
-			.filter((i) => i.type === "movie")
-			.map((i) => String(i.id));
-		const showIds = items
-			.filter((i) => i.type === "show")
-			.map((i) => String(i.id));
+	const queries = useQueries({
+		queries: batches.map((batch) => ({
+			queryKey: ["ratings", "batch", batch.mediaType, batch.mediaIds],
+			staleTime: 60_000,
+			queryFn: async () => {
+				const { data } = await ratingsControllerGetBatchRatings({
+					body: { mediaType: batch.mediaType, mediaIds: batch.mediaIds },
+					throwOnError: true,
+				});
+				if (!data) throw new Error("Batch ratings response was empty");
+				return data;
+			},
+		})),
+	});
 
-		const promises: Promise<void>[] = [];
-
-		if (movieIds.length > 0) {
-			promises.push(
-				mutation
-					.mutateAsync({ body: { mediaType: "movie", mediaIds: movieIds } })
-					.then((res) => {
-						setRatings((prev) => {
-							const next = new Map(prev);
-							for (const item of res.items) {
-								next.set(item.mediaId, item);
-							}
-							return next;
-						});
-					}),
-			);
+	const ratings = new Map<string, BatchRating>();
+	for (const query of queries) {
+		for (const item of query.data?.items ?? []) {
+			ratings.set(item.mediaId, item);
 		}
+	}
 
-		if (showIds.length > 0) {
-			promises.push(
-				mutation
-					.mutateAsync({ body: { mediaType: "show", mediaIds: showIds } })
-					.then((res) => {
-						setRatings((prev) => {
-							const next = new Map(prev);
-							for (const item of res.items) {
-								next.set(item.mediaId, item);
-							}
-							return next;
-						});
-					}),
-			);
-		}
-
-		if (promises.length > 0) {
-			Promise.all(promises).catch(() => {
-				// silently ignore batch rating errors
-			});
-		}
-	}, [items, mutation.mutateAsync]);
-
-	return { ratings, isLoading: mutation.isPending };
+	return { ratings, isLoading: queries.some((query) => query.isLoading) };
 }
