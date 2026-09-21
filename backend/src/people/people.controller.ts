@@ -1,6 +1,7 @@
 import {
 	Controller,
 	Get,
+	Header,
 	NotFoundException,
 	Param,
 	Query,
@@ -12,6 +13,7 @@ import {
 	ApiResponse,
 	ApiTags,
 } from "@nestjs/swagger";
+import { PUBLIC_CATALOGUE_CACHE_CONTROL } from "../common/cache-control";
 import {
 	TmdbPersonDetailDto,
 	PersonFilmographyResponseDto,
@@ -46,6 +48,7 @@ export class PeopleController {
 	}
 
 	@Get("tmdb/:personId")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get person details from TMDB" })
 	@ApiParam({
 		name: "personId",
@@ -72,6 +75,7 @@ export class PeopleController {
 	}
 
 	@Get("tmdb/:personId/filmography")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get paginated person filmography from TMDB" })
 	@ApiParam({
 		name: "personId",

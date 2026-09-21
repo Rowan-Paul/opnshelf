@@ -11,6 +11,7 @@ import {
 import { useMemo } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
+import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
 import {
 	ShowProgressScope,
@@ -62,6 +63,7 @@ export const Route = createFileRoute("/people/$personId/$personName")({
 			return null;
 		}
 	},
+	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData, params, match }) => {
 		const meta = buildPersonPageMeta(loaderData, params.personName);
 		const pageUrl = env.VITE_SITE_URL

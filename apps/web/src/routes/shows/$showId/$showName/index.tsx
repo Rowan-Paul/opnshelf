@@ -8,6 +8,7 @@ import { ChevronRight, Play, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
+import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
 import {
 	useEpisodeWatchActions,
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/shows/$showId/$showName/")({
 			}),
 		);
 	},
+	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData, params, match }) => {
 		const meta = buildShowPageMeta(loaderData, params.showName);
 		const pageUrl = env.VITE_SITE_URL

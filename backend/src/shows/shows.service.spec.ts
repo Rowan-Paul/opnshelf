@@ -284,12 +284,7 @@ describe("ShowsService", () => {
 			expect(spies.syncShowMetadata).toHaveBeenCalledWith("123", {
 				force: true,
 			});
-			// getEpisodeContext is the public alias of the local-first lookup.
-			await expect(service.getEpisodeContext("123", 1, 2)).resolves.toBe(
-				sentinel,
-			);
 			await service.getEpisodeContextLocal("123", 1, 2);
-			expect(spies.getEpisodeContextLocal).toHaveBeenCalledTimes(2);
 			expect(spies.getEpisodeContextLocal).toHaveBeenCalledWith("123", 1, 2);
 			await service.getLocalSeasons("123");
 			expect(spies.getLocalSeasons).toHaveBeenCalledWith("123");
@@ -297,6 +292,19 @@ describe("ShowsService", () => {
 			expect(spies.getLocalEpisodes).toHaveBeenCalledWith("123", 1);
 			await service.ensureShowHasColors("123");
 			expect(spies.ensureShowHasColors).toHaveBeenCalledWith("123");
+		});
+
+		it("gets public episode navigation from TMDB without reading the catalogue", async () => {
+			const tmdbContext = vi
+				.spyOn(showsTmdb, "getEpisodeContext")
+				.mockResolvedValue(sentinel as never);
+			const localContext = vi.spyOn(catalogue, "getEpisodeContextLocal");
+
+			await expect(service.getEpisodeContext("123", 1, 2)).resolves.toBe(
+				sentinel,
+			);
+			expect(tmdbContext).toHaveBeenCalledWith("123", 1, 2);
+			expect(localContext).not.toHaveBeenCalled();
 		});
 
 		it("forwards Watch read models to ShowProgressService", async () => {
