@@ -64,6 +64,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
 			this.logger.warn(`${logContext} -> ${status}`);
 		}
 
+		// A controller may mark its successful response as publicly cacheable.
+		// Never let that policy carry over to an exception response: transient
+		// upstream failures and mapped 404s must reach the origin on the next try.
+		response.setHeader("Cache-Control", "private, no-store");
 		response.status(status).json(body);
 	}
 }
