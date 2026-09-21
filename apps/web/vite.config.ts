@@ -40,7 +40,14 @@ const config = defineConfig({
 		devtools(),
 		tsconfigPaths({ projects: ["./tsconfig.json"] }),
 		tailwindcss(),
-		tanstackStart(),
+		tanstackStart({
+			prerender: {
+				enabled: true,
+				autoStaticPathsDiscovery: false,
+				crawlLinks: false,
+			},
+			pages: [{ path: "/privacy" }, { path: "/tos" }],
+		}),
 		nitro(),
 		viteReact(),
 	],

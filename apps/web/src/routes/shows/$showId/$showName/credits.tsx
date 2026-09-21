@@ -1,6 +1,7 @@
 import { showsControllerGetShowDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
+import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { useShowDetails } from "#/lib/hooks";
 import { FullCredits } from "../../../../components/CreditsSections";
 
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/shows/$showId/$showName/credits")({
 		context.queryClient.ensureQueryData(
 			showsControllerGetShowDetailsOptions({ path: { showId: params.showId } }),
 		),
+	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData }) => ({
 		meta: [{ title: `Cast & crew — ${loaderData?.name ?? "Show"} | Opnshelf` }],
 	}),

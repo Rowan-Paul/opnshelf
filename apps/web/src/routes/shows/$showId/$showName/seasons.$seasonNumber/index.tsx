@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
+import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
 import {
 	useEpisodeWatchActions,
@@ -60,6 +61,7 @@ export const Route = createFileRoute(
 
 		return { show, season };
 	},
+	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData, params, match }) => {
 		const meta = buildSeasonPageMeta(
 			loaderData?.show,

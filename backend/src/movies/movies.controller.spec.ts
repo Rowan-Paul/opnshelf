@@ -122,7 +122,7 @@ describe("MoviesController", () => {
 	});
 
 	describe("getMovieDetails", () => {
-		it("should return movie details from TMDB with colors and trailer", async () => {
+		it("returns TMDB details without reading or writing the catalogue", async () => {
 			const mockMovie = {
 				id: 123,
 				title: "Test Movie",
@@ -141,26 +141,15 @@ describe("MoviesController", () => {
 					sourceMediaType: "movie",
 				},
 			};
-			const mockUpsertedMovie = {
-				movieId: "123",
-				colors: {
-					primary: "#ff0000",
-					secondary: "#00ff00",
-					accent: "#0000ff",
-					muted: "#808080",
-				},
-			};
 			mockMoviesService.getMovieDetails.mockResolvedValue(mockMovie);
-			mockMoviesService.upsertMovie.mockResolvedValue(mockUpsertedMovie);
+			mockMoviesService.getMovieCredits.mockResolvedValue(undefined);
 
 			const result = await controller.getMovieDetails("123");
 
-			expect(result).toEqual({
-				...mockMovie,
-				colors: mockUpsertedMovie.colors,
-			});
+			expect(result).toEqual(mockMovie);
 			expect(mockMoviesService.getMovieDetails).toHaveBeenCalledWith("123");
-			expect(mockMoviesService.upsertMovie).toHaveBeenCalledWith(mockMovie);
+			expect(mockMoviesService.getMovieByTMDBId).not.toHaveBeenCalled();
+			expect(mockMoviesService.upsertMovie).not.toHaveBeenCalled();
 		});
 
 		it("should handle movie not found", async () => {

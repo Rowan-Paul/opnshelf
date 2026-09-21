@@ -68,7 +68,7 @@ describe("ShowsController", () => {
 		return { user } as unknown as AuthenticatedRequest;
 	};
 
-	it("should get show details with trailer and colors", async () => {
+	it("returns TMDB details without reading or writing the catalogue", async () => {
 		const mockShow = {
 			id: 123,
 			name: "Test Show",
@@ -82,15 +82,6 @@ describe("ShowsController", () => {
 			},
 		};
 		mockShowsService.getShowDetails.mockResolvedValue(mockShow);
-		mockShowsService.upsertShow.mockResolvedValue({
-			showId: "123",
-			colors: {
-				primary: "#111111",
-				secondary: "#222222",
-				accent: "#333333",
-				muted: "#444444",
-			},
-		});
 		mockShowsService.getShowCredits.mockResolvedValue({
 			cast: [],
 			crew: [],
@@ -100,41 +91,32 @@ describe("ShowsController", () => {
 
 		expect(result).toEqual({
 			...mockShow,
-			colors: {
-				primary: "#111111",
-				secondary: "#222222",
-				accent: "#333333",
-				muted: "#444444",
-			},
 			credits: {
 				cast: [],
 				crew: [],
 			},
 		});
-		expect(
-			mockShowsService.upsertShow.mock.invocationCallOrder[0],
-		).toBeLessThan(
-			mockShowsService.syncShowMetadata.mock.invocationCallOrder[0],
-		);
-		expect(
-			mockShowsService.syncShowMetadata.mock.invocationCallOrder[0],
-		).toBeLessThan(mockShowsService.getShowCredits.mock.invocationCallOrder[0]);
+		expect(mockShowsService.getShowByTMDBId).not.toHaveBeenCalled();
+		expect(mockShowsService.upsertShow).not.toHaveBeenCalled();
+		expect(mockShowsService.syncShowMetadata).not.toHaveBeenCalled();
 	});
 
-	it("does not return a detail response when season metadata synchronization fails", async () => {
+	it("returns a detail response without synchronizing season metadata", async () => {
 		mockShowsService.getShowDetails.mockResolvedValue({
 			id: 123,
 			name: "Test Show",
 		});
-		mockShowsService.upsertShow.mockResolvedValue({ showId: "123" });
 		mockShowsService.syncShowMetadata.mockRejectedValue(
 			new Error("Could not synchronize seasons 2"),
 		);
+		mockShowsService.getShowCredits.mockResolvedValue(null);
 
-		await expect(controller.getShowDetails("123")).rejects.toThrow(
-			"Could not synchronize seasons 2",
-		);
-		expect(mockShowsService.getShowCredits).not.toHaveBeenCalled();
+		await expect(controller.getShowDetails("123")).resolves.toEqual({
+			id: 123,
+			name: "Test Show",
+			credits: null,
+		});
+		expect(mockShowsService.syncShowMetadata).not.toHaveBeenCalled();
 	});
 
 	it("returns progress for the authenticated viewer's requested shows", async () => {

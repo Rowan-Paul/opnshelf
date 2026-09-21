@@ -22,6 +22,7 @@ import {
 } from "#/components/ui/dialog";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
+import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
 import {
 	useEpisodeDetails,
@@ -73,6 +74,7 @@ export const Route = createFileRoute(
 
 		return { show, episode };
 	},
+	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData, params, match }) => {
 		const meta = buildEpisodePageMeta(loaderData?.show, loaderData?.episode, {
 			seasonNumber: params.seasonNumber,

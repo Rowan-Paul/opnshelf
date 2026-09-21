@@ -101,8 +101,6 @@ export class ShowsService {
 		);
 	}
 
-	// Persisted catalogue
-
 	async getEpisodeContext(
 		showId: string,
 		seasonNumber: number,
@@ -111,8 +109,14 @@ export class ShowsService {
 		previous: { seasonNumber: number; episodeNumber: number } | null;
 		next: { seasonNumber: number; episodeNumber: number } | null;
 	}> {
-		return this.getEpisodeContextLocal(showId, seasonNumber, episodeNumber);
+		return this.showsTmdb.getEpisodeContext(
+			showId,
+			seasonNumber,
+			episodeNumber,
+		);
 	}
+
+	// Persisted catalogue
 
 	async getShowByTMDBId(showId: string) {
 		return this.catalogue.getShowByTMDBId(showId);

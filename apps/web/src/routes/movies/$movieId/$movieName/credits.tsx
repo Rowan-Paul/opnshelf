@@ -1,6 +1,7 @@
 import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
+import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { useMovieDetails } from "#/lib/hooks";
 import { FullCredits } from "../../../../components/CreditsSections";
 
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/movies/$movieId/$movieName/credits")({
 				path: { movieId: params.movieId },
 			}),
 		),
+	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData }) => ({
 		meta: [
 			{ title: `Cast & crew — ${loaderData?.title ?? "Movie"} | Opnshelf` },
