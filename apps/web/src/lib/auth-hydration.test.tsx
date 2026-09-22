@@ -114,6 +114,13 @@ it.each([
 		);
 		expect(screen.queryByText("Public landing page")).toBeNull();
 		expect(await screen.findByText("Public landing page")).toBeTruthy();
+		// Only a real "signed out" answer clears the signed-in hint; an outage
+		// says nothing about the session.
+		if (result === "signed out") {
+			await vi.waitFor(() => expect(hint.remember).toHaveBeenCalledWith(false));
+		} else {
+			expect(hint.remember).not.toHaveBeenCalled();
+		}
 	} finally {
 		cleanup();
 		browser.clear();

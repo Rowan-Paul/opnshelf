@@ -29,15 +29,21 @@ export function prefetchHomePrompts(queryClient: QueryClient): void {
 }
 
 /**
- * Whether a prompt's data was already cached when it mounted. A prompt whose
- * answer arrives after Home is on screen stays hidden until the next visit:
- * showing it late would push the whole page down, and waiting for it would
- * hold the page back for an ask that can just as well come next time.
+ * Whether a prompt was eligible when it mounted, judged from the answer that
+ * was already cached then. A prompt renders only while this and its current
+ * answer both say so: it may disappear during a visit (dismissed, snoozed)
+ * but never appear, so a late or refetched answer cannot push Home down. An
+ * ask that became eligible meanwhile waits for the next visit, which costs
+ * nothing, where holding Home back for it would.
  */
-export function useReadyAtMount(queryKey: QueryKey): boolean {
+export function useEligibleAtMount<T>(
+	queryKey: QueryKey,
+	isEligible: (data: T) => boolean,
+): boolean {
 	const queryClient = useQueryClient();
-	const [ready] = useState(
-		() => queryClient.getQueryState(queryKey)?.status === "success",
-	);
-	return ready;
+	const [eligible] = useState(() => {
+		const state = queryClient.getQueryState<T>(queryKey);
+		return state?.status === "success" && isEligible(state.data as T);
+	});
+	return eligible;
 }

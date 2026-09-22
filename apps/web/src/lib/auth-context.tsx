@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		data: user,
 		isLoading,
 		isFetchedAfterMount,
+		isError: isSessionCheckError,
 	} = useQuery({
 		...currentUserQueryOptions(),
 		// SSR cannot see the API's host-only session cookie. Verify once on
@@ -71,9 +72,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		staleTime: 5 * 60 * 1000,
 	});
 
+	// Only an answer from /auth/me updates the hint: a 401 resolves to null, but
+	// a timeout, 5xx or network error says nothing about the session, and
+	// clearing the hint then would show a signed-in reader the landing page.
 	useEffect(() => {
-		if (isFetchedAfterMount) rememberSignedIn(Boolean(user));
-	}, [isFetchedAfterMount, user]);
+		if (isFetchedAfterMount && !isSessionCheckError) {
+			rememberSignedIn(Boolean(user));
+		}
+	}, [isFetchedAfterMount, isSessionCheckError, user]);
 
 	// The API callback is a browser singleton. Register it after mount so SSR
 	// requests never capture their request-scoped QueryClient in global state.

@@ -17,7 +17,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { posthog } from "#/integrations/posthog/provider";
-import { atStoreHomePromptQuery, useReadyAtMount } from "#/lib/home-prompts";
+import { atStoreHomePromptQuery, useEligibleAtMount } from "#/lib/home-prompts";
 import { startPromptCooldown } from "#/lib/prompt-state";
 
 const PLATFORM = { platform: "web" } as const;
@@ -31,9 +31,12 @@ export function AtStoreReviewPrompt() {
 	const [text, setText] = useState("");
 
 	const promptOptions = atStoreHomePromptQuery();
-	const readyAtMount = useReadyAtMount(promptOptions.queryKey);
+	const eligibleAtMount = useEligibleAtMount(
+		promptOptions.queryKey,
+		(data: { eligible?: boolean } | undefined) => Boolean(data?.eligible),
+	);
 	const { data: prompt } = useQuery(promptOptions);
-	const visible = readyAtMount && Boolean(prompt?.eligible);
+	const visible = eligibleAtMount && Boolean(prompt?.eligible);
 
 	useEffect(() => {
 		if (visible && !viewed.current) {
