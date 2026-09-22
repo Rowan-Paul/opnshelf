@@ -1,13 +1,14 @@
 import {
 	getHttpStatus,
-	type ListsForItemDto,
+	type ListItemRef,
+	type ListMembershipDto,
 	listsControllerAddItemToListMutation,
 	listsControllerCreateListMutation,
 	listsControllerDeleteListMutation,
 	listsControllerGetListInfiniteOptions,
+	listsControllerGetListMembershipsOptions,
+	listsControllerGetListMembershipsQueryKey,
 	listsControllerGetListQueryKey,
-	listsControllerGetListsForItemOptions,
-	listsControllerGetListsForItemQueryKey,
 	listsControllerGetPublicUserListQueryKey,
 	listsControllerGetPublicUserListsQueryKey,
 	listsControllerGetUserListsOptions,
@@ -15,7 +16,9 @@ import {
 	listsControllerRemoveItemFromListMutation,
 	listsControllerReorderListItemsMutation,
 	listsControllerUpdateListMutation,
+	listsForItem,
 	retryUnlessNotFound,
+	withMembership,
 } from "@opnshelf/api";
 import {
 	useInfiniteQuery,
@@ -24,6 +27,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
+import { useMemo } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
@@ -282,55 +286,77 @@ interface ListMembershipTarget {
 
 /**
  * Which of the user's lists contain a media item, plus an optimistic toggle to
- * add/remove it. Mirrors the web `useListActions` — patches `isInList` in the
- * for-item cache immediately, rolls back on error, and reconciles the for-item
- * + user-lists queries on settle.
+ * add/remove it. Mirrors the web `useListItemStatus` + `useListActions`: the
+ * state comes from one shared memberships read for every card on screen, not a
+ * request per item (ADR 0040), and a toggle patches that shared entry, rolls
+ * back on error, and reconciles on settle.
  */
 export function useListMembership(target: ListMembershipTarget) {
 	const { isAuthenticated, user } = useAuth();
 	const queryClient = useQueryClient();
 	const toast = useToast();
 
-	const resolvedMediaType =
+	const resolvedMediaType: ListItemRef["mediaType"] =
 		target.episodeNumber != null
 			? "episode"
 			: target.seasonNumber != null
 				? "season"
 				: target.mediaType;
-
-	const listsForItemKey = listsControllerGetListsForItemQueryKey({
-		path: { mediaType: resolvedMediaType, mediaId: target.mediaId },
-		query: {
+	const item = useMemo<ListItemRef>(
+		() => ({
+			mediaType: resolvedMediaType,
+			mediaId: target.mediaId,
 			seasonNumber: target.seasonNumber,
 			episodeNumber: target.episodeNumber,
-		},
-	});
-	const userListsKey = listsControllerGetUserListsQueryKey();
-
-	const membershipQuery = useQuery({
-		...listsControllerGetListsForItemOptions({
-			path: { mediaType: resolvedMediaType, mediaId: target.mediaId },
-			query: {
-				seasonNumber: target.seasonNumber,
-				episodeNumber: target.episodeNumber,
-			},
 		}),
-		enabled: isAuthenticated && !!target.mediaId && target.enabled !== false,
+		[
+			resolvedMediaType,
+			target.mediaId,
+			target.seasonNumber,
+			target.episodeNumber,
+		],
+	);
+
+	const membershipsKey = listsControllerGetListMembershipsQueryKey();
+	const userListsKey = listsControllerGetUserListsQueryKey();
+	const enabled =
+		isAuthenticated && !!target.mediaId && target.enabled !== false;
+
+	const membershipsQuery = useQuery({
+		...listsControllerGetListMembershipsOptions(),
+		enabled,
 	});
+	const userListsQuery = useQuery({
+		...listsControllerGetUserListsOptions(),
+		enabled,
+	});
+
+	const memberships = useMemo(
+		() =>
+			membershipsQuery.data && userListsQuery.data
+				? listsForItem(membershipsQuery.data, userListsQuery.data, item)
+				: [],
+		[membershipsQuery.data, userListsQuery.data, item],
+	);
 
 	const listName = (slug: string) =>
-		membershipQuery.data?.find((l) => l.listSlug === slug)?.listName ?? "list";
+		memberships.find((l) => l.listSlug === slug)?.listName ?? "list";
 
-	const patchMembership = (slug: string, isInList: boolean) => {
-		queryClient.setQueryData<ListsForItemDto[]>(listsForItemKey, (old) =>
-			Array.isArray(old)
-				? old.map((l) => (l.listSlug === slug ? { ...l, isInList } : l))
-				: old,
-		);
+	const patchMembership = async (slug: string, isInList: boolean) => {
+		await queryClient.cancelQueries({ queryKey: membershipsKey });
+		const prev = queryClient.getQueryData<ListMembershipDto[]>(membershipsKey);
+		const listId = userListsQuery.data?.find((l) => l.slug === slug)?.id;
+		if (prev && listId) {
+			queryClient.setQueryData(
+				membershipsKey,
+				withMembership(prev, item, listId, isInList),
+			);
+		}
+		return { prev };
 	};
 
 	const settle = (slug?: string) => {
-		queryClient.invalidateQueries({ queryKey: listsForItemKey });
+		queryClient.invalidateQueries({ queryKey: membershipsKey });
 		queryClient.invalidateQueries({ queryKey: userListsKey });
 		invalidatePublicListQueries(queryClient, user?.did, slug);
 	};
@@ -338,19 +364,14 @@ export function useListMembership(target: ListMembershipTarget) {
 	const addMutation = useMutation({
 		mutationKey: ["lists", "addItem", resolvedMediaType, target.mediaId],
 		...listsControllerAddItemToListMutation(),
-		onMutate: async (variables) => {
-			await queryClient.cancelQueries({ queryKey: listsForItemKey });
-			const prev = queryClient.getQueryData<ListsForItemDto[]>(listsForItemKey);
-			patchMembership(variables.path.slug, true);
-			return { prev };
-		},
+		onMutate: (variables) => patchMembership(variables.path.slug, true),
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "added", resolvedMediaType);
 			toast.success(`Added to ${listName(variables.path.slug)}`);
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {
-				queryClient.setQueryData(listsForItemKey, context.prev);
+				queryClient.setQueryData(membershipsKey, context.prev);
 			}
 			toast.error(errorMessage(error, "Failed to add to list"));
 		},
@@ -360,19 +381,14 @@ export function useListMembership(target: ListMembershipTarget) {
 	const removeMutation = useMutation({
 		mutationKey: ["lists", "removeItem", resolvedMediaType, target.mediaId],
 		...listsControllerRemoveItemFromListMutation(),
-		onMutate: async (variables) => {
-			await queryClient.cancelQueries({ queryKey: listsForItemKey });
-			const prev = queryClient.getQueryData<ListsForItemDto[]>(listsForItemKey);
-			patchMembership(variables.path.slug, false);
-			return { prev };
-		},
+		onMutate: (variables) => patchMembership(variables.path.slug, false),
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "removed", resolvedMediaType);
 			toast.success(`Removed from ${listName(variables.path.slug)}`);
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prev !== undefined) {
-				queryClient.setQueryData(listsForItemKey, context.prev);
+				queryClient.setQueryData(membershipsKey, context.prev);
 			}
 			toast.error(errorMessage(error, "Failed to remove from list"));
 		},
@@ -404,8 +420,8 @@ export function useListMembership(target: ListMembershipTarget) {
 	};
 
 	return {
-		memberships: membershipQuery.data ?? [],
-		isLoading: membershipQuery.isLoading,
+		memberships,
+		isLoading: membershipsQuery.isLoading || userListsQuery.isLoading,
 		toggle,
 		isPending: addMutation.isPending || removeMutation.isPending,
 	};

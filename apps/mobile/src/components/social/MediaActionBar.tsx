@@ -40,7 +40,7 @@ export function MediaActionBar({
 
 	const watchStatus = useWatchStatus(
 		isMovie
-			? { mediaType: "movie", movieId: id }
+			? { mediaType: "movie", movieId: id, skipHistory: true }
 			: { mediaType: "show", showId: id },
 	);
 	const watchActions = useWatchActions(

@@ -62,6 +62,15 @@ export {
 	isTerminalTraktImportStatus,
 } from "./trakt-import-status";
 export {
+	type ListItemRef,
+	type ListRef,
+	listsForItem,
+	movieWatchCount,
+	withMembership,
+	withMovieWatch,
+	withoutMovieWatches,
+} from "./list-memberships";
+export {
 	invalidateWatchActivityQueries,
 	isWatchActivityQueryKey,
 	WATCH_ACTIVITY_QUERY_IDS,

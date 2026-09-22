@@ -1,6 +1,7 @@
 import {
 	moviesControllerGetMovieWatchHistoryOptions,
-	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMovieWatchCountsOptions,
+	movieWatchCount,
 	showsControllerGetShowWatchHistoryOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -19,15 +20,20 @@ interface WatchStatusShowOptions {
 interface WatchStatusMovieOptions {
 	mediaType: "movie";
 	movieId: string;
+	/**
+	 * Poster cards only need "watched, and how often", which the shared watch
+	 * counts carry; fetching each card's full history was a request per poster.
+	 */
+	skipHistory?: boolean;
 }
 
 type UseWatchStatusOptions = WatchStatusShowOptions | WatchStatusMovieOptions;
 
 /**
  * Read-only tracked status for a movie or show, mirroring the web
- * `useMediaWatchStatus` hook. Movies use the user's tracked-movies list +
- * per-movie watch history; shows derive tracking + per-episode status from the
- * show watch history.
+ * `useMediaWatchStatus` hook. Movies use the user's shared watch counts, plus
+ * the per-movie watch history where a screen shows dates; shows derive
+ * tracking + per-episode status from the show watch history.
  */
 export function useWatchStatus(options: UseWatchStatusOptions) {
 	const { user, isAuthenticated } = useAuth();
@@ -36,8 +42,9 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 	const isMovie = options.mediaType === "movie";
 	const isShow = options.mediaType === "show";
 
-	const { data: userMovies } = useQuery({
-		...moviesControllerGetUserMoviesOptions({ path: { userDid } }),
+	// One small shared answer for every card, not the full tracked-movie list.
+	const { data: watchCounts } = useQuery({
+		...moviesControllerGetUserMovieWatchCountsOptions({ path: { userDid } }),
 		enabled: isAuthenticated && isMovie && !!userDid,
 	});
 
@@ -45,7 +52,7 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 		...moviesControllerGetMovieWatchHistoryOptions({
 			path: { userDid, movieId: isMovie ? options.movieId : "" },
 		}),
-		enabled: isAuthenticated && isMovie && !!userDid,
+		enabled: isAuthenticated && isMovie && !!userDid && !options.skipHistory,
 	});
 
 	const { data: showWatchHistory } = useQuery({
@@ -55,12 +62,10 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 		enabled: isAuthenticated && isShow && !!userDid && !options.skipHistory,
 	});
 
-	const isMovieWatched = useMemo(() => {
-		if (!isMovie || !Array.isArray(userMovies)) return false;
-		return userMovies.some(
-			(m) => String(m.movieId) === (isMovie ? options.movieId : ""),
-		);
-	}, [isMovie, userMovies, options]);
+	const totalMovieWatches = isMovie
+		? movieWatchCount(watchCounts, options.movieId)
+		: 0;
+	const isMovieWatched = totalMovieWatches > 0;
 
 	const isTracking = useMemo(
 		() => isShow && !!showWatchHistory && showWatchHistory.length > 0,
@@ -89,7 +94,7 @@ export function useWatchStatus(options: UseWatchStatusOptions) {
 		// Movie
 		isWatched: isMovie ? isMovieWatched : undefined,
 		movieWatchHistory: isMovie ? movieWatchHistory : undefined,
-		totalMovieWatches: isMovie ? (movieWatchHistory?.length ?? 0) : 0,
+		totalMovieWatches,
 		// Show
 		episodeWatchCount,
 		isTracking: isShow ? isTracking : undefined,
