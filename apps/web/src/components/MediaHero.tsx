@@ -58,6 +58,7 @@ export default function MediaHero({
 						src={backdropUrl}
 						alt={title}
 						className="h-full w-full object-cover"
+						fetchPriority="high"
 					/>
 				) : (
 					<div className="h-full w-full bg-linear-to-br from-gray-800 to-gray-900" />
@@ -125,6 +126,8 @@ export default function MediaHero({
 									src={posterUrl}
 									alt={title}
 									className="h-full w-full object-cover"
+									// Hidden below lg, where a lazy image is never fetched.
+									loading="lazy"
 								/>
 							) : (
 								<div className="flex h-full w-full items-center justify-center bg-linear-to-br from-gray-700 to-gray-800">

@@ -1,3 +1,5 @@
+import interFont from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+import jakartaFont from "@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url";
 import { isUnauthorizedError, type UserDto } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
@@ -18,6 +20,7 @@ import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { AuthProvider } from "#/lib/auth-context";
 import { currentUserQueryOptions } from "#/lib/auth-query";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
+import { mayBeSignedIn, SIGNED_IN_HINT_QUERY_KEY } from "#/lib/session-hint";
 import {
 	DefaultErrorComponent,
 	NotFoundComponent,
@@ -37,6 +40,16 @@ const THEME_INIT_SCRIPT = `(() => {try{const s=localStorage.getItem('theme'),m=s
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async ({ context, location }) => {
+		// Dehydrated with the rest of the cache, so AuthProvider hydrates with
+		// the same answer SSR rendered with (ADR 0039).
+		if (
+			context.queryClient.getQueryData(SIGNED_IN_HINT_QUERY_KEY) === undefined
+		) {
+			context.queryClient.setQueryData(
+				SIGNED_IN_HINT_QUERY_KEY,
+				mayBeSignedIn(),
+			);
+		}
 		// Allow onboarding, login, auth callback, and embed pages without redirect.
 		// `/embed/*` is chromeless and consumed inside the mobile app's WebView, so
 		// it must never bounce to onboarding.
@@ -95,6 +108,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
+			// Found only once the stylesheet is parsed otherwise; the Latin
+			// subsets cover nearly every page.
+			...[interFont, jakartaFont].map((href) => ({
+				rel: "preload",
+				href,
+				as: "font",
+				type: "font/woff2",
+				crossOrigin: "anonymous" as const,
+			})),
 			{ rel: "icon", type: "image/png", href: "/favicon.png" },
 			{ rel: "apple-touch-icon", href: "/icon.png" },
 			{ rel: "manifest", href: "/manifest.json" },

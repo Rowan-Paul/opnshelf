@@ -203,7 +203,7 @@ export function HomeView() {
 						? `https://image.tmdb.org/t/p/w500${item.posterPath}`
 						: "",
 					backdropUrl: item.backdropPath
-						? `https://image.tmdb.org/t/p/original${item.backdropPath}`
+						? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
 						: undefined,
 					year: item.releaseYear,
 					displayTitle: undefined,
@@ -232,9 +232,9 @@ export function HomeView() {
 					: "",
 				// Prefer the episode still (16:9, matches the backdrop layout); fall back to the show backdrop
 				backdropUrl: item.stillPath
-					? `https://image.tmdb.org/t/p/original${item.stillPath}`
+					? `https://image.tmdb.org/t/p/w780${item.stillPath}`
 					: item.backdropPath
-						? `https://image.tmdb.org/t/p/original${item.backdropPath}`
+						? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
 						: undefined,
 				year: item.firstAirYear,
 				episodeInfo: `${item.showTitle} • S${item.seasonNumber}E${item.episodeNumber}`,
@@ -255,7 +255,7 @@ export function HomeView() {
 					? `https://image.tmdb.org/t/p/w500${item.show.posterPath}`
 					: "",
 				backdropUrl: item.show.backdropPath
-					? `https://image.tmdb.org/t/p/original${item.show.backdropPath}`
+					? `https://image.tmdb.org/t/p/w780${item.show.backdropPath}`
 					: undefined,
 				year: item.show.firstAirYear,
 				episodeInfo: `${item.show.title} • S${item.nextEpisode.seasonNumber}E${item.nextEpisode.episodeNumber}`,

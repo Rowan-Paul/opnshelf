@@ -20,7 +20,8 @@ interface WatchProviderDtosProps {
 	onCountryChange: (country: string) => void;
 }
 
-const PROVIDER_LOGO_BASE = "https://image.tmdb.org/t/p/original";
+// Shown at 40px, so w92 covers 2x screens.
+const PROVIDER_LOGO_BASE = "https://image.tmdb.org/t/p/w92";
 
 function ProviderChip({
 	provider,

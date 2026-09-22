@@ -226,9 +226,9 @@ function ShowDetailPage() {
 	}
 
 	const backdropUrl = show.backdrop_path
-		? `https://image.tmdb.org/t/p/original${show.backdrop_path}`
+		? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}`
 		: show.poster_path
-			? `https://image.tmdb.org/t/p/original${show.poster_path}`
+			? `https://image.tmdb.org/t/p/w780${show.poster_path}`
 			: "";
 	const posterUrl = show.poster_path
 		? `https://image.tmdb.org/t/p/w500${show.poster_path}`

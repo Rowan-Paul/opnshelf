@@ -89,7 +89,7 @@ export function getBackdropUrl(
 	item: UnifiedSearchResultDto,
 ): string | undefined {
 	return item.backdrop_path
-		? `https://image.tmdb.org/t/p/original${item.backdrop_path}`
+		? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
 		: undefined;
 }
 

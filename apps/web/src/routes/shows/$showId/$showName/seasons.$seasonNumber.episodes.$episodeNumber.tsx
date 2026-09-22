@@ -182,11 +182,11 @@ function EpisodeDetailPage() {
 	}
 
 	const backdropUrl = episode.still_path
-		? `https://image.tmdb.org/t/p/original${episode.still_path}`
+		? `https://image.tmdb.org/t/p/w1280${episode.still_path}`
 		: show.backdrop_path
-			? `https://image.tmdb.org/t/p/original${show.backdrop_path}`
+			? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}`
 			: show.poster_path
-				? `https://image.tmdb.org/t/p/original${show.poster_path}`
+				? `https://image.tmdb.org/t/p/w780${show.poster_path}`
 				: "";
 	// The hero poster stands for the season, because the progress bar and summary
 	// it carries are season-scoped. Falls back to the show poster when the season

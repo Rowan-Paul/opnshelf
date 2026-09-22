@@ -20,6 +20,11 @@ import {
 import { env } from "#/env";
 import { posthog } from "#/integrations/posthog/provider";
 import { currentUserQueryOptions } from "./auth-query";
+import {
+	mayBeSignedIn,
+	rememberSignedIn,
+	SIGNED_IN_HINT_QUERY_KEY,
+} from "./session-hint";
 
 interface AuthContextType {
 	user: UserDto | null;
@@ -37,6 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	// Decided once per page load, from SSR's answer when there is one, so the
+	// hydrating render matches the server HTML.
+	const [awaitSessionCheck] = useState(
+		() =>
+			queryClient.getQueryData<boolean>(SIGNED_IN_HINT_QUERY_KEY) ??
+			mayBeSignedIn(),
+	);
 
 	// Fetch current user - catch 401s gracefully to prevent router error boundary loops
 	const {
@@ -58,6 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		retry: false,
 		staleTime: 5 * 60 * 1000,
 	});
+
+	useEffect(() => {
+		if (isFetchedAfterMount) rememberSignedIn(Boolean(user));
+	}, [isFetchedAfterMount, user]);
 
 	// The API callback is a browser singleton. Register it after mount so SSR
 	// requests never capture their request-scoped QueryClient in global state.
@@ -94,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			console.error("Logout failed:", error);
 		} finally {
 			posthog.reset();
+			rememberSignedIn(false);
 			// Clear all queries and user data
 			queryClient.clear();
 			setIsLoggingOut(false);
@@ -105,9 +122,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const value: AuthContextType = {
 		user: user ?? null,
 		userSettings: userSettings ?? null,
-		// A signed-out SSR result cannot establish the browser session.
-		// Keep cached users visible while the mount-time verification runs.
-		isLoading: isLoading || (!user && !isFetchedAfterMount) || isLoggingOut,
+		// A signed-out SSR result cannot establish the browser session, so a
+		// visitor who may be signed in waits for the mount-time check. One
+		// with no hint gets public content straight from SSR (ADR 0039).
+		// Keep cached users visible while the verification runs.
+		isLoading:
+			isLoading ||
+			(awaitSessionCheck && !user && !isFetchedAfterMount) ||
+			isLoggingOut,
 		isAuthenticated: !!user,
 		login,
 		signup,
