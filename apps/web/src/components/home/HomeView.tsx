@@ -7,7 +7,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Calendar, ChevronRight, Clock, Film, Loader2, Tv } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { AtStoreReviewPrompt } from "#/components/atstore/AtStoreReviewPrompt";
 import DashboardMediaCard from "#/components/DashboardMediaCard";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
@@ -17,6 +17,7 @@ import { PromptSlot } from "#/components/PromptSlot";
 import { StatsStrip } from "#/components/StatsStrip";
 import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
 import { useAuth } from "#/lib/auth-context";
+import { formatLocalDateKey } from "#/lib/calendar-grid";
 import { withUserLocale } from "#/lib/date-utils";
 import { useShelfSyncStatus, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
@@ -154,10 +155,22 @@ export function HomeView() {
 		}),
 	});
 
-	// Fetch release calendar data
+	// Ask for the two weeks Home shows, like the Mobile App. Without a range
+	// the API returns every episode of every tracked show, which ran to
+	// megabytes for a reader with a long watch history.
+	const releaseRange = useMemo(() => {
+		const today = new Date();
+		const twoWeeksLater = new Date(today);
+		twoWeeksLater.setDate(today.getDate() + 14);
+		return {
+			startDate: formatLocalDateKey(today),
+			endDate: formatLocalDateKey(twoWeeksLater),
+		};
+	}, []);
 	const { data: calendarData, isLoading: calendarLoading } = useQuery({
 		...showsControllerGetUserReleaseCalendarOptions({
 			path: { userDid: user?.did || "" },
+			query: releaseRange,
 		}),
 	});
 
