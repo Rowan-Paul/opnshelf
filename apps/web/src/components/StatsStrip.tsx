@@ -7,15 +7,12 @@ import { useState } from "react";
 /** Format a "YYYY-MM-DD" calendar day as e.g. "Thu, Jun 20" (UTC, no drift). */
 function formatDayLabel(date: string): string {
 	const [year, month, day] = date.split("-").map(Number);
-	return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
-		undefined,
-		{
-			weekday: "short",
-			month: "short",
-			day: "numeric",
-			timeZone: "UTC",
-		},
-	);
+	return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-US", {
+		weekday: "short",
+		month: "short",
+		day: "numeric",
+		timeZone: "UTC",
+	});
 }
 
 /**
