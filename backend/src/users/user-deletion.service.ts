@@ -1,4 +1,5 @@
 import { Agent } from "@atproto/api";
+import { Tap } from "@atproto/tap";
 import {
 	ConflictException,
 	Inject,
@@ -6,6 +7,7 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { $nsid as EPISODE_COLLECTION } from "../lexicons/xyz/opnshelf/episode";
 import { $nsid as FOLLOW_COLLECTION } from "../lexicons/xyz/opnshelf/follow";
 import { $nsid as LIBRARY_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/library/item";
@@ -70,12 +72,25 @@ type PdsDeletionStep = (typeof PDS_DELETION_STEPS)[number];
 @Injectable()
 export class UserDeletionService {
 	private readonly logger = new Logger(UserDeletionService.name);
+	private readonly tab: Tap;
 
 	constructor(
 		private readonly prisma: PrismaService,
 		@Inject(AUTH_SERVICE)
 		private readonly authService: Pick<AuthService, "restore" | "revoke">,
-	) {}
+		config: ConfigService,
+	) {
+		this.tab = new Tap(
+			config.get<string>("TAB_URL") ??
+				config.get<string>("TAP_URL") ??
+				"http://localhost:2480",
+			{
+				adminPassword:
+					config.get<string>("TAB_ADMIN_PASSWORD") ??
+					config.get<string>("TAP_ADMIN_PASSWORD"),
+			},
+		);
+	}
 
 	async deleteUserSync(did: string): Promise<void> {
 		const user = await this.prisma.user.findUnique({
@@ -111,6 +126,15 @@ export class UserDeletionService {
 			}),
 			this.prisma.user.delete({ where: { did } }),
 		]);
+
+		try {
+			await this.tab.removeRepos([did]);
+		} catch (error) {
+			this.logger.warn(
+				`Failed to stop tracking deleted user ${did} in Tab`,
+				error instanceof Error ? error.stack : undefined,
+			);
+		}
 	}
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {

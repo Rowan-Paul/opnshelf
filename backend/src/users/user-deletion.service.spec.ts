@@ -1,7 +1,9 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
+import type { ConfigService } from "@nestjs/config";
 
 const mockDeleteRecord = vi.fn();
 const mockListRecords = vi.fn();
+const mockRemoveRepos = vi.fn();
 
 vi.mock("@atproto/api", () => ({
 	Agent: vi.fn().mockImplementation(() => ({
@@ -13,6 +15,12 @@ vi.mock("@atproto/api", () => ({
 				},
 			},
 		},
+	})),
+}));
+
+vi.mock("@atproto/tap", () => ({
+	Tap: vi.fn().mockImplementation(() => ({
+		removeRepos: mockRemoveRepos,
 	})),
 }));
 
@@ -70,6 +78,13 @@ describe("UserDeletionService", () => {
 		restore: vi.fn(),
 		revoke: vi.fn(),
 	} as unknown as AuthService;
+	const config = {
+		get: vi.fn((key: string) => {
+			if (key === "TAB_URL") return "http://tab:2480";
+			if (key === "TAB_ADMIN_PASSWORD") return "test-password";
+			return undefined;
+		}),
+	} as unknown as ConfigService;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -109,8 +124,9 @@ describe("UserDeletionService", () => {
 
 		mockListRecords.mockResolvedValue({ data: { records: [] } });
 		mockDeleteRecord.mockResolvedValue(undefined);
+		mockRemoveRepos.mockResolvedValue(undefined);
 
-		service = new UserDeletionService(prisma, authService);
+		service = new UserDeletionService(prisma, authService, config);
 	});
 
 	describe("deleteUserSync", () => {
@@ -140,6 +156,19 @@ describe("UserDeletionService", () => {
 				vi.mocked(authService.revoke).mock.invocationCallOrder[0],
 			).toBeLessThan(vi.mocked(prisma.user.delete).mock.invocationCallOrder[0]);
 			expect(prisma.$transaction).toHaveBeenCalledOnce();
+			expect(mockRemoveRepos).toHaveBeenCalledWith(["did:plc:test"]);
+		});
+
+		it("does not fail a completed deletion when Tab cleanup fails", async () => {
+			mockRemoveRepos.mockRejectedValueOnce(new Error("Tab unavailable"));
+
+			await expect(
+				service.deleteUserSync("did:plc:test"),
+			).resolves.toBeUndefined();
+
+			expect(prisma.user.delete).toHaveBeenCalledWith({
+				where: { did: "did:plc:test" },
+			});
 		});
 
 		it("preserves the user and Trakt history when session revocation fails", async () => {
