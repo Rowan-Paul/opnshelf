@@ -81,12 +81,12 @@ export class UserDeletionService {
 		config: ConfigService,
 	) {
 		this.tab = new Tap(
-			config.get<string>("TAB_URL") ??
-				config.get<string>("TAP_URL") ??
+			config.get<string>("TAB_URL") ||
+				config.get<string>("TAP_URL") ||
 				"http://localhost:2480",
 			{
 				adminPassword:
-					config.get<string>("TAB_ADMIN_PASSWORD") ??
+					config.get<string>("TAB_ADMIN_PASSWORD") ||
 					config.get<string>("TAP_ADMIN_PASSWORD"),
 			},
 		);

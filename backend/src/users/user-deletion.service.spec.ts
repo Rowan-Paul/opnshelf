@@ -1,5 +1,6 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import type { ConfigService } from "@nestjs/config";
+import { Tap } from "@atproto/tap";
 
 const mockDeleteRecord = vi.fn();
 const mockListRecords = vi.fn();
@@ -127,6 +128,23 @@ describe("UserDeletionService", () => {
 		mockRemoveRepos.mockResolvedValue(undefined);
 
 		service = new UserDeletionService(prisma, authService, config);
+	});
+
+	it("falls back from empty Tab settings to legacy Tap settings", () => {
+		const legacyConfig = {
+			get: vi.fn((key: string) => {
+				if (key === "TAB_URL" || key === "TAB_ADMIN_PASSWORD") return "";
+				if (key === "TAP_URL") return "http://legacy-tap:2480";
+				if (key === "TAP_ADMIN_PASSWORD") return "legacy-password";
+				return undefined;
+			}),
+		} as unknown as ConfigService;
+
+		new UserDeletionService(prisma, authService, legacyConfig);
+
+		expect(Tap).toHaveBeenLastCalledWith("http://legacy-tap:2480", {
+			adminPassword: "legacy-password",
+		});
 	});
 
 	describe("deleteUserSync", () => {
