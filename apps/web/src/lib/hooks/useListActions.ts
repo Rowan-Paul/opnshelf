@@ -1,6 +1,7 @@
 import {
+	type ListMembershipDto,
+	type ListSummaryDto,
 	listsControllerAddItemToListMutation,
-	listsControllerGetListsForItemQueryKey,
 	listsControllerGetPublicUserListQueryKey,
 	listsControllerGetPublicUserListsQueryKey,
 	listsControllerGetUserListsQueryKey,
@@ -11,6 +12,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
+import {
+	type ListItemRef,
+	listMembershipsKey,
+	withMembership,
+} from "./list-memberships";
 
 interface UseListActionsOptions {
 	mediaType: "movie" | "show";
@@ -45,7 +51,7 @@ export function useListActions({
 	seasonNumber,
 	episodeNumber,
 }: UseListActionsOptions) {
-	const resolvedMediaType =
+	const resolvedMediaType: ListItemRef["mediaType"] =
 		episodeNumber != null
 			? "episode"
 			: seasonNumber != null
@@ -56,11 +62,37 @@ export function useListActions({
 	const queryClient = useQueryClient();
 	const [activeListAction, setActiveListAction] = useState<string | null>(null);
 
-	const listsForItemKey = listsControllerGetListsForItemQueryKey({
-		path: { mediaType: resolvedMediaType, mediaId },
-		query: { seasonNumber, episodeNumber },
-	});
+	const membershipsKey = listMembershipsKey();
 	const userListsKey = listsControllerGetUserListsQueryKey();
+	const item = {
+		mediaType: resolvedMediaType,
+		mediaId,
+		seasonNumber,
+		episodeNumber,
+	};
+
+	// Every card reads the one memberships cache, so an add or remove shows on
+	// every poster of this item at once, then settles with a refetch.
+	const applyOptimistic = async (slug: string, isInList: boolean) => {
+		await queryClient.cancelQueries({ queryKey: membershipsKey });
+		const previous =
+			queryClient.getQueryData<ListMembershipDto[]>(membershipsKey);
+		const listId = queryClient
+			.getQueryData<ListSummaryDto[]>(userListsKey)
+			?.find((list) => list.slug === slug)?.id;
+		if (previous && listId) {
+			queryClient.setQueryData(
+				membershipsKey,
+				withMembership(previous, item, listId, isInList),
+			);
+		}
+		return { previous };
+	};
+	const rollback = (context?: { previous?: ListMembershipDto[] }) => {
+		if (context?.previous) {
+			queryClient.setQueryData(membershipsKey, context.previous);
+		}
+	};
 
 	// The profile pages read from the PUBLIC list queries, which are keyed by the
 	// owner's did and are separate from the authenticated `getUserLists` cache.
@@ -85,40 +117,19 @@ export function useListActions({
 	const addToListMutation = useMutation({
 		mutationKey: ["lists", "addItem", resolvedMediaType, mediaId],
 		...listsControllerAddItemToListMutation(),
-		onMutate: async (variables) => {
-			await queryClient.cancelQueries({ queryKey: listsForItemKey });
-			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
-
-			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return old.map((list: { listSlug: string; isInList: boolean }) =>
-					list.listSlug === variables.path.slug
-						? { ...list, isInList: true }
-						: list,
-				);
-			});
-
-			return { previousListsForItem, listsForItemKey };
-		},
+		onMutate: (variables) => applyOptimistic(variables.path.slug, true),
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "added", resolvedMediaType);
 			toast.success("Added to list");
 		},
 		onError: (error, _variables, context) => {
-			if (context?.previousListsForItem) {
-				queryClient.setQueryData(
-					context.listsForItemKey,
-					context.previousListsForItem,
-				);
-			}
+			rollback(context);
 			toast.error(
 				error instanceof Error ? error.message : "Failed to add to list",
 			);
 		},
-		onSettled: (_data, _error, variables, context) => {
-			if (context?.listsForItemKey) {
-				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
-			}
+		onSettled: (_data, _error, variables) => {
+			queryClient.invalidateQueries({ queryKey: membershipsKey });
 			queryClient.invalidateQueries({ queryKey: userListsKey });
 			invalidatePublicLists(variables?.path?.slug);
 		},
@@ -127,40 +138,19 @@ export function useListActions({
 	const removeFromListMutation = useMutation({
 		mutationKey: ["lists", "removeItem", resolvedMediaType, mediaId],
 		...listsControllerRemoveItemFromListMutation(),
-		onMutate: async (variables) => {
-			await queryClient.cancelQueries({ queryKey: listsForItemKey });
-			const previousListsForItem = queryClient.getQueryData(listsForItemKey);
-
-			queryClient.setQueryData(listsForItemKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return old.map((list: { listSlug: string; isInList: boolean }) =>
-					list.listSlug === variables.path.slug
-						? { ...list, isInList: false }
-						: list,
-				);
-			});
-
-			return { previousListsForItem, listsForItemKey };
-		},
+		onMutate: (variables) => applyOptimistic(variables.path.slug, false),
 		onSuccess: (_data, variables) => {
 			captureListChange(variables.path.slug, "removed", resolvedMediaType);
 			toast.success("Removed from list");
 		},
 		onError: (error, _variables, context) => {
-			if (context?.previousListsForItem) {
-				queryClient.setQueryData(
-					context.listsForItemKey,
-					context.previousListsForItem,
-				);
-			}
+			rollback(context);
 			toast.error(
 				error instanceof Error ? error.message : "Failed to remove from list",
 			);
 		},
-		onSettled: (_data, _error, variables, context) => {
-			if (context?.listsForItemKey) {
-				queryClient.invalidateQueries({ queryKey: context.listsForItemKey });
-			}
+		onSettled: (_data, _error, variables) => {
+			queryClient.invalidateQueries({ queryKey: membershipsKey });
 			queryClient.invalidateQueries({ queryKey: userListsKey });
 			invalidatePublicLists(variables?.path?.slug);
 		},

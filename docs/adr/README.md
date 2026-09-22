@@ -57,3 +57,4 @@ Numbering notes:
 | [0037-undated-watches-sort-after-dated-watches.md](0037-undated-watches-sort-after-dated-watches.md) | 0037 | Undated Watches sort after dated Watches | Accepted and implemented |
 | [0038-android-releases-roll-out-to-everyone.md](0038-android-releases-roll-out-to-everyone.md) | 0038 | Android releases roll out to everyone | Accepted and implemented; supersedes the Android rollout percentage in 0021 |
 | [0039-web-ssr-renders-public-content-without-a-signed-in-hint.md](0039-web-ssr-renders-public-content-without-a-signed-in-hint.md) | 0039 | Web SSR renders public content unless a signed-in hint says otherwise | Accepted and implemented |
+| [0040-list-membership-is-read-once-per-viewer.md](0040-list-membership-is-read-once-per-viewer.md) | 0040 | List membership is read once per viewer, not per item | Accepted; implemented on Web, Mobile still reads per item |

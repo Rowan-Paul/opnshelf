@@ -77,7 +77,7 @@ vi.mock("#/lib/hooks", () => ({
 	useMediaWatchStatus: () => ({
 		isWatched: true,
 		isTracking: true,
-		movieWatchHistory: showWatchHistory,
+		movieWatchCount: showWatchHistory.length,
 		watchHistory: showWatchHistory,
 		isEpisodeWatched: () => true,
 	}),

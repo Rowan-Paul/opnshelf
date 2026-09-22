@@ -1,6 +1,6 @@
 import {
 	moviesControllerGetMovieWatchHistoryOptions,
-	moviesControllerGetUserMoviesOptions,
+	moviesControllerGetUserMovieWatchCountsOptions,
 	showsControllerGetShowWatchHistoryOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +17,11 @@ interface UseMediaWatchStatusShowOptions {
 interface UseMediaWatchStatusMovieOptions {
 	mediaType: "movie";
 	movieId: string;
+	/**
+	 * Poster cards only need the count, which the shared user-movies list
+	 * carries; fetching each card's full history was one request per poster.
+	 */
+	skipHistory?: boolean;
 }
 
 type UseMediaWatchStatusOptions =
@@ -28,8 +33,10 @@ export function useMediaWatchStatus(options: UseMediaWatchStatusOptions) {
 	const userDid = user?.did || "";
 
 	// Movie queries
+	// Counts only: one small shared answer for every card on the page, not the
+	// user's full movie list with every movie's details.
 	const { data: userMovies } = useQuery({
-		...moviesControllerGetUserMoviesOptions({
+		...moviesControllerGetUserMovieWatchCountsOptions({
 			path: { userDid },
 		}),
 		enabled: isAuthenticated && options.mediaType === "movie",
@@ -42,7 +49,8 @@ export function useMediaWatchStatus(options: UseMediaWatchStatusOptions) {
 				movieId: options.mediaType === "movie" ? options.movieId : "",
 			},
 		}),
-		enabled: isAuthenticated && options.mediaType === "movie",
+		enabled:
+			isAuthenticated && options.mediaType === "movie" && !options.skipHistory,
 	});
 
 	// Show queries
@@ -65,6 +73,13 @@ export function useMediaWatchStatus(options: UseMediaWatchStatusOptions) {
 	}, [userMovies, options]);
 
 	// Show derived state
+	const movieWatchCount = useMemo(() => {
+		if (options.mediaType !== "movie" || !Array.isArray(userMovies)) return 0;
+		return (
+			userMovies.find((um) => um.movieId === options.movieId)?.watchCount ?? 0
+		);
+	}, [userMovies, options]);
+
 	const isTracking = useMemo(() => {
 		if (options.mediaType !== "show") return false;
 		return !!showWatchHistory && showWatchHistory.length > 0;
@@ -106,6 +121,8 @@ export function useMediaWatchStatus(options: UseMediaWatchStatusOptions) {
 		// Movie
 		isWatched: options.mediaType === "movie" ? isMovieWatched : undefined,
 		movieWatchHistory,
+		movieWatchCount:
+			options.mediaType === "movie" ? movieWatchCount : undefined,
 		// Show
 		isTracking: options.mediaType === "show" ? isTracking : undefined,
 		watchHistory: options.mediaType === "show" ? showWatchHistory : undefined,

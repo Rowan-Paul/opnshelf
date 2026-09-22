@@ -32,6 +32,7 @@ import {
 	CreateListDto,
 	GetListQueryDto,
 	ListDto,
+	ListMembershipDto,
 	ListsForItemDto,
 	ListSummaryDto,
 	ListWithItemsDto,
@@ -119,6 +120,22 @@ export class ListsController {
 		// 200 with a null body made clients dereference nothing.
 		if (!list) throw new NotFoundException("List not found");
 		return list;
+	}
+
+	// Two segments, and declared before `:slug`, so no list slug can shadow it.
+	@Get("items/memberships")
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary:
+			"Every item in the signed-in user's lists, with the lists that hold it",
+	})
+	@ApiOkResponse({ type: [ListMembershipDto] })
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	getListMemberships(
+		@Req() req: AuthenticatedRequest,
+	): Promise<ListMembershipDto[]> {
+		return this.listsService.getListMemberships(req.user.did);
 	}
 
 	@Get(":slug")

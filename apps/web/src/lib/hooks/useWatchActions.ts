@@ -1,7 +1,7 @@
 import {
 	invalidateWatchActivityQueries,
 	moviesControllerDeleteWatchHistoryEntryMutation,
-	moviesControllerGetUserMoviesQueryKey,
+	moviesControllerGetUserMovieWatchCountsQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
@@ -92,21 +92,26 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onMutate: async () => {
-			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+			const userMoviesKey = moviesControllerGetUserMovieWatchCountsQueryKey({
 				path: { userDid },
 			});
 			await queryClient.cancelQueries({ queryKey: userMoviesKey });
 			const previousUserMovies = queryClient.getQueryData(userMoviesKey);
 
+			// Cards read the watch count from this list, so count the new Watch on
+			// the movie's entry. The id is a string like the API's; the number
+			// this used to push never matched a card's lookup.
 			queryClient.setQueryData(userMoviesKey, (old: unknown) => {
 				if (!old || !Array.isArray(old)) return old;
-				return [
-					...old,
-					{
-						movieId:
-							options.mediaType === "movie" ? Number(options.movieId) : 0,
-					},
-				];
+				const entries = old as Array<{ movieId: string; watchCount?: number }>;
+				if (entries.some((entry) => entry.movieId === movieId)) {
+					return entries.map((entry) =>
+						entry.movieId === movieId
+							? { ...entry, watchCount: (entry.watchCount ?? 0) + 1 }
+							: entry,
+					);
+				}
+				return [...entries, { movieId, watchCount: 1 }];
 			});
 
 			return { previousUserMovies, userMoviesKey };
@@ -135,7 +140,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onMutate: async () => {
-			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+			const userMoviesKey = moviesControllerGetUserMovieWatchCountsQueryKey({
 				path: { userDid },
 			});
 			await queryClient.cancelQueries({ queryKey: userMoviesKey });

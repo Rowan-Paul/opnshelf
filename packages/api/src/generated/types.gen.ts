@@ -166,6 +166,35 @@ export type MovieDto = {
     colors?: MovieColorsDto;
 };
 
+export type UserMovieDto = {
+    id: string;
+    rkey: string;
+    uri: string;
+    cid: string;
+    userDid: string;
+    movieId: string;
+    status: string;
+    watchedDate?: string;
+    createdAt: string;
+    updatedAt: string;
+    movie: MovieDto;
+    /**
+     * Number of Watches the user logged
+     */
+    watchCount: number;
+};
+
+export type MarkWatchedDto = {
+    /**
+     * TMDB movie ID
+     */
+    movieId: string;
+    /**
+     * Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.
+     */
+    watchedAt?: string | null;
+};
+
 export type TrackedMovieDto = {
     id: string;
     rkey: string;
@@ -180,15 +209,9 @@ export type TrackedMovieDto = {
     movie: MovieDto;
 };
 
-export type MarkWatchedDto = {
-    /**
-     * TMDB movie ID
-     */
+export type MovieWatchCountDto = {
     movieId: string;
-    /**
-     * Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.
-     */
-    watchedAt?: string | null;
+    watchCount: number;
 };
 
 export type WatchHistoryItemDto = {
@@ -1522,6 +1545,23 @@ export type ListWithItemsDto = {
     hasNextPage: boolean;
 };
 
+export type ListMembershipDto = {
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * 0 unless the item is a season or episode
+     */
+    seasonNumber: number;
+    /**
+     * 0 unless the item is an episode
+     */
+    episodeNumber: number;
+    listIds: Array<string>;
+};
+
 export type UpdateListDto = {
     /**
      * Name of the list
@@ -2775,7 +2815,7 @@ export type MoviesControllerGetUserMoviesData = {
 };
 
 export type MoviesControllerGetUserMoviesResponses = {
-    200: Array<TrackedMovieDto>;
+    200: Array<UserMovieDto>;
 };
 
 export type MoviesControllerGetUserMoviesResponse = MoviesControllerGetUserMoviesResponses[keyof MoviesControllerGetUserMoviesResponses];
@@ -2844,6 +2884,21 @@ export type MoviesControllerGetMovieResponses = {
 };
 
 export type MoviesControllerGetMovieResponse = MoviesControllerGetMovieResponses[keyof MoviesControllerGetMovieResponses];
+
+export type MoviesControllerGetUserMovieWatchCountsData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: never;
+    url: '/movies/user/{userDid}/watch-counts';
+};
+
+export type MoviesControllerGetUserMovieWatchCountsResponses = {
+    200: Array<MovieWatchCountDto>;
+};
+
+export type MoviesControllerGetUserMovieWatchCountsResponse = MoviesControllerGetUserMovieWatchCountsResponses[keyof MoviesControllerGetUserMovieWatchCountsResponses];
 
 export type MoviesControllerGetMovieWatchHistoryData = {
     body?: never;
@@ -4455,6 +4510,26 @@ export type ListsControllerGetPublicUserListResponses = {
 };
 
 export type ListsControllerGetPublicUserListResponse = ListsControllerGetPublicUserListResponses[keyof ListsControllerGetPublicUserListResponses];
+
+export type ListsControllerGetListMembershipsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/lists/items/memberships';
+};
+
+export type ListsControllerGetListMembershipsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ListsControllerGetListMembershipsResponses = {
+    200: Array<ListMembershipDto>;
+};
+
+export type ListsControllerGetListMembershipsResponse = ListsControllerGetListMembershipsResponses[keyof ListsControllerGetListMembershipsResponses];
 
 export type ListsControllerDeleteListData = {
     body?: never;

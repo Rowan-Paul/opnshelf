@@ -364,6 +364,24 @@ export class ListWithItemsDto {
 	hasNextPage: boolean;
 }
 
+/** One item in the signed-in user's lists, and every list that holds it. */
+export class ListMembershipDto {
+	@ApiProperty({ enum: ["movie", "show", "season", "episode"] })
+	mediaType: "movie" | "show" | "season" | "episode";
+
+	@ApiProperty({ description: "TMDB movie ID or show ID" })
+	mediaId: string;
+
+	@ApiProperty({ description: "0 unless the item is a season or episode" })
+	seasonNumber: number;
+
+	@ApiProperty({ description: "0 unless the item is an episode" })
+	episodeNumber: number;
+
+	@ApiProperty({ type: [String] })
+	listIds: string[];
+}
+
 export class ListsForItemDto {
 	@ApiProperty()
 	listId: string;

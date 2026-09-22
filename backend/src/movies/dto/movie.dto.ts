@@ -99,6 +99,21 @@ export class TrackedMovieDto {
 	movie: MovieDto;
 }
 
+/** A user's movie, collapsed to its latest Watch, with how many Watches it has. */
+export class UserMovieDto extends TrackedMovieDto {
+	@ApiProperty({ description: "Number of Watches the user logged" })
+	watchCount: number;
+}
+
+/** How many Watches a user logged of one movie. */
+export class MovieWatchCountDto {
+	@ApiProperty()
+	movieId: string;
+
+	@ApiProperty()
+	watchCount: number;
+}
+
 export class SearchMoviesDto {
 	@ApiProperty()
 	@IsString()

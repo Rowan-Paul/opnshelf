@@ -42,9 +42,9 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 
 	const watchStatusOptions = isShow
 		? ({ mediaType: "show", showId: mediaId } as const)
-		: ({ mediaType: "movie", movieId: mediaId } as const);
+		: ({ mediaType: "movie", movieId: mediaId, skipHistory: true } as const);
 
-	const { isWatched, isEpisodeWatched, movieWatchHistory, watchHistory } =
+	const { isWatched, isEpisodeWatched, movieWatchCount, watchHistory } =
 		useMediaWatchStatus(watchStatusOptions);
 
 	const watchActions = useWatchActions(watchStatusOptions);
@@ -107,7 +107,7 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 			watchActions.isMarkMoviePending || watchActions.isUnmarkMoviePending;
 		handleToggleShelf = () => {
 			if (isWatched) {
-				if (movieWatchHistory && movieWatchHistory.length > 1) {
+				if ((movieWatchCount ?? 0) > 1) {
 					setConfirmRemoveOpen(true);
 				} else {
 					watchActions.unmarkMovieWatched();
@@ -116,7 +116,7 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 				watchActions.markMovieWatched();
 			}
 		};
-		confirmEntryCount = movieWatchHistory?.length || 0;
+		confirmEntryCount = movieWatchCount || 0;
 		handleConfirmRemove = () => {
 			watchActions.unmarkMovieWatched();
 			setConfirmRemoveOpen(false);

@@ -32,7 +32,9 @@ import {
 	MovieDto,
 	SearchResultsDto,
 	TMDBMovieDetailDto,
+	MovieWatchCountDto,
 	TrackedMovieDto,
+	UserMovieDto,
 	WatchHistoryItemDto,
 	WatchProvidersResponseDto,
 } from "./dto/movie.dto";
@@ -140,7 +142,7 @@ export class MoviesController {
 
 	@Get("user/:userDid")
 	@ApiOperation({ summary: "Get tracked movies for a user" })
-	@ApiResponse({ status: 200, type: [TrackedMovieDto] })
+	@ApiResponse({ status: 200, type: [UserMovieDto] })
 	async getUserMovies(@Param("userDid") userDid: string) {
 		const trackedMovies = await this.moviesService.getUserMovies(userDid);
 		// Match the shows endpoint: stored null colors serialize as undefined.
@@ -243,6 +245,13 @@ export class MoviesController {
 			...movie,
 			colors: colors ?? undefined,
 		};
+	}
+
+	@Get("user/:userDid/watch-counts")
+	@ApiOperation({ summary: "Get how many times a user watched each movie" })
+	@ApiResponse({ status: 200, type: [MovieWatchCountDto] })
+	getUserMovieWatchCounts(@Param("userDid") userDid: string) {
+		return this.moviesService.getUserMovieWatchCounts(userDid);
 	}
 
 	@Get("user/:userDid/movie/:movieId/history")
