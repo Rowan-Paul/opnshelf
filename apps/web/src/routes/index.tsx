@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	ArrowRight,
@@ -11,6 +12,8 @@ import {
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import StoreBadges from "#/components/StoreBadges";
 import { useAuth } from "#/lib/auth-context";
+import { prefetchHomePrompts } from "#/lib/home-prompts";
+import { useHydrated } from "#/lib/prompt-state";
 
 // Home is the signed-in view, so the landing page's anonymous visitors never
 // download it. The session check starts the fetch, so it overlaps the wait.
@@ -81,6 +84,8 @@ const SCREENSHOT_SECTIONS = [
 function IndexPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+	const hydrated = useHydrated();
 
 	useEffect(() => {
 		if (!authLoading && isAuthenticated && user?.needsOnboarding) {
@@ -88,19 +93,50 @@ function IndexPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	// Wait for the browser session before choosing personal or public content.
-	if (authLoading) {
+	// While the session check runs, fetch what Home needs first so it can
+	// appear in one piece: its code, and the answers that decide its prompts.
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) return;
 		void loadHomeView();
-		return null;
-	}
+		prefetchHomePrompts(queryClient);
+	}, [authLoading, isAuthenticated, queryClient]);
+
+	// Wait for the browser session before choosing personal or public content.
+	// A reader who waits is probably signed in (ADR 0039), so hold Home's shape
+	// rather than an empty page the footer would sit in, then get pushed from.
+	if (authLoading) return <HomeSkeleton />;
 	if (isAuthenticated) {
+		// Home renders in the browser only. When SSR could see the session (a
+		// legacy parent-domain cookie, or local dev) it rendered Home, and the
+		// lazy chunk was still loading at hydration: the first query update
+		// threw the server HTML away for the fallback and shifted the page.
+		if (!hydrated) return <HomeSkeleton />;
 		return (
-			<Suspense fallback={null}>
+			<Suspense fallback={<HomeSkeleton />}>
 				<HomeView />
 			</Suspense>
 		);
 	}
 	return <LandingPage />;
+}
+
+function HomeSkeleton() {
+	const pulse = "animate-pulse rounded bg-(--background-subtle)";
+	return (
+		<div className="container-app min-h-screen py-8" aria-hidden>
+			<div className="mb-8 space-y-3">
+				<div className={`h-9 w-72 max-w-full ${pulse}`} />
+				<div className={`h-5 w-40 ${pulse}`} />
+			</div>
+			<div className="card mb-8 h-[236px] animate-pulse lg:h-[156px]" />
+			<div className={`mb-4 h-7 w-32 ${pulse}`} />
+			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+				{["a", "b", "c"].map((key) => (
+					<div key={key} className={`aspect-video ${pulse}`} />
+				))}
+			</div>
+		</div>
+	);
 }
 
 function LandingPage() {

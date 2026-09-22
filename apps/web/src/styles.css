@@ -631,3 +631,13 @@ body {
     color: var(--foreground);
   }
 }
+
+/* Mobile App Banner: which browsers see it is decided before first paint by
+   APP_BANNER_SCRIPT (src/lib/app-banner.ts), so it never appears late. */
+html[data-app-banner="hidden"] .app-banner {
+  display: none;
+}
+html[data-app-os="ios"] .app-banner-android,
+html:not([data-app-os="ios"]) .app-banner-ios {
+  display: none;
+}

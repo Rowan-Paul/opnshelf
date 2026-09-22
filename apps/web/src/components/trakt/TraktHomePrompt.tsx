@@ -1,18 +1,18 @@
 import {
-	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMyCurrentTraktImportQueryKey,
 	usersControllerSnoozeMyTraktReminderMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Film, TimerReset } from "lucide-react";
+import { traktHomePromptQuery, useReadyAtMount } from "#/lib/home-prompts";
 import { startPromptCooldown } from "#/lib/prompt-state";
 
 export function TraktHomePrompt() {
 	const queryClient = useQueryClient();
-	const { data: job } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-	});
+	const query = traktHomePromptQuery();
+	const readyAtMount = useReadyAtMount(query.queryKey);
+	const { data: job } = useQuery(query);
 	const snooze = useMutation({
 		mutationKey: ["trakt", "import", "reminder", "snooze"],
 		...usersControllerSnoozeMyTraktReminderMutation(),
@@ -23,7 +23,7 @@ export function TraktHomePrompt() {
 			});
 		},
 	});
-	if (!job || !job.acknowledgedAt) return null;
+	if (!readyAtMount || !job || !job.acknowledgedAt) return null;
 	if (
 		job.reminderSnoozedUntil &&
 		new Date(job.reminderSnoozedUntil).getTime() > Date.now()

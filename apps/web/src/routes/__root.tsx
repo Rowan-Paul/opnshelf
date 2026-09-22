@@ -17,6 +17,7 @@ import { MobileAppBanner } from "#/components/MobileAppBanner";
 import { WelcomeTour } from "#/components/tour/WelcomeTour";
 import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
+import { APP_BANNER_SCRIPT } from "#/lib/app-banner";
 import { AuthProvider } from "#/lib/auth-context";
 import { currentUserQueryOptions } from "#/lib/auth-query";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
@@ -138,6 +139,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<head>
 				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: Theme script must be inline to prevent FOUC */}
 				<script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: must run before the body paints so the Mobile App Banner never appears late */}
+				<script dangerouslySetInnerHTML={{ __html: APP_BANNER_SCRIPT }} />
 				<HeadContent />
 			</head>
 			<body className="min-h-screen antialiased">

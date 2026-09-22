@@ -32,7 +32,9 @@ import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
-import MediaHero from "../../../../components/MediaHero";
+import MediaHero, {
+	MediaHeroActionsSkeleton,
+} from "../../../../components/MediaHero";
 import { ProgressShelfButton } from "../../../../components/ProgressShelfButton";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
@@ -80,7 +82,12 @@ function useSeasonDetails(showId: string, seasonNumber: number | null) {
 
 function ShowDetailPage() {
 	const { showId, showName } = Route.useParams();
-	const { user, userSettings, isAuthenticated } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
 	const userDid = user?.did || "";
 	const userTimezone = userSettings?.timezone;
 
@@ -116,8 +123,11 @@ function ShowDetailPage() {
 	);
 
 	const { data: watchHistory } = useShowWatchHistory(showId);
-	const { data: showProgressData, isLoading: isProgressLoading } =
-		useShowProgress([showId]);
+	const {
+		data: showProgressData,
+		isPending: isProgressPending,
+		isError: isProgressError,
+	} = useShowProgress([showId]);
 	const showProgress = showProgressData?.items.find(
 		(item) => item.showId === showId,
 	);
@@ -271,7 +281,14 @@ function ShowDetailPage() {
 						: undefined
 				}
 				progressLabel="Show progress"
-				isProgressLoading={isAuthenticated && isProgressLoading}
+				isProgressLoading={
+					// Until progress has answered, not only while it is fetching: SSR
+					// never starts the request, so "loading" arrived after first paint.
+					// A pending session check is probably a signed-in reader too
+					// (ADR 0039).
+					authLoading ||
+					(isAuthenticated && isProgressPending && !isProgressError)
+				}
 				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
 				metaItems={
 					<>
@@ -309,7 +326,10 @@ function ShowDetailPage() {
 					</>
 				}
 				actions={
-					isAuthenticated ? (
+					authLoading ||
+					(isAuthenticated && isProgressPending && !isProgressError) ? (
+						<MediaHeroActionsSkeleton />
+					) : isAuthenticated ? (
 						<>
 							<Link
 								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"

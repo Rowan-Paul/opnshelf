@@ -171,12 +171,19 @@ export default function MediaHero({
 							</div>
 						)}
 
-						{showProgressSummary && (
+						{showProgressSummary ? (
 							<p className="mt-3 text-(--foreground-muted) text-sm tabular-nums">
 								{progress.episodesWatched} of {progress.episodesTotal} episodes
 								watched · {percentage}% watched
 							</p>
-						)}
+						) : isProgressLoading ? (
+							// Holds the summary's line so the page below does not drop
+							// when progress arrives.
+							<div
+								aria-hidden
+								className="mt-3 h-5 w-56 animate-pulse rounded bg-(--background-subtle)"
+							/>
+						) : null}
 
 						{/* Current Progress */}
 						{currentProgress && <div className="mt-4">{currentProgress}</div>}
@@ -191,5 +198,25 @@ export default function MediaHero({
 				</div>
 			</div>
 		</div>
+	);
+}
+
+/**
+ * Stands in for a signed-in reader's action row while its labels are still
+ * unknown: the primary and shelf buttons change wording with progress, and
+ * swapping one row for another pushed the page down. Sized like those two
+ * labelled buttons and the four icon buttons, so it wraps as the real row
+ * does at every width.
+ */
+export function MediaHeroActionsSkeleton() {
+	const pulse = "animate-pulse rounded-lg bg-(--background-subtle)";
+	return (
+		<>
+			<div aria-hidden className={`h-[38px] w-44 ${pulse}`} />
+			<div aria-hidden className={`h-[38px] w-48 ${pulse}`} />
+			{["a", "b", "c", "d"].map((key) => (
+				<div key={key} aria-hidden className={`size-10 ${pulse}`} />
+			))}
+		</>
 	);
 }

@@ -1,6 +1,5 @@
 import {
 	atStoreReviewsControllerDismissMutation,
-	atStoreReviewsControllerGetPromptOptions,
 	atStoreReviewsControllerPublishMutation,
 	authControllerPermissionsMutation,
 } from "@opnshelf/api";
@@ -18,6 +17,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { posthog } from "#/integrations/posthog/provider";
+import { atStoreHomePromptQuery, useReadyAtMount } from "#/lib/home-prompts";
 import { startPromptCooldown } from "#/lib/prompt-state";
 
 const PLATFORM = { platform: "web" } as const;
@@ -30,19 +30,17 @@ export function AtStoreReviewPrompt() {
 	const [rating, setRating] = useState<number | null>(null);
 	const [text, setText] = useState("");
 
-	const promptOptions = atStoreReviewsControllerGetPromptOptions();
-	const { data: prompt } = useQuery({
-		...promptOptions,
-		staleTime: 5 * 60 * 1000,
-		retry: false,
-	});
+	const promptOptions = atStoreHomePromptQuery();
+	const readyAtMount = useReadyAtMount(promptOptions.queryKey);
+	const { data: prompt } = useQuery(promptOptions);
+	const visible = readyAtMount && Boolean(prompt?.eligible);
 
 	useEffect(() => {
-		if (prompt?.eligible && !viewed.current) {
+		if (visible && !viewed.current) {
 			viewed.current = true;
 			posthog.capture("atstore_review_prompt_viewed", PLATFORM);
 		}
-	}, [prompt?.eligible]);
+	}, [visible]);
 
 	useEffect(() => {
 		if (redirectHandled.current || typeof window === "undefined") return;
@@ -134,7 +132,7 @@ export function AtStoreReviewPrompt() {
 		setText("");
 	};
 
-	if (!prompt?.eligible) return null;
+	if (!visible) return null;
 
 	return (
 		<>

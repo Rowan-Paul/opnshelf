@@ -12,7 +12,7 @@ The browser records the outcome of its session check in a Web-origin cookie, `op
 
 SSR reads the cookie from the request and records its answer in the query cache, which is dehydrated with the page; the hydrating render reuses that answer instead of reading `document.cookie`, which cannot see HttpOnly cookies such as a legacy parent-domain session and could disagree. Client-side navigations reuse it too, since `AuthProvider` decides once per page load:
 
-- **Hint present** (or a session cookie the Web server can see, as in local development): unchanged. Wait for the browser session check before choosing between personal and public content.
+- **Hint present** (or a session cookie the Web server can see, as in local development): wait for the browser session check before choosing between personal and public content, as before, but hold the signed-in shape while waiting. On `/` that is a Home skeleton, not an empty page: an empty `<main>` left the footer on screen, and Home then pushed it away.
 - **Hint absent**: render public content straight away. The session check still runs on mount, and if it finds a user, the page switches to personal content.
 
 The hint grants nothing. It only chooses what to show while the check runs; every request still authenticates with the API's own cookie. A forged or stale hint costs at most the wait it was meant to skip, or one flash of the landing page.
@@ -21,7 +21,7 @@ The hint grants nothing. It only chooses what to show while the check runs; ever
 
 - A signed-in reader whose browser has no hint yet sees the landing page once before Home: sessions from before this change, cleared cookies, a new browser. The cookie is set right after, and every later load behaves as it did before.
 - Pages that gate on `isLoading` from `useAuth` render their public state in SSR for anonymous visitors, not only `/`.
-- The signed-in Home view is lazy-loaded on `/`, so anonymous visitors do not download it; the session check starts that download so a signed-in reader's wait overlaps it.
+- The signed-in Home view is lazy-loaded on `/`, so anonymous visitors do not download it. The session check starts that download, and the requests that decide Home's prompts, so a signed-in reader's wait overlaps them. A prompt whose answer is still in flight when Home appears waits for the next visit rather than pushing the page down.
 
 ## Alternatives rejected
 
