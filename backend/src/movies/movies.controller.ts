@@ -78,8 +78,10 @@ export class MoviesController {
 	@ApiOperation({ summary: "Get movie details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBMovieDetailDto })
 	async getMovieDetails(@Param("movieId") movieId: string) {
-		const movieData = await this.moviesService.getMovieDetails(movieId);
-		const credits = await this.moviesService.getMovieCredits(movieId);
+		const [movieData, credits] = await Promise.all([
+			this.moviesService.getMovieDetails(movieId),
+			this.moviesService.getMovieCredits(movieId),
+		]);
 
 		return {
 			...movieData,

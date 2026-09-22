@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+	COVER_BAND,
+	COVER_INSET,
+	ListCardSkeleton,
+	OVERVIEW_GRID,
+} from "#/components/profile/list-skeletons";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -71,12 +77,6 @@ function sortLists(
 	}
 	return sorted;
 }
-
-/** Cards and their skeleton share this, so the placeholder lands on the real shape. */
-const OVERVIEW_GRID = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
-const COVER_BAND = "relative h-32 bg-(--background-subtle)";
-/** Width the poster occupies, plus its gutter — the text column starts here. */
-const COVER_INSET = "pl-[7.5rem]";
 
 const COLOR_BG: Record<string, string> = {
 	blue: "bg-blue-500",
@@ -199,30 +199,6 @@ function ListCard({ list, handle }: { list: ListSummaryDto; handle: string }) {
  * Mounted as the route's `pendingComponent` too — the loader awaits the lists,
  * so otherwise the router would hold the previous page rather than show this.
  */
-export function ListCardSkeleton({ count = 3 }: { count?: number }) {
-	const pulse = "animate-pulse rounded bg-(--background-subtle)";
-	return (
-		<div className={OVERVIEW_GRID}>
-			{Array.from({ length: count }, (_, i) => i).map((i) => (
-				<div
-					key={i}
-					className="overflow-hidden rounded-2xl border border-(--border)"
-				>
-					<div className={cn(COVER_BAND, "animate-pulse")}>
-						{/* Stands where the poster does, overhang included. */}
-						<div className="absolute bottom-[-1rem] left-4 h-36 w-24 rounded-md bg-(--border)" />
-						<div className="absolute right-4 bottom-3 left-[7.5rem] h-4 w-1/2 rounded bg-(--border)" />
-					</div>
-					<div className={cn("space-y-2 p-4", COVER_INSET)}>
-						<div className={cn("h-3 w-4/5", pulse)} />
-						<div className={cn("h-3 w-1/3", pulse)} />
-					</div>
-				</div>
-			))}
-		</div>
-	);
-}
-
 export function ProfileListsOverview({
 	userDid,
 	handle,

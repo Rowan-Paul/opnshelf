@@ -93,8 +93,10 @@ export class ShowsController {
 	@ApiOperation({ summary: "Get show details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBShowDetailDto })
 	async getShowDetails(@Param("showId") showId: string) {
-		const showData = await this.showsService.getShowDetails(showId);
-		const credits = await this.showsService.getShowCredits(showId);
+		const [showData, credits] = await Promise.all([
+			this.showsService.getShowDetails(showId),
+			this.showsService.getShowCredits(showId),
+		]);
 
 		return {
 			...showData,

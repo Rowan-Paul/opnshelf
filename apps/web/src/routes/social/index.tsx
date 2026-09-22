@@ -8,7 +8,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Compass, Plus, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { ActivityFeed } from "#/components/following/ActivityFeed";
 import { CircleFilterBar } from "#/components/following/CircleFilterBar";
 import { PeopleSearch } from "#/components/following/PeopleSearch";
@@ -19,7 +19,7 @@ import { useAuth } from "#/lib/auth-context";
 import { useCircles } from "#/lib/hooks/useCircles";
 
 const socialSearchSchema = z.object({
-	circleId: z.string().optional(),
+	circleId: z.optional(z.string()),
 });
 
 export const Route = createFileRoute("/social/")({

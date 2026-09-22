@@ -25,7 +25,7 @@ import {
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { TraktSyncBanner } from "../components/trakt/TraktSyncBanner";
-import PostHogProvider, { posthog } from "../integrations/posthog/provider";
+import { posthog } from "../integrations/posthog/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -119,39 +119,37 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="min-h-screen antialiased">
-				<PostHogProvider>
-					<PostHogPageviewTracker />
-					<AuthProvider>
-						<SearchDialogProvider>
-							{isEmbed ? (
-								children
-							) : (
-								<div className="flex min-h-screen flex-col">
-									<Header />
-									<TraktSyncBanner />
-									<MobileAppBanner />
-									<main className="flex-1">{children}</main>
-									<Footer />
-								</div>
-							)}
-							<AccountDeletionGate />
-							{/* Above the router: the tour walks the user across routes
-							    and has to survive each change (ADR 0024). */}
-							{!isEmbed && <WelcomeTour />}
-							<Toaster />
-						</SearchDialogProvider>
-					</AuthProvider>
-					<TanStackDevtools
-						config={{ position: "bottom-right" }}
-						plugins={[
-							{
-								name: "Tanstack Router",
-								render: <TanStackRouterDevtoolsPanel />,
-							},
-							TanStackQueryDevtools,
-						]}
-					/>
-				</PostHogProvider>
+				<PostHogPageviewTracker />
+				<AuthProvider>
+					<SearchDialogProvider>
+						{isEmbed ? (
+							children
+						) : (
+							<div className="flex min-h-screen flex-col">
+								<Header />
+								<TraktSyncBanner />
+								<MobileAppBanner />
+								<main className="flex-1">{children}</main>
+								<Footer />
+							</div>
+						)}
+						<AccountDeletionGate />
+						{/* Above the router: the tour walks the user across routes
+						    and has to survive each change (ADR 0024). */}
+						{!isEmbed && <WelcomeTour />}
+						<Toaster />
+					</SearchDialogProvider>
+				</AuthProvider>
+				<TanStackDevtools
+					config={{ position: "bottom-right" }}
+					plugins={[
+						{
+							name: "Tanstack Router",
+							render: <TanStackRouterDevtoolsPanel />,
+						},
+						TanStackQueryDevtools,
+					]}
+				/>
 				<Scripts />
 			</body>
 		</html>

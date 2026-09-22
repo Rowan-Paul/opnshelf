@@ -34,7 +34,10 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AddListItemsDialog from "#/components/AddListItemsDialog";
-import { PosterGridSkeleton } from "#/components/skeletons";
+import {
+	LIST_ITEMS_GRID,
+	ListDetailSkeleton,
+} from "#/components/profile/list-skeletons";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -63,11 +66,6 @@ import { cn } from "#/lib/utils";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
 
 type SortOption = "position" | "added" | "title" | "year";
-
-// Same columns and gutters as the Shelf page, so a poster is the same size
-// wherever the reader meets it.
-const LIST_ITEMS_GRID =
-	"grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6";
 
 const SORT_LABELS: Record<SortOption, string> = {
 	position: "Order",
@@ -184,40 +182,6 @@ function getRating(media: Record<string, unknown>): number | undefined {
  * branch: the loader awaits the list, so without that the router would sit on
  * the previous page instead of showing anything.
  */
-export function ListDetailSkeleton() {
-	const pulse = "animate-pulse rounded bg-(--background-subtle)";
-	return (
-		<div className="space-y-5">
-			{/* Same running order as the real page — back link, toolbar,
-			    description, controls, grid — so nothing below shifts when the list
-			    lands. A list with no description costs one line of drift; leaving
-			    the line out costs it for every list that has one. */}
-			<div className={cn("h-5 w-20", pulse)} />
-			<div className="space-y-6">
-				<div className="-mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-(--border) border-b py-3">
-					<div className={cn("h-7 w-40", pulse)} />
-					<div className={cn("h-3 w-32", pulse)} />
-					<div className={cn("h-3 w-36", pulse)} />
-				</div>
-				<div className={cn("h-5 w-2/5", pulse)} />
-				<div className="space-y-3">
-					<div className={cn("h-10 w-full", pulse)} />
-					<div className="flex gap-2">
-						<div className={cn("h-8 w-20 rounded-full", pulse)} />
-						<div className={cn("ml-auto h-8 w-24 rounded-full", pulse)} />
-					</div>
-					<div className="flex flex-wrap gap-2">
-						{["all", "movies", "shows", "unwatched"].map((key) => (
-							<div key={key} className={cn("h-8 w-20 rounded-full", pulse)} />
-						))}
-					</div>
-				</div>
-				<PosterGridSkeleton gridClassName={LIST_ITEMS_GRID} />
-			</div>
-		</div>
-	);
-}
-
 interface ProfileListsPageProps {
 	userDid: string;
 	handle: string;

@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { AppleMark } from "#/components/AppleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/signup_/apple")({
 		 * Apple has no native credential there, so the app runs the browser leg in
 		 * an in-app browser and lands here (ADR 0027).
 		 */
-		platform: z.literal("mobile").optional(),
+		platform: z.optional(z.literal("mobile")),
 	}),
 	component: AppleSignupPage,
 });

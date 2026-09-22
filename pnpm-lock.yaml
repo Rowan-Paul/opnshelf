@@ -243,9 +243,6 @@ importers:
       '@opnshelf/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@posthog/react':
-        specifier: ^1.10.6
-        version: 1.10.6(@types/react@19.2.14)(posthog-js@1.429.2(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
       '@t3-oss/env-core':
         specifier: ^0.13.10
         version: 0.13.11(typescript@5.9.3)(valibot@1.4.2(typescript@5.9.3))(zod@4.3.6)
@@ -2764,16 +2761,6 @@ packages:
 
   '@posthog/core@1.52.1':
     resolution: {integrity: sha512-WT4TUgmsyBYHAmhsifg+LdaFH9wzOcp3UNWnIaeVOgodfMeG/X39V9n0lyebaxoHLR/NMCMq8gsrF69ldzuMhg==}
-
-  '@posthog/react@1.10.6':
-    resolution: {integrity: sha512-eXCxqrXT53MLU+xaiE1SeoIU7kMagQnWOhh/075cfckjfl4/K0yBpeQw8rn2yGFyDxEnXN+rxV/YGEELpnW3GA==}
-    peerDependencies:
-      '@types/react': '>=16.8.0'
-      posthog-js: '>=1.257.2'
-      react: 19.2.3
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
 
   '@posthog/types@1.409.2':
     resolution: {integrity: sha512-hZ4EXZ1+BstMaxUkmAEg3qvgMR/S00Xb+wEwY/Tx2Dr9dBgiBWrERxaq2UwICh/Fh/vVXpKZT/0SkRtO8JKQ2A==}
@@ -12822,13 +12809,6 @@ snapshots:
     dependencies:
       '@posthog/types': 1.410.0
 
-  '@posthog/react@1.10.6(@types/react@19.2.14)(posthog-js@1.429.2(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)':
-    dependencies:
-      posthog-js: 1.429.2(@types/react@19.2.14)(react@19.2.3)
-      react: 19.2.3
-    optionalDependencies:
-      '@types/react': 19.2.14
-
   '@posthog/types@1.409.2': {}
 
   '@posthog/types@1.410.0': {}
@@ -13859,9 +13839,7 @@ snapshots:
       metro-runtime: 0.84.5
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

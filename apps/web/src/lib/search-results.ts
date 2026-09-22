@@ -3,7 +3,7 @@ import type {
 	TmdbShowResultDto,
 	UnifiedSearchResultDto,
 } from "@opnshelf/api";
-import { z } from "zod";
+import { z } from "zod/mini";
 
 /**
  * Pure URL-state and result-shaping logic for the Search route. The route
@@ -12,9 +12,12 @@ import { z } from "zod";
  */
 
 export const searchRouteSchema = z.object({
-	q: z.string().optional(),
-	type: z.string().optional(),
-	page: z.coerce.number().int().min(1).optional().default(1),
+	q: z.optional(z.string()),
+	type: z.optional(z.string()),
+	page: z._default(
+		z.optional(z.coerce.number().check(z.int(), z.minimum(1))),
+		1,
+	),
 });
 
 export type SearchRouteParams = z.infer<typeof searchRouteSchema>;
