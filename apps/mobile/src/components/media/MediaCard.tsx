@@ -309,7 +309,7 @@ function MediaCardWithActions({
 
 	const watchStatus = useWatchStatus(
 		isMovie
-			? { mediaType: "movie", movieId: mediaId }
+			? { mediaType: "movie", movieId: mediaId, skipHistory: true }
 			: { mediaType: "show", showId: mediaId, skipHistory: !ep },
 	);
 	const watchActions = useWatchActions(

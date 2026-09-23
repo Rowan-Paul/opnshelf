@@ -1,10 +1,10 @@
 import { createEnv } from "@t3-oss/env-core";
-import { z } from "zod";
+import { z } from "zod/mini";
 
 export const env = createEnv({
 	server: {
-		SERVER_URL: z.url().optional(),
-		SSR_RATE_LIMIT_SECRET: z.string().min(32).optional(),
+		SERVER_URL: z.optional(z.url()),
+		SSR_RATE_LIMIT_SECRET: z.optional(z.string().check(z.minLength(32))),
 	},
 
 	/**
@@ -14,17 +14,16 @@ export const env = createEnv({
 	clientPrefix: "VITE_",
 
 	client: {
-		VITE_APP_TITLE: z.string().min(1).optional(),
-		VITE_API_URL: z.url().optional().default("http://127.0.0.1:3001"),
-		VITE_SITE_URL: z.url().optional(),
+		VITE_APP_TITLE: z.optional(z.string().check(z.minLength(1))),
+		VITE_API_URL: z._default(z.optional(z.url()), "http://127.0.0.1:3001"),
+		VITE_SITE_URL: z.optional(z.url()),
 		// Cloudflare Turnstile site key for the signup captcha (public key).
-		VITE_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
+		VITE_TURNSTILE_SITE_KEY: z.optional(z.string().check(z.minLength(1))),
 		// Handle domain accounts are created on (the PDS host), e.g. "opnshelf.social".
-		VITE_PDS_HANDLE_DOMAIN: z
-			.string()
-			.min(1)
-			.optional()
-			.default("opnshelf.social"),
+		VITE_PDS_HANDLE_DOMAIN: z._default(
+			z.optional(z.string().check(z.minLength(1))),
+			"opnshelf.social",
+		),
 	},
 
 	/**

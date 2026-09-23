@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;450;500;600;700&display=swap');
+/* Self-hosted: a Google Fonts @import chained two extra origins in front of first paint. */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/plus-jakarta-sans';
 @import 'tailwindcss';
 
 @plugin '@tailwindcss/typography';
@@ -130,8 +132,8 @@
    ========================================================================== */
 
 @theme inline {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -628,4 +630,14 @@ body {
     background-color: var(--background);
     color: var(--foreground);
   }
+}
+
+/* Mobile App Banner: which browsers see it is decided before first paint by
+   APP_BANNER_SCRIPT (src/lib/app-banner.ts), so it never appears late. */
+html[data-app-banner="hidden"] .app-banner {
+  display: none;
+}
+html[data-app-os="ios"] .app-banner-android,
+html:not([data-app-os="ios"]) .app-banner-ios {
+  display: none;
 }

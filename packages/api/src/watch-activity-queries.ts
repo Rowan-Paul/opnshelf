@@ -22,6 +22,7 @@ export const WATCH_ACTIVITY_QUERY_IDS = [
 	"listsControllerGetUserLists",
 	// Movies the user tracks, and the plays behind them
 	"moviesControllerGetMovieWatchHistory",
+	"moviesControllerGetUserMovieWatchCounts",
 	"moviesControllerGetUserMovies",
 	"moviesControllerGetUserMoviesPaginated",
 	// Shelf + the activity summary behind the stats strip

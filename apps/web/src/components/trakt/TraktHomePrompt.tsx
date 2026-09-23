@@ -1,18 +1,41 @@
 import {
-	usersControllerGetMyCurrentTraktImportOptions,
+	type usersControllerGetMyCurrentTraktImport,
 	usersControllerGetMyCurrentTraktImportQueryKey,
 	usersControllerSnoozeMyTraktReminderMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Film, TimerReset } from "lucide-react";
+import { traktHomePromptQuery, useEligibleAtMount } from "#/lib/home-prompts";
 import { startPromptCooldown } from "#/lib/prompt-state";
+
+type TraktImportJob = NonNullable<
+	Awaited<ReturnType<typeof usersControllerGetMyCurrentTraktImport>>["data"]
+>;
+
+/** Whether an import still needs the reader: paused, failed, or unmatched. */
+function isTraktPromptEligible(
+	job: TraktImportJob | null | undefined,
+): boolean {
+	if (!job || !job.acknowledgedAt) return false;
+	if (
+		job.reminderSnoozedUntil &&
+		new Date(job.reminderSnoozedUntil).getTime() > Date.now()
+	) {
+		return false;
+	}
+	const needsResume = job.status === "paused" || job.status === "failed";
+	return needsResume || job.unmatchedGroups.length > 0;
+}
 
 export function TraktHomePrompt() {
 	const queryClient = useQueryClient();
-	const { data: job } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-	});
+	const query = traktHomePromptQuery();
+	const eligibleAtMount = useEligibleAtMount(
+		query.queryKey,
+		isTraktPromptEligible,
+	);
+	const { data: job } = useQuery(query);
 	const snooze = useMutation({
 		mutationKey: ["trakt", "import", "reminder", "snooze"],
 		...usersControllerSnoozeMyTraktReminderMutation(),
@@ -23,16 +46,9 @@ export function TraktHomePrompt() {
 			});
 		},
 	});
-	if (!job || !job.acknowledgedAt) return null;
-	if (
-		job.reminderSnoozedUntil &&
-		new Date(job.reminderSnoozedUntil).getTime() > Date.now()
-	) {
-		return null;
-	}
+	if (!eligibleAtMount || !job || !isTraktPromptEligible(job)) return null;
 	const needsResume = job.status === "paused" || job.status === "failed";
 	const groups = job.unmatchedGroups.length;
-	if (!needsResume && groups === 0) return null;
 	const watchCount = job.unmatchedGroups.reduce(
 		(total, group) => total + group.watchCount,
 		0,

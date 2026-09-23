@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/signup_/google")({
 		meta: [{ title: "Choose your handle | Opnshelf" }],
 	}),
 	validateSearch: z.object({
-		suggested: z.string().optional(),
+		suggested: z.optional(z.string()),
 	}),
 	component: GoogleSignupPage,
 });

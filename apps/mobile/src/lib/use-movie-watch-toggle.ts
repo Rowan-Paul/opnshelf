@@ -1,10 +1,12 @@
 import {
 	invalidateWatchActivityQueries,
-	moviesControllerGetUserMoviesOptions,
-	moviesControllerGetUserMoviesQueryKey,
+	type MovieWatchCountDto,
+	moviesControllerGetUserMovieWatchCountsOptions,
+	moviesControllerGetUserMovieWatchCountsQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
-	type TrackedMovieDto,
+	withMovieWatch,
+	withoutMovieWatches,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
@@ -15,9 +17,9 @@ import { useAuth } from "@/lib/auth-context";
 /**
  * Lightweight bulk movie watch-toggle for list/grid surfaces (e.g. a person's
  * filmography) where instantiating a full `useWatchActions` per card would be
- * wasteful. Reads the user's tracked-movies list once to derive watched state,
+ * wasteful. Reads the user's shared watch counts once to derive watched state,
  * and exposes a single mark/unmark pair parameterised by `movieId` at call
- * time. Optimistically patches the shared tracked-movies cache and invalidates
+ * time. Optimistically patches the shared watch-counts cache and invalidates
  * every watch-activity query on settle, matching `use-watch-actions`.
  *
  * Movies only — show "watched" is per-episode and can't be a single toggle.
@@ -28,12 +30,12 @@ export function useMovieWatchToggle() {
 	const queryClient = useQueryClient();
 	const toast = useToast();
 
-	const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+	const userMoviesKey = moviesControllerGetUserMovieWatchCountsQueryKey({
 		path: { userDid },
 	});
 
 	const { data: userMovies } = useQuery({
-		...moviesControllerGetUserMoviesOptions({ path: { userDid } }),
+		...moviesControllerGetUserMovieWatchCountsOptions({ path: { userDid } }),
 		enabled: isAuthenticated && !!userDid,
 	});
 
@@ -57,13 +59,12 @@ export function useMovieWatchToggle() {
 		...moviesControllerMarkWatchedMutation(),
 		onMutate: async (variables) => {
 			await queryClient.cancelQueries({ queryKey: userMoviesKey });
-			const prev = queryClient.getQueryData<TrackedMovieDto[]>(userMoviesKey);
+			const prev =
+				queryClient.getQueryData<MovieWatchCountDto[]>(userMoviesKey);
 			const movieId = String(variables.body.movieId);
-			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) => {
-				if (!Array.isArray(old)) return old;
-				if (old.some((m) => String(m.movieId) === movieId)) return old;
-				return [...old, { movieId } as TrackedMovieDto];
-			});
+			queryClient.setQueryData<MovieWatchCountDto[]>(userMoviesKey, (old) =>
+				Array.isArray(old) ? withMovieWatch(old, movieId) : old,
+			);
 			return { prev };
 		},
 		onError: (error, _vars, context) => {
@@ -88,12 +89,11 @@ export function useMovieWatchToggle() {
 		...moviesControllerUnmarkWatchedMutation(),
 		onMutate: async (variables) => {
 			await queryClient.cancelQueries({ queryKey: userMoviesKey });
-			const prev = queryClient.getQueryData<TrackedMovieDto[]>(userMoviesKey);
+			const prev =
+				queryClient.getQueryData<MovieWatchCountDto[]>(userMoviesKey);
 			const movieId = String(variables.path.movieId);
-			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) =>
-				Array.isArray(old)
-					? old.filter((m) => String(m.movieId) !== movieId)
-					: old,
+			queryClient.setQueryData<MovieWatchCountDto[]>(userMoviesKey, (old) =>
+				Array.isArray(old) ? withoutMovieWatches(old, movieId) : old,
 			);
 			return { prev };
 		},

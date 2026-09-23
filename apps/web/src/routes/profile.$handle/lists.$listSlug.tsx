@@ -4,10 +4,8 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	ListDetailSkeleton,
-	ProfileListsPage,
-} from "#/components/profile/ProfileListsPage";
+import { ListDetailSkeleton } from "#/components/profile/list-skeletons";
+import { ProfileListsPage } from "#/components/profile/ProfileListsPage";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/profile/$handle/lists/$listSlug")({

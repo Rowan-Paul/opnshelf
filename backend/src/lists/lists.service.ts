@@ -28,6 +28,7 @@ import type {
 	ListDto,
 	ListSummaryDto,
 	ListWithItemsDto,
+	ListMembershipDto,
 	ListsForItemDto,
 	UpdateListDto,
 } from "./dto/list.dto";
@@ -528,6 +529,47 @@ export class ListsService {
 			isDefault: list.isDefault,
 			isInList: list.items.length > 0,
 		}));
+	}
+
+	/**
+	 * Every item in the user's lists with the lists that hold it, so a page of
+	 * posters asks once instead of once per card (`getListsForItem`).
+	 */
+	async getListMemberships(userDid: string): Promise<ListMembershipDto[]> {
+		const lists = await this.prisma.list.findMany({
+			where: { userDid },
+			select: {
+				id: true,
+				items: {
+					select: {
+						mediaType: true,
+						mediaId: true,
+						seasonNumber: true,
+						episodeNumber: true,
+					},
+				},
+			},
+		});
+
+		const byItem = new Map<string, ListMembershipDto>();
+		for (const list of lists) {
+			for (const item of list.items) {
+				const key = `${item.mediaType}:${item.mediaId}:${item.seasonNumber}:${item.episodeNumber}`;
+				const membership = byItem.get(key);
+				if (membership) {
+					membership.listIds.push(list.id);
+				} else {
+					byItem.set(key, {
+						mediaType: item.mediaType as ListMembershipDto["mediaType"],
+						mediaId: item.mediaId,
+						seasonNumber: item.seasonNumber,
+						episodeNumber: item.episodeNumber,
+						listIds: [list.id],
+					});
+				}
+			}
+		}
+		return [...byItem.values()];
 	}
 
 	async hasAllDefaultLists(userDid: string): Promise<boolean> {

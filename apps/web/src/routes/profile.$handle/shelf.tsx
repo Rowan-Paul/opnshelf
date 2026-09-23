@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { ChevronDown, Film, Search, SlidersHorizontal, Tv } from "lucide-react";
 import { useState } from "react";
-import { z } from "zod";
+import { z } from "zod/mini";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
 import { Button } from "#/components/ui/button";
@@ -31,9 +31,9 @@ import { useWatchActions } from "#/lib/hooks/useWatchActions";
 import { groupShelfItemsByDate } from "#/lib/shelf-sections";
 
 const searchSchema = z.object({
-	page: z.coerce.number().min(1).optional().default(1),
-	type: z.enum(["all", "movie", "episode"]).optional().default("all"),
-	sort: z.enum(["newest", "oldest"]).optional().default("newest"),
+	page: z._default(z.optional(z.coerce.number().check(z.minimum(1))), 1),
+	type: z._default(z.optional(z.enum(["all", "movie", "episode"])), "all"),
+	sort: z._default(z.optional(z.enum(["newest", "oldest"])), "newest"),
 });
 
 export const Route = createFileRoute("/profile/$handle/shelf")({

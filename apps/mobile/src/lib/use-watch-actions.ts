@@ -1,9 +1,10 @@
 import {
 	type EpisodeHistoryItemDto,
 	invalidateWatchActivityQueries,
+	type MovieWatchCountDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetMovieWatchHistoryQueryKey,
-	moviesControllerGetUserMoviesQueryKey,
+	moviesControllerGetUserMovieWatchCountsQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
@@ -12,8 +13,9 @@ import {
 	showsControllerMarkShowWatchedMutation,
 	showsControllerMarkWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
-	type TrackedMovieDto,
 	type WatchHistoryItemDto,
+	withMovieWatch,
+	withoutMovieWatches,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
@@ -121,7 +123,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 
 	// --- Movie keys ---
 	const movieId = options.mediaType === "movie" ? options.movieId : "";
-	const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+	const userMoviesKey = moviesControllerGetUserMovieWatchCountsQueryKey({
 		path: { userDid },
 	});
 	const movieHistoryKey = moviesControllerGetMovieWatchHistoryQueryKey({
@@ -137,7 +139,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				queryClient.cancelQueries({ queryKey: movieHistoryKey }),
 			]);
 			const prevUserMovies =
-				queryClient.getQueryData<TrackedMovieDto[]>(userMoviesKey);
+				queryClient.getQueryData<MovieWatchCountDto[]>(userMoviesKey);
 			const prevHistory =
 				queryClient.getQueryData<WatchHistoryItemDto[]>(movieHistoryKey);
 
@@ -158,11 +160,9 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 						}),
 				);
 			}
-			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) => {
-				if (!Array.isArray(old)) return old;
-				if (old.some((m) => String(m.movieId) === movieId)) return old;
-				return [...old, { movieId } as TrackedMovieDto];
-			});
+			queryClient.setQueryData<MovieWatchCountDto[]>(userMoviesKey, (old) =>
+				Array.isArray(old) ? withMovieWatch(old, movieId) : old,
+			);
 			return { prevUserMovies, prevHistory };
 		},
 		onError: (error, _vars, context) => {
@@ -193,15 +193,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				queryClient.cancelQueries({ queryKey: movieHistoryKey }),
 			]);
 			const prevUserMovies =
-				queryClient.getQueryData<TrackedMovieDto[]>(userMoviesKey);
+				queryClient.getQueryData<MovieWatchCountDto[]>(userMoviesKey);
 			const prevHistory =
 				queryClient.getQueryData<WatchHistoryItemDto[]>(movieHistoryKey);
 
 			queryClient.setQueryData<WatchHistoryItemDto[]>(movieHistoryKey, []);
-			queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) =>
-				Array.isArray(old)
-					? old.filter((m) => String(m.movieId) !== movieId)
-					: old,
+			queryClient.setQueryData<MovieWatchCountDto[]>(userMoviesKey, (old) =>
+				Array.isArray(old) ? withoutMovieWatches(old, movieId) : old,
 			);
 			return { prevUserMovies, prevHistory };
 		},
@@ -234,18 +232,20 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			const prevHistory =
 				queryClient.getQueryData<WatchHistoryItemDto[]>(movieHistoryKey);
 			const prevUserMovies =
-				queryClient.getQueryData<TrackedMovieDto[]>(userMoviesKey);
+				queryClient.getQueryData<MovieWatchCountDto[]>(userMoviesKey);
 			const id = variables.path?.trackedMovieId;
 			const next = (prevHistory ?? []).filter((e) => e.id !== id);
 			queryClient.setQueryData<WatchHistoryItemDto[]>(movieHistoryKey, next);
-			// Last play removed → the movie is no longer on the shelf.
-			if (next.length === 0) {
-				queryClient.setQueryData<TrackedMovieDto[]>(userMoviesKey, (old) =>
-					Array.isArray(old)
-						? old.filter((m) => String(m.movieId) !== movieId)
-						: old,
-				);
-			}
+			// One Watch fewer; the last one removed takes the movie off the shelf.
+			queryClient.setQueryData<MovieWatchCountDto[]>(userMoviesKey, (old) =>
+				Array.isArray(old)
+					? withoutMovieWatches(old, movieId).concat(
+							old
+								.filter((m) => m.movieId === movieId && m.watchCount > 1)
+								.map((m) => ({ ...m, watchCount: m.watchCount - 1 })),
+						)
+					: old,
+			);
 			return { prevHistory, prevUserMovies };
 		},
 		onError: (error, _vars, context) => {

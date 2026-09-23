@@ -1,7 +1,8 @@
 import {
 	invalidateWatchActivityQueries,
+	type MovieWatchCountDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
-	moviesControllerGetUserMoviesQueryKey,
+	moviesControllerGetUserMovieWatchCountsQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
@@ -10,6 +11,8 @@ import {
 	showsControllerMarkShowWatchedMutation,
 	showsControllerMarkWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	withMovieWatch,
+	withoutMovieWatches,
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -92,22 +95,16 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["movies", movieId, "markWatched"],
 		...moviesControllerMarkWatchedMutation(),
 		onMutate: async () => {
-			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+			const userMoviesKey = moviesControllerGetUserMovieWatchCountsQueryKey({
 				path: { userDid },
 			});
 			await queryClient.cancelQueries({ queryKey: userMoviesKey });
 			const previousUserMovies = queryClient.getQueryData(userMoviesKey);
 
-			queryClient.setQueryData(userMoviesKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return [
-					...old,
-					{
-						movieId:
-							options.mediaType === "movie" ? Number(options.movieId) : 0,
-					},
-				];
-			});
+			// Cards read the watch count from this list, so count the new Watch.
+			queryClient.setQueryData<MovieWatchCountDto[]>(userMoviesKey, (old) =>
+				Array.isArray(old) ? withMovieWatch(old, movieId) : old,
+			);
 
 			return { previousUserMovies, userMoviesKey };
 		},
@@ -135,20 +132,15 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["movies", movieId, "unmarkWatched"],
 		...moviesControllerUnmarkWatchedMutation(),
 		onMutate: async () => {
-			const userMoviesKey = moviesControllerGetUserMoviesQueryKey({
+			const userMoviesKey = moviesControllerGetUserMovieWatchCountsQueryKey({
 				path: { userDid },
 			});
 			await queryClient.cancelQueries({ queryKey: userMoviesKey });
 			const previousUserMovies = queryClient.getQueryData(userMoviesKey);
 
-			queryClient.setQueryData(userMoviesKey, (old: unknown) => {
-				if (!old || !Array.isArray(old)) return old;
-				return old.filter(
-					(m: { movieId: number }) =>
-						String(m.movieId) !==
-						(options.mediaType === "movie" ? options.movieId : ""),
-				);
-			});
+			queryClient.setQueryData<MovieWatchCountDto[]>(userMoviesKey, (old) =>
+				Array.isArray(old) ? withoutMovieWatches(old, movieId) : old,
+			);
 
 			return { previousUserMovies, userMoviesKey };
 		},

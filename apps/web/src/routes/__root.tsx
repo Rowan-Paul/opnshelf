@@ -1,3 +1,5 @@
+import interFont from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+import jakartaFont from "@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url";
 import { isUnauthorizedError, type UserDto } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
@@ -15,9 +17,11 @@ import { MobileAppBanner } from "#/components/MobileAppBanner";
 import { WelcomeTour } from "#/components/tour/WelcomeTour";
 import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
+import { APP_BANNER_SCRIPT } from "#/lib/app-banner";
 import { AuthProvider } from "#/lib/auth-context";
 import { currentUserQueryOptions } from "#/lib/auth-query";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
+import { mayBeSignedIn, SIGNED_IN_HINT_QUERY_KEY } from "#/lib/session-hint";
 import {
 	DefaultErrorComponent,
 	NotFoundComponent,
@@ -25,7 +29,7 @@ import {
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { TraktSyncBanner } from "../components/trakt/TraktSyncBanner";
-import PostHogProvider, { posthog } from "../integrations/posthog/provider";
+import { posthog } from "../integrations/posthog/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -37,6 +41,16 @@ const THEME_INIT_SCRIPT = `(() => {try{const s=localStorage.getItem('theme'),m=s
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async ({ context, location }) => {
+		// Dehydrated with the rest of the cache, so AuthProvider hydrates with
+		// the same answer SSR rendered with (ADR 0039).
+		if (
+			context.queryClient.getQueryData(SIGNED_IN_HINT_QUERY_KEY) === undefined
+		) {
+			context.queryClient.setQueryData(
+				SIGNED_IN_HINT_QUERY_KEY,
+				mayBeSignedIn(),
+			);
+		}
 		// Allow onboarding, login, auth callback, and embed pages without redirect.
 		// `/embed/*` is chromeless and consumed inside the mobile app's WebView, so
 		// it must never bounce to onboarding.
@@ -95,6 +109,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
+			// Found only once the stylesheet is parsed otherwise; the Latin
+			// subsets cover nearly every page.
+			...[interFont, jakartaFont].map((href) => ({
+				rel: "preload",
+				href,
+				as: "font",
+				type: "font/woff2",
+				crossOrigin: "anonymous" as const,
+			})),
 			{ rel: "icon", type: "image/png", href: "/favicon.png" },
 			{ rel: "apple-touch-icon", href: "/icon.png" },
 			{ rel: "manifest", href: "/manifest.json" },
@@ -116,42 +139,42 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<head>
 				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: Theme script must be inline to prevent FOUC */}
 				<script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: must run before the body paints so the Mobile App Banner never appears late */}
+				<script dangerouslySetInnerHTML={{ __html: APP_BANNER_SCRIPT }} />
 				<HeadContent />
 			</head>
 			<body className="min-h-screen antialiased">
-				<PostHogProvider>
-					<PostHogPageviewTracker />
-					<AuthProvider>
-						<SearchDialogProvider>
-							{isEmbed ? (
-								children
-							) : (
-								<div className="flex min-h-screen flex-col">
-									<Header />
-									<TraktSyncBanner />
-									<MobileAppBanner />
-									<main className="flex-1">{children}</main>
-									<Footer />
-								</div>
-							)}
-							<AccountDeletionGate />
-							{/* Above the router: the tour walks the user across routes
-							    and has to survive each change (ADR 0024). */}
-							{!isEmbed && <WelcomeTour />}
-							<Toaster />
-						</SearchDialogProvider>
-					</AuthProvider>
-					<TanStackDevtools
-						config={{ position: "bottom-right" }}
-						plugins={[
-							{
-								name: "Tanstack Router",
-								render: <TanStackRouterDevtoolsPanel />,
-							},
-							TanStackQueryDevtools,
-						]}
-					/>
-				</PostHogProvider>
+				<PostHogPageviewTracker />
+				<AuthProvider>
+					<SearchDialogProvider>
+						{isEmbed ? (
+							children
+						) : (
+							<div className="flex min-h-screen flex-col">
+								<Header />
+								<TraktSyncBanner />
+								<MobileAppBanner />
+								<main className="flex-1">{children}</main>
+								<Footer />
+							</div>
+						)}
+						<AccountDeletionGate />
+						{/* Above the router: the tour walks the user across routes
+						    and has to survive each change (ADR 0024). */}
+						{!isEmbed && <WelcomeTour />}
+						<Toaster />
+					</SearchDialogProvider>
+				</AuthProvider>
+				<TanStackDevtools
+					config={{ position: "bottom-right" }}
+					plugins={[
+						{
+							name: "Tanstack Router",
+							render: <TanStackRouterDevtoolsPanel />,
+						},
+						TanStackQueryDevtools,
+					]}
+				/>
 				<Scripts />
 			</body>
 		</html>

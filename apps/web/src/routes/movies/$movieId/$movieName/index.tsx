@@ -138,9 +138,9 @@ function MovieDetailPage() {
 	}
 
 	const backdropUrl = movie.backdrop_path
-		? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+		? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
 		: movie.poster_path
-			? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+			? `https://image.tmdb.org/t/p/w780${movie.poster_path}`
 			: "";
 	const posterUrl = movie.poster_path
 		? `https://image.tmdb.org/t/p/w500${movie.poster_path}`

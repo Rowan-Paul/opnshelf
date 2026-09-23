@@ -6,6 +6,7 @@ import { AuthProvider } from "./auth-context";
 const mocks = vi.hoisted(() => ({
 	authQueryKey: ["auth", "me"] as const,
 	currentQueryClient: {
+		getQueryData: vi.fn(),
 		setQueryData: vi.fn(),
 		clear: vi.fn(),
 	},
@@ -37,6 +38,11 @@ vi.mock("#/env", () => ({
 	env: { VITE_API_URL: "https://api.example.test" },
 }));
 
+vi.mock("./session-hint", () => ({
+	SIGNED_IN_HINT_QUERY_KEY: ["session-hint"],
+	mayBeSignedIn: () => true,
+	rememberSignedIn: vi.fn(),
+}));
 vi.mock("#/integrations/posthog/provider", () => ({
 	posthog: { reset: vi.fn() },
 }));
@@ -44,6 +50,7 @@ vi.mock("#/integrations/posthog/provider", () => ({
 function client(name: string) {
 	return {
 		name,
+		getQueryData: vi.fn(),
 		setQueryData: vi.fn(),
 		clear: vi.fn(),
 	};

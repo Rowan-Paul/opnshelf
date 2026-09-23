@@ -53,6 +53,7 @@ describe("MoviesService", () => {
 	const mockPrismaService = {
 		trackedMovie: {
 			findMany: vi.fn(),
+			groupBy: vi.fn(),
 			findFirst: vi.fn(),
 			upsert: vi.fn(),
 			create: vi.fn(),
@@ -999,6 +1000,27 @@ describe("MoviesService", () => {
 					"2024-01-15T10:00:00Z",
 				),
 			).rejects.toThrow("Movie not found");
+		});
+	});
+
+	describe("getUserMovieWatchCounts", () => {
+		it("counts each movie's Watches without loading the movies", async () => {
+			mockPrismaService.trackedMovie.groupBy.mockResolvedValue([
+				{ movieId: "550", _count: { _all: 2 } },
+				{ movieId: "680", _count: { _all: 1 } },
+			]);
+
+			await expect(
+				service.getUserMovieWatchCounts("did:plc:abc123"),
+			).resolves.toEqual([
+				{ movieId: "550", watchCount: 2 },
+				{ movieId: "680", watchCount: 1 },
+			]);
+			expect(mockPrismaService.trackedMovie.groupBy).toHaveBeenCalledWith({
+				by: ["movieId"],
+				where: { userDid: "did:plc:abc123" },
+				_count: { _all: true },
+			});
 		});
 	});
 

@@ -88,7 +88,12 @@ export const Route = createFileRoute(
 
 function SeasonDetailPage() {
 	const { showId, showName, seasonNumber } = Route.useParams();
-	const { user, userSettings, isAuthenticated } = useAuth();
+	const {
+		user,
+		userSettings,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
 	const userTimezone = userSettings?.timezone;
 
 	const seasonNum = Number.parseInt(seasonNumber, 10);
@@ -122,8 +127,11 @@ function SeasonDetailPage() {
 
 	const { data: upNextData } = useUserUpNext(user?.did || "", showId);
 	const { data: watchHistory } = useShowWatchHistory(showId);
-	const { data: showProgressData, isLoading: isProgressLoading } =
-		useShowProgress([showId]);
+	const {
+		data: showProgressData,
+		isPending: isProgressPending,
+		isError: isProgressError,
+	} = useShowProgress([showId]);
 	const seasonProgress = showProgressData?.items
 		.find((item) => item.showId === showId)
 		?.seasons.find((item) => item.seasonNumber === seasonNum);
@@ -263,9 +271,9 @@ function SeasonDetailPage() {
 	}
 
 	const backdropUrl = show.backdrop_path
-		? `https://image.tmdb.org/t/p/original${show.backdrop_path}`
+		? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}`
 		: show.poster_path
-			? `https://image.tmdb.org/t/p/original${show.poster_path}`
+			? `https://image.tmdb.org/t/p/w780${show.poster_path}`
 			: "";
 	const posterUrl = season.poster_path
 		? `https://image.tmdb.org/t/p/w500${season.poster_path}`
@@ -336,7 +344,14 @@ function SeasonDetailPage() {
 						: undefined
 				}
 				progressLabel="Season progress"
-				isProgressLoading={isAuthenticated && isProgressLoading}
+				isProgressLoading={
+					// Until progress has answered, not only while it is fetching: SSR
+					// never starts the request, so "loading" arrived after first paint.
+					// A pending session check is probably a signed-in reader too
+					// (ADR 0039).
+					authLoading ||
+					(isAuthenticated && isProgressPending && !isProgressError)
+				}
 				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
 				metaItems={
 					<>

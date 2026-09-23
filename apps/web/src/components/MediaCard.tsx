@@ -65,6 +65,23 @@ export interface MediaCardProps {
 	isUnmarkWatchedPending?: boolean;
 }
 
+const TMDB_POSTER = /^(https:\/\/image\.tmdb\.org\/t\/p\/)w500(\/.+)$/;
+
+/**
+ * The poster grids' column widths: two columns on phones up to six on wide
+ * screens. With the srcset below, a phone picks w342 instead of w500.
+ */
+const POSTER_GRID_SIZES =
+	"(min-width: 1280px) 200px, (min-width: 1024px) 24vw, (min-width: 640px) 32vw, calc(50vw - 1.5rem)";
+
+/** TMDB's smaller poster sizes for a w500 poster URL, or undefined for others. */
+function posterSrcSet(url: string | undefined): string | undefined {
+	const match = url?.match(TMDB_POSTER);
+	if (!match) return undefined;
+	const [, base, path] = match;
+	return [185, 342, 500].map((w) => `${base}w${w}${path} ${w}w`).join(", ");
+}
+
 export default function MediaCard({
 	id,
 	title,
@@ -128,6 +145,7 @@ export default function MediaCard({
 
 	const imageUrl =
 		layout === "backdrop" && backdropUrl ? backdropUrl : posterUrl;
+	const posterSources = posterSrcSet(imageUrl);
 
 	const linkHref = (() => {
 		if (href) return href;
@@ -185,6 +203,8 @@ export default function MediaCard({
 					{/* Main image */}
 					<img
 						src={imageUrl}
+						srcSet={posterSources}
+						sizes={posterSources ? POSTER_GRID_SIZES : undefined}
 						loading={imageLoading}
 						decoding="async"
 						alt={title}

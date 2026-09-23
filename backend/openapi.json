@@ -265,7 +265,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TrackedMovieDto"
+                    "$ref": "#/components/schemas/UserMovieDto"
                   }
                 }
               }
@@ -379,6 +379,40 @@
           }
         },
         "summary": "Get movie from database",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/movies/user/{userDid}/watch-counts": {
+      "get": {
+        "operationId": "MoviesController_getUserMovieWatchCounts",
+        "parameters": [
+          {
+            "name": "userDid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovieWatchCountDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get how many times a user watched each movie",
         "tags": [
           "movies"
         ]
@@ -3153,6 +3187,39 @@
           }
         },
         "summary": "Get a public list with its items for a user",
+        "tags": [
+          "lists"
+        ]
+      }
+    },
+    "/lists/items/memberships": {
+      "get": {
+        "operationId": "ListsController_getListMemberships",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListMembershipDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Every item in the signed-in user's lists, with the lists that hold it",
         "tags": [
           "lists"
         ]
@@ -6419,6 +6486,79 @@
           "title"
         ]
       },
+      "UserMovieDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rkey": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "cid": {
+            "type": "string"
+          },
+          "userDid": {
+            "type": "string"
+          },
+          "movieId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "watchedDate": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "movie": {
+            "$ref": "#/components/schemas/MovieDto"
+          },
+          "watchCount": {
+            "type": "number",
+            "description": "Number of Watches the user logged"
+          }
+        },
+        "required": [
+          "id",
+          "rkey",
+          "uri",
+          "cid",
+          "userDid",
+          "movieId",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "movie",
+          "watchCount"
+        ]
+      },
+      "MarkWatchedDto": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "string",
+            "description": "TMDB movie ID"
+          },
+          "watchedAt": {
+            "type": "string",
+            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "movieId"
+        ]
+      },
       "TrackedMovieDto": {
         "type": "object",
         "properties": {
@@ -6469,22 +6609,19 @@
           "movie"
         ]
       },
-      "MarkWatchedDto": {
+      "MovieWatchCountDto": {
         "type": "object",
         "properties": {
           "movieId": {
-            "type": "string",
-            "description": "TMDB movie ID"
+            "type": "string"
           },
-          "watchedAt": {
-            "type": "string",
-            "description": "Custom watch datetime (ISO 8601). Null creates an undated Watch. If omitted, current time is used.",
-            "format": "date-time",
-            "nullable": true
+          "watchCount": {
+            "type": "number"
           }
         },
         "required": [
-          "movieId"
+          "movieId",
+          "watchCount"
         ]
       },
       "WatchHistoryItemDto": {
@@ -9310,6 +9447,45 @@
           "totalPages",
           "hasPreviousPage",
           "hasNextPage"
+        ]
+      },
+      "ListMembershipDto": {
+        "type": "object",
+        "properties": {
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie ID or show ID"
+          },
+          "seasonNumber": {
+            "type": "number",
+            "description": "0 unless the item is a season or episode"
+          },
+          "episodeNumber": {
+            "type": "number",
+            "description": "0 unless the item is an episode"
+          },
+          "listIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "mediaType",
+          "mediaId",
+          "seasonNumber",
+          "episodeNumber",
+          "listIds"
         ]
       },
       "UpdateListDto": {

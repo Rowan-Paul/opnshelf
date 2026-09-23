@@ -1,14 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ init: vi.fn() }));
+const mocks = vi.hoisted(() => ({ init: vi.fn(), capture: vi.fn() }));
 vi.mock("posthog-js", () => ({
-	default: { init: mocks.init, startExceptionAutocapture: vi.fn() },
+	default: {
+		init: mocks.init,
+		capture: mocks.capture,
+		startExceptionAutocapture: vi.fn(),
+	},
 }));
-vi.mock("@posthog/react", () => ({ PostHogProvider: vi.fn() }));
 
 beforeEach(() => {
 	vi.resetModules();
 	mocks.init.mockClear();
+	mocks.capture.mockClear();
 	vi.stubGlobal("window", { location: { hostname: "opnshelf.xyz" } });
 	vi.stubEnv("VITE_POSTHOG_KEY", "test-project-key");
 });
@@ -17,9 +21,31 @@ afterEach(() => {
 	vi.unstubAllEnvs();
 });
 
+describe("PostHog lazy loading", () => {
+	it("replays calls made before posthog-js loads, after it is initialised", async () => {
+		const { posthog, posthogLoaded } = await import("./provider");
+		posthog.capture("watch_logged", { media_type: "movie" });
+		expect(mocks.capture).not.toHaveBeenCalled();
+
+		await posthogLoaded;
+		expect(mocks.init).toHaveBeenCalledBefore(mocks.capture);
+		expect(mocks.capture).toHaveBeenCalledWith("watch_logged", {
+			media_type: "movie",
+		});
+	});
+
+	it("drops calls off the production origin without loading posthog-js", async () => {
+		vi.stubGlobal("window", { location: { hostname: "localhost" } });
+		const { posthog, posthogLoaded } = await import("./provider");
+		posthog.capture("watch_logged");
+		expect(posthogLoaded).toBeUndefined();
+		expect(mocks.capture).not.toHaveBeenCalled();
+	});
+});
+
 describe("PostHog exception titles", () => {
 	it("uses the captured message as the issue title without changing grouping or URL redaction", async () => {
-		await import("./provider");
+		await (await import("./provider")).posthogLoaded;
 		const beforeSend = mocks.init.mock.calls[0][1].before_send;
 		const exception = {
 			type: "Error",
@@ -50,7 +76,7 @@ describe("PostHog exception titles", () => {
 		[{ value: 123 }],
 		[{ value: "  " }],
 	])("leaves the default title for a missing or malformed message (%j)", async (exceptions) => {
-		await import("./provider");
+		await (await import("./provider")).posthogLoaded;
 		const beforeSend = mocks.init.mock.calls[0][1].before_send;
 		const event = {
 			event: "$exception",
@@ -60,7 +86,7 @@ describe("PostHog exception titles", () => {
 	});
 
 	it("preserves explicit titles, ordinary events and dropped events", async () => {
-		await import("./provider");
+		await (await import("./provider")).posthogLoaded;
 		const beforeSend = mocks.init.mock.calls[0][1].before_send;
 		const properties = {
 			$issue_name: "Custom title",
@@ -75,7 +101,7 @@ describe("PostHog exception titles", () => {
 	});
 
 	it("trims and limits titles to PostHog's 255 characters", async () => {
-		await import("./provider");
+		await (await import("./provider")).posthogLoaded;
 		const beforeSend = mocks.init.mock.calls[0][1].before_send;
 		const event = beforeSend({
 			event: "$exception",
@@ -85,7 +111,7 @@ describe("PostHog exception titles", () => {
 	});
 
 	it("keeps the title valid Unicode when the limit falls inside a character", async () => {
-		await import("./provider");
+		await (await import("./provider")).posthogLoaded;
 		const beforeSend = mocks.init.mock.calls[0][1].before_send;
 		const event = beforeSend({
 			event: "$exception",

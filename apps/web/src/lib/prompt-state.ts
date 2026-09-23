@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * Per-device state for the Mobile App ask and the Home prompt slot.
@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
  * you just installed it on must not also hide it on a desktop where you never
  * will. A new browser re-asking is correct — that is a new device.
  */
-const DISMISSED_KEY = "opnshelf.mobile-app.dismissed";
+export const DISMISSED_KEY = "opnshelf.mobile-app.dismissed";
 const COOLDOWN_KEY = "opnshelf.prompt-cooldown-until";
 const COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -52,14 +52,24 @@ export function isPromptCooldownActive(): boolean {
 }
 
 /**
- * False during SSR and the first client render, true afterwards.
+ * False during SSR and the hydrating render, true everywhere else.
  *
  * `localStorage` does not exist on the server, so anything reading it must wait
- * for hydration or React reports a mismatch. This only ever delays showing an
- * ask, never hides one that should be visible.
+ * for hydration or React reports a mismatch. A component mounted after
+ * hydration reads true on its very first render: an effect-based flag started
+ * every late-mounted component at false and popped its content in a frame
+ * later, which pushed the rest of Home down.
  */
 export function useHydrated(): boolean {
-	const [hydrated, setHydrated] = useState(false);
-	useEffect(() => setHydrated(true), []);
-	return hydrated;
+	return useSyncExternalStore(subscribeNever, isClient, isServer);
+}
+
+function subscribeNever(): () => void {
+	return () => {};
+}
+function isClient(): boolean {
+	return true;
+}
+function isServer(): boolean {
+	return false;
 }

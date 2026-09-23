@@ -7,7 +7,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Calendar, ChevronRight, Clock, Film, Loader2, Tv } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { AtStoreReviewPrompt } from "#/components/atstore/AtStoreReviewPrompt";
 import DashboardMediaCard from "#/components/DashboardMediaCard";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
@@ -17,6 +17,7 @@ import { PromptSlot } from "#/components/PromptSlot";
 import { StatsStrip } from "#/components/StatsStrip";
 import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
 import { useAuth } from "#/lib/auth-context";
+import { formatLocalDateKey } from "#/lib/calendar-grid";
 import { withUserLocale } from "#/lib/date-utils";
 import { useShelfSyncStatus, useUserShelf } from "#/lib/hooks";
 import { useUserUpNext } from "#/lib/hooks/useMedia";
@@ -154,10 +155,22 @@ export function HomeView() {
 		}),
 	});
 
-	// Fetch release calendar data
+	// Ask for the two weeks Home shows, like the Mobile App. Without a range
+	// the API returns every episode of every tracked show, which ran to
+	// megabytes for a reader with a long watch history.
+	const releaseRange = useMemo(() => {
+		const today = new Date();
+		const twoWeeksLater = new Date(today);
+		twoWeeksLater.setDate(today.getDate() + 14);
+		return {
+			startDate: formatLocalDateKey(today),
+			endDate: formatLocalDateKey(twoWeeksLater),
+		};
+	}, []);
 	const { data: calendarData, isLoading: calendarLoading } = useQuery({
 		...showsControllerGetUserReleaseCalendarOptions({
 			path: { userDid: user?.did || "" },
+			query: releaseRange,
 		}),
 	});
 
@@ -203,7 +216,7 @@ export function HomeView() {
 						? `https://image.tmdb.org/t/p/w500${item.posterPath}`
 						: "",
 					backdropUrl: item.backdropPath
-						? `https://image.tmdb.org/t/p/original${item.backdropPath}`
+						? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
 						: undefined,
 					year: item.releaseYear,
 					displayTitle: undefined,
@@ -232,9 +245,9 @@ export function HomeView() {
 					: "",
 				// Prefer the episode still (16:9, matches the backdrop layout); fall back to the show backdrop
 				backdropUrl: item.stillPath
-					? `https://image.tmdb.org/t/p/original${item.stillPath}`
+					? `https://image.tmdb.org/t/p/w780${item.stillPath}`
 					: item.backdropPath
-						? `https://image.tmdb.org/t/p/original${item.backdropPath}`
+						? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
 						: undefined,
 				year: item.firstAirYear,
 				episodeInfo: `${item.showTitle} • S${item.seasonNumber}E${item.episodeNumber}`,
@@ -255,7 +268,7 @@ export function HomeView() {
 					? `https://image.tmdb.org/t/p/w500${item.show.posterPath}`
 					: "",
 				backdropUrl: item.show.backdropPath
-					? `https://image.tmdb.org/t/p/original${item.show.backdropPath}`
+					? `https://image.tmdb.org/t/p/w780${item.show.backdropPath}`
 					: undefined,
 				year: item.show.firstAirYear,
 				episodeInfo: `${item.show.title} • S${item.nextEpisode.seasonNumber}E${item.nextEpisode.episodeNumber}`,

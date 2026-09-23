@@ -11,7 +11,7 @@ import {
 	useSearch,
 } from "@tanstack/react-router";
 import { Calendar, Loader2, Plus, Tv } from "lucide-react";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { Pagination } from "#/components/Pagination";
 import { PosterProgress } from "#/components/PosterProgress";
 import { useAuth } from "#/lib/auth-context";
@@ -23,7 +23,7 @@ import {
 } from "#/lib/hooks";
 
 const searchSchema = z.object({
-	page: z.coerce.number().min(1).optional().default(1),
+	page: z._default(z.optional(z.coerce.number().check(z.minimum(1))), 1),
 });
 
 export const Route = createFileRoute("/profile/$handle/up-next")({
