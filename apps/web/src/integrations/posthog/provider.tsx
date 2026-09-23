@@ -1,7 +1,5 @@
 import { nameExceptionIssue } from "@opnshelf/api";
-import { PostHogProvider as BasePostHogProvider } from "@posthog/react";
-import posthog from "posthog-js";
-import type { ReactNode } from "react";
+import type { PostHog } from "posthog-js";
 
 // ponytail: every environment builds with the same VITE_POSTHOG_KEY, so the
 // origin is the gate: only the live site reports. That keeps localhost and
@@ -14,36 +12,56 @@ const isProductionOrigin =
 export const isPostHogEnabled =
 	Boolean(import.meta.env.VITE_POSTHOG_KEY) && isProductionOrigin;
 
-if (isPostHogEnabled) {
-	posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-		// Requests go through our origin so ad blockers are less likely to prevent
-		// analytics from reaching PostHog. Nitro forwards this path to PostHog EU.
-		api_host: "/ingest",
-		person_profiles: "identified_only",
-		capture_pageview: false,
-		capture_pageleave: true,
-		capture_performance: true,
-		defaults: "2025-11-30",
-		before_send: (event) => {
-			if (!event) return event;
-			// Custom event captures inherit browser URL fields by default. Dynamic
-			// paths and query strings can contain user-generated identifiers or
-			// credentials, so analytics uses explicit categorical properties instead.
-			delete event.properties.$current_url;
-			delete event.properties.$pathname;
-			delete event.properties.$referrer;
-			return nameExceptionIssue(event);
-		},
-	});
-	posthog.startExceptionAutocapture();
+let client: PostHog | undefined;
+const pending: Array<(client: PostHog) => void> = [];
+
+function withClient(call: (client: PostHog) => void) {
+	if (!isPostHogEnabled) return;
+	if (client) call(client);
+	else pending.push(call);
 }
 
-export { posthog };
+// posthog-js is roughly a quarter of the entry bundle, so it loads as its own
+// chunk instead of blocking every first paint. Calls made before it arrives
+// are queued and replayed in order once it is initialised.
+export const posthogLoaded: Promise<void> | undefined = isPostHogEnabled
+	? import("posthog-js").then(({ default: loaded }) => {
+			loaded.init(import.meta.env.VITE_POSTHOG_KEY, {
+				// Requests go through our origin so ad blockers are less likely to
+				// prevent analytics from reaching PostHog. Nitro forwards this path to
+				// PostHog EU.
+				api_host: "/ingest",
+				person_profiles: "identified_only",
+				capture_pageview: false,
+				capture_pageleave: true,
+				capture_performance: true,
+				defaults: "2025-11-30",
+				before_send: (event) => {
+					if (!event) return event;
+					// Custom event captures inherit browser URL fields by default.
+					// Dynamic paths and query strings can contain user-generated
+					// identifiers or credentials, so analytics uses explicit
+					// categorical properties instead.
+					delete event.properties.$current_url;
+					delete event.properties.$pathname;
+					delete event.properties.$referrer;
+					return nameExceptionIssue(event);
+				},
+			});
+			loaded.startExceptionAutocapture();
+			client = loaded;
+			for (const call of pending.splice(0)) call(loaded);
+		})
+	: undefined;
 
-interface PostHogProviderProps {
-	children: ReactNode;
-}
-
-export default function PostHogProvider({ children }: PostHogProviderProps) {
-	return <BasePostHogProvider client={posthog}>{children}</BasePostHogProvider>;
-}
+/** The subset of the PostHog client the app uses, safe to call before it loads. */
+export const posthog = {
+	capture: (...args: Parameters<PostHog["capture"]>) =>
+		withClient((c) => c.capture(...args)),
+	captureException: (...args: Parameters<PostHog["captureException"]>) =>
+		withClient((c) => c.captureException(...args)),
+	identify: (...args: Parameters<PostHog["identify"]>) =>
+		withClient((c) => c.identify(...args)),
+	reset: (...args: Parameters<PostHog["reset"]>) =>
+		withClient((c) => c.reset(...args)),
+};

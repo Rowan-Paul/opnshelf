@@ -6,13 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { PeopleSearch } from "#/components/following/PeopleSearch";
 import { useSocialFollowActions } from "#/components/following/useSocialFollowActions";
 import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
 
-const socialSearchSchema = z.object({ circleId: z.string().optional() });
+const socialSearchSchema = z.object({ circleId: z.optional(z.string()) });
 
 export const Route = createFileRoute("/social/find")({
 	validateSearch: socialSearchSchema,

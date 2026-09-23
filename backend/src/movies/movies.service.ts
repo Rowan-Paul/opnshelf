@@ -75,6 +75,23 @@ export class MoviesService {
 		return this.moviesTmdb.getWatchProviders(movieId);
 	}
 
+	/**
+	 * Watch counts per movie, for poster cards that only need "watched, and how
+	 * often". `getUserMovies` answers that too, but with every movie's full
+	 * details: half a megabyte for a long watch history, on every signed-in page.
+	 */
+	async getUserMovieWatchCounts(userDid: string) {
+		const groups = await this.prisma.trackedMovie.groupBy({
+			by: ["movieId"],
+			where: { userDid },
+			_count: { _all: true },
+		});
+		return groups.map((group) => ({
+			movieId: group.movieId,
+			watchCount: group._count._all,
+		}));
+	}
+
 	async getUserMovies(userDid: string) {
 		// Get all tracked movies with their watch counts
 		const trackedMovies = await this.prisma.trackedMovie.findMany({

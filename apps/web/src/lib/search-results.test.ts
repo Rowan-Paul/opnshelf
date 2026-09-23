@@ -173,7 +173,7 @@ describe("titles and images", () => {
 			"https://image.tmdb.org/t/p/w500/p.jpg",
 		);
 		expect(getBackdropUrl(withImages)).toBe(
-			"https://image.tmdb.org/t/p/original/b.jpg",
+			"https://image.tmdb.org/t/p/w780/b.jpg",
 		);
 
 		const bare = result({ id: 1, media_type: "movie" });

@@ -7,15 +7,12 @@ import { useState } from "react";
 /** Format a "YYYY-MM-DD" calendar day as e.g. "Thu, Jun 20" (UTC, no drift). */
 function formatDayLabel(date: string): string {
 	const [year, month, day] = date.split("-").map(Number);
-	return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
-		undefined,
-		{
-			weekday: "short",
-			month: "short",
-			day: "numeric",
-			timeZone: "UTC",
-		},
-	);
+	return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-US", {
+		weekday: "short",
+		month: "short",
+		day: "numeric",
+		timeZone: "UTC",
+	});
 }
 
 /**
@@ -38,14 +35,23 @@ export function StatsStrip({
 	isLoading: boolean;
 }) {
 	if (isLoading) {
-		return <div className="card h-32 animate-pulse" />;
+		// The loaded card's heights, stacked below lg and in a row from lg, so
+		// Home's feed does not drop when the profile arrives. The key makes the
+		// loaded card a new element: reusing the pulsing one made Chrome report
+		// it as moving from its compositing layer's origin, a 0.17 layout shift.
+		return (
+			<div
+				key="loading"
+				className="card h-[236px] animate-pulse lg:h-[156px]"
+			/>
+		);
 	}
 
 	const days = activity ?? [];
 	const last30Total = days.reduce((sum, d) => sum + d.count, 0);
 
 	return (
-		<div className="card flex flex-col gap-6 p-5 lg:flex-row">
+		<div key="loaded" className="card flex flex-col gap-6 p-5 lg:flex-row">
 			{/* Activity graph */}
 			<div className="min-w-0 flex-1">
 				<div className="mb-3 flex items-baseline justify-between">

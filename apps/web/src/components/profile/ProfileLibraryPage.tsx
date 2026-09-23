@@ -28,7 +28,7 @@ function getPosterUrl(media: Record<string, unknown>): string {
 
 function getBackdropUrl(media: Record<string, unknown>): string | undefined {
 	if (typeof media.backdropPath === "string") {
-		return `https://image.tmdb.org/t/p/original${media.backdropPath}`;
+		return `https://image.tmdb.org/t/p/w780${media.backdropPath}`;
 	}
 	return undefined;
 }

@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Loader2, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { useAuth } from "#/lib/auth-context";
 import { useCircles, useCreateCircle } from "#/lib/hooks/useCircles";
 
-const socialSearchSchema = z.object({ circleId: z.string().optional() });
+const socialSearchSchema = z.object({ circleId: z.optional(z.string()) });
 
 export const Route = createFileRoute("/social/circles/")({
 	validateSearch: socialSearchSchema,

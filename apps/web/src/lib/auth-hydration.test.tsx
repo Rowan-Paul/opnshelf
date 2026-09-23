@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider, useAuth } from "./auth-context";
 import {
 	currentUserQueryOptions,
@@ -31,10 +31,18 @@ vi.mock("#/env", () => ({ env: { VITE_API_URL: "https://api.example.test" } }));
 vi.mock("#/integrations/posthog/provider", () => ({
 	posthog: { reset: vi.fn() },
 }));
+const hint = vi.hoisted(() => ({ present: true, remember: vi.fn() }));
+vi.mock("./session-hint", () => ({
+	SIGNED_IN_HINT_QUERY_KEY: ["session-hint"],
+	mayBeSignedIn: () => hint.present,
+	rememberSignedIn: hint.remember,
+}));
 
 afterEach(() => {
 	cleanup();
 	vi.useRealTimers();
+	hint.present = true;
+	hint.remember.mockClear();
 });
 
 function Home() {
@@ -106,6 +114,13 @@ it.each([
 		);
 		expect(screen.queryByText("Public landing page")).toBeNull();
 		expect(await screen.findByText("Public landing page")).toBeTruthy();
+		// Only a real "signed out" answer clears the signed-in hint; an outage
+		// says nothing about the session.
+		if (result === "signed out") {
+			await vi.waitFor(() => expect(hint.remember).toHaveBeenCalledWith(false));
+		} else {
+			expect(hint.remember).not.toHaveBeenCalled();
+		}
 	} finally {
 		cleanup();
 		browser.clear();
@@ -173,4 +188,87 @@ it("keeps a cached Home visible during session refetches", async () => {
 		browser.clear();
 		vi.mocked(authControllerMe).mockReset();
 	}
+});
+
+describe("without a signed-in hint", () => {
+	it("renders public content from SSR and keeps it through hydration", async () => {
+		hint.present = false;
+		const server = new QueryClient();
+		const browser = new QueryClient();
+		server.setQueryData(["auth", "me"], null);
+		hydrate(browser, dehydrate(server));
+		vi.mocked(authControllerMe).mockRejectedValue({ status: 401 });
+		try {
+			expect(
+				renderToString(
+					<QueryClientProvider client={server}>
+						<AuthProvider>
+							<Home />
+						</AuthProvider>
+					</QueryClientProvider>,
+				),
+			).toContain("Public landing page");
+
+			render(
+				<QueryClientProvider client={browser}>
+					<AuthProvider>
+						<Home />
+					</AuthProvider>
+				</QueryClientProvider>,
+			);
+			expect(screen.getByText("Public landing page")).toBeTruthy();
+			await vi.waitFor(() => expect(hint.remember).toHaveBeenCalledWith(false));
+		} finally {
+			server.clear();
+			browser.clear();
+			vi.mocked(authControllerMe).mockReset();
+		}
+	});
+
+	it("switches to Home and remembers the session when the browser is signed in", async () => {
+		hint.present = false;
+		const browser = new QueryClient();
+		browser.setQueryData(["auth", "me"], null);
+		vi.mocked(authControllerMe).mockResolvedValue({
+			data: { did: "did:plc:test" },
+		} as Awaited<ReturnType<typeof authControllerMe>>);
+		try {
+			render(
+				<QueryClientProvider client={browser}>
+					<AuthProvider>
+						<Home />
+					</AuthProvider>
+				</QueryClientProvider>,
+			);
+			expect(await screen.findByText("Your Home")).toBeTruthy();
+			expect(hint.remember).toHaveBeenCalledWith(true);
+		} finally {
+			browser.clear();
+			vi.mocked(authControllerMe).mockReset();
+		}
+	});
+
+	it("hydrates with SSR's decision when the browser cannot see the same cookies", () => {
+		// The server saw an HttpOnly session cookie that document.cookie hides.
+		hint.present = false;
+		const browser = new QueryClient();
+		browser.setQueryData(["auth", "me"], null);
+		browser.setQueryData(["session-hint"], true);
+		vi.mocked(authControllerMe).mockImplementation(
+			() => new Promise<never>(() => {}),
+		);
+		try {
+			render(
+				<QueryClientProvider client={browser}>
+					<AuthProvider>
+						<Home />
+					</AuthProvider>
+				</QueryClientProvider>,
+			);
+			expect(screen.getByText("Checking session")).toBeTruthy();
+		} finally {
+			browser.clear();
+			vi.mocked(authControllerMe).mockReset();
+		}
+	});
 });

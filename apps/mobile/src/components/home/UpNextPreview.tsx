@@ -18,7 +18,7 @@ import { useUpNext } from "@/lib/use-up-next";
  * preview slice rather than owning its own scrolling list.
  */
 export function UpNextPreview({ handle }: { handle: string | undefined }) {
-	const { items, isLoading, isError } = useUpNext();
+	const { items, isLoading, isError } = useUpNext(4);
 
 	const preview = items.slice(0, 4);
 

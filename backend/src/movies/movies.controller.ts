@@ -3,6 +3,7 @@ import {
 	Controller,
 	Delete,
 	Get,
+	Header,
 	HttpCode,
 	HttpStatus,
 	Logger,
@@ -21,6 +22,7 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
+import { PUBLIC_CATALOGUE_CACHE_CONTROL } from "../common/cache-control";
 import { fromTmdbPage, parsePage } from "../common/pagination";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
@@ -30,7 +32,9 @@ import {
 	MovieDto,
 	SearchResultsDto,
 	TMDBMovieDetailDto,
+	MovieWatchCountDto,
 	TrackedMovieDto,
+	UserMovieDto,
 	WatchHistoryItemDto,
 	WatchProvidersResponseDto,
 } from "./dto/movie.dto";
@@ -72,27 +76,23 @@ export class MoviesController {
 	}
 
 	@Get("tmdb/:movieId")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get movie details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBMovieDetailDto })
 	async getMovieDetails(@Param("movieId") movieId: string) {
-		// Get movie details from TMDB
-		const movieData = await this.moviesService.getMovieDetails(movieId);
+		const [movieData, credits] = await Promise.all([
+			this.moviesService.getMovieDetails(movieId),
+			this.moviesService.getMovieCredits(movieId),
+		]);
 
-		// Ensure movie is in database with colors
-		const movie = await this.moviesService.upsertMovie(movieData);
-
-		// Get movie credits
-		const credits = await this.moviesService.getMovieCredits(movieId);
-
-		// Return combined data with colors and credits
 		return {
 			...movieData,
-			colors: movie.colors ?? undefined,
 			credits,
 		};
 	}
 
 	@Get("tmdb/:movieId/credits")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({
 		summary:
 			"Get the full cast and crew for a movie, crew grouped by department",
@@ -103,6 +103,7 @@ export class MoviesController {
 	}
 
 	@Get("tmdb/:movieId/watch-providers")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({
 		summary: "Get watch providers for a movie from TMDB/JustWatch",
 	})
@@ -126,6 +127,7 @@ export class MoviesController {
 	}
 
 	@Get("tmdb/:movieId/recommendations")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get TMDB recommendations (similar movies)" })
 	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchResultsDto })
@@ -140,7 +142,7 @@ export class MoviesController {
 
 	@Get("user/:userDid")
 	@ApiOperation({ summary: "Get tracked movies for a user" })
-	@ApiResponse({ status: 200, type: [TrackedMovieDto] })
+	@ApiResponse({ status: 200, type: [UserMovieDto] })
 	async getUserMovies(@Param("userDid") userDid: string) {
 		const trackedMovies = await this.moviesService.getUserMovies(userDid);
 		// Match the shows endpoint: stored null colors serialize as undefined.
@@ -243,6 +245,13 @@ export class MoviesController {
 			...movie,
 			colors: colors ?? undefined,
 		};
+	}
+
+	@Get("user/:userDid/watch-counts")
+	@ApiOperation({ summary: "Get how many times a user watched each movie" })
+	@ApiResponse({ status: 200, type: [MovieWatchCountDto] })
+	getUserMovieWatchCounts(@Param("userDid") userDid: string) {
+		return this.moviesService.getUserMovieWatchCounts(userDid);
 	}
 
 	@Get("user/:userDid/movie/:movieId/history")

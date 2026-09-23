@@ -22,6 +22,7 @@ import {
 } from "#/components/ui/dialog";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
+import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
 import {
 	useEpisodeDetails,
@@ -73,6 +74,7 @@ export const Route = createFileRoute(
 
 		return { show, episode };
 	},
+	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData, params, match }) => {
 		const meta = buildEpisodePageMeta(loaderData?.show, loaderData?.episode, {
 			seasonNumber: params.seasonNumber,
@@ -98,7 +100,7 @@ export const Route = createFileRoute(
 
 function EpisodeDetailPage() {
 	const { showId, showName, seasonNumber, episodeNumber } = Route.useParams();
-	const { userSettings, isAuthenticated } = useAuth();
+	const { userSettings, isAuthenticated, isLoading: authLoading } = useAuth();
 	const userTimezone = userSettings?.timezone;
 
 	const seasonNum = Number.parseInt(seasonNumber, 10);
@@ -117,8 +119,11 @@ function EpisodeDetailPage() {
 	} = useEpisodeDetails(showId, seasonNumber, episodeNumber);
 
 	const { data: watchHistory } = useShowWatchHistory(showId);
-	const { data: showProgressData, isLoading: isProgressLoading } =
-		useShowProgress([showId]);
+	const {
+		data: showProgressData,
+		isPending: isProgressPending,
+		isError: isProgressError,
+	} = useShowProgress([showId]);
 	const seasonProgress = showProgressData?.items
 		.find((item) => item.showId === showId)
 		?.seasons.find((item) => item.seasonNumber === seasonNum);
@@ -180,11 +185,11 @@ function EpisodeDetailPage() {
 	}
 
 	const backdropUrl = episode.still_path
-		? `https://image.tmdb.org/t/p/original${episode.still_path}`
+		? `https://image.tmdb.org/t/p/w1280${episode.still_path}`
 		: show.backdrop_path
-			? `https://image.tmdb.org/t/p/original${show.backdrop_path}`
+			? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}`
 			: show.poster_path
-				? `https://image.tmdb.org/t/p/original${show.poster_path}`
+				? `https://image.tmdb.org/t/p/w780${show.poster_path}`
 				: "";
 	// The hero poster stands for the season, because the progress bar and summary
 	// it carries are season-scoped. Falls back to the show poster when the season
@@ -323,7 +328,14 @@ function EpisodeDetailPage() {
 						: undefined
 				}
 				progressLabel="Season progress"
-				isProgressLoading={isAuthenticated && isProgressLoading}
+				isProgressLoading={
+					// Until progress has answered, not only while it is fetching: SSR
+					// never starts the request, so "loading" arrived after first paint.
+					// A pending session check is probably a signed-in reader too
+					// (ADR 0039).
+					authLoading ||
+					(isAuthenticated && isProgressPending && !isProgressError)
+				}
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">

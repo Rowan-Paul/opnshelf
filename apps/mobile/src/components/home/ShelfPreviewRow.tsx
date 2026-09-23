@@ -26,7 +26,9 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 	const { user } = useAuth();
 	// The shared shelf query is server-paginated; the first page (newest first)
 	// is exactly the recent-watched preview the dashboard wants.
-	const { data, isLoading, isError } = useProfileShelf(userDid);
+	const { data, isLoading, isError } = useProfileShelf(userDid, {
+		pageSize: 10,
+	});
 
 	const items = (data?.items ?? []).slice(0, 10);
 	const shelfHref = user?.handle

@@ -12,7 +12,7 @@ import {
 import { ArrowRight, HelpCircle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { AppleMark } from "#/components/AppleMark";
 import { GoogleMark } from "#/components/GoogleMark";
 import LoadingState from "#/components/LoadingState";
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/signup")({
 	head: () => ({
 		meta: [{ title: "Sign up | Opnshelf" }],
 	}),
-	validateSearch: z.object({ error: z.string().optional() }),
+	validateSearch: z.object({ error: z.optional(z.string()) }),
 	component: SignupPage,
 });
 

@@ -1,30 +1,10 @@
-import type { ComponentPropsWithoutRef } from "react";
-import Markdown from "react-markdown";
-import remarkBreaks from "remark-breaks";
-
-/**
- * Canonical read renderer for review markdown. Reviews are authored in Milkdown
- * (WYSIWYG over a markdown source of truth) and stored as portable
- * `at.markpub.markdown`; this renders that same markdown for reading. It shares
- * one engine — `remark` via react-markdown, the same family Milkdown uses — so
- * what the writer sees, what is stored, and what readers see all agree, and it
- * matches how the wider standard.site ecosystem parses the record.
- *
- * CommonMark only (no GFM): the editor's feature surface is headings, bold,
- * italic, inline code, code blocks, blockquotes, lists, and links. react-markdown
- * does not render raw HTML by default, so user-authored HTML is never injected.
- *
- * `remark-breaks` renders single newlines as hard breaks so a line break the
- * author made in the Milkdown editor shows the same way when the review is read
- * back (the editor keeps the visual line even where CommonMark would collapse
- * a lone newline to a space).
- */
+import { lazy, Suspense } from "react";
 
 // Element styling lives as descendant variants on the wrapper so they apply to
 // react-markdown's output and reliably win over nested defaults (e.g. inline
 // code styling inside a fenced block). Mirrors the look of the former
 // hand-rolled MarkdownPreview.
-const PROSE_CLASS = [
+export const PROSE_CLASS = [
 	"space-y-3 text-sm leading-relaxed",
 	"[&_h1]:font-display [&_h1]:font-semibold [&_h1]:text-lg",
 	"[&_h2]:font-display [&_h2]:font-semibold [&_h2]:text-lg",
@@ -38,22 +18,31 @@ const PROSE_CLASS = [
 	"[&_a]:text-(--accent) [&_a]:underline hover:[&_a]:no-underline",
 ].join(" ");
 
-function MarkdownLink({ ...props }: ComponentPropsWithoutRef<"a">) {
-	// User-authored external links: open in a new tab and drop referrer / link
-	// equity since these point at arbitrary sites.
-	return <a {...props} target="_blank" rel="noopener noreferrer nofollow" />;
+/**
+ * The editor serialises some hard breaks as literal <br> HTML; react-markdown
+ * doesn't render raw HTML, so turn them into newlines (which remark-breaks then
+ * renders as breaks) rather than showing "<br />" as text.
+ */
+export function normalizeMarkdown(markdown: string): string {
+	return markdown.replace(/<br\s*\/?>/gi, "\n");
 }
 
+// react-markdown and its remark pipeline are the heaviest thing on a detail
+// page and only draw review bodies, which sit below the fold. SSR still
+// renders the formatted markdown; the browser fetches the renderer on its own.
+const MarkdownRenderer = lazy(() => import("./MarkdownRenderer"));
+
+/** Review markdown for reading. See `MarkdownRenderer` for the rules. */
 export function MarkdownContent({ markdown }: { markdown: string }) {
-	// The editor serialises some hard breaks as literal <br> HTML; react-markdown
-	// doesn't render raw HTML, so turn them into newlines (which remark-breaks
-	// then renders as breaks) rather than showing "<br />" as text.
-	const normalized = markdown.replace(/<br\s*\/?>/gi, "\n");
 	return (
-		<div className={PROSE_CLASS}>
-			<Markdown remarkPlugins={[remarkBreaks]} components={{ a: MarkdownLink }}>
-				{normalized}
-			</Markdown>
-		</div>
+		<Suspense
+			fallback={
+				<div className={`${PROSE_CLASS} whitespace-pre-line`}>
+					{normalizeMarkdown(markdown)}
+				</div>
+			}
+		>
+			<MarkdownRenderer markdown={markdown} />
+		</Suspense>
 	);
 }

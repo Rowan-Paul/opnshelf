@@ -25,8 +25,12 @@ export const TMDB_MAX_RETRIES = 3;
 export const TMDB_BACKOFF_BASE_MS = 200;
 /** Default TTL for cached detail/search GETs. */
 export const TMDB_CACHE_TTL_MS = 1000 * 60 * 10;
-/** Upper bound on entries per cache to avoid unbounded growth. */
-export const TMDB_CACHE_MAX_ENTRIES = 500;
+/**
+ * Upper bound on entries per cache to avoid unbounded growth. One detail page
+ * fills six to ten keys, and crawlers walk dozens of Media Items a minute, so
+ * a smaller cache turned over before a popular page was ever asked for twice.
+ */
+export const TMDB_CACHE_MAX_ENTRIES = 2000;
 
 export class MissingTmdbApiKeyError extends Error {
 	constructor() {
@@ -156,6 +160,11 @@ function getHeader(response: TmdbResponse, name: string): string | null {
 export class TmdbHttpClient {
 	private readonly logger: Logger;
 	private readonly cache = new Map<string, CacheEntry>();
+	/** Misses already on their way to TMDB, so concurrent callers share one request. */
+	private readonly inFlight = new Map<
+		string,
+		Promise<TMDBCachedResult | null>
+	>();
 
 	constructor(
 		private readonly apiKey: string,
@@ -269,24 +278,53 @@ export class TmdbHttpClient {
 		const now = Date.now();
 		const cached = this.cache.get(cacheKey);
 		if (cached && cached.expiresAt > now) {
+			// Re-insert so eviction drops the least recently used key, not the
+			// oldest: popular Media Items stay cached through a crawl.
+			this.cache.delete(cacheKey);
+			this.cache.set(cacheKey, cached);
 			return makeCachedResponse(cached.value);
 		}
 		if (cached) {
 			this.cache.delete(cacheKey);
 		}
 
-		const response = await this.fetch(url);
-		if (response.ok) {
-			const data = await response.json<TMDBCachedResult>();
-			this.setCache(cacheKey, data, ttlMs);
-			return makeCachedResponse(data);
+		const shared = this.inFlight.get(cacheKey);
+		if (shared) {
+			const data = await shared;
+			if (data !== null) return makeCachedResponse(data);
+			// The shared request failed; make our own so this caller gets the
+			// real error response rather than a borrowed one.
+			return this.fetch(url);
 		}
-		return response;
+
+		let settle!: (data: TMDBCachedResult | null) => void;
+		this.inFlight.set(
+			cacheKey,
+			new Promise((resolve) => {
+				settle = resolve;
+			}),
+		);
+		try {
+			const response = await this.fetch(url);
+			if (response.ok) {
+				const data = await response.json<TMDBCachedResult>();
+				this.setCache(cacheKey, data, ttlMs);
+				settle(data);
+				return makeCachedResponse(data);
+			}
+			settle(null);
+			return response;
+		} catch (error) {
+			settle(null);
+			throw error;
+		} finally {
+			this.inFlight.delete(cacheKey);
+		}
 	}
 
 	private setCache(key: string, value: TMDBCachedResult, ttlMs: number): void {
 		if (this.cache.size >= TMDB_CACHE_MAX_ENTRIES) {
-			// Simple bound: drop the oldest inserted entry.
+			// Map iteration order is recency order, so the first key is the LRU one.
 			const oldest = this.cache.keys().next().value;
 			if (oldest !== undefined) {
 				this.cache.delete(oldest);

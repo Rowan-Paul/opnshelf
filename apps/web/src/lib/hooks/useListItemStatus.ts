@@ -1,12 +1,15 @@
 import {
-	listsControllerGetListsForItemOptions,
-	listsControllerGetListsForItemQueryKey,
 	listsControllerGetUserListsOptions,
 	listsControllerGetUserListsQueryKey,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useAuth } from "#/lib/auth-context";
+import {
+	listsForItem as deriveListsForItem,
+	listMembershipsKey,
+	listMembershipsQuery,
+} from "./list-memberships";
 
 interface UseListItemStatusOptions {
 	mediaType: "movie" | "show";
@@ -32,11 +35,9 @@ export function useListItemStatus({
 
 	const { isAuthenticated } = useAuth();
 
-	const { data: listsForItem } = useQuery({
-		...listsControllerGetListsForItemOptions({
-			path: { mediaType: resolvedMediaType, mediaId },
-			query: { seasonNumber, episodeNumber },
-		}),
+	// One shared request per page, not one per card; see list-memberships.
+	const { data: memberships } = useQuery({
+		...listMembershipsQuery(),
 		enabled: isAuthenticated && enabled,
 	});
 
@@ -44,6 +45,26 @@ export function useListItemStatus({
 		...listsControllerGetUserListsOptions(),
 		enabled: isAuthenticated,
 	});
+
+	const listsForItem = useMemo(
+		() =>
+			memberships && userLists
+				? deriveListsForItem(memberships, userLists, {
+						mediaType: resolvedMediaType,
+						mediaId,
+						seasonNumber,
+						episodeNumber,
+					})
+				: undefined,
+		[
+			memberships,
+			userLists,
+			resolvedMediaType,
+			mediaId,
+			seasonNumber,
+			episodeNumber,
+		],
+	);
 
 	const isInWatchlist = useMemo(() => {
 		if (!listsForItem || !Array.isArray(listsForItem)) return false;
@@ -94,10 +115,7 @@ export function useListItemStatus({
 		otherLists,
 		availableLists,
 		customListsWithStatus,
-		listsForItemKey: listsControllerGetListsForItemQueryKey({
-			path: { mediaType: resolvedMediaType, mediaId },
-			query: { seasonNumber, episodeNumber },
-		}),
+		listMembershipsKey: listMembershipsKey(),
 		userListsKey: listsControllerGetUserListsQueryKey(),
 	};
 }

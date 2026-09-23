@@ -22,6 +22,7 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
+import { PUBLIC_CATALOGUE_CACHE_CONTROL } from "../common/cache-control";
 import { fromTmdbPage, parsePage } from "../common/pagination";
 import type { AuthenticatedRequest } from "../auth/types";
 import {
@@ -88,25 +89,23 @@ export class ShowsController {
 	}
 
 	@Get("tmdb/:showId")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get show details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBShowDetailDto })
 	async getShowDetails(@Param("showId") showId: string) {
-		const showData = await this.showsService.getShowDetails(showId);
-		const show = await this.showsService.upsertShow(showData);
-		// Progress is derived from aired episode rows, not TMDB's show summary.
-		// Do this before returning the first successful detail response so every
-		// client receives one catalogue lifecycle rather than repairing it later.
-		await this.showsService.syncShowMetadata(showId);
-		const credits = await this.showsService.getShowCredits(showId);
+		const [showData, credits] = await Promise.all([
+			this.showsService.getShowDetails(showId),
+			this.showsService.getShowCredits(showId),
+		]);
 
 		return {
 			...showData,
-			colors: show.colors ?? undefined,
 			credits,
 		};
 	}
 
 	@Get("tmdb/:showId/credits")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({
 		summary:
 			"Get the full cast and crew for a show, crew grouped by department",
@@ -117,6 +116,7 @@ export class ShowsController {
 	}
 
 	@Get("tmdb/:showId/watch-providers")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({
 		summary: "Get watch providers for a show from TMDB/JustWatch",
 	})
@@ -140,6 +140,7 @@ export class ShowsController {
 	}
 
 	@Get("tmdb/:showId/recommendations")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get TMDB recommendations (similar shows)" })
 	@ApiQuery({ name: "page", required: false, description: "Page number" })
 	@ApiResponse({ status: 200, type: SearchShowsResultsDto })
@@ -153,6 +154,7 @@ export class ShowsController {
 	}
 
 	@Get("tmdb/:showId/season/:seasonNumber")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get season details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBSeasonDetailDto })
 	async getSeasonDetails(
@@ -193,6 +195,7 @@ export class ShowsController {
 	}
 
 	@Get("tmdb/:showId/season/:seasonNumber/episode/:episodeNumber")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
 	@ApiOperation({ summary: "Get episode details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBEpisodeDto })
 	async getEpisodeDetails(

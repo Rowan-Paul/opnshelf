@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	ArrowRight,
@@ -8,10 +9,18 @@ import {
 	Sparkles,
 	UserCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { HomeView } from "#/components/home/HomeView";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import StoreBadges from "#/components/StoreBadges";
 import { useAuth } from "#/lib/auth-context";
+import { prefetchHomePrompts } from "#/lib/home-prompts";
+import { useHydrated } from "#/lib/prompt-state";
+
+// Home is the signed-in view, so the landing page's anonymous visitors never
+// download it. The session check starts the fetch, so it overlaps the wait.
+const loadHomeView = () => import("#/components/home/HomeView");
+const HomeView = lazy(() =>
+	loadHomeView().then((module) => ({ default: module.HomeView })),
+);
 
 export const Route = createFileRoute("/")({
 	head: () => ({
@@ -21,13 +30,13 @@ export const Route = createFileRoute("/")({
 });
 
 const HERO_BACKDROPS = [
-	"https://image.tmdb.org/t/p/original/2u7zbn8EudG6kLlBzUYqP8RyFU4.jpg",
-	"https://image.tmdb.org/t/p/original/2ssWTSVklAEc98frZUQhgtGHx7s.jpg",
-	"https://image.tmdb.org/t/p/original/mVr0UiqyltcfqxbAUcLl9zWL8ah.jpg",
-	"https://image.tmdb.org/t/p/original/TU9NIjwzjoKPwQHoHshkFcQUCG.jpg",
-	"https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg",
-	"https://image.tmdb.org/t/p/original/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg",
-	"https://image.tmdb.org/t/p/original/dyJvKsNs2KP8qQnAXbRwDjblViy.jpg",
+	"https://image.tmdb.org/t/p/w1280/2u7zbn8EudG6kLlBzUYqP8RyFU4.jpg",
+	"https://image.tmdb.org/t/p/w1280/2ssWTSVklAEc98frZUQhgtGHx7s.jpg",
+	"https://image.tmdb.org/t/p/w1280/mVr0UiqyltcfqxbAUcLl9zWL8ah.jpg",
+	"https://image.tmdb.org/t/p/w1280/TU9NIjwzjoKPwQHoHshkFcQUCG.jpg",
+	"https://image.tmdb.org/t/p/w1280/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg",
+	"https://image.tmdb.org/t/p/w1280/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg",
+	"https://image.tmdb.org/t/p/w1280/dyJvKsNs2KP8qQnAXbRwDjblViy.jpg",
 ];
 
 const SCREENSHOT_SECTIONS = [
@@ -36,7 +45,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Your personal home for what you've recently watched, what to watch next, and what your friends are up to — all in one place.",
 		icon: LayoutDashboard,
-		image: "/screenshots/dashboard.png",
+		image: "/screenshots/dashboard.jpg",
 		imageAlt: "Opnshelf home preview",
 	},
 	{
@@ -44,7 +53,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Search across movies, TV shows, and people. Filter by what's trending, top-rated, or coming soon. Your next favorite is one search away.",
 		icon: Compass,
-		image: "/screenshots/search.png",
+		image: "/screenshots/search.jpg",
 		imageAlt: "Search preview",
 	},
 	{
@@ -52,7 +61,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Every title has a home. Browse cast, crew, seasons, episodes, and where to watch. Read and write reviews that help the community decide.",
 		icon: Clapperboard,
-		image: "/screenshots/media-detail.png",
+		image: "/screenshots/media-detail.jpg",
 		imageAlt: "Media detail preview",
 	},
 	{
@@ -60,7 +69,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Showcase your taste. Share your shelf, reviews, lists, and ratings with the world. Follow friends and see what they're loving.",
 		icon: UserCircle,
-		image: "/screenshots/profile.png",
+		image: "/screenshots/profile.jpg",
 		imageAlt: "Profile preview",
 	},
 ];
@@ -75,6 +84,8 @@ const SCREENSHOT_SECTIONS = [
 function IndexPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+	const hydrated = useHydrated();
 
 	useEffect(() => {
 		if (!authLoading && isAuthenticated && user?.needsOnboarding) {
@@ -82,17 +93,57 @@ function IndexPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
+	// While the session check runs, fetch what Home needs first so it can
+	// appear in one piece: its code, and the answers that decide its prompts.
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) return;
+		void loadHomeView();
+		prefetchHomePrompts(queryClient);
+	}, [authLoading, isAuthenticated, queryClient]);
+
 	// Wait for the browser session before choosing personal or public content.
-	if (authLoading) return null;
-	if (isAuthenticated) return <HomeView />;
+	// A reader who waits is probably signed in (ADR 0039), so hold Home's shape
+	// rather than an empty page the footer would sit in, then get pushed from.
+	if (authLoading) return <HomeSkeleton />;
+	if (isAuthenticated) {
+		// Home renders in the browser only. When SSR could see the session (a
+		// legacy parent-domain cookie, or local dev) it rendered Home, and the
+		// lazy chunk was still loading at hydration: the first query update
+		// threw the server HTML away for the fallback and shifted the page.
+		if (!hydrated) return <HomeSkeleton />;
+		return (
+			<Suspense fallback={<HomeSkeleton />}>
+				<HomeView />
+			</Suspense>
+		);
+	}
 	return <LandingPage />;
 }
 
-function LandingPage() {
-	const backdropUrl = useMemo(
-		() => HERO_BACKDROPS[Math.floor(Math.random() * HERO_BACKDROPS.length)],
-		[],
+function HomeSkeleton() {
+	const pulse = "animate-pulse rounded bg-(--background-subtle)";
+	return (
+		<div className="container-app min-h-screen py-8" aria-hidden>
+			<div className="mb-8 space-y-3">
+				<div className={`h-9 w-72 max-w-full ${pulse}`} />
+				<div className={`h-5 w-40 ${pulse}`} />
+			</div>
+			<div className="card mb-8 h-[236px] animate-pulse lg:h-[156px]" />
+			<div className={`mb-4 h-7 w-32 ${pulse}`} />
+			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+				{["a", "b", "c"].map((key) => (
+					<div key={key} className={`aspect-video ${pulse}`} />
+				))}
+			</div>
+		</div>
 	);
+}
+
+function LandingPage() {
+	// Rotates daily rather than per render: SSR and hydration must pick the
+	// same image, or the browser fetches the hero twice.
+	const backdropUrl =
+		HERO_BACKDROPS[Math.floor(Date.now() / 86_400_000) % HERO_BACKDROPS.length];
 
 	return (
 		<div className="min-h-screen">
@@ -105,6 +156,7 @@ function LandingPage() {
 						alt=""
 						className="h-full w-full object-cover"
 						loading="eager"
+						fetchPriority="high"
 					/>
 					{/* Heavy dark gradient overlay for legibility */}
 					<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/50 to-black/30" />
@@ -215,6 +267,8 @@ function LandingPage() {
 						<div className="w-full flex-1">
 							<img
 								src="/screenshots/widget-android.png"
+								loading="lazy"
+								decoding="async"
 								alt="The Opnshelf home-screen widget, showing a bar graph of the last 30 days of watches and a total count"
 								width={946}
 								height={512}
@@ -299,14 +353,27 @@ function ScreenshotFrame({
 }) {
 	const [loaded, setLoaded] = useState(false);
 	const [error, setError] = useState(false);
+	// SSR can finish loading the image before React hydrates, and then onLoad
+	// never fires; read the element's state once it is attached instead.
+	const syncLoaded = useCallback((img: HTMLImageElement | null) => {
+		if (img?.complete) {
+			if (img.naturalWidth > 0) setLoaded(true);
+			else setError(true);
+		}
+	}, []);
 
 	return (
 		<div className="overflow-hidden rounded-xl border border-(--border) bg-(--background-elevated) shadow-xl">
 			<div className="relative aspect-video bg-(--background-subtle)">
 				{!error && (
 					<img
+						ref={syncLoaded}
 						src={image}
 						alt={alt}
+						width={1120}
+						height={630}
+						loading="lazy"
+						decoding="async"
 						className={`h-full w-full object-cover transition-opacity duration-500 ${
 							loaded ? "opacity-100" : "opacity-0"
 						}`}

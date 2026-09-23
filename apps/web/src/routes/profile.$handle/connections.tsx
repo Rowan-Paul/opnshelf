@@ -8,7 +8,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, UserMinus, Users } from "lucide-react";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { UserRowsSkeleton } from "#/components/skeletons";
 import { posthog } from "#/integrations/posthog/provider";
@@ -19,7 +19,7 @@ import {
 } from "#/lib/hooks/usePublicProfile";
 
 const connectionsSearchSchema = z.object({
-	tab: z.enum(["followers", "following"]).optional().default("followers"),
+	tab: z._default(z.optional(z.enum(["followers", "following"])), "followers"),
 });
 
 export const Route = createFileRoute("/profile/$handle/connections")({

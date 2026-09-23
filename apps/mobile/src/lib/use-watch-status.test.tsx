@@ -10,13 +10,15 @@ const api = vi.hoisted(() => ({
 	getUserMovies: vi.fn(),
 }));
 
-vi.mock("@opnshelf/api", () => ({
+vi.mock("@opnshelf/api", async (importOriginal) => ({
+	movieWatchCount: (await importOriginal<typeof import("@opnshelf/api")>())
+		.movieWatchCount,
 	moviesControllerGetMovieWatchHistoryOptions: () => ({
 		queryKey: ["movie-history"],
 		queryFn: api.getMovieHistory,
 	}),
-	moviesControllerGetUserMoviesOptions: () => ({
-		queryKey: ["user-movies"],
+	moviesControllerGetUserMovieWatchCountsOptions: () => ({
+		queryKey: ["movie-watch-counts"],
 		queryFn: api.getUserMovies,
 	}),
 	showsControllerGetShowWatchHistoryOptions: () => ({
@@ -32,6 +34,16 @@ vi.mock("@/lib/auth-context", () => ({
 function ShowStatusProbe({ skipHistory }: { skipHistory: boolean }) {
 	useWatchStatus({ mediaType: "show", showId: "show-1", skipHistory });
 	return createElement("show-status-probe" as never);
+}
+
+let movieStatus: ReturnType<typeof useWatchStatus> | undefined;
+function MovieStatusProbe() {
+	movieStatus = useWatchStatus({
+		mediaType: "movie",
+		movieId: "550",
+		skipHistory: true,
+	});
+	return createElement("movie-status-probe" as never);
 }
 
 describe("useWatchStatus", () => {
@@ -83,5 +95,28 @@ describe("useWatchStatus", () => {
 		});
 		act(() => renderer?.unmount());
 		client.clear();
+	});
+
+	it("reads a poster's watch count from the shared counts, without its history", async () => {
+		api.getUserMovies.mockResolvedValue([{ movieId: "550", watchCount: 3 }]);
+		const client = new QueryClient({
+			defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+		});
+
+		let renderer: ReturnType<typeof create> | undefined;
+		act(() => {
+			renderer = create(
+				<QueryClientProvider client={client}>
+					<MovieStatusProbe />
+				</QueryClientProvider>,
+			);
+		});
+		await act(async () => {
+			await vi.waitFor(() => expect(movieStatus?.isWatched).toBe(true));
+		});
+
+		expect(api.getMovieHistory).not.toHaveBeenCalled();
+		expect(movieStatus?.totalMovieWatches).toBe(3);
+		act(() => renderer?.unmount());
 	});
 });

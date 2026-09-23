@@ -8,6 +8,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 const config = defineConfig({
 	nitro: {
+		// Serve prebuilt .br/.gz variants of the hashed assets instead of raw
+		// bytes, so the origin never ships the entry bundle uncompressed.
+		compressPublicAssets: { gzip: true, brotli: true },
 		routeRules: {
 			// Production counterpart to the local Vite proxy below. The wildcard
 			// preserves PostHog's event, decide, and config request paths.
@@ -40,7 +43,14 @@ const config = defineConfig({
 		devtools(),
 		tsconfigPaths({ projects: ["./tsconfig.json"] }),
 		tailwindcss(),
-		tanstackStart(),
+		tanstackStart({
+			prerender: {
+				enabled: true,
+				autoStaticPathsDiscovery: false,
+				crawlLinks: false,
+			},
+			pages: [{ path: "/privacy" }, { path: "/tos" }],
+		}),
 		nitro(),
 		viteReact(),
 	],

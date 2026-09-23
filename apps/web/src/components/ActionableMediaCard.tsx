@@ -106,7 +106,7 @@ export default function ActionableMediaCard({
 	);
 
 	const watchStatusOptions = isMovie
-		? ({ mediaType: "movie", movieId: mediaId } as const)
+		? ({ mediaType: "movie", movieId: mediaId, skipHistory: true } as const)
 		: ({
 				mediaType: "show",
 				showId: mediaId,
@@ -115,7 +115,7 @@ export default function ActionableMediaCard({
 
 	const {
 		isWatched: queryIsWatched,
-		movieWatchHistory,
+		movieWatchCount,
 		watchHistory,
 		isEpisodeWatched,
 	} = useMediaWatchStatus(watchStatusOptions);
@@ -152,7 +152,7 @@ export default function ActionableMediaCard({
 	// every episode Watch behind the card, which is what the confirm dialog
 	// needs to say.
 	const confirmEntryCount = isMovie
-		? movieWatchHistory?.length || 0
+		? movieWatchCount || 0
 		: isEpisode
 			? episodeWatchHistory.length
 			: 0;

@@ -17,6 +17,9 @@ const MAX_BATCH_SIZE = 50;
 export type ShowProgressQuery = {
 	data: ShowProgressBatchResponseDto | undefined;
 	isLoading: boolean;
+	/** No answer yet, fetching or not. SSR never fetches, so `isLoading` is
+	 * false there even though the data is still to come. */
+	isPending: boolean;
 	isError: boolean;
 };
 
@@ -66,6 +69,7 @@ export function useShowProgress(
 				? { items: queries.flatMap((query) => query.data?.items ?? []) }
 				: undefined,
 		isLoading: queries.some((query) => query.isLoading),
+		isPending: queries.some((query) => query.isPending),
 		isError,
 	};
 }

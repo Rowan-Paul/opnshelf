@@ -7,7 +7,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Text } from "@/components/ui/text";
@@ -16,7 +16,8 @@ import { COUNTRY_NAMES } from "@/lib/countries";
 import { posthog } from "@/lib/posthog";
 import { useTwStyle } from "@/lib/use-tw-style";
 
-const PROVIDER_LOGO_BASE = "https://image.tmdb.org/t/p/original";
+// Displayed at 40px; w92 keeps logos sharp on 2x screens without original files.
+const PROVIDER_LOGO_BASE = "https://image.tmdb.org/t/p/w92";
 
 /**
  * The generated `WatchProvidersResultDto` doesn't model the `link` field that
@@ -120,37 +121,32 @@ export function WatchProviders({
 	mediaType: "movie" | "show";
 	mediaId: string;
 }) {
-	const { user } = useAuth();
-	const { data: settings } = useQuery({
+	const { user, isLoading: authLoading } = useAuth();
+	const { data: settings, isPending: settingsPending } = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user,
 	});
 
-	const [country, setCountry] = useState("US");
+	const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+	const country = selectedCountry ?? settings?.watchCountry ?? "US";
 	const [showRentBuy, setShowRentBuy] = useState(false);
-	// Seed the country from the user's setting once, after which the user's
-	// in-screen picks win (matches web's one-shot sync).
-	const hasSyncedCountry = useRef(false);
-	useEffect(() => {
-		if (!hasSyncedCountry.current && settings?.watchCountry) {
-			hasSyncedCountry.current = true;
-			setCountry(settings.watchCountry);
-		}
-	}, [settings]);
+	// Wait for the viewer's country before fetching providers. Otherwise a
+	// non-US viewer fetches the US response first and immediately fetches again.
+	const countryReady = !authLoading && (!user || !settingsPending);
 
 	const movieQuery = useQuery({
 		...moviesControllerGetWatchProvidersOptions({
 			path: { movieId: mediaId },
 			query: { country },
 		}),
-		enabled: mediaType === "movie" && !!mediaId,
+		enabled: mediaType === "movie" && !!mediaId && countryReady,
 	});
 	const showQuery = useQuery({
 		...showsControllerGetWatchProvidersOptions({
 			path: { showId: mediaId },
 			query: { country },
 		}),
-		enabled: mediaType === "show" && !!mediaId,
+		enabled: mediaType === "show" && !!mediaId && countryReady,
 	});
 
 	const query = mediaType === "movie" ? movieQuery : showQuery;
@@ -181,7 +177,7 @@ export function WatchProviders({
 				</Text>
 				{availableCountries.length > 1 ? (
 					<View className="w-40">
-						<CountryPicker value={country} onChange={setCountry} />
+						<CountryPicker value={country} onChange={setSelectedCountry} />
 					</View>
 				) : null}
 			</View>

@@ -33,18 +33,19 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 	const isShow = props.type === "show";
 	const { mediaId, title } = props;
 
-	// For list operations, use episode-scoped mediaId so we add/remove
-	// the specific episode, not the entire show.
-	const listMediaId =
+	// Episodes are list items of their own: the show's id plus the episode's
+	// coordinates, the same identity every other surface and the memberships
+	// read use.
+	const episodeCoords =
 		isShow && props.seasonNumber > 0 && props.episodeNumber > 0
-			? `${mediaId}:season:${props.seasonNumber}:episode:${props.episodeNumber}`
-			: mediaId;
+			? { seasonNumber: props.seasonNumber, episodeNumber: props.episodeNumber }
+			: {};
 
 	const watchStatusOptions = isShow
 		? ({ mediaType: "show", showId: mediaId } as const)
-		: ({ mediaType: "movie", movieId: mediaId } as const);
+		: ({ mediaType: "movie", movieId: mediaId, skipHistory: true } as const);
 
-	const { isWatched, isEpisodeWatched, movieWatchHistory, watchHistory } =
+	const { isWatched, isEpisodeWatched, movieWatchCount, watchHistory } =
 		useMediaWatchStatus(watchStatusOptions);
 
 	const watchActions = useWatchActions(watchStatusOptions);
@@ -60,7 +61,8 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 
 	const { otherLists, userLists, listsForItem } = useListItemStatus({
 		mediaType: props.type,
-		mediaId: listMediaId,
+		mediaId,
+		...episodeCoords,
 	});
 
 	const isListsLoading =
@@ -107,7 +109,7 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 			watchActions.isMarkMoviePending || watchActions.isUnmarkMoviePending;
 		handleToggleShelf = () => {
 			if (isWatched) {
-				if (movieWatchHistory && movieWatchHistory.length > 1) {
+				if ((movieWatchCount ?? 0) > 1) {
 					setConfirmRemoveOpen(true);
 				} else {
 					watchActions.unmarkMovieWatched();
@@ -116,7 +118,7 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 				watchActions.markMovieWatched();
 			}
 		};
-		confirmEntryCount = movieWatchHistory?.length || 0;
+		confirmEntryCount = movieWatchCount || 0;
 		handleConfirmRemove = () => {
 			watchActions.unmarkMovieWatched();
 			setConfirmRemoveOpen(false);
@@ -179,7 +181,8 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 
 			<ManageListsDialog
 				mediaType={props.type}
-				mediaId={listMediaId}
+				mediaId={mediaId}
+				{...episodeCoords}
 				open={listDialogOpen}
 				onOpenChange={setListDialogOpen}
 			/>

@@ -9,6 +9,8 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownContent } from "#/components/MarkdownContent";
 import { ShareButton } from "#/components/ShareButton";
 import { SpoilerShield } from "#/components/SpoilerShield";
+import { formatDate } from "#/lib/date-utils";
+import { useHydrated } from "#/lib/prompt-state";
 
 export const Route = createFileRoute("/reviews/$handle/$rkey")({
 	loader: async ({ context, params }) => {
@@ -97,6 +99,12 @@ function CanonicalReviewPage() {
 	const created = new Date(review.createdAt);
 	const updated = new Date(review.updatedAt);
 	const wasUpdated = updated.getTime() - created.getTime() > 60_000;
+	// The server's timezone is not the reader's, so SSR and the hydrating
+	// render both format in UTC; the reader's own timezone takes over after
+	// mount. Otherwise a review posted near midnight hydrates with a
+	// different day than the server rendered.
+	const hydrated = useHydrated();
+	const dateTimezone = hydrated ? undefined : "UTC";
 
 	return (
 		<article className="container-app py-8">
@@ -153,10 +161,10 @@ function CanonicalReviewPage() {
 						</Link>
 						<span className="flex items-center gap-1.5">
 							<CalendarDays className="size-4" />
-							{created.toLocaleDateString()}
+							{formatDate(review.createdAt, dateTimezone)}
 							{wasUpdated && (
 								<span className="text-(--foreground-subtle)">
-									(updated {updated.toLocaleDateString()})
+									(updated {formatDate(review.updatedAt, dateTimezone)})
 								</span>
 							)}
 						</span>

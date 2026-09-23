@@ -43,10 +43,10 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 	);
 
 	const watchStatusOptions = isMovie
-		? ({ mediaType: "movie", movieId: String(id) } as const)
+		? ({ mediaType: "movie", movieId: String(id), skipHistory: true } as const)
 		: ({ mediaType: "show", showId: actualShowId || "" } as const);
 
-	const { movieWatchHistory, watchHistory } =
+	const { movieWatchCount, watchHistory } =
 		useMediaWatchStatus(watchStatusOptions);
 
 	const rawMediaId = isMovie ? String(id) : actualShowId || String(id);
@@ -82,7 +82,7 @@ export default function DashboardMediaCard(props: DashboardMediaCardProps) {
 	}, [isMovie, watchHistory, seasonNumber, episodeNumber]);
 
 	const confirmEntryCount = isMovie
-		? movieWatchHistory?.length || 0
+		? movieWatchCount || 0
 		: episodeWatchHistory.length;
 	// Rows that already know the count (Shelf) pass it; the rest fall back to the
 	// viewer's own history so a card watched in-session badges its count too.

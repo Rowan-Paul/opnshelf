@@ -465,6 +465,63 @@ describe("ListsService", () => {
 		});
 	});
 
+	describe("getListMemberships", () => {
+		it("groups every list item under one entry per media item", async () => {
+			mockPrismaService.list.findMany.mockResolvedValue([
+				{
+					id: "watchlist",
+					items: [
+						{
+							mediaType: "movie",
+							mediaId: "550",
+							seasonNumber: 0,
+							episodeNumber: 0,
+						},
+						{
+							mediaType: "episode",
+							mediaId: "1399",
+							seasonNumber: 1,
+							episodeNumber: 2,
+						},
+					],
+				},
+				{
+					id: "favorites",
+					items: [
+						{
+							mediaType: "movie",
+							mediaId: "550",
+							seasonNumber: 0,
+							episodeNumber: 0,
+						},
+					],
+				},
+			]);
+
+			const result = await service.getListMemberships("did:plc:abc123");
+
+			expect(mockPrismaService.list.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { userDid: "did:plc:abc123" } }),
+			);
+			expect(result).toEqual([
+				{
+					mediaType: "movie",
+					mediaId: "550",
+					seasonNumber: 0,
+					episodeNumber: 0,
+					listIds: ["watchlist", "favorites"],
+				},
+				{
+					mediaType: "episode",
+					mediaId: "1399",
+					seasonNumber: 1,
+					episodeNumber: 2,
+					listIds: ["watchlist"],
+				},
+			]);
+		});
+	});
+
 	describe("getList", () => {
 		it("should return all items when pagination is not requested", async () => {
 			mockPrismaService.list.findFirst.mockResolvedValue({
