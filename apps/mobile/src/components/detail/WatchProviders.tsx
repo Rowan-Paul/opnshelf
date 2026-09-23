@@ -121,7 +121,7 @@ export function WatchProviders({
 	mediaType: "movie" | "show";
 	mediaId: string;
 }) {
-	const { user } = useAuth();
+	const { user, isLoading: authLoading } = useAuth();
 	const { data: settings, isPending: settingsPending } = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user,
@@ -132,7 +132,7 @@ export function WatchProviders({
 	const [showRentBuy, setShowRentBuy] = useState(false);
 	// Wait for the viewer's country before fetching providers. Otherwise a
 	// non-US viewer fetches the US response first and immediately fetches again.
-	const countryReady = !user || !settingsPending;
+	const countryReady = !authLoading && (!user || !settingsPending);
 
 	const movieQuery = useQuery({
 		...moviesControllerGetWatchProvidersOptions({
