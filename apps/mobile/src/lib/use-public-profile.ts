@@ -53,10 +53,11 @@ const SHELF_PAGE_SIZE = 24;
 function shelfQuery(
 	{ type, search, sortOrder = "desc" }: ProfileShelfFilters,
 	page?: number,
+	pageSize = SHELF_PAGE_SIZE,
 ) {
 	return {
 		...(page ? { page } : {}),
-		pageSize: SHELF_PAGE_SIZE,
+		pageSize,
 		sortOrder,
 		...(type ? { type } : {}),
 		...(search?.trim() ? { search: search.trim() } : {}),
@@ -66,13 +67,13 @@ function shelfQuery(
 /** First page of the user's public shelf (Home and self-profile previews). */
 export function useProfileShelf(
 	userDid: string,
-	options: ProfileShelfFilters & { page?: number } = {},
+	options: ProfileShelfFilters & { page?: number; pageSize?: number } = {},
 ) {
-	const { page = 1, ...filters } = options;
+	const { page = 1, pageSize = SHELF_PAGE_SIZE, ...filters } = options;
 	return useQuery({
 		...shelfControllerGetUserShelfOptions({
 			path: { userDid },
-			query: shelfQuery(filters, page),
+			query: shelfQuery(filters, page, pageSize),
 		}),
 		enabled: !!userDid,
 	});
@@ -102,11 +103,15 @@ export function useInfiniteProfileShelf(
 const UP_NEXT_PAGE_SIZE = 20;
 
 /** First page of Up Next (in-progress shows + their next episode). */
-export function useProfileUpNext(userDid: string, page = 1) {
+export function useProfileUpNext(
+	userDid: string,
+	page = 1,
+	pageSize = UP_NEXT_PAGE_SIZE,
+) {
 	return useQuery({
 		...showsControllerGetUserUpNextOptions({
 			path: { userDid },
-			query: { page, pageSize: UP_NEXT_PAGE_SIZE },
+			query: { page, pageSize },
 		}),
 		enabled: !!userDid,
 	});

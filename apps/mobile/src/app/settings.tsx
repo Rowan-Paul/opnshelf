@@ -198,11 +198,11 @@ export function SettingsCategoryScreen({
 		isError: settingsError,
 	} = useQuery({
 		...usersControllerGetMySettingsOptions(),
-		enabled: !!user,
+		enabled: !!user && (section === "preferences" || section === "connections"),
 	});
 	const { data: traktJob } = useQuery({
 		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: !!user,
+		enabled: !!user && section === "connections",
 	});
 
 	const updateSettingsMutation = useMutation({
@@ -256,7 +256,7 @@ export function SettingsCategoryScreen({
 		isError: publicationsError,
 	} = useQuery({
 		...reviewsControllerListMyPublicationsOptions(),
-		enabled: !!user,
+		enabled: !!user && section === "connections",
 	});
 
 	const storedPublicationUri = settings?.reviewsPublicationUri ?? null;
