@@ -121,8 +121,8 @@ export function OverviewTab({
 	// Both rows read the shelf endpoint rather than the dedicated recent-movies /
 	// recent-episodes ones: its DTO carries the episode title and the profile
 	// owner's Watch counts, so these posters badge like the Shelf tab does.
-	const movies = useProfileShelf(userDid, { type: "movie" });
-	const episodes = useProfileShelf(userDid, { type: "episode" });
+	const movies = useProfileShelf(userDid, { type: "movie", pageSize: 10 });
+	const episodes = useProfileShelf(userDid, { type: "episode", pageSize: 10 });
 	const lists = useProfileLists(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 4);
 

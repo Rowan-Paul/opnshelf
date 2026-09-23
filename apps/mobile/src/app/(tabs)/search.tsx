@@ -15,7 +15,7 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { Link } from "expo-router";
+import { Link, useIsFocused } from "expo-router";
 import {
 	ChevronRight,
 	Clapperboard,
@@ -170,49 +170,58 @@ function DiscoverRail({
 			    virtualization needed. items-start: horizontal ScrollView content
 			    defaults to cross-axis stretch, which collapses aspect-ratio cards
 			    (see CircleFilterBar). */}
-			<ShowProgressScope
-				showIds={items
-					.filter((item) => item.type === "show")
-					.map((item) => item.id)}
+			<ScrollView
+				horizontal
+				showsHorizontalScrollIndicator={false}
+				contentContainerClassName="items-start gap-3 px-4"
 			>
-				<ScrollView
-					horizontal
-					showsHorizontalScrollIndicator={false}
-					contentContainerClassName="items-start gap-3 px-4"
-				>
-					{items.map((item, cardIndex) => {
-						const key = `${item.type}-${item.id}`;
-						return anchorFirstCard && cardIndex === 0 ? (
-							<TourAnchor key={key} id="media-card" className="w-28">
-								<MediaCard item={item} actions />
-							</TourAnchor>
-						) : (
-							<View key={key} className="w-28">
-								<MediaCard item={item} actions />
-							</View>
-						);
-					})}
-				</ScrollView>
-			</ShowProgressScope>
+				{items.map((item, cardIndex) => {
+					const key = `${item.type}-${item.id}`;
+					return anchorFirstCard && cardIndex === 0 ? (
+						<TourAnchor key={key} id="media-card" className="w-28">
+							<MediaCard item={item} actions />
+						</TourAnchor>
+					) : (
+						<View key={key} className="w-28">
+							<MediaCard item={item} actions />
+						</View>
+					);
+				})}
+			</ScrollView>
 		</View>
 	);
 }
 
 /** Default landing state of the search tab when the query is empty. */
-function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
+function DiscoverSections({
+	isAuthenticated,
+	isFocused,
+}: {
+	isAuthenticated: boolean;
+	isFocused: boolean;
+}) {
 	const fromFollows = useQuery({
 		...discoverControllerFromFollowsOptions(),
-		enabled: isAuthenticated,
+		enabled: isAuthenticated && isFocused,
 	});
 	const becauseYouWatched = useQuery({
 		...discoverControllerBecauseYouWatchedOptions(),
-		enabled: isAuthenticated,
+		enabled: isAuthenticated && isFocused,
 	});
-	const trending = useQuery(discoverControllerTrendingOptions());
+	const trending = useQuery({
+		...discoverControllerTrendingOptions(),
+		enabled: isFocused,
+	});
 	// Public TMDB rails, so guests and brand-new accounts get more than the one
 	// trending row (issue #206).
-	const popularMovies = useQuery(moviesControllerDiscoverMoviesOptions());
-	const popularShows = useQuery(showsControllerDiscoverShowsOptions());
+	const popularMovies = useQuery({
+		...moviesControllerDiscoverMoviesOptions(),
+		enabled: isFocused,
+	});
+	const popularShows = useQuery({
+		...showsControllerDiscoverShowsOptions(),
+		enabled: isFocused,
+	});
 
 	const followsItems = (fromFollows.data?.items ?? []).map(toMediaCardItem);
 	const trendingItems = (trending.data?.items ?? []).map(toMediaCardItem);
@@ -248,6 +257,9 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 		{ key: "shows", title: "Popular shows", items: showItems },
 	];
 	const firstFilledRail = rails.find((rail) => rail.items.length > 0)?.key;
+	const showIds = rails.flatMap((rail) =>
+		rail.items.filter((item) => item.type === "show").map((item) => item.id),
+	);
 
 	const [refreshing, setRefreshing] = useState(false);
 	const onRefresh = async () => {
@@ -263,28 +275,31 @@ function DiscoverSections({ isAuthenticated }: { isAuthenticated: boolean }) {
 	};
 
 	return (
-		<ScrollView
-			contentContainerClassName="pb-8"
-			showsVerticalScrollIndicator={false}
-			keyboardShouldPersistTaps="handled"
-			refreshControl={
-				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-			}
-		>
-			{rails.map((rail) => (
-				<DiscoverRail
-					key={rail.key}
-					title={rail.title}
-					items={rail.items}
-					anchorFirstCard={rail.key === firstFilledRail}
-				/>
-			))}
-		</ScrollView>
+		<ShowProgressScope showIds={showIds}>
+			<ScrollView
+				contentContainerClassName="pb-8"
+				showsVerticalScrollIndicator={false}
+				keyboardShouldPersistTaps="handled"
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+				}
+			>
+				{rails.map((rail) => (
+					<DiscoverRail
+						key={rail.key}
+						title={rail.title}
+						items={rail.items}
+						anchorFirstCard={rail.key === firstFilledRail}
+					/>
+				))}
+			</ScrollView>
+		</ShowProgressScope>
 	);
 }
 
 export default function SearchScreen() {
 	const { isAuthenticated } = useAuth();
+	const isFocused = useIsFocused();
 	const [query, setQuery] = useState("");
 	const [activeTab, setActiveTab] = useState<Tab>("all");
 	const debouncedQuery = useDebounce(query.trim(), 350);
@@ -301,7 +316,8 @@ export default function SearchScreen() {
 		}),
 		initialPageParam: 1,
 		getNextPageParam: nextPage,
-		enabled: hasQuery && activeTab !== "people" && activeTab !== "cast",
+		enabled:
+			isFocused && hasQuery && activeTab !== "people" && activeTab !== "cast",
 	});
 
 	const peopleQuery = useInfiniteQuery({
@@ -310,7 +326,7 @@ export default function SearchScreen() {
 		}),
 		initialPageParam: 1,
 		getNextPageParam: nextPage,
-		enabled: hasQuery && activeTab === "people",
+		enabled: isFocused && hasQuery && activeTab === "people",
 	});
 
 	// Cast & Crew (TMDB people) — public, only fetched on its own tab.
@@ -320,7 +336,7 @@ export default function SearchScreen() {
 		}),
 		initialPageParam: 1,
 		getNextPageParam: nextPage,
-		enabled: hasQuery && activeTab === "cast",
+		enabled: isFocused && hasQuery && activeTab === "cast",
 	});
 
 	const results = useMemo(
@@ -394,7 +410,12 @@ export default function SearchScreen() {
 
 	function renderBody() {
 		if (!hasQuery) {
-			return <DiscoverSections isAuthenticated={isAuthenticated} />;
+			return (
+				<DiscoverSections
+					isAuthenticated={isAuthenticated}
+					isFocused={isFocused}
+				/>
+			);
 		}
 		if (activeQuery.isLoading) {
 			return (

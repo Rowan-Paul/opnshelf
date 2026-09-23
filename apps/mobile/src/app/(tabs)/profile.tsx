@@ -63,8 +63,8 @@ export default function ProfileTab() {
 	const { data: profile, isLoading, isError } = usePublicProfile(handle);
 	const userDid = profile?.did ?? "";
 
-	const shelf = useProfileShelf(userDid, { page: 1 });
-	const upNext = useProfileUpNext(userDid);
+	const shelf = useProfileShelf(userDid, { pageSize: 10 });
+	const upNext = useProfileUpNext(userDid, 1, 4);
 	const lists = useProfileLists(userDid);
 	const library = useUserLibrary(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 3);

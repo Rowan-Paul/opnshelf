@@ -77,7 +77,10 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 		<View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3">
 			<View className="h-20 w-14 items-center justify-center overflow-hidden rounded-lg bg-background-subtle">
 				{item.posterPath ? (
-					<PosterImage url={posterUrl(item.posterPath)} className="h-20 w-14" />
+					<PosterImage
+						url={posterUrl(item.posterPath, "w185")}
+						className="h-20 w-14"
+					/>
 				) : isMovie ? (
 					<Film color="#94a3b8" size={22} />
 				) : (

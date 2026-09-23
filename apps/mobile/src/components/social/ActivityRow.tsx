@@ -95,7 +95,8 @@ export function ActivityRow({
 		activity.type === "episode" ? activity.showTitle : activity.title;
 	const isMovieish = !!activity.movieId;
 	const poster =
-		posterUrl(activity.posterPath) ?? backdropUrl(activity.backdropPath);
+		posterUrl(activity.posterPath, "w185") ??
+		backdropUrl(activity.backdropPath, "w780");
 	const href = activityMediaHref(activity);
 
 	const episodeLabel =
