@@ -1,6 +1,6 @@
 # ADR 0041: Redis caches TMDB reads across restarts
 
-Status: accepted, not yet implemented.
+Status: accepted and implemented (issue #362).
 
 ## Context
 

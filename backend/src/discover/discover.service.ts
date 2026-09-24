@@ -1,11 +1,17 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { TMDB_CACHE_STORE } from "../tmdb/tmdb-cache.module";
+import type { TmdbCacheStore } from "../tmdb/tmdb-cache.store";
 import { Prisma } from "../generated/client";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { UnifiedSearchResultDto } from "../search/dto/search.dto";
 import { ShowsService } from "../shows/shows.service";
-import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
+import {
+	TMDB_LIST_CACHE_TTL_MS,
+	TmdbHttpClient,
+	tmdbErrorForResponse,
+} from "../tmdb/tmdb-http";
 import {
 	type BecauseYouWatchedRowDto,
 	type DiscoverSectionResponseDto,
@@ -54,9 +60,14 @@ export class DiscoverService {
 		private readonly moviesService: MoviesService,
 		private readonly showsService: ShowsService,
 		config: ConfigService,
+		@Optional() @Inject(TMDB_CACHE_STORE) cacheStore?: TmdbCacheStore,
 	) {
 		this.tmdbApiKey = config.get("TMDB_API_KEY") ?? "";
-		this.http = new TmdbHttpClient(this.tmdbApiKey, DiscoverService.name);
+		this.http = new TmdbHttpClient(
+			this.tmdbApiKey,
+			DiscoverService.name,
+			cacheStore,
+		);
 	}
 
 	/** Globally trending movies + shows this week (no personalization). */
@@ -64,6 +75,7 @@ export class DiscoverService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/trending/all/week?api_key=${this.tmdbApiKey}`,
 			"trending:all:week",
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 		if (!response.ok) {
 			throw tmdbErrorForResponse(response, "Failed to fetch trending");
@@ -84,7 +96,11 @@ export class DiscoverService {
 	 */
 	async onboarding(): Promise<DiscoverSectionResponseDto> {
 		const fetchResults = async (url: string, cacheKey: string) => {
-			const response = await this.http.fetchCached(url, cacheKey);
+			const response = await this.http.fetchCached(
+				url,
+				cacheKey,
+				TMDB_LIST_CACHE_TTL_MS,
+			);
 			if (!response.ok) {
 				throw tmdbErrorForResponse(
 					response,

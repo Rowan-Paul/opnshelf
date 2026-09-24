@@ -142,6 +142,7 @@ Notes:
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `TMDB_API_KEY` | TMDB API key for movie data |
+| `REDIS_URL` | Optional. Redis connection string for the TMDB response cache (ADR 0041). Unset locally; the cache then lives in process memory and empties on restart. In Railway it comes from the Redis service reference. |
 | `TRAKT_API_KEY` | Trakt.tv API key for imports |
 | `TAB_URL` | Tab ingestion service URL |
 | `TAB_ADMIN_PASSWORD` | Tab admin password; must match the container |

@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { TmdbCacheModule } from "./tmdb/tmdb-cache.module";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { SessionThrottlerGuard } from "./common/session-throttler.guard";
@@ -26,6 +27,8 @@ import { UsersModule } from "./users/users.module";
 @Module({
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true }),
+		// Shared TMDB response cache, Redis-backed when REDIS_URL is set (ADR 0041).
+		TmdbCacheModule,
 		// Global default rate limit: 100 requests / 60s per session (per IP for
 		// anonymous callers — see SessionThrottlerGuard). This sits
 		// alongside the custom AuthGuard and the hand-rolled register/resend
