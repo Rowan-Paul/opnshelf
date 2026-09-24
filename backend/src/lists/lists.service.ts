@@ -1027,7 +1027,7 @@ export class ListsService {
 			rkey: item.rkey,
 		});
 
-		await this.prisma.listItem.delete({
+		await this.prisma.listItem.deleteMany({
 			where: { id: item.id },
 		});
 

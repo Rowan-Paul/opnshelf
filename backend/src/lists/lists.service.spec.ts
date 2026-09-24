@@ -1261,7 +1261,36 @@ describe("ListsService", () => {
 				collection: "xyz.opnshelf.list.item",
 				rkey: "item-abc",
 			});
-			expect(mockPrismaService.listItem.delete).toHaveBeenCalledWith({
+			expect(mockPrismaService.listItem.deleteMany).toHaveBeenCalledWith({
+				where: { id: "item-1" },
+			});
+		});
+
+		it("succeeds when ingestion deletes the indexed item first", async () => {
+			mockPrismaService.list.findFirst.mockResolvedValue({ id: "list-1" });
+			mockPrismaService.listItem.findUnique.mockResolvedValue({
+				id: "item-1",
+				rkey: "item-abc",
+			});
+			mockDeleteRecord.mockImplementation(async () => {
+				await service.deleteListItemRecord("did:plc:abc123", "item-abc");
+			});
+			mockPrismaService.listItem.delete.mockRejectedValue(
+				Object.assign(new Error("Record to delete does not exist"), {
+					code: "P2025",
+				}),
+			);
+
+			await expect(
+				service.removeFromList(
+					"did:plc:abc123",
+					{ did: "did:plc:abc123" },
+					"watchlist",
+					"movie",
+					"123",
+				),
+			).resolves.toBeUndefined();
+			expect(mockPrismaService.listItem.deleteMany).toHaveBeenCalledWith({
 				where: { id: "item-1" },
 			});
 		});
