@@ -44,6 +44,23 @@ describe("PostHog lazy loading", () => {
 });
 
 describe("PostHog exception titles", () => {
+	it("keeps categorical pageview location while redacting other event URLs", async () => {
+		await (await import("./provider")).posthogLoaded;
+		const beforeSend = mocks.init.mock.calls[0][1].before_send;
+		const pageview = beforeSend({
+			event: "$pageview",
+			properties: {
+				$current_url: "https://opnshelf.xyz",
+				$pathname: "/discover",
+				$referrer: "https://example.com/private",
+			},
+		});
+		expect(pageview.properties).toEqual({
+			$current_url: "https://opnshelf.xyz",
+			$pathname: "/discover",
+		});
+	});
+
 	it("uses the captured message as the issue title without changing grouping or URL redaction", async () => {
 		await (await import("./provider")).posthogLoaded;
 		const beforeSend = mocks.init.mock.calls[0][1].before_send;
