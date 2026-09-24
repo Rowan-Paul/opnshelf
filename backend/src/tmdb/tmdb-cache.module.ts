@@ -26,8 +26,9 @@ export const TMDB_REDIS_CLIENT = Symbol("TMDB_REDIS_CLIENT");
  * operator adds the service.
  *
  * The connection is tuned to fail fast rather than queue: with the offline
- * queue disabled a command issued while disconnected rejects immediately, so
- * a Redis outage costs one rejected call per read instead of a hang. ioredis
+ * queue disabled a command issued while disconnected rejects immediately, and
+ * the command timeout bounds a connected but silent Redis, so an outage costs
+ * one rejected call per read instead of a hang. ioredis
  * keeps reconnecting in the background, and the store logs recovery.
  */
 export function createTmdbRedisClient(
@@ -44,6 +45,10 @@ export function createTmdbRedisClient(
 		enableOfflineQueue: false,
 		maxRetriesPerRequest: 0,
 		connectTimeout: 5_000,
+		// A cache read must never be slower than the TMDB call it replaces. A
+		// connected but unresponsive Redis would otherwise hang every cached
+		// read; a rejected command is a miss and the store falls through.
+		commandTimeout: 1_000,
 		// Reconnect with a capped backoff forever; the store degrades meanwhile.
 		retryStrategy: (attempt) => Math.min(attempt * 500, 10_000),
 	});
