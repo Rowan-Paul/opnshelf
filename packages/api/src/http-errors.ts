@@ -35,3 +35,16 @@ export function retryUnlessNotFound(
 ): boolean {
 	return getHttpStatus(error) !== 404 && failureCount < 3;
 }
+
+/**
+ * Default retry policy for queries: retry only failures a second attempt can
+ * fix (no response, or a 5xx). A 4xx is the API's definitive answer, and
+ * retrying a 429 multiplies the very load that tripped the rate limit.
+ */
+export function retryTransientFailures(
+	failureCount: number,
+	error: unknown,
+): boolean {
+	const status = getHttpStatus(error);
+	return (status === undefined || status >= 500) && failureCount < 3;
+}

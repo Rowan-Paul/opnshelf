@@ -1,3 +1,4 @@
+import { retryTransientFailures } from "@opnshelf/api";
 import { QueryClient } from "@tanstack/react-query";
 import { createReportingMutationCache } from "@/lib/report-mutation-failure";
 
@@ -13,7 +14,7 @@ export const queryClient = new QueryClient({
 		queries: {
 			staleTime: 60 * 1000,
 			refetchOnWindowFocus: false,
-			retry: 2,
+			retry: retryTransientFailures,
 		},
 		mutations: {
 			retry: 0,
