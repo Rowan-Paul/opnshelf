@@ -37,6 +37,7 @@ export * from "./generated/index";
 export {
 	getHttpStatus,
 	isUnauthorizedError,
+	retryTransientFailures,
 	retryUnlessNotFound,
 } from "./http-errors";
 export { slugifyName } from "./media-slug";
