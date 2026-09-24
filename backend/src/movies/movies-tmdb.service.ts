@@ -1,5 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { TMDB_CACHE_STORE } from "../tmdb/tmdb-cache.module";
+import type { TmdbCacheStore } from "../tmdb/tmdb-cache.store";
 import {
 	groupCrewByDepartment,
 	sortCrewByJob,
@@ -10,7 +12,12 @@ import {
 	trimCast,
 	trimCrew,
 } from "../tmdb/tmdb-credits.util";
-import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
+import {
+	TMDB_DETAIL_CACHE_TTL_MS,
+	TMDB_LIST_CACHE_TTL_MS,
+	TmdbHttpClient,
+	tmdbErrorForResponse,
+} from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
 	type TMDBTrailer,
@@ -98,9 +105,16 @@ export class MoviesTmdbService {
 	private readonly tmdbBaseUrl = "https://api.themoviedb.org/3";
 	private readonly http: TmdbHttpClient;
 
-	constructor(private config: ConfigService) {
+	constructor(
+		private config: ConfigService,
+		@Optional() @Inject(TMDB_CACHE_STORE) cacheStore?: TmdbCacheStore,
+	) {
 		this.tmdbApiKey = this.config.get("TMDB_API_KEY") ?? "";
-		this.http = new TmdbHttpClient(this.tmdbApiKey, MoviesTmdbService.name);
+		this.http = new TmdbHttpClient(
+			this.tmdbApiKey,
+			MoviesTmdbService.name,
+			cacheStore,
+		);
 	}
 
 	async searchMovies(
@@ -110,6 +124,7 @@ export class MoviesTmdbService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/search/movie?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
 			`search:movie:${query}:${page}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -133,6 +148,7 @@ export class MoviesTmdbService {
 		const response = await this.http.fetchCached(
 			url,
 			`discover:movie:${sortBy}:${page}:${year ?? ""}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -153,6 +169,7 @@ export class MoviesTmdbService {
 		const recs = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/movie/${movieId}/recommendations?api_key=${this.tmdbApiKey}&page=${page}`,
 			`movie:recommendations:${movieId}:${page}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 		if (recs.ok) {
 			const data = await recs.json<TMDBSearchResponse>();
@@ -162,6 +179,7 @@ export class MoviesTmdbService {
 		const similar = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/movie/${movieId}/similar?api_key=${this.tmdbApiKey}&page=${page}`,
 			`movie:similar:${movieId}:${page}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 		if (!similar.ok) {
 			throw tmdbErrorForResponse(similar, "Failed to fetch recommendations");
@@ -174,10 +192,12 @@ export class MoviesTmdbService {
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/movie/${movieId}?api_key=${this.tmdbApiKey}`,
 				`movie:detail:${movieId}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/movie/${movieId}/videos?api_key=${this.tmdbApiKey}`,
 				`movie:videos:${movieId}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 		]);
 
@@ -200,6 +220,7 @@ export class MoviesTmdbService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/movie/${movieId}/credits?api_key=${this.tmdbApiKey}`,
 			`movie:credits:${movieId}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -241,8 +262,10 @@ export class MoviesTmdbService {
 	async getWatchProviders(
 		movieId: string,
 	): Promise<WatchProvidersResponse | null> {
-		const response = await this.http.fetch(
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/movie/${movieId}/watch/providers?api_key=${this.tmdbApiKey}`,
+			`movie:watchProviders:${movieId}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {

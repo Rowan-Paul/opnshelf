@@ -58,4 +58,4 @@ Numbering notes:
 | [0038-android-releases-roll-out-to-everyone.md](0038-android-releases-roll-out-to-everyone.md) | 0038 | Android releases roll out to everyone | Accepted and implemented; supersedes the Android rollout percentage in 0021 |
 | [0039-web-ssr-renders-public-content-without-a-signed-in-hint.md](0039-web-ssr-renders-public-content-without-a-signed-in-hint.md) | 0039 | Web SSR renders public content unless a signed-in hint says otherwise | Accepted and implemented |
 | [0040-list-membership-is-read-once-per-viewer.md](0040-list-membership-is-read-once-per-viewer.md) | 0040 | List membership is read once per viewer, not per item | Accepted and implemented |
-| [0041-redis-caches-tmdb-reads-across-restarts.md](0041-redis-caches-tmdb-reads-across-restarts.md) | 0041 | Redis caches TMDB reads across restarts | Accepted, not yet implemented; supersedes the reasoning that closed issue #67 |
+| [0041-redis-caches-tmdb-reads-across-restarts.md](0041-redis-caches-tmdb-reads-across-restarts.md) | 0041 | Redis caches TMDB reads across restarts | Accepted and implemented; supersedes the reasoning that closed issue #67 |
