@@ -1,3 +1,4 @@
+import { client } from "@opnshelf/api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -38,6 +39,7 @@ describe("shared QueryClient mutation failure reporting", () => {
 	it("reports a failed mutation to PostHog with categorical properties only", async () => {
 		const serverError = Object.assign(new Error("Too many parts"), {
 			status: 400,
+			requestId: "private details",
 		});
 
 		await failMutation(
@@ -57,7 +59,33 @@ describe("shared QueryClient mutation failure reporting", () => {
 			mutation_key: "users/me/profile/avatar/upload",
 			http_status: 400,
 			error_name: "Error",
+			request_id: null,
 		});
+	});
+
+	it("reports the request ID returned with an API failure", async () => {
+		const error = await client
+			.get({
+				url: "/lists/example/items/movie/123",
+				throwOnError: true,
+				fetch: async () =>
+					new Response(JSON.stringify({ statusCode: 500 }), {
+						status: 500,
+						headers: {
+							"X-Request-ID": "1bb20dbc-dbf4-4636-9919-c0dd15d04084",
+						},
+					}),
+			})
+			.catch((failure: unknown) => failure);
+		await failMutation(["lists", "example", "removeItem"], error);
+
+		expect(mocks.captureException).toHaveBeenCalledWith(
+			expect.any(Error),
+			expect.objectContaining({
+				http_status: 500,
+				request_id: "1bb20dbc-dbf4-4636-9919-c0dd15d04084",
+			}),
+		);
 	});
 
 	it("reports network failures without a status", async () => {
@@ -69,6 +97,7 @@ describe("shared QueryClient mutation failure reporting", () => {
 				mutation_key: "reviews/create",
 				http_status: null,
 				error_name: "TypeError",
+				request_id: null,
 			},
 		);
 	});

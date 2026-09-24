@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import type { RequestHandler } from "express";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/http-exception.filter";
@@ -25,6 +27,13 @@ async function bootstrap() {
 	// Single proxy hop in front of us (Railway), so trust the first X-Forwarded-*
 	// entry. This makes req.ip resolve to the real client address.
 	app.set("trust proxy", 1);
+	const assignRequestId: RequestHandler = (_request, response, next) => {
+		const requestId = randomUUID();
+		response.locals.requestId = requestId;
+		response.setHeader("X-Request-ID", requestId);
+		next();
+	};
+	app.use(assignRequestId);
 
 	// Security headers. Defaults are fine; Swagger is gated to non-prod below.
 	app.use(helmet());
@@ -41,6 +50,7 @@ async function bootstrap() {
 	app.enableCors({
 		origin: [frontendUrl, ...loopbackOrigins],
 		credentials: true,
+		exposedHeaders: ["X-Request-ID"],
 	});
 
 	app.useGlobalPipes(

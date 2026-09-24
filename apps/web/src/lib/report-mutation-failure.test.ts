@@ -59,6 +59,7 @@ describe("app QueryClient mutation failure reporting", () => {
 			mutation_key: "users/me/profile/avatar/upload",
 			http_status: 400,
 			error_name: "Error",
+			request_id: null,
 		});
 	});
 
@@ -71,6 +72,7 @@ describe("app QueryClient mutation failure reporting", () => {
 				mutation_key: "reviews/create",
 				http_status: null,
 				error_name: "TypeError",
+				request_id: null,
 			},
 		);
 	});

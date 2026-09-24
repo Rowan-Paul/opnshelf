@@ -87,6 +87,14 @@ client.interceptors.response.use(async (response) => {
 	return response;
 });
 
+client.interceptors.error.use((error, response) => {
+	const requestId = response?.headers.get('x-request-id');
+	if (requestId && typeof error === 'object' && error !== null) {
+		return Object.assign(error, { requestId });
+	}
+	return error;
+});
+
 // Initialize client with default config
 updateClientConfig();
 
