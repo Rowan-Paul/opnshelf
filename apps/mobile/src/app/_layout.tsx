@@ -23,6 +23,7 @@ import { UpdateBanner } from "@/components/UpdateBanner";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
 import { posthog } from "@/lib/posthog";
+import { PushNotificationBridge } from "@/lib/push-notification-bridge";
 import { useTheme } from "@/lib/theme-context";
 import { setWidgetApiUrl } from "../../modules/widget-bridge";
 
@@ -81,6 +82,7 @@ export default function RootLayout() {
 
 	return (
 		<Providers>
+			<PushNotificationBridge />
 			<ScreenTracker />
 			{/* Above the navigator so a downloaded OTA update is announced on every
 			    screen, not just the tabs; hidden on the auth/onboarding routes. */}

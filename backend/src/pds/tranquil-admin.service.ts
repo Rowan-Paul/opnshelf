@@ -80,6 +80,13 @@ export class TranquilAdminService implements OnModuleInit {
 		}
 	}
 
+	/** Only our own PDS accounts are visible to this administrator. */
+	async getVerifiedAccountEmail(did: string): Promise<string | null> {
+		const agent = await this.ensureLogin();
+		const { data } = await agent.com.atproto.admin.getAccountInfo({ did });
+		return data.email && data.emailConfirmedAt ? data.email : null;
+	}
+
 	private async ensureLogin(): Promise<AtpAgent> {
 		if (this.agent?.session) {
 			return this.agent;

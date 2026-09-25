@@ -168,7 +168,7 @@ export default function SignupScreen() {
 						keyboardType="email-address"
 						autoComplete="email"
 						editable={!isSubmitting}
-						helperText="Opnshelf needs an email for account recovery and verification. Opnshelf itself never stores it."
+						helperText="Opnshelf needs an email for account recovery and verification. We also use a verified address for notifications you can manage in Settings."
 					/>
 
 					<TextField

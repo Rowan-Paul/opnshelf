@@ -1,0 +1,103 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NotificationWorkerService } from "./notification-worker.service";
+
+describe("NotificationWorkerService", () => {
+	const user = {
+		timezone: "Europe/Amsterdam",
+		watchCountry: "NL",
+		handle: "alice.test",
+	};
+	const settings = {
+		userDid: "did:plc:alice",
+		user,
+		email: "alice@example.com",
+		emailVerifiedAt: new Date(),
+		emailNewReleases: true,
+		emailWatchlistReleases: false,
+		emailNewSeasons: false,
+		emailStats: false,
+		pushNewReleases: false,
+		pushWatchlistReleases: false,
+		pushNewSeasons: false,
+		pushStats: false,
+	};
+	const prisma = {
+		notificationSettings: { findMany: vi.fn() },
+		pushDevice: { findMany: vi.fn() },
+		notificationDelivery: { upsert: vi.fn() },
+		listItem: { findMany: vi.fn() },
+	};
+	const movies = { discoverReleasesBetween: vi.fn() };
+	const shows = { discoverPremieresBetween: vi.fn() };
+	const worker = new NotificationWorkerService(
+		prisma as never,
+		{} as never,
+		{} as never,
+		movies as never,
+		shows as never,
+	);
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		prisma.notificationSettings.findMany.mockResolvedValue([settings]);
+		prisma.pushDevice.findMany.mockResolvedValue([]);
+		prisma.notificationDelivery.upsert.mockResolvedValue({});
+		prisma.listItem.findMany.mockResolvedValue([]);
+		movies.discoverReleasesBetween.mockResolvedValue([
+			{ id: 42, title: "A Movie" },
+		]);
+		shows.discoverPremieresBetween.mockResolvedValue([
+			{ id: 24, name: "A Show" },
+		]);
+	});
+
+	it("queues the general release digest once for the coming week on Monday", async () => {
+		await worker.queueDueEvents(new Date("2026-09-28T08:00:00.000Z"));
+		expect(movies.discoverReleasesBetween).toHaveBeenCalledWith(
+			"2026-09-28",
+			"2026-10-04",
+			"NL",
+		);
+		expect(prisma.notificationDelivery.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				create: expect.objectContaining({
+					channel: "email",
+					eventKey: "new-releases:2026-09-28:NL",
+					body: "A Movie · A Show",
+				}),
+			}),
+		);
+	});
+
+	it("does not send the general digest on Tuesday", async () => {
+		await worker.queueDueEvents(new Date("2026-09-29T08:00:00.000Z"));
+		expect(movies.discoverReleasesBetween).not.toHaveBeenCalled();
+		expect(prisma.notificationDelivery.upsert).not.toHaveBeenCalled();
+	});
+
+	it("queues a watchlist movie on its release day", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([
+			{
+				...settings,
+				emailNewReleases: false,
+				emailWatchlistReleases: true,
+			},
+		]);
+		prisma.listItem.findMany.mockResolvedValue([
+			{
+				movie: { movieId: "42", title: "A Movie" },
+				show: null,
+			},
+		]);
+		await worker.queueDueEvents(new Date("2026-09-29T08:00:00.000Z"));
+		expect(prisma.notificationDelivery.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				create: expect.objectContaining({
+					category: "WatchlistReleases",
+					eventKey: "watchlist:2026-09-29",
+					body: "A Movie",
+				}),
+			}),
+		);
+	});
+});

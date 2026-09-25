@@ -175,6 +175,26 @@ export class ShowsTmdbService {
 		return response.json<TMDBSearchResponse>();
 	}
 
+	/** Popular series premiering in a date range. */
+	async discoverPremieresBetween(
+		start: string,
+		end: string,
+	): Promise<TMDBShow[]> {
+		const url = new URL(`${this.tmdbBaseUrl}/discover/tv`);
+		url.searchParams.set("api_key", this.tmdbApiKey);
+		url.searchParams.set("sort_by", "popularity.desc");
+		url.searchParams.set("first_air_date.gte", start);
+		url.searchParams.set("first_air_date.lte", end);
+		const response = await this.http.fetchCached(
+			url.toString(),
+			`notifications:show:${start}:${end}`,
+		);
+		if (!response.ok) {
+			throw tmdbErrorForResponse(response, "Failed to discover show premieres");
+		}
+		return (await response.json<TMDBSearchResponse>()).results;
+	}
+
 	async discoverShows(
 		sortBy: string = "popularity.desc",
 		page: number = 1,

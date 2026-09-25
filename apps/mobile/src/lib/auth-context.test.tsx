@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
 	posthogCapture: vi.fn(),
 	posthogIdentify: vi.fn(),
 	posthogReset: vi.fn(),
+	removeCurrentPushDevice: vi.fn(),
 	routerReplace: vi.fn(),
 	saveSessionToken: vi.fn(),
 	setOnUnauthorized: vi.fn(),
@@ -63,6 +64,10 @@ vi.mock("@/lib/posthog", () => ({
 		identify: mocks.posthogIdentify,
 		reset: mocks.posthogReset,
 	},
+}));
+
+vi.mock("@/lib/push-notifications", () => ({
+	removeCurrentPushDevice: mocks.removeCurrentPushDevice,
 }));
 
 vi.mock("../../modules/widget-bridge", () => ({
