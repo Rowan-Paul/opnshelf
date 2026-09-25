@@ -340,6 +340,41 @@ function SearchPage() {
 		[popularShowsData, shownKeys],
 	);
 
+	const recommendationRows = (
+		isAuthenticated ? (becauseYouWatchedData?.rows ?? []) : []
+	).map((row) => ({
+		key: `byw-${row.seedMediaType}-${row.seedId}`,
+		title: (
+			<>
+				Because you watched <em>{row.seedTitle}</em>
+			</>
+		),
+		items: row.items,
+	}));
+	const discoverRows = [
+		{
+			key: "follows",
+			title: "From your follows",
+			items: isAuthenticated ? (fromFollowsData?.items ?? []) : [],
+		},
+		...recommendationRows.slice(0, 1),
+		...(hasServices ? (popularOnYourServices.data?.rows ?? []) : []).map(
+			(row) => ({
+				key: `service-${row.serviceId}`,
+				title: `Popular on ${row.serviceName}`,
+				items: row.items,
+			}),
+		),
+		{
+			key: "trending",
+			title: "Trending this week",
+			items: trendingData?.items ?? [],
+		},
+		...recommendationRows.slice(1),
+		{ key: "movies", title: "Popular movies", items: popularMovieItems },
+		{ key: "shows", title: "Popular shows", items: popularShowItems },
+	];
+
 	// TMDB multi-search can return the same id twice → dedupe before rendering
 	// so React keys stay unique (was "two children with the same key").
 	const results = useMemo(
@@ -678,42 +713,9 @@ function SearchPage() {
 				<DiscoverRowsSkeleton />
 			) : (
 				<div className="space-y-8">
-					{hasServices &&
-						(popularOnYourServices.data?.rows ?? []).map((row) => (
-							<DiscoverRow
-								key={row.serviceId}
-								title={`Popular on ${row.serviceName}`}
-								items={row.items}
-							/>
-						))}
-					{isAuthenticated && (
-						<DiscoverRow
-							title="From your follows"
-							items={fromFollowsData?.items ?? []}
-						/>
-					)}
-
-					{isAuthenticated &&
-						(becauseYouWatchedData?.rows ?? []).map((row) => (
-							<DiscoverRow
-								key={`byw-${row.seedMediaType}-${row.seedId}`}
-								title={
-									<>
-										Because you watched <em>{row.seedTitle}</em>
-									</>
-								}
-								items={row.items}
-							/>
-						))}
-
-					<DiscoverRow
-						title="Trending this week"
-						items={trendingData?.items ?? []}
-					/>
-
-					<DiscoverRow title="Popular movies" items={popularMovieItems} />
-
-					<DiscoverRow title="Popular shows" items={popularShowItems} />
+					{discoverRows.map((row) => (
+						<DiscoverRow key={row.key} title={row.title} items={row.items} />
+					))}
 				</div>
 			)}
 		</div>

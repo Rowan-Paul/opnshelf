@@ -280,7 +280,14 @@ function DiscoverSections({
 
 	// One list so the Welcome Tour's long-press step can point at the first
 	// poster that actually rendered, whichever rail that turns out to be.
+	const recommendationRows = rows.map((row) => ({
+		key: `${row.seedMediaType}-${row.seedId}`,
+		title: `Because you watched ${row.seedTitle}`,
+		items: row.items.map(toMediaCardItem),
+	}));
 	const rails = [
+		{ key: "follows", title: "From your follows", items: followsItems },
+		...recommendationRows.slice(0, 1),
 		...(hasServices ? (popularOnYourServices.data?.rows ?? []) : []).map(
 			(row) => ({
 				key: `service-${row.serviceId}`,
@@ -288,13 +295,8 @@ function DiscoverSections({
 				items: row.items.map(toMediaCardItem),
 			}),
 		),
-		{ key: "follows", title: "From your follows", items: followsItems },
-		...rows.map((row) => ({
-			key: `${row.seedMediaType}-${row.seedId}`,
-			title: `Because you watched ${row.seedTitle}`,
-			items: row.items.map(toMediaCardItem),
-		})),
 		{ key: "trending", title: "Trending this week", items: trendingItems },
+		...recommendationRows.slice(1),
 		{ key: "movies", title: "Popular movies", items: movieItems },
 		{ key: "shows", title: "Popular shows", items: showItems },
 	];
