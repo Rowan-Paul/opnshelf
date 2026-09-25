@@ -6038,6 +6038,38 @@
           "discover"
         ]
       }
+    },
+    "/streaming-services": {
+      "get": {
+        "operationId": "StreamingServicesController_list",
+        "parameters": [
+          {
+            "name": "country",
+            "required": false,
+            "in": "query",
+            "description": "ISO 3166-1 alpha-2 country code (e.g. US, NL); defaults to US",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingServicesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the Streaming Services available in a watch country, ordered by prominence",
+        "tags": [
+          "streaming-services"
+        ]
+      }
     }
   },
   "info": {
@@ -8311,6 +8343,13 @@
             "type": "string",
             "description": "ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)"
           },
+          "streamingServiceIds": {
+            "description": "My Services: TMDB watch-provider ids the user subscribes to, for their watch country. Empty when never chosen.",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
           "alwaysShowSpoilers": {
             "type": "boolean",
             "description": "Reader preference: always show spoiler content, suppressing Spoiler Shields"
@@ -8354,6 +8393,7 @@
           "timeFormat",
           "timezone",
           "watchCountry",
+          "streamingServiceIds",
           "alwaysShowSpoilers",
           "reviewsPublicationUri",
           "reviewsPublicationName",
@@ -8382,6 +8422,13 @@
           "watchCountry": {
             "type": "string",
             "description": "ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)"
+          },
+          "streamingServiceIds": {
+            "description": "My Services: TMDB watch-provider ids the user subscribes to. Replaces the whole set; an empty array clears it.",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
           },
           "alwaysShowSpoilers": {
             "type": "boolean",
@@ -11813,6 +11860,53 @@
         },
         "required": [
           "rows"
+        ]
+      },
+      "StreamingServiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "TMDB watch-provider id"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, e.g. Netflix"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Absolute URL of the service logo, or null when TMDB has none",
+            "nullable": true
+          },
+          "displayPriority": {
+            "type": "number",
+            "description": "TMDB display priority within the requested country; lower is more prominent"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "logoUrl",
+          "displayPriority"
+        ]
+      },
+      "StreamingServicesResponseDto": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country the list is for"
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StreamingServiceDto"
+            }
+          }
+        },
+        "required": [
+          "country",
+          "services"
         ]
       }
     }

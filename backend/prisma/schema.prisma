@@ -23,6 +23,9 @@ model User {
   timezone                String           @default("UTC")
   timeFormat              String           @default("24h")
   watchCountry            String           @default("US")
+  // My Services: TMDB watch-provider ids the user subscribes to, chosen for
+  // their watch country. Private preference, never an AT Protocol record.
+  streamingServiceIds     Int[]            @default([])
   // Reader preference: suppress Spoiler Shields entirely (ADR-0016).
   alwaysShowSpoilers      Boolean          @default(false)
   onboardingCompletedAt   DateTime?

@@ -16,6 +16,7 @@ vi.mock("#/lib/auth-context", () => ({
 			timezone: "Europe/Amsterdam",
 			timeFormat: "24h",
 			watchCountry: "NL",
+			streamingServiceIds: [],
 			alwaysShowSpoilers: false,
 			blueskyCrossPostEnabled: false,
 		},
@@ -53,6 +54,7 @@ describe("settings sections", () => {
 		expect(screen.getByText("Appearance")).toBeDefined();
 		expect(screen.getByText("Time & Region")).toBeDefined();
 		expect(screen.getByText("Streaming")).toBeDefined();
+		expect(screen.getByText("My services")).toBeDefined();
 		expect(screen.getByText("Reviews")).toBeDefined();
 		// timeFormat "24h" → the 24-hour switch is on.
 		expect(screen.getByRole("switch", { name: /24-hour time/i })).toBeDefined();

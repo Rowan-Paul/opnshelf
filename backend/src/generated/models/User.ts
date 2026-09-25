@@ -27,11 +27,13 @@ export type AggregateUser = {
 }
 
 export type UserAvgAggregateOutputType = {
+  streamingServiceIds: number | null
   welcomeTourWebVersion: number | null
   welcomeTourMobileVersion: number | null
 }
 
 export type UserSumAggregateOutputType = {
+  streamingServiceIds: number[]
   welcomeTourWebVersion: number | null
   welcomeTourMobileVersion: number | null
 }
@@ -127,6 +129,7 @@ export type UserCountAggregateOutputType = {
   timezone: number
   timeFormat: number
   watchCountry: number
+  streamingServiceIds: number
   alwaysShowSpoilers: number
   onboardingCompletedAt: number
   atStoreReviewHandledAt: number
@@ -153,11 +156,13 @@ export type UserCountAggregateOutputType = {
 
 
 export type UserAvgAggregateInputType = {
+  streamingServiceIds?: true
   welcomeTourWebVersion?: true
   welcomeTourMobileVersion?: true
 }
 
 export type UserSumAggregateInputType = {
+  streamingServiceIds?: true
   welcomeTourWebVersion?: true
   welcomeTourMobileVersion?: true
 }
@@ -253,6 +258,7 @@ export type UserCountAggregateInputType = {
   timezone?: true
   timeFormat?: true
   watchCountry?: true
+  streamingServiceIds?: true
   alwaysShowSpoilers?: true
   onboardingCompletedAt?: true
   atStoreReviewHandledAt?: true
@@ -378,6 +384,7 @@ export type UserGroupByOutputType = {
   timezone: string
   timeFormat: string
   watchCountry: string
+  streamingServiceIds: number[]
   alwaysShowSpoilers: boolean
   onboardingCompletedAt: Date | null
   atStoreReviewHandledAt: Date | null
@@ -439,6 +446,7 @@ export type UserWhereInput = {
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
   watchCountry?: Prisma.StringFilter<"User"> | string
+  streamingServiceIds?: Prisma.IntNullableListFilter<"User">
   alwaysShowSpoilers?: Prisma.BoolFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   atStoreReviewHandledAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -490,6 +498,7 @@ export type UserOrderByWithRelationInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  streamingServiceIds?: Prisma.SortOrder
   alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -544,6 +553,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   timezone?: Prisma.StringFilter<"User"> | string
   timeFormat?: Prisma.StringFilter<"User"> | string
   watchCountry?: Prisma.StringFilter<"User"> | string
+  streamingServiceIds?: Prisma.IntNullableListFilter<"User">
   alwaysShowSpoilers?: Prisma.BoolFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   atStoreReviewHandledAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -595,6 +605,7 @@ export type UserOrderByWithAggregationInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  streamingServiceIds?: Prisma.SortOrder
   alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -641,6 +652,7 @@ export type UserScalarWhereWithAggregatesInput = {
   timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
   timeFormat?: Prisma.StringWithAggregatesFilter<"User"> | string
   watchCountry?: Prisma.StringWithAggregatesFilter<"User"> | string
+  streamingServiceIds?: Prisma.IntNullableListFilter<"User">
   alwaysShowSpoilers?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   onboardingCompletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   atStoreReviewHandledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -679,6 +691,7 @@ export type UserCreateInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -730,6 +743,7 @@ export type UserUncheckedCreateInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -781,6 +795,7 @@ export type UserUpdateInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -832,6 +847,7 @@ export type UserUncheckedUpdateInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -883,6 +899,7 @@ export type UserCreateManyInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -921,6 +938,7 @@ export type UserUpdateManyMutationInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -959,6 +977,7 @@ export type UserUncheckedUpdateManyInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -982,6 +1001,14 @@ export type UserUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type IntNullableListFilter<$PrismaModel = never> = {
+  equals?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
+  has?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
+  hasEvery?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  hasSome?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
 export type UserCountOrderByAggregateInput = {
   did?: Prisma.SortOrder
   handle?: Prisma.SortOrder
@@ -997,6 +1024,7 @@ export type UserCountOrderByAggregateInput = {
   timezone?: Prisma.SortOrder
   timeFormat?: Prisma.SortOrder
   watchCountry?: Prisma.SortOrder
+  streamingServiceIds?: Prisma.SortOrder
   alwaysShowSpoilers?: Prisma.SortOrder
   onboardingCompletedAt?: Prisma.SortOrder
   atStoreReviewHandledAt?: Prisma.SortOrder
@@ -1021,6 +1049,7 @@ export type UserCountOrderByAggregateInput = {
 }
 
 export type UserAvgOrderByAggregateInput = {
+  streamingServiceIds?: Prisma.SortOrder
   welcomeTourWebVersion?: Prisma.SortOrder
   welcomeTourMobileVersion?: Prisma.SortOrder
 }
@@ -1102,6 +1131,7 @@ export type UserMinOrderByAggregateInput = {
 }
 
 export type UserSumOrderByAggregateInput = {
+  streamingServiceIds?: Prisma.SortOrder
   welcomeTourWebVersion?: Prisma.SortOrder
   welcomeTourMobileVersion?: Prisma.SortOrder
 }
@@ -1109,6 +1139,10 @@ export type UserSumOrderByAggregateInput = {
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
+}
+
+export type UserCreatestreamingServiceIdsInput = {
+  set: number[]
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -1121,6 +1155,11 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
+}
+
+export type UserUpdatestreamingServiceIdsInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type BoolFieldUpdateOperationsInput = {
@@ -1340,6 +1379,7 @@ export type UserCreateWithoutFollowingInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -1390,6 +1430,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -1445,6 +1486,7 @@ export type UserCreateWithoutFollowersInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -1495,6 +1537,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -1561,6 +1604,7 @@ export type UserUpdateWithoutFollowingInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1611,6 +1655,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1672,6 +1717,7 @@ export type UserUpdateWithoutFollowersInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1722,6 +1768,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1772,6 +1819,7 @@ export type UserCreateWithoutCirclesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -1822,6 +1870,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -1888,6 +1937,7 @@ export type UserUpdateWithoutCirclesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1938,6 +1988,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1988,6 +2039,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2038,6 +2090,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2104,6 +2157,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2154,6 +2208,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2204,6 +2259,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2254,6 +2310,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2320,6 +2377,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2370,6 +2428,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2420,6 +2479,7 @@ export type UserCreateWithoutListsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2470,6 +2530,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2536,6 +2597,7 @@ export type UserUpdateWithoutListsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2586,6 +2648,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2636,6 +2699,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2686,6 +2750,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2752,6 +2817,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2802,6 +2868,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2852,6 +2919,7 @@ export type UserCreateWithoutNotesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2902,6 +2970,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -2968,6 +3037,7 @@ export type UserUpdateWithoutNotesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3018,6 +3088,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3068,6 +3139,7 @@ export type UserCreateWithoutReviewsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3118,6 +3190,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3184,6 +3257,7 @@ export type UserUpdateWithoutReviewsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3234,6 +3308,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3284,6 +3359,7 @@ export type UserCreateWithoutPublicationsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3334,6 +3410,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3400,6 +3477,7 @@ export type UserUpdateWithoutPublicationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3450,6 +3528,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3500,6 +3579,7 @@ export type UserCreateWithoutRatingsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3550,6 +3630,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3616,6 +3697,7 @@ export type UserUpdateWithoutRatingsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3666,6 +3748,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3716,6 +3799,7 @@ export type UserCreateWithoutReviewLikesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3766,6 +3850,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3832,6 +3917,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3882,6 +3968,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3932,6 +4019,7 @@ export type UserCreateWithoutFeedbackInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -3982,6 +4070,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   timezone?: string
   timeFormat?: string
   watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: Date | string | null
   atStoreReviewHandledAt?: Date | string | null
@@ -4048,6 +4137,7 @@ export type UserUpdateWithoutFeedbackInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4098,6 +4188,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
   watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
   alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4287,6 +4378,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  streamingServiceIds?: boolean
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
@@ -4339,6 +4431,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  streamingServiceIds?: boolean
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
@@ -4377,6 +4470,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  streamingServiceIds?: boolean
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
@@ -4415,6 +4509,7 @@ export type UserSelectScalar = {
   timezone?: boolean
   timeFormat?: boolean
   watchCountry?: boolean
+  streamingServiceIds?: boolean
   alwaysShowSpoilers?: boolean
   onboardingCompletedAt?: boolean
   atStoreReviewHandledAt?: boolean
@@ -4438,7 +4533,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -4490,6 +4585,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     timezone: string
     timeFormat: string
     watchCountry: string
+    streamingServiceIds: number[]
     alwaysShowSpoilers: boolean
     onboardingCompletedAt: Date | null
     atStoreReviewHandledAt: Date | null
@@ -4961,6 +5057,7 @@ export interface UserFieldRefs {
   readonly timezone: Prisma.FieldRef<"User", 'String'>
   readonly timeFormat: Prisma.FieldRef<"User", 'String'>
   readonly watchCountry: Prisma.FieldRef<"User", 'String'>
+  readonly streamingServiceIds: Prisma.FieldRef<"User", 'Int[]'>
   readonly alwaysShowSpoilers: Prisma.FieldRef<"User", 'Boolean'>
   readonly onboardingCompletedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly atStoreReviewHandledAt: Prisma.FieldRef<"User", 'DateTime'>

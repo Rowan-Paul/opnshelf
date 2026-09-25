@@ -25,7 +25,7 @@ import {
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -42,6 +42,7 @@ import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
+import { StreamingServicePicker } from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -606,6 +607,22 @@ export function SettingsCategoryScreen({
 											}
 											disabled={settingsBusy}
 										/>
+										<Text className="mt-4 font-medium text-foreground text-sm">
+											My services
+										</Text>
+										<Text className="text-muted-foreground text-sm">
+											The streaming services you pay for. Used to show what you
+											can watch on Up Next and Discover.
+										</Text>
+										<MyServicesField
+											country={settings?.watchCountry ?? "US"}
+											saved={settings?.streamingServiceIds ?? []}
+											onSave={(streamingServiceIds) =>
+												updateSettingsMutation.mutate({
+													body: { streamingServiceIds },
+												})
+											}
+										/>
 									</View>
 								)}
 							</SettingsSection>
@@ -982,5 +999,35 @@ export default function SettingsScreen() {
 				</ScrollView>
 			</Screen>
 		</>
+	);
+}
+
+/**
+ * My Services in Settings saves on every toggle. The chosen set lives in
+ * local state so consecutive toggles build on each other instead of on the
+ * last server response; the settings query catches up after each save.
+ */
+function MyServicesField({
+	country,
+	saved,
+	onSave,
+}: {
+	country: string;
+	saved: number[];
+	onSave: (ids: number[]) => void;
+}) {
+	const [selected, setSelected] = useState<number[]>(saved);
+	useEffect(() => {
+		setSelected(saved);
+	}, [saved]);
+	return (
+		<StreamingServicePicker
+			country={country}
+			value={selected}
+			onChange={(ids) => {
+				setSelected(ids);
+				onSave(ids);
+			}}
+		/>
 	);
 }

@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { StreamingServicesModule } from "./streaming-services/streaming-services.module";
 import { TmdbCacheModule } from "./tmdb/tmdb-cache.module";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
@@ -58,6 +59,7 @@ import { UsersModule } from "./users/users.module";
 		PeopleModule,
 		FeedbackModule,
 		DiscoverModule,
+		StreamingServicesModule,
 	],
 	providers: [
 		// Must run before route handlers so an operator can freeze every unsafe
