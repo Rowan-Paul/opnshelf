@@ -105,7 +105,7 @@ export function DetailHero({
 							<View className="mt-1 flex-row items-center gap-1">
 								<Star color="#f3bc00" fill="#f3bc00" size={14} />
 								<Text className="font-medium text-foreground text-sm">
-									{rating.toFixed(1)}
+									{rating.toFixed(1)}/10
 								</Text>
 							</View>
 						) : null}

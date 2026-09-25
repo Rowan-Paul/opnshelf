@@ -275,7 +275,7 @@ function MediaCardBase({
 							<View className="flex-row items-center gap-0.5">
 								<Star color="#f3bc00" fill="#f3bc00" size={11} />
 								<Text className="text-muted-foreground text-xs">
-									{item.rating.toFixed(1)}
+									{item.rating.toFixed(1)}/10
 								</Text>
 							</View>
 						) : null}

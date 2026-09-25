@@ -14,8 +14,8 @@ vi.mock("#/integrations/posthog/provider", () => ({
 
 describe("MediaCard poster metadata", () => {
 	it.each([
-		{ tmdbRating: 7.3, globalRating: undefined, expected: "7.3" },
-		{ tmdbRating: 7.3, globalRating: 8.6, expected: "8.6" },
+		{ tmdbRating: 7.3, globalRating: undefined, expected: "7.3/10" },
+		{ tmdbRating: 7.3, globalRating: 8.6, expected: "8.6/10" },
 	])("keeps aggregate ratings on the detail page's ten-point scale ($expected)", ({
 		tmdbRating,
 		globalRating,
