@@ -1,9 +1,7 @@
+import { env } from "../config/env";
+
 function backendBaseUrl(): string {
-	return (
-		process.env.BACKEND_PUBLIC_URL ??
-		process.env.BACKEND_URL ??
-		"http://127.0.0.1:3001"
-	);
+	return env.BACKEND_PUBLIC_URL ?? env.BACKEND_URL ?? "http://127.0.0.1:3001";
 }
 
 /** Absolute URL for the avatar proxy endpoint, based on this instance's

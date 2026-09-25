@@ -1,3 +1,4 @@
+import { mockEnvironment } from "../../test/env";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationWorkerService } from "./notification-worker.service";
 
@@ -36,7 +37,7 @@ describe("NotificationWorkerService", () => {
 		trackedEpisode: { count: vi.fn().mockResolvedValue(3) },
 	};
 	const email = { sendNotification: vi.fn() };
-	const config = { get: vi.fn() };
+	const config = mockEnvironment({ get: vi.fn() });
 	const movies = { discoverReleasesBetween: vi.fn() };
 	const shows = { discoverPremieresBetween: vi.fn() };
 	const worker = new NotificationWorkerService(

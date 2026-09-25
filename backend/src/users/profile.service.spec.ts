@@ -1,6 +1,7 @@
+import { mockEnvironment } from "../../test/env";
 import { BlobRef } from "@atproto/api";
 import { BadGatewayException, NotFoundException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { MAX_AVATAR_BYTES } from "./avatar.constants";
 
 const mockUploadBlob = vi.fn();
@@ -90,14 +91,14 @@ describe("ProfileService", () => {
 		},
 	};
 
-	const configService = {
+	const configService = mockEnvironment({
 		get: vi.fn((key: string) => {
 			if (key === "BACKEND_PUBLIC_URL") {
 				return "https://backend.example";
 			}
 			return undefined;
 		}),
-	};
+	});
 
 	const session: ATSession = {
 		did: "did:plc:alice",
@@ -107,7 +108,7 @@ describe("ProfileService", () => {
 		vi.clearAllMocks();
 		service = new ProfileService(
 			prisma as unknown as PrismaService,
-			configService as unknown as ConfigService,
+			configService as unknown as BackendEnv,
 		);
 		mockPutRecord.mockResolvedValue({
 			data: {
@@ -689,9 +690,9 @@ describe("ProfileService", () => {
 		it("rejects an http PDS in production without fetching", async () => {
 			const productionService = new ProfileService(
 				prisma as unknown as PrismaService,
-				{
+				mockEnvironment({
 					get: (key: string) => (key === "NODE_ENV" ? "production" : undefined),
-				} as unknown as ConfigService,
+				}) as unknown as BackendEnv,
 			);
 			mockResolveAtprotoData.mockResolvedValue({
 				pds: "http://pds.example.com",

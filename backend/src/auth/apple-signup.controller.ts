@@ -15,7 +15,7 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Throttle } from "@nestjs/throttler";
 import {
 	ApiExcludeEndpoint,
@@ -100,13 +100,13 @@ export class AppleSignupController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly nativeAccounts: NativeAccountService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 		private readonly tranquilAdmin: TranquilAdminService,
 		private readonly captcha: CaptchaService,
 		private readonly appleOAuth: AppleOAuthService,
 		private readonly rateLimiter: SignupRateLimiter,
 	) {
-		const configured = this.configService.get<string>("PROVIDER_STATE_SECRET");
+		const configured = this.configService.PROVIDER_STATE_SECRET;
 		this.stateSecret = configured || randomBytes(32).toString("base64url");
 		this.browserFlowAvailable =
 			Boolean(configured) || !isProduction(this.configService);
@@ -360,7 +360,7 @@ export class AppleSignupController {
 			);
 		}
 
-		const handleDomain = this.configService.get<string>("PDS_HANDLE_DOMAIN");
+		const handleDomain = this.configService.PDS_HANDLE_DOMAIN;
 		if (!handleDomain) {
 			this.logger.error("PDS_HANDLE_DOMAIN is not configured");
 			throw new ServiceUnavailableException("Signup is not configured");

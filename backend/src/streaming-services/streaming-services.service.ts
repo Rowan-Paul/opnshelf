@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { TMDB_CACHE_STORE } from "../tmdb/tmdb-cache.module";
 import type { TmdbCacheStore } from "../tmdb/tmdb-cache.store";
 import {
@@ -41,10 +41,10 @@ export class StreamingServicesService {
 	private readonly http: TmdbHttpClient;
 
 	constructor(
-		config: ConfigService,
+		config: BackendEnv,
 		@Optional() @Inject(TMDB_CACHE_STORE) cacheStore?: TmdbCacheStore,
 	) {
-		this.tmdbApiKey = config.get("TMDB_API_KEY") ?? "";
+		this.tmdbApiKey = config.TMDB_API_KEY ?? "";
 		this.http = new TmdbHttpClient(
 			this.tmdbApiKey,
 			StreamingServicesService.name,

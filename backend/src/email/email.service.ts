@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 
 /** Cloudflare Email Sending REST endpoint. The account id is interpolated at send time. */
 const CLOUDFLARE_SEND_URL = (accountId: string) =>
@@ -10,9 +10,9 @@ export class EmailService {
 	private readonly apiToken?: string;
 	private readonly accountId?: string;
 
-	constructor(private readonly config: ConfigService) {
-		this.apiToken = this.config.get<string>("CLOUDFLARE_API_TOKEN");
-		this.accountId = this.config.get<string>("CLOUDFLARE_ACCOUNT_ID");
+	constructor(private readonly config: BackendEnv) {
+		this.apiToken = this.config.CLOUDFLARE_API_TOKEN;
+		this.accountId = this.config.CLOUDFLARE_ACCOUNT_ID;
 	}
 
 	/** Delivery failures are surfaced so the notification worker can retry. */

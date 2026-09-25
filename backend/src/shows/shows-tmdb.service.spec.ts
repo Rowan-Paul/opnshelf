@@ -1,4 +1,4 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
 import { MemoryTmdbCacheStore } from "../tmdb/tmdb-cache.store";
 import { TMDB_DETAIL_CACHE_TTL_MS } from "../tmdb/tmdb-http";
 import { ShowsTmdbService } from "./shows-tmdb.service";
@@ -31,7 +31,7 @@ describe("Up Next season availability", () => {
 			);
 		vi.stubGlobal("fetch", fetch);
 		const service = new ShowsTmdbService(
-			new ConfigService({ TMDB_API_KEY: "test" }),
+			mockEnvironment({ TMDB_API_KEY: "test" }),
 		);
 		expect(
 			(await service.getUpNextAvailability("1", 2)).results.NL.flatrate,
@@ -56,7 +56,7 @@ describe("Up Next season availability", () => {
 				Response.json({ results: { NL: { link: "", flatrate: [offer] } } }),
 			);
 		vi.stubGlobal("fetch", fetch);
-		const config = new ConfigService({ TMDB_API_KEY: "test" });
+		const config = mockEnvironment({ TMDB_API_KEY: "test" });
 		const store = new MemoryTmdbCacheStore();
 		const first = new ShowsTmdbService(config, store);
 		const second = new ShowsTmdbService(config, store);
@@ -84,7 +84,7 @@ describe("Up Next season availability", () => {
 			.mockResolvedValueOnce(new Response(null, { status: 403 }));
 		vi.stubGlobal("fetch", fetch);
 		const service = new ShowsTmdbService(
-			new ConfigService({ TMDB_API_KEY: "test" }),
+			mockEnvironment({ TMDB_API_KEY: "test" }),
 		);
 		await expect(service.getUpNextAvailability("1", 2)).resolves.toEqual({
 			id: 1,

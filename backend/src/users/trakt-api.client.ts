@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import type {
 	TraktHistoryPreviewItemDto,
 	TraktPublicProfileDto,
@@ -24,8 +24,8 @@ export class TraktApiClient {
 	private readonly traktBaseUrl = "https://api.trakt.tv";
 	private readonly traktUserAgent = "Opnshelf/1.0 (+https://opnshelf.xyz)";
 
-	constructor(private readonly configService: ConfigService) {
-		this.traktApiKey = this.configService.get<string>("TRAKT_API_KEY") ?? "";
+	constructor(private readonly configService: BackendEnv) {
+		this.traktApiKey = this.configService.TRAKT_API_KEY ?? "";
 	}
 
 	/** Throws when the server has no Trakt API key, so callers fail fast. */

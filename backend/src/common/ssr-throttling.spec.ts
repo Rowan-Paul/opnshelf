@@ -1,3 +1,7 @@
+const { env } = vi.hoisted(() => ({
+	env: { SSR_RATE_LIMIT_SECRET: undefined as string | undefined },
+}));
+vi.mock("../config/env", () => ({ env }));
 import { createHmac } from "node:crypto";
 import { type ExecutionContext, HttpException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -18,10 +22,12 @@ function headers(ip: string) {
 	};
 }
 
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+	env.SSR_RATE_LIMIT_SECRET = undefined;
+});
 
 it("keeps another SSR visitor out of an exhausted crawler bucket", async () => {
-	vi.stubEnv("SSR_RATE_LIMIT_SECRET", secret);
+	env.SSR_RATE_LIMIT_SECRET = secret;
 	const module = await Test.createTestingModule({
 		imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }])],
 		providers: [
@@ -71,7 +77,7 @@ it("keeps another SSR visitor out of an exhausted crawler bucket", async () => {
 					.digest("hex"),
 			}),
 		).rejects.toBeInstanceOf(HttpException);
-		vi.stubEnv("SSR_RATE_LIMIT_SECRET", "");
+		env.SSR_RATE_LIMIT_SECRET = undefined;
 		await expect(call(valid)).rejects.toBeInstanceOf(HttpException);
 	} finally {
 		await module.close();

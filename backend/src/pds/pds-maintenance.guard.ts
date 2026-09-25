@@ -4,7 +4,7 @@ import {
 	Injectable,
 	ServiceUnavailableException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import type { Request, Response } from "express";
 
 export const PDS_MAINTENANCE_MESSAGE =
@@ -18,7 +18,7 @@ export const PDS_MAINTENANCE_MESSAGE =
  */
 @Injectable()
 export class PdsMaintenanceGuard implements CanActivate {
-	constructor(private readonly config: ConfigService) {}
+	constructor(private readonly config: BackendEnv) {}
 
 	canActivate(context: ExecutionContext): boolean {
 		if (!this.isEnabled()) return true;
@@ -33,22 +33,11 @@ export class PdsMaintenanceGuard implements CanActivate {
 	}
 
 	private isEnabled(): boolean {
-		return ["1", "true", "yes", "on"].includes(
-			(this.config.get<string>("PDS_MAINTENANCE_MODE") ?? "")
-				.trim()
-				.toLowerCase(),
-		);
+		return this.config.PDS_MAINTENANCE_MODE;
 	}
 
 	private retryAfterSeconds(): string {
-		const configured = Number(
-			this.config.get<string>("PDS_MAINTENANCE_RETRY_AFTER_SECONDS") ?? "300",
-		);
-		return String(
-			Number.isFinite(configured) && configured > 0
-				? Math.floor(configured)
-				: 300,
-		);
+		return String(this.config.PDS_MAINTENANCE_RETRY_AFTER_SECONDS);
 	}
 
 	private isBlockedRequest(request: Request): boolean {

@@ -1,4 +1,4 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
 import { FeedbackIssuesService } from "./feedback-issues.service";
 
 describe("feedback GitHub delivery", () => {
@@ -17,7 +17,7 @@ describe("feedback GitHub delivery", () => {
 	it.each(["bug", "feature_request"] as const)(
 		"creates a %s issue",
 		async (category) => {
-			const service = new FeedbackIssuesService(new ConfigService(config));
+			const service = new FeedbackIssuesService(mockEnvironment(config));
 			await service.createIssue("feedback-id", {
 				category,
 				message: "First line\n@someone\n```\n# More detail",
@@ -45,7 +45,7 @@ describe("feedback GitHub delivery", () => {
 	);
 
 	it("skips delivery without configuration", async () => {
-		await new FeedbackIssuesService(new ConfigService()).createIssue("id", {
+		await new FeedbackIssuesService(mockEnvironment()).createIssue("id", {
 			category: "bug",
 			message: "Test",
 		});
@@ -57,7 +57,7 @@ describe("feedback GitHub delivery", () => {
 		async (status) => {
 			fetchMock.mockResolvedValue({ ok: false, status });
 			await expect(
-				new FeedbackIssuesService(new ConfigService(config)).createIssue("id", {
+				new FeedbackIssuesService(mockEnvironment(config)).createIssue("id", {
 					category: "bug",
 					message: "Test",
 				}),
@@ -68,7 +68,7 @@ describe("feedback GitHub delivery", () => {
 	it("does not reject saved feedback on network failure", async () => {
 		fetchMock.mockRejectedValue(new Error("Network failure"));
 		await expect(
-			new FeedbackIssuesService(new ConfigService(config)).createIssue("id", {
+			new FeedbackIssuesService(mockEnvironment(config)).createIssue("id", {
 				category: "bug",
 				message: "Test",
 			}),
@@ -76,14 +76,11 @@ describe("feedback GitHub delivery", () => {
 	});
 
 	it("bounds the title and tolerates a URL without a scheme", async () => {
-		await new FeedbackIssuesService(new ConfigService(config)).createIssue(
-			"id",
-			{
-				category: "bug",
-				message: "x".repeat(5000),
-				pageUrl: "example.com",
-			},
-		);
+		await new FeedbackIssuesService(mockEnvironment(config)).createIssue("id", {
+			category: "bug",
+			message: "x".repeat(5000),
+			pageUrl: "example.com",
+		});
 		expect(JSON.parse(fetchMock.mock.calls[0][1].body).title).toHaveLength(160);
 	});
 });

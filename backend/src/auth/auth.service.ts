@@ -1,7 +1,7 @@
 import { Agent } from "@atproto/api";
 import { randomUUID } from "node:crypto";
 import { Injectable, Logger, Optional } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { DeviceSessionsService } from "./device-sessions.service";
@@ -37,7 +37,7 @@ export class AuthService {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 		private readonly oauthClientFactory: OAuthClientFactory,
 		private readonly sessions: DeviceSessionsService,
 		@Optional() private readonly tranquilAdmin?: TranquilAdminService,
@@ -113,7 +113,7 @@ export class AuthService {
 		sso?: "google",
 	): Promise<string> {
 		const client = this.oauthClientFactory.getBaseClient();
-		const pdsUrl = this.configService.get<string>("PDS_URL");
+		const pdsUrl = this.configService.PDS_URL;
 		if (!pdsUrl) {
 			throw new Error("PDS_URL not configured");
 		}

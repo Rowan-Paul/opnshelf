@@ -1,3 +1,4 @@
+import { env } from "./config/env";
 import { randomUUID } from "node:crypto";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
@@ -11,7 +12,7 @@ import { AllExceptionsFilter } from "./common/http-exception.filter";
 import { installProcessErrorHandlers } from "./common/process-error-handlers";
 import { createOpenApiDocument } from "./openapi";
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = env.NODE_ENV === "production";
 
 const processLogger = new Logger("Process");
 installProcessErrorHandlers(processLogger);
@@ -43,7 +44,7 @@ async function bootstrap() {
 
 	// CORS with credentials for cookie-based auth. Loopback origins (local Web
 	// dev server and Expo) are only trusted outside production.
-	const frontendUrl = process.env.FRONTEND_URL || "http://127.0.0.1:3000";
+	const frontendUrl = env.FRONTEND_URL || "http://127.0.0.1:3000";
 	const loopbackOrigins = isProduction
 		? []
 		: ["http://127.0.0.1:3000", "http://127.0.0.1:8081"];
@@ -70,7 +71,7 @@ async function bootstrap() {
 		SwaggerModule.setup("api", app, document);
 	}
 
-	const port = Number(process.env.PORT ?? 3001);
+	const port = env.PORT;
 	const host = "0.0.0.0";
 
 	await app.listen(port, host);

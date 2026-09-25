@@ -1,3 +1,7 @@
+const { env } = vi.hoisted(() => ({
+	env: { DATABASE_URL: undefined as string | undefined },
+}));
+vi.mock("../config/env", () => ({ env }));
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaService } from "./prisma.service";
 
@@ -8,13 +12,13 @@ vi.mock("@prisma/adapter-pg", () => ({ PrismaPg: vi.fn() }));
 vi.mock("../generated/client", () => ({ PrismaClient: vi.fn() }));
 
 describe("PrismaService", () => {
-	const originalEnv = process.env.DATABASE_URL;
+	const originalEnv = env.DATABASE_URL;
 
 	beforeAll(() => {
-		process.env.DATABASE_URL = "postgres://test:test@localhost:5432/test";
+		env.DATABASE_URL = "postgres://test:test@localhost:5432/test";
 	});
 	afterAll(() => {
-		process.env.DATABASE_URL = originalEnv;
+		env.DATABASE_URL = originalEnv;
 	});
 
 	it("uses a deliberately small pool for the shared production database", () => {

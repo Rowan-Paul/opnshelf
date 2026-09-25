@@ -1,4 +1,5 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 vi.mock("../prisma/prisma.service", () => ({
@@ -69,12 +70,12 @@ describe("EpisodeWatchService", () => {
 		},
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			if (key === "TMDB_API_KEY") return "test-api-key";
 			return undefined;
 		}),
-	};
+	});
 
 	const mockColorExtractionService = {
 		extractColorsFromPoster: vi.fn(),
@@ -96,7 +97,7 @@ describe("EpisodeWatchService", () => {
 				ShowCatalogueService,
 				ShowsTmdbService,
 				{ provide: PrismaService, useValue: mockPrismaService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{
 					provide: ColorExtractionService,
 					useValue: mockColorExtractionService,

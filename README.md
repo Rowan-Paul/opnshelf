@@ -139,27 +139,67 @@ Notes:
 
 ### Backend (`backend/.env`)
 
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `TMDB_API_KEY` | TMDB API key for movie data |
-| `REDIS_URL` | Optional. Redis connection string for the TMDB response cache (ADR 0041). `docker-compose up -d` starts one on `redis://127.0.0.1:6379`; unset, the cache lives in process memory and empties on restart. In Railway it comes from the Redis service reference. |
-| `TRAKT_API_KEY` | Trakt.tv API key for imports |
-| `TAB_URL` | Tab ingestion service URL |
-| `TAB_ADMIN_PASSWORD` | Tab admin password; must match the container |
-| `PDS_URL` | Personal Data Server (e.g., `https://opnshelf.social`) |
-| `PDS_HANDLE_DOMAIN` | Handle domain the PDS serves accounts on |
-| `PDS_ADMIN_IDENTIFIER`, `PDS_ADMIN_PASSWORD` | PDS admin account used to mint single-use invite codes at signup |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | "Continue with Google" signup; empty hides the button |
-| `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` | "Continue with Apple" signup; empty hides the button |
-| `SSR_RATE_LIMIT_SECRET` | Server-only shared Web/API signing secret, at least 32 characters. Leave unset until the [trusted-edge verification](docs/runbooks/ssr-rate-limiting.md) passes; use separate values per environment |
-| `PROVIDER_STATE_SECRET` | Signs the CSRF state for Apple's `form_post` callback, which cannot use a cookie. Unset, signups in flight break on every restart |
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server secret; empty disables captcha verification (local only) |
-| `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `FEEDBACK_NOTIFICATION_EMAIL` | Feedback notification email via Cloudflare Email Sending; empty logs and skips |
-| `BACKEND_PUBLIC_URL` | Public URL for OAuth callbacks |
-| `FRONTEND_URL` | Frontend URL for redirects |
+<!-- backend-env:start -->
+| Variable | Requirement | Purpose |
+| --- | --- | --- |
+| `NODE_ENV` | Defaulted | Runtime mode; defaults to development. |
+| `PORT` | Defaulted | HTTP listening port; defaults to 3001. |
+| `DATABASE_URL` | Required in production | PostgreSQL connection string. |
+| `TMDB_API_KEY` | Required in production | TMDB API key for catalogue reads. |
+| `PDS_URL` | Required in production | Tranquil Personal Data Server URL. |
+| `PDS_HANDLE_DOMAIN` | Required in production | Handle domain served by the PDS. |
+| `PDS_ADMIN_IDENTIFIER` | Required in production | PDS admin account used for account management. |
+| `PDS_ADMIN_PASSWORD` | Required in production | PDS admin account password. |
+| `BACKEND_PUBLIC_URL` | Required in production | Public API URL for OAuth callbacks and avatars. |
+| `BACKEND_URL` | Optional | Legacy fallback base URL for avatar links. |
+| `FRONTEND_URL` | Required in production | Web origin for CORS, redirects and notification links. |
+| `TAB_URL` | Required in production | Tab ingestion service URL; local fallback is http://localhost:2480. |
+| `TAB_ADMIN_PASSWORD` | Required in production | Tab admin password; must match its container. |
+| `TAP_URL` | Optional | Deprecated alias for TAB_URL; accepted for one transition release. |
+| `TAP_ADMIN_PASSWORD` | Optional | Deprecated alias for TAB_ADMIN_PASSWORD; accepted for one transition release. |
+| `REDIS_URL` | Optional | Optional TMDB cache; absence uses process memory, including on Staging (ADR 0041). |
+| `GOOGLE_CLIENT_ID` | Required in production | Google OAuth client ID shared with the PDS. |
+| `GOOGLE_CLIENT_SECRET` | Required in production | Google OAuth client secret shared with the PDS. |
+| `APPLE_CLIENT_ID` | Required in production | Apple Service ID shared with the PDS. |
+| `APPLE_TEAM_ID` | Required in production | Apple developer team ID (10 characters). |
+| `APPLE_KEY_ID` | Required in production | Apple signing key ID (10 characters). |
+| `APPLE_PRIVATE_KEY` | Required in production | Apple P-256 private signing key; escaped newlines are accepted. |
+| `PROVIDER_STATE_SECRET` | Required in production | CSRF signing secret for provider callbacks; at least 32 characters. |
+| `SSR_RATE_LIMIT_SECRET` | Optional | Optional Web/API forwarding secret; enable only after trusted-edge verification (ADR 0025). |
+| `TURNSTILE_SECRET_KEY` | Required in production | Cloudflare Turnstile server secret for signup captcha. |
+| `CLOUDFLARE_API_TOKEN` | Required in production | Cloudflare Email Sending API token for notifications. |
+| `CLOUDFLARE_ACCOUNT_ID` | Required in production | Cloudflare account ID for notification delivery. |
+| `TRAKT_API_KEY` | Required in production | Trakt API key for history imports. |
+| `FEEDBACK_GITHUB_TOKEN` | Optional | Optional GitHub token for feedback issues; absent configuration saves feedback only (ADR 0007). |
+| `FEEDBACK_GITHUB_REPOSITORY` | Optional | Optional owner/repository receiving feedback issues. |
+| `PDS_MAINTENANCE_MODE` | Defaulted | Pause PDS writes and authentication; true/false, 1/0, yes/no or on/off; defaults to false. |
+| `PDS_MAINTENANCE_RETRY_AFTER_SECONDS` | Defaulted | Maintenance Retry-After header in seconds; defaults to 300. |
+<!-- backend-env:end -->
 
-`backend/.env.example` carries the commentary for each of these. Deployed values are Railway service variables on the `Server` service; they are never checked in.
+The table is generated from `backend/src/config/env.schema.ts`; run
+`pnpm --filter backend run env:docs` after changing the schema. Backend tests
+check it for drift. Empty values count as absent; supplied values are validated
+in every mode. Production requirements also apply to Staging, which runs
+`NODE_ENV=production`. Redis remains optional under ADR 0041. Local integrations
+may be disabled, but real local API usage still needs a database, TMDB and a PDS.
+
+Validation runs before Nest boots and reports only missing/invalid variable
+names. The backend uses plain Zod so conditional production requirements, value-free
+aggregate errors and generated documentation share one schema. A typed global
+Nest provider replaces ConfigModule loading; no T3 wrapper is needed. Node 24 loads `backend/.env` when commands run in the backend workspace;
+already-set deployment variables take precedence.
+
+`TAB_URL` and `TAB_ADMIN_PASSWORD` are canonical. For the transition release,
+`TAP_URL` and `TAP_ADMIN_PASSWORD` remain accepted with a deprecation warning;
+nonempty canonical values win. Before removing aliases in the following release,
+rename legacy variables on each Railway Server service to `TAB_*`, retaining the
+same environment-specific values/references. First verify a Staging deploy with
+its current names unchanged, then rename and verify again. Do not change the
+Tab service's own upstream variable names or share Tab between environments.
+Deployment and Railway changes require operator approval.
+
+`backend/.env.example` provides local setup examples. Deployed values live in
+Railway service variables on the `Server` service and are never checked in.
 
 ### Web (`apps/web/.env`)
 

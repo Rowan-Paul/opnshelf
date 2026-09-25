@@ -1,5 +1,6 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock } from "vitest";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 vi.mock("../prisma/prisma.service", () => ({
@@ -117,12 +118,12 @@ describe("IngesterService", () => {
 		deleteUserSync: Mock;
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			if (key === "TAB_URL") return "wss://tab.opnshelf.xyz";
 			return undefined;
 		}),
-	};
+	});
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -204,7 +205,7 @@ describe("IngesterService", () => {
 			providers: [
 				IngesterService,
 				{ provide: PrismaService, useValue: mockPrismaService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{ provide: MoviesService, useValue: mockMoviesService },
 				{ provide: ShowsService, useValue: mockShowsService },
 				{ provide: ListsService, useValue: mockListsService },

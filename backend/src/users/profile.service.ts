@@ -11,7 +11,7 @@ import {
 	PayloadTooLargeException,
 	UnsupportedMediaTypeException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import type { Response } from "express";
 import type { Response as UpstreamResponse } from "undici";
 import {
@@ -62,10 +62,9 @@ export class ProfileService {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 	) {
-		this.isProduction =
-			this.configService.get<string>("NODE_ENV") === "production";
+		this.isProduction = this.configService.NODE_ENV === "production";
 	}
 
 	async seedProfileForNewUser(

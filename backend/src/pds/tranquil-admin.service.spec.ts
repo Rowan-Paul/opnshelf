@@ -1,4 +1,5 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 
 const loginMock = vi.fn();
 const createInviteCodeMock = vi.fn();
@@ -27,8 +28,10 @@ vi.mock("@atproto/api", () => ({
 
 import { TranquilAdminService } from "./tranquil-admin.service";
 
-function makeConfig(values: Record<string, string | undefined>): ConfigService {
-	return { get: (key: string) => values[key] } as unknown as ConfigService;
+function makeConfig(values: Record<string, string | undefined>): BackendEnv {
+	return mockEnvironment({
+		get: (key: string) => values[key],
+	}) as unknown as BackendEnv;
 }
 
 const fullConfig = makeConfig({

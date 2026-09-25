@@ -1,4 +1,5 @@
-import type { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import type { BackendEnv } from "../config/env.schema";
 import {
 	buildMobileErrorUrl,
 	buildWebErrorUrl,
@@ -10,7 +11,9 @@ import {
 } from "./auth-flow";
 
 const configWith = (values: Record<string, string>) =>
-	({ get: (key: string) => values[key] }) as unknown as ConfigService;
+	mockEnvironment({
+		get: (key: string) => values[key],
+	}) as unknown as BackendEnv;
 
 describe("auth-flow", () => {
 	it("defaults the frontend URL to the local dev server", () => {

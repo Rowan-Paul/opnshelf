@@ -1,3 +1,4 @@
+import { env } from "../config/env";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 import { Inject, Injectable } from "@nestjs/common";
@@ -43,7 +44,7 @@ export class SessionThrottlerGuard extends ThrottlerGuard {
 
 /** A forwarded identity is not authentication; it only selects an IP bucket. */
 function verifiedSsrIp(req: Record<string, unknown>): string | undefined {
-	const secret = process.env.SSR_RATE_LIMIT_SECRET;
+	const secret = env.SSR_RATE_LIMIT_SECRET;
 	if (!secret || secret.length < 32) return;
 	const headers = req.headers as Record<string, unknown> | undefined;
 	const ip = headers?.["x-opnshelf-client-ip"];

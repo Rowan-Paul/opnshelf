@@ -1,4 +1,5 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 vi.mock("../prisma/prisma.service", () => ({
@@ -36,20 +37,20 @@ describe("NativeAccountService", () => {
 		PDS_URL: "https://opnshelf.social",
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string): string | undefined => baseConfig[key]),
-	};
+	});
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		mockConfigService.get.mockImplementation((key: string) => baseConfig[key]);
+		mockBackendEnv.get.mockImplementation((key: string) => baseConfig[key]);
 		atpAgentHarness.session = undefined;
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				NativeAccountService,
 				{ provide: PrismaService, useValue: mockPrismaService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 			],
 		}).compile();
 
@@ -94,7 +95,7 @@ describe("NativeAccountService", () => {
 		});
 
 		it("fails loudly when the PDS is not configured", async () => {
-			mockConfigService.get.mockImplementation(() => undefined);
+			mockBackendEnv.get.mockImplementation(() => undefined);
 
 			await expect(
 				service.registerAccount({

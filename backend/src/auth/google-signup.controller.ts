@@ -14,7 +14,7 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Throttle } from "@nestjs/throttler";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
@@ -75,7 +75,7 @@ export class GoogleSignupController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly nativeAccounts: NativeAccountService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 		private readonly tranquilAdmin: TranquilAdminService,
 		private readonly captcha: CaptchaService,
 		private readonly googleOAuth: GoogleOAuthService,
@@ -299,7 +299,7 @@ export class GoogleSignupController {
 			);
 		}
 
-		const handleDomain = this.configService.get<string>("PDS_HANDLE_DOMAIN");
+		const handleDomain = this.configService.PDS_HANDLE_DOMAIN;
 		if (!handleDomain) {
 			this.logger.error("PDS_HANDLE_DOMAIN is not configured");
 			throw new ServiceUnavailableException("Signup is not configured");
