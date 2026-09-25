@@ -62,6 +62,9 @@ _Avoid_: Subscriptions, my providers, my platforms
 A user's queue of shows with an aired, unwatched next episode, one entry per show, shown on their profile. Anyone can view a user's Up Next; the "On my services" filter appears only to its owner.
 _Avoid_: Continue watching, watchlist (that is a List of items not yet started), queue
 
+**Notification**:
+An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or the User's weekly, monthly, or yearly Watch counts. Email categories start enabled when a verified delivery address is available. Mobile push categories start after the User grants device permission; each category can then be turned off in settings. There is no in-app notification inbox.
+
 **Shelf**:
 The collection of media items a user has marked as watched or tracked. Its dated
 timeline view renders one card per **Watch**, so rewatches appear as separate

@@ -13,6 +13,7 @@ import { LibraryModule } from "./library/library.module";
 import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
 import { NotesModule } from "./notes/notes.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { PeopleModule } from "./people/people.module";
 import { PdsMaintenanceGuard } from "./pds/pds-maintenance.guard";
 import { RatingsModule } from "./ratings/ratings.module";
@@ -49,6 +50,7 @@ import { UsersModule } from "./users/users.module";
 		ListsModule,
 		LibraryModule,
 		NotesModule,
+		NotificationsModule,
 		RatingsModule,
 		ReviewsModule,
 		ShowsModule,

@@ -52,6 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  NotificationSettings: 'NotificationSettings',
+  PushDevice: 'PushDevice',
+  NotificationDelivery: 'NotificationDelivery',
   Follow: 'Follow',
   Circle: 'Circle',
   CircleMember: 'CircleMember',
@@ -132,6 +135,60 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const NotificationSettingsScalarFieldEnum = {
+  userDid: 'userDid',
+  email: 'email',
+  pendingEmail: 'pendingEmail',
+  emailVerifiedAt: 'emailVerifiedAt',
+  emailIsCustom: 'emailIsCustom',
+  emailCodeHash: 'emailCodeHash',
+  emailCodeExpiresAt: 'emailCodeExpiresAt',
+  emailCodeAttempts: 'emailCodeAttempts',
+  pushNewReleases: 'pushNewReleases',
+  pushWatchlistReleases: 'pushWatchlistReleases',
+  pushNewSeasons: 'pushNewSeasons',
+  pushStats: 'pushStats',
+  pushInitialized: 'pushInitialized',
+  emailNewReleases: 'emailNewReleases',
+  emailWatchlistReleases: 'emailWatchlistReleases',
+  emailNewSeasons: 'emailNewSeasons',
+  emailStats: 'emailStats',
+  nextQueueAt: 'nextQueueAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationSettingsScalarFieldEnum = (typeof NotificationSettingsScalarFieldEnum)[keyof typeof NotificationSettingsScalarFieldEnum]
+
+
+export const PushDeviceScalarFieldEnum = {
+  token: 'token',
+  userDid: 'userDid',
+  platform: 'platform',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PushDeviceScalarFieldEnum = (typeof PushDeviceScalarFieldEnum)[keyof typeof PushDeviceScalarFieldEnum]
+
+
+export const NotificationDeliveryScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  channel: 'channel',
+  category: 'category',
+  eventKey: 'eventKey',
+  title: 'title',
+  body: 'body',
+  url: 'url',
+  status: 'status',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationDeliveryScalarFieldEnum = (typeof NotificationDeliveryScalarFieldEnum)[keyof typeof NotificationDeliveryScalarFieldEnum]
 
 
 export const FollowScalarFieldEnum = {

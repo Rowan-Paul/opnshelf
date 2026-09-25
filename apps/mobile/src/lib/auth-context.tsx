@@ -31,6 +31,7 @@ import {
 } from "@/lib/auth-handoff";
 import { NoPendingHandoffError } from "@/lib/handoff-error";
 import { posthog } from "@/lib/posthog";
+import { removeCurrentPushDevice } from "@/lib/push-notifications";
 import { setWidgetHandle } from "../../modules/widget-bridge";
 
 /** Where the PDS OAuth flow redirects back into the app. */
@@ -359,6 +360,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const signOut = useCallback(async () => {
+		try {
+			await Promise.race([
+				removeCurrentPushDevice(),
+				new Promise<void>((resolve) => setTimeout(resolve, 2_000)),
+			]);
+		} catch (error) {
+			console.error("Failed to unregister push device", error);
+		}
 		try {
 			await authControllerLogout({ throwOnError: true });
 		} catch (error) {

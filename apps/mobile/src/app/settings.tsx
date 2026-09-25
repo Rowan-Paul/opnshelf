@@ -34,6 +34,7 @@ import {
 	View,
 } from "react-native";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
+import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
@@ -578,6 +579,13 @@ export function SettingsCategoryScreen({
 										</View>
 									</View>
 								)}
+							</SettingsSection>
+
+							<SettingsSection
+								title="Notifications"
+								description="Choose the updates Opnshelf sends to your device and email."
+							>
+								<NotificationPreferences />
 							</SettingsSection>
 
 							{/* Streaming country */}

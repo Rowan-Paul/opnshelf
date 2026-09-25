@@ -2431,6 +2431,48 @@ export type PublishAtStoreReviewResponseDto = {
     uri: string;
 };
 
+export type NotificationSettingsDto = {
+    email?: string | null;
+    emailVerified: boolean;
+    pushDeviceCount: number;
+    pushNewReleases: boolean;
+    pushWatchlistReleases: boolean;
+    pushNewSeasons: boolean;
+    pushStats: boolean;
+    emailNewReleases: boolean;
+    emailWatchlistReleases: boolean;
+    emailNewSeasons: boolean;
+    emailStats: boolean;
+};
+
+export type UpdateNotificationSettingsDto = {
+    pushNewReleases?: boolean;
+    pushWatchlistReleases?: boolean;
+    pushNewSeasons?: boolean;
+    pushStats?: boolean;
+    emailNewReleases?: boolean;
+    emailWatchlistReleases?: boolean;
+    emailNewSeasons?: boolean;
+    emailStats?: boolean;
+};
+
+export type RequestNotificationEmailDto = {
+    email: string;
+};
+
+export type ConfirmNotificationEmailDto = {
+    code: string;
+};
+
+export type RegisterPushDeviceDto = {
+    token: string;
+    platform: 'ios' | 'android';
+};
+
+export type RemovePushDeviceDto = {
+    token: string;
+};
+
 export type UnifiedSearchResultDto = {
     id: number;
     media_type: 'movie' | 'tv';
@@ -5892,6 +5934,82 @@ export type AtStoreReviewsControllerPublishResponses = {
 };
 
 export type AtStoreReviewsControllerPublishResponse = AtStoreReviewsControllerPublishResponses[keyof AtStoreReviewsControllerPublishResponses];
+
+export type NotificationsControllerSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/settings';
+};
+
+export type NotificationsControllerSettingsResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerSettingsResponse = NotificationsControllerSettingsResponses[keyof NotificationsControllerSettingsResponses];
+
+export type NotificationsControllerUpdateSettingsData = {
+    body: UpdateNotificationSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/settings';
+};
+
+export type NotificationsControllerUpdateSettingsResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerUpdateSettingsResponse = NotificationsControllerUpdateSettingsResponses[keyof NotificationsControllerUpdateSettingsResponses];
+
+export type NotificationsControllerRequestEmailData = {
+    body: RequestNotificationEmailDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/email/request';
+};
+
+export type NotificationsControllerRequestEmailResponses = {
+    201: unknown;
+};
+
+export type NotificationsControllerConfirmEmailData = {
+    body: ConfirmNotificationEmailDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/email/confirm';
+};
+
+export type NotificationsControllerConfirmEmailResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerConfirmEmailResponse = NotificationsControllerConfirmEmailResponses[keyof NotificationsControllerConfirmEmailResponses];
+
+export type NotificationsControllerRemoveDeviceData = {
+    body: RemovePushDeviceDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/devices';
+};
+
+export type NotificationsControllerRemoveDeviceResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerRemoveDeviceResponse = NotificationsControllerRemoveDeviceResponses[keyof NotificationsControllerRemoveDeviceResponses];
+
+export type NotificationsControllerRegisterDeviceData = {
+    body: RegisterPushDeviceDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/devices';
+};
+
+export type NotificationsControllerRegisterDeviceResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerRegisterDeviceResponse = NotificationsControllerRegisterDeviceResponses[keyof NotificationsControllerRegisterDeviceResponses];
 
 export type SearchControllerSearchAllData = {
     body?: never;

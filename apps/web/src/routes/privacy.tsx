@@ -52,12 +52,20 @@ function PrivacyPolicyPage() {
 							information, including your handle, display name, and avatar.
 						</p>
 						<p>
+							If you allow mobile notifications, we store your device's push
+							token and send it to Expo to deliver alerts. You can turn off
+							notification categories in Settings or revoke permission on your
+							device.
+						</p>
+						<p>
 							Signing up with a password asks for a username, an email address
-							and a password. We pass the email address and the password to the
-							PDS and store neither. Our own database keeps your handle and
-							whether the email has been confirmed. Signing up with Google gives
-							us the email address on your Google account, which we hand to the
-							PDS the same way.
+							and a password. We pass both to the PDS. We never store your
+							password. Our own database keeps your handle and whether the email
+							has been confirmed. It also keeps a verified email address so we
+							can send release and watch-stat notifications; you can change that
+							address and turn off each email category in Settings. Signing up
+							with Google gives us the email address on your Google account,
+							which we hand to the PDS the same way.
 						</p>
 
 						<h3 className="font-semibold text-(--foreground)">
@@ -165,8 +173,9 @@ function PrivacyPolicyPage() {
 							</li>
 							<li>
 								<strong className="text-(--foreground)">Cloudflare</strong> for
-								the signup captcha (Turnstile) and for sending account email,
-								such as your verification code. See{" "}
+								the signup captcha (Turnstile) and for sending account and
+								notification email, such as verification codes and release
+								updates. See{" "}
 								<a
 									href="https://www.cloudflare.com/privacypolicy/"
 									target="_blank"
@@ -176,6 +185,10 @@ function PrivacyPolicyPage() {
 									Cloudflare's privacy policy
 								</a>
 								.
+							</li>
+							<li>
+								<strong className="text-(--foreground)">Expo</strong> for
+								delivering mobile push notifications to devices that allow them.
 							</li>
 							<li>
 								<strong className="text-(--foreground)">PostHog</strong> for
