@@ -18,16 +18,15 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SuggestionsStep } from "@/components/onboarding/SuggestionsStep";
 import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
-import { UserRow } from "@/components/social/UserRow";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
-import { UserRowsSkeleton } from "@/components/ui/skeletons";
 import {
 	StreamingServicePicker,
 	toggleService,
@@ -39,7 +38,6 @@ import { useAuth } from "@/lib/auth-context";
 import { guessWatchCountry } from "@/lib/countries";
 import { posthog } from "@/lib/posthog";
 import { useProfileSetup } from "@/lib/use-profile";
-import { useFollowToggle, useSuggestions } from "@/lib/use-social";
 
 const logo = require("../../assets/images/icon.png");
 
@@ -237,10 +235,16 @@ export default function OnboardingScreen() {
 					/>
 				)}
 				{step === "suggestions" && (
-					<SuggestionsStep
-						onFollowed={() => setFollowedAnyone(true)}
-						onNext={() => setStep("watches")}
-					/>
+					<StepScaffold
+						footer={
+							<PrimaryButton
+								label="Continue"
+								onPress={() => setStep("watches")}
+							/>
+						}
+					>
+						<SuggestionsStep onFollowed={() => setFollowedAnyone(true)} />
+					</StepScaffold>
 				)}
 				{step === "watches" && (
 					<WatchedMediaSwipe
@@ -581,52 +585,6 @@ function TraktStep({
 				onDone={onNext}
 			/>
 		</View>
-	);
-}
-
-/* -------------------------------------------------------------- Suggestions */
-function SuggestionsStep({
-	onNext,
-	onFollowed,
-}: {
-	onNext: () => void;
-	onFollowed: () => void;
-}) {
-	const { user } = useAuth();
-	const { data, isLoading } = useSuggestions();
-	const { toggle } = useFollowToggle(onFollowed);
-	const suggestions = data?.items ?? [];
-
-	return (
-		<StepScaffold footer={<PrimaryButton label="Continue" onPress={onNext} />}>
-			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
-					People to follow
-				</Text>
-				<Text className="text-muted-foreground text-sm">
-					Find people you know on Opnshelf.
-				</Text>
-			</View>
-
-			{isLoading ? (
-				<UserRowsSkeleton />
-			) : suggestions.length === 0 ? (
-				<Text className="py-8 text-center text-muted-foreground text-sm">
-					No suggestions right now.
-				</Text>
-			) : (
-				<View className="gap-2">
-					{suggestions.map((person) => (
-						<UserRow
-							key={person.did}
-							user={person}
-							isSelf={person.did === user?.did}
-							onToggleFollow={toggle}
-						/>
-					))}
-				</View>
-			)}
-		</StepScaffold>
 	);
 }
 
