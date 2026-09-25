@@ -2464,6 +2464,10 @@ export type UpdateNotificationSettingsDto = {
     emailStats?: boolean;
 };
 
+export type TestNotificationDto = {
+    channel: 'push' | 'email';
+};
+
 export type RequestNotificationEmailDto = {
     email: string;
 };
@@ -5995,6 +5999,17 @@ export type NotificationsControllerUpdateSettingsResponses = {
 };
 
 export type NotificationsControllerUpdateSettingsResponse = NotificationsControllerUpdateSettingsResponses[keyof NotificationsControllerUpdateSettingsResponses];
+
+export type NotificationsControllerTestNotificationData = {
+    body: TestNotificationDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/test';
+};
+
+export type NotificationsControllerTestNotificationResponses = {
+    201: unknown;
+};
 
 export type NotificationsControllerRequestEmailData = {
     body: RequestNotificationEmailDto;

@@ -1,3 +1,4 @@
+import { sendPushNotification } from "./send-push";
 import {
 	Injectable,
 	Logger,
@@ -259,9 +260,13 @@ export class NotificationWorkerService
 						where: { userDid: row.userDid, nextQueueAt: row.nextQueueAt },
 						data: {
 							nextQueueAt: localTimeUtc(
-								day.hour < 9 ? day.date : addDays(day.date, 1),
+								day.hour < 9 || (day.weekday === "Fri" && day.hour < 18)
+									? day.date
+									: addDays(day.date, 1),
 								row.user.timezone,
-								9,
+								day.weekday === "Fri" && day.hour >= 9 && day.hour < 18
+									? 18
+									: 9,
 							),
 						},
 					});
@@ -292,16 +297,19 @@ export class NotificationWorkerService
 		if ((!row.email || !row.emailVerifiedAt) && devices.length === 0) return;
 		const events: Array<[Category, Event | null]> = [];
 		if (
-			day.weekday === "Mon" &&
+			day.weekday === "Fri" &&
+			day.hour >= 18 &&
 			(row.emailNewReleases || (devices.length && row.pushNewReleases))
 		) {
-			const cacheKey = `${day.date}:${row.user.watchCountry}`;
+			// Friday recommendations cover this week, including the coming weekend.
+			const start = addDays(day.date, -4);
+			const cacheKey = `${start}:${row.user.watchCountry}`;
 			if (!globalReleases.has(cacheKey)) {
 				globalReleases.set(
 					cacheKey,
 					await this.globalReleases(
-						day.date,
-						addDays(day.date, 6),
+						start,
+						addDays(day.date, 2),
 						row.user.watchCountry,
 					),
 				);
@@ -599,7 +607,7 @@ export class NotificationWorkerService
 					const enabled =
 						job.user.notificationSettings?.[`push${job.category as Category}`];
 					if (enabled && device?.userDid === job.userDid)
-						await this.sendPush(token, job);
+						await sendPushNotification(this.prisma, token, job);
 				}
 				await this.prisma.notificationDelivery.update({
 					where: { id: job.id },
@@ -619,39 +627,5 @@ export class NotificationWorkerService
 				this.logger.warn(`Notification ${job.id} failed: ${String(error)}`);
 			}
 		}
-	}
-
-	private async sendPush(
-		token: string,
-		job: { title: string; body: string; url: string | null },
-	): Promise<void> {
-		const response = await fetch("https://exp.host/--/api/v2/push/send", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Accept: "application/json",
-			},
-			body: JSON.stringify({
-				to: token,
-				title: job.title,
-				body: job.body,
-				data: { path: job.url },
-				sound: "default",
-			}),
-			signal: AbortSignal.timeout(15_000),
-		});
-		if (!response.ok)
-			throw new Error(`Expo push returned HTTP ${response.status}`);
-		const result = (await response.json()) as {
-			data?: { status?: string; details?: { error?: string } };
-		};
-		if (result.data?.details?.error === "DeviceNotRegistered") {
-			await this.prisma.pushDevice.deleteMany({ where: { token } });
-			return;
-		}
-		if (result.data?.status !== "ok")
-			throw new Error(
-				`Expo push rejected notification: ${result.data?.details?.error ?? "unknown"}`,
-			);
 	}
 }

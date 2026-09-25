@@ -59,6 +59,43 @@ describe("push registration", () => {
 		mocks.getToken.mockResolvedValue({ data: "ExpoPushToken[known]" });
 	});
 
+	it("reports permission before a failed Android token fetch", async () => {
+		setPushUser("did:plc:alice");
+		mocks.getToken.mockRejectedValue(new Error("INTERNAL_SERVER_ERROR"));
+		const permissionChanged = vi.fn();
+		await expect(requestAndRegisterPush(permissionChanged)).rejects.toThrow();
+		expect(permissionChanged).toHaveBeenCalledWith(true);
+		expect(mocks.register).not.toHaveBeenCalled();
+	});
+
+	it("shares concurrent token fetches from enabling and the token listener", async () => {
+		setPushUser("did:plc:alice");
+		let finishToken!: (value: { data: string }) => void;
+		mocks.getToken.mockReturnValue(
+			new Promise((resolve) => {
+				finishToken = resolve;
+			}),
+		);
+		const enabling = requestAndRegisterPush();
+		await vi.waitFor(() => expect(mocks.getToken).toHaveBeenCalled());
+		const syncing = syncAuthorizedPush();
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		finishToken({ data: "ExpoPushToken[known]" });
+		await Promise.all([enabling, syncing]);
+		expect(mocks.getToken).toHaveBeenCalledOnce();
+		expect(mocks.register).toHaveBeenCalledOnce();
+	});
+
+	it("uses a rotated native token without asking the native service for it again", async () => {
+		setPushUser("did:plc:alice");
+		const devicePushToken = { type: "android", data: "rotated" } as const;
+		await syncAuthorizedPush(devicePushToken);
+		expect(mocks.getToken).toHaveBeenCalledWith({
+			projectId: "project",
+			devicePushToken,
+		});
+	});
+
 	it("creates the Android channel before asking for permission", async () => {
 		setPushUser("did:plc:alice");
 		expect(await requestAndRegisterPush()).toBe(true);

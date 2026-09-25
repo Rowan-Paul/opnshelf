@@ -12,6 +12,10 @@ import { Platform } from "react-native";
 const REGISTERED_TOKEN_KEY = "opnshelf_registered_push_token";
 let activeUserDid: string | null = null;
 let generation = 0;
+let tokenRegistration: {
+	generation: number;
+	promise: Promise<boolean>;
+} | null = null;
 const registrations = new Map<AbortController, Promise<void>>();
 
 /** Invalidate token work started for a previous account. */
@@ -70,34 +74,63 @@ function hasPermission(
 	);
 }
 
-async function expoToken(): Promise<string | null> {
+async function expoToken(
+	devicePushToken?: Notifications.DevicePushToken,
+): Promise<string | null> {
 	if (!Device.isDevice || Platform.OS === "web") return null;
 	await ensureAndroidChannel();
 	const projectId =
 		Constants.easConfig?.projectId ??
 		Constants.expoConfig?.extra?.eas?.projectId;
 	if (typeof projectId !== "string") return null;
-	return (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+	return (
+		await Notifications.getExpoPushTokenAsync({ projectId, devicePushToken })
+	).data;
 }
 
-export async function requestAndRegisterPush(): Promise<boolean> {
+function registerAuthorizedToken(
+	expectedGeneration: number,
+	devicePushToken?: Notifications.DevicePushToken,
+): Promise<boolean> {
+	if (tokenRegistration?.generation === expectedGeneration)
+		return tokenRegistration.promise;
+	const promise = (async () => {
+		const token = await expoToken(devicePushToken);
+		if (!token || generation !== expectedGeneration) return false;
+		await registerToken(token, expectedGeneration);
+		return generation === expectedGeneration;
+	})();
+	tokenRegistration = { generation: expectedGeneration, promise };
+	void promise
+		.finally(() => {
+			if (tokenRegistration?.promise === promise) tokenRegistration = null;
+		})
+		.catch(() => {});
+	return promise;
+}
+
+export async function requestAndRegisterPush(
+	onPermission?: (granted: boolean) => void,
+): Promise<boolean> {
 	if (!Device.isDevice || !activeUserDid) return false;
 	const expectedGeneration = generation;
 	await ensureAndroidChannel();
 	const permission = await Notifications.requestPermissionsAsync();
-	if (!hasPermission(permission)) return false;
-	const token = await expoToken();
-	if (!token || generation !== expectedGeneration) return false;
-	await registerToken(token, expectedGeneration);
-	return true;
+	if (generation !== expectedGeneration) return false;
+	const granted = hasPermission(permission);
+	onPermission?.(granted);
+	if (!granted) return false;
+	return registerAuthorizedToken(expectedGeneration);
 }
 
-export async function syncAuthorizedPush(): Promise<void> {
+export async function syncAuthorizedPush(
+	devicePushToken?: Notifications.DevicePushToken,
+): Promise<void> {
 	if (!Device.isDevice || !activeUserDid) return;
 	const expectedGeneration = generation;
 	if (!hasPermission(await Notifications.getPermissionsAsync())) return;
-	const token = await expoToken();
-	if (token) await registerToken(token, expectedGeneration);
+	if (generation !== expectedGeneration) return;
+	await registerAuthorizedToken(expectedGeneration, devicePushToken);
 }
 
 export async function removeCurrentPushDevice(): Promise<void> {

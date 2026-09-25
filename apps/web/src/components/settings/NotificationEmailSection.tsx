@@ -2,12 +2,14 @@ import {
 	notificationsControllerConfirmEmailMutation,
 	notificationsControllerRequestEmailMutation,
 	notificationsControllerSettingsOptions,
+	notificationsControllerTestNotificationMutation,
 	notificationsControllerUpdateSettingsMutation,
 	type UpdateNotificationSettingsDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import StoreBadges from "#/components/StoreBadges";
 import { Switch } from "#/components/ui/switch";
 
 const CATEGORIES = [
@@ -49,6 +51,23 @@ export function NotificationEmailSection() {
 	} = useQuery({
 		...notificationsControllerSettingsOptions(),
 	});
+	const testNotification = useMutation({
+		...notificationsControllerTestNotificationMutation(),
+	});
+	const sendTest = async (channel: "push" | "email") => {
+		try {
+			await testNotification.mutateAsync({ body: { channel } });
+			toast.success(
+				"Test accepted for delivery. Check your " +
+					(channel === "push" ? "device." : "inbox."),
+			);
+		} catch {
+			toast.error(
+				"Could not send the test. Check notification setup and try again.",
+			);
+		}
+	};
+
 	const update = useMutation({
 		...notificationsControllerUpdateSettingsMutation(),
 	});
@@ -138,6 +157,16 @@ export function NotificationEmailSection() {
 							<p className="text-(--foreground-muted) text-sm">
 								Confirm an email address to receive notifications.
 							</p>
+						)}
+						{settings.emailVerified && (
+							<button
+								type="button"
+								className="btn btn-secondary"
+								disabled={testNotification.isPending}
+								onClick={() => void sendTest("email")}
+							>
+								Send test email
+							</button>
 						)}
 						{!awaitingCode ? (
 							<div className="space-y-2">
@@ -242,6 +271,14 @@ export function NotificationEmailSection() {
 					</div>
 				</div>
 			)}
+			<div className="mt-8 space-y-3 border-(--border) border-t pt-6">
+				<h3 className="font-semibold">Mobile notifications</h3>
+				<p className="text-(--foreground-muted) text-sm">
+					Open Settings → Notifications in the Mobile App to enable alerts on
+					your phone and send a test notification.
+				</p>
+				<StoreBadges className="justify-start" />
+			</div>
 		</section>
 	);
 }

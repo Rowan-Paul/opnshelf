@@ -2,14 +2,15 @@ import {
 	notificationsControllerConfirmEmailMutation,
 	notificationsControllerRequestEmailMutation,
 	notificationsControllerSettingsOptions,
+	notificationsControllerTestNotificationMutation,
 	notificationsControllerUpdateSettingsMutation,
 	type UpdateNotificationSettingsDto,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import { useEffect, useState } from "react";
-import { Switch, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { AppState, Switch, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -52,6 +53,9 @@ export function NotificationPreferences() {
 	const [code, setCode] = useState("");
 	const [awaitingCode, setAwaitingCode] = useState(false);
 	const [pushGranted, setPushGranted] = useState(false);
+	const [pushPending, setPushPending] = useState(false);
+	const [pushError, setPushError] = useState<string | null>(null);
+	const pushInFlight = useRef(false);
 	const [pendingKey, setPendingKey] = useState<SettingKey | null>(null);
 	const {
 		data: settings,
@@ -61,6 +65,23 @@ export function NotificationPreferences() {
 	} = useQuery({
 		...notificationsControllerSettingsOptions(),
 	});
+	const testNotification = useMutation({
+		...notificationsControllerTestNotificationMutation(),
+	});
+	const sendTest = async (channel: "push" | "email") => {
+		try {
+			await testNotification.mutateAsync({ body: { channel } });
+			toast.success(
+				"Test accepted for delivery. Check your " +
+					(channel === "push" ? "device." : "inbox."),
+			);
+		} catch {
+			toast.error(
+				"Could not send the test. Check notification setup and try again.",
+			);
+		}
+	};
+
 	const update = useMutation({
 		...notificationsControllerUpdateSettingsMutation(),
 	});
@@ -73,13 +94,29 @@ export function NotificationPreferences() {
 
 	useEffect(() => {
 		if (!Device.isDevice) return;
-		void Notifications.getPermissionsAsync().then((permission) => {
-			setPushGranted(
-				permission.granted ||
-					permission.ios?.status ===
-						Notifications.IosAuthorizationStatus.PROVISIONAL,
-			);
+		let active = true;
+		const refreshPermission = async () => {
+			try {
+				const permission = await Notifications.getPermissionsAsync();
+				if (active)
+					setPushGranted(
+						permission.granted ||
+							permission.ios?.status ===
+								Notifications.IosAuthorizationStatus.PROVISIONAL,
+					);
+			} catch {
+				if (active)
+					setPushError("Could not read notification permission. Try again.");
+			}
+		};
+		void refreshPermission();
+		const listener = AppState.addEventListener("change", (state) => {
+			if (state === "active") void refreshPermission();
 		});
+		return () => {
+			active = false;
+			listener.remove();
+		};
 	}, []);
 
 	const refresh = () =>
@@ -104,23 +141,27 @@ export function NotificationPreferences() {
 	};
 
 	const enablePush = async () => {
+		if (pushInFlight.current) return;
+		pushInFlight.current = true;
+		setPushPending(true);
+		setPushError(null);
 		try {
-			const granted = await requestAndRegisterPush();
-			if (!granted) {
-				toast.error(
-					"Allow notifications in your device settings to enable push alerts.",
+			const registered = await requestAndRegisterPush(setPushGranted);
+			if (!registered) {
+				setPushError(
+					"Mobile alerts are not connected. Check notification permission in device settings and try again.",
 				);
 				return;
 			}
-			setPushGranted(true);
 			await refresh();
 			toast.success("Mobile notifications enabled");
-		} catch (error) {
-			toast.error(
-				error instanceof Error
-					? error.message
-					: "Could not enable notifications",
+		} catch {
+			setPushError(
+				"We could not connect this device for mobile alerts. Check your connection and try again.",
 			);
+		} finally {
+			pushInFlight.current = false;
+			setPushPending(false);
 		}
 	};
 
@@ -178,13 +219,33 @@ export function NotificationPreferences() {
 						? "Allowed on this device"
 						: "Enable alerts on this device to receive mobile notifications."}
 				</Text>
-				{!pushGranted && (
+				{
 					<Button
-						label="Enable mobile notifications"
+						label={
+							pushGranted
+								? "Reconnect mobile notifications"
+								: "Enable mobile notifications"
+						}
+						loading={pushPending}
+						loadingLabel="Connecting mobile alerts…"
 						size="sm"
 						onPress={() => void enablePush()}
 						disabled={!Device.isDevice}
 						className="self-start"
+					/>
+				}
+				{pushError && (
+					<Text accessibilityRole="alert" className="text-destructive text-sm">
+						{pushError}
+					</Text>
+				)}
+				{pushGranted && (
+					<Button
+						label="Send test mobile notification"
+						size="sm"
+						variant="secondary"
+						disabled={testNotification.isPending || pushPending}
+						onPress={() => void sendTest("push")}
 					/>
 				)}
 				{!Device.isDevice && (
@@ -206,6 +267,15 @@ export function NotificationPreferences() {
 					<Text className="text-muted-foreground text-sm">
 						Confirm an email address to receive email notifications.
 					</Text>
+				)}
+				{settings.emailVerified && (
+					<Button
+						label="Send test email"
+						size="sm"
+						variant="secondary"
+						disabled={testNotification.isPending}
+						onPress={() => void sendTest("email")}
+					/>
 				)}
 				{!awaitingCode ? (
 					<View className="gap-2">

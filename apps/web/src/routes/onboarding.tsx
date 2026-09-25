@@ -34,6 +34,7 @@ import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
 import StreamingServicePicker, {
 	toggleService,
 } from "#/components/StreamingServicePicker";
+import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
 import { UserRowsSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
@@ -138,6 +139,19 @@ function OnboardingPage() {
 						)}
 						{step === "services" && (
 							<ServicesStep onNext={goToNextStep} onSkip={goToNextStep} />
+						)}
+						{step === "notifications" && (
+							<div className="space-y-6">
+								<h1 className="font-semibold text-2xl">Stay up to date</h1>
+								<NotificationEmailSection />
+								<button
+									type="button"
+									className="btn btn-primary"
+									onClick={goToNextStep}
+								>
+									Continue
+								</button>
+							</div>
 						)}
 						{step === "trakt" && (
 							<TraktStep

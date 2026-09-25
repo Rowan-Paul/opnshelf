@@ -1,5 +1,10 @@
+import { sendPushNotification } from "./send-push";
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+	BadRequestException,
+	Injectable,
+	ServiceUnavailableException,
+} from "@nestjs/common";
 import { EmailService } from "../email/email.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
@@ -153,6 +158,52 @@ export class NotificationsService {
 	async removePushDevice(did: string, token: string) {
 		await this.prisma.pushDevice.deleteMany({ where: { userDid: did, token } });
 		return this.getSettings(did);
+	}
+
+	async sendTest(did: string, channel: "push" | "email"): Promise<void> {
+		const title = "Opnshelf test notification";
+		const body =
+			"Your notifications are working. This is a test you requested from Settings.";
+		if (channel === "email") {
+			const settings = await this.ensureSettings(did);
+			if (!settings.email || !settings.emailVerifiedAt)
+				throw new BadRequestException("Confirm your notification email first");
+			try {
+				await this.email.sendNotification({
+					to: settings.email,
+					subject: title,
+					text: body,
+				});
+			} catch {
+				throw new ServiceUnavailableException(
+					"Could not send the test email. Try again later.",
+				);
+			}
+			return;
+		}
+		const devices = await this.prisma.pushDevice.findMany({
+			where: { userDid: did },
+		});
+		if (!devices.length)
+			throw new BadRequestException(
+				"Enable mobile notifications on a device first",
+			);
+		const results = await Promise.allSettled(
+			devices.map(({ token }) =>
+				sendPushNotification(this.prisma, token, {
+					title,
+					body,
+					url: "/settings/notifications",
+				}),
+			),
+		);
+		if (
+			results.some((result) => result.status === "rejected" || !result.value)
+		) {
+			throw new ServiceUnavailableException(
+				"One or more devices could not receive the test. Reconnect mobile notifications and try again.",
+			);
+		}
 	}
 
 	private hashCode(code: string): string {

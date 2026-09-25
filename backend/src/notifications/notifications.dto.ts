@@ -73,3 +73,9 @@ export class RemovePushDeviceDto {
 	@IsString()
 	token!: string;
 }
+
+export class TestNotificationDto {
+	@ApiProperty({ enum: ["push", "email"] })
+	@IsIn(["push", "email"])
+	channel!: "push" | "email";
+}

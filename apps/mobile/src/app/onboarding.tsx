@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
+import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { UserRow } from "@/components/social/UserRow";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
@@ -47,6 +48,7 @@ type OnboardingStep =
 	| "profile"
 	| "preferences"
 	| "services"
+	| "notifications"
 	| "trakt"
 	| "suggestions"
 	| "watches"
@@ -57,6 +59,7 @@ const STEP_SEQUENCE: OnboardingStep[] = [
 	"profile",
 	"preferences",
 	"services",
+	"notifications",
 	"trakt",
 	"suggestions",
 	"watches",
@@ -206,7 +209,26 @@ export default function OnboardingScreen() {
 					<PreferencesStep onNext={() => setStep("services")} />
 				)}
 				{step === "services" && (
-					<ServicesStep onNext={() => setStep("trakt")} />
+					<ServicesStep onNext={() => setStep("notifications")} />
+				)}
+				{step === "notifications" && (
+					<StepScaffold
+						footer={
+							<PrimaryButton
+								label="Continue"
+								onPress={() => setStep("trakt")}
+							/>
+						}
+					>
+						<Text className="font-display font-semibold text-2xl text-foreground">
+							Stay up to date
+						</Text>
+						<Text className="text-muted-foreground text-sm">
+							Choose mobile and email notifications. You can change these in
+							Settings anytime.
+						</Text>
+						<NotificationPreferences />
+					</StepScaffold>
 				)}
 				{step === "trakt" && (
 					<TraktStep

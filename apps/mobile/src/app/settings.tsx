@@ -13,6 +13,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nativeApplicationVersion } from "expo-application";
+import Constants from "expo-constants";
 import { Link, Stack } from "expo-router";
 import * as Updates from "expo-updates";
 import {
@@ -53,6 +54,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { createCoalescedSaver, sameIdSet } from "@/lib/coalesced-save";
+import { env } from "@/lib/env";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
@@ -105,8 +107,12 @@ function SettingsSection({
  * they are looking at. `Updates.channel` is null on a dev build. */
 function formatVersionLine(): string {
 	const version = nativeApplicationVersion ?? "?";
-	const parts = [`v${version}`];
-	if (Updates.channel && Updates.channel !== "production") {
+	const parts = [
+		`v${version}`,
+		`commit ${Constants.expoConfig?.extra?.commit ?? "unknown"}`,
+		new URL(env.apiUrl).hostname,
+	];
+	if (Updates.channel) {
 		parts.push(Updates.channel);
 	}
 	if (!Updates.isEnabled || !Updates.updateId) {
@@ -1021,6 +1027,12 @@ export default function SettingsScreen() {
 							</Link>
 						))}
 					</View>
+					<Text
+						selectable
+						className="pt-6 text-center text-muted-foreground text-xs"
+					>
+						{formatVersionLine()}
+					</Text>
 				</ScrollView>
 			</Screen>
 		</>

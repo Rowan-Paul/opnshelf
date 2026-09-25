@@ -1,5 +1,5 @@
 import { BadRequestException } from "@nestjs/common";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationsService } from "./notifications.service";
 
 describe("NotificationsService", () => {
@@ -29,6 +29,7 @@ describe("NotificationsService", () => {
 		},
 		pushDevice: {
 			count: vi.fn(),
+			findMany: vi.fn(),
 			findUnique: vi.fn(),
 			upsert: vi.fn(),
 			deleteMany: vi.fn(),
@@ -43,6 +44,57 @@ describe("NotificationsService", () => {
 		prisma.pushDevice.count.mockResolvedValue(0);
 		prisma.pushDevice.findUnique.mockResolvedValue(null);
 		email.sendNotification.mockResolvedValue(undefined);
+	});
+
+	afterEach(() => vi.unstubAllGlobals());
+	it("reports rejected push delivery and removes expired device registrations", async () => {
+		prisma.pushDevice.findMany.mockResolvedValue([
+			{ token: "ExpoPushToken[test]" },
+		]);
+		const fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			json: async () => ({
+				data: { status: "error", details: { error: "DeviceNotRegistered" } },
+			}),
+		});
+		vi.stubGlobal("fetch", fetch);
+		await expect(service.sendTest("did:plc:user", "push")).rejects.toThrow(
+			"One or more devices",
+		);
+		expect(prisma.pushDevice.deleteMany).toHaveBeenCalledWith({
+			where: { token: "ExpoPushToken[test]" },
+		});
+		const payload = JSON.parse(fetch.mock.calls[0][1].body);
+		expect(payload).toMatchObject({
+			channelId: "releases",
+			data: { path: "/settings/notifications" },
+		});
+	});
+
+	it("sends test email only to the authenticated user's verified address", async () => {
+		await expect(service.sendTest("did:plc:user", "email")).rejects.toThrow(
+			"Confirm",
+		);
+		expect(email.sendNotification).not.toHaveBeenCalled();
+		prisma.notificationSettings.upsert.mockResolvedValue({
+			...settings,
+			email: "verified@example.com",
+			emailVerifiedAt: new Date(),
+		});
+		await service.sendTest("did:plc:user", "email");
+		expect(email.sendNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ to: "verified@example.com" }),
+		);
+	});
+
+	it("does not claim a test push was sent without a registered device", async () => {
+		prisma.pushDevice.findMany.mockResolvedValue([]);
+		await expect(service.sendTest("did:plc:user", "push")).rejects.toThrow(
+			"Enable mobile",
+		);
+		expect(prisma.pushDevice.findMany).toHaveBeenCalledWith({
+			where: { userDid: "did:plc:user" },
+		});
 	});
 
 	it("does not replace a verified address until the new code is confirmed", async () => {
