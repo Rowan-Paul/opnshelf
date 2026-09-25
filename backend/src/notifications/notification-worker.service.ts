@@ -588,7 +588,7 @@ export class NotificationWorkerService
 						await this.email.sendNotification({
 							to: settings.email,
 							subject: job.title,
-							text: `${job.body}${link ? `\n\n${link}` : ""}\n\nManage notifications: ${new URL("/settings/preferences", this.config.get<string>("FRONTEND_URL") || "https://opnshelf.xyz").toString()}`,
+							text: `${job.body}${link ? `\n\n${link}` : ""}\n\nManage notifications: ${new URL("/settings/notifications", this.config.get<string>("FRONTEND_URL") || "https://opnshelf.xyz").toString()}`,
 						});
 					}
 				} else if (job.channel.startsWith("push:")) {

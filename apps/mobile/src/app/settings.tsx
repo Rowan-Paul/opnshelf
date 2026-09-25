@@ -680,7 +680,7 @@ export function SettingsCategoryScreen({
 
 					{section === "notifications" && (
 						<SettingsSection
-							title="Notifications"
+							title="Delivery"
 							description="Choose the updates Opnshelf sends to your device and email."
 						>
 							<NotificationPreferences />
@@ -951,37 +951,37 @@ const SETTINGS_AREAS: {
 }[] = [
 	{
 		href: "/edit-profile",
-		label: "Profile",
+		label: SETTINGS_TITLES.profile,
 		description: "Name, photo and social links",
 		Icon: UserPen,
 	},
 	{
 		href: "/settings/preferences",
-		label: "Preferences",
+		label: SETTINGS_TITLES.preferences,
 		description: "Appearance, time, streaming and reviews",
 		Icon: Compass,
 	},
 	{
 		href: "/settings/notifications",
-		label: "Notifications",
-		description: "Mobile and email alerts",
+		label: SETTINGS_TITLES.notifications,
+		description: "Mobile push and email notifications",
 		Icon: Bell,
 	},
 	{
 		href: "/settings/connections",
-		label: "Connections",
+		label: SETTINGS_TITLES.connections,
 		description: "Blog mirroring, Bluesky and Trakt",
 		Icon: Download,
 	},
 	{
 		href: "/settings/account",
-		label: "Account",
+		label: SETTINGS_TITLES.account,
 		description: "Devices, sign out and account deletion",
 		Icon: Smartphone,
 	},
 	{
 		href: "/settings/help",
-		label: "Help",
+		label: SETTINGS_TITLES.help,
 		description: "Welcome tour and feedback",
 		Icon: MessageSquare,
 	},

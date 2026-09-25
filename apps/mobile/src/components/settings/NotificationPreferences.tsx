@@ -222,15 +222,14 @@ export function NotificationPreferences() {
 						{emailInput.trim() && (
 							<Button
 								label={
-									requestEmail.isPending
-										? "Sending code…"
-										: settings.emailVerified
-											? "Change email address"
-											: "Send confirmation code"
+									settings.emailVerified
+										? "Change email address"
+										: "Send confirmation code"
 								}
 								size="sm"
 								variant="secondary"
-								disabled={requestEmail.isPending}
+								loading={requestEmail.isPending}
+								loadingLabel="Sending code…"
 								onPress={() => void sendCode()}
 								className="self-start"
 							/>
@@ -255,22 +254,21 @@ export function NotificationPreferences() {
 							maxLength={6}
 						/>
 						<Button
-							label={
-								confirmEmail.isPending ? "Confirming email…" : "Confirm email"
-							}
+							label="Confirm email"
 							size="sm"
-							disabled={code.length !== 6 || confirmEmail.isPending}
+							loading={confirmEmail.isPending}
+							loadingLabel="Confirming email…"
+							disabled={code.length !== 6}
 							onPress={() => void verifyCode()}
 							className="self-start"
 						/>
 						<View className="flex-row flex-wrap gap-2">
 							<Button
-								label={
-									requestEmail.isPending ? "Resending code…" : "Resend code"
-								}
+								label="Resend code"
 								size="sm"
 								variant="secondary"
-								disabled={requestEmail.isPending}
+								loading={requestEmail.isPending}
+								loadingLabel="Resending code…"
 								onPress={() => void sendCode()}
 							/>
 							<Button

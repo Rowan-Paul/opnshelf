@@ -29,7 +29,7 @@ export const SETTINGS_AREAS = [
 	{
 		section: "notifications",
 		label: "Notifications",
-		description: "Email alerts and digests",
+		description: "Email notifications and digests",
 		Icon: Bell,
 	},
 	{

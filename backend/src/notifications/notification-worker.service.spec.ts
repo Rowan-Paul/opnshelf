@@ -25,15 +25,22 @@ describe("NotificationWorkerService", () => {
 	const prisma = {
 		notificationSettings: { findMany: vi.fn(), updateMany: vi.fn() },
 		pushDevice: { findMany: vi.fn() },
-		notificationDelivery: { upsert: vi.fn() },
+		notificationDelivery: {
+			upsert: vi.fn(),
+			findMany: vi.fn(),
+			updateMany: vi.fn(),
+			update: vi.fn(),
+		},
 		listItem: { findMany: vi.fn() },
 	};
+	const email = { sendNotification: vi.fn() };
+	const config = { get: vi.fn() };
 	const movies = { discoverReleasesBetween: vi.fn() };
 	const shows = { discoverPremieresBetween: vi.fn() };
 	const worker = new NotificationWorkerService(
 		prisma as never,
-		{} as never,
-		{} as never,
+		email as never,
+		config as never,
 		movies as never,
 		shows as never,
 	);
@@ -44,6 +51,11 @@ describe("NotificationWorkerService", () => {
 		prisma.notificationSettings.updateMany.mockResolvedValue({ count: 1 });
 		prisma.pushDevice.findMany.mockResolvedValue([]);
 		prisma.notificationDelivery.upsert.mockResolvedValue({});
+		prisma.notificationDelivery.findMany.mockResolvedValue([]);
+		prisma.notificationDelivery.updateMany.mockResolvedValue({ count: 1 });
+		prisma.notificationDelivery.update.mockResolvedValue({});
+		email.sendNotification.mockResolvedValue(undefined);
+		config.get.mockReturnValue("https://staging.opnshelf.xyz");
 		prisma.listItem.findMany.mockResolvedValue([]);
 		movies.discoverReleasesBetween.mockResolvedValue([
 			{ id: 42, title: "A Movie" },
@@ -121,6 +133,34 @@ describe("NotificationWorkerService", () => {
 					eventKey: "watchlist:2026-09-29",
 					body: "A Movie",
 				}),
+			}),
+		);
+	});
+
+	it("links notification emails to their settings section", async () => {
+		prisma.notificationDelivery.findMany.mockResolvedValue([
+			{
+				id: "delivery-1",
+				userDid: settings.userDid,
+				channel: "email",
+				category: "NewReleases",
+				status: "pending",
+				attempts: 0,
+				nextAttemptAt: new Date("2026-09-28T08:00:00.000Z"),
+				title: "New releases",
+				body: "A Movie · A Show",
+				url: null,
+				user: { notificationSettings: settings },
+			},
+		]);
+
+		await worker.deliverPending();
+
+		expect(email.sendNotification).toHaveBeenCalledWith(
+			expect.objectContaining({
+				text: expect.stringContaining(
+					"Manage notifications: https://staging.opnshelf.xyz/settings/notifications",
+				),
 			}),
 		);
 	});

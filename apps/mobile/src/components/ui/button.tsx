@@ -61,13 +61,13 @@ export interface ButtonProps
 	size?: ButtonSize;
 	/** Blocks presses and dims, without implying anything is in flight. */
 	disabled?: boolean;
-	/** Blocks presses and shows a spinner. */
+	/** Blocks presses and shows a centered spinner unless loadingLabel is set. */
 	loading?: boolean;
-	/** Replaces `label` while loading, e.g. "Creating account". */
+	/** Replaces `label` and the spinner while loading, e.g. "Creating account". */
 	loadingLabel?: string;
 	/** Rendered before the label, usually an icon. */
 	leading?: ReactNode;
-	/** Rendered after the label. Hidden while loading, where the spinner sits. */
+	/** Rendered after the label. Hidden while loading. */
 	trailing?: ReactNode;
 	/** Layout classes for the button itself: `flex-1`, `mt-2`, `self-start`. */
 	className?: string;
@@ -81,9 +81,8 @@ export interface ButtonProps
  * stray radius - differences nobody chose and no reviewer could catch, because
  * each one only looks wrong beside a button on another screen.
  *
- * The spinner is absolutely positioned rather than inserted into the row: a
- * spinner that takes part in the layout shoves the label sideways the moment
- * you tap.
+ * A spinner replaces the visible label without changing its layout width, so
+ * compact buttons cannot put a spinner on top of their text.
  */
 export const Button = forwardRef<RNView, ButtonProps>(function Button(
 	{
@@ -103,6 +102,7 @@ export const Button = forwardRef<RNView, ButtonProps>(function Button(
 ) {
 	const dark = useColorScheme() === "dark";
 	const locked = disabled || loading;
+	const showSpinner = loading && !loadingLabel;
 	// Loading keeps the filled look: it is momentary, and the spinner needs the
 	// same contrast the label has.
 	const muted = variant === "primary" && disabled && !loading;
@@ -137,17 +137,18 @@ export const Button = forwardRef<RNView, ButtonProps>(function Button(
 					"font-semibold",
 					muted ? DISABLED_PRIMARY.label : VARIANT[variant].label,
 					SIZE[size].label,
+					showSpinner && "opacity-0",
 				)}
 			>
 				{loading ? (loadingLabel ?? label) : label}
 			</Text>
-			{loading ? (
-				<View className="absolute right-4 justify-center">
+			{showSpinner ? (
+				<View className="absolute inset-0 items-center justify-center">
 					<ActivityIndicator size="small" color={spinner} />
 				</View>
-			) : (
+			) : !loading ? (
 				trailing
-			)}
+			) : null}
 		</Pressable>
 	);
 });

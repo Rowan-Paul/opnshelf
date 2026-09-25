@@ -66,7 +66,7 @@ describe("settings sections", () => {
 		render(<NotificationEmailSection />, { wrapper: Wrapper });
 
 		expect(
-			screen.getByRole("heading", { name: "Notifications" }),
+			screen.getByRole("heading", { name: "Email delivery" }),
 		).toBeDefined();
 	});
 

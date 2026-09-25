@@ -79,15 +79,17 @@ describe("Button", () => {
 		expect(button(renderer).props.accessibilityState.busy).toBe(false);
 	});
 
-	it("keeps the label in place when the spinner appears", () => {
-		// An inline spinner shoves the label sideways on tap.
-		const idle = render(<Button label="Sign in" />);
-		const busy = render(<Button label="Sign in" loading />);
+	it("centers the spinner without overlapping a compact button label", () => {
+		const idle = render(<Button label="Confirm email" size="sm" />);
+		const busy = render(<Button label="Confirm email" size="sm" loading />);
 		expect(spinners(idle)).toHaveLength(0);
 		expect(spinners(busy)).toHaveLength(1);
 		expect(
 			busy.root.find((n) => hostType(n) === "view").props.className,
-		).toContain("absolute");
+		).toContain("absolute inset-0 items-center justify-center");
+		expect(
+			busy.root.find((n) => hostType(n) === "text").props.className,
+		).toContain("opacity-0");
 	});
 
 	it("swaps in the loading label when given one", () => {
@@ -95,6 +97,9 @@ describe("Button", () => {
 			<Button label="Create account" loading loadingLabel="Creating account" />,
 		);
 		expect(label(renderer)).toBe("Creating account");
+		expect(spinners(renderer)).toHaveLength(0);
+		expect(button(renderer).props.accessibilityState.busy).toBe(true);
+		expect(button(renderer).props.className).toContain("bg-primary");
 	});
 
 	it("tints the spinner for the variant, and for the theme when it depends on it", () => {
