@@ -13,6 +13,27 @@ vi.mock("#/integrations/posthog/provider", () => ({
 }));
 
 describe("MediaCard poster metadata", () => {
+	it.each([
+		{ tmdbRating: 7.3, globalRating: undefined, expected: "7.3/10" },
+		{ tmdbRating: 7.3, globalRating: 8.6, expected: "8.6/10" },
+	])("keeps aggregate ratings on the detail page's ten-point scale ($expected)", ({
+		tmdbRating,
+		globalRating,
+		expected,
+	}) => {
+		render(
+			<MediaCard
+				id="920"
+				title="Cars"
+				posterUrl="/poster.jpg"
+				type="movie"
+				tmdbRating={tmdbRating}
+				globalRating={globalRating}
+			/>,
+		);
+		expect(screen.getByText(expected)).toBeTruthy();
+	});
+
 	it("shows the Watch count inside the watched control", () => {
 		render(
 			<MediaCard

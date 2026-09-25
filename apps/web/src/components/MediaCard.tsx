@@ -18,7 +18,7 @@ import {
 	buildShowUrl,
 } from "#/lib/url-utils";
 import { PosterProgress } from "./PosterProgress";
-import StarRating, { ratingToStars } from "./StarRating";
+import StarRating from "./StarRating";
 import { WatchCountBadge } from "./WatchCountBadge";
 
 export interface MediaCardProps {
@@ -454,7 +454,7 @@ export default function MediaCard({
 										node: (
 											<span className="flex items-center gap-1">
 												<Star className="size-3 fill-current text-yellow-500" />
-												{ratingToStars(globalRating).toFixed(1)}
+												{globalRating.toFixed(1)}/10
 											</span>
 										),
 									});
@@ -464,7 +464,7 @@ export default function MediaCard({
 										node: (
 											<span className="flex items-center gap-1">
 												<Star className="size-3 fill-current text-yellow-500/60" />
-												{(tmdbRating / 2).toFixed(1)}
+												{tmdbRating.toFixed(1)}/10
 											</span>
 										),
 									});

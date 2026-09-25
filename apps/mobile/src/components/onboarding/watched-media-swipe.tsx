@@ -359,7 +359,7 @@ function MediaSwipeCard({
 						<View className="flex-row items-center gap-1">
 							<Star color="#f3bc00" fill="#f3bc00" size={14} />
 							<Text className="text-muted-foreground text-sm">
-								{item.rating.toFixed(1)}
+								{item.rating.toFixed(1)}/10
 							</Text>
 						</View>
 					) : null}
