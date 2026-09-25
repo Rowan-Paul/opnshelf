@@ -2526,6 +2526,7 @@ export const NotificationSettingsScalarFieldEnum = {
   emailWatchlistReleases: 'emailWatchlistReleases',
   emailNewSeasons: 'emailNewSeasons',
   emailStats: 'emailStats',
+  nextQueueAt: 'nextQueueAt',
   updatedAt: 'updatedAt'
 } as const
 

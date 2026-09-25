@@ -85,7 +85,8 @@ model User {
 }
 
 // Notification email is supplied and verified separately from PDS account mail.
-// Every category and channel is opt-in.
+// Email categories start enabled once an address is verified; push categories
+// are enabled only after device permission and registration.
 model NotificationSettings {
   userDid String @id
   user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
@@ -105,7 +106,10 @@ model NotificationSettings {
   emailWatchlistReleases Boolean @default(true)
   emailNewSeasons Boolean @default(true)
   emailStats Boolean @default(true)
+  nextQueueAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([nextQueueAt])
 }
 
 model PushDevice {

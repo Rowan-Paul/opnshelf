@@ -27,7 +27,12 @@ describe("NotificationsService", () => {
 			upsert: vi.fn(),
 			update: vi.fn(),
 		},
-		pushDevice: { count: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
+		pushDevice: {
+			count: vi.fn(),
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			deleteMany: vi.fn(),
+		},
 	};
 	const email = { sendNotification: vi.fn() };
 	const service = new NotificationsService(prisma as never, email as never);
@@ -36,6 +41,7 @@ describe("NotificationsService", () => {
 		vi.clearAllMocks();
 		prisma.notificationSettings.upsert.mockResolvedValue(settings);
 		prisma.pushDevice.count.mockResolvedValue(0);
+		prisma.pushDevice.findUnique.mockResolvedValue(null);
 		email.sendNotification.mockResolvedValue(undefined);
 	});
 
@@ -93,10 +99,26 @@ describe("NotificationsService", () => {
 			...settings,
 			pushInitialized: true,
 		});
+		prisma.pushDevice.findUnique.mockResolvedValue({ userDid: "did:plc:user" });
 		await service.registerPushDevice("did:plc:user", {
 			token: "ExpoPushToken[test]",
 			platform: "ios",
 		});
 		expect(prisma.notificationSettings.update).not.toHaveBeenCalled();
+	});
+
+	it("makes a new device due without resetting existing push preferences", async () => {
+		prisma.notificationSettings.upsert.mockResolvedValue({
+			...settings,
+			pushInitialized: true,
+		});
+		await service.registerPushDevice("did:plc:user", {
+			token: "ExpoPushToken[new]",
+			platform: "android",
+		});
+		expect(prisma.notificationSettings.update).toHaveBeenCalledWith({
+			where: { userDid: "did:plc:user" },
+			data: { nextQueueAt: expect.any(Date) },
+		});
 	});
 });

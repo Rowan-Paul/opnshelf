@@ -52,6 +52,7 @@ export type NotificationSettingsMinAggregateOutputType = {
   emailWatchlistReleases: boolean | null
   emailNewSeasons: boolean | null
   emailStats: boolean | null
+  nextQueueAt: Date | null
   updatedAt: Date | null
 }
 
@@ -73,6 +74,7 @@ export type NotificationSettingsMaxAggregateOutputType = {
   emailWatchlistReleases: boolean | null
   emailNewSeasons: boolean | null
   emailStats: boolean | null
+  nextQueueAt: Date | null
   updatedAt: Date | null
 }
 
@@ -94,6 +96,7 @@ export type NotificationSettingsCountAggregateOutputType = {
   emailWatchlistReleases: number
   emailNewSeasons: number
   emailStats: number
+  nextQueueAt: number
   updatedAt: number
   _all: number
 }
@@ -125,6 +128,7 @@ export type NotificationSettingsMinAggregateInputType = {
   emailWatchlistReleases?: true
   emailNewSeasons?: true
   emailStats?: true
+  nextQueueAt?: true
   updatedAt?: true
 }
 
@@ -146,6 +150,7 @@ export type NotificationSettingsMaxAggregateInputType = {
   emailWatchlistReleases?: true
   emailNewSeasons?: true
   emailStats?: true
+  nextQueueAt?: true
   updatedAt?: true
 }
 
@@ -167,6 +172,7 @@ export type NotificationSettingsCountAggregateInputType = {
   emailWatchlistReleases?: true
   emailNewSeasons?: true
   emailStats?: true
+  nextQueueAt?: true
   updatedAt?: true
   _all?: true
 }
@@ -275,6 +281,7 @@ export type NotificationSettingsGroupByOutputType = {
   emailWatchlistReleases: boolean
   emailNewSeasons: boolean
   emailStats: boolean
+  nextQueueAt: Date
   updatedAt: Date
   _count: NotificationSettingsCountAggregateOutputType | null
   _avg: NotificationSettingsAvgAggregateOutputType | null
@@ -319,6 +326,7 @@ export type NotificationSettingsWhereInput = {
   emailWatchlistReleases?: Prisma.BoolFilter<"NotificationSettings"> | boolean
   emailNewSeasons?: Prisma.BoolFilter<"NotificationSettings"> | boolean
   emailStats?: Prisma.BoolFilter<"NotificationSettings"> | boolean
+  nextQueueAt?: Prisma.DateTimeFilter<"NotificationSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NotificationSettings"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -341,6 +349,7 @@ export type NotificationSettingsOrderByWithRelationInput = {
   emailWatchlistReleases?: Prisma.SortOrder
   emailNewSeasons?: Prisma.SortOrder
   emailStats?: Prisma.SortOrder
+  nextQueueAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
@@ -366,6 +375,7 @@ export type NotificationSettingsWhereUniqueInput = Prisma.AtLeast<{
   emailWatchlistReleases?: Prisma.BoolFilter<"NotificationSettings"> | boolean
   emailNewSeasons?: Prisma.BoolFilter<"NotificationSettings"> | boolean
   emailStats?: Prisma.BoolFilter<"NotificationSettings"> | boolean
+  nextQueueAt?: Prisma.DateTimeFilter<"NotificationSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NotificationSettings"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "userDid">
@@ -388,6 +398,7 @@ export type NotificationSettingsOrderByWithAggregationInput = {
   emailWatchlistReleases?: Prisma.SortOrder
   emailNewSeasons?: Prisma.SortOrder
   emailStats?: Prisma.SortOrder
+  nextQueueAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.NotificationSettingsCountOrderByAggregateInput
   _avg?: Prisma.NotificationSettingsAvgOrderByAggregateInput
@@ -417,6 +428,7 @@ export type NotificationSettingsScalarWhereWithAggregatesInput = {
   emailWatchlistReleases?: Prisma.BoolWithAggregatesFilter<"NotificationSettings"> | boolean
   emailNewSeasons?: Prisma.BoolWithAggregatesFilter<"NotificationSettings"> | boolean
   emailStats?: Prisma.BoolWithAggregatesFilter<"NotificationSettings"> | boolean
+  nextQueueAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationSettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationSettings"> | Date | string
 }
 
@@ -437,6 +449,7 @@ export type NotificationSettingsCreateInput = {
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationSettingsInput
 }
@@ -459,6 +472,7 @@ export type NotificationSettingsUncheckedCreateInput = {
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: Date | string
   updatedAt?: Date | string
 }
 
@@ -479,6 +493,7 @@ export type NotificationSettingsUpdateInput = {
   emailWatchlistReleases?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailNewSeasons?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailStats?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nextQueueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationSettingsNestedInput
 }
@@ -501,6 +516,7 @@ export type NotificationSettingsUncheckedUpdateInput = {
   emailWatchlistReleases?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailNewSeasons?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailStats?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nextQueueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -522,6 +538,7 @@ export type NotificationSettingsCreateManyInput = {
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: Date | string
   updatedAt?: Date | string
 }
 
@@ -542,6 +559,7 @@ export type NotificationSettingsUpdateManyMutationInput = {
   emailWatchlistReleases?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailNewSeasons?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailStats?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nextQueueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -563,6 +581,7 @@ export type NotificationSettingsUncheckedUpdateManyInput = {
   emailWatchlistReleases?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailNewSeasons?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailStats?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nextQueueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -589,6 +608,7 @@ export type NotificationSettingsCountOrderByAggregateInput = {
   emailWatchlistReleases?: Prisma.SortOrder
   emailNewSeasons?: Prisma.SortOrder
   emailStats?: Prisma.SortOrder
+  nextQueueAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -614,6 +634,7 @@ export type NotificationSettingsMaxOrderByAggregateInput = {
   emailWatchlistReleases?: Prisma.SortOrder
   emailNewSeasons?: Prisma.SortOrder
   emailStats?: Prisma.SortOrder
+  nextQueueAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -635,6 +656,7 @@ export type NotificationSettingsMinOrderByAggregateInput = {
   emailWatchlistReleases?: Prisma.SortOrder
   emailNewSeasons?: Prisma.SortOrder
   emailStats?: Prisma.SortOrder
+  nextQueueAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -691,6 +713,7 @@ export type NotificationSettingsCreateWithoutUserInput = {
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: Date | string
   updatedAt?: Date | string
 }
 
@@ -711,6 +734,7 @@ export type NotificationSettingsUncheckedCreateWithoutUserInput = {
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: Date | string
   updatedAt?: Date | string
 }
 
@@ -747,6 +771,7 @@ export type NotificationSettingsUpdateWithoutUserInput = {
   emailWatchlistReleases?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailNewSeasons?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailStats?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nextQueueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -767,6 +792,7 @@ export type NotificationSettingsUncheckedUpdateWithoutUserInput = {
   emailWatchlistReleases?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailNewSeasons?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailStats?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nextQueueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -790,6 +816,7 @@ export type NotificationSettingsSelect<ExtArgs extends runtime.Types.Extensions.
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notificationSettings"]>
@@ -812,6 +839,7 @@ export type NotificationSettingsSelectCreateManyAndReturn<ExtArgs extends runtim
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notificationSettings"]>
@@ -834,6 +862,7 @@ export type NotificationSettingsSelectUpdateManyAndReturn<ExtArgs extends runtim
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notificationSettings"]>
@@ -856,10 +885,11 @@ export type NotificationSettingsSelectScalar = {
   emailWatchlistReleases?: boolean
   emailNewSeasons?: boolean
   emailStats?: boolean
+  nextQueueAt?: boolean
   updatedAt?: boolean
 }
 
-export type NotificationSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userDid" | "email" | "pendingEmail" | "emailVerifiedAt" | "emailIsCustom" | "emailCodeHash" | "emailCodeExpiresAt" | "emailCodeAttempts" | "pushNewReleases" | "pushWatchlistReleases" | "pushNewSeasons" | "pushStats" | "pushInitialized" | "emailNewReleases" | "emailWatchlistReleases" | "emailNewSeasons" | "emailStats" | "updatedAt", ExtArgs["result"]["notificationSettings"]>
+export type NotificationSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userDid" | "email" | "pendingEmail" | "emailVerifiedAt" | "emailIsCustom" | "emailCodeHash" | "emailCodeExpiresAt" | "emailCodeAttempts" | "pushNewReleases" | "pushWatchlistReleases" | "pushNewSeasons" | "pushStats" | "pushInitialized" | "emailNewReleases" | "emailWatchlistReleases" | "emailNewSeasons" | "emailStats" | "nextQueueAt" | "updatedAt", ExtArgs["result"]["notificationSettings"]>
 export type NotificationSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -893,6 +923,7 @@ export type $NotificationSettingsPayload<ExtArgs extends runtime.Types.Extension
     emailWatchlistReleases: boolean
     emailNewSeasons: boolean
     emailStats: boolean
+    nextQueueAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["notificationSettings"]>
   composites: {}
@@ -1335,6 +1366,7 @@ export interface NotificationSettingsFieldRefs {
   readonly emailWatchlistReleases: Prisma.FieldRef<"NotificationSettings", 'Boolean'>
   readonly emailNewSeasons: Prisma.FieldRef<"NotificationSettings", 'Boolean'>
   readonly emailStats: Prisma.FieldRef<"NotificationSettings", 'Boolean'>
+  readonly nextQueueAt: Prisma.FieldRef<"NotificationSettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"NotificationSettings", 'DateTime'>
 }
     

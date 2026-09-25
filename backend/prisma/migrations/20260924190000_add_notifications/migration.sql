@@ -16,6 +16,7 @@ CREATE TABLE "NotificationSettings" (
     "emailWatchlistReleases" BOOLEAN NOT NULL DEFAULT true,
     "emailNewSeasons" BOOLEAN NOT NULL DEFAULT true,
     "emailStats" BOOLEAN NOT NULL DEFAULT true,
+    "nextQueueAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "NotificationSettings_pkey" PRIMARY KEY ("userDid")
 );
@@ -46,6 +47,7 @@ CREATE TABLE "NotificationDelivery" (
 );
 
 CREATE INDEX "PushDevice_userDid_idx" ON "PushDevice"("userDid");
+CREATE INDEX "NotificationSettings_nextQueueAt_idx" ON "NotificationSettings"("nextQueueAt");
 CREATE UNIQUE INDEX "NotificationDelivery_userDid_channel_eventKey_key" ON "NotificationDelivery"("userDid", "channel", "eventKey");
 CREATE INDEX "NotificationDelivery_status_nextAttemptAt_idx" ON "NotificationDelivery"("status", "nextAttemptAt");
 

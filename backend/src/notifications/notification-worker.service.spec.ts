@@ -9,6 +9,7 @@ describe("NotificationWorkerService", () => {
 	};
 	const settings = {
 		userDid: "did:plc:alice",
+		nextQueueAt: new Date("2026-09-28T07:00:00.000Z"),
 		user,
 		email: "alice@example.com",
 		emailVerifiedAt: new Date(),
@@ -22,7 +23,7 @@ describe("NotificationWorkerService", () => {
 		pushStats: false,
 	};
 	const prisma = {
-		notificationSettings: { findMany: vi.fn() },
+		notificationSettings: { findMany: vi.fn(), updateMany: vi.fn() },
 		pushDevice: { findMany: vi.fn() },
 		notificationDelivery: { upsert: vi.fn() },
 		listItem: { findMany: vi.fn() },
@@ -40,6 +41,7 @@ describe("NotificationWorkerService", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		prisma.notificationSettings.findMany.mockResolvedValue([settings]);
+		prisma.notificationSettings.updateMany.mockResolvedValue({ count: 1 });
 		prisma.pushDevice.findMany.mockResolvedValue([]);
 		prisma.notificationDelivery.upsert.mockResolvedValue({});
 		prisma.listItem.findMany.mockResolvedValue([]);
@@ -67,6 +69,28 @@ describe("NotificationWorkerService", () => {
 				}),
 			}),
 		);
+		expect(prisma.notificationSettings.updateMany).toHaveBeenCalledWith({
+			where: { userDid: settings.userDid, nextQueueAt: settings.nextQueueAt },
+			data: { nextQueueAt: new Date("2026-09-29T07:00:00.000Z") },
+		});
+	});
+
+	it("queries only accounts due at this tick", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([]);
+		const now = new Date("2026-09-28T08:00:00.000Z");
+		await worker.queueDueEvents(now);
+		expect(prisma.notificationSettings.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({ where: { nextQueueAt: { lte: now } } }),
+		);
+		expect(prisma.pushDevice.findMany).not.toHaveBeenCalled();
+	});
+
+	it("retries an account when event queuing fails", async () => {
+		prisma.pushDevice.findMany.mockRejectedValue(
+			new Error("database unavailable"),
+		);
+		await worker.queueDueEvents(new Date("2026-09-28T08:00:00.000Z"));
+		expect(prisma.notificationSettings.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("does not send the general digest on Tuesday", async () => {

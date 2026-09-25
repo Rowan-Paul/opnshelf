@@ -26,7 +26,7 @@ We **do not sell** data and **do not** use data for cross-app tracking
 ## Apple App Privacy mapping
 - **Data Used to Track You:** none.
 - **Data Linked to You:** Contact Info (verified email for notifications), User Content
-  (shelf, ratings, reviews, notes, lists), Identifiers (atproto DID/handle),
+  (shelf, ratings, reviews, notes, lists), Identifiers (atproto DID/handle and Expo push token),
   Usage Data (PostHog product analytics), Diagnostics (PostHog error details
   and stack traces).
 - **Data Not Linked to You:** Diagnostics (server logs).

@@ -56,13 +56,17 @@ function addDays(date: string, days: number): string {
 }
 
 function localMidnightUtc(date: string, timezone: string): Date {
+	return localTimeUtc(date, timezone, 0);
+}
+
+function localTimeUtc(date: string, timezone: string, hour: number): Date {
 	try {
 		new Intl.DateTimeFormat("en", { timeZone: timezone });
 	} catch {
 		timezone = "UTC";
 	}
 	const [year, month, day] = date.split("-").map(Number);
-	const target = Date.UTC(year, month - 1, day);
+	const target = Date.UTC(year, month - 1, day, hour);
 	let instant = target;
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const parts = new Intl.DateTimeFormat("en-GB", {
@@ -237,6 +241,7 @@ export class NotificationWorkerService
 		const globalReleases = new Map<string, Event | null>();
 		do {
 			const rows = await this.prisma.notificationSettings.findMany({
+				where: { nextQueueAt: { lte: now } },
 				take: 100,
 				...(cursor && { skip: 1, cursor: { userDid: cursor } }),
 				orderBy: { userDid: "asc" },
@@ -249,6 +254,17 @@ export class NotificationWorkerService
 			for (const row of rows) {
 				try {
 					await this.queueUserEvents(row, now, globalReleases);
+					const day = localParts(now, row.user.timezone);
+					await this.prisma.notificationSettings.updateMany({
+						where: { userDid: row.userDid, nextQueueAt: row.nextQueueAt },
+						data: {
+							nextQueueAt: localTimeUtc(
+								day.hour < 9 ? day.date : addDays(day.date, 1),
+								row.user.timezone,
+								9,
+							),
+						},
+					});
 				} catch (error) {
 					this.logger.warn(
 						`Could not queue notifications for ${row.userDid}: ${String(error)}`,
@@ -356,7 +372,7 @@ export class NotificationWorkerService
 			this.logger.warn(
 				`Release discovery failed for ${start}/${region}: ${String(error)}`,
 			);
-			return null;
+			throw error;
 		}
 	}
 

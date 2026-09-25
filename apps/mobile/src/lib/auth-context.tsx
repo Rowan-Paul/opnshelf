@@ -361,7 +361,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const signOut = useCallback(async () => {
 		try {
-			await removeCurrentPushDevice();
+			await Promise.race([
+				removeCurrentPushDevice(),
+				new Promise<void>((resolve) => setTimeout(resolve, 2_000)),
+			]);
 		} catch (error) {
 			console.error("Failed to unregister push device", error);
 		}

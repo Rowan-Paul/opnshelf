@@ -193,6 +193,26 @@ export function NotificationEmailSection() {
 								>
 									Confirm email
 								</button>
+								<div className="flex flex-wrap gap-2">
+									<button
+										type="button"
+										className="btn btn-secondary"
+										disabled={requestEmail.isPending}
+										onClick={() => void sendCode()}
+									>
+										Resend code
+									</button>
+									<button
+										type="button"
+										className="btn btn-secondary"
+										onClick={() => {
+											setCode("");
+											setAwaitingCode(false);
+										}}
+									>
+										Change email address
+									</button>
+								</div>
 							</div>
 						)}
 					</div>

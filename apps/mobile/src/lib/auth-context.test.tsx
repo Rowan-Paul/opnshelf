@@ -136,6 +136,7 @@ function seedIdentityCaches(queryClient: QueryClient) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mocks.removeCurrentPushDevice.mockResolvedValue(undefined);
 	mocks.authControllerLogout.mockResolvedValue({ data: {} });
 	mocks.getSessionToken.mockReturnValue(null);
 	mocks.loadSessionToken.mockResolvedValue(null);
@@ -659,6 +660,19 @@ describe("AuthProvider", () => {
 		expect(clear).toHaveBeenCalledOnce();
 		expect(mocks.routerReplace).toHaveBeenCalledWith("/login");
 
+		harness.unmount();
+	});
+
+	it("finishes sign-out when push cleanup stalls", async () => {
+		mocks.loadSessionToken.mockResolvedValue("test-session");
+		mocks.getSessionToken.mockReturnValue("test-session");
+		mocks.authControllerMe.mockResolvedValue({ data: testUser });
+		mocks.removeCurrentPushDevice.mockReturnValue(new Promise(() => {}));
+		const harness = await renderAuth();
+		await act(async () => harness.auth.signOut());
+		expect(mocks.authControllerLogout).toHaveBeenCalled();
+		expect(mocks.saveSessionToken).toHaveBeenCalledWith(null);
+		expect(mocks.routerReplace).toHaveBeenCalledWith("/login");
 		harness.unmount();
 	});
 

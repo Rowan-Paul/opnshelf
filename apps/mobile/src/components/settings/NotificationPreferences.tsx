@@ -209,7 +209,7 @@ export function NotificationPreferences() {
 				)}
 				{!awaitingCode ? (
 					<View className="gap-2">
-						{(!settings.emailVerified || !settings.email) && (
+						{(!settings.emailVerified || !settings.email || emailInput) && (
 							<TextField
 								label="Email address"
 								value={emailInput}
@@ -260,6 +260,24 @@ export function NotificationPreferences() {
 							onPress={() => void verifyCode()}
 							className="self-start"
 						/>
+						<View className="flex-row flex-wrap gap-2">
+							<Button
+								label="Resend code"
+								size="sm"
+								variant="secondary"
+								loading={requestEmail.isPending}
+								onPress={() => void sendCode()}
+							/>
+							<Button
+								label="Change email address"
+								size="sm"
+								variant="secondary"
+								onPress={() => {
+									setCode("");
+									setAwaitingCode(false);
+								}}
+							/>
+						</View>
 					</View>
 				)}
 			</View>

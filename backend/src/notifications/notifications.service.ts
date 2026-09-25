@@ -49,7 +49,7 @@ export class NotificationsService {
 		await this.prisma.notificationSettings.upsert({
 			where: { userDid: did },
 			create: { userDid: did, ...patch },
-			update: patch,
+			update: { ...patch, nextQueueAt: new Date() },
 		});
 		return this.getSettings(did);
 	}
@@ -110,12 +110,17 @@ export class NotificationsService {
 				emailCodeHash: null,
 				emailCodeExpiresAt: null,
 				emailCodeAttempts: 0,
+				nextQueueAt: new Date(),
 			},
 		});
 		return this.getSettings(did);
 	}
 
 	async registerPushDevice(did: string, device: RegisterPushDeviceDto) {
+		const previous = await this.prisma.pushDevice.findUnique({
+			where: { token: device.token },
+			select: { userDid: true },
+		});
 		await this.prisma.pushDevice.upsert({
 			where: { token: device.token },
 			create: { ...device, userDid: did },
@@ -133,7 +138,13 @@ export class NotificationsService {
 					pushNewSeasons: true,
 					pushStats: true,
 					pushInitialized: true,
+					nextQueueAt: new Date(),
 				},
+			});
+		} else if (previous?.userDid !== did) {
+			await this.prisma.notificationSettings.update({
+				where: { userDid: did },
+				data: { nextQueueAt: new Date() },
 			});
 		}
 		return this.getSettings(did);
