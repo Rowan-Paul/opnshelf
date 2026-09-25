@@ -3710,6 +3710,10 @@ export type ShowsControllerGetUserUpNextData = {
     };
     query?: {
         /**
+         * Filter your own Up Next by My Services (mine) or up to 50 comma-separated streaming service IDs
+         */
+        services?: string;
+        /**
          * Page number to return (1-based)
          */
         page?: number;

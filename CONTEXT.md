@@ -55,11 +55,11 @@ A flat-rate subscription video service on which a Media Item can be watched in a
 _Avoid_: Provider, watch provider (collides with **Provider Sign-In**'s identity providers), platform, subscription (that is the user's relationship to a service, not the service), channel
 
 **My Services**:
-The set of **Streaming Services** a user says they subscribe to, chosen for their watch country in Settings or during **Onboarding**. Drives the "On my services" filter on the user's own **Up Next** and on **Discover**; it is never applied to another user's pages. Changing watch country keeps the chosen set but only services that exist in the new country count.
+The set of **Streaming Services** a user says they subscribe to, chosen for their watch country in Settings or during **Onboarding**. Drives the "On my services" filter on **Discover**; it is never applied to another user's pages. Changing watch country keeps the chosen set but only services that exist in the new country count.
 _Avoid_: Subscriptions, my providers, my platforms
 
 **Up Next**:
-A user's queue of shows with an aired, unwatched next episode, one entry per show, shown on their profile. Anyone can view a user's Up Next; the "On my services" filter appears only to its owner.
+A user's queue of shows with an aired, unwatched next episode, one entry per show, shown on their profile. Anyone can view a user's Up Next; its owner can filter by any selected **Streaming Services**, without changing their saved subscriptions.
 _Avoid_: Continue watching, watchlist (that is a List of items not yet started), queue
 
 **Notification**:

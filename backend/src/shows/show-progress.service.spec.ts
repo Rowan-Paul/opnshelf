@@ -9,7 +9,10 @@ import { ColorExtractionService } from "../movies/color-extraction.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowCatalogueService } from "./show-catalogue.service";
 import { ShowProgressService } from "./show-progress.service";
-import { ShowsTmdbService } from "./shows-tmdb.service";
+import {
+	type WatchProvidersResponse,
+	ShowsTmdbService,
+} from "./shows-tmdb.service";
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -17,8 +20,10 @@ global.fetch = mockFetch;
 describe("ShowProgressService", () => {
 	let service: ShowProgressService;
 	let catalogue: ShowCatalogueService;
+	let tmdb: ShowsTmdbService;
 
 	const mockPrismaService = {
+		user: { findUniqueOrThrow: vi.fn() },
 		trackedEpisode: {
 			findMany: vi.fn(),
 			findFirst: vi.fn(),
@@ -79,9 +84,156 @@ describe("ShowProgressService", () => {
 
 		service = module.get<ShowProgressService>(ShowProgressService);
 		catalogue = module.get<ShowCatalogueService>(ShowCatalogueService);
+		tmdb = module.get<ShowsTmdbService>(ShowsTmdbService);
+		vi.spyOn(tmdb, "getUpNextAvailability").mockResolvedValue({
+			id: 1,
+			results: {},
+		});
 	});
 
 	describe("getUserUpNext", () => {
+		it("filters flat-rate offers in the watch country before pagination and warms unfiltered reads", async () => {
+			const ids = ["1", "2", "3", "4"];
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue(
+				ids.map((showId) => ({
+					id: showId,
+					showId,
+					seasonNumber: 1,
+					episodeNumber: 1,
+					watchedDate: new Date("2025-01-01"),
+					createdAt: new Date("2025-01-01"),
+					show: {
+						showId,
+						title: showId,
+						posterPath: null,
+						backdropPath: null,
+						firstAirYear: null,
+						firstAirDate: null,
+						overview: null,
+						colors: null,
+					},
+				})),
+			);
+			mockPrismaService.$queryRaw.mockResolvedValue(
+				ids.map((showId) => ({
+					showId,
+					seasonNumber: 2,
+					episodeNumber: 1,
+					name: "Next",
+					airDate: new Date("2025-01-02"),
+				})),
+			);
+			mockPrismaService.episode.groupBy.mockResolvedValue(
+				ids.map((showId) => ({ showId, _count: 10 })),
+			);
+			mockPrismaService.trackedEpisode.groupBy.mockResolvedValue(
+				ids.map((showId) => ({ showId, seasonNumber: 1, episodeNumber: 1 })),
+			);
+			mockPrismaService.user.findUniqueOrThrow.mockResolvedValue({
+				watchCountry: "NL",
+				streamingServiceIds: [8],
+			});
+			vi.spyOn(catalogue, "ensureShowHasColors").mockResolvedValue(null);
+			const offer = {
+				provider_id: 8,
+				provider_name: "Netflix",
+				logo_path: "",
+				display_priority: 1,
+			};
+			vi.mocked(tmdb.getUpNextAvailability).mockImplementation(
+				async (id): Promise<WatchProvidersResponse> => ({
+					id: Number(id),
+					results:
+						id === "1"
+							? { NL: { link: "", buy: [offer] } }
+							: id === "3"
+								? { US: { link: "", flatrate: [offer] } }
+								: { NL: { link: "", flatrate: [offer] } },
+				}),
+			);
+			const filtered = await service.getUserUpNext(
+				"did:plc:abc123",
+				2,
+				1,
+				"title",
+				"asc",
+				undefined,
+				"mine",
+			);
+			expect(filtered).toMatchObject({
+				total: 2,
+				totalPages: 2,
+				page: 2,
+				hasPreviousPage: true,
+				hasNextPage: false,
+			});
+			expect(filtered.items.map((item) => item.showId)).toEqual(["4"]);
+			expect(tmdb.getUpNextAvailability).toHaveBeenCalledWith("4", 2);
+			vi.mocked(tmdb.getUpNextAvailability).mockClear();
+			const unfiltered = await service.getUserUpNext("did:plc:abc123", 1, 1);
+			expect(unfiltered.total).toBe(4);
+			expect(tmdb.getUpNextAvailability).toHaveBeenCalledTimes(4);
+			mockPrismaService.user.findUniqueOrThrow.mockResolvedValue({
+				watchCountry: "NL",
+				streamingServiceIds: [],
+			});
+			await expect(
+				service.getUserUpNext(
+					"did:plc:abc123",
+					9,
+					1,
+					"title",
+					"asc",
+					undefined,
+					"mine",
+				),
+			).resolves.toMatchObject({ items: [], total: 0, totalPages: 0, page: 1 });
+			// An explicit selection works even without saved subscriptions.
+			const custom = await service.getUserUpNext(
+				"did:plc:abc123",
+				1,
+				1,
+				"title",
+				"asc",
+				undefined,
+				"8,350",
+			);
+			expect(custom).toMatchObject({
+				total: 2,
+				totalPages: 2,
+				hasNextPage: true,
+			});
+			expect(custom.items.map((item) => item.showId)).toEqual(["2"]);
+			await expect(
+				service.getUserUpNext(
+					"did:plc:abc123",
+					1,
+					1,
+					"title",
+					"asc",
+					undefined,
+					"350",
+				),
+			).resolves.toMatchObject({ items: [], total: 0 });
+			vi.mocked(tmdb.getUpNextAvailability).mockRejectedValue(
+				new Error("TMDB offline"),
+			);
+			await expect(
+				service.getUserUpNext("did:plc:abc123"),
+			).resolves.toMatchObject({ total: 4 });
+			await expect(
+				service.getUserUpNext(
+					"did:plc:abc123",
+					1,
+					8,
+					"title",
+					"asc",
+					undefined,
+					"mine",
+				),
+			).rejects.toThrow("TMDB offline");
+		});
+
 		it("ranks an undated show below a dated one even when logged later", async () => {
 			// show-1 was genuinely watched in 2024. show-2 is undated — the whole
 			// show marked watched during onboarding, so its createdAt is today.

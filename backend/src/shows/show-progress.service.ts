@@ -1,8 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowCatalogueService } from "./show-catalogue.service";
 import { watchDateOrderBy } from "../common/watch-ordering";
+import { ShowsTmdbService } from "./shows-tmdb.service";
 
 type TrackedEpisodeWithShow = {
 	id: string;
@@ -88,9 +89,11 @@ function parseReleaseDate(value: string | Date) {
  */
 @Injectable()
 export class ShowProgressService {
+	private readonly logger = new Logger(ShowProgressService.name);
 	constructor(
 		private prisma: PrismaService,
 		private catalogue: ShowCatalogueService,
+		private tmdb: ShowsTmdbService,
 	) {}
 
 	async getUserShows(userDid: string) {
@@ -125,6 +128,7 @@ export class ShowProgressService {
 		sortBy: "lastWatched" | "title" | "progress" = "lastWatched",
 		sortOrder: "asc" | "desc" = "desc",
 		showIdFilter?: string,
+		services?: string,
 	) {
 		// Query 1: one anchor per show via Prisma distinct (S0 excluded, tie-broken)
 		const anchors = (await this.prisma.trackedEpisode.findMany({
@@ -310,8 +314,44 @@ export class ShowProgressService {
 			});
 		}
 
+		// Warm the same season/show keys on ordinary loads. Only a filtered
+		// request depends on availability, so a TMDB outage cannot hide the queue.
+		const availability = Promise.allSettled(
+			items.map((item) =>
+				this.tmdb.getUpNextAvailability(
+					item.showId,
+					item.nextEpisode.seasonNumber,
+				),
+			),
+		);
+		let matchingItems = items;
+		if (services) {
+			const settings = await this.prisma.user.findUniqueOrThrow({
+				where: { did: userDid },
+				select: { watchCountry: true, streamingServiceIds: true },
+			});
+			const serviceIds =
+				services === "mine"
+					? settings.streamingServiceIds
+					: services.split(",").map(Number);
+			const results = await availability;
+			matchingItems = items.filter((_item, index) => {
+				const result = results[index];
+				if (result.status === "rejected") throw result.reason;
+				return result.value.results[settings.watchCountry]?.flatrate?.some(
+					(service) => serviceIds.includes(service.provider_id),
+				);
+			});
+		} else {
+			void availability.then((results) => {
+				if (results.some((result) => result.status === "rejected")) {
+					this.logger.warn("Could not warm some Up Next availability reads");
+				}
+			});
+		}
+
 		const dir = sortOrder === "asc" ? 1 : -1;
-		items.sort((a, b) => {
+		matchingItems.sort((a, b) => {
 			switch (sortBy) {
 				case "title":
 					return dir * a.show.title.localeCompare(b.show.title);
@@ -335,14 +375,14 @@ export class ShowProgressService {
 		});
 
 		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
-		const total = items.length;
+		const total = matchingItems.length;
 		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
 		const requestedPage = Math.max(page, 1);
 		const currentPage =
 			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
 		const start = (currentPage - 1) * safePageSize;
 		const pagedItems = (
-			totalPages > 0 ? items.slice(start, start + safePageSize) : []
+			totalPages > 0 ? matchingItems.slice(start, start + safePageSize) : []
 		).map(({ isUndated: _isUndated, ...item }) => item);
 		await Promise.all(
 			pagedItems.map(async (item) => {

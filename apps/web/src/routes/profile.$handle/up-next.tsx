@@ -1,28 +1,30 @@
 import {
 	showsControllerGetUserUpNextOptions,
-	slugifyName,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
-	Link,
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { Calendar, Loader2, Plus, Tv } from "lucide-react";
+import { Tv } from "lucide-react";
 import { z } from "zod/mini";
 import { Pagination } from "#/components/Pagination";
-import { PosterProgress } from "#/components/PosterProgress";
+import { UpNextEpisodeCard } from "#/components/UpNextEpisodeCard";
+import { UpNextServiceFilter } from "#/components/UpNextServiceFilter";
 import { useAuth } from "#/lib/auth-context";
-import { formatDate } from "#/lib/date-utils";
-import {
-	findShowProgress,
-	useMarkEpisodeWatched,
-	useShowProgress,
-} from "#/lib/hooks";
+import { findShowProgress, useShowProgress } from "#/lib/hooks";
 
 const searchSchema = z.object({
+	services: z.optional(
+		z.union([
+			z.number().check(z.int(), z.minimum(1), z.maximum(999999999)),
+			z
+				.string()
+				.check(z.regex(/^(mine|[1-9][0-9]{0,8}(,[1-9][0-9]{0,8}){0,49})$/)),
+		]),
+	),
 	page: z._default(z.optional(z.coerce.number().check(z.minimum(1))), 1),
 });
 
@@ -50,32 +52,16 @@ export const Route = createFileRoute("/profile/$handle/up-next")({
 	validateSearch: searchSchema,
 });
 
-function formatRelativeDate(dateStr: string): string {
-	const releaseDate = new Date(dateStr);
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
-	releaseDate.setHours(0, 0, 0, 0);
-
-	const diffTime = releaseDate.getTime() - today.getTime();
-	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-	if (diffDays === 0) return "Today";
-	if (diffDays === 1) return "Tomorrow";
-	if (diffDays > 0 && diffDays < 7) return `in ${diffDays} days`;
-	if (diffDays > 0 && diffDays < 30)
-		return `in ${Math.ceil(diffDays / 7)} weeks`;
-	if (diffDays > 0) return formatDate(dateStr);
-	if (diffDays === -1) return "Yesterday";
-	if (diffDays > -7) return `${Math.abs(diffDays)} days ago`;
-	if (diffDays > -30) return `${Math.ceil(Math.abs(diffDays) / 7)} weeks ago`;
-	return formatDate(dateStr);
+// TanStack quotes numeric strings in URLs. Keep single-service links identical to Mobile.
+function serviceSearchValue(services: string | undefined) {
+	return services && /^[0-9]+$/.test(services) ? Number(services) : services;
 }
 
 function ProfileUpNextPage() {
 	const { handle } = Route.useParams();
 	const search = useSearch({ from: Route.id });
 	const navigate = useNavigate();
-	const { user } = useAuth();
+	const { user, userSettings } = useAuth();
 	const page = search.page;
 
 	const { data: profile } = useQuery({
@@ -84,15 +70,37 @@ function ProfileUpNextPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	const { data, isLoading } = useQuery({
-		...showsControllerGetUserUpNextOptions({
-			path: { userDid },
-			query: { page, pageSize: 20 },
-		}),
+	const country = userSettings?.watchCountry ?? "US";
+	const services =
+		isOwner && search.services ? String(search.services) : undefined;
+	const setServices = (services: string | undefined) =>
+		navigate({
+			to: "/profile/$handle/up-next",
+			params: { handle },
+			search: { page: 1, services: serviceSearchValue(services) },
+			replace: true,
+		});
+	const upNextOptions = showsControllerGetUserUpNextOptions({
+		path: { userDid },
+		query: { page, pageSize: 20, services },
+	});
+	const { data, isLoading, isFetching, isError, refetch } = useQuery({
+		...upNextOptions,
+		// Refresh the filtered queue when My Services or watch country changes.
+		queryKey: [
+			{
+				...upNextOptions.queryKey[0],
+				tags: services
+					? [country, ...(userSettings?.streamingServiceIds ?? []).map(String)]
+					: undefined,
+			},
+		],
+		placeholderData: (previous, previousQuery) =>
+			previousQuery?.queryKey[0].path?.userDid === userDid
+				? keepPreviousData(previous)
+				: undefined,
 		enabled: !!userDid,
 	});
-
-	const markEpisodeMutation = useMarkEpisodeWatched();
 
 	const items = data?.items ?? [];
 	const { data: viewerProgressData, isLoading: isViewerProgressLoading } =
@@ -102,42 +110,90 @@ function ProfileUpNextPage() {
 		navigate({
 			to: "/profile/$handle/up-next",
 			params: { handle },
-			search: newPage > 1 ? { page: newPage } : undefined,
+			search: { page: newPage, services: serviceSearchValue(services) },
 			replace: true,
 		});
 	};
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-display-2">Up Next</h1>
-
+			<header className="flex flex-wrap items-center justify-between gap-4">
+				{" "}
+				<div className="flex items-baseline gap-3">
+					<h1 className="text-display-2">Up Next</h1>
+					{data && (
+						<span className="text-(--foreground-muted) text-sm">
+							{data.total} {data.total === 1 ? "show" : "shows"}
+						</span>
+					)}
+				</div>
+				{isOwner && (
+					<UpNextServiceFilter
+						country={country}
+						savedIds={userSettings?.streamingServiceIds ?? []}
+						value={services}
+						onChange={(value) => void setServices(value)}
+					/>
+				)}
+			</header>
+			{isError && (
+				<div role="alert" className="flex items-center gap-3">
+					<p>Couldn't load Up Next.</p>
+					<button
+						type="button"
+						className="btn btn-secondary"
+						onClick={() => void refetch()}
+					>
+						Try again
+					</button>
+				</div>
+			)}
 			{isLoading ? (
-				<div className="space-y-4">
-					{[1, 2, 3, 4].map((i) => (
-						<div key={i} className="card animate-pulse p-4">
-							<div className="flex gap-4">
-								<div className="h-24 w-16 rounded-md bg-(--background-subtle)" />
-								<div className="flex-1 space-y-2">
-									<div className="h-4 w-1/3 rounded bg-(--background-subtle)" />
-									<div className="h-3 w-1/4 rounded bg-(--background-subtle)" />
-									<div className="h-3 w-1/2 rounded bg-(--background-subtle)" />
+				<div
+					className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+					aria-busy="true"
+				>
+					{[1, 2, 3, 4, 5, 6].map((i) => (
+						<div key={i} className="card overflow-hidden" aria-hidden="true">
+							<div className="aspect-video animate-pulse bg-(--background-subtle)" />
+							<div className="space-y-4 p-4">
+								<div className="h-4 w-2/3 animate-pulse rounded bg-(--background-subtle)" />
+								<div className="space-y-2">
+									<div className="h-3 animate-pulse rounded bg-(--background-subtle)" />
+									<div className="h-3 animate-pulse rounded bg-(--background-subtle)" />
+									<div className="h-3 w-3/4 animate-pulse rounded bg-(--background-subtle)" />
+								</div>
+								<div className="flex items-center justify-between gap-2">
+									<div className="h-3 w-28 animate-pulse rounded bg-(--background-subtle)" />
+									<div className="h-9 w-32 animate-pulse rounded bg-(--background-subtle)" />
 								</div>
 							</div>
 						</div>
 					))}
 				</div>
-			) : items.length === 0 ? (
-				<div className="card p-8 text-center">
+			) : isError && !data ? null : items.length === 0 ? (
+				<div
+					className="card p-8 text-center"
+					aria-busy={isFetching}
+					style={{ opacity: isFetching ? 0.5 : 1 }}
+				>
 					<Tv className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
-					<p className="text-(--foreground-muted)">All caught up!</p>
+					<p className="text-(--foreground-muted)">
+						{services ? "No shows on these services" : "All caught up!"}
+					</p>
 					<p className="mt-1 text-(--foreground-muted) text-sm">
-						No upcoming episodes to watch.
+						{services
+							? "Try turning off the filter to see all of Up Next."
+							: "No upcoming episodes to watch."}
 					</p>
 				</div>
 			) : (
-				<div className="space-y-4">
+				<div
+					className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+					aria-busy={isFetching}
+					style={{ opacity: isFetching ? 0.5 : 1 }}
+				>
 					{items.map((item) => {
-						const show = item.show;
 						const nextEp = item.nextEpisode;
 						const viewerProgress = findShowProgress(
 							viewerProgressData,
@@ -159,130 +215,13 @@ function ProfileUpNextPage() {
 								: undefined;
 
 						return (
-							<div
+							<UpNextEpisodeCard
 								key={`${item.showId}-${nextEp.seasonNumber}-${nextEp.episodeNumber}`}
-								className="card flex flex-col gap-4 p-4 sm:flex-row"
-							>
-								{/* Poster */}
-								<Link
-									to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-									params={{
-										showId: item.showId,
-										showName: slugifyName(show.title),
-										seasonNumber: String(nextEp.seasonNumber),
-										episodeNumber: String(nextEp.episodeNumber),
-									}}
-									className="shrink-0"
-								>
-									<div className="relative h-32 w-22 overflow-hidden rounded-lg bg-(--background-subtle) sm:h-36 sm:w-24">
-										{show.posterPath ? (
-											<img
-												src={`https://image.tmdb.org/t/p/w500${show.posterPath}`}
-												alt={show.title}
-												className="h-full w-full object-cover"
-												loading="lazy"
-											/>
-										) : (
-											<div className="flex h-full w-full items-center justify-center">
-												<Tv className="size-8 text-(--foreground-muted)" />
-											</div>
-										)}
-										<PosterProgress
-											progress={progressData}
-											label="Show progress"
-											isLoading={!isOwner && isViewerProgressLoading}
-										/>
-									</div>
-								</Link>
-
-								{/* Info */}
-								<div className="flex min-w-0 flex-1 flex-col justify-between">
-									<div>
-										<div className="flex items-start justify-between gap-2">
-											<div className="min-w-0">
-												<Link
-													to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-													params={{
-														showId: item.showId,
-														showName: slugifyName(show.title),
-														seasonNumber: String(nextEp.seasonNumber),
-														episodeNumber: String(nextEp.episodeNumber),
-													}}
-													className="font-semibold hover:text-(--accent)"
-												>
-													{show.title}
-												</Link>
-												<p className="mt-0.5 font-medium text-sm">
-													{nextEp.name || `Episode ${nextEp.episodeNumber}`}
-												</p>
-											</div>
-											<span className="badge badge-accent shrink-0 text-xs">
-												S{nextEp.seasonNumber}E{nextEp.episodeNumber}
-											</span>
-										</div>
-
-										{nextEp.airDate && (
-											<div className="mt-2 flex items-center gap-2 text-(--foreground-muted) text-sm">
-												<Calendar className="size-4" />
-												<span>{formatDate(nextEp.airDate)}</span>
-												{new Date(nextEp.airDate) >=
-												new Date(new Date().setHours(0, 0, 0, 0)) ? (
-													<span className="text-(--accent)">
-														• {formatRelativeDate(nextEp.airDate)}
-													</span>
-												) : item.latestWatchedDate ? (
-													<span className="text-xs">
-														Last watched: {formatDate(item.latestWatchedDate)}
-													</span>
-												) : null}
-											</div>
-										)}
-
-										{nextEp.overview && (
-											<p className="mt-2 line-clamp-2 text-(--foreground-muted) text-sm">
-												{nextEp.overview}
-											</p>
-										)}
-									</div>
-
-									{/* Progress summary + Action */}
-									<div className="mt-3 flex items-center gap-4">
-										{progressData && progressData.episodesTotal > 0 ? (
-											<p className="min-w-0 flex-1 text-(--foreground-muted) text-xs tabular-nums">
-												{progressData.episodesWatched} of{" "}
-												{progressData.episodesTotal} · {progressData.percentage}
-												% watched
-											</p>
-										) : (
-											<div className="min-w-0 flex-1" />
-										)}
-
-										{isOwner && (
-											<button
-												type="button"
-												onClick={() =>
-													markEpisodeMutation.mutate({
-														body: {
-															showId: item.showId,
-															seasonNumber: nextEp.seasonNumber,
-															episodeNumber: nextEp.episodeNumber,
-														},
-													})
-												}
-												disabled={markEpisodeMutation.isPending}
-												className="btn btn-primary gap-2 text-sm"
-											>
-												{markEpisodeMutation.isPending ? (
-													<Loader2 className="size-4 animate-spin" />
-												) : (
-													<Plus className="size-4" />
-												)}
-												Add to shelf
-											</button>
-										)}
-									</div>
-								</div>
-							</div>
+								item={item}
+								isOwner={isOwner}
+								progress={progressData}
+								isProgressLoading={!isOwner && isViewerProgressLoading}
+							/>
 						);
 					})}
 				</div>

@@ -330,6 +330,7 @@ describe("ShowsService", () => {
 				"title",
 				"asc",
 				"show-1",
+				"mine",
 			);
 			expect(spies.getUserUpNext).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -338,6 +339,7 @@ describe("ShowsService", () => {
 				"title",
 				"asc",
 				"show-1",
+				"mine",
 			);
 			// Defaults are applied once, at the facade, and forwarded explicitly.
 			await service.getUserUpNext("did:plc:abc123");
@@ -347,6 +349,7 @@ describe("ShowsService", () => {
 				8,
 				"lastWatched",
 				"desc",
+				undefined,
 				undefined,
 			);
 			await service.getUserReleaseCalendar("did:plc:abc123", {
