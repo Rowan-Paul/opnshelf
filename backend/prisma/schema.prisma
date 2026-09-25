@@ -79,9 +79,70 @@ model User {
   following       Follow[]         @relation("UserFollowing")
   followers       Follow[]         @relation("UserFollowers")
   circles         Circle[]
+  notificationSettings NotificationSettings?
+  pushDevices PushDevice[]
+  notificationDeliveries NotificationDelivery[]
 
   @@index([handle])
   @@index([profileAvatarCid])
+}
+
+// Notification email is supplied and verified separately from PDS account mail.
+// Email categories start enabled once an address is verified; push categories
+// are enabled only after device permission and registration.
+model NotificationSettings {
+  userDid String @id
+  user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  email String?
+  pendingEmail String?
+  emailVerifiedAt DateTime?
+  emailIsCustom Boolean @default(false)
+  emailCodeHash String?
+  emailCodeExpiresAt DateTime?
+  emailCodeAttempts Int @default(0)
+  pushNewReleases Boolean @default(false)
+  pushWatchlistReleases Boolean @default(false)
+  pushNewSeasons Boolean @default(false)
+  pushStats Boolean @default(false)
+  pushInitialized Boolean @default(false)
+  emailNewReleases Boolean @default(true)
+  emailWatchlistReleases Boolean @default(true)
+  emailNewSeasons Boolean @default(true)
+  emailStats Boolean @default(true)
+  nextQueueAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nextQueueAt])
+}
+
+model PushDevice {
+  token String @id
+  userDid String
+  user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  platform String
+  updatedAt DateTime @updatedAt
+
+  @@index([userDid])
+}
+
+model NotificationDelivery {
+  id String @id @default(cuid())
+  userDid String
+  user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  channel String
+  category String
+  eventKey String
+  title String
+  body String
+  url String?
+  status String @default("pending")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@unique([userDid, channel, eventKey])
+  @@index([status, nextAttemptAt])
 }
 
 // Format emitted for a user's site.standard.document blog mirrors.

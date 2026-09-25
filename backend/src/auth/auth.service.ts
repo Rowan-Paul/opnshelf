@@ -1,8 +1,9 @@
 import { Agent } from "@atproto/api";
 import { randomUUID } from "node:crypto";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
+import { TranquilAdminService } from "../pds/tranquil-admin.service";
 import { DeviceSessionsService } from "./device-sessions.service";
 import type { ActorSuggestionDto } from "./dto/actor-suggestion.dto";
 import {
@@ -39,6 +40,7 @@ export class AuthService {
 		private readonly configService: ConfigService,
 		private readonly oauthClientFactory: OAuthClientFactory,
 		private readonly sessions: DeviceSessionsService,
+		@Optional() private readonly tranquilAdmin?: TranquilAdminService,
 	) {}
 
 	/**
@@ -345,6 +347,52 @@ export class AuthService {
 			displayName,
 			avatar,
 		};
+	}
+
+	/** Cache a verified PDS account address for notification delivery. */
+	async syncNotificationEmailFromSession(session: {
+		did: string;
+	}): Promise<void> {
+		try {
+			const user = await this.prisma.user.findUnique({
+				where: { did: session.did },
+				select: { isNativePds: true },
+			});
+			let email: string | null = null;
+			if (user?.isNativePds) {
+				email =
+					(await this.tranquilAdmin?.getVerifiedAccountEmail(session.did)) ??
+					null;
+			} else {
+				// External PDSes may expose account email through an OAuth session,
+				// but many do not. The settings screen offers a verified fallback.
+				const agent = new Agent(
+					session as unknown as ConstructorParameters<typeof Agent>[0],
+				);
+				const { data } = await agent.com.atproto.server.getSession();
+				email = data.emailConfirmed ? (data.email ?? null) : null;
+			}
+			if (!email) return;
+			await this.prisma.notificationSettings.upsert({
+				where: { userDid: session.did },
+				create: {
+					userDid: session.did,
+					email,
+					emailVerifiedAt: new Date(),
+				},
+				update: {},
+			});
+			// Preserve an address the user separately confirmed in settings.
+			await this.prisma.notificationSettings.updateMany({
+				where: { userDid: session.did, emailIsCustom: false },
+				data: { email, emailVerifiedAt: new Date() },
+			});
+		} catch (error) {
+			this.logger.warn(
+				`Could not sync notification email for ${session.did}`,
+				error instanceof Error ? error.stack : undefined,
+			);
+		}
 	}
 
 	/**

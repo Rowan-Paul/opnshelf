@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1037827407261",
+    "project_id": "opnshelf",
+    "storage_bucket": "opnshelf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1037827407261:android:41141d15e11c7f71050374",
+        "android_client_info": {
+          "package_name": "com.rowanpaul.opnshelf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1037827407261-jk3mg813avu91j6ic25ucrpf6j72iuq5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwNOdCq0pHP7JuFqcK-NDdb2Qm5ieH1wY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1037827407261-jk3mg813avu91j6ic25ucrpf6j72iuq5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1037827407261-4p0icuv936s5et3s9q9khan69q029nc6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.rowanpaul.opnshelf",
+                "app_store_id": "6758867162"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

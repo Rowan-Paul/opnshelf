@@ -36,6 +36,7 @@ describe("AuthController callback", () => {
 		parseOAuthAppState: Mock;
 		fetchProfile: Mock;
 		upsertUser: Mock;
+		syncNotificationEmailFromSession: Mock;
 		getUser: Mock;
 		assertGrantedScopes: Mock;
 		completePermissionChange: Mock;
@@ -47,6 +48,7 @@ describe("AuthController callback", () => {
 		parseOAuthAppState: vi.fn().mockReturnValue({}),
 		fetchProfile: vi.fn(),
 		upsertUser: vi.fn(),
+		syncNotificationEmailFromSession: vi.fn().mockResolvedValue(undefined),
 		getUser: vi.fn(),
 		assertGrantedScopes: vi.fn(),
 		completePermissionChange: vi.fn().mockResolvedValue(undefined),

@@ -44,7 +44,7 @@ const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.6.0",
+	version: "1.6.1",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -88,6 +88,7 @@ const config: ExpoConfig = {
 		},
 	},
 	android: {
+		googleServicesFile: "./google-services.json",
 		adaptiveIcon: {
 			foregroundImage: "./assets/images/adaptive-icon.png",
 			backgroundColor: "#0f172a",
@@ -151,6 +152,7 @@ const config: ExpoConfig = {
 		"expo-secure-store",
 		"expo-font",
 		"expo-image",
+		"expo-notifications",
 		[
 			"expo-splash-screen",
 			{

@@ -8,6 +8,7 @@ import { Switch } from "#/components/ui/switch";
 import { useAuth } from "#/lib/auth-context";
 import { createCoalescedSaver, sameIdSet } from "#/lib/coalesced-save";
 import { type ThemeMode, useThemeMode } from "#/lib/theme";
+import { NotificationEmailSection } from "./NotificationEmailSection";
 import { useUpdateSettings } from "./use-settings-mutations";
 
 const APPEARANCE_OPTIONS: { value: ThemeMode; label: string }[] = [
@@ -109,6 +110,7 @@ export function PreferencesSections() {
 					</div>
 				</div>
 			</section>
+			<NotificationEmailSection />
 
 			<section
 				id="streaming"

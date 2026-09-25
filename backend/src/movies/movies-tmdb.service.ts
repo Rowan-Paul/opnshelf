@@ -134,6 +134,29 @@ export class MoviesTmdbService {
 		return response.json<TMDBSearchResponse>();
 	}
 
+	/** Popular theatrical releases in a date range and watch country. */
+	async discoverReleasesBetween(
+		start: string,
+		end: string,
+		region: string,
+	): Promise<TMDBMovie[]> {
+		const url = new URL(`${this.tmdbBaseUrl}/discover/movie`);
+		url.searchParams.set("api_key", this.tmdbApiKey);
+		url.searchParams.set("sort_by", "popularity.desc");
+		url.searchParams.set("region", region);
+		url.searchParams.set("with_release_type", "2|3");
+		url.searchParams.set("release_date.gte", start);
+		url.searchParams.set("release_date.lte", end);
+		const response = await this.http.fetchCached(
+			url.toString(),
+			`notifications:movie:${start}:${end}:${region}`,
+		);
+		if (!response.ok) {
+			throw tmdbErrorForResponse(response, "Failed to discover movie releases");
+		}
+		return (await response.json<TMDBSearchResponse>()).results;
+	}
+
 	async discoverMovies(
 		sortBy: string = "popularity.desc",
 		page: number = 1,

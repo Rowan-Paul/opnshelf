@@ -368,6 +368,7 @@ export class AuthController {
 					isNativePds: existingUser?.isNativePds ?? false,
 				},
 			);
+			await this.authService.syncNotificationEmailFromSession(session);
 
 			if (statePayload.permissionChange && statePayload.requestedPreferences) {
 				await this.applyPermissionChange(
