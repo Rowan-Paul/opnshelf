@@ -229,6 +229,7 @@ export function NotificationPreferences() {
 								size="sm"
 								variant="secondary"
 								loading={requestEmail.isPending}
+								loadingLabel="Sending code…"
 								onPress={() => void sendCode()}
 								className="self-start"
 							/>
@@ -256,6 +257,7 @@ export function NotificationPreferences() {
 							label="Confirm email"
 							size="sm"
 							loading={confirmEmail.isPending}
+							loadingLabel="Confirming email…"
 							disabled={code.length !== 6}
 							onPress={() => void verifyCode()}
 							className="self-start"
@@ -266,6 +268,7 @@ export function NotificationPreferences() {
 								size="sm"
 								variant="secondary"
 								loading={requestEmail.isPending}
+								loadingLabel="Resending code…"
 								onPress={() => void sendCode()}
 							/>
 							<Button
