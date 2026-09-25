@@ -25,7 +25,7 @@ import {
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -43,10 +43,15 @@ import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
+import {
+	StreamingServicePicker,
+	toggleService,
+} from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
+import { createCoalescedSaver, sameIdSet } from "@/lib/coalesced-save";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
@@ -438,6 +443,12 @@ export function SettingsCategoryScreen({
 		: "";
 
 	const settingsBusy = updateSettingsMutation.isPending;
+	const updateSettingsAsync = updateSettingsMutation.mutateAsync;
+	const saveMyServices = useCallback(
+		(streamingServiceIds: number[]) =>
+			updateSettingsAsync({ body: { streamingServiceIds } }),
+		[updateSettingsAsync],
+	);
 
 	return (
 		<>
@@ -613,6 +624,18 @@ export function SettingsCategoryScreen({
 												})
 											}
 											disabled={settingsBusy}
+										/>
+										<Text className="mt-4 font-medium text-foreground text-sm">
+											My services
+										</Text>
+										<Text className="text-muted-foreground text-sm">
+											The streaming services you pay for. Used to show what you
+											can watch on Up Next and Discover.
+										</Text>
+										<MyServicesField
+											country={settings?.watchCountry ?? "US"}
+											saved={settings?.streamingServiceIds ?? []}
+											save={saveMyServices}
 										/>
 									</View>
 								)}
@@ -990,5 +1013,45 @@ export default function SettingsScreen() {
 				</ScrollView>
 			</Screen>
 		</>
+	);
+}
+
+/**
+ * My Services in Settings saves on every toggle. The chosen set lives in
+ * local state and writes go through a coalescing queue: one request at a
+ * time, always carrying the full latest set, so quick toggles cannot race
+ * each other. The server copy only overwrites local state once nothing is
+ * in flight, so a refetch cannot undo a toggle that is still saving.
+ */
+function MyServicesField({
+	country,
+	saved,
+	save,
+}: {
+	country: string;
+	saved: number[];
+	save: (ids: number[]) => Promise<unknown>;
+}) {
+	const [selected, setSelected] = useState<number[]>(saved);
+	const saver = useMemo(() => createCoalescedSaver(save, sameIdSet), [save]);
+	// Latest local set, independent of the render cycle, so toggles that
+	// arrive before a re-render still build on each other.
+	const latest = useRef(selected);
+	useEffect(() => {
+		if (!saver.isDirty()) {
+			latest.current = saved;
+			setSelected(saved);
+		}
+	}, [saved, saver]);
+	return (
+		<StreamingServicePicker
+			country={country}
+			value={selected}
+			onToggle={(id) => {
+				latest.current = toggleService(latest.current, id);
+				setSelected(latest.current);
+				saver.submit(latest.current);
+			}}
+		/>
 	);
 }

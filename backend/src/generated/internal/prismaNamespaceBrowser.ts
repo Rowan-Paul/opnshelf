@@ -111,6 +111,7 @@ export const UserScalarFieldEnum = {
   timezone: 'timezone',
   timeFormat: 'timeFormat',
   watchCountry: 'watchCountry',
+  streamingServiceIds: 'streamingServiceIds',
   alwaysShowSpoilers: 'alwaysShowSpoilers',
   onboardingCompletedAt: 'onboardingCompletedAt',
   atStoreReviewHandledAt: 'atStoreReviewHandledAt',

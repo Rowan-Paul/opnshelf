@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
+	ArrayMaxSize,
+	IsArray,
 	IsBoolean,
 	IsIn,
 	IsInt,
@@ -36,6 +38,18 @@ export class UpdateUserSettingsDto {
 	@IsString()
 	@IsOptional()
 	watchCountry?: string;
+
+	@ApiPropertyOptional({
+		description:
+			"My Services: TMDB watch-provider ids the user subscribes to. Replaces the whole set; an empty array clears it.",
+		type: [Number],
+	})
+	@IsOptional()
+	@IsArray()
+	@ArrayMaxSize(100)
+	@IsInt({ each: true })
+	@Min(1, { each: true })
+	streamingServiceIds?: number[];
 
 	@ApiPropertyOptional({
 		description:
@@ -140,6 +154,13 @@ export class UserSettingsDto {
 			"ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)",
 	})
 	watchCountry!: string;
+
+	@ApiProperty({
+		description:
+			"My Services: TMDB watch-provider ids the user subscribes to, for their watch country. Empty when never chosen.",
+		type: [Number],
+	})
+	streamingServiceIds!: number[];
 
 	@ApiProperty({
 		description:

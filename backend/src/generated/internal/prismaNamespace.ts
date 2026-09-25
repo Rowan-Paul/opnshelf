@@ -2482,6 +2482,7 @@ export const UserScalarFieldEnum = {
   timezone: 'timezone',
   timeFormat: 'timeFormat',
   watchCountry: 'watchCountry',
+  streamingServiceIds: 'streamingServiceIds',
   alwaysShowSpoilers: 'alwaysShowSpoilers',
   onboardingCompletedAt: 'onboardingCompletedAt',
   atStoreReviewHandledAt: 'atStoreReviewHandledAt',
@@ -3021,9 +3022,9 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'Int[]'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -3035,9 +3036,9 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
 
 
 /**
- * Reference to a field of type 'Int[]'
+ * Reference to a field of type 'Boolean'
  */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

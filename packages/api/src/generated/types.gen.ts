@@ -1048,6 +1048,10 @@ export type UserSettingsDto = {
      */
     watchCountry: string;
     /**
+     * My Services: TMDB watch-provider ids the user subscribes to, for their watch country. Empty when never chosen.
+     */
+    streamingServiceIds: Array<number>;
+    /**
      * Reader preference: always show spoiler content, suppressing Spoiler Shields
      */
     alwaysShowSpoilers: boolean;
@@ -1088,6 +1092,10 @@ export type UpdateUserSettingsDto = {
      * ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)
      */
     watchCountry?: string;
+    /**
+     * My Services: TMDB watch-provider ids the user subscribes to. Replaces the whole set; an empty array clears it.
+     */
+    streamingServiceIds?: Array<number>;
     /**
      * Reader preference: always show spoiler content, suppressing Spoiler Shields
      */
@@ -2727,6 +2735,33 @@ export type BecauseYouWatchedRowDto = {
 
 export type BecauseYouWatchedResponseDto = {
     rows: Array<BecauseYouWatchedRowDto>;
+};
+
+export type StreamingServiceDto = {
+    /**
+     * TMDB watch-provider id
+     */
+    id: number;
+    /**
+     * Display name, e.g. Netflix
+     */
+    name: string;
+    /**
+     * Absolute URL of the service logo, or null when TMDB has none
+     */
+    logoUrl: string | null;
+    /**
+     * TMDB display priority within the requested country; lower is more prominent
+     */
+    displayPriority: number;
+};
+
+export type StreamingServicesResponseDto = {
+    /**
+     * ISO 3166-1 alpha-2 country the list is for
+     */
+    country: string;
+    services: Array<StreamingServiceDto>;
 };
 
 export type MoviesControllerSearchMoviesData = {
@@ -6220,3 +6255,21 @@ export type DiscoverControllerBecauseYouWatchedResponses = {
 };
 
 export type DiscoverControllerBecauseYouWatchedResponse = DiscoverControllerBecauseYouWatchedResponses[keyof DiscoverControllerBecauseYouWatchedResponses];
+
+export type StreamingServicesControllerListData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * ISO 3166-1 alpha-2 country code (e.g. US, NL); defaults to US
+         */
+        country?: string;
+    };
+    url: '/streaming-services';
+};
+
+export type StreamingServicesControllerListResponses = {
+    200: StreamingServicesResponseDto;
+};
+
+export type StreamingServicesControllerListResponse = StreamingServicesControllerListResponses[keyof StreamingServicesControllerListResponses];

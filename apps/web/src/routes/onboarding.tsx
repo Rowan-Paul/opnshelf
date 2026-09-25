@@ -31,6 +31,9 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
 import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
+import StreamingServicePicker, {
+	toggleService,
+} from "#/components/StreamingServicePicker";
 import { UserRowsSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
@@ -132,6 +135,9 @@ function OnboardingPage() {
 						{step === "profile" && <ProfileStep onNext={goToNextStep} />}
 						{step === "preferences" && (
 							<PreferencesStep onNext={goToNextStep} />
+						)}
+						{step === "services" && (
+							<ServicesStep onNext={goToNextStep} onSkip={goToNextStep} />
 						)}
 						{step === "trakt" && (
 							<TraktStep
@@ -558,9 +564,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const updateSettingsMutation = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save preferences",
@@ -627,6 +636,117 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 							<ArrowRight className="size-4" />
 						</>
 					)}
+				</button>
+			</div>
+		</div>
+	);
+}
+
+/* ------------------------------------------------------------------
+   Step 3b: My Services
+   ------------------------------------------------------------------ */
+const SERVICE_SKELETON_KEYS = Array.from(
+	{ length: 12 },
+	(_, i) => `service-skeleton-${i + 1}`,
+);
+
+function ServicesStep({
+	onNext,
+	onSkip,
+}: {
+	onNext: () => void;
+	onSkip: () => void;
+}) {
+	const queryClient = useQueryClient();
+	const { data: settings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+	const [selected, setSelected] = useState<number[]>([]);
+
+	useEffect(() => {
+		if (settings) setSelected(settings.streamingServiceIds);
+	}, [settings]);
+
+	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "me", "settings", "update"],
+		...usersControllerUpdateMySettingsMutation(),
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to save your services",
+			);
+		},
+	});
+
+	function handleSave() {
+		updateSettingsMutation.mutate(
+			{ body: { streamingServiceIds: selected } },
+			{ onSuccess: onNext },
+		);
+	}
+
+	return (
+		<div className="card p-8">
+			<div className="mb-6 flex justify-center">
+				<Logo className="size-16 rounded-2xl" />
+			</div>
+			<h1 className="mb-2 text-center text-display-2">Your Services</h1>
+			<p className="mb-8 text-center text-(--foreground-muted)">
+				Pick the streaming services you pay for, so Up Next and Discover can
+				show what you can actually watch.
+			</p>
+
+			{settingsLoading ? (
+				<div className="grid grid-cols-4 gap-2 sm:grid-cols-6" aria-busy="true">
+					{SERVICE_SKELETON_KEYS.map((key) => (
+						<div
+							key={key}
+							className="h-[72px] animate-pulse rounded-xl bg-(--background-subtle)"
+						/>
+					))}
+				</div>
+			) : (
+				<StreamingServicePicker
+					country={settings?.watchCountry ?? "US"}
+					value={selected}
+					onToggle={(id) =>
+						setSelected((current) => toggleService(current, id))
+					}
+					disabled={updateSettingsMutation.isPending}
+				/>
+			)}
+			<p className="mt-4 text-(--foreground-subtle) text-xs">
+				You can change these at any time in Settings.
+			</p>
+
+			<div className="mt-8 space-y-2">
+				<button
+					type="button"
+					onClick={handleSave}
+					disabled={settingsLoading || updateSettingsMutation.isPending}
+					className="btn btn-primary w-full"
+				>
+					{updateSettingsMutation.isPending ? (
+						<Loader2 className="size-4 animate-spin" />
+					) : (
+						<>
+							Continue
+							<ArrowRight className="size-4" />
+						</>
+					)}
+				</button>
+				<button
+					type="button"
+					onClick={onSkip}
+					disabled={updateSettingsMutation.isPending}
+					className="btn btn-ghost w-full"
+				>
+					Skip for now
 				</button>
 			</div>
 		</div>

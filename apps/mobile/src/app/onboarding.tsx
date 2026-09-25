@@ -27,6 +27,10 @@ import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
+import {
+	StreamingServicePicker,
+	toggleService,
+} from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -42,6 +46,7 @@ type OnboardingStep =
 	| "welcome"
 	| "profile"
 	| "preferences"
+	| "services"
 	| "trakt"
 	| "suggestions"
 	| "watches"
@@ -51,6 +56,7 @@ const STEP_SEQUENCE: OnboardingStep[] = [
 	"welcome",
 	"profile",
 	"preferences",
+	"services",
 	"trakt",
 	"suggestions",
 	"watches",
@@ -197,7 +203,10 @@ export default function OnboardingScreen() {
 					<ProfileStep onNext={() => setStep("preferences")} />
 				)}
 				{step === "preferences" && (
-					<PreferencesStep onNext={() => setStep("trakt")} />
+					<PreferencesStep onNext={() => setStep("services")} />
+				)}
+				{step === "services" && (
+					<ServicesStep onNext={() => setStep("trakt")} />
 				)}
 				{step === "trakt" && (
 					<TraktStep
@@ -359,9 +368,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const updateSettings = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save preferences",
@@ -421,6 +433,101 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 					You can change these any time in Settings.
 				</Text>
 			</View>
+		</StepScaffold>
+	);
+}
+
+/* ----------------------------------------------------------------- Services */
+const SERVICE_SKELETON_KEYS = Array.from(
+	{ length: 12 },
+	(_, i) => `service-skeleton-${i + 1}`,
+);
+
+function ServicesStep({ onNext }: { onNext: () => void }) {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	const [selected, setSelected] = useState<number[]>([]);
+	const { data: settings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+
+	useEffect(() => {
+		if (settings) setSelected(settings.streamingServiceIds);
+	}, [settings]);
+
+	const updateSettings = useMutation({
+		mutationKey: ["users", "me", "settings", "update"],
+		...usersControllerUpdateMySettingsMutation(),
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
+		onError: (error) =>
+			toast.error(
+				error instanceof Error ? error.message : "Failed to save your services",
+			),
+	});
+
+	const handleContinue = () => {
+		updateSettings.mutate(
+			{ body: { streamingServiceIds: selected } },
+			{ onSuccess: onNext },
+		);
+	};
+
+	return (
+		<StepScaffold
+			footer={
+				<>
+					<PrimaryButton
+						label="Continue"
+						onPress={handleContinue}
+						loading={updateSettings.isPending}
+						disabled={settingsLoading}
+					/>
+					<Button
+						label="Skip for now"
+						variant="secondary"
+						onPress={onNext}
+						disabled={updateSettings.isPending}
+					/>
+				</>
+			}
+		>
+			<View className="gap-1">
+				<Text className="font-bold font-display text-3xl text-foreground">
+					Your services
+				</Text>
+				<Text className="text-muted-foreground text-sm leading-5">
+					Pick the streaming services you pay for, so Up Next and Discover can
+					show what you can actually watch.
+				</Text>
+			</View>
+
+			{settingsLoading ? (
+				<View className="flex-row flex-wrap gap-2">
+					{SERVICE_SKELETON_KEYS.map((key) => (
+						<View
+							key={key}
+							className="h-[72px] w-[23%] rounded-xl bg-background-subtle"
+						/>
+					))}
+				</View>
+			) : (
+				<StreamingServicePicker
+					country={settings?.watchCountry ?? "US"}
+					value={selected}
+					onToggle={(id) =>
+						setSelected((current) => toggleService(current, id))
+					}
+					disabled={updateSettings.isPending}
+				/>
+			)}
+			<Text className="text-muted-foreground text-xs">
+				You can change these any time in Settings.
+			</Text>
 		</StepScaffold>
 	);
 }

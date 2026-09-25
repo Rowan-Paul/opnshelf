@@ -58,6 +58,7 @@ docker-compose up -d
 DATABASE_URL="postgresql://opnshelf:opnshelf@127.0.0.1:5432/opnshelf"
 TMDB_API_KEY="your-tmdb-key"
 TAB_URL="http://localhost:2480"
+REDIS_URL="redis://127.0.0.1:6379"
 TAB_ADMIN_PASSWORD="y29d6b572f17af0f150cd4b480bec85cf"
 
 # Run migrations. This is `prisma migrate dev` against DATABASE_URL, so make
@@ -142,7 +143,7 @@ Notes:
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `TMDB_API_KEY` | TMDB API key for movie data |
-| `REDIS_URL` | Optional. Redis connection string for the TMDB response cache (ADR 0041). Unset locally; the cache then lives in process memory and empties on restart. In Railway it comes from the Redis service reference. |
+| `REDIS_URL` | Optional. Redis connection string for the TMDB response cache (ADR 0041). `docker-compose up -d` starts one on `redis://127.0.0.1:6379`; unset, the cache lives in process memory and empties on restart. In Railway it comes from the Redis service reference. |
 | `TRAKT_API_KEY` | Trakt.tv API key for imports |
 | `TAB_URL` | Tab ingestion service URL |
 | `TAB_ADMIN_PASSWORD` | Tab admin password; must match the container |

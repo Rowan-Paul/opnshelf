@@ -19,6 +19,7 @@ describe("onboarding steps", () => {
 			"welcome",
 			"profile",
 			"preferences",
+			"services",
 			"trakt",
 			"suggestions",
 			"watched",
@@ -29,7 +30,8 @@ describe("onboarding steps", () => {
 	it("advances to the linear successor", () => {
 		expect(nextOnboardingStep("welcome")).toBe("profile");
 		expect(nextOnboardingStep("profile")).toBe("preferences");
-		expect(nextOnboardingStep("preferences")).toBe("trakt");
+		expect(nextOnboardingStep("preferences")).toBe("services");
+		expect(nextOnboardingStep("services")).toBe("trakt");
 		expect(nextOnboardingStep("trakt")).toBe("suggestions");
 		expect(nextOnboardingStep("suggestions")).toBe("watched");
 		expect(nextOnboardingStep("watched")).toBe("done");
