@@ -39,6 +39,7 @@ export type NotificationDeliveryMinAggregateOutputType = {
   userDid: string | null
   channel: string | null
   category: string | null
+  collectionId: string | null
   eventKey: string | null
   title: string | null
   body: string | null
@@ -55,6 +56,7 @@ export type NotificationDeliveryMaxAggregateOutputType = {
   userDid: string | null
   channel: string | null
   category: string | null
+  collectionId: string | null
   eventKey: string | null
   title: string | null
   body: string | null
@@ -71,6 +73,7 @@ export type NotificationDeliveryCountAggregateOutputType = {
   userDid: number
   channel: number
   category: number
+  collectionId: number
   eventKey: number
   title: number
   body: number
@@ -97,6 +100,7 @@ export type NotificationDeliveryMinAggregateInputType = {
   userDid?: true
   channel?: true
   category?: true
+  collectionId?: true
   eventKey?: true
   title?: true
   body?: true
@@ -113,6 +117,7 @@ export type NotificationDeliveryMaxAggregateInputType = {
   userDid?: true
   channel?: true
   category?: true
+  collectionId?: true
   eventKey?: true
   title?: true
   body?: true
@@ -129,6 +134,7 @@ export type NotificationDeliveryCountAggregateInputType = {
   userDid?: true
   channel?: true
   category?: true
+  collectionId?: true
   eventKey?: true
   title?: true
   body?: true
@@ -232,6 +238,7 @@ export type NotificationDeliveryGroupByOutputType = {
   userDid: string
   channel: string
   category: string
+  collectionId: string | null
   eventKey: string
   title: string
   body: string
@@ -271,6 +278,7 @@ export type NotificationDeliveryWhereInput = {
   userDid?: Prisma.StringFilter<"NotificationDelivery"> | string
   channel?: Prisma.StringFilter<"NotificationDelivery"> | string
   category?: Prisma.StringFilter<"NotificationDelivery"> | string
+  collectionId?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
   eventKey?: Prisma.StringFilter<"NotificationDelivery"> | string
   title?: Prisma.StringFilter<"NotificationDelivery"> | string
   body?: Prisma.StringFilter<"NotificationDelivery"> | string
@@ -281,6 +289,7 @@ export type NotificationDeliveryWhereInput = {
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  collection?: Prisma.XOR<Prisma.NotificationCollectionNullableScalarRelationFilter, Prisma.NotificationCollectionWhereInput> | null
 }
 
 export type NotificationDeliveryOrderByWithRelationInput = {
@@ -288,6 +297,7 @@ export type NotificationDeliveryOrderByWithRelationInput = {
   userDid?: Prisma.SortOrder
   channel?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  collectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   eventKey?: Prisma.SortOrder
   title?: Prisma.SortOrder
   body?: Prisma.SortOrder
@@ -298,6 +308,7 @@ export type NotificationDeliveryOrderByWithRelationInput = {
   sentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
+  collection?: Prisma.NotificationCollectionOrderByWithRelationInput
 }
 
 export type NotificationDeliveryWhereUniqueInput = Prisma.AtLeast<{
@@ -309,6 +320,7 @@ export type NotificationDeliveryWhereUniqueInput = Prisma.AtLeast<{
   userDid?: Prisma.StringFilter<"NotificationDelivery"> | string
   channel?: Prisma.StringFilter<"NotificationDelivery"> | string
   category?: Prisma.StringFilter<"NotificationDelivery"> | string
+  collectionId?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
   eventKey?: Prisma.StringFilter<"NotificationDelivery"> | string
   title?: Prisma.StringFilter<"NotificationDelivery"> | string
   body?: Prisma.StringFilter<"NotificationDelivery"> | string
@@ -319,6 +331,7 @@ export type NotificationDeliveryWhereUniqueInput = Prisma.AtLeast<{
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  collection?: Prisma.XOR<Prisma.NotificationCollectionNullableScalarRelationFilter, Prisma.NotificationCollectionWhereInput> | null
 }, "id" | "userDid_channel_eventKey">
 
 export type NotificationDeliveryOrderByWithAggregationInput = {
@@ -326,6 +339,7 @@ export type NotificationDeliveryOrderByWithAggregationInput = {
   userDid?: Prisma.SortOrder
   channel?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  collectionId?: Prisma.SortOrderInput | Prisma.SortOrder
   eventKey?: Prisma.SortOrder
   title?: Prisma.SortOrder
   body?: Prisma.SortOrder
@@ -350,6 +364,7 @@ export type NotificationDeliveryScalarWhereWithAggregatesInput = {
   userDid?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
   channel?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
   category?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
+  collectionId?: Prisma.StringNullableWithAggregatesFilter<"NotificationDelivery"> | string | null
   eventKey?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
   title?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
   body?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
@@ -375,6 +390,7 @@ export type NotificationDeliveryCreateInput = {
   sentAt?: Date | string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationDeliveriesInput
+  collection?: Prisma.NotificationCollectionCreateNestedOneWithoutDeliveriesInput
 }
 
 export type NotificationDeliveryUncheckedCreateInput = {
@@ -382,6 +398,7 @@ export type NotificationDeliveryUncheckedCreateInput = {
   userDid: string
   channel: string
   category: string
+  collectionId?: string | null
   eventKey: string
   title: string
   body: string
@@ -407,6 +424,7 @@ export type NotificationDeliveryUpdateInput = {
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationDeliveriesNestedInput
+  collection?: Prisma.NotificationCollectionUpdateOneWithoutDeliveriesNestedInput
 }
 
 export type NotificationDeliveryUncheckedUpdateInput = {
@@ -414,6 +432,7 @@ export type NotificationDeliveryUncheckedUpdateInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
@@ -430,6 +449,7 @@ export type NotificationDeliveryCreateManyInput = {
   userDid: string
   channel: string
   category: string
+  collectionId?: string | null
   eventKey: string
   title: string
   body: string
@@ -461,6 +481,7 @@ export type NotificationDeliveryUncheckedUpdateManyInput = {
   userDid?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
@@ -493,6 +514,7 @@ export type NotificationDeliveryCountOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   channel?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  collectionId?: Prisma.SortOrder
   eventKey?: Prisma.SortOrder
   title?: Prisma.SortOrder
   body?: Prisma.SortOrder
@@ -513,6 +535,7 @@ export type NotificationDeliveryMaxOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   channel?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  collectionId?: Prisma.SortOrder
   eventKey?: Prisma.SortOrder
   title?: Prisma.SortOrder
   body?: Prisma.SortOrder
@@ -529,6 +552,7 @@ export type NotificationDeliveryMinOrderByAggregateInput = {
   userDid?: Prisma.SortOrder
   channel?: Prisma.SortOrder
   category?: Prisma.SortOrder
+  collectionId?: Prisma.SortOrder
   eventKey?: Prisma.SortOrder
   title?: Prisma.SortOrder
   body?: Prisma.SortOrder
@@ -586,6 +610,48 @@ export type NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.NotificationDeliveryScalarWhereInput | Prisma.NotificationDeliveryScalarWhereInput[]
 }
 
+export type NotificationDeliveryCreateNestedManyWithoutCollectionInput = {
+  create?: Prisma.XOR<Prisma.NotificationDeliveryCreateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput> | Prisma.NotificationDeliveryCreateWithoutCollectionInput[] | Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput[]
+  connectOrCreate?: Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput | Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput[]
+  createMany?: Prisma.NotificationDeliveryCreateManyCollectionInputEnvelope
+  connect?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+}
+
+export type NotificationDeliveryUncheckedCreateNestedManyWithoutCollectionInput = {
+  create?: Prisma.XOR<Prisma.NotificationDeliveryCreateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput> | Prisma.NotificationDeliveryCreateWithoutCollectionInput[] | Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput[]
+  connectOrCreate?: Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput | Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput[]
+  createMany?: Prisma.NotificationDeliveryCreateManyCollectionInputEnvelope
+  connect?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+}
+
+export type NotificationDeliveryUpdateManyWithoutCollectionNestedInput = {
+  create?: Prisma.XOR<Prisma.NotificationDeliveryCreateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput> | Prisma.NotificationDeliveryCreateWithoutCollectionInput[] | Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput[]
+  connectOrCreate?: Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput | Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput[]
+  upsert?: Prisma.NotificationDeliveryUpsertWithWhereUniqueWithoutCollectionInput | Prisma.NotificationDeliveryUpsertWithWhereUniqueWithoutCollectionInput[]
+  createMany?: Prisma.NotificationDeliveryCreateManyCollectionInputEnvelope
+  set?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  disconnect?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  delete?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  connect?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  update?: Prisma.NotificationDeliveryUpdateWithWhereUniqueWithoutCollectionInput | Prisma.NotificationDeliveryUpdateWithWhereUniqueWithoutCollectionInput[]
+  updateMany?: Prisma.NotificationDeliveryUpdateManyWithWhereWithoutCollectionInput | Prisma.NotificationDeliveryUpdateManyWithWhereWithoutCollectionInput[]
+  deleteMany?: Prisma.NotificationDeliveryScalarWhereInput | Prisma.NotificationDeliveryScalarWhereInput[]
+}
+
+export type NotificationDeliveryUncheckedUpdateManyWithoutCollectionNestedInput = {
+  create?: Prisma.XOR<Prisma.NotificationDeliveryCreateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput> | Prisma.NotificationDeliveryCreateWithoutCollectionInput[] | Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput[]
+  connectOrCreate?: Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput | Prisma.NotificationDeliveryCreateOrConnectWithoutCollectionInput[]
+  upsert?: Prisma.NotificationDeliveryUpsertWithWhereUniqueWithoutCollectionInput | Prisma.NotificationDeliveryUpsertWithWhereUniqueWithoutCollectionInput[]
+  createMany?: Prisma.NotificationDeliveryCreateManyCollectionInputEnvelope
+  set?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  disconnect?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  delete?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  connect?: Prisma.NotificationDeliveryWhereUniqueInput | Prisma.NotificationDeliveryWhereUniqueInput[]
+  update?: Prisma.NotificationDeliveryUpdateWithWhereUniqueWithoutCollectionInput | Prisma.NotificationDeliveryUpdateWithWhereUniqueWithoutCollectionInput[]
+  updateMany?: Prisma.NotificationDeliveryUpdateManyWithWhereWithoutCollectionInput | Prisma.NotificationDeliveryUpdateManyWithWhereWithoutCollectionInput[]
+  deleteMany?: Prisma.NotificationDeliveryScalarWhereInput | Prisma.NotificationDeliveryScalarWhereInput[]
+}
+
 export type NotificationDeliveryCreateWithoutUserInput = {
   id?: string
   channel: string
@@ -599,12 +665,14 @@ export type NotificationDeliveryCreateWithoutUserInput = {
   nextAttemptAt?: Date | string
   sentAt?: Date | string | null
   createdAt?: Date | string
+  collection?: Prisma.NotificationCollectionCreateNestedOneWithoutDeliveriesInput
 }
 
 export type NotificationDeliveryUncheckedCreateWithoutUserInput = {
   id?: string
   channel: string
   category: string
+  collectionId?: string | null
   eventKey: string
   title: string
   body: string
@@ -650,6 +718,7 @@ export type NotificationDeliveryScalarWhereInput = {
   userDid?: Prisma.StringFilter<"NotificationDelivery"> | string
   channel?: Prisma.StringFilter<"NotificationDelivery"> | string
   category?: Prisma.StringFilter<"NotificationDelivery"> | string
+  collectionId?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
   eventKey?: Prisma.StringFilter<"NotificationDelivery"> | string
   title?: Prisma.StringFilter<"NotificationDelivery"> | string
   body?: Prisma.StringFilter<"NotificationDelivery"> | string
@@ -661,10 +730,69 @@ export type NotificationDeliveryScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
 }
 
+export type NotificationDeliveryCreateWithoutCollectionInput = {
+  id?: string
+  channel: string
+  category: string
+  eventKey: string
+  title: string
+  body: string
+  url?: string | null
+  status?: string
+  attempts?: number
+  nextAttemptAt?: Date | string
+  sentAt?: Date | string | null
+  createdAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutNotificationDeliveriesInput
+}
+
+export type NotificationDeliveryUncheckedCreateWithoutCollectionInput = {
+  id?: string
+  userDid: string
+  channel: string
+  category: string
+  eventKey: string
+  title: string
+  body: string
+  url?: string | null
+  status?: string
+  attempts?: number
+  nextAttemptAt?: Date | string
+  sentAt?: Date | string | null
+  createdAt?: Date | string
+}
+
+export type NotificationDeliveryCreateOrConnectWithoutCollectionInput = {
+  where: Prisma.NotificationDeliveryWhereUniqueInput
+  create: Prisma.XOR<Prisma.NotificationDeliveryCreateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput>
+}
+
+export type NotificationDeliveryCreateManyCollectionInputEnvelope = {
+  data: Prisma.NotificationDeliveryCreateManyCollectionInput | Prisma.NotificationDeliveryCreateManyCollectionInput[]
+  skipDuplicates?: boolean
+}
+
+export type NotificationDeliveryUpsertWithWhereUniqueWithoutCollectionInput = {
+  where: Prisma.NotificationDeliveryWhereUniqueInput
+  update: Prisma.XOR<Prisma.NotificationDeliveryUpdateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedUpdateWithoutCollectionInput>
+  create: Prisma.XOR<Prisma.NotificationDeliveryCreateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedCreateWithoutCollectionInput>
+}
+
+export type NotificationDeliveryUpdateWithWhereUniqueWithoutCollectionInput = {
+  where: Prisma.NotificationDeliveryWhereUniqueInput
+  data: Prisma.XOR<Prisma.NotificationDeliveryUpdateWithoutCollectionInput, Prisma.NotificationDeliveryUncheckedUpdateWithoutCollectionInput>
+}
+
+export type NotificationDeliveryUpdateManyWithWhereWithoutCollectionInput = {
+  where: Prisma.NotificationDeliveryScalarWhereInput
+  data: Prisma.XOR<Prisma.NotificationDeliveryUpdateManyMutationInput, Prisma.NotificationDeliveryUncheckedUpdateManyWithoutCollectionInput>
+}
+
 export type NotificationDeliveryCreateManyUserInput = {
   id?: string
   channel: string
   category: string
+  collectionId?: string | null
   eventKey: string
   title: string
   body: string
@@ -689,12 +817,14 @@ export type NotificationDeliveryUpdateWithoutUserInput = {
   nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  collection?: Prisma.NotificationCollectionUpdateOneWithoutDeliveriesNestedInput
 }
 
 export type NotificationDeliveryUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
@@ -708,6 +838,71 @@ export type NotificationDeliveryUncheckedUpdateWithoutUserInput = {
 
 export type NotificationDeliveryUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  channel?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  collectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventKey?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  body?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type NotificationDeliveryCreateManyCollectionInput = {
+  id?: string
+  userDid: string
+  channel: string
+  category: string
+  eventKey: string
+  title: string
+  body: string
+  url?: string | null
+  status?: string
+  attempts?: number
+  nextAttemptAt?: Date | string
+  sentAt?: Date | string | null
+  createdAt?: Date | string
+}
+
+export type NotificationDeliveryUpdateWithoutCollectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  channel?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  eventKey?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  body?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutNotificationDeliveriesNestedInput
+}
+
+export type NotificationDeliveryUncheckedUpdateWithoutCollectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
+  channel?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  eventKey?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  body?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type NotificationDeliveryUncheckedUpdateManyWithoutCollectionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.StringFieldUpdateOperationsInput | string
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   eventKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -728,6 +923,7 @@ export type NotificationDeliverySelect<ExtArgs extends runtime.Types.Extensions.
   userDid?: boolean
   channel?: boolean
   category?: boolean
+  collectionId?: boolean
   eventKey?: boolean
   title?: boolean
   body?: boolean
@@ -738,6 +934,7 @@ export type NotificationDeliverySelect<ExtArgs extends runtime.Types.Extensions.
   sentAt?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  collection?: boolean | Prisma.NotificationDelivery$collectionArgs<ExtArgs>
 }, ExtArgs["result"]["notificationDelivery"]>
 
 export type NotificationDeliverySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -745,6 +942,7 @@ export type NotificationDeliverySelectCreateManyAndReturn<ExtArgs extends runtim
   userDid?: boolean
   channel?: boolean
   category?: boolean
+  collectionId?: boolean
   eventKey?: boolean
   title?: boolean
   body?: boolean
@@ -755,6 +953,7 @@ export type NotificationDeliverySelectCreateManyAndReturn<ExtArgs extends runtim
   sentAt?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  collection?: boolean | Prisma.NotificationDelivery$collectionArgs<ExtArgs>
 }, ExtArgs["result"]["notificationDelivery"]>
 
 export type NotificationDeliverySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -762,6 +961,7 @@ export type NotificationDeliverySelectUpdateManyAndReturn<ExtArgs extends runtim
   userDid?: boolean
   channel?: boolean
   category?: boolean
+  collectionId?: boolean
   eventKey?: boolean
   title?: boolean
   body?: boolean
@@ -772,6 +972,7 @@ export type NotificationDeliverySelectUpdateManyAndReturn<ExtArgs extends runtim
   sentAt?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  collection?: boolean | Prisma.NotificationDelivery$collectionArgs<ExtArgs>
 }, ExtArgs["result"]["notificationDelivery"]>
 
 export type NotificationDeliverySelectScalar = {
@@ -779,6 +980,7 @@ export type NotificationDeliverySelectScalar = {
   userDid?: boolean
   channel?: boolean
   category?: boolean
+  collectionId?: boolean
   eventKey?: boolean
   title?: boolean
   body?: boolean
@@ -790,27 +992,32 @@ export type NotificationDeliverySelectScalar = {
   createdAt?: boolean
 }
 
-export type NotificationDeliveryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "channel" | "category" | "eventKey" | "title" | "body" | "url" | "status" | "attempts" | "nextAttemptAt" | "sentAt" | "createdAt", ExtArgs["result"]["notificationDelivery"]>
+export type NotificationDeliveryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "channel" | "category" | "collectionId" | "eventKey" | "title" | "body" | "url" | "status" | "attempts" | "nextAttemptAt" | "sentAt" | "createdAt", ExtArgs["result"]["notificationDelivery"]>
 export type NotificationDeliveryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  collection?: boolean | Prisma.NotificationDelivery$collectionArgs<ExtArgs>
 }
 export type NotificationDeliveryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  collection?: boolean | Prisma.NotificationDelivery$collectionArgs<ExtArgs>
 }
 export type NotificationDeliveryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  collection?: boolean | Prisma.NotificationDelivery$collectionArgs<ExtArgs>
 }
 
 export type $NotificationDeliveryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "NotificationDelivery"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
+    collection: Prisma.$NotificationCollectionPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userDid: string
     channel: string
     category: string
+    collectionId: string | null
     eventKey: string
     title: string
     body: string
@@ -1215,6 +1422,7 @@ readonly fields: NotificationDeliveryFieldRefs;
 export interface Prisma__NotificationDeliveryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  collection<T extends Prisma.NotificationDelivery$collectionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.NotificationDelivery$collectionArgs<ExtArgs>>): Prisma.Prisma__NotificationCollectionClient<runtime.Types.Result.GetResult<Prisma.$NotificationCollectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1248,6 +1456,7 @@ export interface NotificationDeliveryFieldRefs {
   readonly userDid: Prisma.FieldRef<"NotificationDelivery", 'String'>
   readonly channel: Prisma.FieldRef<"NotificationDelivery", 'String'>
   readonly category: Prisma.FieldRef<"NotificationDelivery", 'String'>
+  readonly collectionId: Prisma.FieldRef<"NotificationDelivery", 'String'>
   readonly eventKey: Prisma.FieldRef<"NotificationDelivery", 'String'>
   readonly title: Prisma.FieldRef<"NotificationDelivery", 'String'>
   readonly body: Prisma.FieldRef<"NotificationDelivery", 'String'>
@@ -1655,6 +1864,25 @@ export type NotificationDeliveryDeleteManyArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many NotificationDeliveries to delete.
    */
   limit?: number
+}
+
+/**
+ * NotificationDelivery.collection
+ */
+export type NotificationDelivery$collectionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NotificationCollection
+   */
+  select?: Prisma.NotificationCollectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the NotificationCollection
+   */
+  omit?: Prisma.NotificationCollectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationCollectionInclude<ExtArgs> | null
+  where?: Prisma.NotificationCollectionWhereInput
 }
 
 /**

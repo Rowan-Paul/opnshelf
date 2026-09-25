@@ -79,3 +79,23 @@ export class TestNotificationDto {
 	@IsIn(["push", "email"])
 	channel!: "push" | "email";
 }
+
+export class NotificationCollectionItemDto {
+	@ApiProperty() mediaId!: string;
+	@ApiProperty({ enum: ["movie", "show"] }) mediaType!: "movie" | "show";
+	@ApiProperty() title!: string;
+	@ApiProperty({ type: String, nullable: true }) posterPath!: string | null;
+	@ApiProperty() overview!: string;
+	@ApiProperty({ type: String, nullable: true }) releaseDate!: string | null;
+	@ApiProperty({ type: Number, nullable: true }) seasonNumber!: number | null;
+	@ApiProperty() path!: string;
+}
+
+export class NotificationCollectionDto {
+	@ApiProperty() id!: string;
+	@ApiProperty() heading!: string;
+	@ApiProperty() periodStart!: string;
+	@ApiProperty() periodEnd!: string;
+	@ApiProperty({ type: [NotificationCollectionItemDto] })
+	items!: NotificationCollectionItemDto[];
+}

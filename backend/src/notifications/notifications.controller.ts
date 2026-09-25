@@ -4,6 +4,7 @@ import {
 	Delete,
 	Get,
 	Patch,
+	Param,
 	Post,
 	Req,
 	UseGuards,
@@ -15,6 +16,7 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	ConfirmNotificationEmailDto,
 	NotificationSettingsDto,
+	NotificationCollectionDto,
 	RegisterPushDeviceDto,
 	RemovePushDeviceDto,
 	RequestNotificationEmailDto,
@@ -29,6 +31,15 @@ import { NotificationsService } from "./notifications.service";
 @Controller("notifications")
 export class NotificationsController {
 	constructor(private readonly notifications: NotificationsService) {}
+
+	@Get("collections/:id")
+	@ApiOkResponse({ type: NotificationCollectionDto })
+	collection(
+		@Req() req: AuthenticatedRequest,
+		@Param("id") id: string,
+	): Promise<NotificationCollectionDto> {
+		return this.notifications.getCollection(req.user.did, id);
+	}
 
 	@Get("settings")
 	@ApiOkResponse({ type: NotificationSettingsDto })

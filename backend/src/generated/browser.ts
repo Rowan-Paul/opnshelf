@@ -33,6 +33,11 @@ export type NotificationSettings = Prisma.NotificationSettingsModel
  */
 export type PushDevice = Prisma.PushDeviceModel
 /**
+ * Model NotificationCollection
+ * Immutable selection shared by every delivery of the same event.
+ */
+export type NotificationCollection = Prisma.NotificationCollectionModel
+/**
  * Model NotificationDelivery
  * 
  */

@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   NotificationSettings: 'NotificationSettings',
   PushDevice: 'PushDevice',
+  NotificationCollection: 'NotificationCollection',
   NotificationDelivery: 'NotificationDelivery',
   Follow: 'Follow',
   Circle: 'Circle',
@@ -426,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "notificationSettings" | "pushDevice" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "traktImportItem" | "traktImportMatch" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback"
+    modelProps: "user" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "traktImportItem" | "traktImportMatch" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -649,6 +650,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PushDeviceCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PushDeviceCountAggregateOutputType> | number
+        }
+      }
+    }
+    NotificationCollection: {
+      payload: Prisma.$NotificationCollectionPayload<ExtArgs>
+      fields: Prisma.NotificationCollectionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationCollectionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationCollectionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationCollectionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationCollectionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationCollectionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationCollectionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationCollectionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationCollectionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationCollectionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>
+        }
+        update: {
+          args: Prisma.NotificationCollectionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationCollectionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationCollectionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationCollectionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationCollectionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationCollectionPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationCollectionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationCollection>
+        }
+        groupBy: {
+          args: Prisma.NotificationCollectionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationCollectionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationCollectionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationCollectionCountAggregateOutputType> | number
         }
       }
     }
@@ -2544,11 +2619,28 @@ export const PushDeviceScalarFieldEnum = {
 export type PushDeviceScalarFieldEnum = (typeof PushDeviceScalarFieldEnum)[keyof typeof PushDeviceScalarFieldEnum]
 
 
+export const NotificationCollectionScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  eventKey: 'eventKey',
+  title: 'title',
+  body: 'body',
+  heading: 'heading',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
+  items: 'items',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationCollectionScalarFieldEnum = (typeof NotificationCollectionScalarFieldEnum)[keyof typeof NotificationCollectionScalarFieldEnum]
+
+
 export const NotificationDeliveryScalarFieldEnum = {
   id: 'id',
   userDid: 'userDid',
   channel: 'channel',
   category: 'category',
+  collectionId: 'collectionId',
   eventKey: 'eventKey',
   title: 'title',
   body: 'body',
@@ -3224,6 +3316,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   notificationSettings?: Prisma.NotificationSettingsOmit
   pushDevice?: Prisma.PushDeviceOmit
+  notificationCollection?: Prisma.NotificationCollectionOmit
   notificationDelivery?: Prisma.NotificationDeliveryOmit
   follow?: Prisma.FollowOmit
   circle?: Prisma.CircleOmit

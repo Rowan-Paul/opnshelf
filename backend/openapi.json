@@ -5687,6 +5687,41 @@
         ]
       }
     },
+    "/notifications/collections/{id}": {
+      "get": {
+        "operationId": "NotificationsController_collection",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationCollectionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/notifications/settings": {
       "get": {
         "operationId": "NotificationsController_settings",
@@ -11596,6 +11631,82 @@
         },
         "required": [
           "uri"
+        ]
+      },
+      "NotificationCollectionItemDto": {
+        "type": "object",
+        "properties": {
+          "mediaId": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "posterPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "overview": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "seasonNumber": {
+            "type": "number",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mediaId",
+          "mediaType",
+          "title",
+          "posterPath",
+          "overview",
+          "releaseDate",
+          "seasonNumber",
+          "path"
+        ]
+      },
+      "NotificationCollectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "periodStart": {
+            "type": "string"
+          },
+          "periodEnd": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCollectionItemDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "heading",
+          "periodStart",
+          "periodEnd",
+          "items"
         ]
       },
       "NotificationSettingsDto": {

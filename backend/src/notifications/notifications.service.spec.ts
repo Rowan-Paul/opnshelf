@@ -23,6 +23,7 @@ describe("NotificationsService", () => {
 		emailStats: true,
 	};
 	const prisma = {
+		notificationCollection: { findFirst: vi.fn() },
 		notificationSettings: {
 			upsert: vi.fn(),
 			update: vi.fn(),
@@ -171,6 +172,31 @@ describe("NotificationsService", () => {
 		expect(prisma.notificationSettings.update).toHaveBeenCalledWith({
 			where: { userDid: "did:plc:user" },
 			data: { nextQueueAt: expect.any(Date) },
+		});
+	});
+	it("does not expose another recipient's collection or delivery metadata", async () => {
+		prisma.notificationCollection.findFirst.mockResolvedValue(null);
+		await expect(
+			service.getCollection("did:plc:user", "other-users-id"),
+		).rejects.toThrow("unavailable");
+		expect(prisma.notificationCollection.findFirst).toHaveBeenCalledWith({
+			where: { id: "other-users-id", userDid: "did:plc:user" },
+		});
+		prisma.notificationCollection.findFirst.mockResolvedValue({
+			id: "own",
+			heading: "Releases",
+			periodStart: "2026-09-21",
+			periodEnd: "2026-09-27",
+			items: [],
+			userDid: "did:plc:user",
+			body: "private delivery copy",
+		});
+		expect(await service.getCollection("did:plc:user", "own")).toEqual({
+			id: "own",
+			heading: "Releases",
+			periodStart: "2026-09-21",
+			periodEnd: "2026-09-27",
+			items: [],
 		});
 	});
 });
