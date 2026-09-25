@@ -118,7 +118,6 @@ function ProfileUpNextPage() {
 	return (
 		<div className="space-y-6">
 			<header className="flex flex-wrap items-center justify-between gap-4">
-				{" "}
 				<div className="flex items-baseline gap-3">
 					<h1 className="text-display-2">Up Next</h1>
 					{data && (
@@ -132,6 +131,11 @@ function ProfileUpNextPage() {
 						country={country}
 						savedIds={userSettings?.streamingServiceIds ?? []}
 						value={services}
+						needsSelection={
+							!!userSettings &&
+							services === "mine" &&
+							userSettings.streamingServiceIds.length === 0
+						}
 						onChange={(value) => void setServices(value)}
 					/>
 				)}
@@ -183,7 +187,7 @@ function ProfileUpNextPage() {
 					</p>
 					<p className="mt-1 text-(--foreground-muted) text-sm">
 						{services
-							? "Try turning off the filter to see all of Up Next."
+							? "Clear filters to see all of Up Next."
 							: "No upcoming episodes to watch."}
 					</p>
 				</div>

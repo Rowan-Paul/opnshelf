@@ -21,6 +21,7 @@ export function UpNextTab({
 	userDid,
 	isOwner,
 	showHeading = true,
+	filterHandle,
 }: {
 	userDid: string;
 	isOwner: boolean;
@@ -30,6 +31,8 @@ export function UpNextTab({
 	 * profile hub where the section needs its own label.
 	 */
 	showHeading?: boolean;
+	/** Embedded profile tabs apply filters on the canonical Up Next route. */
+	filterHandle?: string;
 }) {
 	const { services: servicesParam } = useLocalSearchParams<{
 		services?: string;
@@ -79,7 +82,24 @@ export function UpNextTab({
 					country={country}
 					savedIds={settings?.streamingServiceIds ?? []}
 					value={services}
-					onChange={(services) => router.setParams({ services })}
+					needsSelection={
+						!!settings &&
+						services === "mine" &&
+						settings.streamingServiceIds.length === 0
+					}
+					onChange={(services) => {
+						if (filterHandle) {
+							router.push({
+								pathname: "/profile/[handle]/up-next",
+								params: {
+									handle: filterHandle,
+									...(services ? { services } : {}),
+								},
+							});
+						} else {
+							router.setParams({ services });
+						}
+					}}
 				/>
 			)}
 			{isError && items.length > 0 && (
@@ -105,7 +125,7 @@ export function UpNextTab({
 						title={services ? "No shows on these services" : "All caught up!"}
 						message={
 							services
-								? "Turn off the filter to see all of Up Next."
+								? "Clear filters to see all of Up Next."
 								: "No upcoming episodes to watch."
 						}
 					/>

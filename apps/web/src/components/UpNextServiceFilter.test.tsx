@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UpNextServiceFilter } from "./UpNextServiceFilter";
 
-function setup(value?: string, savedIds = [8]) {
+function setup(value?: string, savedIds = [8], needsSelection = false) {
 	const client = new QueryClient({
 		defaultOptions: { queries: { staleTime: Infinity } },
 	});
@@ -26,15 +26,13 @@ function setup(value?: string, savedIds = [8]) {
 				country="NL"
 				savedIds={savedIds}
 				value={value}
+				needsSelection={needsSelection}
 				onChange={onChange}
 			/>
 		</QueryClientProvider>,
 	);
-	fireEvent.click(
-		screen.getByRole("button", {
-			name: "Streaming services",
-		}),
-	);
+	if (!needsSelection)
+		fireEvent.click(screen.getByRole("button", { name: "Streaming services" }));
 	return { onChange, dialog: within(screen.getByRole("dialog")) };
 }
 
@@ -53,6 +51,12 @@ describe.each([
 		);
 	});
 	afterEach(() => vi.unstubAllGlobals());
+	it("opens an empty legacy selection automatically and allows cancellation", () => {
+		const { onChange, dialog } = setup("mine", [], true);
+		fireEvent.click(dialog.getByRole("button", { name: "Cancel" }));
+		expect(screen.queryByRole("dialog")).toBeNull();
+		expect(onChange).not.toHaveBeenCalled();
+	});
 	it("adds a service outside My Services and only applies on confirmation", () => {
 		const { onChange, dialog } = setup("mine");
 		fireEvent.click(dialog.getByRole("button", { name: "Apple TV" }));

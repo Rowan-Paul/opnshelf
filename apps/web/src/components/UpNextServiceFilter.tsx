@@ -1,7 +1,7 @@
 import { streamingServicesControllerListOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import StreamingServicePicker, {
 	toggleService,
 } from "#/components/StreamingServicePicker";
@@ -33,11 +33,13 @@ export function UpNextServiceFilter({
 	country,
 	savedIds,
 	value,
+	needsSelection = false,
 	onChange,
 }: {
 	country: string;
 	savedIds: number[];
 	value?: string;
+	needsSelection?: boolean;
 	onChange: (value: string | undefined) => void;
 }) {
 	const isMobile = useSyncExternalStore(
@@ -47,6 +49,12 @@ export function UpNextServiceFilter({
 	);
 	const [open, setOpen] = useState(false);
 	const [draft, setDraft] = useState<number[]>([]);
+	useEffect(() => {
+		if (needsSelection) {
+			setDraft([]);
+			setOpen(true);
+		}
+	}, [needsSelection]);
 	const { data } = useQuery({
 		...streamingServicesControllerListOptions({ query: { country } }),
 	});

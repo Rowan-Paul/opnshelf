@@ -6,6 +6,7 @@ import type { PropsWithChildren } from "react";
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PosterProgress } from "@/components/media/poster-progress";
 import { Button } from "@/components/ui/button";
 import { UpNextCard } from "./UpNextCard";
 
@@ -62,6 +63,13 @@ beforeEach(() => {
 	mocks.useMark.mockReturnValue({ mutate: mocks.mutate, isPending: false });
 });
 describe("Up Next episode tiles", () => {
+	it("contains progress inside the artwork with a real aspect-ratio height", () => {
+		const view = renderCards();
+		const progress = view.root.findAllByType(PosterProgress)[0];
+		expect(progress.parent?.props.style).toEqual({ aspectRatio: 16 / 9 });
+		expect(progress.props.progress.episodesWatched).toBe(5);
+		act(() => view.unmount());
+	});
 	it("falls back from episode artwork to show artwork and then the placeholder", () => {
 		const view = renderCards();
 		const image = () => view.root.findAllByType(Image)[0];

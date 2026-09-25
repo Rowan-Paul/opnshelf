@@ -1,7 +1,7 @@
 import { streamingServicesControllerListOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	KeyboardAvoidingView,
 	Modal,
@@ -22,15 +22,23 @@ export function UpNextServiceFilter({
 	country,
 	savedIds,
 	value,
+	needsSelection = false,
 	onChange,
 }: {
 	country: string;
 	savedIds: number[];
 	value?: string;
+	needsSelection?: boolean;
 	onChange: (value: string | undefined) => void;
 }) {
 	const [open, setOpen] = useState(false);
 	const [draft, setDraft] = useState<number[]>([]);
+	useEffect(() => {
+		if (needsSelection) {
+			setDraft([]);
+			setOpen(true);
+		}
+	}, [needsSelection]);
 	const insets = useSafeAreaInsets();
 	const { data } = useQuery({
 		...streamingServicesControllerListOptions({ query: { country } }),
@@ -108,7 +116,7 @@ export function UpNextServiceFilter({
 							contentContainerStyle={{ padding: 16, gap: 16 }}
 						>
 							<Text className="text-muted-foreground text-sm">
-								Show episodes available on any selected service in {country}.
+								Show episodes on any selected service in {country}.
 							</Text>
 
 							<StreamingServicePicker

@@ -93,16 +93,14 @@ export function UpNextCard({
 								{show.title}
 							</Text>
 						</View>
+						<PosterProgress
+							progress={progressData}
+							label="Show progress"
+							isLoading={!isOwner && viewerProgressQuery.isLoading}
+						/>
 					</View>
 				</Pressable>
 			</Link>
-			<View>
-				<PosterProgress
-					progress={progressData}
-					label="Show progress"
-					isLoading={!isOwner && viewerProgressQuery.isLoading}
-				/>
-			</View>
 			<View className="gap-3 p-4">
 				<Link href={href} asChild>
 					<Pressable accessibilityRole="link">
