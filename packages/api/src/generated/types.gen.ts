@@ -6207,13 +6207,6 @@ export type FeedbackControllerCreateFeedbackData = {
     url: '/feedback';
 };
 
-export type FeedbackControllerCreateFeedbackErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
 export type FeedbackControllerCreateFeedbackResponses = {
     /**
      * Feedback submitted

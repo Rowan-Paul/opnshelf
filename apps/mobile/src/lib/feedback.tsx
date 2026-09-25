@@ -123,6 +123,11 @@ function FeedbackSheet({
 							</Pressable>
 						</View>
 
+						<Text className="text-muted-foreground text-sm">
+							Your feedback will become a public GitHub issue. Please leave out
+							personal information and secrets.
+						</Text>
+
 						{/* Category toggle */}
 						<View className="flex-row gap-2">
 							{CATEGORIES.map(({ value, label, icon: Icon }) => {
