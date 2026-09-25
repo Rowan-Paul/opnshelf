@@ -1,6 +1,7 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock, Mocked } from "vitest";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
 
@@ -55,7 +56,7 @@ describe("AuthController", () => {
 		initializeProfileForNewUser: vi.fn().mockResolvedValue(undefined),
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
@@ -64,7 +65,7 @@ describe("AuthController", () => {
 			};
 			return config[key];
 		}),
-	};
+	});
 
 	const createMockResponse = () => {
 		const res = {
@@ -97,7 +98,7 @@ describe("AuthController", () => {
 			controllers: [AuthController],
 			providers: [
 				{ provide: AuthService, useValue: mockAuthService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{ provide: IngesterService, useValue: mockIngesterService },
 				{ provide: UsersService, useValue: mockUsersService },
 				{ provide: MobileHandoffService, useValue: mockMobileHandoff },

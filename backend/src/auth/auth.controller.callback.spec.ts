@@ -1,5 +1,6 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock, Mocked } from "vitest";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
 
@@ -68,7 +69,7 @@ describe("AuthController callback", () => {
 		initializeProfileForNewUser: vi.fn().mockResolvedValue(undefined),
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
@@ -77,7 +78,7 @@ describe("AuthController callback", () => {
 			};
 			return config[key];
 		}),
-	};
+	});
 
 	const createMockResponse = () => {
 		const res = {
@@ -102,7 +103,7 @@ describe("AuthController callback", () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		mockConfigService.get.mockImplementation((key: string) => {
+		mockBackendEnv.get.mockImplementation((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
 				NODE_ENV: "test",
@@ -123,7 +124,7 @@ describe("AuthController callback", () => {
 			controllers: [AuthController],
 			providers: [
 				{ provide: AuthService, useValue: mockAuthService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{ provide: IngesterService, useValue: mockIngesterService },
 				{ provide: UsersService, useValue: mockUsersService },
 				{ provide: MobileHandoffService, useValue: mockMobileHandoff },
@@ -635,7 +636,7 @@ describe("AuthController callback", () => {
 
 		it("should keep the session cookie host-only in production", async () => {
 			// Override to production config
-			mockConfigService.get.mockImplementation((key: string) => {
+			mockBackendEnv.get.mockImplementation((key: string) => {
 				const config: Record<string, string> = {
 					FRONTEND_URL: "https://opnshelf.xyz",
 					NODE_ENV: "production",

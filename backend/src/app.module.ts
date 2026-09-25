@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { EnvModule } from "./config/env.module";
 import { StreamingServicesModule } from "./streaming-services/streaming-services.module";
 import { TmdbCacheModule } from "./tmdb/tmdb-cache.module";
 import { APP_GUARD } from "@nestjs/core";
@@ -28,7 +28,7 @@ import { UsersModule } from "./users/users.module";
 
 @Module({
 	imports: [
-		ConfigModule.forRoot({ isGlobal: true }),
+		EnvModule,
 		// Shared TMDB response cache, Redis-backed when REDIS_URL is set (ADR 0041).
 		TmdbCacheModule,
 		// Global default rate limit: 100 requests / 60s per session (per IP for

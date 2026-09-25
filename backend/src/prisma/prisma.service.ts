@@ -1,3 +1,4 @@
+import { env } from "../config/env";
 import {
 	Injectable,
 	type OnModuleDestroy,
@@ -14,7 +15,7 @@ export class PrismaService
 	constructor() {
 		super({
 			adapter: new PrismaPg({
-				connectionString: process.env.DATABASE_URL,
+				connectionString: env.DATABASE_URL,
 				// Railway's Postgres connection budget is shared with the PDS and
 				// deployment overlap. A large Trakt import plus the dashboard's
 				// parallel queries could otherwise exhaust it for every request.

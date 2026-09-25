@@ -11,7 +11,7 @@ import {
 	type OnModuleDestroy,
 	type OnModuleInit,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Prisma } from "../generated/client";
 import {
 	$nsid as FOLLOW_COLLECTION,
@@ -189,7 +189,7 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly config: ConfigService,
+		private readonly config: BackendEnv,
 		private readonly moviesService: MoviesService,
 		private readonly showsService: ShowsService,
 		private readonly listsService: ListsService,
@@ -201,13 +201,8 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		private readonly profileService: ProfileService,
 		private readonly usersService: UsersService,
 	) {
-		this.tabUrl =
-			this.config.get<string>("TAB_URL") ??
-			this.config.get<string>("TAP_URL") ??
-			"http://localhost:2480";
-		this.tabAdminPassword =
-			this.config.get<string>("TAB_ADMIN_PASSWORD") ??
-			this.config.get<string>("TAP_ADMIN_PASSWORD");
+		this.tabUrl = this.config.TAB_URL ?? "http://localhost:2480";
+		this.tabAdminPassword = this.config.TAB_ADMIN_PASSWORD;
 	}
 
 	onModuleInit() {

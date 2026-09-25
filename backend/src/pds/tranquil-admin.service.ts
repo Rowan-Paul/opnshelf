@@ -5,7 +5,7 @@ import {
 	Logger,
 	type OnModuleInit,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 
 /**
  * Talks to our Tranquil PDS as an admin account.
@@ -26,10 +26,10 @@ export class TranquilAdminService implements OnModuleInit {
 	private agent: AtpAgent | null = null;
 	private loginPromise: Promise<AtpAgent> | null = null;
 
-	constructor(private readonly config: ConfigService) {
-		this.pdsUrl = this.config.get<string>("PDS_URL");
-		this.identifier = this.config.get<string>("PDS_ADMIN_IDENTIFIER");
-		this.password = this.config.get<string>("PDS_ADMIN_PASSWORD");
+	constructor(private readonly config: BackendEnv) {
+		this.pdsUrl = this.config.PDS_URL;
+		this.identifier = this.config.PDS_ADMIN_IDENTIFIER;
+		this.password = this.config.PDS_ADMIN_PASSWORD;
 	}
 
 	onModuleInit() {

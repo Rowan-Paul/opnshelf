@@ -1,14 +1,18 @@
+const { env } = vi.hoisted(() => ({
+	env: { BACKEND_PUBLIC_URL: undefined as string | undefined },
+}));
+vi.mock("../config/env", () => ({ env }));
 import { rebaseAvatarUrl } from "./avatar-url";
 
 describe("rebaseAvatarUrl", () => {
-	const OLD_ENV = process.env.BACKEND_PUBLIC_URL;
+	const OLD_ENV = env.BACKEND_PUBLIC_URL;
 
 	beforeEach(() => {
-		process.env.BACKEND_PUBLIC_URL = "https://api.example.com";
+		env.BACKEND_PUBLIC_URL = "https://api.example.com";
 	});
 
 	afterEach(() => {
-		process.env.BACKEND_PUBLIC_URL = OLD_ENV;
+		env.BACKEND_PUBLIC_URL = OLD_ENV;
 	});
 
 	it("re-bases stored proxy URLs onto the current public URL", () => {

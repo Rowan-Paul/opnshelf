@@ -7,7 +7,7 @@ import {
 	type OnModuleDestroy,
 	Optional,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import Redis from "ioredis";
 import {
 	MemoryTmdbCacheStore,
@@ -32,10 +32,10 @@ export const TMDB_REDIS_CLIENT = Symbol("TMDB_REDIS_CLIENT");
  * keeps reconnecting in the background, and the store logs recovery.
  */
 export function createTmdbRedisClient(
-	config: ConfigService,
+	config: BackendEnv,
 	logger: Logger,
 ): Redis | null {
-	const url = config.get<string>("REDIS_URL");
+	const url = config.REDIS_URL;
 	if (!url) {
 		logger.log("REDIS_URL not set; TMDB cache is per-process memory");
 		return null;
@@ -91,9 +91,9 @@ class TmdbRedisLifecycle implements OnModuleDestroy {
 	providers: [
 		{
 			provide: TMDB_REDIS_CLIENT,
-			useFactory: (config: ConfigService) =>
+			useFactory: (config: BackendEnv) =>
 				createTmdbRedisClient(config, new Logger(TmdbCacheModule.name)),
-			inject: [ConfigService],
+			inject: [BackendEnv],
 		},
 		{
 			provide: TMDB_CACHE_STORE,

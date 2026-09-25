@@ -11,7 +11,7 @@ import {
 	type OnModuleDestroy,
 	type OnModuleInit,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import slugify from "slugify";
 import { EmailService } from "../email/email.service";
 import { MoviesTmdbService } from "../movies/movies-tmdb.service";
@@ -123,7 +123,7 @@ export class NotificationWorkerService
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly email: EmailService,
-		private readonly config: ConfigService,
+		private readonly config: BackendEnv,
 		private readonly movies: MoviesTmdbService,
 		private readonly shows: ShowsTmdbService,
 	) {}
@@ -719,9 +719,7 @@ export class NotificationWorkerService
 								body: job.body,
 								url: job.url,
 								collection: job.collection,
-								baseUrl:
-									this.config.get<string>("FRONTEND_URL") ||
-									"https://opnshelf.xyz",
+								baseUrl: this.config.FRONTEND_URL || "https://opnshelf.xyz",
 							}),
 						});
 					}

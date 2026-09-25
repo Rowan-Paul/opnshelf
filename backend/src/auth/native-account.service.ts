@@ -1,6 +1,6 @@
 import { Agent, AtpAgent } from "@atproto/api";
 import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 
 /** An identity provider the PDS can verify an id_token from. */
@@ -16,7 +16,7 @@ export type SsoProvider = "google" | "apple";
 export class NativeAccountService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 	) {}
 
 	/**
@@ -38,7 +38,7 @@ export class NativeAccountService {
 		refreshJwt: string;
 		pdsUrl: string;
 	}> {
-		const pdsUrl = this.configService.get<string>("PDS_URL");
+		const pdsUrl = this.configService.PDS_URL;
 		if (!pdsUrl) {
 			throw new Error("PDS_URL not configured");
 		}
@@ -113,7 +113,7 @@ export class NativeAccountService {
 	 * signup code `createAccount` originally sent — so no session/agent is needed.
 	 */
 	async resendEmailConfirmation(did: string): Promise<void> {
-		const pdsUrl = this.configService.get<string>("PDS_URL");
+		const pdsUrl = this.configService.PDS_URL;
 		if (!pdsUrl) {
 			throw new Error("PDS_URL not configured");
 		}
@@ -177,7 +177,7 @@ export class NativeAccountService {
 			providerUsername?: string | null;
 			redirectUrl?: string | null;
 		};
-		const pdsUrl = this.configService.get<string>("PDS_URL");
+		const pdsUrl = this.configService.PDS_URL;
 		return {
 			token: data.token ?? null,
 			email: data.email ?? null,
@@ -223,7 +223,7 @@ export class NativeAccountService {
 			accessJwt?: string;
 			refreshJwt?: string;
 		};
-		const pdsUrl = this.configService.get<string>("PDS_URL");
+		const pdsUrl = this.configService.PDS_URL;
 		if (!pdsUrl) {
 			throw new Error("PDS_URL not configured");
 		}
@@ -247,7 +247,7 @@ export class NativeAccountService {
 		path: string,
 		body: Record<string, unknown>,
 	): Promise<unknown> {
-		const pdsUrl = this.configService.get<string>("PDS_URL");
+		const pdsUrl = this.configService.PDS_URL;
 		if (!pdsUrl) {
 			throw new Error("PDS_URL not configured");
 		}

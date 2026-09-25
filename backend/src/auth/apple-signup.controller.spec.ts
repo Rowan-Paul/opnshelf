@@ -1,7 +1,8 @@
+import { mockEnvironment } from "../../test/env";
 import { ConflictException, UnauthorizedException } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
 import type { Mock, Mocked } from "vitest";
@@ -64,7 +65,7 @@ describe("AppleSignupController", () => {
 		exchangeCode: vi.fn().mockResolvedValue("apple-id-token"),
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
@@ -74,7 +75,7 @@ describe("AppleSignupController", () => {
 			};
 			return config[key];
 		}),
-	};
+	});
 
 	const createMockResponse = () =>
 		({
@@ -124,7 +125,7 @@ describe("AppleSignupController", () => {
 				SignupRateLimiter,
 				{ provide: AuthService, useValue: mockAuthService },
 				{ provide: NativeAccountService, useValue: mockNativeAccounts },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{ provide: TranquilAdminService, useValue: mockTranquilAdmin },
 				{ provide: CaptchaService, useValue: mockCaptcha },
 				{ provide: AppleOAuthService, useValue: mockAppleOAuth },
@@ -739,15 +740,15 @@ describe("AppleSignupController", () => {
 					{ provide: AuthService, useValue: mockAuthService },
 					{ provide: NativeAccountService, useValue: mockNativeAccounts },
 					{
-						provide: ConfigService,
-						useValue: {
+						provide: BackendEnv,
+						useValue: mockEnvironment({
 							get: (key: string) =>
 								({
 									FRONTEND_URL: "http://127.0.0.1:3000",
 									NODE_ENV: nodeEnv,
 									PDS_HANDLE_DOMAIN: "opnshelf.social",
 								})[key],
-						},
+						}),
 					},
 					{ provide: TranquilAdminService, useValue: mockTranquilAdmin },
 					{ provide: CaptchaService, useValue: mockCaptcha },

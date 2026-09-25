@@ -1,6 +1,6 @@
+import { mockEnvironment } from "../../test/env";
 import { ConflictException, NotFoundException } from "@nestjs/common";
-import type { ConfigService } from "@nestjs/config";
-import { Tap } from "@atproto/tap";
+import type { BackendEnv } from "../config/env.schema";
 
 const mockDeleteRecord = vi.fn();
 const mockListRecords = vi.fn();
@@ -79,13 +79,13 @@ describe("UserDeletionService", () => {
 		restore: vi.fn(),
 		revoke: vi.fn(),
 	} as unknown as AuthService;
-	const config = {
+	const config = mockEnvironment({
 		get: vi.fn((key: string) => {
 			if (key === "TAB_URL") return "http://tab:2480";
 			if (key === "TAB_ADMIN_PASSWORD") return "test-password";
 			return undefined;
 		}),
-	} as unknown as ConfigService;
+	}) as unknown as BackendEnv;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -128,23 +128,6 @@ describe("UserDeletionService", () => {
 		mockRemoveRepos.mockResolvedValue(undefined);
 
 		service = new UserDeletionService(prisma, authService, config);
-	});
-
-	it("falls back from empty Tab settings to legacy Tap settings", () => {
-		const legacyConfig = {
-			get: vi.fn((key: string) => {
-				if (key === "TAB_URL" || key === "TAB_ADMIN_PASSWORD") return "";
-				if (key === "TAP_URL") return "http://legacy-tap:2480";
-				if (key === "TAP_ADMIN_PASSWORD") return "legacy-password";
-				return undefined;
-			}),
-		} as unknown as ConfigService;
-
-		new UserDeletionService(prisma, authService, legacyConfig);
-
-		expect(Tap).toHaveBeenLastCalledWith("http://legacy-tap:2480", {
-			adminPassword: "legacy-password",
-		});
 	});
 
 	describe("deleteUserSync", () => {

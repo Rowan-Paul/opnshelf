@@ -1,4 +1,4 @@
-import type { ConfigService } from "@nestjs/config";
+import type { BackendEnv } from "../config/env.schema";
 
 /** Tells the OAuth callback the flow started in the Mobile App. */
 export const PLATFORM_COOKIE_NAME = "auth_platform";
@@ -23,19 +23,19 @@ export type ProviderSignupErrorCode =
 	| "apple_email_unverified";
 export type AuthPlatform = "mobile" | undefined;
 
-export function isProduction(configService: ConfigService): boolean {
-	return configService.get<string>("NODE_ENV") === "production";
+export function isProduction(configService: BackendEnv): boolean {
+	return configService.NODE_ENV === "production";
 }
 
-export function getFrontendUrl(configService: ConfigService): string {
-	return configService.get<string>("FRONTEND_URL") || "http://127.0.0.1:3000";
+export function getFrontendUrl(configService: BackendEnv): string {
+	return configService.FRONTEND_URL || "http://127.0.0.1:3000";
 }
 
 /**
  * Options for the short-lived platform/timezone cookies that carry state
  * across an OAuth redirect. Same secure/sameSite posture as the session.
  */
-export function flowCookieOptions(configService: ConfigService) {
+export function flowCookieOptions(configService: BackendEnv) {
 	return {
 		httpOnly: true,
 		secure: isProduction(configService),
@@ -50,7 +50,7 @@ export function flowCookieOptions(configService: ConfigService) {
  * credentials: include and never needs to receive the cookie itself. Its
  * maxAge is the absolute session lifetime (SESSION_TTL_MS).
  */
-export function sessionCookieOptions(configService: ConfigService) {
+export function sessionCookieOptions(configService: BackendEnv) {
 	return {
 		httpOnly: true,
 		secure: isProduction(configService),
@@ -64,11 +64,9 @@ export function sessionCookieOptions(configService: ConfigService) {
  * Scope used only to clear session cookies issued before sessions became
  * host-only. New session cookies must never use this domain.
  */
-export function getCookieDomain(
-	configService: ConfigService,
-): string | undefined {
+export function getCookieDomain(configService: BackendEnv): string | undefined {
 	if (!isProduction(configService)) return undefined;
-	const frontendUrl = configService.get<string>("FRONTEND_URL") || "";
+	const frontendUrl = configService.FRONTEND_URL || "";
 	try {
 		const host = new URL(frontendUrl).hostname;
 		if (host && !host.startsWith("localhost") && !host.startsWith("127.")) {

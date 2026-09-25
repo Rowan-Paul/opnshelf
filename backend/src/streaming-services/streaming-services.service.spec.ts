@@ -1,4 +1,4 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	normalizeCountry,
@@ -9,7 +9,7 @@ function jsonResponse(body: unknown, status = 200) {
 	return {
 		ok: status >= 200 && status < 300,
 		status,
-		headers: { get: () => null },
+		headers: mockEnvironment({ get: () => null }),
 		json: () => Promise.resolve(body),
 	};
 }
@@ -53,9 +53,7 @@ const tvList = {
 };
 
 function build() {
-	return new StreamingServicesService(
-		new ConfigService({ TMDB_API_KEY: "key" }),
-	);
+	return new StreamingServicesService(mockEnvironment({ TMDB_API_KEY: "key" }));
 }
 
 afterEach(() => {

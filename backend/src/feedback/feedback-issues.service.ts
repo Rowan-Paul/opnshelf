@@ -1,16 +1,16 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import type { CreateFeedbackDto } from "./dto/feedback.dto";
 
 @Injectable()
 export class FeedbackIssuesService {
 	private readonly logger = new Logger(FeedbackIssuesService.name);
 
-	constructor(private readonly config: ConfigService) {}
+	constructor(private readonly config: BackendEnv) {}
 
 	async createIssue(id: string, dto: CreateFeedbackDto): Promise<void> {
-		const token = this.config.get<string>("FEEDBACK_GITHUB_TOKEN");
-		const repository = this.config.get<string>("FEEDBACK_GITHUB_REPOSITORY");
+		const token = this.config.FEEDBACK_GITHUB_TOKEN;
+		const repository = this.config.FEEDBACK_GITHUB_REPOSITORY;
 		if (!token || !repository) {
 			this.logger.warn(
 				`Feedback ${id} saved; GitHub delivery is not configured`,

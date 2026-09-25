@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 
 const TURNSTILE_VERIFY_URL =
 	"https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -24,11 +24,11 @@ export class CaptchaService {
 
 	private readonly isProduction: boolean;
 
-	constructor(private readonly config: ConfigService) {
-		this.secret = this.config.get<string>("TURNSTILE_SECRET_KEY");
+	constructor(private readonly config: BackendEnv) {
+		this.secret = this.config.TURNSTILE_SECRET_KEY;
 		// No secret configured means no captcha — the local-dev escape hatch.
 		this.disabled = !this.secret;
-		this.isProduction = this.config.get<string>("NODE_ENV") === "production";
+		this.isProduction = this.config.NODE_ENV === "production";
 
 		if (this.disabled) {
 			this.logger.warn(

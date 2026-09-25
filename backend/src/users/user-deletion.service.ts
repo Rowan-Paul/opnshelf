@@ -7,7 +7,7 @@ import {
 	Logger,
 	NotFoundException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { $nsid as EPISODE_COLLECTION } from "../lexicons/xyz/opnshelf/episode";
 import { $nsid as FOLLOW_COLLECTION } from "../lexicons/xyz/opnshelf/follow";
 import { $nsid as LIBRARY_ITEM_COLLECTION } from "../lexicons/xyz/opnshelf/library/item";
@@ -78,18 +78,11 @@ export class UserDeletionService {
 		private readonly prisma: PrismaService,
 		@Inject(AUTH_SERVICE)
 		private readonly authService: Pick<AuthService, "restore" | "revoke">,
-		config: ConfigService,
+		config: BackendEnv,
 	) {
-		this.tab = new Tap(
-			config.get<string>("TAB_URL") ||
-				config.get<string>("TAP_URL") ||
-				"http://localhost:2480",
-			{
-				adminPassword:
-					config.get<string>("TAB_ADMIN_PASSWORD") ||
-					config.get<string>("TAP_ADMIN_PASSWORD"),
-			},
-		);
+		this.tab = new Tap(config.TAB_URL || "http://localhost:2480", {
+			adminPassword: config.TAB_ADMIN_PASSWORD,
+		});
 	}
 
 	async deleteUserSync(did: string): Promise<void> {

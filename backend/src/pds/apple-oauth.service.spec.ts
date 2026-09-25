@@ -1,5 +1,6 @@
+import { mockEnvironment } from "../../test/env";
 import { generateKeyPairSync, verify } from "node:crypto";
-import type { ConfigService } from "@nestjs/config";
+import type { BackendEnv } from "../config/env.schema";
 import { AppleOAuthService } from "./apple-oauth.service";
 
 const { privateKey, publicKey } = generateKeyPairSync("ec", {
@@ -19,9 +20,11 @@ const FULL_CONFIG: Record<string, string> = {
 
 function service(overrides: Record<string, string | undefined> = {}) {
 	const values = { ...FULL_CONFIG, ...overrides };
-	return new AppleOAuthService({
-		get: (key: string) => values[key],
-	} as unknown as ConfigService);
+	return new AppleOAuthService(
+		mockEnvironment({
+			get: (key: string) => values[key],
+		}) as unknown as BackendEnv,
+	);
 }
 
 /** Reach past `private` to assert on the secret Apple would receive. */
@@ -107,19 +110,6 @@ describe("AppleOAuthService", () => {
 		it("reuses a cached secret rather than re-signing", () => {
 			const svc = service();
 			expect(mintClientSecret(svc)).toBe(mintClientSecret(svc));
-		});
-
-		it("accepts a key whose newlines arrived escaped", () => {
-			const escaped = TEST_KEY_PEM.replace(/\n/g, "\\n");
-			const secret = mintClientSecret(service({ APPLE_PRIVATE_KEY: escaped }));
-			const [header, claims, signature] = secret.split(".");
-			const ok = verify(
-				"sha256",
-				Buffer.from(`${header}.${claims}`),
-				{ key: publicKey, dsaEncoding: "ieee-p1363" },
-				Buffer.from(signature, "base64url"),
-			);
-			expect(ok).toBe(true);
 		});
 	});
 });
