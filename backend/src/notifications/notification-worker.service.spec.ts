@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationWorkerService } from "./notification-worker.service";
 
 describe("NotificationWorkerService", () => {
@@ -49,6 +49,8 @@ describe("NotificationWorkerService", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		prisma.trackedMovie.count.mockResolvedValue(2);
+		prisma.trackedEpisode.count.mockResolvedValue(3);
 		prisma.notificationSettings.findMany.mockResolvedValue([settings]);
 		prisma.notificationSettings.updateMany.mockResolvedValue({ count: 1 });
 		prisma.pushDevice.findMany.mockResolvedValue([]);
@@ -65,6 +67,100 @@ describe("NotificationWorkerService", () => {
 		shows.discoverPremieresBetween.mockResolvedValue([
 			{ id: 24, name: "A Show" },
 		]);
+	});
+
+	describe("startup with a schedule saved by an older deployment", () => {
+		let nextQueueAt: Date;
+		const queuedEvents = new Set<string>();
+		const startedWorkers: NotificationWorkerService[] = [];
+
+		beforeEach(() => {
+			vi.useFakeTimers();
+			nextQueueAt = new Date("2026-09-26T07:00:00.000Z");
+			queuedEvents.clear();
+			// Unlike the normal fixtures, honor the persisted due-time filter.
+			prisma.notificationSettings.findMany.mockImplementation(({ where }) =>
+				Promise.resolve(
+					nextQueueAt <= where.nextQueueAt.lte
+						? [{ ...settings, nextQueueAt }]
+						: [],
+				),
+			);
+			prisma.notificationSettings.updateMany.mockImplementation(
+				({ where, data }) => {
+					const matches =
+						where.nextQueueAt instanceof Date
+							? nextQueueAt.getTime() === where.nextQueueAt.getTime()
+							: nextQueueAt > where.nextQueueAt.gt;
+					if (matches) nextQueueAt = data.nextQueueAt;
+					return Promise.resolve({ count: Number(matches) });
+				},
+			);
+			prisma.notificationDelivery.upsert.mockImplementation(
+				({ create, update }) => {
+					// A repeated event must preserve the existing delivery.
+					expect(update).toEqual({});
+					queuedEvents.add(create.eventKey);
+					return Promise.resolve({});
+				},
+			);
+		});
+
+		afterEach(() => {
+			for (const instance of startedWorkers) instance.onModuleDestroy();
+			startedWorkers.length = 0;
+			vi.useRealTimers();
+			vi.resetAllMocks();
+		});
+
+		async function startWorker(now: string) {
+			vi.setSystemTime(new Date(now));
+			const instance = new NotificationWorkerService(
+				{
+					...prisma,
+					movie: { findMany: vi.fn().mockResolvedValue([]) },
+					show: { findMany: vi.fn().mockResolvedValue([]) },
+				} as never,
+				email as never,
+				config as never,
+				movies as never,
+				shows as never,
+			);
+			startedWorkers.push(instance);
+			instance.onModuleInit();
+			await vi.advanceTimersByTimeAsync(0);
+			return instance;
+		}
+
+		it("replaces Saturday's cached check and queues Friday's digest at 18:00", async () => {
+			await startWorker("2026-09-25T13:57:00.000Z");
+			expect(queuedEvents.size).toBe(0);
+			expect(nextQueueAt).toEqual(new Date("2026-09-25T16:00:00.000Z"));
+			await vi.advanceTimersByTimeAsync(125 * 60_000);
+			expect([...queuedEvents]).toEqual(["new-releases:2026-09-21:NL"]);
+			expect(nextQueueAt).toEqual(new Date("2026-09-26T07:00:00.000Z"));
+		});
+
+		it("recovers on a Friday evening restart without replacing an existing event", async () => {
+			const first = await startWorker("2026-09-25T18:00:00.000Z");
+			expect([...queuedEvents]).toEqual(["new-releases:2026-09-21:NL"]);
+			first.onModuleDestroy();
+			await startWorker("2026-09-25T18:01:00.000Z");
+			expect(prisma.notificationDelivery.upsert).toHaveBeenCalledTimes(2);
+			expect(queuedEvents.size).toBe(1);
+			await vi.advanceTimersByTimeAsync(5 * 60_000);
+			expect(prisma.notificationDelivery.upsert).toHaveBeenCalledTimes(2);
+		});
+
+		it("retries startup reconciliation after a transient database failure", async () => {
+			prisma.notificationSettings.updateMany.mockRejectedValueOnce(
+				new Error("database unavailable"),
+			);
+			await startWorker("2026-09-25T18:00:00.000Z");
+			expect(queuedEvents.size).toBe(0);
+			await vi.advanceTimersByTimeAsync(5 * 60_000);
+			expect([...queuedEvents]).toEqual(["new-releases:2026-09-21:NL"]);
+		});
 	});
 
 	it("queues the Monday–Sunday release digest on Friday at 18:00 local time", async () => {
