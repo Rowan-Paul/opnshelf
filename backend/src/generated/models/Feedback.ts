@@ -161,7 +161,7 @@ export type FeedbackGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 
 export type FeedbackGroupByOutputType = {
   id: string
-  userDid: string
+  userDid: string | null
   category: string
   message: string
   pageUrl: string | null
@@ -192,18 +192,18 @@ export type FeedbackWhereInput = {
   OR?: Prisma.FeedbackWhereInput[]
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   id?: Prisma.StringFilter<"Feedback"> | string
-  userDid?: Prisma.StringFilter<"Feedback"> | string
+  userDid?: Prisma.StringNullableFilter<"Feedback"> | string | null
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type FeedbackOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  userDid?: Prisma.SortOrder
+  userDid?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
   pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -217,18 +217,18 @@ export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   OR?: Prisma.FeedbackWhereInput[]
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
-  userDid?: Prisma.StringFilter<"Feedback"> | string
+  userDid?: Prisma.StringNullableFilter<"Feedback"> | string | null
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id">
 
 export type FeedbackOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  userDid?: Prisma.SortOrder
+  userDid?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
   pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -244,7 +244,7 @@ export type FeedbackScalarWhereWithAggregatesInput = {
   OR?: Prisma.FeedbackScalarWhereWithAggregatesInput[]
   NOT?: Prisma.FeedbackScalarWhereWithAggregatesInput | Prisma.FeedbackScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
-  userDid?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
+  userDid?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   category?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
   message?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
@@ -259,12 +259,12 @@ export type FeedbackCreateInput = {
   pageUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutFeedbackInput
+  user?: Prisma.UserCreateNestedOneWithoutFeedbackInput
 }
 
 export type FeedbackUncheckedCreateInput = {
   id?: string
-  userDid: string
+  userDid?: string | null
   category: string
   message: string
   pageUrl?: string | null
@@ -279,12 +279,12 @@ export type FeedbackUpdateInput = {
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutFeedbackNestedInput
+  user?: Prisma.UserUpdateOneWithoutFeedbackNestedInput
 }
 
 export type FeedbackUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -294,7 +294,7 @@ export type FeedbackUncheckedUpdateInput = {
 
 export type FeedbackCreateManyInput = {
   id?: string
-  userDid: string
+  userDid?: string | null
   category: string
   message: string
   pageUrl?: string | null
@@ -313,7 +313,7 @@ export type FeedbackUpdateManyMutationInput = {
 
 export type FeedbackUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string
+  userDid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -452,7 +452,7 @@ export type FeedbackScalarWhereInput = {
   OR?: Prisma.FeedbackScalarWhereInput[]
   NOT?: Prisma.FeedbackScalarWhereInput | Prisma.FeedbackScalarWhereInput[]
   id?: Prisma.StringFilter<"Feedback"> | string
-  userDid?: Prisma.StringFilter<"Feedback"> | string
+  userDid?: Prisma.StringNullableFilter<"Feedback"> | string | null
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
@@ -506,7 +506,7 @@ export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   pageUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -517,7 +517,7 @@ export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pageUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -528,7 +528,7 @@ export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pageUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectScalar = {
@@ -543,23 +543,23 @@ export type FeedbackSelectScalar = {
 
 export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "category" | "message" | "pageUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["feedback"]>
 export type FeedbackInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }
 export type FeedbackIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }
 export type FeedbackIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }
 
 export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Feedback"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
+    user: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    userDid: string
+    userDid: string | null
     category: string
     message: string
     pageUrl: string | null
@@ -959,7 +959,7 @@ readonly fields: FeedbackFieldRefs;
  */
 export interface Prisma__FeedbackClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.Feedback$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Feedback$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1394,6 +1394,25 @@ export type FeedbackDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Feedbacks to delete.
    */
   limit?: number
+}
+
+/**
+ * Feedback.user
+ */
+export type Feedback$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**

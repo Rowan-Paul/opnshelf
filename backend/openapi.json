@@ -6170,17 +6170,9 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Not authenticated"
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Submit user feedback",
+        "summary": "Submit feedback with or without a session",
         "tags": [
           "feedback"
         ]

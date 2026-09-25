@@ -1,12 +1,6 @@
 import { Body, Controller, Post, Req, UseGuards } from "@nestjs/common";
-import {
-	ApiBearerAuth,
-	ApiOkResponse,
-	ApiOperation,
-	ApiTags,
-	ApiUnauthorizedResponse,
-} from "@nestjs/swagger";
-import { AuthGuard } from "../auth/auth.guard";
+import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import { CreateFeedbackDto, FeedbackResponseDto } from "./dto/feedback.dto";
 import { FeedbackService } from "./feedback.service";
@@ -17,20 +11,18 @@ export class FeedbackController {
 	constructor(private readonly feedbackService: FeedbackService) {}
 
 	@Post()
-	@UseGuards(AuthGuard)
-	@ApiBearerAuth()
-	@ApiOperation({ summary: "Submit user feedback" })
+	@UseGuards(OptionalAuthGuard)
+	@ApiOperation({ summary: "Submit feedback with or without a session" })
 	@ApiOkResponse({
 		description: "Feedback submitted",
 		type: FeedbackResponseDto,
 	})
-	@ApiUnauthorizedResponse({ description: "Not authenticated" })
 	async createFeedback(
-		@Req() req: AuthenticatedRequest,
+		@Req() req: Partial<AuthenticatedRequest>,
 		@Body() dto: CreateFeedbackDto,
 	): Promise<FeedbackResponseDto> {
 		const feedback = await this.feedbackService.createFeedback(
-			req.user.did,
+			req.user?.did ?? null,
 			dto,
 		);
 

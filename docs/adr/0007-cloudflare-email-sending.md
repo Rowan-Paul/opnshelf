@@ -10,3 +10,19 @@ We send all transactional email — the in-repo feedback notification and the Tr
 - **Railway blocks outbound SMTP on Hobby** (ports 25/465/587/2525), so the PDS cannot reach Cloudflare's SMTP endpoint directly. We run a small SMTP→REST bridge, `services/mail-relay/`, as a second Railway service: the PDS sends plaintext SMTP to it over the private network (`mail-relay.railway.internal:2500`, `MAIL_SMARTHOST_TLS=none`, no auth — internal traffic isn't egress-blocked), and the relay forwards via Cloudflare's REST API over HTTPS. The relay holds its own dedicated user-owned token (separate from the backend's, so the two services rotate independently). The backend dodges the block only because it was already on the REST API. Alternatives rejected: upgrading to Railway Pro (recurring cost) and moving the PDS off Railway (large change).
   - Gotcha: an already-running service won't route to a newly-added private-network peer until it's **redeployed**. After creating the relay, the PDS had to be redeployed to resolve/connect to it; until then every send timed out.
 - **Email Sending rejects account-owned (`cfat_`) API tokens.** Use a **user-owned** token (My Profile → API Tokens), account-scoped, permission *Email Sending: Edit*. An account-owned token verifies as valid but returns `10000 Authentication error` on send.
+
+## Amendment: feedback goes to GitHub Issues
+
+Feedback submissions now create public issues in `Rowan-Paul/opnshelf` instead
+of sending email. This replaces only the feedback notification decision above;
+transactional notification and PDS account emails still use Cloudflare. Both
+clients disclose that submissions are public before sending. Account details
+are kept in the database and not attached to issues, and page URLs omit credentials,
+query parameters and fragments. Submitted text is rendered as a code block to
+avoid interpreting Markdown or notifying mentioned GitHub users.
+
+The backend saves each submission before making one bounded GitHub API request.
+Missing configuration or failed delivery is logged with the feedback ID and does
+not reject saved feedback. There is no automatic retry or historical backfill;
+operators can recover failed deliveries from the saved records. See the
+[feedback routing runbook](../runbooks/feedback-github.md) for setup and rollout.
