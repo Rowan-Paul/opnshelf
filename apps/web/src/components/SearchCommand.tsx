@@ -550,7 +550,9 @@ export function SearchCommand({
 													<CommandShortcut>
 														<span className="flex items-center gap-1">
 															<Star />
-															{movie.vote_average?.toFixed(1) || "N/A"}
+															{movie.vote_average
+																? `${movie.vote_average.toFixed(1)}/10`
+																: "N/A"}
 														</span>
 													</CommandShortcut>
 												</CommandItem>
@@ -597,7 +599,9 @@ export function SearchCommand({
 													<CommandShortcut>
 														<span className="flex items-center gap-1">
 															<Star />
-															{show.vote_average?.toFixed(1) || "N/A"}
+															{show.vote_average
+																? `${show.vote_average.toFixed(1)}/10`
+																: "N/A"}
 														</span>
 													</CommandShortcut>
 												</CommandItem>

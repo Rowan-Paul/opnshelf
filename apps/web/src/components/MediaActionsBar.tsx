@@ -26,7 +26,6 @@ import AddToLibraryDialog from "./AddToLibraryDialog";
 import ManageListsDialog from "./ManageListsDialog";
 import { NoteDialog } from "./NoteDialog";
 import { ReviewDialog } from "./ReviewDialog";
-import { ratingToStars } from "./StarRating";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -304,14 +303,12 @@ export default function MediaActionsBar({
 								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
-						aria-label={rating > 0 ? "Edit your rating" : "Rate this"}
+						aria-label={
+							rating > 0 ? `Edit your rating: ${rating} out of 10` : "Rate this"
+						}
 					>
 						<Star className={`size-5 ${rating > 0 ? "fill-current" : ""}`} />
-						{rating > 0 ? (
-							<span className="text-sm">
-								{ratingToStars(rating).toFixed(1)}
-							</span>
-						) : null}
+						{rating > 0 ? <span className="text-sm">{rating}/10</span> : null}
 					</button>
 
 					{/* Library ("I own this") Button */}

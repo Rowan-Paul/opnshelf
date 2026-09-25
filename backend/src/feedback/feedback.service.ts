@@ -1,18 +1,16 @@
 import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { EmailService } from "../email/email.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreateFeedbackDto } from "./dto/feedback.dto";
+import { FeedbackIssuesService } from "./feedback-issues.service";
 
 @Injectable()
 export class FeedbackService {
 	constructor(
 		private prisma: PrismaService,
-		private email: EmailService,
-		private config: ConfigService,
+		private issues: FeedbackIssuesService,
 	) {}
 
-	async createFeedback(userDid: string, dto: CreateFeedbackDto) {
+	async createFeedback(userDid: string | null, dto: CreateFeedbackDto) {
 		const feedback = await this.prisma.feedback.create({
 			data: {
 				userDid,
@@ -22,24 +20,7 @@ export class FeedbackService {
 			},
 		});
 
-		const user = await this.prisma.user.findUnique({
-			where: { did: userDid },
-			select: { handle: true, displayName: true },
-		});
-
-		const notificationEmail = this.config.get<string>(
-			"FEEDBACK_NOTIFICATION_EMAIL",
-		);
-		if (notificationEmail && user) {
-			await this.email.sendFeedbackNotification({
-				to: notificationEmail,
-				category: dto.category,
-				message: dto.message,
-				userHandle: user.handle,
-				userDisplayName: user.displayName,
-				pageUrl: dto.pageUrl,
-			});
-		}
+		await this.issues.createIssue(feedback.id, dto);
 
 		return feedback;
 	}

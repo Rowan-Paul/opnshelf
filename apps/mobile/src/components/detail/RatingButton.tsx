@@ -47,7 +47,7 @@ export function RatingButton({
 					size={18}
 				/>
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
-					{rated ? `${(rating / 2).toFixed(1)} / 5` : "Rate"}
+					{rated ? `${rating} /10` : "Rate"}
 				</Text>
 			</Pressable>
 

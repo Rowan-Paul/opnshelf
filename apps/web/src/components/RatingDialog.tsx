@@ -11,7 +11,7 @@ import {
 	useRating,
 	useSetRating,
 } from "#/lib/hooks/useRatings";
-import StarRating, { ratingToStars } from "./StarRating";
+import StarRating from "./StarRating";
 
 interface RatingDialogProps {
 	open: boolean;
@@ -104,7 +104,7 @@ export function RatingDialog({
 						Your Rating
 					</DialogTitle>
 					<DialogDescription className="sr-only">
-						Rate this title from half a star to five stars.
+						Rate this title from 1 to 10. Each half-star is one point.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -113,13 +113,13 @@ export function RatingDialog({
 					{rated ? (
 						<div className="flex items-baseline gap-1">
 							<span className="font-bold font-display text-(--foreground) text-2xl">
-								{ratingToStars(rating).toFixed(1)}
+								{rating}
 							</span>
-							<span className="text-(--foreground-subtle) text-sm">/ 5</span>
+							<span className="text-(--foreground-subtle) text-sm">/10</span>
 						</div>
 					) : (
 						<span className="text-(--foreground-subtle) text-sm">
-							Click a star to rate
+							Choose a rating from 1 to 10
 						</span>
 					)}
 				</div>

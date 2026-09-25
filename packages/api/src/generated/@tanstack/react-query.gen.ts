@@ -3513,7 +3513,7 @@ export const peopleControllerGetPersonFilmographyInfiniteOptions = (options: Opt
 });
 
 /**
- * Submit user feedback
+ * Submit feedback with or without a session
  */
 export const feedbackControllerCreateFeedbackMutation = (options?: Partial<Options<FeedbackControllerCreateFeedbackData>>): UseMutationOptions<FeedbackControllerCreateFeedbackResponse, DefaultError, Options<FeedbackControllerCreateFeedbackData>> => {
     const mutationOptions: UseMutationOptions<FeedbackControllerCreateFeedbackResponse, DefaultError, Options<FeedbackControllerCreateFeedbackData>> = {

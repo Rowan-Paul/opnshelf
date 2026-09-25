@@ -1162,6 +1162,11 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
 export type UserCreatestreamingServiceIdsInput = {
   set: number[]
 }
@@ -1419,10 +1424,12 @@ export type UserCreateNestedOneWithoutFeedbackInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutFeedbackNestedInput = {
+export type UserUpdateOneWithoutFeedbackNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutFeedbackInput, Prisma.UserUncheckedCreateWithoutFeedbackInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutFeedbackInput
   upsert?: Prisma.UserUpsertWithoutFeedbackInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFeedbackInput, Prisma.UserUpdateWithoutFeedbackInput>, Prisma.UserUncheckedUpdateWithoutFeedbackInput>
 }

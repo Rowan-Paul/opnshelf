@@ -719,8 +719,8 @@ model ReviewLike {
 
 model Feedback {
   id        String   @id @default(cuid())
-  userDid   String
-  user      User     @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  userDid   String?
+  user      User?    @relation(fields: [userDid], references: [did], onDelete: Cascade)
   category  String
   message   String
   pageUrl   String?

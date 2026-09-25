@@ -1,5 +1,6 @@
 import { Pressable, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { Text } from "@/components/ui/text";
 
 const STAR_COLOR = "#f3bc00";
 const EMPTY_COLOR = "#94a3b8";
@@ -64,7 +65,19 @@ export function StarRating({
 	const gap = Math.max(2, Math.round(size * 0.18));
 
 	return (
-		<View style={{ flexDirection: "row", gap }}>
+		<View
+			accessible={!interactive}
+			accessibilityRole={interactive ? undefined : "image"}
+			accessibilityLabel={
+				interactive ? undefined : `Rating: ${rating} out of 10`
+			}
+			style={{
+				flexDirection: "row",
+				alignItems: "center",
+				flexWrap: "wrap",
+				gap,
+			}}
+		>
 			{stars.map((star) => {
 				// How much of this star is filled: 1 (full), 0.5 (half) or 0.
 				const fraction = Math.max(0, Math.min(2, rating - (star - 1) * 2)) / 2;
@@ -94,11 +107,17 @@ export function StarRating({
 						>
 							<Pressable
 								hitSlop={6}
+								accessibilityRole="radio"
+								accessibilityLabel={`Rate ${halfValue} out of 10`}
+								accessibilityState={{ selected: rating === halfValue }}
 								onPress={() => onChange?.(halfValue)}
 								style={{ width: size / 2, height: size }}
 							/>
 							<Pressable
 								hitSlop={6}
+								accessibilityRole="radio"
+								accessibilityLabel={`Rate ${fullValue} out of 10`}
+								accessibilityState={{ selected: rating === fullValue }}
 								onPress={() => onChange?.(fullValue)}
 								style={{ width: size / 2, height: size }}
 							/>
@@ -106,6 +125,9 @@ export function StarRating({
 					</View>
 				);
 			})}
+			{!interactive && rating > 0 ? (
+				<Text className="font-medium text-muted-foreground text-xs">{`${rating}/10`}</Text>
+			) : null}
 		</View>
 	);
 }

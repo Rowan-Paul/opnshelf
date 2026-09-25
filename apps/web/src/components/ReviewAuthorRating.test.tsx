@@ -13,7 +13,7 @@ describe("ReviewAuthorRating", () => {
 		render(<ReviewAuthorRating rating={8} />);
 
 		expect(
-			screen.getByRole("img", { name: "Rating: 4.0 out of 5" }),
+			screen.getByRole("img", { name: "Rating: 8 out of 10" }),
 		).toBeTruthy();
 	});
 });
