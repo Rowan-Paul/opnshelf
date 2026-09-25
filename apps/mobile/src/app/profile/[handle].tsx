@@ -129,7 +129,11 @@ export default function ProfileScreen() {
 							initialFilter={shelfFilter}
 						/>
 					) : tab === "up-next" ? (
-						<UpNextTab userDid={userDid} isOwner={isOwner} />
+						<UpNextTab
+							userDid={userDid}
+							isOwner={isOwner}
+							filterHandle={profile.handle}
+						/>
 					) : tab === "lists" ? (
 						<ListsTab userDid={userDid} handle={profile.handle} />
 					) : tab === "library" ? (

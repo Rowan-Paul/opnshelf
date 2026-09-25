@@ -178,6 +178,7 @@ export class ShowsService {
 		sortBy: "lastWatched" | "title" | "progress" = "lastWatched",
 		sortOrder: "asc" | "desc" = "desc",
 		showIdFilter?: string,
+		services?: string,
 	) {
 		return this.progress.getUserUpNext(
 			userDid,
@@ -186,6 +187,7 @@ export class ShowsService {
 			sortBy,
 			sortOrder,
 			showIdFilter,
+			services,
 		);
 	}
 

@@ -509,6 +509,28 @@ export class ShowsTmdbService {
 		return response.json<WatchProvidersResponse>();
 	}
 
+	/** Season data wins even when it has no flat-rate offers in this country. */
+	async getUpNextAvailability(showId: string, seasonNumber: number) {
+		const response = await this.http.fetchCached(
+			`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/watch/providers?api_key=${this.tmdbApiKey}`,
+			`tv:season:watchProviders:${showId}:${seasonNumber}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
+			{ notFoundValue: { results: {} } },
+		);
+		if (!response.ok) {
+			throw tmdbErrorForResponse(
+				response,
+				"Failed to fetch season availability",
+			);
+		}
+		const season = await response.json<WatchProvidersResponse>();
+		if (Object.keys(season.results).length > 0) return season;
+
+		const show = await this.getWatchProviders(showId);
+		if (!show) throw new Error("Failed to fetch show availability");
+		return show;
+	}
+
 	private getNavigableEpisodes(episodes: TMDBEpisode[]): TMDBEpisode[] {
 		return episodes.filter((episode) => this.isNavigableEpisode(episode));
 	}

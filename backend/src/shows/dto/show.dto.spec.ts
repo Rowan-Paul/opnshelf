@@ -1,6 +1,10 @@
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { MAX_SHOW_PROGRESS_IDS, ShowProgressQueryDto } from "./show.dto";
+import {
+	MAX_SHOW_PROGRESS_IDS,
+	PaginatedUpNextQueryDto,
+	ShowProgressQueryDto,
+} from "./show.dto";
 
 describe("ShowProgressQueryDto", () => {
 	// `?showIds=1399` arrives as a string, `?showIds=1399&showIds=1396` as an
@@ -34,5 +38,30 @@ describe("ShowProgressQueryDto", () => {
 		);
 
 		expect(errors.some((error) => error.property === "showIds")).toBe(true);
+	});
+});
+
+describe("PaginatedUpNextQueryDto services", () => {
+	it.each([undefined, "mine", "8", "8,350"])("accepts %s", async (services) => {
+		await expect(
+			validate(plainToInstance(PaginatedUpNextQueryDto, { services })),
+		).resolves.toHaveLength(0);
+	});
+	it.each([
+		"all",
+		"",
+		"0",
+		"-8",
+		"8,",
+		"mine,8",
+		"8.5",
+		"1234567890",
+		Array(51).fill("8").join(","),
+		["mine"],
+	])("rejects unsupported filter %s", async (services) => {
+		const errors = await validate(
+			plainToInstance(PaginatedUpNextQueryDto, { services }),
+		);
+		expect(errors.some((error) => error.property === "services")).toBe(true);
 	});
 });

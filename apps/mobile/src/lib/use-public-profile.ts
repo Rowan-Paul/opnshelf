@@ -13,9 +13,14 @@ import {
 	showsControllerGetUserUpNextInfiniteOptions,
 	showsControllerGetUserUpNextOptions,
 	socialControllerGetRelationshipOptions,
+	type UserSettingsDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+	keepPreviousData,
+	useInfiniteQuery,
+	useQuery,
+} from "@tanstack/react-query";
 
 /**
  * Data hooks for the public profile screen. These wrap the same generated
@@ -118,12 +123,33 @@ export function useProfileUpNext(
 }
 
 /** Up Next accumulated page by page (Up Next tab). */
-export function useInfiniteProfileUpNext(userDid: string) {
+export function useInfiniteProfileUpNext(
+	userDid: string,
+	services?: string,
+	settings?: UserSettingsDto,
+) {
+	const options = showsControllerGetUserUpNextInfiniteOptions({
+		path: { userDid },
+		query: { pageSize: UP_NEXT_PAGE_SIZE, services },
+	});
 	return useInfiniteQuery({
-		...showsControllerGetUserUpNextInfiniteOptions({
-			path: { userDid },
-			query: { pageSize: UP_NEXT_PAGE_SIZE },
-		}),
+		...options,
+		// Refresh the filtered queue when My Services or watch country changes.
+		queryKey: [
+			{
+				...options.queryKey[0],
+				tags: services
+					? [
+							settings?.watchCountry ?? "US",
+							...(settings?.streamingServiceIds ?? []).map(String),
+						]
+					: undefined,
+			},
+		],
+		placeholderData: (previous, previousQuery) =>
+			previousQuery?.queryKey[0].path?.userDid === userDid
+				? keepPreviousData(previous)
+				: undefined,
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) =>
 			lastPage.hasNextPage ? lastPage.page + 1 : undefined,

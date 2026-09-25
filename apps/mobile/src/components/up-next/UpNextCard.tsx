@@ -28,12 +28,11 @@ function formatAirDate(iso?: string): string | undefined {
 /**
  * A single Up Next entry: a tracked show's next unwatched episode, with watch
  * progress and a one-tap "mark watched" action that advances the queue. Shared
- * by the dashboard preview, the self-profile preview, and the full Up Next
- * screen. `isOwner` (default true) gates the action so other users' queues are
+ * by Home and Profile previews. The full Up Next screen uses UpNextEpisodeCard. `isOwner` (default true) gates the action so other users' queues are
  * read-only.
  *
  * The card owns its mark-watched mutation, so marking several episodes at once
- * only spins the cards being marked.
+ * only marks the cards being acted on as pending.
  */
 export function UpNextCard({
 	item,
@@ -131,6 +130,7 @@ export function UpNextCard({
 								label="Add to shelf"
 								size="sm"
 								loading={markEpisode.isPending}
+								loadingLabel="Adding…"
 								leading={<Plus color="#3f2e00" size={16} strokeWidth={3} />}
 								onPress={(e) => {
 									e.stopPropagation();
