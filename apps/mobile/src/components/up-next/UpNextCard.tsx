@@ -1,40 +1,23 @@
 import type { UpNextShowDto } from "@opnshelf/api";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
-import { Calendar, Plus } from "lucide-react-native";
+import { Plus, Tv } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, View } from "react-native";
-import { PosterImage } from "@/components/media/PosterImage";
 import { PosterProgress } from "@/components/media/poster-progress";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { showHref } from "@/lib/media-href";
-import { posterUrl } from "@/lib/tmdb";
+import { backdropUrl } from "@/lib/tmdb";
 import {
 	findShowProgress,
 	useShowProgressForShow,
 } from "@/lib/use-show-progress";
 import { useMarkUpNextEpisode } from "@/lib/use-up-next";
 
-function formatAirDate(iso?: string): string | undefined {
-	if (!iso) return undefined;
-	const d = new Date(iso);
-	if (Number.isNaN(d.getTime())) return undefined;
-	return d.toLocaleDateString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
-}
-
-/**
- * A single Up Next entry: a tracked show's next unwatched episode, with watch
- * progress and a one-tap "mark watched" action that advances the queue. Shared
- * by the dashboard preview, the self-profile preview, and the full Up Next
- * screen. `isOwner` (default true) gates the action so other users' queues are
- * read-only.
- *
- * The card owns its mark-watched mutation, so marking several episodes at once
- * only spins the cards being marked.
- */
+/** Episode tile shared by profile queues and dashboard previews.
+ * Each card owns its pending action; other users' queues remain read-only. */
 export function UpNextCard({
 	item,
 	isOwner = true,
@@ -61,92 +44,118 @@ export function UpNextCard({
 		: viewerProgress?.state !== "unavailable"
 			? viewerProgress
 			: undefined;
-	const airDate = formatAirDate(ep.airDate);
+	const [failedImages, setFailedImages] = useState<string[]>([]);
+	const imagePath = [ep.stillPath, show.backdropPath].find(
+		(path) => path && !failedImages.includes(path),
+	);
+	const href = showHref(
+		show.showId,
+		show.title,
+		ep.seasonNumber,
+		ep.episodeNumber,
+	);
 
 	return (
-		<Link
-			href={showHref(
-				show.showId,
-				show.title,
-				ep.seasonNumber,
-				ep.episodeNumber,
-			)}
-			asChild
-		>
-			<Pressable className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
-				{/* Fixed width + self-stretch wrapper with an absolutely-filled
-				    image: the poster covers the card's full height without ever
-				    driving row layout (h-full/aspect on the image itself makes RN
-				    inflate the row to the image's natural size). */}
-				<View className="min-h-32 w-24 self-stretch overflow-hidden rounded-lg border border-border bg-background-subtle">
-					<PosterImage
-						url={posterUrl(show.posterPath)}
-						className="absolute inset-0"
-					/>
-					<PosterProgress
-						progress={progressData}
-						label="Show progress"
-						isLoading={!isOwner && viewerProgressQuery.isLoading}
-					/>
-				</View>
-
-				<View className="min-w-0 flex-1 justify-between">
-					<View className="gap-0.5">
-						<View className="flex-row items-start justify-between gap-2">
+		<View className="overflow-hidden rounded-xl border border-border bg-card">
+			<Link href={href} asChild>
+				<Pressable
+					accessibilityRole="link"
+					accessibilityLabel={`${show.title}, season ${ep.seasonNumber}, episode ${ep.episodeNumber}`}
+				>
+					<View style={{ aspectRatio: 16 / 9 }} className="bg-slate-800">
+						{imagePath ? (
+							<Image
+								source={{ uri: backdropUrl(imagePath, "w780") }}
+								style={{ position: "absolute", inset: 0 }}
+								contentFit="cover"
+								transition={200}
+								onError={() =>
+									setFailedImages((paths) => [...paths, imagePath])
+								}
+							/>
+						) : (
+							<View className="absolute inset-0 items-center justify-center">
+								<Tv color="#94a3b8" size={40} />
+							</View>
+						)}
+						<LinearGradient
+							colors={["transparent", "rgba(0,0,0,0.9)"]}
+							style={{ position: "absolute", inset: 0 }}
+						/>
+						<View className="absolute right-0 bottom-0 left-0 gap-1 p-4">
+							<Text className="text-white/85 text-xs">
+								S{ep.seasonNumber} · E{ep.episodeNumber}
+							</Text>
 							<Text
-								className="flex-1 font-semibold text-foreground text-sm"
+								className="font-semibold text-base text-white"
 								numberOfLines={2}
 							>
 								{show.title}
 							</Text>
-							<View className="rounded-full bg-background-subtle px-2 py-0.5">
-								<Text className="font-medium text-muted-foreground text-xs">
-									S{ep.seasonNumber}E{ep.episodeNumber}
-								</Text>
-							</View>
 						</View>
-						<Text className="text-muted-foreground text-sm" numberOfLines={1}>
+					</View>
+				</Pressable>
+			</Link>
+			<View>
+				<PosterProgress
+					progress={progressData}
+					label="Show progress"
+					isLoading={!isOwner && viewerProgressQuery.isLoading}
+				/>
+			</View>
+			<View className="gap-3 p-4">
+				<Link href={href} asChild>
+					<Pressable accessibilityRole="link">
+						<Text
+							className="font-medium text-foreground text-sm"
+							numberOfLines={2}
+						>
 							{ep.name || `Episode ${ep.episodeNumber}`}
 						</Text>
-						{airDate ? (
-							<View className="mt-0.5 flex-row items-center gap-1.5">
-								<Calendar color="#94a3b8" size={13} />
-								<Text className="text-muted-foreground text-xs">{airDate}</Text>
-							</View>
-						) : null}
-					</View>
-
-					<View className="mt-2 gap-2">
-						{progressData && progressData.episodesTotal > 0 ? (
-							<Text
-								className="text-muted-foreground text-xs"
-								style={{ fontVariant: ["tabular-nums"] }}
-							>
-								{progressData.episodesWatched} of {progressData.episodesTotal} ·
-								{progressData.percentage}% watched
-							</Text>
-						) : null}
-						{isOwner ? (
-							<Button
-								label="Add to shelf"
-								size="sm"
-								loading={markEpisode.isPending}
-								leading={<Plus color="#3f2e00" size={16} strokeWidth={3} />}
-								onPress={(e) => {
-									e.stopPropagation();
-									markEpisode.mutate({
-										body: {
-											showId: item.showId,
-											seasonNumber: ep.seasonNumber,
-											episodeNumber: ep.episodeNumber,
-										},
-									});
-								}}
-							/>
-						) : null}
-					</View>
+					</Pressable>
+				</Link>
+				{ep.overview ? (
+					<Text
+						className="text-muted-foreground text-sm leading-relaxed"
+						numberOfLines={3}
+					>
+						{ep.overview}
+					</Text>
+				) : null}
+				<View className="flex-row flex-wrap items-center justify-between gap-2">
+					{!isOwner && viewerProgressQuery.isLoading ? (
+						<View className="h-3 w-28 animate-pulse rounded bg-background-subtle" />
+					) : progressData && progressData.episodesTotal > 0 ? (
+						<Text
+							className="text-muted-foreground text-xs"
+							style={{ fontVariant: ["tabular-nums"] }}
+						>
+							{progressData.episodesWatched} of {progressData.episodesTotal}{" "}
+							watched
+						</Text>
+					) : (
+						<View />
+					)}
+					{isOwner ? (
+						<Button
+							label="Add to shelf"
+							size="sm"
+							loading={markEpisode.isPending}
+							loadingLabel="Adding…"
+							leading={<Plus color="#3f2e00" size={16} strokeWidth={3} />}
+							onPress={() =>
+								markEpisode.mutate({
+									body: {
+										showId: item.showId,
+										seasonNumber: ep.seasonNumber,
+										episodeNumber: ep.episodeNumber,
+									},
+								})
+							}
+						/>
+					) : null}
 				</View>
-			</Pressable>
-		</Link>
+			</View>
+		</View>
 	);
 }
