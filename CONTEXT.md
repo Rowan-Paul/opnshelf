@@ -55,7 +55,7 @@ A flat-rate subscription video service on which a Media Item can be watched in a
 _Avoid_: Provider, watch provider (collides with **Provider Sign-In**'s identity providers), platform, subscription (that is the user's relationship to a service, not the service), channel
 
 **My Services**:
-The set of **Streaming Services** a user says they subscribe to, chosen for their watch country in Settings or during **Onboarding**. Drives the "On my services" filter on **Discover**; it is never applied to another user's pages. Changing watch country keeps the chosen set but only services that exist in the new country count.
+The set of **Streaming Services** a user says they subscribe to, chosen for their watch country in Settings or during **Onboarding**. Drives the "Popular on [service name]" rows on **Discover**; it is never applied to another user's pages. Changing watch country keeps the chosen set but only services that exist in the new country count.
 _Avoid_: Subscriptions, my providers, my platforms
 
 **Up Next**:

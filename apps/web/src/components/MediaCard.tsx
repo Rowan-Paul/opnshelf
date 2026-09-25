@@ -261,68 +261,69 @@ export default function MediaCard({
 					)}
 
 					{/* Actions — top-right corner */}
-					{(isWatched ||
-						onManageLists ||
-						((onMarkWatched || onUnmarkWatched) && !isProgressUnavailable)) && (
+					{(isWatched || onManageLists || onMarkWatched || onUnmarkWatched) && (
 						<div className="absolute top-2 right-2 flex flex-col gap-2 sm:gap-1.5">
 							<div className="flex items-center gap-2 sm:gap-1.5">
-								{(onMarkWatched || onUnmarkWatched) &&
-									!isProgressUnavailable && (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.preventDefault();
-												if (isWatched && onUnmarkWatched) {
-													onUnmarkWatched();
-												} else if (onMarkWatched) {
-													onMarkWatched();
-												}
-											}}
-											disabled={
-												isMarkWatchedPending ||
-												isUnmarkWatchedPending ||
-												isProgressLoading
+								{(onMarkWatched || onUnmarkWatched) && (
+									<button
+										type="button"
+										onClick={(e) => {
+											// Unknown progress: follow the card to the show's tracking controls.
+											if (isProgressUnavailable) return;
+											e.preventDefault();
+											if (isWatched && onUnmarkWatched) {
+												onUnmarkWatched();
+											} else if (onMarkWatched) {
+												onMarkWatched();
 											}
-											className={`flex h-9 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 ${
-												isPartialShow || isWatched
-													? `bg-(--accent) text-[#3f2e00] hover:brightness-95 ${watchCount && watchCount > 1 ? "gap-1 px-2.5 sm:px-2" : "w-9 sm:w-7"}`
-													: "w-9 bg-white/20 text-white backdrop-blur-sm hover:bg-white/40 sm:w-7"
-											}`}
-											aria-label={
-												isPartialShow
-													? `${episodeProgress?.watched} of ${episodeProgress?.total} episodes watched. Mark remaining watched`
-													: isWatched && watchCount
-														? `${watchCount} ${watchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
-														: isWatched
-															? "Remove from shelf"
-															: "Add to shelf"
-											}
-											title={
-												isPartialShow
+										}}
+										disabled={
+											isMarkWatchedPending ||
+											isUnmarkWatchedPending ||
+											isProgressLoading
+										}
+										className={`flex h-9 items-center justify-center rounded-full transition-colors disabled:opacity-50 sm:h-7 ${
+											isPartialShow || isWatched
+												? `bg-(--accent) text-[#3f2e00] hover:brightness-95 ${watchCount && watchCount > 1 ? "gap-1 px-2.5 sm:px-2" : "w-9 sm:w-7"}`
+												: "w-9 bg-black/70 text-white backdrop-blur-sm hover:bg-black/85 sm:w-7"
+										}`}
+										aria-label={
+											isPartialShow
+												? `${episodeProgress?.watched} of ${episodeProgress?.total} episodes watched. Mark remaining watched`
+												: isWatched && watchCount
+													? `${watchCount} ${watchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+													: isWatched
+														? "Remove from shelf"
+														: "Add to shelf"
+										}
+										title={
+											isProgressUnavailable
+												? "Open show to manage shelf"
+												: isPartialShow
 													? "Mark remaining watched"
 													: isWatched
 														? "Remove from shelf"
 														: "Add to shelf"
-											}
-										>
-											{isProgressLoading ? (
-												<span className="h-4 w-6 animate-pulse rounded-full bg-white/35 sm:h-3.5" />
-											) : isMarkWatchedPending || isUnmarkWatchedPending ? (
-												<Loader2 className="size-4 animate-spin sm:size-3.5" />
-											) : isWatched ? (
-												<>
-													<Check className="size-4 sm:size-3.5" />
-													{watchCount && watchCount > 1 ? (
-														<span className="font-bold text-xs tabular-nums">
-															{watchCount}
-														</span>
-													) : null}
-												</>
-											) : (
-												<Plus className="size-4 sm:size-3.5" />
-											)}
-										</button>
-									)}
+										}
+									>
+										{isProgressLoading ? (
+											<span className="h-4 w-6 animate-pulse rounded-full bg-white/35 sm:h-3.5" />
+										) : isMarkWatchedPending || isUnmarkWatchedPending ? (
+											<Loader2 className="size-4 animate-spin sm:size-3.5" />
+										) : isWatched ? (
+											<>
+												<Check className="size-4 sm:size-3.5" />
+												{watchCount && watchCount > 1 ? (
+													<span className="font-bold text-xs tabular-nums">
+														{watchCount}
+													</span>
+												) : null}
+											</>
+										) : (
+											<Plus className="size-4 sm:size-3.5" />
+										)}
+									</button>
+								)}
 								{onManageLists && (
 									<button
 										type="button"
@@ -333,7 +334,7 @@ export default function MediaCard({
 										className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors sm:h-7 sm:w-7 ${
 											isInAnyList
 												? "bg-(--accent) text-[#3f2e00] hover:brightness-95"
-												: "bg-white/20 text-white backdrop-blur-sm hover:bg-white/40"
+												: "bg-black/70 text-white backdrop-blur-sm hover:bg-black/85"
 										}`}
 										aria-label={isInAnyList ? "Manage lists" : "Add to list"}
 										title={isInAnyList ? "Manage list" : "Add to list"}

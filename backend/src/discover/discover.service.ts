@@ -8,6 +8,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UnifiedSearchResultDto } from "../search/dto/search.dto";
 import { ShowsService } from "../shows/shows.service";
 import {
+	normalizeCountry,
+	StreamingServicesService,
+} from "../streaming-services/streaming-services.service";
+import {
 	TMDB_LIST_CACHE_TTL_MS,
 	TmdbHttpClient,
 	tmdbErrorForResponse,
@@ -15,6 +19,7 @@ import {
 import {
 	type BecauseYouWatchedRowDto,
 	type DiscoverSectionResponseDto,
+	type PopularOnYourServicesResponseDto,
 } from "./dto/discover.dto";
 
 /** Raw TMDB list item (movie, show, or mixed trending entry). */
@@ -59,6 +64,7 @@ export class DiscoverService {
 		private readonly prisma: PrismaService,
 		private readonly moviesService: MoviesService,
 		private readonly showsService: ShowsService,
+		private readonly streamingServices: StreamingServicesService,
 		config: ConfigService,
 		@Optional() @Inject(TMDB_CACHE_STORE) cacheStore?: TmdbCacheStore,
 	) {
@@ -68,6 +74,59 @@ export class DiscoverService {
 			DiscoverService.name,
 			cacheStore,
 		);
+	}
+
+	/** One mixed movie/show row per saved service available in the watch country. */
+	async popularOnYourServices(
+		viewerDid: string,
+	): Promise<PopularOnYourServicesResponseDto> {
+		const user = await this.prisma.user.findUnique({
+			where: { did: viewerDid },
+			select: { watchCountry: true, streamingServiceIds: true },
+		});
+		if (!user?.streamingServiceIds.length) return { rows: [] };
+		const country = normalizeCountry(user.watchCountry);
+		const catalogue = await this.streamingServices.listForCountry(country);
+		const selected = catalogue.services.filter((service) =>
+			user.streamingServiceIds.includes(service.id),
+		);
+		const rows = await Promise.all(
+			selected.map(async (service) => {
+				const params = new URLSearchParams({
+					api_key: this.tmdbApiKey,
+					watch_region: country,
+					with_watch_providers: String(service.id),
+					with_watch_monetization_types: "flatrate",
+					sort_by: "popularity.desc",
+					include_adult: "false",
+					page: "1",
+				});
+				const [movies, shows] = await Promise.all(
+					(["movie", "tv"] as const).map(async (mediaType) => {
+						const response = await this.http.fetchCached(
+							`${this.tmdbBaseUrl}/discover/${mediaType}?${params}`,
+							`discover:services:${mediaType}:${country}:${service.id}`,
+							TMDB_LIST_CACHE_TTL_MS,
+						);
+						if (!response.ok)
+							throw tmdbErrorForResponse(
+								response,
+								"Failed to fetch popular titles on your services",
+							);
+						const data = await response.json<{ results: RawTmdbItem[] }>();
+						return validItems(data.results, mediaType);
+					}),
+				);
+				return {
+					serviceId: service.id,
+					serviceName: service.name,
+					items: interleaveByMediaType(movies, shows)
+						.slice(0, SECTION_LIMIT)
+						.map((item) => mapTmdbItem(item, item.media_type)),
+				};
+			}),
+		);
+		return { rows: rows.filter((row) => row.items.length > 0) };
 	}
 
 	/** Globally trending movies + shows this week (no personalization). */

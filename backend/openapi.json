@@ -6178,6 +6178,28 @@
         ]
       }
     },
+    "/discover/popular-on-your-services": {
+      "get": {
+        "operationId": "DiscoverController_popularOnYourServices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PopularOnYourServicesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Popular movies and shows on your Streaming Services",
+        "tags": [
+          "discover"
+        ]
+      }
+    },
     "/discover/trending": {
       "get": {
         "operationId": "DiscoverController_trending",
@@ -12176,6 +12198,42 @@
           "category",
           "message",
           "createdAt"
+        ]
+      },
+      "PopularOnYourServicesRowDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedSearchResultDto"
+            }
+          },
+          "serviceId": {
+            "type": "number"
+          },
+          "serviceName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "serviceId",
+          "serviceName"
+        ]
+      },
+      "PopularOnYourServicesResponseDto": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PopularOnYourServicesRowDto"
+            }
+          }
+        },
+        "required": [
+          "rows"
         ]
       },
       "DiscoverSectionResponseDto": {
