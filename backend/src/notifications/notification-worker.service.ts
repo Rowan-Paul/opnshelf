@@ -100,6 +100,7 @@ export class NotificationWorkerService
 	private readonly logger = new Logger(NotificationWorkerService.name);
 	private timer: NodeJS.Timeout | null = null;
 	private busy = false;
+	private schedulesReconciled = false;
 
 	constructor(
 		private readonly prisma: PrismaService,
@@ -122,6 +123,18 @@ export class NotificationWorkerService
 		if (this.busy) return;
 		this.busy = true;
 		try {
+			if (!this.schedulesReconciled) {
+				// nextQueueAt caches the previous process's scheduling rules. A
+				// deployment can introduce an earlier slot (e.g. Friday evening).
+				// Recheck future schedules once on startup; existing event keys
+				// preserve deliveries already queued or sent. Failed resets retry.
+				const now = new Date();
+				await this.prisma.notificationSettings.updateMany({
+					where: { nextQueueAt: { gt: now } },
+					data: { nextQueueAt: now },
+				});
+				this.schedulesReconciled = true;
+			}
 			await this.refreshRelevantCatalog();
 			await this.queueDueEvents(new Date());
 			await this.deliverPending();
