@@ -273,7 +273,8 @@ export class TmdbHttpClient {
 	 * Cached variant of {@link fetch} for idempotent GETs. Caches the parsed
 	 * JSON of successful responses under `cacheKey` for `ttlMs`. On a cache hit
 	 * returns a synthetic ok response wrapping the cached JSON. Non-ok responses
-	 * are never cached, preserving not-found semantics for callers.
+	 * are not cached unless the caller supplies a JSON value for a 404. That
+	 * value is cached and returned as a successful response for the same TTL.
 	 *
 	 * Opt-in: only call this from safe detail/search GETs.
 	 */
@@ -281,6 +282,7 @@ export class TmdbHttpClient {
 		url: string,
 		cacheKey: string,
 		ttlMs: number = TMDB_CACHE_TTL_MS,
+		options?: { notFoundValue: Record<string, unknown> },
 	): Promise<TmdbResponse> {
 		const cached = await this.store.get(cacheKey);
 		if (cached !== undefined) {
@@ -305,8 +307,10 @@ export class TmdbHttpClient {
 		);
 		try {
 			const response = await this.fetch(url);
-			if (response.ok) {
-				const data = await response.json<TMDBCachedResult>();
+			if (response.ok || (response.status === 404 && options)) {
+				const data = response.ok
+					? await response.json<TMDBCachedResult>()
+					: options?.notFoundValue;
 				await this.store.set(cacheKey, data, ttlMs);
 				settle(data);
 				return makeCachedResponse(data);

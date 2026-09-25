@@ -515,17 +515,16 @@ export class ShowsTmdbService {
 			`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/watch/providers?api_key=${this.tmdbApiKey}`,
 			`tv:season:watchProviders:${showId}:${seasonNumber}`,
 			TMDB_DETAIL_CACHE_TTL_MS,
+			{ notFoundValue: { results: {} } },
 		);
-		if (!response.ok && response.status !== 404) {
+		if (!response.ok) {
 			throw tmdbErrorForResponse(
 				response,
 				"Failed to fetch season availability",
 			);
 		}
-		const season = response.ok
-			? await response.json<WatchProvidersResponse>()
-			: null;
-		if (season && Object.keys(season.results).length > 0) return season;
+		const season = await response.json<WatchProvidersResponse>();
+		if (Object.keys(season.results).length > 0) return season;
 
 		const show = await this.getWatchProviders(showId);
 		if (!show) throw new Error("Failed to fetch show availability");

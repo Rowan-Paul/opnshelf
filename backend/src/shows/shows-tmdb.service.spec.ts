@@ -1,4 +1,6 @@
 import { ConfigService } from "@nestjs/config";
+import { MemoryTmdbCacheStore } from "../tmdb/tmdb-cache.store";
+import { TMDB_DETAIL_CACHE_TTL_MS } from "../tmdb/tmdb-http";
 import { ShowsTmdbService } from "./shows-tmdb.service";
 
 const offer = {
@@ -9,7 +11,10 @@ const offer = {
 };
 
 describe("Up Next season availability", () => {
-	afterEach(() => vi.unstubAllGlobals());
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.useRealTimers();
+	});
 
 	it("falls back only when season data is absent, and reuses cached reads", async () => {
 		const fetch = vi
@@ -38,6 +43,36 @@ describe("Up Next season availability", () => {
 		expect(
 			(await service.getUpNextAvailability("1", 3)).results.NL.flatrate,
 		).toBeUndefined();
+		expect(fetch).toHaveBeenCalledTimes(3);
+	});
+
+	it("caches missing seasons across service instances until the detail TTL expires", async () => {
+		vi.useFakeTimers();
+		const fetch = vi
+			.fn()
+			.mockResolvedValueOnce(new Response(null, { status: 404 }))
+			.mockResolvedValueOnce(Response.json({ id: 1, results: {} }))
+			.mockResolvedValueOnce(
+				Response.json({ results: { NL: { link: "", flatrate: [offer] } } }),
+			);
+		vi.stubGlobal("fetch", fetch);
+		const config = new ConfigService({ TMDB_API_KEY: "test" });
+		const store = new MemoryTmdbCacheStore();
+		const first = new ShowsTmdbService(config, store);
+		const second = new ShowsTmdbService(config, store);
+		await expect(first.getUpNextAvailability("1", 2)).resolves.toEqual({
+			id: 1,
+			results: {},
+		});
+		await expect(second.getUpNextAvailability("1", 2)).resolves.toEqual({
+			id: 1,
+			results: {},
+		});
+		expect(fetch).toHaveBeenCalledTimes(2);
+		vi.advanceTimersByTime(TMDB_DETAIL_CACHE_TTL_MS);
+		expect(
+			(await second.getUpNextAvailability("1", 2)).results.NL.flatrate,
+		).toEqual([offer]);
 		expect(fetch).toHaveBeenCalledTimes(3);
 	});
 
