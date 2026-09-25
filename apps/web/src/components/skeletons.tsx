@@ -205,3 +205,20 @@ export function DetailPageSkeleton() {
 		</div>
 	);
 }
+
+/** Discover's initial load: unnamed horizontal rows until all sections are ready. */
+export function DiscoverRowsSkeleton() {
+	return (
+		<output className="block space-y-8" aria-label="Loading Discover">
+			{IDX(3).map((i) => (
+				<div key={i} aria-hidden="true">
+					<div className={`mb-3 h-7 w-56 ${PULSE}`} />
+					<PosterGridSkeleton
+						count={8}
+						gridClassName="grid-flow-col auto-cols-[8rem] gap-3 overflow-hidden sm:auto-cols-[10rem]"
+					/>
+				</div>
+			))}
+		</output>
+	);
+}

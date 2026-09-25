@@ -24,3 +24,16 @@ export class BecauseYouWatchedResponseDto {
 	@ApiProperty({ type: [BecauseYouWatchedRowDto] })
 	rows: BecauseYouWatchedRowDto[];
 }
+
+export class PopularOnYourServicesRowDto extends DiscoverSectionResponseDto {
+	@ApiProperty()
+	serviceId: number;
+
+	@ApiProperty()
+	serviceName: string;
+}
+
+export class PopularOnYourServicesResponseDto {
+	@ApiProperty({ type: [PopularOnYourServicesRowDto] })
+	rows: PopularOnYourServicesRowDto[];
+}

@@ -2726,6 +2726,16 @@ export type FeedbackResponseDto = {
     createdAt: string;
 };
 
+export type PopularOnYourServicesRowDto = {
+    items: Array<UnifiedSearchResultDto>;
+    serviceId: number;
+    serviceName: string;
+};
+
+export type PopularOnYourServicesResponseDto = {
+    rows: Array<PopularOnYourServicesRowDto>;
+};
+
 export type DiscoverSectionResponseDto = {
     items: Array<UnifiedSearchResultDto>;
 };
@@ -6222,6 +6232,19 @@ export type FeedbackControllerCreateFeedbackResponses = {
 };
 
 export type FeedbackControllerCreateFeedbackResponse = FeedbackControllerCreateFeedbackResponses[keyof FeedbackControllerCreateFeedbackResponses];
+
+export type DiscoverControllerPopularOnYourServicesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/discover/popular-on-your-services';
+};
+
+export type DiscoverControllerPopularOnYourServicesResponses = {
+    200: PopularOnYourServicesResponseDto;
+};
+
+export type DiscoverControllerPopularOnYourServicesResponse = DiscoverControllerPopularOnYourServicesResponses[keyof DiscoverControllerPopularOnYourServicesResponses];
 
 export type DiscoverControllerTrendingData = {
     body?: never;

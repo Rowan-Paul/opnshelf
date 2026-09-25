@@ -1,6 +1,7 @@
 import {
 	discoverControllerBecauseYouWatchedOptions,
 	discoverControllerFromFollowsOptions,
+	discoverControllerPopularOnYourServicesOptions,
 	discoverControllerTrendingOptions,
 	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
@@ -12,8 +13,14 @@ import {
 	socialControllerSearchPeopleOptions,
 	socialControllerUnfollowMutation,
 	type UnifiedSearchResultDto,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	hashKey,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Link,
@@ -34,7 +41,11 @@ import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { Pagination } from "#/components/Pagination";
 import { SearchTabs } from "#/components/search/SearchTabs";
-import { PosterGridSkeleton, UserRowsSkeleton } from "#/components/skeletons";
+import {
+	DiscoverRowsSkeleton,
+	PosterGridSkeleton,
+	UserRowsSkeleton,
+} from "#/components/skeletons";
 import { useDebounce } from "#/hooks/useDebounce";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
@@ -251,28 +262,62 @@ function SearchPage() {
 
 	// Discovery sections — only fetched on the empty-query (browse) state.
 	const browsing = debouncedQuery.length === 0;
-	const { data: trendingData } = useQuery({
+	const { data: serviceSettings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: isAuthenticated,
+	});
+	const hasServices =
+		isAuthenticated && (serviceSettings?.streamingServiceIds.length ?? 0) > 0;
+	const popularOnYourServices = useQuery({
+		...discoverControllerPopularOnYourServicesOptions(),
+		queryKeyHashFn: (key) =>
+			hashKey([
+				...key,
+				user?.did,
+				serviceSettings?.watchCountry,
+				serviceSettings?.streamingServiceIds,
+			]),
+		enabled: hasServices && browsing,
+	});
+	const { data: trendingData, isLoading: trendingLoading } = useQuery({
 		...discoverControllerTrendingOptions(),
 		enabled: browsing,
 	});
-	const { data: fromFollowsData } = useQuery({
+	const { data: fromFollowsData, isLoading: fromFollowsLoading } = useQuery({
 		...discoverControllerFromFollowsOptions(),
 		enabled: browsing && isAuthenticated,
 	});
-	const { data: becauseYouWatchedData } = useQuery({
-		...discoverControllerBecauseYouWatchedOptions(),
-		enabled: browsing && isAuthenticated,
-	});
+	const { data: becauseYouWatchedData, isLoading: becauseYouWatchedLoading } =
+		useQuery({
+			...discoverControllerBecauseYouWatchedOptions(),
+			enabled: browsing && isAuthenticated,
+		});
 	// Public TMDB rows, so guests and brand-new accounts get more than the one
 	// trending row (issue #206).
-	const { data: popularMoviesData } = useQuery({
-		...moviesControllerDiscoverMoviesOptions(),
-		enabled: browsing,
-	});
-	const { data: popularShowsData } = useQuery({
+	const { data: popularMoviesData, isLoading: popularMoviesLoading } = useQuery(
+		{
+			...moviesControllerDiscoverMoviesOptions(),
+			enabled: browsing,
+		},
+	);
+	const { data: popularShowsData, isLoading: popularShowsLoading } = useQuery({
 		...showsControllerDiscoverShowsOptions(),
 		enabled: browsing,
 	});
+
+	const discoverPending =
+		authLoading ||
+		settingsLoading ||
+		popularOnYourServices.isLoading ||
+		trendingLoading ||
+		fromFollowsLoading ||
+		becauseYouWatchedLoading ||
+		popularMoviesLoading ||
+		popularShowsLoading;
+	const [discoverReady, setDiscoverReady] = useState(false);
+	useEffect(() => {
+		if (browsing && !discoverPending) setDiscoverReady(true);
+	}, [browsing, discoverPending]);
 
 	// Popular overlaps trending heavily (half the movie row, measured), so the
 	// popular rows only show what the rows above them didn't.
@@ -629,8 +674,18 @@ function SearchPage() {
 						)}
 					</div>
 				)
+			) : !discoverReady && discoverPending ? (
+				<DiscoverRowsSkeleton />
 			) : (
 				<div className="space-y-8">
+					{hasServices &&
+						(popularOnYourServices.data?.rows ?? []).map((row) => (
+							<DiscoverRow
+								key={row.serviceId}
+								title={`Popular on ${row.serviceName}`}
+								items={row.items}
+							/>
+						))}
 					{isAuthenticated && (
 						<DiscoverRow
 							title="From your follows"

@@ -5,6 +5,7 @@ import type { AuthenticatedRequest } from "../auth/types";
 import {
 	BecauseYouWatchedResponseDto,
 	DiscoverSectionResponseDto,
+	PopularOnYourServicesResponseDto,
 } from "./dto/discover.dto";
 import { DiscoverService } from "./discover.service";
 
@@ -12,6 +13,16 @@ import { DiscoverService } from "./discover.service";
 @Controller("discover")
 export class DiscoverController {
 	constructor(private readonly discoverService: DiscoverService) {}
+
+	@Get("popular-on-your-services")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary: "Popular movies and shows on your Streaming Services",
+	})
+	@ApiResponse({ status: 200, type: PopularOnYourServicesResponseDto })
+	async popularOnYourServices(@Req() req: AuthenticatedRequest) {
+		return this.discoverService.popularOnYourServices(req.user.did);
+	}
 
 	@Get("trending")
 	@ApiOperation({ summary: "Trending movies and shows this week" })
