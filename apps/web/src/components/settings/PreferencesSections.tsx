@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CountrySelector from "#/components/CountrySelector";
-import StreamingServicePicker from "#/components/StreamingServicePicker";
+import StreamingServicePicker, {
+	toggleService,
+} from "#/components/StreamingServicePicker";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { Switch } from "#/components/ui/switch";
 import { useAuth } from "#/lib/auth-context";
+import { createCoalescedSaver, sameIdSet } from "#/lib/coalesced-save";
 import { type ThemeMode, useThemeMode } from "#/lib/theme";
 import { useUpdateSettings } from "./use-settings-mutations";
 
@@ -179,8 +182,10 @@ export function PreferencesSections() {
 
 /**
  * My Services in Settings saves on every toggle. The chosen set lives in
- * local state so consecutive toggles build on each other instead of on the
- * last server response; the settings query catches up after each save.
+ * local state and writes go through a coalescing queue: one request at a
+ * time, always carrying the full latest set, so quick toggles cannot race
+ * each other. The server copy only overwrites local state once nothing is
+ * in flight, so a refetch cannot undo a toggle that is still saving.
  */
 function MyServicesField() {
 	const { userSettings } = useAuth();
@@ -188,18 +193,35 @@ function MyServicesField() {
 	const [selected, setSelected] = useState<number[]>(
 		userSettings?.streamingServiceIds ?? [],
 	);
+	const mutateAsync = updateSettingsMutation.mutateAsync;
+	const saver = useMemo(
+		() =>
+			createCoalescedSaver(
+				(streamingServiceIds: number[]) =>
+					mutateAsync({ body: { streamingServiceIds } }),
+				sameIdSet,
+			),
+		[mutateAsync],
+	);
+	// Latest local set, independent of the render cycle, so toggles that
+	// arrive before a re-render still build on each other.
+	const latest = useRef(selected);
 	const saved = userSettings?.streamingServiceIds;
 	useEffect(() => {
-		if (saved) setSelected(saved);
-	}, [saved]);
+		if (saved && !saver.isDirty()) {
+			latest.current = saved;
+			setSelected(saved);
+		}
+	}, [saved, saver]);
 
 	return (
 		<StreamingServicePicker
 			country={userSettings?.watchCountry ?? "US"}
 			value={selected}
-			onChange={(streamingServiceIds) => {
-				setSelected(streamingServiceIds);
-				updateSettingsMutation.mutate({ body: { streamingServiceIds } });
+			onToggle={(id) => {
+				latest.current = toggleService(latest.current, id);
+				setSelected(latest.current);
+				saver.submit(latest.current);
 			}}
 		/>
 	);

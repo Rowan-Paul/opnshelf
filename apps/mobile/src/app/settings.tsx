@@ -25,7 +25,7 @@ import {
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -42,11 +42,15 @@ import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
-import { StreamingServicePicker } from "@/components/ui/streaming-service-picker";
+import {
+	StreamingServicePicker,
+	toggleService,
+} from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
+import { createCoalescedSaver, sameIdSet } from "@/lib/coalesced-save";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
@@ -438,6 +442,12 @@ export function SettingsCategoryScreen({
 		: "";
 
 	const settingsBusy = updateSettingsMutation.isPending;
+	const updateSettingsAsync = updateSettingsMutation.mutateAsync;
+	const saveMyServices = useCallback(
+		(streamingServiceIds: number[]) =>
+			updateSettingsAsync({ body: { streamingServiceIds } }),
+		[updateSettingsAsync],
+	);
 
 	return (
 		<>
@@ -617,11 +627,7 @@ export function SettingsCategoryScreen({
 										<MyServicesField
 											country={settings?.watchCountry ?? "US"}
 											saved={settings?.streamingServiceIds ?? []}
-											onSave={(streamingServiceIds) =>
-												updateSettingsMutation.mutate({
-													body: { streamingServiceIds },
-												})
-											}
+											save={saveMyServices}
 										/>
 									</View>
 								)}
@@ -1004,29 +1010,39 @@ export default function SettingsScreen() {
 
 /**
  * My Services in Settings saves on every toggle. The chosen set lives in
- * local state so consecutive toggles build on each other instead of on the
- * last server response; the settings query catches up after each save.
+ * local state and writes go through a coalescing queue: one request at a
+ * time, always carrying the full latest set, so quick toggles cannot race
+ * each other. The server copy only overwrites local state once nothing is
+ * in flight, so a refetch cannot undo a toggle that is still saving.
  */
 function MyServicesField({
 	country,
 	saved,
-	onSave,
+	save,
 }: {
 	country: string;
 	saved: number[];
-	onSave: (ids: number[]) => void;
+	save: (ids: number[]) => Promise<unknown>;
 }) {
 	const [selected, setSelected] = useState<number[]>(saved);
+	const saver = useMemo(() => createCoalescedSaver(save, sameIdSet), [save]);
+	// Latest local set, independent of the render cycle, so toggles that
+	// arrive before a re-render still build on each other.
+	const latest = useRef(selected);
 	useEffect(() => {
-		setSelected(saved);
-	}, [saved]);
+		if (!saver.isDirty()) {
+			latest.current = saved;
+			setSelected(saved);
+		}
+	}, [saved, saver]);
 	return (
 		<StreamingServicePicker
 			country={country}
 			value={selected}
-			onChange={(ids) => {
-				setSelected(ids);
-				onSave(ids);
+			onToggle={(id) => {
+				latest.current = toggleService(latest.current, id);
+				setSelected(latest.current);
+				saver.submit(latest.current);
 			}}
 		/>
 	);

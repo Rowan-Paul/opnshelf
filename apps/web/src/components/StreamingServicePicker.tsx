@@ -21,7 +21,8 @@ interface StreamingServicePickerProps {
 	country: string;
 	/** TMDB watch-provider ids currently chosen (My Services). */
 	value: number[];
-	onChange: (ids: number[]) => void;
+	/** Called with the id the user tapped; the owner folds it into its own latest state. */
+	onToggle: (id: number) => void;
 	disabled?: boolean;
 }
 
@@ -54,14 +55,16 @@ export function toggleService(selected: number[], id: number): number[] {
 
 /**
  * Multi-select grid of Streaming Services for a watch country. Controlled:
- * the caller owns the chosen ids and decides when to save them. The search
+ * the caller owns the chosen ids, folds each toggle into its latest state
+ * (so two taps in one frame cannot read the same stale set), and decides
+ * when to save. The search
  * box is always there; it reaches the whole list, the grid only shows the
  * top of it until you type.
  */
 export default function StreamingServicePicker({
 	country,
 	value,
-	onChange,
+	onToggle,
 	disabled,
 }: StreamingServicePickerProps) {
 	const [query, setQuery] = useState("");
@@ -95,7 +98,9 @@ export default function StreamingServicePicker({
 		);
 	}
 
-	if (isError) {
+	// A failed background refresh keeps the last good list on screen; the
+	// error view is only for the case where there is nothing to show.
+	if (isError && !data) {
 		return (
 			<p className="text-(--foreground-muted) text-sm">
 				Could not load streaming services.{" "}
@@ -151,7 +156,7 @@ export default function StreamingServicePicker({
 							type="button"
 							disabled={disabled}
 							aria-pressed={selected}
-							onClick={() => onChange(toggleService(value, service.id))}
+							onClick={() => onToggle(service.id)}
 							className={cn(
 								"relative flex flex-col items-center gap-1.5 rounded-xl border p-2 text-center transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
 								selected

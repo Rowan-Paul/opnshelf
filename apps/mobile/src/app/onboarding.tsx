@@ -27,7 +27,10 @@ import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
 import { UserRowsSkeleton } from "@/components/ui/skeletons";
-import { StreamingServicePicker } from "@/components/ui/streaming-service-picker";
+import {
+	StreamingServicePicker,
+	toggleService,
+} from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -365,9 +368,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const updateSettings = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save preferences",
@@ -452,9 +458,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	const updateSettings = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save your services",
@@ -510,7 +519,9 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 				<StreamingServicePicker
 					country={settings?.watchCountry ?? "US"}
 					value={selected}
-					onChange={setSelected}
+					onToggle={(id) =>
+						setSelected((current) => toggleService(current, id))
+					}
 					disabled={updateSettings.isPending}
 				/>
 			)}

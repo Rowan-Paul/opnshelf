@@ -31,7 +31,9 @@ import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
 import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
-import StreamingServicePicker from "#/components/StreamingServicePicker";
+import StreamingServicePicker, {
+	toggleService,
+} from "#/components/StreamingServicePicker";
 import { UserRowsSkeleton } from "#/components/skeletons";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
@@ -562,9 +564,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const updateSettingsMutation = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save preferences",
@@ -665,9 +670,12 @@ function ServicesStep({
 	const updateSettingsMutation = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save your services",
@@ -706,7 +714,9 @@ function ServicesStep({
 				<StreamingServicePicker
 					country={settings?.watchCountry ?? "US"}
 					value={selected}
-					onChange={setSelected}
+					onToggle={(id) =>
+						setSelected((current) => toggleService(current, id))
+					}
 					disabled={updateSettingsMutation.isPending}
 				/>
 			)}
