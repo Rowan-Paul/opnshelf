@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import type { ExpoConfig } from "expo/config";
 
 /**
@@ -39,6 +40,20 @@ const googleSignInPlugin = GOOGLE_IOS_CLIENT_ID
 			},
 		] as [string, Record<string, string>])
 	: null;
+
+function sourceCommit(): string {
+	const commit =
+		process.env.EAS_BUILD_GIT_COMMIT_HASH ?? process.env.GITHUB_SHA;
+	if (commit) return commit.slice(0, 8);
+	try {
+		return execFileSync("git", ["rev-parse", "--short=8", "HEAD"], {
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+	} catch {
+		return "unknown";
+	}
+}
 
 const config: ExpoConfig = {
 	name: "Opnshelf",
@@ -183,6 +198,7 @@ const config: ExpoConfig = {
 		typedRoutes: true,
 	},
 	extra: {
+		commit: sourceCommit(),
 		apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:3001",
 		posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
 		posthogHost:

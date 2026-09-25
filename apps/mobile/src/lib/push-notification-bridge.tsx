@@ -10,22 +10,19 @@ import {
 /** Keeps a granted install registered and opens shared Web/Mobile detail URLs. */
 export function PushNotificationBridge() {
 	const { user, isLoading } = useAuth();
+	const did = user?.did;
+	const needsOnboarding = user?.needsOnboarding;
+	const needsEmailVerification = user?.needsEmailVerification;
 	const openedResponse = useRef<string | null>(null);
 	useEffect(() => {
-		setPushUser(user?.did ?? null);
-		if (
-			isLoading ||
-			!user ||
-			user.needsOnboarding ||
-			user.needsEmailVerification
-		)
-			return;
+		setPushUser(did ?? null);
+		if (isLoading || !did || needsOnboarding || needsEmailVerification) return;
 		let active = true;
 		void syncAuthorizedPush().catch((error) =>
 			console.warn("Could not sync push token", error),
 		);
-		const tokenListener = Notifications.addPushTokenListener(() => {
-			void syncAuthorizedPush().catch((error) =>
+		const tokenListener = Notifications.addPushTokenListener((token) => {
+			void syncAuthorizedPush(token).catch((error) =>
 				console.warn("Could not refresh push token", error),
 			);
 		});
@@ -47,6 +44,6 @@ export function PushNotificationBridge() {
 			tokenListener.remove();
 			responseListener.remove();
 		};
-	}, [isLoading, user]);
+	}, [isLoading, did, needsOnboarding, needsEmailVerification]);
 	return null;
 }

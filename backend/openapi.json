@@ -5736,6 +5736,35 @@
         ]
       }
     },
+    "/notifications/test": {
+      "post": {
+        "operationId": "NotificationsController_testNotification",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestNotificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/notifications/email/request": {
       "post": {
         "operationId": "NotificationsController_requestEmail",
@@ -11623,6 +11652,21 @@
             "type": "boolean"
           }
         }
+      },
+      "TestNotificationDto": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "push",
+              "email"
+            ]
+          }
+        },
+        "required": [
+          "channel"
+        ]
       },
       "RequestNotificationEmailDto": {
         "type": "object",

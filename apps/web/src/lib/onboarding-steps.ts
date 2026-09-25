@@ -14,6 +14,7 @@ export const ONBOARDING_STEPS = [
 	"profile",
 	"preferences",
 	"services",
+	"notifications",
 	"trakt",
 	"suggestions",
 	"watched",

@@ -32,6 +32,8 @@ describe("NotificationWorkerService", () => {
 			update: vi.fn(),
 		},
 		listItem: { findMany: vi.fn() },
+		trackedMovie: { count: vi.fn().mockResolvedValue(2) },
+		trackedEpisode: { count: vi.fn().mockResolvedValue(3) },
 	};
 	const email = { sendNotification: vi.fn() };
 	const config = { get: vi.fn() };
@@ -65,8 +67,8 @@ describe("NotificationWorkerService", () => {
 		]);
 	});
 
-	it("queues the general release digest once for the coming week on Monday", async () => {
-		await worker.queueDueEvents(new Date("2026-09-28T08:00:00.000Z"));
+	it("queues the Monday–Sunday release digest on Friday at 18:00 local time", async () => {
+		await worker.queueDueEvents(new Date("2026-10-02T16:00:00.000Z"));
 		expect(movies.discoverReleasesBetween).toHaveBeenCalledWith(
 			"2026-09-28",
 			"2026-10-04",
@@ -83,8 +85,84 @@ describe("NotificationWorkerService", () => {
 		);
 		expect(prisma.notificationSettings.updateMany).toHaveBeenCalledWith({
 			where: { userDid: settings.userDid, nextQueueAt: settings.nextQueueAt },
-			data: { nextQueueAt: new Date("2026-09-29T07:00:00.000Z") },
+			data: { nextQueueAt: new Date("2026-10-03T07:00:00.000Z") },
 		});
+	});
+
+	it.each([
+		["2026-10-02T06:00:00.000Z", "2026-10-02T07:00:00.000Z"],
+		["2026-10-02T07:00:00.000Z", "2026-10-02T16:00:00.000Z"],
+		["2026-10-02T15:59:00.000Z", "2026-10-02T16:00:00.000Z"],
+		["2026-10-30T08:00:00.000Z", "2026-10-30T17:00:00.000Z"],
+	])(
+		"waits for Friday evening while preserving the morning run at %s",
+		async (now, next) => {
+			await worker.queueDueEvents(new Date(now));
+			expect(movies.discoverReleasesBetween).not.toHaveBeenCalled();
+			expect(prisma.notificationSettings.updateMany).toHaveBeenCalledWith(
+				expect.objectContaining({ data: { nextQueueAt: new Date(next) } }),
+			);
+		},
+	);
+
+	it("keeps weekly stats on Monday morning without a release digest", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([
+			{ ...settings, emailStats: true },
+		]);
+		await worker.queueDueEvents(new Date("2026-09-28T07:00:00.000Z"));
+		expect(movies.discoverReleasesBetween).not.toHaveBeenCalled();
+		expect(prisma.notificationDelivery.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				create: expect.objectContaining({
+					category: "Stats",
+					eventKey: "stats:weekly:2026-09-28",
+				}),
+			}),
+		);
+		expect(prisma.trackedMovie.count).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					watchedDate: {
+						gte: new Date("2026-09-20T22:00:00.000Z"),
+						lt: new Date("2026-09-27T22:00:00.000Z"),
+					},
+				}),
+			}),
+		);
+	});
+
+	it("uses the user's Friday even when UTC is already Saturday", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([
+			{ ...settings, user: { ...user, timezone: "America/Los_Angeles" } },
+		]);
+		await worker.queueDueEvents(new Date("2026-10-03T01:00:00.000Z"));
+		expect(movies.discoverReleasesBetween).toHaveBeenCalledWith(
+			"2026-09-28",
+			"2026-10-04",
+			"NL",
+		);
+		expect(prisma.notificationSettings.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: { nextQueueAt: new Date("2026-10-03T16:00:00.000Z") },
+			}),
+		);
+	});
+
+	it("keeps monthly and yearly stats on January 1 at 09:00, even on Friday", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([
+			{ ...settings, emailStats: true },
+		]);
+		await worker.queueDueEvents(new Date("2027-01-01T08:00:00.000Z"));
+		expect(movies.discoverReleasesBetween).not.toHaveBeenCalled();
+		for (const period of ["monthly", "yearly"]) {
+			expect(prisma.notificationDelivery.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({
+						eventKey: `stats:${period}:2027-01-01`,
+					}),
+				}),
+			);
+		}
 	});
 
 	it("queries only accounts due at this tick", async () => {

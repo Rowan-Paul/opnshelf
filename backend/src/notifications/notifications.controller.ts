@@ -19,6 +19,7 @@ import {
 	RemovePushDeviceDto,
 	RequestNotificationEmailDto,
 	UpdateNotificationSettingsDto,
+	TestNotificationDto,
 } from "./notifications.dto";
 import { NotificationsService } from "./notifications.service";
 
@@ -42,6 +43,15 @@ export class NotificationsController {
 		@Body() body: UpdateNotificationSettingsDto,
 	): Promise<NotificationSettingsDto> {
 		return this.notifications.updateSettings(req.user.did, body);
+	}
+
+	@Post("test")
+	@Throttle({ default: { limit: 3, ttl: 60_000 } })
+	async testNotification(
+		@Req() req: AuthenticatedRequest,
+		@Body() body: TestNotificationDto,
+	): Promise<void> {
+		await this.notifications.sendTest(req.user.did, body.channel);
 	}
 
 	@Post("email/request")

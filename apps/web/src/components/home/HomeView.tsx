@@ -13,6 +13,7 @@ import DashboardMediaCard from "#/components/DashboardMediaCard";
 import { FriendsActivitySection } from "#/components/following/FriendsActivitySection";
 import LoadingState from "#/components/LoadingState";
 import { MobileAppPrompt } from "#/components/MobileAppPrompt";
+import { NotificationPrompt } from "#/components/NotificationPrompt";
 import { PromptSlot } from "#/components/PromptSlot";
 import { StatsStrip } from "#/components/StatsStrip";
 import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
@@ -319,6 +320,7 @@ export function HomeView() {
 			    Mobile App is new to them, AT Store is a favour to us. */}
 			<PromptSlot>
 				<TraktHomePrompt />
+				<NotificationPrompt />
 				<MobileAppPrompt />
 				<AtStoreReviewPrompt />
 			</PromptSlot>
