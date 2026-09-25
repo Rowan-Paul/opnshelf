@@ -17,6 +17,7 @@ import { Link, Stack } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
+	Bell,
 	ChevronRight,
 	Compass,
 	Download,
@@ -167,9 +168,19 @@ function AppearanceSetting() {
 export type SettingsCategory =
 	| "profile"
 	| "preferences"
+	| "notifications"
 	| "connections"
 	| "account"
 	| "help";
+
+const SETTINGS_TITLES: Record<SettingsCategory, string> = {
+	profile: "Profile",
+	preferences: "Preferences",
+	notifications: "Notifications",
+	connections: "Connections",
+	account: "Account",
+	help: "Help",
+};
 
 /** Shared implementation for the focused settings category routes. */
 export function SettingsCategoryScreen({
@@ -454,16 +465,7 @@ export function SettingsCategoryScreen({
 		<>
 			<Stack.Screen
 				options={{
-					title:
-						section === "profile"
-							? "Profile"
-							: section === "preferences"
-								? "Preferences"
-								: section === "connections"
-									? "Connections"
-									: section === "account"
-										? "Account"
-										: "Help",
+					title: SETTINGS_TITLES[section],
 					// While a PDS deletion job runs, lock the user on this screen:
 					// hide the back button and disable the iOS swipe-back gesture.
 					headerBackVisible: !isDeleting,
@@ -592,13 +594,6 @@ export function SettingsCategoryScreen({
 								)}
 							</SettingsSection>
 
-							<SettingsSection
-								title="Notifications"
-								description="Choose the updates Opnshelf sends to your device and email."
-							>
-								<NotificationPreferences />
-							</SettingsSection>
-
 							{/* Streaming country */}
 							<SettingsSection
 								title="Streaming"
@@ -681,6 +676,15 @@ export function SettingsCategoryScreen({
 								)}
 							</SettingsSection>
 						</>
+					)}
+
+					{section === "notifications" && (
+						<SettingsSection
+							title="Notifications"
+							description="Choose the updates Opnshelf sends to your device and email."
+						>
+							<NotificationPreferences />
+						</SettingsSection>
 					)}
 
 					{section === "connections" && (
@@ -937,6 +941,7 @@ const SETTINGS_AREAS: {
 	href:
 		| "/edit-profile"
 		| "/settings/preferences"
+		| "/settings/notifications"
 		| "/settings/connections"
 		| "/settings/account"
 		| "/settings/help";
@@ -955,6 +960,12 @@ const SETTINGS_AREAS: {
 		label: "Preferences",
 		description: "Appearance, time, streaming and reviews",
 		Icon: Compass,
+	},
+	{
+		href: "/settings/notifications",
+		label: "Notifications",
+		description: "Mobile and email alerts",
+		Icon: Bell,
 	},
 	{
 		href: "/settings/connections",

@@ -116,6 +116,10 @@ export default function RootLayout() {
 						options={{ headerShown: true }}
 					/>
 					<Stack.Screen
+						name="settings/notifications"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
 						name="settings/connections"
 						options={{ headerShown: true }}
 					/>

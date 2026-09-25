@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+	Bell,
 	CircleHelp,
 	Loader2,
 	PlugZap,
@@ -24,6 +25,12 @@ export const SETTINGS_AREAS = [
 		label: "Preferences",
 		description: "Appearance, time, streaming and reviews",
 		Icon: SlidersHorizontal,
+	},
+	{
+		section: "notifications",
+		label: "Notifications",
+		description: "Email alerts and digests",
+		Icon: Bell,
 	},
 	{
 		section: "connections",

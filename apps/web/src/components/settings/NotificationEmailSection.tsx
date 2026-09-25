@@ -109,10 +109,7 @@ export function NotificationEmailSection() {
 	};
 
 	return (
-		<section
-			id="notifications"
-			className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
-		>
+		<section id="notifications" className="scroll-mt-24 p-5 sm:p-7">
 			<h2 className="mb-1 font-semibold text-lg">Notifications</h2>
 			<p className="mb-6 text-(--foreground-muted) text-sm">
 				Choose which updates Opnshelf emails you.
