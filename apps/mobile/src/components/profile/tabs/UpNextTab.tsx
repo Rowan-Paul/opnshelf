@@ -7,6 +7,7 @@ import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
+import { UpNextEpisodeCard } from "@/components/up-next/UpNextEpisodeCard";
 import { UpNextServiceFilter } from "@/components/up-next/UpNextServiceFilter";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useEndReached } from "@/lib/use-end-reached";
@@ -62,6 +63,8 @@ export function UpNextTab({
 		isFetchNextPageError,
 	} = useInfiniteProfileUpNext(userDid, services, settings);
 
+	const Card = filterHandle ? UpNextCard : UpNextEpisodeCard;
+	const skeletonVariant = filterHandle ? "compact" : "tile";
 	const items = data?.pages.flatMap((page) => page.items) ?? [];
 	const loadMore = { hasNextPage, isFetchingNextPage, isFetchNextPageError };
 	useEndReached(() => {
@@ -113,7 +116,7 @@ export function UpNextTab({
 				accessibilityState={{ busy: isFetching }}
 			>
 				{isLoading ? (
-					<UpNextSkeleton rows={4} />
+					<UpNextSkeleton rows={4} variant={skeletonVariant} />
 				) : isError && items.length === 0 ? (
 					<ErrorState
 						message="Couldn't load Up Next."
@@ -132,7 +135,7 @@ export function UpNextTab({
 				) : (
 					<View className="gap-3">
 						{items.map((item) => (
-							<UpNextCard
+							<Card
 								key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
 								item={item}
 								isOwner={isOwner}
@@ -144,7 +147,7 @@ export function UpNextTab({
 			<LoadMoreFooter
 				{...loadMore}
 				onRetry={() => void fetchNextPage()}
-				skeleton={<UpNextSkeleton rows={1} />}
+				skeleton={<UpNextSkeleton rows={1} variant={skeletonVariant} />}
 			/>
 		</View>
 	);

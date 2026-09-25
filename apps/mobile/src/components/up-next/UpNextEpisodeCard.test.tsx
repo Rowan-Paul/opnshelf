@@ -8,7 +8,7 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PosterProgress } from "@/components/media/poster-progress";
 import { Button } from "@/components/ui/button";
-import { UpNextCard } from "./UpNextCard";
+import { UpNextEpisodeCard } from "./UpNextEpisodeCard";
 
 const mocks = vi.hoisted(() => ({ mutate: vi.fn(), useMark: vi.fn() }));
 function host(name: string) {
@@ -50,8 +50,8 @@ function renderCards(owner = true) {
 	act(() => {
 		renderer = create(
 			<>
-				<UpNextCard item={item} isOwner={owner} />
-				<UpNextCard item={{ ...item, showId: "2" }} isOwner={owner} />
+				<UpNextEpisodeCard item={item} isOwner={owner} />
+				<UpNextEpisodeCard item={{ ...item, showId: "2" }} isOwner={owner} />
 			</>,
 		);
 	});

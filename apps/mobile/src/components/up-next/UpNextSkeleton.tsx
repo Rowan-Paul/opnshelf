@@ -21,7 +21,22 @@ export function UpNextRowSkeleton({
 	);
 }
 
-export function UpNextSkeleton({ rows = 2 }: { rows?: number }) {
+export function UpNextSkeleton({
+	rows = 2,
+	variant = "compact",
+}: {
+	rows?: number;
+	variant?: "compact" | "tile";
+}) {
+	if (variant === "compact")
+		return (
+			<View className="gap-3">
+				{Array.from({ length: rows }, (_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
+					<UpNextRowSkeleton key={i} />
+				))}
+			</View>
+		);
 	return (
 		<View className="gap-3">
 			{Array.from({ length: rows }, (_, i) => (

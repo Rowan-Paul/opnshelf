@@ -2,6 +2,8 @@ import type { PropsWithChildren } from "react";
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UpNextCard } from "@/components/up-next/UpNextCard";
+import { UpNextEpisodeCard } from "@/components/up-next/UpNextEpisodeCard";
 import { UpNextServiceFilter } from "@/components/up-next/UpNextServiceFilter";
 import { UpNextTab } from "./UpNextTab";
 
@@ -28,7 +30,17 @@ vi.mock("@tanstack/react-query", () => ({
 	}),
 }));
 vi.mock("@/lib/use-public-profile", () => ({
-	useInfiniteProfileUpNext: () => ({ data: { pages: [{ items: [] }] } }),
+	useInfiniteProfileUpNext: () => ({
+		data: {
+			pages: [
+				{
+					items: [
+						{ showId: "1", nextEpisode: { seasonNumber: 1, episodeNumber: 1 } },
+					],
+				},
+			],
+		},
+	}),
 }));
 vi.mock("@/lib/use-end-reached", () => ({ useEndReached: vi.fn() }));
 vi.mock("@/components/ui/load-more", () => ({
@@ -42,6 +54,9 @@ vi.mock("@/components/ui/states", () => ({
 vi.mock("@/components/ui/text", () => ({ Text: host("Text") }));
 vi.mock("@/components/up-next/UpNextCard", () => ({
 	UpNextCard: host("Card"),
+}));
+vi.mock("@/components/up-next/UpNextEpisodeCard", () => ({
+	UpNextEpisodeCard: host("EpisodeCard"),
 }));
 vi.mock("@/components/up-next/UpNextSkeleton", () => ({
 	UpNextSkeleton: host("Skeleton"),
@@ -65,6 +80,16 @@ beforeEach(() => {
 	mocks.savedIds = [];
 });
 describe("Up Next filter navigation", () => {
+	it("keeps compact cards in the profile hub and episode tiles on the full screen", () => {
+		const hub = renderTab("demo.test");
+		expect(hub.root.findAllByType(UpNextCard)).toHaveLength(1);
+		expect(hub.root.findAllByType(UpNextEpisodeCard)).toHaveLength(0);
+		act(() => hub.unmount());
+		const full = renderTab();
+		expect(full.root.findAllByType(UpNextEpisodeCard)).toHaveLength(1);
+		expect(full.root.findAllByType(UpNextCard)).toHaveLength(0);
+		act(() => full.unmount());
+	});
 	it("applies hub filters on the canonical route rather than the hub URL", () => {
 		const view = renderTab("demo.test");
 		act(() => view.root.findByType(UpNextServiceFilter).props.onChange("350"));
