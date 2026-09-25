@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -25,9 +25,9 @@ export class GoogleOAuthService {
 	private readonly clientId: string | undefined;
 	private readonly clientSecret: string | undefined;
 
-	constructor(private readonly config: ConfigService) {
-		this.clientId = this.config.get<string>("GOOGLE_CLIENT_ID");
-		this.clientSecret = this.config.get<string>("GOOGLE_CLIENT_SECRET");
+	constructor(private readonly config: BackendEnv) {
+		this.clientId = this.config.GOOGLE_CLIENT_ID;
+		this.clientSecret = this.config.GOOGLE_CLIENT_SECRET;
 		if (!this.clientId || !this.clientSecret) {
 			this.logger.warn(
 				"Google signup is disabled (need GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET).",
@@ -90,8 +90,7 @@ export class GoogleOAuthService {
 	 * both here and in the token exchange.
 	 */
 	private redirectUri(): string {
-		const base =
-			this.config.get<string>("BACKEND_PUBLIC_URL") || "http://127.0.0.1:3001";
+		const base = this.config.BACKEND_PUBLIC_URL || "http://127.0.0.1:3001";
 		return new URL("/auth/google/callback", base).toString();
 	}
 

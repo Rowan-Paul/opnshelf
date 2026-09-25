@@ -17,7 +17,7 @@
  *
  *   pnpm --filter backend run verify:apple
  */
-import { ConfigService } from "@nestjs/config";
+import { env } from "../src/config/env";
 import { AppleOAuthService } from "../src/pds/apple-oauth.service";
 
 const REQUIRED = [
@@ -30,15 +30,15 @@ const REQUIRED = [
 const problems: string[] = [];
 
 function main(): void {
-	const missing = REQUIRED.filter((name) => !process.env[name]);
+	const missing = REQUIRED.filter((name) => !env[name]);
 	if (missing.length > 0) {
 		console.error(`\n✗ Missing: ${missing.join(", ")}\n`);
 		process.exit(1);
 	}
 
-	const clientId = process.env.APPLE_CLIENT_ID as string;
-	const teamId = process.env.APPLE_TEAM_ID as string;
-	const keyId = process.env.APPLE_KEY_ID as string;
+	const clientId = env.APPLE_CLIENT_ID as string;
+	const teamId = env.APPLE_TEAM_ID as string;
+	const keyId = env.APPLE_KEY_ID as string;
 
 	console.log(`Service ID : ${clientId}`);
 	console.log(`Team ID    : ${teamId}`);
@@ -61,7 +61,7 @@ function main(): void {
 		);
 	}
 
-	const apple = new AppleOAuthService(new ConfigService());
+	const apple = new AppleOAuthService(env);
 	if (!apple.configured) {
 		problems.push("AppleOAuthService reports it is not configured.");
 	} else {

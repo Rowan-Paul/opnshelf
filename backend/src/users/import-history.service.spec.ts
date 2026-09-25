@@ -1,6 +1,7 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock } from "vitest";
 import { Agent } from "@atproto/api";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Prisma } from "../generated/client";
 import type { AuthService } from "../auth/auth.service";
 import type { MoviesService } from "../movies/movies.service";
@@ -118,12 +119,12 @@ describe("ImportHistoryService", () => {
 		indexTrackedEpisode: vi.fn(),
 	} as unknown as ShowsService;
 
-	const configService = {
+	const configService = mockEnvironment({
 		get: vi.fn((key: string) => {
 			if (key === "TRAKT_API_KEY") return "trakt-key";
 			return undefined;
 		}),
-	} as unknown as ConfigService;
+	}) as unknown as BackendEnv;
 
 	const authService = {
 		restore: vi.fn(),

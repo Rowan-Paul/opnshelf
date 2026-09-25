@@ -1,10 +1,11 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock, MockedFunction } from "vitest";
 import {
 	BadGatewayException,
 	BadRequestException,
 	NotFoundException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import type {
 	FetchTraktPublicHistoryResponseDto,
 	ImportHistoryResponseDto,
@@ -103,12 +104,12 @@ describe("UsersService", () => {
 		indexTrackedEpisode: vi.fn(),
 	} as unknown as ShowsService;
 
-	const configService = {
+	const configService = mockEnvironment({
 		get: vi.fn((key: string) => {
 			if (key === "TRAKT_API_KEY") return "trakt-key";
 			return undefined;
 		}),
-	} as unknown as ConfigService;
+	}) as unknown as BackendEnv;
 
 	const userDeletionService = {
 		deleteUserSync: vi.fn(),

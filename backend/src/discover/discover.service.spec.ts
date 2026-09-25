@@ -1,4 +1,5 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 import { TmdbNotFoundError } from "../tmdb/tmdb-http";
 import { DiscoverService } from "./discover.service";
 
@@ -42,7 +43,9 @@ describe("DiscoverService onboarding", () => {
 					],
 				}),
 			} as never,
-			{ get: vi.fn(() => "test-api-key") } as unknown as ConfigService,
+			mockEnvironment({
+				get: vi.fn(() => "test-api-key"),
+			}) as unknown as BackendEnv,
 		);
 	});
 
@@ -79,7 +82,9 @@ describe("DiscoverService onboarding", () => {
 					],
 				}),
 			} as never,
-			{ get: vi.fn(() => "test-api-key") } as unknown as ConfigService,
+			mockEnvironment({
+				get: vi.fn(() => "test-api-key"),
+			}) as unknown as BackendEnv,
 		);
 		const second = await service.onboarding();
 
@@ -157,7 +162,9 @@ describe("DiscoverService popular on your services", () => {
 					],
 				}),
 			} as never,
-			{ get: vi.fn(() => "test-api-key") } as unknown as ConfigService,
+			mockEnvironment({
+				get: vi.fn(() => "test-api-key"),
+			}) as unknown as BackendEnv,
 		);
 	});
 

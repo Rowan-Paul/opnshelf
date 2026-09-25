@@ -5,7 +5,7 @@ import {
 	type OnModuleDestroy,
 	type OnModuleInit,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import slugify from "slugify";
 import { EmailService } from "../email/email.service";
 import { MoviesTmdbService } from "../movies/movies-tmdb.service";
@@ -104,7 +104,7 @@ export class NotificationWorkerService
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly email: EmailService,
-		private readonly config: ConfigService,
+		private readonly config: BackendEnv,
 		private readonly movies: MoviesTmdbService,
 		private readonly shows: ShowsTmdbService,
 	) {}
@@ -589,14 +589,13 @@ export class NotificationWorkerService
 						const link = job.url
 							? new URL(
 									job.url,
-									this.config.get<string>("FRONTEND_URL") ||
-										"https://opnshelf.xyz",
+									this.config.FRONTEND_URL || "https://opnshelf.xyz",
 								).toString()
 							: undefined;
 						await this.email.sendNotification({
 							to: settings.email,
 							subject: job.title,
-							text: `${job.body}${link ? `\n\n${link}` : ""}\n\nManage notifications: ${new URL("/settings/notifications", this.config.get<string>("FRONTEND_URL") || "https://opnshelf.xyz").toString()}`,
+							text: `${job.body}${link ? `\n\n${link}` : ""}\n\nManage notifications: ${new URL("/settings/notifications", this.config.FRONTEND_URL || "https://opnshelf.xyz").toString()}`,
 						});
 					}
 				} else if (job.channel.startsWith("push:")) {

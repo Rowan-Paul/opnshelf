@@ -1,6 +1,6 @@
 import { createPrivateKey, sign as cryptoSign } from "node:crypto";
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 
 const APPLE_AUTH_URL = "https://appleid.apple.com/auth/authorize";
 const APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token";
@@ -39,15 +39,11 @@ export class AppleOAuthService {
 	private readonly privateKeyPem: string | undefined;
 	private cachedSecret: { secret: string; expiresAt: number } | undefined;
 
-	constructor(private readonly config: ConfigService) {
-		this.clientId = this.config.get<string>("APPLE_CLIENT_ID");
-		this.teamId = this.config.get<string>("APPLE_TEAM_ID");
-		this.keyId = this.config.get<string>("APPLE_KEY_ID");
-		// Secret managers commonly flatten PEM newlines into the literal two
-		// characters \n, which createPrivateKey rejects.
-		this.privateKeyPem = this.config
-			.get<string>("APPLE_PRIVATE_KEY")
-			?.replace(/\\n/g, "\n");
+	constructor(private readonly config: BackendEnv) {
+		this.clientId = this.config.APPLE_CLIENT_ID;
+		this.teamId = this.config.APPLE_TEAM_ID;
+		this.keyId = this.config.APPLE_KEY_ID;
+		this.privateKeyPem = this.config.APPLE_PRIVATE_KEY;
 
 		if (!this.configured) {
 			this.logger.warn(
@@ -152,8 +148,7 @@ export class AppleOAuthService {
 	 * is why local development uses the native path or a tunnel.
 	 */
 	private redirectUri(): string {
-		const base =
-			this.config.get<string>("BACKEND_PUBLIC_URL") || "http://127.0.0.1:3001";
+		const base = this.config.BACKEND_PUBLIC_URL || "http://127.0.0.1:3001";
 		return new URL("/auth/apple/callback", base).toString();
 	}
 

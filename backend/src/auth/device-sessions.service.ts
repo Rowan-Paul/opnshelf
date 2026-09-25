@@ -5,7 +5,7 @@ import type {
 	NodeSavedSessionStore,
 } from "@atproto/oauth-client-node";
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { randomUUID } from "node:crypto";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
@@ -101,7 +101,7 @@ export class DeviceSessionsService {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 		private readonly oauthClientFactory: OAuthClientFactory,
 	) {}
 
@@ -311,8 +311,7 @@ export class DeviceSessionsService {
 		const stored = JSON.parse(sessionDataJson) as AtpSessionData & {
 			pdsUrl?: string;
 		};
-		const pdsUrl =
-			stored.pdsUrl || this.configService.get<string>("PDS_URL") || "";
+		const pdsUrl = stored.pdsUrl || this.configService.PDS_URL || "";
 		let persistence = Promise.resolve();
 
 		const session = new CredentialSession(

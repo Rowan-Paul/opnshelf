@@ -8,7 +8,7 @@ import {
 	type OAuthClientMetadataInput,
 } from "@atproto/oauth-client-node";
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 import { DECLARED_OAUTH_SCOPE } from "./oauth-scopes";
 
@@ -45,7 +45,7 @@ export class OAuthClientFactory implements OnModuleInit {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 	) {}
 
 	onModuleInit() {
@@ -154,12 +154,11 @@ export class OAuthClientFactory implements OnModuleInit {
 
 	private getOAuthClientConfig(): OAuthClientConfig {
 		const backendUrl =
-			this.configService.get<string>("BACKEND_PUBLIC_URL") ||
-			"http://127.0.0.1:3001";
+			this.configService.BACKEND_PUBLIC_URL || "http://127.0.0.1:3001";
 		const backendHostname = new URL(backendUrl).hostname;
 		const isLocalhost =
 			backendHostname === "localhost" || backendHostname === "127.0.0.1";
-		const configuredPort = this.configService.get<number>("PORT");
+		const configuredPort = this.configService.PORT;
 		const derivedPort = new URL(backendUrl).port;
 		const port = configuredPort || Number(derivedPort || 3001);
 

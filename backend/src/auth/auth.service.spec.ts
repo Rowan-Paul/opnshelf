@@ -1,5 +1,6 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock } from "vitest";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing AuthService
@@ -142,16 +143,16 @@ describe("AuthService", () => {
 		NODE_ENV: "test",
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => baseConfig[key]),
-	};
+	});
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		mockPrismaService.$queryRaw.mockResolvedValue([]);
 		// Tests that override get() with mockImplementation leak into every later
 		// test (clearAllMocks doesn't undo it), so restore the base config here.
-		mockConfigService.get.mockImplementation((key: string) => baseConfig[key]);
+		mockBackendEnv.get.mockImplementation((key: string) => baseConfig[key]);
 		credentialSessionHarness.instances.length = 0;
 
 		const module: TestingModule = await Test.createTestingModule({
@@ -160,7 +161,7 @@ describe("AuthService", () => {
 				OAuthClientFactory,
 				DeviceSessionsService,
 				{ provide: PrismaService, useValue: mockPrismaService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 			],
 		}).compile();
 

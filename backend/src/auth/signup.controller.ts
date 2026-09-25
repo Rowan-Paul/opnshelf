@@ -12,7 +12,7 @@ import {
 	ServiceUnavailableException,
 	UseGuards,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { IngesterService } from "../ingester/ingester.service";
@@ -48,7 +48,7 @@ export class SignupController {
 		private readonly authService: AuthService,
 		private readonly nativeAccounts: NativeAccountService,
 		private readonly sessions: DeviceSessionsService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 		private readonly ingesterService: IngesterService,
 		private readonly tranquilAdmin: TranquilAdminService,
 		private readonly captcha: CaptchaService,
@@ -87,7 +87,7 @@ export class SignupController {
 			throw new ForbiddenException("Captcha verification failed");
 		}
 
-		const handleDomain = this.configService.get<string>("PDS_HANDLE_DOMAIN");
+		const handleDomain = this.configService.PDS_HANDLE_DOMAIN;
 		if (!handleDomain) {
 			this.logger.error("PDS_HANDLE_DOMAIN is not configured");
 			throw new ServiceUnavailableException("Signup is not configured");
