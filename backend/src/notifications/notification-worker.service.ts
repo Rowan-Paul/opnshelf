@@ -1,3 +1,9 @@
+import {
+	collectionItems,
+	notificationEmail,
+	releaseTeaser,
+} from "./notification-content";
+import type { NotificationCollectionItemDto } from "./notifications.dto";
 import { sendPushNotification } from "./send-push";
 import {
 	Injectable,
@@ -14,7 +20,19 @@ import { ShowsTmdbService } from "../shows/shows-tmdb.service";
 
 const HOUR_MS = 3_600_000;
 const MAX_ATTEMPTS = 5;
-type Event = { key: string; title: string; body: string; path?: string };
+type Event = {
+	key: string;
+	title: string;
+	body: string;
+	path?: string;
+	collectionId?: string;
+	collection?: {
+		heading: string;
+		periodStart: string;
+		periodEnd: string;
+		items: NotificationCollectionItemDto[];
+	};
+};
 type Category = "NewReleases" | "WatchlistReleases" | "NewSeasons" | "Stats";
 
 function localParts(now: Date, timezone: string) {
@@ -346,8 +364,36 @@ export class NotificationWorkerService
 				...(await this.statsEvents(row.userDid, day, row.user.timezone)),
 			);
 		}
-		for (const [category, event] of events) {
-			if (!event) continue;
+		for (const [category, candidate] of events) {
+			if (!candidate) continue;
+			let event = candidate;
+			if (candidate.collection) {
+				const saved = await this.prisma.notificationCollection.upsert({
+					where: {
+						userDid_eventKey: { userDid: row.userDid, eventKey: candidate.key },
+					},
+					create: {
+						userDid: row.userDid,
+						eventKey: candidate.key,
+						title: candidate.title,
+						body: candidate.body,
+						...candidate.collection,
+						items: candidate.collection.items.map((item) => ({ ...item })),
+					},
+					update: {},
+				});
+				const items = collectionItems(saved.items);
+				event = {
+					...candidate,
+					title: saved.title,
+					body: saved.body,
+					collectionId: saved.id,
+					path:
+						category === "NewReleases" || items.length > 1
+							? `/discover/collections/${saved.id}`
+							: items[0].path,
+				};
+			}
 			const emailEnabled = row[`email${category}`];
 			const pushEnabled = row[`push${category}`];
 			if (emailEnabled && row.email && row.emailVerifiedAt) {
@@ -375,19 +421,39 @@ export class NotificationWorkerService
 				this.movies.discoverReleasesBetween(start, end, region),
 				this.shows.discoverPremieresBetween(start, end),
 			]);
-			const names = [
-				...movies.slice(0, 3).map((movie) => movie.title),
-				...shows.slice(0, 3).map((show) => show.name),
+			const items: NotificationCollectionItemDto[] = [
+				...movies.slice(0, 3).map((movie) => ({
+					mediaId: String(movie.id),
+					mediaType: "movie" as const,
+					title: movie.title,
+					posterPath: movie.poster_path || null,
+					overview: movie.overview || "",
+					releaseDate: movie.release_date || null,
+					seasonNumber: null,
+					path: mediaPath("movies", String(movie.id), movie.title),
+				})),
+				...shows.slice(0, 3).map((show) => ({
+					mediaId: String(show.id),
+					mediaType: "show" as const,
+					title: show.name,
+					posterPath: show.poster_path || null,
+					overview: show.overview || "",
+					releaseDate: show.first_air_date || null,
+					seasonNumber: null,
+					path: mediaPath("shows", String(show.id), show.name),
+				})),
 			];
-			if (!names.length) return null;
-			const first = movies[0]
-				? mediaPath("movies", String(movies[0].id), movies[0].title)
-				: mediaPath("shows", String(shows[0].id), shows[0].name);
+			if (!items.length) return null;
 			return {
 				key: `new-releases:${start}:${region}`,
-				title: "Movies and shows releasing this week",
-				body: names.join(" · "),
-				path: first,
+				title: "Your weekend watch starts here",
+				body: releaseTeaser(items),
+				collection: {
+					heading: "This week’s releases",
+					periodStart: start,
+					periodEnd: end,
+					items,
+				},
 			};
 		} catch (error) {
 			this.logger.warn(
@@ -416,20 +482,44 @@ export class NotificationWorkerService
 			take: 20,
 		});
 		if (!items.length) return null;
-		const first = items[0];
-		const names = items
-			.map((item) => item.movie?.title ?? item.show?.title)
-			.filter(Boolean);
-		const path = first.movie
-			? mediaPath("movies", first.movie.movieId, first.movie.title)
-			: first.show
-				? mediaPath("shows", first.show.showId, first.show.title)
-				: undefined;
+		const selection: NotificationCollectionItemDto[] = items.flatMap((item) => {
+			const media = item.movie ?? item.show;
+			if (!media) return [];
+			const mediaType = item.movie ? ("movie" as const) : ("show" as const);
+			const id = item.movie?.movieId ?? item.show?.showId;
+			if (!id) return [];
+			return [
+				{
+					mediaId: id,
+					mediaType,
+					title: media.title,
+					posterPath: media.posterPath,
+					overview: media.overview ?? "",
+					releaseDate: date,
+					seasonNumber: null,
+					path: mediaPath(item.movie ? "movies" : "shows", id, media.title),
+				},
+			];
+		});
+		// A title can be represented by more than one season/episode in a Watchlist.
+		const unique = selection.filter(
+			(item, index) =>
+				selection.findIndex((other) => other.path === item.path) === index,
+		);
+		if (!unique.length) return null;
 		return {
 			key: `watchlist:${date}`,
-			title: "A watchlist title releases today",
-			body: names.join(" · "),
-			path,
+			title:
+				unique.length === 1
+					? "One from your Watchlist releases today"
+					: `${unique.length} from your Watchlist release today`,
+			body: releaseTeaser(unique),
+			collection: {
+				heading: "Your Watchlist releases",
+				periodStart: date,
+				periodEnd: date,
+				items: unique,
+			},
 		};
 	}
 
@@ -469,13 +559,31 @@ export class NotificationWorkerService
 			take: 20,
 		});
 		if (!seasons.length) return null;
+		const selection: NotificationCollectionItemDto[] = seasons.map(
+			(season) => ({
+				mediaId: season.showId,
+				mediaType: "show",
+				title: season.show.title,
+				posterPath: season.posterPath ?? season.show.posterPath,
+				overview: season.show.overview ?? "",
+				releaseDate: date,
+				seasonNumber: season.seasonNumber,
+				path: `${mediaPath("shows", season.showId, season.show.title)}/seasons/${season.seasonNumber}`,
+			}),
+		);
 		return {
 			key: `new-seasons:${date}`,
-			title: "New season today",
-			body: seasons
-				.map((season) => `${season.show.title} season ${season.seasonNumber}`)
-				.join(" · "),
-			path: `${mediaPath("shows", seasons[0].showId, seasons[0].show.title)}/seasons/${seasons[0].seasonNumber}`,
+			title:
+				selection.length === 1
+					? "A show you follow is back"
+					: `${selection.length} shows you follow are back`,
+			body: releaseTeaser(selection),
+			collection: {
+				heading: "New seasons to catch up on",
+				periodStart: date,
+				periodEnd: date,
+				items: selection,
+			},
 		};
 	}
 
@@ -564,6 +672,7 @@ export class NotificationWorkerService
 				title: event.title,
 				body: event.body,
 				url: event.path,
+				collectionId: event.collectionId,
 			},
 			update: {},
 		});
@@ -578,7 +687,10 @@ export class NotificationWorkerService
 			},
 			orderBy: { nextAttemptAt: "asc" },
 			take: 50,
-			include: { user: { select: { notificationSettings: true } } },
+			include: {
+				user: { select: { notificationSettings: true } },
+				collection: true,
+			},
 		});
 		for (const job of jobs) {
 			const claimed = await this.prisma.notificationDelivery.updateMany({
@@ -599,17 +711,18 @@ export class NotificationWorkerService
 					const settings = job.user.notificationSettings;
 					const enabled = settings?.[`email${job.category as Category}`];
 					if (enabled && settings.email && settings.emailVerifiedAt) {
-						const link = job.url
-							? new URL(
-									job.url,
-									this.config.get<string>("FRONTEND_URL") ||
-										"https://opnshelf.xyz",
-								).toString()
-							: undefined;
 						await this.email.sendNotification({
 							to: settings.email,
 							subject: job.title,
-							text: `${job.body}${link ? `\n\n${link}` : ""}\n\nManage notifications: ${new URL("/settings/notifications", this.config.get<string>("FRONTEND_URL") || "https://opnshelf.xyz").toString()}`,
+							...notificationEmail({
+								title: job.title,
+								body: job.body,
+								url: job.url,
+								collection: job.collection,
+								baseUrl:
+									this.config.get<string>("FRONTEND_URL") ||
+									"https://opnshelf.xyz",
+							}),
 						});
 					}
 				} else if (job.channel.startsWith("push:")) {

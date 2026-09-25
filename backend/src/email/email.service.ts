@@ -20,6 +20,7 @@ export class EmailService {
 		to: string;
 		subject: string;
 		text: string;
+		html?: string;
 	}): Promise<void> {
 		if (!this.apiToken || !this.accountId) {
 			throw new Error("Cloudflare Email Sending is not configured");
@@ -35,6 +36,7 @@ export class EmailService {
 				to: params.to,
 				subject: params.subject,
 				text: params.text,
+				html: params.html,
 			}),
 			signal: AbortSignal.timeout(15_000),
 		});

@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   NotificationSettings: 'NotificationSettings',
   PushDevice: 'PushDevice',
+  NotificationCollection: 'NotificationCollection',
   NotificationDelivery: 'NotificationDelivery',
   Follow: 'Follow',
   Circle: 'Circle',
@@ -173,11 +174,28 @@ export const PushDeviceScalarFieldEnum = {
 export type PushDeviceScalarFieldEnum = (typeof PushDeviceScalarFieldEnum)[keyof typeof PushDeviceScalarFieldEnum]
 
 
+export const NotificationCollectionScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  eventKey: 'eventKey',
+  title: 'title',
+  body: 'body',
+  heading: 'heading',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
+  items: 'items',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationCollectionScalarFieldEnum = (typeof NotificationCollectionScalarFieldEnum)[keyof typeof NotificationCollectionScalarFieldEnum]
+
+
 export const NotificationDeliveryScalarFieldEnum = {
   id: 'id',
   userDid: 'userDid',
   channel: 'channel',
   category: 'category',
+  collectionId: 'collectionId',
   eventKey: 'eventKey',
   title: 'title',
   body: 'body',

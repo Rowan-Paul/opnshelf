@@ -1,7 +1,10 @@
+import { collectionItems } from "./notification-content";
+import type { NotificationCollectionDto } from "./notifications.dto";
 import { sendPushNotification } from "./send-push";
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import {
 	BadRequestException,
+	NotFoundException,
 	Injectable,
 	ServiceUnavailableException,
 } from "@nestjs/common";
@@ -28,6 +31,24 @@ export class NotificationsService {
 			create: { userDid: did },
 			update: {},
 		});
+	}
+
+	async getCollection(
+		did: string,
+		id: string,
+	): Promise<NotificationCollectionDto> {
+		const collection = await this.prisma.notificationCollection.findFirst({
+			where: { id, userDid: did },
+		});
+		if (!collection)
+			throw new NotFoundException("This release collection is unavailable");
+		return {
+			id: collection.id,
+			heading: collection.heading,
+			periodStart: collection.periodStart,
+			periodEnd: collection.periodEnd,
+			items: collectionItems(collection.items),
+		};
 	}
 
 	async getSettings(did: string) {

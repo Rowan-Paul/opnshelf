@@ -2439,6 +2439,25 @@ export type PublishAtStoreReviewResponseDto = {
     uri: string;
 };
 
+export type NotificationCollectionItemDto = {
+    mediaId: string;
+    mediaType: 'movie' | 'show';
+    title: string;
+    posterPath: string | null;
+    overview: string;
+    releaseDate: string | null;
+    seasonNumber: number | null;
+    path: string;
+};
+
+export type NotificationCollectionDto = {
+    id: string;
+    heading: string;
+    periodStart: string;
+    periodEnd: string;
+    items: Array<NotificationCollectionItemDto>;
+};
+
 export type NotificationSettingsDto = {
     email?: string | null;
     emailVerified: boolean;
@@ -5987,6 +6006,21 @@ export type AtStoreReviewsControllerPublishResponses = {
 };
 
 export type AtStoreReviewsControllerPublishResponse = AtStoreReviewsControllerPublishResponses[keyof AtStoreReviewsControllerPublishResponses];
+
+export type NotificationsControllerCollectionData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/notifications/collections/{id}';
+};
+
+export type NotificationsControllerCollectionResponses = {
+    200: NotificationCollectionDto;
+};
+
+export type NotificationsControllerCollectionResponse = NotificationsControllerCollectionResponses[keyof NotificationsControllerCollectionResponses];
 
 export type NotificationsControllerSettingsData = {
     body?: never;

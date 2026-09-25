@@ -23,6 +23,7 @@ describe("NotificationWorkerService", () => {
 		pushStats: false,
 	};
 	const prisma = {
+		notificationCollection: { upsert: vi.fn() },
 		notificationSettings: { findMany: vi.fn(), updateMany: vi.fn() },
 		pushDevice: { findMany: vi.fn() },
 		notificationDelivery: {
@@ -32,8 +33,9 @@ describe("NotificationWorkerService", () => {
 			update: vi.fn(),
 		},
 		listItem: { findMany: vi.fn() },
+		season: { findMany: vi.fn() },
 		trackedMovie: { count: vi.fn().mockResolvedValue(2) },
-		trackedEpisode: { count: vi.fn().mockResolvedValue(3) },
+		trackedEpisode: { findMany: vi.fn(), count: vi.fn().mockResolvedValue(3) },
 	};
 	const email = { sendNotification: vi.fn() };
 	const config = { get: vi.fn() };
@@ -49,6 +51,9 @@ describe("NotificationWorkerService", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		prisma.notificationCollection.upsert.mockImplementation(({ create }) =>
+			Promise.resolve({ id: "collection-1", ...create }),
+		);
 		prisma.trackedMovie.count.mockResolvedValue(2);
 		prisma.trackedEpisode.count.mockResolvedValue(3);
 		prisma.notificationSettings.findMany.mockResolvedValue([settings]);
@@ -175,7 +180,8 @@ describe("NotificationWorkerService", () => {
 				create: expect.objectContaining({
 					channel: "email",
 					eventKey: "new-releases:2026-09-28:NL",
-					body: "A Movie · A Show",
+					body: "A Movie and A Show. Take a look.",
+					url: "/discover/collections/collection-1",
 				}),
 			}),
 		);
@@ -295,7 +301,7 @@ describe("NotificationWorkerService", () => {
 		]);
 		prisma.listItem.findMany.mockResolvedValue([
 			{
-				movie: { movieId: "42", title: "A Movie" },
+				movie: { movieId: "42", title: "A Movie", posterPath: null },
 				show: null,
 			},
 		]);
@@ -305,7 +311,7 @@ describe("NotificationWorkerService", () => {
 				create: expect.objectContaining({
 					category: "WatchlistReleases",
 					eventKey: "watchlist:2026-09-29",
-					body: "A Movie",
+					body: "A Movie. Take a look.",
 				}),
 			}),
 		);
@@ -322,7 +328,7 @@ describe("NotificationWorkerService", () => {
 				attempts: 0,
 				nextAttemptAt: new Date("2026-09-28T08:00:00.000Z"),
 				title: "New releases",
-				body: "A Movie · A Show",
+				body: "A Movie and A Show. Take a look.",
 				url: null,
 				user: { notificationSettings: settings },
 			},
@@ -338,4 +344,103 @@ describe("NotificationWorkerService", () => {
 			}),
 		);
 	});
+	it("keeps the saved selection and copy when catalog ordering changes on a retry", async () => {
+		let saved: unknown;
+		prisma.notificationCollection.upsert.mockImplementation(
+			({ create, update }) => {
+				expect(update).toEqual({});
+				saved ??= { id: "saved", ...create };
+				return Promise.resolve(saved);
+			},
+		);
+		await worker.queueDueEvents(new Date("2026-10-02T16:00:00Z"));
+		movies.discoverReleasesBetween.mockResolvedValue([
+			{ id: 99, title: "Changed catalog" },
+		]);
+		await worker.queueDueEvents(new Date("2026-10-02T16:05:00Z"));
+		expect(
+			prisma.notificationDelivery.upsert.mock.calls.at(-1)?.[0].create,
+		).toMatchObject({
+			body: "A Movie and A Show. Take a look.",
+			url: "/discover/collections/saved",
+			collectionId: "saved",
+		});
+	});
+
+	it.each([1, 2])(
+		"routes %i Watchlist releases to the matching destination",
+		async (count) => {
+			prisma.notificationSettings.findMany.mockResolvedValue([
+				{ ...settings, emailNewReleases: false, emailWatchlistReleases: true },
+			]);
+			prisma.listItem.findMany.mockResolvedValue(
+				Array.from({ length: count }, (_, i) => ({
+					movie: {
+						movieId: String(i + 1),
+						title: `Movie ${i + 1}`,
+						posterPath: null,
+						overview: "Story",
+					},
+					show: null,
+				})),
+			);
+			await worker.queueDueEvents(new Date("2026-09-29T07:00:00Z"));
+			expect(
+				prisma.notificationDelivery.upsert.mock.calls[0][0].create.url,
+			).toBe(
+				count === 1
+					? "/movies/1/movie-1"
+					: "/discover/collections/collection-1",
+			);
+		},
+	);
+	it("shares one collection across email and every push device", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([
+			{ ...settings, pushNewReleases: true },
+		]);
+		prisma.pushDevice.findMany.mockResolvedValue([
+			{ token: "first" },
+			{ token: "second" },
+		]);
+		await worker.queueDueEvents(new Date("2026-10-02T16:00:00Z"));
+		expect(prisma.notificationCollection.upsert).toHaveBeenCalledTimes(1);
+		expect(
+			prisma.notificationDelivery.upsert.mock.calls.map(([args]) => ({
+				channel: args.create.channel,
+				url: args.create.url,
+			})),
+		).toEqual([
+			{ channel: "email", url: "/discover/collections/collection-1" },
+			{ channel: "push:first", url: "/discover/collections/collection-1" },
+			{ channel: "push:second", url: "/discover/collections/collection-1" },
+		]);
+	});
+	it.each([1, 2])(
+		"keeps season detail links for %i returning shows",
+		async (count) => {
+			prisma.notificationSettings.findMany.mockResolvedValue([
+				{ ...settings, emailNewReleases: false, emailNewSeasons: true },
+			]);
+			prisma.trackedEpisode.findMany.mockResolvedValue([{ showId: "24" }]);
+			prisma.season.findMany.mockResolvedValue(
+				Array.from({ length: count }, (_, i) => ({
+					showId: String(24 + i),
+					seasonNumber: 2,
+					posterPath: null,
+					show: { title: `Show ${i + 1}`, posterPath: null, overview: "Story" },
+				})),
+			);
+			await worker.queueDueEvents(new Date("2026-09-29T07:00:00Z"));
+			const saved =
+				prisma.notificationCollection.upsert.mock.calls[0][0].create;
+			expect(saved.items[0].path).toBe("/shows/24/show-1/seasons/2");
+			expect(
+				prisma.notificationDelivery.upsert.mock.calls[0][0].create.url,
+			).toBe(
+				count === 1
+					? "/shows/24/show-1/seasons/2"
+					: "/discover/collections/collection-1",
+			);
+		},
+	);
 });

@@ -82,6 +82,7 @@ model User {
   notificationSettings NotificationSettings?
   pushDevices PushDevice[]
   notificationDeliveries NotificationDelivery[]
+  notificationCollections NotificationCollection[]
 
   @@index([handle])
   @@index([profileAvatarCid])
@@ -125,12 +126,32 @@ model PushDevice {
   @@index([userDid])
 }
 
+/// Immutable selection shared by every delivery of the same event.
+model NotificationCollection {
+  id String @id @default(cuid())
+  userDid String
+  user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  eventKey String
+  title String
+  body String
+  heading String
+  periodStart String
+  periodEnd String
+  items Json
+  createdAt DateTime @default(now())
+  deliveries NotificationDelivery[]
+
+  @@unique([userDid, eventKey])
+}
+
 model NotificationDelivery {
   id String @id @default(cuid())
   userDid String
   user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
   channel String
   category String
+  collectionId String?
+  collection NotificationCollection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   eventKey String
   title String
   body String

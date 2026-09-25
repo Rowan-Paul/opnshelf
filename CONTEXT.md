@@ -62,8 +62,11 @@ _Avoid_: Subscriptions, my providers, my platforms
 A user's queue of shows with an aired, unwatched next episode, one entry per show, shown on their profile. Anyone can view a user's Up Next; its owner can filter by any selected **Streaming Services**, without changing their saved subscriptions.
 _Avoid_: Continue watching, watchlist (that is a List of items not yet started), queue
 
+**Notification Collection**:
+The saved selection of Media Items from a release Notification, presented within Discover. It preserves the original titles for the recipient to revisit from email or Mobile App push.
+
 **Notification**:
-An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or the User's weekly, monthly, or yearly Watch counts. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox.
+An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or the User's weekly, monthly, or yearly Watch counts. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
 
 **Shelf**:
 The collection of media items a user has marked as watched or tracked. Its dated
