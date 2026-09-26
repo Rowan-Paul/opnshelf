@@ -1,4 +1,4 @@
-import { nameExceptionIssue } from "@opnshelf/api";
+import { preparePostHogEvent } from "@opnshelf/api";
 import type { PostHog } from "posthog-js";
 
 // ponytail: every environment builds with the same VITE_POSTHOG_KEY, so the
@@ -45,7 +45,7 @@ export const posthogLoaded: Promise<void> | undefined = isPostHogEnabled
 						delete event.properties.$pathname;
 					}
 					delete event.properties.$referrer;
-					return nameExceptionIssue(event);
+					return preparePostHogEvent(event);
 				},
 			});
 			loaded.startExceptionAutocapture();

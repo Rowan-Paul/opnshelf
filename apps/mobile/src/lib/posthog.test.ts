@@ -117,10 +117,7 @@ describe("PostHog exception titles", () => {
 			["updateProfile"],
 		);
 		expect(report).not.toBeNull();
-		for (const message of [
-			"ThrottlerException: Too Many Requests",
-			report?.error.message,
-		]) {
+		for (const message of ["Internal server error", report?.error.message]) {
 			const event = {
 				event: "$exception",
 				properties: { $exception_list: [{ type: "Error", value: message }] },
@@ -128,5 +125,75 @@ describe("PostHog exception titles", () => {
 			expect(beforeSend(event).properties.$issue_name).toBe(message);
 			expect(JSON.stringify(event)).not.toContain("private server response");
 		}
+	});
+});
+
+describe("PostHog rate-limit filtering", () => {
+	it.each([
+		{ http_status: 429 },
+		{ http_status: "429" },
+		{
+			$exception_list: [
+				{ type: "Error", value: "ThrottlerException: Too Many Requests" },
+			],
+		},
+		{
+			$exception_list: [
+				{ type: "ThrottlerException", value: "Request throttled" },
+			],
+		},
+		{ $exception_list: [{ type: "Error", value: "Too Many Requests" }] },
+		{
+			$exception_list: [
+				{ type: "Error", value: "Minified React error #520" },
+				{ type: "Error", value: "ThrottlerException: Too Many Requests" },
+			],
+		},
+	])("drops rate-limit exceptions before sending (%j)", async (properties) => {
+		await import("./posthog");
+		const beforeSend = mocks.PostHog.mock.calls[0][1].before_send;
+		expect(beforeSend({ event: "$exception", properties })).toBeNull();
+	});
+
+	it("drops categorical mutation 429 reports but keeps 500 reports", async () => {
+		await import("./posthog");
+		const beforeSend = mocks.PostHog.mock.calls[0][1].before_send;
+		const { describeMutationFailure } = await import("@opnshelf/api");
+		for (const status of [429, 500]) {
+			const report = describeMutationFailure({ status }, ["updateProfile"]);
+			expect(report).not.toBeNull();
+			const event = {
+				event: "$exception",
+				properties: {
+					...report?.properties,
+					$exception_list: [
+						{ type: "MutationFailedError", value: report?.error.message },
+					],
+				},
+			};
+			if (status === 429) expect(beforeSend(event)).toBeNull();
+			else expect(beforeSend(event)).not.toBeNull();
+		}
+	});
+
+	it.each([
+		{ event: "request_completed", properties: { http_status: 429 } },
+		{ event: "$exception", properties: { http_status: 500 } },
+		{
+			event: "$exception",
+			properties: { $exception_list: [{ value: "Internal server error" }] },
+		},
+		{
+			event: "$exception",
+			properties: { $exception_list: [{ value: "Minified React error #520" }] },
+		},
+		{
+			event: "$exception",
+			properties: { $exception_list: [null, {}, { value: 429 }] },
+		},
+	])("keeps unrelated events (%j)", async (event) => {
+		await import("./posthog");
+		const beforeSend = mocks.PostHog.mock.calls[0][1].before_send;
+		expect(beforeSend(event)).not.toBeNull();
 	});
 });
