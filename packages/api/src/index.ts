@@ -40,6 +40,15 @@ export {
 	retryTransientFailures,
 	retryUnlessNotFound,
 } from "./http-errors";
+export {
+	type ListItemRef,
+	type ListRef,
+	listsForItem,
+	movieWatchCount,
+	withMembership,
+	withMovieWatch,
+	withoutMovieWatches,
+} from "./list-memberships";
 export { slugifyName } from "./media-slug";
 export {
 	describeMutationFailure,
@@ -47,6 +56,7 @@ export {
 	type MutationFailureReport,
 } from "./mutation-failure";
 export { onboardingDiscoveryOptions } from "./onboarding-discovery";
+export { preparePostHogEvent } from "./posthog-event";
 export {
 	getYouTubeEmbedUrl,
 	getYouTubeThumbnailUrl,
@@ -62,15 +72,6 @@ export {
 	isKnownTraktImportStatus,
 	isTerminalTraktImportStatus,
 } from "./trakt-import-status";
-export {
-	type ListItemRef,
-	type ListRef,
-	listsForItem,
-	movieWatchCount,
-	withMembership,
-	withMovieWatch,
-	withoutMovieWatches,
-} from "./list-memberships";
 export {
 	invalidateWatchActivityQueries,
 	isWatchActivityQueryKey,
