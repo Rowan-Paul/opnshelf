@@ -26,31 +26,39 @@ name: Release
 # its patch bumped. A bump to 1.1.0 lands exactly on v1.1.0; OTA-only releases
 # in between walk v1.1.1, v1.1.2 and do not match the app version, which is the
 # cost of giving every release its own notes.
+#
+# For a store release, set the mobile app version on `develop` to the intended
+# GitHub release version, higher than every existing release tag, so the two
+# versions match again. For example, after OTA releases through v1.6.2 while
+# the app stays at 1.6.0, use app version 1.6.3 for the next store release.
+# OTA-only releases leave the mobile app version unchanged.
+# PRs targeting main validate these versions before merge; only pushes publish.
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 jobs:
-  release:
+  validate:
+    name: Validate release version
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.publish.outputs.tag }}
-      store_release: ${{ steps.publish.outputs.store_release }}
-      ota_release: ${{ steps.publish.outputs.ota_release }}
+      tag: ${{ steps.version.outputs.tag }}
+      store_release: ${{ steps.version.outputs.store_release }}
+      ota_release: ${{ steps.version.outputs.ota_release }}
+      range: ${{ steps.version.outputs.range }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Publish release
-        id: publish
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Validate release version
+        id: version
         run: |
           set -euo pipefail
 
@@ -103,14 +111,43 @@ jobs:
           fi
           tag="v$(printf '%s\n%s\n' "$app_version" "$bumped" | sort -V | tail -1)"
 
+          if [ "$store_release" = true ] && [ "$tag" != "v$app_version" ]; then
+            echo "::error::Store release version mismatch: app v$app_version, GitHub $tag. Set apps/mobile/app.config.ts version to ${tag#v} or higher on develop before releasing."
+            exit 1
+          fi
+
           echo "Tag $tag, app ${prev_app_version:-unknown} -> $app_version," \
             "store=$store_release ota=$ota_release, notes range $range"
           {
             echo "tag=$tag"
             echo "store_release=$store_release"
             echo "ota_release=$ota_release"
+            echo "range=$range"
           } >> "$GITHUB_OUTPUT"
 
+  release:
+    needs: validate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    outputs:
+      tag: ${{ needs.validate.outputs.tag }}
+      ota_release: ${{ needs.validate.outputs.ota_release }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          tag: ${{ needs.validate.outputs.tag }}
+          range: ${{ needs.validate.outputs.range }}
+        run: |
+          set -euo pipefail
           # ponytail: %h and nothing more. GitHub autolinks a bare short SHA in
           # a release body, so this buys clickable commits without a second API
           # call. No author: every commit here is one person's, and mapping an
@@ -125,7 +162,7 @@ jobs:
       # EAS build does not turn the release run red. workflow_dispatch is one of
       # the two events GITHUB_TOKEN is allowed to trigger.
       - name: Build and submit the store release
-        if: steps.publish.outputs.store_release == 'true'
+        if: needs.validate.outputs.store_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -136,7 +173,7 @@ jobs:
   # pnpm and EAS toolchain that the release job has no other use for.
   ota:
     needs: release
-    if: ${{ needs.release.outputs.ota_release == 'true' }}
+    if: ${{ github.event_name == 'push' && needs.release.outputs.ota_release == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
