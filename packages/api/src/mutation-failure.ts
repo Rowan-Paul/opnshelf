@@ -21,6 +21,7 @@ export interface MutationFailureReport {
 		mutation_key: string;
 		http_status: number | null;
 		error_name: string;
+		request_id: string | null;
 	};
 }
 
@@ -51,8 +52,18 @@ export function describeMutationFailure(
 			mutation_key: key,
 			http_status: status ?? null,
 			error_name: errorName(error),
+			request_id: requestId(error),
 		},
 	};
+}
+
+function requestId(error: unknown): string | null {
+	if (typeof error !== "object" || error === null) return null;
+	const id = (error as Record<string, unknown>).requestId;
+	return typeof id === "string" &&
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+		? id
+		: null;
 }
 
 function formatMutationKey(key: ReadonlyArray<unknown> | undefined): string {

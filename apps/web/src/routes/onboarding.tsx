@@ -2,8 +2,6 @@ import {
 	authControllerMeOptions,
 	authControllerResendVerificationMutation,
 	authControllerVerifyEmailMutation,
-	socialControllerFollowMutation,
-	socialControllerGetSuggestionsOptions,
 	type UserDto,
 	type UserProfileDto,
 	usersControllerCompleteOnboarding,
@@ -22,16 +20,18 @@ import {
 	Loader2,
 	MailCheck,
 	User,
-	UserPlus,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
-import { UserAvatar } from "#/components/following/UserAvatar";
 import Logo from "#/components/Logo";
+import { FollowSuggestionsStep } from "#/components/onboarding/FollowSuggestionsStep";
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
 import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
-import { UserRowsSkeleton } from "#/components/skeletons";
+import StreamingServicePicker, {
+	toggleService,
+} from "#/components/StreamingServicePicker";
+import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
 import { posthog } from "#/integrations/posthog/provider";
@@ -132,6 +132,22 @@ function OnboardingPage() {
 						{step === "profile" && <ProfileStep onNext={goToNextStep} />}
 						{step === "preferences" && (
 							<PreferencesStep onNext={goToNextStep} />
+						)}
+						{step === "services" && (
+							<ServicesStep onNext={goToNextStep} onSkip={goToNextStep} />
+						)}
+						{step === "notifications" && (
+							<div className="space-y-6">
+								<h1 className="font-semibold text-2xl">Stay up to date</h1>
+								<NotificationEmailSection />
+								<button
+									type="button"
+									className="btn btn-primary"
+									onClick={goToNextStep}
+								>
+									Continue
+								</button>
+							</div>
 						)}
 						{step === "trakt" && (
 							<TraktStep
@@ -558,9 +574,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const updateSettingsMutation = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save preferences",
@@ -634,6 +653,117 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 }
 
 /* ------------------------------------------------------------------
+   Step 3b: My Services
+   ------------------------------------------------------------------ */
+const SERVICE_SKELETON_KEYS = Array.from(
+	{ length: 12 },
+	(_, i) => `service-skeleton-${i + 1}`,
+);
+
+function ServicesStep({
+	onNext,
+	onSkip,
+}: {
+	onNext: () => void;
+	onSkip: () => void;
+}) {
+	const queryClient = useQueryClient();
+	const { data: settings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+	const [selected, setSelected] = useState<number[]>([]);
+
+	useEffect(() => {
+		if (settings) setSelected(settings.streamingServiceIds);
+	}, [settings]);
+
+	const updateSettingsMutation = useMutation({
+		mutationKey: ["users", "me", "settings", "update"],
+		...usersControllerUpdateMySettingsMutation(),
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to save your services",
+			);
+		},
+	});
+
+	function handleSave() {
+		updateSettingsMutation.mutate(
+			{ body: { streamingServiceIds: selected } },
+			{ onSuccess: onNext },
+		);
+	}
+
+	return (
+		<div className="card p-8">
+			<div className="mb-6 flex justify-center">
+				<Logo className="size-16 rounded-2xl" />
+			</div>
+			<h1 className="mb-2 text-center text-display-2">Your Services</h1>
+			<p className="mb-8 text-center text-(--foreground-muted)">
+				Pick the streaming services you pay for, so Up Next and Discover can
+				show what you can actually watch.
+			</p>
+
+			{settingsLoading ? (
+				<div className="grid grid-cols-4 gap-2 sm:grid-cols-6" aria-busy="true">
+					{SERVICE_SKELETON_KEYS.map((key) => (
+						<div
+							key={key}
+							className="h-[72px] animate-pulse rounded-xl bg-(--background-subtle)"
+						/>
+					))}
+				</div>
+			) : (
+				<StreamingServicePicker
+					country={settings?.watchCountry ?? "US"}
+					value={selected}
+					onToggle={(id) =>
+						setSelected((current) => toggleService(current, id))
+					}
+					disabled={updateSettingsMutation.isPending}
+				/>
+			)}
+			<p className="mt-4 text-(--foreground-subtle) text-xs">
+				You can change these at any time in Settings.
+			</p>
+
+			<div className="mt-8 space-y-2">
+				<button
+					type="button"
+					onClick={handleSave}
+					disabled={settingsLoading || updateSettingsMutation.isPending}
+					className="btn btn-primary w-full"
+				>
+					{updateSettingsMutation.isPending ? (
+						<Loader2 className="size-4 animate-spin" />
+					) : (
+						<>
+							Continue
+							<ArrowRight className="size-4" />
+						</>
+					)}
+				</button>
+				<button
+					type="button"
+					onClick={onSkip}
+					disabled={updateSettingsMutation.isPending}
+					className="btn btn-ghost w-full"
+				>
+					Skip for now
+				</button>
+			</div>
+		</div>
+	);
+}
+
+/* ------------------------------------------------------------------
    Step 4: Trakt.tv Import
    ------------------------------------------------------------------ */
 function TraktStep({
@@ -654,124 +784,6 @@ function TraktStep({
 				onComplete={onNext}
 				onImportStarted={onImportStarted}
 			/>
-		</div>
-	);
-}
-
-/* ------------------------------------------------------------------
-   Step 5: Follow Suggestions
-   ------------------------------------------------------------------ */
-function FollowSuggestionsStep({
-	onNext,
-	onFollowed,
-}: {
-	onNext: () => void;
-	onFollowed: () => void;
-}) {
-	const queryClient = useQueryClient();
-	const { data, isLoading } = useQuery(socialControllerGetSuggestionsOptions());
-
-	const followMutation = useMutation({
-		mutationKey: ["social", "follow"],
-		...socialControllerFollowMutation(),
-		onSuccess: () => {
-			posthog.capture("user_followed", { source: "onboarding" });
-			onFollowed();
-			queryClient.invalidateQueries({
-				queryKey: socialControllerGetSuggestionsOptions().queryKey,
-			});
-			queryClient.invalidateQueries({
-				predicate: (query) =>
-					(query.queryKey[0] as { _id?: string } | undefined)?._id ===
-					"socialControllerGetFeed",
-			});
-			toast.success("Followed");
-		},
-		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to follow user",
-			);
-		},
-	});
-
-	const suggestions = data?.items ?? [];
-
-	return (
-		<div className="card p-6">
-			<div className="mb-6">
-				<h2 className="text-display-3">People to Follow</h2>
-				<p className="mt-1 text-(--foreground-muted) text-sm">
-					Find people you know on Opnshelf
-				</p>
-			</div>
-
-			{isLoading && <UserRowsSkeleton rows={4} />}
-
-			{!isLoading && suggestions.length === 0 && (
-				<p className="py-8 text-center text-(--foreground-muted) text-sm">
-					No suggestions right now
-				</p>
-			)}
-
-			{suggestions.length > 0 && (
-				<div className="mb-6 space-y-1">
-					{suggestions.map((person) => (
-						<div
-							key={person.did}
-							className="flex items-center gap-3 rounded-lg p-2 hover:bg-(--background-subtle)"
-						>
-							<UserAvatar
-								src={
-									typeof person.avatar === "string" ? person.avatar : undefined
-								}
-								alt={String(person.displayName) || person.handle}
-							/>
-							<div className="min-w-0 flex-1">
-								<p className="truncate font-medium text-sm">
-									{String(person.displayName) || person.handle}
-								</p>
-								<p className="text-(--foreground-muted) text-xs">
-									@{person.handle}
-								</p>
-							</div>
-							{person.isFollowing ? (
-								<span className="text-(--foreground-muted) text-xs">
-									Following
-								</span>
-							) : (
-								<button
-									type="button"
-									className="btn btn-primary btn-sm"
-									onClick={() =>
-										followMutation.mutate({
-											path: { targetDid: person.did },
-										})
-									}
-									disabled={
-										followMutation.isPending &&
-										followMutation.variables?.path?.targetDid === person.did
-									}
-								>
-									{followMutation.isPending &&
-									followMutation.variables?.path?.targetDid === person.did ? (
-										<Loader2 className="size-3 animate-spin" />
-									) : (
-										<>
-											<UserPlus className="size-3" />
-											Follow
-										</>
-									)}
-								</button>
-							)}
-						</div>
-					))}
-				</div>
-			)}
-
-			<button type="button" onClick={onNext} className="btn btn-primary w-full">
-				Continue
-				<ArrowRight className="size-4" />
-			</button>
 		</div>
 	);
 }

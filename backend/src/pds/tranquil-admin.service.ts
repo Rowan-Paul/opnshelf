@@ -5,7 +5,7 @@ import {
 	Logger,
 	type OnModuleInit,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 
 /**
  * Talks to our Tranquil PDS as an admin account.
@@ -26,10 +26,10 @@ export class TranquilAdminService implements OnModuleInit {
 	private agent: AtpAgent | null = null;
 	private loginPromise: Promise<AtpAgent> | null = null;
 
-	constructor(private readonly config: ConfigService) {
-		this.pdsUrl = this.config.get<string>("PDS_URL");
-		this.identifier = this.config.get<string>("PDS_ADMIN_IDENTIFIER");
-		this.password = this.config.get<string>("PDS_ADMIN_PASSWORD");
+	constructor(private readonly config: BackendEnv) {
+		this.pdsUrl = this.config.PDS_URL;
+		this.identifier = this.config.PDS_ADMIN_IDENTIFIER;
+		this.password = this.config.PDS_ADMIN_PASSWORD;
 	}
 
 	onModuleInit() {
@@ -78,6 +78,13 @@ export class TranquilAdminService implements OnModuleInit {
 			this.logger.error("Failed to disable invite codes", error);
 			throw new InternalServerErrorException("Could not disable invite codes");
 		}
+	}
+
+	/** Only our own PDS accounts are visible to this administrator. */
+	async getVerifiedAccountEmail(did: string): Promise<string | null> {
+		const agent = await this.ensureLogin();
+		const { data } = await agent.com.atproto.admin.getAccountInfo({ did });
+		return data.email && data.emailConfirmedAt ? data.email : null;
 	}
 
 	private async ensureLogin(): Promise<AtpAgent> {

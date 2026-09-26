@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { type Href, Link } from "expo-router";
+import { type Href, Link, router } from "expo-router";
 import { Check, Plus, Star, X } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
@@ -220,7 +220,7 @@ function MediaCardBase({
 								onRemove();
 							}}
 							disabled={isRemoving}
-							className="absolute top-1.5 left-1.5 size-7 items-center justify-center rounded-full bg-black/55"
+							className="absolute top-1.5 left-1.5 size-7 items-center justify-center rounded-full bg-black/70"
 							accessibilityLabel="Remove this watch"
 							accessibilityState={{ busy: isRemoving }}
 						>
@@ -275,7 +275,7 @@ function MediaCardBase({
 							<View className="flex-row items-center gap-0.5">
 								<Star color="#f3bc00" fill="#f3bc00" size={11} />
 								<Text className="text-muted-foreground text-xs">
-									{item.rating.toFixed(1)}
+									{item.rating.toFixed(1)}/10
 								</Text>
 							</View>
 						) : null}
@@ -402,6 +402,10 @@ function MediaCardWithActions({
 
 	const toggleWatched = () => {
 		if (!isAuthenticated) return;
+		if (!isMovie && !ep && isProgressUnavailable) {
+			router.push(showHref(item.id, item.title));
+			return;
+		}
 		// Removal deletes every Watch behind this card, so a card standing for
 		// more than one asks first (same guard as the Web card).
 		if (watched) {
@@ -435,63 +439,65 @@ function MediaCardWithActions({
 
 	// Movies/episodes toggle a single watched state; shows toggle "on shelf"
 	// (tracking) via markShowWatched — all three handled by toggleWatched above.
-	const cornerToggle =
-		isAuthenticated && !(!isMovie && !ep && isProgressUnavailable) ? (
-			<Pressable
-				hitSlop={8}
-				onPress={(e) => {
-					// Keep the tap on the overlay button, never the card's Link.
-					e.stopPropagation();
-					toggleWatched();
-				}}
-				disabled={
-					isWatchPending || (!isMovie && !ep && progressQuery.isLoading)
-				}
-				accessibilityState={{
-					busy: isWatchPending || (!isMovie && !ep && progressQuery.isLoading),
-					checked: watched,
-				}}
-				accessibilityLabel={
-					isPartialShow
-						? `${showProgress?.episodesWatched} of ${showProgress?.episodesTotal} episodes watched. Mark remaining watched`
-						: watched && badgeWatchCount
-							? `${badgeWatchCount} ${badgeWatchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
-							: watched
-								? "Remove from shelf"
-								: "Add to shelf"
-				}
-				// Pending drops back to the neutral dark circle: one in-progress look
-				// whichever way the toggle is going, instead of a yellow "on shelf"
-				// badge while the removal is still in flight.
-				className={
-					(isPartialShow || watched) && !isWatchPending
-						? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${badgeWatchCount && badgeWatchCount > 1 ? "flex-row px-2" : "w-7"}`
-						: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
-				}
-			>
-				{!isMovie && !ep && progressQuery.isLoading ? (
-					<View className="h-3.5 w-5 animate-pulse rounded-full bg-white/35" />
-				) : isWatchPending ? (
-					<ActivityIndicator size="small" color="#ffffff" />
-				) : isPartialShow ? (
-					<Plus color="#3f2e00" size={16} strokeWidth={2.5} />
-				) : watched ? (
-					<>
-						<Check color="#3f2e00" size={16} strokeWidth={3} />
-						{badgeWatchCount && badgeWatchCount > 1 ? (
-							<Text
-								className="font-bold text-[#3f2e00] text-xs"
-								style={{ fontVariant: ["tabular-nums"] }}
-							>
-								{badgeWatchCount}
-							</Text>
-						) : null}
-					</>
-				) : (
-					<Plus color="#ffffff" size={16} strokeWidth={2.5} />
-				)}
-			</Pressable>
-		) : null;
+	const cornerToggle = isAuthenticated ? (
+		<Pressable
+			hitSlop={8}
+			onPress={(e) => {
+				// Keep the tap on the overlay button, never the card's Link.
+				e.stopPropagation();
+				toggleWatched();
+			}}
+			disabled={isWatchPending || (!isMovie && !ep && progressQuery.isLoading)}
+			accessibilityHint={
+				!isMovie && !ep && isProgressUnavailable
+					? "Opens the show to manage your shelf"
+					: undefined
+			}
+			accessibilityState={{
+				busy: isWatchPending || (!isMovie && !ep && progressQuery.isLoading),
+				checked: watched,
+			}}
+			accessibilityLabel={
+				isPartialShow
+					? `${showProgress?.episodesWatched} of ${showProgress?.episodesTotal} episodes watched. Mark remaining watched`
+					: watched && badgeWatchCount
+						? `${badgeWatchCount} ${badgeWatchCount === 1 ? "watch" : "watches"} logged. Remove from shelf`
+						: watched
+							? "Remove from shelf"
+							: "Add to shelf"
+			}
+			// Pending drops back to the neutral dark circle: one in-progress look
+			// whichever way the toggle is going, instead of a yellow "on shelf"
+			// badge while the removal is still in flight.
+			className={
+				(isPartialShow || watched) && !isWatchPending
+					? `absolute top-1.5 right-1.5 h-7 items-center justify-center rounded-full bg-primary ${badgeWatchCount && badgeWatchCount > 1 ? "flex-row px-2" : "w-7"}`
+					: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/70"
+			}
+		>
+			{!isMovie && !ep && progressQuery.isLoading ? (
+				<View className="h-3.5 w-5 animate-pulse rounded-full bg-white/35" />
+			) : isWatchPending ? (
+				<ActivityIndicator size="small" color="#ffffff" />
+			) : isPartialShow ? (
+				<Plus color="#3f2e00" size={16} strokeWidth={2.5} />
+			) : watched ? (
+				<>
+					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					{badgeWatchCount && badgeWatchCount > 1 ? (
+						<Text
+							className="font-bold text-[#3f2e00] text-xs"
+							style={{ fontVariant: ["tabular-nums"] }}
+						>
+							{badgeWatchCount}
+						</Text>
+					) : null}
+				</>
+			) : (
+				<Plus color="#ffffff" size={16} strokeWidth={2.5} />
+			)}
+		</Pressable>
+	) : null;
 
 	return (
 		<>

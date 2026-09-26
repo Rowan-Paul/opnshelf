@@ -1688,6 +1688,17 @@
             }
           },
           {
+            "name": "services",
+            "required": false,
+            "in": "query",
+            "description": "Filter your own Up Next by My Services (mine) or up to 50 comma-separated streaming service IDs",
+            "schema": {
+              "pattern": "^(mine|[1-9][0-9]{0,8}(,[1-9][0-9]{0,8}){0,49})$",
+              "example": "8,350",
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -5676,6 +5687,265 @@
         ]
       }
     },
+    "/notifications/collections/{id}": {
+      "get": {
+        "operationId": "NotificationsController_collection",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationCollectionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/settings": {
+      "get": {
+        "operationId": "NotificationsController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      },
+      "patch": {
+        "operationId": "NotificationsController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/test": {
+      "post": {
+        "operationId": "NotificationsController_testNotification",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestNotificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/email/request": {
+      "post": {
+        "operationId": "NotificationsController_requestEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestNotificationEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/email/confirm": {
+      "post": {
+        "operationId": "NotificationsController_confirmEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmNotificationEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/devices": {
+      "post": {
+        "operationId": "NotificationsController_registerDevice",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      },
+      "delete": {
+        "operationId": "NotificationsController_removeDevice",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovePushDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/search/all": {
       "get": {
         "operationId": "SearchController_searchAll",
@@ -5935,19 +6205,33 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Not authenticated"
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Submit user feedback",
+        "summary": "Submit feedback with or without a session",
         "tags": [
           "feedback"
+        ]
+      }
+    },
+    "/discover/popular-on-your-services": {
+      "get": {
+        "operationId": "DiscoverController_popularOnYourServices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PopularOnYourServicesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Popular movies and shows on your Streaming Services",
+        "tags": [
+          "discover"
         ]
       }
     },
@@ -6036,6 +6320,38 @@
         "summary": "Recommendation rows seeded from your recent watches",
         "tags": [
           "discover"
+        ]
+      }
+    },
+    "/streaming-services": {
+      "get": {
+        "operationId": "StreamingServicesController_list",
+        "parameters": [
+          {
+            "name": "country",
+            "required": false,
+            "in": "query",
+            "description": "ISO 3166-1 alpha-2 country code (e.g. US, NL); defaults to US",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingServicesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the Streaming Services available in a watch country, ordered by prominence",
+        "tags": [
+          "streaming-services"
         ]
       }
     }
@@ -8311,6 +8627,13 @@
             "type": "string",
             "description": "ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)"
           },
+          "streamingServiceIds": {
+            "description": "My Services: TMDB watch-provider ids the user subscribes to, for their watch country. Empty when never chosen.",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
           "alwaysShowSpoilers": {
             "type": "boolean",
             "description": "Reader preference: always show spoiler content, suppressing Spoiler Shields"
@@ -8354,6 +8677,7 @@
           "timeFormat",
           "timezone",
           "watchCountry",
+          "streamingServiceIds",
           "alwaysShowSpoilers",
           "reviewsPublicationUri",
           "reviewsPublicationName",
@@ -8382,6 +8706,13 @@
           "watchCountry": {
             "type": "string",
             "description": "ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)"
+          },
+          "streamingServiceIds": {
+            "description": "My Services: TMDB watch-provider ids the user subscribes to. Replaces the whole set; an empty array clears it.",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
           },
           "alwaysShowSpoilers": {
             "type": "boolean",
@@ -11302,6 +11633,229 @@
           "uri"
         ]
       },
+      "NotificationCollectionItemDto": {
+        "type": "object",
+        "properties": {
+          "mediaId": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "posterPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "overview": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "seasonNumber": {
+            "type": "number",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mediaId",
+          "mediaType",
+          "title",
+          "posterPath",
+          "overview",
+          "releaseDate",
+          "seasonNumber",
+          "path"
+        ]
+      },
+      "NotificationCollectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "periodStart": {
+            "type": "string"
+          },
+          "periodEnd": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCollectionItemDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "heading",
+          "periodStart",
+          "periodEnd",
+          "items"
+        ]
+      },
+      "NotificationSettingsDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "pushDeviceCount": {
+            "type": "number"
+          },
+          "pushNewReleases": {
+            "type": "boolean"
+          },
+          "pushWatchlistReleases": {
+            "type": "boolean"
+          },
+          "pushNewSeasons": {
+            "type": "boolean"
+          },
+          "pushStats": {
+            "type": "boolean"
+          },
+          "emailNewReleases": {
+            "type": "boolean"
+          },
+          "emailWatchlistReleases": {
+            "type": "boolean"
+          },
+          "emailNewSeasons": {
+            "type": "boolean"
+          },
+          "emailStats": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "emailVerified",
+          "pushDeviceCount",
+          "pushNewReleases",
+          "pushWatchlistReleases",
+          "pushNewSeasons",
+          "pushStats",
+          "emailNewReleases",
+          "emailWatchlistReleases",
+          "emailNewSeasons",
+          "emailStats"
+        ]
+      },
+      "UpdateNotificationSettingsDto": {
+        "type": "object",
+        "properties": {
+          "pushNewReleases": {
+            "type": "boolean"
+          },
+          "pushWatchlistReleases": {
+            "type": "boolean"
+          },
+          "pushNewSeasons": {
+            "type": "boolean"
+          },
+          "pushStats": {
+            "type": "boolean"
+          },
+          "emailNewReleases": {
+            "type": "boolean"
+          },
+          "emailWatchlistReleases": {
+            "type": "boolean"
+          },
+          "emailNewSeasons": {
+            "type": "boolean"
+          },
+          "emailStats": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TestNotificationDto": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "push",
+              "email"
+            ]
+          }
+        },
+        "required": [
+          "channel"
+        ]
+      },
+      "RequestNotificationEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ConfirmNotificationEmailDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "RegisterPushDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ios",
+              "android"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "platform"
+        ]
+      },
+      "RemovePushDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
       "UnifiedSearchResultDto": {
         "type": "object",
         "properties": {
@@ -11757,6 +12311,42 @@
           "createdAt"
         ]
       },
+      "PopularOnYourServicesRowDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnifiedSearchResultDto"
+            }
+          },
+          "serviceId": {
+            "type": "number"
+          },
+          "serviceName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "serviceId",
+          "serviceName"
+        ]
+      },
+      "PopularOnYourServicesResponseDto": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PopularOnYourServicesRowDto"
+            }
+          }
+        },
+        "required": [
+          "rows"
+        ]
+      },
       "DiscoverSectionResponseDto": {
         "type": "object",
         "properties": {
@@ -11813,6 +12403,53 @@
         },
         "required": [
           "rows"
+        ]
+      },
+      "StreamingServiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "TMDB watch-provider id"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, e.g. Netflix"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Absolute URL of the service logo, or null when TMDB has none",
+            "nullable": true
+          },
+          "displayPriority": {
+            "type": "number",
+            "description": "TMDB display priority within the requested country; lower is more prominent"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "logoUrl",
+          "displayPriority"
+        ]
+      },
+      "StreamingServicesResponseDto": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country the list is for"
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StreamingServiceDto"
+            }
+          }
+        },
+        "required": [
+          "country",
+          "services"
         ]
       }
     }

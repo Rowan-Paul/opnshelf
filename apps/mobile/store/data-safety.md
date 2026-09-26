@@ -13,6 +13,8 @@ We **do not sell** data and **do not** use data for cross-app tracking
 | Data | Category | Linked to user | Purpose | Source |
 | --- | --- | --- | --- | --- |
 | Handle, display name, avatar | Account info | Yes | App functionality | Provided by user (atproto account) |
+| Verified email address | Contact info | Yes | Email notifications | PDS account or entered in Settings |
+| Expo push token | Device identifier | Yes | Mobile notifications | Device after permission |
 | Shelf, watch history & dates | User content | Yes | App functionality | Provided by user |
 | Star ratings, notes, reviews | User content | Yes | App functionality | Provided by user |
 | Lists | User content | Yes | App functionality | Provided by user |
@@ -23,16 +25,17 @@ We **do not sell** data and **do not** use data for cross-app tracking
 
 ## Apple App Privacy mapping
 - **Data Used to Track You:** none.
-- **Data Linked to You:** Contact Info (none — no email at signup), User Content
-  (shelf, ratings, reviews, notes, lists), Identifiers (atproto DID/handle),
+- **Data Linked to You:** Contact Info (verified email for notifications), User Content
+  (shelf, ratings, reviews, notes, lists), Identifiers (atproto DID/handle and Expo push token),
   Usage Data (PostHog product analytics), Diagnostics (PostHog error details
   and stack traces).
 - **Data Not Linked to You:** Diagnostics (server logs).
 
 ## Google Play Data safety mapping
-- **Data shared with third parties:** none (PostHog is our processor, not a sale).
+- **Data shared with third parties:** none for their independent use. Expo processes push tokens to deliver mobile notifications; PostHog processes app analytics.
 - **Data collected:**
-  - Personal info → Name (display name), User IDs (handle/DID).
+  - Personal info → Name (display name), Email address, User IDs (handle/DID).
+  - Device or other IDs → Expo push token for mobile notifications.
   - App activity → In-app actions, other user-generated content (shelf, reviews,
     ratings, notes, lists), App interactions (PostHog analytics).
   - App info & performance → Crash logs (PostHog error details and stack

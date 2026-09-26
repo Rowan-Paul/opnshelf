@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { EnvModule } from "./config/env.module";
+import { StreamingServicesModule } from "./streaming-services/streaming-services.module";
+import { TmdbCacheModule } from "./tmdb/tmdb-cache.module";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { SessionThrottlerGuard } from "./common/session-throttler.guard";
@@ -12,6 +14,7 @@ import { LibraryModule } from "./library/library.module";
 import { ListsModule } from "./lists/lists.module";
 import { MoviesModule } from "./movies/movies.module";
 import { NotesModule } from "./notes/notes.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { PeopleModule } from "./people/people.module";
 import { PdsMaintenanceGuard } from "./pds/pds-maintenance.guard";
 import { RatingsModule } from "./ratings/ratings.module";
@@ -25,7 +28,9 @@ import { UsersModule } from "./users/users.module";
 
 @Module({
 	imports: [
-		ConfigModule.forRoot({ isGlobal: true }),
+		EnvModule,
+		// Shared TMDB response cache, Redis-backed when REDIS_URL is set (ADR 0041).
+		TmdbCacheModule,
 		// Global default rate limit: 100 requests / 60s per session (per IP for
 		// anonymous callers — see SessionThrottlerGuard). This sits
 		// alongside the custom AuthGuard and the hand-rolled register/resend
@@ -46,6 +51,7 @@ import { UsersModule } from "./users/users.module";
 		ListsModule,
 		LibraryModule,
 		NotesModule,
+		NotificationsModule,
 		RatingsModule,
 		ReviewsModule,
 		ShowsModule,
@@ -55,6 +61,7 @@ import { UsersModule } from "./users/users.module";
 		PeopleModule,
 		FeedbackModule,
 		DiscoverModule,
+		StreamingServicesModule,
 	],
 	providers: [
 		// Must run before route handlers so an operator can freeze every unsafe

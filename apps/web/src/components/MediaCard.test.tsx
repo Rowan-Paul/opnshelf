@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import MediaCard from "./MediaCard";
 
@@ -13,6 +13,27 @@ vi.mock("#/integrations/posthog/provider", () => ({
 }));
 
 describe("MediaCard poster metadata", () => {
+	it.each([
+		{ tmdbRating: 7.3, globalRating: undefined, expected: "7.3/10" },
+		{ tmdbRating: 7.3, globalRating: 8.6, expected: "8.6/10" },
+	])("keeps aggregate ratings on the detail page's ten-point scale ($expected)", ({
+		tmdbRating,
+		globalRating,
+		expected,
+	}) => {
+		render(
+			<MediaCard
+				id="920"
+				title="Cars"
+				posterUrl="/poster.jpg"
+				type="movie"
+				tmdbRating={tmdbRating}
+				globalRating={globalRating}
+			/>,
+		);
+		expect(screen.getByText(expected)).toBeTruthy();
+	});
+
 	it("shows the Watch count inside the watched control", () => {
 		render(
 			<MediaCard
@@ -107,4 +128,27 @@ describe("MediaCard poster metadata", () => {
 
 		expect(screen.queryByRole("progressbar")).toBeNull();
 	});
+});
+
+it("keeps shelf and list actions visible when progress is unavailable and follows the card instead of writing Watches", () => {
+	const markWatched = vi.fn();
+	const manageLists = vi.fn();
+	render(
+		<MediaCard
+			id="1"
+			title="Unavailable Show"
+			posterUrl="/poster.jpg"
+			type="show"
+			isProgressUnavailable
+			onMarkWatched={markWatched}
+			onManageLists={manageLists}
+		/>,
+	);
+	const shelf = screen.getByRole("button", { name: "Add to shelf" });
+	const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+	fireEvent(shelf, click);
+	expect(click.defaultPrevented).toBe(false);
+	expect(markWatched).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("button", { name: "Add to list" }));
+	expect(manageLists).toHaveBeenCalledOnce();
 });

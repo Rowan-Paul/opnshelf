@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AccountSection } from "./AccountSection";
 import { BlueskyCrossPostsSection } from "./BlueskyCrossPostsSection";
 import { DeleteAccountSection } from "./DeleteAccountSection";
+import { NotificationEmailSection } from "./NotificationEmailSection";
 import { PreferencesSections } from "./PreferencesSections";
 
 // The sections read their own state instead of taking it as props, so the
@@ -16,6 +17,7 @@ vi.mock("#/lib/auth-context", () => ({
 			timezone: "Europe/Amsterdam",
 			timeFormat: "24h",
 			watchCountry: "NL",
+			streamingServiceIds: [],
 			alwaysShowSpoilers: false,
 			blueskyCrossPostEnabled: false,
 		},
@@ -53,9 +55,19 @@ describe("settings sections", () => {
 		expect(screen.getByText("Appearance")).toBeDefined();
 		expect(screen.getByText("Time & Region")).toBeDefined();
 		expect(screen.getByText("Streaming")).toBeDefined();
+		expect(screen.getByText("My services")).toBeDefined();
 		expect(screen.getByText("Reviews")).toBeDefined();
+		expect(screen.queryByRole("heading", { name: "Notifications" })).toBeNull();
 		// timeFormat "24h" → the 24-hour switch is on.
 		expect(screen.getByRole("switch", { name: /24-hour time/i })).toBeDefined();
+	});
+
+	it("renders notifications separately from preferences", () => {
+		render(<NotificationEmailSection />, { wrapper: Wrapper });
+
+		expect(
+			screen.getByRole("heading", { name: "Email delivery" }),
+		).toBeDefined();
 	});
 
 	it("marks the picked appearance and persists it for the header toggle", () => {

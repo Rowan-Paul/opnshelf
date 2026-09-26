@@ -1,4 +1,7 @@
-import { reviewsControllerGetUserReviewsInfiniteQueryKey } from "@opnshelf/api";
+import {
+	configureApiClient,
+	reviewsControllerGetUserReviewsInfiniteQueryKey,
+} from "@opnshelf/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
@@ -6,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	useInfiniteProfileNotes,
 	useInfiniteProfileReviews,
+	useInfiniteProfileUpNext,
 } from "./use-public-profile";
 
 const api = vi.hoisted(() => ({
@@ -189,5 +193,55 @@ describe("infinite public profile hooks", () => {
 		});
 		await waitForUpdate(() => expect(api.getReviews).toHaveBeenCalledTimes(2));
 		hook.unmount();
+	});
+});
+
+describe("Up Next services filter", () => {
+	it("keeps loaded pages while filtering, starts at page one, and clears data for a different profile", async () => {
+		configureApiClient("http://up-next.test");
+		let resolveFiltered!: (response: Response) => void;
+		const pending = new Promise<Response>((resolve) => {
+			resolveFiltered = resolve;
+		});
+		const page = (showId: string) =>
+			Response.json({ items: [{ showId }], page: 1, hasNextPage: false });
+		const fetch = vi
+			.fn()
+			.mockResolvedValueOnce(page("all"))
+			.mockReturnValueOnce(pending)
+			.mockReturnValueOnce(new Promise(() => {}));
+		vi.stubGlobal("fetch", fetch);
+		let services: "mine" | undefined;
+		let userDid = "did:one";
+		const hook = renderQueryHook(() =>
+			useInfiniteProfileUpNext(userDid, services),
+		);
+		try {
+			await waitForUpdate(() =>
+				expect(hook.result.current.isSuccess).toBe(true),
+			);
+			services = "mine";
+			hook.rerender();
+			expect(hook.result.current.isPlaceholderData).toBe(true);
+			expect(hook.result.current.isFetching).toBe(true);
+			expect(hook.result.current.data?.pages[0].items[0].showId).toBe("all");
+			await waitForUpdate(() => expect(fetch).toHaveBeenCalledTimes(2));
+			const request = fetch.mock.calls[1][0] as Request;
+			expect(new URL(request.url).searchParams.get("services")).toBe("mine");
+			expect(new URL(request.url).searchParams.get("page")).toBe("1");
+			resolveFiltered(page("filtered"));
+			await waitForUpdate(() =>
+				expect(hook.result.current.data?.pages[0].items[0].showId).toBe(
+					"filtered",
+				),
+			);
+			userDid = "did:other";
+			services = undefined;
+			hook.rerender();
+			expect(hook.result.current.data).toBeUndefined();
+		} finally {
+			hook.unmount();
+			vi.unstubAllGlobals();
+		}
 	});
 });

@@ -1048,6 +1048,10 @@ export type UserSettingsDto = {
      */
     watchCountry: string;
     /**
+     * My Services: TMDB watch-provider ids the user subscribes to, for their watch country. Empty when never chosen.
+     */
+    streamingServiceIds: Array<number>;
+    /**
      * Reader preference: always show spoiler content, suppressing Spoiler Shields
      */
     alwaysShowSpoilers: boolean;
@@ -1088,6 +1092,10 @@ export type UpdateUserSettingsDto = {
      * ISO 3166-1 alpha-2 country code for streaming availability (e.g., US, GB)
      */
     watchCountry?: string;
+    /**
+     * My Services: TMDB watch-provider ids the user subscribes to. Replaces the whole set; an empty array clears it.
+     */
+    streamingServiceIds?: Array<number>;
     /**
      * Reader preference: always show spoiler content, suppressing Spoiler Shields
      */
@@ -2431,6 +2439,71 @@ export type PublishAtStoreReviewResponseDto = {
     uri: string;
 };
 
+export type NotificationCollectionItemDto = {
+    mediaId: string;
+    mediaType: 'movie' | 'show';
+    title: string;
+    posterPath: string | null;
+    overview: string;
+    releaseDate: string | null;
+    seasonNumber: number | null;
+    path: string;
+};
+
+export type NotificationCollectionDto = {
+    id: string;
+    heading: string;
+    periodStart: string;
+    periodEnd: string;
+    items: Array<NotificationCollectionItemDto>;
+};
+
+export type NotificationSettingsDto = {
+    email?: string | null;
+    emailVerified: boolean;
+    pushDeviceCount: number;
+    pushNewReleases: boolean;
+    pushWatchlistReleases: boolean;
+    pushNewSeasons: boolean;
+    pushStats: boolean;
+    emailNewReleases: boolean;
+    emailWatchlistReleases: boolean;
+    emailNewSeasons: boolean;
+    emailStats: boolean;
+};
+
+export type UpdateNotificationSettingsDto = {
+    pushNewReleases?: boolean;
+    pushWatchlistReleases?: boolean;
+    pushNewSeasons?: boolean;
+    pushStats?: boolean;
+    emailNewReleases?: boolean;
+    emailWatchlistReleases?: boolean;
+    emailNewSeasons?: boolean;
+    emailStats?: boolean;
+};
+
+export type TestNotificationDto = {
+    channel: 'push' | 'email';
+};
+
+export type RequestNotificationEmailDto = {
+    email: string;
+};
+
+export type ConfirmNotificationEmailDto = {
+    code: string;
+};
+
+export type RegisterPushDeviceDto = {
+    token: string;
+    platform: 'ios' | 'android';
+};
+
+export type RemovePushDeviceDto = {
+    token: string;
+};
+
 export type UnifiedSearchResultDto = {
     id: number;
     media_type: 'movie' | 'tv';
@@ -2672,6 +2745,16 @@ export type FeedbackResponseDto = {
     createdAt: string;
 };
 
+export type PopularOnYourServicesRowDto = {
+    items: Array<UnifiedSearchResultDto>;
+    serviceId: number;
+    serviceName: string;
+};
+
+export type PopularOnYourServicesResponseDto = {
+    rows: Array<PopularOnYourServicesRowDto>;
+};
+
 export type DiscoverSectionResponseDto = {
     items: Array<UnifiedSearchResultDto>;
 };
@@ -2685,6 +2768,33 @@ export type BecauseYouWatchedRowDto = {
 
 export type BecauseYouWatchedResponseDto = {
     rows: Array<BecauseYouWatchedRowDto>;
+};
+
+export type StreamingServiceDto = {
+    /**
+     * TMDB watch-provider id
+     */
+    id: number;
+    /**
+     * Display name, e.g. Netflix
+     */
+    name: string;
+    /**
+     * Absolute URL of the service logo, or null when TMDB has none
+     */
+    logoUrl: string | null;
+    /**
+     * TMDB display priority within the requested country; lower is more prominent
+     */
+    displayPriority: number;
+};
+
+export type StreamingServicesResponseDto = {
+    /**
+     * ISO 3166-1 alpha-2 country the list is for
+     */
+    country: string;
+    services: Array<StreamingServiceDto>;
 };
 
 export type MoviesControllerSearchMoviesData = {
@@ -3628,6 +3738,10 @@ export type ShowsControllerGetUserUpNextData = {
         userDid: string;
     };
     query?: {
+        /**
+         * Filter your own Up Next by My Services (mine) or up to 50 comma-separated streaming service IDs
+         */
+        services?: string;
         /**
          * Page number to return (1-based)
          */
@@ -5893,6 +6007,108 @@ export type AtStoreReviewsControllerPublishResponses = {
 
 export type AtStoreReviewsControllerPublishResponse = AtStoreReviewsControllerPublishResponses[keyof AtStoreReviewsControllerPublishResponses];
 
+export type NotificationsControllerCollectionData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/notifications/collections/{id}';
+};
+
+export type NotificationsControllerCollectionResponses = {
+    200: NotificationCollectionDto;
+};
+
+export type NotificationsControllerCollectionResponse = NotificationsControllerCollectionResponses[keyof NotificationsControllerCollectionResponses];
+
+export type NotificationsControllerSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/settings';
+};
+
+export type NotificationsControllerSettingsResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerSettingsResponse = NotificationsControllerSettingsResponses[keyof NotificationsControllerSettingsResponses];
+
+export type NotificationsControllerUpdateSettingsData = {
+    body: UpdateNotificationSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/settings';
+};
+
+export type NotificationsControllerUpdateSettingsResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerUpdateSettingsResponse = NotificationsControllerUpdateSettingsResponses[keyof NotificationsControllerUpdateSettingsResponses];
+
+export type NotificationsControllerTestNotificationData = {
+    body: TestNotificationDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/test';
+};
+
+export type NotificationsControllerTestNotificationResponses = {
+    201: unknown;
+};
+
+export type NotificationsControllerRequestEmailData = {
+    body: RequestNotificationEmailDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/email/request';
+};
+
+export type NotificationsControllerRequestEmailResponses = {
+    201: unknown;
+};
+
+export type NotificationsControllerConfirmEmailData = {
+    body: ConfirmNotificationEmailDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/email/confirm';
+};
+
+export type NotificationsControllerConfirmEmailResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerConfirmEmailResponse = NotificationsControllerConfirmEmailResponses[keyof NotificationsControllerConfirmEmailResponses];
+
+export type NotificationsControllerRemoveDeviceData = {
+    body: RemovePushDeviceDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/devices';
+};
+
+export type NotificationsControllerRemoveDeviceResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerRemoveDeviceResponse = NotificationsControllerRemoveDeviceResponses[keyof NotificationsControllerRemoveDeviceResponses];
+
+export type NotificationsControllerRegisterDeviceData = {
+    body: RegisterPushDeviceDto;
+    path?: never;
+    query?: never;
+    url: '/notifications/devices';
+};
+
+export type NotificationsControllerRegisterDeviceResponses = {
+    200: NotificationSettingsDto;
+};
+
+export type NotificationsControllerRegisterDeviceResponse = NotificationsControllerRegisterDeviceResponses[keyof NotificationsControllerRegisterDeviceResponses];
+
 export type SearchControllerSearchAllData = {
     body?: never;
     path?: never;
@@ -6035,13 +6251,6 @@ export type FeedbackControllerCreateFeedbackData = {
     url: '/feedback';
 };
 
-export type FeedbackControllerCreateFeedbackErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
 export type FeedbackControllerCreateFeedbackResponses = {
     /**
      * Feedback submitted
@@ -6050,6 +6259,19 @@ export type FeedbackControllerCreateFeedbackResponses = {
 };
 
 export type FeedbackControllerCreateFeedbackResponse = FeedbackControllerCreateFeedbackResponses[keyof FeedbackControllerCreateFeedbackResponses];
+
+export type DiscoverControllerPopularOnYourServicesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/discover/popular-on-your-services';
+};
+
+export type DiscoverControllerPopularOnYourServicesResponses = {
+    200: PopularOnYourServicesResponseDto;
+};
+
+export type DiscoverControllerPopularOnYourServicesResponse = DiscoverControllerPopularOnYourServicesResponses[keyof DiscoverControllerPopularOnYourServicesResponses];
 
 export type DiscoverControllerTrendingData = {
     body?: never;
@@ -6102,3 +6324,21 @@ export type DiscoverControllerBecauseYouWatchedResponses = {
 };
 
 export type DiscoverControllerBecauseYouWatchedResponse = DiscoverControllerBecauseYouWatchedResponses[keyof DiscoverControllerBecauseYouWatchedResponses];
+
+export type StreamingServicesControllerListData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * ISO 3166-1 alpha-2 country code (e.g. US, NL); defaults to US
+         */
+        country?: string;
+    };
+    url: '/streaming-services';
+};
+
+export type StreamingServicesControllerListResponses = {
+    200: StreamingServicesResponseDto;
+};
+
+export type StreamingServicesControllerListResponse = StreamingServicesControllerListResponses[keyof StreamingServicesControllerListResponses];

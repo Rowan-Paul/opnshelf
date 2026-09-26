@@ -12,7 +12,7 @@ import {
 	UnauthorizedException,
 	UseGuards,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { IngesterService } from "../ingester/ingester.service";
@@ -57,7 +57,7 @@ export class AuthController {
 
 	constructor(
 		private readonly authService: AuthService,
-		private readonly configService: ConfigService,
+		private readonly configService: BackendEnv,
 		private readonly ingesterService: IngesterService,
 		private readonly usersService: UsersService,
 		private readonly mobileHandoff: MobileHandoffService,
@@ -368,6 +368,7 @@ export class AuthController {
 					isNativePds: existingUser?.isNativePds ?? false,
 				},
 			);
+			await this.authService.syncNotificationEmailFromSession(session);
 
 			if (statePayload.permissionChange && statePayload.requestedPreferences) {
 				await this.applyPermissionChange(

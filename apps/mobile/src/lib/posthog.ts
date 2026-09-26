@@ -1,4 +1,4 @@
-import { nameExceptionIssue } from "@opnshelf/api";
+import { preparePostHogEvent } from "@opnshelf/api";
 import Constants from "expo-constants";
 import * as Updates from "expo-updates";
 import PostHog from "posthog-react-native";
@@ -30,7 +30,7 @@ export const posthog =
 	isPostHogEnabled && apiKey
 		? new PostHog(apiKey, {
 				host,
-				before_send: nameExceptionIssue,
+				before_send: preparePostHogEvent,
 				captureAppLifecycleEvents: true,
 				errorTracking: {
 					autocapture: {

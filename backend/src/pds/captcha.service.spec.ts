@@ -1,10 +1,11 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 import { CaptchaService } from "./captcha.service";
 
-function makeConfig(values: Record<string, string | undefined>): ConfigService {
-	return {
+function makeConfig(values: Record<string, string | undefined>): BackendEnv {
+	return mockEnvironment({
 		get: (key: string) => values[key],
-	} as unknown as ConfigService;
+	}) as unknown as BackendEnv;
 }
 
 describe("CaptchaService", () => {

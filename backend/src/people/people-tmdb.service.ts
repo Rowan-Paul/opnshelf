@@ -1,6 +1,13 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
+import { BackendEnv } from "../config/env.schema";
+import { TMDB_CACHE_STORE } from "../tmdb/tmdb-cache.module";
+import type { TmdbCacheStore } from "../tmdb/tmdb-cache.store";
+import {
+	TMDB_DETAIL_CACHE_TTL_MS,
+	TMDB_LIST_CACHE_TTL_MS,
+	TmdbHttpClient,
+	tmdbErrorForResponse,
+} from "../tmdb/tmdb-http";
 import type { PersonFilmographyItemDto } from "./dto/person.dto";
 
 export interface TMDBPerson {
@@ -65,9 +72,16 @@ export class PeopleTmdbService {
 	private readonly tmdbBaseUrl = "https://api.themoviedb.org/3";
 	private readonly http: TmdbHttpClient;
 
-	constructor(private config: ConfigService) {
-		this.tmdbApiKey = this.config.get("TMDB_API_KEY") ?? "";
-		this.http = new TmdbHttpClient(this.tmdbApiKey, PeopleTmdbService.name);
+	constructor(
+		private config: BackendEnv,
+		@Optional() @Inject(TMDB_CACHE_STORE) cacheStore?: TmdbCacheStore,
+	) {
+		this.tmdbApiKey = this.config.TMDB_API_KEY ?? "";
+		this.http = new TmdbHttpClient(
+			this.tmdbApiKey,
+			PeopleTmdbService.name,
+			cacheStore,
+		);
 	}
 
 	async searchPeople(
@@ -77,6 +91,7 @@ export class PeopleTmdbService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/search/person?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
 			`person:search:${query}:${page}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -90,6 +105,7 @@ export class PeopleTmdbService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/person/${personId}?api_key=${this.tmdbApiKey}`,
 			`person:detail:${personId}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -105,6 +121,7 @@ export class PeopleTmdbService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/person/${personId}/movie_credits?api_key=${this.tmdbApiKey}`,
 			`person:movieCredits:${personId}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -119,6 +136,7 @@ export class PeopleTmdbService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/person/${personId}/tv_credits?api_key=${this.tmdbApiKey}`,
 			`person:tvCredits:${personId}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {

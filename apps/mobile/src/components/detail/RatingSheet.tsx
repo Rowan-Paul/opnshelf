@@ -50,13 +50,13 @@ export function RatingSheet({
 						{rated ? (
 							<View className="flex-row items-baseline gap-0.5">
 								<Text className="font-bold font-display text-2xl text-foreground">
-									{(rating / 2).toFixed(1)}
+									{rating}
 								</Text>
-								<Text className="text-muted-foreground text-sm"> / 5</Text>
+								<Text className="text-muted-foreground text-sm"> /10</Text>
 							</View>
 						) : (
 							<Text className="text-muted-foreground text-sm">
-								Tap a star to rate
+								Choose a rating from 1 to 10
 							</Text>
 						)}
 					</View>

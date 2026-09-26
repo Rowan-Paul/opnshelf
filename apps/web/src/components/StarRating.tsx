@@ -15,20 +15,12 @@ const sizeClasses = {
 	lg: "h-6 w-6",
 };
 
-function ratingToStars(rating: number): number {
-	return rating / 2;
-}
-
-function starsToRating(stars: number): number {
-	return Math.round(stars * 2);
-}
-
 export default function StarRating({
 	value = 0,
 	onChange,
 	size = "md",
 	readOnly = false,
-	showValue = false,
+	showValue = readOnly,
 }: StarRatingProps) {
 	const [hoverValue, setHoverValue] = useState(0);
 
@@ -84,12 +76,12 @@ export default function StarRating({
 	] as const;
 
 	return (
-		<div className="flex items-center gap-1">
+		<div className="flex flex-wrap items-center gap-1">
 			{readOnly ? (
 				<div
 					className="relative inline-flex"
 					role="img"
-					aria-label={`Rating: ${ratingToStars(value).toFixed(1)} out of 5`}
+					aria-label={`Rating: ${value} out of 10`}
 				>
 					<div className="flex gap-0.5">
 						{starPositions.map((pos) => (
@@ -120,6 +112,7 @@ export default function StarRating({
 					aria-valuemin={0}
 					aria-valuemax={10}
 					aria-valuenow={value}
+					aria-valuetext={value > 0 ? `${value} out of 10` : "Not rated"}
 					onKeyDown={handleKeyDown}
 					tabIndex={0}
 				>
@@ -160,11 +153,9 @@ export default function StarRating({
 
 			{showValue && value > 0 && (
 				<span className="ml-1 font-medium text-(--foreground-muted) text-sm">
-					{ratingToStars(value).toFixed(1)}
+					{value}/10
 				</span>
 			)}
 		</div>
 	);
 }
-
-export { ratingToStars, starsToRating };

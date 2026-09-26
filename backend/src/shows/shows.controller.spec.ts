@@ -61,6 +61,33 @@ describe("ShowsController", () => {
 		controller = module.get<ShowsController>(ShowsController);
 	});
 
+	it.each(["mine", "8,350"])(
+		"restricts the %s filter to the owner while keeping unfiltered Up Next public",
+		async (services) => {
+			const owner = createMockRequest({
+				did: "did:plc:owner",
+				session: { did: "did:plc:owner" },
+			});
+			await controller.getUserUpNext("did:plc:owner", { services }, owner);
+			expect(mockShowsService.getUserUpNext).toHaveBeenCalledWith(
+				"did:plc:owner",
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				services,
+			);
+			mockShowsService.getUserUpNext.mockClear();
+			await expect(
+				controller.getUserUpNext("did:plc:other", { services }, owner),
+			).rejects.toThrow("Streaming service filtering is only available");
+			expect(mockShowsService.getUserUpNext).not.toHaveBeenCalled();
+			await controller.getUserUpNext("did:plc:other", {}, owner);
+			expect(mockShowsService.getUserUpNext).toHaveBeenCalled();
+		},
+	);
+
 	const createMockRequest = (user: {
 		did: string;
 		session: { did: string };

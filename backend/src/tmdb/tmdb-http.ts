@@ -1,4 +1,9 @@
 import { Logger } from "@nestjs/common";
+import {
+	MemoryTmdbCacheStore,
+	TMDB_CACHE_MAX_ENTRIES,
+	type TmdbCacheStore,
+} from "./tmdb-cache.store";
 
 /**
  * Shared HTTP plumbing for the TMDB v3 REST API.
@@ -10,7 +15,8 @@ import { Logger } from "@nestjs/common";
  *    bounded exponential backoff, honouring the Retry-After header when present.
  *  - Never retry other 4xx responses (e.g. 404 "not found"), so callers keep
  *    their existing not-found semantics.
- *  - Optionally cache idempotent GETs in a short-TTL in-memory cache.
+ *  - Optionally cache idempotent GETs in a {@link TmdbCacheStore}: per-process
+ *    memory by default, Redis when the app provides one (ADR 0041).
  *
  * Auth note: this client uses TMDB v3 query-param auth (?api_key=). The
  * codebase only configures TMDB_API_KEY (v3). If a v4 read access token is
@@ -23,14 +29,17 @@ export const TMDB_TIMEOUT_MS = 10_000;
 export const TMDB_MAX_RETRIES = 3;
 /** Base backoff in ms; doubled each attempt (200, 400, 800...). */
 export const TMDB_BACKOFF_BASE_MS = 200;
-/** Default TTL for cached detail/search GETs. */
-export const TMDB_CACHE_TTL_MS = 1000 * 60 * 10;
 /**
- * Upper bound on entries per cache to avoid unbounded growth. One detail page
- * fills six to ten keys, and crawlers walk dozens of Media Items a minute, so
- * a smaller cache turned over before a popular page was ever asked for twice.
+ * TTL for reads that change slowly: movie, show, season, episode and person
+ * details, credits, videos and watch providers. A day of staleness is the
+ * accepted cost of a cache that survives deploys (ADR 0041).
  */
-export const TMDB_CACHE_MAX_ENTRIES = 2000;
+export const TMDB_DETAIL_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+/** TTL for ranked or query-shaped lists: search, discover, trending, recommendations. */
+export const TMDB_LIST_CACHE_TTL_MS = 1000 * 60 * 60;
+/** Default TTL when a caller does not classify its read. */
+export const TMDB_CACHE_TTL_MS = TMDB_LIST_CACHE_TTL_MS;
+export { TMDB_CACHE_MAX_ENTRIES };
 
 export class MissingTmdbApiKeyError extends Error {
 	constructor() {
@@ -111,11 +120,6 @@ export interface TmdbResponse {
 	json<T>(): Promise<T>;
 }
 
-interface CacheEntry {
-	value: TMDBCachedResult;
-	expiresAt: number;
-}
-
 /** Parsed JSON we may cache for a successful GET. */
 type TMDBCachedResult = unknown;
 
@@ -152,14 +156,15 @@ function getHeader(response: TmdbResponse, name: string): string | null {
 }
 
 /**
- * Per-service TMDB HTTP client. Holds the resolved api key and an optional
- * in-memory response cache. One instance per NestJS service (injected via the
- * service constructor), so each test that builds a fresh service also gets a
- * fresh cache — no cross-test bleed.
+ * Per-service TMDB HTTP client. Holds the resolved api key and a response
+ * cache store. Without an explicit store each instance gets its own in-memory
+ * one, so each test that builds a fresh service also gets a fresh cache — no
+ * cross-test bleed. In the running app every service shares the store from
+ * `TmdbCacheModule`, so a show cached by one service is a hit for the others.
  */
 export class TmdbHttpClient {
 	private readonly logger: Logger;
-	private readonly cache = new Map<string, CacheEntry>();
+	private readonly store: TmdbCacheStore;
 	/** Misses already on their way to TMDB, so concurrent callers share one request. */
 	private readonly inFlight = new Map<
 		string,
@@ -169,13 +174,15 @@ export class TmdbHttpClient {
 	constructor(
 		private readonly apiKey: string,
 		loggerContext = "TmdbHttpClient",
+		store?: TmdbCacheStore,
 	) {
 		this.logger = new Logger(loggerContext);
+		this.store = store ?? new MemoryTmdbCacheStore();
 	}
 
-	/** Clears the in-memory cache. Exposed for tests / explicit invalidation. */
-	clearCache(): void {
-		this.cache.clear();
+	/** Clears the cache store. Exposed for tests / explicit invalidation. */
+	clearCache(): Promise<void> {
+		return this.store.clear();
 	}
 
 	private assertApiKey(): void {
@@ -266,7 +273,8 @@ export class TmdbHttpClient {
 	 * Cached variant of {@link fetch} for idempotent GETs. Caches the parsed
 	 * JSON of successful responses under `cacheKey` for `ttlMs`. On a cache hit
 	 * returns a synthetic ok response wrapping the cached JSON. Non-ok responses
-	 * are never cached, preserving not-found semantics for callers.
+	 * are not cached unless the caller supplies a JSON value for a 404. That
+	 * value is cached and returned as a successful response for the same TTL.
 	 *
 	 * Opt-in: only call this from safe detail/search GETs.
 	 */
@@ -274,18 +282,11 @@ export class TmdbHttpClient {
 		url: string,
 		cacheKey: string,
 		ttlMs: number = TMDB_CACHE_TTL_MS,
+		options?: { notFoundValue: Record<string, unknown> },
 	): Promise<TmdbResponse> {
-		const now = Date.now();
-		const cached = this.cache.get(cacheKey);
-		if (cached && cached.expiresAt > now) {
-			// Re-insert so eviction drops the least recently used key, not the
-			// oldest: popular Media Items stay cached through a crawl.
-			this.cache.delete(cacheKey);
-			this.cache.set(cacheKey, cached);
-			return makeCachedResponse(cached.value);
-		}
-		if (cached) {
-			this.cache.delete(cacheKey);
+		const cached = await this.store.get(cacheKey);
+		if (cached !== undefined) {
+			return makeCachedResponse(cached);
 		}
 
 		const shared = this.inFlight.get(cacheKey);
@@ -306,9 +307,11 @@ export class TmdbHttpClient {
 		);
 		try {
 			const response = await this.fetch(url);
-			if (response.ok) {
-				const data = await response.json<TMDBCachedResult>();
-				this.setCache(cacheKey, data, ttlMs);
+			if (response.ok || (response.status === 404 && options)) {
+				const data = response.ok
+					? await response.json<TMDBCachedResult>()
+					: options?.notFoundValue;
+				await this.store.set(cacheKey, data, ttlMs);
 				settle(data);
 				return makeCachedResponse(data);
 			}
@@ -320,17 +323,6 @@ export class TmdbHttpClient {
 		} finally {
 			this.inFlight.delete(cacheKey);
 		}
-	}
-
-	private setCache(key: string, value: TMDBCachedResult, ttlMs: number): void {
-		if (this.cache.size >= TMDB_CACHE_MAX_ENTRIES) {
-			// Map iteration order is recency order, so the first key is the LRU one.
-			const oldest = this.cache.keys().next().value;
-			if (oldest !== undefined) {
-				this.cache.delete(oldest);
-			}
-		}
-		this.cache.set(key, { value, expiresAt: Date.now() + ttlMs });
 	}
 }
 

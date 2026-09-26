@@ -42,6 +42,7 @@ import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle
 import { Route as ProfileHandleLibraryRouteImport } from './routes/profile.$handle/library'
 import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
 import { Route as PeoplePersonIdPersonNameRouteImport } from './routes/people/$personId/$personName'
+import { Route as DiscoverCollectionsIdRouteImport } from './routes/discover/collections/$id'
 import { Route as ShowsShowIdShowNameIndexRouteImport } from './routes/shows/$showId/$showName/index'
 import { Route as ProfileHandleListsIndexRouteImport } from './routes/profile.$handle/lists.index'
 import { Route as MoviesMovieIdMovieNameIndexRouteImport } from './routes/movies/$movieId/$movieName/index'
@@ -219,6 +220,11 @@ const PeoplePersonIdPersonNameRoute =
     path: '/people/$personId/$personName',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DiscoverCollectionsIdRoute = DiscoverCollectionsIdRouteImport.update({
+  id: '/discover/collections/$id',
+  path: '/discover/collections/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShowsShowIdShowNameIndexRoute =
   ShowsShowIdShowNameIndexRouteImport.update({
     id: '/',
@@ -296,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/social/find': typeof SocialFindRoute
   '/settings/': typeof SettingsIndexRoute
   '/social/': typeof SocialIndexRoute
+  '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -337,6 +344,7 @@ export interface FileRoutesByTo {
   '/social/find': typeof SocialFindRoute
   '/settings': typeof SettingsIndexRoute
   '/social': typeof SocialIndexRoute
+  '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/social/find': typeof SocialFindRoute
   '/settings/': typeof SettingsIndexRoute
   '/social/': typeof SocialIndexRoute
+  '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/social/find'
     | '/settings/'
     | '/social/'
+    | '/discover/collections/$id'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
     | '/social/find'
     | '/settings'
     | '/social'
+    | '/discover/collections/$id'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -507,6 +518,7 @@ export interface FileRouteTypes {
     | '/social/find'
     | '/settings/'
     | '/social/'
+    | '/discover/collections/$id'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -548,6 +560,7 @@ export interface RootRouteChildren {
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   SignupAppleRoute: typeof SignupAppleRoute
   SignupGoogleRoute: typeof SignupGoogleRoute
+  DiscoverCollectionsIdRoute: typeof DiscoverCollectionsIdRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ReviewsHandleRkeyRoute: typeof ReviewsHandleRkeyRoute
   ShowsShowIdShowNameRoute: typeof ShowsShowIdShowNameRouteWithChildren
@@ -788,6 +801,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeoplePersonIdPersonNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/discover/collections/$id': {
+      id: '/discover/collections/$id'
+      path: '/discover/collections/$id'
+      fullPath: '/discover/collections/$id'
+      preLoaderRoute: typeof DiscoverCollectionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shows/$showId/$showName/': {
       id: '/shows/$showId/$showName/'
       path: '/'
@@ -975,6 +995,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   SignupAppleRoute: SignupAppleRoute,
   SignupGoogleRoute: SignupGoogleRoute,
+  DiscoverCollectionsIdRoute: DiscoverCollectionsIdRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ReviewsHandleRkeyRoute: ReviewsHandleRkeyRoute,
   ShowsShowIdShowNameRoute: ShowsShowIdShowNameRouteWithChildren,

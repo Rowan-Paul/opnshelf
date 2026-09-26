@@ -1,5 +1,6 @@
 import {
 	Body,
+	ForbiddenException,
 	Controller,
 	Delete,
 	Get,
@@ -21,6 +22,7 @@ import {
 	ApiResponse,
 	ApiTags,
 } from "@nestjs/swagger";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import { AuthGuard } from "../auth/auth.guard";
 import { PUBLIC_CATALOGUE_CACHE_CONTROL } from "../common/cache-control";
 import { fromTmdbPage, parsePage } from "../common/pagination";
@@ -237,12 +239,20 @@ export class ShowsController {
 	}
 
 	@Get("user/:userDid/up-next")
+	@UseGuards(OptionalAuthGuard)
+	@Header("Cache-Control", "private, no-store")
 	@ApiOperation({ summary: "Get up next episodes for a user" })
 	@ApiResponse({ status: 200, type: PaginatedUpNextResponseDto })
 	async getUserUpNext(
 		@Param("userDid") userDid: string,
 		@Query() query: PaginatedUpNextQueryDto,
+		@Req() req: AuthenticatedRequest,
 	) {
+		if (query.services && req.user?.did !== userDid) {
+			throw new ForbiddenException(
+				"Streaming service filtering is only available on your own Up Next",
+			);
+		}
 		return this.showsService.getUserUpNext(
 			userDid,
 			query.page,
@@ -250,6 +260,7 @@ export class ShowsController {
 			query.sortBy,
 			query.sortOrder,
 			query.showId,
+			query.services,
 		);
 	}
 

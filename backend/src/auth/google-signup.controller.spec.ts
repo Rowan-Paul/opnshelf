@@ -1,6 +1,7 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock, Mocked } from "vitest";
 import { type HttpException, UnauthorizedException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
 
@@ -59,7 +60,7 @@ describe("GoogleSignupController", () => {
 		exchangeCode: vi.fn().mockResolvedValue("id-token"),
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
@@ -68,7 +69,7 @@ describe("GoogleSignupController", () => {
 			};
 			return config[key];
 		}),
-	};
+	});
 
 	const createMockResponse = () => {
 		const res = {
@@ -102,7 +103,7 @@ describe("GoogleSignupController", () => {
 				SignupRateLimiter,
 				{ provide: AuthService, useValue: mockAuthService },
 				{ provide: NativeAccountService, useValue: mockNativeAccounts },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{ provide: TranquilAdminService, useValue: mockTranquilAdmin },
 				{ provide: CaptchaService, useValue: mockCaptcha },
 				{ provide: GoogleOAuthService, useValue: mockGoogleOAuth },
@@ -123,7 +124,7 @@ describe("GoogleSignupController", () => {
 		};
 
 		beforeEach(() => {
-			mockConfigService.get.mockImplementation((key: string) => {
+			mockBackendEnv.get.mockImplementation((key: string) => {
 				const config: Record<string, string> = {
 					FRONTEND_URL: "http://127.0.0.1:3000",
 					NODE_ENV: "test",

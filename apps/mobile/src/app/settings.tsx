@@ -13,10 +13,12 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nativeApplicationVersion } from "expo-application";
+import Constants from "expo-constants";
 import { Link, Stack } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
+	Bell,
 	ChevronRight,
 	Compass,
 	Download,
@@ -25,7 +27,7 @@ import {
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -34,6 +36,7 @@ import {
 	View,
 } from "react-native";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
+import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
@@ -42,10 +45,16 @@ import { useDialog } from "@/components/ui/dialog";
 import { Screen } from "@/components/ui/screen";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
+import {
+	StreamingServicePicker,
+	toggleService,
+} from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
+import { createCoalescedSaver, sameIdSet } from "@/lib/coalesced-save";
+import { env } from "@/lib/env";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
@@ -98,8 +107,12 @@ function SettingsSection({
  * they are looking at. `Updates.channel` is null on a dev build. */
 function formatVersionLine(): string {
 	const version = nativeApplicationVersion ?? "?";
-	const parts = [`v${version}`];
-	if (Updates.channel && Updates.channel !== "production") {
+	const parts = [
+		`v${version}`,
+		`commit ${Constants.expoConfig?.extra?.commit ?? "unknown"}`,
+		new URL(env.apiUrl).hostname,
+	];
+	if (Updates.channel) {
 		parts.push(Updates.channel);
 	}
 	if (!Updates.isEnabled || !Updates.updateId) {
@@ -161,9 +174,19 @@ function AppearanceSetting() {
 export type SettingsCategory =
 	| "profile"
 	| "preferences"
+	| "notifications"
 	| "connections"
 	| "account"
 	| "help";
+
+const SETTINGS_TITLES: Record<SettingsCategory, string> = {
+	profile: "Profile",
+	preferences: "Preferences",
+	notifications: "Notifications",
+	connections: "Connections",
+	account: "Account",
+	help: "Help",
+};
 
 /** Shared implementation for the focused settings category routes. */
 export function SettingsCategoryScreen({
@@ -437,21 +460,18 @@ export function SettingsCategoryScreen({
 		: "";
 
 	const settingsBusy = updateSettingsMutation.isPending;
+	const updateSettingsAsync = updateSettingsMutation.mutateAsync;
+	const saveMyServices = useCallback(
+		(streamingServiceIds: number[]) =>
+			updateSettingsAsync({ body: { streamingServiceIds } }),
+		[updateSettingsAsync],
+	);
 
 	return (
 		<>
 			<Stack.Screen
 				options={{
-					title:
-						section === "profile"
-							? "Profile"
-							: section === "preferences"
-								? "Preferences"
-								: section === "connections"
-									? "Connections"
-									: section === "account"
-										? "Account"
-										: "Help",
+					title: SETTINGS_TITLES[section],
 					// While a PDS deletion job runs, lock the user on this screen:
 					// hide the back button and disable the iOS swipe-back gesture.
 					headerBackVisible: !isDeleting,
@@ -606,6 +626,18 @@ export function SettingsCategoryScreen({
 											}
 											disabled={settingsBusy}
 										/>
+										<Text className="mt-4 font-medium text-foreground text-sm">
+											My services
+										</Text>
+										<Text className="text-muted-foreground text-sm">
+											The streaming services you pay for. Used to show what you
+											can watch on Up Next and Discover.
+										</Text>
+										<MyServicesField
+											country={settings?.watchCountry ?? "US"}
+											saved={settings?.streamingServiceIds ?? []}
+											save={saveMyServices}
+										/>
 									</View>
 								)}
 							</SettingsSection>
@@ -650,6 +682,15 @@ export function SettingsCategoryScreen({
 								)}
 							</SettingsSection>
 						</>
+					)}
+
+					{section === "notifications" && (
+						<SettingsSection
+							title="Delivery"
+							description="Choose the updates Opnshelf sends to your device and email."
+						>
+							<NotificationPreferences />
+						</SettingsSection>
 					)}
 
 					{section === "connections" && (
@@ -906,6 +947,7 @@ const SETTINGS_AREAS: {
 	href:
 		| "/edit-profile"
 		| "/settings/preferences"
+		| "/settings/notifications"
 		| "/settings/connections"
 		| "/settings/account"
 		| "/settings/help";
@@ -915,31 +957,37 @@ const SETTINGS_AREAS: {
 }[] = [
 	{
 		href: "/edit-profile",
-		label: "Profile",
+		label: SETTINGS_TITLES.profile,
 		description: "Name, photo and social links",
 		Icon: UserPen,
 	},
 	{
 		href: "/settings/preferences",
-		label: "Preferences",
+		label: SETTINGS_TITLES.preferences,
 		description: "Appearance, time, streaming and reviews",
 		Icon: Compass,
 	},
 	{
+		href: "/settings/notifications",
+		label: SETTINGS_TITLES.notifications,
+		description: "Mobile push and email notifications",
+		Icon: Bell,
+	},
+	{
 		href: "/settings/connections",
-		label: "Connections",
+		label: SETTINGS_TITLES.connections,
 		description: "Blog mirroring, Bluesky and Trakt",
 		Icon: Download,
 	},
 	{
 		href: "/settings/account",
-		label: "Account",
+		label: SETTINGS_TITLES.account,
 		description: "Devices, sign out and account deletion",
 		Icon: Smartphone,
 	},
 	{
 		href: "/settings/help",
-		label: "Help",
+		label: SETTINGS_TITLES.help,
 		description: "Welcome tour and feedback",
 		Icon: MessageSquare,
 	},
@@ -979,8 +1027,54 @@ export default function SettingsScreen() {
 							</Link>
 						))}
 					</View>
+					<Text
+						selectable
+						className="pt-6 text-center text-muted-foreground text-xs"
+					>
+						{formatVersionLine()}
+					</Text>
 				</ScrollView>
 			</Screen>
 		</>
+	);
+}
+
+/**
+ * My Services in Settings saves on every toggle. The chosen set lives in
+ * local state and writes go through a coalescing queue: one request at a
+ * time, always carrying the full latest set, so quick toggles cannot race
+ * each other. The server copy only overwrites local state once nothing is
+ * in flight, so a refetch cannot undo a toggle that is still saving.
+ */
+function MyServicesField({
+	country,
+	saved,
+	save,
+}: {
+	country: string;
+	saved: number[];
+	save: (ids: number[]) => Promise<unknown>;
+}) {
+	const [selected, setSelected] = useState<number[]>(saved);
+	const saver = useMemo(() => createCoalescedSaver(save, sameIdSet), [save]);
+	// Latest local set, independent of the render cycle, so toggles that
+	// arrive before a re-render still build on each other.
+	const latest = useRef(selected);
+	useEffect(() => {
+		if (!saver.isDirty()) {
+			latest.current = saved;
+			setSelected(saved);
+		}
+	}, [saved, saver]);
+	return (
+		<StreamingServicePicker
+			country={country}
+			value={selected}
+			onToggle={(id) => {
+				latest.current = toggleService(latest.current, id);
+				setSelected(latest.current);
+				saver.submit(latest.current);
+			}}
+		/>
 	);
 }

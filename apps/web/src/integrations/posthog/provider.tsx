@@ -1,4 +1,4 @@
-import { nameExceptionIssue } from "@opnshelf/api";
+import { preparePostHogEvent } from "@opnshelf/api";
 import type { PostHog } from "posthog-js";
 
 // ponytail: every environment builds with the same VITE_POSTHOG_KEY, so the
@@ -38,14 +38,14 @@ export const posthogLoaded: Promise<void> | undefined = isPostHogEnabled
 				defaults: "2025-11-30",
 				before_send: (event) => {
 					if (!event) return event;
-					// Custom event captures inherit browser URL fields by default.
-					// Dynamic paths and query strings can contain user-generated
-					// identifiers or credentials, so analytics uses explicit
-					// categorical properties instead.
-					delete event.properties.$current_url;
-					delete event.properties.$pathname;
+					// The root route supplies only the origin and route section for
+					// pageviews. Other events can inherit sensitive browser URLs.
+					if (event.event !== "$pageview") {
+						delete event.properties.$current_url;
+						delete event.properties.$pathname;
+					}
 					delete event.properties.$referrer;
-					return nameExceptionIssue(event);
+					return preparePostHogEvent(event);
 				},
 			});
 			loaded.startExceptionAutocapture();

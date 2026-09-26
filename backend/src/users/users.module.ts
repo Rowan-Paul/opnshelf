@@ -1,6 +1,5 @@
 import { forwardRef, Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
-import { ConfigModule } from "@nestjs/config";
 import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -21,7 +20,6 @@ import { UsersService } from "./users.service";
 
 @Module({
 	imports: [
-		ConfigModule,
 		PrismaModule,
 		ListsModule,
 		MoviesModule,

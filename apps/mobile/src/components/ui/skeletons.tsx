@@ -156,3 +156,17 @@ export function ProfileHeaderSkeleton() {
 		</View>
 	);
 }
+
+/** Discover's initial load uses the same placeholder for every kind of row. */
+export function DiscoverRowsSkeleton() {
+	return (
+		<View accessibilityLabel="Loading Discover" accessibilityRole="progressbar">
+			{IDX(3).map((i) => (
+				<View key={i} className="px-4 pt-2 pb-4">
+					<View className="mb-3 h-6 w-56 rounded bg-background-subtle" />
+					<PosterRowSkeleton width={112} />
+				</View>
+			))}
+		</View>
+	);
+}

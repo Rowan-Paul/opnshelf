@@ -1,5 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
+import { BackendEnv } from "../config/env.schema";
+import { TMDB_CACHE_STORE } from "../tmdb/tmdb-cache.module";
+import type { TmdbCacheStore } from "../tmdb/tmdb-cache.store";
 import {
 	groupCrewByDepartment,
 	sortCrewByJob,
@@ -10,7 +12,12 @@ import {
 	trimCast,
 	trimCrew,
 } from "../tmdb/tmdb-credits.util";
-import { TmdbHttpClient, tmdbErrorForResponse } from "../tmdb/tmdb-http";
+import {
+	TMDB_DETAIL_CACHE_TTL_MS,
+	TMDB_LIST_CACHE_TTL_MS,
+	TmdbHttpClient,
+	tmdbErrorForResponse,
+} from "../tmdb/tmdb-http";
 import {
 	selectBestTMDBTrailer,
 	type TMDBTrailer,
@@ -139,9 +146,16 @@ export class ShowsTmdbService {
 	private readonly tmdbBaseUrl = "https://api.themoviedb.org/3";
 	private readonly http: TmdbHttpClient;
 
-	constructor(private config: ConfigService) {
-		this.tmdbApiKey = this.config.get("TMDB_API_KEY") ?? "";
-		this.http = new TmdbHttpClient(this.tmdbApiKey, ShowsTmdbService.name);
+	constructor(
+		private config: BackendEnv,
+		@Optional() @Inject(TMDB_CACHE_STORE) cacheStore?: TmdbCacheStore,
+	) {
+		this.tmdbApiKey = this.config.TMDB_API_KEY ?? "";
+		this.http = new TmdbHttpClient(
+			this.tmdbApiKey,
+			ShowsTmdbService.name,
+			cacheStore,
+		);
 	}
 
 	async searchShows(
@@ -151,6 +165,7 @@ export class ShowsTmdbService {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/search/tv?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&page=${page}`,
 			`search:tv:${query}:${page}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -158,6 +173,26 @@ export class ShowsTmdbService {
 		}
 
 		return response.json<TMDBSearchResponse>();
+	}
+
+	/** Popular series premiering in a date range. */
+	async discoverPremieresBetween(
+		start: string,
+		end: string,
+	): Promise<TMDBShow[]> {
+		const url = new URL(`${this.tmdbBaseUrl}/discover/tv`);
+		url.searchParams.set("api_key", this.tmdbApiKey);
+		url.searchParams.set("sort_by", "popularity.desc");
+		url.searchParams.set("first_air_date.gte", start);
+		url.searchParams.set("first_air_date.lte", end);
+		const response = await this.http.fetchCached(
+			url.toString(),
+			`notifications:show:${start}:${end}`,
+		);
+		if (!response.ok) {
+			throw tmdbErrorForResponse(response, "Failed to discover show premieres");
+		}
+		return (await response.json<TMDBSearchResponse>()).results;
 	}
 
 	async discoverShows(
@@ -174,6 +209,7 @@ export class ShowsTmdbService {
 		const response = await this.http.fetchCached(
 			url,
 			`discover:tv:${sortBy}:${page}:${year ?? ""}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -194,6 +230,7 @@ export class ShowsTmdbService {
 		const recs = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/tv/${showId}/recommendations?api_key=${this.tmdbApiKey}&page=${page}`,
 			`tv:recommendations:${showId}:${page}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 		if (recs.ok) {
 			const data = await recs.json<TMDBSearchResponse>();
@@ -203,6 +240,7 @@ export class ShowsTmdbService {
 		const similar = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/tv/${showId}/similar?api_key=${this.tmdbApiKey}&page=${page}`,
 			`tv:similar:${showId}:${page}`,
+			TMDB_LIST_CACHE_TTL_MS,
 		);
 		if (!similar.ok) {
 			throw tmdbErrorForResponse(similar, "Failed to fetch recommendations");
@@ -215,10 +253,12 @@ export class ShowsTmdbService {
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}?api_key=${this.tmdbApiKey}`,
 				`tv:detail:${showId}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/videos?api_key=${this.tmdbApiKey}`,
 				`tv:videos:${showId}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 		]);
 
@@ -242,6 +282,7 @@ export class ShowsTmdbService {
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/credits?api_key=${this.tmdbApiKey}`,
 				`tv:credits:${showId}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 			// TMDB lists a show's creators under created_by on the detail endpoint —
 			// /credits has no "Creator" job at all, so without this the clients fall
@@ -249,6 +290,7 @@ export class ShowsTmdbService {
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}?api_key=${this.tmdbApiKey}`,
 				`tv:detail:${showId}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 		]);
 
@@ -314,10 +356,12 @@ export class ShowsTmdbService {
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}?api_key=${this.tmdbApiKey}`,
 				`tv:season:detail:${showId}:${seasonNumber}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/videos?api_key=${this.tmdbApiKey}`,
 				`tv:season:videos:${showId}:${seasonNumber}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 		]);
 		if (!detailResponse.ok) {
@@ -342,10 +386,12 @@ export class ShowsTmdbService {
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/episode/${episodeNumber}?api_key=${this.tmdbApiKey}`,
 				`tv:episode:detail:${showId}:${seasonNumber}:${episodeNumber}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/episode/${episodeNumber}/videos?api_key=${this.tmdbApiKey}`,
 				`tv:episode:videos:${showId}:${seasonNumber}:${episodeNumber}`,
+				TMDB_DETAIL_CACHE_TTL_MS,
 			),
 		]);
 		if (!detailResponse.ok) {
@@ -449,8 +495,10 @@ export class ShowsTmdbService {
 	async getWatchProviders(
 		showId: string,
 	): Promise<WatchProvidersResponse | null> {
-		const response = await this.http.fetch(
+		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/tv/${showId}/watch/providers?api_key=${this.tmdbApiKey}`,
+			`tv:watchProviders:${showId}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
 		);
 
 		if (!response.ok) {
@@ -459,6 +507,28 @@ export class ShowsTmdbService {
 		}
 
 		return response.json<WatchProvidersResponse>();
+	}
+
+	/** Season data wins even when it has no flat-rate offers in this country. */
+	async getUpNextAvailability(showId: string, seasonNumber: number) {
+		const response = await this.http.fetchCached(
+			`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/watch/providers?api_key=${this.tmdbApiKey}`,
+			`tv:season:watchProviders:${showId}:${seasonNumber}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
+			{ notFoundValue: { results: {} } },
+		);
+		if (!response.ok) {
+			throw tmdbErrorForResponse(
+				response,
+				"Failed to fetch season availability",
+			);
+		}
+		const season = await response.json<WatchProvidersResponse>();
+		if (Object.keys(season.results).length > 0) return season;
+
+		const show = await this.getWatchProviders(showId);
+		if (!show) throw new Error("Failed to fetch show availability");
+		return show;
 	}
 
 	private getNavigableEpisodes(episodes: TMDBEpisode[]): TMDBEpisode[] {

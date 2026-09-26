@@ -4,6 +4,7 @@ import {
 	IsDateString,
 	IsArray,
 	IsInt,
+	Matches,
 	IsNumberString,
 	IsOptional,
 	IsString,
@@ -434,6 +435,16 @@ export class EpisodeHistoryItemDto {
 }
 
 export class PaginatedUpNextQueryDto {
+	@ApiPropertyOptional({
+		description:
+			"Filter your own Up Next by My Services (mine) or up to 50 comma-separated streaming service IDs",
+		example: "8,350",
+		pattern: "^(mine|[1-9][0-9]{0,8}(,[1-9][0-9]{0,8}){0,49})$",
+	})
+	@IsOptional()
+	@Matches(/^(mine|[1-9][0-9]{0,8}(,[1-9][0-9]{0,8}){0,49})$/)
+	services?: string;
+
 	@ApiPropertyOptional({
 		description: "Page number to return (1-based)",
 		default: 1,

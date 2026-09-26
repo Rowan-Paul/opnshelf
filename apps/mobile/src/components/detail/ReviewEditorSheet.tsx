@@ -196,9 +196,7 @@ export function ReviewEditorSheet({
 										size={28}
 									/>
 									<Text className="font-medium text-muted-foreground text-sm">
-										{isRated
-											? `${((rating ?? 0) / 2).toFixed(1)} / 5`
-											: "Not rated"}
+										{isRated ? `${rating} /10` : "Not rated"}
 									</Text>
 								</View>
 							</View>

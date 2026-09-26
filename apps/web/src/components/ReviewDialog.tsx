@@ -16,7 +16,7 @@ import {
 	useSetRating,
 } from "#/lib/hooks/useRatings";
 import { useCreateReview, useUpdateReview } from "#/lib/hooks/useReviews";
-import StarRating, { ratingToStars } from "./StarRating";
+import StarRating from "./StarRating";
 
 // The WYSIWYG editor (Milkdown/ProseMirror) is DOM-only and heavy, so it is
 // lazy-loaded and rendered client-side only (see the `mounted` gate below).
@@ -296,9 +296,7 @@ export function ReviewDialog({
 						<div className="flex items-center justify-between gap-4">
 							<StarRating value={rating} onChange={handleRatingChange} />
 							<span className="shrink-0 font-medium text-(--foreground-muted) text-sm">
-								{rated
-									? `${ratingToStars(rating).toFixed(1)} / 5`
-									: "Not rated"}
+								{rated ? `${rating} /10` : "Not rated"}
 							</span>
 						</div>
 					</section>

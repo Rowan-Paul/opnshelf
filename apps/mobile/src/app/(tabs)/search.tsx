@@ -1,6 +1,7 @@
 import {
 	discoverControllerBecauseYouWatchedOptions,
 	discoverControllerFromFollowsOptions,
+	discoverControllerPopularOnYourServicesOptions,
 	discoverControllerTrendingOptions,
 	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
@@ -11,9 +12,10 @@ import {
 	type TmdbMovieResultDto,
 	type TmdbShowResultDto,
 	type UnifiedSearchResultDto,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { hashKey, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Link, useIsFocused } from "expo-router";
 import {
@@ -33,6 +35,7 @@ import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { Screen } from "@/components/ui/screen";
 import {
+	DiscoverRowsSkeleton,
 	PosterGridSkeleton,
 	UserRowsSkeleton,
 } from "@/components/ui/skeletons";
@@ -200,6 +203,24 @@ function DiscoverSections({
 	isAuthenticated: boolean;
 	isFocused: boolean;
 }) {
+	const { user, isLoading: authLoading } = useAuth();
+	const { data: serviceSettings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: isAuthenticated,
+	});
+	const hasServices =
+		isAuthenticated && (serviceSettings?.streamingServiceIds.length ?? 0) > 0;
+	const popularOnYourServices = useQuery({
+		...discoverControllerPopularOnYourServicesOptions(),
+		queryKeyHashFn: (key) =>
+			hashKey([
+				...key,
+				user?.did,
+				serviceSettings?.watchCountry,
+				serviceSettings?.streamingServiceIds,
+			]),
+		enabled: hasServices && isFocused,
+	});
 	const fromFollows = useQuery({
 		...discoverControllerFromFollowsOptions(),
 		enabled: isAuthenticated && isFocused,
@@ -223,6 +244,20 @@ function DiscoverSections({
 		enabled: isFocused,
 	});
 
+	const discoverPending =
+		authLoading ||
+		settingsLoading ||
+		popularOnYourServices.isLoading ||
+		fromFollows.isLoading ||
+		becauseYouWatched.isLoading ||
+		trending.isLoading ||
+		popularMovies.isLoading ||
+		popularShows.isLoading;
+	const [discoverReady, setDiscoverReady] = useState(false);
+	useEffect(() => {
+		if (isFocused && !discoverPending) setDiscoverReady(true);
+	}, [isFocused, discoverPending]);
+
 	const followsItems = (fromFollows.data?.items ?? []).map(toMediaCardItem);
 	const trendingItems = (trending.data?.items ?? []).map(toMediaCardItem);
 	const rows = becauseYouWatched.data?.rows ?? [];
@@ -245,14 +280,23 @@ function DiscoverSections({
 
 	// One list so the Welcome Tour's long-press step can point at the first
 	// poster that actually rendered, whichever rail that turns out to be.
+	const recommendationRows = rows.map((row) => ({
+		key: `${row.seedMediaType}-${row.seedId}`,
+		title: `Because you watched ${row.seedTitle}`,
+		items: row.items.map(toMediaCardItem),
+	}));
 	const rails = [
 		{ key: "follows", title: "From your follows", items: followsItems },
-		...rows.map((row) => ({
-			key: `${row.seedMediaType}-${row.seedId}`,
-			title: `Because you watched ${row.seedTitle}`,
-			items: row.items.map(toMediaCardItem),
-		})),
+		...recommendationRows.slice(0, 1),
+		...(hasServices ? (popularOnYourServices.data?.rows ?? []) : []).map(
+			(row) => ({
+				key: `service-${row.serviceId}`,
+				title: `Popular on ${row.serviceName}`,
+				items: row.items.map(toMediaCardItem),
+			}),
+		),
 		{ key: "trending", title: "Trending this week", items: trendingItems },
+		...recommendationRows.slice(1),
 		{ key: "movies", title: "Popular movies", items: movieItems },
 		{ key: "shows", title: "Popular shows", items: showItems },
 	];
@@ -265,6 +309,7 @@ function DiscoverSections({
 	const onRefresh = async () => {
 		setRefreshing(true);
 		await Promise.all([
+			hasServices ? popularOnYourServices.refetch() : null,
 			trending.refetch(),
 			popularMovies.refetch(),
 			popularShows.refetch(),
@@ -284,14 +329,18 @@ function DiscoverSections({
 					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
 				}
 			>
-				{rails.map((rail) => (
-					<DiscoverRail
-						key={rail.key}
-						title={rail.title}
-						items={rail.items}
-						anchorFirstCard={rail.key === firstFilledRail}
-					/>
-				))}
+				{!discoverReady && discoverPending ? (
+					<DiscoverRowsSkeleton />
+				) : (
+					rails.map((rail) => (
+						<DiscoverRail
+							key={rail.key}
+							title={rail.title}
+							items={rail.items}
+							anchorFirstCard={rail.key === firstFilledRail}
+						/>
+					))
+				)}
 			</ScrollView>
 		</ShowProgressScope>
 	);

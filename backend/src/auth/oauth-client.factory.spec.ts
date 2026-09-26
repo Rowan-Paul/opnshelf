@@ -1,6 +1,7 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock } from "vitest";
 import { NodeOAuthClient } from "@atproto/oauth-client-node";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing OAuthClientFactory
@@ -52,19 +53,19 @@ describe("OAuthClientFactory", () => {
 		NODE_ENV: "test",
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => baseConfig[key]),
-	};
+	});
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		mockConfigService.get.mockImplementation((key: string) => baseConfig[key]);
+		mockBackendEnv.get.mockImplementation((key: string) => baseConfig[key]);
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				OAuthClientFactory,
 				{ provide: PrismaService, useValue: mockPrismaService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 			],
 		}).compile();
 
@@ -125,7 +126,7 @@ describe("OAuthClientFactory", () => {
 		});
 
 		it("should return production metadata for non-localhost URLs", () => {
-			(mockConfigService.get as Mock).mockImplementation((key: string) => {
+			(mockBackendEnv.get as Mock).mockImplementation((key: string) => {
 				if (key === "BACKEND_PUBLIC_URL") return "https://api.opnshelf.xyz";
 				if (key === "PORT") return 443;
 				return undefined;
@@ -166,7 +167,7 @@ describe("OAuthClientFactory", () => {
 		it("refuses to hand out a client before initialization", () => {
 			const uninitialized = new OAuthClientFactory(
 				mockPrismaService as unknown as PrismaService,
-				mockConfigService as unknown as ConfigService,
+				mockBackendEnv as unknown as BackendEnv,
 			);
 
 			expect(() => uninitialized.getBaseClient()).toThrow(

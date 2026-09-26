@@ -114,7 +114,7 @@ describe("CommunityReviews", () => {
 		});
 
 		render(<CommunityReviews mediaType="movie" mediaId="123" />);
-		expect(screen.getByLabelText("Rating: 4.0 out of 5")).toBeTruthy();
+		expect(screen.getByLabelText("Rating: 8 out of 10")).toBeTruthy();
 	});
 
 	it.each([null, 0])("does not show a rating for %s", (authorRating) => {

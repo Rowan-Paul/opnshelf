@@ -18,15 +18,19 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SuggestionsStep } from "@/components/onboarding/SuggestionsStep";
 import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
+import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
-import { UserRow } from "@/components/social/UserRow";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
-import { UserRowsSkeleton } from "@/components/ui/skeletons";
+import {
+	StreamingServicePicker,
+	toggleService,
+} from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -34,7 +38,6 @@ import { useAuth } from "@/lib/auth-context";
 import { guessWatchCountry } from "@/lib/countries";
 import { posthog } from "@/lib/posthog";
 import { useProfileSetup } from "@/lib/use-profile";
-import { useFollowToggle, useSuggestions } from "@/lib/use-social";
 
 const logo = require("../../assets/images/icon.png");
 
@@ -42,6 +45,8 @@ type OnboardingStep =
 	| "welcome"
 	| "profile"
 	| "preferences"
+	| "services"
+	| "notifications"
 	| "trakt"
 	| "suggestions"
 	| "watches"
@@ -51,6 +56,8 @@ const STEP_SEQUENCE: OnboardingStep[] = [
 	"welcome",
 	"profile",
 	"preferences",
+	"services",
+	"notifications",
 	"trakt",
 	"suggestions",
 	"watches",
@@ -197,7 +204,29 @@ export default function OnboardingScreen() {
 					<ProfileStep onNext={() => setStep("preferences")} />
 				)}
 				{step === "preferences" && (
-					<PreferencesStep onNext={() => setStep("trakt")} />
+					<PreferencesStep onNext={() => setStep("services")} />
+				)}
+				{step === "services" && (
+					<ServicesStep onNext={() => setStep("notifications")} />
+				)}
+				{step === "notifications" && (
+					<StepScaffold
+						footer={
+							<PrimaryButton
+								label="Continue"
+								onPress={() => setStep("trakt")}
+							/>
+						}
+					>
+						<Text className="font-display font-semibold text-2xl text-foreground">
+							Stay up to date
+						</Text>
+						<Text className="text-muted-foreground text-sm">
+							Choose mobile and email notifications. You can change these in
+							Settings anytime.
+						</Text>
+						<NotificationPreferences />
+					</StepScaffold>
 				)}
 				{step === "trakt" && (
 					<TraktStep
@@ -206,10 +235,16 @@ export default function OnboardingScreen() {
 					/>
 				)}
 				{step === "suggestions" && (
-					<SuggestionsStep
-						onFollowed={() => setFollowedAnyone(true)}
-						onNext={() => setStep("watches")}
-					/>
+					<StepScaffold
+						footer={
+							<PrimaryButton
+								label="Continue"
+								onPress={() => setStep("watches")}
+							/>
+						}
+					>
+						<SuggestionsStep onFollowed={() => setFollowedAnyone(true)} />
+					</StepScaffold>
 				)}
 				{step === "watches" && (
 					<WatchedMediaSwipe
@@ -359,9 +394,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	const updateSettings = useMutation({
 		mutationKey: ["users", "me", "settings", "update"],
 		...usersControllerUpdateMySettingsMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users", "me", "settings"] });
-		},
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to save preferences",
@@ -425,6 +463,101 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	);
 }
 
+/* ----------------------------------------------------------------- Services */
+const SERVICE_SKELETON_KEYS = Array.from(
+	{ length: 12 },
+	(_, i) => `service-skeleton-${i + 1}`,
+);
+
+function ServicesStep({ onNext }: { onNext: () => void }) {
+	const queryClient = useQueryClient();
+	const toast = useToast();
+	const [selected, setSelected] = useState<number[]>([]);
+	const { data: settings, isLoading: settingsLoading } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+	});
+
+	useEffect(() => {
+		if (settings) setSelected(settings.streamingServiceIds);
+	}, [settings]);
+
+	const updateSettings = useMutation({
+		mutationKey: ["users", "me", "settings", "update"],
+		...usersControllerUpdateMySettingsMutation(),
+		// Returned so the step's own onSuccess (which advances) waits for the
+		// refetch: the next step reads the settings cache and must see this save.
+		onSuccess: () =>
+			queryClient.invalidateQueries({
+				queryKey: usersControllerGetMySettingsOptions().queryKey,
+			}),
+		onError: (error) =>
+			toast.error(
+				error instanceof Error ? error.message : "Failed to save your services",
+			),
+	});
+
+	const handleContinue = () => {
+		updateSettings.mutate(
+			{ body: { streamingServiceIds: selected } },
+			{ onSuccess: onNext },
+		);
+	};
+
+	return (
+		<StepScaffold
+			footer={
+				<>
+					<PrimaryButton
+						label="Continue"
+						onPress={handleContinue}
+						loading={updateSettings.isPending}
+						disabled={settingsLoading}
+					/>
+					<Button
+						label="Skip for now"
+						variant="secondary"
+						onPress={onNext}
+						disabled={updateSettings.isPending}
+					/>
+				</>
+			}
+		>
+			<View className="gap-1">
+				<Text className="font-bold font-display text-3xl text-foreground">
+					Your services
+				</Text>
+				<Text className="text-muted-foreground text-sm leading-5">
+					Pick the streaming services you pay for, so Up Next and Discover can
+					show what you can actually watch.
+				</Text>
+			</View>
+
+			{settingsLoading ? (
+				<View className="flex-row flex-wrap gap-2">
+					{SERVICE_SKELETON_KEYS.map((key) => (
+						<View
+							key={key}
+							className="h-[72px] w-[23%] rounded-xl bg-background-subtle"
+						/>
+					))}
+				</View>
+			) : (
+				<StreamingServicePicker
+					country={settings?.watchCountry ?? "US"}
+					value={selected}
+					onToggle={(id) =>
+						setSelected((current) => toggleService(current, id))
+					}
+					disabled={updateSettings.isPending}
+				/>
+			)}
+			<Text className="text-muted-foreground text-xs">
+				You can change these any time in Settings.
+			</Text>
+		</StepScaffold>
+	);
+}
+
 /* -------------------------------------------------------------------- Trakt */
 function TraktStep({
 	onNext,
@@ -452,52 +585,6 @@ function TraktStep({
 				onDone={onNext}
 			/>
 		</View>
-	);
-}
-
-/* -------------------------------------------------------------- Suggestions */
-function SuggestionsStep({
-	onNext,
-	onFollowed,
-}: {
-	onNext: () => void;
-	onFollowed: () => void;
-}) {
-	const { user } = useAuth();
-	const { data, isLoading } = useSuggestions();
-	const { toggle } = useFollowToggle(onFollowed);
-	const suggestions = data?.items ?? [];
-
-	return (
-		<StepScaffold footer={<PrimaryButton label="Continue" onPress={onNext} />}>
-			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
-					People to follow
-				</Text>
-				<Text className="text-muted-foreground text-sm">
-					Find people you know on Opnshelf.
-				</Text>
-			</View>
-
-			{isLoading ? (
-				<UserRowsSkeleton />
-			) : suggestions.length === 0 ? (
-				<Text className="py-8 text-center text-muted-foreground text-sm">
-					No suggestions right now.
-				</Text>
-			) : (
-				<View className="gap-2">
-					{suggestions.map((person) => (
-						<UserRow
-							key={person.did}
-							user={person}
-							isSelf={person.did === user?.did}
-							onToggleFollow={toggle}
-						/>
-					))}
-				</View>
-			)}
-		</StepScaffold>
 	);
 }
 

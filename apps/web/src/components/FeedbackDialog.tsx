@@ -62,7 +62,8 @@ export function FeedbackDialog({
 				<DialogHeader>
 					<DialogTitle>Send Feedback</DialogTitle>
 					<DialogDescription>
-						Help us improve Opnshelf by sharing your thoughts.
+						Your feedback will become a public GitHub issue. Please leave out
+						personal information and secrets.
 					</DialogDescription>
 				</DialogHeader>
 

@@ -1,6 +1,7 @@
+import { mockEnvironment } from "../../test/env";
 import type { Mock, Mocked } from "vitest";
 import { BadRequestException, HttpException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Response } from "express";
 
@@ -72,7 +73,7 @@ describe("SignupController", () => {
 		verify: vi.fn().mockResolvedValue(true),
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			const config: Record<string, string> = {
 				FRONTEND_URL: "http://127.0.0.1:3000",
@@ -81,7 +82,7 @@ describe("SignupController", () => {
 			};
 			return config[key];
 		}),
-	};
+	});
 
 	const createMockResponse = () => {
 		const res = {
@@ -123,7 +124,7 @@ describe("SignupController", () => {
 				{ provide: AuthService, useValue: mockAuthService },
 				{ provide: NativeAccountService, useValue: mockNativeAccounts },
 				{ provide: DeviceSessionsService, useValue: mockSessions },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{ provide: IngesterService, useValue: mockIngesterService },
 				{ provide: TranquilAdminService, useValue: mockTranquilAdmin },
 				{ provide: CaptchaService, useValue: mockCaptcha },
@@ -151,7 +152,7 @@ describe("SignupController", () => {
 		beforeEach(() => {
 			// An earlier test overrides get() via mockImplementation, which
 			// clearAllMocks() does not reset — restore the full config here.
-			mockConfigService.get.mockImplementation((key: string) => {
+			mockBackendEnv.get.mockImplementation((key: string) => {
 				const config: Record<string, string> = {
 					FRONTEND_URL: "http://127.0.0.1:3000",
 					NODE_ENV: "test",

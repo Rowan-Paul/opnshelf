@@ -1,4 +1,5 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing AuthService
@@ -32,9 +33,9 @@ describe("AuthService.upsertUser", () => {
 		},
 	};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn(),
-	};
+	});
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -43,7 +44,7 @@ describe("AuthService.upsertUser", () => {
 			providers: [
 				AuthService,
 				{ provide: PrismaService, useValue: mockPrismaService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{ provide: OAuthClientFactory, useValue: {} },
 				{ provide: DeviceSessionsService, useValue: {} },
 			],

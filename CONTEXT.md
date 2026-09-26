@@ -50,6 +50,24 @@ _Avoid_: Blog copy (does not distinguish the managed mirror from abandoned histo
 **Media Item**:
 A movie, show, season, or episode that can be tracked, reviewed, and listed.
 
+**Streaming Service**:
+A flat-rate subscription video service on which a Media Item can be watched in a given watch country — Netflix, Disney+ and the like, as listed by TMDB/JustWatch. Rent, buy, free and ad-supported availability are not Streaming Service availability. Availability is reckoned per **season** for shows, so a show can be on a Streaming Service while its newest season is not.
+_Avoid_: Provider, watch provider (collides with **Provider Sign-In**'s identity providers), platform, subscription (that is the user's relationship to a service, not the service), channel
+
+**My Services**:
+The set of **Streaming Services** a user says they subscribe to, chosen for their watch country in Settings or during **Onboarding**. Drives the "Popular on [service name]" rows on **Discover**; it is never applied to another user's pages. Changing watch country keeps the chosen set but only services that exist in the new country count.
+_Avoid_: Subscriptions, my providers, my platforms
+
+**Up Next**:
+A user's queue of shows with an aired, unwatched next episode, one entry per show, shown on their profile. Anyone can view a user's Up Next; its owner can filter by any selected **Streaming Services**, without changing their saved subscriptions.
+_Avoid_: Continue watching, watchlist (that is a List of items not yet started), queue
+
+**Notification Collection**:
+The saved selection of Media Items from a release Notification, presented within Discover. It preserves the original titles for the recipient to revisit from email or Mobile App push.
+
+**Notification**:
+An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or the User's weekly, monthly, or yearly Watch counts. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
+
 **Shelf**:
 The collection of media items a user has marked as watched or tracked. Its dated
 timeline view renders one card per **Watch**, so rewatches appear as separate
@@ -65,7 +83,7 @@ _Avoid_: View, log entry (a watchlist add is a separate, un-watched state), play
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
 
 **Onboarding**:
-The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → optional Trakt history import → follow suggestions → add watched Media Items → done. The watched-Media-Items step presents the same mixed deck on both clients: 14 all-time recognizable movies and shows, ranked by TMDB vote count, plus 6 titles trending that week. Skipping a card makes no change. Marking a movie watched adds one undated Watch. Marking a show watched adds an undated Watch for each aired episode. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
+The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → **My Services** → optional mobile and email notification preferences → optional Trakt history import → follow suggestions → add watched Media Items → done. The watched-Media-Items step presents the same mixed deck on both clients: 14 all-time recognizable movies and shows, ranked by TMDB vote count, plus 6 titles trending that week. Skipping a card makes no change. Marking a movie watched adds one undated Watch. Marking a show watched adds an undated Watch for each aired episode. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
 _Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup), Welcome Tour (that comes after, over the live UI)
 
 **Welcome Tour**:

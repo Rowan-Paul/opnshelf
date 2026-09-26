@@ -54,7 +54,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 		}
 
 		// Log full detail server-side (stack included) but never ship it out.
-		const logContext = `${request.method} ${request.url}`;
+		const logContext = `${request.method} ${request.url} request_id=${response.locals?.requestId ?? "unknown"}`;
 		if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
 			this.logger.error(
 				`${logContext} -> ${status}`,

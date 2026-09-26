@@ -6,6 +6,7 @@ import { DeleteAccountSection } from "#/components/settings/DeleteAccountSection
 import { DevicesSection } from "#/components/settings/DevicesSection";
 import { HelpSection } from "#/components/settings/HelpSection";
 import { ImportHistorySection } from "#/components/settings/ImportHistorySection";
+import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
 import { PreferencesSections } from "#/components/settings/PreferencesSections";
 import { SettingsPageShell } from "#/components/settings/SettingsPageShell";
 import { useAuth } from "#/lib/auth-context";
@@ -18,6 +19,10 @@ const SECTION_COPY = {
 	preferences: {
 		title: "Preferences",
 		description: "Choose how Opnshelf looks and works for you.",
+	},
+	notifications: {
+		title: "Notifications",
+		description: "Choose which updates Opnshelf emails you.",
 	},
 	connections: {
 		title: "Connections",
@@ -51,6 +56,7 @@ function SettingsSectionPage() {
 			<div className="card overflow-hidden">
 				{section === "profile" && user ? <AccountSection user={user} /> : null}
 				{section === "preferences" ? <PreferencesSections /> : null}
+				{section === "notifications" ? <NotificationEmailSection /> : null}
 				{section === "connections" ? (
 					<>
 						<BlogMirrorSection />

@@ -1,6 +1,6 @@
 import interFont from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import jakartaFont from "@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url";
-import { isUnauthorizedError, type UserDto } from "@opnshelf/api";
+import type { UserDto } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -76,17 +76,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			return;
 		}
 
+		let user: UserDto | null;
 		try {
-			const user = await context.queryClient.fetchQuery(sessionQuery);
-			if (user?.needsOnboarding) {
-				throw redirect({ to: "/onboarding" });
-			}
-		} catch (error) {
-			if (isUnauthorizedError(error)) {
-				// Not logged in — allow access to public pages
-				return;
-			}
-			throw error;
+			user = await context.queryClient.fetchQuery(sessionQuery);
+		} catch {
+			// SSR cannot establish the session; keep the page available and let
+			// AuthProvider check again in the browser.
+			return;
+		}
+		if (user?.needsOnboarding) {
+			throw redirect({ to: "/onboarding" });
 		}
 	},
 	head: () => ({

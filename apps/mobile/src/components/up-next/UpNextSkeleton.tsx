@@ -1,7 +1,6 @@
 import { View } from "react-native";
 
-/** Shape-matched placeholders mirroring UpNextCard, so sections don't claim
- * to be empty (or jump around when real content arrives) while pending. */
+/** Compact rows reused by review/activity placeholders. */
 export function UpNextRowSkeleton({
 	extraLine = false,
 }: {
@@ -22,12 +21,48 @@ export function UpNextRowSkeleton({
 	);
 }
 
-export function UpNextSkeleton({ rows = 2 }: { rows?: number }) {
+export function UpNextSkeleton({
+	rows = 2,
+	variant = "compact",
+}: {
+	rows?: number;
+	variant?: "compact" | "tile";
+}) {
+	if (variant === "compact")
+		return (
+			<View className="gap-3">
+				{Array.from({ length: rows }, (_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
+					<UpNextRowSkeleton key={i} />
+				))}
+			</View>
+		);
 	return (
 		<View className="gap-3">
 			{Array.from({ length: rows }, (_, i) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder rows never reorder
-				<UpNextRowSkeleton key={i} />
+				<View
+					// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder rows never reorder
+					key={i}
+					className="overflow-hidden rounded-xl border border-border bg-card"
+					accessible={false}
+				>
+					<View
+						className="animate-pulse bg-background-subtle"
+						style={{ aspectRatio: 16 / 9 }}
+					/>
+					<View className="gap-4 p-4">
+						<View className="h-4 w-2/3 animate-pulse rounded bg-background-subtle" />
+						<View className="gap-2">
+							<View className="h-3 animate-pulse rounded bg-background-subtle" />
+							<View className="h-3 animate-pulse rounded bg-background-subtle" />
+							<View className="h-3 w-3/4 animate-pulse rounded bg-background-subtle" />
+						</View>
+						<View className="flex-row items-center justify-between">
+							<View className="h-3 w-28 animate-pulse rounded bg-background-subtle" />
+							<View className="h-10 w-32 animate-pulse rounded bg-background-subtle" />
+						</View>
+					</View>
+				</View>
 			))}
 		</View>
 	);

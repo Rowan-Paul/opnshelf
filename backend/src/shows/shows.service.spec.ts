@@ -1,4 +1,5 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 vi.mock("../prisma/prisma.service", () => ({
@@ -32,12 +33,12 @@ describe("ShowsService", () => {
 
 	const mockPrismaService = {};
 
-	const mockConfigService = {
+	const mockBackendEnv = mockEnvironment({
 		get: vi.fn((key: string) => {
 			if (key === "TMDB_API_KEY") return "test-api-key";
 			return undefined;
 		}),
-	};
+	});
 
 	const mockColorExtractionService = {
 		extractColorsFromPoster: vi.fn(),
@@ -55,7 +56,7 @@ describe("ShowsService", () => {
 				ShowProgressService,
 				EpisodeWatchService,
 				{ provide: PrismaService, useValue: mockPrismaService },
-				{ provide: ConfigService, useValue: mockConfigService },
+				{ provide: BackendEnv, useValue: mockBackendEnv },
 				{
 					provide: ColorExtractionService,
 					useValue: mockColorExtractionService,
@@ -330,6 +331,7 @@ describe("ShowsService", () => {
 				"title",
 				"asc",
 				"show-1",
+				"mine",
 			);
 			expect(spies.getUserUpNext).toHaveBeenCalledWith(
 				"did:plc:abc123",
@@ -338,6 +340,7 @@ describe("ShowsService", () => {
 				"title",
 				"asc",
 				"show-1",
+				"mine",
 			);
 			// Defaults are applied once, at the facade, and forwarded explicitly.
 			await service.getUserUpNext("did:plc:abc123");
@@ -347,6 +350,7 @@ describe("ShowsService", () => {
 				8,
 				"lastWatched",
 				"desc",
+				undefined,
 				undefined,
 			);
 			await service.getUserReleaseCalendar("did:plc:abc123", {

@@ -1,4 +1,5 @@
-import { ConfigService } from "@nestjs/config";
+import { mockEnvironment } from "../../test/env";
+import { BackendEnv } from "../config/env.schema";
 import { TmdbNotFoundError } from "../tmdb/tmdb-http";
 import { DiscoverService } from "./discover.service";
 
@@ -34,7 +35,17 @@ describe("DiscoverService onboarding", () => {
 			{} as never,
 			{} as never,
 			{} as never,
-			{ get: vi.fn(() => "test-api-key") } as unknown as ConfigService,
+			{
+				listForCountry: vi.fn().mockResolvedValue({
+					services: [
+						{ id: 8, name: "Netflix" },
+						{ id: 337, name: "Disney+" },
+					],
+				}),
+			} as never,
+			mockEnvironment({
+				get: vi.fn(() => "test-api-key"),
+			}) as unknown as BackendEnv,
 		);
 	});
 
@@ -63,7 +74,17 @@ describe("DiscoverService onboarding", () => {
 			{} as never,
 			{} as never,
 			{} as never,
-			{ get: vi.fn(() => "test-api-key") } as unknown as ConfigService,
+			{
+				listForCountry: vi.fn().mockResolvedValue({
+					services: [
+						{ id: 8, name: "Netflix" },
+						{ id: 337, name: "Disney+" },
+					],
+				}),
+			} as never,
+			mockEnvironment({
+				get: vi.fn(() => "test-api-key"),
+			}) as unknown as BackendEnv,
 		);
 		const second = await service.onboarding();
 
@@ -120,5 +141,126 @@ describe("DiscoverService onboarding", () => {
 		await expect(service.onboarding()).rejects.toBeInstanceOf(
 			TmdbNotFoundError,
 		);
+	});
+});
+
+describe("DiscoverService popular on your services", () => {
+	const findUnique = vi.fn();
+	let service: DiscoverService;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		service = new DiscoverService(
+			{ user: { findUnique } } as never,
+			{} as never,
+			{} as never,
+			{
+				listForCountry: vi.fn().mockResolvedValue({
+					services: [
+						{ id: 8, name: "Netflix" },
+						{ id: 337, name: "Disney+" },
+					],
+				}),
+			} as never,
+			mockEnvironment({
+				get: vi.fn(() => "test-api-key"),
+			}) as unknown as BackendEnv,
+		);
+	});
+
+	it.each([null, { watchCountry: "NL", streamingServiceIds: [] }])(
+		"does not request unfiltered titles when preferences are absent: %s",
+		async (user) => {
+			findUnique.mockResolvedValue(user);
+			expect(await service.popularOnYourServices("did:plc:viewer")).toEqual({
+				rows: [],
+			});
+			expect(mockFetch).not.toHaveBeenCalled();
+		},
+	);
+
+	it("filters both media types by country and each saved flat-rate service, then caps each mixed row", async () => {
+		findUnique.mockResolvedValue({
+			watchCountry: "nl",
+			streamingServiceIds: [337, 8, 8],
+		});
+		mockFetch.mockImplementation((url: string) =>
+			Promise.resolve(
+				response(
+					Array.from({ length: 20 }, (_, i) =>
+						url.includes("/movie?") ? movie(i + 1) : show(i + 1),
+					),
+				),
+			),
+		);
+		const result = await service.popularOnYourServices("did:plc:viewer");
+		expect(findUnique).toHaveBeenCalledWith({
+			where: { did: "did:plc:viewer" },
+			select: { watchCountry: true, streamingServiceIds: true },
+		});
+		expect(mockFetch).toHaveBeenCalledTimes(4);
+		for (const [url] of mockFetch.mock.calls) {
+			const params = new URL(url).searchParams;
+			expect(params.get("watch_region")).toBe("NL");
+			expect(["8", "337"]).toContain(params.get("with_watch_providers"));
+			expect(params.get("with_watch_monetization_types")).toBe("flatrate");
+			expect(params.get("sort_by")).toBe("popularity.desc");
+		}
+		expect(result.rows.map((row) => row.serviceName)).toEqual([
+			"Netflix",
+			"Disney+",
+		]);
+		expect(result.rows.every((row) => row.items.length === 20)).toBe(true);
+		expect(
+			result.rows[0].items
+				.slice(0, 4)
+				.map((item) => `${item.media_type}:${item.id}`),
+		).toEqual(["movie:1", "tv:1", "movie:2", "tv:2"]);
+	});
+
+	it("hides services absent from the country's catalogue", async () => {
+		findUnique.mockResolvedValue({
+			watchCountry: "NL",
+			streamingServiceIds: [999],
+		});
+		expect(await service.popularOnYourServices("did:plc:viewer")).toEqual({
+			rows: [],
+		});
+		expect(mockFetch).not.toHaveBeenCalled();
+	});
+
+	it("uses a separate cached request after the country or services change", async () => {
+		mockFetch.mockResolvedValue(response([]));
+		for (const preferences of [
+			{ watchCountry: "NL", streamingServiceIds: [8] },
+			{ watchCountry: "US", streamingServiceIds: [8] },
+			{ watchCountry: "US", streamingServiceIds: [337] },
+		]) {
+			findUnique.mockResolvedValue(preferences);
+			await service.popularOnYourServices("did:plc:viewer");
+		}
+		expect(mockFetch).toHaveBeenCalledTimes(6);
+	});
+
+	it("returns an empty row when the saved services have no titles in the country", async () => {
+		findUnique.mockResolvedValue({
+			watchCountry: "NL",
+			streamingServiceIds: [8],
+		});
+		mockFetch.mockResolvedValue(response([]));
+		expect(await service.popularOnYourServices("did:plc:viewer")).toEqual({
+			rows: [],
+		});
+	});
+
+	it("surfaces TMDB errors instead of falling back to unfiltered popularity", async () => {
+		findUnique.mockResolvedValue({
+			watchCountry: "NL",
+			streamingServiceIds: [8],
+		});
+		mockFetch.mockResolvedValue(response([], false, 404));
+		await expect(
+			service.popularOnYourServices("did:plc:viewer"),
+		).rejects.toBeInstanceOf(TmdbNotFoundError);
 	});
 });

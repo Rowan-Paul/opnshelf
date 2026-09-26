@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import type { ExpoConfig } from "expo/config";
 
 /**
@@ -40,11 +41,25 @@ const googleSignInPlugin = GOOGLE_IOS_CLIENT_ID
 		] as [string, Record<string, string>])
 	: null;
 
+function sourceCommit(): string {
+	const commit =
+		process.env.EAS_BUILD_GIT_COMMIT_HASH ?? process.env.GITHUB_SHA;
+	if (commit) return commit.slice(0, 8);
+	try {
+		return execFileSync("git", ["rev-parse", "--short=8", "HEAD"], {
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+	} catch {
+		return "unknown";
+	}
+}
+
 const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.6.0",
+	version: "1.6.3",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -88,6 +103,7 @@ const config: ExpoConfig = {
 		},
 	},
 	android: {
+		googleServicesFile: "./google-services.json",
 		adaptiveIcon: {
 			foregroundImage: "./assets/images/adaptive-icon.png",
 			backgroundColor: "#0f172a",
@@ -110,6 +126,11 @@ const config: ExpoConfig = {
 					{ scheme: "https", host: SITE_HOST, pathPrefix: "/shows" },
 					{ scheme: "https", host: SITE_HOST, pathPrefix: "/people" },
 					{ scheme: "https", host: SITE_HOST, pathPrefix: "/reviews" },
+					{
+						scheme: "https",
+						host: SITE_HOST,
+						pathPrefix: "/discover/collections/",
+					},
 					{ scheme: "https", host: SITE_HOST, pathPrefix: "/profile" },
 				],
 			},
@@ -151,6 +172,7 @@ const config: ExpoConfig = {
 		"expo-secure-store",
 		"expo-font",
 		"expo-image",
+		"expo-notifications",
 		[
 			"expo-splash-screen",
 			{
@@ -181,6 +203,7 @@ const config: ExpoConfig = {
 		typedRoutes: true,
 	},
 	extra: {
+		commit: sourceCommit(),
 		apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://127.0.0.1:3001",
 		posthogApiKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
 		posthogHost:
