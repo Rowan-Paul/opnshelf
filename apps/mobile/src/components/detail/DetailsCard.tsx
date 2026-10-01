@@ -1,9 +1,10 @@
+import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
 
 export interface DetailItem {
 	label: string;
-	value?: string | number | null;
+	value?: ReactNode;
 }
 
 /**
@@ -37,9 +38,14 @@ export function DetailsCard({
 							<Text className="text-muted-foreground text-sm">
 								{item.label}
 							</Text>
-							<Text className="flex-1 text-right font-medium text-foreground text-sm">
-								{item.value}
-							</Text>
+							{typeof item.value === "string" ||
+							typeof item.value === "number" ? (
+								<Text className="flex-1 text-right font-medium text-foreground text-sm">
+									{item.value}
+								</Text>
+							) : (
+								item.value
+							)}
 						</View>
 					))}
 				</View>

@@ -46,8 +46,9 @@ export class MoviesService {
 		sortBy: string = "popularity.desc",
 		page: number = 1,
 		year?: number,
+		genreId?: number,
 	): Promise<TMDBSearchResponse> {
-		return this.moviesTmdb.discoverMovies(sortBy, page, year);
+		return this.moviesTmdb.discoverMovies(sortBy, page, year, genreId);
 	}
 
 	async getRecommendations(

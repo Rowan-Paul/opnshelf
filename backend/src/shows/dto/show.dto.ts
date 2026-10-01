@@ -128,6 +128,13 @@ export class SearchShowsDto {
 }
 
 export class DiscoverShowsDto {
+	@ApiPropertyOptional({ description: "Filter by TMDB genre ID", minimum: 1 })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@Type(() => Number)
+	genreId?: number;
+
 	@ApiPropertyOptional({
 		description: "Sort order for results",
 		enum: [

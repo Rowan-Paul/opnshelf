@@ -10,6 +10,7 @@ import { CreditsSummary } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
+import { GenreLinks } from "@/components/detail/GenreLinks";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
@@ -81,9 +82,9 @@ export default function MovieDetailScreen() {
 							items={[
 								yearFromDate(data.release_date),
 								formatRuntime(data.runtime),
-								...(data.genres ?? []).map((g) => g.name),
 							]}
 						/>
+						<GenreLinks genres={data.genres} mediaType="movie" />
 					</DetailHero>
 
 					{/* Shelf, watchlist and secondary tiles form one action cluster,
@@ -124,7 +125,11 @@ export default function MovieDetailScreen() {
 							},
 							{
 								label: "Genres",
-								value: data.genres?.map((g) => g.name).join(", ") || "N/A",
+								value: data.genres?.length ? (
+									<GenreLinks genres={data.genres} mediaType="movie" compact />
+								) : (
+									"N/A"
+								),
 							},
 						]}
 					/>

@@ -5,6 +5,7 @@ import {
 	discoverControllerTrendingOptions,
 	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
+	parseGenreDiscovery,
 	peopleControllerSearchPeopleInfiniteOptions,
 	searchControllerSearchAllInfiniteOptions,
 	showsControllerDiscoverShowsOptions,
@@ -17,7 +18,7 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { hashKey, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { Link, useIsFocused } from "expo-router";
+import { Link, useIsFocused, useLocalSearchParams } from "expo-router";
 import {
 	ChevronRight,
 	Clapperboard,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react-native";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { GenreDiscover } from "@/components/discover/GenreDiscover";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
@@ -347,6 +349,12 @@ function DiscoverSections({
 }
 
 export default function SearchScreen() {
+	const params = useLocalSearchParams();
+	const filter = parseGenreDiscovery(params);
+	return filter ? <GenreDiscover filter={filter} /> : <KeywordSearchScreen />;
+}
+
+function KeywordSearchScreen() {
 	const { isAuthenticated } = useAuth();
 	const isFocused = useIsFocused();
 	const [query, setQuery] = useState("");

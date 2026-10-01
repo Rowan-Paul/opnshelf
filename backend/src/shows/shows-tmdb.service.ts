@@ -199,6 +199,7 @@ export class ShowsTmdbService {
 		sortBy: string = "popularity.desc",
 		page: number = 1,
 		year?: number,
+		genreId?: number,
 	): Promise<TMDBSearchResponse> {
 		let url = `${this.tmdbBaseUrl}/discover/tv?api_key=${this.tmdbApiKey}&sort_by=${sortBy}&page=${page}`;
 
@@ -206,9 +207,11 @@ export class ShowsTmdbService {
 			url += `&first_air_date_year=${year}`;
 		}
 
+		if (genreId) url += `&with_genres=${genreId}`;
+
 		const response = await this.http.fetchCached(
 			url,
-			`discover:tv:${sortBy}:${page}:${year ?? ""}`,
+			`discover:tv:${sortBy}:${page}:${year ?? ""}:${genreId ?? ""}`,
 			TMDB_LIST_CACHE_TTL_MS,
 		);
 

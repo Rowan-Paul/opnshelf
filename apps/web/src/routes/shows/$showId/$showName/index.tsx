@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Play, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { GenreLinks } from "#/components/GenreLinks";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
@@ -317,11 +318,7 @@ function ShowDetailPage() {
 						</span>
 						<span className="text-(--border-strong)">•</span>
 						<div className="flex gap-2">
-							{show.genres?.slice(0, 3).map((genre) => (
-								<span key={genre.id} className="badge badge-subtle">
-									{genre.name}
-								</span>
-							))}
+							<GenreLinks genres={show.genres} mediaType="show" />
 						</div>
 					</>
 				}
@@ -504,7 +501,11 @@ function ShowDetailPage() {
 								},
 								{
 									label: "Genres",
-									value: show.genres?.map((g) => g.name).join(", ") || "N/A",
+									value: show.genres?.length ? (
+										<GenreLinks genres={show.genres} mediaType="show" compact />
+									) : (
+										"N/A"
+									),
 								},
 							]}
 						/>

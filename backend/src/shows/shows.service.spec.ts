@@ -245,12 +245,13 @@ describe("ShowsService", () => {
 			}
 
 			await expect(
-				service.discoverShows("vote_average.desc", 2, 2020),
+				service.discoverShows("vote_average.desc", 2, 2020, 18),
 			).resolves.toBe(sentinel);
 			expect(spies.discoverShows).toHaveBeenCalledWith(
 				"vote_average.desc",
 				2,
 				2020,
+				18,
 			);
 			await service.getRecommendations("123", 3);
 			expect(spies.getRecommendations).toHaveBeenCalledWith("123", 3);

@@ -2,6 +2,7 @@ import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { GenreLinks } from "#/components/GenreLinks";
 import {
 	Dialog,
 	DialogContent,
@@ -200,13 +201,7 @@ function MovieDetailPage() {
 								: "Unknown"}
 						</span>
 						<span className="text-(--border-strong)">•</span>
-						<div className="flex gap-2">
-							{movie.genres?.map((g) => (
-								<span key={g.name} className="badge badge-subtle">
-									{g.name}
-								</span>
-							))}
-						</div>
+						<GenreLinks genres={movie.genres} mediaType="movie" />
 					</>
 				}
 				actions={
@@ -313,7 +308,15 @@ function MovieDetailPage() {
 								},
 								{
 									label: "Genres",
-									value: movie.genres?.map((g) => g.name).join(", ") || "N/A",
+									value: movie.genres?.length ? (
+										<GenreLinks
+											genres={movie.genres}
+											mediaType="movie"
+											compact
+										/>
+									) : (
+										"N/A"
+									),
 								},
 							]}
 						/>

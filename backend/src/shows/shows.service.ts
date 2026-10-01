@@ -53,8 +53,9 @@ export class ShowsService {
 		sortBy: string = "popularity.desc",
 		page: number = 1,
 		year?: number,
+		genreId?: number,
 	): Promise<TMDBSearchResponse> {
-		return this.showsTmdb.discoverShows(sortBy, page, year);
+		return this.showsTmdb.discoverShows(sortBy, page, year, genreId);
 	}
 
 	async getRecommendations(
