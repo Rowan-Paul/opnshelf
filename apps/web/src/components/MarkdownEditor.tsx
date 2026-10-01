@@ -43,6 +43,8 @@ import {
 import { type ReactNode, useRef, useState } from "react";
 
 interface MarkdownEditorProps {
+	/** Constrain the editor to its host, keeping only the text area scrollable. */
+	fillHeight?: boolean;
 	/** Initial markdown. Read once at mount — remount (via `key`) to reset. */
 	value: string;
 	/** Fires with the serialized markdown on every change. */
@@ -53,7 +55,7 @@ interface MarkdownEditorProps {
 // surface matches how the review reads. `.ProseMirror` is the contenteditable
 // root Milkdown mounts.
 const EDITOR_CLASS = [
-	"input min-h-[200px] overflow-auto",
+	"input overflow-auto",
 	"[&_.ProseMirror]:min-h-[180px] [&_.ProseMirror]:space-y-3 [&_.ProseMirror]:text-sm [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:outline-none",
 	"[&_.ProseMirror_h1]:font-display [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h1]:text-lg",
 	"[&_.ProseMirror_h2]:font-display [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:text-lg",
@@ -193,7 +195,11 @@ function formattingIsEqual(
 	);
 }
 
-function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
+function MilkdownEditorInner({
+	value,
+	onChange,
+	fillHeight = false,
+}: MarkdownEditorProps) {
 	const [, getEditor] = useInstance();
 	const [bubble, setBubble] = useState<BubblePos | null>(null);
 	const [activeFormatting, setActiveFormatting] = useState(EMPTY_FORMATTING);
@@ -304,8 +310,13 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 	);
 
 	return (
-		<div ref={wrapperRef} className="relative">
-			<div className="mb-1 flex flex-wrap items-center gap-0.5 rounded-md border border-(--border) bg-(--background-elevated) p-1">
+		<div
+			ref={wrapperRef}
+			className={
+				fillHeight ? "relative flex h-full min-h-0 flex-col" : "relative"
+			}
+		>
+			<div className="mb-1 flex shrink-0 flex-wrap items-center gap-0.5 rounded-md border border-(--border) bg-(--background-elevated) p-1">
 				<CommandButton
 					label="Heading"
 					active={activeFormatting.heading}
@@ -362,7 +373,9 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 				</div>
 			)}
 
-			<div className={EDITOR_CLASS}>
+			<div
+				className={`${EDITOR_CLASS} ${fillHeight ? "min-h-0 flex-1 overscroll-contain" : "min-h-[200px]"}`}
+			>
 				<Milkdown />
 			</div>
 		</div>
