@@ -15,6 +15,7 @@ interface MilkdownWebViewProps {
 	value: string;
 	/** Fires with the serialized markdown on every edit inside the WebView. */
 	onChange: (markdown: string) => void;
+	onFocus?: () => void;
 }
 
 /**
@@ -26,10 +27,14 @@ interface MilkdownWebViewProps {
  * deploy, not a mobile release.
  *
  * Bridge protocol (mirrors the embed route):
- *   page → native:  { type: "ready" } | { type: "change", markdown }
+ *   page → native:  { type: "ready" } | { type: "change", markdown } | { type: "focus" }
  *   native → page:  window.opnshelfSetMarkdown(md)
  */
-export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
+export function MilkdownWebView({
+	value,
+	onChange,
+	onFocus,
+}: MilkdownWebViewProps) {
 	const { scheme } = useTheme();
 	const webRef = useRef<WebView>(null);
 	// Capture the initial body once; parent re-renders (on each change) must not
@@ -53,6 +58,8 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 			webRef.current?.injectJavaScript(
 				`window.opnshelfSetMarkdown(${JSON.stringify(initial.current)}); true;`,
 			);
+		} else if (msg.type === "focus") {
+			onFocus?.();
 		} else if (msg.type === "change" && typeof msg.markdown === "string") {
 			onChange(msg.markdown);
 		}
@@ -70,8 +77,13 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 					isTrustedEditorUrl(request.url, env.siteUrl)
 				}
 				onMessage={handleMessage}
+				// Native keyboard tracking does not see focus inside WKContentView.
+				injectedJavaScript={`document.addEventListener("focusin", (event) => {
+                    if (event.target.isContentEditable) window.ReactNativeWebView.postMessage(JSON.stringify({ type: "focus" }));
+                }); true;`}
 				setSupportMultipleWindows={false}
 				scrollEnabled={false}
+				nestedScrollEnabled
 				// iOS: allow the editor to focus + raise the keyboard without a
 				// preceding user tap being required by WebKit.
 				keyboardDisplayRequiresUserAction={false}

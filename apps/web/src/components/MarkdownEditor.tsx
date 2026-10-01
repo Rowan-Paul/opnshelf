@@ -53,10 +53,10 @@ interface MarkdownEditorProps {
 
 // Box + ProseMirror content styling, mirroring the read renderer so the WYSIWYG
 // surface matches how the review reads. `.ProseMirror` is the contenteditable
-// root Milkdown mounts.
+// root Milkdown mounts. Keep editable text at 16px so iOS does not zoom on focus.
 const EDITOR_CLASS = [
 	"input overflow-auto",
-	"[&_.ProseMirror]:min-h-[180px] [&_.ProseMirror]:space-y-3 [&_.ProseMirror]:text-sm [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:outline-none",
+	"[&_.ProseMirror]:min-h-[180px] [&_.ProseMirror]:space-y-3 [&_.ProseMirror]:text-base [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:outline-none",
 	"[&_.ProseMirror_h1]:font-display [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h1]:text-lg",
 	"[&_.ProseMirror_h2]:font-display [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:text-lg",
 	"[&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h4]:font-semibold [&_.ProseMirror_h5]:font-semibold [&_.ProseMirror_h6]:font-semibold",
