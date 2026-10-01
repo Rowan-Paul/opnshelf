@@ -13,7 +13,6 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nativeApplicationVersion } from "expo-application";
-import Constants from "expo-constants";
 import { Link, Stack } from "expo-router";
 import * as Updates from "expo-updates";
 import {
@@ -54,7 +53,6 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { createCoalescedSaver, sameIdSet } from "@/lib/coalesced-save";
-import { env } from "@/lib/env";
 import { useFeedback } from "@/lib/feedback";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
@@ -98,20 +96,16 @@ function SettingsSection({
 	);
 }
 
-/** "v1.0.0 · update 019f40cf · Jul 8, 2026" once an OTA update is running, or
+/** "v1.0.0 · production · update 019f40cf" once an OTA update is running, or
  * "v1.0.0 · embedded" for the build's own bundle (also what dev/Expo Go shows,
  * since `Updates.isEnabled` is false there).
  *
- * A non-production channel is named: `preview` and the store build carry the same
+ * The update channel is named: `preview` and the store build carry the same
  * version, so without it there is nothing on screen to tell a tester which one
  * they are looking at. `Updates.channel` is null on a dev build. */
 function formatVersionLine(): string {
 	const version = nativeApplicationVersion ?? "?";
-	const parts = [
-		`v${version}`,
-		`commit ${Constants.expoConfig?.extra?.commit ?? "unknown"}`,
-		new URL(env.apiUrl).hostname,
-	];
+	const parts = [`v${version}`];
 	if (Updates.channel) {
 		parts.push(Updates.channel);
 	}
@@ -120,15 +114,6 @@ function formatVersionLine(): string {
 		return parts.join(" · ");
 	}
 	parts.push(`update ${Updates.updateId.slice(0, 8)}`);
-	if (Updates.createdAt) {
-		parts.push(
-			Updates.createdAt.toLocaleDateString(undefined, {
-				month: "short",
-				day: "numeric",
-				year: "numeric",
-			}),
-		);
-	}
 	return parts.join(" · ");
 }
 
