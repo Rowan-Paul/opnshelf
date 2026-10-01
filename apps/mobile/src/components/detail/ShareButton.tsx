@@ -26,7 +26,7 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
 		<View className="flex-1">
 			<Pressable
 				onPress={onShare}
-				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
+				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<Share2 color="#94a3b8" size={18} />
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
