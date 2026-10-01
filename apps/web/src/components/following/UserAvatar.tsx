@@ -38,7 +38,7 @@ export function UserAvatar({
 	// then unmounts once loaded so transparent avatars don't show it through.
 	return (
 		<div
-			className={`${sizeClass} relative flex items-center justify-center overflow-hidden bg-(--accent-subtle)`}
+			className={`${sizeClass} relative flex shrink-0 items-center justify-center overflow-hidden bg-(--accent-subtle)`}
 		>
 			{!loaded || failed ? (
 				<User
