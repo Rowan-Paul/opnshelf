@@ -82,3 +82,4 @@ export {
 	isWatchActivityQueryKey,
 	WATCH_ACTIVITY_QUERY_IDS,
 } from "./watch-activity-queries";
+export { getWatchProviderLink } from "./watch-provider-link";
