@@ -2,12 +2,22 @@ import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { StarOff, Trash2, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, Switch, View } from "react-native";
+import {
+	Modal,
+	Pressable,
+	ScrollView,
+	Switch,
+	type TextInput,
+	View,
+} from "react-native";
 import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
-import { MilkdownWebView } from "@/components/detail/MilkdownWebView";
+import {
+	MilkdownWebView,
+	type MilkdownWebViewHandle,
+} from "@/components/detail/MilkdownWebView";
 import { StarRating } from "@/components/detail/StarRating";
 import { Button } from "@/components/ui/button";
 import { DialogProvider, useDialog } from "@/components/ui/dialog";
@@ -77,6 +87,8 @@ export function ReviewEditorSheet({
 	isClearingRating = false,
 }: ReviewEditorSheetProps) {
 	const formRef = useRef<ScrollView>(null);
+	const editorRef = useRef<MilkdownWebViewHandle>(null);
+	const titleRef = useRef<TextInput>(null);
 	const fieldOffsets = useRef({ title: 0, body: 0 });
 	const focusedField = useRef<"title" | "body" | null>(null);
 	const viewportHeight = useRef(0);
@@ -237,10 +249,21 @@ export function ReviewEditorSheet({
 								}}
 							>
 								<TextField
+									ref={titleRef}
 									variant="subtle"
 									label="Title *"
 									value={title}
 									onChangeText={setTitle}
+									returnKeyType="next"
+									submitBehavior="submit"
+									onSubmitEditing={() => {
+										// iOS needs to release the title before WKWebView can take over.
+										// Android's JS blur hides the keyboard; let native focus transfer it.
+										if (process.env.EXPO_OS === "ios") {
+											titleRef.current?.blur();
+										}
+										editorRef.current?.focus();
+									}}
 									onFocus={() => revealField("title")}
 									placeholder="Review title"
 									accessibilityLabel="Review title, required"
@@ -257,6 +280,7 @@ export function ReviewEditorSheet({
 									Review *
 								</Text>
 								<MilkdownWebView
+									ref={editorRef}
 									key={openCount}
 									value={initialMarkdown}
 									onChange={setMarkdown}

@@ -1,10 +1,12 @@
+import { createRef } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MilkdownWebView } from "./MilkdownWebView";
+import { MilkdownWebView, type MilkdownWebViewHandle } from "./MilkdownWebView";
 
 const webViewMock = vi.hoisted(() => ({
 	props: null as Record<string, unknown> | null,
 	injectJavaScript: vi.fn(),
+	requestFocus: vi.fn(),
 }));
 
 vi.mock("react-native", async () => {
@@ -21,6 +23,7 @@ vi.mock("react-native-webview", async () => {
 		WebView: React.forwardRef((props: Record<string, unknown>, ref) => {
 			React.useImperativeHandle(ref, () => ({
 				injectJavaScript: webViewMock.injectJavaScript,
+				requestFocus: webViewMock.requestFocus,
 			}));
 			webViewMock.props = props;
 			return null;
@@ -60,6 +63,7 @@ describe("MilkdownWebView trust boundary", () => {
 	beforeEach(() => {
 		webViewMock.props = null;
 		webViewMock.injectJavaScript.mockReset();
+		webViewMock.requestFocus.mockReset();
 	});
 
 	it("wires the WebView to only the trusted origin and editor route", () => {
@@ -212,5 +216,47 @@ it("reports editor focus only from the trusted WebView", () => {
 		},
 	});
 	expect(onFocus).toHaveBeenCalledOnce();
+	act(() => renderer.unmount());
+});
+
+it("waits for the trusted page before delivering a title focus request", () => {
+	webViewMock.injectJavaScript.mockReset();
+	webViewMock.requestFocus.mockReset();
+	const ref = createRef<MilkdownWebViewHandle>();
+	let renderer!: ReactTestRenderer;
+	act(() => {
+		renderer = create(
+			<MilkdownWebView ref={ref} value="Keep my draft" onChange={vi.fn()} />,
+		);
+	});
+	act(() => ref.current?.focus());
+	expect(webViewMock.injectJavaScript).not.toHaveBeenCalled();
+	const message =
+		webViewProp<
+			(event: { nativeEvent: { url: string; data: string } }) => void
+		>("onMessage");
+	message({
+		nativeEvent: {
+			url: "https://evil.example",
+			data: JSON.stringify({ type: "ready" }),
+		},
+	});
+	expect(webViewMock.injectJavaScript).not.toHaveBeenCalled();
+	message({
+		nativeEvent: {
+			url: "https://opnshelf.xyz",
+			data: JSON.stringify({ type: "ready" }),
+		},
+	});
+	expect(webViewMock.requestFocus).toHaveBeenCalledOnce();
+	expect(webViewMock.injectJavaScript.mock.calls).toEqual([
+		['window.opnshelfSetMarkdown("Keep my draft"); true;'],
+		["window.opnshelfFocusEditor?.(); true;"],
+	]);
+	webViewMock.injectJavaScript.mockClear();
+	act(() => ref.current?.focus());
+	expect(webViewMock.injectJavaScript).toHaveBeenCalledExactlyOnceWith(
+		"window.opnshelfFocusEditor?.(); true;",
+	);
 	act(() => renderer.unmount());
 });
