@@ -134,7 +134,12 @@ export function groupCrewByDepartment<T extends TMDBCrewMember>(
 	const groups = new Map<string, T[]>();
 	for (const member of crew ?? []) {
 		const department = member.department || "Crew";
-		groups.set(department, [...(groups.get(department) ?? []), member]);
+		const members = groups.get(department);
+		if (members) {
+			members.push(member);
+		} else {
+			groups.set(department, [member]);
+		}
 	}
 
 	const rank = (department: string) => {
