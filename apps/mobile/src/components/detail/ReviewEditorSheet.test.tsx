@@ -9,6 +9,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 
 const showDialog = vi.hoisted(() => vi.fn());
 const scrollTo = vi.hoisted(() => vi.fn());
+const focusEditor = vi.hoisted(() => vi.fn());
+const blurTitle = vi.hoisted(() => vi.fn());
 vi.mock("@/components/ui/dialog", () => ({
 	useDialog: () => ({ showDialog }),
 	DialogProvider: ({ children }: { children: import("react").ReactNode }) =>
@@ -61,22 +63,30 @@ vi.mock("@/components/ui/text", async () => {
 });
 
 vi.mock("@/components/ui/text-field", async () => {
-	const { createElement } = await import("react");
+	const { createElement, forwardRef, useImperativeHandle } = await import(
+		"react"
+	);
 	return {
-		TextField: (props: Record<string, unknown>) =>
-			createElement(
+		TextField: forwardRef((props: Record<string, unknown>, ref) => {
+			useImperativeHandle(ref, () => ({ blur: blurTitle }));
+			return createElement(
 				"text-field",
 				props,
 				props.label ? createElement("text", null, props.label as string) : null,
-			),
+			);
+		}),
 	};
 });
 
 vi.mock("@/components/detail/MilkdownWebView", async () => {
-	const { createElement } = await import("react");
+	const { createElement, forwardRef, useImperativeHandle } = await import(
+		"react"
+	);
 	return {
-		MilkdownWebView: (props: Record<string, unknown>) =>
-			createElement("milkdown", props),
+		MilkdownWebView: forwardRef((props: Record<string, unknown>, ref) => {
+			useImperativeHandle(ref, () => ({ focus: focusEditor }));
+			return createElement("milkdown", props);
+		}),
 	};
 });
 
@@ -244,4 +254,26 @@ it("reveals the focused field after the keyboard shrinks the form, not on expans
 			.findAllByType("pressable" as never)
 			.some((n) => n.props.accessibilityLabel === "Save"),
 	).toBe(false);
+});
+
+it("moves from the title to the body without saving a valid review", () => {
+	const { renderer, onSave } = renderSheet();
+	const title = renderer.root.findByType("text-field" as never);
+	act(() => {
+		title.props.onChangeText("My review");
+		renderer.root
+			.findByType("milkdown" as never)
+			.props.onChange("A complete body");
+	});
+	expect(saveButton(renderer)?.props.disabled).toBe(false);
+	expect(title.props.returnKeyType).toBe("next");
+	expect(title.props.submitBehavior).toBe("submit");
+	act(() => title.props.onSubmitEditing());
+	expect(blurTitle).toHaveBeenCalledOnce();
+	expect(focusEditor).toHaveBeenCalledOnce();
+	expect(blurTitle.mock.invocationCallOrder[0]).toBeLessThan(
+		focusEditor.mock.invocationCallOrder[0],
+	);
+	expect(onSave).not.toHaveBeenCalled();
+	act(() => renderer.unmount());
 });

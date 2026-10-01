@@ -21,6 +21,7 @@ import {
 } from "@milkdown/kit/preset/commonmark";
 import type { Node as ProseNode } from "@milkdown/kit/prose/model";
 import { type EditorState, Plugin } from "@milkdown/kit/prose/state";
+import type { EditorView } from "@milkdown/kit/prose/view";
 import { callCommand } from "@milkdown/kit/utils";
 import {
 	Milkdown,
@@ -40,9 +41,20 @@ import {
 	Quote,
 	SquareCode,
 } from "lucide-react";
-import { type ReactNode, useRef, useState } from "react";
+import {
+	type ReactNode,
+	type Ref,
+	useImperativeHandle,
+	useRef,
+	useState,
+} from "react";
+
+export interface MarkdownEditorHandle {
+	focus: () => void;
+}
 
 interface MarkdownEditorProps {
+	ref?: Ref<MarkdownEditorHandle>;
 	/** Constrain the editor to its host, keeping only the text area scrollable. */
 	fillHeight?: boolean;
 	/** Initial markdown. Read once at mount — remount (via `key`) to reset. */
@@ -196,6 +208,7 @@ function formattingIsEqual(
 }
 
 function MilkdownEditorInner({
+	ref,
 	value,
 	onChange,
 	fillHeight = false,
@@ -204,6 +217,18 @@ function MilkdownEditorInner({
 	const [bubble, setBubble] = useState<BubblePos | null>(null);
 	const [activeFormatting, setActiveFormatting] = useState(EMPTY_FORMATTING);
 	const wrapperRef = useRef<HTMLDivElement>(null);
+	const viewRef = useRef<EditorView | null>(null);
+	const pendingFocus = useRef(false);
+	useImperativeHandle(
+		ref,
+		() => ({
+			focus() {
+				if (viewRef.current) viewRef.current.focus();
+				else pendingFocus.current = true;
+			},
+		}),
+		[],
+	);
 
 	// Keep callbacks current without re-creating the editor (deps: []).
 	const onChangeRef = useRef(onChange);
@@ -238,6 +263,16 @@ function MilkdownEditorInner({
 					);
 
 					const l = ctx.get(listenerCtx);
+					l.mounted((mountedCtx) => {
+						viewRef.current = mountedCtx.get(editorViewCtx);
+						if (pendingFocus.current) {
+							pendingFocus.current = false;
+							viewRef.current.focus();
+						}
+					});
+					l.destroy(() => {
+						viewRef.current = null;
+					});
 					l.markdownUpdated((_ctx, markdown) => {
 						onChangeRef.current(markdown);
 					});
