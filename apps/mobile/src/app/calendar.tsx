@@ -170,7 +170,7 @@ export default function CalendarScreen() {
 		<View className="flex-1 bg-background">
 			<Stack.Screen options={{ headerShown: true, title: "Calendar" }} />
 
-			<View className="flex-row items-center justify-center gap-2 border-border border-b px-4 pt-3">
+			<View className="flex-row items-center justify-center gap-2 border-border border-b px-4 py-3">
 				{(["week", "month"] as const).map((v) => {
 					const active = view === v;
 					return (
