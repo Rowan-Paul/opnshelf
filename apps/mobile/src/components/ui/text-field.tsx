@@ -71,10 +71,10 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
 						placeholderTextColor={placeholderTextColor}
 						className={cn(
 							"flex-1 py-3 font-sans text-[16px] text-foreground",
-							// Multiline can't clip the way a single line does, so restore a
-							// comfortable line-height for readability (single-line stays
-							// line-height-free to avoid the iOS descender clipping).
-							multiline && "leading-6",
+							// iOS applies explicit line-height differently to the empty
+							// caret and placeholder. Keep its native font metrics aligned;
+							// Android retains the more spacious multiline line-height.
+							multiline && process.env.EXPO_OS !== "ios" && "leading-6",
 							className,
 						)}
 						{...props}
