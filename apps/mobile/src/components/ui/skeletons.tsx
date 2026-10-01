@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View } from "react-native";
 import { UpNextRowSkeleton } from "@/components/up-next/UpNextSkeleton";
 
@@ -8,10 +9,16 @@ const IDX = (n: number) => Array.from({ length: n }, (_, i) => i);
 
 /** Horizontal poster row (Shelf/Library previews, filmography). */
 export function PosterRowSkeleton({ width = 110 }: { width?: number }) {
+	const [containerWidth, setContainerWidth] = useState(0);
+	// Include the partially visible last card, just like the loaded rail.
+	const count = Math.max(1, Math.ceil((containerWidth + 12) / (width + 12)));
 	return (
-		<View className="flex-row gap-3 overflow-hidden">
-			{IDX(3).map((i) => (
-				<View key={i} style={{ width }}>
+		<View
+			className="flex-row gap-3 overflow-hidden"
+			onLayout={(event) => setContainerWidth(event.nativeEvent.layout.width)}
+		>
+			{IDX(count).map((i) => (
+				<View key={i} className="shrink-0" style={{ width }}>
 					<View className="aspect-2/3 w-full rounded-lg bg-background-subtle" />
 					<View className="mt-2 h-3 w-4/5 rounded bg-background-subtle" />
 					<View className="mt-1.5 h-2.5 w-1/2 rounded bg-background-subtle" />
@@ -162,9 +169,11 @@ export function DiscoverRowsSkeleton() {
 	return (
 		<View accessibilityLabel="Loading Discover" accessibilityRole="progressbar">
 			{IDX(3).map((i) => (
-				<View key={i} className="px-4 pt-2 pb-4">
-					<View className="mb-3 h-6 w-56 rounded bg-background-subtle" />
-					<PosterRowSkeleton width={112} />
+				<View key={i} className="pt-2 pb-4">
+					<View className="mx-4 mb-3 h-6 w-56 rounded bg-background-subtle" />
+					<View className="pl-4">
+						<PosterRowSkeleton width={112} />
+					</View>
 				</View>
 			))}
 		</View>
