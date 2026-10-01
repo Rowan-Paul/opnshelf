@@ -5,6 +5,7 @@ import {
 	discoverControllerTrendingOptions,
 	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
+	parseGenreDiscovery,
 	peopleControllerSearchPeopleOptions,
 	type SocialUserCardDto,
 	searchControllerSearchAllOptions,
@@ -40,6 +41,7 @@ import { toast } from "sonner";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { Pagination } from "#/components/Pagination";
+import { GenreDiscover } from "#/components/search/GenreDiscover";
 import { SearchTabs } from "#/components/search/SearchTabs";
 import {
 	DiscoverRowsSkeleton,
@@ -136,6 +138,16 @@ function DiscoverRow({
 }
 
 function SearchPage() {
+	const search = useSearch({ from: Route.id });
+	const filter = parseGenreDiscovery(search);
+	return filter ? (
+		<GenreDiscover filter={filter} page={search.page} />
+	) : (
+		<KeywordSearchPage />
+	);
+}
+
+function KeywordSearchPage() {
 	const search = useSearch({ from: Route.id });
 	const navigate = useNavigate();
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();

@@ -13,6 +13,8 @@ import { z } from "zod/mini";
 
 export const searchRouteSchema = z.object({
 	q: z.optional(z.string()),
+	genre: z.optional(z.coerce.number().check(z.int(), z.minimum(1))),
+	genreName: z.optional(z.string()),
 	type: z.optional(z.string()),
 	page: z._default(
 		z.optional(z.coerce.number().check(z.int(), z.minimum(1))),

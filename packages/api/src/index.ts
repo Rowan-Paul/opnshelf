@@ -35,6 +35,11 @@ export { createClient, createConfig } from "./generated/client/index";
 export { client } from "./generated/client.gen";
 export * from "./generated/index";
 export {
+	type GenreDiscovery,
+	genreDiscoverySearch,
+	parseGenreDiscovery,
+} from "./genre-discovery";
+export {
 	getHttpStatus,
 	isUnauthorizedError,
 	retryTransientFailures,

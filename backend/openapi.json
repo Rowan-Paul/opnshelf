@@ -47,6 +47,16 @@
         "operationId": "MoviesController_discoverMovies",
         "parameters": [
           {
+            "name": "genreId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by TMDB genre ID",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
             "name": "sortBy",
             "required": false,
             "in": "query",
@@ -1281,6 +1291,16 @@
       "get": {
         "operationId": "ShowsController_discoverShows",
         "parameters": [
+          {
+            "name": "genreId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by TMDB genre ID",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
           {
             "name": "sortBy",
             "required": false,

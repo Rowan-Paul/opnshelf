@@ -71,6 +71,7 @@ export class MoviesController {
 				discoverDto.sortBy,
 				discoverDto.page ?? 1,
 				discoverDto.year,
+				discoverDto.genreId,
 			),
 		);
 	}

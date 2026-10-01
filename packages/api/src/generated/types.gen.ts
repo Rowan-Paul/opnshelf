@@ -2824,6 +2824,10 @@ export type MoviesControllerDiscoverMoviesData = {
     path?: never;
     query?: {
         /**
+         * Filter by TMDB genre ID
+         */
+        genreId?: number;
+        /**
          * Sort order for results
          */
         sortBy?: 'popularity.desc' | 'popularity.asc' | 'release_date.desc' | 'release_date.asc' | 'vote_average.desc' | 'vote_average.asc';
@@ -3561,6 +3565,10 @@ export type ShowsControllerDiscoverShowsData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Filter by TMDB genre ID
+         */
+        genreId?: number;
         /**
          * Sort order for results
          */
