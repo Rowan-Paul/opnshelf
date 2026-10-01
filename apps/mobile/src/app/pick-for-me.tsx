@@ -16,9 +16,10 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, Redirect, Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
 	Image,
+	Keyboard,
 	Linking,
 	Modal,
 	Pressable,
@@ -147,12 +148,21 @@ function Picker({
 		initialPickerFilters(savedIds),
 	);
 	const [ready, setReady] = useState(false);
-	const [time, setTime] = useState("");
+	const [time, setTime] = useState("180");
 	const [submitted, setSubmitted] = useState<number>();
 	const [selection, setSelection] = useState<WatchPickerItemDto>();
 	const [skipped, setSkipped] = useState<string[]>([]);
 	const [linkError, setLinkError] = useState(false);
 	const [genreOpen, setGenreOpen] = useState(false);
+	const scrollView = useRef<ScrollView>(null);
+	const resultY = useRef(0);
+	const revealResult = useRef(false);
+	const scrollToResult = () => {
+		scrollView.current?.scrollTo({
+			y: Math.max(0, resultY.current - 16),
+			animated: true,
+		});
+	};
 	useEffect(() => {
 		let active = true;
 		void SecureStore.getItemAsync(storageKey)
@@ -200,6 +210,7 @@ function Picker({
 	}, [query.data, query.isFetching]);
 	const change = (next: PickerFilters) => {
 		if (JSON.stringify(next) === JSON.stringify(filters)) return;
+		revealResult.current = false;
 		setFilters(next);
 		setSkipped([]);
 		void SecureStore.setItemAsync(storageKey, JSON.stringify(next)).catch(
@@ -207,8 +218,21 @@ function Picker({
 		);
 	};
 	const valid = /^\d+$/.test(time) && Number(time) >= 1 && Number(time) <= 1440;
+	const timeError = !valid
+		? time.trim()
+			? "Enter a whole number between 1 and 1440 minutes."
+			: "Enter how many minutes you have."
+		: undefined;
 	return (
 		<ScrollView
+			ref={scrollView}
+			onContentSizeChange={() => {
+				if (revealResult.current && submitted !== undefined) {
+					scrollToResult();
+					if (!query.isFetching && (query.data || query.isError))
+						revealResult.current = false;
+				}
+			}}
 			keyboardShouldPersistTaps="handled"
 			contentContainerClassName="gap-5 py-5 pb-12"
 		>
@@ -226,6 +250,7 @@ function Picker({
 						className="h-12 w-28 rounded-lg border border-border px-3 text-foreground"
 						value={time}
 						onChangeText={(value) => {
+							revealResult.current = false;
 							setTime(value);
 							setSkipped([]);
 							setSubmitted(undefined);
@@ -234,6 +259,11 @@ function Picker({
 					/>
 					<Text>minutes</Text>
 				</View>
+				{timeError && (
+					<Text accessibilityRole="alert" className="text-sm">
+						{timeError}
+					</Text>
+				)}
 				<Choices
 					label="Type"
 					value={filters.type}
@@ -301,7 +331,7 @@ function Picker({
 					</View>
 				</Modal>
 				<UpNextServiceFilter
-					clearLabel="Clear services"
+					showClear={false}
 					country={country}
 					savedIds={savedIds}
 					value={filters.services}
@@ -311,6 +341,9 @@ function Picker({
 					label="Pick for me"
 					disabled={!valid || query.isFetching || !ready}
 					onPress={() => {
+						Keyboard.dismiss();
+						revealResult.current = true;
+						scrollToResult();
 						setSkipped([]);
 						if (submitted === Number(time)) {
 							const next = selection ? [...skipped, selection.id] : skipped;
@@ -325,141 +358,148 @@ function Picker({
 					onPress={() => change(initialPickerFilters([]))}
 				/>
 			</View>
-			{query.isError && (
-				<View accessibilityRole="alert" className="gap-3">
-					<Text>Couldn't find suggestions. Try again.</Text>
-					<Button
-						label="Try again"
-						variant="secondary"
-						onPress={() => void query.refetch()}
-					/>
-				</View>
-			)}
-			{query.isFetching && !selection ? (
-				<View
-					accessibilityLabel="Finding something to watch"
-					className="gap-4 rounded-xl border border-border p-4"
-				>
-					<View className="h-56 w-36 self-center rounded-xl bg-background-subtle" />
-					<View className="h-7 w-2/3 rounded bg-background-subtle" />
-					<View className="h-4 rounded bg-background-subtle" />
-					<View className="h-12 rounded bg-background-subtle" />
-				</View>
-			) : selection ? (
-				<View
-					className="gap-4 rounded-xl border border-border bg-card p-4"
-					style={{ opacity: query.isFetching ? 0.5 : 1 }}
-				>
-					{selection.posterPath && (
-						<Image
-							accessibilityLabel={`${selection.title} poster`}
-							source={{
-								uri: `https://image.tmdb.org/t/p/w342${selection.posterPath}`,
-							}}
-							className="h-56 w-36 self-center rounded-xl"
+			<View
+				onLayout={(event) => {
+					resultY.current = event.nativeEvent.layout.y;
+				}}
+				className="gap-5"
+			>
+				{query.isError && (
+					<View accessibilityRole="alert" className="gap-3">
+						<Text>Couldn't find suggestions. Try again.</Text>
+						<Button
+							label="Try again"
+							variant="secondary"
+							onPress={() => void query.refetch()}
 						/>
-					)}
-					<Text className="font-bold font-display text-2xl">
-						{selection.title}
-					</Text>
-					<Text className="text-muted-foreground">
-						{pickerEpisodeLabel(selection)}
-					</Text>
-					<Text>
-						{selection.estimated ? "About " : ""}
-						{selection.minutes} minutes ·{" "}
-						{Math.max(0, (submitted ?? 0) - selection.minutes)} minutes left
-					</Text>
-					{selection.services.map((service) => {
-						const href = getWatchProviderLink(
-							service.provider_id,
-							selection.watchLink,
-						);
-						return href ? (
+					</View>
+				)}
+				{query.isFetching && !selection ? (
+					<View
+						accessibilityLabel="Finding something to watch"
+						className="gap-4 rounded-xl border border-border p-4"
+					>
+						<View className="h-56 w-36 self-center rounded-xl bg-background-subtle" />
+						<View className="h-7 w-2/3 rounded bg-background-subtle" />
+						<View className="h-4 rounded bg-background-subtle" />
+						<View className="h-12 rounded bg-background-subtle" />
+					</View>
+				) : selection ? (
+					<View
+						className="gap-4 rounded-xl border border-border bg-card p-4"
+						style={{ opacity: query.isFetching ? 0.5 : 1 }}
+					>
+						{selection.posterPath && (
+							<Image
+								accessibilityLabel={`${selection.title} poster`}
+								source={{
+									uri: `https://image.tmdb.org/t/p/w342${selection.posterPath}`,
+								}}
+								className="h-56 w-36 self-center rounded-xl"
+							/>
+						)}
+						<Text className="font-bold font-display text-2xl">
+							{selection.title}
+						</Text>
+						<Text className="text-muted-foreground">
+							{pickerEpisodeLabel(selection)}
+						</Text>
+						<Text>
+							{selection.estimated ? "About " : ""}
+							{selection.minutes} minutes ·{" "}
+							{Math.max(0, (submitted ?? 0) - selection.minutes)} minutes left
+						</Text>
+						{selection.services.map((service) => {
+							const href = getWatchProviderLink(
+								service.provider_id,
+								selection.watchLink,
+							);
+							return href ? (
+								<Button
+									key={service.provider_id}
+									label={`Watch on ${pickerServiceLabel(selection, service.provider_id, service.provider_name)}`}
+									variant="secondary"
+									onPress={() => {
+										setLinkError(false);
+										void Linking.openURL(href).catch(() => setLinkError(true));
+									}}
+								/>
+							) : (
+								<Text key={service.provider_id}>{service.provider_name}</Text>
+							);
+						})}
+						{linkError && (
+							<Text accessibilityRole="alert">
+								Couldn't open the service. Try its website or app.
+							</Text>
+						)}
+						{!selection.services.length && (
+							<Text className="text-muted-foreground">
+								Streaming availability is unknown or unavailable in your watch
+								country.
+							</Text>
+						)}
+						<Link
+							href={
+								selection.mediaType === "movie"
+									? {
+											pathname: "/movies/[id]/[name]",
+											params: {
+												id: selection.mediaId,
+												name: slugifyName(selection.title),
+											},
+										}
+									: {
+											pathname: "/shows/[id]/[name]",
+											params: {
+												id: selection.mediaId,
+												name: slugifyName(selection.title),
+											},
+										}
+							}
+							asChild
+						>
+							<Button label="View details" variant="secondary" />
+						</Link>
+						<Button
+							label="Pick again"
+							disabled={query.isFetching}
+							onPress={() => {
+								const next = [...skipped, selection.id];
+								setSkipped(next);
+								setSelection(choosePickerItem(query.data?.items ?? [], next));
+								setLinkError(false);
+							}}
+						/>
+					</View>
+				) : submitted !== undefined &&
+					query.data &&
+					!query.isFetching &&
+					!query.isError ? (
+					<View className="gap-3 rounded-xl border border-border p-4">
+						<Text className="font-semibold text-xl">
+							{skipped.length
+								? "You’ve tried every match"
+								: "No titles fit these filters"}
+						</Text>
+						<Text className="text-muted-foreground">
+							{skipped.length
+								? "Reset your skips or change the filters to try something else."
+								: "Try more time or clear filters. Add titles to your watchlist if you need more choices. Titles without a usable runtime cannot fit a time budget."}
+						</Text>
+						{skipped.length > 0 && (
 							<Button
-								key={service.provider_id}
-								label={`Watch on ${pickerServiceLabel(selection, service.provider_id, service.provider_name)}`}
+								label="Reset skips"
 								variant="secondary"
 								onPress={() => {
-									setLinkError(false);
-									void Linking.openURL(href).catch(() => setLinkError(true));
+									setSkipped([]);
+									setSelection(choosePickerItem(query.data?.items ?? [], []));
 								}}
 							/>
-						) : (
-							<Text key={service.provider_id}>{service.provider_name}</Text>
-						);
-					})}
-					{linkError && (
-						<Text accessibilityRole="alert">
-							Couldn't open the service. Try its website or app.
-						</Text>
-					)}
-					{!selection.services.length && (
-						<Text className="text-muted-foreground">
-							Streaming availability is unknown or unavailable in your watch
-							country.
-						</Text>
-					)}
-					<Link
-						href={
-							selection.mediaType === "movie"
-								? {
-										pathname: "/movies/[id]/[name]",
-										params: {
-											id: selection.mediaId,
-											name: slugifyName(selection.title),
-										},
-									}
-								: {
-										pathname: "/shows/[id]/[name]",
-										params: {
-											id: selection.mediaId,
-											name: slugifyName(selection.title),
-										},
-									}
-						}
-						asChild
-					>
-						<Button label="View details" variant="secondary" />
-					</Link>
-					<Button
-						label="Pick again"
-						disabled={query.isFetching}
-						onPress={() => {
-							const next = [...skipped, selection.id];
-							setSkipped(next);
-							setSelection(choosePickerItem(query.data?.items ?? [], next));
-							setLinkError(false);
-						}}
-					/>
-				</View>
-			) : submitted !== undefined &&
-				query.data &&
-				!query.isFetching &&
-				!query.isError ? (
-				<View className="gap-3 rounded-xl border border-border p-4">
-					<Text className="font-semibold text-xl">
-						{skipped.length
-							? "You’ve tried every match"
-							: "No titles fit these filters"}
-					</Text>
-					<Text className="text-muted-foreground">
-						{skipped.length
-							? "Reset your skips or change the filters to try something else."
-							: "Try more time or clear filters. Add titles to your watchlist if you need more choices. Titles without a usable runtime cannot fit a time budget."}
-					</Text>
-					{skipped.length > 0 && (
-						<Button
-							label="Reset skips"
-							variant="secondary"
-							onPress={() => {
-								setSkipped([]);
-								setSelection(choosePickerItem(query.data?.items ?? [], []));
-							}}
-						/>
-					)}
-				</View>
-			) : null}
+						)}
+					</View>
+				) : null}
+			</View>
 		</ScrollView>
 	);
 }

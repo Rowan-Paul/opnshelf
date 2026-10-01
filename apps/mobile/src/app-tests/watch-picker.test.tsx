@@ -1,5 +1,10 @@
-import { createElement, type PropsWithChildren } from "react";
-import { TextInput } from "react-native";
+import {
+	createElement,
+	forwardRef,
+	type PropsWithChildren,
+	useImperativeHandle,
+} from "react";
+import { ScrollView, TextInput } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Button } from "@/components/ui/button";
@@ -8,6 +13,8 @@ import PickerScreen from "../app/pick-for-me";
 
 const mocks = vi.hoisted(() => ({
 	save: vi.fn(),
+	scrollTo: vi.fn(),
+	dismissKeyboard: vi.fn(),
 	user: { did: "did:plc:picker-test", handle: "picker.test" },
 }));
 function host(name: string) {
@@ -16,7 +23,11 @@ function host(name: string) {
 }
 vi.mock("react-native", () => ({
 	View: host("View"),
-	ScrollView: host("ScrollView"),
+	ScrollView: forwardRef(({ children, ...props }: PropsWithChildren, ref) => {
+		useImperativeHandle(ref, () => ({ scrollTo: mocks.scrollTo }));
+		return createElement("ScrollView", props, children);
+	}),
+	Keyboard: { dismiss: mocks.dismissKeyboard },
 	Pressable: host("Pressable"),
 	TextInput: host("TextInput"),
 	Image: host("Image"),
@@ -95,23 +106,49 @@ function button(view: ReactTestRenderer, label: string) {
 	)[0];
 }
 beforeEach(() => {
+	mocks.scrollTo.mockClear();
+	mocks.dismissKeyboard.mockClear();
 	mocks.save.mockReset();
 	mocks.save.mockResolvedValue(undefined);
 });
 describe("Mobile picker session", () => {
-	it("requires time, exhausts without repeats, and explicitly resets skips", async () => {
+	it("defaults to 180 minutes, exhausts without repeats, and explicitly resets skips", async () => {
 		const view = await renderPicker();
-		expect(button(view, "Pick for me").props.disabled).toBe(true);
-		await act(async () =>
-			view.root.findByType(TextInput).props.onChangeText("180"),
-		);
+		expect(view.root.findByType(TextInput).props.value).toBe("180");
+		expect(button(view, "Pick for me").props.disabled).toBe(false);
+		act(() => {
+			view.root
+				.find((node) => typeof node.props.onLayout === "function")
+				.props.onLayout({ nativeEvent: { layout: { y: 600 } } });
+		});
 		await act(async () => button(view, "Pick for me").props.onPress());
+		act(() => view.root.findByType(ScrollView).props.onContentSizeChange());
+		expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
+		expect(mocks.scrollTo).toHaveBeenLastCalledWith({ y: 584, animated: true });
 		expect(JSON.stringify(view.toJSON())).toContain("Tonight’s movie");
 		await act(async () => button(view, "Pick again").props.onPress());
 		expect(JSON.stringify(view.toJSON())).toContain("You’ve tried every match");
 		expect(button(view, "Pick again")).toBeUndefined();
 		await act(async () => button(view, "Reset skips").props.onPress());
 		expect(JSON.stringify(view.toJSON())).toContain("Tonight’s movie");
+		await act(async () => view.unmount());
+	});
+	it("explains empty and invalid time and clears the error after correction", async () => {
+		const view = await renderPicker();
+		for (const value of ["", "0", "1441", "1.5"]) {
+			await act(async () =>
+				view.root.findByType(TextInput).props.onChangeText(value),
+			);
+			expect(button(view, "Pick for me").props.disabled).toBe(true);
+			expect(JSON.stringify(view.toJSON())).toContain(
+				value ? "Enter a whole number" : "Enter how many minutes",
+			);
+		}
+		await act(async () =>
+			view.root.findByType(TextInput).props.onChangeText("120"),
+		);
+		expect(button(view, "Pick for me").props.disabled).toBe(false);
+		expect(JSON.stringify(view.toJSON())).not.toContain("Enter a whole number");
 		await act(async () => view.unmount());
 	});
 	it("clears all filters without clearing time and persists the unrestricted choice", async () => {

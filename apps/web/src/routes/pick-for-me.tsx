@@ -130,7 +130,7 @@ function Picker({
 		initialPickerFilters(savedIds),
 	);
 	const [ready, setReady] = useState(false);
-	const [time, setTime] = useState("");
+	const [time, setTime] = useState("180");
 	const [submitted, setSubmitted] = useState<number>();
 	const [selection, setSelection] = useState<WatchPickerItemDto>();
 	const [skipped, setSkipped] = useState<string[]>([]);
@@ -181,8 +181,13 @@ function Picker({
 		}
 	};
 	const valid = /^\d+$/.test(time) && Number(time) >= 1 && Number(time) <= 1440;
+	const timeError = !valid
+		? time.trim()
+			? "Enter a whole number between 1 and 1440 minutes."
+			: "Enter how many minutes you have."
+		: undefined;
 	return (
-		<div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-0">
+		<div className="mx-auto max-w-3xl space-y-6 px-4 pb-12 sm:px-0">
 			<header className="space-y-2">
 				<h1 className="text-display-2">Pick for me</h1>
 				<p className="text-(--foreground-muted)">
@@ -214,6 +219,8 @@ function Picker({
 							max="1440"
 							placeholder="180"
 							value={time}
+							aria-invalid={!valid}
+							aria-describedby={timeError ? "picker-time-error" : undefined}
 							onChange={(event) => {
 								setTime(event.target.value);
 								setSkipped([]);
@@ -223,6 +230,11 @@ function Picker({
 						/>
 						<span>minutes</span>
 					</div>
+					{timeError && (
+						<p id="picker-time-error" role="alert" className="text-sm">
+							{timeError}
+						</p>
+					)}
 				</label>
 				<div className="grid gap-4 sm:grid-cols-3">
 					<label className="space-y-2">
@@ -282,7 +294,7 @@ function Picker({
 					</label>
 				</div>
 				<UpNextServiceFilter
-					clearLabel="Clear services"
+					showClear={false}
 					country={country}
 					savedIds={savedIds}
 					value={filters.services}

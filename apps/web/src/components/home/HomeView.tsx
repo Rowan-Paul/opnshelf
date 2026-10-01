@@ -330,26 +330,28 @@ export function HomeView() {
 				<div className="space-y-8 lg:col-span-2">
 					{/* Up Next - Shows the next episodes to watch */}
 					<section>
-						<div className="mb-4 flex items-center justify-between">
+						<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 							<h2 className="text-display-3" data-tour="up-next">
 								Up Next
 							</h2>
-							<Link
-								to="/pick-for-me"
-								className="font-medium text-(--accent) text-sm"
-							>
-								Pick for me
-							</Link>
-							{user && (
+							<div className="flex shrink-0 items-center gap-4">
 								<Link
-									to="/profile/$handle/up-next"
-									params={{ handle: user.handle }}
-									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+									to="/pick-for-me"
+									className="font-medium text-(--accent) text-sm"
 								>
-									View all
-									<ChevronRight className="size-4" />
+									Pick for me
 								</Link>
-							)}
+								{user && (
+									<Link
+										to="/profile/$handle/up-next"
+										params={{ handle: user.handle }}
+										className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+									>
+										View all
+										<ChevronRight className="size-4" />
+									</Link>
+								)}
+							</div>
 						</div>
 
 						{upNextLoading ? (
