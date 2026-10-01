@@ -253,11 +253,6 @@ function NoFollowsContent() {
 						: "No suggestions right now."}
 				</Text>
 			)}
-			<SocialLink
-				href="/social/find"
-				icon={Search}
-				label="More ways to find people"
-			/>
 		</ScrollView>
 	);
 }
@@ -329,9 +324,7 @@ function EmptyFeed({
 						</Text>
 					</Pressable>
 				</View>
-			) : (
-				<SocialLink href="/social/find" icon={Search} label="Find people" />
-			)}
+			) : null}
 		</View>
 	);
 }
