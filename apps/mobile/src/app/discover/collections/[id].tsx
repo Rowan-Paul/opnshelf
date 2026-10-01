@@ -77,10 +77,6 @@ export default function NotificationCollectionScreen() {
 					{collection.items.map((item) => (
 						<CollectionItem key={item.path} item={item} />
 					))}
-
-					<Link href="/search" className="font-semibold text-primary">
-						Back to Discover
-					</Link>
 				</>
 			) : query.isError ? (
 				<ErrorState
