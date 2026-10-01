@@ -72,10 +72,11 @@ function EmbedReviewEditor() {
 	}, [mounted]);
 
 	return (
-		<div className="min-h-screen bg-(--background) p-3">
+		<div className="h-dvh overflow-hidden bg-(--background) p-3">
 			{mounted && initial !== null ? (
 				<Suspense fallback={<div className="input min-h-[240px]" />}>
 					<MarkdownEditor
+						fillHeight
 						key={editorKey.current}
 						value={initial}
 						onChange={(markdown) => postToNative({ type: "change", markdown })}
