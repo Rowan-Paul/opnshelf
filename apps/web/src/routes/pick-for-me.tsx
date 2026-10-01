@@ -1,7 +1,9 @@
 import {
+	authControllerMeOptions,
 	choosePickerItem,
 	getWatchProviderLink,
 	initialPickerFilters,
+	isUnauthorizedError,
 	PICKER_GENRES,
 	type PickerFilters,
 	pickerEpisodeLabel,
@@ -14,17 +16,56 @@ import {
 	watchPickerControllerGetOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	redirect,
+	useNavigate,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { UpNextServiceFilter } from "#/components/UpNextServiceFilter";
+import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
+import { currentUserQueryOptions } from "#/lib/auth-query";
 
 export const Route = createFileRoute("/pick-for-me")({
+	beforeLoad: async ({ context }) => {
+		if (!ssrCanResolveSession()) return;
+		try {
+			const user = await context.queryClient.fetchQuery({
+				...authControllerMeOptions(ssrAuthOptions()),
+				staleTime: 0,
+			});
+			if (!user) throw redirect({ to: "/login" });
+		} catch (error) {
+			if (isUnauthorizedError(error)) {
+				throw redirect({ to: "/login" });
+			}
+			throw error;
+		}
+	},
 	component: PickerPage,
 	head: () => ({ meta: [{ title: "Pick for me | Opnshelf" }] }),
 });
 function PickerPage() {
 	const { user, isLoading: authLoading } = useAuth();
+	const navigate = useNavigate();
+	const session = useQuery(currentUserQueryOptions());
+	useEffect(() => {
+		if (
+			!authLoading &&
+			!user &&
+			session.isFetchedAfterMount &&
+			!session.isError
+		)
+			void navigate({ to: "/login", replace: true });
+	}, [
+		authLoading,
+		user,
+		session.isFetchedAfterMount,
+		session.isError,
+		navigate,
+	]);
 	const settingsQuery = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user,
@@ -44,7 +85,7 @@ function PickerPage() {
 				<div className="card h-80 animate-pulse bg-(--background-subtle)" />
 			</div>
 		);
-	if (!user) return <p>Sign in to choose from your Up Next and watchlist.</p>;
+	if (!user) return null;
 	if (settingsQuery.isError || servicesQuery.isError)
 		return (
 			<div role="alert" className="space-y-3">

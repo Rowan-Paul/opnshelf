@@ -14,7 +14,7 @@ import {
 	watchPickerControllerGetOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Link, Stack } from "expo-router";
+import { Link, Redirect, Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { type ReactNode, useEffect, useState } from "react";
 import {
@@ -54,8 +54,7 @@ export default function PickerScreen() {
 				<View className="h-80 rounded-xl bg-background-subtle" />
 			</View>
 		);
-	else if (!user)
-		content = <Text>Sign in to choose from your Up Next and watchlist.</Text>;
+	else if (!user) return <Redirect href="/login" />;
 	else if (settingsQuery.isError || servicesQuery.isError)
 		content = (
 			<View className="gap-3 py-5">
