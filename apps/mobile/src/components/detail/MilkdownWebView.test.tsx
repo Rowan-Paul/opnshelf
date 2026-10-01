@@ -36,15 +36,19 @@ vi.mock("@/lib/theme-context", () => ({
 	useTheme: () => ({ scheme: "dark" }),
 }));
 
-function renderEditor(onChange = vi.fn()) {
+function renderEditor(onChange = vi.fn(), onFocus = vi.fn()) {
 	const rendered: { current?: ReactTestRenderer } = {};
 	act(() => {
 		rendered.current = create(
-			<MilkdownWebView value="Initial **review**" onChange={onChange} />,
+			<MilkdownWebView
+				value="Initial **review**"
+				onChange={onChange}
+				onFocus={onFocus}
+			/>,
 		);
 	});
 	if (!rendered.current) throw new Error("Editor was not rendered");
-	return { renderer: rendered.current, onChange };
+	return { renderer: rendered.current, onChange, onFocus };
 }
 
 function webViewProp<T>(name: string): T {
@@ -186,4 +190,27 @@ describe("MilkdownWebView trust boundary", () => {
 		expect(webViewMock.injectJavaScript).not.toHaveBeenCalled();
 		act(() => renderer.unmount());
 	});
+});
+
+it("reports editor focus only from the trusted WebView", () => {
+	const { onFocus, renderer } = renderEditor();
+	const message =
+		webViewProp<
+			(event: { nativeEvent: { url: string; data: string } }) => void
+		>("onMessage");
+	message({
+		nativeEvent: {
+			url: "https://evil.example",
+			data: JSON.stringify({ type: "focus" }),
+		},
+	});
+	expect(onFocus).not.toHaveBeenCalled();
+	message({
+		nativeEvent: {
+			url: "https://opnshelf.xyz",
+			data: JSON.stringify({ type: "focus" }),
+		},
+	});
+	expect(onFocus).toHaveBeenCalledOnce();
+	act(() => renderer.unmount());
 });

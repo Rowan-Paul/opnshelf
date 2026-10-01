@@ -1,8 +1,8 @@
 import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { StarOff, Trash2, X } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { Modal, Pressable, Switch, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Modal, Pressable, ScrollView, Switch, View } from "react-native";
 import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
@@ -76,6 +76,17 @@ export function ReviewEditorSheet({
 	onClearRating,
 	isClearingRating = false,
 }: ReviewEditorSheetProps) {
+	const formRef = useRef<ScrollView>(null);
+	const fieldOffsets = useRef({ title: 0, body: 0 });
+	const focusedField = useRef<"title" | "body" | null>(null);
+	const viewportHeight = useRef(0);
+	const revealField = (field: "title" | "body") => {
+		focusedField.current = field;
+		formRef.current?.scrollTo({
+			y: fieldOffsets.current[field],
+			animated: false,
+		});
+	};
 	const [title, setTitle] = useState(initialTitle);
 	const [markdown, setMarkdown] = useState(initialMarkdown);
 	const [spoiler, setSpoiler] = useState(initialSpoiler);
@@ -106,6 +117,7 @@ export function ReviewEditorSheet({
 	// Re-sync local state whenever the sheet is (re)opened for a target.
 	useEffect(() => {
 		if (visible) {
+			focusedField.current = null;
 			setTitle(initialTitle);
 			setMarkdown(initialMarkdown);
 			setSpoiler(initialSpoiler);
@@ -168,154 +180,180 @@ export function ReviewEditorSheet({
 							</Pressable>
 						</View>
 
-						{includesRating ? (
-							<View className="gap-3 rounded-lg bg-background-subtle px-3 py-3">
-								<View className="flex-row items-center justify-between gap-3">
-									<View className="flex-1">
-										<Text className="font-medium text-foreground text-sm">
-											Your rating
-										</Text>
-										<Text className="text-muted-foreground text-xs">
-											Optional — save it without writing a review.
+						<ScrollView
+							ref={formRef}
+							onLayout={(event) => {
+								const height = event.nativeEvent.layout.height;
+								if (height < viewportHeight.current && focusedField.current)
+									revealField(focusedField.current);
+								viewportHeight.current = height;
+							}}
+							className="min-h-0 flex-1"
+							contentContainerStyle={{ flexGrow: 1, gap: 16 }}
+							keyboardShouldPersistTaps="handled"
+							keyboardDismissMode="interactive"
+						>
+							{includesRating ? (
+								<View className="gap-3 rounded-lg bg-background-subtle px-3 py-3">
+									<View className="flex-row items-center justify-between gap-3">
+										<View className="flex-1">
+											<Text className="font-medium text-foreground text-sm">
+												Your rating
+											</Text>
+											<Text className="text-muted-foreground text-xs">
+												Optional — save it without writing a review.
+											</Text>
+										</View>
+										{isRated && onClearRating ? (
+											<Pressable
+												onPress={onClearRating}
+												disabled={isClearingRating}
+												className="flex-row items-center gap-1"
+												style={{ opacity: isClearingRating ? 0.6 : 1 }}
+											>
+												<StarOff color="#94a3b8" size={15} />
+												<Text className="font-medium text-muted-foreground text-xs">
+													Clear
+												</Text>
+											</Pressable>
+										) : null}
+									</View>
+									<View className="flex-row items-center justify-between gap-3">
+										<StarRating
+											rating={rating ?? 0}
+											onChange={onRatingChange}
+											size={28}
+										/>
+										<Text className="font-medium text-muted-foreground text-sm">
+											{isRated ? `${rating} /10` : "Not rated"}
 										</Text>
 									</View>
-									{isRated && onClearRating ? (
-										<Pressable
-											onPress={onClearRating}
-											disabled={isClearingRating}
-											className="flex-row items-center gap-1"
-											style={{ opacity: isClearingRating ? 0.6 : 1 }}
-										>
-											<StarOff color="#94a3b8" size={15} />
-											<Text className="font-medium text-muted-foreground text-xs">
-												Clear
-											</Text>
-										</Pressable>
-									) : null}
 								</View>
-								<View className="flex-row items-center justify-between gap-3">
-									<StarRating
-										rating={rating ?? 0}
-										onChange={onRatingChange}
-										size={28}
-									/>
-									<Text className="font-medium text-muted-foreground text-sm">
-										{isRated ? `${rating} /10` : "Not rated"}
-									</Text>
-								</View>
-							</View>
-						) : null}
+							) : null}
 
-						<TextField
-							variant="subtle"
-							label="Title *"
-							value={title}
-							onChangeText={setTitle}
-							placeholder="Review title"
-							accessibilityLabel="Review title, required"
-							maxLength={300}
-						/>
-
-						<Text className="font-medium text-foreground text-sm">
-							Review *
-						</Text>
-						<MilkdownWebView
-							key={openCount}
-							value={initialMarkdown}
-							onChange={setMarkdown}
-						/>
-
-						<View className="flex-row items-center justify-between">
-							{needsTitle ? (
-								<Text className="text-destructive text-xs">
-									A title is required when you write a review.
-								</Text>
-							) : needsBody ? (
-								<Text className="text-destructive text-xs">
-									A review body is required before you can save.
-								</Text>
-							) : (
-								<View />
-							)}
-							<Text
-								className={
-									overLimit
-										? "text-destructive text-xs"
-										: "text-foreground-subtle text-xs"
-								}
+							<View
+								onLayout={(event) => {
+									fieldOffsets.current.title = event.nativeEvent.layout.y;
+								}}
 							>
-								{markdown.length}/{MAX_LENGTH}
-							</Text>
-						</View>
-
-						<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
-							<View className="flex-1">
-								<Text className="font-medium text-foreground text-sm">
-									Contains spoilers
-								</Text>
-								{spoiler ? (
-									<Text className="text-muted-foreground text-xs leading-5">
-										The title stays visible everywhere — keep spoilers in the
-										body.
-									</Text>
-								) : null}
+								<TextField
+									variant="subtle"
+									label="Title *"
+									value={title}
+									onChangeText={setTitle}
+									onFocus={() => revealField("title")}
+									placeholder="Review title"
+									accessibilityLabel="Review title, required"
+									maxLength={300}
+								/>
 							</View>
-							<Switch
-								value={spoiler}
-								onValueChange={setSpoiler}
-								trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
-								thumbColor="#ffffff"
-							/>
-						</View>
+							<View
+								className="min-h-48 flex-1 gap-4"
+								onLayout={(event) => {
+									fieldOffsets.current.body = event.nativeEvent.layout.y;
+								}}
+							>
+								<Text className="font-medium text-foreground text-sm">
+									Review *
+								</Text>
+								<MilkdownWebView
+									key={openCount}
+									value={initialMarkdown}
+									onChange={setMarkdown}
+									onFocus={() => revealField("body")}
+								/>
+							</View>
+							<View className="flex-row items-center justify-between">
+								{needsTitle ? (
+									<Text className="text-destructive text-xs">
+										A title is required when you write a review.
+									</Text>
+								) : needsBody ? (
+									<Text className="text-destructive text-xs">
+										A review body is required before you can save.
+									</Text>
+								) : (
+									<View />
+								)}
+								<Text
+									className={
+										overLimit
+											? "text-destructive text-xs"
+											: "text-foreground-subtle text-xs"
+									}
+								>
+									{markdown.length}/{MAX_LENGTH}
+								</Text>
+							</View>
 
-						{hasBlog ? (
 							<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
 								<View className="flex-1">
 									<Text className="font-medium text-foreground text-sm">
-										Also publish to my blog
+										Contains spoilers
 									</Text>
-									{blogName ? (
-										<Text
-											className="text-muted-foreground text-xs"
-											numberOfLines={1}
-										>
-											{blogName}
+									{spoiler ? (
+										<Text className="text-muted-foreground text-xs leading-5">
+											The title stays visible everywhere — keep spoilers in the
+											body.
 										</Text>
 									) : null}
 								</View>
 								<Switch
-									value={mirrorToBlog}
-									onValueChange={setMirrorToBlog}
+									value={spoiler}
+									onValueChange={setSpoiler}
 									trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
 									thumbColor="#ffffff"
 								/>
 							</View>
-						) : null}
 
-						{!isEditing && hasBluesky ? (
-							<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
-								<Text className="flex-1 font-medium text-foreground text-sm">
-									Also post on Bluesky
-								</Text>
-								<Switch
-									value={postToBluesky}
-									onValueChange={setPostToBluesky}
-									trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
-									thumbColor="#ffffff"
+							{hasBlog ? (
+								<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
+									<View className="flex-1">
+										<Text className="font-medium text-foreground text-sm">
+											Also publish to my blog
+										</Text>
+										{blogName ? (
+											<Text
+												className="text-muted-foreground text-xs"
+												numberOfLines={1}
+											>
+												{blogName}
+											</Text>
+										) : null}
+									</View>
+									<Switch
+										value={mirrorToBlog}
+										onValueChange={setMirrorToBlog}
+										trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+										thumbColor="#ffffff"
+									/>
+								</View>
+							) : null}
+
+							{!isEditing && hasBluesky ? (
+								<View className="flex-row items-center justify-between gap-3 rounded-lg bg-background-subtle px-3 py-2.5">
+									<Text className="flex-1 font-medium text-foreground text-sm">
+										Also post on Bluesky
+									</Text>
+									<Switch
+										value={postToBluesky}
+										onValueChange={setPostToBluesky}
+										trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+										thumbColor="#ffffff"
+									/>
+								</View>
+							) : null}
+
+							{isEditing && onDelete ? (
+								<Button
+									label="Delete review"
+									variant="destructive"
+									loading={isDeleting}
+									leading={<Trash2 color="#ef4444" size={18} />}
+									onPress={onDelete}
 								/>
-							</View>
-						) : null}
-
-						{isEditing && onDelete ? (
-							<Button
-								label="Delete review"
-								variant="destructive"
-								loading={isDeleting}
-								leading={<Trash2 color="#ef4444" size={18} />}
-								onPress={onDelete}
-							/>
-						) : null}
-
+							) : null}
+						</ScrollView>
 						<View className="flex-row items-center gap-3">
 							{isEditing && onNewReview ? (
 								<DialogProvider>

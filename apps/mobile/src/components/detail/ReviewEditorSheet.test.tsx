@@ -8,6 +8,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 }));
 
 const showDialog = vi.hoisted(() => vi.fn());
+const scrollTo = vi.hoisted(() => vi.fn());
 vi.mock("@/components/ui/dialog", () => ({
 	useDialog: () => ({ showDialog }),
 	DialogProvider: ({ children }: { children: import("react").ReactNode }) =>
@@ -36,6 +37,7 @@ vi.mock("react-native", async () => {
 		Pressable: component("pressable"),
 		Switch: component("switch"),
 		View: component("view"),
+		ScrollView: component("scroll-view"),
 		// The Button primitive picks its spinner tint from the scheme.
 		useColorScheme: () => "light",
 	};
@@ -85,6 +87,10 @@ function renderSheet(onSave = vi.fn()) {
 	act(() => {
 		renderer = create(
 			<ReviewEditorSheet visible onDismiss={vi.fn()} onSave={onSave} />,
+			{
+				createNodeMock: (node) =>
+					node.type === "scroll-view" ? { scrollTo } : null,
+			},
 		);
 	});
 	return { renderer, onSave };
@@ -200,4 +206,42 @@ describe("starting a new review", () => {
 		act(() => showDialog.mock.calls.at(-1)?.[0].actions[1].onPress());
 		expect(onNewReview).toHaveBeenCalledOnce();
 	});
+});
+
+it("reveals the focused field after the keyboard shrinks the form, not on expansion", () => {
+	const { renderer } = renderSheet();
+	const scroll = renderer.root.findByType("scroll-view" as never);
+	const layout = (y: number, height: number) => ({
+		nativeEvent: { layout: { y, height } },
+	});
+	act(() => scroll.props.onLayout(layout(0, 500)));
+	const body = renderer.root
+		.findAllByType("view" as never)
+		.find(
+			(n) => n.props.onLayout && n.findAllByType("milkdown" as never).length,
+		);
+	expect(body).toBeDefined();
+	act(() => body?.props.onLayout(layout(280, 192)));
+	act(() => renderer.root.findByType("milkdown" as never).props.onFocus());
+	expect(scrollTo).toHaveBeenLastCalledWith({ y: 280, animated: false });
+	scrollTo.mockClear();
+	act(() => scroll.props.onLayout(layout(0, 300)));
+	expect(scrollTo).toHaveBeenCalledOnce();
+	scrollTo.mockClear();
+	act(() => scroll.props.onLayout(layout(0, 500)));
+	expect(scrollTo).not.toHaveBeenCalled();
+	const title = renderer.root
+		.findAllByType("view" as never)
+		.find(
+			(n) => n.props.onLayout && n.findAllByType("text-field" as never).length,
+		);
+	expect(title).toBeDefined();
+	act(() => title?.props.onLayout(layout(110, 70)));
+	act(() => renderer.root.findByType("text-field" as never).props.onFocus());
+	expect(scrollTo).toHaveBeenLastCalledWith({ y: 110, animated: false });
+	expect(
+		scroll
+			.findAllByType("pressable" as never)
+			.some((n) => n.props.accessibilityLabel === "Save"),
+	).toBe(false);
 });
