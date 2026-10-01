@@ -1,4 +1,4 @@
-import type { WatchProviderDto } from "@opnshelf/api";
+import { getWatchProviderLink, type WatchProviderDto } from "@opnshelf/api";
 import { useState } from "react";
 import { posthog } from "#/integrations/posthog/provider";
 import { COUNTRY_NAMES, SORTED_COUNTRIES } from "#/lib/countries";
@@ -30,6 +30,7 @@ function ProviderChip({
 	provider: WatchProviderDto;
 	link?: string;
 }) {
+	const destination = getWatchProviderLink(provider.provider_id, link);
 	const img = (
 		<div className="flex flex-col items-center gap-1.5">
 			<div className="size-10 overflow-hidden rounded-xl border border-(--border) shadow-sm">
@@ -46,10 +47,10 @@ function ProviderChip({
 		</div>
 	);
 
-	if (link) {
+	if (destination) {
 		return (
 			<a
-				href={link}
+				href={destination}
 				target="_blank"
 				rel="noopener noreferrer"
 				className="group transition-transform hover:-translate-y-0.5"
