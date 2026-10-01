@@ -138,6 +138,7 @@ model NotificationCollection {
   periodStart String
   periodEnd String
   items Json
+  recap Json?
   createdAt DateTime @default(now())
   deliveries NotificationDelivery[]
 

@@ -1,5 +1,38 @@
+import { z } from "zod";
 import type { Prisma } from "../generated/client";
-import type { NotificationCollectionItemDto } from "./notifications.dto";
+import type {
+	NotificationCollectionItemDto,
+	WatchRecapDto,
+} from "./notifications.dto";
+
+const highlightSchema = z.object({
+	title: z.string(),
+	path: z
+		.string()
+		.regex(
+			/^\/(movies|shows)\/\d+\/[a-z0-9-]+(?:\/seasons\/\d+\/episodes\/\d+)?$/,
+		),
+	watchedAt: z.iso.datetime(),
+});
+const recapSchema = z.object({
+	movieWatches: z.number().int().nonnegative(),
+	episodeWatches: z.number().int().nonnegative(),
+	timezone: z.string().refine((value) => {
+		try {
+			new Intl.DateTimeFormat("en", { timeZone: value });
+			return true;
+		} catch {
+			return false;
+		}
+	}),
+	firstWatch: highlightSchema.nullable(),
+	lastWatch: highlightSchema.nullable(),
+});
+export function watchRecap(
+	value: Prisma.JsonValue | undefined,
+): WatchRecapDto | null {
+	return value == null ? null : recapSchema.parse(value);
+}
 
 /** JSON is persisted by the worker, but validate it before exposing links or HTML. */
 export function collectionItems(
@@ -32,6 +65,10 @@ export function collectionItems(
 					Number.isInteger(item.seasonNumber) &&
 					item.seasonNumber > 0)
 			) ||
+			(item.watchCount !== undefined &&
+				(typeof item.watchCount !== "number" ||
+					!Number.isSafeInteger(item.watchCount) ||
+					item.watchCount < 1)) ||
 			typeof item.path !== "string" ||
 			!/^\/(movies|shows)\/\d+\/[a-z0-9-]+(?:\/seasons\/\d+)?$/.test(item.path)
 		)
@@ -45,6 +82,9 @@ export function collectionItems(
 			releaseDate: item.releaseDate,
 			seasonNumber: item.seasonNumber,
 			path: item.path,
+			...(typeof item.watchCount === "number" && {
+				watchCount: item.watchCount,
+			}),
 		};
 	});
 }
@@ -81,25 +121,48 @@ export function notificationEmail(input: {
 		periodStart: string;
 		periodEnd: string;
 		items: Prisma.JsonValue;
+		recap?: Prisma.JsonValue;
 	} | null;
 }): { text: string; html: string } {
 	const absolute = (path: string) => new URL(path, input.baseUrl).toString();
 	const settings = absolute("/settings/notifications");
 	const items = input.collection ? collectionItems(input.collection.items) : [];
+	const recap = watchRecap(input.collection?.recap);
 	const heading = input.collection?.heading ?? input.title;
 	const period = input.collection
 		? `${input.collection.periodStart} – ${input.collection.periodEnd}`
 		: "";
 	const link = input.url ? absolute(input.url) : null;
-	const label = input.url?.startsWith("/discover/collections/")
-		? "See all releases"
-		: "Open in Opnshelf";
+	const label = recap
+		? "See your recap"
+		: input.url?.startsWith("/discover/collections/")
+			? "See all releases"
+			: "Open in Opnshelf";
+	const highlights = recap
+		? ([
+				["First Watch", recap.firstWatch],
+				["Last Watch", recap.lastWatch],
+			] as const)
+		: [];
+	const highlightText = highlights.flatMap(([label, watch]) =>
+		watch
+			? [
+					`${label}: ${watch.title}\n${new Date(watch.watchedAt).toLocaleString("en-GB", { timeZone: recap?.timezone })} (${recap?.timezone})\n${absolute(watch.path)}`,
+				]
+			: [],
+	);
+	const recapHtml = recap
+		? `<table role="presentation" width="100%"><tr><td style="padding:20px 0"><strong style="font-size:36px">${recap.movieWatches}</strong><br>Movie Watches</td><td style="padding:20px 0"><strong style="font-size:36px">${recap.episodeWatches}</strong><br>Episode Watches</td></tr></table>${highlights.map(([label, watch]) => (watch ? `<p class="email-muted" style="line-height:1.6;color:#475569">${label}<br><a class="email-link" style="color:#654c00" href="${escapeHtml(absolute(watch.path))}">${escapeHtml(watch.title)}</a><br>${escapeHtml(new Date(watch.watchedAt).toLocaleString("en-GB", { timeZone: recap.timezone }))} (${escapeHtml(recap.timezone)})</p>` : "")).join("")}${items.length ? `<h2 style="font-size:22px;margin-top:28px">Your most-watched titles</h2>` : `<p><a class="email-link" href="${escapeHtml(absolute("/search"))}">Find something to watch</a></p>`}`
+		: "";
 	const cards = items
 		.map((item) => {
 			const title = `${item.title}${item.seasonNumber ? ` · Season ${item.seasonNumber}` : ""}`;
-			const date = item.releaseDate
-				? `${item.mediaType === "movie" ? "Release" : "Premiere"}: ${item.releaseDate}`
-				: "Release date unavailable";
+			const date =
+				item.watchCount !== undefined
+					? `${item.watchCount} ${item.mediaType === "show" ? "episode " : ""}${item.watchCount === 1 ? "Watch" : "Watches"}`
+					: item.releaseDate
+						? `${item.mediaType === "movie" ? "Release" : "Premiere"}: ${item.releaseDate}`
+						: "Release date unavailable";
 			return `<tr><td class="email-divider" style="padding:24px 0;border-bottom:1px solid #e2e8f0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${item.posterPath ? `<td width="96" valign="top" style="padding-right:16px"><a href="${escapeHtml(absolute(item.path))}"><img src="https://image.tmdb.org/t/p/w342${escapeHtml(item.posterPath)}" alt="${escapeHtml(item.title)} poster" width="80" style="display:block;width:80px;border-radius:8px" /></a></td>` : ""}<td valign="top"><h2 style="margin:0 0 8px;font-size:20px;line-height:1.3"><a href="${escapeHtml(absolute(item.path))}" class="email-text" style="color:#0f172a;text-decoration:none">${escapeHtml(title)}</a></h2><p class="email-muted" style="margin:0 0 8px;font-size:13px;color:#475569">${escapeHtml(date)}</p><p style="margin:0 0 12px;font-size:15px;line-height:1.6">${escapeHtml(item.overview.length > 240 ? `${item.overview.slice(0, 237)}…` : item.overview)}</p><a href="${escapeHtml(absolute(item.path))}" class="email-link" style="color:#654c00;font-size:14px">View details →</a></td></tr></table></td></tr>`;
 		})
 		.join("");
@@ -108,15 +171,16 @@ export function notificationEmail(input: {
 			heading,
 			period,
 			input.body,
+			...highlightText,
 			...items.map(
 				(item) =>
-					`${item.title}${item.seasonNumber ? ` · Season ${item.seasonNumber}` : ""}\n${item.releaseDate ?? "Release date unavailable"}\n${item.overview}\n${absolute(item.path)}`,
+					`${item.title}${item.seasonNumber ? ` · Season ${item.seasonNumber}` : ""}\n${item.watchCount !== undefined ? `${item.watchCount} ${item.mediaType === "show" ? "episode " : ""}${item.watchCount === 1 ? "Watch" : "Watches"}` : (item.releaseDate ?? "Release date unavailable")}\n${item.overview}\n${absolute(item.path)}`,
 			),
 			link ? `${label}: ${link}` : "",
 			`Manage notifications: ${settings}`,
 		]
 			.filter(Boolean)
 			.join("\n\n"),
-		html: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><style>:root{color-scheme:light dark;supported-color-schemes:light dark}@media (prefers-color-scheme:dark){body,.email-canvas{background-color:#020617!important;color:#f8fafc!important}.email-panel{background-color:#0f172a!important;color:#f8fafc!important}.email-text{color:#f8fafc!important}.email-muted{color:#cbd5e1!important}.email-link{color:#f3bc00!important}.email-divider{border-color:#334155!important}.email-button{background-color:#f3bc00!important;color:#3f2e00!important}}</style><title>${escapeHtml(heading)}</title></head><body class="email-canvas" style="margin:0;background:#f8fafc;color:#0f172a;font-family:Arial,Helvetica,sans-serif"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(input.body)}</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellpadding="0" cellspacing="0" class="email-panel" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px"><tr><td style="padding:32px 24px"><p style="margin:0 0 28px"><a href="${escapeHtml(absolute("/"))}" style="text-decoration:none"><img src="${escapeHtml(absolute("/logo192.png"))}" alt="Opnshelf" width="48" height="48" style="display:block;border:0;border-radius:10px" /></a></p>${period ? `<p class="email-muted" style="font-size:13px;color:#475569">${escapeHtml(period)}</p>` : ""}<h1 style="margin:0 0 12px;font-size:30px;line-height:1.2">${escapeHtml(heading)}</h1><p class="email-muted" style="line-height:1.6;color:#475569">${escapeHtml(input.body)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${cards}</table>${link ? `<p style="margin:28px 0"><a href="${escapeHtml(link)}" class="email-button" style="display:inline-block;padding:14px 20px;background:#f3bc00;border-radius:8px;color:#3f2e00;text-decoration:none;font-weight:bold">${label}</a></p>` : ""}<p class="email-muted" style="margin:28px 0 0;font-size:12px;line-height:1.6;color:#475569"><a href="${escapeHtml(settings)}" class="email-muted" style="color:#475569">Manage notifications</a></p></td></tr></table></td></tr></table></body></html>`,
+		html: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><style>:root{color-scheme:light dark;supported-color-schemes:light dark}@media (prefers-color-scheme:dark){body,.email-canvas{background-color:#020617!important;color:#f8fafc!important}.email-panel{background-color:#0f172a!important;color:#f8fafc!important}.email-text{color:#f8fafc!important}.email-muted{color:#cbd5e1!important}.email-link{color:#f3bc00!important}.email-divider{border-color:#334155!important}.email-button{background-color:#f3bc00!important;color:#3f2e00!important}}</style><title>${escapeHtml(heading)}</title></head><body class="email-canvas" style="margin:0;background:#f8fafc;color:#0f172a;font-family:Arial,Helvetica,sans-serif"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(input.body)}</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellpadding="0" cellspacing="0" class="email-panel" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px"><tr><td style="padding:32px 24px"><p style="margin:0 0 28px"><a href="${escapeHtml(absolute("/"))}" style="text-decoration:none"><img src="${escapeHtml(absolute("/logo192.png"))}" alt="Opnshelf" width="48" height="48" style="display:block;border:0;border-radius:10px" /></a></p>${period ? `<p class="email-muted" style="font-size:13px;color:#475569">${escapeHtml(period)}</p>` : ""}<h1 style="margin:0 0 12px;font-size:30px;line-height:1.2">${escapeHtml(heading)}</h1><p class="email-muted" style="line-height:1.6;color:#475569">${escapeHtml(input.body)}</p>${recapHtml}<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${cards}</table>${link ? `<p style="margin:28px 0"><a href="${escapeHtml(link)}" class="email-button" style="display:inline-block;padding:14px 20px;background:#f3bc00;border-radius:8px;color:#3f2e00;text-decoration:none;font-weight:bold">${label}</a></p>` : ""}<p class="email-muted" style="margin:28px 0 0;font-size:12px;line-height:1.6;color:#475569"><a href="${escapeHtml(settings)}" class="email-muted" style="color:#475569">Manage notifications</a></p></td></tr></table></td></tr></table></body></html>`,
 	};
 }

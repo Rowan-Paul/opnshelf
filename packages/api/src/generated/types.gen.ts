@@ -2439,6 +2439,20 @@ export type PublishAtStoreReviewResponseDto = {
     uri: string;
 };
 
+export type WatchRecapHighlightDto = {
+    title: string;
+    path: string;
+    watchedAt: string;
+};
+
+export type WatchRecapDto = {
+    movieWatches: number;
+    episodeWatches: number;
+    timezone: string;
+    firstWatch: WatchRecapHighlightDto | null;
+    lastWatch: WatchRecapHighlightDto | null;
+};
+
 export type NotificationCollectionItemDto = {
     mediaId: string;
     mediaType: 'movie' | 'show';
@@ -2448,9 +2462,11 @@ export type NotificationCollectionItemDto = {
     releaseDate: string | null;
     seasonNumber: number | null;
     path: string;
+    watchCount?: number;
 };
 
 export type NotificationCollectionDto = {
+    recap?: WatchRecapDto | null;
     id: string;
     heading: string;
     periodStart: string;

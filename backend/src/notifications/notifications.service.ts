@@ -1,4 +1,4 @@
-import { collectionItems } from "./notification-content";
+import { collectionItems, watchRecap } from "./notification-content";
 import type { NotificationCollectionDto } from "./notifications.dto";
 import { sendPushNotification } from "./send-push";
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
@@ -45,6 +45,7 @@ export class NotificationsService {
 		return {
 			id: collection.id,
 			heading: collection.heading,
+			recap: watchRecap(collection.recap),
 			periodStart: collection.periodStart,
 			periodEnd: collection.periodEnd,
 			items: collectionItems(collection.items),

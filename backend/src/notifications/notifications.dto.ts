@@ -89,9 +89,28 @@ export class NotificationCollectionItemDto {
 	@ApiProperty({ type: String, nullable: true }) releaseDate!: string | null;
 	@ApiProperty({ type: Number, nullable: true }) seasonNumber!: number | null;
 	@ApiProperty() path!: string;
+	@ApiPropertyOptional() watchCount?: number;
+}
+
+export class WatchRecapHighlightDto {
+	@ApiProperty() title!: string;
+	@ApiProperty() path!: string;
+	@ApiProperty() watchedAt!: string;
+}
+
+export class WatchRecapDto {
+	@ApiProperty() movieWatches!: number;
+	@ApiProperty() episodeWatches!: number;
+	@ApiProperty() timezone!: string;
+	@ApiProperty({ type: WatchRecapHighlightDto, nullable: true })
+	firstWatch!: WatchRecapHighlightDto | null;
+	@ApiProperty({ type: WatchRecapHighlightDto, nullable: true })
+	lastWatch!: WatchRecapHighlightDto | null;
 }
 
 export class NotificationCollectionDto {
+	@ApiPropertyOptional({ type: WatchRecapDto, nullable: true })
+	recap?: WatchRecapDto | null;
 	@ApiProperty() id!: string;
 	@ApiProperty() heading!: string;
 	@ApiProperty() periodStart!: string;

@@ -2,6 +2,7 @@ import {
 	getHttpStatus,
 	type NotificationCollectionItemDto,
 	notificationsControllerCollection,
+	type WatchRecapDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { type Href, Link, Stack, useLocalSearchParams } from "expo-router";
@@ -47,7 +48,7 @@ export default function NotificationCollectionScreen() {
 			{!authLoading && !isAuthenticated ? (
 				<View className="gap-4">
 					<Text className="font-bold font-display text-2xl">
-						Your release collection
+						Your notification collection
 					</Text>
 					<Text>
 						Sign in to the account that received this notification, then open
@@ -68,12 +69,24 @@ export default function NotificationCollectionScreen() {
 						<Text selectable className="font-bold font-display text-3xl">
 							{collection.heading}
 						</Text>
-						<Text selectable className="text-muted-foreground">
-							{collection.items.length}{" "}
-							{collection.items.length === 1 ? "title" : "titles"} to explore.
-							Find your next watch.
-						</Text>
+						{collection.recap ? (
+							<RecapSummary recap={collection.recap} />
+						) : (
+							<Text selectable className="text-muted-foreground">
+								{collection.items.length}{" "}
+								{collection.items.length === 1 ? "title" : "titles"} to explore.
+								Find your next watch.
+							</Text>
+						)}
 					</View>
+					{collection.recap && collection.items.length > 0 && (
+						<Text
+							accessibilityRole="header"
+							className="font-bold font-display text-2xl"
+						>
+							Your most-watched titles
+						</Text>
+					)}
 					{collection.items.map((item) => (
 						<CollectionItem key={item.path} item={item} />
 					))}
@@ -142,9 +155,11 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 							: item.mediaType === "movie"
 								? "Movie"
 								: "Show"}
-						{item.releaseDate
-							? ` · ${formatDate(item.releaseDate)}`
-							: " · Date unavailable"}
+						{item.watchCount !== undefined
+							? ` · ${item.watchCount} ${item.mediaType === "show" ? "episode " : ""}${item.watchCount === 1 ? "Watch" : "Watches"}`
+							: item.releaseDate
+								? ` · ${formatDate(item.releaseDate)}`
+								: " · Date unavailable"}
 					</Text>
 					<Link href={item.path as Href}>
 						<Text selectable className="font-bold font-display text-xl">
@@ -167,27 +182,29 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 				>
 					View details
 				</Link>
-				<Pressable
-					accessibilityRole="button"
-					accessibilityLabel={`${isInWatchlist ? "Remove" : "Add"} ${item.title} ${isInWatchlist ? "from" : "to"} Watchlist`}
-					accessibilityState={{
-						disabled: isPending || isLoading,
-						busy: isPending,
-					}}
-					disabled={isPending || isLoading}
-					onPress={() => toggle("watchlist", isInWatchlist)}
-					className="flex-row items-center justify-center gap-2 self-start rounded-lg border border-border px-3 py-3"
-					style={{ opacity: isPending || isLoading ? 0.5 : 1 }}
-				>
-					{isInWatchlist ? (
-						<Check size={16} color="#b88b00" />
-					) : (
-						<Bookmark size={16} color="#b88b00" />
-					)}
-					<Text className="font-semibold text-sm">
-						{isInWatchlist ? "In Watchlist" : "Watchlist"}
-					</Text>
-				</Pressable>
+				{item.watchCount === undefined && (
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel={`${isInWatchlist ? "Remove" : "Add"} ${item.title} ${isInWatchlist ? "from" : "to"} Watchlist`}
+						accessibilityState={{
+							disabled: isPending || isLoading,
+							busy: isPending,
+						}}
+						disabled={isPending || isLoading}
+						onPress={() => toggle("watchlist", isInWatchlist)}
+						className="flex-row items-center justify-center gap-2 self-start rounded-lg border border-border px-3 py-3"
+						style={{ opacity: isPending || isLoading ? 0.5 : 1 }}
+					>
+						{isInWatchlist ? (
+							<Check size={16} color="#b88b00" />
+						) : (
+							<Bookmark size={16} color="#b88b00" />
+						)}
+						<Text className="font-semibold text-sm">
+							{isInWatchlist ? "In Watchlist" : "Watchlist"}
+						</Text>
+					</Pressable>
+				)}
 			</View>
 		</View>
 	);
@@ -195,7 +212,10 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 
 function CollectionSkeleton() {
 	return (
-		<View accessibilityLabel="Loading release collection" className="gap-6">
+		<View
+			accessibilityLabel="Loading notification collection"
+			className="gap-6"
+		>
 			<View className="h-4 w-40 rounded bg-background-subtle" />
 			<View className="h-9 w-3/4 rounded bg-background-subtle" />
 			{[0, 1, 2].map((key) => (
@@ -211,6 +231,66 @@ function CollectionSkeleton() {
 					</View>
 				</View>
 			))}
+		</View>
+	);
+}
+
+function RecapSummary({ recap }: { recap: WatchRecapDto }) {
+	return (
+		<View accessibilityLabel="Watch recap" className="gap-6 pt-3">
+			<View className="flex-row gap-6 border-border border-y py-6">
+				{[
+					["Movie Watches", recap.movieWatches],
+					["Episode Watches", recap.episodeWatches],
+				].map(([label, count]) => (
+					<View key={label} className="flex-1 gap-2">
+						<Text selectable className="font-bold font-display text-5xl">
+							{count}
+						</Text>
+						<Text className="text-muted-foreground text-sm">{label}</Text>
+					</View>
+				))}
+			</View>
+			{recap.firstWatch ? (
+				<View className="gap-5">
+					{(
+						[
+							["First Watch", recap.firstWatch],
+							["Last Watch", recap.lastWatch],
+						] as const
+					).map(
+						([label, watch]) =>
+							watch && (
+								<View key={label} className="gap-2">
+									<Text className="text-muted-foreground text-sm">{label}</Text>
+									<Link href={watch.path as Href}>
+										<Text className="font-bold font-display text-lg underline">
+											{watch.title}
+										</Text>
+									</Link>
+									<Text className="text-muted-foreground text-sm">
+										{new Date(watch.watchedAt).toLocaleString("en-GB", {
+											timeZone: recap.timezone,
+											dateStyle: "medium",
+											timeStyle: "short",
+										})}{" "}
+										· {recap.timezone}
+									</Text>
+								</View>
+							),
+					)}
+				</View>
+			) : (
+				<View className="gap-3">
+					<Text>
+						No dated Watches this period. Add a Watch to your Shelf to start
+						your next recap.
+					</Text>
+					<Link href="/search" className="text-foreground underline">
+						Find something to watch
+					</Link>
+				</View>
+			)}
 		</View>
 	);
 }

@@ -35,7 +35,7 @@ describe("NotificationWorkerService", () => {
 		},
 		listItem: { findMany: vi.fn() },
 		season: { findMany: vi.fn() },
-		trackedMovie: { count: vi.fn().mockResolvedValue(2) },
+		trackedMovie: { findMany: vi.fn() },
 		trackedEpisode: { findMany: vi.fn(), count: vi.fn().mockResolvedValue(3) },
 	};
 	const email = { sendNotification: vi.fn() };
@@ -55,7 +55,20 @@ describe("NotificationWorkerService", () => {
 		prisma.notificationCollection.upsert.mockImplementation(({ create }) =>
 			Promise.resolve({ id: "collection-1", ...create }),
 		);
-		prisma.trackedMovie.count.mockResolvedValue(2);
+		prisma.trackedMovie.findMany.mockResolvedValue([
+			{
+				watchedDate: new Date("2026-09-22T12:00:00Z"),
+				movie: { movieId: "42", title: "A Movie", posterPath: null },
+			},
+		]);
+		prisma.trackedEpisode.findMany.mockResolvedValue([
+			{
+				watchedDate: new Date("2026-09-23T12:00:00Z"),
+				show: { showId: "24", title: "A Show", posterPath: null },
+				seasonNumber: 1,
+				episodeNumber: 2,
+			},
+		]);
 		prisma.trackedEpisode.count.mockResolvedValue(3);
 		prisma.notificationSettings.findMany.mockResolvedValue([settings]);
 		prisma.notificationSettings.updateMany.mockResolvedValue({ count: 1 });
@@ -219,10 +232,11 @@ describe("NotificationWorkerService", () => {
 				create: expect.objectContaining({
 					category: "Stats",
 					eventKey: "stats:weekly:2026-09-28",
+					url: "/discover/collections/collection-1",
 				}),
 			}),
 		);
-		expect(prisma.trackedMovie.count).toHaveBeenCalledWith(
+		expect(prisma.trackedMovie.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({
 					watchedDate: {
@@ -444,4 +458,64 @@ describe("NotificationWorkerService", () => {
 			);
 		},
 	);
+	it("shares an immutable recap between email and push, including an empty period", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([
+			{ ...settings, emailStats: true, pushStats: true },
+		]);
+		prisma.pushDevice.findMany.mockResolvedValue([{ token: "device" }]);
+		prisma.trackedMovie.findMany.mockResolvedValue([]);
+		prisma.trackedEpisode.findMany.mockResolvedValue([]);
+		let saved: unknown;
+		prisma.notificationCollection.upsert.mockImplementation(
+			({ create, update }) => {
+				expect(update).toEqual({});
+				saved ??= { id: "recap", ...create };
+				return Promise.resolve(saved);
+			},
+		);
+		await worker.queueDueEvents(new Date("2026-10-01T07:00:00Z"));
+		expect(saved).toMatchObject({
+			heading: "Your September 2026 in review",
+			periodStart: "2026-09-01",
+			periodEnd: "2026-09-30",
+			recap: {
+				movieWatches: 0,
+				episodeWatches: 0,
+				firstWatch: null,
+				lastWatch: null,
+			},
+			items: [],
+		});
+		expect(prisma.trackedMovie.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: {
+					userDid: settings.userDid,
+					status: "watched",
+					watchedDate: {
+						gte: new Date("2026-08-31T22:00:00Z"),
+						lt: new Date("2026-09-30T22:00:00Z"),
+					},
+				},
+			}),
+		);
+		prisma.trackedMovie.findMany.mockResolvedValue([
+			{
+				watchedDate: new Date("2026-09-15T12:00:00Z"),
+				movie: { movieId: "42", title: "Added later", posterPath: null },
+			},
+		]);
+		await worker.queueDueEvents(new Date("2026-10-01T07:05:00Z"));
+		for (const [args] of prisma.notificationDelivery.upsert.mock.calls) {
+			expect(args.create).toMatchObject({
+				collectionId: "recap",
+				url: "/discover/collections/recap",
+				body: expect.stringContaining("No dated Watches"),
+			});
+		}
+		expect(
+			prisma.notificationDelivery.upsert.mock.calls.map(
+				([args]) => args.create.channel,
+			),
+		).toEqual(["email", "push:device", "email", "push:device"]);
+	});
 });
