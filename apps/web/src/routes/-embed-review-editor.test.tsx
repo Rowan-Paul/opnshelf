@@ -50,6 +50,17 @@ it("queues native focus until the actual Milkdown body mounts, preserving its dr
 		expect(document.activeElement).toBe(document.querySelector(".ProseMirror"));
 		expect(document.activeElement?.textContent).toBe("A different review");
 	});
+	const previousBody = document.querySelector(".ProseMirror");
+	act(() => {
+		host.opnshelfSetMarkdown?.("A different review");
+		host.opnshelfFocusEditor?.();
+	});
+	await waitFor(() => {
+		const body = document.querySelector(".ProseMirror");
+		expect(body).not.toBe(previousBody);
+		expect(document.activeElement).toBe(body);
+		expect(body?.textContent).toBe("A different review");
+	});
 	cleanup();
 	expect(host.opnshelfFocusEditor).toBeUndefined();
 	expect(host.opnshelfSetMarkdown).toBeUndefined();

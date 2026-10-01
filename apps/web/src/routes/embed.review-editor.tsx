@@ -42,9 +42,11 @@ function postToNative(message: Record<string, unknown>) {
  * immediately so the page is still previewable.
  */
 function EmbedReviewEditor() {
-	const [initial, setInitial] = useState<string | null>(null);
+	const [initial, setInitial] = useState<{
+		markdown: string;
+		key: number;
+	} | null>(null);
 	const [mounted, setMounted] = useState(false);
-	const editorKey = useRef(0);
 	const editorRef = useRef<MarkdownEditorHandle | null>(null);
 	const pendingFocus = useRef(false);
 	const attachEditor = useCallback((editor: MarkdownEditorHandle | null) => {
@@ -75,9 +77,11 @@ function EmbedReviewEditor() {
 		(
 			window as unknown as { opnshelfSetMarkdown?: (md: string) => void }
 		).opnshelfSetMarkdown = (md: string) => {
-			editorKey.current += 1;
 			editorRef.current = null;
-			setInitial(md ?? "");
+			setInitial((previous) => ({
+				markdown: md ?? "",
+				key: (previous?.key ?? 0) + 1,
+			}));
 		};
 
 		const host = window as unknown as { opnshelfFocusEditor?: () => void };
@@ -93,7 +97,7 @@ function EmbedReviewEditor() {
 			postToNative({ type: "ready" });
 		} else {
 			// Browser preview / direct open: no bridge, start with an empty editor.
-			setInitial("");
+			setInitial({ markdown: "", key: 0 });
 		}
 		return () => {
 			delete host.opnshelfFocusEditor;
@@ -110,8 +114,8 @@ function EmbedReviewEditor() {
 					<MarkdownEditor
 						ref={attachEditor}
 						fillHeight
-						key={editorKey.current}
-						value={initial}
+						key={initial.key}
+						value={initial.markdown}
 						onChange={(markdown) => postToNative({ type: "change", markdown })}
 					/>
 				</Suspense>
