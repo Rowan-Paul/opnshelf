@@ -1,3 +1,4 @@
+import type { MediaReviewItemDto } from "@opnshelf/api";
 import { MessageSquare } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -20,12 +21,17 @@ export function RateReviewButton({
 }) {
 	const { isAuthenticated } = useAuth();
 	const [sheetVisible, setSheetVisible] = useState(false);
+	const [editingReview, setEditingReview] = useState<MediaReviewItemDto>();
 	const {
 		rating,
 		reviews,
 		setRating,
 		clearRating,
 		createReview,
+		updateReview,
+		isLoading,
+		isReviewError,
+		refetchReviews,
 		isClearingRating,
 		isSavingReview,
 	} = useReview({ mediaType, mediaId, seasonNumber, episodeNumber });
@@ -39,15 +45,25 @@ export function RateReviewButton({
 		markdown: string;
 		mirrorToBlog: boolean;
 		postToBluesky: boolean;
+		spoiler: boolean;
 	}) => {
-		createReview(input);
+		if (editingReview) updateReview(editingReview.id, input);
+		else createReview(input);
 		setSheetVisible(false);
 	};
 
 	return (
 		<View className="flex-1">
 			<Pressable
-				onPress={() => setSheetVisible(true)}
+				disabled={isLoading}
+				onPress={() => {
+					if (isReviewError) {
+						void refetchReviews();
+						return;
+					}
+					setEditingReview(reviews[0]);
+					setSheetVisible(true);
+				}}
 				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<MessageSquare
@@ -56,16 +72,19 @@ export function RateReviewButton({
 					size={18}
 				/>
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
-					Rate & review
+					{isReviewError ? "Retry reviews" : "Rate & review"}
 				</Text>
 			</Pressable>
 
 			<ReviewEditorSheet
 				visible={sheetVisible}
 				onDismiss={() => setSheetVisible(false)}
-				isEditing={false}
-				initialTitle=""
-				initialMarkdown=""
+				isEditing={!!editingReview}
+				initialTitle={editingReview?.reviewTitle ?? ""}
+				initialMarkdown={editingReview?.markdown ?? ""}
+				initialSpoiler={editingReview?.spoiler ?? false}
+				initialMirrorToBlog={editingReview?.mirrorToBlog ?? true}
+				onNewReview={() => setEditingReview(undefined)}
 				onSave={handleSave}
 				isSaving={isSavingReview}
 				rating={rating}

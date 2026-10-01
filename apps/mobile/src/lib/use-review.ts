@@ -115,6 +115,7 @@ export function useReview(target: ReviewTarget) {
 		...reviewsControllerGetMediaReviewsOptions({
 			query: {
 				mediaType: resolvedMediaType,
+				authorDid: userDid,
 				mediaId: target.mediaId,
 				seasonNumber: target.seasonNumber,
 				episodeNumber: target.episodeNumber,
@@ -338,6 +339,8 @@ export function useReview(target: ReviewTarget) {
 		hasRating: !!ratingRecord,
 		reviews,
 		isLoading: ratingQuery.isLoading || reviewsQuery.isLoading,
+		isReviewError: reviewsQuery.isError,
+		refetchReviews: reviewsQuery.refetch,
 		setRating,
 		clearRating,
 		createReview,

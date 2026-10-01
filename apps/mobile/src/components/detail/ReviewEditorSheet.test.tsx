@@ -7,6 +7,13 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 	useQuery: () => ({ data: undefined }),
 }));
 
+const showDialog = vi.hoisted(() => vi.fn());
+vi.mock("@/components/ui/dialog", () => ({
+	useDialog: () => ({ showDialog }),
+	DialogProvider: ({ children }: { children: import("react").ReactNode }) =>
+		children,
+}));
+
 vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({ isAuthenticated: true }),
 }));
@@ -153,5 +160,44 @@ describe("ReviewEditorSheet required fields", () => {
 
 		act(() => editor.props.onChange("   "));
 		expect(saveButton(renderer)?.props.disabled).toBe(true);
+	});
+});
+
+describe("starting a new review", () => {
+	it("keeps unsaved changes until the discard action is confirmed", () => {
+		const onNewReview = vi.fn();
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(
+				<ReviewEditorSheet
+					visible
+					isEditing
+					initialTitle="Existing"
+					initialMarkdown="Body"
+					onDismiss={vi.fn()}
+					onSave={vi.fn()}
+					onNewReview={onNewReview}
+				/>,
+			);
+		});
+		act(() =>
+			renderer.root
+				.findByType("text-field" as never)
+				.props.onChangeText("Unsaved"),
+		);
+		const button = renderer.root
+			.findAllByType("pressable" as never)
+			.find((node) =>
+				node
+					.findAllByType("text" as never)
+					.some((text) => text.children.includes("New review")),
+			);
+		act(() => button?.props.onPress());
+		expect(onNewReview).not.toHaveBeenCalled();
+		expect(renderer.root.findByType("text-field" as never).props.value).toBe(
+			"Unsaved",
+		);
+		act(() => showDialog.mock.calls.at(-1)?.[0].actions[1].onPress());
+		expect(onNewReview).toHaveBeenCalledOnce();
 	});
 });

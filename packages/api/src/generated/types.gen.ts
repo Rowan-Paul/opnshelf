@@ -5253,6 +5253,10 @@ export type ReviewsControllerGetMediaReviewsData = {
          */
         mediaId: string;
         /**
+         * Filter to this author's reviews, ordered newest first instead of community popularity.
+         */
+        authorDid?: string;
+        /**
          * Season number for season/episode items
          */
         seasonNumber?: number;
