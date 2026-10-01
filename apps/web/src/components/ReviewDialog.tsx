@@ -422,7 +422,7 @@ export function ReviewDialog({
 						{isEditing && onNewReview ? (
 							<button
 								type="button"
-								className="btn btn-secondary btn-sm"
+								className="btn btn-ghost btn-sm"
 								disabled={isPending}
 								onClick={startNewReview}
 							>
