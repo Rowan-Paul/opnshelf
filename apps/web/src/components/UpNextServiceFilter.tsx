@@ -34,12 +34,14 @@ export function UpNextServiceFilter({
 	savedIds,
 	value,
 	needsSelection = false,
+	clearLabel = "Clear filters",
 	onChange,
 }: {
 	country: string;
 	savedIds: number[];
 	value?: string;
 	needsSelection?: boolean;
+	clearLabel?: string;
 	onChange: (value: string | undefined) => void;
 }) {
 	const isMobile = useSyncExternalStore(
@@ -170,7 +172,7 @@ export function UpNextServiceFilter({
 						onChange(undefined);
 					}}
 				>
-					Clear filters
+					{clearLabel}
 				</button>
 			)}
 		</div>

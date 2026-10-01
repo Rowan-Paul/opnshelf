@@ -82,4 +82,13 @@ export {
 	isWatchActivityQueryKey,
 	WATCH_ACTIVITY_QUERY_IDS,
 } from "./watch-activity-queries";
+export {
+	choosePickerItem,
+	initialPickerFilters,
+	PICKER_GENRES,
+	type PickerFilters,
+	pickerEpisodeLabel,
+	pickerServiceLabel,
+	restorePickerFilters,
+} from "./watch-picker";
 export { getWatchProviderLink } from "./watch-provider-link";

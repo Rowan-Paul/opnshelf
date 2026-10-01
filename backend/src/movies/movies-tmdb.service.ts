@@ -25,6 +25,8 @@ import {
 } from "../tmdb/tmdb-trailer.util";
 
 export interface TMDBMovie {
+	runtime?: number;
+	genres?: Array<{ id: number; name: string }>;
 	id: number;
 	title: string;
 	poster_path?: string;

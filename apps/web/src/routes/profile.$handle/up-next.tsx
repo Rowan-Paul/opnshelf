@@ -5,6 +5,7 @@ import {
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
+	Link,
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
@@ -126,6 +127,11 @@ function ProfileUpNextPage() {
 						</span>
 					)}
 				</div>
+				{isOwner && (
+					<Link to="/pick-for-me" className="btn btn-primary">
+						Pick for me
+					</Link>
+				)}
 				{isOwner && (
 					<UpNextServiceFilter
 						country={country}

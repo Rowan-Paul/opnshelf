@@ -1,3 +1,4 @@
+import { WatchPickerModule } from "./watch-picker/watch-picker.module";
 import { Module } from "@nestjs/common";
 import { EnvModule } from "./config/env.module";
 import { StreamingServicesModule } from "./streaming-services/streaming-services.module";
@@ -62,6 +63,7 @@ import { UsersModule } from "./users/users.module";
 		FeedbackModule,
 		DiscoverModule,
 		StreamingServicesModule,
+		WatchPickerModule,
 	],
 	providers: [
 		// Must run before route handlers so an operator can freeze every unsafe

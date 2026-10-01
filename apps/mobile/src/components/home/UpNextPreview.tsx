@@ -1,8 +1,10 @@
+import { Link } from "expo-router";
 import { Tv } from "lucide-react-native";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { EmptyState, ErrorState } from "@/components/ui/states";
+import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useUpNext } from "@/lib/use-up-next";
@@ -28,7 +30,26 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 				<SectionHeader
 					icon={Tv}
 					title="Up Next"
-					href={handle ? (`/profile/${handle}/up-next` as const) : undefined}
+					right={
+						handle ? (
+							<View className="flex-row items-center gap-4">
+								<Link href="/pick-for-me" asChild>
+									<Pressable hitSlop={8}>
+										<Text className="font-medium text-muted-foreground text-sm">
+											Pick for me
+										</Text>
+									</Pressable>
+								</Link>
+								<Link href={`/profile/${handle}/up-next`} asChild>
+									<Pressable hitSlop={8}>
+										<Text className="font-medium text-muted-foreground text-sm">
+											View all
+										</Text>
+									</Pressable>
+								</Link>
+							</View>
+						) : undefined
+					}
 				/>
 			</TourAnchor>
 			{isLoading ? (

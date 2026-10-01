@@ -36,6 +36,7 @@ export interface TMDBSeasonSummary {
 }
 
 export interface TMDBShow {
+	episode_run_time?: number[];
 	id: number;
 	name: string;
 	poster_path?: string;
@@ -79,6 +80,7 @@ export interface TMDBCredits {
 }
 
 export interface TMDBEpisode {
+	runtime?: number;
 	id: number;
 	name: string;
 	episode_number: number;

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Tv } from "lucide-react-native";
 import { View } from "react-native";
+import { Button } from "@/components/ui/button";
 import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -80,6 +81,12 @@ export function UpNextTab({
 				</Text>
 			) : null}
 
+			{isOwner && (
+				<Button
+					label="Pick for me"
+					onPress={() => router.push("/pick-for-me")}
+				/>
+			)}
 			{isOwner && (
 				<UpNextServiceFilter
 					country={country}

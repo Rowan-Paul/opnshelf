@@ -334,6 +334,12 @@ export function HomeView() {
 							<h2 className="text-display-3" data-tour="up-next">
 								Up Next
 							</h2>
+							<Link
+								to="/pick-for-me"
+								className="font-medium text-(--accent) text-sm"
+							>
+								Pick for me
+							</Link>
 							{user && (
 								<Link
 									to="/profile/$handle/up-next"

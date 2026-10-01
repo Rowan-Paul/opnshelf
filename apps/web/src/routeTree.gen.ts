@@ -16,6 +16,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PickForMeRouteImport } from './routes/pick-for-me'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -86,6 +87,11 @@ const SearchRoute = SearchRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PickForMeRoute = PickForMeRouteImport.update({
+  id: '/pick-for-me',
+  path: '/pick-for-me',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -286,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/pick-for-me': typeof PickForMeRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -331,6 +338,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/pick-for-me': typeof PickForMeRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
@@ -371,6 +379,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/pick-for-me': typeof PickForMeRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -418,6 +427,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/login'
     | '/onboarding'
+    | '/pick-for-me'
     | '/privacy'
     | '/search'
     | '/settings'
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/login'
     | '/onboarding'
+    | '/pick-for-me'
     | '/privacy'
     | '/search'
     | '/signup'
@@ -502,6 +513,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/login'
     | '/onboarding'
+    | '/pick-for-me'
     | '/privacy'
     | '/search'
     | '/settings'
@@ -548,6 +560,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  PickForMeRoute: typeof PickForMeRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRouteWithChildren
@@ -617,6 +630,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pick-for-me': {
+      id: '/pick-for-me'
+      path: '/pick-for-me'
+      fullPath: '/pick-for-me'
+      preLoaderRoute: typeof PickForMeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -983,6 +1003,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  PickForMeRoute: PickForMeRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRouteWithChildren,
