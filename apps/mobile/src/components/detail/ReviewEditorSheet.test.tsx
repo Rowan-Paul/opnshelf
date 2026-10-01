@@ -1,5 +1,5 @@
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReviewEditorSheet } from "./ReviewEditorSheet";
 
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
@@ -11,6 +11,7 @@ const showDialog = vi.hoisted(() => vi.fn());
 const scrollTo = vi.hoisted(() => vi.fn());
 const focusEditor = vi.hoisted(() => vi.fn());
 const blurTitle = vi.hoisted(() => vi.fn());
+afterEach(() => vi.unstubAllEnvs());
 vi.mock("@/components/ui/dialog", () => ({
 	useDialog: () => ({ showDialog }),
 	DialogProvider: ({ children }: { children: import("react").ReactNode }) =>
@@ -256,7 +257,13 @@ it("reveals the focused field after the keyboard shrinks the form, not on expans
 	).toBe(false);
 });
 
-it("moves from the title to the body without saving a valid review", () => {
+it.each([
+	"ios",
+	"android",
+])("moves from the title to the body on %s without saving a valid review", (platform) => {
+	vi.stubEnv("EXPO_OS", platform);
+	blurTitle.mockClear();
+	focusEditor.mockClear();
 	const { renderer, onSave } = renderSheet();
 	const title = renderer.root.findByType("text-field" as never);
 	act(() => {
@@ -269,11 +276,16 @@ it("moves from the title to the body without saving a valid review", () => {
 	expect(title.props.returnKeyType).toBe("next");
 	expect(title.props.submitBehavior).toBe("submit");
 	act(() => title.props.onSubmitEditing());
-	expect(blurTitle).toHaveBeenCalledOnce();
 	expect(focusEditor).toHaveBeenCalledOnce();
-	expect(blurTitle.mock.invocationCallOrder[0]).toBeLessThan(
-		focusEditor.mock.invocationCallOrder[0],
-	);
+	if (platform === "ios") {
+		expect(blurTitle).toHaveBeenCalledOnce();
+		expect(blurTitle.mock.invocationCallOrder[0]).toBeLessThan(
+			focusEditor.mock.invocationCallOrder[0],
+		);
+	} else {
+		// React Native Android maps an explicit JS blur to hiding the IME.
+		expect(blurTitle).not.toHaveBeenCalled();
+	}
 	expect(onSave).not.toHaveBeenCalled();
 	act(() => renderer.unmount());
 });

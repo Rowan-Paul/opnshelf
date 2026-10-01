@@ -257,8 +257,11 @@ export function ReviewEditorSheet({
 									returnKeyType="next"
 									submitBehavior="submit"
 									onSubmitEditing={() => {
-										// WKWebView cannot take the keyboard while the native input owns it.
-										titleRef.current?.blur();
+										// iOS needs to release the title before WKWebView can take over.
+										// Android's JS blur hides the keyboard; let native focus transfer it.
+										if (process.env.EXPO_OS === "ios") {
+											titleRef.current?.blur();
+										}
 										editorRef.current?.focus();
 									}}
 									onFocus={() => revealField("title")}
