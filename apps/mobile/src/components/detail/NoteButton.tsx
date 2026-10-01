@@ -46,7 +46,7 @@ export function NoteButton({
 		<View className="flex-1">
 			<Pressable
 				onPress={() => setSheetVisible(true)}
-				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
+				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<StickyNote
 					color={hasNote ? "#f3bc00" : "#94a3b8"}

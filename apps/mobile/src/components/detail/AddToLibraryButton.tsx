@@ -39,7 +39,7 @@ export function AddToLibraryButton({
 		<View className="flex-1">
 			<Pressable
 				onPress={() => setSheetVisible(true)}
-				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
+				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<Disc color={count > 0 ? "#f3bc00" : "#94a3b8"} size={18} />
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
