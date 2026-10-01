@@ -38,6 +38,7 @@ import {
 	posterUrl,
 	yearFromDate,
 } from "@/lib/tmdb";
+import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { useUpNext } from "@/lib/use-up-next";
@@ -69,6 +70,12 @@ export default function SeasonDetailScreen() {
 		...showsControllerGetShowDetailsOptions({ path: { showId: id } }),
 		enabled: Boolean(id),
 	});
+	const { data: mediaRating } = useMediaRating({
+		mediaType: "season",
+		mediaId: id,
+		seasonNumber: seasonNum,
+	});
+	const rating = mediaRating?.averageRating ?? data?.vote_average;
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
 	const progressQuery = useShowProgress([id]);
 	const showProgress = findShowProgress(progressQuery.data, id);
@@ -173,7 +180,7 @@ export default function SeasonDetailScreen() {
 								backdropUrl={backdropUrl(showData?.backdrop_path)}
 								posterUrl={posterUrl(data.poster_path)}
 								posterHref={`/shows/${id}/${name}`}
-								rating={data.vote_average}
+								rating={rating}
 								progress={
 									seasonProgress?.state !== "unavailable"
 										? seasonProgress
@@ -307,8 +314,8 @@ export default function SeasonDetailScreen() {
 									{
 										label: "Rating",
 										value:
-											data.vote_average && data.vote_average > 0
-												? `${data.vote_average.toFixed(1)} / 10`
+											rating && rating > 0
+												? `${rating.toFixed(1)}/10`
 												: undefined,
 									},
 								]}

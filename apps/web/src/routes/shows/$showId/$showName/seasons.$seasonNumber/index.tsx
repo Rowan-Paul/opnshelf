@@ -158,6 +158,8 @@ function SeasonDetailPage() {
 		seasonNumber: seasonNum,
 	});
 
+	const rating = mediaRating?.averageRating ?? season?.vote_average;
+
 	// Season-specific watch history
 	const seasonWatchHistory = useMemo(() => {
 		if (!watchHistory || !Array.isArray(watchHistory)) return [];
@@ -358,9 +360,7 @@ function SeasonDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
-								{(mediaRating?.averageRating ?? season.vote_average)?.toFixed(
-									1,
-								) || "N/A"}
+								{rating?.toFixed(1) || "N/A"}
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>
 						</div>
@@ -548,9 +548,7 @@ function SeasonDetailPage() {
 								},
 								{
 									label: "Rating",
-									value: season.vote_average
-										? `${season.vote_average.toFixed(1)}/10`
-										: "N/A",
+									value: rating ? `${rating.toFixed(1)}/10` : "N/A",
 								},
 							]}
 						/>

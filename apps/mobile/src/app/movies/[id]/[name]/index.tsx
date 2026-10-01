@@ -28,6 +28,7 @@ import {
 	posterUrl,
 	yearFromDate,
 } from "@/lib/tmdb";
+import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { webMediaUrl } from "@/lib/web-url";
 
@@ -45,6 +46,11 @@ export default function MovieDetailScreen() {
 		...moviesControllerGetMovieDetailsOptions({ path: { movieId: id } }),
 		enabled: Boolean(id),
 	});
+	const { data: mediaRating } = useMediaRating({
+		mediaType: "movie",
+		mediaId: id,
+	});
+	const rating = mediaRating?.averageRating ?? data?.vote_average;
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	return (
@@ -75,7 +81,7 @@ export default function MovieDetailScreen() {
 						title={data.title}
 						backdropUrl={backdropUrl(data.backdrop_path)}
 						posterUrl={posterUrl(data.poster_path)}
-						rating={data.vote_average}
+						rating={rating}
 					>
 						<MetadataPills
 							items={[
