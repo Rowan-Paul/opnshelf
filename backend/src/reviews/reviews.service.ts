@@ -254,6 +254,7 @@ export class ReviewsService {
 			mediaId,
 			seasonNumber: seasonNumber ?? 0,
 			episodeNumber: episodeNumber ?? 0,
+			...(query.authorDid ? { userDid: query.authorDid } : {}),
 		};
 
 		// Community-appreciation ordering: most-liked first, then most recent. The
@@ -293,11 +294,13 @@ export class ReviewsService {
 
 		const items = await this.prisma.review.findMany({
 			where,
-			orderBy: [
-				{ likes: { _count: "desc" } },
-				{ createdAt: "desc" },
-				{ id: "desc" },
-			],
+			orderBy: query.authorDid
+				? [{ createdAt: "desc" }, { id: "desc" }]
+				: [
+						{ likes: { _count: "desc" } },
+						{ createdAt: "desc" },
+						{ id: "desc" },
+					],
 			skip: (pagination.page - 1) * pagination.pageSize,
 			take: pagination.pageSize,
 			include,

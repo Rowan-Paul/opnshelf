@@ -10,6 +10,7 @@ import {
 import { MilkdownWebView } from "@/components/detail/MilkdownWebView";
 import { StarRating } from "@/components/detail/StarRating";
 import { Button } from "@/components/ui/button";
+import { DialogProvider, useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
@@ -29,6 +30,7 @@ interface ReviewEditorSheetProps {
 	initialMirrorToBlog?: boolean;
 	/** Whether the sheet is editing an existing review (vs. writing a new one). */
 	isEditing?: boolean;
+	onNewReview?: () => void;
 	onSave: (input: {
 		title: string;
 		markdown: string;
@@ -64,6 +66,7 @@ export function ReviewEditorSheet({
 	initialSpoiler = false,
 	initialMirrorToBlog = true,
 	isEditing = false,
+	onNewReview,
 	onSave,
 	onDelete,
 	isSaving = false,
@@ -159,6 +162,7 @@ export function ReviewEditorSheet({
 										? "Rate & review"
 										: "Write a review"}
 							</Text>
+
 							<Pressable hitSlop={8} onPress={onDismiss}>
 								<X color="#94a3b8" size={22} />
 							</Pressable>
@@ -312,24 +316,80 @@ export function ReviewEditorSheet({
 							/>
 						) : null}
 
-						<Button
-							onPress={() =>
-								onSave({
-									title,
-									markdown,
-									spoiler,
-									mirrorToBlog,
-									postToBluesky,
-								})
-							}
-							label="Save"
-							loadingLabel="Saving…"
-							loading={isSaving}
-							disabled={!canSave}
-						/>
+						<View className="flex-row items-center gap-3">
+							{isEditing && onNewReview ? (
+								<DialogProvider>
+									<NewReviewButton
+										dirty={
+											title !== initialTitle ||
+											markdown !== initialMarkdown ||
+											spoiler !== initialSpoiler ||
+											mirrorToBlog !== initialMirrorToBlog
+										}
+										disabled={isSaving}
+										onNewReview={onNewReview}
+									/>
+								</DialogProvider>
+							) : null}
+							<Button
+								onPress={() =>
+									onSave({
+										title,
+										markdown,
+										spoiler,
+										mirrorToBlog,
+										postToBluesky,
+									})
+								}
+								className="flex-1"
+								label="Save"
+								loadingLabel="Saving…"
+								loading={isSaving}
+								disabled={!canSave}
+							/>
+						</View>
 					</View>
 				</KeyboardAvoidingView>
 			</KeyboardProvider>
 		</Modal>
+	);
+}
+
+/** Keep the confirmation inside the editor's native Modal so iOS can present it. */
+function NewReviewButton({
+	dirty,
+	disabled,
+	onNewReview,
+}: {
+	dirty: boolean;
+	disabled: boolean;
+	onNewReview: () => void;
+}) {
+	const { showDialog } = useDialog();
+	return (
+		<Button
+			label="New review"
+			variant="secondary"
+			className="border-0"
+			disabled={disabled}
+			onPress={() => {
+				if (!dirty) {
+					onNewReview();
+					return;
+				}
+				showDialog({
+					title: "Discard changes?",
+					description: "Your edits will be lost when you start a new review.",
+					actions: [
+						{ label: "Keep editing" },
+						{
+							label: "New review",
+							variant: "destructive",
+							onPress: onNewReview,
+						},
+					],
+				});
+			}}
+		/>
 	);
 }

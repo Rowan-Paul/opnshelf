@@ -4351,6 +4351,15 @@
             }
           },
           {
+            "name": "authorDid",
+            "required": false,
+            "in": "query",
+            "description": "Filter to this author's reviews, ordered newest first instead of community popularity.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "seasonNumber",
             "required": false,
             "in": "query",

@@ -36,6 +36,8 @@ function resolveMediaType(
 }
 
 interface UseMediaReviewsOptions {
+	authorDid?: string;
+	enabled?: boolean;
 	mediaType: "movie" | "show";
 	mediaId: string;
 	seasonNumber?: number;
@@ -45,6 +47,8 @@ interface UseMediaReviewsOptions {
 }
 
 export function useMediaReviews({
+	authorDid,
+	enabled = true,
 	mediaType,
 	mediaId,
 	seasonNumber,
@@ -64,10 +68,11 @@ export function useMediaReviews({
 				mediaId,
 				seasonNumber,
 				episodeNumber,
+				...(authorDid ? { authorDid } : {}),
 				...(pinnedReviewId ? { pinnedReviewId } : {}),
 			},
 		}),
-		enabled: !!mediaId,
+		enabled: enabled && !!mediaId,
 	});
 }
 
