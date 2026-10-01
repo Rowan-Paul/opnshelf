@@ -79,6 +79,48 @@ describe("notification collection", () => {
 		mocks.query.data = undefined;
 		mocks.query.isError = false;
 		render(<NotificationCollectionPage />);
-		expect(screen.getByLabelText("Loading release collection")).toBeTruthy();
+		expect(
+			screen.getByLabelText("Loading notification collection"),
+		).toBeTruthy();
+	});
+	it("opens a recap with Watch totals and episode highlights instead of release actions", () => {
+		mocks.query.data = {
+			id: "saved",
+			heading: "Your September 2026 in review",
+			periodStart: "2026-09-01",
+			periodEnd: "2026-09-30",
+			recap: {
+				movieWatches: 1,
+				episodeWatches: 2,
+				timezone: "Europe/Amsterdam",
+				firstWatch: {
+					title: "A Show · S1 E2",
+					path: "/shows/24/a-show/seasons/1/episodes/2",
+					watchedAt: "2026-09-23T12:00:00Z",
+				},
+				lastWatch: null,
+			},
+			items: [
+				{
+					mediaId: "24",
+					mediaType: "show",
+					title: "A Show",
+					posterPath: null,
+					overview: "",
+					releaseDate: null,
+					seasonNumber: null,
+					path: "/shows/24/a-show",
+					watchCount: 2,
+				},
+			],
+		};
+		render(<NotificationCollectionPage />);
+		expect(screen.getByText("Movie Watches")).toBeTruthy();
+		expect(screen.getByText("Show · 2 episode Watches")).toBeTruthy();
+		expect(
+			screen.getByRole("link", { name: "A Show · S1 E2" }).getAttribute("href"),
+		).toBe("/shows/24/a-show/seasons/1/episodes/2");
+		expect(screen.queryByRole("button", { name: /Watchlist/ })).toBeNull();
+		expect(screen.queryByText(/Date unavailable/)).toBeNull();
 	});
 });

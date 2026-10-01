@@ -11662,6 +11662,64 @@
           "uri"
         ]
       },
+      "WatchRecapHighlightDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "watchedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "path",
+          "watchedAt"
+        ]
+      },
+      "WatchRecapDto": {
+        "type": "object",
+        "properties": {
+          "movieWatches": {
+            "type": "number"
+          },
+          "episodeWatches": {
+            "type": "number"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "firstWatch": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchRecapHighlightDto"
+              }
+            ]
+          },
+          "lastWatch": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchRecapHighlightDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "movieWatches",
+          "episodeWatches",
+          "timezone",
+          "firstWatch",
+          "lastWatch"
+        ]
+      },
       "NotificationCollectionItemDto": {
         "type": "object",
         "properties": {
@@ -11695,6 +11753,9 @@
           },
           "path": {
             "type": "string"
+          },
+          "watchCount": {
+            "type": "number"
           }
         },
         "required": [
@@ -11711,6 +11772,15 @@
       "NotificationCollectionDto": {
         "type": "object",
         "properties": {
+          "recap": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchRecapDto"
+              }
+            ]
+          },
           "id": {
             "type": "string"
           },

@@ -2,6 +2,7 @@ import {
 	getHttpStatus,
 	type NotificationCollectionItemDto,
 	notificationsControllerCollection,
+	type WatchRecapDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -13,7 +14,7 @@ import { useListItemStatus } from "#/lib/hooks/useListItemStatus";
 export const Route = createFileRoute("/discover/collections/$id")({
 	head: () => ({
 		meta: [
-			{ title: "Release collection | Opnshelf" },
+			{ title: "Notification collection | Opnshelf" },
 			{ name: "robots", content: "noindex" },
 		],
 	}),
@@ -49,7 +50,7 @@ export function NotificationCollectionPage() {
 			{!authLoading && !isAuthenticated ? (
 				<section className="space-y-4">
 					<h1 className="font-bold font-display text-3xl">
-						Your release collection
+						Your notification collection
 					</h1>
 					<p>
 						Sign in to the account that received this notification, then open
@@ -70,12 +71,21 @@ export function NotificationCollectionPage() {
 						<h1 className="font-bold font-display text-3xl sm:text-4xl">
 							{collection.heading}
 						</h1>
-						<p className="text-(--foreground-muted)">
-							{collection.items.length}{" "}
-							{collection.items.length === 1 ? "title" : "titles"} to explore.
-							Find your next watch.
-						</p>
+						{collection.recap ? (
+							<RecapSummary recap={collection.recap} />
+						) : (
+							<p className="text-(--foreground-muted)">
+								{collection.items.length}{" "}
+								{collection.items.length === 1 ? "title" : "titles"} to explore.
+								Find your next watch.
+							</p>
+						)}
 					</header>
+					{collection.recap && collection.items.length > 0 && (
+						<h2 className="mb-6 font-bold font-display text-2xl">
+							Your most-watched titles
+						</h2>
+					)}
 					<div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
 						{collection.items.map((item) => (
 							<CollectionItem key={item.path} item={item} />
@@ -156,9 +166,11 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 							: item.mediaType === "movie"
 								? "Movie"
 								: "Show"}
-						{item.releaseDate
-							? ` · ${formatDate(item.releaseDate)}`
-							: " · Date unavailable"}
+						{item.watchCount !== undefined
+							? ` · ${item.watchCount} ${item.mediaType === "show" ? "episode " : ""}${item.watchCount === 1 ? "Watch" : "Watches"}`
+							: item.releaseDate
+								? ` · ${formatDate(item.releaseDate)}`
+								: " · Date unavailable"}
 					</p>
 					<h2 className="font-bold font-display text-xl">
 						<Link to={item.path}>{item.title}</Link>
@@ -175,23 +187,25 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 				>
 					View details
 				</Link>
-				<div>
-					<button
-						type="button"
-						disabled={isPending || !listsForItem}
-						aria-busy={isPending}
-						aria-label={`${isInWatchlist ? "Remove" : "Add"} ${item.title} ${isInWatchlist ? "from" : "to"} Watchlist`}
-						className="btn btn-secondary inline-flex items-center gap-2 text-sm disabled:opacity-50"
-						onClick={() => toggleWatchlist(isInWatchlist)}
-					>
-						{isInWatchlist ? (
-							<Check className="size-4" />
-						) : (
-							<Bookmark className="size-4" />
-						)}
-						{isInWatchlist ? "In Watchlist" : "Watchlist"}
-					</button>
-				</div>
+				{item.watchCount === undefined && (
+					<div>
+						<button
+							type="button"
+							disabled={isPending || !listsForItem}
+							aria-busy={isPending}
+							aria-label={`${isInWatchlist ? "Remove" : "Add"} ${item.title} ${isInWatchlist ? "from" : "to"} Watchlist`}
+							className="btn btn-secondary inline-flex items-center gap-2 text-sm disabled:opacity-50"
+							onClick={() => toggleWatchlist(isInWatchlist)}
+						>
+							{isInWatchlist ? (
+								<Check className="size-4" />
+							) : (
+								<Bookmark className="size-4" />
+							)}
+							{isInWatchlist ? "In Watchlist" : "Watchlist"}
+						</button>
+					</div>
+				)}
 			</div>
 		</article>
 	);
@@ -200,7 +214,7 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 function CollectionSkeleton() {
 	return (
 		<section
-			aria-label="Loading release collection"
+			aria-label="Loading notification collection"
 			aria-busy="true"
 			className="motion-safe:animate-pulse"
 		>
@@ -218,6 +232,67 @@ function CollectionSkeleton() {
 					</div>
 				))}
 			</div>
+		</section>
+	);
+}
+
+function RecapSummary({ recap }: { recap: WatchRecapDto }) {
+	return (
+		<section aria-label="Watch recap" className="space-y-6 pt-3">
+			<div className="grid grid-cols-2 gap-6 border-(--border) border-y py-6">
+				{[
+					["Movie Watches", recap.movieWatches],
+					["Episode Watches", recap.episodeWatches],
+				].map(([label, count]) => (
+					<div key={label}>
+						<p className="font-bold font-display text-5xl tabular-nums">
+							{count}
+						</p>
+						<p className="mt-2 text-(--foreground-muted) text-sm">{label}</p>
+					</div>
+				))}
+			</div>
+			{recap.firstWatch ? (
+				<div className="grid gap-6 sm:grid-cols-2">
+					{(
+						[
+							["First Watch", recap.firstWatch],
+							["Last Watch", recap.lastWatch],
+						] as const
+					).map(
+						([label, watch]) =>
+							watch && (
+								<div key={label} className="space-y-2">
+									<p className="text-(--foreground-muted) text-sm">{label}</p>
+									<Link
+										to={watch.path}
+										className="font-bold font-display text-lg underline underline-offset-4"
+									>
+										{watch.title}
+									</Link>
+									<p className="text-(--foreground-muted) text-sm">
+										{new Date(watch.watchedAt).toLocaleString("en-GB", {
+											timeZone: recap.timezone,
+											dateStyle: "medium",
+											timeStyle: "short",
+										})}{" "}
+										· {recap.timezone}
+									</p>
+								</div>
+							),
+					)}
+				</div>
+			) : (
+				<div className="space-y-3">
+					<p>
+						No dated Watches this period. Add a Watch to your Shelf to start
+						your next recap.
+					</p>
+					<Link to="/search" className="btn btn-primary">
+						Find something to watch
+					</Link>
+				</div>
+			)}
 		</section>
 	);
 }

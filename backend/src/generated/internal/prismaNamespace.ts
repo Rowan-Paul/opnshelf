@@ -2629,6 +2629,7 @@ export const NotificationCollectionScalarFieldEnum = {
   periodStart: 'periodStart',
   periodEnd: 'periodEnd',
   items: 'items',
+  recap: 'recap',
   createdAt: 'createdAt'
 } as const
 

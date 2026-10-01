@@ -1,9 +1,13 @@
+import { buildWatchRecap } from "./watch-recap";
 import {
 	collectionItems,
 	notificationEmail,
 	releaseTeaser,
 } from "./notification-content";
-import type { NotificationCollectionItemDto } from "./notifications.dto";
+import type {
+	NotificationCollectionItemDto,
+	WatchRecapDto,
+} from "./notifications.dto";
 import { sendPushNotification } from "./send-push";
 import {
 	Injectable,
@@ -18,6 +22,14 @@ import { MoviesTmdbService } from "../movies/movies-tmdb.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsTmdbService } from "../shows/shows-tmdb.service";
 
+function formatMonth(date: string) {
+	return new Date(`${date}T12:00:00Z`).toLocaleDateString("en", {
+		month: "long",
+		year: "numeric",
+		timeZone: "UTC",
+	});
+}
+
 const HOUR_MS = 3_600_000;
 const MAX_ATTEMPTS = 5;
 type Event = {
@@ -31,6 +43,7 @@ type Event = {
 		periodStart: string;
 		periodEnd: string;
 		items: NotificationCollectionItemDto[];
+		recap?: WatchRecapDto;
 	};
 };
 type Category = "NewReleases" | "WatchlistReleases" | "NewSeasons" | "Stats";
@@ -377,8 +390,21 @@ export class NotificationWorkerService
 						eventKey: candidate.key,
 						title: candidate.title,
 						body: candidate.body,
-						...candidate.collection,
+						heading: candidate.collection.heading,
+						periodStart: candidate.collection.periodStart,
+						periodEnd: candidate.collection.periodEnd,
 						items: candidate.collection.items.map((item) => ({ ...item })),
+						...(candidate.collection.recap && {
+							recap: {
+								...candidate.collection.recap,
+								firstWatch: candidate.collection.recap.firstWatch
+									? { ...candidate.collection.recap.firstWatch }
+									: null,
+								lastWatch: candidate.collection.recap.lastWatch
+									? { ...candidate.collection.recap.lastWatch }
+									: null,
+							},
+						}),
 					},
 					update: {},
 				});
@@ -389,7 +415,9 @@ export class NotificationWorkerService
 					body: saved.body,
 					collectionId: saved.id,
 					path:
-						category === "NewReleases" || items.length > 1
+						category === "Stats" ||
+						category === "NewReleases" ||
+						items.length > 1
 							? `/discover/collections/${saved.id}`
 							: items[0].path,
 				};
@@ -622,28 +650,74 @@ export class NotificationWorkerService
 			const start = localMidnightUtc(period.start, timezone);
 			const end = localMidnightUtc(day.date, timezone);
 			const [movies, episodes] = await Promise.all([
-				this.prisma.trackedMovie.count({
+				this.prisma.trackedMovie.findMany({
 					where: {
 						userDid: did,
 						status: "watched",
 						watchedDate: { gte: start, lt: end },
 					},
+					select: {
+						watchedDate: true,
+						movie: { select: { movieId: true, title: true, posterPath: true } },
+					},
 				}),
-				this.prisma.trackedEpisode.count({
+				this.prisma.trackedEpisode.findMany({
 					where: {
 						userDid: did,
 						status: "watched",
 						watchedDate: { gte: start, lt: end },
+					},
+					select: {
+						watchedDate: true,
+						seasonNumber: true,
+						episodeNumber: true,
+						show: { select: { showId: true, title: true, posterPath: true } },
 					},
 				}),
 			]);
+			const { recap, items } = buildWatchRecap(
+				[
+					...movies.map((watch) => ({
+						...watch.movie,
+						mediaId: watch.movie.movieId,
+						mediaType: "movie" as const,
+						watchedDate: watch.watchedDate,
+					})),
+					...episodes.map((watch) => ({
+						...watch.show,
+						mediaId: watch.show.showId,
+						mediaType: "show" as const,
+						watchedDate: watch.watchedDate,
+						seasonNumber: watch.seasonNumber,
+						episodeNumber: watch.episodeNumber,
+					})),
+				],
+				timezone,
+			);
+			const periodLabel =
+				period.name === "monthly"
+					? formatMonth(period.start)
+					: period.name === "yearly"
+						? period.start.slice(0, 4)
+						: "week";
+			const heading = `Your ${periodLabel} in review`;
+			const body =
+				recap.movieWatches + recap.episodeWatches === 0
+					? "No dated Watches this period. Add a Watch to your Shelf to start your next recap."
+					: `You watched ${recap.movieWatches} ${recap.movieWatches === 1 ? "movie" : "movies"} and ${recap.episodeWatches} ${recap.episodeWatches === 1 ? "episode" : "episodes"}. Revisit your highlights.`;
 			events.push([
 				"Stats",
 				{
 					key: `stats:${period.name}:${day.date}`,
-					title: `Your ${period.name} watch stats`,
-					body: `You watched ${movies} movies and ${episodes} episodes.`,
-					path: "/",
+					title: heading,
+					body,
+					collection: {
+						heading,
+						periodStart: period.start,
+						periodEnd: addDays(day.date, -1),
+						items,
+						recap,
+					},
 				},
 			]);
 		}

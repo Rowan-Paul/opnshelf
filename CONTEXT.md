@@ -65,8 +65,11 @@ _Avoid_: Continue watching, watchlist (that is a List of items not yet started),
 **Notification Collection**:
 The saved selection of Media Items from a release Notification, presented within Discover. It preserves the original titles for the recipient to revisit from email or Mobile App push.
 
+**Watch Recap**:
+A saved summary of a User’s dated movie and episode Watches for a completed week, month, or year in their timezone, including rewatches, most-watched titles, and first and last Watches. Email and Mobile App push open the same private recap.
+
 **Notification**:
-An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or the User's weekly, monthly, or yearly Watch counts. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
+An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or a weekly, monthly, or yearly **Watch Recap**. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
 
 **Shelf**:
 The collection of media items a user has marked as watched or tracked. Its dated
