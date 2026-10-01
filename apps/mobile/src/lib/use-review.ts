@@ -2,6 +2,7 @@ import {
 	type BlueskyCrossPostResultDto,
 	type MediaReviewItemDto,
 	ratingsControllerClearRatingMutation,
+	ratingsControllerGetMediaRatingQueryKey,
 	ratingsControllerGetRatingOptions,
 	ratingsControllerGetRatingQueryKey,
 	ratingsControllerSetRatingMutation,
@@ -131,6 +132,16 @@ export function useReview(target: ReviewTarget) {
 
 	const invalidate = () => {
 		queryClient.invalidateQueries({ queryKey: ratingKey });
+		queryClient.invalidateQueries({
+			queryKey: ratingsControllerGetMediaRatingQueryKey({
+				query: {
+					mediaType: resolvedMediaType,
+					mediaId: target.mediaId,
+					seasonNumber: target.seasonNumber,
+					episodeNumber: target.episodeNumber,
+				},
+			}),
+		});
 		queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
 	};
 

@@ -162,6 +162,8 @@ function EpisodeDetailPage() {
 		episodeNumber: episodeNum,
 	});
 
+	const rating = mediaRating?.averageRating ?? episode?.vote_average;
+
 	// Episode-specific watch history
 	const episodeWatchHistory = useMemo(() => {
 		if (!watchHistory || !Array.isArray(watchHistory)) return [];
@@ -341,9 +343,7 @@ function EpisodeDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-yellow-500 text-yellow-500" />
 							<span className="font-semibold">
-								{(mediaRating?.averageRating ?? episode.vote_average)?.toFixed(
-									1,
-								) || "N/A"}
+								{rating?.toFixed(1) || "N/A"}
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>
 						</div>
@@ -540,9 +540,7 @@ function EpisodeDetailPage() {
 								},
 								{
 									label: "Rating",
-									value: episode.vote_average
-										? `${episode.vote_average.toFixed(1)}/10`
-										: "N/A",
+									value: rating ? `${rating.toFixed(1)}/10` : "N/A",
 								},
 							]}
 						/>

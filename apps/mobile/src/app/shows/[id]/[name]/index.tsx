@@ -29,6 +29,7 @@ import {
 	posterUrl,
 	yearFromDate,
 } from "@/lib/tmdb";
+import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { webMediaUrl } from "@/lib/web-url";
@@ -48,6 +49,11 @@ export default function ShowDetailScreen() {
 		...showsControllerGetShowDetailsOptions({ path: { showId: id } }),
 		enabled: Boolean(id),
 	});
+	const { data: mediaRating } = useMediaRating({
+		mediaType: "show",
+		mediaId: id,
+	});
+	const rating = mediaRating?.averageRating ?? data?.vote_average;
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
 	const progressQuery = useShowProgress([id]);
 	const progress = findShowProgress(progressQuery.data, id);
@@ -85,7 +91,7 @@ export default function ShowDetailScreen() {
 						title={data.name}
 						backdropUrl={backdropUrl(data.backdrop_path)}
 						posterUrl={posterUrl(data.poster_path)}
-						rating={data.vote_average}
+						rating={rating}
 						progress={progress?.state !== "unavailable" ? progress : undefined}
 						progressLabel="Show progress"
 						isProgressLoading={progressQuery.isLoading}

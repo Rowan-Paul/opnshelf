@@ -36,6 +36,7 @@ import {
 	stillUrl,
 	yearFromDate,
 } from "@/lib/tmdb";
+import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { webMediaUrl } from "@/lib/web-url";
@@ -61,6 +62,13 @@ export default function EpisodeDetailScreen() {
 		}),
 		enabled: Boolean(id) && Boolean(seasonNumber) && Boolean(episodeNumber),
 	});
+	const { data: mediaRating } = useMediaRating({
+		mediaType: "episode",
+		mediaId: id,
+		seasonNumber: seasonNum,
+		episodeNumber: episodeNum,
+	});
+	const rating = mediaRating?.averageRating ?? data?.vote_average;
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	// Episode neighbours: use the show's season list (each season's
@@ -152,7 +160,7 @@ export default function EpisodeDetailScreen() {
 							currentSeasonPosterPath ?? showData?.poster_path,
 						)}
 						posterHref={`/shows/${id}/${name}/seasons/${seasonNum}`}
-						rating={data.vote_average}
+						rating={rating}
 						progress={
 							seasonProgress?.state !== "unavailable"
 								? seasonProgress
@@ -297,9 +305,7 @@ export default function EpisodeDetailScreen() {
 							{
 								label: "Rating",
 								value:
-									data.vote_average && data.vote_average > 0
-										? `${data.vote_average.toFixed(1)} / 10`
-										: undefined,
+									rating && rating > 0 ? `${rating.toFixed(1)}/10` : undefined,
 							},
 						]}
 					/>
