@@ -93,6 +93,57 @@ describe("ShowProgressService", () => {
 	});
 
 	describe("getUserUpNext", () => {
+		it("loads all next-episode positions once without pagination or presentation reads", async () => {
+			const ids = Array.from({ length: 101 }, (_, index) => String(index + 1));
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue(
+				ids.map((showId) => ({
+					id: showId,
+					showId,
+					seasonNumber: 1,
+					episodeNumber: 1,
+					watchedDate: new Date("2025-01-01"),
+					createdAt: new Date("2025-01-01"),
+					show: {
+						showId,
+						title: showId,
+						posterPath: null,
+						backdropPath: null,
+						firstAirYear: null,
+						firstAirDate: null,
+						overview: null,
+						colors: null,
+					},
+				})),
+			);
+			mockPrismaService.$queryRaw.mockResolvedValue(
+				ids.map((showId) => ({
+					showId,
+					seasonNumber: 2,
+					episodeNumber: 1,
+					name: "Next",
+					airDate: new Date("2025-01-02"),
+				})),
+			);
+			mockPrismaService.episode.groupBy.mockResolvedValue(
+				ids.map((showId) => ({ showId, _count: 10 })),
+			);
+			mockPrismaService.trackedEpisode.groupBy.mockResolvedValue(
+				ids.map((showId) => ({ showId, seasonNumber: 1, episodeNumber: 1 })),
+			);
+			const colors = vi.spyOn(catalogue, "ensureShowHasColors");
+			const positions = await service.getUserUpNextPositions("did:plc:abc123");
+			expect(positions).toHaveLength(101);
+			expect(positions.at(-1)).toEqual({
+				showId: "101",
+				nextEpisode: { seasonNumber: 2, episodeNumber: 1 },
+			});
+			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledTimes(
+				1,
+			);
+			expect(mockPrismaService.$queryRaw).toHaveBeenCalledTimes(1);
+			expect(tmdb.getUpNextAvailability).not.toHaveBeenCalled();
+			expect(colors).not.toHaveBeenCalled();
+		});
 		it("filters flat-rate offers in the watch country before pagination and warms unfiltered reads", async () => {
 			const ids = ["1", "2", "3", "4"];
 			mockPrismaService.trackedEpisode.findMany.mockResolvedValue(

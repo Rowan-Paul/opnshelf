@@ -2813,6 +2813,31 @@ export type StreamingServicesResponseDto = {
     services: Array<StreamingServiceDto>;
 };
 
+export type PickerEpisodeDto = {
+    serviceIds: Array<number>;
+    seasonNumber: number;
+    episodeNumber: number;
+    name: string;
+};
+
+export type WatchPickerItemDto = {
+    id: string;
+    mediaType: 'movie' | 'show';
+    mediaId: string;
+    title: string;
+    posterPath?: string;
+    minutes: number;
+    estimated: boolean;
+    episodes: Array<PickerEpisodeDto>;
+    services: Array<WatchProviderDto>;
+    watchLink?: string;
+};
+
+export type WatchPickerResponseDto = {
+    items: Array<WatchPickerItemDto>;
+    genres: Array<string>;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -6370,3 +6395,25 @@ export type StreamingServicesControllerListResponses = {
 };
 
 export type StreamingServicesControllerListResponse = StreamingServicesControllerListResponses[keyof StreamingServicesControllerListResponses];
+
+export type WatchPickerControllerGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        minutes: number;
+        type?: 'both' | 'movie' | 'show';
+        progress?: 'both' | 'start' | 'continue';
+        genre?: string;
+        /**
+         * Comma-separated service IDs; omitted means unrestricted
+         */
+        services?: string;
+    };
+    url: '/watch-picker';
+};
+
+export type WatchPickerControllerGetResponses = {
+    200: WatchPickerResponseDto;
+};
+
+export type WatchPickerControllerGetResponse = WatchPickerControllerGetResponses[keyof WatchPickerControllerGetResponses];

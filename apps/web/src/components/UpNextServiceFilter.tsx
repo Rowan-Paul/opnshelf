@@ -34,12 +34,16 @@ export function UpNextServiceFilter({
 	savedIds,
 	value,
 	needsSelection = false,
+	clearLabel = "Clear filters",
+	showClear = true,
 	onChange,
 }: {
 	country: string;
 	savedIds: number[];
 	value?: string;
 	needsSelection?: boolean;
+	clearLabel?: string;
+	showClear?: boolean;
 	onChange: (value: string | undefined) => void;
 }) {
 	const isMobile = useSyncExternalStore(
@@ -160,7 +164,7 @@ export function UpNextServiceFilter({
 					</PopoverContent>
 				)}
 			</Root>
-			{value && (
+			{showClear && value && (
 				<button
 					type="button"
 					className="btn btn-secondary"
@@ -170,7 +174,7 @@ export function UpNextServiceFilter({
 						onChange(undefined);
 					}}
 				>
-					Clear filters
+					{clearLabel}
 				</button>
 			)}
 		</div>

@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react";
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Button } from "@/components/ui/button";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextEpisodeCard } from "@/components/up-next/UpNextEpisodeCard";
 import { UpNextServiceFilter } from "@/components/up-next/UpNextServiceFilter";
@@ -17,6 +18,7 @@ function host(name: string) {
 	return ({ children, ...props }: PropsWithChildren) =>
 		createElement(name, props, children);
 }
+vi.mock("@/components/ui/button", () => ({ Button: host("Button") }));
 vi.mock("react-native", () => ({ View: host("View") }));
 vi.mock("lucide-react-native", () => ({ Tv: host("Tv") }));
 vi.mock("expo-router", () => ({
@@ -80,6 +82,12 @@ beforeEach(() => {
 	mocks.savedIds = [];
 });
 describe("Up Next filter navigation", () => {
+	it("opens Pick for me from the owner’s queue", () => {
+		const view = renderTab();
+		act(() => view.root.findByType(Button).props.onPress());
+		expect(mocks.push).toHaveBeenCalledWith("/pick-for-me");
+		act(() => view.unmount());
+	});
 	it("keeps compact cards in the profile hub and episode tiles on the full screen", () => {
 		const hub = renderTab("demo.test");
 		expect(hub.root.findAllByType(UpNextCard)).toHaveLength(1);

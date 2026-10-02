@@ -23,12 +23,16 @@ export function UpNextServiceFilter({
 	savedIds,
 	value,
 	needsSelection = false,
+	clearLabel = "Clear filters",
+	showClear = true,
 	onChange,
 }: {
 	country: string;
 	savedIds: number[];
 	value?: string;
 	needsSelection?: boolean;
+	clearLabel?: string;
+	showClear?: boolean;
 	onChange: (value: string | undefined) => void;
 }) {
 	const [open, setOpen] = useState(false);
@@ -66,9 +70,9 @@ export function UpNextServiceFilter({
 					</Text>
 					<ChevronDown color="#94a3b8" size={14} />
 				</Pressable>
-				{value && (
+				{showClear && value && (
 					<Button
-						label="Clear filters"
+						label={clearLabel}
 						size="sm"
 						variant="secondary"
 						onPress={() => {
