@@ -1,10 +1,21 @@
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReviewEditorSheet } from "./ReviewEditorSheet";
 
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@tanstack/react-query")>()),
 	useQuery: () => ({ data: undefined }),
+}));
+
+const showDialog = vi.hoisted(() => vi.fn());
+const scrollTo = vi.hoisted(() => vi.fn());
+const focusEditor = vi.hoisted(() => vi.fn());
+const blurTitle = vi.hoisted(() => vi.fn());
+afterEach(() => vi.unstubAllEnvs());
+vi.mock("@/components/ui/dialog", () => ({
+	useDialog: () => ({ showDialog }),
+	DialogProvider: ({ children }: { children: import("react").ReactNode }) =>
+		children,
 }));
 
 vi.mock("@/lib/auth-context", () => ({
@@ -29,6 +40,7 @@ vi.mock("react-native", async () => {
 		Pressable: component("pressable"),
 		Switch: component("switch"),
 		View: component("view"),
+		ScrollView: component("scroll-view"),
 		// The Button primitive picks its spinner tint from the scheme.
 		useColorScheme: () => "light",
 	};
@@ -52,22 +64,30 @@ vi.mock("@/components/ui/text", async () => {
 });
 
 vi.mock("@/components/ui/text-field", async () => {
-	const { createElement } = await import("react");
+	const { createElement, forwardRef, useImperativeHandle } = await import(
+		"react"
+	);
 	return {
-		TextField: (props: Record<string, unknown>) =>
-			createElement(
+		TextField: forwardRef((props: Record<string, unknown>, ref) => {
+			useImperativeHandle(ref, () => ({ blur: blurTitle }));
+			return createElement(
 				"text-field",
 				props,
 				props.label ? createElement("text", null, props.label as string) : null,
-			),
+			);
+		}),
 	};
 });
 
 vi.mock("@/components/detail/MilkdownWebView", async () => {
-	const { createElement } = await import("react");
+	const { createElement, forwardRef, useImperativeHandle } = await import(
+		"react"
+	);
 	return {
-		MilkdownWebView: (props: Record<string, unknown>) =>
-			createElement("milkdown", props),
+		MilkdownWebView: forwardRef((props: Record<string, unknown>, ref) => {
+			useImperativeHandle(ref, () => ({ focus: focusEditor }));
+			return createElement("milkdown", props);
+		}),
 	};
 });
 
@@ -78,6 +98,10 @@ function renderSheet(onSave = vi.fn()) {
 	act(() => {
 		renderer = create(
 			<ReviewEditorSheet visible onDismiss={vi.fn()} onSave={onSave} />,
+			{
+				createNodeMock: (node) =>
+					node.type === "scroll-view" ? { scrollTo } : null,
+			},
 		);
 	});
 	return { renderer, onSave };
@@ -154,4 +178,114 @@ describe("ReviewEditorSheet required fields", () => {
 		act(() => editor.props.onChange("   "));
 		expect(saveButton(renderer)?.props.disabled).toBe(true);
 	});
+});
+
+describe("starting a new review", () => {
+	it("keeps unsaved changes until the discard action is confirmed", () => {
+		const onNewReview = vi.fn();
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(
+				<ReviewEditorSheet
+					visible
+					isEditing
+					initialTitle="Existing"
+					initialMarkdown="Body"
+					onDismiss={vi.fn()}
+					onSave={vi.fn()}
+					onNewReview={onNewReview}
+				/>,
+			);
+		});
+		act(() =>
+			renderer.root
+				.findByType("text-field" as never)
+				.props.onChangeText("Unsaved"),
+		);
+		const button = renderer.root
+			.findAllByType("pressable" as never)
+			.find((node) =>
+				node
+					.findAllByType("text" as never)
+					.some((text) => text.children.includes("New review")),
+			);
+		act(() => button?.props.onPress());
+		expect(onNewReview).not.toHaveBeenCalled();
+		expect(renderer.root.findByType("text-field" as never).props.value).toBe(
+			"Unsaved",
+		);
+		act(() => showDialog.mock.calls.at(-1)?.[0].actions[1].onPress());
+		expect(onNewReview).toHaveBeenCalledOnce();
+	});
+});
+
+it("reveals the focused field after the keyboard shrinks the form, not on expansion", () => {
+	const { renderer } = renderSheet();
+	const scroll = renderer.root.findByType("scroll-view" as never);
+	const layout = (y: number, height: number) => ({
+		nativeEvent: { layout: { y, height } },
+	});
+	act(() => scroll.props.onLayout(layout(0, 500)));
+	const body = renderer.root
+		.findAllByType("view" as never)
+		.find(
+			(n) => n.props.onLayout && n.findAllByType("milkdown" as never).length,
+		);
+	expect(body).toBeDefined();
+	act(() => body?.props.onLayout(layout(280, 192)));
+	act(() => renderer.root.findByType("milkdown" as never).props.onFocus());
+	expect(scrollTo).toHaveBeenLastCalledWith({ y: 280, animated: false });
+	scrollTo.mockClear();
+	act(() => scroll.props.onLayout(layout(0, 300)));
+	expect(scrollTo).toHaveBeenCalledOnce();
+	scrollTo.mockClear();
+	act(() => scroll.props.onLayout(layout(0, 500)));
+	expect(scrollTo).not.toHaveBeenCalled();
+	const title = renderer.root
+		.findAllByType("view" as never)
+		.find(
+			(n) => n.props.onLayout && n.findAllByType("text-field" as never).length,
+		);
+	expect(title).toBeDefined();
+	act(() => title?.props.onLayout(layout(110, 70)));
+	act(() => renderer.root.findByType("text-field" as never).props.onFocus());
+	expect(scrollTo).toHaveBeenLastCalledWith({ y: 110, animated: false });
+	expect(
+		scroll
+			.findAllByType("pressable" as never)
+			.some((n) => n.props.accessibilityLabel === "Save"),
+	).toBe(false);
+});
+
+it.each([
+	"ios",
+	"android",
+])("moves from the title to the body on %s without saving a valid review", (platform) => {
+	vi.stubEnv("EXPO_OS", platform);
+	blurTitle.mockClear();
+	focusEditor.mockClear();
+	const { renderer, onSave } = renderSheet();
+	const title = renderer.root.findByType("text-field" as never);
+	act(() => {
+		title.props.onChangeText("My review");
+		renderer.root
+			.findByType("milkdown" as never)
+			.props.onChange("A complete body");
+	});
+	expect(saveButton(renderer)?.props.disabled).toBe(false);
+	expect(title.props.returnKeyType).toBe("next");
+	expect(title.props.submitBehavior).toBe("submit");
+	act(() => title.props.onSubmitEditing());
+	expect(focusEditor).toHaveBeenCalledOnce();
+	if (platform === "ios") {
+		expect(blurTitle).toHaveBeenCalledOnce();
+		expect(blurTitle.mock.invocationCallOrder[0]).toBeLessThan(
+			focusEditor.mock.invocationCallOrder[0],
+		);
+	} else {
+		// React Native Android maps an explicit JS blur to hiding the IME.
+		expect(blurTitle).not.toHaveBeenCalled();
+	}
+	expect(onSave).not.toHaveBeenCalled();
+	act(() => renderer.unmount());
 });

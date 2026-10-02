@@ -208,7 +208,7 @@ export default function Header() {
 										onClick={logout}
 										className="cursor-pointer text-red-600 focus:text-red-600"
 									>
-										<LogOut />
+										<LogOut className="text-current" />
 										Sign Out
 									</DropdownMenuItem>
 								</DropdownMenuContent>

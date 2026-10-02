@@ -41,6 +41,7 @@ interface ReviewDialogProps {
 	episodeNumber?: number;
 	/** When set, the dialog edits this review; otherwise it creates a new one. */
 	review?: EditableReview;
+	onNewReview?: () => void;
 	onSuccess?: () => void;
 	/**
 	 * Element id to scroll into view after a successful save, so the user lands
@@ -60,6 +61,7 @@ export function ReviewDialog({
 	seasonNumber,
 	episodeNumber,
 	review,
+	onNewReview,
 	onSuccess,
 	scrollTargetId = "community-reviews",
 	includeRating = false,
@@ -250,6 +252,17 @@ export function ReviewDialog({
 		});
 	};
 
+	const startNewReview = () => {
+		const dirty =
+			title !== (review?.title ?? "") ||
+			markdown !== (review?.markdown ?? "") ||
+			spoiler !== (review?.spoiler ?? false) ||
+			mirrorToBlog !== (review?.mirrorToBlog ?? true);
+		if (dirty && !window.confirm("Discard changes and start a new review?"))
+			return;
+		onNewReview?.();
+	};
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
@@ -268,7 +281,7 @@ export function ReviewDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				{includeRating && !isEditing && (
+				{includeRating && (
 					<section className="rounded-lg border border-(--border) bg-(--background-subtle) p-4">
 						<div className="mb-3 flex items-center justify-between">
 							<div>
@@ -405,7 +418,17 @@ export function ReviewDialog({
 					>
 						{markdown.length}/20000
 					</span>
-					<div className="flex gap-2">
+					<div className="flex flex-wrap justify-end gap-2">
+						{isEditing && onNewReview ? (
+							<button
+								type="button"
+								className="btn btn-ghost btn-sm"
+								disabled={isPending}
+								onClick={startNewReview}
+							>
+								New review
+							</button>
+						) : null}
 						<button
 							type="button"
 							onClick={() => onOpenChange(false)}

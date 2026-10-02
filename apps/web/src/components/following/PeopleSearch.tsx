@@ -187,7 +187,9 @@ function UserSearchRow({
 					<p className="truncate font-medium text-sm">
 						{String(person.displayName) || person.handle}
 					</p>
-					<p className="text-(--foreground-muted) text-xs">@{person.handle}</p>
+					<p className="truncate text-(--foreground-muted) text-xs">
+						@{person.handle}
+					</p>
 				</div>
 			</Link>
 			{person.isFollowing ? (

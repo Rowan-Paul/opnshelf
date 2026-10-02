@@ -19,6 +19,6 @@ import { ShowsTmdbService } from "./shows-tmdb.service";
 		ShowProgressService,
 		EpisodeWatchService,
 	],
-	exports: [ShowsService, ShowsTmdbService],
+	exports: [ShowsService, ShowsTmdbService, ShowProgressService],
 })
 export class ShowsModule {}

@@ -2439,6 +2439,20 @@ export type PublishAtStoreReviewResponseDto = {
     uri: string;
 };
 
+export type WatchRecapHighlightDto = {
+    title: string;
+    path: string;
+    watchedAt: string;
+};
+
+export type WatchRecapDto = {
+    movieWatches: number;
+    episodeWatches: number;
+    timezone: string;
+    firstWatch: WatchRecapHighlightDto | null;
+    lastWatch: WatchRecapHighlightDto | null;
+};
+
 export type NotificationCollectionItemDto = {
     mediaId: string;
     mediaType: 'movie' | 'show';
@@ -2448,9 +2462,11 @@ export type NotificationCollectionItemDto = {
     releaseDate: string | null;
     seasonNumber: number | null;
     path: string;
+    watchCount?: number;
 };
 
 export type NotificationCollectionDto = {
+    recap?: WatchRecapDto | null;
     id: string;
     heading: string;
     periodStart: string;
@@ -2797,6 +2813,31 @@ export type StreamingServicesResponseDto = {
     services: Array<StreamingServiceDto>;
 };
 
+export type PickerEpisodeDto = {
+    serviceIds: Array<number>;
+    seasonNumber: number;
+    episodeNumber: number;
+    name: string;
+};
+
+export type WatchPickerItemDto = {
+    id: string;
+    mediaType: 'movie' | 'show';
+    mediaId: string;
+    title: string;
+    posterPath?: string;
+    minutes: number;
+    estimated: boolean;
+    episodes: Array<PickerEpisodeDto>;
+    services: Array<WatchProviderDto>;
+    watchLink?: string;
+};
+
+export type WatchPickerResponseDto = {
+    items: Array<WatchPickerItemDto>;
+    genres: Array<string>;
+};
+
 export type MoviesControllerSearchMoviesData = {
     body?: never;
     path?: never;
@@ -2823,6 +2864,10 @@ export type MoviesControllerDiscoverMoviesData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Filter by TMDB genre ID
+         */
+        genreId?: number;
         /**
          * Sort order for results
          */
@@ -3561,6 +3606,10 @@ export type ShowsControllerDiscoverShowsData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Filter by TMDB genre ID
+         */
+        genreId?: number;
         /**
          * Sort order for results
          */
@@ -5253,6 +5302,10 @@ export type ReviewsControllerGetMediaReviewsData = {
          */
         mediaId: string;
         /**
+         * Filter to this author's reviews, ordered newest first instead of community popularity.
+         */
+        authorDid?: string;
+        /**
          * Season number for season/episode items
          */
         seasonNumber?: number;
@@ -6342,3 +6395,25 @@ export type StreamingServicesControllerListResponses = {
 };
 
 export type StreamingServicesControllerListResponse = StreamingServicesControllerListResponses[keyof StreamingServicesControllerListResponses];
+
+export type WatchPickerControllerGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        minutes: number;
+        type?: 'both' | 'movie' | 'show';
+        progress?: 'both' | 'start' | 'continue';
+        genre?: string;
+        /**
+         * Comma-separated service IDs; omitted means unrestricted
+         */
+        services?: string;
+    };
+    url: '/watch-picker';
+};
+
+export type WatchPickerControllerGetResponses = {
+    200: WatchPickerResponseDto;
+};
+
+export type WatchPickerControllerGetResponse = WatchPickerControllerGetResponses[keyof WatchPickerControllerGetResponses];

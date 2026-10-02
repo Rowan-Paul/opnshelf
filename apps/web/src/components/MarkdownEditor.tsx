@@ -21,6 +21,7 @@ import {
 } from "@milkdown/kit/preset/commonmark";
 import type { Node as ProseNode } from "@milkdown/kit/prose/model";
 import { type EditorState, Plugin } from "@milkdown/kit/prose/state";
+import type { EditorView } from "@milkdown/kit/prose/view";
 import { callCommand } from "@milkdown/kit/utils";
 import {
 	Milkdown,
@@ -40,9 +41,22 @@ import {
 	Quote,
 	SquareCode,
 } from "lucide-react";
-import { type ReactNode, useRef, useState } from "react";
+import {
+	type ReactNode,
+	type Ref,
+	useImperativeHandle,
+	useRef,
+	useState,
+} from "react";
+
+export interface MarkdownEditorHandle {
+	focus: () => void;
+}
 
 interface MarkdownEditorProps {
+	ref?: Ref<MarkdownEditorHandle>;
+	/** Constrain the editor to its host, keeping only the text area scrollable. */
+	fillHeight?: boolean;
 	/** Initial markdown. Read once at mount — remount (via `key`) to reset. */
 	value: string;
 	/** Fires with the serialized markdown on every change. */
@@ -51,10 +65,10 @@ interface MarkdownEditorProps {
 
 // Box + ProseMirror content styling, mirroring the read renderer so the WYSIWYG
 // surface matches how the review reads. `.ProseMirror` is the contenteditable
-// root Milkdown mounts.
+// root Milkdown mounts. Keep editable text at 16px so iOS does not zoom on focus.
 const EDITOR_CLASS = [
-	"input min-h-[200px] overflow-auto",
-	"[&_.ProseMirror]:min-h-[180px] [&_.ProseMirror]:space-y-3 [&_.ProseMirror]:text-sm [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:outline-none",
+	"input overflow-auto",
+	"[&_.ProseMirror]:min-h-[180px] [&_.ProseMirror]:space-y-3 [&_.ProseMirror]:text-base [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:outline-none",
 	"[&_.ProseMirror_h1]:font-display [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h1]:text-lg",
 	"[&_.ProseMirror_h2]:font-display [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:text-lg",
 	"[&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h4]:font-semibold [&_.ProseMirror_h5]:font-semibold [&_.ProseMirror_h6]:font-semibold",
@@ -193,11 +207,28 @@ function formattingIsEqual(
 	);
 }
 
-function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
+function MilkdownEditorInner({
+	ref,
+	value,
+	onChange,
+	fillHeight = false,
+}: MarkdownEditorProps) {
 	const [, getEditor] = useInstance();
 	const [bubble, setBubble] = useState<BubblePos | null>(null);
 	const [activeFormatting, setActiveFormatting] = useState(EMPTY_FORMATTING);
 	const wrapperRef = useRef<HTMLDivElement>(null);
+	const viewRef = useRef<EditorView | null>(null);
+	const pendingFocus = useRef(false);
+	useImperativeHandle(
+		ref,
+		() => ({
+			focus() {
+				if (viewRef.current) viewRef.current.focus();
+				else pendingFocus.current = true;
+			},
+		}),
+		[],
+	);
 
 	// Keep callbacks current without re-creating the editor (deps: []).
 	const onChangeRef = useRef(onChange);
@@ -232,6 +263,16 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 					);
 
 					const l = ctx.get(listenerCtx);
+					l.mounted((mountedCtx) => {
+						viewRef.current = mountedCtx.get(editorViewCtx);
+						if (pendingFocus.current) {
+							pendingFocus.current = false;
+							viewRef.current.focus();
+						}
+					});
+					l.destroy(() => {
+						viewRef.current = null;
+					});
 					l.markdownUpdated((_ctx, markdown) => {
 						onChangeRef.current(markdown);
 					});
@@ -304,8 +345,13 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 	);
 
 	return (
-		<div ref={wrapperRef} className="relative">
-			<div className="mb-1 flex flex-wrap items-center gap-0.5 rounded-md border border-(--border) bg-(--background-elevated) p-1">
+		<div
+			ref={wrapperRef}
+			className={
+				fillHeight ? "relative flex h-full min-h-0 flex-col" : "relative"
+			}
+		>
+			<div className="mb-1 flex shrink-0 flex-wrap items-center gap-0.5 rounded-md border border-(--border) bg-(--background-elevated) p-1">
 				<CommandButton
 					label="Heading"
 					active={activeFormatting.heading}
@@ -362,7 +408,9 @@ function MilkdownEditorInner({ value, onChange }: MarkdownEditorProps) {
 				</div>
 			)}
 
-			<div className={EDITOR_CLASS}>
+			<div
+				className={`${EDITOR_CLASS} ${fillHeight ? "min-h-0 flex-1 overscroll-contain" : "min-h-[200px]"}`}
+			>
 				<Milkdown />
 			</div>
 		</div>

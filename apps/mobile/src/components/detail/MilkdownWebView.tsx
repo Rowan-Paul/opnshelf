@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { type Ref, useImperativeHandle, useRef } from "react";
 import { View } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { env } from "@/lib/env";
@@ -10,11 +10,17 @@ import {
 } from "@/lib/safe-links";
 import { useTheme } from "@/lib/theme-context";
 
+export interface MilkdownWebViewHandle {
+	focus: () => void;
+}
+
 interface MilkdownWebViewProps {
+	ref?: Ref<MilkdownWebViewHandle>;
 	/** Initial markdown, injected once after the page signals it is ready. */
 	value: string;
 	/** Fires with the serialized markdown on every edit inside the WebView. */
 	onChange: (markdown: string) => void;
+	onFocus?: () => void;
 }
 
 /**
@@ -26,12 +32,30 @@ interface MilkdownWebViewProps {
  * deploy, not a mobile release.
  *
  * Bridge protocol (mirrors the embed route):
- *   page → native:  { type: "ready" } | { type: "change", markdown }
- *   native → page:  window.opnshelfSetMarkdown(md)
+ *   page → native:  { type: "ready" } | { type: "change", markdown } | { type: "focus" }
+ *   native → page:  window.opnshelfSetMarkdown(md) | window.opnshelfFocusEditor()
  */
-export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
+export function MilkdownWebView({
+	ref,
+	value,
+	onChange,
+	onFocus,
+}: MilkdownWebViewProps) {
 	const { scheme } = useTheme();
 	const webRef = useRef<WebView>(null);
+	const ready = useRef(false);
+	const pendingFocus = useRef(false);
+	const focus = () => {
+		if (!ready.current) {
+			pendingFocus.current = true;
+			return;
+		}
+		pendingFocus.current = false;
+		// DOM focus alone does not transfer iOS keyboard ownership to WKWebView.
+		webRef.current?.requestFocus();
+		webRef.current?.injectJavaScript("window.opnshelfFocusEditor?.(); true;");
+	};
+	useImperativeHandle(ref, () => ({ focus }));
 	// Capture the initial body once; parent re-renders (on each change) must not
 	// re-seed the editor and clobber what the user is typing.
 	const initial = useRef(value);
@@ -49,10 +73,14 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 			return;
 		}
 		if (msg.type === "ready") {
+			ready.current = true;
 			// Seed the stored body; JSON.stringify safely escapes it for injection.
 			webRef.current?.injectJavaScript(
 				`window.opnshelfSetMarkdown(${JSON.stringify(initial.current)}); true;`,
 			);
+			if (pendingFocus.current) focus();
+		} else if (msg.type === "focus") {
+			onFocus?.();
 		} else if (msg.type === "change" && typeof msg.markdown === "string") {
 			onChange(msg.markdown);
 		}
@@ -70,8 +98,16 @@ export function MilkdownWebView({ value, onChange }: MilkdownWebViewProps) {
 					isTrustedEditorUrl(request.url, env.siteUrl)
 				}
 				onMessage={handleMessage}
+				onLoadStart={() => {
+					ready.current = false;
+				}}
+				// Native keyboard tracking does not see focus inside WKContentView.
+				injectedJavaScript={`document.addEventListener("focusin", (event) => {
+                    if (event.target.isContentEditable) window.ReactNativeWebView.postMessage(JSON.stringify({ type: "focus" }));
+                }); true;`}
 				setSupportMultipleWindows={false}
 				scrollEnabled={false}
+				nestedScrollEnabled
 				// iOS: allow the editor to focus + raise the keyboard without a
 				// preceding user tap being required by WebKit.
 				keyboardDisplayRequiresUserAction={false}

@@ -58,6 +58,7 @@ export type NotificationCollectionCountAggregateOutputType = {
   periodStart: number
   periodEnd: number
   items: number
+  recap: number
   createdAt: number
   _all: number
 }
@@ -97,6 +98,7 @@ export type NotificationCollectionCountAggregateInputType = {
   periodStart?: true
   periodEnd?: true
   items?: true
+  recap?: true
   createdAt?: true
   _all?: true
 }
@@ -183,6 +185,7 @@ export type NotificationCollectionGroupByOutputType = {
   periodStart: string
   periodEnd: string
   items: runtime.JsonValue
+  recap: runtime.JsonValue | null
   createdAt: Date
   _count: NotificationCollectionCountAggregateOutputType | null
   _min: NotificationCollectionMinAggregateOutputType | null
@@ -217,6 +220,7 @@ export type NotificationCollectionWhereInput = {
   periodStart?: Prisma.StringFilter<"NotificationCollection"> | string
   periodEnd?: Prisma.StringFilter<"NotificationCollection"> | string
   items?: Prisma.JsonFilter<"NotificationCollection">
+  recap?: Prisma.JsonNullableFilter<"NotificationCollection">
   createdAt?: Prisma.DateTimeFilter<"NotificationCollection"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   deliveries?: Prisma.NotificationDeliveryListRelationFilter
@@ -232,6 +236,7 @@ export type NotificationCollectionOrderByWithRelationInput = {
   periodStart?: Prisma.SortOrder
   periodEnd?: Prisma.SortOrder
   items?: Prisma.SortOrder
+  recap?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   deliveries?: Prisma.NotificationDeliveryOrderByRelationAggregateInput
@@ -251,6 +256,7 @@ export type NotificationCollectionWhereUniqueInput = Prisma.AtLeast<{
   periodStart?: Prisma.StringFilter<"NotificationCollection"> | string
   periodEnd?: Prisma.StringFilter<"NotificationCollection"> | string
   items?: Prisma.JsonFilter<"NotificationCollection">
+  recap?: Prisma.JsonNullableFilter<"NotificationCollection">
   createdAt?: Prisma.DateTimeFilter<"NotificationCollection"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   deliveries?: Prisma.NotificationDeliveryListRelationFilter
@@ -266,6 +272,7 @@ export type NotificationCollectionOrderByWithAggregationInput = {
   periodStart?: Prisma.SortOrder
   periodEnd?: Prisma.SortOrder
   items?: Prisma.SortOrder
+  recap?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.NotificationCollectionCountOrderByAggregateInput
   _max?: Prisma.NotificationCollectionMaxOrderByAggregateInput
@@ -285,6 +292,7 @@ export type NotificationCollectionScalarWhereWithAggregatesInput = {
   periodStart?: Prisma.StringWithAggregatesFilter<"NotificationCollection"> | string
   periodEnd?: Prisma.StringWithAggregatesFilter<"NotificationCollection"> | string
   items?: Prisma.JsonWithAggregatesFilter<"NotificationCollection">
+  recap?: Prisma.JsonNullableWithAggregatesFilter<"NotificationCollection">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationCollection"> | Date | string
 }
 
@@ -297,6 +305,7 @@ export type NotificationCollectionCreateInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationCollectionsInput
   deliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutCollectionInput
@@ -312,6 +321,7 @@ export type NotificationCollectionUncheckedCreateInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   deliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutCollectionInput
 }
@@ -325,6 +335,7 @@ export type NotificationCollectionUpdateInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationCollectionsNestedInput
   deliveries?: Prisma.NotificationDeliveryUpdateManyWithoutCollectionNestedInput
@@ -340,6 +351,7 @@ export type NotificationCollectionUncheckedUpdateInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutCollectionNestedInput
 }
@@ -354,6 +366,7 @@ export type NotificationCollectionCreateManyInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -366,6 +379,7 @@ export type NotificationCollectionUpdateManyMutationInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -379,6 +393,7 @@ export type NotificationCollectionUncheckedUpdateManyInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -407,6 +422,7 @@ export type NotificationCollectionCountOrderByAggregateInput = {
   periodStart?: Prisma.SortOrder
   periodEnd?: Prisma.SortOrder
   items?: Prisma.SortOrder
+  recap?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -506,6 +522,7 @@ export type NotificationCollectionCreateWithoutUserInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   deliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutCollectionInput
 }
@@ -519,6 +536,7 @@ export type NotificationCollectionUncheckedCreateWithoutUserInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   deliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutCollectionInput
 }
@@ -562,6 +580,7 @@ export type NotificationCollectionScalarWhereInput = {
   periodStart?: Prisma.StringFilter<"NotificationCollection"> | string
   periodEnd?: Prisma.StringFilter<"NotificationCollection"> | string
   items?: Prisma.JsonFilter<"NotificationCollection">
+  recap?: Prisma.JsonNullableFilter<"NotificationCollection">
   createdAt?: Prisma.DateTimeFilter<"NotificationCollection"> | Date | string
 }
 
@@ -574,6 +593,7 @@ export type NotificationCollectionCreateWithoutDeliveriesInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationCollectionsInput
 }
@@ -588,6 +608,7 @@ export type NotificationCollectionUncheckedCreateWithoutDeliveriesInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -616,6 +637,7 @@ export type NotificationCollectionUpdateWithoutDeliveriesInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationCollectionsNestedInput
 }
@@ -630,6 +652,7 @@ export type NotificationCollectionUncheckedUpdateWithoutDeliveriesInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -642,6 +665,7 @@ export type NotificationCollectionCreateManyUserInput = {
   periodStart: string
   periodEnd: string
   items: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
 }
 
@@ -654,6 +678,7 @@ export type NotificationCollectionUpdateWithoutUserInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveries?: Prisma.NotificationDeliveryUpdateManyWithoutCollectionNestedInput
 }
@@ -667,6 +692,7 @@ export type NotificationCollectionUncheckedUpdateWithoutUserInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutCollectionNestedInput
 }
@@ -680,6 +706,7 @@ export type NotificationCollectionUncheckedUpdateManyWithoutUserInput = {
   periodStart?: Prisma.StringFieldUpdateOperationsInput | string
   periodEnd?: Prisma.StringFieldUpdateOperationsInput | string
   items?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  recap?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -724,6 +751,7 @@ export type NotificationCollectionSelect<ExtArgs extends runtime.Types.Extension
   periodStart?: boolean
   periodEnd?: boolean
   items?: boolean
+  recap?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   deliveries?: boolean | Prisma.NotificationCollection$deliveriesArgs<ExtArgs>
@@ -740,6 +768,7 @@ export type NotificationCollectionSelectCreateManyAndReturn<ExtArgs extends runt
   periodStart?: boolean
   periodEnd?: boolean
   items?: boolean
+  recap?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notificationCollection"]>
@@ -754,6 +783,7 @@ export type NotificationCollectionSelectUpdateManyAndReturn<ExtArgs extends runt
   periodStart?: boolean
   periodEnd?: boolean
   items?: boolean
+  recap?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notificationCollection"]>
@@ -768,10 +798,11 @@ export type NotificationCollectionSelectScalar = {
   periodStart?: boolean
   periodEnd?: boolean
   items?: boolean
+  recap?: boolean
   createdAt?: boolean
 }
 
-export type NotificationCollectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "eventKey" | "title" | "body" | "heading" | "periodStart" | "periodEnd" | "items" | "createdAt", ExtArgs["result"]["notificationCollection"]>
+export type NotificationCollectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "eventKey" | "title" | "body" | "heading" | "periodStart" | "periodEnd" | "items" | "recap" | "createdAt", ExtArgs["result"]["notificationCollection"]>
 export type NotificationCollectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   deliveries?: boolean | Prisma.NotificationCollection$deliveriesArgs<ExtArgs>
@@ -800,6 +831,7 @@ export type $NotificationCollectionPayload<ExtArgs extends runtime.Types.Extensi
     periodStart: string
     periodEnd: string
     items: runtime.JsonValue
+    recap: runtime.JsonValue | null
     createdAt: Date
   }, ExtArgs["result"]["notificationCollection"]>
   composites: {}
@@ -1235,6 +1267,7 @@ export interface NotificationCollectionFieldRefs {
   readonly periodStart: Prisma.FieldRef<"NotificationCollection", 'String'>
   readonly periodEnd: Prisma.FieldRef<"NotificationCollection", 'String'>
   readonly items: Prisma.FieldRef<"NotificationCollection", 'Json'>
+  readonly recap: Prisma.FieldRef<"NotificationCollection", 'Json'>
   readonly createdAt: Prisma.FieldRef<"NotificationCollection", 'DateTime'>
 }
     

@@ -5,6 +5,7 @@ import {
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
 	createFileRoute,
+	Link,
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
@@ -127,17 +128,22 @@ function ProfileUpNextPage() {
 					)}
 				</div>
 				{isOwner && (
-					<UpNextServiceFilter
-						country={country}
-						savedIds={userSettings?.streamingServiceIds ?? []}
-						value={services}
-						needsSelection={
-							!!userSettings &&
-							services === "mine" &&
-							userSettings.streamingServiceIds.length === 0
-						}
-						onChange={(value) => void setServices(value)}
-					/>
+					<div className="flex flex-wrap items-center gap-2">
+						<UpNextServiceFilter
+							country={country}
+							savedIds={userSettings?.streamingServiceIds ?? []}
+							value={services}
+							needsSelection={
+								!!userSettings &&
+								services === "mine" &&
+								userSettings.streamingServiceIds.length === 0
+							}
+							onChange={(value) => void setServices(value)}
+						/>
+						<Link to="/pick-for-me" className="btn btn-primary">
+							Pick for me
+						</Link>
+					</div>
 				)}
 			</header>
 			{isError && (

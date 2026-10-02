@@ -1,5 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import {
+	lazy,
+	Suspense,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+
+import type { MarkdownEditorHandle } from "#/components/MarkdownEditor";
 
 // The same WYSIWYG Milkdown editor the web ReviewDialog uses. Rendered here in a
 // chromeless page so the mobile app can host it in a WebView and get exact
@@ -26,15 +35,27 @@ function postToNative(message: Record<string, unknown>) {
  *   page → native:  { type: "ready" }             once the page can accept input
  *                    { type: "change", markdown }  on every edit
  *   native → page:  window.opnshelfSetMarkdown(md) to seed the initial body
+ *                    window.opnshelfFocusEditor() to move focus into the body
  *
  * The editor only mounts after the initial markdown arrives (so it round-trips
  * the stored body). Opened directly in a browser (no RN bridge), it seeds empty
  * immediately so the page is still previewable.
  */
 function EmbedReviewEditor() {
-	const [initial, setInitial] = useState<string | null>(null);
+	const [initial, setInitial] = useState<{
+		markdown: string;
+		key: number;
+	} | null>(null);
 	const [mounted, setMounted] = useState(false);
-	const editorKey = useRef(0);
+	const editorRef = useRef<MarkdownEditorHandle | null>(null);
+	const pendingFocus = useRef(false);
+	const attachEditor = useCallback((editor: MarkdownEditorHandle | null) => {
+		editorRef.current = editor;
+		if (editor && pendingFocus.current) {
+			pendingFocus.current = false;
+			editor.focus();
+		}
+	}, []);
 
 	useEffect(() => {
 		setMounted(true);
@@ -56,8 +77,17 @@ function EmbedReviewEditor() {
 		(
 			window as unknown as { opnshelfSetMarkdown?: (md: string) => void }
 		).opnshelfSetMarkdown = (md: string) => {
-			editorKey.current += 1;
-			setInitial(md ?? "");
+			editorRef.current = null;
+			setInitial((previous) => ({
+				markdown: md ?? "",
+				key: (previous?.key ?? 0) + 1,
+			}));
+		};
+
+		const host = window as unknown as { opnshelfFocusEditor?: () => void };
+		host.opnshelfFocusEditor = () => {
+			if (editorRef.current) editorRef.current.focus();
+			else pendingFocus.current = true;
 		};
 
 		const hasNative = !!(
@@ -67,17 +97,25 @@ function EmbedReviewEditor() {
 			postToNative({ type: "ready" });
 		} else {
 			// Browser preview / direct open: no bridge, start with an empty editor.
-			setInitial("");
+			setInitial({ markdown: "", key: 0 });
 		}
+		return () => {
+			delete host.opnshelfFocusEditor;
+			delete (
+				window as unknown as { opnshelfSetMarkdown?: (md: string) => void }
+			).opnshelfSetMarkdown;
+		};
 	}, [mounted]);
 
 	return (
-		<div className="min-h-screen bg-(--background) p-3">
+		<div className="h-dvh overflow-hidden bg-(--background) p-3">
 			{mounted && initial !== null ? (
 				<Suspense fallback={<div className="input min-h-[240px]" />}>
 					<MarkdownEditor
-						key={editorKey.current}
-						value={initial}
+						ref={attachEditor}
+						fillHeight
+						key={initial.key}
+						value={initial.markdown}
 						onChange={(markdown) => postToNative({ type: "change", markdown })}
 					/>
 				</Suspense>

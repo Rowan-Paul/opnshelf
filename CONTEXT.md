@@ -62,11 +62,18 @@ _Avoid_: Subscriptions, my providers, my platforms
 A user's queue of shows with an aired, unwatched next episode, one entry per show, shown on their profile. Anyone can view a user's Up Next; its owner can filter by any selected **Streaming Services**, without changing their saved subscriptions.
 _Avoid_: Continue watching, watchlist (that is a List of items not yet started), queue
 
+**Pick for me**:
+A private choosing surface that combines a User’s Up Next and watchlist movies and shows to suggest one random eligible movie or a run of consecutive episodes within the time available, allowing for breaks. Filters narrow the choices by media type, genre, starting or continuing, and Streaming Services (initially My Services); skipping offers another title without changing Watches or Lists.
+_Avoid_: Recommendation engine (the choice is random within the User’s existing titles), Up Next (the picker also includes watchlist items)
+
 **Notification Collection**:
 The saved selection of Media Items from a release Notification, presented within Discover. It preserves the original titles for the recipient to revisit from email or Mobile App push.
 
+**Watch Recap**:
+A saved summary of a User’s dated movie and episode Watches for a completed week, month, or year in their timezone, including rewatches, most-watched titles, and first and last Watches. Email and Mobile App push open the same private recap.
+
 **Notification**:
-An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or the User's weekly, monthly, or yearly Watch counts. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
+An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or a weekly, monthly, or yearly **Watch Recap**. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
 
 **Shelf**:
 The collection of media items a user has marked as watched or tracked. Its dated

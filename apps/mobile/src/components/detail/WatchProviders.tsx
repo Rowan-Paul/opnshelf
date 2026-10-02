@@ -1,8 +1,9 @@
-import type { WatchProviderDto } from "@opnshelf/api";
 import {
+	getWatchProviderLink,
 	moviesControllerGetWatchProvidersOptions,
 	showsControllerGetWatchProvidersOptions,
 	usersControllerGetMySettingsOptions,
+	type WatchProviderDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -40,6 +41,7 @@ function ProviderChip({
 	provider: WatchProviderDto;
 	link?: string;
 }) {
+	const destination = getWatchProviderLink(provider.provider_id, link);
 	const logoStyle = useTwStyle("size-10 rounded-xl");
 
 	const chip = (
@@ -60,11 +62,13 @@ function ProviderChip({
 		</View>
 	);
 
-	if (link) {
+	if (destination) {
 		return (
 			<Pressable
+				accessibilityRole="link"
+				accessibilityLabel={`Open ${provider.provider_name}`}
 				onPress={() => {
-					void Linking.openURL(link).then(() =>
+					void Linking.openURL(destination).then(() =>
 						posthog?.capture("watch_provider_opened", {
 							surface: "media_detail",
 						}),

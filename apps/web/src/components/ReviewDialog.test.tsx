@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReviewDialog } from "./ReviewDialog";
 
@@ -40,13 +41,19 @@ vi.mock("./MarkdownEditor", () => ({
 	}: {
 		value: string;
 		onChange: (value: string) => void;
-	}) => (
-		<textarea
-			aria-label="Review body"
-			value={value}
-			onChange={(event) => onChange(event.target.value)}
-		/>
-	),
+	}) => {
+		const [text, setText] = useState(value);
+		return (
+			<textarea
+				aria-label="Review body"
+				value={text}
+				onChange={(event) => {
+					setText(event.target.value);
+					onChange(event.target.value);
+				}}
+			/>
+		);
+	},
 }));
 
 describe("ReviewDialog required fields", () => {
@@ -95,5 +102,78 @@ describe("ReviewDialog required fields", () => {
 			"Write your review before publishing.",
 		);
 		expect(mocks.create).not.toHaveBeenCalled();
+	});
+});
+
+describe("ReviewDialog editing and new review", () => {
+	afterEach(cleanup);
+	beforeEach(() => vi.clearAllMocks());
+	function Editor() {
+		const [review, setReview] = useState<
+			{ id: string; title: string; markdown: string } | undefined
+		>({ id: "latest", title: "Existing", markdown: "Existing body" });
+		return (
+			<ReviewDialog
+				open
+				onOpenChange={vi.fn()}
+				mediaType="show"
+				mediaId="123"
+				seasonNumber={3}
+				episodeNumber={2}
+				review={review}
+				onNewReview={() => setReview(undefined)}
+			/>
+		);
+	}
+	it("updates the selected review without creating another", async () => {
+		render(<Editor />);
+		await screen.findByLabelText("Review body");
+		fireEvent.click(screen.getByRole("button", { name: "Save" }));
+		expect(mocks.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				path: { reviewId: "latest" },
+				body: expect.objectContaining({
+					title: "Existing",
+					markdown: "Existing body",
+				}),
+			}),
+		);
+		expect(mocks.create).not.toHaveBeenCalled();
+	});
+	it("protects edits, then clears the editor and creates a new review after confirmation", async () => {
+		const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+		render(<Editor />);
+		await screen.findByLabelText("Review body");
+		fireEvent.change(screen.getByLabelText("Review body"), {
+			target: { value: "Unsaved body" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "New review" }));
+		expect(
+			(screen.getByLabelText("Review body") as HTMLTextAreaElement).value,
+		).toBe("Unsaved body");
+		confirm.mockReturnValue(true);
+		fireEvent.click(screen.getByRole("button", { name: "New review" }));
+		expect(
+			(screen.getByLabelText("Review body") as HTMLTextAreaElement).value,
+		).toBe("");
+		fireEvent.change(screen.getByPlaceholderText("Give your review a title"), {
+			target: { value: "New title" },
+		});
+		fireEvent.change(screen.getByLabelText("Review body"), {
+			target: { value: "New body" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+		expect(mocks.create).toHaveBeenCalledWith({
+			body: expect.objectContaining({
+				mediaType: "episode",
+				mediaId: "123",
+				seasonNumber: 3,
+				episodeNumber: 2,
+				title: "New title",
+				markdown: "New body",
+			}),
+		});
+		expect(mocks.update).not.toHaveBeenCalled();
+		confirm.mockRestore();
 	});
 });

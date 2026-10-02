@@ -25,10 +25,6 @@ export type TMDBTrailer = {
 	sourceMediaType: TMDBTrailerSourceMediaType;
 };
 
-type TrailerCandidate = TMDBVideo & {
-	score: number;
-};
-
 export function selectBestTMDBTrailer(
 	videos: TMDBVideo[] | undefined,
 	sourceMediaType: TMDBTrailerSourceMediaType,
@@ -37,15 +33,19 @@ export function selectBestTMDBTrailer(
 		return undefined;
 	}
 
-	const rankedCandidates: TrailerCandidate[] = videos
-		.filter((video) => video.site === "YouTube" && video.key)
-		.map((video, index) => ({
-			...video,
-			score: getVideoScore(video, index),
-		}))
-		.sort((a, b) => a.score - b.score);
+	let best: TMDBVideo | undefined;
+	let bestScore = Infinity;
+	let candidateIndex = 0;
+	for (const video of videos) {
+		if (video.site !== "YouTube" || !video.key) continue;
 
-	const best = rankedCandidates[0];
+		const score = getVideoScore(video, candidateIndex++);
+		// Keep the first candidate on ties, matching the previous stable sort.
+		if (score < bestScore) {
+			best = video;
+			bestScore = score;
+		}
+	}
 
 	if (!best) {
 		return undefined;

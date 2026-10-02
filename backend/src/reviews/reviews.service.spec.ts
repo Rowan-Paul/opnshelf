@@ -313,6 +313,38 @@ describe("ReviewsService", () => {
 			);
 		});
 
+		it("filters an author's reviews before pagination and selects newest before popularity", async () => {
+			mockPrismaService.review.findMany.mockResolvedValue([]);
+			mockPrismaService.review.count.mockResolvedValue(2);
+			await service.getMediaReviews(
+				{
+					mediaType: "episode",
+					mediaId: "123",
+					seasonNumber: 3,
+					episodeNumber: 2,
+					authorDid: "did:plc:viewer",
+					pageSize: 1,
+				},
+				"did:plc:viewer",
+			);
+			const where = {
+				mediaType: "episode",
+				mediaId: "123",
+				seasonNumber: 3,
+				episodeNumber: 2,
+				userDid: "did:plc:viewer",
+			};
+			expect(mockPrismaService.review.count).toHaveBeenCalledWith({ where });
+			expect(mockPrismaService.review.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where,
+					orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+					take: 1,
+					skip: 0,
+				}),
+			);
+		});
+
 		it("breaks like-count ties by the author's separate Rating, not the review", async () => {
 			const base = {
 				rkey: "rk",

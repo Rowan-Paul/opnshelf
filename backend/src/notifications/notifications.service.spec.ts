@@ -185,6 +185,7 @@ describe("NotificationsService", () => {
 		prisma.notificationCollection.findFirst.mockResolvedValue({
 			id: "own",
 			heading: "Releases",
+			recap: null,
 			periodStart: "2026-09-21",
 			periodEnd: "2026-09-27",
 			items: [],
@@ -194,6 +195,7 @@ describe("NotificationsService", () => {
 		expect(await service.getCollection("did:plc:user", "own")).toEqual({
 			id: "own",
 			heading: "Releases",
+			recap: null,
 			periodStart: "2026-09-21",
 			periodEnd: "2026-09-27",
 			items: [],

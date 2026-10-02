@@ -2,6 +2,7 @@ import {
 	type BlueskyCrossPostResultDto,
 	type MediaReviewItemDto,
 	ratingsControllerClearRatingMutation,
+	ratingsControllerGetMediaRatingQueryKey,
 	ratingsControllerGetRatingOptions,
 	ratingsControllerGetRatingQueryKey,
 	ratingsControllerSetRatingMutation,
@@ -115,6 +116,7 @@ export function useReview(target: ReviewTarget) {
 		...reviewsControllerGetMediaReviewsOptions({
 			query: {
 				mediaType: resolvedMediaType,
+				authorDid: userDid,
 				mediaId: target.mediaId,
 				seasonNumber: target.seasonNumber,
 				episodeNumber: target.episodeNumber,
@@ -131,6 +133,16 @@ export function useReview(target: ReviewTarget) {
 
 	const invalidate = () => {
 		queryClient.invalidateQueries({ queryKey: ratingKey });
+		queryClient.invalidateQueries({
+			queryKey: ratingsControllerGetMediaRatingQueryKey({
+				query: {
+					mediaType: resolvedMediaType,
+					mediaId: target.mediaId,
+					seasonNumber: target.seasonNumber,
+					episodeNumber: target.episodeNumber,
+				},
+			}),
+		});
 		queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
 	};
 
@@ -338,6 +350,8 @@ export function useReview(target: ReviewTarget) {
 		hasRating: !!ratingRecord,
 		reviews,
 		isLoading: ratingQuery.isLoading || reviewsQuery.isLoading,
+		isReviewError: reviewsQuery.isError,
+		refetchReviews: reviewsQuery.refetch,
 		setRating,
 		clearRating,
 		createReview,

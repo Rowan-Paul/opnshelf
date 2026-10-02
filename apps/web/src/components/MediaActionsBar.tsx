@@ -25,7 +25,7 @@ import { useMediaReviews } from "#/lib/hooks/useReviews";
 import AddToLibraryDialog from "./AddToLibraryDialog";
 import ManageListsDialog from "./ManageListsDialog";
 import { NoteDialog } from "./NoteDialog";
-import { ReviewDialog } from "./ReviewDialog";
+import { type EditableReview, ReviewDialog } from "./ReviewDialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -52,6 +52,7 @@ export default function MediaActionsBar({
 	const [shareSuccess, setShareSuccess] = useState(false);
 	const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 	const [rateReviewDialogOpen, setRateReviewDialogOpen] = useState(false);
+	const [editingReview, setEditingReview] = useState<EditableReview>();
 	const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
 	const [listsDialogOpen, setListsDialogOpen] = useState(false);
 
@@ -91,18 +92,39 @@ export default function MediaActionsBar({
 		episodeNumber,
 	});
 	const rating = ratingRecord?.rating ?? 0;
-	const { data: reviews } = useMediaReviews({
+	const {
+		data: reviews,
+		isPending: reviewsPending,
+		isError: reviewsError,
+		refetch: refetchReviews,
+	} = useMediaReviews({
+		authorDid: userDid,
+		enabled: !!userDid,
 		mediaType,
 		mediaId,
 		seasonNumber,
 		episodeNumber,
 	});
-	// A user may write several Reviews per title; the button always opens a fresh
-	// one. The active state reflects whether they have *reviewed* this title —
-	// independent of any Rating (those are separate entities).
-	const hasReviewed = (reviews?.items ?? []).some(
-		(review) => review.userDid === userDid,
-	);
+	const hasReviewed = !!reviews?.items.length;
+	const openReview = () => {
+		if (reviewsError) {
+			void refetchReviews();
+			return;
+		}
+		const latest = reviews?.items[0];
+		setEditingReview(
+			latest
+				? {
+						id: latest.id,
+						title: latest.reviewTitle,
+						markdown: latest.markdown,
+						spoiler: latest.spoiler,
+						mirrorToBlog: latest.mirrorToBlog,
+					}
+				: undefined,
+		);
+		setRateReviewDialogOpen(true);
+	};
 
 	const handleShare = async () => {
 		const url = window.location.href;
@@ -174,7 +196,13 @@ export default function MediaActionsBar({
 				</button>
 				<button
 					type="button"
-					onClick={() => setRateReviewDialogOpen(true)}
+					onClick={openReview}
+					disabled={reviewsPending}
+					title={
+						reviewsError
+							? "Could not load your reviews. Click to retry."
+							: undefined
+					}
 					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${hasReviewed ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
 					aria-label="Rate and review"
 				>
@@ -297,7 +325,13 @@ export default function MediaActionsBar({
 					{/* Rate Button */}
 					<button
 						type="button"
-						onClick={() => setRateReviewDialogOpen(true)}
+						onClick={openReview}
+						disabled={reviewsPending}
+						title={
+							reviewsError
+								? "Could not load your reviews. Click to retry."
+								: undefined
+						}
 						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
 							rating > 0
 								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
@@ -333,13 +367,19 @@ export default function MediaActionsBar({
 					{/* Review Button */}
 					<button
 						type="button"
-						onClick={() => setRateReviewDialogOpen(true)}
+						onClick={openReview}
+						disabled={reviewsPending}
+						title={
+							reviewsError
+								? "Could not load your reviews. Click to retry."
+								: undefined
+						}
 						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
 							hasReviewed
 								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
-						aria-label={hasReviewed ? "Write another review" : "Write a review"}
+						aria-label={hasReviewed ? "Edit review" : "Write a review"}
 					>
 						<MessageSquarePlus className="size-5" />
 					</button>
@@ -392,6 +432,8 @@ export default function MediaActionsBar({
 				mediaId={mediaId}
 				seasonNumber={seasonNumber}
 				episodeNumber={episodeNumber}
+				review={editingReview}
+				onNewReview={() => setEditingReview(undefined)}
 				includeRating
 			/>
 			<AddToLibraryDialog

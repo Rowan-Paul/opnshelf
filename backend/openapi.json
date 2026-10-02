@@ -47,6 +47,16 @@
         "operationId": "MoviesController_discoverMovies",
         "parameters": [
           {
+            "name": "genreId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by TMDB genre ID",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
             "name": "sortBy",
             "required": false,
             "in": "query",
@@ -1281,6 +1291,16 @@
       "get": {
         "operationId": "ShowsController_discoverShows",
         "parameters": [
+          {
+            "name": "genreId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by TMDB genre ID",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
           {
             "name": "sortBy",
             "required": false,
@@ -4331,6 +4351,15 @@
             }
           },
           {
+            "name": "authorDid",
+            "required": false,
+            "in": "query",
+            "description": "Filter to this author's reviews, ordered newest first instead of community popularity.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "seasonNumber",
             "required": false,
             "in": "query",
@@ -6352,6 +6381,82 @@
         "summary": "List the Streaming Services available in a watch country, ordered by prominence",
         "tags": [
           "streaming-services"
+        ]
+      }
+    },
+    "/watch-picker": {
+      "get": {
+        "operationId": "WatchPickerController_get",
+        "parameters": [
+          {
+            "name": "minutes",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1440,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "both",
+                "movie",
+                "show"
+              ]
+            }
+          },
+          {
+            "name": "progress",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "both",
+                "start",
+                "continue"
+              ]
+            }
+          },
+          {
+            "name": "genre",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "services",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated service IDs; omitted means unrestricted",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPickerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Eligible watching sessions from your Up Next and watchlist",
+        "tags": [
+          "watch-picker"
         ]
       }
     }
@@ -11633,6 +11738,64 @@
           "uri"
         ]
       },
+      "WatchRecapHighlightDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "watchedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "path",
+          "watchedAt"
+        ]
+      },
+      "WatchRecapDto": {
+        "type": "object",
+        "properties": {
+          "movieWatches": {
+            "type": "number"
+          },
+          "episodeWatches": {
+            "type": "number"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "firstWatch": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchRecapHighlightDto"
+              }
+            ]
+          },
+          "lastWatch": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchRecapHighlightDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "movieWatches",
+          "episodeWatches",
+          "timezone",
+          "firstWatch",
+          "lastWatch"
+        ]
+      },
       "NotificationCollectionItemDto": {
         "type": "object",
         "properties": {
@@ -11666,6 +11829,9 @@
           },
           "path": {
             "type": "string"
+          },
+          "watchCount": {
+            "type": "number"
           }
         },
         "required": [
@@ -11682,6 +11848,15 @@
       "NotificationCollectionDto": {
         "type": "object",
         "properties": {
+          "recap": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchRecapDto"
+              }
+            ]
+          },
           "id": {
             "type": "string"
           },
@@ -12450,6 +12625,108 @@
         "required": [
           "country",
           "services"
+        ]
+      },
+      "PickerEpisodeDto": {
+        "type": "object",
+        "properties": {
+          "serviceIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "serviceIds",
+          "seasonNumber",
+          "episodeNumber",
+          "name"
+        ]
+      },
+      "WatchPickerItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "mediaId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "posterPath": {
+            "type": "string"
+          },
+          "minutes": {
+            "type": "number"
+          },
+          "estimated": {
+            "type": "boolean"
+          },
+          "episodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PickerEpisodeDto"
+            }
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchProviderDto"
+            }
+          },
+          "watchLink": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mediaType",
+          "mediaId",
+          "title",
+          "minutes",
+          "estimated",
+          "episodes",
+          "services"
+        ]
+      },
+      "WatchPickerResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchPickerItemDto"
+            }
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "genres"
         ]
       }
     }

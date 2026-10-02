@@ -10,6 +10,7 @@ import { CreditsSummary } from "@/components/detail/CreditsSection";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
+import { GenreLinks } from "@/components/detail/GenreLinks";
 import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
@@ -28,6 +29,7 @@ import {
 	posterUrl,
 	yearFromDate,
 } from "@/lib/tmdb";
+import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { webMediaUrl } from "@/lib/web-url";
 
@@ -45,6 +47,11 @@ export default function MovieDetailScreen() {
 		...moviesControllerGetMovieDetailsOptions({ path: { movieId: id } }),
 		enabled: Boolean(id),
 	});
+	const { data: mediaRating } = useMediaRating({
+		mediaType: "movie",
+		mediaId: id,
+	});
+	const rating = mediaRating?.averageRating ?? data?.vote_average;
 	const { refreshing, onRefresh } = useRefreshActiveQueries();
 
 	return (
@@ -75,15 +82,15 @@ export default function MovieDetailScreen() {
 						title={data.title}
 						backdropUrl={backdropUrl(data.backdrop_path)}
 						posterUrl={posterUrl(data.poster_path)}
-						rating={data.vote_average}
+						rating={rating}
 					>
 						<MetadataPills
 							items={[
 								yearFromDate(data.release_date),
 								formatRuntime(data.runtime),
-								...(data.genres ?? []).map((g) => g.name),
 							]}
 						/>
+						<GenreLinks genres={data.genres} mediaType="movie" />
 					</DetailHero>
 
 					{/* Shelf, watchlist and secondary tiles form one action cluster,
@@ -124,7 +131,11 @@ export default function MovieDetailScreen() {
 							},
 							{
 								label: "Genres",
-								value: data.genres?.map((g) => g.name).join(", ") || "N/A",
+								value: data.genres?.length ? (
+									<GenreLinks genres={data.genres} mediaType="movie" compact />
+								) : (
+									"N/A"
+								),
 							},
 						]}
 					/>

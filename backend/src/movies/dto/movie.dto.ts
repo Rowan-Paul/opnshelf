@@ -1,6 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsDateString, IsInt, IsOptional, IsString } from "class-validator";
+import {
+	IsDateString,
+	IsInt,
+	IsOptional,
+	IsString,
+	Min,
+} from "class-validator";
 import { PaginationMetaDto } from "../../common/pagination";
 
 export class MovieColorsDto {
@@ -121,6 +127,13 @@ export class SearchMoviesDto {
 }
 
 export class DiscoverMoviesDto {
+	@ApiPropertyOptional({ description: "Filter by TMDB genre ID", minimum: 1 })
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@Type(() => Number)
+	genreId?: number;
+
 	@ApiPropertyOptional({
 		description: "Sort order for results",
 		enum: [

@@ -358,6 +358,14 @@ export class MediaReviewsQueryDto extends PageQueryDto {
 	mediaId: string;
 
 	@ApiPropertyOptional({
+		description:
+			"Filter to this author's reviews, ordered newest first instead of community popularity.",
+	})
+	@IsOptional()
+	@IsString()
+	authorDid?: string;
+
+	@ApiPropertyOptional({
 		description: "Season number for season/episode items",
 	})
 	@IsOptional()

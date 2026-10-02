@@ -136,6 +136,10 @@ export default function RootLayout() {
 						name="list/[handle]/[slug]"
 						options={{ headerShown: true }}
 					/>
+					<Stack.Screen
+						name="pick-for-me"
+						options={{ headerShown: true, title: "Pick for me" }}
+					/>
 					<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
 					<Stack.Screen
 						name="atstore-review"
