@@ -130,6 +130,86 @@ export class ShowProgressService {
 		showIdFilter?: string,
 		services?: string,
 	) {
+		const matchingItems = await this.loadUserUpNext(
+			userDid,
+			showIdFilter,
+			services,
+		);
+		const dir = sortOrder === "asc" ? 1 : -1;
+		matchingItems.sort((a, b) => {
+			switch (sortBy) {
+				case "title":
+					return dir * a.show.title.localeCompare(b.show.title);
+				case "progress": {
+					const pA =
+						a.totalEpisodes > 0 ? a.episodesWatched / a.totalEpisodes : 0;
+					const pB =
+						b.totalEpisodes > 0 ? b.episodesWatched / b.totalEpisodes : 0;
+					return dir * (pA - pB);
+				}
+				default:
+					// ADR 0037: undated Watches sort after dated ones whichever way
+					// the list runs, so this comparison sits outside `dir`.
+					if (a.isUndated !== b.isUndated) return a.isUndated ? 1 : -1;
+					return (
+						dir *
+						(new Date(a.latestWatchedDate).getTime() -
+							new Date(b.latestWatchedDate).getTime())
+					);
+			}
+		});
+
+		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
+		const total = matchingItems.length;
+		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
+		const requestedPage = Math.max(page, 1);
+		const currentPage =
+			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+		const start = (currentPage - 1) * safePageSize;
+		const pagedItems = (
+			totalPages > 0 ? matchingItems.slice(start, start + safePageSize) : []
+		).map(({ isUndated: _isUndated, ...item }) => item);
+		await Promise.all(
+			pagedItems.map(async (item) => {
+				item.show.colors =
+					(await this.catalogue.ensureShowHasColors(item.showId)) ?? undefined;
+			}),
+		);
+
+		return {
+			items: pagedItems,
+			total,
+			page: currentPage,
+			pageSize: safePageSize,
+			totalPages,
+			hasPreviousPage: totalPages > 0 && currentPage > 1,
+			hasNextPage: totalPages > 0 && currentPage < totalPages,
+		};
+	}
+
+	/** Complete next-episode positions for internal consumers, without page decoration. */
+	async getUserUpNextPositions(userDid: string) {
+		const items = await this.loadUserUpNext(
+			userDid,
+			undefined,
+			undefined,
+			false,
+		);
+		return items.map(({ showId, nextEpisode }) => ({
+			showId,
+			nextEpisode: {
+				seasonNumber: nextEpisode.seasonNumber,
+				episodeNumber: nextEpisode.episodeNumber,
+			},
+		}));
+	}
+
+	private async loadUserUpNext(
+		userDid: string,
+		showIdFilter?: string,
+		services?: string,
+		warmAvailability = true,
+	) {
 		// Query 1: one anchor per show via Prisma distinct (S0 excluded, tie-broken)
 		const anchors = (await this.prisma.trackedEpisode.findMany({
 			where: {
@@ -146,17 +226,7 @@ export class ShowProgressService {
 			include: { show: true },
 		})) as TrackedEpisodeWithShow[];
 
-		if (anchors.length === 0) {
-			return {
-				items: [],
-				total: 0,
-				page: 1,
-				pageSize: Math.min(Math.max(pageSize, 1), 50),
-				totalPages: 0,
-				hasPreviousPage: false,
-				hasNextPage: false,
-			};
-		}
+		if (anchors.length === 0) return [];
 
 		const showIds = anchors.map((a) => a.showId);
 		const now = new Date();
@@ -317,7 +387,7 @@ export class ShowProgressService {
 		// Warm the same season/show keys on ordinary loads. Only a filtered
 		// request depends on availability, so a TMDB outage cannot hide the queue.
 		const availability = Promise.allSettled(
-			items.map((item) =>
+			(services || warmAvailability ? items : []).map((item) =>
 				this.tmdb.getUpNextAvailability(
 					item.showId,
 					item.nextEpisode.seasonNumber,
@@ -342,7 +412,7 @@ export class ShowProgressService {
 					(service) => serviceIds.includes(service.provider_id),
 				);
 			});
-		} else {
+		} else if (warmAvailability) {
 			void availability.then((results) => {
 				if (results.some((result) => result.status === "rejected")) {
 					this.logger.warn("Could not warm some Up Next availability reads");
@@ -350,56 +420,7 @@ export class ShowProgressService {
 			});
 		}
 
-		const dir = sortOrder === "asc" ? 1 : -1;
-		matchingItems.sort((a, b) => {
-			switch (sortBy) {
-				case "title":
-					return dir * a.show.title.localeCompare(b.show.title);
-				case "progress": {
-					const pA =
-						a.totalEpisodes > 0 ? a.episodesWatched / a.totalEpisodes : 0;
-					const pB =
-						b.totalEpisodes > 0 ? b.episodesWatched / b.totalEpisodes : 0;
-					return dir * (pA - pB);
-				}
-				default:
-					// ADR 0037: undated Watches sort after dated ones whichever way
-					// the list runs, so this comparison sits outside `dir`.
-					if (a.isUndated !== b.isUndated) return a.isUndated ? 1 : -1;
-					return (
-						dir *
-						(new Date(a.latestWatchedDate).getTime() -
-							new Date(b.latestWatchedDate).getTime())
-					);
-			}
-		});
-
-		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
-		const total = matchingItems.length;
-		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
-		const requestedPage = Math.max(page, 1);
-		const currentPage =
-			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
-		const start = (currentPage - 1) * safePageSize;
-		const pagedItems = (
-			totalPages > 0 ? matchingItems.slice(start, start + safePageSize) : []
-		).map(({ isUndated: _isUndated, ...item }) => item);
-		await Promise.all(
-			pagedItems.map(async (item) => {
-				item.show.colors =
-					(await this.catalogue.ensureShowHasColors(item.showId)) ?? undefined;
-			}),
-		);
-
-		return {
-			items: pagedItems,
-			total,
-			page: currentPage,
-			pageSize: safePageSize,
-			totalPages,
-			hasPreviousPage: totalPages > 0 && currentPage > 1,
-			hasNextPage: totalPages > 0 && currentPage < totalPages,
-		};
+		return matchingItems;
 	}
 
 	async getUserReleaseCalendar(

@@ -19,7 +19,7 @@ describe("Pick for me", () => {
 		getSeasonDetails: vi.fn(),
 		getUpNextAvailability: vi.fn(),
 	};
-	const progress = { getUserUpNext: vi.fn() };
+	const progress = { getUserUpNextPositions: vi.fn() };
 	let service: WatchPickerService;
 	const netflix = {
 		provider_id: 8,
@@ -44,7 +44,7 @@ describe("Pick for me", () => {
 			],
 		});
 		prisma.trackedEpisode.findMany.mockResolvedValue([]);
-		progress.getUserUpNext.mockResolvedValue({ items: [], hasNextPage: false });
+		progress.getUserUpNextPositions.mockResolvedValue([]);
 		movies.getMovieDetails.mockResolvedValue({
 			title: "Movie",
 			runtime: 120,
@@ -91,24 +91,18 @@ describe("Pick for me", () => {
 			["movie", 120, 0],
 		]);
 	});
-	it("includes later Up Next pages and deduplicates watchlist shows", async () => {
+	it("loads the complete Up Next queue once and deduplicates watchlist shows", async () => {
 		prisma.trackedEpisode.findMany.mockResolvedValue([
 			{ showId: "1", seasonNumber: 1, episodeNumber: 1 },
 		]);
-		progress.getUserUpNext
-			.mockResolvedValueOnce({
-				items: [
-					{ showId: "1", nextEpisode: { seasonNumber: 1, episodeNumber: 2 } },
-				],
-				hasNextPage: true,
-			})
-			.mockResolvedValueOnce({
-				items: [
-					{ showId: "3", nextEpisode: { seasonNumber: 1, episodeNumber: 1 } },
-				],
-				hasNextPage: false,
-			});
+		progress.getUserUpNextPositions.mockResolvedValue([
+			{ showId: "1", nextEpisode: { seasonNumber: 1, episodeNumber: 2 } },
+			{ showId: "3", nextEpisode: { seasonNumber: 1, episodeNumber: 1 } },
+		]);
 		const result = await service.get("did:plc:test", { minutes: 180 });
+		expect(progress.getUserUpNextPositions).toHaveBeenCalledExactlyOnceWith(
+			"did:plc:test",
+		);
 		expect(result.items.filter((i) => i.id === "show:1")).toHaveLength(1);
 		expect(
 			result.items.find((i) => i.id === "show:1")?.episodes[0].episodeNumber,

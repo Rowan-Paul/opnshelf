@@ -49,12 +49,9 @@ export class WatchPickerService {
 			}),
 		]);
 		const next = new Map<string, EpisodePosition>();
-		// Read every page so selection is independent of the queue page the client loaded.
-		for (let page = 1; ; page++) {
-			const result = await this.progress.getUserUpNext(userDid, page, 50);
-			for (const item of result.items) next.set(item.showId, item.nextEpisode);
-			if (!result.hasNextPage) break;
-		}
+		// Load the complete queue once, without pagination or presentation work.
+		for (const item of await this.progress.getUserUpNextPositions(userDid))
+			next.set(item.showId, item.nextEpisode);
 		const pool = new Map<string, Candidate>();
 		for (const mediaId of next.keys())
 			pool.set(`show:${mediaId}`, { mediaType: "show", mediaId });
