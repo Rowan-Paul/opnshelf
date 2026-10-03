@@ -132,6 +132,8 @@ function EpisodeDetailPage() {
 		markEpisodeWatched,
 		unmarkEpisodeWatched,
 		deleteEpisodeWatchHistoryEntry,
+		updateEpisodeWatchDate,
+		updatingEpisodeWatchIds,
 		isMarkEpisodePending,
 		isUnmarkEpisodePending,
 		isDeleteEpisodeHistoryPending,
@@ -510,6 +512,8 @@ function EpisodeDetailPage() {
 						{/* Your Activity */}
 						{isAuthenticated && (
 							<YourActivity
+								onEditEntry={updateEpisodeWatchDate}
+								updatingEntryIds={updatingEpisodeWatchIds}
 								watchHistory={episodeWatchHistory}
 								onAddToShelf={(watchedAt) =>
 									markEpisodeWatched(seasonNum, episodeNum, watchedAt)

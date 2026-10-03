@@ -1,3 +1,4 @@
+import { UpdateWatchDateDto } from "../common/update-watch-date.dto";
 import {
 	Body,
 	ForbiddenException,
@@ -9,6 +10,7 @@ import {
 	HttpStatus,
 	Logger,
 	Param,
+	Patch,
 	Post,
 	Query,
 	Req,
@@ -432,6 +434,28 @@ export class ShowsController {
 			seasonNumber: item.seasonNumber,
 			episodeNumber: item.episodeNumber,
 		}));
+	}
+
+	@Patch("history/:trackedEpisodeId")
+	@UseGuards(AuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({ summary: "Correct the date of an existing Watch" })
+	@ApiBody({ type: UpdateWatchDateDto })
+	@ApiResponse({ status: 204, description: "Watch date updated" })
+	@ApiResponse({ status: 400, description: "Invalid or future watch date" })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	@ApiResponse({ status: 404, description: "Watch not found" })
+	async updateEpisodeWatchDate(
+		@Param("trackedEpisodeId") id: string,
+		@Body() body: UpdateWatchDateDto,
+		@Req() req: AuthenticatedRequest,
+	) {
+		await this.showsService.updateEpisodeWatchDate(
+			req.user.did,
+			req.user.session as ATSession,
+			id,
+			body.watchedAt,
+		);
 	}
 
 	@Delete("history/:trackedEpisodeId")
