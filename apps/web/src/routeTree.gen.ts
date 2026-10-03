@@ -30,6 +30,7 @@ import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
+import { Route as AdminFeaturedRouteImport } from './routes/admin.featured'
 import { Route as SocialCirclesIndexRouteImport } from './routes/social/circles/index'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
 import { Route as SocialCirclesCircleIdRouteImport } from './routes/social/circles/$circleId'
@@ -157,6 +158,11 @@ const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
   path: '/auth/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFeaturedRoute = AdminFeaturedRouteImport.update({
+  id: '/admin/featured',
+  path: '/admin/featured',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SocialCirclesIndexRoute = SocialCirclesIndexRouteImport.update({
@@ -300,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/admin/featured': typeof AdminFeaturedRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
@@ -344,6 +351,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/admin/featured': typeof AdminFeaturedRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/settings/$section': typeof SettingsSectionRoute
@@ -387,6 +395,7 @@ export interface FileRoutesById {
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/admin/featured': typeof AdminFeaturedRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
@@ -435,6 +444,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tos'
     | '/trakt-import'
+    | '/admin/featured'
     | '/auth/complete'
     | '/embed/review-editor'
     | '/profile/$handle'
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tos'
     | '/trakt-import'
+    | '/admin/featured'
     | '/auth/complete'
     | '/embed/review-editor'
     | '/settings/$section'
@@ -521,6 +532,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tos'
     | '/trakt-import'
+    | '/admin/featured'
     | '/auth/complete'
     | '/embed/review-editor'
     | '/profile/$handle'
@@ -568,6 +580,7 @@ export interface RootRouteChildren {
   SocialRoute: typeof SocialRouteWithChildren
   TosRoute: typeof TosRoute
   TraktImportRoute: typeof TraktImportRoute
+  AdminFeaturedRoute: typeof AdminFeaturedRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
@@ -728,6 +741,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/complete'
       fullPath: '/auth/complete'
       preLoaderRoute: typeof AuthCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/featured': {
+      id: '/admin/featured'
+      path: '/admin/featured'
+      fullPath: '/admin/featured'
+      preLoaderRoute: typeof AdminFeaturedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/social/circles/': {
@@ -1011,6 +1031,7 @@ const rootRouteChildren: RootRouteChildren = {
   SocialRoute: SocialRouteWithChildren,
   TosRoute: TosRoute,
   TraktImportRoute: TraktImportRoute,
+  AdminFeaturedRoute: AdminFeaturedRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,

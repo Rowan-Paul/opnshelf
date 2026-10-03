@@ -27,6 +27,13 @@ export const envSchema = z.object({
 		z.url({ protocol: /^postgres(ql)?$/ }),
 		"PostgreSQL connection string.",
 	),
+	FEATURED_ADMIN_DID: z
+		.string()
+		.regex(/^did:[a-z]+:[A-Za-z0-9._:%-]+$/)
+		.optional()
+		.describe(
+			"Non-secret DID of the sole Featured Content editor; unset disables editorial access.",
+		),
 	TMDB_API_KEY: production(text, "TMDB API key for catalogue reads."),
 	PDS_URL: production(httpUrl, "Tranquil Personal Data Server URL."),
 	PDS_HANDLE_DOMAIN: production(

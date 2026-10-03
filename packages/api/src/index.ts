@@ -21,6 +21,11 @@ export {
 	setOnUnauthorized,
 	setSessionToken,
 } from "./client";
+export {
+	activeFeaturedItems,
+	featuredMediaPath,
+	featuredTitle,
+} from "./featured-content";
 export { nameExceptionIssue } from "./exception-issue-name";
 // Export TanStack Query hooks
 export * from "./generated/@tanstack/react-query.gen";

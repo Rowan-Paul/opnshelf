@@ -3,6 +3,7 @@ import {
 	discoverControllerFromFollowsOptions,
 	discoverControllerPopularOnYourServicesOptions,
 	discoverControllerTrendingOptions,
+	featuredControllerSelectionOptions,
 	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
 	parseGenreDiscovery,
@@ -39,6 +40,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
+import { FeaturedContent } from "#/components/featured/FeaturedContent";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { Pagination } from "#/components/Pagination";
 import { GenreDiscover } from "#/components/search/GenreDiscover";
@@ -75,6 +77,13 @@ import { buildPersonUrl } from "#/lib/url-utils";
 
 export const Route = createFileRoute("/search")({
 	component: SearchPage,
+	loaderDeps: ({ search }) => ({ q: search.q, genre: search.genre }),
+	loader: async ({ context, deps }) => {
+		if (!deps.q && !deps.genre)
+			await context.queryClient
+				.ensureQueryData(featuredControllerSelectionOptions())
+				.catch(() => undefined);
+	},
 	validateSearch: searchRouteSchema,
 	head: ({ match }) => {
 		const q = match.search.q;
@@ -452,6 +461,7 @@ function KeywordSearchPage() {
 				onChange={handleTabChange}
 			/>
 
+			{!hasQuery && <FeaturedContent />}
 			{hasQuery ? (
 				isLoading ? (
 					activeTab === "people" || activeTab === "cast" ? (
