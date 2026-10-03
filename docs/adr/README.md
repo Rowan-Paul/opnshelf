@@ -60,3 +60,4 @@ Numbering notes:
 | [0040-list-membership-is-read-once-per-viewer.md](0040-list-membership-is-read-once-per-viewer.md) | 0040 | List membership is read once per viewer, not per item | Accepted and implemented |
 | [0041-redis-caches-tmdb-reads-across-restarts.md](0041-redis-caches-tmdb-reads-across-restarts.md) | 0041 | Redis caches TMDB reads across restarts | Accepted and implemented; supersedes the reasoning that closed issue #67 |
 | [0042-watch-date-corrections-preserve-identity.md](0042-watch-date-corrections-preserve-identity.md) | 0042 | Watch date corrections preserve identity | Accepted; implemented |
+| [0043-featured-content-is-service-owned.md](0043-featured-content-is-service-owned.md) | 0043 | Featured Content is owned by the service | Accepted and implemented |

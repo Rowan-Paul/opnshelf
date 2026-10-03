@@ -2820,6 +2820,71 @@ export type StreamingServicesResponseDto = {
     services: Array<StreamingServiceDto>;
 };
 
+export type FeaturedDto = {
+    id: string;
+    mediaType: 'movie' | 'show' | 'season';
+    mediaId: number;
+    seasonNumber: number | null;
+    title: string;
+    posterPath: string | null;
+    message: string;
+    sourceUrl: string | null;
+    sourceLabel: string | null;
+    expiresAt: string;
+    active: boolean;
+};
+
+export type FeaturedSelectionDto = {
+    items: Array<FeaturedDto>;
+};
+
+export type FeaturedAccessDto = {
+    canEdit: boolean;
+};
+
+export type FeaturedPageDto = {
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<FeaturedDto>;
+};
+
+export type PublishFeaturedDto = {
+    published?: boolean;
+    mediaType: 'movie' | 'show' | 'season';
+    mediaId: number;
+    seasonNumber?: number | null;
+    message: string;
+    sourceUrl?: string | null;
+    sourceLabel?: 'Watch trailer' | 'Read announcement';
+    expiresAt: string;
+};
+
+export type ReorderFeaturedDto = {
+    ids: Array<string>;
+};
+
 export type PickerEpisodeDto = {
     serviceIds: Array<number>;
     seasonNumber: number;
@@ -6468,6 +6533,111 @@ export type StreamingServicesControllerListResponses = {
 };
 
 export type StreamingServicesControllerListResponse = StreamingServicesControllerListResponses[keyof StreamingServicesControllerListResponses];
+
+export type FeaturedControllerSelectionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/featured';
+};
+
+export type FeaturedControllerSelectionResponses = {
+    200: FeaturedSelectionDto;
+};
+
+export type FeaturedControllerSelectionResponse = FeaturedControllerSelectionResponses[keyof FeaturedControllerSelectionResponses];
+
+export type FeaturedControllerAccessData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/featured/access';
+};
+
+export type FeaturedControllerAccessResponses = {
+    200: FeaturedAccessDto;
+};
+
+export type FeaturedControllerAccessResponse = FeaturedControllerAccessResponses[keyof FeaturedControllerAccessResponses];
+
+export type FeaturedControllerListData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        status?: 'active' | 'inactive';
+    };
+    url: '/featured/manage';
+};
+
+export type FeaturedControllerListResponses = {
+    200: FeaturedPageDto;
+};
+
+export type FeaturedControllerListResponse = FeaturedControllerListResponses[keyof FeaturedControllerListResponses];
+
+export type FeaturedControllerPublishData = {
+    body: PublishFeaturedDto;
+    path?: never;
+    query?: never;
+    url: '/featured/manage';
+};
+
+export type FeaturedControllerPublishResponses = {
+    201: FeaturedDto;
+};
+
+export type FeaturedControllerPublishResponse = FeaturedControllerPublishResponses[keyof FeaturedControllerPublishResponses];
+
+export type FeaturedControllerReorderData = {
+    body: ReorderFeaturedDto;
+    path?: never;
+    query?: never;
+    url: '/featured/manage/order';
+};
+
+export type FeaturedControllerReorderResponses = {
+    204: void;
+};
+
+export type FeaturedControllerReorderResponse = FeaturedControllerReorderResponses[keyof FeaturedControllerReorderResponses];
+
+export type FeaturedControllerRemoveData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/featured/manage/{id}';
+};
+
+export type FeaturedControllerRemoveResponses = {
+    204: void;
+};
+
+export type FeaturedControllerRemoveResponse = FeaturedControllerRemoveResponses[keyof FeaturedControllerRemoveResponses];
+
+export type FeaturedControllerUpdateData = {
+    body: PublishFeaturedDto;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/featured/manage/{id}';
+};
+
+export type FeaturedControllerUpdateResponses = {
+    200: FeaturedDto;
+};
+
+export type FeaturedControllerUpdateResponse = FeaturedControllerUpdateResponses[keyof FeaturedControllerUpdateResponses];
 
 export type WatchPickerControllerGetData = {
     body?: never;

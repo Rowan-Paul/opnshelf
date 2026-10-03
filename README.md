@@ -145,6 +145,7 @@ Notes:
 | `NODE_ENV` | Defaulted | Runtime mode; defaults to development. |
 | `PORT` | Defaulted | HTTP listening port; defaults to 3001. |
 | `DATABASE_URL` | Required in production | PostgreSQL connection string. |
+| `FEATURED_ADMIN_DID` | Optional | Non-secret DID of the sole Featured Content editor; unset disables editorial access. |
 | `TMDB_API_KEY` | Required in production | TMDB API key for catalogue reads. |
 | `PDS_URL` | Required in production | Tranquil Personal Data Server URL. |
 | `PDS_HANDLE_DOMAIN` | Required in production | Handle domain served by the PDS. |

@@ -411,7 +411,8 @@ export const ModelName = {
   Publication: 'Publication',
   Rating: 'Rating',
   ReviewLike: 'ReviewLike',
-  Feedback: 'Feedback'
+  Feedback: 'Feedback',
+  FeaturedContent: 'FeaturedContent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -427,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "traktImportItem" | "traktImportMatch" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback"
+    modelProps: "user" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "traktImportItem" | "traktImportMatch" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2503,6 +2504,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FeaturedContent: {
+      payload: Prisma.$FeaturedContentPayload<ExtArgs>
+      fields: Prisma.FeaturedContentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FeaturedContentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FeaturedContentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>
+        }
+        findFirst: {
+          args: Prisma.FeaturedContentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FeaturedContentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>
+        }
+        findMany: {
+          args: Prisma.FeaturedContentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>[]
+        }
+        create: {
+          args: Prisma.FeaturedContentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>
+        }
+        createMany: {
+          args: Prisma.FeaturedContentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FeaturedContentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>[]
+        }
+        delete: {
+          args: Prisma.FeaturedContentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>
+        }
+        update: {
+          args: Prisma.FeaturedContentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>
+        }
+        deleteMany: {
+          args: Prisma.FeaturedContentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FeaturedContentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FeaturedContentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>[]
+        }
+        upsert: {
+          args: Prisma.FeaturedContentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FeaturedContentPayload>
+        }
+        aggregate: {
+          args: Prisma.FeaturedContentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFeaturedContent>
+        }
+        groupBy: {
+          args: Prisma.FeaturedContentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FeaturedContentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FeaturedContentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FeaturedContentCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -3032,6 +3107,26 @@ export const FeedbackScalarFieldEnum = {
 export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
 
 
+export const FeaturedContentScalarFieldEnum = {
+  id: 'id',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
+  seasonNumber: 'seasonNumber',
+  title: 'title',
+  posterPath: 'posterPath',
+  message: 'message',
+  sourceUrl: 'sourceUrl',
+  sourceLabel: 'sourceLabel',
+  published: 'published',
+  expiresAt: 'expiresAt',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FeaturedContentScalarFieldEnum = (typeof FeaturedContentScalarFieldEnum)[keyof typeof FeaturedContentScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -3342,6 +3437,7 @@ export type GlobalOmitConfig = {
   rating?: Prisma.RatingOmit
   reviewLike?: Prisma.ReviewLikeOmit
   feedback?: Prisma.FeedbackOmit
+  featuredContent?: Prisma.FeaturedContentOmit
 }
 
 /* Types for Logging */
