@@ -3,12 +3,9 @@ import { createHash } from "node:crypto";
 /**
  * Derive a DETERMINISTIC AT Protocol rkey for a Watch record.
  *
- * The same logical Watch (same item + same watched date) always maps to the
- * same rkey, so re-importing an item that already exists in the PDS is an
- * idempotent overwrite (via putRecord / applyWrites with a fixed rkey) rather
- * than a duplicate create. This is the mechanism that makes the Trakt history
- * import crash-safe: a partial run that wrote to the PDS but not the local DB
- * can be re-run without producing duplicate Watches.
+ * The original import item and timestamp choose its creation key. Recovery
+ * recognizes that key without overwriting existing content: a User may have
+ * corrected the date since import. Date edits never recompute it (ADR 0042).
  *
  * IMPORTANT — rewatches: the watched date is part of the key material, so two
  * genuinely different watches of the same item (different dates) map to

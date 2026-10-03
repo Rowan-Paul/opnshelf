@@ -146,3 +146,52 @@ describe("WatchDatePickerModal", () => {
 		expect(picker.props.value.getTime()).toBeGreaterThan(picked.getTime());
 	});
 });
+
+describe("editing a Watch", () => {
+	function edit(initialWatchedAt: string | null) {
+		const onConfirm = vi.fn();
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(
+				<WatchDatePickerModal
+					visible
+					initialWatchedAt={initialWatchedAt}
+					timeZone="Europe/Amsterdam"
+					onDismiss={vi.fn()}
+					onConfirm={onConfirm}
+				/>,
+			);
+		});
+		return { renderer, onConfirm };
+	}
+	function save(renderer: ReactTestRenderer) {
+		const button = renderer.root.findAll(
+			(node) =>
+				node.props.label === "Save" && typeof node.props.onPress === "function",
+		)[0];
+		act(() => button.props.onPress());
+	}
+	it("preserves an unchanged timestamp and uses the saved timezone", () => {
+		const { renderer, onConfirm } = edit("2020-07-04T18:15:42.123Z");
+		expect(
+			renderer.root.findByType("datetimepicker" as never).props.timeZoneName,
+		).toBe("Europe/Amsterdam");
+		save(renderer);
+		expect(onConfirm).toHaveBeenCalledWith("2020-07-04T18:15:42.123Z");
+	});
+	it("only clears the date after Save", () => {
+		const { renderer, onConfirm } = edit("2020-07-04T18:15:42.123Z");
+		act(() => findNoDatePressable(renderer)?.props.onPress());
+		expect(onConfirm).not.toHaveBeenCalled();
+		save(renderer);
+		expect(onConfirm).toHaveBeenCalledWith(null);
+	});
+	it("opens an undated Watch with No date selected", () => {
+		const { renderer, onConfirm } = edit(null);
+		expect(renderer.root.findAllByType("datetimepicker" as never)).toHaveLength(
+			0,
+		);
+		save(renderer);
+		expect(onConfirm).toHaveBeenCalledWith(null);
+	});
+});

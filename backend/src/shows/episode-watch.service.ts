@@ -1,5 +1,6 @@
 import { Agent } from "@atproto/api";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { updateWatchDate } from "../common/update-watch-date";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import { $nsid as COLLECTION } from "../lexicons/xyz/opnshelf/episode";
 import type { Main as EpisodeRecord } from "../lexicons/xyz/opnshelf/episode.defs";
@@ -76,6 +77,37 @@ export class EpisodeWatchService {
 		};
 	}
 
+	async updateEpisodeWatchDate(
+		userDid: string,
+		session: ATSession,
+		id: string,
+		watchedAt: string | null,
+	) {
+		const tracked = await this.prisma.trackedEpisode.findFirst({
+			where: { id, userDid },
+		});
+		if (!tracked) throw new NotFoundException("Watch not found");
+		const data = await updateWatchDate(
+			session,
+			COLLECTION,
+			tracked.rkey,
+			watchedAt,
+		);
+		try {
+			await this.prisma.trackedEpisode.updateMany({
+				// Do not let a delayed response replace an index already advanced
+				// by another edit or the ingester. The PDS still uses last-write-wins.
+				where: { id, userDid, cid: tracked.cid },
+				data,
+			});
+		} catch (error) {
+			this.logger.warn(
+				{ err: error instanceof Error ? error.message : String(error) },
+				"Failed to index Watch correction; firehose will catch it",
+			);
+		}
+	}
+
 	async indexTrackedEpisode(
 		uri: string,
 		cid: string,
@@ -85,6 +117,7 @@ export class EpisodeWatchService {
 		seasonNumber: number,
 		episodeNumber: number,
 		watchedAt: string | undefined,
+		preserveExisting = false,
 	) {
 		const showData = await this.showsTmdb.getShowDetails(showId);
 
@@ -111,10 +144,8 @@ export class EpisodeWatchService {
 				),
 			);
 
-		// Upsert keyed on the repository-qualified rkey so a re-run of an import (e.g. after a
-		// crash between the PDS write and this DB write) overwrites rather than
-		// duplicates. Stays consistent with the firehose ingester, the other
-		// writer of this row, which uses the same owner-qualified identity.
+		// Match the ingester's owner-qualified identity. Import recovery fills
+		// missing rows but must leave any already-indexed corrections intact.
 		return this.prisma.trackedEpisode.upsert({
 			where: { userDid_rkey: { userDid, rkey } },
 			create: {
@@ -128,15 +159,17 @@ export class EpisodeWatchService {
 				watchedDate: watchedAt ? new Date(watchedAt) : null,
 				status: "watched",
 			},
-			update: {
-				uri,
-				cid,
-				showId: normalizedShowId,
-				seasonNumber,
-				episodeNumber,
-				watchedDate: watchedAt ? new Date(watchedAt) : null,
-				status: "watched",
-			},
+			update: preserveExisting
+				? {}
+				: {
+						uri,
+						cid,
+						showId: normalizedShowId,
+						seasonNumber,
+						episodeNumber,
+						watchedDate: watchedAt ? new Date(watchedAt) : null,
+						status: "watched",
+					},
 			include: { show: true },
 		});
 	}
