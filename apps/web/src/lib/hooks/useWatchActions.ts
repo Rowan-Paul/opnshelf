@@ -1,11 +1,13 @@
 import {
 	invalidateWatchActivityQueries,
+	type MoviesControllerUpdateMovieWatchDateData,
 	type MovieWatchCountDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetUserMovieWatchCountsQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
 	moviesControllerUpdateMovieWatchDateMutation,
+	type ShowsControllerUpdateEpisodeWatchDateData,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetSeasonDetailsQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
@@ -16,7 +18,11 @@ import {
 	withMovieWatch,
 	withoutMovieWatches,
 } from "@opnshelf/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useMutationState,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
@@ -113,6 +119,37 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			toast.error("Couldn't update the Watch date. Please try again.");
 		},
 		onSettled: invalidateActivity,
+	});
+
+	// A mutation observer only exposes its latest invocation. Read the cache so
+	// every in-flight row stays pending even when another Watch is saved.
+	const updatingMovieWatchIds = useMutationState({
+		filters: {
+			mutationKey: ["movies", movieId, "updateWatchDate"],
+			exact: true,
+			status: "pending",
+		},
+		select: (mutation) =>
+			(
+				mutation.state.variables as Pick<
+					MoviesControllerUpdateMovieWatchDateData,
+					"path"
+				>
+			).path.trackedMovieId,
+	});
+	const updatingEpisodeWatchIds = useMutationState({
+		filters: {
+			mutationKey: ["shows", showId, "updateWatchDate"],
+			exact: true,
+			status: "pending",
+		},
+		select: (mutation) =>
+			(
+				mutation.state.variables as Pick<
+					ShowsControllerUpdateEpisodeWatchDateData,
+					"path"
+				>
+			).path.trackedEpisodeId,
 	});
 
 	// Movie mutations
@@ -455,12 +492,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 				path: { trackedEpisodeId: id },
 				body: { watchedAt },
 			}),
-		updatingMovieWatchId: updateMovieDate.isPending
-			? updateMovieDate.variables?.path.trackedMovieId
-			: undefined,
-		updatingEpisodeWatchId: updateEpisodeDate.isPending
-			? updateEpisodeDate.variables?.path.trackedEpisodeId
-			: undefined,
+		updatingMovieWatchIds,
+		updatingEpisodeWatchIds,
 		// Movie actions
 		markMovieWatched: handleMarkMovieWatched,
 		unmarkMovieWatched: handleUnmarkMovieWatched,

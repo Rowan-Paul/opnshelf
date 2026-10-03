@@ -16,7 +16,7 @@ interface YourActivityProps {
 	onAddToShelf: (watchedAt: string | null) => void;
 	onDeleteEntry: (id: string) => void;
 	onEditEntry?: (id: string, watchedAt: string | null) => Promise<unknown>;
-	updatingEntryId?: string;
+	updatingEntryIds?: string[];
 	isAddPending?: boolean;
 	isDeletePending?: boolean;
 }
@@ -55,7 +55,7 @@ export function YourActivity({
 	onAddToShelf,
 	onDeleteEntry,
 	onEditEntry,
-	updatingEntryId,
+	updatingEntryIds = [],
 	isAddPending = false,
 	isDeletePending = false,
 }: YourActivityProps) {
@@ -97,12 +97,12 @@ export function YourActivity({
 							{onEditEntry && (
 								<WatchDatePicker
 									initialWatchedAt={entry.watchedDate ?? null}
-									isPending={updatingEntryId === entry.id}
+									isPending={updatingEntryIds.includes(entry.id)}
 									onConfirm={(date) => onEditEntry(entry.id, date)}
 									trigger={
 										<button
 											type="button"
-											disabled={updatingEntryId === entry.id}
+											disabled={updatingEntryIds.includes(entry.id)}
 											aria-label="Edit watch date"
 											className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-(--foreground-muted) hover:bg-(--background-subtle)"
 										>
@@ -114,7 +114,9 @@ export function YourActivity({
 							<button
 								type="button"
 								onClick={() => onDeleteEntry(entry.id)}
-								disabled={isDeletePending || updatingEntryId === entry.id}
+								disabled={
+									isDeletePending || updatingEntryIds.includes(entry.id)
+								}
 								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
 								aria-label="Remove this watch"
 							>
