@@ -38,6 +38,8 @@ model User {
   // are separate because only the mobile tour carries the gestures.
   welcomeTourWebVersion    Int             @default(0)
   welcomeTourMobileVersion Int             @default(0)
+  // Account-wide Release Notes watermark; null falls back to account creation.
+  releaseNotesReadAt      DateTime?
   emailVerifiedAt         DateTime?
   // Backfill/sync tracking for the "syncing your watch history…" indicator.
   // backfillStartedAt is stamped when the user's repo is (re-)registered with

@@ -8,7 +8,8 @@
       "import": "./src/index.ts",
       "require": "./src/index.ts",
       "default": "./src/index.ts"
-    }
+    },
+    "./release-notes-react": "./src/use-release-notes.ts"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.13.1",
@@ -18,7 +19,12 @@
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.3",
     "@types/node": "^22.10.1",
+    "@types/react": "~19.2.14",
+    "react": "19.2.3",
     "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@10.28.2",
+  "peerDependencies": {
+    "react": "19.2.3"
+  }
 }

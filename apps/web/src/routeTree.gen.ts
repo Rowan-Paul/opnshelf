@@ -21,8 +21,10 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WhatsNewIndexRouteImport } from './routes/whats-new.index'
 import { Route as SocialIndexRouteImport } from './routes/social/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as WhatsNewSlugRouteImport } from './routes/whats-new.$slug'
 import { Route as SocialFindRouteImport } from './routes/social/find'
 import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 import { Route as SignupAppleRouteImport } from './routes/signup_.apple'
@@ -30,6 +32,7 @@ import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
+import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
 import { Route as AdminFeaturedRouteImport } from './routes/admin.featured'
 import { Route as SocialCirclesIndexRouteImport } from './routes/social/circles/index'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
@@ -115,6 +118,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WhatsNewIndexRoute = WhatsNewIndexRouteImport.update({
+  id: '/whats-new/',
+  path: '/whats-new/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SocialIndexRoute = SocialIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -124,6 +132,11 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SettingsRoute,
+} as any)
+const WhatsNewSlugRoute = WhatsNewSlugRouteImport.update({
+  id: '/whats-new/$slug',
+  path: '/whats-new/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SocialFindRoute = SocialFindRouteImport.update({
   id: '/find',
@@ -158,6 +171,11 @@ const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
 const AuthCompleteRoute = AuthCompleteRouteImport.update({
   id: '/auth/complete',
   path: '/auth/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReleaseNotesRoute = ApiReleaseNotesRouteImport.update({
+  id: '/api/release-notes',
+  path: '/api/release-notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFeaturedRoute = AdminFeaturedRouteImport.update({
@@ -307,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
   '/admin/featured': typeof AdminFeaturedRoute
+  '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
@@ -314,8 +333,10 @@ export interface FileRoutesByFullPath {
   '/signup/apple': typeof SignupAppleRoute
   '/signup/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
+  '/whats-new/$slug': typeof WhatsNewSlugRoute
   '/settings/': typeof SettingsIndexRoute
   '/social/': typeof SocialIndexRoute
+  '/whats-new/': typeof WhatsNewIndexRoute
   '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -352,14 +373,17 @@ export interface FileRoutesByTo {
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
   '/admin/featured': typeof AdminFeaturedRoute
+  '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/apple': typeof SignupAppleRoute
   '/signup/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
+  '/whats-new/$slug': typeof WhatsNewSlugRoute
   '/settings': typeof SettingsIndexRoute
   '/social': typeof SocialIndexRoute
+  '/whats-new': typeof WhatsNewIndexRoute
   '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -396,6 +420,7 @@ export interface FileRoutesById {
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
   '/admin/featured': typeof AdminFeaturedRoute
+  '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
@@ -403,8 +428,10 @@ export interface FileRoutesById {
   '/signup_/apple': typeof SignupAppleRoute
   '/signup_/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
+  '/whats-new/$slug': typeof WhatsNewSlugRoute
   '/settings/': typeof SettingsIndexRoute
   '/social/': typeof SocialIndexRoute
+  '/whats-new/': typeof WhatsNewIndexRoute
   '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
@@ -445,6 +472,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/trakt-import'
     | '/admin/featured'
+    | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
     | '/profile/$handle'
@@ -452,8 +480,10 @@ export interface FileRouteTypes {
     | '/signup/apple'
     | '/signup/google'
     | '/social/find'
+    | '/whats-new/$slug'
     | '/settings/'
     | '/social/'
+    | '/whats-new/'
     | '/discover/collections/$id'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -490,14 +520,17 @@ export interface FileRouteTypes {
     | '/tos'
     | '/trakt-import'
     | '/admin/featured'
+    | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
     | '/settings/$section'
     | '/signup/apple'
     | '/signup/google'
     | '/social/find'
+    | '/whats-new/$slug'
     | '/settings'
     | '/social'
+    | '/whats-new'
     | '/discover/collections/$id'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -533,6 +566,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/trakt-import'
     | '/admin/featured'
+    | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
     | '/profile/$handle'
@@ -540,8 +574,10 @@ export interface FileRouteTypes {
     | '/signup_/apple'
     | '/signup_/google'
     | '/social/find'
+    | '/whats-new/$slug'
     | '/settings/'
     | '/social/'
+    | '/whats-new/'
     | '/discover/collections/$id'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
@@ -581,11 +617,14 @@ export interface RootRouteChildren {
   TosRoute: typeof TosRoute
   TraktImportRoute: typeof TraktImportRoute
   AdminFeaturedRoute: typeof AdminFeaturedRoute
+  ApiReleaseNotesRoute: typeof ApiReleaseNotesRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   SignupAppleRoute: typeof SignupAppleRoute
   SignupGoogleRoute: typeof SignupGoogleRoute
+  WhatsNewSlugRoute: typeof WhatsNewSlugRoute
+  WhatsNewIndexRoute: typeof WhatsNewIndexRoute
   DiscoverCollectionsIdRoute: typeof DiscoverCollectionsIdRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ReviewsHandleRkeyRoute: typeof ReviewsHandleRkeyRoute
@@ -680,6 +719,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/whats-new/': {
+      id: '/whats-new/'
+      path: '/whats-new'
+      fullPath: '/whats-new/'
+      preLoaderRoute: typeof WhatsNewIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/social/': {
       id: '/social/'
       path: '/'
@@ -693,6 +739,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
+    }
+    '/whats-new/$slug': {
+      id: '/whats-new/$slug'
+      path: '/whats-new/$slug'
+      fullPath: '/whats-new/$slug'
+      preLoaderRoute: typeof WhatsNewSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/social/find': {
       id: '/social/find'
@@ -741,6 +794,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/complete'
       fullPath: '/auth/complete'
       preLoaderRoute: typeof AuthCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/release-notes': {
+      id: '/api/release-notes'
+      path: '/api/release-notes'
+      fullPath: '/api/release-notes'
+      preLoaderRoute: typeof ApiReleaseNotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/featured': {
@@ -1032,11 +1092,14 @@ const rootRouteChildren: RootRouteChildren = {
   TosRoute: TosRoute,
   TraktImportRoute: TraktImportRoute,
   AdminFeaturedRoute: AdminFeaturedRoute,
+  ApiReleaseNotesRoute: ApiReleaseNotesRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   SignupAppleRoute: SignupAppleRoute,
   SignupGoogleRoute: SignupGoogleRoute,
+  WhatsNewSlugRoute: WhatsNewSlugRoute,
+  WhatsNewIndexRoute: WhatsNewIndexRoute,
   DiscoverCollectionsIdRoute: DiscoverCollectionsIdRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ReviewsHandleRkeyRoute: ReviewsHandleRkeyRoute,

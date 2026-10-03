@@ -88,7 +88,13 @@ export default function Footer() {
 					<p className="text-(--foreground-subtle) text-sm">
 						&copy; {year} Opnshelf. All rights reserved.
 					</p>
-					<div className="flex items-center gap-4">
+					<div className="flex flex-wrap items-center justify-center gap-4">
+						<Link
+							to="/whats-new"
+							className="text-(--foreground-subtle) text-xs hover:text-(--foreground)"
+						>
+							What’s new
+						</Link>
 						<Link
 							to="/tos"
 							className="text-(--foreground-subtle) text-xs hover:text-(--foreground)"

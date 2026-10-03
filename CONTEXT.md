@@ -4,6 +4,10 @@ A social media tracking and review platform where users log, rate, and review mo
 
 ## Language
 
+**Release Notes**:
+Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
+_Avoid_: Notification (reserved for media and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
+
 **Rating**:
 A user's numeric 1–10 score for a specific media item, with no text. Its own first-class entity. Each user has at most one Rating per media item. A Rating can exist with no Review and a Review with no Rating — the two are independent.
 _Avoid_: Review (a Review is the long-form text, not the score)

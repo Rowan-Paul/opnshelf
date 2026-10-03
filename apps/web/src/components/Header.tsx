@@ -8,6 +8,7 @@ import {
 	List,
 	LogOut,
 	Menu,
+	Newspaper,
 	Settings,
 	Star,
 	StickyNote,
@@ -25,8 +26,10 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { useAuth } from "#/lib/auth-context";
 import { useSearchDialog } from "#/lib/search-dialog-context";
+import { useReleaseNotes } from "#/lib/use-release-notes";
 import { UserAvatar } from "./following/UserAvatar";
 import Logo from "./Logo";
+import { UnreadDot } from "./release-notes/UnreadDot";
 import SearchCommand from "./SearchCommand";
 import ThemeToggle from "./ThemeToggle";
 
@@ -36,6 +39,7 @@ export default function Header() {
 	const router = useRouterState();
 	const currentPath = router.location.pathname;
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
+	const { unread } = useReleaseNotes({ enabled: Boolean(user) });
 	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
 
 	const navigation = [
@@ -151,9 +155,16 @@ export default function Header() {
 								<DropdownMenuTrigger asChild>
 									<button
 										type="button"
-										className="hidden h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) sm:flex"
-										aria-label="User menu"
+										className="relative hidden h-9 w-9 items-center justify-center rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) sm:flex"
+										aria-label={
+											unread ? "User menu, unread release notes" : "User menu"
+										}
 									>
+										{unread && (
+											<span className="absolute top-0 right-0 z-10">
+												<UnreadDot />
+											</span>
+										)}
 										<UserAvatar
 											src={user.avatar}
 											alt={user.displayName || user.handle}
@@ -198,6 +209,12 @@ export default function Header() {
 									))}
 									<DropdownMenuSeparator />
 									<DropdownMenuItem asChild>
+										<Link to="/whats-new" className="cursor-pointer">
+											<Newspaper />
+											What’s new {unread && <UnreadDot />}
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
 										<Link to="/settings" className="cursor-pointer">
 											<Settings />
 											Settings
@@ -227,9 +244,10 @@ export default function Header() {
 							type="button"
 							className="flex h-9 w-9 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) md:hidden"
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-							aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+							aria-label={`${mobileMenuOpen ? "Close menu" : "Open menu"}${unread ? ", unread release notes" : ""}`}
 							aria-expanded={mobileMenuOpen}
 						>
+							{unread && <UnreadDot />}
 							{mobileMenuOpen ? (
 								<X className="size-5" />
 							) : (
@@ -290,6 +308,14 @@ export default function Header() {
 												</Link>
 											);
 										})}
+										<Link
+											to="/whats-new"
+											onClick={() => setMobileMenuOpen(false)}
+											className="flex items-center gap-3 rounded-md px-3 py-3 text-sm"
+										>
+											<Newspaper className="size-5" />
+											What’s new {unread && <UnreadDot />}
+										</Link>
 										<Link
 											to="/settings"
 											onClick={() => setMobileMenuOpen(false)}
