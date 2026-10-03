@@ -1434,6 +1434,20 @@ export type ImportHistoryResponseDto = {
     errors: Array<ImportErrorDto>;
 };
 
+export type ReleaseNotesReadStateDto = {
+    /**
+     * Release Notes published through this UTC timestamp are read
+     */
+    readThrough: string;
+};
+
+export type MarkReleaseNotesReadDto = {
+    /**
+     * Publication timestamp of the newest entry actually displayed
+     */
+    readThrough: string;
+};
+
 export type ListSummaryDto = {
     id: string;
     rkey: string;
@@ -4561,6 +4575,32 @@ export type UsersControllerImportMyHistoryResponses = {
 };
 
 export type UsersControllerImportMyHistoryResponse = UsersControllerImportMyHistoryResponses[keyof UsersControllerImportMyHistoryResponses];
+
+export type ReleaseNotesControllerGetReadStateData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/release-notes';
+};
+
+export type ReleaseNotesControllerGetReadStateResponses = {
+    200: ReleaseNotesReadStateDto;
+};
+
+export type ReleaseNotesControllerGetReadStateResponse = ReleaseNotesControllerGetReadStateResponses[keyof ReleaseNotesControllerGetReadStateResponses];
+
+export type ReleaseNotesControllerMarkReadData = {
+    body: MarkReleaseNotesReadDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/release-notes';
+};
+
+export type ReleaseNotesControllerMarkReadResponses = {
+    200: ReleaseNotesReadStateDto;
+};
+
+export type ReleaseNotesControllerMarkReadResponse = ReleaseNotesControllerMarkReadResponses[keyof ReleaseNotesControllerMarkReadResponses];
 
 export type ListsControllerGetUserListsData = {
     body?: never;

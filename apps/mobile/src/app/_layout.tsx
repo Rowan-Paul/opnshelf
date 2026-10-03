@@ -110,6 +110,14 @@ export default function RootLayout() {
 					<Stack.Screen name="signup" />
 					<Stack.Screen name="verify-email" />
 					<Stack.Screen name="onboarding" />
+					<Stack.Screen
+						name="whats-new/index"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="whats-new/[slug]"
+						options={{ headerShown: true }}
+					/>
 					<Stack.Screen name="settings" options={{ headerShown: true }} />
 					<Stack.Screen
 						name="settings/preferences"

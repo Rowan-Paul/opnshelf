@@ -34,6 +34,7 @@ import {
 	Switch,
 	View,
 } from "react-native";
+import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
@@ -60,6 +61,7 @@ import {
 	isAccountDeletionRunning,
 	useAccountDeletionJob,
 } from "@/lib/use-account-deletion";
+import { useReleaseNotes } from "@/lib/use-release-notes";
 
 /** Amber primary used for active switches + selected radios. */
 const PRIMARY = "#f3bc00";
@@ -980,6 +982,7 @@ const SETTINGS_AREAS: {
 
 /** The settings index is deliberately a short catalogue, not a control panel. */
 export default function SettingsScreen() {
+	const { unread } = useReleaseNotes();
 	return (
 		<>
 			<Stack.Screen options={{ title: "Settings" }} />
@@ -993,6 +996,24 @@ export default function SettingsScreen() {
 						Choose an area to manage.
 					</Text>
 					<View className="overflow-hidden rounded-xl border border-border bg-card">
+						<Link href="/whats-new" asChild>
+							<Pressable
+								accessibilityRole="link"
+								className="flex-row items-center gap-3 border-border border-b p-4"
+							>
+								<MessageSquare color="#94a3b8" size={20} />
+								<View className="flex-1 gap-0.5">
+									<Text className="font-medium text-foreground">
+										What’s new
+									</Text>
+									<Text className="text-muted-foreground text-sm">
+										Release notes and improvements
+									</Text>
+								</View>
+								{unread && <UnreadDot />}
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+						</Link>
 						{SETTINGS_AREAS.map(({ href, label, description, Icon }, index) => (
 							<Link key={href} href={href} asChild>
 								<Pressable

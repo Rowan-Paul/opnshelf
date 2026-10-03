@@ -3037,6 +3037,58 @@
         ]
       }
     },
+    "/users/me/release-notes": {
+      "get": {
+        "operationId": "ReleaseNotesController_getReadState",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseNotesReadStateDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get account-wide Release Notes read state",
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "ReleaseNotesController_markRead",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkReleaseNotesReadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseNotesReadStateDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Advance Release Notes read state after displaying the history",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/lists": {
       "get": {
         "operationId": "ListsController_getUserLists",
@@ -9611,6 +9663,32 @@
           "skipped",
           "failed",
           "errors"
+        ]
+      },
+      "ReleaseNotesReadStateDto": {
+        "type": "object",
+        "properties": {
+          "readThrough": {
+            "type": "string",
+            "description": "Release Notes published through this UTC timestamp are read",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "readThrough"
+        ]
+      },
+      "MarkReleaseNotesReadDto": {
+        "type": "object",
+        "properties": {
+          "readThrough": {
+            "type": "string",
+            "description": "Publication timestamp of the newest entry actually displayed",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "readThrough"
         ]
       },
       "ListSummaryDto": {

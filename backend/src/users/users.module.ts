@@ -15,6 +15,7 @@ import { WatchImportWriter } from "./import/watch-import-writer.service";
 import { ProfileService } from "./profile.service";
 import { TraktApiClient } from "./trakt-api.client";
 import { UserDeletionService } from "./user-deletion.service";
+import { ReleaseNotesController } from "./release-notes.controller";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
 
@@ -29,7 +30,7 @@ import { UsersService } from "./users.service";
 		ShelfModule,
 		forwardRef(() => AuthModule),
 	],
-	controllers: [UsersController],
+	controllers: [UsersController, ReleaseNotesController],
 	providers: [
 		UsersService,
 		ImportHistoryService,

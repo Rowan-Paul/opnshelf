@@ -17,6 +17,7 @@ import { SectionHeader } from "@/components/home/SectionHeader";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import {
 	PosterRowSkeleton,
 	ProfileHeaderSkeleton,
@@ -26,6 +27,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useProfileShelf, usePublicProfile } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { useReleaseNotes } from "@/lib/use-release-notes";
 
 const POSTER_W = 110;
 
@@ -33,6 +35,7 @@ const POSTER_W = 110;
 export default function ProfileTab() {
 	const insets = useSafeAreaInsets();
 	const { user, isAuthenticated } = useAuth();
+	const { unread } = useReleaseNotes({ enabled: Boolean(user) });
 	const handle = user?.handle ?? "";
 	const { data: profile, isPending, refetch } = usePublicProfile(handle);
 	const userDid = profile?.did ?? "";
@@ -63,10 +66,17 @@ export default function ProfileTab() {
 					<Link href="/settings" asChild>
 						<Pressable
 							accessibilityRole="button"
-							accessibilityLabel="Settings"
+							accessibilityLabel={
+								unread ? "Settings, unread release notes" : "Settings"
+							}
 							className="size-11 items-center justify-center"
 						>
 							<Settings color="#94a3b8" size={22} />
+							{unread && (
+								<View className="absolute top-1 right-1">
+									<UnreadDot />
+								</View>
+							)}
 						</Pressable>
 					</Link>
 				</View>

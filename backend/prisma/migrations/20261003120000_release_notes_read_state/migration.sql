@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "releaseNotesReadAt" TIMESTAMP(3);
