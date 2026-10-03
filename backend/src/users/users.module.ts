@@ -13,9 +13,9 @@ import { TraktImportJobStore } from "./import/trakt-import-job.store";
 import { TraktImportWorker } from "./import/trakt-import-worker.service";
 import { WatchImportWriter } from "./import/watch-import-writer.service";
 import { ProfileService } from "./profile.service";
+import { ReleaseNotesController } from "./release-notes.controller";
 import { TraktApiClient } from "./trakt-api.client";
 import { UserDeletionService } from "./user-deletion.service";
-import { ReleaseNotesController } from "./release-notes.controller";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
 

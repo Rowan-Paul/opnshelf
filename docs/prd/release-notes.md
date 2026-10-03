@@ -2,9 +2,11 @@
 
 Issue: [#321](https://github.com/Rowan-Paul/opnshelf/issues/321)
 
-Status: Design confirmed by the operator on 2026-10-03. Implemented locally;
-native visual verification is pending because simulator automation timed out.
-Not deployed.
+Status: Design confirmed by the operator on 2026-10-03. Implemented and visually
+verified on Web and Android (Pixel 10, Android 17): Profile unread dot, Settings
+row, history, detail, and clearing the dot after reading. Verification used local
+fixture data. iOS remains visually unverified; its simulator was in use by another
+session. Not deployed.
 
 ## Agreed direction
 
@@ -21,7 +23,9 @@ Not deployed.
 - Both clients expose a **What's new** link with an unread indicator, opening
   a browsable history. New notes do not automatically interrupt Users with a popup.
 - Full notes are publicly readable without signing in on the Web App, with
-  a matching Mobile App route for links from Bluesky.
+  matching Mobile App routes for in-app navigation. Bluesky HTTPS links open
+  the Web App. Native capture of these links on both platforms is deferred to
+  a future store build; this release retains the OTA rollout.
 - Put **What's new** in the Web account menu and Mobile Settings, with an
   unread indicator also on the control leading to that destination. Include
   a public Web footer link for signed-out visitors.
@@ -81,7 +85,12 @@ Existing Leaflet integration mirrors Users' Reviews to their Publications
 ## Completion and implementation boundaries
 
 No product decisions remain open from the interview. The operator confirmed
-the complete shared understanding and authorized implementation.
+the complete shared understanding and authorized implementation in the design
+conversation for #321 (2026-10-03). The repeated approvals covered account-wide
+unread state, platform availability, production-only publication, and starting
+with the next release rather than backfilling. These are conversation decisions,
+not claims that the original issue body specified them. During PR #439 review,
+the operator explicitly retained OTA and deferred native link capture.
 
 Feed transport, Markdown schema and rendering, storage of account-wide read
 state, and the shared route shape are implementation choices subject to this
@@ -91,3 +100,5 @@ view must not mark concurrently published, unseen entries as read.
 
 This brief does not authorize deployment or publication of notes or Bluesky
 posts.
+
+Architecture and trade-offs: [ADR 0043](../adr/0043-release-notes-use-web-content-and-private-read-state.md).

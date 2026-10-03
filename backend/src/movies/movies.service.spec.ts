@@ -8,6 +8,8 @@ vi.mock("../prisma/prisma.service", () => ({
 }));
 
 // Mock @atproto/api Agent
+const mockGetRecord = vi.fn();
+const mockApplyWrites = vi.fn();
 const mockPutRecord = vi.fn();
 const mockDeleteRecord = vi.fn();
 vi.mock("@atproto/api", () => ({
@@ -16,6 +18,8 @@ vi.mock("@atproto/api", () => ({
 			atproto: {
 				repo: {
 					putRecord: mockPutRecord,
+					getRecord: mockGetRecord,
+					applyWrites: mockApplyWrites,
 					deleteRecord: mockDeleteRecord,
 				},
 			},
@@ -53,6 +57,7 @@ describe("MoviesService", () => {
 
 	const mockPrismaService = {
 		trackedMovie: {
+			updateMany: vi.fn(),
 			findMany: vi.fn(),
 			groupBy: vi.fn(),
 			findFirst: vi.fn(),
@@ -1080,5 +1085,61 @@ describe("MoviesService", () => {
 
 			expect(result).toEqual([]);
 		});
+	});
+	describe("date corrections", () => {
+		it("scopes lookup to the owner and rejects missing/foreign Watches", async () => {
+			mockPrismaService.trackedMovie.findFirst.mockResolvedValue(null);
+			await expect(
+				service.updateMovieWatchDate("owner", { did: "owner" }, "watch", null),
+			).rejects.toThrow("Watch not found");
+			expect(mockPrismaService.trackedMovie.findFirst).toHaveBeenCalledWith({
+				where: { id: "watch", userDid: "owner" },
+			});
+			expect(mockGetRecord).not.toHaveBeenCalled();
+		});
+		it("indexes the corrected date under the same Watch without changing counts", async () => {
+			mockPrismaService.trackedMovie.findFirst.mockResolvedValue({
+				id: "watch",
+				rkey: "original",
+				cid: "previous",
+			});
+			mockGetRecord.mockResolvedValue({
+				data: { value: { createdAt: "2020-01-01T00:00:00Z" } },
+			});
+			mockApplyWrites.mockResolvedValue({
+				data: { results: [{ cid: "edited" }] },
+			});
+			await service.updateMovieWatchDate(
+				"owner",
+				{ did: "owner" },
+				"watch",
+				null,
+			);
+			expect(mockPrismaService.trackedMovie.updateMany).toHaveBeenCalledWith({
+				where: { id: "watch", userDid: "owner", cid: "previous" },
+				data: { cid: "edited", watchedDate: null },
+			});
+		});
+	});
+	it("import indexing leaves a concurrently corrected Watch untouched", async () => {
+		mockFetch.mockResolvedValue({
+			ok: true,
+			json: async () => ({ id: 1, title: "Movie", name: "Show", seasons: [] }),
+		});
+		await service.indexTrackedMovie(
+			"uri",
+			"cid",
+			"original-key",
+			"owner",
+			"1",
+			undefined,
+			true,
+		);
+		expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { userDid_rkey: { userDid: "owner", rkey: "original-key" } },
+				update: {},
+			}),
+		);
 	});
 });

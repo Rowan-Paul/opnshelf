@@ -50,3 +50,27 @@ it can ship by OTA to a compatible runtime, with operator approval. Installation
 without the Release Notes UI need that first update; thereafter notes themselves
 arrive from Web without another Mobile update. An older app's availability text
 is informational, not feature gating.
+
+## Link behavior and environment previews
+
+Bluesky HTTPS links open the public Web App. The matching Mobile routes support
+in-app navigation, but this OTA does not add Android App Links or iOS Universal
+Links for Release Notes. Add both platforms together in a future store release
+(ADR 0022), with operator approval for the native release switch.
+
+Staging intentionally serves an empty feed, including to Staging Mobile. It must
+not publish announcements from an unreleased branch. To inspect populated Mobile
+screens, run local Web and set `EXPO_PUBLIC_SITE_URL` to that local server before
+starting Metro (Android emulators use `http://10.0.2.2:<port>`; iOS simulators can
+use `http://127.0.0.1:<port>`). Without this override, local Mobile uses the existing
+production site default. Use temporary local content and restore draft status
+before committing.
+
+The availability statuses are a compatibility contract for installed Mobile
+clients: do not add or rename a status in the existing feed. Express additional
+detail through the optional `note` or Markdown body. A new status requires a
+versioned feed and a client migration that preserves the old feed.
+
+The first announcement stays draft until its copy and publication are approved.
+An empty initial history is intentional; merging this feature does not authorize
+announcing it.

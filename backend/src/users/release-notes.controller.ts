@@ -7,32 +7,14 @@ import {
 	Req,
 	UseGuards,
 } from "@nestjs/common";
-import {
-	ApiOperation,
-	ApiProperty,
-	ApiResponse,
-	ApiTags,
-} from "@nestjs/swagger";
-import { IsDateString } from "class-validator";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import { PrismaService } from "../prisma/prisma.service";
-
-export class ReleaseNotesReadStateDto {
-	@ApiProperty({
-		description: "Release Notes published through this UTC timestamp are read",
-		format: "date-time",
-	})
-	readThrough!: string;
-}
-export class MarkReleaseNotesReadDto {
-	@ApiProperty({
-		description: "Publication timestamp of the newest entry actually displayed",
-		format: "date-time",
-	})
-	@IsDateString({ strict: true })
-	readThrough!: string;
-}
+import {
+	MarkReleaseNotesReadDto,
+	ReleaseNotesReadStateDto,
+} from "./dto/release-notes.dto";
 
 @ApiTags("users")
 @Controller("users/me/release-notes")

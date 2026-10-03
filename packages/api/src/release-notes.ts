@@ -36,7 +36,7 @@ export function releaseNoteDate(value: string): string {
 	});
 }
 
-function record(value: unknown): value is Record<string, unknown> {
+function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null;
 }
 export function parseReleaseNotes(value: unknown): ReleaseNote[] {
@@ -46,7 +46,7 @@ export function parseReleaseNotes(value: unknown): ReleaseNote[] {
 	return value
 		.map((entry: unknown) => {
 			if (
-				!record(entry) ||
+				!isRecord(entry) ||
 				typeof entry.slug !== "string" ||
 				!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(entry.slug) ||
 				typeof entry.title !== "string" ||
@@ -58,7 +58,7 @@ export function parseReleaseNotes(value: unknown): ReleaseNote[] {
 				typeof entry.publishedAt !== "string" ||
 				!Number.isFinite(Date.parse(entry.publishedAt)) ||
 				new Date(entry.publishedAt).toISOString() !== entry.publishedAt ||
-				!record(entry.platforms)
+				!isRecord(entry.platforms)
 			)
 				throw new Error("Invalid Release Notes entry");
 			if (slugs.has(entry.slug) || dates.has(entry.publishedAt))
@@ -71,7 +71,7 @@ export function parseReleaseNotes(value: unknown): ReleaseNote[] {
 			for (const platform of RELEASE_PLATFORMS) {
 				const item = entry.platforms[platform];
 				if (
-					!record(item) ||
+					!isRecord(item) ||
 					(item.status !== "available" &&
 						item.status !== "coming-soon" &&
 						item.status !== "update-required") ||

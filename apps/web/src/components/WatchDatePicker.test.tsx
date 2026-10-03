@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { WatchDatePicker } from "#/components/WatchDatePicker";
 
@@ -92,5 +92,65 @@ describe("WatchDatePicker", () => {
 
 		fireEvent.click(confirm);
 		expect(onConfirm).not.toHaveBeenCalled();
+	});
+});
+
+describe("editing a Watch", () => {
+	function edit(initialWatchedAt: string | null, onConfirm = vi.fn()) {
+		render(
+			<WatchDatePicker
+				initialWatchedAt={initialWatchedAt}
+				isPending={false}
+				onConfirm={onConfirm}
+				trigger={<button type="button">Edit</button>}
+			/>,
+		);
+		fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+		return onConfirm;
+	}
+	it("opens in the saved timezone and preserves seconds on an unchanged save", () => {
+		const onConfirm = edit("2020-07-04T18:15:42.123Z");
+		expect(
+			(screen.getByLabelText("When did you watch this?") as HTMLInputElement)
+				.value,
+		).toBe("2020-07-04T20:15");
+		fireEvent.click(screen.getByRole("button", { name: "Save" }));
+		expect(onConfirm).toHaveBeenCalledWith("2020-07-04T18:15:42.123Z");
+	});
+	it("keeps No date as a draft until Save", () => {
+		const onConfirm = edit("2020-07-04T18:15:42.123Z");
+		fireEvent.click(screen.getByRole("button", { name: "No date" }));
+		expect(onConfirm).not.toHaveBeenCalled();
+		fireEvent.click(screen.getByRole("button", { name: "Save" }));
+		expect(onConfirm).toHaveBeenCalledWith(null);
+	});
+	it("can give an undated Watch a date", () => {
+		const onConfirm = edit(null);
+		fireEvent.click(screen.getByRole("button", { name: /Choose a date/ }));
+		fireEvent.change(screen.getByLabelText("When did you watch this?"), {
+			target: { value: "2020-07-04T20:15" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Save" }));
+		expect(onConfirm).toHaveBeenCalledWith("2020-07-04T18:15:00.000Z");
+	});
+	it("cancels without submitting", () => {
+		const onConfirm = edit(null);
+		fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+		expect(onConfirm).not.toHaveBeenCalled();
+	});
+	it("retains the draft after a failed save so it can be retried", async () => {
+		const onConfirm = vi.fn().mockRejectedValue(new Error("offline"));
+		edit("2020-07-04T18:15:42.123Z", onConfirm);
+		fireEvent.change(screen.getByLabelText("When did you watch this?"), {
+			target: { value: "2020-08-04T20:15" },
+		});
+		await act(async () => {
+			fireEvent.click(screen.getByRole("button", { name: "Save" }));
+		});
+		expect(
+			(screen.getByLabelText("When did you watch this?") as HTMLInputElement)
+				.value,
+		).toBe("2020-08-04T20:15");
+		expect(onConfirm).toHaveBeenCalledWith("2020-08-04T18:15:00.000Z");
 	});
 });

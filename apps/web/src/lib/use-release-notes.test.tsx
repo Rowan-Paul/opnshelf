@@ -18,10 +18,15 @@ vi.mock("./release-notes-query", () => ({
 		retry: false,
 	}),
 }));
-vi.mock("@opnshelf/api", () => ({
+vi.mock("../../../../packages/api/src/generated/sdk.gen", () => ({
 	releaseNotesControllerGetReadState: mocks.read,
-	releaseNotesControllerMarkReadMutation: () => ({ mutationFn: mocks.mark }),
 }));
+vi.mock(
+	"../../../../packages/api/src/generated/@tanstack/react-query.gen",
+	() => ({
+		releaseNotesControllerMarkReadMutation: () => ({ mutationFn: mocks.mark }),
+	}),
+);
 const latest = "2026-10-01T12:00:00.000Z";
 let client: QueryClient;
 function wrapper({ children }: { children: ReactNode }) {

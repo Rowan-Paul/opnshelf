@@ -1,20 +1,28 @@
 import {
 	invalidateWatchActivityQueries,
+	type MoviesControllerUpdateMovieWatchDateData,
 	type MovieWatchCountDto,
 	moviesControllerDeleteWatchHistoryEntryMutation,
 	moviesControllerGetUserMovieWatchCountsQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	moviesControllerUpdateMovieWatchDateMutation,
+	type ShowsControllerUpdateEpisodeWatchDateData,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetSeasonDetailsQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerMarkShowWatchedMutation,
 	showsControllerMarkWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	showsControllerUpdateEpisodeWatchDateMutation,
 	withMovieWatch,
 	withoutMovieWatches,
 } from "@opnshelf/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useMutationState,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
@@ -89,6 +97,60 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		invalidateWatchActivityQueries(queryClient);
 		queryClient.invalidateQueries({ queryKey: ["shows", "progress"] });
 	};
+
+	const updateMovieDate = useMutation({
+		mutationKey: ["movies", movieId, "updateWatchDate"],
+		...moviesControllerUpdateMovieWatchDateMutation(),
+		onSuccess: () => {
+			toast.success("Watch date updated");
+		},
+		onError: () => {
+			toast.error("Couldn't update the Watch date. Please try again.");
+		},
+		onSettled: invalidateActivity,
+	});
+	const updateEpisodeDate = useMutation({
+		mutationKey: ["shows", showId, "updateWatchDate"],
+		...showsControllerUpdateEpisodeWatchDateMutation(),
+		onSuccess: () => {
+			toast.success("Watch date updated");
+		},
+		onError: () => {
+			toast.error("Couldn't update the Watch date. Please try again.");
+		},
+		onSettled: invalidateActivity,
+	});
+
+	// A mutation observer only exposes its latest invocation. Read the cache so
+	// every in-flight row stays pending even when another Watch is saved.
+	const updatingMovieWatchIds = useMutationState({
+		filters: {
+			mutationKey: ["movies", movieId, "updateWatchDate"],
+			exact: true,
+			status: "pending",
+		},
+		select: (mutation) =>
+			(
+				mutation.state.variables as Pick<
+					MoviesControllerUpdateMovieWatchDateData,
+					"path"
+				>
+			).path.trackedMovieId,
+	});
+	const updatingEpisodeWatchIds = useMutationState({
+		filters: {
+			mutationKey: ["shows", showId, "updateWatchDate"],
+			exact: true,
+			status: "pending",
+		},
+		select: (mutation) =>
+			(
+				mutation.state.variables as Pick<
+					ShowsControllerUpdateEpisodeWatchDateData,
+					"path"
+				>
+			).path.trackedEpisodeId,
+	});
 
 	// Movie mutations
 	const markMovieWatched = useMutation({
@@ -420,6 +482,18 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	};
 
 	return {
+		updateMovieWatchDate: (id: string, watchedAt: string | null) =>
+			updateMovieDate.mutateAsync({
+				path: { trackedMovieId: id },
+				body: { watchedAt },
+			}),
+		updateEpisodeWatchDate: (id: string, watchedAt: string | null) =>
+			updateEpisodeDate.mutateAsync({
+				path: { trackedEpisodeId: id },
+				body: { watchedAt },
+			}),
+		updatingMovieWatchIds,
+		updatingEpisodeWatchIds,
 		// Movie actions
 		markMovieWatched: handleMarkMovieWatched,
 		unmarkMovieWatched: handleUnmarkMovieWatched,

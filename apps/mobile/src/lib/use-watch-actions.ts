@@ -7,12 +7,14 @@ import {
 	moviesControllerGetUserMovieWatchCountsQueryKey,
 	moviesControllerMarkWatchedMutation,
 	moviesControllerUnmarkWatchedMutation,
+	moviesControllerUpdateMovieWatchDateMutation,
 	showsControllerDeleteEpisodeWatchHistoryEntryMutation,
 	showsControllerGetShowWatchHistoryQueryKey,
 	showsControllerMarkSeasonWatchedMutation,
 	showsControllerMarkShowWatchedMutation,
 	showsControllerMarkWatchedMutation,
 	showsControllerUnmarkWatchedMutation,
+	showsControllerUpdateEpisodeWatchDateMutation,
 	type WatchHistoryItemDto,
 	withMovieWatch,
 	withoutMovieWatches,
@@ -128,6 +130,30 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 	const movieHistoryKey = moviesControllerGetMovieWatchHistoryQueryKey({
 		path: { userDid, movieId },
+	});
+
+	const showId = options.mediaType === "show" ? options.showId : "";
+	const updateMovieDate = useMutation({
+		mutationKey: ["movies", movieId, "updateWatchDate"],
+		...moviesControllerUpdateMovieWatchDateMutation(),
+		onSuccess: () => {
+			toast.success("Watch date updated");
+		},
+		onError: () => {
+			toast.error("Couldn't update the Watch date. Please try again.");
+		},
+		onSettled: invalidateActivity,
+	});
+	const updateEpisodeDate = useMutation({
+		mutationKey: ["shows", showId, "updateWatchDate"],
+		...showsControllerUpdateEpisodeWatchDateMutation(),
+		onSuccess: () => {
+			toast.success("Watch date updated");
+		},
+		onError: () => {
+			toast.error("Couldn't update the Watch date. Please try again.");
+		},
+		onSettled: invalidateActivity,
 	});
 
 	const markMovie = useMutation({
@@ -267,7 +293,6 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	});
 
 	// --- Show keys ---
-	const showId = options.mediaType === "show" ? options.showId : "";
 	const showHistoryKey = showsControllerGetShowWatchHistoryQueryKey({
 		path: { userDid, showId },
 	});
@@ -560,6 +585,22 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	};
 
 	return {
+		updateMovieWatchDate: (id: string, watchedAt: string | null) =>
+			updateMovieDate.mutateAsync({
+				path: { trackedMovieId: id },
+				body: { watchedAt },
+			}),
+		updateEpisodeWatchDate: (id: string, watchedAt: string | null) =>
+			updateEpisodeDate.mutateAsync({
+				path: { trackedEpisodeId: id },
+				body: { watchedAt },
+			}),
+		updatingMovieWatchId: updateMovieDate.isPending
+			? updateMovieDate.variables?.path.trackedMovieId
+			: undefined,
+		updatingEpisodeWatchId: updateEpisodeDate.isPending
+			? updateEpisodeDate.variables?.path.trackedEpisodeId
+			: undefined,
 		// Movie
 		markMovieWatched,
 		unmarkMovieWatched,

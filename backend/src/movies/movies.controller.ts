@@ -1,3 +1,4 @@
+import { UpdateWatchDateDto } from "../common/update-watch-date.dto";
 import {
 	Body,
 	Controller,
@@ -8,6 +9,7 @@ import {
 	HttpStatus,
 	Logger,
 	Param,
+	Patch,
 	Post,
 	Query,
 	Req,
@@ -284,6 +286,28 @@ export class MoviesController {
 			id: item.id,
 			watchedDate: item.watchedDate?.toISOString(),
 		}));
+	}
+
+	@Patch("history/:trackedMovieId")
+	@UseGuards(AuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({ summary: "Correct the date of an existing Watch" })
+	@ApiBody({ type: UpdateWatchDateDto })
+	@ApiResponse({ status: 204, description: "Watch date updated" })
+	@ApiResponse({ status: 400, description: "Invalid or future watch date" })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	@ApiResponse({ status: 404, description: "Watch not found" })
+	async updateMovieWatchDate(
+		@Param("trackedMovieId") id: string,
+		@Body() body: UpdateWatchDateDto,
+		@Req() req: AuthenticatedRequest,
+	) {
+		await this.moviesService.updateMovieWatchDate(
+			req.user.did,
+			req.user.session as ATSession,
+			id,
+			body.watchedAt,
+		);
 	}
 
 	@Delete("history/:trackedMovieId")
