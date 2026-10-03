@@ -219,6 +219,13 @@ export type WatchHistoryItemDto = {
     watchedDate?: string;
 };
 
+export type UpdateWatchDateDto = {
+    /**
+     * Watch date and time, or null for No date. Must not be in the future.
+     */
+    watchedAt: string | null;
+};
+
 export type ActorSuggestionDto = {
     /**
      * The actor's DID
@@ -3119,6 +3126,39 @@ export type MoviesControllerDeleteWatchHistoryEntryResponses = {
 
 export type MoviesControllerDeleteWatchHistoryEntryResponse = MoviesControllerDeleteWatchHistoryEntryResponses[keyof MoviesControllerDeleteWatchHistoryEntryResponses];
 
+export type MoviesControllerUpdateMovieWatchDateData = {
+    body: UpdateWatchDateDto;
+    path: {
+        trackedMovieId: string;
+    };
+    query?: never;
+    url: '/movies/history/{trackedMovieId}';
+};
+
+export type MoviesControllerUpdateMovieWatchDateErrors = {
+    /**
+     * Invalid or future watch date
+     */
+    400: unknown;
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Watch not found
+     */
+    404: unknown;
+};
+
+export type MoviesControllerUpdateMovieWatchDateResponses = {
+    /**
+     * Watch date updated
+     */
+    204: void;
+};
+
+export type MoviesControllerUpdateMovieWatchDateResponse = MoviesControllerUpdateMovieWatchDateResponses[keyof MoviesControllerUpdateMovieWatchDateResponses];
+
 export type AuthControllerGetClientMetadataData = {
     body?: never;
     path?: never;
@@ -3992,6 +4032,39 @@ export type ShowsControllerDeleteEpisodeWatchHistoryEntryResponses = {
 };
 
 export type ShowsControllerDeleteEpisodeWatchHistoryEntryResponse = ShowsControllerDeleteEpisodeWatchHistoryEntryResponses[keyof ShowsControllerDeleteEpisodeWatchHistoryEntryResponses];
+
+export type ShowsControllerUpdateEpisodeWatchDateData = {
+    body: UpdateWatchDateDto;
+    path: {
+        trackedEpisodeId: string;
+    };
+    query?: never;
+    url: '/shows/history/{trackedEpisodeId}';
+};
+
+export type ShowsControllerUpdateEpisodeWatchDateErrors = {
+    /**
+     * Invalid or future watch date
+     */
+    400: unknown;
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Watch not found
+     */
+    404: unknown;
+};
+
+export type ShowsControllerUpdateEpisodeWatchDateResponses = {
+    /**
+     * Watch date updated
+     */
+    204: void;
+};
+
+export type ShowsControllerUpdateEpisodeWatchDateResponse = ShowsControllerUpdateEpisodeWatchDateResponses[keyof ShowsControllerUpdateEpisodeWatchDateResponses];
 
 export type ShowsControllerMarkSeasonWatchedData = {
     body: MarkSeasonWatchedDto;

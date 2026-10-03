@@ -1,4 +1,4 @@
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Pencil, Plus, X } from "lucide-react";
 import type { ComponentProps } from "react";
 import { WatchCountBadge } from "#/components/WatchCountBadge";
 import { WatchDatePicker } from "#/components/WatchDatePicker";
@@ -15,6 +15,8 @@ interface YourActivityProps {
 	/** `null` creates an undated Watch. */
 	onAddToShelf: (watchedAt: string | null) => void;
 	onDeleteEntry: (id: string) => void;
+	onEditEntry?: (id: string, watchedAt: string | null) => Promise<unknown>;
+	updatingEntryId?: string;
 	isAddPending?: boolean;
 	isDeletePending?: boolean;
 }
@@ -52,6 +54,8 @@ export function YourActivity({
 	watchHistory,
 	onAddToShelf,
 	onDeleteEntry,
+	onEditEntry,
+	updatingEntryId,
 	isAddPending = false,
 	isDeletePending = false,
 }: YourActivityProps) {
@@ -90,10 +94,27 @@ export function YourActivity({
 										: "No date"}
 								</span>
 							</div>
+							{onEditEntry && (
+								<WatchDatePicker
+									initialWatchedAt={entry.watchedDate ?? null}
+									isPending={updatingEntryId === entry.id}
+									onConfirm={(date) => onEditEntry(entry.id, date)}
+									trigger={
+										<button
+											type="button"
+											disabled={updatingEntryId === entry.id}
+											aria-label="Edit watch date"
+											className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-(--foreground-muted) hover:bg-(--background-subtle)"
+										>
+											<Pencil className="size-4" />
+										</button>
+									}
+								/>
+							)}
 							<button
 								type="button"
 								onClick={() => onDeleteEntry(entry.id)}
-								disabled={isDeletePending}
+								disabled={isDeletePending || updatingEntryId === entry.id}
 								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
 								aria-label="Remove this watch"
 							>

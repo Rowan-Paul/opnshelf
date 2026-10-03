@@ -1,6 +1,7 @@
 import { Agent } from "@atproto/api";
 import { TID } from "@atproto/common";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { updateWatchDate } from "../common/update-watch-date";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	$nsid as COLLECTION,
@@ -228,8 +229,8 @@ export class MoviesService {
 	 * Build a Watch record for the PDS.
 	 *
 	 * When `deterministicRkey` is provided (history import), the same logical
-	 * watch always maps to the same rkey, so re-issuing the PDS write is an
-	 * idempotent overwrite rather than a duplicate. Interactive single watches
+	 * watch always maps to the same rkey and is recognized on recovery rather
+	 * than duplicated. Interactive single watches
 	 * omit it and get a fresh chronological TID.
 	 */
 	buildMovieWatchRecord(
@@ -374,6 +375,37 @@ export class MoviesService {
 		}
 	}
 
+	async updateMovieWatchDate(
+		userDid: string,
+		session: ATSession,
+		id: string,
+		watchedAt: string | null,
+	) {
+		const tracked = await this.prisma.trackedMovie.findFirst({
+			where: { id, userDid },
+		});
+		if (!tracked) throw new NotFoundException("Watch not found");
+		const data = await updateWatchDate(
+			session,
+			COLLECTION,
+			tracked.rkey,
+			watchedAt,
+		);
+		try {
+			await this.prisma.trackedMovie.updateMany({
+				// Do not let a delayed response replace an index already advanced
+				// by another edit or the ingester. The PDS still uses last-write-wins.
+				where: { id, userDid, cid: tracked.cid },
+				data,
+			});
+		} catch (error) {
+			this.logger.warn(
+				{ err: error instanceof Error ? error.message : String(error) },
+				"Failed to index Watch correction; firehose will catch it",
+			);
+		}
+	}
+
 	/**
 	 * Optimistically index a tracked movie in the database.
 	 * Called by controller after successful PDS write for immediate user feedback.
@@ -385,6 +417,7 @@ export class MoviesService {
 		userDid: string,
 		movieId: string,
 		watchedAt: string | undefined,
+		preserveExisting = false,
 	) {
 		// Fetch movie details from TMDB and upsert in database
 		const movieData = await this.getMovieDetails(movieId);
@@ -399,10 +432,8 @@ export class MoviesService {
 
 		await this.upsertMovie(movieData);
 
-		// Upsert keyed on the repository-qualified rkey so a re-run of an import (e.g. after a
-		// crash between the PDS write and this DB write) overwrites rather than
-		// duplicates. Stays consistent with the firehose ingester, the other
-		// writer of this row, which uses the same owner-qualified identity.
+		// Match the ingester's owner-qualified identity. Import recovery fills
+		// missing rows but must leave any already-indexed corrections intact.
 		return this.prisma.trackedMovie.upsert({
 			where: { userDid_rkey: { userDid, rkey } },
 			create: {
@@ -414,12 +445,14 @@ export class MoviesService {
 				watchedDate: watchedAt ? new Date(watchedAt) : null,
 				status: "watched",
 			},
-			update: {
-				uri,
-				cid,
-				watchedDate: watchedAt ? new Date(watchedAt) : null,
-				status: "watched",
-			},
+			update: preserveExisting
+				? {}
+				: {
+						uri,
+						cid,
+						watchedDate: watchedAt ? new Date(watchedAt) : null,
+						status: "watched",
+					},
 			include: { movie: true },
 		});
 	}

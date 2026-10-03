@@ -476,6 +476,47 @@
       }
     },
     "/movies/history/{trackedMovieId}": {
+      "patch": {
+        "operationId": "MoviesController_updateMovieWatchDate",
+        "parameters": [
+          {
+            "name": "trackedMovieId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWatchDateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Watch date updated"
+          },
+          "400": {
+            "description": "Invalid or future watch date"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Watch not found"
+          }
+        },
+        "summary": "Correct the date of an existing Watch",
+        "tags": [
+          "movies"
+        ]
+      },
       "delete": {
         "operationId": "MoviesController_deleteWatchHistoryEntry",
         "parameters": [
@@ -2048,6 +2089,47 @@
       }
     },
     "/shows/history/{trackedEpisodeId}": {
+      "patch": {
+        "operationId": "ShowsController_updateEpisodeWatchDate",
+        "parameters": [
+          {
+            "name": "trackedEpisodeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWatchDateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Watch date updated"
+          },
+          "400": {
+            "description": "Invalid or future watch date"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Watch not found"
+          }
+        },
+        "summary": "Correct the date of an existing Watch",
+        "tags": [
+          "shows"
+        ]
+      },
       "delete": {
         "operationId": "ShowsController_deleteEpisodeWatchHistoryEntry",
         "parameters": [
@@ -7058,6 +7140,20 @@
         },
         "required": [
           "id"
+        ]
+      },
+      "UpdateWatchDateDto": {
+        "type": "object",
+        "properties": {
+          "watchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Watch date and time, or null for No date. Must not be in the future."
+          }
+        },
+        "required": [
+          "watchedAt"
         ]
       },
       "ActorSuggestionDto": {

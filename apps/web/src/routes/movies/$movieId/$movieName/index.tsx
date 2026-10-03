@@ -101,6 +101,8 @@ function MovieDetailPage() {
 		markMovieWatched,
 		unmarkMovieWatched,
 		deleteMovieWatchHistoryEntry,
+		updateMovieWatchDate,
+		updatingMovieWatchId,
 		isMarkMoviePending,
 		isUnmarkMoviePending,
 		isDeleteMovieHistoryPending,
@@ -331,6 +333,8 @@ function MovieDetailPage() {
 						{/* Your Activity */}
 						{isAuthenticated && (
 							<YourActivity
+								onEditEntry={updateMovieWatchDate}
+								updatingEntryId={updatingMovieWatchId}
 								watchHistory={movieWatchHistory || []}
 								onAddToShelf={(watchedAt) => markMovieWatched(watchedAt)}
 								onDeleteEntry={deleteMovieWatchHistoryEntry}

@@ -62,7 +62,7 @@ type PendingWrite = {
 	  }
 );
 
-type WriteResult = { uri: string; cid: string };
+type WriteResult = { uri: string; cid: string; watchedAt?: string };
 
 const PDS_APPLY_WRITES_BATCH_SIZE = 200;
 
@@ -125,7 +125,6 @@ export class WatchImportWriter {
 					agent,
 					session,
 					batch,
-					"create",
 					options,
 				);
 				results = created.results;
@@ -134,29 +133,17 @@ export class WatchImportWriter {
 				);
 			} catch (writeError) {
 				let error: unknown = writeError;
-				// Crash-recovery / idempotent re-import: rkeys are deterministic
-				// content hashes, so if a previous run wrote these records to the
-				// PDS but died before the DB write, the `create` batch fails with
-				// "record already exists". Retry the same batch as `update` ops —
-				// the record at that rkey is byte-identical, so this is an
-				// idempotent overwrite. Keeps batching (one extra round-trip per
-				// affected batch, not per item).
+				// Keys identify the original import, not immutable content. A User may
+				// have corrected a Watch since the first write (ADR 0042).
 				if (!isPdsRateLimitError(error) && isRecordExistsError(error)) {
-					this.logger.debug(
-						`PDS applyWrites: batch ${batchLabel} already exists, retrying as update (idempotent re-import)`,
-					);
 					try {
-						const updated = await this.applyWriteBatch(
+						results = await this.recoverExistingBatch(
 							agent,
 							session,
 							batch,
-							"update",
 							options,
 						);
-						results = updated.results;
 					} catch (retryError) {
-						// Update retry also failed — fall through to normal error
-						// handling below using the retry error.
 						error = retryError;
 					}
 				}
@@ -299,23 +286,55 @@ export class WatchImportWriter {
 		return { pendingWrites, skipped, failed, errors };
 	}
 
-	/**
-	 * Phase 2: one applyWrites round-trip for the whole batch. `op` is "update"
-	 * only on the idempotent re-import path, where the records already exist.
-	 */
+	/** Recover mixed existing/missing batches without ever overwriting a Watch. */
+	private async recoverExistingBatch(
+		agent: Agent,
+		session: ATSession,
+		batch: PendingWrite[],
+		options?: ImportWriteOptions,
+	): Promise<WriteResult[]> {
+		const results: WriteResult[] = [];
+		for (const pw of batch) {
+			try {
+				const created = await this.applyWriteBatch(
+					agent,
+					session,
+					[pw],
+					options,
+				);
+				results.push(created.results[0]);
+			} catch (error) {
+				if (!isRecordExistsError(error)) throw error;
+				const existing = await agent.com.atproto.repo.getRecord({
+					repo: session.did,
+					collection: pw.collection,
+					rkey: pw.rkey,
+				});
+				reportPdsRateLimit(existing.headers, options);
+				const watchedAt = existing.data.value.watchedAt;
+				if (watchedAt !== undefined && typeof watchedAt !== "string")
+					throw new Error("Invalid Watch date in PDS record");
+				results.push({
+					uri: existing.data.uri,
+					cid: existing.data.cid ?? "",
+					watchedAt,
+				});
+			}
+		}
+		return results;
+	}
+
+	/** Phase 2: create-only writes preserve any corrections to existing records. */
 	private async applyWriteBatch(
 		agent: Agent,
 		session: ATSession,
 		batch: PendingWrite[],
-		op: "create" | "update",
 		options?: ImportWriteOptions,
 	): Promise<{ results: WriteResult[]; commitCid: string }> {
 		const response = await agent.com.atproto.repo.applyWrites({
 			repo: session.did,
 			writes: batch.map((pw) => ({
-				$type: `com.atproto.repo.applyWrites#${op}` as
-					| "com.atproto.repo.applyWrites#create"
-					| "com.atproto.repo.applyWrites#update",
+				$type: "com.atproto.repo.applyWrites#create",
 				collection: pw.collection,
 				rkey: pw.rkey,
 				value: pw.record as Record<string, unknown>,
@@ -334,6 +353,7 @@ export class WatchImportWriter {
 				return {
 					uri: result?.uri ?? `at://${session.did}/${pw.collection}/${pw.rkey}`,
 					cid: result?.cid ?? "",
+					watchedAt: pw.item.watchedAt,
 				};
 			}),
 		};
@@ -360,7 +380,7 @@ export class WatchImportWriter {
 
 		for (let i = 0; i < batch.length; i++) {
 			const pw = batch[i];
-			const { uri, cid } = results[i];
+			const { uri, cid, watchedAt } = results[i];
 			try {
 				if (pw.type === "movie") {
 					await this.moviesService.indexTrackedMovie(
@@ -369,7 +389,8 @@ export class WatchImportWriter {
 						pw.rkey,
 						userDid,
 						pw.movieTmdbId,
-						pw.item.watchedAt,
+						watchedAt,
+						true, // Import indexing must not overwrite a concurrent correction.
 					);
 				} else {
 					await this.showsService.indexTrackedEpisode(
@@ -380,7 +401,8 @@ export class WatchImportWriter {
 						pw.showTmdbId,
 						pw.seasonNumber,
 						pw.episodeNumber,
-						pw.item.watchedAt,
+						watchedAt,
+						true, // Import indexing must not overwrite a concurrent correction.
 					);
 				}
 				imported += 1;

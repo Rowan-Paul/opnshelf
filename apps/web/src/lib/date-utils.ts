@@ -89,6 +89,11 @@ function normalizeDatetimeLocal(value: string): string {
  * formatted for a `datetime-local` input.
  */
 export function nowAsDatetimeLocal(timezone?: string): string {
+	return dateAsDatetimeLocal(new Date(), timezone);
+}
+
+/** Format an existing instant in the same timezone as the Watch editor. */
+export function dateAsDatetimeLocal(date: Date, timezone?: string): string {
 	const parts = new Intl.DateTimeFormat("en-US", {
 		year: "numeric",
 		month: "2-digit",
@@ -99,7 +104,7 @@ export function nowAsDatetimeLocal(timezone?: string): string {
 		// latter, which is not a value a datetime-local input accepts.
 		hourCycle: "h23",
 		timeZone: timezone,
-	}).formatToParts(new Date());
+	}).formatToParts(date);
 	const part = (type: string) =>
 		parts.find((p) => p.type === type)?.value ?? "00";
 	return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
