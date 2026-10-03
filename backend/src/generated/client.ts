@@ -179,3 +179,8 @@ export type ReviewLike = Prisma.ReviewLikeModel
  * 
  */
 export type Feedback = Prisma.FeedbackModel
+/**
+ * Model FeaturedContent
+ * Service-owned editorial picks, never personal PDS records (ADR 0043).
+ */
+export type FeaturedContent = Prisma.FeaturedContentModel

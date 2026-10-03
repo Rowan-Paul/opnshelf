@@ -1,3 +1,4 @@
+import { FeaturedModule } from "./featured/featured.module";
 import { WatchPickerModule } from "./watch-picker/watch-picker.module";
 import { Module } from "@nestjs/common";
 import { EnvModule } from "./config/env.module";
@@ -62,6 +63,7 @@ import { UsersModule } from "./users/users.module";
 		PeopleModule,
 		FeedbackModule,
 		DiscoverModule,
+		FeaturedModule,
 		StreamingServicesModule,
 		WatchPickerModule,
 	],

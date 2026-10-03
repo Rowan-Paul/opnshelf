@@ -33,6 +33,7 @@ import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
+import { Route as AdminFeaturedRouteImport } from './routes/admin.featured'
 import { Route as SocialCirclesIndexRouteImport } from './routes/social/circles/index'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
 import { Route as SocialCirclesCircleIdRouteImport } from './routes/social/circles/$circleId'
@@ -177,6 +178,11 @@ const ApiReleaseNotesRoute = ApiReleaseNotesRouteImport.update({
   path: '/api/release-notes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminFeaturedRoute = AdminFeaturedRouteImport.update({
+  id: '/admin/featured',
+  path: '/admin/featured',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SocialCirclesIndexRoute = SocialCirclesIndexRouteImport.update({
   id: '/circles/',
   path: '/circles/',
@@ -318,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -411,6 +419,7 @@ export interface FileRoutesById {
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -462,6 +471,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tos'
     | '/trakt-import'
+    | '/admin/featured'
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tos'
     | '/trakt-import'
+    | '/admin/featured'
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
@@ -554,6 +565,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tos'
     | '/trakt-import'
+    | '/admin/featured'
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
@@ -604,6 +616,7 @@ export interface RootRouteChildren {
   SocialRoute: typeof SocialRouteWithChildren
   TosRoute: typeof TosRoute
   TraktImportRoute: typeof TraktImportRoute
+  AdminFeaturedRoute: typeof AdminFeaturedRoute
   ApiReleaseNotesRoute: typeof ApiReleaseNotesRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
@@ -788,6 +801,13 @@ declare module '@tanstack/react-router' {
       path: '/api/release-notes'
       fullPath: '/api/release-notes'
       preLoaderRoute: typeof ApiReleaseNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/featured': {
+      id: '/admin/featured'
+      path: '/admin/featured'
+      fullPath: '/admin/featured'
+      preLoaderRoute: typeof AdminFeaturedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/social/circles/': {
@@ -1071,6 +1091,7 @@ const rootRouteChildren: RootRouteChildren = {
   SocialRoute: SocialRouteWithChildren,
   TosRoute: TosRoute,
   TraktImportRoute: TraktImportRoute,
+  AdminFeaturedRoute: AdminFeaturedRoute,
   ApiReleaseNotesRoute: ApiReleaseNotesRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,

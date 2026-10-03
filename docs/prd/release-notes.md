@@ -101,4 +101,4 @@ view must not mark concurrently published, unseen entries as read.
 This brief does not authorize deployment or publication of notes or Bluesky
 posts.
 
-Architecture and trade-offs: [ADR 0043](../adr/0043-release-notes-use-web-content-and-private-read-state.md).
+Architecture and trade-offs: [ADR 0044](../adr/0044-release-notes-use-web-content-and-private-read-state.md).

@@ -3,6 +3,7 @@ import {
 	discoverControllerFromFollowsOptions,
 	discoverControllerPopularOnYourServicesOptions,
 	discoverControllerTrendingOptions,
+	featuredControllerSelectionQueryKey,
 	moviesControllerDiscoverMoviesOptions,
 	type PersonSearchResultDto,
 	parseGenreDiscovery,
@@ -16,7 +17,12 @@ import {
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { hashKey, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+	hashKey,
+	useInfiniteQuery,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Link, useIsFocused, useLocalSearchParams } from "expo-router";
 import {
@@ -31,6 +37,7 @@ import {
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { GenreDiscover } from "@/components/discover/GenreDiscover";
+import { FeaturedContent } from "@/components/featured/FeaturedContent";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
@@ -206,6 +213,7 @@ function DiscoverSections({
 	isFocused: boolean;
 }) {
 	const { user, isLoading: authLoading } = useAuth();
+	const queryClient = useQueryClient();
 	const { data: serviceSettings, isLoading: settingsLoading } = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: isAuthenticated,
@@ -311,6 +319,9 @@ function DiscoverSections({
 	const onRefresh = async () => {
 		setRefreshing(true);
 		await Promise.all([
+			queryClient.invalidateQueries({
+				queryKey: featuredControllerSelectionQueryKey(),
+			}),
 			hasServices ? popularOnYourServices.refetch() : null,
 			trending.refetch(),
 			popularMovies.refetch(),
@@ -331,6 +342,7 @@ function DiscoverSections({
 					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
 				}
 			>
+				<FeaturedContent isFocused={isFocused} />
 				{!discoverReady && discoverPending ? (
 					<DiscoverRowsSkeleton />
 				) : (

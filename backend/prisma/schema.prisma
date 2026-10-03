@@ -754,3 +754,23 @@ model Feedback {
   @@index([userDid])
   @@index([createdAt])
 }
+
+/// Service-owned editorial picks, never personal PDS records (ADR 0043).
+model FeaturedContent {
+  id           String   @id @default(uuid())
+  mediaType    String
+  mediaId      Int
+  seasonNumber Int?
+  title        String
+  posterPath   String?
+  message      String
+  sourceUrl    String?
+  sourceLabel  String?
+  published    Boolean  @default(true)
+  expiresAt    DateTime
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, expiresAt])
+}

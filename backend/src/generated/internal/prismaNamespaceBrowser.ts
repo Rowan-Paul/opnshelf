@@ -78,7 +78,8 @@ export const ModelName = {
   Publication: 'Publication',
   Rating: 'Rating',
   ReviewLike: 'ReviewLike',
-  Feedback: 'Feedback'
+  Feedback: 'Feedback',
+  FeaturedContent: 'FeaturedContent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -586,6 +587,26 @@ export const FeedbackScalarFieldEnum = {
 } as const
 
 export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
+
+
+export const FeaturedContentScalarFieldEnum = {
+  id: 'id',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
+  seasonNumber: 'seasonNumber',
+  title: 'title',
+  posterPath: 'posterPath',
+  message: 'message',
+  sourceUrl: 'sourceUrl',
+  sourceLabel: 'sourceLabel',
+  published: 'published',
+  expiresAt: 'expiresAt',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FeaturedContentScalarFieldEnum = (typeof FeaturedContentScalarFieldEnum)[keyof typeof FeaturedContentScalarFieldEnum]
 
 
 export const SortOrder = {

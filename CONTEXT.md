@@ -216,8 +216,12 @@ A private, personal, named grouping of Users you follow — used to filter your 
 _Avoid_: Category (retired — overloaded), List (reserved for media curation), Friend Group, Group (too generic), Friend (opnshelf has no friend/mutual-follow concept — you group Users you **follow**)
 
 **Discover**:
-The surface for finding media the user hasn't tracked yet. Subsumes the old Search surface (web route, mobile tab): it still does keyword search, but adds discovery sections (e.g. trending, similar, surfaced from the people you follow). "Search" is now one capability of Discover, not a separate destination.
+The surface for finding Media Items and rediscovering tracked titles through Featured Content. It includes keyword search and discovery sections such as trending, similar titles, and titles surfaced from the people you follow; Search is one capability of Discover, not a separate destination.
 _Avoid_: Search (now a sub-capability of Discover, not its own surface), Explore
+
+**Featured Content**:
+An Opnshelf-owned editorial selection of movies, shows, or seasons, each highlighted by an admin with a message explaining why it matters now and an optional source link. Each selected Media Item and its editorial message is a featured entry. A show and one of its seasons are distinct Media Items and may both be featured. The selection appears in Discover for all visitors, including those who have already tracked the Media Item.
+_Avoid_: Pick (reserved for Pick for me), Announcement (suggests a separate news entry), Notification Collection (reserved for saved selections from release Notifications)
 
 **Library**:
 The umbrella term for everything a user **owns** — physical or digital copies of films. Not a stored entity (mirrors _Shelf_, which is the umbrella over Watches). Distinct from a _List_: a List is curation ("want to watch", "favorites"); the Library is ownership ("I own this, in this format"). Replaces the issue-era word "Collection."

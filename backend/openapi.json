@@ -6518,6 +6518,217 @@
         ]
       }
     },
+    "/featured": {
+      "get": {
+        "operationId": "FeaturedController_selection",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedSelectionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "featured"
+        ]
+      }
+    },
+    "/featured/access": {
+      "get": {
+        "operationId": "FeaturedController_access",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedAccessDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "featured"
+        ]
+      }
+    },
+    "/featured/manage": {
+      "get": {
+        "operationId": "FeaturedController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number to return (1-based)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "active",
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "featured"
+        ]
+      },
+      "post": {
+        "operationId": "FeaturedController_publish",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishFeaturedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "featured"
+        ]
+      }
+    },
+    "/featured/manage/order": {
+      "put": {
+        "operationId": "FeaturedController_reorder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderFeaturedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "featured"
+        ]
+      }
+    },
+    "/featured/manage/{id}": {
+      "put": {
+        "operationId": "FeaturedController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishFeaturedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "featured"
+        ]
+      },
+      "delete": {
+        "operationId": "FeaturedController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "featured"
+        ]
+      }
+    },
     "/watch-picker": {
       "get": {
         "operationId": "WatchPickerController_get",
@@ -12799,6 +13010,201 @@
         "required": [
           "country",
           "services"
+        ]
+      },
+      "FeaturedDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show",
+              "season"
+            ]
+          },
+          "mediaId": {
+            "type": "number"
+          },
+          "seasonNumber": {
+            "type": "number",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "posterPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "mediaType",
+          "mediaId",
+          "seasonNumber",
+          "title",
+          "posterPath",
+          "message",
+          "sourceUrl",
+          "sourceLabel",
+          "expiresAt",
+          "active"
+        ]
+      },
+      "FeaturedSelectionDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeaturedDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "FeaturedAccessDto": {
+        "type": "object",
+        "properties": {
+          "canEdit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canEdit"
+        ]
+      },
+      "FeaturedPageDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeaturedDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
+        ]
+      },
+      "PublishFeaturedDto": {
+        "type": "object",
+        "properties": {
+          "published": {
+            "type": "boolean",
+            "default": true
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show",
+              "season"
+            ]
+          },
+          "mediaId": {
+            "type": "number"
+          },
+          "seasonNumber": {
+            "type": "number",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 280
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceLabel": {
+            "type": "string",
+            "enum": [
+              "Watch trailer",
+              "Read announcement"
+            ],
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "mediaType",
+          "mediaId",
+          "message",
+          "expiresAt"
+        ]
+      },
+      "ReorderFeaturedDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ids"
         ]
       },
       "PickerEpisodeDto": {

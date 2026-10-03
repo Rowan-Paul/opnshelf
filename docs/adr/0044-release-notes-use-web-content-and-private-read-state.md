@@ -1,4 +1,4 @@
-# ADR 0043: Release Notes use Web content and private account read state
+# ADR 0044: Release Notes use Web content and private account read state
 
 Status: Accepted; implemented in PR #439.
 
