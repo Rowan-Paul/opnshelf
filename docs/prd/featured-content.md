@@ -19,18 +19,22 @@ Status: Implemented and verified locally; not released.
 
 Featured Content appears at the top of Discover's browse view on both clients,
 above the existing sections. It is hidden while displaying search results.
-Discover includes rediscovering already-tracked titles through these picks.
+Discover includes rediscovering already-tracked titles through these entries.
 
 The operator's account is the sole initial admin. Management uses a protected
 Web App editor; the Mobile App presents the published selection without
-editorial controls.
+editorial controls. An admin-only management link remains available on Web
+Discover when the public selection is empty, so the editor can create the first
+entry without a placeholder section for readers.
 
 ## Active selection and navigation
 
-- Up to five picks may be active, in manually chosen order.
-- Each exact Media Item may have at most one active entry.
-- Publication is immediate. The admin can edit or remove a published pick.
-- Every pick requires an expiry date, defaulting to seven days. Scheduled
+- Up to five entries may be active, in manually chosen order.
+- Each exact Media Item may have at most one active entry. A show and one of its
+  seasons are distinct Media Items and can both be active.
+- Publication is immediate. The admin can edit or remove a published entry.
+- Every entry requires an expiry date. The Web editor defaults it to seven days;
+  the API requires an explicit timestamp. Scheduled
   publication is deferred.
 - The main card opens the Media Item's existing detail page. A separately
   labelled optional link opens the exact trailer or source chosen by the admin.
@@ -41,23 +45,24 @@ editorial controls.
 Use a manually scrollable horizontal row with no automatic rotation. Each
 card uses the selected title's existing artwork, title, and season where
 applicable, plus a required plain-text editorial message of up to 280
-characters. Custom artwork and rich text are outside this design.
+Unicode code points, counted consistently by the editor and API. Custom artwork
+and rich text are outside this design.
 
 The optional source is one HTTPS link labelled “Watch trailer” or “Read
 announcement”. Editorial copy must be spoiler-free and name the region when
 announcing a region-specific release date. The region in the message does
-not filter who sees the pick.
+not filter who sees the entry.
 
-Hide the section when no picks are active. Initial loading uses card-shaped
+Hide the section when no entries are active. Initial loading uses card-shaped
 skeletons; refetching retains already-loaded content under the repository's
 loading-state rules.
 
 ## Expiry and reuse
 
-Expired and manually removed picks remain inactive in the editor, available
+Expired and manually removed entries remain inactive in the editor, available
 to edit and republish. Show expiry as an exact date and time in the admin's
-timezone. Editing an active pick preserves its expiry; republishing defaults
-to seven days from now. Publishing a sixth active pick requires removing
+timezone. Editing an active entry preserves its expiry; republishing defaults
+to seven days from now. Publishing a sixth active entry requires removing
 another first. The one-active-entry-per-exact-Media-Item rule also applies
 when republishing.
 
@@ -69,9 +74,9 @@ publication creates no Review, Activity, or Bluesky Cross-post. See
 [ADR 0043](../adr/0043-featured-content-is-service-owned.md).
 
 Corrections are manual through the editor. Publication requires selecting an
-existing catalog title; custom titles are outside scope. Temporary metadata
+existing catalogue title; custom titles are outside scope. Temporary metadata
 failure retains previously loaded card content. A confirmed missing title
-hides that pick. The admin corrects or removes broken external source links.
+hides that entry. The admin corrects or removes broken external source links.
 
 ## Completion boundary
 
@@ -101,7 +106,11 @@ The public selection is served by `GET /featured`. Authenticated access discover
 uses `GET /featured/access`; the admin editor at `/admin/featured` uses protected
 `/featured/manage` endpoints. Active and inactive editor lists use the shared
 pagination contract. PostgreSQL transaction locks serialize editorial writes so
-concurrent tabs cannot exceed five active picks or publish duplicate Media Items.
+concurrent tabs cannot exceed five active entries or publish duplicate exact
+Media Items.
+These time-dependent rules are enforced by the service transaction; direct SQL
+writes are outside the editorial interface and can bypass them. An index on
+`published` alone would incorrectly block reuse after expiry.
 
 Set the non-secret backend variable `FEATURED_ADMIN_DID` to the operator's exact
 account DID to enable editing. Missing configuration disables editing. Configure
@@ -116,13 +125,14 @@ The Mobile App version is unchanged. This JavaScript-only feature uses the OTA
 release route, after the API and migration are available, subject to operator
 approval. Local simulator development builds are verification artifacts only.
 
-The admin publishes immediately or saves an inactive pick for reuse. Public
-clients refresh the selection and hide locally cached picks at expiry; Mobile
-pull-to-refresh includes Featured Content. Public Web HTML includes the selection.
-Catalog verification uses the shared TMDB cache and a 1.5-second public lookup
+The admin publishes immediately or saves an inactive entry for reuse. Public
+clients refresh the selection and schedule a timer for the next cached expiry
+instead of re-rendering every second. Mobile pull-to-refresh includes Featured
+Content. Public Web HTML includes the selection.
+Catalogue verification uses the shared TMDB cache and a 1.5-second public lookup
 budget, falling back to saved title/artwork on temporary failure. Only a confirmed
 404 hides a title; other upstream failures do not count as deletion. Publication
-requires successful catalog verification. Source URLs are HTTPS-only and opened
+requires successful catalogue verification. Source URLs are HTTPS-only and opened
 separately from the internal Media Item link.
 
 ## Verification record
@@ -133,9 +143,9 @@ Verified locally on 2026-10-03 with Node.js 24 and pnpm 11.1.2.
 | --- | --- |
 | `pnpm typecheck` | Passed across Web, Mobile, and Backend |
 | `pnpm check` | Passed across Web, Mobile, and Backend |
-| `pnpm --filter web run test --maxWorkers=2` | 388 passed; 1 existing performance test skipped |
-| `pnpm --filter mobile run test` | 359 passed; 1 existing performance test skipped |
-| `pnpm --filter backend run test --maxWorkers=2` | 1,101 passed; 2 opt-in local database tests skipped |
+| `pnpm --filter web run test --maxWorkers=2` | 389 passed; 1 existing performance test skipped |
+| `pnpm --filter mobile run test --maxWorkers=2` | 360 passed; 1 existing performance test skipped |
+| `pnpm --filter backend run test --maxWorkers=2` | 1,107 passed; 2 opt-in local database tests skipped |
 | `FEATURED_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55455/featured pnpm --filter backend run test src/featured/featured.integration.spec.ts` | Both passed against disposable local PostgreSQL, including concurrent publication limits |
 | `pnpm --filter backend run build` | Passed |
 | `pnpm generate:api` | Passed; reviewed generated OpenAPI and shared client changes |
@@ -148,9 +158,9 @@ while Xcode was compiling. All passed with two workers; no test timeout or
 unrelated test implementation was changed.
 
 Browser verification used a local fixture API with real Featured Content
-controllers, service, and PostgreSQL persistence. Catalog and authentication were
+controllers, service, and PostgreSQL persistence. Catalogue and authentication were
 fixtures. Checked Discover at `http://localhost:3255/search` at desktop and narrow
-widths, signed-out access, hiding picks during search, media/season URLs, and
+widths, signed-out access, hiding entries during search, media/season URLs, and
 poster failure handling. The editor at `http://localhost:3255/admin/featured`
 was exercised through publishing, editing, reordering, removal, republishing,
 season selection, and access denial. Checked public HTML contains the selection.
@@ -170,3 +180,29 @@ Changed source areas: `backend/src/featured`, Prisma schema and migration, backe
 module/environment registration, shared API helpers and generated contracts,
 both Discover routes and featured components, Web editor route, and product/ADR
 documentation. No lexicons, PDS writes, or Mobile app version changes are needed.
+
+## Review verification
+
+The route loader now uses the same parsed genre filter as the page switch.
+Local SSR requests confirmed that `/search` and `/search?genre=18` include the
+editorial text, while valid genre browse (`?genre=18&type=movies`) and keyword
+search omit the section. Valid genre browse renders `GenreDiscover`, not the
+keyword browse component.
+
+The installed validator already counts surrogate-pair emoji correctly. It
+also discounts variation selectors, unlike the editor's code-point count;
+the explicit API validator now matches the editor. HTTP tests cover 280/281
+emoji and variation-selector boundaries. Tests also cover expiry timers,
+show/season coexistence, and expiry during catalogue verification.
+
+The second future-expiry check remains intentional: catalogue verification and
+waiting for the editorial lock can outlive the first check. The small guard
+continues to share one DID policy with access discovery. Each client's skeleton
+stays next to its platform-specific card because the existing generic Mobile
+skeletons do not match this card's artwork/copy/source layout.
+
+Review follow-up gates passed: Web 389, Mobile 360, Backend 1,107 tests, plus
+both opt-in PostgreSQL tests. API regeneration produced no contract drift.
+Browser recheck covered `/search?genre=18` and `/admin/featured`. The iOS 27
+recheck at `/search` confirmed the film icon for both absent and failed artwork;
+a screenshot is attached to the PR using the same local fixture catalogue.

@@ -132,7 +132,7 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 		...featuredControllerRemoveMutation(),
 		onSuccess: async () => {
 			await refresh();
-			toast.success("Pick removed");
+			toast.success("Entry removed");
 		},
 		onError: (error) => toast.error(errorMessage(error)),
 	});
@@ -216,7 +216,7 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 	return (
 		<div className="space-y-8">
 			{editing !== null && (
-				<PickForm
+				<EntryForm
 					key={editing === "new" ? "new" : editing.id}
 					item={editing === "new" ? undefined : editing}
 					timezone={timezone}
@@ -230,7 +230,7 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 			<section>
 				<div className="mb-4 flex items-center justify-between gap-3">
 					<h2 className="font-display text-xl">
-						Active picks · {items.length}/5
+						Active entries · {items.length}/5
 					</h2>
 					<button
 						type="button"
@@ -238,19 +238,19 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 						onClick={() => setEditing("new")}
 						disabled={items.length >= 5}
 					>
-						Add pick
+						Add entry
 					</button>
 				</div>
 				{items.length >= 5 && (
 					<p className="mb-3 text-(--foreground-muted) text-sm">
-						Remove a pick before publishing another.
+						Remove a entry before publishing another.
 					</p>
 				)}
 				{active.isPending ? (
 					<EditorSkeleton />
 				) : active.isError ? (
 					<p role="alert">
-						Couldn't refresh active picks.{" "}
+						Couldn't refresh active entries.{" "}
 						<button
 							type="button"
 							className="underline"
@@ -264,16 +264,16 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 					{items.map((item, index) => row(item, index, true))}
 				</ul>
 				{!active.isPending && !active.isError && items.length === 0 && (
-					<p>No active picks. Add a title to get started.</p>
+					<p>No active entries. Add a title to get started.</p>
 				)}
 			</section>
 			<section>
-				<h2 className="mb-4 font-display text-xl">Inactive picks</h2>
+				<h2 className="mb-4 font-display text-xl">Inactive entries</h2>
 				{inactive.isPending ? (
 					<EditorSkeleton />
 				) : inactive.isError ? (
 					<p role="alert">
-						Couldn't load inactive picks.{" "}
+						Couldn't load inactive entries.{" "}
 						<button
 							type="button"
 							className="underline"
@@ -290,7 +290,7 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 				</ul>
 				{inactive.data?.total === 0 && (
 					<p className="text-(--foreground-muted) text-sm">
-						Expired and removed picks appear here for reuse.
+						Expired and removed entries appear here for reuse.
 					</p>
 				)}
 				<Pagination
@@ -302,7 +302,7 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 		</div>
 	);
 }
-function PickForm({
+function EntryForm({
 	item,
 	timezone,
 	onCancel,
@@ -383,9 +383,9 @@ function PickForm({
 			toast.success(
 				published
 					? item?.active
-						? "Pick updated"
-						: "Pick published"
-					: "Inactive pick saved",
+						? "Entry updated"
+						: "Entry published"
+					: "Inactive entry saved",
 			);
 			await onSaved();
 		} catch (cause) {
@@ -412,7 +412,7 @@ function PickForm({
 			}}
 		>
 			<h2 className="mb-5 font-display text-xl">
-				{item ? "Edit pick" : "New pick"}
+				{item ? "Edit entry" : "New entry"}
 			</h2>
 			<fieldset
 				disabled={pending}
@@ -432,17 +432,17 @@ function PickForm({
 								className="input w-full"
 								value={query}
 								onChange={(event) => setQuery(event.target.value)}
-								placeholder="Search the catalog"
+								placeholder="Search the catalogue"
 							/>
 							{search.isFetching && (
 								<div
 									className="mt-3 h-12 rounded bg-(--background-subtle) motion-safe:animate-pulse"
 									aria-busy="true"
-									data-testid="catalog-skeleton"
+									data-testid="catalogue-skeleton"
 								/>
 							)}
 							{search.isError && (
-								<p role="alert">Couldn't search the catalog. Try again.</p>
+								<p role="alert">Couldn't search the catalogue. Try again.</p>
 							)}
 							<ul className="mt-2 max-h-64 overflow-y-auto">
 								{(search.data?.items ?? []).map((result) => (

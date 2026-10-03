@@ -77,9 +77,12 @@ import { buildPersonUrl } from "#/lib/url-utils";
 
 export const Route = createFileRoute("/search")({
 	component: SearchPage,
-	loaderDeps: ({ search }) => ({ q: search.q, genre: search.genre }),
+	loaderDeps: ({ search }) => ({
+		q: search.q,
+		genreFilter: parseGenreDiscovery(search),
+	}),
 	loader: async ({ context, deps }) => {
-		if (!deps.q && !deps.genre)
+		if (!deps.q?.trim() && !deps.genreFilter)
 			await context.queryClient
 				.ensureQueryData(featuredControllerSelectionOptions())
 				.catch(() => undefined);

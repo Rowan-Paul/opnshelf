@@ -1,8 +1,8 @@
 import {
 	activeFeaturedItems,
 	type FeaturedDto,
-	featuredMediaPath,
 	featuredTitle,
+	scheduleFeaturedExpiry,
 } from "@opnshelf/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen } from "@testing-library/react";
@@ -21,7 +21,7 @@ vi.mock("@tanstack/react-router", () => ({
 	),
 }));
 const item: FeaturedDto = {
-	id: "pick",
+	id: "entry",
 	mediaType: "season",
 	mediaId: 1399,
 	seasonNumber: 0,
@@ -38,6 +38,29 @@ afterEach(() => {
 	vi.useRealTimers();
 });
 describe("Featured Content reader", () => {
+	it("schedules only expiry boundaries, stops when empty, and cancels on cleanup", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-10-03T12:00:00Z"));
+		const changed = vi.fn();
+		const stop = scheduleFeaturedExpiry(
+			[
+				{ ...item, expiresAt: "2026-10-03T12:00:02Z" },
+				{ ...item, id: "later", expiresAt: "2026-10-03T12:00:05Z" },
+			],
+			changed,
+		);
+		vi.advanceTimersByTime(1000);
+		expect(changed).toHaveBeenCalledTimes(1);
+		vi.advanceTimersByTime(1000);
+		expect(changed).toHaveBeenCalledTimes(2);
+		vi.advanceTimersByTime(3000);
+		expect(changed).toHaveBeenCalledTimes(3);
+		expect(vi.getTimerCount()).toBe(0);
+		stop();
+		const cancel = scheduleFeaturedExpiry([item], changed);
+		cancel();
+		expect(vi.getTimerCount()).toBe(0);
+	});
 	it("links the exact season separately from its source", () => {
 		render(<FeaturedCard item={item} />);
 		expect(
@@ -49,14 +72,11 @@ describe("Featured Content reader", () => {
 			screen.getByRole("link", { name: "Watch trailer" }).getAttribute("href"),
 		).toBe(item.sourceUrl);
 		expect(featuredTitle(item)).toBe("Game of Thrones · Specials");
-		expect(featuredMediaPath({ ...item, mediaType: "movie" })).toBe(
-			"/movies/1399/game-of-thrones",
-		);
 	});
-	it("hides expired picks even when cached data still reports active", () => {
+	it("hides expired entries even when cached data still reports active", () => {
 		expect(activeFeaturedItems([item], Date.parse(item.expiresAt))).toEqual([]);
 	});
-	it("removes a cached pick at expiry without waiting for another request", async () => {
+	it("removes a cached entry at expiry without waiting for another request", async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-10-03T12:00:00Z"));
 		const client = new QueryClient({

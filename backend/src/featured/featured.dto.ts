@@ -16,6 +16,7 @@ import {
 	Min,
 	MinLength,
 	ValidateIf,
+	ValidateBy,
 } from "class-validator";
 import { PageQueryDto, PaginationMetaDto } from "../common/pagination";
 
@@ -43,7 +44,14 @@ export class PublishFeaturedDto {
 	@Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
 	@IsString()
 	@MinLength(1)
-	@MaxLength(280)
+	@ValidateBy({
+		name: "featuredMessageLength",
+		validator: {
+			validate: (value: unknown) =>
+				typeof value === "string" && Array.from(value).length <= 280,
+			defaultMessage: () => "message must be at most 280 characters",
+		},
+	})
 	message: string;
 	@ApiPropertyOptional({ type: String, nullable: true })
 	@IsOptional()

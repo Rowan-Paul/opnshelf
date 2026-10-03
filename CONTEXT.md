@@ -216,8 +216,8 @@ The surface for finding Media Items and rediscovering tracked titles through Fea
 _Avoid_: Search (now a sub-capability of Discover, not its own surface), Explore
 
 **Featured Content**:
-An Opnshelf-owned editorial selection of movies, shows, or seasons, each highlighted by an admin with a message explaining why it matters now and an optional source link. The selection appears in Discover for all visitors, including those who have already tracked the Media Item.
-_Avoid_: Announcement (suggests a separate news entry), Notification Collection (reserved for saved selections from release Notifications)
+An Opnshelf-owned editorial selection of movies, shows, or seasons, each highlighted by an admin with a message explaining why it matters now and an optional source link. Each selected Media Item and its editorial message is a featured entry. A show and one of its seasons are distinct Media Items and may both be featured. The selection appears in Discover for all visitors, including those who have already tracked the Media Item.
+_Avoid_: Pick (reserved for Pick for me), Announcement (suggests a separate news entry), Notification Collection (reserved for saved selections from release Notifications)
 
 **Library**:
 The umbrella term for everything a user **owns** — physical or digital copies of films. Not a stored entity (mirrors _Shelf_, which is the umbrella over Watches). Distinct from a _List_: a List is curation ("want to watch", "favorites"); the Library is ownership ("I own this, in this format"). Replaces the issue-era word "Collection."

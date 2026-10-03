@@ -3,21 +3,28 @@ import {
 	type FeaturedDto,
 	featuredControllerAccessOptions,
 	featuredControllerSelectionOptions,
-	featuredMediaPath,
 	featuredTitle,
+	scheduleFeaturedExpiry,
 } from "@opnshelf/api";
 import { hashKey, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Film } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
+import { buildMovieUrl, buildSeasonUrl, buildShowUrl } from "#/lib/url-utils";
 
 export function FeaturedCard({ item }: { item: FeaturedDto }) {
 	const [failedPoster, setFailedPoster] = useState<string | null>(null);
 	return (
 		<article className="flex w-[min(340px,82vw)] shrink-0 flex-col overflow-hidden rounded-2xl border border-(--border) bg-(--background-elevated)">
 			<Link
-				to={featuredMediaPath(item)}
+				to={
+					item.mediaType === "movie"
+						? buildMovieUrl(item.mediaId, item.title)
+						: item.mediaType === "season" && item.seasonNumber != null
+							? buildSeasonUrl(item.mediaId, item.title, item.seasonNumber)
+							: buildShowUrl(item.mediaId, item.title)
+				}
 				className="group flex flex-1 gap-4 p-4 focus-visible:outline-(--primary) focus-visible:outline-2"
 			>
 				<div className="h-36 w-24 shrink-0 overflow-hidden rounded-lg bg-(--background-subtle)">
@@ -75,9 +82,9 @@ export function FeaturedContent() {
 	});
 	const [now, setNow] = useState(Date.now);
 	useEffect(() => {
-		const timer = setInterval(() => setNow(Date.now()), 1000);
-		return () => clearInterval(timer);
-	}, []);
+		if (selection.data?.items)
+			return scheduleFeaturedExpiry(selection.data.items, setNow);
+	}, [selection.data?.items]);
 	const items = activeFeaturedItems(selection.data?.items ?? [], now);
 	const canEdit = !!user && access.data?.canEdit;
 	if (!selection.isPending && items.length === 0)
@@ -97,7 +104,7 @@ export function FeaturedContent() {
 						to="/admin/featured"
 						className="text-sm underline underline-offset-4"
 					>
-						Manage picks
+						Manage entries
 					</Link>
 				)}
 			</div>
@@ -128,7 +135,7 @@ export function FeaturedContent() {
 				</div>
 			) : canEdit ? (
 				<p className="text-(--foreground-muted) text-sm">
-					No active picks. Publish one to feature it here.
+					No active entries. Publish one to feature it here.
 				</p>
 			) : null}
 		</section>

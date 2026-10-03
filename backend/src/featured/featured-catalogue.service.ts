@@ -13,13 +13,14 @@ import {
 	TmdbHttpClient,
 } from "../tmdb/tmdb-http";
 
-export type FeaturedMedia = {
-	mediaType: string;
-	mediaId: number;
-	seasonNumber?: number | null;
-};
+import type { PublishFeaturedDto } from "./featured.dto";
+
+export type FeaturedMedia = Pick<
+	PublishFeaturedDto,
+	"mediaType" | "mediaId" | "seasonNumber"
+>;
 @Injectable()
-export class FeaturedCatalogService {
+export class FeaturedCatalogueService {
 	private readonly http: TmdbHttpClient;
 	constructor(
 		private readonly config: BackendEnv,
@@ -27,7 +28,7 @@ export class FeaturedCatalogService {
 	) {
 		this.http = new TmdbHttpClient(
 			config.TMDB_API_KEY ?? "",
-			FeaturedCatalogService.name,
+			FeaturedCatalogueService.name,
 			cache,
 		);
 	}
@@ -42,10 +43,10 @@ export class FeaturedCatalogService {
 		);
 		// Only a real 404 proves the title is missing; authentication/limits/outages do not.
 		if (response.status === 404)
-			throw new NotFoundException("Catalog title no longer exists");
+			throw new NotFoundException("Catalogue title no longer exists");
 		if (!response.ok)
 			throw new ServiceUnavailableException(
-				"Catalog is temporarily unavailable",
+				"Catalogue is temporarily unavailable",
 			);
 		return response.json();
 	}
@@ -61,7 +62,7 @@ export class FeaturedCatalogService {
 				: null;
 		const title = item.title || item.name;
 		if (!title)
-			throw new ServiceUnavailableException("Catalog title is incomplete");
+			throw new ServiceUnavailableException("Catalogue title is incomplete");
 		return {
 			title,
 			posterPath: season?.poster_path ?? item.poster_path ?? null,

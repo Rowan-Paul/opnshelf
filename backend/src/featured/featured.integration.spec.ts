@@ -2,7 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { PrismaClient } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
-import type { FeaturedCatalogService } from "./featured-catalog.service";
+import type { FeaturedCatalogueService } from "./featured-catalogue.service";
 import { FeaturedService } from "./featured.service";
 
 // Opt-in against a disposable local database only; never backend/.env.
@@ -13,12 +13,12 @@ describe.skipIf(!url)("Featured Content PostgreSQL transactions", () => {
 	const db = new PrismaClient({
 		adapter: new PrismaPg({ connectionString: url, max: 8 }),
 	});
-	const catalog = {
+	const catalogue = {
 		resolve: async () => ({ title: "Fixture title", posterPath: null }),
 	};
 	const service = new FeaturedService(
 		db as unknown as PrismaService,
-		catalog as unknown as FeaturedCatalogService,
+		catalogue as unknown as FeaturedCatalogueService,
 	);
 	const input = (mediaId: number) => ({
 		mediaType: "movie" as const,

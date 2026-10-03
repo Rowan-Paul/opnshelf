@@ -4,7 +4,7 @@ Status: Accepted and implemented.
 
 For [Featured Content (#255)](https://github.com/Rowan-Paul/opnshelf/issues/255),
 store the editorial selection in Opnshelf's service persistence rather than
-the admin's personal AT Protocol records. These picks speak for Opnshelf;
+the admin's personal AT Protocol records. These entries speak for Opnshelf;
 the admin's account authorizes editing but does not own the published content.
 
 Personal PDS records would make editorial content portable and federated,

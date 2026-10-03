@@ -23,7 +23,7 @@ export {
 } from "./client";
 export {
 	activeFeaturedItems,
-	featuredMediaPath,
+	scheduleFeaturedExpiry,
 	featuredTitle,
 } from "./featured-content";
 export { nameExceptionIssue } from "./exception-issue-name";

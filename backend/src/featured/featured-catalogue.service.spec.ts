@@ -2,15 +2,15 @@ import { NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
 import { MemoryTmdbCacheStore } from "../tmdb/tmdb-cache.store";
-import { FeaturedCatalogService } from "./featured-catalog.service";
+import { FeaturedCatalogueService } from "./featured-catalogue.service";
 
 afterEach(() => vi.unstubAllGlobals());
 const service = () =>
-	new FeaturedCatalogService(
+	new FeaturedCatalogueService(
 		parseEnvironment({ TMDB_API_KEY: "fixture-key" }),
 		new MemoryTmdbCacheStore(),
 	);
-describe("Featured catalog validation", () => {
+describe("Featured catalogue validation", () => {
 	it("looks up the exact season, including Specials, while retaining the show title", async () => {
 		const fetch = vi
 			.fn()
@@ -46,7 +46,7 @@ describe("Featured catalog validation", () => {
 			).rejects.toBeInstanceOf(ServiceUnavailableException);
 		},
 	);
-	it("recognizes a genuine missing catalog title", async () => {
+	it("recognizes a genuine missing catalogue title", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn().mockResolvedValue(new Response(null, { status: 404 })),

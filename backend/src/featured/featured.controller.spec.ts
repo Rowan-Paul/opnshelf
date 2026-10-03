@@ -12,7 +12,7 @@ let app: INestApplication;
 const featured = {
 	selection: vi.fn().mockResolvedValue({ items: [] }),
 	list: vi.fn().mockResolvedValue({ items: [] }),
-	publish: vi.fn().mockResolvedValue({ id: "pick" }),
+	publish: vi.fn().mockResolvedValue({ id: "entry" }),
 	remove: vi.fn(),
 	reorder: vi.fn(),
 };
@@ -63,8 +63,8 @@ describe("editorial HTTP boundary", () => {
 	it.each([
 		["get", "/featured/manage"],
 		["post", "/featured/manage"],
-		["put", "/featured/manage/pick"],
-		["delete", "/featured/manage/pick"],
+		["put", "/featured/manage/entry"],
+		["delete", "/featured/manage/entry"],
 		["put", "/featured/manage/order"],
 	] as const)(
 		"protects %s %s from guests and ordinary users",
@@ -98,6 +98,21 @@ describe("editorial HTTP boundary", () => {
 			expect.objectContaining({ message: "Specials announced" }),
 		);
 	});
+	it.each([
+		["😀".repeat(280), 201],
+		["😀".repeat(281), 400],
+		["✈️".repeat(140), 201],
+		["✈️".repeat(141), 400],
+	] as const)(
+		"counts Unicode code points consistently with the editor",
+		async (message, status) => {
+			await request(app.getHttpServer())
+				.post("/featured/manage")
+				.set("Authorization", "Bearer editor")
+				.send({ ...body, message })
+				.expect(status);
+		},
+	);
 	it.each([
 		{ message: " " },
 		{ message: "a".repeat(281) },

@@ -2,13 +2,14 @@ import {
 	BadRequestException,
 	ConflictException,
 	Injectable,
+	InternalServerErrorException,
 	NotFoundException,
 	ServiceUnavailableException,
 } from "@nestjs/common";
 import { getPaginationMeta } from "../common/pagination";
 import type { FeaturedContent, Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { FeaturedCatalogService } from "./featured-catalog.service";
+import { FeaturedCatalogueService } from "./featured-catalogue.service";
 import type {
 	FeaturedDto,
 	FeaturedQueryDto,
@@ -24,12 +25,15 @@ const orderBy = [{ position: "asc" as const }, { id: "asc" as const }];
 export class FeaturedService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly catalog: FeaturedCatalogService,
+		private readonly catalogue: FeaturedCatalogueService,
 	) {}
 	private dto(item: FeaturedContent): FeaturedDto {
+		const mediaType = item.mediaType;
+		if (mediaType !== "movie" && mediaType !== "show" && mediaType !== "season")
+			throw new InternalServerErrorException("Invalid featured media type");
 		return {
 			id: item.id,
-			mediaType: item.mediaType as FeaturedDto["mediaType"],
+			mediaType,
 			mediaId: item.mediaId,
 			seasonNumber: item.seasonNumber,
 			title: item.title,
@@ -41,31 +45,35 @@ export class FeaturedService {
 			active: item.published && item.expiresAt.getTime() > Date.now(),
 		};
 	}
-	private async publicPick(pick: FeaturedContent): Promise<FeaturedDto | null> {
+	private async publicEntry(
+		entry: FeaturedContent,
+	): Promise<FeaturedDto | null> {
 		let timeout: ReturnType<typeof setTimeout> | undefined;
 		try {
-			// Discovery must remain usable during a slow catalog outage. The
+			// Discovery must remain usable during a slow catalogue outage. The
 			// underlying read can still warm the shared cache for the next visit.
 			const metadata = await Promise.race([
-				this.catalog.resolve(pick),
+				this.catalogue.resolve(this.dto(entry)),
 				new Promise<null>((resolve) => {
 					timeout = setTimeout(() => resolve(null), 1500);
 				}),
 			]);
-			return this.dto({ ...pick, ...metadata });
+			return this.dto({ ...entry, ...metadata });
 		} catch (error) {
-			return error instanceof NotFoundException ? null : this.dto(pick);
+			return error instanceof NotFoundException ? null : this.dto(entry);
 		} finally {
 			clearTimeout(timeout);
 		}
 	}
 	async selection() {
-		const picks = await this.prisma.featuredContent.findMany({
+		const entries = await this.prisma.featuredContent.findMany({
 			where: activeWhere(new Date()),
 			orderBy,
 			take: 5,
 		});
-		const items = await Promise.all(picks.map((pick) => this.publicPick(pick)));
+		const items = await Promise.all(
+			entries.map((entry) => this.publicEntry(entry)),
+		);
 		return {
 			items: items.filter((item): item is FeaturedDto => !!item?.active),
 		};
@@ -91,7 +99,7 @@ export class FeaturedService {
 		});
 		return { ...meta, items: items.map((item) => this.dto(item)) };
 	}
-	// Serialize editorial writes across API replicas, so concurrent tabs cannot
+	// Serialize concurrent editorial requests, so separate tabs cannot
 	// exceed the cap, duplicate an active title, or race a reorder.
 	private async edit<T>(
 		run: (tx: Prisma.TransactionClient) => Promise<T>,
@@ -117,7 +125,7 @@ export class FeaturedService {
 			);
 		let metadata: { title: string; posterPath: string | null };
 		try {
-			metadata = await this.catalog.resolve(input);
+			metadata = await this.catalogue.resolve(input);
 		} catch (error) {
 			if (error instanceof NotFoundException) throw error;
 			throw new ServiceUnavailableException(
@@ -129,8 +137,9 @@ export class FeaturedService {
 				? await tx.featuredContent.findUnique({ where: { id } })
 				: null;
 			if (id && !existing)
-				throw new NotFoundException("Featured pick not found");
+				throw new NotFoundException("Featured entry not found");
 			const now = new Date();
+			// Catalogue verification and lock acquisition may outlive the initial expiry check.
 			if (input.published !== false && expiresAt <= now)
 				throw new BadRequestException("Expiry must be in the future");
 			const active = await tx.featuredContent.findMany({
@@ -140,7 +149,7 @@ export class FeaturedService {
 			const others = active.filter((item) => item.id !== id);
 			if (input.published !== false && others.length >= 5)
 				throw new ConflictException(
-					"Remove an active pick before publishing another",
+					"Remove an active entry before publishing another",
 				);
 			if (
 				input.published !== false &&
@@ -153,7 +162,9 @@ export class FeaturedService {
 			)
 				throw new ConflictException("This Media Item is already featured");
 			const data = {
-				...input,
+				mediaType: input.mediaType,
+				mediaId: input.mediaId,
+				message: input.message,
 				...metadata,
 				seasonNumber: input.seasonNumber ?? null,
 				sourceUrl: input.sourceUrl ?? null,
@@ -177,7 +188,8 @@ export class FeaturedService {
 				where: { id },
 				data: { published: false },
 			});
-			if (!result.count) throw new NotFoundException("Featured pick not found");
+			if (!result.count)
+				throw new NotFoundException("Featured entry not found");
 		});
 	}
 	async reorder(ids: string[]) {

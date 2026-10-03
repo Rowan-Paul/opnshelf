@@ -1,12 +1,15 @@
+import type { FeaturedDto } from "@opnshelf/api";
 import {
 	activeFeaturedItems,
 	featuredControllerSelectionOptions,
 	featuredTitle,
+	scheduleFeaturedExpiry,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { Film } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
 	Alert,
@@ -28,11 +31,9 @@ export function FeaturedContent({ isFocused }: { isFocused: boolean }) {
 	});
 	const [now, setNow] = useState(Date.now);
 	useEffect(() => {
-		if (!isFocused) return;
-		setNow(Date.now());
-		const timer = setInterval(() => setNow(Date.now()), 1000);
-		return () => clearInterval(timer);
-	}, [isFocused]);
+		if (isFocused && query.data?.items)
+			return scheduleFeaturedExpiry(query.data.items, setNow);
+	}, [isFocused, query.data?.items]);
 	const width = Math.min(340, useWindowDimensions().width * 0.84);
 	const items = activeFeaturedItems(query.data?.items ?? [], now);
 	if (!query.isPending && items.length === 0) return null;
@@ -81,15 +82,7 @@ export function FeaturedContent({ isFocused }: { isFocused: boolean }) {
 										accessibilityLabel={featuredTitle(item)}
 										className="flex-1 flex-row gap-4 p-4"
 									>
-										<View className="h-36 w-24 overflow-hidden rounded-lg bg-background-subtle">
-											{item.posterPath ? (
-												<Image
-													source={{ uri: posterUrl(item.posterPath) }}
-													style={{ width: 96, height: 144 }}
-													contentFit="cover"
-												/>
-											) : null}
-										</View>
+										<FeaturedPoster item={item} />
 										<View className="min-w-0 flex-1">
 											<Text className="font-display font-semibold text-base text-foreground">
 												{featuredTitle(item)}
@@ -123,6 +116,28 @@ export function FeaturedContent({ isFocused }: { isFocused: boolean }) {
 							</View>
 						))}
 			</ScrollView>
+		</View>
+	);
+}
+
+function FeaturedPoster({ item }: { item: FeaturedDto }) {
+	const [failedPoster, setFailedPoster] = useState<string | null>(null);
+	return (
+		<View className="h-36 w-24 items-center justify-center overflow-hidden rounded-lg bg-background-subtle">
+			{item.posterPath && item.posterPath !== failedPoster ? (
+				<Image
+					source={{ uri: posterUrl(item.posterPath) }}
+					style={{ width: 96, height: 144 }}
+					contentFit="cover"
+					onError={() => setFailedPoster(item.posterPath)}
+				/>
+			) : (
+				<Film
+					size={32}
+					color="#94a3b8"
+					accessibilityLabel="Poster unavailable"
+				/>
+			)}
 		</View>
 	);
 }

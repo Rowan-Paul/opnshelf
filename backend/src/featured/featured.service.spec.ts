@@ -2,7 +2,7 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FeaturedContent } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
-import type { FeaturedCatalogService } from "./featured-catalog.service";
+import type { FeaturedCatalogueService } from "./featured-catalogue.service";
 import { FeaturedService } from "./featured.service";
 import type { PublishFeaturedDto } from "./featured.dto";
 
@@ -12,7 +12,7 @@ const input: PublishFeaturedDto = {
 	message: "New trailer",
 	expiresAt: "2099-01-01T12:00:00Z",
 };
-function pick(
+function entry(
 	id = "one",
 	extra: Partial<FeaturedContent> = {},
 ): FeaturedContent {
@@ -41,40 +41,40 @@ function setup(active: FeaturedContent[] = []) {
 		count: vi.fn().mockResolvedValue(active.length),
 		create: vi
 			.fn()
-			.mockImplementation(({ data }) => Promise.resolve(pick("new", data))),
+			.mockImplementation(({ data }) => Promise.resolve(entry("new", data))),
 		update: vi
 			.fn()
 			.mockImplementation(({ data, where }) =>
-				Promise.resolve(pick(where.id, data)),
+				Promise.resolve(entry(where.id, data)),
 			),
 		updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 	};
 	const tx = { featuredContent: model, $executeRaw: vi.fn() };
 	const prisma = { ...tx, $transaction: vi.fn(async (fn) => fn(tx)) };
-	const catalog = {
+	const catalogue = {
 		resolve: vi
 			.fn()
 			.mockResolvedValue({ title: "Fresh title", posterPath: "/fresh.jpg" }),
 	};
 	const service = new FeaturedService(
 		prisma as unknown as PrismaService,
-		catalog as unknown as FeaturedCatalogService,
+		catalogue as unknown as FeaturedCatalogueService,
 	);
-	return { model, tx, catalog, service };
+	return { model, tx, catalogue, service };
 }
 afterEach(() => vi.useRealTimers());
 describe("Featured Content", () => {
-	it("bounds public lookup latency during a hanging catalog request", async () => {
+	it("bounds public lookup latency during a hanging catalogue request", async () => {
 		vi.useFakeTimers();
-		const { service, catalog } = setup([pick()]);
-		catalog.resolve.mockReturnValue(new Promise(() => {}));
+		const { service, catalogue } = setup([entry()]);
+		catalogue.resolve.mockReturnValue(new Promise(() => {}));
 		const response = service.selection();
 		await vi.advanceTimersByTimeAsync(1500);
 		expect((await response).items).toEqual([
 			expect.objectContaining({ title: "Saved title" }),
 		]);
 	});
-	it("publishes verified catalog metadata after taking the editorial lock", async () => {
+	it("publishes verified catalogue metadata after taking the editorial lock", async () => {
 		const { service, model, tx } = setup();
 		expect(await service.publish(input)).toMatchObject({
 			active: true,
@@ -85,9 +85,9 @@ describe("Featured Content", () => {
 			model.create.mock.invocationCallOrder[0],
 		);
 	});
-	it("rejects a sixth pick but allows editing one of five", async () => {
+	it("rejects a sixth entry but allows editing one of five", async () => {
 		const active = Array.from({ length: 5 }, (_, i) =>
-			pick(`${i}`, { mediaId: i }),
+			entry(`${i}`, { mediaId: i }),
 		);
 		const { service } = setup(active);
 		await expect(service.publish(input)).rejects.toBeInstanceOf(
@@ -98,11 +98,36 @@ describe("Featured Content", () => {
 		});
 	});
 	it("rejects duplicate exact Media Items, allowing different seasons", async () => {
-		const { service } = setup([pick()]);
+		const { service } = setup([entry()]);
 		await expect(service.publish(input)).rejects.toThrow("already featured");
 		await expect(
 			service.publish({ ...input, mediaType: "season", seasonNumber: 1 }),
 		).resolves.toMatchObject({ seasonNumber: 1 });
+	});
+	it("allows a show and its season, but rejects the same season twice", async () => {
+		const { service } = setup([
+			entry("show", { mediaType: "show" }),
+			entry("season", { mediaType: "season", seasonNumber: 1 }),
+		]);
+		await expect(
+			service.publish({ ...input, mediaType: "season", seasonNumber: 2 }),
+		).resolves.toMatchObject({ seasonNumber: 2 });
+		await expect(
+			service.publish({ ...input, mediaType: "season", seasonNumber: 1 }),
+		).rejects.toThrow("already featured");
+	});
+	it("rechecks expiry after slow catalogue verification before writing", async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-10-03T12:00:00Z"));
+		const { service, catalogue, model } = setup();
+		catalogue.resolve.mockImplementation(async () => {
+			vi.setSystemTime(new Date("2026-10-03T12:00:03Z"));
+			return { title: "Title", posterPath: null };
+		});
+		await expect(
+			service.publish({ ...input, expiresAt: "2026-10-03T12:00:02Z" }),
+		).rejects.toThrow("Expiry must be in the future");
+		expect(model.create).not.toHaveBeenCalled();
 	});
 	it.each([
 		{ mediaType: "season" },
@@ -120,7 +145,7 @@ describe("Featured Content", () => {
 	});
 	it("retains inactive edits without consuming a slot or requiring future expiry", async () => {
 		const { service } = setup(
-			Array.from({ length: 5 }, (_, i) => pick(`${i}`, { mediaId: i })),
+			Array.from({ length: 5 }, (_, i) => entry(`${i}`, { mediaId: i })),
 		);
 		expect(
 			await service.publish(
@@ -130,26 +155,26 @@ describe("Featured Content", () => {
 		).toMatchObject({ active: false });
 	});
 	it("uses saved metadata during outages but hides confirmed missing titles", async () => {
-		const { service, catalog } = setup([
-			pick("outage"),
-			pick("missing"),
-			pick("expired", { expiresAt: new Date(0) }),
+		const { service, catalogue } = setup([
+			entry("outage"),
+			entry("missing"),
+			entry("expired", { expiresAt: new Date(0) }),
 		]);
-		catalog.resolve
+		catalogue.resolve
 			.mockRejectedValueOnce(new Error("offline"))
 			.mockRejectedValueOnce(new NotFoundException());
 		expect((await service.selection()).items).toEqual([
 			expect.objectContaining({ id: "outage", title: "Saved title" }),
 		]);
 	});
-	it("refuses publication when catalog verification fails", async () => {
-		const { service, catalog, model } = setup();
-		catalog.resolve.mockRejectedValue(new Error("offline"));
+	it("refuses publication when catalogue verification fails", async () => {
+		const { service, catalogue, model } = setup();
+		catalogue.resolve.mockRejectedValue(new Error("offline"));
 		await expect(service.publish(input)).rejects.toThrow("Couldn't verify");
 		expect(model.create).not.toHaveBeenCalled();
 	});
 	it("reorders the exact active set and rejects stale or duplicate orders", async () => {
-		const { service, model } = setup([pick("a"), pick("b", { mediaId: 3 })]);
+		const { service, model } = setup([entry("a"), entry("b", { mediaId: 3 })]);
 		await expect(service.reorder(["a"])).rejects.toThrow("selection changed");
 		await expect(service.reorder(["a", "a"])).rejects.toThrow(
 			"selection changed",
@@ -160,8 +185,8 @@ describe("Featured Content", () => {
 			data: { position: 0 },
 		});
 	});
-	it("removes a pick without deleting its reusable record", async () => {
-		const { service, model } = setup([pick()]);
+	it("removes a entry without deleting its reusable record", async () => {
+		const { service, model } = setup([entry()]);
 		await service.remove("one");
 		expect(model.updateMany).toHaveBeenCalledWith({
 			where: { id: "one" },

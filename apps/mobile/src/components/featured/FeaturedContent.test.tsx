@@ -6,7 +6,7 @@ const fixture = vi.hoisted(() => ({
 	data: {
 		items: [
 			{
-				id: "pick",
+				id: "entry",
 				mediaType: "season",
 				mediaId: 1399,
 				seasonNumber: 2,
@@ -34,6 +34,7 @@ vi.mock("react-native", () => ({
 	View: "View",
 	useWindowDimensions: () => ({ width: 390 }),
 }));
+vi.mock("lucide-react-native", () => ({ Film: "Film" }));
 vi.mock("expo-image", () => ({ Image: "Image" }));
 vi.mock("expo-router", () => ({ Link: "Link" }));
 vi.mock("expo-web-browser", () => ({
@@ -73,4 +74,13 @@ it("hides expired content while the client stays open", () => {
 		vi.advanceTimersByTime(2000);
 	});
 	expect(renderer.toJSON()).toBeNull();
+});
+
+it("uses the same film fallback for unavailable posters", () => {
+	act(() => {
+		renderer = create(<FeaturedContent isFocused />);
+	});
+	expect(
+		renderer.root.findByType("Film" as never).props.accessibilityLabel,
+	).toBe("Poster unavailable");
 });
