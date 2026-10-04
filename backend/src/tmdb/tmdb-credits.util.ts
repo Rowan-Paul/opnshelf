@@ -110,9 +110,10 @@ export function summarizeCrew<T extends TMDBCrewMember>(
 	crew: T[] | undefined,
 	keyJobs: string[],
 ): T[] {
-	const ranked = sortCrewByJob(crew, keyJobs).filter((member) =>
+	const candidates = (crew ?? []).filter((member) =>
 		keyJobs.includes(member.job ?? ""),
 	);
+	const ranked = sortCrewByJob(candidates, keyJobs);
 
 	const seen = new Set<number>();
 	return ranked
