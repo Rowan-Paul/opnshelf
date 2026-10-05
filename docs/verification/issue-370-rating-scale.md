@@ -9,7 +9,7 @@ chosen by the operator. Read-only stars include the numeric score, and screen
 readers announce the score out of ten.
 
 AT Store reviews are a separate 1–5 assessment of Opnshelf itself, as defined in
-CONTEXT.md. Their controls and API contract remain unchanged.
+GLOSSARY.md. Their controls and API contract remain unchanged.
 
 ## Audit coverage
 

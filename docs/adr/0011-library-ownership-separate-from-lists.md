@@ -15,6 +15,6 @@ Keeping them separate costs one more lexicon and model — but they are a near-e
 ## Consequences
 
 - A new collection `xyz.opnshelf.library.item` is written to user PDSs and must be indexed by the ingester, alongside lists, ratings, and review documents.
-- `List` and `Library` are two parallel PDS-backed media-collection systems by design. Future readers should not "consolidate" them: the split is the decision. CONTEXT.md records the distinction (List = curation, Library = ownership).
+- `List` and `Library` are two parallel PDS-backed media-collection systems by design. Future readers should not "consolidate" them: the split is the decision. GLOSSARY.md records the distinction (List = curation, Library = ownership).
 - Ownership is public. There is no private-library option, because the PDS makes the data public regardless; any future "private" feature would require not writing to the PDS at all, which would break portability.
 - Box Set is a plain string on the item (no identity, no box-set-level metadata, renaming touches each item). Promoting it to a first-class entity later is a contained migration; it was deferred because issue #33 specifies nothing beyond "can be divided into box sets".

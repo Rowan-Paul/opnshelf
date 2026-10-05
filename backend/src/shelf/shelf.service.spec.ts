@@ -330,7 +330,7 @@ describe("ShelfService", () => {
 			: String(sql);
 
 		// Activity counts logged watches only: watchedDate-based, status =
-		// 'watched', no createdAt fallback (see the Watch term in CONTEXT.md).
+		// 'watched', no createdAt fallback (see the Watch term in GLOSSARY.md).
 		// Prisma persists DateTime as a timezone-less PostgreSQL TIMESTAMP whose
 		// wall-clock value is UTC. Attach UTC before projecting into the owner's
 		// timezone; otherwise a just-after-midnight watch is shifted backwards.

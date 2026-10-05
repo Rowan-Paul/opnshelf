@@ -1,5 +1,5 @@
 /**
- * WidgetKit extension target for the Home-Screen Widget (see CONTEXT.md and
+ * WidgetKit extension target for the Home-Screen Widget (see GLOSSARY.md and
  * ADR 0017). `@bacons/apple-targets` links this folder into the generated
  * Xcode project on prebuild, so `ios/` stays disposable.
  *

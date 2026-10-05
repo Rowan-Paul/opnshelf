@@ -6,7 +6,7 @@ Prisma persists these `DateTime` fields as PostgreSQL `TIMESTAMP` values whose w
 
 ## Context / why this is surprising
 
-Previously the dashboard's `getUserActivitySummary` used `COALESCE(watchedDate, createdAt)` with no status filter, so adding something to a watchlist counted as "watched." That contradicted the **Watch** term in CONTEXT.md (a *logged* watch). Fixing it **reduced** the dashboard's existing 7/30-day counts for anyone with watchlist items — an intentional correctness change, not a regression. A future reader seeing the dropped numbers, the removed `COALESCE`, or the new `UsersService → ShelfModule` dependency might otherwise "restore" the old behavior.
+Previously the dashboard's `getUserActivitySummary` used `COALESCE(watchedDate, createdAt)` with no status filter, so adding something to a watchlist counted as "watched." That contradicted the **Watch** term in GLOSSARY.md (a *logged* watch). Fixing it **reduced** the dashboard's existing 7/30-day counts for anyone with watchlist items — an intentional correctness change, not a regression. A future reader seeing the dropped numbers, the removed `COALESCE`, or the new `UsersService → ShelfModule` dependency might otherwise "restore" the old behavior.
 
 ## Considered alternatives
 
