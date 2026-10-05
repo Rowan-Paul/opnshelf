@@ -175,7 +175,7 @@ export default function EpisodeDetailScreen() {
 									<>
 										<Link href={`/shows/${id}/${name}`} asChild>
 											<Pressable>
-												<Text className="font-medium text-primary text-xs">
+												<Text className="font-medium text-foreground/80 text-xs">
 													{showData.name}
 												</Text>
 											</Pressable>
@@ -188,13 +188,13 @@ export default function EpisodeDetailScreen() {
 									asChild
 								>
 									<Pressable>
-										<Text className="font-medium text-primary text-xs">
+										<Text className="font-medium text-foreground/80 text-xs">
 											Season {data.season_number}
 										</Text>
 									</Pressable>
 								</Link>
 								<Text className="text-muted-foreground text-xs">·</Text>
-								<Text className="font-medium text-primary text-xs">
+								<Text className="font-medium text-foreground text-xs">
 									Episode {data.episode_number}
 								</Text>
 							</View>

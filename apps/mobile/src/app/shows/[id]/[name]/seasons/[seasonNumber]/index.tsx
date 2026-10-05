@@ -195,7 +195,7 @@ export default function SeasonDetailScreen() {
 											<>
 												<Link href={`/shows/${id}/${name}`} asChild>
 													<Pressable>
-														<Text className="font-medium text-primary text-xs">
+														<Text className="font-medium text-foreground/80 text-xs">
 															{showData.name}
 														</Text>
 													</Pressable>
@@ -203,7 +203,7 @@ export default function SeasonDetailScreen() {
 												<Text className="text-muted-foreground text-xs">·</Text>
 											</>
 										) : null}
-										<Text className="font-medium text-primary text-xs">
+										<Text className="font-medium text-foreground text-xs">
 											Season {data.season_number}
 										</Text>
 									</View>
