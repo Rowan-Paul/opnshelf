@@ -311,7 +311,12 @@ export default function Header() {
 										<Link
 											to="/whats-new"
 											onClick={() => setMobileMenuOpen(false)}
-											className="flex items-center gap-3 rounded-md px-3 py-3 text-sm"
+											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
+												currentPath === "/whats-new" ||
+												currentPath.startsWith("/whats-new/")
+													? "bg-(--accent-subtle) text-(--accent)"
+													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
+											}`}
 										>
 											<Newspaper className="size-5" />
 											What’s new {unread && <UnreadDot />}
