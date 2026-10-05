@@ -1,7 +1,7 @@
 # Documentation index
 
 Working rules live in [`AGENTS.md`](../AGENTS.md); product vocabulary lives in
-[`CONTEXT.md`](../CONTEXT.md). Setup, environment variables, test data,
+[`GLOSSARY.md`](../GLOSSARY.md). Setup, environment variables, test data,
 external dependencies and how to test a change are in the
 [root README](../README.md), with per-workspace notes in
 [`backend/README.md`](../backend/README.md) and
@@ -18,4 +18,4 @@ external dependencies and how to test a change are in the
 
 Documentation changes ship in the same branch as the code they describe. A new
 architectural or business decision gets an ADR; a new product term gets a
-`CONTEXT.md` entry.
+`GLOSSARY.md` entry.

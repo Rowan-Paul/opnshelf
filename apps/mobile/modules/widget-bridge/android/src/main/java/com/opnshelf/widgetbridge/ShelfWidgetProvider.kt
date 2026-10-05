@@ -8,7 +8,7 @@ import android.os.Bundle
 
 /**
  * Home-Screen Widget provider: renders the signed-in user's 30-day activity
- * graph plus total Watch count (see CONTEXT.md, "Home-Screen Widget"). All
+ * graph plus total Watch count (see GLOSSARY.md, "Home-Screen Widget"). All
  * rendering logic lives in [ShelfWidgetRenderer]; this class only routes the
  * system callbacks. Refreshes come from Android's 30-minute periodic tick and
  * from app-triggered updates via [requestUpdate] (watch log/remove, login,

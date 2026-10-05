@@ -456,7 +456,7 @@ export class UsersService {
 	 * activity graph, the most-watched show over the trailing 30 days, and the
 	 * current year's watch count. A "watch" is one tracked row with status
 	 * `watched` and a `watchedDate` — rewatches are counted, watchlist adds are
-	 * not (see the Watch term in CONTEXT.md). Day/year windows are bucketed in
+	 * not (see the Watch term in GLOSSARY.md). Day/year windows are bucketed in
 	 * the profile owner's own timezone, reusing the same activity logic the
 	 * dashboard renders so both surfaces agree; the most-watched show uses a
 	 * rolling 30-day cutoff from now, so it doesn't need timezone bucketing.

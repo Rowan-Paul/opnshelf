@@ -17,7 +17,7 @@ Use Node.js 24 and run workspace commands with the repository's pnpm version fro
 
 ## Source-of-truth documents
 
-- `CONTEXT.md` controls exact product vocabulary. Use its canonical terms and respect its avoid lists. When a change adds, renames, or retires a product concept, update `CONTEXT.md` in the same change.
+- `GLOSSARY.md` controls exact product vocabulary. Use its canonical terms and respect its avoid lists. When a change adds, renames, or retires a product concept, update `GLOSSARY.md` in the same change.
 - `docs/adr/**` records architectural decisions. Read the relevant accepted and superseding ADRs before changing behavior or boundaries.
 - `.github/workflows/ci.yml` is the source of truth for workspace verification gates; package scripts provide their implementations. The standalone mail relay has local gates below because CI does not cover it.
 - Deployed configuration lives in Railway, not in the checked-in examples. For environment-shaped work, inspect variable names and only named values that the operator or checked-in docs classify as non-secret. Never run a command that prints all deployed values.
@@ -113,4 +113,4 @@ The five default triage labels, unchanged: `needs-triage`, `needs-info`, `ready-
 
 ### Domain docs
 
-Single-context: one root `CONTEXT.md` and one `docs/adr/` index. See `docs/agents/domain.md`.
+Single-context: one root `GLOSSARY.md` and one `docs/adr/` index. See `docs/agents/domain.md`.

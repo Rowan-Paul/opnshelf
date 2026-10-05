@@ -2,11 +2,11 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-This is a **single-context** repo: one glossary and one ADR directory at the root, even though the pnpm workspace holds several packages.
+This is a **single-context** repo: one glossary and one ADR directory at the root, even though the pnpm workspace holds several packages. Installed skills using the older glossary filename should follow this repo’s `GLOSSARY.md` path.
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root. It controls exact product vocabulary and carries an avoid list per term.
+- **`GLOSSARY.md`** at the repo root. It controls exact product vocabulary and carries an avoid list per term.
 - **`docs/adr/`**: read ADRs that touch the area you're about to work in. [`docs/adr/README.md`](../adr/README.md) is the index with number, title, and status; check for superseding ADRs before relying on one.
 - **`plans/`**: when the task names a numbered plan, read it in full and honor its STOP conditions.
 
@@ -16,7 +16,7 @@ Use `docs/README.md` as the index; load only what the task needs rather than eve
 
 ```
 /
-├── CONTEXT.md
+├── GLOSSARY.md
 ├── docs/
 │   ├── adr/            ← architectural decisions, indexed in README.md
 │   ├── prd/            ← product briefs
@@ -26,9 +26,9 @@ Use `docs/README.md` as the index; load only what the task needs rather than eve
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
+When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `GLOSSARY.md`. Don't drift to synonyms the glossary explicitly avoids.
 
-If the concept you need isn't in the glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap. A change that adds, renames, or retires a product concept updates `CONTEXT.md` in the same change.
+If the concept you need isn't in the glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap. A change that adds, renames, or retires a product concept updates `GLOSSARY.md` in the same change.
 
 ## Flag ADR conflicts
 

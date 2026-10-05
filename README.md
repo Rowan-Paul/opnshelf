@@ -317,7 +317,7 @@ device, see [Testing the mobile app on a physical device](#testing-the-mobile-ap
 
 [`docs/README.md`](docs/README.md) indexes the ADRs, product briefs, runbooks
 and implementation plans. Working rules are in [`AGENTS.md`](AGENTS.md) and
-vocabulary in [`CONTEXT.md`](CONTEXT.md).
+vocabulary in [`GLOSSARY.md`](GLOSSARY.md).
 
 ## License
 
