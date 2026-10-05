@@ -35,14 +35,14 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 							<View className="flex-row items-center gap-4">
 								<Link href="/pick-for-me" asChild>
 									<Pressable hitSlop={8}>
-										<Text className="font-medium text-muted-foreground text-sm">
+										<Text className="font-medium text-primary text-sm">
 											Pick for me
 										</Text>
 									</Pressable>
 								</Link>
 								<Link href={`/profile/${handle}/up-next`} asChild>
 									<Pressable hitSlop={8}>
-										<Text className="font-medium text-muted-foreground text-sm">
+										<Text className="font-medium text-primary text-sm">
 											View all
 										</Text>
 									</Pressable>

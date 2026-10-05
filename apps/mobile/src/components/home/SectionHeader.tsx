@@ -3,6 +3,7 @@ import { ChevronRight, type LucideIcon } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
  * Section header for the home dashboard: an optional leading icon + title on the
@@ -22,6 +23,7 @@ export function SectionHeader({
 	href?: Href;
 	right?: ReactNode;
 }) {
+	const linkStyle = useTwStyle("text-primary");
 	return (
 		<View className="mb-3 flex-row items-center justify-between">
 			<View className="flex-row items-center gap-2">
@@ -34,10 +36,8 @@ export function SectionHeader({
 				(href ? (
 					<Link href={href} asChild>
 						<Pressable hitSlop={8} className="flex-row items-center gap-1">
-							<Text className="font-medium text-muted-foreground text-sm">
-								View all
-							</Text>
-							<ChevronRight color="#94a3b8" size={15} />
+							<Text className="font-medium text-primary text-sm">View all</Text>
+							<ChevronRight color={linkStyle.color} size={15} />
 						</Pressable>
 					</Link>
 				) : null)}
