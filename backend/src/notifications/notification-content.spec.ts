@@ -17,6 +17,31 @@ const item = {
 };
 
 describe("notification content", () => {
+	it.each([
+		{ mediaType: "movie" as const, watchCount: 1, label: "1 Watch" },
+		{ mediaType: "movie" as const, watchCount: 2, label: "2 Watches" },
+		{ mediaType: "show" as const, watchCount: 1, label: "1 episode Watch" },
+		{ mediaType: "show" as const, watchCount: 2, label: "2 episode Watches" },
+	])(
+		"uses $label in both email formats",
+		({ mediaType, watchCount, label }) => {
+			const result = notificationEmail({
+				title: "Your Watch recap",
+				body: "Your most-watched titles",
+				url: null,
+				baseUrl: "https://opnshelf.xyz",
+				collection: {
+					heading: "Your Watch recap",
+					periodStart: "2026-09-21",
+					periodEnd: "2026-09-27",
+					items: [{ ...item, mediaType, watchCount }],
+				},
+			});
+			expect(result.text).toContain(`\n${label}\n`);
+			expect(result.html).toContain(`>${label}</p>`);
+		},
+	);
+
 	it("includes every title, individual links, collection link and settings in both email formats", () => {
 		const result = notificationEmail({
 			title: "Weekend",
