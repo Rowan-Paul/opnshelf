@@ -72,7 +72,7 @@ async function bootstrap() {
 	}
 
 	const port = env.PORT;
-	const host = "0.0.0.0";
+	const host = env.HOST;
 
 	await app.listen(port, host);
 

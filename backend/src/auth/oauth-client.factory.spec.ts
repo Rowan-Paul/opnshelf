@@ -106,6 +106,30 @@ describe("OAuthClientFactory", () => {
 		});
 	});
 
+	it("uses a configured local PLC directory for login and device clients", () => {
+		mockBackendEnv.get.mockImplementation((key: string) =>
+			key === "PLC_DIRECTORY_URL" ? "http://127.0.0.1:2582" : baseConfig[key],
+		);
+		service.onModuleInit();
+		service.buildClient({ set: vi.fn(), get: vi.fn(), del: vi.fn() });
+		expect(NodeOAuthClient).toHaveBeenLastCalledWith(
+			expect.objectContaining({ plcDirectoryUrl: "http://127.0.0.1:2582" }),
+		);
+	});
+
+	it("uses a configured XRPC handle resolver without changing default resolution", () => {
+		mockBackendEnv.get.mockImplementation((key: string) =>
+			key === "HANDLE_RESOLVER_URL"
+				? "https://pds.example.test"
+				: baseConfig[key],
+		);
+		service.onModuleInit();
+		service.buildClient({ set: vi.fn(), get: vi.fn(), del: vi.fn() });
+		expect(NodeOAuthClient).toHaveBeenLastCalledWith(
+			expect.objectContaining({ handleResolver: "https://pds.example.test" }),
+		);
+	});
+
 	describe("getClientMetadata", () => {
 		it("should return localhost metadata for development", () => {
 			const metadata = service.getClientMetadata();

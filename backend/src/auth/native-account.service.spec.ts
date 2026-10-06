@@ -108,6 +108,51 @@ describe("NativeAccountService", () => {
 		});
 	});
 
+	describe("confirmEmailWithCode", () => {
+		it("confirms signup without requiring an email-read grant", async () => {
+			const request = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({ did: "did:plc:jane", emailVerified: true }),
+			});
+			vi.stubGlobal("fetch", request);
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, " code "),
+			).resolves.toBe(true);
+			expect(request).toHaveBeenCalledWith(
+				"https://opnshelf.social/xrpc/com.atproto.server.confirmSignup",
+				expect.objectContaining({
+					body: JSON.stringify({
+						did: "did:plc:jane",
+						verificationCode: "code",
+					}),
+				}),
+			);
+		});
+		it.each([
+			{ did: "did:plc:other", emailVerified: true },
+			{ did: "did:plc:jane", emailVerified: false },
+		])("rejects an unverified or different account", async (result) => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue({ ok: true, json: async () => result }),
+			);
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, "code"),
+			).rejects.toThrow("PDS did not verify this account's email");
+		});
+		it("does not treat a rejected code as verification", async () => {
+			vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, "wrong"),
+			).rejects.toThrow("Invalid or expired");
+		});
+		it("requires the authenticated account", async () => {
+			await expect(
+				service.confirmEmailWithCode(undefined, "code"),
+			).rejects.toThrow("Session not found");
+		});
+	});
+
 	describe("resendEmailConfirmation", () => {
 		it("asks Tranquil to re-enqueue the signup code by DID, unauthenticated", async () => {
 			const mockFetch = vi.fn().mockResolvedValue({ ok: true });

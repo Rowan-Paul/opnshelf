@@ -103,28 +103,17 @@ function LoginPage() {
 		login(loginHandle);
 	};
 
-	const handleLogin = async (e: React.FormEvent) => {
+	const handleLogin = (e: React.FormEvent) => {
 		e.preventDefault();
 		const trimmed = handle.trim();
 		if (!trimmed) return;
-		setIsLoading(true);
-		try {
-			const res = await fetch(
-				`https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(trimmed)}`,
-			);
-			if (!res.ok) {
-				toast.error("Handle not found. Check your handle and try again.");
-				setIsLoading(false);
-				return;
-			}
-		} catch {
-			// Network error — let the backend handle it
-		}
-		login(trimmed);
+		// OAuth resolves the handle against the configured identity network.
+		// Bluesky's public index cannot validate every PDS or local account.
+		startLogin(trimmed);
 	};
 
-	// A picked suggestion is a known-resolvable handle, so skip the resolve
-	// pre-check and go straight to OAuth.
+	// Suggestions and typed handles use the same authoritative OAuth lookup.
+
 	const handleSuggestionPick = (actorHandle: string) => {
 		setHandle(actorHandle);
 		setShowSuggestions(false);

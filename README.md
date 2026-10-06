@@ -144,11 +144,14 @@ Notes:
 | --- | --- | --- |
 | `NODE_ENV` | Defaulted | Runtime mode; defaults to development. |
 | `PORT` | Defaulted | HTTP listening port; defaults to 3001. |
+| `HOST` | Defaulted | HTTP bind address; defaults to 0.0.0.0. Use 127.0.0.1 for a local-only server. |
 | `DATABASE_URL` | Required in production | PostgreSQL connection string. |
 | `FEATURED_ADMIN_DID` | Optional | Non-secret DID of the sole Featured Content editor; unset disables editorial access. |
 | `TMDB_API_KEY` | Required in production | TMDB API key for catalogue reads. |
 | `ENABLE_ATPROTO_SPACES` | Defaulted | Enable the experimental, opt-in Private Settings integration; defaults to false. |
 | `PDS_URL` | Required in production | Tranquil Personal Data Server URL. |
+| `PLC_DIRECTORY_URL` | Optional | Override the PLC directory for an isolated local AT Protocol network; defaults to the public directory. |
+| `HANDLE_RESOLVER_URL` | Optional | Optional trusted XRPC service for OAuth handle resolution; unset uses DNS and HTTPS resolution. |
 | `PDS_HANDLE_DOMAIN` | Required in production | Handle domain served by the PDS. |
 | `PDS_ADMIN_IDENTIFIER` | Required in production | PDS admin account used for account management. |
 | `PDS_ADMIN_PASSWORD` | Required in production | PDS admin account password. |

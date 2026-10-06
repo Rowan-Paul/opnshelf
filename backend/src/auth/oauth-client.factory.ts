@@ -117,6 +117,12 @@ export class OAuthClientFactory implements OnModuleInit {
 			sessionStore,
 			requestLock: requestLocalLock,
 			allowHttp: oauthClientConfig.allowHttp,
+			...(this.configService.HANDLE_RESOLVER_URL && {
+				handleResolver: this.configService.HANDLE_RESOLVER_URL,
+			}),
+			...(this.configService.PLC_DIRECTORY_URL && {
+				plcDirectoryUrl: this.configService.PLC_DIRECTORY_URL,
+			}),
 		});
 	}
 
