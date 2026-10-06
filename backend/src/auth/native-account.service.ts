@@ -86,10 +86,35 @@ export class NativeAccountService {
 			},
 		);
 		if (!response.ok) {
-			throw new Error("Invalid or expired signup verification code");
+			const failure: unknown = await response.json().catch(() => null);
+			const error =
+				failure &&
+				typeof failure === "object" &&
+				"error" in failure &&
+				typeof failure.error === "string"
+					? failure.error
+					: "SignupVerificationFailed";
+			throw Object.assign(new Error("Signup verification failed"), { error });
 		}
-		const result: { did?: string; emailVerified?: boolean } =
-			await response.json();
+		const result: {
+			did?: string;
+			emailVerified?: boolean;
+			accessJwt?: string;
+		} = await response.json();
+		// confirmSignup issues a credential session that this OAuth flow never uses.
+		// Revoke it before accepting verification, including malformed account replies.
+		if (typeof result.accessJwt !== "string" || !result.accessJwt) {
+			throw new Error("PDS did not return a signup session to revoke");
+		}
+		const revoked = await fetch(
+			`${pdsUrl}/xrpc/com.atproto.server.deleteSession`,
+			{
+				method: "POST",
+				headers: { Authorization: `Bearer ${result.accessJwt}` },
+				signal: AbortSignal.timeout(15_000),
+			},
+		);
+		if (!revoked.ok) throw new Error("Could not revoke the signup session");
 		if (result.did !== did || result.emailVerified !== true) {
 			throw new Error("PDS did not verify this account's email");
 		}
