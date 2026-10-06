@@ -147,6 +147,7 @@ Notes:
 | `DATABASE_URL` | Required in production | PostgreSQL connection string. |
 | `FEATURED_ADMIN_DID` | Optional | Non-secret DID of the sole Featured Content editor; unset disables editorial access. |
 | `TMDB_API_KEY` | Required in production | TMDB API key for catalogue reads. |
+| `ENABLE_ATPROTO_SPACES` | Defaulted | Enable the experimental, opt-in Private Settings integration; defaults to false. |
 | `PDS_URL` | Required in production | Tranquil Personal Data Server URL. |
 | `PDS_HANDLE_DOMAIN` | Required in production | Handle domain served by the PDS. |
 | `PDS_ADMIN_IDENTIFIER` | Required in production | PDS admin account used for account management. |

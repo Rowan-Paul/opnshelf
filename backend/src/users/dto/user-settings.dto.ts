@@ -137,7 +137,34 @@ export class AccountDeletionJobDto {
 	createdAt!: string;
 }
 
+export class PrivateSettingsStateDto {
+	@ApiProperty()
+	enabled!: boolean;
+	@ApiProperty({
+		enum: [
+			"disabled",
+			"available",
+			"unsupported",
+			"connected",
+			"missing",
+			"permissionRequired",
+			"unavailable",
+		],
+	})
+	status!:
+		| "disabled"
+		| "available"
+		| "unsupported"
+		| "connected"
+		| "missing"
+		| "permissionRequired"
+		| "unavailable";
+}
+
 export class UserSettingsDto {
+	@ApiPropertyOptional({ type: PrivateSettingsStateDto })
+	privateSettings?: PrivateSettingsStateDto;
+
 	@ApiProperty({
 		description: "Time format preference",
 		enum: ["12h", "24h"],

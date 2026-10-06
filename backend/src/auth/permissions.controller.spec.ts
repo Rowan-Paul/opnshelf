@@ -15,6 +15,7 @@ vi.mock("@atproto/tap", () => ({
 	SimpleIndexer: vi.fn(),
 }));
 
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { AuthService } from "./auth.service";
 import { PermissionsController } from "./permissions.controller";
 
@@ -47,10 +48,47 @@ describe("PermissionsController", () => {
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [PermissionsController],
-			providers: [{ provide: AuthService, useValue: mockAuthService }],
+			providers: [
+				{ provide: AuthService, useValue: mockAuthService },
+				{
+					provide: PrivateSettingsService,
+					useValue: { assertAvailable: vi.fn() },
+				},
+			],
 		}).compile();
 
 		controller = module.get<PermissionsController>(PermissionsController);
+	});
+
+	it("preserves other integrations when connecting Spaces and carries the mobile challenge", async () => {
+		mockAuthService.getUser.mockResolvedValue({
+			handle: "owner.example",
+			privateSettingsEnabled: false,
+			blogIntegrationEnabled: true,
+			blueskyCrossPostEnabled: true,
+			reviewsMirrorFormat: "markdown",
+		});
+		await controller.permissions(
+			{
+				user: { did: "did:plc:owner", session: { did: "did:plc:owner" } },
+			} as never,
+			{
+				integration: "spaces",
+				action: "connect",
+				platform: "mobile",
+				codeChallenge: "a".repeat(43),
+			},
+		);
+		expect(mockAuthService.authorizePermissionChange).toHaveBeenCalledWith(
+			"owner.example",
+			"spaces",
+			expect.objectContaining({
+				privateSettingsEnabled: true,
+				blogEnabled: true,
+				blueskyEnabled: true,
+			}),
+			{ platform: "mobile", codeChallenge: "a".repeat(43) },
+		);
 	});
 
 	describe("permissions", () => {

@@ -70,6 +70,8 @@ export type UserMinAggregateOutputType = {
   showTangledOnProfile: boolean | null
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  privateSettingsEnabled: boolean | null
+  privateSettingsHasCopy: boolean | null
   blogIntegrationEnabled: boolean | null
   blueskyCrossPostEnabled: boolean | null
   reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
@@ -109,6 +111,8 @@ export type UserMaxAggregateOutputType = {
   showTangledOnProfile: boolean | null
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  privateSettingsEnabled: boolean | null
+  privateSettingsHasCopy: boolean | null
   blogIntegrationEnabled: boolean | null
   blueskyCrossPostEnabled: boolean | null
   reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
@@ -149,6 +153,8 @@ export type UserCountAggregateOutputType = {
   showTangledOnProfile: number
   reviewsPublicationUri: number
   reviewsPublicationName: number
+  privateSettingsEnabled: number
+  privateSettingsHasCopy: number
   blogIntegrationEnabled: number
   blueskyCrossPostEnabled: number
   reviewsMirrorFormat: number
@@ -202,6 +208,8 @@ export type UserMinAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  privateSettingsEnabled?: true
+  privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
   reviewsMirrorFormat?: true
@@ -241,6 +249,8 @@ export type UserMaxAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  privateSettingsEnabled?: true
+  privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
   reviewsMirrorFormat?: true
@@ -281,6 +291,8 @@ export type UserCountAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  privateSettingsEnabled?: true
+  privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
   reviewsMirrorFormat?: true
@@ -408,6 +420,8 @@ export type UserGroupByOutputType = {
   showTangledOnProfile: boolean
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  privateSettingsEnabled: boolean
+  privateSettingsHasCopy: boolean
   blogIntegrationEnabled: boolean
   blueskyCrossPostEnabled: boolean
   reviewsMirrorFormat: $Enums.BlogMirrorFormat
@@ -471,6 +485,8 @@ export type UserWhereInput = {
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
+  privateSettingsEnabled?: Prisma.BoolFilter<"User"> | boolean
+  privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
@@ -528,6 +544,8 @@ export type UserOrderByWithRelationInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
+  privateSettingsEnabled?: Prisma.SortOrder
+  privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
@@ -588,6 +606,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
+  privateSettingsEnabled?: Prisma.BoolFilter<"User"> | boolean
+  privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
@@ -645,6 +665,8 @@ export type UserOrderByWithAggregationInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
+  privateSettingsEnabled?: Prisma.SortOrder
+  privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
@@ -693,6 +715,8 @@ export type UserScalarWhereWithAggregatesInput = {
   showTangledOnProfile?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  privateSettingsEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  privateSettingsHasCopy?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatWithAggregatesFilter<"User"> | $Enums.BlogMirrorFormat
@@ -733,6 +757,8 @@ export type UserCreateInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -790,6 +816,8 @@ export type UserUncheckedCreateInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -847,6 +875,8 @@ export type UserUpdateInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -904,6 +934,8 @@ export type UserUncheckedUpdateInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -961,6 +993,8 @@ export type UserCreateManyInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -1001,6 +1035,8 @@ export type UserUpdateManyMutationInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -1041,6 +1077,8 @@ export type UserUncheckedUpdateManyInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -1089,6 +1127,8 @@ export type UserCountOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  privateSettingsEnabled?: Prisma.SortOrder
+  privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
@@ -1134,6 +1174,8 @@ export type UserMaxOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  privateSettingsEnabled?: Prisma.SortOrder
+  privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
@@ -1173,6 +1215,8 @@ export type UserMinOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  privateSettingsEnabled?: Prisma.SortOrder
+  privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
@@ -1510,6 +1554,8 @@ export type UserCreateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -1566,6 +1612,8 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -1638,6 +1686,8 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -1694,6 +1744,8 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -1750,6 +1802,8 @@ export type UserCreateWithoutPushDevicesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -1806,6 +1860,8 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -1878,6 +1934,8 @@ export type UserUpdateWithoutPushDevicesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -1934,6 +1992,8 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -1990,6 +2050,8 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2046,6 +2108,8 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2118,6 +2182,8 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2174,6 +2240,8 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2230,6 +2298,8 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2286,6 +2356,8 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2358,6 +2430,8 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2414,6 +2488,8 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2470,6 +2546,8 @@ export type UserCreateWithoutFollowingInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2526,6 +2604,8 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2587,6 +2667,8 @@ export type UserCreateWithoutFollowersInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2643,6 +2725,8 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -2715,6 +2799,8 @@ export type UserUpdateWithoutFollowingInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2771,6 +2857,8 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2838,6 +2926,8 @@ export type UserUpdateWithoutFollowersInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2894,6 +2984,8 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -2950,6 +3042,8 @@ export type UserCreateWithoutCirclesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3006,6 +3100,8 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3078,6 +3174,8 @@ export type UserUpdateWithoutCirclesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3134,6 +3232,8 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3190,6 +3290,8 @@ export type UserCreateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3246,6 +3348,8 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3318,6 +3422,8 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3374,6 +3480,8 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3430,6 +3538,8 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3486,6 +3596,8 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3558,6 +3670,8 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3614,6 +3728,8 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3670,6 +3786,8 @@ export type UserCreateWithoutListsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3726,6 +3844,8 @@ export type UserUncheckedCreateWithoutListsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3798,6 +3918,8 @@ export type UserUpdateWithoutListsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3854,6 +3976,8 @@ export type UserUncheckedUpdateWithoutListsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -3910,6 +4034,8 @@ export type UserCreateWithoutLibraryItemsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -3966,6 +4092,8 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4038,6 +4166,8 @@ export type UserUpdateWithoutLibraryItemsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4094,6 +4224,8 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4150,6 +4282,8 @@ export type UserCreateWithoutNotesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4206,6 +4340,8 @@ export type UserUncheckedCreateWithoutNotesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4278,6 +4414,8 @@ export type UserUpdateWithoutNotesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4334,6 +4472,8 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4390,6 +4530,8 @@ export type UserCreateWithoutReviewsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4446,6 +4588,8 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4518,6 +4662,8 @@ export type UserUpdateWithoutReviewsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4574,6 +4720,8 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4630,6 +4778,8 @@ export type UserCreateWithoutPublicationsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4686,6 +4836,8 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4758,6 +4910,8 @@ export type UserUpdateWithoutPublicationsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4814,6 +4968,8 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -4870,6 +5026,8 @@ export type UserCreateWithoutRatingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4926,6 +5084,8 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -4998,6 +5158,8 @@ export type UserUpdateWithoutRatingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -5054,6 +5216,8 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -5110,6 +5274,8 @@ export type UserCreateWithoutReviewLikesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -5166,6 +5332,8 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -5238,6 +5406,8 @@ export type UserUpdateWithoutReviewLikesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -5294,6 +5464,8 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -5350,6 +5522,8 @@ export type UserCreateWithoutFeedbackInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -5406,6 +5580,8 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
@@ -5478,6 +5654,8 @@ export type UserUpdateWithoutFeedbackInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -5534,6 +5712,8 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
@@ -5756,6 +5936,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: boolean
@@ -5814,6 +5996,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: boolean
@@ -5854,6 +6038,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: boolean
@@ -5894,6 +6080,8 @@ export type UserSelectScalar = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
   reviewsMirrorFormat?: boolean
@@ -5901,7 +6089,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -5979,6 +6167,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     showTangledOnProfile: boolean
     reviewsPublicationUri: string | null
     reviewsPublicationName: string | null
+    privateSettingsEnabled: boolean
+    privateSettingsHasCopy: boolean
     blogIntegrationEnabled: boolean
     blueskyCrossPostEnabled: boolean
     reviewsMirrorFormat: $Enums.BlogMirrorFormat
@@ -6456,6 +6646,8 @@ export interface UserFieldRefs {
   readonly showTangledOnProfile: Prisma.FieldRef<"User", 'Boolean'>
   readonly reviewsPublicationUri: Prisma.FieldRef<"User", 'String'>
   readonly reviewsPublicationName: Prisma.FieldRef<"User", 'String'>
+  readonly privateSettingsEnabled: Prisma.FieldRef<"User", 'Boolean'>
+  readonly privateSettingsHasCopy: Prisma.FieldRef<"User", 'Boolean'>
   readonly blogIntegrationEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly blueskyCrossPostEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly reviewsMirrorFormat: Prisma.FieldRef<"User", 'BlogMirrorFormat'>

@@ -1,0 +1,18 @@
+{
+  "lexicon": 1,
+  "id": "xyz.opnshelf.privateSettings",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Experimental owner-only preferences stored exclusively in an xyz.opnshelf.settings Space, never in the public repository.",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "required": ["timeFormat"],
+        "properties": {
+          "timeFormat": { "type": "string", "enum": ["12h", "24h"] }
+        }
+      }
+    }
+  }
+}

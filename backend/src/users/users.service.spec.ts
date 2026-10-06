@@ -27,6 +27,7 @@ import type { ReviewsService } from "../reviews/reviews.service";
 import type { ImportHistoryService } from "./import-history.service";
 import type { ProfileService } from "./profile.service";
 import type { UserDeletionService } from "./user-deletion.service";
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { UsersService } from "./users.service";
 
 type MockImportHistoryService = {
@@ -55,12 +56,14 @@ describe("UsersService", () => {
 	let service: UsersService;
 	let importHistoryService: MockImportHistoryService;
 	let reviewsService: ReviewsService;
+	let privateSettings: PrivateSettingsService;
 
 	const prisma = {
 		user: {
 			findUnique: vi.fn(),
 			findMany: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 		follow: {
 			findMany: vi.fn(),
@@ -143,6 +146,9 @@ describe("UsersService", () => {
 		reviewsService = {
 			listMyPublications: vi.fn(),
 		} as unknown as ReviewsService;
+		privateSettings = new PrivateSettingsService(
+			mockEnvironment({ ENABLE_ATPROTO_SPACES: false }),
+		);
 		service = new UsersService(
 			prisma,
 			importHistoryService as unknown as ImportHistoryService,
@@ -151,7 +157,51 @@ describe("UsersService", () => {
 			listsService,
 			reviewsService,
 			shelfService,
+			privateSettings,
 		);
+	});
+
+	it("does not change the local preference after a failed private save", async () => {
+		vi.mocked(prisma.user.findUnique).mockResolvedValue({
+			privateSettingsEnabled: true,
+		} as never);
+		vi.spyOn(privateSettings, "save").mockRejectedValue(
+			new Error("PDS unavailable"),
+		);
+		await expect(
+			service.updateUserSettings(
+				"did:plc:owner",
+				{ timeFormat: "24h" },
+				{ did: "did:plc:owner" },
+			),
+		).rejects.toThrow("PDS unavailable");
+		expect(prisma.user.update).toHaveBeenCalledExactlyOnceWith({
+			where: { did: "did:plc:owner" },
+			data: { privateSettingsHasCopy: true },
+		});
+	});
+	it("hydrates the local preference only from a validated private record", async () => {
+		vi.mocked(prisma.user.findUnique).mockResolvedValue({
+			privateSettingsEnabled: true,
+			timeFormat: "12h",
+		} as never);
+		vi.spyOn(privateSettings, "read").mockResolvedValue({
+			enabled: true,
+			status: "connected",
+			timeFormat: "24h",
+		});
+		const result = await service.getUserSettings("did:plc:owner", {
+			did: "did:plc:owner",
+		});
+		expect(result.timeFormat).toBe("24h");
+		expect(prisma.user.updateMany).toHaveBeenCalledWith({
+			where: {
+				did: "did:plc:owner",
+				timeFormat: "12h",
+				privateSettingsEnabled: true,
+			},
+			data: { timeFormat: "24h", privateSettingsHasCopy: true },
+		});
 	});
 
 	// No afterEach restoreAllMocks: the Logger spies live on the per-test

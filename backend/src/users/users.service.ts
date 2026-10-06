@@ -1,3 +1,4 @@
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { rebaseAvatarUrl } from "./avatar-url";
 import {
 	BadGatewayException,
@@ -50,12 +51,16 @@ export class UsersService {
 		private readonly listsService: ListsService,
 		private readonly reviewsService: ReviewsService,
 		private readonly shelfService: ShelfService,
+		private readonly privateSettings: PrivateSettingsService,
 	) {}
 
 	/**
 	 * Get user settings by DID
 	 */
-	async getUserSettings(did: string): Promise<UserSettingsDto> {
+	async getUserSettings(
+		did: string,
+		session?: ATSession,
+	): Promise<UserSettingsDto> {
 		const user = await this.prisma.user.findUnique({
 			where: { did },
 			select: {
@@ -69,6 +74,8 @@ export class UsersService {
 				reviewsMirrorFormat: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				privateSettingsEnabled: true,
+				privateSettingsHasCopy: true,
 				welcomeTourWebVersion: true,
 				welcomeTourMobileVersion: true,
 			},
@@ -78,9 +85,36 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
+		const privateSettings = await this.privateSettings.read(
+			did,
+			user.privateSettingsEnabled,
+			session,
+		);
+		if (
+			privateSettings.timeFormat &&
+			(privateSettings.timeFormat !== user.timeFormat ||
+				!user.privateSettingsHasCopy)
+		) {
+			await this.prisma.user.updateMany({
+				where: {
+					did,
+					timeFormat: user.timeFormat,
+					privateSettingsEnabled: true,
+				},
+				data: {
+					timeFormat: privateSettings.timeFormat,
+					privateSettingsHasCopy: true,
+				},
+			});
+		}
+
 		return {
 			timezone: user.timezone,
-			timeFormat: user.timeFormat,
+			timeFormat: privateSettings.timeFormat ?? user.timeFormat,
+			privateSettings: {
+				enabled: privateSettings.enabled,
+				status: privateSettings.status,
+			},
 			watchCountry: user.watchCountry,
 			streamingServiceIds: user.streamingServiceIds,
 			alwaysShowSpoilers: user.alwaysShowSpoilers,
@@ -145,11 +179,23 @@ export class UsersService {
 			}
 		}
 
+		if (user.privateSettingsEnabled && dto.timeFormat !== undefined) {
+			// Reserve cleanup before the remote write, including if the later cache update fails.
+			await this.prisma.user.update({
+				where: { did },
+				data: { privateSettingsHasCopy: true },
+			});
+			await this.privateSettings.save(did, session, dto.timeFormat);
+		}
+
 		const updatedUser = await this.prisma.user.update({
 			where: { did },
 			data: {
 				...(dto.timezone !== undefined && { timezone: dto.timezone }),
-				...(dto.timeFormat !== undefined && { timeFormat: dto.timeFormat }),
+				...(dto.timeFormat !== undefined && {
+					timeFormat: dto.timeFormat,
+					...(user.privateSettingsEnabled && { privateSettingsHasCopy: true }),
+				}),
 				...(dto.watchCountry !== undefined && {
 					watchCountry: dto.watchCountry,
 				}),
@@ -181,6 +227,7 @@ export class UsersService {
 				reviewsMirrorFormat: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				privateSettingsEnabled: true,
 				welcomeTourWebVersion: true,
 				welcomeTourMobileVersion: true,
 			},
@@ -219,6 +266,14 @@ export class UsersService {
 			welcomeTourWebVersion: updatedUser.welcomeTourWebVersion,
 			welcomeTourMobileVersion: updatedUser.welcomeTourMobileVersion,
 		};
+	}
+
+	async deletePrivateSettings(did: string, session: ATSession) {
+		await this.privateSettings.delete(did, session);
+		await this.prisma.user.update({
+			where: { did },
+			data: { privateSettingsHasCopy: false },
+		});
 	}
 
 	async updateUserProfile(

@@ -4,6 +4,13 @@ A social media tracking and review platform where users log, rate, and review mo
 
 ## Language
 
+**Private Settings**:
+An optional, experimental connection that stores a User's time-format preference in an owner-controlled AT Protocol Space on their PDS. Opnshelf keeps the last valid value locally and reports when private storage is unavailable. It does not move Circles or other settings into Spaces. See ADR 0045.
+_Avoid_: Private profile (the profile is public), encrypted settings (Spaces use access control, not end-to-end encryption)
+
+**Space**:
+An AT Protocol access-control and synchronization boundary. Each author has a separate repository inside it. Private Settings uses a single owner-controlled Space with no other members; a Space is not an Opnshelf Circle or List.
+
 **Release Notes**:
 Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
 _Avoid_: Notification (reserved for media and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)

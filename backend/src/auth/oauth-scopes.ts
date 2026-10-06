@@ -35,7 +35,10 @@ export const CORE_GRANTED_SCOPES = CORE_REPO_COLLECTIONS.flatMap((collection) =>
 );
 
 export type BlogMirrorFormat = "markdown" | "leaflet" | "offprint" | "pckt";
-export type OAuthIntegration = "atstore" | "blog" | "bluesky";
+export type OAuthIntegration = "atstore" | "blog" | "bluesky" | "spaces";
+
+export const PRIVATE_SETTINGS_SCOPE =
+	"space:xyz.opnshelf.settings?collection=xyz.opnshelf.privateSettings&manage=create";
 
 export const BLOG_OAUTH_SCOPES = ["repo:site.standard.document"] as const;
 export const OFFPRINT_OAUTH_SCOPE = "repo:app.offprint.document.article";
@@ -51,6 +54,7 @@ export const ATSTORE_REVIEW_GRANTED_SCOPES = [
 ] as const;
 
 export interface OAuthScopePreferences {
+	privateSettingsEnabled?: boolean;
 	blogEnabled?: boolean;
 	blueskyEnabled?: boolean;
 	atStoreReviewEnabled?: boolean;
@@ -61,6 +65,7 @@ export function buildOAuthScopes(
 	preferences: OAuthScopePreferences = {},
 ): string[] {
 	const scopes: string[] = [...CORE_OAUTH_SCOPES];
+	if (preferences.privateSettingsEnabled) scopes.push(PRIVATE_SETTINGS_SCOPE);
 	if (preferences.blogEnabled) {
 		scopes.push(...BLOG_OAUTH_SCOPES);
 		if (preferences.reviewsMirrorFormat === "offprint") {
@@ -193,6 +198,8 @@ export function includesOAuthCapabilities(
 
 	return (
 		includesRequestedScopes(grantedScope, directScopes) &&
+		(!preferences.privateSettingsEnabled ||
+			includesRequestedScopes(grantedScope, [PRIVATE_SETTINGS_SCOPE])) &&
 		includesPermissionSetGrant(
 			grantedScope,
 			CORE_PERMISSION_SET_SCOPE,
@@ -215,3 +222,9 @@ export const DECLARED_OAUTH_SCOPE = buildOAuthScope({
 	blueskyEnabled: true,
 	reviewsMirrorFormat: "offprint",
 });
+
+export function declaredOAuthScope(privateSettingsEnabled = false): string {
+	return privateSettingsEnabled
+		? `${DECLARED_OAUTH_SCOPE} ${PRIVATE_SETTINGS_SCOPE}`
+		: DECLARED_OAUTH_SCOPE;
+}

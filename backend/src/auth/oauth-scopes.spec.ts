@@ -77,3 +77,18 @@ describe("progressive OAuth scopes", () => {
 		expect(includesOAuthCapabilities(granted)).toBe(false);
 	});
 });
+
+it("requests Spaces only after opt-in and rejects a partial grant", () => {
+	const preferences = { privateSettingsEnabled: true };
+	const scopes = buildOAuthScopes(preferences);
+	expect(buildOAuthScopes().some((scope) => scope.startsWith("space:"))).toBe(
+		false,
+	);
+	expect(scopes).toContain(
+		"space:xyz.opnshelf.settings?collection=xyz.opnshelf.privateSettings&manage=create",
+	);
+	expect(includesOAuthCapabilities(scopes, preferences)).toBe(true);
+	expect(includesOAuthCapabilities(buildOAuthScopes(), preferences)).toBe(
+		false,
+	);
+});

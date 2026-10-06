@@ -1,3 +1,4 @@
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { mockEnvironment } from "../../test/env";
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import type { BackendEnv } from "../config/env.schema";
@@ -127,7 +128,12 @@ describe("UserDeletionService", () => {
 		mockDeleteRecord.mockResolvedValue(undefined);
 		mockRemoveRepos.mockResolvedValue(undefined);
 
-		service = new UserDeletionService(prisma, authService, config);
+		service = new UserDeletionService(
+			prisma,
+			authService,
+			config,
+			new PrivateSettingsService(config),
+		);
 	});
 
 	describe("deleteUserSync", () => {

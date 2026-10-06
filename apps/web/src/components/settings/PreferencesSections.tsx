@@ -8,6 +8,7 @@ import { Switch } from "#/components/ui/switch";
 import { useAuth } from "#/lib/auth-context";
 import { createCoalescedSaver, sameIdSet } from "#/lib/coalesced-save";
 import { type ThemeMode, useThemeMode } from "#/lib/theme";
+import { PrivateSettingsSection } from "./PrivateSettingsSection";
 import { useUpdateSettings } from "./use-settings-mutations";
 
 const APPEARANCE_OPTIONS: { value: ThemeMode; label: string }[] = [
@@ -83,7 +84,15 @@ export function PreferencesSections() {
 									body: { timezone },
 								})
 							}
-							disabled={updateSettingsMutation.isPending}
+							disabled={
+								updateSettingsMutation.isPending ||
+								Boolean(
+									userSettings?.privateSettings?.enabled &&
+										!["connected", "missing"].includes(
+											userSettings.privateSettings.status,
+										),
+								)
+							}
 						/>
 					</div>
 
@@ -107,6 +116,7 @@ export function PreferencesSections() {
 							disabled={updateSettingsMutation.isPending}
 						/>
 					</div>
+					<PrivateSettingsSection />
 				</div>
 			</section>
 			<section

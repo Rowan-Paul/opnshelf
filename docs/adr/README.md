@@ -62,3 +62,4 @@ Numbering notes:
 | [0042-watch-date-corrections-preserve-identity.md](0042-watch-date-corrections-preserve-identity.md) | 0042 | Watch date corrections preserve identity | Accepted; implemented |
 | [0043-featured-content-is-service-owned.md](0043-featured-content-is-service-owned.md) | 0043 | Featured Content is owned by the service | Accepted and implemented |
 | [0044-release-notes-use-web-content-and-private-read-state.md](0044-release-notes-use-web-content-and-private-read-state.md) | 0044 | Release Notes use Web content and private account read state | Accepted; implemented |
+| [0045-private-settings-use-an-opt-in-space.md](0045-private-settings-use-an-opt-in-space.md) | 0045 | Private Settings use an opt-in Space | Accepted for experimental trial |

@@ -60,6 +60,8 @@ model User {
   reviewsPublicationName  String?
   // Account-wide integrations. Configuration is retained when disabled so an
   // explicit reconnect can resume the same publication/pointers.
+  privateSettingsEnabled Boolean @default(false)
+  privateSettingsHasCopy Boolean @default(false)
   blogIntegrationEnabled  Boolean          @default(false)
   blueskyCrossPostEnabled Boolean          @default(false)
   // The explicitly confirmed reader format for blog mirrors. This remains

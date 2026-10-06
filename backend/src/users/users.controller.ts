@@ -161,7 +161,10 @@ export class UsersController {
 			throw new Error("User not found in request");
 		}
 
-		return this.usersService.getUserSettings(did);
+		return this.usersService.getUserSettings(
+			did,
+			req.user.session as ATSession,
+		);
 	}
 
 	/**
@@ -183,6 +186,20 @@ export class UsersController {
 
 		const session = req.user?.session as ATSession | undefined;
 		return this.usersService.updateUserSettings(did, dto, session);
+	}
+
+	@Delete("me/settings/private")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary:
+			"Delete the private settings record while retaining the last local preference",
+	})
+	@ApiResponse({ status: 200, description: "Private record deleted" })
+	async deletePrivateSettings(@Req() req: AuthenticatedRequest): Promise<void> {
+		await this.usersService.deletePrivateSettings(
+			req.user.did,
+			req.user.session as ATSession,
+		);
 	}
 
 	/**
