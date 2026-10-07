@@ -48,9 +48,10 @@ export class PrivacyController {
 		private readonly locks: WatchAccountLock,
 	) {}
 	private async authorized(session: unknown) {
-		const granted = (await requireWatchSession(session).getTokenInfo()).scope;
+		const oauthSession = requireWatchSession(session);
+		const granted = (await oauthSession.getTokenInfo()).scope;
 		return PRIVACY_ALPHA_SCOPES.every((scope) =>
-			includesWatchSpaceGrant(granted, scope),
+			includesWatchSpaceGrant(granted, scope, oauthSession.did),
 		);
 	}
 	@Get()

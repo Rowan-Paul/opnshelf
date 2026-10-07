@@ -168,6 +168,7 @@ export class AuthService {
 		preferences: OAuthScopePreferences,
 	): Promise<void> {
 		const candidate = session as {
+			did?: string;
 			getTokenInfo?: (
 				refresh?: boolean | "auto",
 			) => Promise<{ scope?: string | string[] }>;
@@ -176,7 +177,7 @@ export class AuthService {
 			typeof candidate.getTokenInfo === "function"
 				? (await candidate.getTokenInfo(false)).scope
 				: undefined;
-		if (!includesOAuthCapabilities(grantedScope, preferences)) {
+		if (!includesOAuthCapabilities(grantedScope, preferences, candidate.did)) {
 			throw new Error(
 				"OAuth authorization did not grant every requested permission",
 			);

@@ -103,6 +103,7 @@ export class ContentPrivacyService {
 			!includesWatchSpaceGrant(
 				(await requireWatchSession(session).getTokenInfo()).scope,
 				config.scope,
+				did,
 			)
 		)
 			throw new ForbiddenException(

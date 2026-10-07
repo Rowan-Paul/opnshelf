@@ -10,9 +10,11 @@ import { requireWatchSession } from "../privacy/watch-operation";
 @Injectable()
 export class PrivateSettingsService {
 	async canDelete(value: unknown) {
+		const session = requireWatchSession(value);
 		return includesWatchSpaceGrant(
-			(await requireWatchSession(value).getTokenInfo()).scope,
+			(await session.getTokenInfo()).scope,
 			PRIVATE_SETTINGS_SCOPE,
+			session.did,
 		);
 	}
 	async delete(did: string, value: unknown) {

@@ -77,6 +77,7 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 				!includesWatchSpaceGrant(
 					(await this.session.getTokenInfo()).scope,
 					this.config.scope,
+					this.ownerDid,
 				))
 		) {
 			throw new WatchMigrationPdsError("InsufficientScope", 403);

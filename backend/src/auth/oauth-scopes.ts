@@ -61,13 +61,21 @@ export const PRIVACY_ALPHA_SCOPES = [
 export function includesWatchSpaceGrant(
 	scope: string | string[] | undefined,
 	requiredScope = WATCH_SPACE_SCOPE,
+	ownerDid?: string,
 ): boolean {
 	const normalize = (value: string) => {
 		const [resource, query, extra] = value.split("?");
 		if (extra !== undefined || resource !== requiredScope.split("?")[0])
 			return undefined;
+		const params = new URLSearchParams(query);
+		const authorities = params.getAll("authority");
+		if (authorities.length) {
+			if (!ownerDid || authorities.length !== 1 || authorities[0] !== ownerDid)
+				return undefined;
+			params.delete("authority");
+		}
 		return JSON.stringify(
-			[...new URLSearchParams(query).entries()].sort(
+			[...params.entries()].sort(
 				([ak, av], [bk, bv]) => ak.localeCompare(bk) || av.localeCompare(bv),
 			),
 		);
@@ -220,6 +228,7 @@ export function includesPermissionSetGrant(
 export function includesOAuthCapabilities(
 	grantedScope: string | string[] | undefined,
 	preferences: OAuthScopePreferences = {},
+	ownerDid?: string,
 ): boolean {
 	const directScopes: string[] = CORE_OAUTH_SCOPES.filter(
 		(scope) => scope !== CORE_PERMISSION_SET_SCOPE,
@@ -238,10 +247,14 @@ export function includesOAuthCapabilities(
 		includesRequestedScopes(grantedScope, directScopes) &&
 		(!preferences.watchPrivacyEnabled ||
 			PRIVACY_ALPHA_SCOPES.every((scope) =>
-				includesWatchSpaceGrant(grantedScope, scope),
+				includesWatchSpaceGrant(grantedScope, scope, ownerDid),
 			)) &&
 		(!preferences.privateSettingsEnabled ||
-			includesRequestedScopes(grantedScope, [PRIVATE_SETTINGS_SCOPE])) &&
+			includesWatchSpaceGrant(
+				grantedScope,
+				PRIVATE_SETTINGS_SCOPE,
+				ownerDid,
+			)) &&
 		includesPermissionSetGrant(
 			grantedScope,
 			CORE_PERMISSION_SET_SCOPE,

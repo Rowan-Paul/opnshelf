@@ -117,3 +117,41 @@ describe("Watch Spaces grant equivalence", () => {
 		},
 	);
 });
+
+describe("reference Spaces resolved owner authority", () => {
+	const did = "did:plc:owner";
+	it("accepts the signed-in owner and rejects foreign, wildcard, duplicate or unknown authority", () => {
+		expect(
+			includesWatchSpaceGrant(
+				`${WATCH_SPACE_SCOPE}&authority=${did}`,
+				WATCH_SPACE_SCOPE,
+				did,
+			),
+		).toBe(true);
+		for (const authority of ["did:plc:other", "*", `${did}&authority=${did}`]) {
+			expect(
+				includesWatchSpaceGrant(
+					`${WATCH_SPACE_SCOPE}&authority=${authority}`,
+					WATCH_SPACE_SCOPE,
+					did,
+				),
+			).toBe(false);
+		}
+		expect(
+			includesWatchSpaceGrant(`${WATCH_SPACE_SCOPE}&authority=${did}`),
+		).toBe(false);
+	});
+	it("accepts expanded owner scopes throughout callback capability validation", () => {
+		const preferences = {
+			watchPrivacyEnabled: true,
+			privateSettingsEnabled: true,
+		};
+		const granted = buildOAuthScopes(preferences).map((scope) =>
+			scope.startsWith("space:") ? `${scope}&authority=${did}` : scope,
+		);
+		expect(includesOAuthCapabilities(granted, preferences, did)).toBe(true);
+		expect(
+			includesOAuthCapabilities(granted, preferences, "did:plc:other"),
+		).toBe(false);
+	});
+});

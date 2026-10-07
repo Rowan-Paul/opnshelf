@@ -40,3 +40,31 @@ migration tests; they do not claim production deployment or reference-PDS OAuth
 browser verification. Local catalogue discovery remains limited without a TMDB
 API key. The shared browser's inspection API timed out; its page was inspected
 and operated through native computer control instead.
+
+## Reference OAuth verification (2026-10-07)
+
+A separate disposable-account check exercised PAR, the reference authorization
+page, sign-in and consent APIs, PKCE token exchange, and DPoP-authorized
+Public → Private → Public operations for all six collections. It found and
+fixed two gaps hidden by the account-JWT wire test:
+
+- The reference consent screen resolves Space declarations even when the scope
+  names collections explicitly. `spaces/lexicons/` now supplies those declarations.
+- Issued scopes resolve implicit self authority to `authority=<account DID>`.
+  Capability checks now accept that exact owner and reject other authorities.
+
+The successful check used the reference PDS's `PDS_LEXICON_AUTHORITY_DID` override
+pointing at a synthetic local publisher containing those declaration records.
+The reference implementation, validation and authorization were unchanged.
+This proves the protocol flow with local publication; it does **not** verify
+production namespace resolution or the visual reference consent screen. Web
+and Mobile visual checks above still used Tranquil.
+
+**Rollout dependency:** publish the five Space declarations and verify public
+Lexicon resolution before enabling the alpha. This is a separately approved
+publication step, not a PDS deployment. Do not publish through the existing
+script until the operator has approved the declaration set.
+
+The follow-up OAuth check also created a disposable retired Settings Space and
+deleted it using only the cleanup grant (`manage=delete`), with the corrected
+`xyz.opnshelf.privateSettings` collection declaration. This passed.

@@ -55,6 +55,8 @@ export class WatchPrivacyService {
 		if (!user) throw new NotFoundException("Account not found");
 		const connected = includesWatchSpaceGrant(
 			(await requireWatchSession(session).getTokenInfo()).scope,
+			undefined,
+			did,
 		);
 		const migration = user.watchPrivacyMigration;
 		return {
@@ -88,7 +90,13 @@ export class WatchPrivacyService {
 		if (!current.watchPrivacyMigration && current.watchVisibility === target)
 			return this.status(did, session);
 		const watchSession = requireWatchSession(session);
-		if (!includesWatchSpaceGrant((await watchSession.getTokenInfo()).scope))
+		if (
+			!includesWatchSpaceGrant(
+				(await watchSession.getTokenInfo()).scope,
+				undefined,
+				did,
+			)
+		)
 			throw new ForbiddenException(
 				"Authorize Private data access before changing privacy.",
 			);
