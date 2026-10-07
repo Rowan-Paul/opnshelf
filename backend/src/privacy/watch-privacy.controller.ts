@@ -1,9 +1,6 @@
 import {
 	Body,
-	Catch,
 	UseFilters,
-	type ArgumentsHost,
-	type ExceptionFilter,
 	Controller,
 	Get,
 	Header,
@@ -15,34 +12,8 @@ import { ApiProperty, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { IsBoolean, IsIn, IsOptional } from "class-validator";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
-import type { Response } from "express";
-import { WatchMigrationPdsError } from "./watch-migration-pds";
+import { WatchPrivacyPdsFilter } from "./privacy-pds.filter";
 import { WatchPrivacyService } from "./watch-privacy.service";
-
-@Catch(WatchMigrationPdsError)
-class WatchPrivacyPdsFilter implements ExceptionFilter {
-	catch(error: WatchMigrationPdsError, host: ArgumentsHost) {
-		const messages: Record<string, string> = {
-			ConditionalDeleteUnsupported:
-				"Your PDS needs an update before Watches can safely change privacy.",
-			InsufficientScope:
-				"Reconnect Watch access before changing or syncing private Watches.",
-			SpaceNotPrivate:
-				"Your Watch Space is shared. Restore owner-only access before continuing.",
-			SpaceNotFound:
-				"Your private Watch Space could not be found. Reconnect Watch access and try again.",
-		};
-		host
-			.switchToHttp()
-			.getResponse<Response>()
-			.status(error.status >= 400 && error.status < 500 ? error.status : 502)
-			.json({
-				message:
-					messages[error.code] ??
-					"The PDS could not complete this Watch request. Try again; an interrupted privacy change can be resumed.",
-			});
-	}
-}
 
 export class WatchPrivacyChangeDto {
 	@ApiProperty({ enum: ["public", "private"] })

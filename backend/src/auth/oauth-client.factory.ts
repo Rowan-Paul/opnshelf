@@ -176,7 +176,7 @@ export class OAuthClientFactory implements OnModuleInit {
 		const redirectUri = `${clientUri}/auth/callback`;
 		const metadataClientId = `${backendUrl}/.well-known/oauth-client-metadata.json`;
 		const runtimeClientId = isLocalhost
-			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(declaredOAuthScope(this.configService.ENABLE_ATPROTO_SPACES))}`
+			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(declaredOAuthScope())}`
 			: metadataClientId;
 
 		return {
@@ -198,7 +198,7 @@ export class OAuthClientFactory implements OnModuleInit {
 			client_name: "Opnshelf",
 			client_uri: oauthClientConfig.clientUri,
 			redirect_uris: [oauthClientConfig.redirectUri],
-			scope: declaredOAuthScope(this.configService.ENABLE_ATPROTO_SPACES),
+			scope: declaredOAuthScope(),
 			grant_types: ["authorization_code", "refresh_token"],
 			response_types: ["code"],
 			application_type: oauthClientConfig.applicationType,

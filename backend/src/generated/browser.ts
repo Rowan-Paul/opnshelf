@@ -172,3 +172,13 @@ export type WatchPrivacyCopy = Prisma.WatchPrivacyCopyModel
  * 
  */
 export type WatchPrivacyMigration = Prisma.WatchPrivacyMigrationModel
+/**
+ * Model PrivacyScope
+ * 
+ */
+export type PrivacyScope = Prisma.PrivacyScopeModel
+/**
+ * Model PrivacyCopy
+ * 
+ */
+export type PrivacyCopy = Prisma.PrivacyCopyModel

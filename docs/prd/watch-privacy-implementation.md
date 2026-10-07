@@ -1,5 +1,10 @@
 # Watch privacy implementation
 
+Historical implementation record: the release gate and settings design below are
+superseded by [ADR 0048](../adr/0048-privacy-alpha-uses-reference-spaces.md).
+The replacement Privacy Alpha is implemented; see its [verification runbook](../runbooks/privacy-reference-smoke.md).
+Production rollout remains a separate operator action.
+
 Status: runtime integration and Web/Mobile controls implemented and locally
 verified; production rollout pending. Builds on
 issue #252, PR #449 and [ADR 0046](../adr/0046-privacy-is-chosen-by-data-category.md).

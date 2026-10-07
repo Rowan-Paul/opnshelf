@@ -81,14 +81,18 @@ export class WatchPrivacyService {
 		target: WatchVisibility,
 		confirmed: boolean,
 	) {
+		const current = await this.prisma.user.findUniqueOrThrow({
+			where: { did },
+			select: { watchVisibility: true, watchPrivacyMigration: true },
+		});
+		if (!current.watchPrivacyMigration && current.watchVisibility === target)
+			return this.status(did, session);
 		const watchSession = requireWatchSession(session);
 		if (!includesWatchSpaceGrant((await watchSession.getTokenInfo()).scope))
 			throw new ForbiddenException(
-				"Reconnect Watch access before changing privacy.",
+				"Authorize Private data access before changing privacy.",
 			);
 		const pds = new WatchMigrationPds(did, watchSession);
-		// Do not move an owner into a repository they cannot safely leave again.
-		await pds.assertConditionalPrivateDelete();
 		// Space creation belongs to the accepted job, after local policy checks.
 		try {
 			await pds.assertExistingPrivate();
@@ -154,7 +158,6 @@ export class WatchPrivacyService {
 				if (target === "private") await pds.assertPrivate();
 				else {
 					await pds.assertExistingPrivate();
-					await pds.assertConditionalPrivateDelete();
 				}
 				const journal = new PrismaWatchMigrationJournal(
 					this.prisma,
@@ -303,7 +306,7 @@ export class WatchPrivacyService {
 						? {}
 						: {
 								watchSyncError:
-									"Watch sync paused. Reconnect Watch access and retry.",
+									"Watch sync paused. Authorize Private data access and retry.",
 							}),
 				},
 			});

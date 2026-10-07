@@ -43,20 +43,28 @@ export type OAuthIntegration =
 	| "watches";
 
 export const PRIVATE_SETTINGS_SCOPE =
-	"space:xyz.opnshelf.settings?collection=xyz.opnshelf.privateSettings&manage=create";
+	"space:xyz.opnshelf.settings?collection=xyz.opnshelf.privateSettings&manage=delete";
 
 // Reserved for the Watch visibility integration; not requested by Core or Settings.
 export const WATCH_SPACE_SCOPE =
 	"space:xyz.opnshelf.watches?collection=xyz.opnshelf.movie&collection=xyz.opnshelf.episode&manage=create";
 
+export const PRIVACY_ALPHA_SCOPES = [
+	WATCH_SPACE_SCOPE,
+	"space:xyz.opnshelf.library?collection=xyz.opnshelf.library.item&manage=create",
+	"space:xyz.opnshelf.notes?collection=xyz.opnshelf.note&manage=create",
+	"space:xyz.opnshelf.lists?collection=xyz.opnshelf.list&collection=xyz.opnshelf.list.item&manage=create",
+] as const;
+
 /** Equivalent query ordering is allowed; additional authority/action constraints
  * are not silently treated as a complete grant. Unsupported forms fail closed. */
 export function includesWatchSpaceGrant(
 	scope: string | string[] | undefined,
+	requiredScope = WATCH_SPACE_SCOPE,
 ): boolean {
 	const normalize = (value: string) => {
 		const [resource, query, extra] = value.split("?");
-		if (extra !== undefined || resource !== "space:xyz.opnshelf.watches")
+		if (extra !== undefined || resource !== requiredScope.split("?")[0])
 			return undefined;
 		return JSON.stringify(
 			[...new URLSearchParams(query).entries()].sort(
@@ -64,7 +72,7 @@ export function includesWatchSpaceGrant(
 			),
 		);
 	};
-	const required = normalize(WATCH_SPACE_SCOPE);
+	const required = normalize(requiredScope);
 	return scopeValues(scope).some((value) => normalize(value) === required);
 }
 
@@ -94,7 +102,7 @@ export function buildOAuthScopes(
 	preferences: OAuthScopePreferences = {},
 ): string[] {
 	const scopes: string[] = [...CORE_OAUTH_SCOPES];
-	if (preferences.watchPrivacyEnabled) scopes.push(WATCH_SPACE_SCOPE);
+	if (preferences.watchPrivacyEnabled) scopes.push(...PRIVACY_ALPHA_SCOPES);
 	if (preferences.privateSettingsEnabled) scopes.push(PRIVATE_SETTINGS_SCOPE);
 	if (preferences.blogEnabled) {
 		scopes.push(...BLOG_OAUTH_SCOPES);
@@ -229,7 +237,9 @@ export function includesOAuthCapabilities(
 	return (
 		includesRequestedScopes(grantedScope, directScopes) &&
 		(!preferences.watchPrivacyEnabled ||
-			includesWatchSpaceGrant(grantedScope)) &&
+			PRIVACY_ALPHA_SCOPES.every((scope) =>
+				includesWatchSpaceGrant(grantedScope, scope),
+			)) &&
 		(!preferences.privateSettingsEnabled ||
 			includesRequestedScopes(grantedScope, [PRIVATE_SETTINGS_SCOPE])) &&
 		includesPermissionSetGrant(
@@ -248,16 +258,15 @@ export function includesOAuthCapabilities(
 
 /** Core-only login scope; integrations are requested only when enabled. */
 export const OAUTH_SCOPE = buildOAuthScope();
-export const DECLARED_OAUTH_SCOPE = buildOAuthScope({
-	watchPrivacyEnabled: true,
-	atStoreReviewEnabled: true,
-	blogEnabled: true,
-	blueskyEnabled: true,
-	reviewsMirrorFormat: "offprint",
-});
+export const DECLARED_OAUTH_SCOPE =
+	buildOAuthScope({
+		watchPrivacyEnabled: true,
+		atStoreReviewEnabled: true,
+		blogEnabled: true,
+		blueskyEnabled: true,
+		reviewsMirrorFormat: "offprint",
+	}) + ` ${PRIVATE_SETTINGS_SCOPE}`;
 
-export function declaredOAuthScope(privateSettingsEnabled = false): string {
-	return privateSettingsEnabled
-		? `${DECLARED_OAUTH_SCOPE} ${PRIVATE_SETTINGS_SCOPE}`
-		: DECLARED_OAUTH_SCOPE;
+export function declaredOAuthScope(): string {
+	return DECLARED_OAUTH_SCOPE;
 }

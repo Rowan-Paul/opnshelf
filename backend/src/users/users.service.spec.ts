@@ -146,9 +146,7 @@ describe("UsersService", () => {
 		reviewsService = {
 			listMyPublications: vi.fn(),
 		} as unknown as ReviewsService;
-		privateSettings = new PrivateSettingsService(
-			mockEnvironment({ ENABLE_ATPROTO_SPACES: false }),
-		);
+		privateSettings = new PrivateSettingsService();
 		service = new UsersService(
 			prisma,
 			importHistoryService as unknown as ImportHistoryService,
@@ -161,47 +159,42 @@ describe("UsersService", () => {
 		);
 	});
 
-	it("does not change the local preference after a failed private save", async () => {
-		vi.mocked(prisma.user.findUnique).mockResolvedValue({
-			privateSettingsEnabled: true,
-		} as never);
-		vi.spyOn(privateSettings, "save").mockRejectedValue(
-			new Error("PDS unavailable"),
-		);
-		await expect(
-			service.updateUserSettings(
-				"did:plc:owner",
-				{ timeFormat: "24h" },
-				{ did: "did:plc:owner" },
-			),
-		).rejects.toThrow("PDS unavailable");
-		expect(prisma.user.update).toHaveBeenCalledExactlyOnceWith({
-			where: { did: "did:plc:owner" },
-			data: { privateSettingsHasCopy: true },
-		});
-	});
-	it("hydrates the local preference only from a validated private record", async () => {
+	it("keeps time-format changes local after retiring the experiment", async () => {
 		vi.mocked(prisma.user.findUnique).mockResolvedValue({
 			privateSettingsEnabled: true,
 			timeFormat: "12h",
 		} as never);
-		vi.spyOn(privateSettings, "read").mockResolvedValue({
-			enabled: true,
-			status: "connected",
+		vi.mocked(prisma.user.update).mockResolvedValue({
 			timeFormat: "24h",
-		});
+		} as never);
+		const result = await service.updateUserSettings(
+			"did:plc:owner",
+			{ timeFormat: "24h" },
+			{ did: "did:plc:owner" },
+		);
+		expect(result.timeFormat).toBe("24h");
+		expect(prisma.user.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ timeFormat: "24h" }),
+			}),
+		);
+		expect(prisma.user.update).not.toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ privateSettingsHasCopy: true }),
+			}),
+		);
+	});
+	it("reads the local time preference without private synchronization", async () => {
+		vi.mocked(prisma.user.findUnique).mockResolvedValue({
+			privateSettingsEnabled: true,
+			timeFormat: "12h",
+		} as never);
 		const result = await service.getUserSettings("did:plc:owner", {
 			did: "did:plc:owner",
 		});
-		expect(result.timeFormat).toBe("24h");
-		expect(prisma.user.updateMany).toHaveBeenCalledWith({
-			where: {
-				did: "did:plc:owner",
-				timeFormat: "12h",
-				privateSettingsEnabled: true,
-			},
-			data: { timeFormat: "24h", privateSettingsHasCopy: true },
-		});
+		expect(result.timeFormat).toBe("12h");
+		expect(result).not.toHaveProperty("privateSettings");
+		expect(prisma.user.updateMany).not.toHaveBeenCalled();
 	});
 
 	// No afterEach restoreAllMocks: the Logger spies live on the per-test
@@ -512,6 +505,9 @@ describe("UsersService", () => {
 		expect(prisma.user.findUnique).toHaveBeenCalledWith({
 			where: { handle: "alice.bsky.social" },
 			select: {
+				privacyScopes: {
+					select: { category: true, visibility: true, targetVisibility: true },
+				},
 				watchVisibility: true,
 				watchPrivacyMigration: { select: { jobId: true } },
 				did: true,

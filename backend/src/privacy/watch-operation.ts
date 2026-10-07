@@ -1,3 +1,4 @@
+import type { PrivacyRepositoryConfig } from "./privacy-category";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { Agent } from "@atproto/api";
 import {
@@ -19,6 +20,7 @@ import type { WatchVisibility } from "./watch-record-migration";
 export const watchOperation = new AsyncLocalStorage<{
 	did: string;
 	visibility: WatchVisibility;
+	repository?: PrivacyRepositoryConfig;
 	signal: AbortSignal;
 }>();
 
@@ -50,7 +52,7 @@ export function requireWatchSession(session: unknown): WatchOAuthSession {
 		typeof session.getTokenInfo !== "function"
 	) {
 		throw new ForbiddenException(
-			"Reconnect Watch access to use private Watches",
+			"Authorize Private data access to use private Watches",
 		);
 	}
 	return session as WatchOAuthSession;
@@ -63,7 +65,10 @@ type Params<
 
 /** Dedicated Watch repository interface. Private responses retain their real
  * Space URIs; they must not pass through public-repository lexicon validation. */
-export function createWatchAgent(session: { did: string }) {
+export function createWatchAgent(
+	session: { did: string },
+	createSpace = false,
+) {
 	const context = watchOperation.getStore();
 	if (!context || context.did !== session.did)
 		throw new Error("Watch writes require the account coordinator");
@@ -92,6 +97,7 @@ export function createWatchAgent(session: { did: string }) {
 		session.did,
 		requireWatchSession(session),
 		context.signal,
+		context.repository,
 	);
 	const writeResult = (body: Record<string, unknown>) => {
 		if (typeof body.uri !== "string" || typeof body.cid !== "string")
@@ -116,6 +122,7 @@ export function createWatchAgent(session: { did: string }) {
 			};
 		},
 		async putRecord(params: Params<"putRecord">) {
+			if (createSpace) await pds.assertPrivate();
 			const body = await pds.watchRequest("putRecord", params, true);
 			return { data: writeResult(body), headers: {} };
 		},

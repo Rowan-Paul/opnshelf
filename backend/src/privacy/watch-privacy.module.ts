@@ -1,3 +1,6 @@
+import { ContentPrivacyGuard } from "./content-privacy.guard";
+import { ContentPrivacyCoordinator } from "./content-privacy-coordinator";
+import { ContentPrivacyInterceptor } from "./content-privacy.interceptor";
 import { PrismaModule } from "../prisma/prisma.module";
 import { WatchWriteInterceptor } from "./watch-operation";
 import {
@@ -32,6 +35,9 @@ class WatchLockPool extends Pool implements OnModuleDestroy {
 @Module({
 	imports: [PrismaModule],
 	providers: [
+		ContentPrivacyGuard,
+		ContentPrivacyCoordinator,
+		ContentPrivacyInterceptor,
 		WatchLockPool,
 		WatchReadGuard,
 		WatchWriteInterceptor,
@@ -48,6 +54,9 @@ class WatchLockPool extends Pool implements OnModuleDestroy {
 		},
 	],
 	exports: [
+		ContentPrivacyGuard,
+		ContentPrivacyCoordinator,
+		ContentPrivacyInterceptor,
 		WatchAccountLock,
 		WatchPrivacyCoordinator,
 		WatchReadGuard,

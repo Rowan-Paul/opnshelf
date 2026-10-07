@@ -1,8 +1,8 @@
+import type { PrivacyCollection } from "./privacy-category";
 /**
  * One recoverable public -> private Watch move. A durable journal must commit
  * the verified copy before public deletion; a worker may retry after any await.
  * The caller holds the account's migration lock and hides public derived data.
- * This module is not exposed by an API until those account-wide gates exist.
  */
 export const WATCH_COLLECTIONS = [
 	"xyz.opnshelf.movie",
@@ -10,7 +10,7 @@ export const WATCH_COLLECTIONS = [
 ] as const;
 export type WatchCollection = (typeof WATCH_COLLECTIONS)[number];
 export interface WatchReference {
-	collection: WatchCollection;
+	collection: PrivacyCollection;
 	rkey: string;
 }
 export interface StoredWatch {
@@ -92,14 +92,12 @@ async function moveWatch(
 
 export interface ReversibleWatchMigrationRepository
 	extends WatchMigrationRepository {
-	/** Fail before copying anything public if the PDS cannot safely remove the source. */
-	assertConditionalPrivateDelete(): Promise<void>;
 	assertExistingPrivate(): Promise<void>;
 	createPublic(ref: WatchReference, record: StoredWatch): Promise<void>;
 	deletePrivate(ref: WatchReference, expectedCid: string): Promise<void>;
 }
 
-/** The copy/verify/journal/conditional-delete algorithm is symmetric. A journal
+/** Copy/verify/journal is symmetric; private cleanup follows the alpha contract. A journal
  * must belong to this direction's job; never reuse receipts from the prior move. */
 export async function moveWatchToPublic(
 	ref: WatchReference,
@@ -107,7 +105,6 @@ export async function moveWatchToPublic(
 	journal: WatchMigrationJournal,
 ): Promise<"moved" | "missing"> {
 	await journal.assertDirection("public");
-	await repository.assertConditionalPrivateDelete();
 	return moveWatch(
 		ref,
 		{

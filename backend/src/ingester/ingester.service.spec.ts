@@ -1004,6 +1004,7 @@ describe("IngesterService", () => {
 				expect(deleteRecord).toHaveBeenLastCalledWith(
 					"did:plc:owner-b",
 					"shared-rkey",
+					...(index < 4 ? ["stream"] : []),
 				);
 			}
 		});

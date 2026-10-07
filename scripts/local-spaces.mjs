@@ -346,7 +346,6 @@ allow_insecure = true
 		{
 			NODE_ENV: "development",
 			DATABASE_URL: "postgresql://postgres@127.0.0.1:55432/opnshelf_spaces",
-			ENABLE_ATPROTO_SPACES: "true",
 			HOST: "127.0.0.1",
 			PORT: "3102",
 			BACKEND_PUBLIC_URL: "http://127.0.0.1:3102",

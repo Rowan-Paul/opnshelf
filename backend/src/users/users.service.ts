@@ -59,7 +59,7 @@ export class UsersService {
 	 */
 	async getUserSettings(
 		did: string,
-		session?: ATSession,
+		_session?: ATSession,
 	): Promise<UserSettingsDto> {
 		const user = await this.prisma.user.findUnique({
 			where: { did },
@@ -74,8 +74,6 @@ export class UsersService {
 				reviewsMirrorFormat: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
-				privateSettingsEnabled: true,
-				privateSettingsHasCopy: true,
 				welcomeTourWebVersion: true,
 				welcomeTourMobileVersion: true,
 			},
@@ -85,36 +83,9 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const privateSettings = await this.privateSettings.read(
-			did,
-			user.privateSettingsEnabled,
-			session,
-		);
-		if (
-			privateSettings.timeFormat &&
-			(privateSettings.timeFormat !== user.timeFormat ||
-				!user.privateSettingsHasCopy)
-		) {
-			await this.prisma.user.updateMany({
-				where: {
-					did,
-					timeFormat: user.timeFormat,
-					privateSettingsEnabled: true,
-				},
-				data: {
-					timeFormat: privateSettings.timeFormat,
-					privateSettingsHasCopy: true,
-				},
-			});
-		}
-
 		return {
 			timezone: user.timezone,
-			timeFormat: privateSettings.timeFormat ?? user.timeFormat,
-			privateSettings: {
-				enabled: privateSettings.enabled,
-				status: privateSettings.status,
-			},
+			timeFormat: user.timeFormat,
 			watchCountry: user.watchCountry,
 			streamingServiceIds: user.streamingServiceIds,
 			alwaysShowSpoilers: user.alwaysShowSpoilers,
@@ -179,22 +150,12 @@ export class UsersService {
 			}
 		}
 
-		if (user.privateSettingsEnabled && dto.timeFormat !== undefined) {
-			// Reserve cleanup before the remote write, including if the later cache update fails.
-			await this.prisma.user.update({
-				where: { did },
-				data: { privateSettingsHasCopy: true },
-			});
-			await this.privateSettings.save(did, session, dto.timeFormat);
-		}
-
 		const updatedUser = await this.prisma.user.update({
 			where: { did },
 			data: {
 				...(dto.timezone !== undefined && { timezone: dto.timezone }),
 				...(dto.timeFormat !== undefined && {
 					timeFormat: dto.timeFormat,
-					...(user.privateSettingsEnabled && { privateSettingsHasCopy: true }),
 				}),
 				...(dto.watchCountry !== undefined && {
 					watchCountry: dto.watchCountry,
@@ -227,7 +188,6 @@ export class UsersService {
 				reviewsMirrorFormat: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
-				privateSettingsEnabled: true,
 				welcomeTourWebVersion: true,
 				welcomeTourMobileVersion: true,
 			},
@@ -467,6 +427,9 @@ export class UsersService {
 			where: { handle: normalizedHandle },
 			select: {
 				watchVisibility: true,
+				privacyScopes: {
+					select: { category: true, visibility: true, targetVisibility: true },
+				},
 				watchPrivacyMigration: { select: { jobId: true } },
 				did: true,
 				handle: true,
@@ -500,6 +463,16 @@ export class UsersService {
 
 		return {
 			watchesPublic,
+			libraryPublic: !(user.privacyScopes ?? []).some(
+				(s) =>
+					s.category === "library" &&
+					(s.visibility !== "public" || s.targetVisibility),
+			),
+			notesPublic: !(user.privacyScopes ?? []).some(
+				(s) =>
+					s.category === "notes" &&
+					(s.visibility !== "public" || s.targetVisibility),
+			),
 			did: user.did,
 			handle: user.handle,
 			displayName: user.displayName,

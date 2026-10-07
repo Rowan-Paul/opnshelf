@@ -196,66 +196,42 @@ it("recognizes a concurrently removed public source without unconditional deleti
 	expect(f.session.fetchHandler).toHaveBeenCalledTimes(2);
 });
 
-describe("conditional private Watch deletion", () => {
-	const capabilities = {
-		tranquilSpaceCapabilities: ["deleteRecord.swapRecord.v1"],
-	};
-	it.each([
-		{},
-		{ tranquilSpaceCapabilities: [] },
-		{ tranquilSpaceCapabilities: "deleteRecord.swapRecord.v1" },
-	])(
-		"refuses unsupported PDSs without sending a delete",
-		async (description) => {
-			const f = fixture();
-			f.session.fetchHandler.mockResolvedValue(response(description));
-			await expect(f.repo.deletePrivate(ref, record.cid)).rejects.toThrow(
-				"ConditionalDeleteUnsupported",
-			);
-			expect(f.session.fetchHandler).toHaveBeenCalledTimes(1);
-		},
-	);
-	it("uses the original CID and private Space on deletion", async () => {
+describe("reference alpha private Watch deletion", () => {
+	it("checks the original CID then uses only standard delete fields", async () => {
 		const f = fixture();
 		f.session.fetchHandler
-			.mockResolvedValueOnce(response(capabilities))
+			.mockResolvedValueOnce(response(record))
 			.mockResolvedValueOnce(response({}));
 		await f.repo.deletePrivate(ref, record.cid);
+		expect(f.session.fetchHandler.mock.calls[0][0]).toContain(
+			"com.atproto.space.getRecord",
+		);
 		expect(f.session.fetchHandler.mock.calls[1][0]).toBe(
 			"/xrpc/com.atproto.space.deleteRecord",
 		);
 		expect(
 			JSON.parse(String(f.session.fetchHandler.mock.calls[1][1]?.body)),
-		).toEqual({
-			...ref,
-			repo: did,
-			space: f.repo.space,
-			swapRecord: record.cid,
-		});
+		).toEqual({ ...ref, repo: did, space: f.repo.space });
 	});
-	it("preserves a concurrent edit and never retries unconditionally", async () => {
+	it("stops on an observed source edit without deleting it", async () => {
 		const f = fixture();
-		f.session.fetchHandler
-			.mockResolvedValueOnce(response(capabilities))
-			.mockResolvedValueOnce(response({ error: "InvalidSwap" }, 400))
-			.mockResolvedValueOnce(response({ ...record, cid: "edited" }));
+		f.session.fetchHandler.mockResolvedValueOnce(
+			response({ ...record, cid: "changed" }),
+		);
 		await expect(f.repo.deletePrivate(ref, record.cid)).rejects.toThrow(
 			"changed",
 		);
-		expect(f.session.fetchHandler).toHaveBeenCalledTimes(3);
-		expect(f.session.fetchHandler.mock.calls[2][0]).toContain(
-			"com.atproto.space.getRecord",
-		);
+		expect(f.session.fetchHandler).toHaveBeenCalledTimes(1);
 	});
-	it("accepts a concurrent deletion only after checking absence", async () => {
+	it("accepts an already removed private source", async () => {
 		const f = fixture();
-		f.session.fetchHandler
-			.mockResolvedValueOnce(response(capabilities))
-			.mockResolvedValueOnce(response({ error: "InvalidSwap" }, 400))
-			.mockResolvedValueOnce(response({ error: "RecordNotFound" }, 400));
+		f.session.fetchHandler.mockResolvedValueOnce(
+			response({ error: "RecordNotFound" }, 400),
+		);
 		await expect(
 			f.repo.deletePrivate(ref, record.cid),
 		).resolves.toBeUndefined();
+		expect(f.session.fetchHandler).toHaveBeenCalledTimes(1);
 	});
 	it("creates a public copy without replacing an existing record", async () => {
 		const f = fixture();

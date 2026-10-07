@@ -60,35 +60,15 @@ describe("PermissionsController", () => {
 		controller = module.get<PermissionsController>(PermissionsController);
 	});
 
-	it("preserves other integrations when connecting Spaces and carries the mobile challenge", async () => {
-		mockAuthService.getUser.mockResolvedValue({
-			handle: "owner.example",
-			privateSettingsEnabled: false,
-			blogIntegrationEnabled: true,
-			blueskyCrossPostEnabled: true,
-			reviewsMirrorFormat: "markdown",
-		});
-		await controller.permissions(
-			{
-				user: { did: "did:plc:owner", session: { did: "did:plc:owner" } },
-			} as never,
-			{
+	it("does not reconnect the retired Settings experiment", async () => {
+		mockAuthService.getUser.mockResolvedValue({ handle: "owner.example" });
+		await expect(
+			controller.permissions({ user: { did: "did:plc:owner" } } as never, {
 				integration: "spaces",
 				action: "connect",
-				platform: "mobile",
-				codeChallenge: "a".repeat(43),
-			},
-		);
-		expect(mockAuthService.authorizePermissionChange).toHaveBeenCalledWith(
-			"owner.example",
-			"spaces",
-			expect.objectContaining({
-				privateSettingsEnabled: true,
-				blogEnabled: true,
-				blueskyEnabled: true,
 			}),
-			{ platform: "mobile", codeChallenge: "a".repeat(43) },
-		);
+		).rejects.toThrow("retired");
+		expect(mockAuthService.authorizePermissionChange).not.toHaveBeenCalled();
 	});
 
 	describe("permissions", () => {
@@ -123,6 +103,8 @@ describe("PermissionsController", () => {
 				{
 					blogEnabled: true,
 					blueskyEnabled: false,
+					privateSettingsEnabled: false,
+					watchPrivacyEnabled: undefined,
 					reviewsMirrorFormat: "leaflet",
 				},
 			);
@@ -156,6 +138,8 @@ describe("PermissionsController", () => {
 					atStoreReviewEnabled: true,
 					blogEnabled: false,
 					blueskyEnabled: false,
+					privateSettingsEnabled: false,
+					watchPrivacyEnabled: undefined,
 					reviewsMirrorFormat: "markdown",
 				},
 				{ platform: "mobile" },
@@ -261,6 +245,8 @@ describe("PermissionsController", () => {
 				{
 					blogEnabled: true,
 					blueskyEnabled: false,
+					privateSettingsEnabled: false,
+					watchPrivacyEnabled: undefined,
 					reviewsMirrorFormat: "leaflet",
 				},
 			);

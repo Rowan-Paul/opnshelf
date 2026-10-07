@@ -148,7 +148,6 @@ Notes:
 | `DATABASE_URL` | Required in production | PostgreSQL connection string. |
 | `FEATURED_ADMIN_DID` | Optional | Non-secret DID of the sole Featured Content editor; unset disables editorial access. |
 | `TMDB_API_KEY` | Required in production | TMDB API key for catalogue reads. |
-| `ENABLE_ATPROTO_SPACES` | Defaulted | Enable the experimental, opt-in Private Settings integration; defaults to false. |
 | `PDS_URL` | Required in production | Tranquil Personal Data Server URL. |
 | `PLC_DIRECTORY_URL` | Optional | Override the PLC directory for an isolated local AT Protocol network; defaults to the public directory. |
 | `HANDLE_RESOLVER_URL` | Optional | Optional trusted XRPC service for OAuth handle resolution; unset uses DNS and HTTPS resolution. |

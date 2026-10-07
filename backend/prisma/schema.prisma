@@ -63,7 +63,10 @@ model User {
   watchSyncAttemptedAt DateTime?
   watchSyncedAt DateTime?
   watchSyncError String?
+  privacyScopes PrivacyScope[]
+  listsDefaultVisibility String @default("public")
   watchPrivacyManaged Boolean @default(false)
+  // Legacy storage name: saved authorization preference for all Privacy Alpha categories.
   watchPrivacyEnabled Boolean @default(false)
   watchVisibility String @default("public")
   watchPrivacyMigration WatchPrivacyMigration?
@@ -810,4 +813,39 @@ model WatchPrivacyMigration {
   sourceVisibility String
   targetVisibility String
   createdAt DateTime @default(now())
+}
+
+// Privacy state for category repositories and individual Lists. A migration
+// generation binds its recovery copies; visibility changes only at completion.
+model PrivacyScope {
+ id String @id @default(cuid())
+ userDid String
+ user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+ key String
+ category String
+ listRkey String?
+ visibility String @default("public")
+ managed Boolean @default(false)
+ migrationId String? @unique
+ targetVisibility String?
+ status String?
+ error String?
+ syncAttemptedAt DateTime?
+ syncedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ copies PrivacyCopy[]
+ @@unique([userDid, key])
+ @@index([status, updatedAt])
+}
+model PrivacyCopy {
+ scopeId String
+ scope PrivacyScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+ migrationId String
+ collection String
+ rkey String
+ cid String
+ value Json
+ createdAt DateTime @default(now())
+ @@id([scopeId, collection, rkey])
 }

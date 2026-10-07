@@ -145,9 +145,21 @@ export default function ProfileScreen() {
 					) : tab === "lists" ? (
 						<ListsTab userDid={userDid} handle={profile.handle} />
 					) : tab === "library" ? (
-						<LibraryTab userDid={userDid} />
+						isOwner || profile.libraryPublic !== false ? (
+							<LibraryTab userDid={userDid} />
+						) : (
+							<Text className="p-5 text-muted-foreground">
+								This Library is Private.
+							</Text>
+						)
 					) : tab === "notes" ? (
-						<NotesTab userDid={userDid} isOwner={isOwner} />
+						isOwner || profile.notesPublic !== false ? (
+							<NotesTab userDid={userDid} isOwner={isOwner} />
+						) : (
+							<Text className="p-5 text-muted-foreground">
+								These Notes are Private.
+							</Text>
+						)
 					) : tab === "reviews" ? (
 						<ReviewsTab
 							userDid={userDid}

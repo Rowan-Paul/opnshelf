@@ -738,11 +738,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				evt.rkey,
 				evt.did,
 				listRecord,
+				"stream",
 			);
 		}
 
 		if (evt.action === "delete") {
-			await this.listsService.deleteListRecord(evt.did, evt.rkey);
+			await this.listsService.deleteListRecord(evt.did, evt.rkey, "stream");
 		}
 	}
 
@@ -868,11 +869,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				evt.rkey,
 				evt.did,
 				listItemRecord,
+				"stream",
 			);
 		}
 
 		if (evt.action === "delete") {
-			await this.listsService.deleteListItemRecord(evt.did, evt.rkey);
+			await this.listsService.deleteListItemRecord(evt.did, evt.rkey, "stream");
 		}
 	}
 
@@ -904,11 +906,16 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				evt.rkey,
 				evt.did,
 				libraryItemRecord,
+				"stream",
 			);
 		}
 
 		if (evt.action === "delete") {
-			await this.libraryService.deleteLibraryItemRecord(evt.did, evt.rkey);
+			await this.libraryService.deleteLibraryItemRecord(
+				evt.did,
+				evt.rkey,
+				"stream",
+			);
 		}
 	}
 
@@ -940,11 +947,12 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				evt.rkey,
 				evt.did,
 				noteRecord,
+				"stream",
 			);
 		}
 
 		if (evt.action === "delete") {
-			await this.notesService.deleteNoteRecord(evt.did, evt.rkey);
+			await this.notesService.deleteNoteRecord(evt.did, evt.rkey, "stream");
 		}
 	}
 

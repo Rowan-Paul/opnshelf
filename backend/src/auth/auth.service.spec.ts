@@ -214,6 +214,7 @@ describe("AuthService", () => {
 					state: JSON.stringify({
 						requestedPreferences: {
 							watchPrivacyEnabled: false,
+							privateSettingsEnabled: false,
 							blogEnabled: false,
 							blueskyEnabled: false,
 						},
@@ -245,6 +246,7 @@ describe("AuthService", () => {
 					blogIntegrationEnabled: true,
 					blueskyCrossPostEnabled: true,
 					privateSettingsEnabled: true,
+					privateSettingsHasCopy: true,
 					watchPrivacyEnabled: true,
 					reviewsMirrorFormat: true,
 				},
@@ -266,6 +268,7 @@ describe("AuthService", () => {
 			expect(JSON.parse(authorizeOptions.state)).toEqual({
 				requestedPreferences: {
 					watchPrivacyEnabled: false,
+					privateSettingsEnabled: false,
 					blogEnabled: true,
 					blueskyEnabled: true,
 					reviewsMirrorFormat: "offprint",
@@ -409,9 +412,21 @@ describe("AuthService", () => {
 			{ locked: false, visibility: "public", migration: null },
 			{ locked: true, visibility: "private", migration: null },
 			{ locked: true, visibility: "public", migration: { jobId: "moving" } },
+			{
+				locked: true,
+				visibility: "public",
+				migration: null,
+				listsDefaultVisibility: "private",
+			},
+			{
+				locked: true,
+				visibility: "public",
+				migration: null,
+				privacyScopes: [{ id: "private-notes" }],
+			},
 		])(
 			"rejects disconnect when the account changed during authorization: %j",
-			async ({ locked, visibility, migration }) => {
+			async ({ locked, visibility, migration, ...content }) => {
 				const tx = {
 					$queryRaw: vi.fn().mockResolvedValue([{ locked }]),
 					user: {
@@ -419,6 +434,7 @@ describe("AuthService", () => {
 							watchPrivacyEnabled: true,
 							watchVisibility: visibility,
 							watchPrivacyMigration: migration,
+							...content,
 						}),
 						update: vi.fn(),
 					},

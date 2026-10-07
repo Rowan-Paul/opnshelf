@@ -73,6 +73,7 @@ export type UserMinAggregateOutputType = {
   watchSyncAttemptedAt: Date | null
   watchSyncedAt: Date | null
   watchSyncError: string | null
+  listsDefaultVisibility: string | null
   watchPrivacyManaged: boolean | null
   watchPrivacyEnabled: boolean | null
   watchVisibility: string | null
@@ -120,6 +121,7 @@ export type UserMaxAggregateOutputType = {
   watchSyncAttemptedAt: Date | null
   watchSyncedAt: Date | null
   watchSyncError: string | null
+  listsDefaultVisibility: string | null
   watchPrivacyManaged: boolean | null
   watchPrivacyEnabled: boolean | null
   watchVisibility: string | null
@@ -168,6 +170,7 @@ export type UserCountAggregateOutputType = {
   watchSyncAttemptedAt: number
   watchSyncedAt: number
   watchSyncError: number
+  listsDefaultVisibility: number
   watchPrivacyManaged: number
   watchPrivacyEnabled: number
   watchVisibility: number
@@ -229,6 +232,7 @@ export type UserMinAggregateInputType = {
   watchSyncAttemptedAt?: true
   watchSyncedAt?: true
   watchSyncError?: true
+  listsDefaultVisibility?: true
   watchPrivacyManaged?: true
   watchPrivacyEnabled?: true
   watchVisibility?: true
@@ -276,6 +280,7 @@ export type UserMaxAggregateInputType = {
   watchSyncAttemptedAt?: true
   watchSyncedAt?: true
   watchSyncError?: true
+  listsDefaultVisibility?: true
   watchPrivacyManaged?: true
   watchPrivacyEnabled?: true
   watchVisibility?: true
@@ -324,6 +329,7 @@ export type UserCountAggregateInputType = {
   watchSyncAttemptedAt?: true
   watchSyncedAt?: true
   watchSyncError?: true
+  listsDefaultVisibility?: true
   watchPrivacyManaged?: true
   watchPrivacyEnabled?: true
   watchVisibility?: true
@@ -459,6 +465,7 @@ export type UserGroupByOutputType = {
   watchSyncAttemptedAt: Date | null
   watchSyncedAt: Date | null
   watchSyncError: string | null
+  listsDefaultVisibility: string
   watchPrivacyManaged: boolean
   watchPrivacyEnabled: boolean
   watchVisibility: string
@@ -530,6 +537,7 @@ export type UserWhereInput = {
   watchSyncAttemptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncError?: Prisma.StringNullableFilter<"User"> | string | null
+  listsDefaultVisibility?: Prisma.StringFilter<"User"> | string
   watchPrivacyManaged?: Prisma.BoolFilter<"User"> | boolean
   watchPrivacyEnabled?: Prisma.BoolFilter<"User"> | boolean
   watchVisibility?: Prisma.StringFilter<"User"> | string
@@ -540,6 +548,7 @@ export type UserWhereInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  privacyScopes?: Prisma.PrivacyScopeListRelationFilter
   watchPrivacyMigration?: Prisma.XOR<Prisma.WatchPrivacyMigrationNullableScalarRelationFilter, Prisma.WatchPrivacyMigrationWhereInput> | null
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
   trackedEpisodes?: Prisma.TrackedEpisodeListRelationFilter
@@ -596,6 +605,7 @@ export type UserOrderByWithRelationInput = {
   watchSyncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
@@ -606,6 +616,7 @@ export type UserOrderByWithRelationInput = {
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  privacyScopes?: Prisma.PrivacyScopeOrderByRelationAggregateInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationOrderByWithRelationInput
   trackedMovies?: Prisma.TrackedMovieOrderByRelationAggregateInput
   trackedEpisodes?: Prisma.TrackedEpisodeOrderByRelationAggregateInput
@@ -665,6 +676,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   watchSyncAttemptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncError?: Prisma.StringNullableFilter<"User"> | string | null
+  listsDefaultVisibility?: Prisma.StringFilter<"User"> | string
   watchPrivacyManaged?: Prisma.BoolFilter<"User"> | boolean
   watchPrivacyEnabled?: Prisma.BoolFilter<"User"> | boolean
   watchVisibility?: Prisma.StringFilter<"User"> | string
@@ -675,6 +687,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  privacyScopes?: Prisma.PrivacyScopeListRelationFilter
   watchPrivacyMigration?: Prisma.XOR<Prisma.WatchPrivacyMigrationNullableScalarRelationFilter, Prisma.WatchPrivacyMigrationWhereInput> | null
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
   trackedEpisodes?: Prisma.TrackedEpisodeListRelationFilter
@@ -731,6 +744,7 @@ export type UserOrderByWithAggregationInput = {
   watchSyncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
@@ -787,6 +801,7 @@ export type UserScalarWhereWithAggregatesInput = {
   watchSyncAttemptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   watchSyncedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   watchSyncError?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  listsDefaultVisibility?: Prisma.StringWithAggregatesFilter<"User"> | string
   watchPrivacyManaged?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   watchPrivacyEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   watchVisibility?: Prisma.StringWithAggregatesFilter<"User"> | string
@@ -835,6 +850,7 @@ export type UserCreateInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -845,6 +861,7 @@ export type UserCreateInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -901,6 +918,7 @@ export type UserUncheckedCreateInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -911,6 +929,7 @@ export type UserUncheckedCreateInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -967,6 +986,7 @@ export type UserUpdateInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -977,6 +997,7 @@ export type UserUpdateInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -1033,6 +1054,7 @@ export type UserUncheckedUpdateInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1043,6 +1065,7 @@ export type UserUncheckedUpdateInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -1099,6 +1122,7 @@ export type UserCreateManyInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -1147,6 +1171,7 @@ export type UserUpdateManyMutationInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1195,6 +1220,7 @@ export type UserUncheckedUpdateManyInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1251,6 +1277,7 @@ export type UserCountOrderByAggregateInput = {
   watchSyncAttemptedAt?: Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrder
   watchSyncError?: Prisma.SortOrder
+  listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
@@ -1304,6 +1331,7 @@ export type UserMaxOrderByAggregateInput = {
   watchSyncAttemptedAt?: Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrder
   watchSyncError?: Prisma.SortOrder
+  listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
@@ -1351,6 +1379,7 @@ export type UserMinOrderByAggregateInput = {
   watchSyncAttemptedAt?: Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrder
   watchSyncError?: Prisma.SortOrder
+  listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
@@ -1674,6 +1703,20 @@ export type UserUpdateOneRequiredWithoutWatchPrivacyMigrationNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWatchPrivacyMigrationInput, Prisma.UserUpdateWithoutWatchPrivacyMigrationInput>, Prisma.UserUncheckedUpdateWithoutWatchPrivacyMigrationInput>
 }
 
+export type UserCreateNestedOneWithoutPrivacyScopesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrivacyScopesInput, Prisma.UserUncheckedCreateWithoutPrivacyScopesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrivacyScopesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPrivacyScopesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrivacyScopesInput, Prisma.UserUncheckedCreateWithoutPrivacyScopesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrivacyScopesInput
+  upsert?: Prisma.UserUpsertWithoutPrivacyScopesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPrivacyScopesInput, Prisma.UserUpdateWithoutPrivacyScopesInput>, Prisma.UserUncheckedUpdateWithoutPrivacyScopesInput>
+}
+
 export type UserCreateWithoutNotificationSettingsInput = {
   did: string
   handle: string
@@ -1710,6 +1753,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -1720,6 +1764,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -1775,6 +1820,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -1785,6 +1831,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -1856,6 +1903,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1866,6 +1914,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -1921,6 +1970,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1931,6 +1981,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -1986,6 +2037,7 @@ export type UserCreateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -1996,6 +2048,7 @@ export type UserCreateWithoutPushDevicesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -2051,6 +2104,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2061,6 +2115,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -2132,6 +2187,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2142,6 +2198,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -2197,6 +2254,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2207,6 +2265,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -2262,6 +2321,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2272,6 +2332,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -2327,6 +2388,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2337,6 +2399,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -2408,6 +2471,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2418,6 +2482,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -2473,6 +2538,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2483,6 +2549,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -2538,6 +2605,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2548,6 +2616,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -2603,6 +2672,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2613,6 +2683,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -2684,6 +2755,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2694,6 +2766,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -2749,6 +2822,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2759,6 +2833,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -2814,6 +2889,7 @@ export type UserCreateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2824,6 +2900,7 @@ export type UserCreateWithoutFollowingInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -2879,6 +2956,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2889,6 +2967,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -2949,6 +3028,7 @@ export type UserCreateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -2959,6 +3039,7 @@ export type UserCreateWithoutFollowersInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -3014,6 +3095,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -3024,6 +3106,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -3095,6 +3178,7 @@ export type UserUpdateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3105,6 +3189,7 @@ export type UserUpdateWithoutFollowingInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -3160,6 +3245,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3170,6 +3256,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -3236,6 +3323,7 @@ export type UserUpdateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3246,6 +3334,7 @@ export type UserUpdateWithoutFollowersInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -3301,6 +3390,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3311,6 +3401,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -3366,6 +3457,7 @@ export type UserCreateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -3376,6 +3468,7 @@ export type UserCreateWithoutCirclesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -3431,6 +3524,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -3441,6 +3535,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -3512,6 +3607,7 @@ export type UserUpdateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3522,6 +3618,7 @@ export type UserUpdateWithoutCirclesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -3577,6 +3674,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3587,6 +3685,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -3642,6 +3741,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -3652,6 +3752,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
@@ -3707,6 +3808,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -3717,6 +3819,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
@@ -3788,6 +3891,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3798,6 +3902,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
@@ -3853,6 +3958,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3863,6 +3969,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
@@ -3918,6 +4025,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -3928,6 +4036,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
@@ -3983,6 +4092,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -3993,6 +4103,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
@@ -4064,6 +4175,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4074,6 +4186,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
@@ -4129,6 +4242,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4139,6 +4253,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
@@ -4194,6 +4309,7 @@ export type UserCreateWithoutListsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -4204,6 +4320,7 @@ export type UserCreateWithoutListsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -4259,6 +4376,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -4269,6 +4387,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -4340,6 +4459,7 @@ export type UserUpdateWithoutListsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4350,6 +4470,7 @@ export type UserUpdateWithoutListsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -4405,6 +4526,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4415,6 +4537,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -4470,6 +4593,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -4480,6 +4604,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -4535,6 +4660,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -4545,6 +4671,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -4616,6 +4743,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4626,6 +4754,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -4681,6 +4810,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4691,6 +4821,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -4746,6 +4877,7 @@ export type UserCreateWithoutNotesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -4756,6 +4888,7 @@ export type UserCreateWithoutNotesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -4811,6 +4944,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -4821,6 +4955,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -4892,6 +5027,7 @@ export type UserUpdateWithoutNotesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4902,6 +5038,7 @@ export type UserUpdateWithoutNotesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -4957,6 +5094,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4967,6 +5105,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -5022,6 +5161,7 @@ export type UserCreateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5032,6 +5172,7 @@ export type UserCreateWithoutReviewsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -5087,6 +5228,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5097,6 +5239,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -5168,6 +5311,7 @@ export type UserUpdateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -5178,6 +5322,7 @@ export type UserUpdateWithoutReviewsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -5233,6 +5378,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -5243,6 +5389,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -5298,6 +5445,7 @@ export type UserCreateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5308,6 +5456,7 @@ export type UserCreateWithoutPublicationsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -5363,6 +5512,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5373,6 +5523,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -5444,6 +5595,7 @@ export type UserUpdateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -5454,6 +5606,7 @@ export type UserUpdateWithoutPublicationsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -5509,6 +5662,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -5519,6 +5673,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -5574,6 +5729,7 @@ export type UserCreateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5584,6 +5740,7 @@ export type UserCreateWithoutRatingsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -5639,6 +5796,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5649,6 +5807,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -5720,6 +5879,7 @@ export type UserUpdateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -5730,6 +5890,7 @@ export type UserUpdateWithoutRatingsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -5785,6 +5946,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -5795,6 +5957,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -5850,6 +6013,7 @@ export type UserCreateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5860,6 +6024,7 @@ export type UserCreateWithoutReviewLikesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -5915,6 +6080,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -5925,6 +6091,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -5996,6 +6163,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -6006,6 +6174,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -6061,6 +6230,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -6071,6 +6241,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -6126,6 +6297,7 @@ export type UserCreateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -6136,6 +6308,7 @@ export type UserCreateWithoutFeedbackInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
@@ -6191,6 +6364,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -6201,6 +6375,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
@@ -6272,6 +6447,7 @@ export type UserUpdateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -6282,6 +6458,7 @@ export type UserUpdateWithoutFeedbackInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
@@ -6337,6 +6514,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -6347,6 +6525,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -6402,6 +6581,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -6412,6 +6592,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
@@ -6467,6 +6648,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: string
@@ -6477,6 +6659,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
@@ -6548,6 +6731,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -6558,6 +6742,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
@@ -6613,6 +6798,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
@@ -6623,6 +6809,291 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
+  trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
+  libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUncheckedUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUncheckedUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
+  notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
+  pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
+  notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutPrivacyScopesInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: boolean
+  onboardingCompletedAt?: Date | string | null
+  atStoreReviewHandledAt?: Date | string | null
+  atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
+  releaseNotesReadAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  listsDefaultVisibility?: string
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
+  watchVisibility?: string
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
+  blogIntegrationEnabled?: boolean
+  blueskyCrossPostEnabled?: boolean
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
+  trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListCreateNestedManyWithoutUserInput
+  libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
+  notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
+  pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
+  notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPrivacyScopesInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: boolean
+  onboardingCompletedAt?: Date | string | null
+  atStoreReviewHandledAt?: Date | string | null
+  atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
+  releaseNotesReadAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  listsDefaultVisibility?: string
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
+  watchVisibility?: string
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
+  blogIntegrationEnabled?: boolean
+  blueskyCrossPostEnabled?: boolean
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
+  trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
+  libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationUncheckedCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingUncheckedCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
+  notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
+  pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
+  notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPrivacyScopesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrivacyScopesInput, Prisma.UserUncheckedCreateWithoutPrivacyScopesInput>
+}
+
+export type UserUpsertWithoutPrivacyScopesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPrivacyScopesInput, Prisma.UserUncheckedUpdateWithoutPrivacyScopesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrivacyScopesInput, Prisma.UserUncheckedCreateWithoutPrivacyScopesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPrivacyScopesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPrivacyScopesInput, Prisma.UserUncheckedUpdateWithoutPrivacyScopesInput>
+}
+
+export type UserUpdateWithoutPrivacyScopesInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  releaseNotesReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
+  trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUpdateManyWithoutUserNestedInput
+  libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
+  notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
+  pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
+  notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  releaseNotesReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
@@ -6648,6 +7119,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
  */
 
 export type UserCountOutputType = {
+  privacyScopes: number
   trackedMovies: number
   trackedEpisodes: number
   lists: number
@@ -6667,6 +7139,7 @@ export type UserCountOutputType = {
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  privacyScopes?: boolean | UserCountOutputTypeCountPrivacyScopesArgs
   trackedMovies?: boolean | UserCountOutputTypeCountTrackedMoviesArgs
   trackedEpisodes?: boolean | UserCountOutputTypeCountTrackedEpisodesArgs
   lists?: boolean | UserCountOutputTypeCountListsArgs
@@ -6693,6 +7166,13 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
    * Select specific fields to fetch from the UserCountOutputType
    */
   select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPrivacyScopesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PrivacyScopeWhereInput
 }
 
 /**
@@ -6844,6 +7324,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
@@ -6854,6 +7335,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  privacyScopes?: boolean | Prisma.User$privacyScopesArgs<ExtArgs>
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -6911,6 +7393,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
@@ -6959,6 +7442,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
@@ -7007,6 +7491,7 @@ export type UserSelectScalar = {
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
@@ -7019,8 +7504,9 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "listsDefaultVisibility" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  privacyScopes?: boolean | Prisma.User$privacyScopesArgs<ExtArgs>
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
@@ -7047,6 +7533,7 @@ export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
+    privacyScopes: Prisma.$PrivacyScopePayload<ExtArgs>[]
     watchPrivacyMigration: Prisma.$WatchPrivacyMigrationPayload<ExtArgs> | null
     trackedMovies: Prisma.$TrackedMoviePayload<ExtArgs>[]
     trackedEpisodes: Prisma.$TrackedEpisodePayload<ExtArgs>[]
@@ -7102,6 +7589,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     watchSyncAttemptedAt: Date | null
     watchSyncedAt: Date | null
     watchSyncError: string | null
+    listsDefaultVisibility: string
     watchPrivacyManaged: boolean
     watchPrivacyEnabled: boolean
     watchVisibility: string
@@ -7506,6 +7994,7 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  privacyScopes<T extends Prisma.User$privacyScopesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$privacyScopesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PrivacyScopePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   watchPrivacyMigration<T extends Prisma.User$watchPrivacyMigrationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$watchPrivacyMigrationArgs<ExtArgs>>): Prisma.Prisma__WatchPrivacyMigrationClient<runtime.Types.Result.GetResult<Prisma.$WatchPrivacyMigrationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   trackedMovies<T extends Prisma.User$trackedMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trackedMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrackedMoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   trackedEpisodes<T extends Prisma.User$trackedEpisodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trackedEpisodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrackedEpisodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -7588,6 +8077,7 @@ export interface UserFieldRefs {
   readonly watchSyncAttemptedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly watchSyncedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly watchSyncError: Prisma.FieldRef<"User", 'String'>
+  readonly listsDefaultVisibility: Prisma.FieldRef<"User", 'String'>
   readonly watchPrivacyManaged: Prisma.FieldRef<"User", 'Boolean'>
   readonly watchPrivacyEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly watchVisibility: Prisma.FieldRef<"User", 'String'>
@@ -7988,6 +8478,30 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Users to delete.
    */
   limit?: number
+}
+
+/**
+ * User.privacyScopes
+ */
+export type User$privacyScopesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PrivacyScope
+   */
+  select?: Prisma.PrivacyScopeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PrivacyScope
+   */
+  omit?: Prisma.PrivacyScopeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PrivacyScopeInclude<ExtArgs> | null
+  where?: Prisma.PrivacyScopeWhereInput
+  orderBy?: Prisma.PrivacyScopeOrderByWithRelationInput | Prisma.PrivacyScopeOrderByWithRelationInput[]
+  cursor?: Prisma.PrivacyScopeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PrivacyScopeScalarFieldEnum | Prisma.PrivacyScopeScalarFieldEnum[]
 }
 
 /**

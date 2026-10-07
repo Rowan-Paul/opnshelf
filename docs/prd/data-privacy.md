@@ -1,7 +1,7 @@
 # User-controlled data privacy
 
-Status: product direction agreed on 2026-10-06; not implemented. Related: #252,
-PR #449 and ADR 0046. PR #449 implements only the private time-format trial.
+Status: alpha replacement agreed on 2026-10-07; implementation in progress.
+Related: #252, ADR 0046 and ADR 0048. Superseded experimental PR #449 is closed.
 
 ## Controls
 
@@ -14,7 +14,7 @@ on Web and Mobile, available again in Settings so choices can be changed later.
 | Lists | Default visibility for Lists, with a choice for each List |
 | Library | One Public / Private choice for all Library Items |
 | Notes | One Public / Private choice for all Notes |
-| Settings | Always private; optional PDS sync |
+| Settings | Ordinary private account preferences; no experimental PDS sync |
 
 No individual Watch, Library Item or Note overrides in the first version.
 A List's visibility covers its contents as well as its name and description.
@@ -23,15 +23,22 @@ Reviews, Ratings, profile, Follows and Review Likes retain their existing
 behavior; this agreement does not change their visibility. Circles remain under
 ADR 0010 and are not implicitly included in this migration.
 
-Visibility and sync are separate controls. Disabling Settings sync never
-publishes Settings. Turning off private visibility for content means publishing
-it and requires explicit confirmation.
+The Privacy screen and onboarding identify the feature as Alpha. Onboarding
+starts with one Public/Private choice (Public preselected), with category
+customization. Private authorization occurs within this flow. Declining it keeps
+the previous visibility; no connection-control step is exposed. Unsupported PDSs
+keep Public usable and explain why Private is unavailable.
+
+A Lists default change applies only to new Lists. Existing Lists retain their
+visibility; a separate bulk action changes all Lists. The release covers all four
+categories, with matching Web and Mobile flows and no placeholder controls.
 
 ## Initial visibility
 
 New Users start with Public Watches, Public Library and Public Notes, and Public
 as their Lists default. Users can choose Private later through the same controls.
-Settings remain private; this public default does not enable Settings sync.
+Settings remain private account preferences. Remove the experimental sync code
+and its private Settings records and Space, preserving ordinary preferences.
 Existing Users retain their current visibility until they explicitly change it.
 
 ## Changing visibility
@@ -53,18 +60,16 @@ other derived surfaces as well as primary pages. Public content that independent
 reveals related information is not silently made private by another category's
 switch; explain these boundaries in the confirmation flow.
 
-## Decisions still needed
+## Alpha migration contract
 
-- Timing and presentation of the privacy prompt. New Users' public defaults are
-  agreed; make visibility clear without silently migrating existing content.
-- Whether changing the Lists default affects only future Lists or also offers
-  a separate bulk change for existing Lists.
-- The exact Settings fields included in portable sync, and what happens to an
-  existing private copy when sync is disabled or re-enabled.
-- Storage layout, synchronization authority, conflict handling, offline writes,
-  OAuth permissions, and safe migration sequencing across public and private stores.
-- Behavior for PDSs without Spaces support; private data must never fall back to
-  public storage.
+Use reference Spaces endpoints, never require a Tranquil-only capability. Copy
+and verify complete records, retain a temporary recovery journal, recheck the
+source, then delete originals. Public-source CAS remains supported. Private
+cleanup cannot close the race with an external app editing after the last check;
+this is an accepted alpha limitation documented in Learn more, without an extra
+concurrency warning. Detected conflicts stop the job; permanent private backups
+are not the product behavior. Ordinary switching deletes migrated records, not
+whole content Spaces. Pause affected category edits while migration runs.
 
 ## Implementation stages
 

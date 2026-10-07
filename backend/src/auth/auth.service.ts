@@ -68,6 +68,7 @@ export class AuthService {
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
 				privateSettingsEnabled: true,
+				privateSettingsHasCopy: true,
 				watchPrivacyEnabled: true,
 				reviewsMirrorFormat: true,
 			},
@@ -76,21 +77,14 @@ export class AuthService {
 			? { ...preferences }
 			: {
 					watchPrivacyEnabled: knownUser?.watchPrivacyEnabled ?? false,
-					privateSettingsEnabled:
-						this.configService.ENABLE_ATPROTO_SPACES &&
-						(knownUser?.privateSettingsEnabled ?? false),
+					privateSettingsEnabled: Boolean(
+						knownUser?.privateSettingsHasCopy ||
+							knownUser?.privateSettingsEnabled,
+					),
 					blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
 					blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
 					reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
 				};
-		// Turning the experiment off must also omit its scope during another
-		// integration's cumulative permission replacement.
-		if (
-			!this.configService.ENABLE_ATPROTO_SPACES &&
-			resolvedPreferences.privateSettingsEnabled
-		) {
-			resolvedPreferences.privateSettingsEnabled = false;
-		}
 
 		const url = await client.authorize(handle, {
 			scope: buildOAuthScope(resolvedPreferences),
@@ -195,15 +189,27 @@ export class AuthService {
 			select: {
 				watchVisibility: true,
 				watchPrivacyMigration: { select: { jobId: true } },
+				listsDefaultVisibility: true,
+				privacyScopes: {
+					where: {
+						OR: [
+							{ visibility: "private" },
+							{ targetVisibility: { not: null } },
+						],
+					},
+					select: { id: true },
+				},
 			},
 		});
 		if (
 			!user ||
 			user.watchVisibility !== "public" ||
-			user.watchPrivacyMigration
+			user.watchPrivacyMigration ||
+			user.listsDefaultVisibility === "private" ||
+			user.privacyScopes?.length
 		)
 			throw new ConflictException(
-				"Finish making Watches Public before disconnecting Watch access.",
+				"Finish making all content and the new-List default Public before disconnecting Private data access.",
 			);
 	}
 
@@ -231,14 +237,27 @@ export class AuthService {
 						watchPrivacyEnabled: true,
 						watchVisibility: true,
 						watchPrivacyMigration: { select: { jobId: true } },
+						listsDefaultVisibility: true,
+						privacyScopes: {
+							where: {
+								OR: [
+									{ visibility: "private" },
+									{ targetVisibility: { not: null } },
+								],
+							},
+							select: { id: true },
+						},
 					},
 				});
 				if (
 					owner?.watchPrivacyEnabled &&
-					(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
+					(owner.watchVisibility !== "public" ||
+						owner.watchPrivacyMigration ||
+						owner.listsDefaultVisibility === "private" ||
+						owner.privacyScopes?.length)
 				)
 					throw new ConflictException(
-						"Finish making Watches Public before disconnecting Watch access.",
+						"Finish making all content and the new-List default Public before disconnecting Private data access.",
 					);
 			}
 			await tx.user.update({

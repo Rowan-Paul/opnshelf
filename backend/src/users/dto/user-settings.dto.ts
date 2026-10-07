@@ -137,34 +137,7 @@ export class AccountDeletionJobDto {
 	createdAt!: string;
 }
 
-export class PrivateSettingsStateDto {
-	@ApiProperty()
-	enabled!: boolean;
-	@ApiProperty({
-		enum: [
-			"disabled",
-			"available",
-			"unsupported",
-			"connected",
-			"missing",
-			"permissionRequired",
-			"unavailable",
-		],
-	})
-	status!:
-		| "disabled"
-		| "available"
-		| "unsupported"
-		| "connected"
-		| "missing"
-		| "permissionRequired"
-		| "unavailable";
-}
-
 export class UserSettingsDto {
-	@ApiPropertyOptional({ type: PrivateSettingsStateDto })
-	privateSettings?: PrivateSettingsStateDto;
-
 	@ApiProperty({
 		description: "Time format preference",
 		enum: ["12h", "24h"],
@@ -340,6 +313,10 @@ export class MostWatchedShowDto {
 }
 
 export class PublicUserProfileDto {
+	@ApiProperty({ description: "Whether Library is publicly visible" })
+	libraryPublic!: boolean;
+	@ApiProperty({ description: "Whether Notes are publicly visible" })
+	notesPublic!: boolean;
 	@ApiProperty({ description: "Whether Watches are publicly visible" })
 	watchesPublic!: boolean;
 	@ApiProperty({

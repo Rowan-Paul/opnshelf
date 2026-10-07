@@ -1,6 +1,11 @@
 # ADR 0047: Watch privacy uses authoritative repository sync
 
-Status: accepted implementation decision for ADR 0046; production rollout pending.
+Update: [ADR 0048](0048-privacy-alpha-uses-reference-spaces.md) supersedes the
+Settings experiment and conditional-private-deletion release requirements.
+The text below records the earlier decision.
+
+Status: partially superseded by ADR 0048; see its Privacy Alpha decisions.
+The remaining category boundaries and authoritative-sync design still apply.
 
 Once an account starts its first Watch Privacy Migration, Opnshelf reads its
 Watch projection directly from its selected repository, including after returning

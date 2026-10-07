@@ -1,4 +1,8 @@
-import { Agent } from "@atproto/api";
+import {
+	projectContent,
+	type ProjectionSource,
+} from "../privacy/content-public-projection";
+import { createWatchAgent } from "../privacy/watch-operation";
 import { TID } from "@atproto/common";
 import { Injectable, Logger } from "@nestjs/common";
 import {
@@ -119,9 +123,7 @@ export class LibraryService {
 			createdAt: now,
 		});
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: LIBRARY_ITEM_COLLECTION,
@@ -180,9 +182,7 @@ export class LibraryService {
 			return;
 		}
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		await agent.com.atproto.repo.deleteRecord({
 			repo: session.did,
 			collection: LIBRARY_ITEM_COLLECTION,
@@ -200,6 +200,7 @@ export class LibraryService {
 		rkey: string,
 		userDid: string,
 		record: LibraryItemRecord,
+		source: ProjectionSource = "repository",
 	): Promise<void> {
 		const mediaType = record.mediaType;
 		const mediaId = record.mediaId;
@@ -238,40 +239,48 @@ export class LibraryService {
 			}
 		}
 
-		await this.prisma.libraryItem.upsert({
-			where: { userDid_rkey: { userDid, rkey } },
-			create: {
-				rkey,
-				uri,
-				cid,
-				userDid,
-				mediaType,
-				mediaId,
-				format: record.format,
-				seasonNumber,
-				episodeNumber,
-				movieId: mediaType === "movie" ? mediaId : null,
-				showId: mediaType === "movie" ? null : mediaId,
-				boxSet: record.boxSet,
-				notes: record.notes,
-			},
-			update: {
-				cid,
-				mediaType,
-				mediaId,
-				format: record.format,
-				seasonNumber,
-				episodeNumber,
-				movieId: mediaType === "movie" ? mediaId : null,
-				showId: mediaType === "movie" ? null : mediaId,
-				boxSet: record.boxSet,
-				notes: record.notes,
-			},
-		});
+		await projectContent(this.prisma, userDid, ["library"], source, (db) =>
+			db.libraryItem.upsert({
+				where: { userDid_rkey: { userDid, rkey } },
+				create: {
+					rkey,
+					uri,
+					cid,
+					userDid,
+					mediaType,
+					mediaId,
+					format: record.format,
+					seasonNumber,
+					episodeNumber,
+					movieId: mediaType === "movie" ? mediaId : null,
+					showId: mediaType === "movie" ? null : mediaId,
+					boxSet: record.boxSet,
+					notes: record.notes,
+				},
+				update: {
+					cid,
+					mediaType,
+					mediaId,
+					format: record.format,
+					seasonNumber,
+					episodeNumber,
+					movieId: mediaType === "movie" ? mediaId : null,
+					showId: mediaType === "movie" ? null : mediaId,
+					boxSet: record.boxSet,
+					notes: record.notes,
+				},
+			}),
+		);
 	}
 
-	async deleteLibraryItemRecord(userDid: string, rkey: string): Promise<void> {
-		await this.prisma.libraryItem.deleteMany({ where: { userDid, rkey } });
+	async deleteLibraryItemRecord(
+		userDid: string,
+		rkey: string,
+		source: ProjectionSource = "repository",
+	): Promise<void> {
+		await projectContent(this.prisma, userDid, ["library"], source, (db) =>
+			db.libraryItem.deleteMany({ where: { userDid, rkey } }),
+		);
 	}
 
 	private async episodeNameMap(

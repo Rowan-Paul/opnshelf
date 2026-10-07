@@ -1,6 +1,10 @@
+import {
+	privacyRepositoryConfig,
+	type PrivacyRepositoryConfig,
+	type PrivacyCollection,
+} from "./privacy-category";
 import { includesWatchSpaceGrant } from "../auth/oauth-scopes";
 import {
-	WATCH_COLLECTIONS,
 	WatchMigrationConflict,
 	type StoredWatch,
 	type ReversibleWatchMigrationRepository,
@@ -28,22 +32,25 @@ function object(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** OAuth/DPoP transport. Every removal is conditional; reverse migration also
- * requires the PDS to explicitly advertise the private deletion extension. */
+/** OAuth/DPoP transport using reference Spaces. Public deletion uses CAS;
+ * private deletion rechecks the source under the documented alpha contract. */
 export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 	readonly space: string;
 	constructor(
 		private readonly ownerDid: string,
 		private readonly session: WatchOAuthSession,
 		private readonly operationSignal?: AbortSignal,
+		private readonly config: PrivacyRepositoryConfig = privacyRepositoryConfig(
+			"watches",
+		),
 	) {
 		if (session.did !== ownerDid)
 			throw new Error("Watch migration owner does not match the session");
-		this.space = `at://${ownerDid}/space/${WATCH_SPACE_TYPE}/self`;
+		this.space = `at://${ownerDid}/space/${config.spaceType}/${config.skey}`;
 	}
 	private params(ref: WatchReference, privateRepo: boolean) {
 		if (
-			!WATCH_COLLECTIONS.includes(ref.collection) ||
+			!this.config.collections.includes(ref.collection) ||
 			!/^[a-zA-Z0-9._~:-]{1,512}$/.test(ref.rkey) ||
 			ref.rkey === "." ||
 			ref.rkey === ".."
@@ -67,7 +74,10 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 			this.session.did !== this.ownerDid ||
 			((method.startsWith("com.atproto.space.") ||
 				method.startsWith("com.atproto.simplespace.")) &&
-				!includesWatchSpaceGrant((await this.session.getTokenInfo()).scope))
+				!includesWatchSpaceGrant(
+					(await this.session.getTokenInfo()).scope,
+					this.config.scope,
+				))
 		) {
 			throw new WatchMigrationPdsError("InsufficientScope", 403);
 		}
@@ -140,7 +150,7 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 			: [input.collection];
 		if (
 			collections.some(
-				(c) => !WATCH_COLLECTIONS.some((allowed) => allowed === c),
+				(c) => !this.config.collections.some((allowed) => allowed === c),
 			)
 		)
 			throw new Error("Invalid Watch collection");
@@ -151,7 +161,7 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 		);
 	}
 	async list(
-		collection: (typeof WATCH_COLLECTIONS)[number],
+		collection: PrivacyCollection,
 		privateRepo: boolean,
 		cursor?: string,
 		limit = 100,
@@ -222,8 +232,8 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 				await this.call(
 					"com.atproto.simplespace.createSpace",
 					{
-						spaceType: WATCH_SPACE_TYPE,
-						skey: "self",
+						spaceType: this.config.spaceType,
+						skey: this.config.skey,
 						readPolicy: { $type: MEMBER_POLICY },
 						writePolicy: { $type: MEMBER_POLICY },
 						appAccess: { $type: "com.atproto.simplespace.defs#open" },
@@ -298,20 +308,6 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 	createPublic(ref: WatchReference, record: StoredWatch) {
 		return this.create(ref, record, false);
 	}
-	async assertConditionalPrivateDelete(): Promise<void> {
-		const description = await this.call(
-			"com.atproto.server.describeServer",
-			{},
-		);
-		if (
-			!Array.isArray(description.tranquilSpaceCapabilities) ||
-			!description.tranquilSpaceCapabilities.includes(
-				"deleteRecord.swapRecord.v1",
-			)
-		) {
-			throw new WatchMigrationPdsError("ConditionalDeleteUnsupported", 409);
-		}
-	}
 	private async create(
 		ref: WatchReference,
 		record: StoredWatch,
@@ -340,7 +336,12 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 		return this.remove(ref, expectedCid, false);
 	}
 	async deletePrivate(ref: WatchReference, expectedCid: string) {
-		await this.assertConditionalPrivateDelete();
+		// Reference Spaces has no atomic revision precondition. Detect changes
+		// already visible now; another app can still write between this read and
+		// delete. ADR 0048 explicitly accepts that limitation for this alpha.
+		const current = await this.readPrivate(ref);
+		if (!current) return;
+		if (current.cid !== expectedCid) throw new WatchMigrationConflict();
 		return this.remove(ref, expectedCid, true);
 	}
 	private async remove(
@@ -353,7 +354,10 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 		try {
 			await this.call(
 				`com.atproto.${privateRepo ? "space" : "repo"}.deleteRecord`,
-				{ ...this.params(ref, privateRepo), swapRecord: expectedCid },
+				{
+					...this.params(ref, privateRepo),
+					...(privateRepo ? {} : { swapRecord: expectedCid }),
+				},
 				true,
 			);
 		} catch (error) {

@@ -37,9 +37,8 @@ import {
 import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
-import { PrivateSettingsSection } from "@/components/settings/private-settings-section";
+import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
-import { WatchPrivacySection } from "@/components/settings/watch-privacy-section";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
@@ -163,6 +162,7 @@ function AppearanceSetting() {
 export type SettingsCategory =
 	| "profile"
 	| "preferences"
+	| "privacy"
 	| "notifications"
 	| "connections"
 	| "account"
@@ -171,6 +171,7 @@ export type SettingsCategory =
 const SETTINGS_TITLES: Record<SettingsCategory, string> = {
 	profile: "Profile",
 	preferences: "Preferences",
+	privacy: "Privacy",
 	notifications: "Notifications",
 	connections: "Connections",
 	account: "Account",
@@ -519,6 +520,11 @@ export function SettingsCategoryScreen({
 						</View>
 					)}
 
+					{section === "privacy" && (
+						<SettingsSection title="Privacy">
+							<PrivacySection />
+						</SettingsSection>
+					)}
 					{section === "preferences" && (
 						<>
 							<SettingsSection
@@ -580,40 +586,13 @@ export function SettingsCategoryScreen({
 														body: { timeFormat: checked ? "24h" : "12h" },
 													})
 												}
-												disabled={
-													settingsBusy ||
-													Boolean(
-														settings?.privateSettings?.enabled &&
-															!["connected", "missing"].includes(
-																settings.privateSettings.status,
-															),
-													)
-												}
+												disabled={settingsBusy}
 												trackColor={{ false: "#3f3f46", true: PRIMARY }}
 												thumbColor="#ffffff"
 											/>
 										</View>
-										<PrivateSettingsSection
-											settings={settings}
-											permissionPending={permissionChangeMutation.isPending}
-											onPermissionChange={(action) =>
-												requestPermissionChange("spaces", action)
-											}
-										/>
 									</View>
 								)}
-							</SettingsSection>
-
-							<SettingsSection title="Watch privacy">
-								<WatchPrivacySection
-									permissionPending={permissionChangeMutation.isPending}
-									onConnect={() =>
-										requestPermissionChange("watches", "connect")
-									}
-									onDisconnect={() =>
-										requestPermissionChange("watches", "disconnect")
-									}
-								/>
 							</SettingsSection>
 							{/* Streaming country */}
 							<SettingsSection
@@ -962,6 +941,7 @@ const SETTINGS_AREAS: {
 	href:
 		| "/edit-profile"
 		| "/settings/preferences"
+		| "/settings/privacy"
 		| "/settings/notifications"
 		| "/settings/connections"
 		| "/settings/account"
@@ -970,6 +950,12 @@ const SETTINGS_AREAS: {
 	description: string;
 	Icon: typeof UserPen;
 }[] = [
+	{
+		href: "/settings/privacy",
+		label: SETTINGS_TITLES.privacy,
+		description: "Public and Private data · Alpha",
+		Icon: Smartphone,
+	},
 	{
 		href: "/edit-profile",
 		label: SETTINGS_TITLES.profile,

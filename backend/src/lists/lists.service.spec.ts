@@ -1,3 +1,17 @@
+import { ContentPrivacyCoordinator } from "../privacy/content-privacy-coordinator";
+import { watchOperation } from "../privacy/watch-operation";
+import { privacyRepositoryConfig } from "../privacy/privacy-category";
+// Repository routing is tested separately; these tests isolate public content behavior.
+vi.mock("../privacy/watch-operation", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("../privacy/watch-operation")>();
+	const { Agent } = await import("@atproto/api");
+	return {
+		...actual,
+		createWatchAgent: (session: ConstructorParameters<typeof Agent>[0]) =>
+			new Agent(session),
+	};
+});
 import { Test, type TestingModule } from "@nestjs/testing";
 import { Logger } from "@nestjs/common";
 
@@ -59,7 +73,13 @@ describe("ListsService", () => {
 	let service: ListsService;
 
 	const mockPrismaService = {
+		privacyScope: {
+			updateMany: vi.fn(),
+			findMany: vi.fn().mockResolvedValue([]),
+			findUnique: vi.fn().mockResolvedValue(null),
+		},
 		list: {
+			findUnique: vi.fn().mockResolvedValue({ rkey: "test-rkey" }),
 			findMany: vi.fn(),
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -121,6 +141,28 @@ describe("ListsService", () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				ListsService,
+				{
+					provide: ContentPrivacyCoordinator,
+					useValue: {
+						prepareNewList: vi.fn(),
+						activateNewList: vi.fn(),
+						write: (
+							did: string,
+							_category: string,
+							_rkey: string | undefined,
+							work: () => Promise<unknown>,
+						) =>
+							watchOperation.run(
+								{
+									did,
+									visibility: "public",
+									signal: AbortSignal.timeout(10000),
+									repository: privacyRepositoryConfig("lists", "new"),
+								},
+								work,
+							),
+					},
+				},
 				{ provide: PrismaService, useValue: mockPrismaService },
 				{ provide: MoviesService, useValue: mockMoviesService },
 				{ provide: ShowsService, useValue: mockShowsService },
@@ -376,6 +418,24 @@ describe("ListsService", () => {
 			expect(result[1].coverPosterPath).toBeUndefined();
 		});
 
+		it("excludes private and migrating Lists from public summaries", async () => {
+			mockPrismaService.privacyScope.findMany.mockResolvedValue([
+				{ listRkey: "hidden" },
+			]);
+			mockPrismaService.list.findMany.mockResolvedValue([]);
+			await service.getPublicUserLists("owner");
+			expect(mockPrismaService.list.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { userDid: "owner", rkey: { notIn: ["hidden"] } },
+				}),
+			);
+			mockPrismaService.list.findMany.mockClear();
+			await service.getUserLists("owner");
+			expect(mockPrismaService.list.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { userDid: "owner" } }),
+			);
+		});
+
 		it("should expose public list summaries via the same ordering", async () => {
 			mockPrismaService.list.findMany.mockResolvedValue([
 				{
@@ -401,6 +461,32 @@ describe("ListsService", () => {
 				},
 			]);
 		});
+
+		it.each([null, "other"])(
+			"hides private List details from %s but preserves the owner path",
+			async (viewer) => {
+				mockPrismaService.privacyScope.findUnique.mockResolvedValueOnce({
+					visibility: "private",
+					targetVisibility: null,
+				});
+				await expect(
+					service.getPublicList("owner", "favorites", viewer),
+				).resolves.toBeNull();
+				const getList = vi
+					.spyOn(service, "getList")
+					.mockResolvedValueOnce(null);
+				await service.getPublicList("owner", "favorites", "owner");
+				expect(getList).toHaveBeenCalledWith(
+					"owner",
+					"favorites",
+					"owner",
+					undefined,
+					undefined,
+					undefined,
+				);
+				getList.mockRestore();
+			},
+		);
 
 		it("should expose public list details for a user's slug", async () => {
 			mockPrismaService.list.findFirst.mockResolvedValue({

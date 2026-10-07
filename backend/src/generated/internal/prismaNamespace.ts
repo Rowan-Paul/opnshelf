@@ -414,7 +414,9 @@ export const ModelName = {
   Feedback: 'Feedback',
   FeaturedContent: 'FeaturedContent',
   WatchPrivacyCopy: 'WatchPrivacyCopy',
-  WatchPrivacyMigration: 'WatchPrivacyMigration'
+  WatchPrivacyMigration: 'WatchPrivacyMigration',
+  PrivacyScope: 'PrivacyScope',
+  PrivacyCopy: 'PrivacyCopy'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -430,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "traktImportItem" | "traktImportMatch" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration"
+    modelProps: "user" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "traktImportItem" | "traktImportMatch" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration" | "privacyScope" | "privacyCopy"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2728,6 +2730,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PrivacyScope: {
+      payload: Prisma.$PrivacyScopePayload<ExtArgs>
+      fields: Prisma.PrivacyScopeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PrivacyScopeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PrivacyScopeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>
+        }
+        findFirst: {
+          args: Prisma.PrivacyScopeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PrivacyScopeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>
+        }
+        findMany: {
+          args: Prisma.PrivacyScopeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>[]
+        }
+        create: {
+          args: Prisma.PrivacyScopeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>
+        }
+        createMany: {
+          args: Prisma.PrivacyScopeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PrivacyScopeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>[]
+        }
+        delete: {
+          args: Prisma.PrivacyScopeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>
+        }
+        update: {
+          args: Prisma.PrivacyScopeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>
+        }
+        deleteMany: {
+          args: Prisma.PrivacyScopeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PrivacyScopeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PrivacyScopeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>[]
+        }
+        upsert: {
+          args: Prisma.PrivacyScopeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyScopePayload>
+        }
+        aggregate: {
+          args: Prisma.PrivacyScopeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePrivacyScope>
+        }
+        groupBy: {
+          args: Prisma.PrivacyScopeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PrivacyScopeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PrivacyScopeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PrivacyScopeCountAggregateOutputType> | number
+        }
+      }
+    }
+    PrivacyCopy: {
+      payload: Prisma.$PrivacyCopyPayload<ExtArgs>
+      fields: Prisma.PrivacyCopyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PrivacyCopyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PrivacyCopyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>
+        }
+        findFirst: {
+          args: Prisma.PrivacyCopyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PrivacyCopyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>
+        }
+        findMany: {
+          args: Prisma.PrivacyCopyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>[]
+        }
+        create: {
+          args: Prisma.PrivacyCopyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>
+        }
+        createMany: {
+          args: Prisma.PrivacyCopyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PrivacyCopyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>[]
+        }
+        delete: {
+          args: Prisma.PrivacyCopyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>
+        }
+        update: {
+          args: Prisma.PrivacyCopyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>
+        }
+        deleteMany: {
+          args: Prisma.PrivacyCopyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PrivacyCopyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PrivacyCopyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>[]
+        }
+        upsert: {
+          args: Prisma.PrivacyCopyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PrivacyCopyPayload>
+        }
+        aggregate: {
+          args: Prisma.PrivacyCopyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePrivacyCopy>
+        }
+        groupBy: {
+          args: Prisma.PrivacyCopyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PrivacyCopyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PrivacyCopyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PrivacyCopyCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2803,6 +2953,7 @@ export const UserScalarFieldEnum = {
   watchSyncAttemptedAt: 'watchSyncAttemptedAt',
   watchSyncedAt: 'watchSyncedAt',
   watchSyncError: 'watchSyncError',
+  listsDefaultVisibility: 'listsDefaultVisibility',
   watchPrivacyManaged: 'watchPrivacyManaged',
   watchPrivacyEnabled: 'watchPrivacyEnabled',
   watchVisibility: 'watchVisibility',
@@ -3309,6 +3460,40 @@ export const WatchPrivacyMigrationScalarFieldEnum = {
 export type WatchPrivacyMigrationScalarFieldEnum = (typeof WatchPrivacyMigrationScalarFieldEnum)[keyof typeof WatchPrivacyMigrationScalarFieldEnum]
 
 
+export const PrivacyScopeScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  key: 'key',
+  category: 'category',
+  listRkey: 'listRkey',
+  visibility: 'visibility',
+  managed: 'managed',
+  migrationId: 'migrationId',
+  targetVisibility: 'targetVisibility',
+  status: 'status',
+  error: 'error',
+  syncAttemptedAt: 'syncAttemptedAt',
+  syncedAt: 'syncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PrivacyScopeScalarFieldEnum = (typeof PrivacyScopeScalarFieldEnum)[keyof typeof PrivacyScopeScalarFieldEnum]
+
+
+export const PrivacyCopyScalarFieldEnum = {
+  scopeId: 'scopeId',
+  migrationId: 'migrationId',
+  collection: 'collection',
+  rkey: 'rkey',
+  cid: 'cid',
+  value: 'value',
+  createdAt: 'createdAt'
+} as const
+
+export type PrivacyCopyScalarFieldEnum = (typeof PrivacyCopyScalarFieldEnum)[keyof typeof PrivacyCopyScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -3622,6 +3807,8 @@ export type GlobalOmitConfig = {
   featuredContent?: Prisma.FeaturedContentOmit
   watchPrivacyCopy?: Prisma.WatchPrivacyCopyOmit
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationOmit
+  privacyScope?: Prisma.PrivacyScopeOmit
+  privacyCopy?: Prisma.PrivacyCopyOmit
 }
 
 /* Types for Logging */

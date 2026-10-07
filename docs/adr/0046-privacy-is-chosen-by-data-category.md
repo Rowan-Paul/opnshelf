@@ -1,9 +1,11 @@
 # ADR 0046: Privacy is chosen by data category
 
-Status: accepted product direction; Watches implemented locally, production
-rollout and the remaining data categories pending. Partially supersedes
-ADR 0011's public-only Library restriction. ADR 0045 remains the implemented
-experimental trial, not the completed privacy feature.
+Update: [ADR 0048](0048-privacy-alpha-uses-reference-spaces.md) supersedes the
+Settings experiment and conditional-private-deletion release requirements.
+The text below records the earlier decision.
+
+Status: partially superseded by ADR 0048; see its Privacy Alpha decisions.
+The remaining category boundaries and authoritative-sync design still apply.
 
 Users choose Public or Private for Watches, Library and Notes by category. Lists
 have a default visibility and an individual visibility choice per List. This

@@ -35,6 +35,7 @@ describe("UserDeletionService", () => {
 	let service: UserDeletionService;
 
 	const prisma = {
+		privacyScope: { findMany: vi.fn().mockResolvedValue([]) },
 		$transaction: vi.fn(),
 		user: {
 			findUnique: vi.fn(),
@@ -140,7 +141,7 @@ describe("UserDeletionService", () => {
 			prisma,
 			authService,
 			config,
-			new PrivateSettingsService(config),
+			new PrivateSettingsService(),
 			mockWatchCoordinator(prisma),
 		);
 	});

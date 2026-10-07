@@ -6,16 +6,15 @@ A social media tracking and review platform where users log, rate, and review mo
 
 **Data Visibility**:
 A User's choice of Public or Private for their content: by category for Watches,
-Library Items and Notes, and per List with a default for Lists. Settings are
-always private; syncing them is a separate choice.
+Library Items and Notes, and per List with a default for Lists. Settings remain ordinary account preferences; they are not synchronized to Spaces.
 _Avoid_: Sync (visibility controls who can read, not whether data is synchronized)
 
-**Private Settings**:
-An optional, experimental connection that stores a User's time-format preference in an owner-controlled AT Protocol Space on their PDS. Opnshelf keeps the last valid value locally and reports when private storage is unavailable. It does not move Circles or other settings into Spaces. See ADR 0045.
-_Avoid_: Private profile (the profile is public), encrypted settings (Spaces use access control, not end-to-end encryption)
+**Private Settings** (retired):
+The former experiment that synchronized the 12/24-hour preference to a Space.
+Retired by ADR 0048; ordinary timezone and time-format preferences remain.
 
 **Space**:
-An AT Protocol access-control and synchronization boundary. Each author has a separate repository inside it. Private Settings uses a single owner-controlled Space with no other members; a Space is not an Opnshelf Circle or List.
+An AT Protocol access-control and synchronization boundary. Each author has a separate repository inside it. Privacy Alpha uses owner-only Spaces: one for each category and a separate Space for each private List. A Space is a protocol boundary, not an Opnshelf Circle or List.
 
 **Release Notes**:
 Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
@@ -298,11 +297,21 @@ The account-wide choice between Public and Private for movie and episode
 Watches are stored. Other data categories retain their own visibility.
 _Avoid_: private account (other categories can remain Public).
 
-**Watch access**:
-The optional permission for Opnshelf to use the User's private Watch **Space**.
-Connecting it does not change Watch privacy. Disconnecting is available after
-Watches are Public and no privacy change remains in progress.
-_Avoid_: privacy enabled (permission and visibility are different choices).
+**Privacy Alpha**:
+The evolving Public/Private controls for **Watches**, **Library**, **Notes** and
+**Lists**, available in Privacy settings and onboarding. Public is the initial
+choice. Private uses owner-only **Spaces** on compatible PDSs, including the
+reference Spaces alpha. Reviews and Ratings retain their existing visibility.
+_Avoid_: private account (visibility is chosen by category).
+
+**Private data access**:
+The OAuth permission requested as part of choosing Private. Permission alone
+does not change visibility, and declining it preserves the previous choice.
+_Avoid_: Watch access, Connect privacy, privacy enabled.
+
+**List default visibility**:
+The Public/Private choice applied only to newly created Lists. Existing Lists
+keep their individual choice; **Change all Lists** explicitly moves them.
 
 **Sync Watches**:
 Refresh the User's Watches from their selected public repository or private
@@ -317,10 +326,10 @@ a failed move resumes that migration rather than starting one in the opposite
 direction. Interactive Watch changes pause until it finishes.
 
 **Recovery Snapshot**:
-A temporary, complete record copy retained during a **Watch Privacy Migration**
+A temporary, complete record copy retained during a Privacy Alpha visibility change
 so interrupted copy-and-delete operations can be recovered. It is removed when
 verified migration and local reconciliation finish, or the account is deleted.
-It is not a permanent backup of private Watches after publication.
+It is not a permanent backup of private content after publication.
 
 ## Flagged ambiguities
 

@@ -90,7 +90,7 @@ function pdsFixture(did: string) {
 					failDelete = false;
 					return respond({ error: "InternalError" }, 500);
 				}
-				if (records.get(key)?.cid !== params.swapRecord)
+				if (!isPrivate && records.get(key)?.cid !== params.swapRecord)
 					return respond({ error: "InvalidSwap" }, 400);
 				records.delete(key);
 				return respond({});
@@ -245,14 +245,15 @@ describe.skipIf(!url)("Watch privacy runtime on PostgreSQL", () => {
 		expect((await privacy.status(did, pds.session)).migration).toBeNull();
 		expect(pds.publicRecords.size).toBe(0);
 	});
-	it("refuses unsupported PDSs before starting a migration or writing any copy", async () => {
+	it("moves in both directions without Tranquil extension capabilities", async () => {
 		pds.disableConditionalDelete();
-		await expect(
-			privacy.start(did, pds.session, "private", false),
-		).rejects.toThrow("ConditionalDeleteUnsupported");
+		await privacy.start(did, pds.session, "private", false);
+		await run();
+		await run();
+		await privacy.start(did, pds.session, "public", true);
+		await run();
+		await run();
+		expect((await privacy.status(did, pds.session)).visibility).toBe("public");
 		expect(pds.privateRecords.size).toBe(0);
-		expect(
-			await db.watchPrivacyMigration.count({ where: { userDid: did } }),
-		).toBe(0);
 	});
 });

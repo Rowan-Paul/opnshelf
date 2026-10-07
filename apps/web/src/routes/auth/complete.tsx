@@ -40,6 +40,7 @@ function AuthCompletePage() {
 		// Check for error in query params
 		const error = (search as { error?: string }).error;
 		if (error) {
+			sessionStorage.removeItem("opnshelf-privacy-choice");
 			setStatus("error");
 			setErrorMessage(getErrorMessage(error));
 			return;
@@ -67,9 +68,11 @@ function AuthCompletePage() {
 				const permission = (search as { permission?: string }).permission;
 				const redirectTo = data?.needsOnboarding
 					? "/onboarding"
-					: permission === "atstore"
-						? "/?review=compose"
-						: "/";
+					: permission === "privacy"
+						? "/settings/privacy"
+						: permission === "atstore"
+							? "/?review=compose"
+							: "/";
 				// Clear any stale query cache from previous sessions
 				queryClient.clear();
 				setTimeout(() => {

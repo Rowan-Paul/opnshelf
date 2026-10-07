@@ -40,13 +40,6 @@ export const envSchema = z.object({
 			"Non-secret DID of the sole Featured Content editor; unset disables editorial access.",
 		),
 	TMDB_API_KEY: production(text, "TMDB API key for catalogue reads."),
-	ENABLE_ATPROTO_SPACES: z
-		.enum(["true", "false"])
-		.default("false")
-		.transform((value) => value === "true")
-		.describe(
-			"Enable the experimental, opt-in Private Settings integration; defaults to false.",
-		),
 	PDS_URL: production(httpUrl, "Tranquil Personal Data Server URL."),
 	PLC_DIRECTORY_URL: httpUrl
 		.optional()

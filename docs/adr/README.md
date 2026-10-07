@@ -62,6 +62,7 @@ Numbering notes:
 | [0042-watch-date-corrections-preserve-identity.md](0042-watch-date-corrections-preserve-identity.md) | 0042 | Watch date corrections preserve identity | Accepted; implemented |
 | [0043-featured-content-is-service-owned.md](0043-featured-content-is-service-owned.md) | 0043 | Featured Content is owned by the service | Accepted and implemented |
 | [0044-release-notes-use-web-content-and-private-read-state.md](0044-release-notes-use-web-content-and-private-read-state.md) | 0044 | Release Notes use Web content and private account read state | Accepted; implemented |
-| [0045-private-settings-use-an-opt-in-space.md](0045-private-settings-use-an-opt-in-space.md) | 0045 | Private Settings use an opt-in Space | Accepted for experimental trial |
-| [0046-privacy-is-chosen-by-data-category.md](0046-privacy-is-chosen-by-data-category.md) | 0046 | Privacy is chosen by data category | Accepted; Watches implemented locally, remaining rollout pending |
-| [0047-watch-privacy-uses-authoritative-repository-sync.md](0047-watch-privacy-uses-authoritative-repository-sync.md) | 0047 | Watch privacy uses authoritative repository sync | Accepted implementation decision; rollout pending |
+| [0045-private-settings-use-an-opt-in-space.md](0045-private-settings-use-an-opt-in-space.md) | 0045 | Private Settings use an opt-in Space | Superseded by 0048; Settings experiment retired |
+| [0046-privacy-is-chosen-by-data-category.md](0046-privacy-is-chosen-by-data-category.md) | 0046 | Privacy is chosen by data category | Partially superseded by 0048; category privacy retained |
+| [0047-watch-privacy-uses-authoritative-repository-sync.md](0047-watch-privacy-uses-authoritative-repository-sync.md) | 0047 | Watch privacy uses authoritative repository sync | Partially superseded by 0048; authoritative sync retained |
+| [0048-privacy-alpha-uses-reference-spaces.md](0048-privacy-alpha-uses-reference-spaces.md) | 0048 | Privacy alpha uses reference Spaces | Accepted; supersedes experimental Settings sync and custom CAS requirement |

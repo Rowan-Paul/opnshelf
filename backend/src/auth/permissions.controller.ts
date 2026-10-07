@@ -15,7 +15,6 @@ import {
 	PermissionChangeDto,
 	PermissionChangeResponseDto,
 } from "./dto/permission-change.dto";
-import { PrivateSettingsService } from "../pds/private-settings.service";
 import type { OAuthScopePreferences } from "./oauth-scopes";
 import type { AuthenticatedRequest } from "./types";
 
@@ -29,10 +28,7 @@ import type { AuthenticatedRequest } from "./types";
 @ApiTags("auth")
 @Controller()
 export class PermissionsController {
-	constructor(
-		private readonly authService: AuthService,
-		private readonly privateSettings: PrivateSettingsService,
-	) {}
+	constructor(private readonly authService: AuthService) {}
 
 	/** Explicitly request (or remove) one external integration's cumulative scope. */
 	@Post("auth/permissions")
@@ -69,14 +65,17 @@ export class PermissionsController {
 			}
 		}
 		if (enable && integration === "spaces")
-			await this.privateSettings.assertAvailable(did, req.user.session);
+			throw new BadRequestException(
+				"Private Settings has been retired. Use Privacy settings for your content.",
+			);
 		if (integration === "watches" && !enable)
 			await this.authService.assertCanDisconnectWatches(did);
 		const preferences: OAuthScopePreferences = {
 			watchPrivacyEnabled:
 				integration === "watches" ? enable : user.watchPrivacyEnabled,
-			privateSettingsEnabled:
-				integration === "spaces" ? enable : user.privateSettingsEnabled,
+			privateSettingsEnabled: Boolean(
+				user.privateSettingsHasCopy || user.privateSettingsEnabled,
+			),
 			...(integration === "atstore" ? { atStoreReviewEnabled: enable } : {}),
 			blogEnabled:
 				integration === "blog" ? enable : user.blogIntegrationEnabled,

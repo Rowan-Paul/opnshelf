@@ -1,3 +1,4 @@
+import { privacyRepositoryConfig } from "../privacy/privacy-category";
 import { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
 import {
 	WatchMigrationPds,
@@ -393,6 +394,52 @@ export class UserDeletionService {
 						throw error;
 					}
 					for (const collection of WATCH_COLLECTIONS) {
+						const page = await pds.list(collection, true, undefined, 20);
+						if (page.records.length) {
+							for (const record of page.records)
+								await pds.deletePrivate(record, record.cid);
+							return false;
+						}
+					}
+					return true;
+				},
+			);
+			if (!complete) return false;
+		}
+		const scopes = await this.prisma.privacyScope.findMany({
+			where: { userDid, managed: true },
+		});
+		for (const scope of scopes) {
+			if (
+				scope.category !== "library" &&
+				scope.category !== "notes" &&
+				scope.category !== "lists"
+			)
+				throw new Error("Invalid private content category");
+			const config = privacyRepositoryConfig(
+				scope.category,
+				scope.listRkey ?? undefined,
+			);
+			const complete = await this.watchPrivacy.withAccountLock(
+				userDid,
+				async (_tx, signal) => {
+					const pds = new WatchMigrationPds(
+						userDid,
+						requireWatchSession(session),
+						signal,
+						config,
+					);
+					try {
+						await pds.assertExistingPrivate();
+					} catch (error) {
+						if (
+							error instanceof WatchMigrationPdsError &&
+							["SpaceNotFound", "SpaceDeleted"].includes(error.code)
+						)
+							return true;
+						throw error;
+					}
+					for (const collection of config.collections) {
 						const page = await pds.list(collection, true, undefined, 20);
 						if (page.records.length) {
 							for (const record of page.records)

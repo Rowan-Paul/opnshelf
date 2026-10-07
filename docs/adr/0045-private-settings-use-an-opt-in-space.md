@@ -1,6 +1,10 @@
 # ADR 0045: Private Settings use an opt-in Space
 
-Status: accepted for the experimental trial in issue #252.
+Update: [ADR 0048](0048-privacy-alpha-uses-reference-spaces.md) supersedes the
+Settings experiment and conditional-private-deletion release requirements.
+The text below records the earlier decision.
+
+Status: superseded by ADR 0048; Settings experiment retired.
 
 A User may connect **Private Settings** to keep their `timeFormat` preference in
 an owner-controlled AT Protocol Space. The integration is disabled unless the

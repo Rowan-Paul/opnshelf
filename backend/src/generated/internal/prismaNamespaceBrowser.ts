@@ -81,7 +81,9 @@ export const ModelName = {
   Feedback: 'Feedback',
   FeaturedContent: 'FeaturedContent',
   WatchPrivacyCopy: 'WatchPrivacyCopy',
-  WatchPrivacyMigration: 'WatchPrivacyMigration'
+  WatchPrivacyMigration: 'WatchPrivacyMigration',
+  PrivacyScope: 'PrivacyScope',
+  PrivacyCopy: 'PrivacyCopy'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -136,6 +138,7 @@ export const UserScalarFieldEnum = {
   watchSyncAttemptedAt: 'watchSyncAttemptedAt',
   watchSyncedAt: 'watchSyncedAt',
   watchSyncError: 'watchSyncError',
+  listsDefaultVisibility: 'listsDefaultVisibility',
   watchPrivacyManaged: 'watchPrivacyManaged',
   watchPrivacyEnabled: 'watchPrivacyEnabled',
   watchVisibility: 'watchVisibility',
@@ -640,6 +643,40 @@ export const WatchPrivacyMigrationScalarFieldEnum = {
 } as const
 
 export type WatchPrivacyMigrationScalarFieldEnum = (typeof WatchPrivacyMigrationScalarFieldEnum)[keyof typeof WatchPrivacyMigrationScalarFieldEnum]
+
+
+export const PrivacyScopeScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  key: 'key',
+  category: 'category',
+  listRkey: 'listRkey',
+  visibility: 'visibility',
+  managed: 'managed',
+  migrationId: 'migrationId',
+  targetVisibility: 'targetVisibility',
+  status: 'status',
+  error: 'error',
+  syncAttemptedAt: 'syncAttemptedAt',
+  syncedAt: 'syncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PrivacyScopeScalarFieldEnum = (typeof PrivacyScopeScalarFieldEnum)[keyof typeof PrivacyScopeScalarFieldEnum]
+
+
+export const PrivacyCopyScalarFieldEnum = {
+  scopeId: 'scopeId',
+  migrationId: 'migrationId',
+  collection: 'collection',
+  rkey: 'rkey',
+  cid: 'cid',
+  value: 'value',
+  createdAt: 'createdAt'
+} as const
+
+export type PrivacyCopyScalarFieldEnum = (typeof PrivacyCopyScalarFieldEnum)[keyof typeof PrivacyCopyScalarFieldEnum]
 
 
 export const SortOrder = {

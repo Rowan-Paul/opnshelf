@@ -190,7 +190,6 @@ function reverseFixture() {
 		reverse: {
 			assertPrivate: f.repository.assertPrivate,
 			assertExistingPrivate: f.repository.assertPrivate,
-			assertConditionalPrivateDelete: vi.fn(async () => {}),
 			readPrivate: f.repository.readPublic,
 			readPublic: f.repository.readPrivate,
 			createPublic: f.repository.createPrivate,
@@ -201,17 +200,6 @@ function reverseFixture() {
 	};
 }
 describe("moving a Watch back to public", () => {
-	it("checks deletion support before exposing any private record", async () => {
-		const f = reverseFixture();
-		f.reverse.assertConditionalPrivateDelete.mockRejectedValue(
-			new Error("unsupported"),
-		);
-		await expect(moveWatchToPublic(ref, f.reverse, f.journal)).rejects.toThrow(
-			"unsupported",
-		);
-		expect(f.reverse.readPrivate).not.toHaveBeenCalled();
-		expect(f.reverse.createPublic).not.toHaveBeenCalled();
-	});
 	it("moves the complete record and retains a temporary durable recovery receipt", async () => {
 		const f = reverseFixture();
 		expect(await moveWatchToPublic(ref, f.reverse, f.journal)).toBe("moved");
