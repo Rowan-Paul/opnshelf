@@ -79,7 +79,9 @@ export const ModelName = {
   Rating: 'Rating',
   ReviewLike: 'ReviewLike',
   Feedback: 'Feedback',
-  FeaturedContent: 'FeaturedContent'
+  FeaturedContent: 'FeaturedContent',
+  WatchPrivacyCopy: 'WatchPrivacyCopy',
+  WatchPrivacyMigration: 'WatchPrivacyMigration'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -131,6 +133,9 @@ export const UserScalarFieldEnum = {
   showTangledOnProfile: 'showTangledOnProfile',
   reviewsPublicationUri: 'reviewsPublicationUri',
   reviewsPublicationName: 'reviewsPublicationName',
+  watchVisibility: 'watchVisibility',
+  privateSettingsEnabled: 'privateSettingsEnabled',
+  privateSettingsHasCopy: 'privateSettingsHasCopy',
   blogIntegrationEnabled: 'blogIntegrationEnabled',
   blueskyCrossPostEnabled: 'blueskyCrossPostEnabled',
   reviewsMirrorFormat: 'reviewsMirrorFormat',
@@ -607,6 +612,29 @@ export const FeaturedContentScalarFieldEnum = {
 } as const
 
 export type FeaturedContentScalarFieldEnum = (typeof FeaturedContentScalarFieldEnum)[keyof typeof FeaturedContentScalarFieldEnum]
+
+
+export const WatchPrivacyCopyScalarFieldEnum = {
+  jobId: 'jobId',
+  collection: 'collection',
+  rkey: 'rkey',
+  cid: 'cid',
+  value: 'value',
+  createdAt: 'createdAt'
+} as const
+
+export type WatchPrivacyCopyScalarFieldEnum = (typeof WatchPrivacyCopyScalarFieldEnum)[keyof typeof WatchPrivacyCopyScalarFieldEnum]
+
+
+export const WatchPrivacyMigrationScalarFieldEnum = {
+  jobId: 'jobId',
+  userDid: 'userDid',
+  sourceVisibility: 'sourceVisibility',
+  targetVisibility: 'targetVisibility',
+  createdAt: 'createdAt'
+} as const
+
+export type WatchPrivacyMigrationScalarFieldEnum = (typeof WatchPrivacyMigrationScalarFieldEnum)[keyof typeof WatchPrivacyMigrationScalarFieldEnum]
 
 
 export const SortOrder = {

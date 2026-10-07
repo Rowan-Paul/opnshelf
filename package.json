@@ -13,7 +13,10 @@
     "check": "turbo run check",
     "check:write": "turbo run check -- --write --unsafe",
     "typecheck": "turbo run typecheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev:spaces": "node scripts/local-spaces.mjs start",
+    "dev:spaces:setup": "node scripts/local-spaces.mjs setup",
+    "dev:spaces:stop": "node scripts/local-spaces.mjs stop"
   },
   "workspaces": [
     "apps/*",

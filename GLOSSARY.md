@@ -4,6 +4,19 @@ A social media tracking and review platform where users log, rate, and review mo
 
 ## Language
 
+**Data Visibility**:
+A User's choice of Public or Private for their content: by category for Watches,
+Library Items and Notes, and per List with a default for Lists. Settings are
+always private; syncing them is a separate choice.
+_Avoid_: Sync (visibility controls who can read, not whether data is synchronized)
+
+**Private Settings**:
+An optional, experimental connection that stores a User's time-format preference in an owner-controlled AT Protocol Space on their PDS. Opnshelf keeps the last valid value locally and reports when private storage is unavailable. It does not move Circles or other settings into Spaces. See ADR 0045.
+_Avoid_: Private profile (the profile is public), encrypted settings (Spaces use access control, not end-to-end encryption)
+
+**Space**:
+An AT Protocol access-control and synchronization boundary. Each author has a separate repository inside it. Private Settings uses a single owner-controlled Space with no other members; a Space is not an Opnshelf Circle or List.
+
 **Release Notes**:
 Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
 _Avoid_: Notification (reserved for media and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
@@ -278,6 +291,18 @@ _Avoid_: Percentage rollout (that's a feature flag), promotion (that's moving be
 
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
+
+**Watch Privacy Migration**:
+An account-wide move of movie and episode **Watches** between Public records and
+an owner-only **Space**. Its direction is fixed for the lifetime of the migration;
+a failed move resumes that migration rather than starting one in the opposite
+direction. Interactive Watch changes pause until it finishes.
+
+**Recovery Snapshot**:
+A temporary, complete record copy retained during a **Watch Privacy Migration**
+so interrupted copy-and-delete operations can be recovered. It is removed when
+verified migration and local reconciliation finish, or the account is deleted.
+It is not a permanent backup of private Watches after publication.
 
 ## Flagged ambiguities
 

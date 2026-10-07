@@ -2464,6 +2464,21 @@
         ]
       }
     },
+    "/users/me/settings/private": {
+      "delete": {
+        "operationId": "UsersController_deletePrivateSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Private record deleted"
+          }
+        },
+        "summary": "Delete the private settings record while retaining the last local preference",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/me/profile": {
       "patch": {
         "operationId": "UsersController_updateMyProfile",
@@ -7849,7 +7864,8 @@
             "enum": [
               "atstore",
               "blog",
-              "bluesky"
+              "bluesky",
+              "spaces"
             ]
           },
           "action": {
@@ -9072,9 +9088,36 @@
           "hasPreviousPage"
         ]
       },
+      "PrivateSettingsStateDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "available",
+              "unsupported",
+              "connected",
+              "missing",
+              "permissionRequired",
+              "unavailable"
+            ]
+          }
+        },
+        "required": [
+          "enabled",
+          "status"
+        ]
+      },
       "UserSettingsDto": {
         "type": "object",
         "properties": {
+          "privateSettings": {
+            "$ref": "#/components/schemas/PrivateSettingsStateDto"
+          },
           "timeFormat": {
             "type": "string",
             "description": "Time format preference",

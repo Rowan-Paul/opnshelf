@@ -1,3 +1,4 @@
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { Agent } from "@atproto/api";
 import { Tap } from "@atproto/tap";
 import {
@@ -79,6 +80,7 @@ export class UserDeletionService {
 		@Inject(AUTH_SERVICE)
 		private readonly authService: Pick<AuthService, "restore" | "revoke">,
 		config: BackendEnv,
+		private readonly privateSettings: PrivateSettingsService,
 	) {
 		this.tab = new Tap(config.TAB_URL || "http://localhost:2480", {
 			adminPassword: config.TAB_ADMIN_PASSWORD,
@@ -350,6 +352,20 @@ export class UserDeletionService {
 			throw new Error(
 				"Your sign-in session expired. Could not delete PDS data.",
 			);
+		}
+
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { privateSettingsHasCopy: true },
+		});
+		if (user?.privateSettingsHasCopy) {
+			// Never claim all PDS data was removed while leaving a known private copy.
+			// A disconnected account must reconnect before retrying this job.
+			await this.privateSettings.delete(userDid, session);
+			await this.prisma.user.update({
+				where: { did: userDid },
+				data: { privateSettingsHasCopy: false },
+			});
 		}
 
 		const agent = new Agent(

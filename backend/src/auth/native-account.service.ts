@@ -1,4 +1,4 @@
-import { Agent, AtpAgent } from "@atproto/api";
+import { AtpAgent } from "@atproto/api";
 import { Injectable } from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
@@ -65,42 +65,59 @@ export class NativeAccountService {
 		};
 	}
 
-	/**
-	 * Confirm the signup verification code for a native PDS account.
-	 *
-	 * The code was emailed by the PDS on `createAccount`. We read the account's
-	 * email from its own session (`getSession`), then call
-	 * `com.atproto.server.confirmEmail`. Verifying the email satisfies the PDS's
-	 * verified-comms-channel gate, after which records can be written.
-	 *
-	 * Takes the session the request guard already restored rather than restoring
-	 * again: a second restore in the same request spins up a competing credential
-	 * session that races the guard's on the PDS's single-use refresh token, and
-	 * the loser's failure revokes the session — logging the user out mid-verify.
-	 *
-	 * @returns `true` if the account was just verified (or already verified).
-	 * @throws an XRPC error (mapped by the controller) on an invalid/expired code.
-	 */
+	/** Verify Tranquil's signup code for the account authenticated by the guard. */
 	async confirmEmailWithCode(session: unknown, code: string): Promise<boolean> {
-		if (!session) {
+		const did = (session as { did?: unknown } | undefined)?.did;
+		if (typeof did !== "string" || !did.startsWith("did:")) {
 			throw new Error("Session not found");
 		}
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
+		const pdsUrl = this.configService.PDS_URL;
+		if (!pdsUrl) throw new Error("PDS_URL not configured");
+		// getSession deliberately omits email without an email-read grant.
+		// confirmSignup validates the emailed code against this DID directly;
+		// no additional OAuth access to the account's email is needed.
+		const response = await fetch(
+			`${pdsUrl}/xrpc/com.atproto.server.confirmSignup`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ did, verificationCode: code.trim() }),
+				signal: AbortSignal.timeout(15_000),
+			},
 		);
-
-		const { data: sessionInfo } = await agent.com.atproto.server.getSession();
-		if (!sessionInfo.email) {
-			throw new Error("Account has no email to verify");
+		if (!response.ok) {
+			const failure: unknown = await response.json().catch(() => null);
+			const error =
+				failure &&
+				typeof failure === "object" &&
+				"error" in failure &&
+				typeof failure.error === "string"
+					? failure.error
+					: "SignupVerificationFailed";
+			throw Object.assign(new Error("Signup verification failed"), { error });
 		}
-		if (sessionInfo.emailConfirmed) {
-			return true;
+		const result: {
+			did?: string;
+			emailVerified?: boolean;
+			accessJwt?: string;
+		} = await response.json();
+		// confirmSignup issues a credential session that this OAuth flow never uses.
+		// Revoke it before accepting verification, including malformed account replies.
+		if (typeof result.accessJwt !== "string" || !result.accessJwt) {
+			throw new Error("PDS did not return a signup session to revoke");
 		}
-
-		await agent.com.atproto.server.confirmEmail({
-			email: sessionInfo.email,
-			token: code.trim(),
-		});
+		const revoked = await fetch(
+			`${pdsUrl}/xrpc/com.atproto.server.deleteSession`,
+			{
+				method: "POST",
+				headers: { Authorization: `Bearer ${result.accessJwt}` },
+				signal: AbortSignal.timeout(15_000),
+			},
+		);
+		if (!revoked.ok) throw new Error("Could not revoke the signup session");
+		if (result.did !== did || result.emailVerified !== true) {
+			throw new Error("PDS did not verify this account's email");
+		}
 		return true;
 	}
 

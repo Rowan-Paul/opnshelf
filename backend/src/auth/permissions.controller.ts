@@ -15,6 +15,7 @@ import {
 	PermissionChangeDto,
 	PermissionChangeResponseDto,
 } from "./dto/permission-change.dto";
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import type { OAuthScopePreferences } from "./oauth-scopes";
 import type { AuthenticatedRequest } from "./types";
 
@@ -28,7 +29,10 @@ import type { AuthenticatedRequest } from "./types";
 @ApiTags("auth")
 @Controller()
 export class PermissionsController {
-	constructor(private readonly authService: AuthService) {}
+	constructor(
+		private readonly authService: AuthService,
+		private readonly privateSettings: PrivateSettingsService,
+	) {}
 
 	/** Explicitly request (or remove) one external integration's cumulative scope. */
 	@Post("auth/permissions")
@@ -64,7 +68,11 @@ export class PermissionsController {
 				);
 			}
 		}
+		if (enable && integration === "spaces")
+			await this.privateSettings.assertAvailable(did, req.user.session);
 		const preferences: OAuthScopePreferences = {
+			privateSettingsEnabled:
+				integration === "spaces" ? enable : user.privateSettingsEnabled,
 			...(integration === "atstore" ? { atStoreReviewEnabled: enable } : {}),
 			blogEnabled:
 				integration === "blog" ? enable : user.blogIntegrationEnabled,

@@ -497,7 +497,7 @@ export type MobileHandoffExchangeResponseDto = {
 };
 
 export type PermissionChangeDto = {
-    integration: 'atstore' | 'blog' | 'bluesky';
+    integration: 'atstore' | 'blog' | 'bluesky' | 'spaces';
     action: 'connect' | 'disconnect';
     platform?: 'mobile';
     /**
@@ -1041,7 +1041,13 @@ export type PaginatedSocialUsersDto = {
     hasPreviousPage: boolean;
 };
 
+export type PrivateSettingsStateDto = {
+    enabled: boolean;
+    status: 'disabled' | 'available' | 'unsupported' | 'connected' | 'missing' | 'permissionRequired' | 'unavailable';
+};
+
 export type UserSettingsDto = {
+    privateSettings?: PrivateSettingsStateDto;
     /**
      * Time format preference
      */
@@ -4331,6 +4337,20 @@ export type UsersControllerUpdateMySettingsResponses = {
 };
 
 export type UsersControllerUpdateMySettingsResponse = UsersControllerUpdateMySettingsResponses[keyof UsersControllerUpdateMySettingsResponses];
+
+export type UsersControllerDeletePrivateSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/settings/private';
+};
+
+export type UsersControllerDeletePrivateSettingsResponses = {
+    /**
+     * Private record deleted
+     */
+    200: unknown;
+};
 
 export type UsersControllerUpdateMyProfileData = {
     body: UpdateUserProfileDto;

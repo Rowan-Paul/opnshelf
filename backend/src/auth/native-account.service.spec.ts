@@ -23,6 +23,8 @@ vi.mock("@atproto/api", () => ({
 
 import { PrismaService } from "../prisma/prisma.service";
 import { NativeAccountService } from "./native-account.service";
+import { mapConfirmEmailError } from "./signup-support";
+import { Logger } from "@nestjs/common";
 
 describe("NativeAccountService", () => {
 	let service: NativeAccountService;
@@ -105,6 +107,132 @@ describe("NativeAccountService", () => {
 					inviteCode: "invite-code",
 				}),
 			).rejects.toThrow("PDS_URL not configured");
+		});
+	});
+
+	describe("confirmEmailWithCode", () => {
+		it("confirms signup without requiring an email-read grant", async () => {
+			const request = vi
+				.fn()
+				.mockResolvedValueOnce({
+					ok: true,
+					json: async () => ({
+						did: "did:plc:jane",
+						emailVerified: true,
+						accessJwt: "signup-access",
+					}),
+				})
+				.mockResolvedValueOnce({ ok: true });
+			vi.stubGlobal("fetch", request);
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, " code "),
+			).resolves.toBe(true);
+			expect(request).toHaveBeenNthCalledWith(
+				2,
+				"https://opnshelf.social/xrpc/com.atproto.server.deleteSession",
+				expect.objectContaining({
+					method: "POST",
+					headers: { Authorization: "Bearer signup-access" },
+				}),
+			);
+			expect(request).toHaveBeenCalledWith(
+				"https://opnshelf.social/xrpc/com.atproto.server.confirmSignup",
+				expect.objectContaining({
+					body: JSON.stringify({
+						did: "did:plc:jane",
+						verificationCode: "code",
+					}),
+				}),
+			);
+		});
+		it.each([
+			{ did: "did:plc:other", emailVerified: true },
+			{ did: "did:plc:jane", emailVerified: false },
+		])("rejects an unverified or different account", async (result) => {
+			vi.stubGlobal(
+				"fetch",
+				vi
+					.fn()
+					.mockResolvedValueOnce({
+						ok: true,
+						json: async () => ({ ...result, accessJwt: "signup-access" }),
+					})
+					.mockResolvedValueOnce({ ok: true }),
+			);
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, "code"),
+			).rejects.toThrow("PDS did not verify this account's email");
+		});
+		it.each([
+			["ExpiredToken", "That code has expired. Request a new one."],
+			["InvalidToken", "That code is invalid."],
+			["InvalidRequest", "That code is invalid."],
+			["InternalError", "Could not verify that code. Please try again."],
+		])("maps the PDS %s error for the caller", async (error, message) => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue({
+					ok: false,
+					json: async () => ({ error }),
+				}),
+			);
+			const logger = new Logger();
+			vi.spyOn(logger, "error").mockImplementation(() => undefined);
+			const failure = await service
+				.confirmEmailWithCode({ did: "did:plc:jane" }, "wrong")
+				.catch((reason: unknown) => reason);
+			expect(failure).toMatchObject({ error });
+			expect(mapConfirmEmailError(failure, logger).message).toBe(message);
+		});
+		it("handles non-JSON PDS failures", async () => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue({
+					ok: false,
+					json: async () => {
+						throw new SyntaxError("not JSON");
+					},
+				}),
+			);
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, "wrong"),
+			).rejects.toMatchObject({ error: "SignupVerificationFailed" });
+		});
+		it("fails verification when signup session revocation fails", async () => {
+			vi.stubGlobal(
+				"fetch",
+				vi
+					.fn()
+					.mockResolvedValueOnce({
+						ok: true,
+						json: async () => ({
+							did: "did:plc:jane",
+							emailVerified: true,
+							accessJwt: "signup-access",
+						}),
+					})
+					.mockResolvedValueOnce({ ok: false }),
+			);
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, "code"),
+			).rejects.toThrow("Could not revoke the signup session");
+		});
+		it("rejects confirmation without a revocable signup session", async () => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue({
+					ok: true,
+					json: async () => ({ did: "did:plc:jane", emailVerified: true }),
+				}),
+			);
+			await expect(
+				service.confirmEmailWithCode({ did: "did:plc:jane" }, "code"),
+			).rejects.toThrow("PDS did not return a signup session to revoke");
+		});
+		it("requires the authenticated account", async () => {
+			await expect(
+				service.confirmEmailWithCode(undefined, "code"),
+			).rejects.toThrow("Session not found");
 		});
 	});
 

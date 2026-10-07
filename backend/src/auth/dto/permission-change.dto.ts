@@ -2,7 +2,12 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsIn, IsOptional, IsString, Matches } from "class-validator";
 import { BASE64URL_32_BYTES } from "./mobile-handoff.dto";
 
-export const OAUTH_INTEGRATIONS = ["atstore", "blog", "bluesky"] as const;
+export const OAUTH_INTEGRATIONS = [
+	"atstore",
+	"blog",
+	"bluesky",
+	"spaces",
+] as const;
 export const OAUTH_PERMISSION_ACTIONS = ["connect", "disconnect"] as const;
 export const OAUTH_PERMISSION_PLATFORMS = ["mobile"] as const;
 

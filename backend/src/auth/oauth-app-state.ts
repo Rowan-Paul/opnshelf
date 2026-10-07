@@ -66,7 +66,8 @@ export function parseOAuthAppState(
 		const permissionChange =
 			parsed.permissionChange === "atstore" ||
 			parsed.permissionChange === "blog" ||
-			parsed.permissionChange === "bluesky"
+			parsed.permissionChange === "bluesky" ||
+			parsed.permissionChange === "spaces"
 				? parsed.permissionChange
 				: undefined;
 		return {

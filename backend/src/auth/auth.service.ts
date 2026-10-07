@@ -62,14 +62,29 @@ export class AuthService {
 				handle: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				privateSettingsEnabled: true,
 				reviewsMirrorFormat: true,
 			},
 		});
-		const resolvedPreferences = preferences ?? {
-			blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
-			blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
-			reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
-		};
+		const resolvedPreferences = preferences
+			? { ...preferences }
+			: {
+					privateSettingsEnabled:
+						this.configService.ENABLE_ATPROTO_SPACES &&
+						(knownUser?.privateSettingsEnabled ?? false),
+					blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
+					blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
+					reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
+				};
+		// Turning the experiment off must also omit its scope during another
+		// integration's cumulative permission replacement.
+		if (
+			!this.configService.ENABLE_ATPROTO_SPACES &&
+			resolvedPreferences.privateSettingsEnabled
+		) {
+			resolvedPreferences.privateSettingsEnabled = false;
+		}
+
 		const url = await client.authorize(handle, {
 			scope: buildOAuthScope(resolvedPreferences),
 			state: serializeOAuthAppState({
@@ -180,6 +195,7 @@ export class AuthService {
 			await tx.user.update({
 				where: { did },
 				data: {
+					privateSettingsEnabled: Boolean(preferences.privateSettingsEnabled),
 					blogIntegrationEnabled: Boolean(preferences.blogEnabled),
 					blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
 				},
@@ -201,9 +217,11 @@ export class AuthService {
 		await this.prisma.user.update({
 			where: { did },
 			data:
-				integration === "blog"
-					? { blogIntegrationEnabled: false }
-					: { blueskyCrossPostEnabled: false },
+				integration === "spaces"
+					? { privateSettingsEnabled: false }
+					: integration === "blog"
+						? { blogIntegrationEnabled: false }
+						: { blueskyCrossPostEnabled: false },
 		});
 	}
 

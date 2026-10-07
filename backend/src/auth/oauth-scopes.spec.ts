@@ -4,6 +4,8 @@ import {
 	buildOAuthScopes,
 	includesOAuthCapabilities,
 	includesRequestedScopes,
+	includesWatchSpaceGrant,
+	WATCH_SPACE_SCOPE,
 } from "./oauth-scopes";
 
 describe("progressive OAuth scopes", () => {
@@ -76,4 +78,42 @@ describe("progressive OAuth scopes", () => {
 
 		expect(includesOAuthCapabilities(granted)).toBe(false);
 	});
+});
+
+it("requests Spaces only after opt-in and rejects a partial grant", () => {
+	const preferences = { privateSettingsEnabled: true };
+	const scopes = buildOAuthScopes(preferences);
+	expect(buildOAuthScopes().some((scope) => scope.startsWith("space:"))).toBe(
+		false,
+	);
+	expect(scopes).toContain(
+		"space:xyz.opnshelf.settings?collection=xyz.opnshelf.privateSettings&manage=create",
+	);
+	expect(includesOAuthCapabilities(scopes, preferences)).toBe(true);
+	expect(includesOAuthCapabilities(buildOAuthScopes(), preferences)).toBe(
+		false,
+	);
+});
+
+describe("Watch Spaces grant equivalence", () => {
+	it("accepts equivalent ordering without adding access to Core", () => {
+		expect(includesWatchSpaceGrant(WATCH_SPACE_SCOPE)).toBe(true);
+		expect(
+			includesWatchSpaceGrant(
+				"atproto space:xyz.opnshelf.watches?manage=create&collection=xyz.opnshelf.episode&collection=xyz.opnshelf.movie",
+			),
+		).toBe(true);
+		expect(buildOAuthScopes()).not.toContain(WATCH_SPACE_SCOPE);
+	});
+	it.each([
+		"space:xyz.opnshelf.watches?collection=xyz.opnshelf.movie&manage=create",
+		`${WATCH_SPACE_SCOPE}&action=read`,
+		`${WATCH_SPACE_SCOPE}&authority=did:plc:other`,
+		"space:xyz.opnshelf.settings?collection=xyz.opnshelf.movie&collection=xyz.opnshelf.episode&manage=create",
+	])(
+		"fails closed for incomplete or differently constrained scopes",
+		(scope) => {
+			expect(includesWatchSpaceGrant(scope)).toBe(false);
+		},
+	);
 });

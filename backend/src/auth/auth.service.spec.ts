@@ -243,6 +243,7 @@ describe("AuthService", () => {
 					handle: true,
 					blogIntegrationEnabled: true,
 					blueskyCrossPostEnabled: true,
+					privateSettingsEnabled: true,
 					reviewsMirrorFormat: true,
 				},
 			});
@@ -423,7 +424,11 @@ describe("AuthService", () => {
 
 			expect(tx.user.update).toHaveBeenCalledWith({
 				where: { did: "did:plc:abc123" },
-				data: { blogIntegrationEnabled: true, blueskyCrossPostEnabled: false },
+				data: {
+					blogIntegrationEnabled: true,
+					blueskyCrossPostEnabled: false,
+					privateSettingsEnabled: false,
+				},
 			});
 			expect(tx.authSession.deleteMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123", id: { not: "retained" } },

@@ -37,6 +37,7 @@ import {
 import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
+import { PrivateSettingsSection } from "@/components/settings/private-settings-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
@@ -245,7 +246,7 @@ export function SettingsCategoryScreen({
 	});
 
 	const requestPermissionChange = async (
-		integration: "blog" | "bluesky",
+		integration: "blog" | "bluesky" | "spaces",
 		action: "connect" | "disconnect",
 	) => {
 		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
@@ -578,11 +579,26 @@ export function SettingsCategoryScreen({
 														body: { timeFormat: checked ? "24h" : "12h" },
 													})
 												}
-												disabled={settingsBusy}
+												disabled={
+													settingsBusy ||
+													Boolean(
+														settings?.privateSettings?.enabled &&
+															!["connected", "missing"].includes(
+																settings.privateSettings.status,
+															),
+													)
+												}
 												trackColor={{ false: "#3f3f46", true: PRIMARY }}
 												thumbColor="#ffffff"
 											/>
 										</View>
+										<PrivateSettingsSection
+											settings={settings}
+											permissionPending={permissionChangeMutation.isPending}
+											onPermissionChange={(action) =>
+												requestPermissionChange("spaces", action)
+											}
+										/>
 									</View>
 								)}
 							</SettingsSection>

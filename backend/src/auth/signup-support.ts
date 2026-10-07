@@ -63,7 +63,7 @@ export function mapCreateAccountError(
 	}
 }
 
-/** Map a PDS confirmEmail XRPC error to an appropriate HTTP response. */
+/** Map a PDS signup confirmation XRPC error to an appropriate HTTP response. */
 export function mapConfirmEmailError(
 	error: unknown,
 	logger: Logger,
@@ -78,6 +78,7 @@ export function mapConfirmEmailError(
 				"That code has expired. Request a new one.",
 			);
 		case "InvalidToken":
+		case "InvalidRequest":
 			return new BadRequestException("That code is invalid.");
 		default:
 			logger.error(`confirmEmail failed (${code})`, error);
