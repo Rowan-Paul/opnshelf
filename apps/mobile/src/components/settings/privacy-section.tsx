@@ -24,6 +24,7 @@ export function PrivacySection({
 	const [initial, setInitial] = useState<"public" | "private">("public");
 	const [customize, setCustomize] = useState(false);
 	const [details, setDetails] = useState(false);
+	const [bulk, setBulk] = useState(false);
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
 		const codeChallenge = (await beginHandoff()) ?? undefined;
 		const result = await authControllerPermissions({
@@ -64,34 +65,57 @@ export function PrivacySection({
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
 		const moving = scope.migration;
 		return (
-			<View key={key} className="gap-3 border-border border-t py-5">
-				<Text className="font-semibold text-foreground">{scope.label}</Text>
-				<View className="flex-row gap-2">
-					{(["public", "private"] as const).map((visibility) => (
-						<Button
-							key={visibility}
-							variant={
-								scope.visibility === visibility ? "primary" : "secondary"
-							}
-							accessibilityState={{ selected: scope.visibility === visibility }}
-							disabled={
-								Boolean(moving) ||
-								pendingKey === key ||
-								(visibility === "private" && data?.availability !== "available")
-							}
-							onPress={() =>
-								choose({
-									kind: "change",
-									body: {
-										category: scope.category,
-										listRkey: scope.listRkey ?? undefined,
-										visibility,
-									},
-								})
-							}
-							label={visibility === "public" ? "Public" : "Private"}
-						/>
-					))}
+			<View
+				key={key}
+				className="gap-3 rounded-2xl border border-border bg-background-elevated p-4"
+			>
+				<View className="flex-row flex-wrap items-center justify-between gap-3">
+					<View className="min-w-24 flex-1 gap-1">
+						<Text className="font-semibold text-foreground">{scope.label}</Text>
+						{scope.category !== "lists" && (
+							<Text className="text-muted-foreground text-xs">
+								{scope.category === "watches"
+									? "Movies & episodes"
+									: scope.category === "library"
+										? "Your saved collection"
+										: "Your personal notes"}
+							</Text>
+						)}
+					</View>
+					<View className="flex-row gap-1 rounded-full bg-background-subtle p-1">
+						{(["public", "private"] as const).map((visibility) => (
+							<Button
+								key={visibility}
+								variant="secondary"
+								size="sm"
+								className={
+									scope.visibility === visibility
+										? "h-11 border-primary/50 bg-background-elevated"
+										: "h-11 border-transparent"
+								}
+								accessibilityState={{
+									selected: scope.visibility === visibility,
+								}}
+								disabled={
+									Boolean(moving) ||
+									pendingKey === key ||
+									(visibility === "private" &&
+										data?.availability !== "available")
+								}
+								onPress={() =>
+									choose({
+										kind: "change",
+										body: {
+											category: scope.category,
+											listRkey: scope.listRkey ?? undefined,
+											visibility,
+										},
+									})
+								}
+								label={visibility === "public" ? "Public" : "Private"}
+							/>
+						))}
+					</View>
 				</View>
 				{pendingKey === key && (
 					<Text accessibilityLiveRegion="polite">Updating {scope.label}…</Text>
@@ -133,22 +157,33 @@ export function PrivacySection({
 	};
 	return (
 		<View className="gap-4">
-			<Text className="font-semibold text-primary text-xs">Alpha</Text>
-			<Text className="text-muted-foreground text-sm">
-				Choose who can see your Watches, Library, Notes and Lists. Private data
-				is available to you and apps you authorize. Reviews and Ratings keep
-				their current visibility. Other public content may still reveal related
-				information.
-			</Text>
-			<Button
-				variant="secondary"
-				onPress={() => setDetails(!details)}
-				label="Learn more"
-			/>
+			<View className="gap-3 pb-2">
+				<View className="flex-row flex-wrap items-center gap-3">
+					<Text className="font-semibold text-2xl text-foreground">
+						Who can see your data
+					</Text>
+					<View className="rounded-md bg-primary/10 px-2 py-1">
+						<Text className="font-semibold text-foreground text-xs">Alpha</Text>
+					</View>
+				</View>
+				<Text className="text-muted-foreground text-sm leading-5">
+					Public is visible to everyone. Private is for you and the apps you
+					authorize.
+				</Text>
+				<Button
+					variant="secondary"
+					size="sm"
+					className="self-start border-transparent px-0"
+					onPress={() => setDetails(!details)}
+					accessibilityState={{ expanded: details }}
+					label={details ? "Hide privacy details" : "Learn more"}
+				/>
+			</View>
 			{details && (
 				<Text className="text-muted-foreground text-sm">
-					{data?.alphaDetails} Your PDS can read private data; Spaces are not
-					encrypted end to end.
+					Reviews and Ratings keep their current visibility. Other public
+					content may still reveal related information. {data?.alphaDetails}{" "}
+					Your PDS can read private data; Spaces are not encrypted end to end.
 				</Text>
 			)}
 			{!data ? (
@@ -166,7 +201,10 @@ export function PrivacySection({
 				) : (
 					<View className="gap-5">
 						{[0, 1, 2, 3].map((key) => (
-							<View key={key} className="h-16 rounded bg-background-subtle" />
+							<View
+								key={key}
+								className="h-24 rounded-2xl bg-background-subtle"
+							/>
 						))}
 					</View>
 				)
@@ -235,19 +273,21 @@ export function PrivacySection({
 							{data.scopes
 								.filter((scope) => scope.category !== "lists")
 								.map(row)}
-							<View className="gap-3 border-border border-t py-5">
+							<View className="gap-3 rounded-2xl border border-border bg-background-elevated p-4">
 								<Text className="font-semibold text-foreground">New Lists</Text>
 								<Text className="text-muted-foreground text-sm">
-									This default only applies to Lists you create next.
+									Default for Lists you create next.
 								</Text>
-								<View className="flex-row gap-2">
+								<View className="flex-row gap-1 self-start rounded-full bg-background-subtle p-1">
 									{(["public", "private"] as const).map((visibility) => (
 										<Button
 											key={visibility}
-											variant={
+											variant="secondary"
+											size="sm"
+											className={
 												data.listsDefaultVisibility === visibility
-													? "primary"
-													: "secondary"
+													? "h-11 border-primary/50 bg-background-elevated"
+													: "h-11 border-transparent"
 											}
 											accessibilityState={{
 												selected: data.listsDefaultVisibility === visibility,
@@ -268,35 +308,46 @@ export function PrivacySection({
 									))}
 								</View>
 							</View>
-							<View className="gap-3 border-border border-t pt-5">
-								<Text className="font-semibold text-foreground">
-									Your Lists
-								</Text>
-								{(["public", "private"] as const).map((visibility) => (
+							<View className="gap-3 pt-3">
+								<View className="flex-row items-center justify-between">
+									<Text className="font-semibold text-foreground text-lg">
+										Your Lists
+									</Text>
 									<Button
-										key={visibility}
 										variant="secondary"
-										disabled={
-											pendingKey === "allLists" ||
-											data.scopes.some(
-												(scope) =>
-													scope.category === "lists" && scope.migration,
-											) ||
-											(visibility === "private" &&
-												data.availability !== "available")
-										}
-										onPress={() =>
-											choose({
-												kind: "allLists",
-												body: { category: "lists", visibility },
-											})
-										}
-										label={
-											"Change all Lists to " +
-											(visibility === "public" ? "Public" : "Private")
-										}
+										size="sm"
+										className="border-transparent"
+										label="Change all Lists"
+										onPress={() => setBulk(!bulk)}
+										accessibilityState={{ expanded: bulk }}
 									/>
-								))}
+								</View>
+								{bulk &&
+									(["public", "private"] as const).map((visibility) => (
+										<Button
+											key={visibility}
+											variant="secondary"
+											disabled={
+												pendingKey === "allLists" ||
+												data.scopes.some(
+													(scope) =>
+														scope.category === "lists" && scope.migration,
+												) ||
+												(visibility === "private" &&
+													data.availability !== "available")
+											}
+											onPress={() =>
+												choose({
+													kind: "allLists",
+													body: { category: "lists", visibility },
+												})
+											}
+											label={
+												"Change all Lists to " +
+												(visibility === "public" ? "Public" : "Private")
+											}
+										/>
+									))}
 								{data.scopes
 									.filter((scope) => scope.category === "lists")
 									.map(row)}

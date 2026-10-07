@@ -520,11 +520,7 @@ export function SettingsCategoryScreen({
 						</View>
 					)}
 
-					{section === "privacy" && (
-						<SettingsSection title="Privacy">
-							<PrivacySection />
-						</SettingsSection>
-					)}
+					{section === "privacy" && <PrivacySection />}
 					{section === "preferences" && (
 						<>
 							<SettingsSection

@@ -97,18 +97,35 @@ export function PrivacySection({
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
 		const moving = scope.migration;
 		return (
-			<div key={key} className="space-y-3 border-(--border) border-t py-5">
+			<div
+				key={key}
+				className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5"
+			>
 				<div className="flex flex-wrap items-center justify-between gap-4">
-					<h3 className="font-semibold">{scope.label}</h3>
+					<div className="space-y-1">
+						<h3 className="font-semibold">{scope.label}</h3>
+						{scope.category !== "lists" && (
+							<p className="text-(--foreground-muted) text-xs">
+								{scope.category === "watches"
+									? "Movies & episodes"
+									: scope.category === "library"
+										? "Your saved collection"
+										: "Your personal notes"}
+							</p>
+						)}
+					</div>
 					<fieldset
-						className="flex gap-2"
+						className="flex gap-1 rounded-full bg-(--background-subtle) p-1"
 						aria-label={`${scope.label} visibility`}
 					>
 						{(["public", "private"] as const).map((visibility) => (
 							<Button
 								key={visibility}
-								variant={
-									scope.visibility === visibility ? "default" : "outline"
+								variant="ghost"
+								className={
+									scope.visibility === visibility
+										? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
+										: "min-w-20 rounded-full border border-transparent"
 								}
 								aria-pressed={scope.visibility === visibility}
 								disabled={
@@ -171,22 +188,28 @@ export function PrivacySection({
 		);
 	};
 	return (
-		<section className="p-5 sm:p-7">
-			<div className="mb-5 space-y-2">
-				<span className="rounded bg-(--accent-subtle) px-2 py-1 font-medium text-(--accent) text-xs">
-					Alpha
-				</span>
-				<p className="pt-2 text-(--foreground-muted) text-sm">
-					Choose who can see your Watches, Library, Notes and Lists. Private
-					data is available to you and apps you authorize. Reviews and Ratings
-					keep their current visibility. Other public content may still reveal
-					related information.
+		<section className="space-y-3 p-5 sm:p-7">
+			<div className="space-y-3 pb-5">
+				<div className="flex flex-wrap items-center gap-3">
+					<h2 className="font-semibold text-2xl tracking-tight">
+						Who can see your data
+					</h2>
+					<span className="rounded-md bg-(--accent-subtle) px-2 py-1 font-medium text-xs">
+						Alpha
+					</span>
+				</div>
+				<p className="max-w-lg text-(--foreground-muted) text-sm leading-relaxed">
+					Public is visible to everyone. Private is for you and the apps you
+					authorize.
 				</p>
 				<details className="text-sm">
-					<summary className="cursor-pointer">Learn more</summary>
-					<p className="pt-2 text-(--foreground-muted)">
-						{data?.alphaDetails} Your PDS can read private data; Spaces are not
-						encrypted end to end.
+					<summary className="w-fit cursor-pointer text-(--foreground-muted) underline-offset-4 hover:text-(--foreground) hover:underline">
+						Learn more
+					</summary>
+					<p className="max-w-xl pt-3 text-(--foreground-muted) leading-relaxed">
+						Reviews and Ratings keep their current visibility. Other public
+						content may still reveal related information. {data?.alphaDetails}{" "}
+						Your PDS can read private data; Spaces are not encrypted end to end.
 					</p>
 				</details>
 			</div>
@@ -211,7 +234,7 @@ export function PrivacySection({
 						{[0, 1, 2, 3].map((key) => (
 							<div
 								key={key}
-								className="h-16 animate-pulse rounded bg-(--border)"
+								className="h-24 animate-pulse rounded-2xl bg-(--border)"
 							/>
 						))}
 					</div>
@@ -281,19 +304,20 @@ export function PrivacySection({
 							{data.scopes
 								.filter((scope) => scope.category !== "lists")
 								.map(scopeRow)}
-							<div className="space-y-3 border-(--border) border-t py-5">
+							<div className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5">
 								<h3 className="font-semibold">New Lists</h3>
 								<p className="text-(--foreground-muted) text-sm">
-									This default only applies to Lists you create next.
+									Default for Lists you create next.
 								</p>
-								<div className="flex gap-2">
+								<div className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1">
 									{(["public", "private"] as const).map((visibility) => (
 										<Button
 											key={visibility}
-											variant={
+											variant="ghost"
+											className={
 												data.listsDefaultVisibility === visibility
-													? "default"
-													: "outline"
+													? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
+													: "min-w-20 rounded-full border border-transparent"
 											}
 											aria-pressed={data.listsDefaultVisibility === visibility}
 											disabled={
@@ -313,34 +337,39 @@ export function PrivacySection({
 									))}
 								</div>
 							</div>
-							<div className="border-(--border) border-t pt-5">
-								<h3 className="font-semibold">Your Lists</h3>
-								<div className="my-3 flex flex-wrap gap-2">
-									{(["public", "private"] as const).map((visibility) => (
-										<Button
-											key={visibility}
-											variant="outline"
-											disabled={
-												pendingKey === "allLists" ||
-												data.scopes.some(
-													(scope) =>
-														scope.category === "lists" && scope.migration,
-												) ||
-												(visibility === "private" &&
-													data.availability !== "available")
-											}
-											onClick={() =>
-												choose({
-													kind: "allLists",
-													body: { category: "lists", visibility },
-												})
-											}
-										>
-											Change all Lists to{" "}
-											{visibility === "public" ? "Public" : "Private"}
-										</Button>
-									))}
-								</div>
+							<div className="space-y-3 pt-6">
+								<h3 className="font-semibold text-lg">Your Lists</h3>
+								<details className="text-sm">
+									<summary className="w-fit cursor-pointer text-(--foreground-muted)">
+										Change all Lists
+									</summary>
+									<div className="my-3 flex flex-wrap gap-2">
+										{(["public", "private"] as const).map((visibility) => (
+											<Button
+												key={visibility}
+												variant="outline"
+												disabled={
+													pendingKey === "allLists" ||
+													data.scopes.some(
+														(scope) =>
+															scope.category === "lists" && scope.migration,
+													) ||
+													(visibility === "private" &&
+														data.availability !== "available")
+												}
+												onClick={() =>
+													choose({
+														kind: "allLists",
+														body: { category: "lists", visibility },
+													})
+												}
+											>
+												Change all Lists to{" "}
+												{visibility === "public" ? "Public" : "Private"}
+											</Button>
+										))}
+									</div>
+								</details>
 								{data.scopes
 									.filter((scope) => scope.category === "lists")
 									.map(scopeRow)}
