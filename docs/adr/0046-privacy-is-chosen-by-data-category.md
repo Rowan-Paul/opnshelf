@@ -1,6 +1,7 @@
 # ADR 0046: Privacy is chosen by data category
 
-Status: accepted product direction; implementation pending. Partially supersedes
+Status: accepted product direction; Watches implemented locally, production
+rollout and the remaining data categories pending. Partially supersedes
 ADR 0011's public-only Library restriction. ADR 0045 remains the implemented
 experimental trial, not the completed privacy feature.
 

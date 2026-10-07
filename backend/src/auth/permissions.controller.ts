@@ -70,7 +70,11 @@ export class PermissionsController {
 		}
 		if (enable && integration === "spaces")
 			await this.privateSettings.assertAvailable(did, req.user.session);
+		if (integration === "watches" && !enable)
+			await this.authService.assertCanDisconnectWatches(did);
 		const preferences: OAuthScopePreferences = {
+			watchPrivacyEnabled:
+				integration === "watches" ? enable : user.watchPrivacyEnabled,
 			privateSettingsEnabled:
 				integration === "spaces" ? enable : user.privateSettingsEnabled,
 			...(integration === "atstore" ? { atStoreReviewEnabled: enable } : {}),

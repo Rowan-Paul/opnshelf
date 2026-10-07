@@ -16,6 +16,7 @@ import { ShelfTab } from "@/components/profile/tabs/ShelfTab";
 import { UpNextTab } from "@/components/profile/tabs/UpNextTab";
 import { ProfileHeaderSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
+import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { usePublicProfile } from "@/lib/use-public-profile";
@@ -116,8 +117,15 @@ export default function ProfileScreen() {
 						<ProfileTabBar active={tab} onChange={setTab} />
 					</View>
 
-					{tab === "overview" ? (
+					{!isOwner &&
+					!profile.watchesPublic &&
+					(tab === "shelf" || tab === "up-next") ? (
+						<Text className="px-4 py-6 text-muted-foreground">
+							Watches are private.
+						</Text>
+					) : tab === "overview" ? (
 						<OverviewTab
+							canReadWatches={isOwner || profile.watchesPublic}
 							profile={profile}
 							userDid={userDid}
 							onNavigate={navigate}

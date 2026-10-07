@@ -1,4 +1,4 @@
-import { ConflictException } from "@nestjs/common";
+import { ConflictException, ServiceUnavailableException } from "@nestjs/common";
 import type { Pool } from "pg";
 
 /** A checked-out connection owns the session lock until the callback settles.
@@ -29,14 +29,17 @@ export class WatchAccountLock {
 			new ConflictException(
 				"Another Watch operation is in progress. Try again.",
 			);
-		// Bound admission as well as PostgreSQL lock contention. Never queue an
-		// unbounded number of API requests behind a long-running external write.
-		if (
-			this.pool.idleCount === 0 &&
-			this.pool.totalCount >= (this.pool.options.max ?? 10)
-		)
-			throw busy();
-		const client = await this.pool.connect();
+		// Give other accounts a bounded chance to use a released connection.
+		// Pool connectionTimeoutMillis caps the wait; cap queue length as well.
+		if (this.pool.waitingCount >= 16)
+			throw new ServiceUnavailableException(
+				"Watch operations are busy. Try again shortly.",
+			);
+		const client = await this.pool.connect().catch(() => {
+			throw new ServiceUnavailableException(
+				"Watch operations are busy. Try again shortly.",
+			);
+		});
 		let acquired = false;
 		let broken = false;
 		const controller = new AbortController();

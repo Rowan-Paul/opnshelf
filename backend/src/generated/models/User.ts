@@ -70,6 +70,11 @@ export type UserMinAggregateOutputType = {
   showTangledOnProfile: boolean | null
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  watchSyncAttemptedAt: Date | null
+  watchSyncedAt: Date | null
+  watchSyncError: string | null
+  watchPrivacyManaged: boolean | null
+  watchPrivacyEnabled: boolean | null
   watchVisibility: string | null
   privateSettingsEnabled: boolean | null
   privateSettingsHasCopy: boolean | null
@@ -112,6 +117,11 @@ export type UserMaxAggregateOutputType = {
   showTangledOnProfile: boolean | null
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  watchSyncAttemptedAt: Date | null
+  watchSyncedAt: Date | null
+  watchSyncError: string | null
+  watchPrivacyManaged: boolean | null
+  watchPrivacyEnabled: boolean | null
   watchVisibility: string | null
   privateSettingsEnabled: boolean | null
   privateSettingsHasCopy: boolean | null
@@ -155,6 +165,11 @@ export type UserCountAggregateOutputType = {
   showTangledOnProfile: number
   reviewsPublicationUri: number
   reviewsPublicationName: number
+  watchSyncAttemptedAt: number
+  watchSyncedAt: number
+  watchSyncError: number
+  watchPrivacyManaged: number
+  watchPrivacyEnabled: number
   watchVisibility: number
   privateSettingsEnabled: number
   privateSettingsHasCopy: number
@@ -211,6 +226,11 @@ export type UserMinAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  watchSyncAttemptedAt?: true
+  watchSyncedAt?: true
+  watchSyncError?: true
+  watchPrivacyManaged?: true
+  watchPrivacyEnabled?: true
   watchVisibility?: true
   privateSettingsEnabled?: true
   privateSettingsHasCopy?: true
@@ -253,6 +273,11 @@ export type UserMaxAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  watchSyncAttemptedAt?: true
+  watchSyncedAt?: true
+  watchSyncError?: true
+  watchPrivacyManaged?: true
+  watchPrivacyEnabled?: true
   watchVisibility?: true
   privateSettingsEnabled?: true
   privateSettingsHasCopy?: true
@@ -296,6 +321,11 @@ export type UserCountAggregateInputType = {
   showTangledOnProfile?: true
   reviewsPublicationUri?: true
   reviewsPublicationName?: true
+  watchSyncAttemptedAt?: true
+  watchSyncedAt?: true
+  watchSyncError?: true
+  watchPrivacyManaged?: true
+  watchPrivacyEnabled?: true
   watchVisibility?: true
   privateSettingsEnabled?: true
   privateSettingsHasCopy?: true
@@ -426,6 +456,11 @@ export type UserGroupByOutputType = {
   showTangledOnProfile: boolean
   reviewsPublicationUri: string | null
   reviewsPublicationName: string | null
+  watchSyncAttemptedAt: Date | null
+  watchSyncedAt: Date | null
+  watchSyncError: string | null
+  watchPrivacyManaged: boolean
+  watchPrivacyEnabled: boolean
   watchVisibility: string
   privateSettingsEnabled: boolean
   privateSettingsHasCopy: boolean
@@ -492,6 +527,11 @@ export type UserWhereInput = {
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
+  watchSyncAttemptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  watchSyncedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  watchSyncError?: Prisma.StringNullableFilter<"User"> | string | null
+  watchPrivacyManaged?: Prisma.BoolFilter<"User"> | boolean
+  watchPrivacyEnabled?: Prisma.BoolFilter<"User"> | boolean
   watchVisibility?: Prisma.StringFilter<"User"> | string
   privateSettingsEnabled?: Prisma.BoolFilter<"User"> | boolean
   privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
@@ -553,6 +593,11 @@ export type UserOrderByWithRelationInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchSyncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchPrivacyManaged?: Prisma.SortOrder
+  watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
   privateSettingsEnabled?: Prisma.SortOrder
   privateSettingsHasCopy?: Prisma.SortOrder
@@ -617,6 +662,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   showTangledOnProfile?: Prisma.BoolFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableFilter<"User"> | string | null
+  watchSyncAttemptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  watchSyncedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  watchSyncError?: Prisma.StringNullableFilter<"User"> | string | null
+  watchPrivacyManaged?: Prisma.BoolFilter<"User"> | boolean
+  watchPrivacyEnabled?: Prisma.BoolFilter<"User"> | boolean
   watchVisibility?: Prisma.StringFilter<"User"> | string
   privateSettingsEnabled?: Prisma.BoolFilter<"User"> | boolean
   privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
@@ -678,6 +728,11 @@ export type UserOrderByWithAggregationInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchSyncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchPrivacyManaged?: Prisma.SortOrder
+  watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
   privateSettingsEnabled?: Prisma.SortOrder
   privateSettingsHasCopy?: Prisma.SortOrder
@@ -729,6 +784,11 @@ export type UserScalarWhereWithAggregatesInput = {
   showTangledOnProfile?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   reviewsPublicationUri?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   reviewsPublicationName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  watchSyncAttemptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  watchSyncedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  watchSyncError?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  watchPrivacyManaged?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  watchPrivacyEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   watchVisibility?: Prisma.StringWithAggregatesFilter<"User"> | string
   privateSettingsEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   privateSettingsHasCopy?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
@@ -772,6 +832,11 @@ export type UserCreateInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -833,6 +898,11 @@ export type UserUncheckedCreateInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -894,6 +964,11 @@ export type UserUpdateInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -955,6 +1030,11 @@ export type UserUncheckedUpdateInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1016,6 +1096,11 @@ export type UserCreateManyInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -1059,6 +1144,11 @@ export type UserUpdateManyMutationInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1102,6 +1192,11 @@ export type UserUncheckedUpdateManyInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1153,6 +1248,11 @@ export type UserCountOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  watchSyncAttemptedAt?: Prisma.SortOrder
+  watchSyncedAt?: Prisma.SortOrder
+  watchSyncError?: Prisma.SortOrder
+  watchPrivacyManaged?: Prisma.SortOrder
+  watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
   privateSettingsEnabled?: Prisma.SortOrder
   privateSettingsHasCopy?: Prisma.SortOrder
@@ -1201,6 +1301,11 @@ export type UserMaxOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  watchSyncAttemptedAt?: Prisma.SortOrder
+  watchSyncedAt?: Prisma.SortOrder
+  watchSyncError?: Prisma.SortOrder
+  watchPrivacyManaged?: Prisma.SortOrder
+  watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
   privateSettingsEnabled?: Prisma.SortOrder
   privateSettingsHasCopy?: Prisma.SortOrder
@@ -1243,6 +1348,11 @@ export type UserMinOrderByAggregateInput = {
   showTangledOnProfile?: Prisma.SortOrder
   reviewsPublicationUri?: Prisma.SortOrder
   reviewsPublicationName?: Prisma.SortOrder
+  watchSyncAttemptedAt?: Prisma.SortOrder
+  watchSyncedAt?: Prisma.SortOrder
+  watchSyncError?: Prisma.SortOrder
+  watchPrivacyManaged?: Prisma.SortOrder
+  watchPrivacyEnabled?: Prisma.SortOrder
   watchVisibility?: Prisma.SortOrder
   privateSettingsEnabled?: Prisma.SortOrder
   privateSettingsHasCopy?: Prisma.SortOrder
@@ -1597,6 +1707,11 @@ export type UserCreateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -1657,6 +1772,11 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -1733,6 +1853,11 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1793,6 +1918,11 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1853,6 +1983,11 @@ export type UserCreateWithoutPushDevicesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -1913,6 +2048,11 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -1989,6 +2129,11 @@ export type UserUpdateWithoutPushDevicesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2049,6 +2194,11 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2109,6 +2259,11 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2169,6 +2324,11 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2245,6 +2405,11 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2305,6 +2470,11 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2365,6 +2535,11 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2425,6 +2600,11 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2501,6 +2681,11 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2561,6 +2746,11 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2621,6 +2811,11 @@ export type UserCreateWithoutFollowingInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2681,6 +2876,11 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2746,6 +2946,11 @@ export type UserCreateWithoutFollowersInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2806,6 +3011,11 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -2882,6 +3092,11 @@ export type UserUpdateWithoutFollowingInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2942,6 +3157,11 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3013,6 +3233,11 @@ export type UserUpdateWithoutFollowersInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3073,6 +3298,11 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3133,6 +3363,11 @@ export type UserCreateWithoutCirclesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -3193,6 +3428,11 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -3269,6 +3509,11 @@ export type UserUpdateWithoutCirclesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3329,6 +3574,11 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3389,6 +3639,11 @@ export type UserCreateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -3449,6 +3704,11 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -3525,6 +3785,11 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3585,6 +3850,11 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3645,6 +3915,11 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -3705,6 +3980,11 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -3781,6 +4061,11 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3841,6 +4126,11 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3901,6 +4191,11 @@ export type UserCreateWithoutListsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -3961,6 +4256,11 @@ export type UserUncheckedCreateWithoutListsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4037,6 +4337,11 @@ export type UserUpdateWithoutListsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4097,6 +4402,11 @@ export type UserUncheckedUpdateWithoutListsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4157,6 +4467,11 @@ export type UserCreateWithoutLibraryItemsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4217,6 +4532,11 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4293,6 +4613,11 @@ export type UserUpdateWithoutLibraryItemsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4353,6 +4678,11 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4413,6 +4743,11 @@ export type UserCreateWithoutNotesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4473,6 +4808,11 @@ export type UserUncheckedCreateWithoutNotesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4549,6 +4889,11 @@ export type UserUpdateWithoutNotesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4609,6 +4954,11 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4669,6 +5019,11 @@ export type UserCreateWithoutReviewsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4729,6 +5084,11 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4805,6 +5165,11 @@ export type UserUpdateWithoutReviewsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4865,6 +5230,11 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4925,6 +5295,11 @@ export type UserCreateWithoutPublicationsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -4985,6 +5360,11 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -5061,6 +5441,11 @@ export type UserUpdateWithoutPublicationsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5121,6 +5506,11 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5181,6 +5571,11 @@ export type UserCreateWithoutRatingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -5241,6 +5636,11 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -5317,6 +5717,11 @@ export type UserUpdateWithoutRatingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5377,6 +5782,11 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5437,6 +5847,11 @@ export type UserCreateWithoutReviewLikesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -5497,6 +5912,11 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -5573,6 +5993,11 @@ export type UserUpdateWithoutReviewLikesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5633,6 +6058,11 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5693,6 +6123,11 @@ export type UserCreateWithoutFeedbackInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -5753,6 +6188,11 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -5829,6 +6269,11 @@ export type UserUpdateWithoutFeedbackInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5889,6 +6334,11 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5949,6 +6399,11 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -6009,6 +6464,11 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: string | null
   reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: string
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -6085,6 +6545,11 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6145,6 +6610,11 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6371,6 +6841,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  watchSyncAttemptedAt?: boolean
+  watchSyncedAt?: boolean
+  watchSyncError?: boolean
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -6433,6 +6908,11 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  watchSyncAttemptedAt?: boolean
+  watchSyncedAt?: boolean
+  watchSyncError?: boolean
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -6476,6 +6956,11 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  watchSyncAttemptedAt?: boolean
+  watchSyncedAt?: boolean
+  watchSyncError?: boolean
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -6519,6 +7004,11 @@ export type UserSelectScalar = {
   showTangledOnProfile?: boolean
   reviewsPublicationUri?: boolean
   reviewsPublicationName?: boolean
+  watchSyncAttemptedAt?: boolean
+  watchSyncedAt?: boolean
+  watchSyncError?: boolean
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
   watchVisibility?: boolean
   privateSettingsEnabled?: boolean
   privateSettingsHasCopy?: boolean
@@ -6529,7 +7019,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
@@ -6609,6 +7099,11 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     showTangledOnProfile: boolean
     reviewsPublicationUri: string | null
     reviewsPublicationName: string | null
+    watchSyncAttemptedAt: Date | null
+    watchSyncedAt: Date | null
+    watchSyncError: string | null
+    watchPrivacyManaged: boolean
+    watchPrivacyEnabled: boolean
     watchVisibility: string
     privateSettingsEnabled: boolean
     privateSettingsHasCopy: boolean
@@ -7090,6 +7585,11 @@ export interface UserFieldRefs {
   readonly showTangledOnProfile: Prisma.FieldRef<"User", 'Boolean'>
   readonly reviewsPublicationUri: Prisma.FieldRef<"User", 'String'>
   readonly reviewsPublicationName: Prisma.FieldRef<"User", 'String'>
+  readonly watchSyncAttemptedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly watchSyncedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly watchSyncError: Prisma.FieldRef<"User", 'String'>
+  readonly watchPrivacyManaged: Prisma.FieldRef<"User", 'Boolean'>
+  readonly watchPrivacyEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly watchVisibility: Prisma.FieldRef<"User", 'String'>
   readonly privateSettingsEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly privateSettingsHasCopy: Prisma.FieldRef<"User", 'Boolean'>

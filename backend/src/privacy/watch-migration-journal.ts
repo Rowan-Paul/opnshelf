@@ -87,7 +87,9 @@ export class PrismaWatchMigrationJournal implements WatchMigrationJournal {
 			await tx.watchPrivacyCopy.createMany({
 				data: [
 					{
-						...receipt,
+						collection: receipt.collection,
+						rkey: receipt.rkey,
+						cid: receipt.cid,
 						jobId: this.jobId,
 						value: receipt.value as Prisma.InputJsonObject,
 					},

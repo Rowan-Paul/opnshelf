@@ -35,7 +35,12 @@ export const CORE_GRANTED_SCOPES = CORE_REPO_COLLECTIONS.flatMap((collection) =>
 );
 
 export type BlogMirrorFormat = "markdown" | "leaflet" | "offprint" | "pckt";
-export type OAuthIntegration = "atstore" | "blog" | "bluesky" | "spaces";
+export type OAuthIntegration =
+	| "atstore"
+	| "blog"
+	| "bluesky"
+	| "spaces"
+	| "watches";
 
 export const PRIVATE_SETTINGS_SCOPE =
 	"space:xyz.opnshelf.settings?collection=xyz.opnshelf.privateSettings&manage=create";
@@ -77,6 +82,7 @@ export const ATSTORE_REVIEW_GRANTED_SCOPES = [
 ] as const;
 
 export interface OAuthScopePreferences {
+	watchPrivacyEnabled?: boolean;
 	privateSettingsEnabled?: boolean;
 	blogEnabled?: boolean;
 	blueskyEnabled?: boolean;
@@ -88,6 +94,7 @@ export function buildOAuthScopes(
 	preferences: OAuthScopePreferences = {},
 ): string[] {
 	const scopes: string[] = [...CORE_OAUTH_SCOPES];
+	if (preferences.watchPrivacyEnabled) scopes.push(WATCH_SPACE_SCOPE);
 	if (preferences.privateSettingsEnabled) scopes.push(PRIVATE_SETTINGS_SCOPE);
 	if (preferences.blogEnabled) {
 		scopes.push(...BLOG_OAUTH_SCOPES);
@@ -221,6 +228,8 @@ export function includesOAuthCapabilities(
 
 	return (
 		includesRequestedScopes(grantedScope, directScopes) &&
+		(!preferences.watchPrivacyEnabled ||
+			includesWatchSpaceGrant(grantedScope)) &&
 		(!preferences.privateSettingsEnabled ||
 			includesRequestedScopes(grantedScope, [PRIVATE_SETTINGS_SCOPE])) &&
 		includesPermissionSetGrant(
@@ -240,6 +249,7 @@ export function includesOAuthCapabilities(
 /** Core-only login scope; integrations are requested only when enabled. */
 export const OAUTH_SCOPE = buildOAuthScope();
 export const DECLARED_OAUTH_SCOPE = buildOAuthScope({
+	watchPrivacyEnabled: true,
 	atStoreReviewEnabled: true,
 	blogEnabled: true,
 	blueskyEnabled: true,

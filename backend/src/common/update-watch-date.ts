@@ -1,4 +1,4 @@
-import { Agent } from "@atproto/api";
+import { createWatchAgent } from "../privacy/watch-operation";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { isAtprotoRecordMissingError } from "./atproto-record-errors";
 
@@ -19,9 +19,7 @@ export async function updateWatchDate(
 			"Watch date must be a valid date that is not in the future",
 		);
 	}
-	const agent = new Agent(
-		session as unknown as ConstructorParameters<typeof Agent>[0],
-	);
+	const agent = createWatchAgent(session);
 	try {
 		const existing = await agent.com.atproto.repo.getRecord({
 			repo: session.did,

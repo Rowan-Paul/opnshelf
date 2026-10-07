@@ -2230,6 +2230,98 @@
         ]
       }
     },
+    "/users/me/watch-privacy": {
+      "get": {
+        "operationId": "WatchPrivacyController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      },
+      "post": {
+        "operationId": "WatchPrivacyController_change",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchPrivacyChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/watch-privacy/retry": {
+      "post": {
+        "operationId": "WatchPrivacyController_retry",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/watch-privacy/sync": {
+      "post": {
+        "operationId": "WatchPrivacyController_sync",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
     "/users/{handle}/profile": {
       "get": {
         "operationId": "UsersController_getPublicProfile",
@@ -7865,7 +7957,8 @@
               "atstore",
               "blog",
               "bluesky",
-              "spaces"
+              "spaces",
+              "watches"
             ]
           },
           "action": {
@@ -8869,6 +8962,96 @@
           "showId"
         ]
       },
+      "WatchPrivacyMigrationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "copied": {
+            "type": "number"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "target",
+          "status",
+          "copied",
+          "error"
+        ]
+      },
+      "WatchPrivacyStatusDto": {
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "syncError": {
+            "type": "string",
+            "nullable": true
+          },
+          "migration": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchPrivacyMigrationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "visibility",
+          "connected",
+          "lastSyncedAt",
+          "syncError",
+          "migration"
+        ]
+      },
+      "WatchPrivacyChangeDto": {
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "publicationConfirmed": {
+            "type": "boolean",
+            "description": "Explicit consent to publish all Watches"
+          }
+        },
+        "required": [
+          "visibility"
+        ]
+      },
       "ProfileActivityDayDto": {
         "type": "object",
         "properties": {
@@ -8917,6 +9100,10 @@
       "PublicUserProfileDto": {
         "type": "object",
         "properties": {
+          "watchesPublic": {
+            "type": "boolean",
+            "description": "Whether Watches are publicly visible"
+          },
           "did": {
             "type": "string",
             "description": "Stable DID for the user"
@@ -8988,6 +9175,7 @@
           }
         },
         "required": [
+          "watchesPublic",
           "did",
           "handle",
           "displayName",

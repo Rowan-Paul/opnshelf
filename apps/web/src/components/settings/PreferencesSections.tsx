@@ -10,6 +10,7 @@ import { createCoalescedSaver, sameIdSet } from "#/lib/coalesced-save";
 import { type ThemeMode, useThemeMode } from "#/lib/theme";
 import { PrivateSettingsSection } from "./PrivateSettingsSection";
 import { useUpdateSettings } from "./use-settings-mutations";
+import { WatchPrivacySection } from "./WatchPrivacySection";
 
 const APPEARANCE_OPTIONS: { value: ThemeMode; label: string }[] = [
 	{ value: "auto", label: "System" },
@@ -63,6 +64,7 @@ export function PreferencesSections() {
 				<AppearanceSetting />
 			</section>
 
+			<WatchPrivacySection />
 			<section
 				id="time-region"
 				className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"

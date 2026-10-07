@@ -1,3 +1,4 @@
+import { ConflictException, ServiceUnavailableException } from "@nestjs/common";
 /**
  * Processes one page of a Trakt Import per tick: fetch the page from Trakt,
  * record every source item in the ledger, write the Watches, then persist
@@ -210,6 +211,18 @@ export class TraktImportWorker {
 				completedAt: isComplete ? new Date() : null,
 			});
 		} catch (error) {
+			if (
+				error instanceof ConflictException ||
+				error instanceof ServiceUnavailableException
+			) {
+				await this.jobStore.persistWorkerState(job.id, jobData, {
+					status: "waiting_retry",
+					nextRunAt: new Date(Date.now() + 5000),
+					lastError: "Waiting for another Watch operation to finish.",
+					completedAt: null,
+				});
+				return;
+			}
 			if (error instanceof PdsRateLimitError) {
 				const retryAfterSeconds = Math.min(
 					Math.max(

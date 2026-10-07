@@ -8,8 +8,8 @@ import type { WatchVisibility } from "./watch-record-migration";
 
 const ACTIVE_JOB_STATUSES = ["queued", "running", "waiting_retry", "paused"];
 
-/** This boundary is not registered with an API yet. All Watch writers, imports,
- * deletion and migration workers must use the same account lock before rollout.
+/** All Watch writers, imports, deletion and migration workers share this account
+ * lock.
  * The independent session lock outlives transaction deadlines. Recovery journal
  * writes use their own committed transaction before any PDS deletion. */
 export class WatchPrivacyCoordinator {
@@ -60,7 +60,12 @@ export class WatchPrivacyCoordinator {
 		ownerDid: string,
 		operation: (visibility: WatchVisibility, signal: AbortSignal) => Promise<T>,
 	) {
-		return this.withAccountLock(ownerDid, async (tx, signal) => {
+		return this.locks.run(ownerDid, async (lockSignal) => {
+			const signal = AbortSignal.any([
+				lockSignal,
+				AbortSignal.timeout(this.transactionTimeoutMs),
+			]);
+			const tx = this.prisma;
 			await this.requireNoDeletion(tx, ownerDid);
 			const user = await tx.user.findUnique({
 				where: { did: ownerDid },
@@ -129,6 +134,10 @@ export class WatchPrivacyCoordinator {
 				throw new ConflictException(
 					"Finish the import or account deletion before changing Watch privacy.",
 				);
+			await tx.user.update({
+				where: { did: ownerDid },
+				data: { watchPrivacyManaged: true },
+			});
 			return tx.backgroundJob.create({
 				data: {
 					type: WATCH_PRIVACY_JOB_TYPE,
@@ -213,20 +222,30 @@ export class WatchPrivacyCoordinator {
 		});
 	}
 
-	/** Called only after whole-account PDS verification. Reconcile local indices
-	 * inside this transaction; visibility, recovery cleanup and completion either
-	 * all commit or all roll back. Never perform network calls in reconcile. */
+	/** Verify while holding the independent account lock, then commit only local
+	 * reconciliation and visibility in a short database transaction. No PDS or
+	 * metadata requests run while that final database transaction is open. */
 	async finish(
 		ownerDid: string,
 		jobId: string,
 		reconcile: (
 			tx: Prisma.TransactionClient,
 			target: WatchVisibility,
+			signal: AbortSignal,
 		) => Promise<void>,
+		verify?: (target: WatchVisibility, signal: AbortSignal) => Promise<void>,
 	) {
-		return this.withAccountLock(ownerDid, async (tx) => {
-			await this.requireNoDeletion(tx, ownerDid);
-			const migration = await this.requireMigration(tx, ownerDid, jobId);
+		return this.locks.run(ownerDid, async (lockSignal) => {
+			const signal = AbortSignal.any([
+				lockSignal,
+				AbortSignal.timeout(300_000),
+			]);
+			await this.requireNoDeletion(this.prisma, ownerDid);
+			const migration = await this.requireMigration(
+				this.prisma,
+				ownerDid,
+				jobId,
+			);
 			if (migration.job.status !== "queued")
 				throw new ConflictException(
 					"Verify the privacy change before finishing.",
@@ -234,17 +253,35 @@ export class WatchPrivacyCoordinator {
 			const target = migration.targetVisibility;
 			if (target !== "public" && target !== "private")
 				throw new Error("Invalid Watch visibility");
-			await reconcile(tx, target);
-			await tx.user.update({
-				where: { did: ownerDid },
-				data: { watchVisibility: target },
-			});
-			await tx.watchPrivacyCopy.deleteMany({ where: { jobId } });
-			await tx.watchPrivacyMigration.delete({ where: { jobId } });
-			await tx.backgroundJob.update({
-				where: { id: jobId },
-				data: { status: "completed", completedAt: new Date(), lastError: null },
-			});
+			await verify?.(target, signal);
+			signal.throwIfAborted();
+			await this.prisma.$transaction(
+				async (tx) => {
+					await this.requireNoDeletion(tx, ownerDid);
+					const current = await this.requireMigration(tx, ownerDid, jobId);
+					if (current.job.status !== "queued")
+						throw new ConflictException(
+							"Privacy change is not ready to finish.",
+						);
+					await reconcile(tx, target, signal);
+					signal.throwIfAborted();
+					await tx.user.update({
+						where: { did: ownerDid },
+						data: { watchVisibility: target },
+					});
+					await tx.watchPrivacyCopy.deleteMany({ where: { jobId } });
+					await tx.watchPrivacyMigration.delete({ where: { jobId } });
+					await tx.backgroundJob.update({
+						where: { id: jobId },
+						data: {
+							status: "completed",
+							completedAt: new Date(),
+							lastError: null,
+						},
+					});
+				},
+				{ timeout: 30_000, maxWait: 5000 },
+			);
 		});
 	}
 
@@ -262,7 +299,7 @@ export class WatchPrivacyCoordinator {
 				data: {
 					status: "stopped_for_deletion",
 					lastError:
-						"Watch migration stopped for account deletion. Recovery snapshots are retained until deletion completes.",
+						"Watch privacy change stopped for account deletion. Recovery snapshots are retained until deletion completes.",
 				},
 			});
 		});

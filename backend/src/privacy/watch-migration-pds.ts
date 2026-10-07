@@ -65,7 +65,9 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 		this.operationSignal?.throwIfAborted();
 		if (
 			this.session.did !== this.ownerDid ||
-			!includesWatchSpaceGrant((await this.session.getTokenInfo()).scope)
+			((method.startsWith("com.atproto.space.") ||
+				method.startsWith("com.atproto.simplespace.")) &&
+				!includesWatchSpaceGrant((await this.session.getTokenInfo()).scope))
 		) {
 			throw new WatchMigrationPdsError("InsufficientScope", 403);
 		}
@@ -127,6 +129,75 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 			);
 		}
 		return body;
+	}
+	/** Interactive private operations use the same owner/policy/scope checks. */
+	async watchRequest(method: string, params: object, write: boolean) {
+		await this.assertExistingPrivate();
+		const input = params as Record<string, unknown>;
+		if (input.repo !== this.ownerDid) throw new Error("Watch owner mismatch");
+		const collections = Array.isArray(input.writes)
+			? input.writes.map((w) => w.collection)
+			: [input.collection];
+		if (
+			collections.some(
+				(c) => !WATCH_COLLECTIONS.some((allowed) => allowed === c),
+			)
+		)
+			throw new Error("Invalid Watch collection");
+		return this.call(
+			`com.atproto.space.${method}`,
+			{ ...input, space: this.space },
+			write,
+		);
+	}
+	async list(
+		collection: (typeof WATCH_COLLECTIONS)[number],
+		privateRepo: boolean,
+		cursor?: string,
+		limit = 100,
+	) {
+		const body = await this.call(
+			`com.atproto.${privateRepo ? "space" : "repo"}.listRecords`,
+			{
+				...(privateRepo ? { space: this.space } : {}),
+				repo: this.ownerDid,
+				collection,
+				limit,
+				...(cursor ? { cursor } : {}),
+			},
+		);
+		if (
+			!Array.isArray(body.records) ||
+			(body.cursor !== undefined && typeof body.cursor !== "string")
+		)
+			throw new WatchMigrationPdsError("InvalidResponse", 502);
+		const prefix = privateRepo
+			? `${this.space}/${this.ownerDid}/${collection}/`
+			: `at://${this.ownerDid}/${collection}/`;
+		const records = body.records.map((record) => {
+			if (
+				!object(record) ||
+				(privateRepo
+					? record.collection !== collection || typeof record.rkey !== "string"
+					: typeof record.uri !== "string" || !record.uri.startsWith(prefix)) ||
+				typeof record.cid !== "string" ||
+				!object(record.value) ||
+				record.value.$type !== collection
+			)
+				throw new WatchMigrationPdsError("InvalidRecord", 502);
+			const rkey = privateRepo
+				? String(record.rkey)
+				: String(record.uri).slice(prefix.length);
+			this.params({ collection, rkey }, privateRepo);
+			return {
+				collection,
+				rkey,
+				uri: `${prefix}${rkey}`,
+				cid: record.cid,
+				value: record.value,
+			};
+		});
+		return { records, cursor: body.cursor as string | undefined };
 	}
 	assertPrivate(): Promise<void> {
 		return this.checkPrivate(true);

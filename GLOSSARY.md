@@ -292,6 +292,24 @@ _Avoid_: Percentage rollout (that's a feature flag), promotion (that's moving be
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
 
+**Watch privacy**:
+The account-wide choice between Public and Private for movie and episode
+**Watches**. Changing it moves existing Watches as well as changing where new
+Watches are stored. Other data categories retain their own visibility.
+_Avoid_: private account (other categories can remain Public).
+
+**Watch access**:
+The optional permission for Opnshelf to use the User's private Watch **Space**.
+Connecting it does not change Watch privacy. Disconnecting is available after
+Watches are Public and no privacy change remains in progress.
+_Avoid_: privacy enabled (permission and visibility are different choices).
+
+**Sync Watches**:
+Refresh the User's Watches from their selected public repository or private
+Space, including edits made by other authorized apps. This does not change
+Watch privacy and is separate from a **Trakt Import**.
+_Avoid_: Trakt sync.
+
 **Watch Privacy Migration**:
 An account-wide move of movie and episode **Watches** between Public records and
 an owner-only **Space**. Its direction is fixed for the lifetime of the migration;

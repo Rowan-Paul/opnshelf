@@ -1,3 +1,4 @@
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
 import {
 	Body,
 	BadRequestException,
@@ -85,13 +86,18 @@ export class UsersController {
 	) {}
 
 	@Get(":handle/profile")
+	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get a public user profile by handle" })
 	@ApiResponse({ status: 200, type: PublicUserProfileDto })
 	@ApiResponse({ status: 404, description: "User not found" })
 	async getPublicProfile(
 		@Param("handle") handle: string,
+		@Req() req: Request,
 	): Promise<PublicUserProfileDto> {
-		return this.usersService.getPublicProfileByHandle(handle);
+		return this.usersService.getPublicProfileByHandle(
+			handle,
+			(req as AuthenticatedRequest).user?.did,
+		);
 	}
 
 	@Get(":handle/followers")
@@ -430,6 +436,7 @@ export class UsersController {
 	}
 
 	@Post("me/import/trakt/public/start")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({
 		summary: "Start a background import for a public Trakt profile",
@@ -484,6 +491,7 @@ export class UsersController {
 	}
 
 	@Post("me/import/trakt/public/resume")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({
 		summary: "Resume the current paused or stopped Trakt import",

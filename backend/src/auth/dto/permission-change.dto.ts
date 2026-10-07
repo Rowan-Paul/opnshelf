@@ -7,6 +7,7 @@ export const OAUTH_INTEGRATIONS = [
 	"blog",
 	"bluesky",
 	"spaces",
+	"watches",
 ] as const;
 export const OAUTH_PERMISSION_ACTIONS = ["connect", "disconnect"] as const;
 export const OAUTH_PERMISSION_PLATFORMS = ["mobile"] as const;

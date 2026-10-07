@@ -504,10 +504,18 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 	private async handleRecordEvent(evt: RecordEvent) {
 		const uri = `at://${evt.did}/${evt.collection}/${evt.rkey}`;
 
-		if (evt.collection === MOVIE_COLLECTION) {
-			await this.handleMovieEvent(evt, uri);
-		} else if (evt.collection === EPISODE_COLLECTION) {
-			await this.handleEpisodeEvent(evt, uri);
+		if (
+			evt.collection === MOVIE_COLLECTION ||
+			evt.collection === EPISODE_COLLECTION
+		) {
+			const owner = await this.prisma.user.findUnique({
+				where: { did: evt.did },
+				select: { watchPrivacyManaged: true },
+			});
+			if (!owner || owner.watchPrivacyManaged) return;
+			if (evt.collection === MOVIE_COLLECTION)
+				await this.handleMovieEvent(evt, uri);
+			else await this.handleEpisodeEvent(evt, uri);
 		} else if (evt.collection === PROFILE_COLLECTION) {
 			await this.handleProfileEvent(evt, uri);
 		} else if (evt.collection === FOLLOW_COLLECTION) {
@@ -565,6 +573,22 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 
+	/** Lock only the local projection write. Starting a migration atomically sets
+	 * watchPrivacyManaged on this same User row, so an old Tab event cannot race
+	 * the handover. Catalogue requests never occupy the dedicated Watch lock pool. */
+	private async projectPublicWatch<T>(
+		did: string,
+		operation: (tx: Prisma.TransactionClient) => Promise<T>,
+	) {
+		return this.prisma.$transaction(async (tx) => {
+			const owners = await tx.$queryRaw<
+				{ did: string }[]
+			>`SELECT did FROM "User" WHERE did = ${did} AND "watchPrivacyManaged" = false FOR UPDATE`;
+			if (!owners.length) return;
+			return operation(tx);
+		});
+	}
+
 	private async handleMovieEvent(evt: RecordEvent, uri: string) {
 		if (evt.action === "create" || evt.action === "update") {
 			if (!evt.record) {
@@ -612,37 +636,41 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 				}
 			}
 
-			await this.prisma.trackedMovie.upsert({
-				where: {
-					userDid_rkey: { userDid: evt.did, rkey: evt.rkey },
-				},
-				create: {
-					uri,
-					rkey: evt.rkey,
-					cid: evt.cid ?? "",
-					userDid: evt.did,
-					movieId: movieRecord.movieId,
-					watchedDate: movieRecord.watchedAt
-						? new Date(movieRecord.watchedAt)
-						: null,
-					status: "watched",
-				},
-				update: {
-					cid: evt.cid ?? "",
-					watchedDate: movieRecord.watchedAt
-						? new Date(movieRecord.watchedAt)
-						: null,
-					status: "watched",
-				},
-			});
+			await this.projectPublicWatch(evt.did, (tx) =>
+				tx.trackedMovie.upsert({
+					where: {
+						userDid_rkey: { userDid: evt.did, rkey: evt.rkey },
+					},
+					create: {
+						uri,
+						rkey: evt.rkey,
+						cid: evt.cid ?? "",
+						userDid: evt.did,
+						movieId: movieRecord.movieId,
+						watchedDate: movieRecord.watchedAt
+							? new Date(movieRecord.watchedAt)
+							: null,
+						status: "watched",
+					},
+					update: {
+						cid: evt.cid ?? "",
+						watchedDate: movieRecord.watchedAt
+							? new Date(movieRecord.watchedAt)
+							: null,
+						status: "watched",
+					},
+				}),
+			);
 
 			await this.touchLastIngest(evt.did);
 		}
 
 		if (evt.action === "delete") {
-			await this.prisma.trackedMovie.deleteMany({
-				where: { userDid: evt.did, rkey: evt.rkey },
-			});
+			await this.projectPublicWatch(evt.did, (tx) =>
+				tx.trackedMovie.deleteMany({
+					where: { userDid: evt.did, rkey: evt.rkey },
+				}),
+			);
 		}
 	}
 
@@ -770,41 +798,45 @@ export class IngesterService implements OnModuleInit, OnModuleDestroy {
 					),
 				);
 
-			await this.prisma.trackedEpisode.upsert({
-				where: {
-					userDid_rkey: { userDid: evt.did, rkey: evt.rkey },
-				},
-				create: {
-					uri,
-					rkey: evt.rkey,
-					cid: evt.cid ?? "",
-					userDid: evt.did,
-					showId,
-					seasonNumber: episodeRecord.seasonNumber,
-					episodeNumber: episodeRecord.episodeNumber,
-					watchedDate: episodeRecord.watchedAt
-						? new Date(episodeRecord.watchedAt)
-						: null,
-					status: "watched",
-				},
-				update: {
-					cid: evt.cid ?? "",
-					seasonNumber: episodeRecord.seasonNumber,
-					episodeNumber: episodeRecord.episodeNumber,
-					watchedDate: episodeRecord.watchedAt
-						? new Date(episodeRecord.watchedAt)
-						: null,
-					status: "watched",
-				},
-			});
+			await this.projectPublicWatch(evt.did, (tx) =>
+				tx.trackedEpisode.upsert({
+					where: {
+						userDid_rkey: { userDid: evt.did, rkey: evt.rkey },
+					},
+					create: {
+						uri,
+						rkey: evt.rkey,
+						cid: evt.cid ?? "",
+						userDid: evt.did,
+						showId,
+						seasonNumber: episodeRecord.seasonNumber,
+						episodeNumber: episodeRecord.episodeNumber,
+						watchedDate: episodeRecord.watchedAt
+							? new Date(episodeRecord.watchedAt)
+							: null,
+						status: "watched",
+					},
+					update: {
+						cid: evt.cid ?? "",
+						seasonNumber: episodeRecord.seasonNumber,
+						episodeNumber: episodeRecord.episodeNumber,
+						watchedDate: episodeRecord.watchedAt
+							? new Date(episodeRecord.watchedAt)
+							: null,
+						status: "watched",
+					},
+				}),
+			);
 
 			await this.touchLastIngest(evt.did);
 		}
 
 		if (evt.action === "delete") {
-			await this.prisma.trackedEpisode.deleteMany({
-				where: { userDid: evt.did, rkey: evt.rkey },
-			});
+			await this.projectPublicWatch(evt.did, (tx) =>
+				tx.trackedEpisode.deleteMany({
+					where: { userDid: evt.did, rkey: evt.rkey },
+				}),
+			);
 		}
 	}
 

@@ -479,9 +479,11 @@ export class AuthController {
 							? statePayload.requestedPreferences?.blogEnabled
 							: statePayload.permissionChange === "bluesky"
 								? statePayload.requestedPreferences?.blueskyEnabled
-								: statePayload.permissionChange === "spaces"
-									? statePayload.requestedPreferences?.privateSettingsEnabled
-									: false;
+								: statePayload.permissionChange === "watches"
+									? statePayload.requestedPreferences?.watchPrivacyEnabled
+									: statePayload.permissionChange === "spaces"
+										? statePayload.requestedPreferences?.privateSettingsEnabled
+										: false;
 				if (statePayload.permissionChange) {
 					if (declinedConnection) {
 						await this.authService.disableIntegration(
@@ -492,6 +494,12 @@ export class AuthController {
 				} else if (statePayload.requestedPreferences) {
 					// A returning user declined saved optional access. Downscope the
 					// account and restart Core-only without touching prior sessions.
+					if (statePayload.requestedPreferences.watchPrivacyEnabled) {
+						await this.authService.disableIntegration(
+							statePayload.accountDid,
+							"watches",
+						);
+					}
 					if (statePayload.requestedPreferences.privateSettingsEnabled) {
 						await this.authService.disableIntegration(
 							statePayload.accountDid,

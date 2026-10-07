@@ -39,6 +39,7 @@ import { IntegrationPermissionRow } from "@/components/settings/integration-perm
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { PrivateSettingsSection } from "@/components/settings/private-settings-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
+import { WatchPrivacySection } from "@/components/settings/watch-privacy-section";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
@@ -246,7 +247,7 @@ export function SettingsCategoryScreen({
 	});
 
 	const requestPermissionChange = async (
-		integration: "blog" | "bluesky" | "spaces",
+		integration: "blog" | "bluesky" | "spaces" | "watches",
 		action: "connect" | "disconnect",
 	) => {
 		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
@@ -603,6 +604,17 @@ export function SettingsCategoryScreen({
 								)}
 							</SettingsSection>
 
+							<SettingsSection title="Watch privacy">
+								<WatchPrivacySection
+									permissionPending={permissionChangeMutation.isPending}
+									onConnect={() =>
+										requestPermissionChange("watches", "connect")
+									}
+									onDisconnect={() =>
+										requestPermissionChange("watches", "disconnect")
+									}
+								/>
+							</SettingsSection>
 							{/* Streaming country */}
 							<SettingsSection
 								title="Streaming"

@@ -471,6 +471,8 @@ describe("UsersService", () => {
 	it("returns a public profile by normalized handle", async () => {
 		prisma.user.findUnique = vi.fn().mockResolvedValue({
 			did: "did:plc:123",
+			watchVisibility: "public",
+			watchPrivacyMigration: null,
 			handle: "alice.bsky.social",
 			displayName: "Alice",
 			avatar: "https://example.com/alice.jpg",
@@ -510,6 +512,8 @@ describe("UsersService", () => {
 		expect(prisma.user.findUnique).toHaveBeenCalledWith({
 			where: { handle: "alice.bsky.social" },
 			select: {
+				watchVisibility: true,
+				watchPrivacyMigration: { select: { jobId: true } },
 				did: true,
 				handle: true,
 				displayName: true,

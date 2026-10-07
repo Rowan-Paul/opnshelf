@@ -1,3 +1,5 @@
+import { WatchPrivacyService } from "../privacy/watch-privacy.service";
+import { WatchPrivacyController } from "../privacy/watch-privacy.controller";
 import { forwardRef, Module } from "@nestjs/common";
 import { PdsModule } from "../pds/pds.module";
 import { AuthModule } from "../auth/auth.module";
@@ -32,8 +34,13 @@ import { UsersService } from "./users.service";
 		ShelfModule,
 		forwardRef(() => AuthModule),
 	],
-	controllers: [UsersController, ReleaseNotesController],
+	controllers: [
+		WatchPrivacyController,
+		UsersController,
+		ReleaseNotesController,
+	],
 	providers: [
+		WatchPrivacyService,
 		UsersService,
 		ImportHistoryService,
 		TraktImportJobStore,

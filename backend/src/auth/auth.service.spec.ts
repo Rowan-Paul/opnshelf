@@ -213,6 +213,7 @@ describe("AuthService", () => {
 					scope: OAUTH_SCOPE,
 					state: JSON.stringify({
 						requestedPreferences: {
+							watchPrivacyEnabled: false,
 							blogEnabled: false,
 							blueskyEnabled: false,
 						},
@@ -244,6 +245,7 @@ describe("AuthService", () => {
 					blogIntegrationEnabled: true,
 					blueskyCrossPostEnabled: true,
 					privateSettingsEnabled: true,
+					watchPrivacyEnabled: true,
 					reviewsMirrorFormat: true,
 				},
 			});
@@ -263,6 +265,7 @@ describe("AuthService", () => {
 			);
 			expect(JSON.parse(authorizeOptions.state)).toEqual({
 				requestedPreferences: {
+					watchPrivacyEnabled: false,
 					blogEnabled: true,
 					blueskyEnabled: true,
 					reviewsMirrorFormat: "offprint",
@@ -402,6 +405,64 @@ describe("AuthService", () => {
 	});
 
 	describe("completePermissionChange", () => {
+		it.each([
+			{ locked: false, visibility: "public", migration: null },
+			{ locked: true, visibility: "private", migration: null },
+			{ locked: true, visibility: "public", migration: { jobId: "moving" } },
+		])(
+			"rejects disconnect when the account changed during authorization: %j",
+			async ({ locked, visibility, migration }) => {
+				const tx = {
+					$queryRaw: vi.fn().mockResolvedValue([{ locked }]),
+					user: {
+						findUnique: vi.fn().mockResolvedValue({
+							watchPrivacyEnabled: true,
+							watchVisibility: visibility,
+							watchPrivacyMigration: migration,
+						}),
+						update: vi.fn(),
+					},
+					authSession: { deleteMany: vi.fn() },
+				};
+				mockPrismaService.$transaction.mockImplementation(
+					async (fn: (tx: unknown) => Promise<void>) => fn(tx),
+				);
+				await expect(
+					service.completePermissionChange("did:plc:abc123", "retained", {
+						watchPrivacyEnabled: false,
+					}),
+				).rejects.toThrow();
+				expect(tx.user.update).not.toHaveBeenCalled();
+				expect(tx.authSession.deleteMany).not.toHaveBeenCalled();
+			},
+		);
+		it("disconnects Watch access after Watches are Public", async () => {
+			const tx = {
+				$queryRaw: vi.fn().mockResolvedValue([{ locked: true }]),
+				user: {
+					findUnique: vi.fn().mockResolvedValue({
+						watchPrivacyEnabled: true,
+						watchVisibility: "public",
+						watchPrivacyMigration: null,
+					}),
+					update: vi.fn(),
+				},
+				authSession: { deleteMany: vi.fn() },
+			};
+			mockPrismaService.$transaction.mockImplementation(
+				async (fn: (tx: unknown) => Promise<void>) => fn(tx),
+			);
+			await service.completePermissionChange("did:plc:abc123", "retained", {
+				watchPrivacyEnabled: false,
+			});
+			expect(tx.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ watchPrivacyEnabled: false }),
+				}),
+			);
+			expect(tx.authSession.deleteMany).toHaveBeenCalled();
+		});
+
 		it("saves the account-wide preferences and drops every other session", async () => {
 			const tx = {
 				user: { update: vi.fn() },
@@ -428,6 +489,7 @@ describe("AuthService", () => {
 					blogIntegrationEnabled: true,
 					blueskyCrossPostEnabled: false,
 					privateSettingsEnabled: false,
+					watchPrivacyEnabled: false,
 				},
 			});
 			expect(tx.authSession.deleteMany).toHaveBeenCalledWith({

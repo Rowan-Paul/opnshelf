@@ -1,3 +1,4 @@
+import { WatchPrivacyService } from "../privacy/watch-privacy.service";
 import {
 	Injectable,
 	Logger,
@@ -20,6 +21,7 @@ export class BackgroundJobWorkerService
 	constructor(
 		private readonly importHistoryService: ImportHistoryService,
 		private readonly userDeletionService: UserDeletionService,
+		private readonly watchPrivacy: WatchPrivacyService,
 	) {}
 
 	onModuleInit() {
@@ -47,6 +49,7 @@ export class BackgroundJobWorkerService
 			await this.userDeletionService.reapStaleRunningJobs();
 			await this.importHistoryService.processNextTraktImportJob();
 			await this.userDeletionService.processNextDeletionJob();
+			await this.watchPrivacy.tick();
 		} catch (error) {
 			this.logger.error(
 				`Background job worker tick failed: ${error instanceof Error ? error.message : String(error)}`,

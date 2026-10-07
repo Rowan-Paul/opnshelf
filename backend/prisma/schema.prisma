@@ -60,6 +60,11 @@ model User {
   reviewsPublicationName  String?
   // Account-wide integrations. Configuration is retained when disabled so an
   // explicit reconnect can resume the same publication/pointers.
+  watchSyncAttemptedAt DateTime?
+  watchSyncedAt DateTime?
+  watchSyncError String?
+  watchPrivacyManaged Boolean @default(false)
+  watchPrivacyEnabled Boolean @default(false)
   watchVisibility String @default("public")
   watchPrivacyMigration WatchPrivacyMigration?
   privateSettingsEnabled Boolean @default(false)

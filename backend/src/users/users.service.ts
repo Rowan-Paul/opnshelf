@@ -460,11 +460,14 @@ export class UsersService {
 
 	async getPublicProfileByHandle(
 		handle: string,
+		viewerDid?: string,
 	): Promise<PublicUserProfileDto> {
 		const normalizedHandle = handle.trim().replace(/^@/, "").toLowerCase();
 		const user = await this.prisma.user.findUnique({
 			where: { handle: normalizedHandle },
 			select: {
+				watchVisibility: true,
+				watchPrivacyMigration: { select: { jobId: true } },
 				did: true,
 				handle: true,
 				displayName: true,
@@ -488,9 +491,15 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const stats = await this.getProfileStats(user.did, user.timezone);
+		const watchesPublic =
+			user.watchVisibility === "public" && !user.watchPrivacyMigration;
+		const stats =
+			viewerDid === user.did || watchesPublic
+				? await this.getProfileStats(user.did, user.timezone)
+				: { activityLast30Days: [], mostWatchedShow: null, watchedThisYear: 0 };
 
 		return {
+			watchesPublic,
 			did: user.did,
 			handle: user.handle,
 			displayName: user.displayName,

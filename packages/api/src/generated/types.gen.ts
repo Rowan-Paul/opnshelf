@@ -497,7 +497,7 @@ export type MobileHandoffExchangeResponseDto = {
 };
 
 export type PermissionChangeDto = {
-    integration: 'atstore' | 'blog' | 'bluesky' | 'spaces';
+    integration: 'atstore' | 'blog' | 'bluesky' | 'spaces' | 'watches';
     action: 'connect' | 'disconnect';
     platform?: 'mobile';
     /**
@@ -923,6 +923,30 @@ export type MarkShowWatchedDto = {
     watchedAt?: string | null;
 };
 
+export type WatchPrivacyMigrationDto = {
+    id: string;
+    target: 'public' | 'private';
+    status: string;
+    copied: number;
+    error: string | null;
+};
+
+export type WatchPrivacyStatusDto = {
+    visibility: 'public' | 'private';
+    connected: boolean;
+    lastSyncedAt: string | null;
+    syncError: string | null;
+    migration: WatchPrivacyMigrationDto | null;
+};
+
+export type WatchPrivacyChangeDto = {
+    visibility: 'public' | 'private';
+    /**
+     * Explicit consent to publish all Watches
+     */
+    publicationConfirmed?: boolean;
+};
+
 export type ProfileActivityDayDto = {
     /**
      * UTC calendar day in YYYY-MM-DD form
@@ -954,6 +978,10 @@ export type MostWatchedShowDto = {
 };
 
 export type PublicUserProfileDto = {
+    /**
+     * Whether Watches are publicly visible
+     */
+    watchesPublic: boolean;
     /**
      * Stable DID for the user
      */
@@ -4190,6 +4218,58 @@ export type ShowsControllerMarkShowWatchedResponses = {
 };
 
 export type ShowsControllerMarkShowWatchedResponse = ShowsControllerMarkShowWatchedResponses[keyof ShowsControllerMarkShowWatchedResponses];
+
+export type WatchPrivacyControllerStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/watch-privacy';
+};
+
+export type WatchPrivacyControllerStatusResponses = {
+    200: WatchPrivacyStatusDto;
+};
+
+export type WatchPrivacyControllerStatusResponse = WatchPrivacyControllerStatusResponses[keyof WatchPrivacyControllerStatusResponses];
+
+export type WatchPrivacyControllerChangeData = {
+    body: WatchPrivacyChangeDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/watch-privacy';
+};
+
+export type WatchPrivacyControllerChangeResponses = {
+    201: WatchPrivacyStatusDto;
+};
+
+export type WatchPrivacyControllerChangeResponse = WatchPrivacyControllerChangeResponses[keyof WatchPrivacyControllerChangeResponses];
+
+export type WatchPrivacyControllerRetryData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/watch-privacy/retry';
+};
+
+export type WatchPrivacyControllerRetryResponses = {
+    201: WatchPrivacyStatusDto;
+};
+
+export type WatchPrivacyControllerRetryResponse = WatchPrivacyControllerRetryResponses[keyof WatchPrivacyControllerRetryResponses];
+
+export type WatchPrivacyControllerSyncData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/watch-privacy/sync';
+};
+
+export type WatchPrivacyControllerSyncResponses = {
+    201: WatchPrivacyStatusDto;
+};
+
+export type WatchPrivacyControllerSyncResponse = WatchPrivacyControllerSyncResponses[keyof WatchPrivacyControllerSyncResponses];
 
 export type UsersControllerGetPublicProfileData = {
     body?: never;

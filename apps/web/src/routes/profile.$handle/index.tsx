@@ -57,6 +57,7 @@ function ProfileOverviewPage() {
 	});
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
+	const canReadWatches = isOwner || profile?.watchesPublic === true;
 
 	// Both preview rows read the shelf endpoint rather than the dedicated
 	// recent-movies/episodes ones: it's the source that carries the profile
@@ -67,7 +68,7 @@ function ProfileOverviewPage() {
 			path: { userDid },
 			query: { page: 1, pageSize: 8, type: "movie", sortOrder: "desc" },
 		}),
-		enabled: !!userDid,
+		enabled: !!userDid && canReadWatches,
 	});
 
 	const { data: episodesData, isLoading: episodesLoading } = useQuery({
@@ -75,7 +76,7 @@ function ProfileOverviewPage() {
 			path: { userDid },
 			query: { page: 1, pageSize: 8, type: "episode", sortOrder: "desc" },
 		}),
-		enabled: !!userDid,
+		enabled: !!userDid && canReadWatches,
 	});
 
 	const movies = (moviesData?.items ?? []).filter(
@@ -103,135 +104,140 @@ function ProfileOverviewPage() {
 
 	return (
 		<div className="space-y-10">
-			{/* Stats strip: 30-day activity graph + a few headline stats */}
-			<StatsStrip
-				activity={profile?.activityLast30Days}
-				mostWatchedShow={profile?.mostWatchedShow ?? null}
-				watchedThisYear={profile?.watchedThisYear ?? 0}
-				reviewsCount={profile?.reviewsCount ?? 0}
-				isLoading={!profile && !!handle}
-			/>
+			{canReadWatches ? (
+				<>
+					{/* Stats strip: 30-day activity graph + a few headline stats */}
+					<StatsStrip
+						activity={profile?.activityLast30Days}
+						mostWatchedShow={profile?.mostWatchedShow ?? null}
+						watchedThisYear={profile?.watchedThisYear ?? 0}
+						reviewsCount={profile?.reviewsCount ?? 0}
+						isLoading={!profile && !!handle}
+					/>
 
-			{/* Last Movies & Episodes */}
-			<div className="grid gap-8 lg:grid-cols-2">
-				{/* Last Movies */}
-				<section className="min-w-0">
-					<div className="mb-4 flex items-center justify-between">
-						<h2 className="flex items-center gap-2 text-display-3">
-							<Film className="size-5 text-(--accent)" />
-							Recent Movies
-						</h2>
-						<Link
-							to="/profile/$handle/shelf"
-							params={{ handle }}
-							search={{ type: "movie" }}
-							className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
-						>
-							View all
-							<ChevronRight className="size-4" />
-						</Link>
-					</div>
+					{/* Last Movies & Episodes */}
+					<div className="grid gap-8 lg:grid-cols-2">
+						{/* Last Movies */}
+						<section className="min-w-0">
+							<div className="mb-4 flex items-center justify-between">
+								<h2 className="flex items-center gap-2 text-display-3">
+									<Film className="size-5 text-(--accent)" />
+									Recent Movies
+								</h2>
+								<Link
+									to="/profile/$handle/shelf"
+									params={{ handle }}
+									search={{ type: "movie" }}
+									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+								>
+									View all
+									<ChevronRight className="size-4" />
+								</Link>
+							</div>
 
-					{moviesLoading ? (
-						<div className={SCROLL_ROW}>
-							{[1, 2, 3, 4].map((i) => (
-								<div key={i} className={SCROLL_SKELETON} />
-							))}
-						</div>
-					) : movies.length > 0 ? (
-						<div className={SCROLL_ROW}>
-							{movies.map((item) => (
-								<div key={item.id} className="shrink-0">
-									<ActionableMediaCard
-										id={item.movieId}
-										title={item.title}
-										posterUrl={
-											item.posterPath
-												? `https://image.tmdb.org/t/p/w500${item.posterPath}`
-												: ""
-										}
-										type="movie"
-										watchedDate={item.watchedDate}
-										undatedWatch={!item.watchedDate}
-										interactive={isOwner}
-										isWatched={true}
-										watchCount={item.watchCount}
-									/>
+							{moviesLoading ? (
+								<div className={SCROLL_ROW}>
+									{[1, 2, 3, 4].map((i) => (
+										<div key={i} className={SCROLL_SKELETON} />
+									))}
 								</div>
-							))}
-						</div>
-					) : (
-						<div className="card p-8 text-center">
-							<p className="text-(--foreground-muted)">
-								No movies watched yet.
-							</p>
-						</div>
-					)}
-				</section>
-
-				{/* Last Episodes */}
-				<section className="min-w-0">
-					<div className="mb-4 flex items-center justify-between">
-						<h2 className="flex items-center gap-2 text-display-3">
-							<Tv className="size-5 text-(--accent)" />
-							Recent Episodes
-						</h2>
-						<Link
-							to="/profile/$handle/shelf"
-							params={{ handle }}
-							search={{ type: "episode" }}
-							className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
-						>
-							View all
-							<ChevronRight className="size-4" />
-						</Link>
-					</div>
-
-					{episodesLoading ? (
-						<div className={SCROLL_ROW}>
-							{[1, 2, 3, 4].map((i) => (
-								<div key={i} className={SCROLL_SKELETON} />
-							))}
-						</div>
-					) : episodes.length > 0 ? (
-						<div className={SCROLL_ROW}>
-							{episodes.map((item) => (
-								<div key={item.id} className="shrink-0">
-									<ActionableMediaCard
-										id={item.showId}
-										title={item.showTitle}
-										posterUrl={
-											item.posterPath
-												? `https://image.tmdb.org/t/p/w500${item.posterPath}`
-												: ""
-										}
-										type="show"
-										seasonNumber={item.seasonNumber}
-										episodeNumber={item.episodeNumber}
-										episodeInfo={
-											item.episodeTitle
-												? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeTitle}`
-												: `S${item.seasonNumber}E${item.episodeNumber}`
-										}
-										watchedDate={item.watchedDate}
-										undatedWatch={!item.watchedDate}
-										interactive={isOwner}
-										isWatched={true}
-										watchCount={item.watchCount}
-									/>
+							) : movies.length > 0 ? (
+								<div className={SCROLL_ROW}>
+									{movies.map((item) => (
+										<div key={item.id} className="shrink-0">
+											<ActionableMediaCard
+												id={item.movieId}
+												title={item.title}
+												posterUrl={
+													item.posterPath
+														? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+														: ""
+												}
+												type="movie"
+												watchedDate={item.watchedDate}
+												undatedWatch={!item.watchedDate}
+												interactive={isOwner}
+												isWatched={true}
+												watchCount={item.watchCount}
+											/>
+										</div>
+									))}
 								</div>
-							))}
-						</div>
-					) : (
-						<div className="card p-8 text-center">
-							<p className="text-(--foreground-muted)">
-								No episodes watched yet.
-							</p>
-						</div>
-					)}
-				</section>
-			</div>
+							) : (
+								<div className="card p-8 text-center">
+									<p className="text-(--foreground-muted)">
+										No movies watched yet.
+									</p>
+								</div>
+							)}
+						</section>
 
+						{/* Last Episodes */}
+						<section className="min-w-0">
+							<div className="mb-4 flex items-center justify-between">
+								<h2 className="flex items-center gap-2 text-display-3">
+									<Tv className="size-5 text-(--accent)" />
+									Recent Episodes
+								</h2>
+								<Link
+									to="/profile/$handle/shelf"
+									params={{ handle }}
+									search={{ type: "episode" }}
+									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+								>
+									View all
+									<ChevronRight className="size-4" />
+								</Link>
+							</div>
+
+							{episodesLoading ? (
+								<div className={SCROLL_ROW}>
+									{[1, 2, 3, 4].map((i) => (
+										<div key={i} className={SCROLL_SKELETON} />
+									))}
+								</div>
+							) : episodes.length > 0 ? (
+								<div className={SCROLL_ROW}>
+									{episodes.map((item) => (
+										<div key={item.id} className="shrink-0">
+											<ActionableMediaCard
+												id={item.showId}
+												title={item.showTitle}
+												posterUrl={
+													item.posterPath
+														? `https://image.tmdb.org/t/p/w500${item.posterPath}`
+														: ""
+												}
+												type="show"
+												seasonNumber={item.seasonNumber}
+												episodeNumber={item.episodeNumber}
+												episodeInfo={
+													item.episodeTitle
+														? `S${item.seasonNumber}E${item.episodeNumber} — ${item.episodeTitle}`
+														: `S${item.seasonNumber}E${item.episodeNumber}`
+												}
+												watchedDate={item.watchedDate}
+												undatedWatch={!item.watchedDate}
+												interactive={isOwner}
+												isWatched={true}
+												watchCount={item.watchCount}
+											/>
+										</div>
+									))}
+								</div>
+							) : (
+								<div className="card p-8 text-center">
+									<p className="text-(--foreground-muted)">
+										No episodes watched yet.
+									</p>
+								</div>
+							)}
+						</section>
+					</div>
+				</>
+			) : profile ? (
+				<p className="text-(--foreground-muted)">Watches are private.</p>
+			) : null}
 			{/* Lists Preview */}
 			<div className="grid gap-8 lg:grid-cols-2">
 				<ListPreview

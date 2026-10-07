@@ -1,10 +1,15 @@
+import { WatchPrivacyCoordinator } from "../../privacy/watch-privacy-coordinator";
+import { watchOperation } from "../../privacy/watch-operation";
 /**
  * Turns normalized import items into Watches: builds the PDS records, writes
  * them in `applyWrites` batches with deterministic rkeys, and indexes each
  * written record. Shared by the Trakt Import worker, the match/retry flows,
  * and the CSV import endpoint.
  */
-import { Agent } from "@atproto/api";
+import {
+	createWatchAgent,
+	type WatchAgent,
+} from "../../privacy/watch-operation";
 import {
 	BadRequestException,
 	Inject,
@@ -76,6 +81,7 @@ export class WatchImportWriter {
 		private readonly showsService: ShowsService,
 		@Inject(AUTH_SERVICE)
 		private readonly authService: Pick<AuthService, "restore">,
+		private readonly watchPrivacy: WatchPrivacyCoordinator,
 	) {}
 
 	async importNormalizedItems(
@@ -84,6 +90,15 @@ export class WatchImportWriter {
 		items: NormalizedImportItemDto[],
 		options?: ImportWriteOptions,
 	): Promise<ImportHistoryResponseDto> {
+		const current = watchOperation.getStore();
+		if (!current) {
+			return this.watchPrivacy.write(userDid, (visibility, signal) =>
+				watchOperation.run({ did: userDid, visibility, signal }, () =>
+					this.importNormalizedItems(userDid, session, items, options),
+				),
+			);
+		}
+		if (current.did !== userDid) throw new Error("Watch import owner mismatch");
 		if (items.length > 100) {
 			throw new BadRequestException(
 				"A maximum of 100 items can be imported per request",
@@ -101,9 +116,7 @@ export class WatchImportWriter {
 			return { imported, skipped, failed, errors };
 		}
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 
 		for (
 			let batchStart = 0;
@@ -288,7 +301,7 @@ export class WatchImportWriter {
 
 	/** Recover mixed existing/missing batches without ever overwriting a Watch. */
 	private async recoverExistingBatch(
-		agent: Agent,
+		agent: WatchAgent,
 		session: ATSession,
 		batch: PendingWrite[],
 		options?: ImportWriteOptions,
@@ -326,7 +339,7 @@ export class WatchImportWriter {
 
 	/** Phase 2: create-only writes preserve any corrections to existing records. */
 	private async applyWriteBatch(
-		agent: Agent,
+		agent: WatchAgent,
 		session: ATSession,
 		batch: PendingWrite[],
 		options?: ImportWriteOptions,

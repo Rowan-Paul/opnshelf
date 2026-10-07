@@ -8,12 +8,13 @@ function fixture() {
 		release: vi.fn(),
 	});
 	const pool = {
+		waitingCount: 0,
 		idleCount: 1,
 		totalCount: 1,
 		options: { max: 2, query_timeout: 5000, connectionTimeoutMillis: 1000 },
 		connect: vi.fn(async () => client),
 	};
-	return { client, lock: new WatchAccountLock(pool as unknown as Pool) };
+	return { client, pool, lock: new WatchAccountLock(pool as unknown as Pool) };
 }
 it("destroys a session when acquisition has an unknown outcome", async () => {
 	const f = fixture();
@@ -45,4 +46,23 @@ it("destroys the connection if unlocking fails", async () => {
 		"saved",
 	);
 	expect(f.client.release).toHaveBeenCalledWith(true);
+});
+
+it("admits another account through the bounded pool wait instead of rejecting immediately", async () => {
+	const f = fixture();
+	f.pool.idleCount = 0;
+	f.pool.totalCount = 2;
+	f.client.query.mockResolvedValue({ rows: [{ acquired: true }] });
+	await expect(
+		f.lock.run("did:plc:another", async () => "saved"),
+	).resolves.toBe("saved");
+	expect(f.pool.connect).toHaveBeenCalledOnce();
+});
+it("bounds the queue without attempting a connection", async () => {
+	const f = fixture();
+	f.pool.waitingCount = 16;
+	await expect(f.lock.run("did:plc:another", async () => {})).rejects.toThrow(
+		"busy",
+	);
+	expect(f.pool.connect).not.toHaveBeenCalled();
 });

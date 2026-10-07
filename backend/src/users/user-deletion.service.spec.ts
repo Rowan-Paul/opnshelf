@@ -1,3 +1,4 @@
+import { mockWatchCoordinator } from "../../test/watch-privacy";
 import { PrivateSettingsService } from "../pds/private-settings.service";
 import { mockEnvironment } from "../../test/env";
 import { ConflictException, NotFoundException } from "@nestjs/common";
@@ -92,8 +93,15 @@ describe("UserDeletionService", () => {
 		vi.clearAllMocks();
 		prisma.$transaction = vi
 			.fn()
-			.mockImplementation((operations: Promise<unknown>[]) =>
-				Promise.all(operations),
+			.mockImplementation(
+				(
+					operations:
+						| Promise<unknown>[]
+						| ((tx: PrismaService) => Promise<unknown>),
+				) =>
+					Array.isArray(operations)
+						? Promise.all(operations)
+						: operations(prisma),
 			);
 		authService.restore = vi.fn();
 		authService.revoke = vi.fn().mockResolvedValue(undefined);
@@ -133,6 +141,7 @@ describe("UserDeletionService", () => {
 			authService,
 			config,
 			new PrivateSettingsService(config),
+			mockWatchCoordinator(prisma),
 		);
 	});
 

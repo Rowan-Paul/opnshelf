@@ -1,6 +1,11 @@
 import { Agent } from "@atproto/api";
 import { randomUUID } from "node:crypto";
-import { Injectable, Logger, Optional } from "@nestjs/common";
+import {
+	Injectable,
+	Logger,
+	Optional,
+	ConflictException,
+} from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 import { TranquilAdminService } from "../pds/tranquil-admin.service";
@@ -63,12 +68,14 @@ export class AuthService {
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
 				privateSettingsEnabled: true,
+				watchPrivacyEnabled: true,
 				reviewsMirrorFormat: true,
 			},
 		});
 		const resolvedPreferences = preferences
 			? { ...preferences }
 			: {
+					watchPrivacyEnabled: knownUser?.watchPrivacyEnabled ?? false,
 					privateSettingsEnabled:
 						this.configService.ENABLE_ATPROTO_SPACES &&
 						(knownUser?.privateSettingsEnabled ?? false),
@@ -182,6 +189,24 @@ export class AuthService {
 		}
 	}
 
+	async assertCanDisconnectWatches(did: string) {
+		const user = await this.prisma.user.findUnique({
+			where: { did },
+			select: {
+				watchVisibility: true,
+				watchPrivacyMigration: { select: { jobId: true } },
+			},
+		});
+		if (
+			!user ||
+			user.watchVisibility !== "public" ||
+			user.watchPrivacyMigration
+		)
+			throw new ConflictException(
+				"Finish making Watches Public before disconnecting Watch access.",
+			);
+	}
+
 	/** Persist account-wide integration state and revoke superseded devices atomically. */
 	async completePermissionChange(
 		did: string,
@@ -192,10 +217,35 @@ export class AuthService {
 			`Permission change for ${did}: dropping every session except ${retainedSessionId.slice(0, 8)}…`,
 		);
 		await this.prisma.$transaction(async (tx) => {
+			if (preferences.watchPrivacyEnabled === false) {
+				const rows = await tx.$queryRaw<
+					{ locked: boolean }[]
+				>`SELECT pg_try_advisory_xact_lock(hashtextextended(${did}, 252)) AS locked`;
+				if (!rows[0]?.locked)
+					throw new ConflictException(
+						"Another Watch operation is in progress. Reconnect and try again.",
+					);
+				const owner = await tx.user.findUnique({
+					where: { did },
+					select: {
+						watchPrivacyEnabled: true,
+						watchVisibility: true,
+						watchPrivacyMigration: { select: { jobId: true } },
+					},
+				});
+				if (
+					owner?.watchPrivacyEnabled &&
+					(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
+				)
+					throw new ConflictException(
+						"Finish making Watches Public before disconnecting Watch access.",
+					);
+			}
 			await tx.user.update({
 				where: { did },
 				data: {
 					privateSettingsEnabled: Boolean(preferences.privateSettingsEnabled),
+					watchPrivacyEnabled: Boolean(preferences.watchPrivacyEnabled),
 					blogIntegrationEnabled: Boolean(preferences.blogEnabled),
 					blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
 				},
@@ -217,11 +267,13 @@ export class AuthService {
 		await this.prisma.user.update({
 			where: { did },
 			data:
-				integration === "spaces"
-					? { privateSettingsEnabled: false }
-					: integration === "blog"
-						? { blogIntegrationEnabled: false }
-						: { blueskyCrossPostEnabled: false },
+				integration === "watches"
+					? { watchPrivacyEnabled: false }
+					: integration === "spaces"
+						? { privateSettingsEnabled: false }
+						: integration === "blog"
+							? { blogIntegrationEnabled: false }
+							: { blueskyCrossPostEnabled: false },
 		});
 	}
 

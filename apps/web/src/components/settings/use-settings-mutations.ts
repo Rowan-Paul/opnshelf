@@ -50,7 +50,7 @@ export function usePermissionChange() {
 	return {
 		isPending: mutation.isPending,
 		requestPermissionChange: (
-			integration: "blog" | "bluesky" | "spaces",
+			integration: "blog" | "bluesky" | "spaces" | "watches",
 			action: "connect" | "disconnect",
 		) => mutation.mutate({ body: { integration, action } }),
 	};

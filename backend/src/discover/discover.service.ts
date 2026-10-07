@@ -1,3 +1,4 @@
+import { publicWatchOwnerSql } from "../privacy/watch-access";
 import { Inject, Injectable, Optional } from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
 import { TMDB_CACHE_STORE } from "../tmdb/tmdb-cache.module";
@@ -245,7 +246,7 @@ export class DiscoverService {
 			FROM (
 				SELECT "userDid" AS uid, "movieId" AS mid, "watchedDate" AS at
 					FROM "TrackedMovie"
-					WHERE "userDid" IN (${dids}) AND status = 'watched'
+					WHERE "userDid" IN (${dids}) AND status = 'watched' AND ${publicWatchOwnerSql(Prisma.sql`"TrackedMovie"."userDid"`)}
 				UNION ALL
 				SELECT "userDid" AS uid, "mediaId" AS mid, "updatedAt" AS at
 					FROM "Rating"
@@ -272,7 +273,7 @@ export class DiscoverService {
 			FROM (
 				SELECT "userDid" AS uid, "showId" AS sid, "watchedDate" AS at
 					FROM "TrackedEpisode"
-					WHERE "userDid" IN (${dids}) AND status = 'watched'
+					WHERE "userDid" IN (${dids}) AND status = 'watched' AND ${publicWatchOwnerSql(Prisma.sql`"TrackedEpisode"."userDid"`)}
 				UNION ALL
 				SELECT "userDid" AS uid, "mediaId" AS sid, "updatedAt" AS at
 					FROM "Rating"

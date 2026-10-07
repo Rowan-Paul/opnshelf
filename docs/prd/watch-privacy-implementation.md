@@ -1,7 +1,7 @@
 # Watch privacy implementation
 
-Status: record migration and coordinator primitives implemented; runtime integration
-and privacy controls remain pending. Builds on
+Status: runtime integration and Web/Mobile controls implemented and locally
+verified; production rollout pending. Builds on
 issue #252, PR #449 and [ADR 0046](../adr/0046-privacy-is-chosen-by-data-category.md).
 
 ## Boundaries
@@ -30,7 +30,7 @@ record exist. Completion checks the source is absent and the destination matches
 
 Full snapshots are temporary migration recovery state, not a permanent private
 backup. They are necessary because the two repositories cannot commit atomically.
-The eventual worker must retain the journal until whole-account verification and
+The worker retains the journal until whole-account verification and
 local-index reconciliation have committed. The database restricts deletion of
 a job with snapshots; the verified finalizer must explicitly remove snapshots
 before job cleanup. Delete the snapshots in the same database transaction that
@@ -74,8 +74,9 @@ resume after its database lock is released. Finalization takes the same lock and
 commits local reconciliation, visibility, journal cleanup and completion together;
 a reconciliation failure leaves all recovery state intact.
 
-This class is still an internal primitive, not a registered worker or API. The
-caller must perform whole-account PDS verification before finalization. A bounded
+The registered API and worker perform whole-account PDS verification before
+finalization. Network verification holds the account lock without opening the
+short final reconciliation transaction. A bounded
 batch uses a 120-second database transaction, with each PDS request limited to
 10 seconds. The independent session lock remains held until the callback settles,
 even if Prisma expires the transaction. The transaction deadline aborts the operation signal, stopping further PDS
@@ -90,7 +91,7 @@ transport with that signal. No caller may continue writing after a lock conflict
 or transaction failure. Public-read filtering and routing every writer through this
 boundary are required before any migration can be started by a user.
 
-## Integration gates before exposing controls
+## Runtime integration and verification gates
 
 - Account-wide durable migration status, explicit publication consent, progress,
   retry, and a single active migration; refuse reversing direction mid-migration.
@@ -133,6 +134,24 @@ boundary are required before any migration can be started by a user.
 | Lists, Pick for me, recaps and notifications | `lists.service`, `watch-picker.service`, `notification-worker.service` | Audit viewer scope and cached projections; owner-only derived data stays owner-only |
 | Web and Mobile Settings/profile | both clients | Matching controls, confirmation, recoverable progress, cache invalidation; no native version bump expected |
 
-The new backend modules are intentionally not registered with a controller or
-worker. Web and Mobile retain their existing behavior until the integration gates
-are satisfied. This is not a deployable watch-privacy feature yet.
+The API, worker and matching Web/Mobile controls are registered. Accounts that
+have changed privacy use authoritative repository sync thereafter, including
+when Public, as recorded in [ADR 0047](../adr/0047-watch-privacy-uses-authoritative-repository-sync.md).
+Production rollout still requires the companion PDS capability and separate
+operator authorization. Local end-to-end verification is a release gate.
+
+## Local verification (2026-10-07)
+
+Against the real disposable Tranquil PDS with OAuth/DPoP: connected Watch access,
+changed Public → Private, created a private movie Watch, corrected its date using
+Spaces applyWrites, migrated Private → Public → Private while retaining its rkey
+and local identity, and deleted it privately. Manual sync succeeded. Signed-out
+Shelf access returned 403 and profile output reported `watchesPublic: false`.
+The test record was removed and the local account returned to Public.
+
+The local stack has no TMDB API key; one catalogue row was seeded for the test,
+while all Watch records and migrations used the real PDS. This verifies the
+privacy protocol and does not claim to verify local TMDB discovery. Web Settings
+was inspected in the shared browser and Mobile Preferences on the iOS simulator.
+PostgreSQL integration tests cover recovery after a failed conditional deletion,
+full record preservation and owner-qualified read predicates.
