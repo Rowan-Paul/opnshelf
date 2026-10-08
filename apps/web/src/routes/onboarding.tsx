@@ -147,12 +147,11 @@ function OnboardingPage() {
 							<ServicesStep onNext={goToNextStep} onSkip={goToNextStep} />
 						)}
 						{step === "notifications" && (
-							<div className="space-y-6">
-								<h1 className="font-semibold text-2xl">Stay up to date</h1>
-								<NotificationEmailSection />
+							<div className="card space-y-6 p-5 sm:p-7">
+								<NotificationEmailSection onboarding />
 								<button
 									type="button"
-									className="btn btn-primary"
+									className="btn btn-primary w-full"
 									onClick={goToNextStep}
 								>
 									Continue

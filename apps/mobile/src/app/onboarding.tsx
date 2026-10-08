@@ -239,7 +239,9 @@ export default function OnboardingScreen() {
 							Choose mobile and email notifications. You can change these in
 							Settings anytime.
 						</Text>
-						<NotificationPreferences />
+						<View className="rounded-xl border border-border bg-card p-4">
+							<NotificationPreferences onboarding />
+						</View>
 					</StepScaffold>
 				)}
 				{step === "trakt" && (

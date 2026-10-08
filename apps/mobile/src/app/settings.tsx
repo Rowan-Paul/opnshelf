@@ -947,12 +947,6 @@ const SETTINGS_AREAS: {
 	Icon: typeof UserPen;
 }[] = [
 	{
-		href: "/settings/privacy",
-		label: SETTINGS_TITLES.privacy,
-		description: "Public and Private data · Alpha",
-		Icon: Smartphone,
-	},
-	{
 		href: "/edit-profile",
 		label: SETTINGS_TITLES.profile,
 		description: "Name, photo and social links",
@@ -963,6 +957,12 @@ const SETTINGS_AREAS: {
 		label: SETTINGS_TITLES.preferences,
 		description: "Appearance, time, streaming and reviews",
 		Icon: Compass,
+	},
+	{
+		href: "/settings/privacy",
+		label: SETTINGS_TITLES.privacy,
+		description: "Public and Private data",
+		Icon: Smartphone,
 	},
 	{
 		href: "/settings/notifications",
@@ -1033,7 +1033,18 @@ export default function SettingsScreen() {
 								>
 									<Icon color="#94a3b8" size={20} />
 									<View className="flex-1 gap-0.5">
-										<Text className="font-medium text-foreground">{label}</Text>
+										<View className="flex-row items-center gap-2">
+											<Text className="font-medium text-foreground">
+												{label}
+											</Text>
+											{href === "/settings/privacy" && (
+												<View className="rounded-md bg-primary/10 px-2 py-1">
+													<Text className="font-semibold text-foreground text-xs">
+														Alpha
+													</Text>
+												</View>
+											)}
+										</View>
 										<Text className="text-muted-foreground text-sm">
 											{description}
 										</Text>

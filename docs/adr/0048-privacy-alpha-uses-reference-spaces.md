@@ -16,8 +16,9 @@ Category changes include existing records. Lists additionally have an individual
 visibility. The Lists choice prompts for New Lists only or All Lists; the latter
 changes existing Lists and the default together. Individual controls and recovery
 remain available in a Manage individual Lists modal. Reviews, Ratings and other
-categories retain their existing behavior. Publication requires confirmation. Migration progress and
-recovery are visible, with edits paused only for the affected category.
+categories retain their existing behavior. Publication requires confirmation.
+Migration progress and recovery are visible, with edits paused only for the
+affected category.
 
 The current reference Spaces API has no private-record conditional deletion.
 For this alpha, copy/create the destination, verify the complete record, retain
@@ -59,3 +60,9 @@ Retiring the old Settings Space requires the reference `manage=delete` grant.
 Only accounts with the old experiment request that cleanup grant on reauthorization;
 accounts without it defer cleanup rather than repeatedly prompting. Deleted Lists
 retain their Space identity for eventual account cleanup but stop background polling.
+
+Onboarding presentation update, requested by the operator on 2026-10-08: replace
+the initial combined choice with always-visible Public/Private controls for
+Shelf, Library, Notes and Lists, initially Public. This updates the onboarding
+presentation above; the Spaces architecture and authorization decisions remain
+in effect.

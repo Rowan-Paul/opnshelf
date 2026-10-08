@@ -15,12 +15,6 @@ import { useAuth } from "#/lib/auth-context";
 
 export const SETTINGS_AREAS = [
 	{
-		section: "privacy",
-		label: "Privacy",
-		description: "Public and Private data · Alpha",
-		Icon: ShieldCheck,
-	},
-	{
 		section: "profile",
 		label: "Profile",
 		description: "Your name, photo and social links",
@@ -31,6 +25,12 @@ export const SETTINGS_AREAS = [
 		label: "Preferences",
 		description: "Appearance, time, streaming and reviews",
 		Icon: SlidersHorizontal,
+	},
+	{
+		section: "privacy",
+		label: "Privacy",
+		description: "Public and Private data",
+		Icon: ShieldCheck,
 	},
 	{
 		section: "notifications",
