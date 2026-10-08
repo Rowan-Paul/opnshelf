@@ -38,7 +38,6 @@ function LoginPage() {
 	const message = (search as { message?: string }).message;
 	const error = (search as { error?: string }).error;
 	const inputAreaRef = useRef<HTMLDivElement>(null);
-	const handleDomain = env.VITE_PDS_HANDLE_DOMAIN;
 
 	const debouncedHandle = useDebounce(handle, 300).trim();
 	const suggestionsQuery = useQuery({
@@ -157,7 +156,7 @@ function LoginPage() {
 								<input
 									id="handle"
 									type="text"
-									placeholder={`bob.${handleDomain}`}
+									placeholder="bob.opnshelf.social"
 									value={handle}
 									onChange={(e) => {
 										setHandle(e.target.value);
