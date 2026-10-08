@@ -1,6 +1,11 @@
 import { Agent } from "@atproto/api";
 import { randomUUID } from "node:crypto";
-import { Injectable, Logger, Optional } from "@nestjs/common";
+import {
+	Injectable,
+	Logger,
+	Optional,
+	ConflictException,
+} from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
 import { TranquilAdminService } from "../pds/tranquil-admin.service";
@@ -62,14 +67,25 @@ export class AuthService {
 				handle: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				privateSettingsEnabled: true,
+				privateSettingsHasCopy: true,
+				watchPrivacyEnabled: true,
 				reviewsMirrorFormat: true,
 			},
 		});
-		const resolvedPreferences = preferences ?? {
-			blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
-			blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
-			reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
-		};
+		const resolvedPreferences = preferences
+			? { ...preferences }
+			: {
+					watchPrivacyEnabled: knownUser?.watchPrivacyEnabled ?? false,
+					privateSettingsEnabled: Boolean(
+						knownUser?.privateSettingsHasCopy ||
+							knownUser?.privateSettingsEnabled,
+					),
+					blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
+					blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
+					reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
+				};
+
 		const url = await client.authorize(handle, {
 			scope: buildOAuthScope(resolvedPreferences),
 			state: serializeOAuthAppState({
@@ -152,6 +168,7 @@ export class AuthService {
 		preferences: OAuthScopePreferences,
 	): Promise<void> {
 		const candidate = session as {
+			did?: string;
 			getTokenInfo?: (
 				refresh?: boolean | "auto",
 			) => Promise<{ scope?: string | string[] }>;
@@ -160,11 +177,41 @@ export class AuthService {
 			typeof candidate.getTokenInfo === "function"
 				? (await candidate.getTokenInfo(false)).scope
 				: undefined;
-		if (!includesOAuthCapabilities(grantedScope, preferences)) {
+		if (!includesOAuthCapabilities(grantedScope, preferences, candidate.did)) {
 			throw new Error(
 				"OAuth authorization did not grant every requested permission",
 			);
 		}
+	}
+
+	async assertCanDisconnectWatches(did: string) {
+		const user = await this.prisma.user.findUnique({
+			where: { did },
+			select: {
+				watchVisibility: true,
+				watchPrivacyMigration: { select: { jobId: true } },
+				listsDefaultVisibility: true,
+				privacyScopes: {
+					where: {
+						OR: [
+							{ visibility: "private" },
+							{ targetVisibility: { not: null } },
+						],
+					},
+					select: { id: true },
+				},
+			},
+		});
+		if (
+			!user ||
+			user.watchVisibility !== "public" ||
+			user.watchPrivacyMigration ||
+			user.listsDefaultVisibility === "private" ||
+			user.privacyScopes?.length
+		)
+			throw new ConflictException(
+				"Finish making all content and the new-List default Public before disconnecting Private data access.",
+			);
 	}
 
 	/** Persist account-wide integration state and revoke superseded devices atomically. */
@@ -177,9 +224,48 @@ export class AuthService {
 			`Permission change for ${did}: dropping every session except ${retainedSessionId.slice(0, 8)}…`,
 		);
 		await this.prisma.$transaction(async (tx) => {
+			if (preferences.watchPrivacyEnabled === false) {
+				const rows = await tx.$queryRaw<
+					{ locked: boolean }[]
+				>`SELECT pg_try_advisory_xact_lock(hashtextextended(${did}, 252)) AS locked`;
+				if (!rows[0]?.locked)
+					throw new ConflictException(
+						"Another Watch operation is in progress. Reconnect and try again.",
+					);
+				const owner = await tx.user.findUnique({
+					where: { did },
+					select: {
+						watchPrivacyEnabled: true,
+						watchVisibility: true,
+						watchPrivacyMigration: { select: { jobId: true } },
+						listsDefaultVisibility: true,
+						privacyScopes: {
+							where: {
+								OR: [
+									{ visibility: "private" },
+									{ targetVisibility: { not: null } },
+								],
+							},
+							select: { id: true },
+						},
+					},
+				});
+				if (
+					owner?.watchPrivacyEnabled &&
+					(owner.watchVisibility !== "public" ||
+						owner.watchPrivacyMigration ||
+						owner.listsDefaultVisibility === "private" ||
+						owner.privacyScopes?.length)
+				)
+					throw new ConflictException(
+						"Finish making all content and the new-List default Public before disconnecting Private data access.",
+					);
+			}
 			await tx.user.update({
 				where: { did },
 				data: {
+					privateSettingsEnabled: Boolean(preferences.privateSettingsEnabled),
+					watchPrivacyEnabled: Boolean(preferences.watchPrivacyEnabled),
 					blogIntegrationEnabled: Boolean(preferences.blogEnabled),
 					blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
 				},
@@ -201,9 +287,13 @@ export class AuthService {
 		await this.prisma.user.update({
 			where: { did },
 			data:
-				integration === "blog"
-					? { blogIntegrationEnabled: false }
-					: { blueskyCrossPostEnabled: false },
+				integration === "watches"
+					? { watchPrivacyEnabled: false }
+					: integration === "spaces"
+						? { privateSettingsEnabled: false }
+						: integration === "blog"
+							? { blogIntegrationEnabled: false }
+							: { blueskyCrossPostEnabled: false },
 		});
 	}
 

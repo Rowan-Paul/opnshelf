@@ -1,4 +1,4 @@
-import { Agent } from "@atproto/api";
+import { createWatchAgent } from "../privacy/watch-operation";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { updateWatchDate } from "../common/update-watch-date";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
@@ -58,9 +58,7 @@ export class EpisodeWatchService {
 			customWatchedAt,
 		);
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: COLLECTION,
@@ -182,9 +180,7 @@ export class EpisodeWatchService {
 		seasonNumber?: number,
 		episodeNumber?: number,
 	) {
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 
 		const where = {
 			userDid,
@@ -274,9 +270,7 @@ export class EpisodeWatchService {
 			throw new Error("Tracked episode not found");
 		}
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		await agent.com.atproto.repo.deleteRecord({
 			repo: userDid,
 			collection: COLLECTION,
@@ -304,9 +298,7 @@ export class EpisodeWatchService {
 			episodeNumber: number;
 		}>,
 	) {
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		const written: WrittenEpisode[] = [];
 
 		for (

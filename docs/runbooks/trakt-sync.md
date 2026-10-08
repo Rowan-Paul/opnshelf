@@ -1,5 +1,7 @@
 # Trakt Sync operations and verification
 
+Sync supports public Watches only. A private Shelf or pending Shelf privacy migration holds Watch sync; disabling Watches lets Ratings continue. Sync and legacy Import recovery share the account lock with privacy changes and deletion.
+
 ## Server configuration and rollout
 
 Trakt Sync uses the existing `TRAKT_API_KEY` as the OAuth client ID, `BACKEND_PUBLIC_URL` to construct `/trakt-sync/callback`, `FRONTEND_URL` for the Web return route, and `PROVIDER_STATE_SECRET` to encrypt access/refresh tokens and single-use OAuth state. Register the exact callback URL with the Trakt application before enabling the UI against a deployed backend. Mobile returns to `opnshelf://trakt-sync`. No Trakt password is collected.

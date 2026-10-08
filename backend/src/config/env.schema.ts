@@ -23,6 +23,11 @@ export const envSchema = z.object({
 		.max(65535)
 		.default(3001)
 		.describe("HTTP listening port; defaults to 3001."),
+	HOST: text
+		.default("0.0.0.0")
+		.describe(
+			"HTTP bind address; defaults to 0.0.0.0. Use 127.0.0.1 for a local-only server.",
+		),
 	DATABASE_URL: production(
 		z.url({ protocol: /^postgres(ql)?$/ }),
 		"PostgreSQL connection string.",
@@ -36,6 +41,16 @@ export const envSchema = z.object({
 		),
 	TMDB_API_KEY: production(text, "TMDB API key for catalogue reads."),
 	PDS_URL: production(httpUrl, "Tranquil Personal Data Server URL."),
+	PLC_DIRECTORY_URL: httpUrl
+		.optional()
+		.describe(
+			"Override the PLC directory for an isolated local AT Protocol network; defaults to the public directory.",
+		),
+	HANDLE_RESOLVER_URL: httpUrl
+		.optional()
+		.describe(
+			"Optional trusted XRPC service for OAuth handle resolution; unset uses DNS and HTTPS resolution.",
+		),
 	PDS_HANDLE_DOMAIN: production(
 		z.hostname(),
 		"Handle domain served by the PDS.",

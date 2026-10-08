@@ -32,6 +32,7 @@ import StreamingServicePicker, {
 	toggleService,
 } from "#/components/StreamingServicePicker";
 import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
+import { PrivacySection } from "#/components/settings/PrivacySection";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktImport } from "#/components/trakt/TraktImport";
 import { posthog } from "#/integrations/posthog/provider";
@@ -60,7 +61,13 @@ export const Route = createFileRoute("/onboarding")({
 function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
-	const [step, setStep] = useState<OnboardingStep>("welcome");
+	const [step, setStep] = useState<OnboardingStep>(() =>
+		typeof window !== "undefined" &&
+		(sessionStorage.getItem("opnshelf-privacy-choice") ||
+			new URLSearchParams(window.location.search).has("privacyAuthorization"))
+			? "privacy"
+			: "welcome",
+	);
 	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
@@ -130,6 +137,9 @@ function OnboardingPage() {
 					<>
 						{step === "welcome" && <WelcomeStep onNext={goToNextStep} />}
 						{step === "profile" && <ProfileStep onNext={goToNextStep} />}
+						{step === "privacy" && (
+							<PrivacySection onboarding onContinue={goToNextStep} />
+						)}
 						{step === "preferences" && (
 							<PreferencesStep onNext={goToNextStep} />
 						)}
@@ -137,12 +147,11 @@ function OnboardingPage() {
 							<ServicesStep onNext={goToNextStep} onSkip={goToNextStep} />
 						)}
 						{step === "notifications" && (
-							<div className="space-y-6">
-								<h1 className="font-semibold text-2xl">Stay up to date</h1>
-								<NotificationEmailSection />
+							<div className="card space-y-6 p-5 sm:p-7">
+								<NotificationEmailSection onboarding />
 								<button
 									type="button"
-									className="btn btn-primary"
+									className="btn btn-primary w-full"
 									onClick={goToNextStep}
 								>
 									Continue

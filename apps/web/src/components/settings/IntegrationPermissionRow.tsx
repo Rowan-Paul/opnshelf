@@ -16,12 +16,14 @@ export function IntegrationPermissionRow({
 	description,
 	connected,
 	disabled = false,
+	confirmationDescription = "Other devices will need to sign in again after this permission change. Your saved publication and format choices stay in place.",
 	onConfirm,
 }: {
 	name: string;
 	description: string;
 	connected: boolean;
 	disabled?: boolean;
+	confirmationDescription?: string;
 	onConfirm: (action: PermissionAction) => void;
 }) {
 	const [pendingAction, setPendingAction] = useState<PermissionAction | null>(
@@ -72,10 +74,7 @@ export function IntegrationPermissionRow({
 								? `Disconnect ${name}?`
 								: `Connect ${name}?`}
 						</DialogTitle>
-						<DialogDescription>
-							Other devices will need to sign in again after this permission
-							change. Your saved publication and format choices stay in place.
-						</DialogDescription>
+						<DialogDescription>{confirmationDescription}</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
 						<Button

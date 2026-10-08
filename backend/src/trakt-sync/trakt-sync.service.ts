@@ -1,3 +1,5 @@
+import { WatchAccountLock } from "../privacy/watch-account-lock";
+import { watchOperation } from "../privacy/watch-operation";
 import {
 	createCipheriv,
 	createDecipheriv,
@@ -97,6 +99,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		private readonly api: TraktSyncClient,
 		private readonly local: LocalSyncRecords,
 		private readonly config: BackendEnv,
+		private readonly watchLocks: WatchAccountLock,
 	) {}
 	onModuleInit() {
 		if (this.config.NODE_ENV !== "test")
@@ -467,6 +470,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		operation: () => Promise<T>,
 	): Promise<T> {
 		const c = await this.requireConnection(userDid);
+		return this.publicWatchOperation({ ...c, watches: true }, () =>
+			this.recoverImportLocked(c, operation),
+		);
+	}
+	private async recoverImportLocked<T>(
+		c: TraktSyncConnection,
+		operation: () => Promise<T>,
+	): Promise<T> {
+		const userDid = c.userDid;
 		return this.locked(c, async (lease) => {
 			if (!c.publicationConsent)
 				throw new BadRequestException(
@@ -858,7 +870,12 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			if (!c) return;
 			await this.locked(c, async (lease) => {
 				try {
-					await this.process(c, lease);
+					await this.publicWatchOperation(c, async (signal) =>
+						this.process(c, async () => {
+							signal.throwIfAborted();
+							await lease();
+						}),
+					);
 				} catch (error) {
 					await this.prisma.traktSyncConnection.update({
 						where: { id: c.id },
@@ -886,15 +903,44 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			this.busy = false;
 		}
 	}
-	private async process(c: TraktSyncConnection, lease: () => Promise<void>) {
-		const deleting = await this.prisma.backgroundJob.findFirst({
-			where: {
-				userDid: c.userDid,
-				type: "account_deletion",
-				status: { in: ["queued", "running", "waiting_retry"] },
-			},
+	private async publicWatchOperation<T>(
+		c: TraktSyncConnection,
+		work: (signal: AbortSignal) => Promise<T>,
+	): Promise<T> {
+		return this.watchLocks.run(c.userDid, async (signal) => {
+			const deleting = await this.prisma.backgroundJob.findFirst({
+				where: {
+					userDid: c.userDid,
+					type: "account_deletion",
+					status: { in: ["queued", "running", "waiting_retry"] },
+				},
+			});
+			if (deleting)
+				throw new TraktSyncError("Account deletion is in progress.");
+
+			const owner = await this.prisma.user.findUniqueOrThrow({
+				where: { did: c.userDid },
+				select: {
+					watchVisibility: true,
+					watchPrivacyMigration: { select: { jobId: true } },
+				},
+			});
+			if (
+				c.watches &&
+				(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
+			)
+				throw new TraktSyncError(
+					"Watch sync requires a public Shelf with no privacy change in progress. Disable Watch sync to continue with Ratings.",
+				);
+			signal.throwIfAborted();
+			return watchOperation.run(
+				{ did: c.userDid, visibility: "public", signal },
+				() => work(signal),
+			);
 		});
-		if (deleting) return;
+	}
+
+	private async process(c: TraktSyncConnection, lease: () => Promise<void>) {
 		const token = await this.token(c);
 		let remote = records(c.remoteSnapshot);
 		const local = await this.local.snapshot(c.userDid);

@@ -1,3 +1,6 @@
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
+import { UseInterceptors } from "@nestjs/common";
+import { WatchReadGuard } from "../privacy/watch-access";
 import { UpdateWatchDateDto } from "../common/update-watch-date.dto";
 import {
 	Body,
@@ -226,6 +229,8 @@ export class ShowsController {
 	}
 
 	@Get("user/:userDid")
+	@Header("Cache-Control", "private, no-store")
+	@UseGuards(OptionalAuthGuard, WatchReadGuard)
 	@ApiOperation({ summary: "Get tracked shows for a user" })
 	@ApiResponse({ status: 200, type: [TrackedShowSummaryDto] })
 	async getUserShows(@Param("userDid") userDid: string) {
@@ -242,8 +247,8 @@ export class ShowsController {
 	}
 
 	@Get("user/:userDid/up-next")
-	@UseGuards(OptionalAuthGuard)
 	@Header("Cache-Control", "private, no-store")
+	@UseGuards(OptionalAuthGuard, WatchReadGuard)
 	@ApiOperation({ summary: "Get up next episodes for a user" })
 	@ApiResponse({ status: 200, type: PaginatedUpNextResponseDto })
 	async getUserUpNext(
@@ -268,6 +273,8 @@ export class ShowsController {
 	}
 
 	@Get("user/:userDid/release-calendar")
+	@Header("Cache-Control", "private, no-store")
+	@UseGuards(OptionalAuthGuard, WatchReadGuard)
 	@ApiOperation({
 		summary:
 			"Get releases for watched shows and watchlist items within a date range",
@@ -281,6 +288,7 @@ export class ShowsController {
 	}
 
 	@Post("watched")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "Mark an episode as watched" })
 	@ApiBody({ type: MarkEpisodeWatchedDto })
@@ -331,6 +339,7 @@ export class ShowsController {
 	}
 
 	@Delete("watched/:showId")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@ApiOperation({ summary: "Unmark episode(s) as watched" })
@@ -422,7 +431,9 @@ export class ShowsController {
 		@Req() req: AuthenticatedRequest,
 	) {
 		if (req.user.did !== userDid) {
-			throw new Error("Unauthorized");
+			throw new ForbiddenException(
+				"Watch history is only available to its owner",
+			);
 		}
 		const history = await this.showsService.getEpisodeWatchHistory(
 			userDid,
@@ -437,6 +448,7 @@ export class ShowsController {
 	}
 
 	@Patch("history/:trackedEpisodeId")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@ApiOperation({ summary: "Correct the date of an existing Watch" })
@@ -459,6 +471,7 @@ export class ShowsController {
 	}
 
 	@Delete("history/:trackedEpisodeId")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@ApiOperation({ summary: "Delete a specific episode watch history entry" })
@@ -481,6 +494,7 @@ export class ShowsController {
 	}
 
 	@Post("season/watched")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "Mark all episodes in a season as watched" })
 	@ApiBody({ type: MarkSeasonWatchedDto })
@@ -501,6 +515,7 @@ export class ShowsController {
 	}
 
 	@Post("show/watched")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "Mark all episodes in a show as watched" })
 	@ApiBody({ type: MarkShowWatchedDto })

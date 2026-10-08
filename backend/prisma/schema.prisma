@@ -60,6 +60,18 @@ model User {
   reviewsPublicationName  String?
   // Account-wide integrations. Configuration is retained when disabled so an
   // explicit reconnect can resume the same publication/pointers.
+  watchSyncAttemptedAt DateTime?
+  watchSyncedAt DateTime?
+  watchSyncError String?
+  privacyScopes PrivacyScope[]
+  listsDefaultVisibility String @default("public")
+  watchPrivacyManaged Boolean @default(false)
+  // Legacy storage name: saved authorization preference for all Privacy Alpha categories.
+  watchPrivacyEnabled Boolean @default(false)
+  watchVisibility String @default("public")
+  watchPrivacyMigration WatchPrivacyMigration?
+  privateSettingsEnabled Boolean @default(false)
+  privateSettingsHasCopy Boolean @default(false)
   blogIntegrationEnabled  Boolean          @default(false)
   blueskyCrossPostEnabled Boolean          @default(false)
   // The explicitly confirmed reader format for blog mirrors. This remains
@@ -359,6 +371,8 @@ model BackgroundJob {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  watchPrivacyCopies WatchPrivacyCopy[]
+  watchPrivacyMigration WatchPrivacyMigration?
   traktItems   TraktImportItem[]
   traktMatches TraktImportMatch[]
 
@@ -829,4 +843,66 @@ model FeaturedContent {
   updatedAt    DateTime @updatedAt
 
   @@index([published, expiresAt])
+}
+
+// Verified full-record snapshots scoped to one privacy migration. Retain until
+// the entire migration commits so an interrupted cross-repo move is recoverable.
+model WatchPrivacyCopy {
+  jobId String
+  job BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  collection String
+  rkey String
+  cid String
+  value Json
+  createdAt DateTime @default(now())
+
+  @@id([jobId, collection, rkey])
+}
+
+// Exists only while migrating (including recoverable failures). Its unique owner
+// prevents overlapping migrations; direction never changes after creation.
+model WatchPrivacyMigration {
+  jobId String @id
+  job BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  userDid String @unique
+  user User @relation(fields: [userDid], references: [did], onDelete: Restrict)
+  sourceVisibility String
+  targetVisibility String
+  createdAt DateTime @default(now())
+}
+
+// Privacy state for category repositories and individual Lists. A migration
+// generation binds its recovery copies; visibility changes only at completion.
+model PrivacyScope {
+ id String @id @default(cuid())
+ userDid String
+ user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+ key String
+ category String
+ listRkey String?
+ visibility String @default("public")
+ managed Boolean @default(false)
+ migrationId String? @unique
+ targetVisibility String?
+ totalRecords Int?
+ status String?
+ error String?
+ syncAttemptedAt DateTime?
+ syncedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ copies PrivacyCopy[]
+ @@unique([userDid, key])
+ @@index([status, updatedAt])
+}
+model PrivacyCopy {
+ scopeId String
+ scope PrivacyScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+ migrationId String
+ collection String
+ rkey String
+ cid String
+ value Json
+ createdAt DateTime @default(now())
+ @@id([scopeId, collection, rkey])
 }

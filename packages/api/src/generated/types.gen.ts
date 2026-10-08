@@ -497,7 +497,7 @@ export type MobileHandoffExchangeResponseDto = {
 };
 
 export type PermissionChangeDto = {
-    integration: 'atstore' | 'blog' | 'bluesky';
+    integration: 'atstore' | 'blog' | 'bluesky' | 'spaces' | 'watches';
     action: 'connect' | 'disconnect';
     platform?: 'mobile';
     /**
@@ -954,6 +954,18 @@ export type MostWatchedShowDto = {
 };
 
 export type PublicUserProfileDto = {
+    /**
+     * Whether Library is publicly visible
+     */
+    libraryPublic: boolean;
+    /**
+     * Whether Notes are publicly visible
+     */
+    notesPublic: boolean;
+    /**
+     * Whether Watches are publicly visible
+     */
+    watchesPublic: boolean;
     /**
      * Stable DID for the user
      */
@@ -1455,145 +1467,96 @@ export type MarkReleaseNotesReadDto = {
     readThrough: string;
 };
 
-export type SyncStatusDto = {
-    configured: boolean;
-    status: 'disconnected' | 'paused' | 'preparing' | 'active' | 'reconnect';
-    username?: string;
-    direction: 'inbound' | 'outbound' | 'both';
-    watches: boolean;
-    ratings: boolean;
-    historyScope: 'all' | 'future';
-    publicationConsent: boolean;
-    lastSuccessAt?: string;
-    lastError?: string;
-    needsAttention: number;
-    ignored: number;
-    importStatus?: string;
-};
-
-export type SyncConnectDto = {
-    platform: 'web' | 'mobile';
-};
-
-export type SyncAuthorizeDto = {
-    url: string;
-};
-
-export type SyncSettingsDto = {
-    direction: 'inbound' | 'outbound' | 'both';
-    watches: boolean;
-    ratings: boolean;
-    historyScope: 'all' | 'future';
-    publicationConsent: boolean;
-    handoffImport?: boolean;
-};
-
-export type SyncActionDto = {
-    action: 'pause' | 'resume' | 'sync' | 'disconnect';
-};
-
-export type SyncRecordDto = {
-    key: string;
-    kind: string;
-    mediaType: string;
-    mediaId: string | null;
-    title: string;
-    season: number;
-    episode: number;
-    /**
-     * Watch date, No date, or Rating
-     */
-    displayValue: string;
-};
-
-export type SyncIssueDto = {
+export type PrivacyMigrationDto = {
     id: string;
-    kind: string;
-    issue: string;
-    ignored: boolean;
-    opnshelf?: SyncRecordDto;
-    trakt?: SyncRecordDto;
-    candidates: Array<SyncRecordDto>;
+    target: 'public' | 'private';
+    status: string;
+    copied: number;
+    /**
+     * Distinct records in this migration; null until counted or when unavailable.
+     */
+    total: number | null;
+    error: string | null;
 };
 
-export type SyncIssuesDto = {
-    /**
-     * Total count of items across all pages
-     */
-    total: number;
-    /**
-     * Current page number after server-side clamping
-     */
-    page: number;
-    /**
-     * Number of items per page
-     */
-    pageSize: number;
-    /**
-     * Total number of available pages
-     */
-    totalPages: number;
-    /**
-     * Whether a next page exists
-     */
-    hasNextPage: boolean;
-    /**
-     * Whether a previous page exists
-     */
-    hasPreviousPage: boolean;
-    items: Array<SyncIssueDto>;
+export type PrivacyScopeDto = {
+    category: 'watches' | 'library' | 'notes' | 'lists';
+    listRkey: string | null;
+    label: string;
+    visibility: 'public' | 'private';
+    migration: PrivacyMigrationDto | null;
 };
 
-export type SyncResolveDto = {
-    action: 'trakt' | 'opnshelf' | 'ignore' | 'undo' | 'retry' | 'link' | 'match' | 'separate';
-    candidateKey?: string;
-    /**
-     * TMDB movie or show ID
-     */
-    mediaId?: string;
-    allRatings?: boolean;
+export type PrivacyStatusDto = {
+    availability: 'available' | 'unsupported' | 'unavailable';
+    authorized: boolean;
+    listsDefaultVisibility: 'public' | 'private';
+    scopes: Array<PrivacyScopeDto>;
+    alphaDetails: string;
 };
 
-export type RatingResponseDto = {
+export type PrivacyChangeDto = {
+    category: 'watches' | 'library' | 'notes' | 'lists';
+    visibility: 'public' | 'private';
+    listRkey?: string;
+    publicationConfirmed?: boolean;
+};
+
+export type PrivacyDefaultDto = {
+    visibility: 'public' | 'private';
+};
+
+export type WatchPrivacyMigrationDto = {
+    id: string;
+    target: 'public' | 'private';
+    status: string;
+    copied: number;
+    error: string | null;
+};
+
+export type WatchPrivacyStatusDto = {
+    visibility: 'public' | 'private';
+    connected: boolean;
+    lastSyncedAt: string | null;
+    syncError: string | null;
+    migration: WatchPrivacyMigrationDto | null;
+};
+
+export type WatchPrivacyChangeDto = {
+    visibility: 'public' | 'private';
+    /**
+     * Explicit consent to publish all Watches
+     */
+    publicationConfirmed?: boolean;
+};
+
+export type LibraryItemDto = {
     id: string;
     rkey: string;
-    rating: number;
     mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
     mediaId: string;
+    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
     seasonNumber?: number;
     episodeNumber?: number;
+    episodeName?: string;
+    boxSet?: string;
+    notes?: string;
     createdAt: string;
-    updatedAt: string;
+    media: {
+        [key: string]: unknown;
+    };
 };
 
-export type MediaRatingResponseDto = {
-    /**
-     * Average rating (1-10 scale)
-     */
-    averageRating?: number;
-    /**
-     * Total number of ratings
-     */
-    ratingCount: number;
+export type LibraryOwnershipDto = {
+    rkey: string;
+    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
+    boxSet?: string;
 };
 
-export type BatchRatingItemDto = {
-    mediaId: string;
-    /**
-     * Average rating (1-10 scale)
-     */
-    averageRating?: number;
-    /**
-     * Total number of ratings
-     */
-    ratingCount: number;
-};
-
-export type BatchRatingResponseDto = {
-    items: Array<BatchRatingItemDto>;
-};
-
-export type SetRatingDto = {
+export type AddToLibraryDto = {
     /**
      * Media type
      */
@@ -1603,6 +1566,10 @@ export type SetRatingDto = {
      */
     mediaId: string;
     /**
+     * Format the item is owned in
+     */
+    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
+    /**
      * Season number for season/episode items
      */
     seasonNumber?: number;
@@ -1611,9 +1578,13 @@ export type SetRatingDto = {
      */
     episodeNumber?: number;
     /**
-     * Rating from 1 to 10 (maps to 0.5-5.0 stars)
+     * Optional named box set
      */
-    rating: number;
+    boxSet?: string;
+    /**
+     * Optional notes about the owned item
+     */
+    notes?: string;
 };
 
 export type ListSummaryDto = {
@@ -1799,6 +1770,253 @@ export type ListsForItemDto = {
     listSlug: string;
     isDefault: boolean;
     isInList: boolean;
+};
+
+export type NoteResponseDto = {
+    id: string;
+    rkey: string;
+    content: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type UserNoteDto = {
+    id: string;
+    content: string;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    /**
+     * Human-readable label for the media. Display only — never build a URL from it.
+     */
+    mediaLabel?: string;
+    /**
+     * Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).
+     */
+    mediaTitle?: string;
+    /**
+     * Poster path for the movie or show
+     */
+    posterPath?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PaginatedNotesResponseDto = {
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<UserNoteDto>;
+};
+
+export type UpsertNoteDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
+    /**
+     * Note content
+     */
+    content: string;
+};
+
+export type SyncStatusDto = {
+    configured: boolean;
+    status: 'disconnected' | 'paused' | 'preparing' | 'active' | 'reconnect';
+    username?: string;
+    direction: 'inbound' | 'outbound' | 'both';
+    watches: boolean;
+    ratings: boolean;
+    historyScope: 'all' | 'future';
+    publicationConsent: boolean;
+    lastSuccessAt?: string;
+    lastError?: string;
+    needsAttention: number;
+    ignored: number;
+    importStatus?: string;
+};
+
+export type SyncConnectDto = {
+    platform: 'web' | 'mobile';
+};
+
+export type SyncAuthorizeDto = {
+    url: string;
+};
+
+export type SyncSettingsDto = {
+    direction: 'inbound' | 'outbound' | 'both';
+    watches: boolean;
+    ratings: boolean;
+    historyScope: 'all' | 'future';
+    publicationConsent: boolean;
+    handoffImport?: boolean;
+};
+
+export type SyncActionDto = {
+    action: 'pause' | 'resume' | 'sync' | 'disconnect';
+};
+
+export type SyncRecordDto = {
+    key: string;
+    kind: string;
+    mediaType: string;
+    mediaId: string | null;
+    title: string;
+    season: number;
+    episode: number;
+    /**
+     * Watch date, No date, or Rating
+     */
+    displayValue: string;
+};
+
+export type SyncIssueDto = {
+    id: string;
+    kind: string;
+    issue: string;
+    ignored: boolean;
+    opnshelf?: SyncRecordDto;
+    trakt?: SyncRecordDto;
+    candidates: Array<SyncRecordDto>;
+};
+
+export type SyncIssuesDto = {
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<SyncIssueDto>;
+};
+
+export type SyncResolveDto = {
+    action: 'trakt' | 'opnshelf' | 'ignore' | 'undo' | 'retry' | 'link' | 'match' | 'separate';
+    candidateKey?: string;
+    /**
+     * TMDB movie or show ID
+     */
+    mediaId?: string;
+    allRatings?: boolean;
+};
+
+export type RatingResponseDto = {
+    id: string;
+    rkey: string;
+    rating: number;
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MediaRatingResponseDto = {
+    /**
+     * Average rating (1-10 scale)
+     */
+    averageRating?: number;
+    /**
+     * Total number of ratings
+     */
+    ratingCount: number;
+};
+
+export type BatchRatingItemDto = {
+    mediaId: string;
+    /**
+     * Average rating (1-10 scale)
+     */
+    averageRating?: number;
+    /**
+     * Total number of ratings
+     */
+    ratingCount: number;
+};
+
+export type BatchRatingResponseDto = {
+    items: Array<BatchRatingItemDto>;
+};
+
+export type SetRatingDto = {
+    /**
+     * Media type
+     */
+    mediaType: 'movie' | 'show' | 'season' | 'episode';
+    /**
+     * TMDB movie ID or show ID
+     */
+    mediaId: string;
+    /**
+     * Season number for season/episode items
+     */
+    seasonNumber?: number;
+    /**
+     * Episode number for episode items
+     */
+    episodeNumber?: number;
+    /**
+     * Rating from 1 to 10 (maps to 0.5-5.0 stars)
+     */
+    rating: number;
 };
 
 export type UserRelationshipDto = {
@@ -2385,149 +2603,6 @@ export type ShelfSyncStatusDto = {
      * When the last watch record was ingested, ISO 8601
      */
     lastIngestAt?: string;
-};
-
-export type LibraryItemDto = {
-    id: string;
-    rkey: string;
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    /**
-     * TMDB movie ID or show ID
-     */
-    mediaId: string;
-    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
-    seasonNumber?: number;
-    episodeNumber?: number;
-    episodeName?: string;
-    boxSet?: string;
-    notes?: string;
-    createdAt: string;
-    media: {
-        [key: string]: unknown;
-    };
-};
-
-export type LibraryOwnershipDto = {
-    rkey: string;
-    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
-    boxSet?: string;
-};
-
-export type AddToLibraryDto = {
-    /**
-     * Media type
-     */
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    /**
-     * TMDB movie ID or show ID
-     */
-    mediaId: string;
-    /**
-     * Format the item is owned in
-     */
-    format: 'digital' | 'bluray' | 'bluray4k' | 'dvd';
-    /**
-     * Season number for season/episode items
-     */
-    seasonNumber?: number;
-    /**
-     * Episode number for episode items
-     */
-    episodeNumber?: number;
-    /**
-     * Optional named box set
-     */
-    boxSet?: string;
-    /**
-     * Optional notes about the owned item
-     */
-    notes?: string;
-};
-
-export type NoteResponseDto = {
-    id: string;
-    rkey: string;
-    content: string;
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    mediaId: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type UserNoteDto = {
-    id: string;
-    content: string;
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    mediaId: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    /**
-     * Human-readable label for the media. Display only — never build a URL from it.
-     */
-    mediaLabel?: string;
-    /**
-     * Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023).
-     */
-    mediaTitle?: string;
-    /**
-     * Poster path for the movie or show
-     */
-    posterPath?: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type PaginatedNotesResponseDto = {
-    /**
-     * Total count of items across all pages
-     */
-    total: number;
-    /**
-     * Current page number after server-side clamping
-     */
-    page: number;
-    /**
-     * Number of items per page
-     */
-    pageSize: number;
-    /**
-     * Total number of available pages
-     */
-    totalPages: number;
-    /**
-     * Whether a next page exists
-     */
-    hasNextPage: boolean;
-    /**
-     * Whether a previous page exists
-     */
-    hasPreviousPage: boolean;
-    items: Array<UserNoteDto>;
-};
-
-export type UpsertNoteDto = {
-    /**
-     * Media type
-     */
-    mediaType: 'movie' | 'show' | 'season' | 'episode';
-    /**
-     * TMDB movie ID or show ID
-     */
-    mediaId: string;
-    /**
-     * Season number for season/episode items
-     */
-    seasonNumber?: number;
-    /**
-     * Episode number for episode items
-     */
-    episodeNumber?: number;
-    /**
-     * Note content
-     */
-    content: string;
 };
 
 export type AtStoreReviewPromptDto = {
@@ -4431,6 +4506,20 @@ export type UsersControllerUpdateMySettingsResponses = {
 
 export type UsersControllerUpdateMySettingsResponse = UsersControllerUpdateMySettingsResponses[keyof UsersControllerUpdateMySettingsResponses];
 
+export type UsersControllerDeletePrivateSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/settings/private';
+};
+
+export type UsersControllerDeletePrivateSettingsResponses = {
+    /**
+     * Private record deleted
+     */
+    200: unknown;
+};
+
 export type UsersControllerUpdateMyProfileData = {
     body: UpdateUserProfileDto;
     path?: never;
@@ -4839,268 +4928,258 @@ export type ReleaseNotesControllerMarkReadResponses = {
 
 export type ReleaseNotesControllerMarkReadResponse = ReleaseNotesControllerMarkReadResponses[keyof ReleaseNotesControllerMarkReadResponses];
 
-export type TraktSyncControllerStatusData = {
+export type PrivacyControllerStatusData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/trakt-sync';
+    url: '/users/me/privacy';
 };
 
-export type TraktSyncControllerStatusResponses = {
-    200: SyncStatusDto;
+export type PrivacyControllerStatusResponses = {
+    200: PrivacyStatusDto;
 };
 
-export type TraktSyncControllerStatusResponse = TraktSyncControllerStatusResponses[keyof TraktSyncControllerStatusResponses];
+export type PrivacyControllerStatusResponse = PrivacyControllerStatusResponses[keyof PrivacyControllerStatusResponses];
 
-export type TraktSyncControllerConfigureData = {
-    body: SyncSettingsDto;
+export type PrivacyControllerChangeData = {
+    body: PrivacyChangeDto;
     path?: never;
     query?: never;
-    url: '/trakt-sync';
+    url: '/users/me/privacy/change';
 };
 
-export type TraktSyncControllerConfigureResponses = {
-    200: SyncStatusDto;
+export type PrivacyControllerChangeResponses = {
+    201: PrivacyStatusDto;
 };
 
-export type TraktSyncControllerConfigureResponse = TraktSyncControllerConfigureResponses[keyof TraktSyncControllerConfigureResponses];
+export type PrivacyControllerChangeResponse = PrivacyControllerChangeResponses[keyof PrivacyControllerChangeResponses];
 
-export type TraktSyncControllerConnectData = {
-    body: SyncConnectDto;
+export type PrivacyControllerRetryData = {
+    body: PrivacyChangeDto;
     path?: never;
     query?: never;
-    url: '/trakt-sync/connect';
+    url: '/users/me/privacy/retry';
 };
 
-export type TraktSyncControllerConnectResponses = {
-    201: SyncAuthorizeDto;
+export type PrivacyControllerRetryResponses = {
+    201: PrivacyStatusDto;
 };
 
-export type TraktSyncControllerConnectResponse = TraktSyncControllerConnectResponses[keyof TraktSyncControllerConnectResponses];
+export type PrivacyControllerRetryResponse = PrivacyControllerRetryResponses[keyof PrivacyControllerRetryResponses];
 
-export type TraktSyncControllerCallbackData = {
+export type PrivacyControllerListsDefaultData = {
+    body: PrivacyDefaultDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/privacy/lists/default';
+};
+
+export type PrivacyControllerListsDefaultResponses = {
+    201: PrivacyStatusDto;
+};
+
+export type PrivacyControllerListsDefaultResponse = PrivacyControllerListsDefaultResponses[keyof PrivacyControllerListsDefaultResponses];
+
+export type PrivacyControllerChangeAllListsData = {
+    body: PrivacyChangeDto;
+    path?: never;
+    query?: never;
+    url: '/users/me/privacy/lists/change-all';
+};
+
+export type PrivacyControllerChangeAllListsResponses = {
+    201: PrivacyStatusDto;
+};
+
+export type PrivacyControllerChangeAllListsResponse = PrivacyControllerChangeAllListsResponses[keyof PrivacyControllerChangeAllListsResponses];
+
+export type WatchPrivacyControllerStatusData = {
     body?: never;
     path?: never;
-    query: {
-        state: string;
-    };
-    url: '/trakt-sync/callback';
+    query?: never;
+    url: '/users/me/watch-privacy';
 };
 
-export type TraktSyncControllerCallbackResponses = {
-    200: unknown;
+export type WatchPrivacyControllerStatusResponses = {
+    200: WatchPrivacyStatusDto;
 };
 
-export type TraktSyncControllerActionData = {
-    body: SyncActionDto;
+export type WatchPrivacyControllerStatusResponse = WatchPrivacyControllerStatusResponses[keyof WatchPrivacyControllerStatusResponses];
+
+export type WatchPrivacyControllerChangeData = {
+    body: WatchPrivacyChangeDto;
     path?: never;
     query?: never;
-    url: '/trakt-sync/action';
+    url: '/users/me/watch-privacy';
 };
 
-export type TraktSyncControllerActionResponses = {
-    201: SyncStatusDto;
+export type WatchPrivacyControllerChangeResponses = {
+    201: WatchPrivacyStatusDto;
 };
 
-export type TraktSyncControllerActionResponse = TraktSyncControllerActionResponses[keyof TraktSyncControllerActionResponses];
+export type WatchPrivacyControllerChangeResponse = WatchPrivacyControllerChangeResponses[keyof WatchPrivacyControllerChangeResponses];
 
-export type TraktSyncControllerIssuesData = {
+export type WatchPrivacyControllerRetryData = {
     body?: never;
     path?: never;
-    query?: {
+    query?: never;
+    url: '/users/me/watch-privacy/retry';
+};
+
+export type WatchPrivacyControllerRetryResponses = {
+    201: WatchPrivacyStatusDto;
+};
+
+export type WatchPrivacyControllerRetryResponse = WatchPrivacyControllerRetryResponses[keyof WatchPrivacyControllerRetryResponses];
+
+export type WatchPrivacyControllerSyncData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/watch-privacy/sync';
+};
+
+export type WatchPrivacyControllerSyncResponses = {
+    201: WatchPrivacyStatusDto;
+};
+
+export type WatchPrivacyControllerSyncResponse = WatchPrivacyControllerSyncResponses[keyof WatchPrivacyControllerSyncResponses];
+
+export type LibraryControllerGetMyLibraryData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/library';
+};
+
+export type LibraryControllerGetMyLibraryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type LibraryControllerGetMyLibraryResponses = {
+    /**
+     * Owned items
+     */
+    200: Array<LibraryItemDto>;
+};
+
+export type LibraryControllerGetMyLibraryResponse = LibraryControllerGetMyLibraryResponses[keyof LibraryControllerGetMyLibraryResponses];
+
+export type LibraryControllerGetUserLibraryData = {
+    body?: never;
+    path: {
         /**
-         * Page number to return (1-based)
+         * User DID
          */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-        view?: 'attention' | 'ignored';
-    };
-    url: '/trakt-sync/issues';
-};
-
-export type TraktSyncControllerIssuesResponses = {
-    200: SyncIssuesDto;
-};
-
-export type TraktSyncControllerIssuesResponse = TraktSyncControllerIssuesResponses[keyof TraktSyncControllerIssuesResponses];
-
-export type TraktSyncControllerResolveData = {
-    body: SyncResolveDto;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/trakt-sync/issues/{id}';
-};
-
-export type TraktSyncControllerResolveResponses = {
-    201: SyncStatusDto;
-};
-
-export type TraktSyncControllerResolveResponse = TraktSyncControllerResolveResponses[keyof TraktSyncControllerResolveResponses];
-
-export type TraktSyncControllerMatchesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: {
-        q?: string;
-    };
-    url: '/trakt-sync/issues/{id}/matches';
-};
-
-export type TraktSyncControllerMatchesResponses = {
-    200: Array<TraktMatchCandidateDto>;
-};
-
-export type TraktSyncControllerMatchesResponse = TraktSyncControllerMatchesResponses[keyof TraktSyncControllerMatchesResponses];
-
-export type RatingsControllerGetRatingData = {
-    body?: never;
-    path: {
         userDid: string;
     };
-    query: {
-        /**
-         * Media type (movie, show, season, episode)
-         */
-        mediaType: 'movie' | 'show' | 'season' | 'episode';
-        /**
-         * TMDB movie ID or show ID
-         */
-        mediaId: string;
-        /**
-         * Season number for season/episode items
-         */
-        seasonNumber?: number;
-        /**
-         * Episode number for episode items
-         */
-        episodeNumber?: number;
-    };
-    url: '/ratings/user/{userDid}';
-};
-
-export type RatingsControllerGetRatingErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type RatingsControllerGetRatingResponses = {
-    /**
-     * Rating retrieved
-     */
-    200: RatingResponseDto;
-};
-
-export type RatingsControllerGetRatingResponse = RatingsControllerGetRatingResponses[keyof RatingsControllerGetRatingResponses];
-
-export type RatingsControllerGetMediaRatingData = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Media type
-         */
-        mediaType: 'movie' | 'show' | 'season' | 'episode';
-        /**
-         * TMDB movie ID or show ID
-         */
-        mediaId: string;
-        /**
-         * Season number for season/episode items
-         */
-        seasonNumber?: number;
-        /**
-         * Episode number for episode items
-         */
-        episodeNumber?: number;
-    };
-    url: '/ratings/media';
-};
-
-export type RatingsControllerGetMediaRatingResponses = {
-    /**
-     * Aggregate rating retrieved
-     */
-    200: MediaRatingResponseDto;
-};
-
-export type RatingsControllerGetMediaRatingResponse = RatingsControllerGetMediaRatingResponses[keyof RatingsControllerGetMediaRatingResponses];
-
-export type RatingsControllerGetBatchRatingsData = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Media type
-         */
-        mediaType: 'movie' | 'show';
-        /**
-         * Repeated media ID to fetch ratings for
-         */
-        mediaIds: Array<string>;
-    };
-    url: '/ratings/batch';
-};
-
-export type RatingsControllerGetBatchRatingsResponses = {
-    /**
-     * Batch ratings retrieved
-     */
-    200: BatchRatingResponseDto;
-};
-
-export type RatingsControllerGetBatchRatingsResponse = RatingsControllerGetBatchRatingsResponses[keyof RatingsControllerGetBatchRatingsResponses];
-
-export type RatingsControllerSetRatingData = {
-    body: SetRatingDto;
-    path?: never;
     query?: never;
-    url: '/ratings';
+    url: '/library/user/{userDid}';
 };
 
-export type RatingsControllerSetRatingErrors = {
+export type LibraryControllerGetUserLibraryResponses = {
     /**
-     * Not authenticated
+     * Owned items
      */
-    401: unknown;
+    200: Array<LibraryItemDto>;
 };
 
-export type RatingsControllerSetRatingResponses = {
-    /**
-     * Rating set
-     */
-    200: RatingResponseDto;
-};
+export type LibraryControllerGetUserLibraryResponse = LibraryControllerGetUserLibraryResponses[keyof LibraryControllerGetUserLibraryResponses];
 
-export type RatingsControllerSetRatingResponse = RatingsControllerSetRatingResponses[keyof RatingsControllerSetRatingResponses];
-
-export type RatingsControllerClearRatingData = {
+export type LibraryControllerGetLibraryForItemData = {
     body?: never;
     path: {
-        ratingId: string;
+        /**
+         * movie, show, season, or episode
+         */
+        mediaType: string;
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
     };
-    query?: never;
-    url: '/ratings/{ratingId}';
+    query?: {
+        seasonNumber?: number;
+        episodeNumber?: number;
+    };
+    url: '/library/for-item/{mediaType}/{mediaId}';
 };
 
-export type RatingsControllerClearRatingErrors = {
+export type LibraryControllerGetLibraryForItemErrors = {
     /**
      * Not authenticated
      */
     401: unknown;
 };
 
-export type RatingsControllerClearRatingResponses = {
+export type LibraryControllerGetLibraryForItemResponses = {
     /**
-     * Rating cleared
+     * Owned formats
+     */
+    200: Array<LibraryOwnershipDto>;
+};
+
+export type LibraryControllerGetLibraryForItemResponse = LibraryControllerGetLibraryForItemResponses[keyof LibraryControllerGetLibraryForItemResponses];
+
+export type LibraryControllerAddToLibraryData = {
+    body: AddToLibraryDto;
+    path?: never;
+    query?: never;
+    url: '/library/items';
+};
+
+export type LibraryControllerAddToLibraryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type LibraryControllerAddToLibraryResponses = {
+    /**
+     * Item added
+     */
+    200: LibraryItemDto;
+};
+
+export type LibraryControllerAddToLibraryResponse = LibraryControllerAddToLibraryResponses[keyof LibraryControllerAddToLibraryResponses];
+
+export type LibraryControllerRemoveFromLibraryData = {
+    body?: never;
+    path: {
+        /**
+         * movie, show, season, or episode
+         */
+        mediaType: string;
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * digital, bluray, bluray4k, or dvd
+         */
+        format: string;
+    };
+    query?: {
+        seasonNumber?: number;
+        episodeNumber?: number;
+    };
+    url: '/library/items/{mediaType}/{mediaId}/{format}';
+};
+
+export type LibraryControllerRemoveFromLibraryErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type LibraryControllerRemoveFromLibraryResponses = {
+    /**
+     * Item removed
      */
     200: unknown;
 };
@@ -5491,6 +5570,387 @@ export type ListsControllerGetListsForItemResponses = {
 };
 
 export type ListsControllerGetListsForItemResponse = ListsControllerGetListsForItemResponses[keyof ListsControllerGetListsForItemResponses];
+
+export type NotesControllerGetNoteData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query: {
+        /**
+         * Media type (movie, show, season, episode)
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
+    url: '/notes/user/{userDid}';
+};
+
+export type NotesControllerGetNoteErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type NotesControllerGetNoteResponses = {
+    /**
+     * Note retrieved
+     */
+    200: NoteResponseDto;
+};
+
+export type NotesControllerGetNoteResponse = NotesControllerGetNoteResponses[keyof NotesControllerGetNoteResponses];
+
+export type NotesControllerGetUserNotesData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query?: {
+        /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+    };
+    url: '/notes/user/{userDid}/notes';
+};
+
+export type NotesControllerGetUserNotesResponses = {
+    /**
+     * Notes retrieved
+     */
+    200: PaginatedNotesResponseDto;
+};
+
+export type NotesControllerGetUserNotesResponse = NotesControllerGetUserNotesResponses[keyof NotesControllerGetUserNotesResponses];
+
+export type NotesControllerUpsertNoteData = {
+    body: UpsertNoteDto;
+    path?: never;
+    query?: never;
+    url: '/notes';
+};
+
+export type NotesControllerUpsertNoteErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type NotesControllerUpsertNoteResponses = {
+    /**
+     * Note upserted
+     */
+    200: NoteResponseDto;
+};
+
+export type NotesControllerUpsertNoteResponse = NotesControllerUpsertNoteResponses[keyof NotesControllerUpsertNoteResponses];
+
+export type NotesControllerDeleteNoteData = {
+    body?: never;
+    path: {
+        noteId: string;
+    };
+    query?: never;
+    url: '/notes/{noteId}';
+};
+
+export type NotesControllerDeleteNoteErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type NotesControllerDeleteNoteResponses = {
+    /**
+     * Note deleted
+     */
+    200: unknown;
+};
+
+export type TraktSyncControllerStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/trakt-sync';
+};
+
+export type TraktSyncControllerStatusResponses = {
+    200: SyncStatusDto;
+};
+
+export type TraktSyncControllerStatusResponse = TraktSyncControllerStatusResponses[keyof TraktSyncControllerStatusResponses];
+
+export type TraktSyncControllerConfigureData = {
+    body: SyncSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/trakt-sync';
+};
+
+export type TraktSyncControllerConfigureResponses = {
+    200: SyncStatusDto;
+};
+
+export type TraktSyncControllerConfigureResponse = TraktSyncControllerConfigureResponses[keyof TraktSyncControllerConfigureResponses];
+
+export type TraktSyncControllerConnectData = {
+    body: SyncConnectDto;
+    path?: never;
+    query?: never;
+    url: '/trakt-sync/connect';
+};
+
+export type TraktSyncControllerConnectResponses = {
+    201: SyncAuthorizeDto;
+};
+
+export type TraktSyncControllerConnectResponse = TraktSyncControllerConnectResponses[keyof TraktSyncControllerConnectResponses];
+
+export type TraktSyncControllerCallbackData = {
+    body?: never;
+    path?: never;
+    query: {
+        state: string;
+    };
+    url: '/trakt-sync/callback';
+};
+
+export type TraktSyncControllerCallbackResponses = {
+    200: unknown;
+};
+
+export type TraktSyncControllerActionData = {
+    body: SyncActionDto;
+    path?: never;
+    query?: never;
+    url: '/trakt-sync/action';
+};
+
+export type TraktSyncControllerActionResponses = {
+    201: SyncStatusDto;
+};
+
+export type TraktSyncControllerActionResponse = TraktSyncControllerActionResponses[keyof TraktSyncControllerActionResponses];
+
+export type TraktSyncControllerIssuesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        view?: 'attention' | 'ignored';
+    };
+    url: '/trakt-sync/issues';
+};
+
+export type TraktSyncControllerIssuesResponses = {
+    200: SyncIssuesDto;
+};
+
+export type TraktSyncControllerIssuesResponse = TraktSyncControllerIssuesResponses[keyof TraktSyncControllerIssuesResponses];
+
+export type TraktSyncControllerResolveData = {
+    body: SyncResolveDto;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/trakt-sync/issues/{id}';
+};
+
+export type TraktSyncControllerResolveResponses = {
+    201: SyncStatusDto;
+};
+
+export type TraktSyncControllerResolveResponse = TraktSyncControllerResolveResponses[keyof TraktSyncControllerResolveResponses];
+
+export type TraktSyncControllerMatchesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        q?: string;
+    };
+    url: '/trakt-sync/issues/{id}/matches';
+};
+
+export type TraktSyncControllerMatchesResponses = {
+    200: Array<TraktMatchCandidateDto>;
+};
+
+export type TraktSyncControllerMatchesResponse = TraktSyncControllerMatchesResponses[keyof TraktSyncControllerMatchesResponses];
+
+export type RatingsControllerGetRatingData = {
+    body?: never;
+    path: {
+        userDid: string;
+    };
+    query: {
+        /**
+         * Media type (movie, show, season, episode)
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
+    url: '/ratings/user/{userDid}';
+};
+
+export type RatingsControllerGetRatingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type RatingsControllerGetRatingResponses = {
+    /**
+     * Rating retrieved
+     */
+    200: RatingResponseDto;
+};
+
+export type RatingsControllerGetRatingResponse = RatingsControllerGetRatingResponses[keyof RatingsControllerGetRatingResponses];
+
+export type RatingsControllerGetMediaRatingData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Media type
+         */
+        mediaType: 'movie' | 'show' | 'season' | 'episode';
+        /**
+         * TMDB movie ID or show ID
+         */
+        mediaId: string;
+        /**
+         * Season number for season/episode items
+         */
+        seasonNumber?: number;
+        /**
+         * Episode number for episode items
+         */
+        episodeNumber?: number;
+    };
+    url: '/ratings/media';
+};
+
+export type RatingsControllerGetMediaRatingResponses = {
+    /**
+     * Aggregate rating retrieved
+     */
+    200: MediaRatingResponseDto;
+};
+
+export type RatingsControllerGetMediaRatingResponse = RatingsControllerGetMediaRatingResponses[keyof RatingsControllerGetMediaRatingResponses];
+
+export type RatingsControllerGetBatchRatingsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Media type
+         */
+        mediaType: 'movie' | 'show';
+        /**
+         * Repeated media ID to fetch ratings for
+         */
+        mediaIds: Array<string>;
+    };
+    url: '/ratings/batch';
+};
+
+export type RatingsControllerGetBatchRatingsResponses = {
+    /**
+     * Batch ratings retrieved
+     */
+    200: BatchRatingResponseDto;
+};
+
+export type RatingsControllerGetBatchRatingsResponse = RatingsControllerGetBatchRatingsResponses[keyof RatingsControllerGetBatchRatingsResponses];
+
+export type RatingsControllerSetRatingData = {
+    body: SetRatingDto;
+    path?: never;
+    query?: never;
+    url: '/ratings';
+};
+
+export type RatingsControllerSetRatingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type RatingsControllerSetRatingResponses = {
+    /**
+     * Rating set
+     */
+    200: RatingResponseDto;
+};
+
+export type RatingsControllerSetRatingResponse = RatingsControllerSetRatingResponses[keyof RatingsControllerSetRatingResponses];
+
+export type RatingsControllerClearRatingData = {
+    body?: never;
+    path: {
+        ratingId: string;
+    };
+    query?: never;
+    url: '/ratings/{ratingId}';
+};
+
+export type RatingsControllerClearRatingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type RatingsControllerClearRatingResponses = {
+    /**
+     * Rating cleared
+     */
+    200: unknown;
+};
 
 export type SocialControllerGetSuggestionsData = {
     body?: never;
@@ -6158,260 +6618,6 @@ export type ShelfControllerGetSyncStatusResponses = {
 };
 
 export type ShelfControllerGetSyncStatusResponse = ShelfControllerGetSyncStatusResponses[keyof ShelfControllerGetSyncStatusResponses];
-
-export type LibraryControllerGetMyLibraryData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/library';
-};
-
-export type LibraryControllerGetMyLibraryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type LibraryControllerGetMyLibraryResponses = {
-    /**
-     * Owned items
-     */
-    200: Array<LibraryItemDto>;
-};
-
-export type LibraryControllerGetMyLibraryResponse = LibraryControllerGetMyLibraryResponses[keyof LibraryControllerGetMyLibraryResponses];
-
-export type LibraryControllerGetUserLibraryData = {
-    body?: never;
-    path: {
-        /**
-         * User DID
-         */
-        userDid: string;
-    };
-    query?: never;
-    url: '/library/user/{userDid}';
-};
-
-export type LibraryControllerGetUserLibraryResponses = {
-    /**
-     * Owned items
-     */
-    200: Array<LibraryItemDto>;
-};
-
-export type LibraryControllerGetUserLibraryResponse = LibraryControllerGetUserLibraryResponses[keyof LibraryControllerGetUserLibraryResponses];
-
-export type LibraryControllerGetLibraryForItemData = {
-    body?: never;
-    path: {
-        /**
-         * movie, show, season, or episode
-         */
-        mediaType: string;
-        /**
-         * TMDB movie ID or show ID
-         */
-        mediaId: string;
-    };
-    query?: {
-        seasonNumber?: number;
-        episodeNumber?: number;
-    };
-    url: '/library/for-item/{mediaType}/{mediaId}';
-};
-
-export type LibraryControllerGetLibraryForItemErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type LibraryControllerGetLibraryForItemResponses = {
-    /**
-     * Owned formats
-     */
-    200: Array<LibraryOwnershipDto>;
-};
-
-export type LibraryControllerGetLibraryForItemResponse = LibraryControllerGetLibraryForItemResponses[keyof LibraryControllerGetLibraryForItemResponses];
-
-export type LibraryControllerAddToLibraryData = {
-    body: AddToLibraryDto;
-    path?: never;
-    query?: never;
-    url: '/library/items';
-};
-
-export type LibraryControllerAddToLibraryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type LibraryControllerAddToLibraryResponses = {
-    /**
-     * Item added
-     */
-    200: LibraryItemDto;
-};
-
-export type LibraryControllerAddToLibraryResponse = LibraryControllerAddToLibraryResponses[keyof LibraryControllerAddToLibraryResponses];
-
-export type LibraryControllerRemoveFromLibraryData = {
-    body?: never;
-    path: {
-        /**
-         * movie, show, season, or episode
-         */
-        mediaType: string;
-        /**
-         * TMDB movie ID or show ID
-         */
-        mediaId: string;
-        /**
-         * digital, bluray, bluray4k, or dvd
-         */
-        format: string;
-    };
-    query?: {
-        seasonNumber?: number;
-        episodeNumber?: number;
-    };
-    url: '/library/items/{mediaType}/{mediaId}/{format}';
-};
-
-export type LibraryControllerRemoveFromLibraryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type LibraryControllerRemoveFromLibraryResponses = {
-    /**
-     * Item removed
-     */
-    200: unknown;
-};
-
-export type NotesControllerGetNoteData = {
-    body?: never;
-    path: {
-        userDid: string;
-    };
-    query: {
-        /**
-         * Media type (movie, show, season, episode)
-         */
-        mediaType: 'movie' | 'show' | 'season' | 'episode';
-        /**
-         * TMDB movie ID or show ID
-         */
-        mediaId: string;
-        /**
-         * Season number for season/episode items
-         */
-        seasonNumber?: number;
-        /**
-         * Episode number for episode items
-         */
-        episodeNumber?: number;
-    };
-    url: '/notes/user/{userDid}';
-};
-
-export type NotesControllerGetNoteErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type NotesControllerGetNoteResponses = {
-    /**
-     * Note retrieved
-     */
-    200: NoteResponseDto;
-};
-
-export type NotesControllerGetNoteResponse = NotesControllerGetNoteResponses[keyof NotesControllerGetNoteResponses];
-
-export type NotesControllerGetUserNotesData = {
-    body?: never;
-    path: {
-        userDid: string;
-    };
-    query?: {
-        /**
-         * Page number to return (1-based)
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-    };
-    url: '/notes/user/{userDid}/notes';
-};
-
-export type NotesControllerGetUserNotesResponses = {
-    /**
-     * Notes retrieved
-     */
-    200: PaginatedNotesResponseDto;
-};
-
-export type NotesControllerGetUserNotesResponse = NotesControllerGetUserNotesResponses[keyof NotesControllerGetUserNotesResponses];
-
-export type NotesControllerUpsertNoteData = {
-    body: UpsertNoteDto;
-    path?: never;
-    query?: never;
-    url: '/notes';
-};
-
-export type NotesControllerUpsertNoteErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type NotesControllerUpsertNoteResponses = {
-    /**
-     * Note upserted
-     */
-    200: NoteResponseDto;
-};
-
-export type NotesControllerUpsertNoteResponse = NotesControllerUpsertNoteResponses[keyof NotesControllerUpsertNoteResponses];
-
-export type NotesControllerDeleteNoteData = {
-    body?: never;
-    path: {
-        noteId: string;
-    };
-    query?: never;
-    url: '/notes/{noteId}';
-};
-
-export type NotesControllerDeleteNoteErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type NotesControllerDeleteNoteResponses = {
-    /**
-     * Note deleted
-     */
-    200: unknown;
-};
 
 export type AtStoreReviewsControllerGetPromptData = {
     body?: never;

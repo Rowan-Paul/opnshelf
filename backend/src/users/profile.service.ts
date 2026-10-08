@@ -57,13 +57,16 @@ const ALLOWED_AVATAR_MIME_TYPES = new Set([
 @Injectable()
 export class ProfileService {
 	private readonly logger = new Logger(ProfileService.name);
-	private readonly idResolver = new IdResolver();
+	private readonly idResolver: IdResolver;
 	private readonly isProduction: boolean;
 
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly configService: BackendEnv,
 	) {
+		this.idResolver = new IdResolver({
+			plcUrl: this.configService.PLC_DIRECTORY_URL,
+		});
 		this.isProduction = this.configService.NODE_ENV === "production";
 	}
 

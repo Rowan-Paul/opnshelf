@@ -1,4 +1,4 @@
-import { Agent } from "@atproto/api";
+import { createWatchAgent } from "../privacy/watch-operation";
 import { TID } from "@atproto/common";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { updateWatchDate } from "../common/update-watch-date";
@@ -280,9 +280,7 @@ export class MoviesService {
 		});
 
 		// Create agent from session and write record to user's PDS
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: COLLECTION,
@@ -312,9 +310,7 @@ export class MoviesService {
 		movieId: string,
 		mode: "latest" | "all" = "latest",
 	) {
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 
 		if (mode === "all") {
 			// Get all tracked movies for this user and movie
@@ -492,9 +488,7 @@ export class MoviesService {
 		}
 
 		// Delete the AT Protocol record from user's PDS
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		await agent.com.atproto.repo.deleteRecord({
 			repo: userDid,
 			collection: COLLECTION,

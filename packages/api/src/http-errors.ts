@@ -48,3 +48,18 @@ export function retryTransientFailures(
 	const status = getHttpStatus(error);
 	return (status === undefined || status >= 500) && failureCount < 3;
 }
+
+/** Read the API's public error message, including Nest's plain JSON responses. */
+export function getErrorMessage(error: unknown, fallback: string): string {
+	if (typeof error !== "object" || error === null || !("message" in error))
+		return fallback;
+	const message = error.message;
+	if (typeof message === "string" && message.trim()) return message;
+	if (
+		Array.isArray(message) &&
+		message.length &&
+		message.every((item) => typeof item === "string" && item.trim())
+	)
+		return message.join(" ");
+	return fallback;
+}

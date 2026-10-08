@@ -1,0 +1,4 @@
+ALTER TABLE "User" ADD COLUMN "watchPrivacyEnabled" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN "watchPrivacyManaged" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN "watchSyncedAt" TIMESTAMP(3), ADD COLUMN "watchSyncError" TEXT;
+ALTER TABLE "User" ADD COLUMN "watchSyncAttemptedAt" TIMESTAMP(3);

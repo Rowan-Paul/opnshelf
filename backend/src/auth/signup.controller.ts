@@ -215,7 +215,6 @@ export class SignupController {
 			throw mapConfirmEmailError(error, this.logger);
 		}
 
-		await this.nativeAccounts.markEmailVerified(did);
 		// The Mobile App names itself so the Core callback lands back in the app
 		// (with a handoff code when it also sent a challenge) instead of on the web.
 		const coreOAuthUrl = dto.platform
@@ -224,6 +223,9 @@ export class SignupController {
 					codeChallenge: dto.codeChallenge,
 				})
 			: await this.authService.authorize(user.handle);
+		// Keep the verification gate in place if preparing Core OAuth fails.
+		// Otherwise a retained bootstrap could advance directly to onboarding.
+		await this.nativeAccounts.markEmailVerified(did);
 		const bootstrapSessionId = extractSessionId(req);
 		if (bootstrapSessionId) {
 			await this.authService.revokeBySessionId(bootstrapSessionId);

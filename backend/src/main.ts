@@ -32,6 +32,9 @@ async function bootstrap() {
 		const requestId = randomUUID();
 		response.locals.requestId = requestId;
 		response.setHeader("X-Request-ID", requestId);
+		// Account data is never a shared cache entry. Explicit catalogue routes
+		// may override this header with their public metadata cache policy.
+		response.setHeader("Cache-Control", "private, no-store");
 		next();
 	};
 	app.use(assignRequestId);
@@ -72,7 +75,7 @@ async function bootstrap() {
 	}
 
 	const port = env.PORT;
-	const host = "0.0.0.0";
+	const host = env.HOST;
 
 	await app.listen(port, host);
 

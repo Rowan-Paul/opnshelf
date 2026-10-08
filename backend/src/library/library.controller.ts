@@ -1,3 +1,13 @@
+import { UseFilters } from "@nestjs/common";
+import { WatchPrivacyPdsFilter } from "../privacy/privacy-pds.filter";
+import { Header } from "@nestjs/common";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { ContentPrivacyGuard } from "../privacy/content-privacy.guard";
+import { UseInterceptors } from "@nestjs/common";
+import {
+	ContentPrivacyCategory,
+	ContentPrivacyInterceptor,
+} from "../privacy/content-privacy.interceptor";
 import {
 	Body,
 	Controller,
@@ -30,6 +40,7 @@ import { LibraryService, type ATSession } from "./library.service";
 
 @ApiTags("library")
 @Controller("library")
+@UseFilters(WatchPrivacyPdsFilter)
 export class LibraryController {
 	constructor(private readonly libraryService: LibraryService) {}
 
@@ -46,6 +57,9 @@ export class LibraryController {
 	}
 
 	@Get("user/:userDid")
+	@ContentPrivacyCategory("library")
+	@UseGuards(OptionalAuthGuard, ContentPrivacyGuard)
+	@Header("Cache-Control", "private, no-store")
 	@ApiOperation({ summary: "Get a user's public library" })
 	@ApiParam({ name: "userDid", description: "User DID" })
 	@ApiOkResponse({ description: "Owned items", type: [LibraryItemDto] })
@@ -87,6 +101,8 @@ export class LibraryController {
 	}
 
 	@Post("items")
+	@ContentPrivacyCategory("library")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Add an owned item to the library" })
@@ -104,6 +120,8 @@ export class LibraryController {
 	}
 
 	@Delete("items/:mediaType/:mediaId/:format")
+	@ContentPrivacyCategory("library")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({

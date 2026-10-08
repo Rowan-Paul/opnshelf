@@ -1,3 +1,12 @@
+import { privacyRepositoryConfig } from "../privacy/privacy-category";
+import { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
+import {
+	WatchMigrationPds,
+	WatchMigrationPdsError,
+} from "../privacy/watch-migration-pds";
+import { requireWatchSession } from "../privacy/watch-operation";
+import { WATCH_COLLECTIONS } from "../privacy/watch-record-migration";
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { Agent } from "@atproto/api";
 import { Tap } from "@atproto/tap";
 import {
@@ -81,6 +90,8 @@ export class UserDeletionService {
 		@Inject(AUTH_SERVICE)
 		private readonly authService: Pick<AuthService, "restore" | "revoke">,
 		config: BackendEnv,
+		private readonly privateSettings: PrivateSettingsService,
+		private readonly watchPrivacy: WatchPrivacyCoordinator,
 		@Optional() private readonly traktSync?: TraktSyncService,
 	) {
 		this.tab = new Tap(config.TAB_URL || "http://localhost:2480", {
@@ -89,6 +100,7 @@ export class UserDeletionService {
 	}
 
 	async deleteUserSync(did: string): Promise<void> {
+		await this.watchPrivacy.stopForAccountDeletion(did);
 		const user = await this.prisma.user.findUnique({
 			where: { did },
 		});
@@ -109,8 +121,8 @@ export class UserDeletionService {
 		// Revocation happens before entering this helper. Keep Trakt history and the
 		// user in one transaction so a failed User delete cannot strand a live
 		// account after its durable import ledger was removed.
-		await this.prisma.$transaction([
-			this.prisma.backgroundJob.deleteMany({
+		await this.watchPrivacy.deleteLocalAccount(did, async (tx) => {
+			await tx.backgroundJob.deleteMany({
 				where: {
 					userDid: did,
 					type: {
@@ -120,9 +132,9 @@ export class UserDeletionService {
 						],
 					},
 				},
-			}),
-			this.prisma.user.delete({ where: { did } }),
-		]);
+			});
+			await tx.user.delete({ where: { did } });
+		});
 
 		try {
 			await this.tab.removeRepos([did]);
@@ -136,6 +148,11 @@ export class UserDeletionService {
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {
 		await this.traktSync?.disconnectForDeletion(did);
+		return this.watchPrivacy.withAccountLock(did, () =>
+			this.createDeletionJobLocked(did, deletePdsData),
+		);
+	}
+	private async createDeletionJobLocked(did: string, deletePdsData: boolean) {
 		const user = await this.prisma.user.findUnique({
 			where: { did },
 		});
@@ -274,6 +291,7 @@ export class UserDeletionService {
 		});
 
 		try {
+			await this.watchPrivacy.stopForAccountDeletion(job.userDid);
 			if (jobData.deletePdsData && jobData.currentStep !== "db_cleanup") {
 				const finished = await this.deletePdsRecordsWithProgress(
 					job.id,
@@ -355,6 +373,98 @@ export class UserDeletionService {
 			throw new Error(
 				"Your sign-in session expired. Could not delete PDS data.",
 			);
+		}
+
+		const user = await this.prisma.user.findUnique({
+			where: { did: userDid },
+			select: { privateSettingsHasCopy: true, watchPrivacyManaged: true },
+		});
+		if (user?.watchPrivacyManaged) {
+			const complete = await this.watchPrivacy.withAccountLock(
+				userDid,
+				async (_tx, signal) => {
+					const pds = new WatchMigrationPds(
+						userDid,
+						requireWatchSession(session),
+						signal,
+					);
+					try {
+						await pds.assertExistingPrivate();
+					} catch (error) {
+						if (
+							error instanceof WatchMigrationPdsError &&
+							["SpaceNotFound", "SpaceDeleted"].includes(error.code)
+						)
+							return true;
+						throw error;
+					}
+					for (const collection of WATCH_COLLECTIONS) {
+						const page = await pds.list(collection, true, undefined, 20);
+						if (page.records.length) {
+							for (const record of page.records)
+								await pds.deletePrivate(record, record.cid);
+							return false;
+						}
+					}
+					return true;
+				},
+			);
+			if (!complete) return false;
+		}
+		const scopes = await this.prisma.privacyScope.findMany({
+			where: { userDid, managed: true },
+		});
+		for (const scope of scopes) {
+			if (
+				scope.category !== "library" &&
+				scope.category !== "notes" &&
+				scope.category !== "lists"
+			)
+				throw new Error("Invalid private content category");
+			const config = privacyRepositoryConfig(
+				scope.category,
+				scope.listRkey ?? undefined,
+			);
+			const complete = await this.watchPrivacy.withAccountLock(
+				userDid,
+				async (_tx, signal) => {
+					const pds = new WatchMigrationPds(
+						userDid,
+						requireWatchSession(session),
+						signal,
+						config,
+					);
+					try {
+						await pds.assertExistingPrivate();
+					} catch (error) {
+						if (
+							error instanceof WatchMigrationPdsError &&
+							["SpaceNotFound", "SpaceDeleted"].includes(error.code)
+						)
+							return true;
+						throw error;
+					}
+					for (const collection of config.collections) {
+						const page = await pds.list(collection, true, undefined, 20);
+						if (page.records.length) {
+							for (const record of page.records)
+								await pds.deletePrivate(record, record.cid);
+							return false;
+						}
+					}
+					return true;
+				},
+			);
+			if (!complete) return false;
+		}
+		if (user?.privateSettingsHasCopy) {
+			// Never claim all PDS data was removed while leaving a known private copy.
+			// A disconnected account must reconnect before retrying this job.
+			await this.privateSettings.delete(userDid, session);
+			await this.prisma.user.update({
+				where: { did: userDid },
+				data: { privateSettingsHasCopy: false },
+			});
 		}
 
 		const agent = new Agent(

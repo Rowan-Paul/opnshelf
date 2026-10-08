@@ -120,6 +120,10 @@ export default function RootLayout() {
 					/>
 					<Stack.Screen name="settings" options={{ headerShown: true }} />
 					<Stack.Screen
+						name="settings/privacy"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
 						name="settings/preferences"
 						options={{ headerShown: true }}
 					/>

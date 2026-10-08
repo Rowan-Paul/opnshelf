@@ -172,3 +172,23 @@ export type Feedback = Prisma.FeedbackModel
  * Service-owned editorial picks, never personal PDS records (ADR 0043).
  */
 export type FeaturedContent = Prisma.FeaturedContentModel
+/**
+ * Model WatchPrivacyCopy
+ * 
+ */
+export type WatchPrivacyCopy = Prisma.WatchPrivacyCopyModel
+/**
+ * Model WatchPrivacyMigration
+ * 
+ */
+export type WatchPrivacyMigration = Prisma.WatchPrivacyMigrationModel
+/**
+ * Model PrivacyScope
+ * 
+ */
+export type PrivacyScope = Prisma.PrivacyScopeModel
+/**
+ * Model PrivacyCopy
+ * 
+ */
+export type PrivacyCopy = Prisma.PrivacyCopyModel

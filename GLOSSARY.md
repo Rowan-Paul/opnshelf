@@ -4,6 +4,18 @@ A social media tracking and review platform where users log, rate, and review mo
 
 ## Language
 
+**Data Visibility**:
+A User's choice of Public or Private for their content: by category for the Shelf,
+Library Items and Notes, and per List with a default for Lists. Settings remain ordinary account preferences; they are not synchronized to Spaces.
+_Avoid_: Sync (visibility controls who can read, not whether data is synchronized)
+
+**Private Settings** (retired):
+The former experiment that synchronized the 12/24-hour preference to a Space.
+Retired by ADR 0048; ordinary timezone and time-format preferences remain.
+
+**Space**:
+An AT Protocol access-control and synchronization boundary. Each author has a separate repository inside it. Privacy Alpha uses owner-only Spaces: one for each category and a separate Space for each private List. A Space is a protocol boundary, not an Opnshelf Circle or List.
+
 **Release Notes**:
 Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
 _Avoid_: Notification (reserved for media and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
@@ -286,6 +298,47 @@ _Avoid_: Percentage rollout (that's a feature flag), promotion (that's moving be
 
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
+
+**Shelf privacy**:
+The account-wide choice between Public and Private for movie and episode
+**Watches**. Changing it moves existing Watches as well as changing where new
+Watches are stored. Other data categories retain their own visibility.
+_Avoid_: private account (other categories can remain Public).
+
+**Privacy Alpha**:
+The evolving Public/Private controls for **Shelf**, **Library**, **Notes** and
+**Lists**, available in Privacy settings and onboarding. Public is the initial
+choice. Private uses owner-only **Spaces** on compatible PDSs, including the
+reference Spaces alpha. Reviews and Ratings retain their existing visibility.
+_Avoid_: private account (visibility is chosen by category).
+
+**Private data access**:
+The OAuth permission requested as part of choosing Private. Permission alone
+does not change visibility, and declining it preserves the previous choice.
+_Avoid_: Watch access, Connect privacy, privacy enabled.
+
+**List default visibility**:
+The Public/Private choice applied only to newly created Lists. Existing Lists
+keep their individual choice unless the User selects **All Lists** when changing
+the default. **Manage individual Lists** opens the per-List visibility controls.
+
+**Sync Watches**:
+Refresh the User's Watches from their selected public repository or private
+Space, including edits made by other authorized apps. This does not change
+Shelf privacy and is separate from a **Trakt Import**.
+_Avoid_: Trakt sync.
+
+**Watch Privacy Migration**:
+An account-wide move of movie and episode **Watches** between Public records and
+an owner-only **Space**. Its direction is fixed for the lifetime of the migration;
+a failed move resumes that migration rather than starting one in the opposite
+direction. Interactive Watch changes pause until it finishes.
+
+**Recovery Snapshot**:
+A temporary, complete record copy retained during a Privacy Alpha visibility change
+so interrupted copy-and-delete operations can be recovered. It is removed when
+verified migration and local reconciliation finish, or the account is deleted.
+It is not a permanent backup of private content after publication.
 
 ## Flagged ambiguities
 

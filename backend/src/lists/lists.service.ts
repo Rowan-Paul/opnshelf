@@ -1,4 +1,11 @@
+import {
+	projectContent,
+	type ProjectionSource,
+} from "../privacy/content-public-projection";
 import { Agent } from "@atproto/api";
+import { ContentPrivacyCoordinator } from "../privacy/content-privacy-coordinator";
+import { watchOperation } from "../privacy/watch-operation";
+import { createWatchAgent } from "../privacy/watch-operation";
 import { TID } from "@atproto/common";
 import {
 	BadRequestException,
@@ -72,11 +79,18 @@ export class ListsService {
 		private prisma: PrismaService,
 		private moviesService: MoviesService,
 		private showsService: ShowsService,
+		private readonly privacy: ContentPrivacyCoordinator,
 	) {}
 
-	async getUserLists(userDid: string): Promise<ListSummaryDto[]> {
+	async getUserLists(
+		userDid: string,
+		excludedRkeys: string[] = [],
+	): Promise<ListSummaryDto[]> {
 		const lists = await this.prisma.list.findMany({
-			where: { userDid },
+			where: {
+				userDid,
+				...(excludedRkeys.length ? { rkey: { notIn: excludedRkeys } } : {}),
+			},
 			orderBy: [{ isDefault: "desc" }, { name: "asc" }],
 			include: {
 				_count: { select: { items: true } },
@@ -117,7 +131,18 @@ export class ListsService {
 	}
 
 	async getPublicUserLists(userDid: string): Promise<ListSummaryDto[]> {
-		return this.getUserLists(userDid);
+		const hidden = await this.prisma.privacyScope.findMany({
+			where: {
+				userDid,
+				category: "lists",
+				OR: [{ visibility: "private" }, { targetVisibility: { not: null } }],
+			},
+			select: { listRkey: true },
+		});
+		return this.getUserLists(
+			userDid,
+			hidden.flatMap((s) => (s.listRkey ? [s.listRkey] : [])),
+		);
 	}
 
 	async getPublicList(
@@ -128,6 +153,18 @@ export class ListsService {
 		pageSize?: number,
 		sort?: ListSort,
 	): Promise<ListWithItemsDto | null> {
+		if (viewerDid !== userDid) {
+			const list = await this.prisma.list.findUnique({
+				where: { userDid_slug: { userDid, slug } },
+				select: { rkey: true },
+			});
+			if (!list) return null;
+			const state = await this.prisma.privacyScope.findUnique({
+				where: { userDid_key: { userDid, key: `lists:${list.rkey}` } },
+			});
+			if (state && (state.visibility !== "public" || state.targetVisibility))
+				return null;
+		}
 		return this.getList(userDid, slug, viewerDid, page, pageSize, sort);
 	}
 
@@ -685,7 +722,14 @@ export class ListsService {
 		session: ATSession,
 		defaultList: { name: string; slug: string; description: string },
 	): Promise<ListDto> {
+		if (
+			watchOperation.getStore()?.repository?.spaceType !== "xyz.opnshelf.lists"
+		)
+			return this.privacy.write(userDid, "lists", undefined, () =>
+				this.createDefaultList(userDid, session, defaultList),
+			);
 		const rkey = TID.nextStr();
+		await this.privacy.prepareNewList(userDid, rkey);
 		const now = new Date().toISOString();
 
 		const record: ListRecord = listSchema.build({
@@ -696,9 +740,7 @@ export class ListsService {
 			createdAt: now,
 		});
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session, true);
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: LIST_COLLECTION,
@@ -706,6 +748,8 @@ export class ListsService {
 			record,
 			validate: false,
 		});
+
+		await this.privacy.activateNewList(userDid, rkey);
 
 		this.logger.log(`Created default list: ${response.data.uri}`);
 
@@ -741,9 +785,16 @@ export class ListsService {
 		session: ATSession,
 		dto: CreateListDto,
 	): Promise<ListDto> {
+		if (
+			watchOperation.getStore()?.repository?.spaceType !== "xyz.opnshelf.lists"
+		)
+			return this.privacy.write(userDid, "lists", undefined, () =>
+				this.createList(userDid, session, dto),
+			);
 		const slug = this.generateSlug(dto.name, userDid);
 
 		const rkey = TID.nextStr();
+		await this.privacy.prepareNewList(userDid, rkey);
 		const now = new Date().toISOString();
 
 		const record: ListRecord = listSchema.build({
@@ -754,9 +805,7 @@ export class ListsService {
 			createdAt: now,
 		});
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session, true);
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: LIST_COLLECTION,
@@ -764,6 +813,8 @@ export class ListsService {
 			record,
 			validate: false,
 		});
+
+		await this.privacy.activateNewList(userDid, rkey);
 
 		this.logger.log(`Created AT list record: ${response.data.uri}`);
 
@@ -825,9 +876,7 @@ export class ListsService {
 			createdAt: list.createdAt.toISOString(),
 		});
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: LIST_COLLECTION,
@@ -876,9 +925,7 @@ export class ListsService {
 			throw new Error("Cannot delete default lists");
 		}
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		await agent.com.atproto.repo.deleteRecord({
 			repo: session.did,
 			collection: LIST_COLLECTION,
@@ -889,6 +936,11 @@ export class ListsService {
 			where: { id: list.id },
 		});
 
+		// Keep its Space identity for account cleanup, but stop polling a deleted List.
+		await this.prisma.privacyScope.updateMany({
+			where: { userDid, key: `lists:${list.rkey}` },
+			data: { status: "deleted" },
+		});
 		this.logger.log(`Deleted list ${slug} for user ${userDid}`);
 	}
 
@@ -946,9 +998,7 @@ export class ListsService {
 			createdAt: now,
 		});
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		const response = await agent.com.atproto.repo.putRecord({
 			repo: session.did,
 			collection: LIST_ITEM_COLLECTION,
@@ -1018,9 +1068,7 @@ export class ListsService {
 			return;
 		}
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 		await agent.com.atproto.repo.deleteRecord({
 			repo: session.did,
 			collection: LIST_ITEM_COLLECTION,
@@ -1040,33 +1088,52 @@ export class ListsService {
 		rkey: string,
 		userDid: string,
 		record: ListRecord,
+		source: ProjectionSource = "repository",
 	): Promise<void> {
-		await this.prisma.list.upsert({
-			where: { userDid_rkey: { userDid, rkey } },
-			create: {
-				rkey,
-				uri,
-				cid,
-				userDid,
-				name: record.name,
-				description: record.description,
-				slug: record.slug,
-				isDefault: record.isDefault,
-			},
-			update: {
-				cid,
-				name: record.name,
-				description: record.description,
-				slug: record.slug,
-				isDefault: record.isDefault,
-			},
-		});
+		await projectContent(
+			this.prisma,
+			userDid,
+			[`lists:${rkey}`],
+			source,
+			(db) =>
+				db.list.upsert({
+					where: { userDid_rkey: { userDid, rkey } },
+					create: {
+						rkey,
+						uri,
+						cid,
+						userDid,
+						name: record.name,
+						description: record.description,
+						slug: record.slug,
+						isDefault: record.isDefault,
+					},
+					update: {
+						cid,
+						name: record.name,
+						description: record.description,
+						slug: record.slug,
+						isDefault: record.isDefault,
+					},
+				}),
+		);
 	}
 
-	async deleteListRecord(userDid: string, rkey: string): Promise<void> {
-		await this.prisma.list.deleteMany({
-			where: { userDid, rkey },
-		});
+	async deleteListRecord(
+		userDid: string,
+		rkey: string,
+		source: ProjectionSource = "repository",
+	): Promise<void> {
+		await projectContent(
+			this.prisma,
+			userDid,
+			[`lists:${rkey}`],
+			source,
+			(db) =>
+				db.list.deleteMany({
+					where: { userDid, rkey },
+				}),
+		);
 	}
 
 	async indexListItemRecord(
@@ -1075,6 +1142,7 @@ export class ListsService {
 		rkey: string,
 		userDid: string,
 		record: ListItemRecord,
+		source: ProjectionSource = "repository",
 	): Promise<void> {
 		const list = await this.prisma.list.findFirst({
 			where: { userDid, rkey: record.listRkey },
@@ -1144,39 +1212,76 @@ export class ListsService {
 			}
 		}
 
-		await this.prisma.listItem.upsert({
-			where: { userDid_rkey: { userDid, rkey } },
-			create: {
-				rkey,
-				uri,
-				cid,
-				userDid,
-				listId: list.id,
-				mediaType,
-				mediaId,
-				seasonNumber,
-				episodeNumber,
-				movieId: mediaType === "movie" ? mediaId : null,
-				showId: mediaType === "movie" ? null : mediaId,
-				notes: record.notes,
-			},
-			update: {
-				cid,
-				mediaType,
-				mediaId,
-				seasonNumber,
-				episodeNumber,
-				movieId: mediaType === "movie" ? mediaId : null,
-				showId: mediaType === "movie" ? null : mediaId,
-				notes: record.notes,
-			},
-		});
+		const previous =
+			source === "stream"
+				? await this.prisma.listItem.findUnique({
+						where: { userDid_rkey: { userDid, rkey } },
+						select: { list: { select: { rkey: true } } },
+					})
+				: null;
+
+		await projectContent(
+			this.prisma,
+			userDid,
+			[
+				...(previous ? [`lists:${previous.list.rkey}`] : []),
+				`lists:${record.listRkey}`,
+			],
+			source,
+			(db) =>
+				db.listItem.upsert({
+					where: { userDid_rkey: { userDid, rkey } },
+					create: {
+						rkey,
+						uri,
+						cid,
+						userDid,
+						listId: list.id,
+						mediaType,
+						mediaId,
+						seasonNumber,
+						episodeNumber,
+						movieId: mediaType === "movie" ? mediaId : null,
+						showId: mediaType === "movie" ? null : mediaId,
+						notes: record.notes,
+					},
+					update: {
+						cid,
+						mediaType,
+						mediaId,
+						seasonNumber,
+						episodeNumber,
+						movieId: mediaType === "movie" ? mediaId : null,
+						showId: mediaType === "movie" ? null : mediaId,
+						notes: record.notes,
+					},
+				}),
+		);
 	}
 
-	async deleteListItemRecord(userDid: string, rkey: string): Promise<void> {
-		await this.prisma.listItem.deleteMany({
-			where: { userDid, rkey },
-		});
+	async deleteListItemRecord(
+		userDid: string,
+		rkey: string,
+		source: ProjectionSource = "repository",
+	): Promise<void> {
+		const previous =
+			source === "stream"
+				? await this.prisma.listItem.findUnique({
+						where: { userDid_rkey: { userDid, rkey } },
+						select: { list: { select: { rkey: true } } },
+					})
+				: null;
+
+		await projectContent(
+			this.prisma,
+			userDid,
+			[...(previous ? [`lists:${previous.list.rkey}`] : [])],
+			source,
+			(db) =>
+				db.listItem.deleteMany({
+					where: { userDid, rkey },
+				}),
+		);
 	}
 
 	private generateSlug(name: string, userDid: string): string {

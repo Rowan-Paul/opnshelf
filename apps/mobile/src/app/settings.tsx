@@ -37,6 +37,7 @@ import {
 import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
+import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,7 @@ function AppearanceSetting() {
 export type SettingsCategory =
 	| "profile"
 	| "preferences"
+	| "privacy"
 	| "notifications"
 	| "connections"
 	| "account"
@@ -169,6 +171,7 @@ export type SettingsCategory =
 const SETTINGS_TITLES: Record<SettingsCategory, string> = {
 	profile: "Profile",
 	preferences: "Preferences",
+	privacy: "Privacy",
 	notifications: "Notifications",
 	connections: "Connections",
 	account: "Account",
@@ -245,7 +248,7 @@ export function SettingsCategoryScreen({
 	});
 
 	const requestPermissionChange = async (
-		integration: "blog" | "bluesky",
+		integration: "blog" | "bluesky" | "spaces" | "watches",
 		action: "connect" | "disconnect",
 	) => {
 		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
@@ -517,6 +520,7 @@ export function SettingsCategoryScreen({
 						</View>
 					)}
 
+					{section === "privacy" && <PrivacySection />}
 					{section === "preferences" && (
 						<>
 							<SettingsSection
@@ -586,7 +590,6 @@ export function SettingsCategoryScreen({
 									</View>
 								)}
 							</SettingsSection>
-
 							{/* Streaming country */}
 							<SettingsSection
 								title="Streaming"
@@ -943,6 +946,7 @@ const SETTINGS_AREAS: {
 	href:
 		| "/edit-profile"
 		| "/settings/preferences"
+		| "/settings/privacy"
 		| "/settings/notifications"
 		| "/settings/connections"
 		| "/settings/account"
@@ -962,6 +966,12 @@ const SETTINGS_AREAS: {
 		label: SETTINGS_TITLES.preferences,
 		description: "Appearance, time, streaming and reviews",
 		Icon: Compass,
+	},
+	{
+		href: "/settings/privacy",
+		label: SETTINGS_TITLES.privacy,
+		description: "Public and Private data",
+		Icon: Smartphone,
 	},
 	{
 		href: "/settings/notifications",
@@ -1032,7 +1042,18 @@ export default function SettingsScreen() {
 								>
 									<Icon color="#94a3b8" size={20} />
 									<View className="flex-1 gap-0.5">
-										<Text className="font-medium text-foreground">{label}</Text>
+										<View className="flex-row items-center gap-2">
+											<Text className="font-medium text-foreground">
+												{label}
+											</Text>
+											{href === "/settings/privacy" && (
+												<View className="rounded-md bg-primary/10 px-2 py-1">
+													<Text className="font-semibold text-foreground text-xs">
+														Alpha
+													</Text>
+												</View>
+											)}
+										</View>
 										<Text className="text-muted-foreground text-sm">
 											{description}
 										</Text>

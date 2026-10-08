@@ -103,6 +103,7 @@ function ProfileShelfPage() {
 	});
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
+	const canReadWatches = isOwner || profile?.watchesPublic === true;
 
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showDividers, setShowDividers] = useState(true);
@@ -122,7 +123,7 @@ function ProfileShelfPage() {
 				...(searchQuery.trim() ? { search: searchQuery.trim() } : {}),
 			},
 		}),
-		enabled: !!userDid,
+		enabled: !!userDid && canReadWatches,
 	});
 
 	const buildSearch = (
@@ -182,6 +183,8 @@ function ProfileShelfPage() {
 	const items = data?.items ?? [];
 	const sections = groupShelfItemsByDate(items, sectionLabel);
 
+	if (profile && !canReadWatches)
+		return <p className="text-(--foreground-muted)">Watches are private.</p>;
 	return (
 		<div className="space-y-6">
 			{/* Title & Controls */}

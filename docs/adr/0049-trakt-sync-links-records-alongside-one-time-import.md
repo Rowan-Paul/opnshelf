@@ -1,4 +1,4 @@
-# ADR 0045: Trakt Sync links records alongside one-time Import
+# ADR 0049: Trakt Sync links records alongside one-time Import
 
 Status: Accepted; implemented in the #260 working branch, pending deployment. Extends ADR 0020 with ongoing sync while retaining its one-time Import and existing outcome-retention guarantees.
 
@@ -8,7 +8,7 @@ Sync needs account-scoped links between individual records and a remembered sync
 
 Trakt's representational limits must not silently alter Opnshelf history. Link initial Watches only when a same-media, same-minute match is unambiguous and one-to-one. Preserve local timestamps and rewatch counts; report unrepresentable duplicates rather than inventing dates. No date Watches stay without dates.
 
-The first version uses public Watches and Ratings, with explicit publication acknowledgement before importing private Trakt history. It does not wait for AT Protocol Spaces: the separate Spaces implementation currently covers private Settings, not private Watches or Ratings. Setup and management have parity in Web and Mobile.
+The first version uses public Watches and Ratings, with explicit publication acknowledgement before importing private Trakt history. ADR 0048 now provides private Shelf storage. This first sync version still handles public Watches only: hold Watch transfers while the Shelf is private or changing privacy, and share the existing account lock with migration and deletion. Users can disable Watch sync and continue syncing public Ratings. Setup and management have parity in Web and Mobile.
 
 An unfinished Import may permanently hand control to sync after its in-flight work finishes. Its Continued in Trakt Sync status preserves real historical progress and outcomes without claiming completion; the old Import cannot resume, even after sync disconnects. Matching and retries remain available through sync bookkeeping. A pause alone was rejected because it leaves the old importer resumable and able to compete with sync. Users can instead finish the Import before enabling sync.
 

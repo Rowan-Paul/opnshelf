@@ -27,6 +27,12 @@ export const SETTINGS_AREAS = [
 		Icon: SlidersHorizontal,
 	},
 	{
+		section: "privacy",
+		label: "Privacy",
+		description: "Public and Private data",
+		Icon: ShieldCheck,
+	},
+	{
 		section: "notifications",
 		label: "Notifications",
 		description: "Email notifications and digests",

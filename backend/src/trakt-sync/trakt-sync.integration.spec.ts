@@ -1,3 +1,5 @@
+import { WatchAccountLock } from "../privacy/watch-account-lock";
+import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
@@ -18,6 +20,13 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	const db = new PrismaClient({
 		adapter: new PrismaPg({ connectionString: url, max: 5 }),
 	});
+	const lockPool = new Pool({
+		connectionString: url,
+		max: 2,
+		query_timeout: 5000,
+		connectionTimeoutMillis: 5000,
+	});
+	const locks = new WatchAccountLock(lockPool);
 	const userDid = "did:plc:trakt-sync-test";
 	let localRecords: SyncRecord[] = [];
 	let remoteRecords: SyncRecord[] = [];
@@ -104,6 +113,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		remoteApi as unknown as TraktSyncClient,
 		localApi as unknown as LocalSyncRecords,
 		config,
+		locks,
 	);
 	const watch = (
 		key: string,
@@ -147,6 +157,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await service.tick();
 	}
 	beforeEach(async () => {
+		await db.watchPrivacyMigration.deleteMany({ where: { userDid } });
 		await db.user.deleteMany({ where: { did: userDid } });
 		await db.authState.deleteMany({ where: { key: { startsWith: "trakt:" } } });
 		await db.backgroundJob.deleteMany({ where: { userDid } });
@@ -159,10 +170,79 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await connect();
 	});
 	afterAll(async () => {
+		await db.watchPrivacyMigration.deleteMany({ where: { userDid } });
 		await db.user.deleteMany({ where: { did: userDid } });
 		await db.backgroundJob.deleteMany({ where: { userDid } });
 		await db.$disconnect();
+		await lockPool.end();
 	});
+	it("holds Watch sync and recovery when the Shelf is private", async () => {
+		remoteRecords = [watch("remote-private")];
+		await db.user.update({
+			where: { did: userDid },
+			data: { watchVisibility: "private" },
+		});
+		await configure();
+		expect(remoteApi.snapshot).not.toHaveBeenCalled();
+		expect(localApi.write).not.toHaveBeenCalled();
+		const recovery = vi.fn(async () => undefined);
+		await expect(service.recoverImport(userDid, recovery)).rejects.toThrow(
+			"public Shelf",
+		);
+		expect(recovery).not.toHaveBeenCalled();
+	});
+	it("holds Watch sync while a privacy migration is pending", async () => {
+		const job = await db.backgroundJob.create({
+			data: { userDid, type: "watch_privacy" },
+		});
+		await db.watchPrivacyMigration.create({
+			data: {
+				jobId: job.id,
+				userDid,
+				sourceVisibility: "public",
+				targetVisibility: "private",
+			},
+		});
+		await configure();
+		expect(remoteApi.snapshot).not.toHaveBeenCalled();
+		expect(localApi.write).not.toHaveBeenCalled();
+	});
+
+	it("continues Ratings on a private Shelf when Watches are disabled", async () => {
+		await db.user.update({
+			where: { did: userDid },
+			data: { watchVisibility: "private" },
+		});
+		localRecords = [watch("private-watch")];
+		remoteRecords = [{ ...watch("rating:12"), kind: "rating", value: 8 }];
+		await service.configure(userDid, {
+			direction: "both",
+			historyScope: "all",
+			watches: false,
+			ratings: true,
+			publicationConsent: true,
+		});
+		await tick();
+		await tick();
+		expect(localApi.write).toHaveBeenCalledTimes(1);
+		expect(remoteApi.write).not.toHaveBeenCalled();
+	});
+	it("waits for an account operation before reading or transferring history", async () => {
+		await service.configure(userDid, {
+			direction: "both",
+			historyScope: "all",
+			watches: true,
+			ratings: true,
+			publicationConsent: true,
+		});
+		await locks.run(userDid, async () => {
+			await tick();
+			expect(remoteApi.snapshot).not.toHaveBeenCalled();
+		});
+		await tick();
+		expect(remoteApi.snapshot).toHaveBeenCalledTimes(1);
+	});
+
 	it("encrypts credentials, consumes authorization state once, and starts paused", async () => {
 		const c = await db.traktSyncConnection.findFirstOrThrow({
 			where: { userDid },

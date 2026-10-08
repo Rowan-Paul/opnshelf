@@ -1,3 +1,4 @@
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
 import {
 	Body,
 	BadRequestException,
@@ -85,13 +86,18 @@ export class UsersController {
 	) {}
 
 	@Get(":handle/profile")
+	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get a public user profile by handle" })
 	@ApiResponse({ status: 200, type: PublicUserProfileDto })
 	@ApiResponse({ status: 404, description: "User not found" })
 	async getPublicProfile(
 		@Param("handle") handle: string,
+		@Req() req: Request,
 	): Promise<PublicUserProfileDto> {
-		return this.usersService.getPublicProfileByHandle(handle);
+		return this.usersService.getPublicProfileByHandle(
+			handle,
+			(req as AuthenticatedRequest).user?.did,
+		);
 	}
 
 	@Get(":handle/followers")
@@ -161,7 +167,10 @@ export class UsersController {
 			throw new Error("User not found in request");
 		}
 
-		return this.usersService.getUserSettings(did);
+		return this.usersService.getUserSettings(
+			did,
+			req.user.session as ATSession,
+		);
 	}
 
 	/**
@@ -183,6 +192,20 @@ export class UsersController {
 
 		const session = req.user?.session as ATSession | undefined;
 		return this.usersService.updateUserSettings(did, dto, session);
+	}
+
+	@Delete("me/settings/private")
+	@UseGuards(AuthGuard)
+	@ApiOperation({
+		summary:
+			"Delete the private settings record while retaining the last local preference",
+	})
+	@ApiResponse({ status: 200, description: "Private record deleted" })
+	async deletePrivateSettings(@Req() req: AuthenticatedRequest): Promise<void> {
+		await this.usersService.deletePrivateSettings(
+			req.user.did,
+			req.user.session as ATSession,
+		);
 	}
 
 	/**
@@ -413,6 +436,7 @@ export class UsersController {
 	}
 
 	@Post("me/import/trakt/public/start")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({
 		summary: "Start a background import for a public Trakt profile",
@@ -467,6 +491,7 @@ export class UsersController {
 	}
 
 	@Post("me/import/trakt/public/resume")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({
 		summary: "Resume the current paused or stopped Trakt import",

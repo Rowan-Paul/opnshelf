@@ -1,3 +1,6 @@
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
+import { WatchReadGuard } from "../privacy/watch-access";
 import type { Mocked } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { AuthGuard } from "../auth/auth.guard";
@@ -49,7 +52,17 @@ describe("MoviesController", () => {
 				{ provide: AuthService, useValue: mockAuthService },
 				AuthGuard,
 			],
-		}).compile();
+		})
+			.overrideGuard(WatchReadGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(OptionalAuthGuard)
+			.useValue({ canActivate: () => true })
+			.overrideInterceptor(WatchWriteInterceptor)
+			.useValue({
+				intercept: (_context: unknown, next: { handle: () => unknown }) =>
+					next.handle(),
+			})
+			.compile();
 
 		controller = module.get<MoviesController>(MoviesController);
 		moviesService = module.get(MoviesService);

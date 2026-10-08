@@ -1,4 +1,8 @@
-import { Agent } from "@atproto/api";
+import {
+	projectContent,
+	type ProjectionSource,
+} from "../privacy/content-public-projection";
+import { createWatchAgent } from "../privacy/watch-operation";
 import { TID } from "@atproto/common";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import {
@@ -131,9 +135,7 @@ export class NotesService {
 			},
 		});
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 
 		if (existing) {
 			// Update existing note in PDS
@@ -216,9 +218,7 @@ export class NotesService {
 			throw new NotFoundException("Note not found");
 		}
 
-		const agent = new Agent(
-			session as unknown as ConstructorParameters<typeof Agent>[0],
-		);
+		const agent = createWatchAgent(session);
 
 		await agent.com.atproto.repo.deleteRecord({
 			repo: session.did,
@@ -237,34 +237,43 @@ export class NotesService {
 		rkey: string,
 		userDid: string,
 		record: NoteRecord,
+		source: ProjectionSource = "repository",
 	): Promise<void> {
-		await this.prisma.note.upsert({
-			where: { userDid_rkey: { userDid, rkey } },
-			create: {
-				rkey,
-				uri,
-				cid,
-				userDid,
-				mediaType: record.mediaType,
-				mediaId: record.mediaId,
-				seasonNumber: record.seasonNumber ?? 0,
-				episodeNumber: record.episodeNumber ?? 0,
-				content: record.content,
-			},
-			update: {
-				cid,
-				mediaType: record.mediaType,
-				mediaId: record.mediaId,
-				seasonNumber: record.seasonNumber ?? 0,
-				episodeNumber: record.episodeNumber ?? 0,
-				content: record.content,
-			},
-		});
+		await projectContent(this.prisma, userDid, ["notes"], source, (db) =>
+			db.note.upsert({
+				where: { userDid_rkey: { userDid, rkey } },
+				create: {
+					rkey,
+					uri,
+					cid,
+					userDid,
+					mediaType: record.mediaType,
+					mediaId: record.mediaId,
+					seasonNumber: record.seasonNumber ?? 0,
+					episodeNumber: record.episodeNumber ?? 0,
+					content: record.content,
+				},
+				update: {
+					cid,
+					mediaType: record.mediaType,
+					mediaId: record.mediaId,
+					seasonNumber: record.seasonNumber ?? 0,
+					episodeNumber: record.episodeNumber ?? 0,
+					content: record.content,
+				},
+			}),
+		);
 	}
 
-	async deleteNoteRecord(userDid: string, rkey: string): Promise<void> {
-		await this.prisma.note.deleteMany({
-			where: { userDid, rkey },
-		});
+	async deleteNoteRecord(
+		userDid: string,
+		rkey: string,
+		source: ProjectionSource = "repository",
+	): Promise<void> {
+		await projectContent(this.prisma, userDid, ["notes"], source, (db) =>
+			db.note.deleteMany({
+				where: { userDid, rkey },
+			}),
+		);
 	}
 }

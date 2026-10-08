@@ -8,10 +8,15 @@ import { HelpSection } from "#/components/settings/HelpSection";
 import { ImportHistorySection } from "#/components/settings/ImportHistorySection";
 import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
 import { PreferencesSections } from "#/components/settings/PreferencesSections";
+import { PrivacySection } from "#/components/settings/PrivacySection";
 import { SettingsPageShell } from "#/components/settings/SettingsPageShell";
 import { useAuth } from "#/lib/auth-context";
 
 const SECTION_COPY = {
+	privacy: {
+		title: "Privacy",
+		description: "Choose what you share and what stays Private.",
+	},
 	profile: {
 		title: "Profile",
 		description: "Update the details people see on Opnshelf.",
@@ -55,6 +60,7 @@ function SettingsSectionPage() {
 		<SettingsPageShell {...copy}>
 			<div className="card overflow-hidden">
 				{section === "profile" && user ? <AccountSection user={user} /> : null}
+				{section === "privacy" ? <PrivacySection /> : null}
 				{section === "preferences" ? <PreferencesSections /> : null}
 				{section === "notifications" ? <NotificationEmailSection /> : null}
 				{section === "connections" ? (

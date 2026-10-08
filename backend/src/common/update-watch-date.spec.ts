@@ -1,3 +1,14 @@
+// Repository routing is tested separately; these tests isolate public Watch behavior.
+vi.mock("../privacy/watch-operation", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("../privacy/watch-operation")>();
+	const { Agent } = await import("@atproto/api");
+	return {
+		...actual,
+		createWatchAgent: (session: ConstructorParameters<typeof Agent>[0]) =>
+			new Agent(session),
+	};
+});
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { validate } from "class-validator";
 import { UpdateWatchDateDto } from "./update-watch-date.dto";

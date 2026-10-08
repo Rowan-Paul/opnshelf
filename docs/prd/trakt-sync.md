@@ -17,7 +17,7 @@ Status: agreed design implemented in the #260 working branch. Verified with loca
 - At first connection, offer All existing history and future changes (default) or Future changes only. Merge existing history without deleting destination-only records.
 - In initial two-way reconciliation, matching Ratings link automatically. Differing Ratings require a source choice, per item or applied to all, because neither service provides a reliable comparable last-edit timestamp. In one-way sync, the selected source wins.
 - Propagate Watch date corrections, Watch deletions, Rating changes, and Rating removals in the selected direction for records already linked by sync. Preserve unrelated destination records. Concurrent changes on both sides since the last sync require conflict resolution.
-- Private Trakt profiles may be imported. Before transfer into public Opnshelf records, require explicit acknowledgement of publication. Ship against public Watches and Ratings without waiting for the separate Spaces work. Private destinations are a later extension once Spaces supports those records.
+- Private Trakt profiles may be imported. Before transfer into public Opnshelf records, require explicit acknowledgement of publication. Ship against public Watches and Ratings without waiting for the separate Spaces work. Private destinations remain outside this first sync version.
 - Sync runs on the server while clients are closed. Queue outbound Opnshelf changes promptly, check Trakt approximately every 15 minutes, and expose Sync now, last-success time, and errors. Rate limits may delay completion.
 - Automatically link an unambiguous one-to-one media match within the same minute, accounting for Trakt's minute precision. Preserve local timestamps and rewatch counts. Flag nearby or ambiguous matches for review. If several Opnshelf Watches cannot be represented on Trakt within one minute, preserve them locally and report the limitation; never invent timestamps.
 - After linking, conflicting Rating changes on both sides require a choice. One-way sync follows its selected source.
@@ -59,7 +59,7 @@ Follow-up issue drafts are in [Trakt Sync follow-ups](trakt-sync-follow-ups.md).
 
 ## Investigation findings
 
-- The separate Spaces implementation currently stores private time-format Settings only. It does not yet provide private Watch or Rating destinations. Do not assume that enabling Spaces makes Trakt transfers private.
+- ADR 0048 now provides private Shelf storage. Trakt Watch sync remains public-only and waits while the Shelf is private or migrating; disabling Watch sync allows public Ratings to continue. Trakt Sync never changes a category’s privacy choice.
 - Opnshelf Rating database timestamps can advance during ingestion; Trakt exposes a historical, client-settable rated_at. Neither is a verified last-user-edit clock suitable for automatic initial conflict resolution.
 - Trakt's [2026 history announcement](https://github.com/trakt/trakt-api/discussions/694) describes minute precision and deduplication by media and watched_at. Its [current OpenAPI document](https://developer.trakt.tv/openapi.json) still contains contradictory deduplication prose. Verify behavior in controlled integration tests before promising lossless rewatch round trips.
 - The current Trakt OpenAPI document supports watched_at: "unknown" on history writes. Readback and repeated No date Watch behavior still need verification.
@@ -81,6 +81,6 @@ The implementation includes automated reconciliation, transport, PDS recovery, d
 
 ## Architecture constraints
 
-ADR 0045 allows ongoing Trakt Sync alongside the lifetime Trakt Import defined by ADR 0020. It preserves existing Import outcomes and reconciliation, including an explicit permanent handoff for unfinished Imports.
+ADR 0049 allows ongoing Trakt Sync alongside the lifetime Trakt Import defined by ADR 0020. It preserves existing Import outcomes and reconciliation, including an explicit permanent handoff for unfinished Imports.
 
 ADR 0042 preserves Watch identity through watch-date corrections. Existing import identity derives from media coordinates and the original date rather than a Trakt history-event ID. Ongoing sync therefore needs deliberate event linkage and cannot safely be implemented by repeatedly restarting the existing importer.

@@ -10,12 +10,14 @@ export function IntegrationPermissionRow({
 	description,
 	connected,
 	disabled = false,
+	confirmationDescription = "Other devices will need to sign in again after this permission change. Your saved publication and format choices stay in place.",
 	onConfirm,
 }: {
 	name: string;
 	description: string;
 	connected: boolean;
 	disabled?: boolean;
+	confirmationDescription?: string;
 	onConfirm: (action: PermissionAction) => void;
 }) {
 	const { showDialog } = useDialog();
@@ -24,8 +26,7 @@ export function IntegrationPermissionRow({
 	const requestChange = () => {
 		showDialog({
 			title: `${connected ? "Disconnect" : "Connect"} ${name}?`,
-			description:
-				"Other devices will need to sign in again after this permission change. Your saved publication and format choices stay in place.",
+			description: confirmationDescription,
 			actions: [
 				{ label: "Cancel" },
 				{

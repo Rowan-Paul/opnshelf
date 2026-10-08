@@ -28,7 +28,7 @@ Numbering notes:
 | [0008-discovery-tmdb-passthrough-no-recommender.md](0008-discovery-tmdb-passthrough-no-recommender.md) | 0008 | Discovery similarity is TMDB-passthrough; no homegrown recommender (yet) | Accepted |
 | [0009-bulk-watch-best-effort-batch-sync.md](0009-bulk-watch-best-effort-batch-sync.md) | 0009 | Bulk watch logging is best-effort batch-sync | Accepted (implicit) |
 | [0010-circles-are-local-only-not-pds-records.md](0010-circles-are-local-only-not-pds-records.md) | 0010 | Circles are local-only, not PDS records | Accepted (implicit) |
-| [0011-library-ownership-separate-from-lists.md](0011-library-ownership-separate-from-lists.md) | 0011 | The Library (ownership) is modelled separately from Lists (curation) | Accepted (implicit) |
+| [0011-library-ownership-separate-from-lists.md](0011-library-ownership-separate-from-lists.md) | 0011 | The Library (ownership) is modelled separately from Lists (curation) | Public-only restriction superseded by 0046; implementation pending |
 | [0012-unified-social-ia-activity-and-connections.md](0012-unified-social-ia-activity-and-connections.md) | 0012 | Unified social IA: Activity + Connections, shared across web and mobile | Partially superseded by 0032 |
 | [0013-reviews-as-opnshelf-lexicon-with-optional-blog-mirror.md](0013-reviews-as-opnshelf-lexicon-with-optional-blog-mirror.md) | 0013 | Reviews as `xyz.opnshelf.review` with optional standard.site blog mirror | Accepted (implicit); supersedes 0002 and 0003 |
 | [0014-per-reader-blog-mirror-content.md](0014-per-reader-blog-mirror-content.md) | 0014 | Per-reader blog-mirror content (Leaflet, Offprint, Pckt) | Implemented |
@@ -62,4 +62,8 @@ Numbering notes:
 | [0042-watch-date-corrections-preserve-identity.md](0042-watch-date-corrections-preserve-identity.md) | 0042 | Watch date corrections preserve identity | Accepted; implemented |
 | [0043-featured-content-is-service-owned.md](0043-featured-content-is-service-owned.md) | 0043 | Featured Content is owned by the service | Accepted and implemented |
 | [0044-release-notes-use-web-content-and-private-read-state.md](0044-release-notes-use-web-content-and-private-read-state.md) | 0044 | Release Notes use Web content and private account read state | Accepted; implemented |
-| [0045-trakt-sync-links-records-alongside-one-time-import.md](0045-trakt-sync-links-records-alongside-one-time-import.md) | 0045 | Trakt Sync links records alongside one-time Import | Accepted; extends 0020 |
+| [0045-private-settings-use-an-opt-in-space.md](0045-private-settings-use-an-opt-in-space.md) | 0045 | Private Settings use an opt-in Space | Superseded by 0048; Settings experiment retired |
+| [0046-privacy-is-chosen-by-data-category.md](0046-privacy-is-chosen-by-data-category.md) | 0046 | Privacy is chosen by data category | Partially superseded by 0048; category privacy retained |
+| [0047-watch-privacy-uses-authoritative-repository-sync.md](0047-watch-privacy-uses-authoritative-repository-sync.md) | 0047 | Watch privacy uses authoritative repository sync | Partially superseded by 0048; authoritative sync retained |
+| [0048-privacy-alpha-uses-reference-spaces.md](0048-privacy-alpha-uses-reference-spaces.md) | 0048 | Privacy alpha uses reference Spaces | Accepted; supersedes experimental Settings sync and custom CAS requirement |
+| [0049-trakt-sync-links-records-alongside-one-time-import.md](0049-trakt-sync-links-records-alongside-one-time-import.md) | 0049 | Trakt Sync links records alongside one-time Import | Accepted; extends 0020 |

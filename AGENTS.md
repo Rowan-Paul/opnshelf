@@ -9,6 +9,7 @@ This file is the root guide for automated coding work in Opnshelf. Keep changes 
 - `apps/mobile/`: Expo/React Native Mobile App for iOS and Android.
 - `packages/api/`: shared OpenAPI-generated client and types used by the clients. It has no package scripts, so root gates skip it.
 - `lexicons/`: source JSON definitions for the `xyz.opnshelf.*` AT Protocol records.
+- `spaces/lexicons/`: alpha Space declarations for publication, separate from record validators. Read `spaces/README.md` before changing or publishing them.
 - `services/mail-relay/`: standalone mail relay for the PDS. It sits outside the pnpm workspace, so root commands never touch it.
 - `docs/`: `adr/` for decisions, `prd/` for product briefs, `runbooks/` for operational procedures.
 - `plans/`: numbered implementation plans with a status table in `plans/README.md`. When the task names a plan, read it in full, honor its STOP conditions, and update its status row when you finish that plan.
