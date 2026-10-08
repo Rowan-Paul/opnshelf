@@ -7,7 +7,7 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { Redirect, router } from "expo-router";
+import { Link, Redirect, router } from "expo-router";
 import { ArrowRight, CheckCircle2, ChevronLeft } from "lucide-react-native";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import {
@@ -578,6 +578,12 @@ function TraktStep({
 					Bring your watch history over from Trakt.tv — or skip and do it later.
 				</Text>
 			</View>
+			<Link
+				href="/trakt-sync"
+				className="mb-4 rounded-xl border border-border p-3 text-center font-medium text-primary"
+			>
+				Keep in sync with Trakt
+			</Link>
 			<TraktImportPanel
 				showExistingJob={false}
 				onImportStarted={onImportStarted}

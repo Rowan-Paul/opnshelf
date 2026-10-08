@@ -20,6 +20,7 @@ export type TraktJobStatus =
 	| "waiting_retry"
 	| "paused"
 	| "completed"
+	| "continued_in_sync"
 	| "failed";
 
 export const ACTIVE_TRAKT_JOB_STATUSES: TraktJobStatus[] = [
@@ -303,7 +304,9 @@ export class TraktImportJobStore {
 				: latestData;
 			const paused = latest.status === "paused";
 			const terminal =
-				latest.status === "completed" || latest.status === "failed";
+				latest.status === "completed" ||
+				latest.status === "failed" ||
+				latest.status === "continued_in_sync";
 			if (terminal && latest.status !== workerState.status) {
 				return;
 			}

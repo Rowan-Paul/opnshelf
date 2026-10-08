@@ -85,9 +85,65 @@ model User {
   pushDevices PushDevice[]
   notificationDeliveries NotificationDelivery[]
   notificationCollections NotificationCollection[]
+  traktConnections TraktSyncConnection[]
 
   @@index([handle])
   @@index([profileAvatarCid])
+}
+
+// Private integration state; never published to a user's AT repository.
+model TraktSyncConnection {
+  id String @id @default(cuid())
+  userDid String
+  user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  traktUserId String
+  username String
+  accessToken String?
+  refreshToken String?
+  expiresAt DateTime?
+  status String @default("paused")
+  direction String @default("both")
+  watches Boolean @default(true)
+  ratings Boolean @default(true)
+  historyScope String @default("all")
+  publicationConsent Boolean @default(false)
+  initialised Boolean @default(false)
+  nextRunAt DateTime @default(now())
+  lastSuccessAt DateTime?
+  lastError String?
+  leaseId String?
+  leaseUntil DateTime?
+  remoteSnapshot Json @default("[]")
+  remoteReadAt DateTime?
+  entries TraktSyncEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userDid, traktUserId])
+  @@index([status, nextRunAt])
+}
+
+model TraktSyncEntry {
+  id String @id @default(cuid())
+  connectionId String
+  connection TraktSyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  kind String
+  localKey String?
+  remoteKey String?
+  localBase Json?
+  remoteBase Json?
+  linked Boolean @default(false)
+  eligible Boolean @default(true)
+  ignored Boolean @default(false)
+  issue String?
+  resolution String?
+  pending Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([connectionId, localKey])
+  @@unique([connectionId, remoteKey])
+  @@index([connectionId, issue])
 }
 
 // Notification email is supplied and verified separately from PDS account mail.

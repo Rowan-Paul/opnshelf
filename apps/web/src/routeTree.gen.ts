@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TraktSyncRouteImport } from './routes/trakt-sync'
 import { Route as TraktImportRouteImport } from './routes/trakt-import'
 import { Route as TosRouteImport } from './routes/tos'
 import { Route as SocialRouteImport } from './routes/social'
@@ -58,6 +59,11 @@ import { Route as ShowsShowIdShowNameSeasonsSeasonNumberRouteImport } from './ro
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber/index'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber.episodes.$episodeNumber'
 
+const TraktSyncRoute = TraktSyncRouteImport.update({
+  id: '/trakt-sync',
+  path: '/trakt-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TraktImportRoute = TraktImportRouteImport.update({
   id: '/trakt-import',
   path: '/trakt-import',
@@ -324,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -372,6 +379,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -419,6 +427,7 @@ export interface FileRoutesById {
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
   '/trakt-import': typeof TraktImportRoute
+  '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
@@ -471,6 +480,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tos'
     | '/trakt-import'
+    | '/trakt-sync'
     | '/admin/featured'
     | '/api/release-notes'
     | '/auth/complete'
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tos'
     | '/trakt-import'
+    | '/trakt-sync'
     | '/admin/featured'
     | '/api/release-notes'
     | '/auth/complete'
@@ -565,6 +576,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tos'
     | '/trakt-import'
+    | '/trakt-sync'
     | '/admin/featured'
     | '/api/release-notes'
     | '/auth/complete'
@@ -616,6 +628,7 @@ export interface RootRouteChildren {
   SocialRoute: typeof SocialRouteWithChildren
   TosRoute: typeof TosRoute
   TraktImportRoute: typeof TraktImportRoute
+  TraktSyncRoute: typeof TraktSyncRoute
   AdminFeaturedRoute: typeof AdminFeaturedRoute
   ApiReleaseNotesRoute: typeof ApiReleaseNotesRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
@@ -635,6 +648,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trakt-sync': {
+      id: '/trakt-sync'
+      path: '/trakt-sync'
+      fullPath: '/trakt-sync'
+      preLoaderRoute: typeof TraktSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trakt-import': {
       id: '/trakt-import'
       path: '/trakt-import'
@@ -1091,6 +1111,7 @@ const rootRouteChildren: RootRouteChildren = {
   SocialRoute: SocialRouteWithChildren,
   TosRoute: TosRoute,
   TraktImportRoute: TraktImportRoute,
+  TraktSyncRoute: TraktSyncRoute,
   AdminFeaturedRoute: AdminFeaturedRoute,
   ApiReleaseNotesRoute: ApiReleaseNotesRoute,
   AuthCompleteRoute: AuthCompleteRoute,

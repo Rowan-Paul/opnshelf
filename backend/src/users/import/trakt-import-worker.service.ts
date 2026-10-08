@@ -36,6 +36,7 @@ import {
 	type TraktLedgerOutcome,
 } from "./trakt-import-ledger";
 import { TraktImportJobStore } from "./trakt-import-job.store";
+import { activeTraktImports } from "./import-activity";
 import { WatchImportWriter } from "./watch-import-writer.service";
 
 type RecordedTraktPageItem = {
@@ -76,7 +77,12 @@ export class TraktImportWorker {
 			return;
 		}
 
-		await this.processTraktImportJob(job.id);
+		activeTraktImports.add(job.userDid);
+		try {
+			await this.processTraktImportJob(job.id);
+		} finally {
+			activeTraktImports.delete(job.userDid);
+		}
 	}
 
 	private async processTraktImportJob(jobId: string): Promise<void> {
@@ -88,6 +94,7 @@ export class TraktImportWorker {
 			job.status === "completed" ||
 			job.status === "failed" ||
 			job.status === "paused" ||
+			job.status === "continued_in_sync" ||
 			job.nextRunAt > new Date()
 		) {
 			return;

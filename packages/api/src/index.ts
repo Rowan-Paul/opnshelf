@@ -99,3 +99,4 @@ export {
 export { getWatchProviderLink } from "./watch-provider-link";
 
 export * from "./release-notes";
+export * from "./trakt-sync";

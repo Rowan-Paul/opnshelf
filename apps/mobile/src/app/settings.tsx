@@ -408,7 +408,7 @@ export function SettingsCategoryScreen({
 		showDialog({
 			title: "Delete your account?",
 			description:
-				"This action cannot be undone. All your data will be permanently removed.",
+				"This action cannot be undone. All your data will be permanently removed. Trakt Sync stops; records already transferred to Trakt remain there.",
 			actions: [
 				{ label: "Cancel" },
 				{
@@ -793,6 +793,13 @@ export function SettingsCategoryScreen({
 								<Text className="font-display font-semibold text-foreground text-lg">
 									Import history
 								</Text>
+								<Link href="/trakt-sync" asChild>
+									<Pressable className="rounded-lg border border-border bg-background-subtle p-3">
+										<Text className="font-medium text-foreground">
+											Keep in sync with Trakt
+										</Text>
+									</Pressable>
+								</Link>
 								<Link href="/trakt-import" asChild>
 									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
 										<Download color="#94a3b8" size={20} />
@@ -845,6 +852,8 @@ export function SettingsCategoryScreen({
 									</Text>
 									<Text className="text-destructive/80 text-sm leading-5">
 										Permanently delete your account and all associated data.
+										Trakt Sync stops; records already transferred to Trakt
+										remain there.
 									</Text>
 								</View>
 

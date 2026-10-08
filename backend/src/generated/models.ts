@@ -9,6 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User.js'
+export type * from './models/TraktSyncConnection.js'
+export type * from './models/TraktSyncEntry.js'
 export type * from './models/NotificationSettings.js'
 export type * from './models/PushDevice.js'
 export type * from './models/NotificationCollection.js'

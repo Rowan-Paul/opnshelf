@@ -124,7 +124,8 @@ export function DeleteAccountSection() {
 						</DialogTitle>
 						<DialogDescription>
 							This action cannot be undone. All your data will be permanently
-							removed.
+							removed. Trakt Sync stops; records already transferred to Trakt
+							remain there.
 						</DialogDescription>
 					</DialogHeader>
 

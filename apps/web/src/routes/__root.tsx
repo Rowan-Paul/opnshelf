@@ -56,6 +56,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		// it must never bounce to onboarding.
 		if (
 			location.pathname === "/onboarding" ||
+			location.pathname === "/trakt-sync" ||
+			location.pathname === "/trakt-import" ||
 			location.pathname === "/login" ||
 			location.pathname === "/auth/complete" ||
 			location.pathname.startsWith("/embed")

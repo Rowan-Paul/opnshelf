@@ -3,7 +3,11 @@ const ACTIVE_TRAKT_IMPORT_STATUSES = [
 	"running",
 	"waiting_retry",
 ] as const;
-const TERMINAL_TRAKT_IMPORT_STATUSES = ["completed", "failed"] as const;
+const TERMINAL_TRAKT_IMPORT_STATUSES = [
+	"completed",
+	"failed",
+	"continued_in_sync",
+] as const;
 const KNOWN_TRAKT_IMPORT_STATUSES = [
 	...ACTIVE_TRAKT_IMPORT_STATUSES,
 	...TERMINAL_TRAKT_IMPORT_STATUSES,
@@ -44,6 +48,8 @@ export function isKnownTraktImportStatus(
 export function getTraktImportStatusMessage(
 	job: TraktImportStatusJob,
 ): string | null {
+	if (job.status === "continued_in_sync")
+		return "Continued in Trakt Sync. This Import cannot resume; its progress and results remain available.";
 	if (job.status === "queued") {
 		return "Queued on the server. We’ll keep importing your full watch history in the background.";
 	}
@@ -105,7 +111,9 @@ export function getTraktImportStatusProgress(
 	}
 
 	if (
-		(job.status === "running" || job.status === "waiting_retry" || job.status === "failed") &&
+		(job.status === "running" ||
+			job.status === "waiting_retry" ||
+			job.status === "failed") &&
 		typeof job.totalPages === "number" &&
 		job.totalPages > 0
 	) {

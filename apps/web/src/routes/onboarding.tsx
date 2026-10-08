@@ -12,7 +12,7 @@ import {
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	ArrowRight,
 	Camera,
@@ -777,8 +777,11 @@ function TraktStep({
 }) {
 	return (
 		<div className="card p-6">
+			<Link to="/trakt-sync" className="btn btn-secondary mb-5">
+				Keep in sync with Trakt
+			</Link>
 			<TraktImport
-				title="Import from Trakt"
+				title="Import once"
 				description="Import your public watch history from Trakt.tv"
 				onSkip={onSkip}
 				onComplete={onNext}
