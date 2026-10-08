@@ -6,7 +6,7 @@ import { parseEnvironment } from "../config/env.schema";
 import { PrismaClient } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { LocalSyncRecords } from "./local-records.service";
-import { equivalent, type SyncRecord } from "./reconcile";
+import { equivalent, mediaKey, type SyncRecord } from "./reconcile";
 import { type TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
 import { TraktImportJobStore } from "../users/import/trakt-import-job.store";
 import { TraktSyncService } from "./trakt-sync.service";
@@ -47,6 +47,15 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		})),
 		revoke: vi.fn(async () => undefined),
 		snapshot: vi.fn(async () => structuredClone(remoteRecords)),
+		readForRecord: vi.fn(async (_token: string, record: SyncRecord) =>
+			structuredClone(
+				remoteRecords.filter((r) =>
+					record.kind === "rating"
+						? r.kind === "rating" && r.mediaType === record.mediaType
+						: mediaKey(r) === mediaKey(record),
+				),
+			),
+		),
 		write: vi.fn(async (_token: string, r: SyncRecord, remove = false) => {
 			if (remove) {
 				remoteRecords = remoteRecords.filter((v) => v.key !== r.key);
@@ -75,6 +84,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		}),
 	};
 	const localApi = {
+		validateMatch: vi.fn(async () => undefined),
 		snapshot: vi.fn(async () => structuredClone(localRecords)),
 		confirmDeleted: vi.fn(async () => undefined),
 		write: vi.fn(
@@ -252,8 +262,104 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		const { url: authUrl } = await service.authorize(userDid, "web");
 		const state = new URL(authUrl).searchParams.get("state") ?? "missing-state";
 		await service.callback(state, "code");
-		await expect(service.callback(state, "code")).rejects.toThrow("expired");
+		await expect(service.callback(state, "code")).resolves.toBe(
+			"http://localhost:3000/trakt-sync?connection=failed",
+		);
 	});
+	it("redirects callback errors to the trusted platform and consumes failed state", async () => {
+		const { url } = await service.authorize(userDid, "mobile");
+		const state = new URL(url).searchParams.get("state") ?? "";
+		remoteApi.exchange.mockRejectedValueOnce(
+			new Error("private provider failure"),
+		);
+		await expect(service.callback(state, "code")).resolves.toBe(
+			"opnshelf://trakt-sync?connection=failed",
+		);
+		await expect(service.callback(state, "code")).resolves.toBe(
+			"http://localhost:3000/trakt-sync?connection=failed",
+		);
+		const { url: expiredUrl } = await service.authorize(userDid, "mobile");
+		const expired = new URL(expiredUrl).searchParams.get("state") ?? "";
+		await db.authState.update({
+			where: { key: `trakt:${expired}` },
+			data: { expiresAt: new Date(0) },
+		});
+		await expect(service.callback(expired, "code")).resolves.toBe(
+			"opnshelf://trakt-sync?connection=failed",
+		);
+	});
+	it("disconnects for account deletion even when remote revocation fails", async () => {
+		remoteApi.revoke.mockRejectedValueOnce(new Error("Trakt unavailable"));
+		await service.disconnectForDeletion(userDid);
+		const c = await db.traktSyncConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		expect(c).toMatchObject({
+			status: "disconnected",
+			accessToken: null,
+			refreshToken: null,
+			expiresAt: null,
+		});
+	});
+	it("does not remap a movie when a show has the same Trakt parent ID", async () => {
+		remoteRecords = [
+			{
+				...watch("watch:movie"),
+				mediaId: null,
+				traktId: 42,
+				traktParentId: 42,
+			},
+			{
+				...watch("watch:episode"),
+				mediaType: "episode",
+				mediaId: null,
+				season: 1,
+				episode: 1,
+				traktId: 77,
+				traktParentId: 42,
+			},
+		];
+		await configure("future");
+		const movie = await db.traktSyncEntry.findFirstOrThrow({
+			where: { remoteKey: "watch:movie" },
+		});
+		const episode = await db.traktSyncEntry.findFirstOrThrow({
+			where: { remoteKey: "watch:episode" },
+		});
+		await service.resolve(userDid, episode.id, {
+			action: "match",
+			mediaId: "99",
+		});
+		expect(
+			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: movie.id } }),
+		).toMatchObject({
+			remoteBase: movie.remoteBase,
+			eligible: false,
+			issue: movie.issue,
+		});
+		expect(
+			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: episode.id } }),
+		).toMatchObject({ remoteBase: { mediaId: "99" }, eligible: true });
+	});
+	it("confirms outbound writes with a scoped read and retains unrelated snapshot records", async () => {
+		localRecords = [watch("local:1")];
+		remoteRecords = [{ ...watch("watch:unrelated"), mediaId: "999" }];
+		await configure("all", "outbound");
+		remoteApi.snapshot.mockClear();
+		await tick();
+		expect(remoteApi.snapshot).toHaveBeenCalledTimes(1);
+		expect(remoteApi.readForRecord).toHaveBeenCalledTimes(1);
+		const c = await db.traktSyncConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		expect(c.remoteSnapshot).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "watch:unrelated" }),
+				expect.objectContaining({ mediaId: "12" }),
+			]),
+		);
+	});
+
 	it("imports a Watch once and follows a linked remote deletion without echo writes", async () => {
 		remoteRecords = [watch("watch:1")];
 		await configure();

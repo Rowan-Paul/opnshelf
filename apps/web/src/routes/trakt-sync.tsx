@@ -4,6 +4,12 @@ import { TraktSyncManager } from "#/components/trakt/TraktSyncManager";
 import { ssrAuthOptions } from "#/lib/api";
 
 export const Route = createFileRoute("/trakt-sync")({
+	validateSearch: (
+		search: Record<string, unknown>,
+	): { connection?: string } => ({
+		connection:
+			typeof search.connection === "string" ? search.connection : undefined,
+	}),
 	beforeLoad: async ({ context }) => {
 		try {
 			await context.queryClient.fetchQuery(
@@ -19,9 +25,13 @@ export const Route = createFileRoute("/trakt-sync")({
 		}
 	},
 	head: () => ({ meta: [{ title: "Trakt Sync | Opnshelf" }] }),
-	component: () => (
-		<div className="container-app py-8 sm:py-12">
-			<TraktSyncManager />
-		</div>
-	),
+	component: TraktSyncPage,
 });
+function TraktSyncPage() {
+	const { connection } = Route.useSearch();
+	return (
+		<div className="container-app py-8 sm:py-12">
+			<TraktSyncManager connectionFailed={connection === "failed"} />
+		</div>
+	);
+}

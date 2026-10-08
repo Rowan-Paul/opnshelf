@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
 import { normalizeRemote, TraktSyncClient } from "./trakt-sync.client";
 
@@ -22,6 +22,77 @@ const page = (data: unknown, count = 1, pages = 1) => ({
 });
 
 describe("Trakt transport boundaries", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.useRealTimers();
+	});
+	it("accepts an empty successful revocation response", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response(null, { status: 200 })),
+		);
+		await expect(
+			new TraktSyncClient(config).revoke("fixture"),
+		).resolves.toBeUndefined();
+	});
+	it("paces separate accounts independently", async () => {
+		vi.useFakeTimers();
+		const fetcher = vi.fn(async () => new Response("{}"));
+		vi.stubGlobal("fetch", fetcher);
+		const client = new TraktSyncClient(config);
+		await client.request("/users/settings", "account-a");
+		const queued = client.request("/users/settings", "account-a");
+		await client.request("/users/settings", "account-b");
+		expect(fetcher).toHaveBeenCalledTimes(2);
+		await vi.advanceTimersByTimeAsync(1100);
+		await queued;
+		expect(fetcher).toHaveBeenCalledTimes(3);
+	});
+	it("confirms known Watches by title and Ratings by category without reading full history", async () => {
+		const client = new TraktSyncClient(config);
+		const request = vi
+			.spyOn(client, "request")
+			.mockResolvedValue(page([movie]));
+		await expect(
+			client.readForRecord("fixture", normalizeRemote(movie, "watch")),
+		).resolves.toHaveLength(1);
+		expect(request).toHaveBeenLastCalledWith(
+			"/sync/history/movies/12?page=1&limit=100",
+			"fixture",
+		);
+		request.mockResolvedValue(page([], 0, 0));
+		await client.readForRecord("fixture", {
+			...normalizeRemote(movie, "watch"),
+			kind: "rating",
+		});
+		expect(request).toHaveBeenLastCalledWith(
+			"/sync/ratings/movies?page=1&limit=100",
+			"fixture",
+		);
+	});
+	it("resolves an exported episode using its parent TMDB ID and episode coordinates", async () => {
+		const client = new TraktSyncClient(config);
+		const request = vi
+			.spyOn(client, "request")
+			.mockResolvedValueOnce(
+				page([{ type: "show", show: { ids: { trakt: 20, tmdb: 34 } } }]),
+			)
+			.mockResolvedValueOnce(page({ ids: { trakt: 88 }, season: 2, number: 3 }))
+			.mockResolvedValueOnce(page([], 0, 0));
+		await client.readForRecord("fixture", {
+			...normalizeRemote(movie, "watch"),
+			traktId: undefined,
+			mediaType: "episode",
+			season: 2,
+			episode: 3,
+		});
+		expect(request.mock.calls.map((c) => c[0])).toEqual([
+			"/search/tmdb/34?type=show",
+			"/shows/20/seasons/2/episodes/3",
+			"/sync/history/episodes/88?page=1&limit=100",
+		]);
+	});
+
 	it("keeps unknown dates absent and separates event identity from media identity", () => {
 		expect(normalizeRemote(movie, "watch")).toMatchObject({
 			key: "watch:41",

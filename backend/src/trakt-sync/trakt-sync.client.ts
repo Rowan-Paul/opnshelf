@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { z } from "zod";
 import { BackendEnv } from "../config/env.schema";
@@ -84,7 +85,7 @@ export function normalizeRemote(
 
 @Injectable()
 export class TraktSyncClient {
-	private nextRequest = 0;
+	private readonly nextRequests = new Map<string, number>();
 	constructor(private readonly config: BackendEnv) {}
 	get configured() {
 		return Boolean(this.config.TRAKT_API_KEY && this.config.BACKEND_PUBLIC_URL);
@@ -102,8 +103,15 @@ export class TraktSyncClient {
 		body?: unknown,
 	): Promise<{ data: unknown; headers: Headers }> {
 		// Pace both reads and writes below Trakt's per-user limits. No credential logging.
-		const delay = Math.max(0, this.nextRequest - Date.now());
-		this.nextRequest = Math.max(Date.now(), this.nextRequest) + 1100;
+		const now = Date.now();
+		for (const [key, next] of this.nextRequests)
+			if (next <= now) this.nextRequests.delete(key);
+		const key = token
+			? createHash("sha256").update(token).digest("hex")
+			: "oauth";
+		const next = this.nextRequests.get(key) ?? now;
+		const delay = Math.max(0, next - now);
+		this.nextRequests.set(key, Math.max(now, next) + 1100);
 		if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
 		const response = await fetch(`https://api.trakt.tv${path}`, {
 			method: body === undefined ? "GET" : "POST",
@@ -128,8 +136,9 @@ export class TraktSyncClient {
 				Number.isFinite(retry) && retry > 0 ? retry : 60,
 			);
 		}
+		const text = await response.text();
 		return {
-			data: response.status === 204 ? null : await response.json(),
+			data: text.trim() ? JSON.parse(text) : null,
 			headers: response.headers,
 		};
 	}
@@ -190,6 +199,56 @@ export class TraktSyncClient {
 			);
 		return [...watches, ...ratings];
 	}
+	/** Confirm only the affected title's Watches, or the affected Rating category.
+	 * Ratings have no item-ID filter: the final path segment filters rating value. */
+	async readForRecord(
+		token: string,
+		record: SyncRecord,
+	): Promise<SyncRecord[]> {
+		const plural = `${record.mediaType}s`;
+		if (record.kind === "rating")
+			return this.pages(`/sync/ratings/${plural}`, token, "rating");
+		let traktId = record.traktId;
+		if (!traktId) {
+			if (!record.mediaId)
+				throw new TraktSyncError("Choose a matching title first.");
+			const type = record.mediaType === "movie" ? "movie" : "show";
+			const { data } = await this.request(
+				`/search/tmdb/${encodeURIComponent(record.mediaId)}?type=${type}`,
+				token,
+			);
+			const matches = z
+				.array(
+					z.object({
+						type: z.string(),
+						movie: media.optional(),
+						show: media.optional(),
+					}),
+				)
+				.parse(data)
+				.filter(
+					(row) =>
+						row.type === type &&
+						row[type]?.ids.tmdb?.toString() === record.mediaId,
+				);
+			if (matches.length !== 1)
+				throw new TraktSyncError(
+					"Trakt could not uniquely identify the written title.",
+				);
+			traktId = matches[0][type]?.ids.trakt;
+			if (record.mediaType === "episode") {
+				const episode = await this.request(
+					`/shows/${traktId}/seasons/${record.season}/episodes/${record.episode}`,
+					token,
+				);
+				traktId = media.parse(episode.data).ids.trakt;
+			}
+		}
+		if (!traktId)
+			throw new TraktSyncError("Trakt did not return a title identity.");
+		return this.pages(`/sync/history/${plural}/${traktId}`, token, "watch");
+	}
+
 	async pages(
 		path: string,
 		token: string,

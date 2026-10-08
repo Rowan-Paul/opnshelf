@@ -1,8 +1,9 @@
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { TraktSyncManager } from "@/components/trakt/TraktSyncManager";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 
 export default function TraktSyncScreen() {
+	const { connection } = useLocalSearchParams<{ connection?: string }>();
 	return (
 		<EndReachedScrollView
 			className="flex-1 bg-background"
@@ -11,7 +12,7 @@ export default function TraktSyncScreen() {
 			keyboardShouldPersistTaps="handled"
 		>
 			<Stack.Screen options={{ headerShown: true, title: "Trakt Sync" }} />
-			<TraktSyncManager />
+			<TraktSyncManager connectionFailed={connection === "failed"} />
 		</EndReachedScrollView>
 	);
 }

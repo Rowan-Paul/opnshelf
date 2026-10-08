@@ -83,7 +83,11 @@ function Toggle({
 	);
 }
 
-export function TraktSyncManager() {
+export function TraktSyncManager({
+	connectionFailed = false,
+}: {
+	connectionFailed?: boolean;
+}) {
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
 	const status = useQuery({
@@ -95,7 +99,15 @@ export function TraktSyncManager() {
 	const connect = useMutation({
 		...traktSyncControllerConnectMutation(),
 		onSuccess: async (data) => {
-			await WebBrowser.openAuthSessionAsync(data.url, "opnshelf://trakt-sync");
+			const result = await WebBrowser.openAuthSessionAsync(
+				data.url,
+				"opnshelf://trakt-sync",
+			);
+			if (
+				result.type === "success" &&
+				new URL(result.url).searchParams.get("connection") === "failed"
+			)
+				throw new Error("Trakt could not connect. Try connecting again.");
 			await refresh();
 		},
 	});
@@ -228,17 +240,22 @@ export function TraktSyncManager() {
 						/>
 					</View>
 				)}
-				{(connect.error || action.error || data.lastError) && (
+				{(connectionFailed ||
+					connect.error ||
+					action.error ||
+					data.lastError) && (
 					<Text
 						selectable
 						accessibilityRole="alert"
 						className="text-destructive text-sm"
 					>
-						{connect.error
-							? traktError(connect.error)
-							: action.error
-								? traktError(action.error)
-								: data.lastError}
+						{connectionFailed
+							? "Trakt could not connect. Try connecting again."
+							: connect.error
+								? traktError(connect.error)
+								: action.error
+									? traktError(action.error)
+									: data.lastError}
 					</Text>
 				)}
 			</View>

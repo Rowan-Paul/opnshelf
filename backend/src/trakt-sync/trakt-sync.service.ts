@@ -205,76 +205,81 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		return { url: url.toString() };
 	}
 	async callback(state: string, code?: string) {
-		const saved = await this.prisma.authState.findUnique({
-			where: { key: `trakt:${state}` },
-		});
-		if (!saved || saved.expiresAt <= new Date())
-			throw new BadRequestException(
-				"Trakt authorization expired. Start again.",
-			);
-		const claimed = await this.prisma.authState.deleteMany({
-			where: { key: saved.key, expiresAt: { gt: new Date() } },
-		});
-		if (claimed.count !== 1)
-			throw new BadRequestException(
-				"Trakt authorization has already been used.",
-			);
-		const data = JSON.parse(this.crypt(saved.stateData, true)) as {
-			userDid: string;
-			verifier: string;
-			platform: string;
-		};
-		const redirect =
-			data.platform === "mobile"
-				? "opnshelf://trakt-sync"
-				: `${this.config.FRONTEND_URL}/trakt-sync`;
-		if (!code) return `${redirect}?connection=cancelled`;
-		const token = await this.api.exchange(code, data.verifier);
+		let redirect = `${this.config.FRONTEND_URL}/trakt-sync`;
 		try {
-			const profile = await this.api.profile(token.access_token);
-			const previous = await this.current(data.userDid);
-			if (
-				previous &&
-				previous.status !== "disconnected" &&
-				previous.traktUserId !== profile.ids.uuid
-			)
-				throw new ConflictException(
-					"Disconnect the current Trakt account before switching.",
-				);
-			const existing = await this.prisma.traktSyncConnection.findUnique({
-				where: {
-					userDid_traktUserId: {
-						userDid: data.userDid,
-						traktUserId: profile.ids.uuid,
-					},
-				},
+			const saved = await this.prisma.authState.findUnique({
+				where: { key: `trakt:${state}` },
 			});
-			if (existing)
-				await this.locked(existing, async () => {
-					await this.prisma.traktSyncConnection.update({
-						where: { id: existing.id },
+			const data = JSON.parse(this.crypt(saved?.stateData ?? "", true)) as {
+				userDid: string;
+				verifier: string;
+				platform: string;
+			};
+			redirect =
+				data.platform === "mobile"
+					? "opnshelf://trakt-sync"
+					: `${this.config.FRONTEND_URL}/trakt-sync`;
+			if (!saved || saved.expiresAt <= new Date())
+				throw new BadRequestException(
+					"Trakt authorization expired. Start again.",
+				);
+			const claimed = await this.prisma.authState.deleteMany({
+				where: { key: saved.key, expiresAt: { gt: new Date() } },
+			});
+			if (claimed.count !== 1)
+				throw new BadRequestException(
+					"Trakt authorization has already been used.",
+				);
+			if (!code) return `${redirect}?connection=cancelled`;
+			const token = await this.api.exchange(code, data.verifier);
+			try {
+				const profile = await this.api.profile(token.access_token);
+				const previous = await this.current(data.userDid);
+				if (
+					previous &&
+					previous.status !== "disconnected" &&
+					previous.traktUserId !== profile.ids.uuid
+				)
+					throw new ConflictException(
+						"Disconnect the current Trakt account before switching.",
+					);
+				const existing = await this.prisma.traktSyncConnection.findUnique({
+					where: {
+						userDid_traktUserId: {
+							userDid: data.userDid,
+							traktUserId: profile.ids.uuid,
+						},
+					},
+				});
+				if (existing)
+					await this.locked(existing, async () => {
+						await this.prisma.traktSyncConnection.update({
+							where: { id: existing.id },
+							data: {
+								...this.tokenData(token),
+								username: profile.username,
+								status: "paused",
+								lastError: null,
+							},
+						});
+					});
+				else
+					await this.prisma.traktSyncConnection.create({
 						data: {
-							...this.tokenData(token),
+							userDid: data.userDid,
+							traktUserId: profile.ids.uuid,
 							username: profile.username,
-							status: "paused",
-							lastError: null,
+							...this.tokenData(token),
 						},
 					});
-				});
-			else
-				await this.prisma.traktSyncConnection.create({
-					data: {
-						userDid: data.userDid,
-						traktUserId: profile.ids.uuid,
-						username: profile.username,
-						...this.tokenData(token),
-					},
-				});
-		} catch (error) {
-			await this.api.revoke(token.access_token).catch(() => undefined);
-			throw error;
+			} catch (error) {
+				await this.api.revoke(token.access_token).catch(() => undefined);
+				throw error;
+			}
+			return `${redirect}?connection=connected`;
+		} catch {
+			return `${redirect}?connection=failed`;
 		}
-		return `${redirect}?connection=connected`;
 	}
 	private async locked<T>(
 		c: TraktSyncConnection,
@@ -426,8 +431,14 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					where: { id: c.id },
 					data: { status: "paused" },
 				});
-				if (c.accessToken)
-					await this.api.revoke(this.crypt(c.accessToken, true));
+				try {
+					if (c.accessToken)
+						await this.api.revoke(this.crypt(c.accessToken, true));
+				} catch {
+					this.logger.warn(
+						"Trakt revocation failed; disconnect will clear local credentials.",
+					);
+				}
 				await this.prisma.traktSyncConnection.update({
 					where: { id: c.id },
 					data: {
@@ -689,12 +700,14 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			},
 			orderBy: { createdAt: "asc" },
 		});
+		const mapped = new Map(
+			applyMappings(remote, entries).map((r) => [r.key, r]),
+		);
+		const localByKey = new Map(local.map((r) => [r.key, r]));
 		return paginateItems(
 			entries.map((e) => {
-				const l = local.find((r) => r.key === e.localKey) ?? null;
-				const r =
-					applyMappings(remote, entries).find((r) => r.key === e.remoteKey) ??
-					null;
+				const l = localByKey.get(e.localKey ?? "") ?? null;
+				const r = mapped.get(e.remoteKey ?? "") ?? null;
 				const source =
 					l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
 				return {
@@ -748,7 +761,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						p &&
 						(r.mediaType === "movie"
 							? p.traktId === r.traktId && p.mediaType === "movie"
-							: r.traktParentId && p.traktParentId === r.traktParentId)
+							: p.mediaType !== "movie" &&
+								r.traktParentId &&
+								p.traktParentId === r.traktParentId)
 					)
 						await this.prisma.traktSyncEntry.update({
 							where: { id: peer.id },
@@ -1259,9 +1274,26 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				...desired,
 				...(remote?.traktId ? { traktId: remote.traktId } : {}),
 			});
-		const refreshed = applyMappings(await this.api.snapshot(token), [entry]);
+		const target = desired ?? previous;
+		if (!target) throw new Error("Missing transfer target.");
+		const confirmation = applyMappings(
+			await this.api.readForRecord(token, {
+				...target,
+				traktId: remote?.traktId ?? previous?.traktId ?? target.traktId,
+			}),
+			[entry],
+		);
+		// A scoped read must never replace the full snapshot or advance its freshness.
+		const refreshed = [
+			...snapshot.filter((r) =>
+				target.kind === "rating"
+					? !(r.kind === "rating" && r.mediaType === target.mediaType)
+					: r.key !== previous?.key && mediaKey(r) !== mediaKey(target),
+			),
+			...confirmation,
+		];
 		const matches = desired
-			? refreshed.filter((r) => equivalent(desired, r))
+			? confirmation.filter((r) => equivalent(desired, r))
 			: [];
 		if (desired && matches.length !== 1)
 			throw new Error(
@@ -1273,7 +1305,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			where: { id: c.id },
 			data: {
 				remoteSnapshot: refreshed as unknown as Prisma.InputJsonValue,
-				remoteReadAt: new Date(),
 			},
 		});
 		await this.complete(entry, desired, matches[0] ?? null);

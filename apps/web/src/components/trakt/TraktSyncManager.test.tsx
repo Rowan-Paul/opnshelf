@@ -58,13 +58,13 @@ vi.mock("@opnshelf/api", async (original) => ({
 	traktSyncControllerConfigureMutation: () => ({ mutationFn: mocks.configure }),
 	traktSyncControllerResolveMutation: () => ({ mutationFn: mocks.resolve }),
 }));
-function mount() {
+function mount(connectionFailed = false) {
 	const client = new QueryClient({
 		defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 	});
 	render(
 		<QueryClientProvider client={client}>
-			<TraktSyncManager />
+			<TraktSyncManager connectionFailed={connectionFailed} />
 		</QueryClientProvider>,
 	);
 }
@@ -75,6 +75,13 @@ beforeEach(() => {
 	mocks.issue = false;
 });
 describe("Trakt Sync setup and conflict choices", () => {
+	it("shows an OAuth callback failure after returning to the app", async () => {
+		mount(true);
+		expect(
+			await screen.findByText("Trakt could not connect. Try connecting again."),
+		).toBeTruthy();
+	});
+
 	it("requires publication consent, Import handoff, and a concrete review before enabling", async () => {
 		mount();
 		const review = (await screen.findByRole("button", {

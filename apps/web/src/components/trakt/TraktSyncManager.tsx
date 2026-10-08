@@ -33,7 +33,11 @@ const rootKey = ["trakt-sync"];
 const card =
 	"rounded-2xl border border-(--border) bg-(--background-elevated) p-5 sm:p-7";
 
-export function TraktSyncManager() {
+export function TraktSyncManager({
+	connectionFailed = false,
+}: {
+	connectionFailed?: boolean;
+}) {
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
 	const status = useQuery({
@@ -212,13 +216,18 @@ export function TraktSyncManager() {
 						</div>
 					</div>
 				)}
-				{(connect.error || action.error || data.lastError) && (
+				{(connectionFailed ||
+					connect.error ||
+					action.error ||
+					data.lastError) && (
 					<p role="alert" className="mt-4 text-(--destructive)">
-						{connect.error
-							? traktError(connect.error)
-							: action.error
-								? traktError(action.error)
-								: data.lastError}
+						{connectionFailed
+							? "Trakt could not connect. Try connecting again."
+							: connect.error
+								? traktError(connect.error)
+								: action.error
+									? traktError(action.error)
+									: data.lastError}
 					</p>
 				)}
 			</section>

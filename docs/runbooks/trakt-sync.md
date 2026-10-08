@@ -2,6 +2,8 @@
 
 Sync supports public Watches only. A private Shelf or pending Shelf privacy migration holds Watch sync; disabling Watches lets Ratings continue. Sync and legacy Import recovery share the account lock with privacy changes and deletion.
 
+The targeted confirmation routes follow the [official Trakt sync contract](https://github.com/trakt/trakt-api/blob/master/projects/api/src/contracts/sync/index.ts). Rating route suffixes filter values, not item IDs, so confirmation must retain category pagination.
+
 ## Server configuration and rollout
 
 Trakt Sync uses the existing `TRAKT_API_KEY` as the OAuth client ID, `BACKEND_PUBLIC_URL` to construct `/trakt-sync/callback`, `FRONTEND_URL` for the Web return route, and `PROVIDER_STATE_SECRET` to encrypt access/refresh tokens and single-use OAuth state. Register the exact callback URL with the Trakt application before enabling the UI against a deployed backend. Mobile returns to `opnshelf://trakt-sync`. No Trakt password is collected.
@@ -18,7 +20,7 @@ Saving settings queues an initial comparison. The UI reports that comparison is 
 
 A database lease serializes each account's operations, with a two-minute expiry and a thirty-second heartbeat. The worker checks due accounts every five seconds, ordinarily refreshes Trakt at fifteen-minute intervals, and reads fresh remote state before potential outbound changes. Complete pagination and unchanged activity markers are required before using a remote snapshot. An incomplete read never proves deletion. Trakt request pacing and rate-limit responses can delay work.
 
-The first version uses complete snapshots rather than an incremental feed. Large histories can therefore take time to compare. Inbound transfers run in bounded batches of ten; outbound work yields after a write and complete readback. A durable pending intent recovers uncertain acknowledgements. Item errors appear in Needs attention, while other eligible records continue. Last successful check describes a completed reconciliation pass, not a claim that every unresolved item transferred.
+The first version uses complete snapshots rather than an incremental feed. Large histories can therefore take time to compare. Inbound transfers run in bounded batches of ten; outbound work yields after a write and scoped readback. Watch confirmation pages only the affected movie or episode history; Rating confirmation pages only its media category. The full pre-write snapshot is retained, so large outbound backlogs still scale with total history size. Scoped reads preserve unrelated cached records and do not advance the full-snapshot freshness timestamp. Request pacing is separated by access-token identity (hashed in memory). A durable pending intent recovers uncertain acknowledgements. Item errors appear in Needs attention, while other eligible records continue. Last successful check describes a completed reconciliation pass, not a claim that every unresolved item transferred.
 
 A Trakt Watch date edit can replace its event ID. A missing linked event accompanied by a new Watch of the same title is held for confirmation, allowing the User to preserve the original Opnshelf Watch identity. Exact-minute deduplication limits, ambiguous and No date pairs are surfaced rather than changing dates or collapsing rewatches.
 
@@ -44,3 +46,10 @@ The fixture verifies client rendering and interaction; it does not prove live OA
 Before rollout, use an explicitly authorized test account to verify PKCE authorization, refresh rotation and revocation, movie and episode repeat history, all four Rating levels, and both one-way directions plus two-way sync. Verify `watched_at: "unknown"` readback and Trakt's actual minute-level deduplication. The current API specification and Trakt's 2026 history announcement contain conflicting deduplication wording; automated local tests cannot resolve that discrepancy. Readback failures remain unresolved instead of being counted as success.
 
 Trakt has no conditional write primitive in this integration. Fresh reads detect intervening edits up to the pre-write comparison; a concurrent edit in the gap between that read and the remote write cannot be made atomic. Do not promise cross-service transactional behavior. No controlled live writes, hosted migrations, deploys, or releases were performed for this implementation.
+
+## CodeRabbit follow-up verification (October 8)
+
+- `pnpm typecheck`, `pnpm check`, and `pnpm --filter backend run build` passed. Existing upstream privacy lint warnings remain.
+- Full test suites passed: Backend 1,301 (including 26 persisted Trakt cases on disposable PostgreSQL), Web 437, Mobile 382. Optional integration/performance tests remain skipped.
+- Web `/trakt-sync?connection=failed` verified in the browser at 1280 × 800 with a fixture API: the callback error appears within the connection panel. Mobile uses the same message for callback deep links and auth-session results; the iOS recheck was blocked because the simulator belongs to another active session.
+- OAuth failure redirects, expired/reused state, best-effort revocation, movie/show ID collisions, scoped snapshot preservation, empty responses, and per-account request pacing have regression coverage. Live Trakt/PDS acceptance remains outstanding.
