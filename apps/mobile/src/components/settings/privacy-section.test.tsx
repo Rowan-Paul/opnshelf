@@ -191,6 +191,65 @@ describe("Privacy Alpha mobile", () => {
 		});
 	});
 
+	it("opens List progress once per migration and respects dismissal across polls", () => {
+		if (!mocks.data) throw new Error("Missing status");
+		const scope = {
+			category: "lists" as const,
+			label: "Favorites",
+			listRkey: "favorites",
+			visibility: "public" as const,
+			migration: {
+				id: "first",
+				target: "private" as const,
+				status: "queued" as const,
+				copied: 0,
+				total: 3,
+				error: null,
+			},
+		};
+		mocks.data.scopes.push(scope);
+		const renderer = render();
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
+		act(() => renderer.root.findByType("dialog").props.onRequestClose());
+		mocks.data = { ...mocks.data, scopes: [...mocks.data.scopes] };
+		act(() => renderer.update(<PrivacySection />));
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		mocks.data = {
+			...mocks.data,
+			scopes: [{ ...scope, migration: { ...scope.migration, id: "second" } }],
+		};
+		act(() => renderer.update(<PrivacySection />));
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
+	});
+
+	it("opens Private All Lists progress only after the scope dialog dismisses", () => {
+		const renderer = render();
+		const choice = renderer.root
+			.findAll(
+				(node) => node.type === "button" && node.props.label === "Private",
+			)
+			.at(-1);
+		if (!choice) throw new Error("Lists choice missing");
+		act(() => choice.props.onPress());
+		const actions = mocks.showDialog.mock.calls[0][0].actions;
+		expect(
+			actions.find(
+				(action: { label: string }) => action.label === "New Lists only",
+			).variant,
+		).toBe("ghost");
+		const allLists = actions.find(
+			(action: { label: string }) => action.label === "All Lists",
+		);
+		act(() => allLists.onPress());
+		expect(mocks.mutate).toHaveBeenCalledWith({
+			kind: "allLists",
+			body: { category: "lists", visibility: "private" },
+		});
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		act(() => allLists.onDismiss());
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
+	});
+
 	it("shows copy totals and finishing state", () => {
 		if (!mocks.data) throw new Error("Missing status");
 		mocks.data.scopes[0].migration = {

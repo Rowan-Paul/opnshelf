@@ -45,6 +45,24 @@ beforeEach(() => {
 	};
 });
 describe("Privacy settings", () => {
+	it("resumes a legacy combined onboarding choice after OAuth", () => {
+		const action = {
+			kind: "initial",
+			body: { category: "watches", visibility: "private" },
+		};
+		sessionStorage.setItem(
+			"opnshelf-privacy-choice",
+			JSON.stringify({
+				did: "owner",
+				action,
+				at: Date.now(),
+				onboarding: true,
+			}),
+		);
+		render(<PrivacySection onboarding />);
+		expect(mocks.mutate).toHaveBeenCalledWith(action);
+	});
+
 	it("chooses Private directly without a separate connection control", () => {
 		render(<PrivacySection />);
 		fireEvent.click(

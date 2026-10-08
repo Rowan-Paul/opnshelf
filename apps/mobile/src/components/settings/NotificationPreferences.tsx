@@ -273,11 +273,12 @@ export function NotificationPreferences({
 						Confirm an email address to receive email notifications.
 					</Text>
 				)}
-				{onboarding && (
+				{onboarding && settings.emailVerified && (
 					<Button
 						label={emailExpanded ? "Hide email options" : "Email options"}
 						variant="secondary"
 						size="sm"
+						accessibilityState={{ expanded: emailExpanded }}
 						onPress={() => setEmailExpanded(!emailExpanded)}
 					/>
 				)}

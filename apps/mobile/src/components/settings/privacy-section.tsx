@@ -84,6 +84,7 @@ export function PrivacySection({
 			{ label: "Cancel" },
 			{
 				label: "New Lists only",
+				variant: "ghost",
 				onPress: () =>
 					choose({
 						kind: "default",

@@ -52,6 +52,8 @@ export function PrivacySection({
 	useEffect(() => {
 		if (resumed.current || !query.data || !user) return;
 		resumed.current = true;
+		// Keep legacy "initial" actions resumable when an older onboarding flow
+		// returns from OAuth after the category-first UI has been deployed.
 		const stored = sessionStorage.getItem(PENDING);
 		sessionStorage.removeItem(PENDING);
 		if (
@@ -394,7 +396,7 @@ export function PrivacySection({
 							existing Lists. Individual Lists can be changed separately.
 						</DialogDescription>
 					</DialogHeader>
-					<DialogFooter className="gap-2 sm:flex-col sm:items-stretch">
+					<DialogFooter className="gap-2 sm:flex-col-reverse sm:items-stretch">
 						<Button variant="ghost" onClick={() => setListChoice(null)}>
 							Cancel
 						</Button>
