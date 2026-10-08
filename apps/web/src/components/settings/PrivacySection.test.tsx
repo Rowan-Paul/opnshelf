@@ -66,11 +66,13 @@ describe("Privacy settings", () => {
 		expect(mocks.toastError).toHaveBeenCalledWith(
 			"Another Watch operation is in progress. Try again.",
 		);
-		expect(screen.getByRole("alert").textContent).toBe(
-			"Another Watch operation is in progress. Try again.",
-		);
+		expect(
+			screen.getByText("Another Watch operation is in progress. Try again.")
+				.textContent,
+		).toBe("Another Watch operation is in progress. Try again.");
 		rerender(<PrivacySection />);
 		expect(mocks.toastError).toHaveBeenCalledOnce();
+		expect(screen.queryByRole("alert")).toBeNull();
 	});
 
 	it("resumes a legacy combined onboarding choice after OAuth", () => {
@@ -195,7 +197,63 @@ describe("Privacy settings", () => {
 		};
 		rerender(<PrivacySection />);
 		expect(screen.queryByRole("dialog")).toBeNull();
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Shelf visibility" })).getByRole(
+				"button",
+				{ name: "Private" },
+			),
+		);
+		rerender(<PrivacySection />);
 		fireEvent.click(screen.getByRole("button", { name: "View List progress" }));
+		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
+	});
+
+	it("records migrations suppressed during errors so later actions do not reopen them", () => {
+		mocks.error = { message: "Conflict" };
+		mocks.data.scopes[1].migration = {
+			id: "partial",
+			target: "private",
+			status: "queued",
+			copied: 0,
+			total: 2,
+			error: null,
+		};
+		const { rerender } = render(<PrivacySection />);
+		expect(screen.queryByRole("dialog")).toBeNull();
+		mocks.error = null;
+		rerender(<PrivacySection />);
+		expect(screen.queryByRole("dialog")).toBeNull();
+	});
+	it("does not suppress migrations when bulk publication is cancelled", () => {
+		const { rerender } = render(<PrivacySection />);
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Lists visibility" })).getByRole(
+				"button",
+				{ name: "Public" },
+			),
+		);
+		fireEvent.click(screen.getByRole("button", { name: "All Lists" }));
+		fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+		expect(mocks.mutate).not.toHaveBeenCalled();
+		mocks.data = {
+			...mocks.data,
+			scopes: mocks.data.scopes.map((scope) =>
+				scope.category === "lists"
+					? {
+							...scope,
+							migration: {
+								id: "external",
+								target: "private",
+								status: "queued",
+								copied: 0,
+								total: 2,
+								error: null,
+							},
+						}
+					: scope,
+			),
+		};
+		rerender(<PrivacySection />);
 		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
 	});
 

@@ -113,7 +113,6 @@ export function PrivacySection({
 	const data = query.data;
 	const shownListMigrations = useRef(new Set<string>());
 	useEffect(() => {
-		if (mutation.isError) return;
 		const migrations =
 			data?.scopes.flatMap((scope) =>
 				scope.category === "lists" && scope.migration
@@ -121,6 +120,7 @@ export function PrivacySection({
 					: [],
 			) ?? [];
 		if (
+			!mutation.isError &&
 			!bulkListChange.current &&
 			migrations.some((id) => !shownListMigrations.current.has(id))
 		) {
@@ -129,13 +129,17 @@ export function PrivacySection({
 		for (const id of migrations) shownListMigrations.current.add(id);
 	}, [data?.scopes, mutation.isError]);
 
+	const submit = (action: PrivacyAction) => {
+		if (action.body.category === "lists")
+			bulkListChange.current = action.kind === "allLists";
+		mutation.mutate(action);
+	};
 	const choose = (action: PrivacyAction) => {
-		bulkListChange.current = action.kind === "allLists";
 		if (action.body.visibility === "public" && action.kind !== "default") {
 			setManageLists(false);
 			setConfirmation(action);
 		} else {
-			mutation.mutate(action);
+			submit(action);
 		}
 	};
 	const scopeRow = (scope: PrivacyScopeDto) => {
@@ -377,11 +381,7 @@ export function PrivacySection({
 					)}
 				</>
 			)}
-			{mutation.isError && (
-				<p role="alert" className="mt-4 text-sm">
-					{errorMessage}
-				</p>
-			)}
+			{mutation.isError && <p className="mt-4 text-sm">{errorMessage}</p>}
 			<Dialog open={manageLists} onOpenChange={setManageLists}>
 				<DialogContent className="max-h-[85dvh] overflow-y-auto">
 					<DialogHeader>
@@ -395,7 +395,7 @@ export function PrivacySection({
 						.map(scopeRow)}
 					{mutation.isError &&
 						mutation.variables?.body.category === "lists" && (
-							<p role="alert">{errorMessage}</p>
+							<p>{errorMessage}</p>
 						)}
 					{!data?.scopes.some((scope) => scope.category === "lists") && (
 						<p>No Lists yet.</p>
@@ -478,7 +478,7 @@ export function PrivacySection({
 						<Button
 							onClick={() => {
 								if (confirmation)
-									mutation.mutate({
+									submit({
 										...confirmation,
 										body: { ...confirmation.body, publicationConfirmed: true },
 									});

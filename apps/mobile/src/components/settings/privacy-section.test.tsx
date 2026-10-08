@@ -280,7 +280,58 @@ describe("Privacy Alpha mobile", () => {
 		};
 		act(() => renderer.update(<PrivacySection />));
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		act(() =>
+			renderer.root
+				.findAll(
+					(node) => node.type === "button" && node.props.label === "Private",
+				)[0]
+				.props.onPress(),
+		);
+		act(() => renderer.update(<PrivacySection />));
 		act(() => button(renderer, "View List progress").props.onPress());
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
+	});
+
+	it("does not suppress migrations when bulk publication is cancelled", () => {
+		const renderer = render();
+		act(() =>
+			renderer.root
+				.findAll(
+					(node) => node.type === "button" && node.props.label === "Public",
+				)
+				.at(-1)
+				?.props.onPress(),
+		);
+		const actions = mocks.showDialog.mock.calls[0][0].actions;
+		act(() =>
+			actions
+				.find((action: { label: string }) => action.label === "All Lists")
+				.onDismiss(),
+		);
+		// The publication dialog is dismissed without submitting Publish.
+		expect(mocks.mutate).not.toHaveBeenCalled();
+		if (!mocks.data) throw new Error("Missing status");
+		mocks.data = {
+			...mocks.data,
+			scopes: [
+				...mocks.data.scopes,
+				{
+					category: "lists",
+					listRkey: "favorites",
+					label: "Favorites",
+					visibility: "public",
+					migration: {
+						id: "external",
+						target: "private",
+						status: "queued",
+						copied: 0,
+						total: 2,
+						error: null,
+					},
+				},
+			],
+		};
+		act(() => renderer.update(<PrivacySection />));
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
 	});
 
@@ -317,6 +368,40 @@ describe("Privacy Alpha mobile", () => {
 		expect(mocks.runAuthorizationUrl).toHaveBeenCalledWith(
 			"https://pds.test/authorize",
 		);
+	});
+
+	it("authorizes after a sheet was dismissed during the permission lookup", async () => {
+		const renderer = render();
+		act(() => button(renderer, "Manage individual Lists").props.onPress());
+		const authorize = mocks.authorize;
+		if (!authorize) throw new Error("Missing authorization callback");
+		const sheet = renderer.root.findByType("dialog");
+		act(() => {
+			sheet.props.onRequestClose();
+			sheet.props.onDismiss();
+		});
+		await act(async () => {
+			void authorize();
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		});
+		expect(mocks.runAuthorizationUrl).toHaveBeenCalledOnce();
+	});
+	it("waits for a newly opened sheet even when authorization holds an older callback", async () => {
+		const renderer = render();
+		const authorize = mocks.authorize;
+		if (!authorize) throw new Error("Missing authorization callback");
+		act(() => button(renderer, "Manage individual Lists").props.onPress());
+		const didDismiss = renderer.root.findByType("dialog").props.onDismiss;
+		await act(async () => {
+			void authorize();
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		});
+		expect(mocks.runAuthorizationUrl).not.toHaveBeenCalled();
+		await act(async () => {
+			didDismiss();
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		});
+		expect(mocks.runAuthorizationUrl).toHaveBeenCalledOnce();
 	});
 
 	it("dismisses the List sheet before showing a failed change and does not repeat it on polls", () => {
@@ -363,6 +448,9 @@ describe("Privacy Alpha mobile", () => {
 		};
 		const renderer = render();
 		expect(mocks.showDialog).toHaveBeenCalledOnce();
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		mocks.mutationError = null;
+		act(() => renderer.update(<PrivacySection />));
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
 	});
 

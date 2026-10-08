@@ -23,16 +23,23 @@ export function PrivacySection({
 }) {
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
-	const [manageLists, setManageLists] = useState(false);
+	const [manageLists, setManageListsVisible] = useState(false);
+	// A hidden iOS sheet remains presented until its native dismissal completes.
+	const listsPresented = useRef(false);
+	const setManageLists = useCallback((visible: boolean) => {
+		if (visible) listsPresented.current = true;
+		setManageListsVisible(visible);
+	}, []);
 	const afterListsDismiss = useRef<(() => void) | undefined>(undefined);
 	const listsDidDismiss = useCallback(() => {
+		listsPresented.current = false;
 		const callback = afterListsDismiss.current;
 		afterListsDismiss.current = undefined;
 		callback?.();
 	}, []);
 	const afterClosingLists = useCallback(
 		(callback: () => void) => {
-			if (!manageLists) {
+			if (!listsPresented.current) {
 				callback();
 				return;
 			}
@@ -40,7 +47,7 @@ export function PrivacySection({
 			setManageLists(false);
 			if (Platform.OS !== "ios") listsDidDismiss();
 		},
-		[manageLists, listsDidDismiss],
+		[listsDidDismiss, setManageLists],
 	);
 
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
@@ -64,7 +71,6 @@ export function PrivacySection({
 	useEffect(() => {
 		// A partially accepted bulk request can report migrations alongside an error.
 		// Let the error dialog remain visible; progress is still available manually.
-		if (mutation.isError) return;
 		const migrations =
 			data?.scopes.flatMap((scope) =>
 				scope.category === "lists" && scope.migration
@@ -72,13 +78,14 @@ export function PrivacySection({
 					: [],
 			) ?? [];
 		if (
+			!mutation.isError &&
 			!bulkListChange.current &&
 			migrations.some((id) => !shownListMigrations.current.has(id))
 		) {
 			setManageLists(true);
 		}
 		for (const id of migrations) shownListMigrations.current.add(id);
-	}, [data?.scopes, mutation.isError]);
+	}, [data?.scopes, mutation.isError, setManageLists]);
 
 	const errorMessage = getErrorMessage(
 		mutation.error,
@@ -107,10 +114,14 @@ export function PrivacySection({
 		afterClosingLists,
 	]);
 
+	const submit = (action: PrivacyAction) => {
+		if (action.body.category === "lists")
+			bulkListChange.current = action.kind === "allLists";
+		mutation.mutate(action);
+	};
 	const choose = (action: PrivacyAction) => {
-		bulkListChange.current = action.kind === "allLists";
 		if (action.body.visibility !== "public" || action.kind === "default") {
-			mutation.mutate(action);
+			submit(action);
 			return;
 		}
 		afterClosingLists(() =>
@@ -124,7 +135,7 @@ export function PrivacySection({
 						label: "Publish",
 						variant: "default",
 						onDismiss: () => {
-							mutation.mutate({
+							submit({
 								...action,
 								body: { ...action.body, publicationConfirmed: true },
 							});
