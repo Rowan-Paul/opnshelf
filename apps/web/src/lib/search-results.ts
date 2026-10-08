@@ -35,7 +35,7 @@ export const SEARCH_TABS = [
 export type SearchTab = (typeof SEARCH_TABS)[number];
 
 export function isSearchTab(value: unknown): value is SearchTab {
-	return SEARCH_TABS.includes(value as SearchTab);
+	return SEARCH_TABS.some((tab) => tab === value);
 }
 
 /** The tab a `?type=` value selects; unknown or missing values fall back to All. */
