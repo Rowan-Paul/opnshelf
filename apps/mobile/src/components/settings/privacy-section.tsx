@@ -1,11 +1,12 @@
 import {
 	authControllerPermissions,
+	getErrorMessage,
 	type PrivacyAction,
 	type PrivacyScopeDto,
 	usePrivacy,
 } from "@opnshelf/api";
-import { useEffect, useRef, useState } from "react";
-import { Modal, ScrollView, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Modal, Platform, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
@@ -23,6 +24,24 @@ export function PrivacySection({
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
 	const [manageLists, setManageLists] = useState(false);
+	const afterListsDismiss = useRef<(() => void) | undefined>(undefined);
+	const listsDidDismiss = useCallback(() => {
+		const callback = afterListsDismiss.current;
+		afterListsDismiss.current = undefined;
+		callback?.();
+	}, []);
+	const afterClosingLists = useCallback(
+		(callback: () => void) => {
+			if (!manageLists) {
+				callback();
+				return;
+			}
+			afterListsDismiss.current = callback;
+			setManageLists(false);
+			if (Platform.OS !== "ios") listsDidDismiss();
+		},
+		[manageLists, listsDidDismiss],
+	);
 
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
 		const codeChallenge = (await beginHandoff()) ?? undefined;
@@ -35,49 +54,85 @@ export function PrivacySection({
 			},
 			throwOnError: true,
 		});
+		// ASWebAuthenticationSession must not compete with an animating native sheet.
+		await new Promise<void>((resolve) => afterClosingLists(resolve));
 		return runAuthorizationUrl(result.data.authorizationUrl);
 	});
 	const data = query.data;
 	const shownListMigrations = useRef(new Set<string>());
+	const bulkListChange = useRef(false);
 	useEffect(() => {
+		// A partially accepted bulk request can report migrations alongside an error.
+		// Let the error dialog remain visible; progress is still available manually.
+		if (mutation.isError) return;
 		const migrations =
 			data?.scopes.flatMap((scope) =>
 				scope.category === "lists" && scope.migration
 					? [scope.migration.id]
 					: [],
 			) ?? [];
-		if (migrations.some((id) => !shownListMigrations.current.has(id))) {
+		if (
+			!bulkListChange.current &&
+			migrations.some((id) => !shownListMigrations.current.has(id))
+		) {
 			setManageLists(true);
 		}
 		for (const id of migrations) shownListMigrations.current.add(id);
-	}, [data?.scopes]);
+	}, [data?.scopes, mutation.isError]);
+
+	const errorMessage = getErrorMessage(
+		mutation.error,
+		"Could not complete this change. Try again.",
+	);
+	const shownError = useRef<unknown>(null);
+	useEffect(() => {
+		if (!mutation.isError) {
+			shownError.current = null;
+			return;
+		}
+		if (shownError.current === mutation.error) return;
+		shownError.current = mutation.error;
+		afterClosingLists(() =>
+			showDialog({
+				title: "Could not change privacy",
+				description: errorMessage,
+				actions: [{ label: "OK" }],
+			}),
+		);
+	}, [
+		mutation.isError,
+		mutation.error,
+		errorMessage,
+		showDialog,
+		afterClosingLists,
+	]);
 
 	const choose = (action: PrivacyAction) => {
+		bulkListChange.current = action.kind === "allLists";
 		if (action.body.visibility !== "public" || action.kind === "default") {
 			mutation.mutate(action);
 			return;
 		}
-		setManageLists(false);
-		showDialog({
-			title: "Make this data Public?",
-			description:
-				"Existing records will be published and can be copied by other services. Making them Private later cannot recall those copies. Other public content may still reveal related information.",
-			actions: [
-				{ label: "Cancel" },
-				{
-					label: "Publish",
-					onDismiss: () => {
-						if (action.body.category === "lists") setManageLists(true);
+		afterClosingLists(() =>
+			showDialog({
+				title: "Make this data Public?",
+				description:
+					"Existing records will be published and can be copied by other services. Making them Private later cannot recall those copies. Other public content may still reveal related information.",
+				actions: [
+					{ label: "Cancel" },
+					{
+						label: "Publish",
+						variant: "default",
+						onDismiss: () => {
+							mutation.mutate({
+								...action,
+								body: { ...action.body, publicationConfirmed: true },
+							});
+						},
 					},
-					onPress: () => {
-						mutation.mutate({
-							...action,
-							body: { ...action.body, publicationConfirmed: true },
-						});
-					},
-				},
-			],
-		});
+				],
+			}),
+		);
 	};
 	const chooseLists = (visibility: "public" | "private") => {
 		const actions: Parameters<typeof showDialog>[0]["actions"] = [
@@ -85,7 +140,7 @@ export function PrivacySection({
 			{
 				label: "New Lists only",
 				variant: "ghost",
-				onPress: () =>
+				onDismiss: () =>
 					choose({
 						kind: "default",
 						body: { category: "lists" as const, visibility },
@@ -99,10 +154,8 @@ export function PrivacySection({
 		)
 			actions.push({
 				label: "All Lists",
-				onDismiss: () => {
-					if (visibility === "private") setManageLists(true);
-				},
-				onPress: () =>
+				variant: "default",
+				onDismiss: () =>
 					choose({ kind: "allLists", body: { category: "lists", visibility } }),
 			});
 		showDialog({
@@ -320,7 +373,14 @@ export function PrivacySection({
 							<Button
 								className="self-start border-transparent px-0"
 								variant="secondary"
-								label="Manage individual Lists"
+								label={
+									bulkListChange.current &&
+									data.scopes.some(
+										(scope) => scope.category === "lists" && scope.migration,
+									)
+										? "View List progress"
+										: "Manage individual Lists"
+								}
 								onPress={() => setManageLists(true)}
 							/>
 						</View>
@@ -338,17 +398,14 @@ export function PrivacySection({
 				</>
 			)}
 			{mutation.isError && (
-				<Text accessibilityRole="alert">
-					{mutation.error instanceof Error
-						? mutation.error.message
-						: "Could not complete this change. Try again."}
-				</Text>
+				<Text accessibilityRole="alert">{errorMessage}</Text>
 			)}
 			<Modal
 				visible={manageLists}
 				animationType="slide"
 				presentationStyle="pageSheet"
 				onRequestClose={() => setManageLists(false)}
+				onDismiss={listsDidDismiss}
 			>
 				<SafeAreaView className="flex-1 bg-background">
 					<View className="flex-row items-center justify-between p-5">
@@ -370,11 +427,7 @@ export function PrivacySection({
 							<Text>No Lists yet.</Text>
 						)}
 						{mutation.isError && (
-							<Text accessibilityRole="alert">
-								{mutation.error instanceof Error
-									? mutation.error.message
-									: "Could not complete this change. Try again."}
-							</Text>
+							<Text accessibilityRole="alert">{errorMessage}</Text>
 						)}
 					</ScrollView>
 				</SafeAreaView>

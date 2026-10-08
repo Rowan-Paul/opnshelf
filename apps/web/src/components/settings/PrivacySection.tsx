@@ -1,10 +1,12 @@
 import {
 	authControllerPermissions,
+	getErrorMessage,
 	type PrivacyAction,
 	type PrivacyScopeDto,
 	usePrivacy,
 } from "@opnshelf/api";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -31,6 +33,7 @@ export function PrivacySection({
 		null,
 	);
 	const resumed = useRef(false);
+	const bulkListChange = useRef(false);
 	const [declined, setDeclined] = useState(false);
 	useEffect(() => {
 		setDeclined(
@@ -49,6 +52,22 @@ export function PrivacySection({
 		window.location.assign(result.data.authorizationUrl);
 		return false;
 	});
+	const errorMessage = getErrorMessage(
+		mutation.error,
+		"Could not complete this change. Try again.",
+	);
+	const shownError = useRef<unknown>(null);
+	useEffect(() => {
+		if (!mutation.isError) {
+			shownError.current = null;
+			return;
+		}
+		if (shownError.current === mutation.error) return;
+		shownError.current = mutation.error;
+		setManageLists(false);
+		toast.error(errorMessage);
+	}, [mutation.isError, mutation.error, errorMessage]);
+
 	useEffect(() => {
 		if (resumed.current || !query.data || !user) return;
 		resumed.current = true;
@@ -84,6 +103,7 @@ export function PrivacySection({
 				saved.action &&
 				query.data.authorized
 			) {
+				bulkListChange.current = saved.action.kind === "allLists";
 				mutation.mutate(saved.action);
 			}
 		} catch {
@@ -93,26 +113,29 @@ export function PrivacySection({
 	const data = query.data;
 	const shownListMigrations = useRef(new Set<string>());
 	useEffect(() => {
+		if (mutation.isError) return;
 		const migrations =
 			data?.scopes.flatMap((scope) =>
 				scope.category === "lists" && scope.migration
 					? [scope.migration.id]
 					: [],
 			) ?? [];
-		if (migrations.some((id) => !shownListMigrations.current.has(id))) {
+		if (
+			!bulkListChange.current &&
+			migrations.some((id) => !shownListMigrations.current.has(id))
+		) {
 			setManageLists(true);
 		}
 		for (const id of migrations) shownListMigrations.current.add(id);
-	}, [data?.scopes]);
+	}, [data?.scopes, mutation.isError]);
 
 	const choose = (action: PrivacyAction) => {
+		bulkListChange.current = action.kind === "allLists";
 		if (action.body.visibility === "public" && action.kind !== "default") {
 			setManageLists(false);
 			setConfirmation(action);
 		} else {
 			mutation.mutate(action);
-			if (action.body.category === "lists" && action.kind !== "default")
-				setManageLists(true);
 		}
 	};
 	const scopeRow = (scope: PrivacyScopeDto) => {
@@ -331,7 +354,12 @@ export function PrivacySection({
 								variant="ghost"
 								onClick={() => setManageLists(true)}
 							>
-								Manage individual Lists
+								{bulkListChange.current &&
+								data.scopes.some(
+									(scope) => scope.category === "lists" && scope.migration,
+								)
+									? "View List progress"
+									: "Manage individual Lists"}
 							</Button>
 						</div>
 					</div>
@@ -351,9 +379,7 @@ export function PrivacySection({
 			)}
 			{mutation.isError && (
 				<p role="alert" className="mt-4 text-sm">
-					{mutation.error instanceof Error
-						? mutation.error.message
-						: "Could not complete this change. Try again."}
+					{errorMessage}
 				</p>
 			)}
 			<Dialog open={manageLists} onOpenChange={setManageLists}>
@@ -369,11 +395,7 @@ export function PrivacySection({
 						.map(scopeRow)}
 					{mutation.isError &&
 						mutation.variables?.body.category === "lists" && (
-							<p role="alert">
-								{mutation.error instanceof Error
-									? mutation.error.message
-									: "Could not complete this change. Try again."}
-							</p>
+							<p role="alert">{errorMessage}</p>
 						)}
 					{!data?.scopes.some((scope) => scope.category === "lists") && (
 						<p>No Lists yet.</p>
@@ -461,8 +483,6 @@ export function PrivacySection({
 										body: { ...confirmation.body, publicationConfirmed: true },
 									});
 								setConfirmation(null);
-								if (confirmation?.body.category === "lists")
-									setManageLists(true);
 							}}
 						>
 							Publish

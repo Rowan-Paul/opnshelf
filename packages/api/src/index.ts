@@ -45,6 +45,7 @@ export {
 	parseGenreDiscovery,
 } from "./genre-discovery";
 export {
+	getErrorMessage,
 	getHttpStatus,
 	isUnauthorizedError,
 	retryTransientFailures,
