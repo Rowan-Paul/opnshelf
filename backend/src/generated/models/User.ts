@@ -567,6 +567,7 @@ export type UserWhereInput = {
   pushDevices?: Prisma.PushDeviceListRelationFilter
   notificationDeliveries?: Prisma.NotificationDeliveryListRelationFilter
   notificationCollections?: Prisma.NotificationCollectionListRelationFilter
+  traktConnections?: Prisma.TraktSyncConnectionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -635,6 +636,7 @@ export type UserOrderByWithRelationInput = {
   pushDevices?: Prisma.PushDeviceOrderByRelationAggregateInput
   notificationDeliveries?: Prisma.NotificationDeliveryOrderByRelationAggregateInput
   notificationCollections?: Prisma.NotificationCollectionOrderByRelationAggregateInput
+  traktConnections?: Prisma.TraktSyncConnectionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -706,6 +708,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   pushDevices?: Prisma.PushDeviceListRelationFilter
   notificationDeliveries?: Prisma.NotificationDeliveryListRelationFilter
   notificationCollections?: Prisma.NotificationCollectionListRelationFilter
+  traktConnections?: Prisma.TraktSyncConnectionListRelationFilter
 }, "did" | "handle">
 
 export type UserOrderByWithAggregationInput = {
@@ -880,6 +883,7 @@ export type UserCreateInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -948,6 +952,7 @@ export type UserUncheckedCreateInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -1016,6 +1021,7 @@ export type UserUpdateInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -1084,6 +1090,7 @@ export type UserUncheckedUpdateInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -1449,6 +1456,20 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
+export type UserCreateNestedOneWithoutTraktConnectionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTraktConnectionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutTraktConnectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTraktConnectionsInput
+  upsert?: Prisma.UserUpsertWithoutTraktConnectionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTraktConnectionsInput, Prisma.UserUpdateWithoutTraktConnectionsInput>, Prisma.UserUncheckedUpdateWithoutTraktConnectionsInput>
+}
+
 export type UserCreateNestedOneWithoutNotificationSettingsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutNotificationSettingsInput, Prisma.UserUncheckedCreateWithoutNotificationSettingsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationSettingsInput
@@ -1717,6 +1738,294 @@ export type UserUpdateOneRequiredWithoutPrivacyScopesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPrivacyScopesInput, Prisma.UserUpdateWithoutPrivacyScopesInput>, Prisma.UserUncheckedUpdateWithoutPrivacyScopesInput>
 }
 
+export type UserCreateWithoutTraktConnectionsInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: boolean
+  onboardingCompletedAt?: Date | string | null
+  atStoreReviewHandledAt?: Date | string | null
+  atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
+  releaseNotesReadAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  listsDefaultVisibility?: string
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
+  watchVisibility?: string
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
+  blogIntegrationEnabled?: boolean
+  blueskyCrossPostEnabled?: boolean
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
+  trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListCreateNestedManyWithoutUserInput
+  libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
+  notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
+  pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
+  notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutTraktConnectionsInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: boolean
+  onboardingCompletedAt?: Date | string | null
+  atStoreReviewHandledAt?: Date | string | null
+  atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
+  releaseNotesReadAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  listsDefaultVisibility?: string
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
+  watchVisibility?: string
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
+  blogIntegrationEnabled?: boolean
+  blueskyCrossPostEnabled?: boolean
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
+  trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
+  libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationUncheckedCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingUncheckedCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
+  notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
+  pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
+  notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutTraktConnectionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
+}
+
+export type UserUpsertWithoutTraktConnectionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTraktConnectionsInput, Prisma.UserUncheckedUpdateWithoutTraktConnectionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTraktConnectionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTraktConnectionsInput, Prisma.UserUncheckedUpdateWithoutTraktConnectionsInput>
+}
+
+export type UserUpdateWithoutTraktConnectionsInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  releaseNotesReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
+  trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUpdateManyWithoutUserNestedInput
+  libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
+  notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
+  pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
+  notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTraktConnectionsInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  releaseNotesReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
+  trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
+  libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUncheckedUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUncheckedUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
+  notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
+  pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
+  notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+}
+
 export type UserCreateWithoutNotificationSettingsInput = {
   did: string
   handle: string
@@ -1782,6 +2091,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationSettingsInput = {
@@ -1849,6 +2159,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationSettingsInput = {
@@ -1932,6 +2243,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
@@ -1999,6 +2311,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPushDevicesInput = {
@@ -2066,6 +2379,7 @@ export type UserCreateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPushDevicesInput = {
@@ -2133,6 +2447,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPushDevicesInput = {
@@ -2216,6 +2531,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPushDevicesInput = {
@@ -2283,6 +2599,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationCollectionsInput = {
@@ -2350,6 +2667,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
@@ -2417,6 +2735,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationCollectionsInput = {
@@ -2500,6 +2819,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
@@ -2567,6 +2887,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationDeliveriesInput = {
@@ -2634,6 +2955,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
@@ -2701,6 +3023,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationDeliveriesInput = {
@@ -2784,6 +3107,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
@@ -2851,6 +3175,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFollowingInput = {
@@ -2918,6 +3243,7 @@ export type UserCreateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFollowingInput = {
@@ -2985,6 +3311,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFollowingInput = {
@@ -3057,6 +3384,7 @@ export type UserCreateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFollowersInput = {
@@ -3124,6 +3452,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFollowersInput = {
@@ -3207,6 +3536,7 @@ export type UserUpdateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowingInput = {
@@ -3274,6 +3604,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutFollowersInput = {
@@ -3352,6 +3683,7 @@ export type UserUpdateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowersInput = {
@@ -3419,6 +3751,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCirclesInput = {
@@ -3486,6 +3819,7 @@ export type UserCreateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCirclesInput = {
@@ -3553,6 +3887,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCirclesInput = {
@@ -3636,6 +3971,7 @@ export type UserUpdateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCirclesInput = {
@@ -3703,6 +4039,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTrackedMoviesInput = {
@@ -3770,6 +4107,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTrackedMoviesInput = {
@@ -3837,6 +4175,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTrackedMoviesInput = {
@@ -3920,6 +4259,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
@@ -3987,6 +4327,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTrackedEpisodesInput = {
@@ -4054,6 +4395,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
@@ -4121,6 +4463,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTrackedEpisodesInput = {
@@ -4204,6 +4547,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
@@ -4271,6 +4615,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutListsInput = {
@@ -4338,6 +4683,7 @@ export type UserCreateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutListsInput = {
@@ -4405,6 +4751,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutListsInput = {
@@ -4488,6 +4835,7 @@ export type UserUpdateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutListsInput = {
@@ -4555,6 +4903,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutLibraryItemsInput = {
@@ -4622,6 +4971,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutLibraryItemsInput = {
@@ -4689,6 +5039,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutLibraryItemsInput = {
@@ -4772,6 +5123,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLibraryItemsInput = {
@@ -4839,6 +5191,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotesInput = {
@@ -4906,6 +5259,7 @@ export type UserCreateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotesInput = {
@@ -4973,6 +5327,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotesInput = {
@@ -5056,6 +5411,7 @@ export type UserUpdateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotesInput = {
@@ -5123,6 +5479,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -5190,6 +5547,7 @@ export type UserCreateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -5257,6 +5615,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -5340,6 +5699,7 @@ export type UserUpdateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -5407,6 +5767,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPublicationsInput = {
@@ -5474,6 +5835,7 @@ export type UserCreateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPublicationsInput = {
@@ -5541,6 +5903,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPublicationsInput = {
@@ -5624,6 +5987,7 @@ export type UserUpdateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPublicationsInput = {
@@ -5691,6 +6055,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRatingsInput = {
@@ -5758,6 +6123,7 @@ export type UserCreateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRatingsInput = {
@@ -5825,6 +6191,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRatingsInput = {
@@ -5908,6 +6275,7 @@ export type UserUpdateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRatingsInput = {
@@ -5975,6 +6343,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewLikesInput = {
@@ -6042,6 +6411,7 @@ export type UserCreateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewLikesInput = {
@@ -6109,6 +6479,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewLikesInput = {
@@ -6192,6 +6563,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewLikesInput = {
@@ -6259,6 +6631,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFeedbackInput = {
@@ -6326,6 +6699,7 @@ export type UserCreateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFeedbackInput = {
@@ -6393,6 +6767,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFeedbackInput = {
@@ -6476,6 +6851,7 @@ export type UserUpdateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFeedbackInput = {
@@ -6543,6 +6919,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutWatchPrivacyMigrationInput = {
@@ -6610,6 +6987,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
@@ -6677,6 +7055,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutWatchPrivacyMigrationInput = {
@@ -6760,6 +7139,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
@@ -6827,6 +7207,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPrivacyScopesInput = {
@@ -6894,6 +7275,7 @@ export type UserCreateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPrivacyScopesInput = {
@@ -6961,6 +7343,7 @@ export type UserUncheckedCreateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPrivacyScopesInput = {
@@ -7044,6 +7427,7 @@ export type UserUpdateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
@@ -7111,6 +7495,7 @@ export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -7136,6 +7521,7 @@ export type UserCountOutputType = {
   pushDevices: number
   notificationDeliveries: number
   notificationCollections: number
+  traktConnections: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -7156,6 +7542,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   pushDevices?: boolean | UserCountOutputTypeCountPushDevicesArgs
   notificationDeliveries?: boolean | UserCountOutputTypeCountNotificationDeliveriesArgs
   notificationCollections?: boolean | UserCountOutputTypeCountNotificationCollectionsArgs
+  traktConnections?: boolean | UserCountOutputTypeCountTraktConnectionsArgs
 }
 
 /**
@@ -7287,6 +7674,13 @@ export type UserCountOutputTypeCountNotificationCollectionsArgs<ExtArgs extends 
   where?: Prisma.NotificationCollectionWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTraktConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TraktSyncConnectionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   did?: boolean
@@ -7354,6 +7748,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   pushDevices?: boolean | Prisma.User$pushDevicesArgs<ExtArgs>
   notificationDeliveries?: boolean | Prisma.User$notificationDeliveriesArgs<ExtArgs>
   notificationCollections?: boolean | Prisma.User$notificationCollectionsArgs<ExtArgs>
+  traktConnections?: boolean | Prisma.User$traktConnectionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -7525,6 +7920,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   pushDevices?: boolean | Prisma.User$pushDevicesArgs<ExtArgs>
   notificationDeliveries?: boolean | Prisma.User$notificationDeliveriesArgs<ExtArgs>
   notificationCollections?: boolean | Prisma.User$notificationCollectionsArgs<ExtArgs>
+  traktConnections?: boolean | Prisma.User$traktConnectionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -7552,6 +7948,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     pushDevices: Prisma.$PushDevicePayload<ExtArgs>[]
     notificationDeliveries: Prisma.$NotificationDeliveryPayload<ExtArgs>[]
     notificationCollections: Prisma.$NotificationCollectionPayload<ExtArgs>[]
+    traktConnections: Prisma.$TraktSyncConnectionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     did: string
@@ -8013,6 +8410,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   pushDevices<T extends Prisma.User$pushDevicesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$pushDevicesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PushDevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificationDeliveries<T extends Prisma.User$notificationDeliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationDeliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationDeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificationCollections<T extends Prisma.User$notificationCollectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationCollectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationCollectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  traktConnections<T extends Prisma.User$traktConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$traktConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TraktSyncConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8924,6 +9322,30 @@ export type User$notificationCollectionsArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.NotificationCollectionScalarFieldEnum | Prisma.NotificationCollectionScalarFieldEnum[]
+}
+
+/**
+ * User.traktConnections
+ */
+export type User$traktConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TraktSyncConnection
+   */
+  select?: Prisma.TraktSyncConnectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TraktSyncConnection
+   */
+  omit?: Prisma.TraktSyncConnectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TraktSyncConnectionInclude<ExtArgs> | null
+  where?: Prisma.TraktSyncConnectionWhereInput
+  orderBy?: Prisma.TraktSyncConnectionOrderByWithRelationInput | Prisma.TraktSyncConnectionOrderByWithRelationInput[]
+  cursor?: Prisma.TraktSyncConnectionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TraktSyncConnectionScalarFieldEnum | Prisma.TraktSyncConnectionScalarFieldEnum[]
 }
 
 /**

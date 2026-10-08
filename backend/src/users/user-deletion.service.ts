@@ -15,6 +15,7 @@ import {
 	Injectable,
 	Logger,
 	NotFoundException,
+	Optional,
 } from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
 import { $nsid as EPISODE_COLLECTION } from "../lexicons/xyz/opnshelf/episode";
@@ -32,6 +33,7 @@ import { $nsid as REVIEW_LIKE_COLLECTION } from "../lexicons/xyz/opnshelf/review
 import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
+import { TraktSyncService } from "../trakt-sync/trakt-sync.service";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
@@ -90,6 +92,7 @@ export class UserDeletionService {
 		config: BackendEnv,
 		private readonly privateSettings: PrivateSettingsService,
 		private readonly watchPrivacy: WatchPrivacyCoordinator,
+		@Optional() private readonly traktSync?: TraktSyncService,
 	) {
 		this.tab = new Tap(config.TAB_URL || "http://localhost:2480", {
 			adminPassword: config.TAB_ADMIN_PASSWORD,
@@ -108,6 +111,7 @@ export class UserDeletionService {
 
 		// Revoke the OAuth session too — it lives in a standalone table (no FK
 		// cascade), so deleting the user alone leaves a live session behind.
+		await this.traktSync?.disconnectForDeletion(did);
 		await this.authService.revoke(did);
 
 		await this.deleteLocalAccount(did);
@@ -143,6 +147,7 @@ export class UserDeletionService {
 	}
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {
+		await this.traktSync?.disconnectForDeletion(did);
 		return this.watchPrivacy.withAccountLock(did, () =>
 			this.createDeletionJobLocked(did, deletePdsData),
 		);

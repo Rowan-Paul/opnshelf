@@ -20,12 +20,14 @@ import { TraktApiClient } from "./trakt-api.client";
 import { UserDeletionService } from "./user-deletion.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
+import { TraktSyncModule } from "../trakt-sync/trakt-sync.module";
 
 @Module({
 	imports: [
 		forwardRef(() => PrivacyModule),
 		PdsModule,
 		PrismaModule,
+		TraktSyncModule,
 		ListsModule,
 		MoviesModule,
 		ShowsModule,

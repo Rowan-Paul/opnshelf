@@ -34,10 +34,16 @@ export function ImportHistorySection() {
 			id="import-history"
 			className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"
 		>
-			<h2 className="mb-1 font-semibold text-lg">Import history</h2>
+			<h2 className="mb-1 font-semibold text-lg">Trakt</h2>
 			<p className="mb-5 text-(--foreground-muted) text-sm">
 				Bring your public Trakt watch history into your Shelf
 			</p>
+			<Link
+				to="/trakt-sync"
+				className="mb-3 flex max-w-lg items-center justify-between rounded-xl border border-(--border) p-4 font-medium"
+			>
+				Keep in sync <ChevronRight className="size-4" />
+			</Link>
 			<Link
 				to="/trakt-import"
 				className="flex max-w-lg items-center gap-3 rounded-xl border border-(--border) bg-(--background-subtle) p-4 transition-colors hover:bg-(--background-elevated)"

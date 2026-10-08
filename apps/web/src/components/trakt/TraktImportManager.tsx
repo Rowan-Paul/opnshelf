@@ -259,12 +259,18 @@ function ImportResult({ job }: { job: TraktImportJobDto }) {
 							@{job.profileUsername ?? job.traktUsername}
 						</p>
 						<h1 className="mt-1 font-display font-semibold text-3xl">
-							{hasIssues ? "Completed with issues" : "Import complete"}
+							{job.status === "continued_in_sync"
+								? "Continued in Trakt Sync"
+								: hasIssues
+									? "Completed with issues"
+									: "Import complete"}
 						</h1>
 						<p className="mt-2 text-(--foreground-muted)">
-							{hasIssues
-								? "Your full Trakt snapshot was examined. Some titles still need attention."
-								: "Your full Trakt snapshot is now on your Shelf."}
+							{job.status === "continued_in_sync"
+								? "Your Import progress and results remain available. The original Import cannot resume, even if sync is disconnected."
+								: hasIssues
+									? "Your full Trakt snapshot was examined. Some titles still need attention."
+									: "Your full Trakt snapshot is now on your Shelf."}
 						</p>
 					</div>
 				</div>

@@ -4487,6 +4487,546 @@
         ]
       }
     },
+    "/trakt-sync": {
+      "get": {
+        "operationId": "TraktSyncController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      },
+      "patch": {
+        "operationId": "TraktSyncController_configure",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      }
+    },
+    "/trakt-sync/connect": {
+      "post": {
+        "operationId": "TraktSyncController_connect",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncConnectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncAuthorizeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      }
+    },
+    "/trakt-sync/callback": {
+      "get": {
+        "operationId": "TraktSyncController_callback",
+        "parameters": [
+          {
+            "name": "state",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      }
+    },
+    "/trakt-sync/action": {
+      "post": {
+        "operationId": "TraktSyncController_action",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      }
+    },
+    "/trakt-sync/issues": {
+      "get": {
+        "operationId": "TraktSyncController_issues",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number to return (1-based)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "view",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "attention",
+                "ignored"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncIssuesDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      }
+    },
+    "/trakt-sync/issues/{id}": {
+      "post": {
+        "operationId": "TraktSyncController_resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncResolveDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      }
+    },
+    "/trakt-sync/issues/{id}/matches": {
+      "get": {
+        "operationId": "TraktSyncController_matches",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "trakt-sync"
+        ]
+      }
+    },
+    "/ratings/user/{userDid}": {
+      "get": {
+        "operationId": "RatingsController_getRating",
+        "parameters": [
+          {
+            "name": "userDid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaType",
+            "required": true,
+            "in": "query",
+            "description": "Media type (movie, show, season, episode)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "show",
+                "season",
+                "episode"
+              ]
+            }
+          },
+          {
+            "name": "mediaId",
+            "required": true,
+            "in": "query",
+            "description": "TMDB movie ID or show ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "seasonNumber",
+            "required": false,
+            "in": "query",
+            "description": "Season number for season/episode items",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "episodeNumber",
+            "required": false,
+            "in": "query",
+            "description": "Episode number for episode items",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rating retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a rating for a user and media item",
+        "tags": [
+          "ratings"
+        ]
+      }
+    },
+    "/ratings/media": {
+      "get": {
+        "operationId": "RatingsController_getMediaRating",
+        "parameters": [
+          {
+            "name": "mediaType",
+            "required": true,
+            "in": "query",
+            "description": "Media type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "show",
+                "season",
+                "episode"
+              ]
+            }
+          },
+          {
+            "name": "mediaId",
+            "required": true,
+            "in": "query",
+            "description": "TMDB movie ID or show ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "seasonNumber",
+            "required": false,
+            "in": "query",
+            "description": "Season number for season/episode items",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "episodeNumber",
+            "required": false,
+            "in": "query",
+            "description": "Episode number for episode items",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregate rating retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaRatingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get aggregate rating for a media item",
+        "tags": [
+          "ratings"
+        ]
+      }
+    },
+    "/ratings/batch": {
+      "get": {
+        "operationId": "RatingsController_getBatchRatings",
+        "parameters": [
+          {
+            "name": "mediaType",
+            "required": true,
+            "in": "query",
+            "description": "Media type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "show"
+              ]
+            }
+          },
+          {
+            "name": "mediaIds",
+            "required": true,
+            "in": "query",
+            "description": "Repeated media ID to fetch ratings for",
+            "schema": {
+              "minItems": 1,
+              "maxItems": 100,
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 50
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch ratings retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchRatingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get batch aggregate ratings for multiple media",
+        "tags": [
+          "ratings"
+        ]
+      }
+    },
+    "/ratings": {
+      "post": {
+        "operationId": "RatingsController_setRating",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetRatingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rating set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set (create or update) a rating",
+        "tags": [
+          "ratings"
+        ]
+      }
+    },
+    "/ratings/{ratingId}": {
+      "delete": {
+        "operationId": "RatingsController_clearRating",
+        "parameters": [
+          {
+            "name": "ratingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rating cleared"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear a rating",
+        "tags": [
+          "ratings"
+        ]
+      }
+    },
     "/social/suggestions": {
       "get": {
         "operationId": "SocialController_getSuggestions",
@@ -5733,276 +6273,6 @@
         "summary": "Whether the user's historical watch records are still backfilling from their PDS",
         "tags": [
           "shelf"
-        ]
-      }
-    },
-    "/ratings/user/{userDid}": {
-      "get": {
-        "operationId": "RatingsController_getRating",
-        "parameters": [
-          {
-            "name": "userDid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "mediaType",
-            "required": true,
-            "in": "query",
-            "description": "Media type (movie, show, season, episode)",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "movie",
-                "show",
-                "season",
-                "episode"
-              ]
-            }
-          },
-          {
-            "name": "mediaId",
-            "required": true,
-            "in": "query",
-            "description": "TMDB movie ID or show ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "seasonNumber",
-            "required": false,
-            "in": "query",
-            "description": "Season number for season/episode items",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "episodeNumber",
-            "required": false,
-            "in": "query",
-            "description": "Episode number for episode items",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Rating retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RatingResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get a rating for a user and media item",
-        "tags": [
-          "ratings"
-        ]
-      }
-    },
-    "/ratings/media": {
-      "get": {
-        "operationId": "RatingsController_getMediaRating",
-        "parameters": [
-          {
-            "name": "mediaType",
-            "required": true,
-            "in": "query",
-            "description": "Media type",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "movie",
-                "show",
-                "season",
-                "episode"
-              ]
-            }
-          },
-          {
-            "name": "mediaId",
-            "required": true,
-            "in": "query",
-            "description": "TMDB movie ID or show ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "seasonNumber",
-            "required": false,
-            "in": "query",
-            "description": "Season number for season/episode items",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "episodeNumber",
-            "required": false,
-            "in": "query",
-            "description": "Episode number for episode items",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Aggregate rating retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MediaRatingResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get aggregate rating for a media item",
-        "tags": [
-          "ratings"
-        ]
-      }
-    },
-    "/ratings/batch": {
-      "get": {
-        "operationId": "RatingsController_getBatchRatings",
-        "parameters": [
-          {
-            "name": "mediaType",
-            "required": true,
-            "in": "query",
-            "description": "Media type",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "movie",
-                "show"
-              ]
-            }
-          },
-          {
-            "name": "mediaIds",
-            "required": true,
-            "in": "query",
-            "description": "Repeated media ID to fetch ratings for",
-            "schema": {
-              "minItems": 1,
-              "maxItems": 100,
-              "uniqueItems": true,
-              "type": "array",
-              "items": {
-                "type": "string",
-                "maxLength": 50
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Batch ratings retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchRatingResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get batch aggregate ratings for multiple media",
-        "tags": [
-          "ratings"
-        ]
-      }
-    },
-    "/ratings": {
-      "post": {
-        "operationId": "RatingsController_setRating",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetRatingDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Rating set",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RatingResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Set (create or update) a rating",
-        "tags": [
-          "ratings"
-        ]
-      }
-    },
-    "/ratings/{ratingId}": {
-      "delete": {
-        "operationId": "RatingsController_clearRating",
-        "parameters": [
-          {
-            "name": "ratingId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Rating cleared"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Clear a rating",
-        "tags": [
-          "ratings"
         ]
       }
     },
@@ -9921,6 +10191,7 @@
               "waiting_retry",
               "paused",
               "completed",
+              "continued_in_sync",
               "failed"
             ]
           },
@@ -11248,6 +11519,449 @@
           "content"
         ]
       },
+      "SyncStatusDto": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "disconnected",
+              "paused",
+              "preparing",
+              "active",
+              "reconnect"
+            ]
+          },
+          "username": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound",
+              "both"
+            ]
+          },
+          "watches": {
+            "type": "boolean"
+          },
+          "ratings": {
+            "type": "boolean"
+          },
+          "historyScope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "future"
+            ]
+          },
+          "publicationConsent": {
+            "type": "boolean"
+          },
+          "lastSuccessAt": {
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "needsAttention": {
+            "type": "number"
+          },
+          "ignored": {
+            "type": "number"
+          },
+          "importStatus": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "configured",
+          "status",
+          "direction",
+          "watches",
+          "ratings",
+          "historyScope",
+          "publicationConsent",
+          "needsAttention",
+          "ignored"
+        ]
+      },
+      "SyncConnectDto": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "web",
+              "mobile"
+            ]
+          }
+        },
+        "required": [
+          "platform"
+        ]
+      },
+      "SyncAuthorizeDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "SyncSettingsDto": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound",
+              "both"
+            ]
+          },
+          "watches": {
+            "type": "boolean"
+          },
+          "ratings": {
+            "type": "boolean"
+          },
+          "historyScope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "future"
+            ]
+          },
+          "publicationConsent": {
+            "type": "boolean"
+          },
+          "handoffImport": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "direction",
+          "watches",
+          "ratings",
+          "historyScope",
+          "publicationConsent"
+        ]
+      },
+      "SyncActionDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "pause",
+              "resume",
+              "sync",
+              "disconnect"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "SyncRecordDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "mediaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "season": {
+            "type": "number"
+          },
+          "episode": {
+            "type": "number"
+          },
+          "displayValue": {
+            "type": "string",
+            "description": "Watch date, No date, or Rating"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "mediaType",
+          "mediaId",
+          "title",
+          "season",
+          "episode",
+          "displayValue"
+        ]
+      },
+      "SyncIssueDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "ignored": {
+            "type": "boolean"
+          },
+          "opnshelf": {
+            "$ref": "#/components/schemas/SyncRecordDto"
+          },
+          "trakt": {
+            "$ref": "#/components/schemas/SyncRecordDto"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncRecordDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "issue",
+          "ignored",
+          "candidates"
+        ]
+      },
+      "SyncIssuesDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncIssueDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
+        ]
+      },
+      "SyncResolveDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "trakt",
+              "opnshelf",
+              "ignore",
+              "undo",
+              "retry",
+              "link",
+              "match",
+              "separate"
+            ]
+          },
+          "candidateKey": {
+            "type": "string"
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie or show ID"
+          },
+          "allRatings": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "RatingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rkey": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string"
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rkey",
+          "rating",
+          "mediaType",
+          "mediaId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "MediaRatingResponseDto": {
+        "type": "object",
+        "properties": {
+          "averageRating": {
+            "type": "number",
+            "description": "Average rating (1-10 scale)"
+          },
+          "ratingCount": {
+            "type": "number",
+            "description": "Total number of ratings"
+          }
+        },
+        "required": [
+          "ratingCount"
+        ]
+      },
+      "BatchRatingItemDto": {
+        "type": "object",
+        "properties": {
+          "mediaId": {
+            "type": "string"
+          },
+          "averageRating": {
+            "type": "number",
+            "description": "Average rating (1-10 scale)"
+          },
+          "ratingCount": {
+            "type": "number",
+            "description": "Total number of ratings"
+          }
+        },
+        "required": [
+          "mediaId",
+          "ratingCount"
+        ]
+      },
+      "BatchRatingResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchRatingItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "SetRatingDto": {
+        "type": "object",
+        "properties": {
+          "mediaType": {
+            "type": "string",
+            "description": "Media type",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie ID or show ID"
+          },
+          "seasonNumber": {
+            "type": "number",
+            "description": "Season number for season/episode items"
+          },
+          "episodeNumber": {
+            "type": "number",
+            "description": "Episode number for episode items"
+          },
+          "rating": {
+            "type": "number",
+            "description": "Rating from 1 to 10 (maps to 0.5-5.0 stars)",
+            "minimum": 1,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "mediaType",
+          "mediaId",
+          "rating"
+        ]
+      },
       "UserRelationshipDto": {
         "type": "object",
         "properties": {
@@ -12464,143 +13178,6 @@
           "isSyncing",
           "trackedMovieCount",
           "trackedEpisodeCount"
-        ]
-      },
-      "RatingResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "rkey": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 10
-          },
-          "mediaType": {
-            "type": "string",
-            "enum": [
-              "movie",
-              "show",
-              "season",
-              "episode"
-            ]
-          },
-          "mediaId": {
-            "type": "string"
-          },
-          "seasonNumber": {
-            "type": "number"
-          },
-          "episodeNumber": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "rkey",
-          "rating",
-          "mediaType",
-          "mediaId",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "MediaRatingResponseDto": {
-        "type": "object",
-        "properties": {
-          "averageRating": {
-            "type": "number",
-            "description": "Average rating (1-10 scale)"
-          },
-          "ratingCount": {
-            "type": "number",
-            "description": "Total number of ratings"
-          }
-        },
-        "required": [
-          "ratingCount"
-        ]
-      },
-      "BatchRatingItemDto": {
-        "type": "object",
-        "properties": {
-          "mediaId": {
-            "type": "string"
-          },
-          "averageRating": {
-            "type": "number",
-            "description": "Average rating (1-10 scale)"
-          },
-          "ratingCount": {
-            "type": "number",
-            "description": "Total number of ratings"
-          }
-        },
-        "required": [
-          "mediaId",
-          "ratingCount"
-        ]
-      },
-      "BatchRatingResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BatchRatingItemDto"
-            }
-          }
-        },
-        "required": [
-          "items"
-        ]
-      },
-      "SetRatingDto": {
-        "type": "object",
-        "properties": {
-          "mediaType": {
-            "type": "string",
-            "description": "Media type",
-            "enum": [
-              "movie",
-              "show",
-              "season",
-              "episode"
-            ]
-          },
-          "mediaId": {
-            "type": "string",
-            "description": "TMDB movie ID or show ID"
-          },
-          "seasonNumber": {
-            "type": "number",
-            "description": "Season number for season/episode items"
-          },
-          "episodeNumber": {
-            "type": "number",
-            "description": "Episode number for episode items"
-          },
-          "rating": {
-            "type": "number",
-            "description": "Rating from 1 to 10 (maps to 0.5-5.0 stars)",
-            "minimum": 1,
-            "maximum": 10
-          }
-        },
-        "required": [
-          "mediaType",
-          "mediaId",
-          "rating"
         ]
       },
       "AtStoreReviewPromptDto": {

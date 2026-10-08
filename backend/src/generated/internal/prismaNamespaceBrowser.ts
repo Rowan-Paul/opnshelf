@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  TraktSyncConnection: 'TraktSyncConnection',
+  TraktSyncEntry: 'TraktSyncEntry',
   NotificationSettings: 'NotificationSettings',
   PushDevice: 'PushDevice',
   NotificationCollection: 'NotificationCollection',
@@ -152,6 +154,56 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const TraktSyncConnectionScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  traktUserId: 'traktUserId',
+  username: 'username',
+  accessToken: 'accessToken',
+  refreshToken: 'refreshToken',
+  expiresAt: 'expiresAt',
+  status: 'status',
+  direction: 'direction',
+  watches: 'watches',
+  ratings: 'ratings',
+  historyScope: 'historyScope',
+  publicationConsent: 'publicationConsent',
+  initialised: 'initialised',
+  nextRunAt: 'nextRunAt',
+  lastSuccessAt: 'lastSuccessAt',
+  lastError: 'lastError',
+  leaseId: 'leaseId',
+  leaseUntil: 'leaseUntil',
+  remoteSnapshot: 'remoteSnapshot',
+  remoteReadAt: 'remoteReadAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraktSyncConnectionScalarFieldEnum = (typeof TraktSyncConnectionScalarFieldEnum)[keyof typeof TraktSyncConnectionScalarFieldEnum]
+
+
+export const TraktSyncEntryScalarFieldEnum = {
+  id: 'id',
+  connectionId: 'connectionId',
+  kind: 'kind',
+  localKey: 'localKey',
+  remoteKey: 'remoteKey',
+  localBase: 'localBase',
+  remoteBase: 'remoteBase',
+  linked: 'linked',
+  eligible: 'eligible',
+  ignored: 'ignored',
+  issue: 'issue',
+  resolution: 'resolution',
+  pending: 'pending',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraktSyncEntryScalarFieldEnum = (typeof TraktSyncEntryScalarFieldEnum)[keyof typeof TraktSyncEntryScalarFieldEnum]
 
 
 export const NotificationSettingsScalarFieldEnum = {
