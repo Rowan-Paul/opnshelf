@@ -1,3 +1,4 @@
+import { mockWatchCoordinator } from "../../../test/watch-privacy";
 import { mockEnvironment } from "../../../test/env";
 import type { Mock } from "vitest";
 import { Agent } from "@atproto/api";
@@ -156,6 +157,7 @@ describe("TraktImportWorker", () => {
 			moviesService,
 			showsService,
 			authService,
+			mockWatchCoordinator(),
 		);
 		worker = new TraktImportWorker(prisma, traktApi, jobStore, writer);
 		global.fetch = vi.fn() as unknown as typeof fetch;

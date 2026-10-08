@@ -61,7 +61,6 @@ export function PreferencesSections() {
 				</p>
 				<AppearanceSetting />
 			</section>
-
 			<section
 				id="time-region"
 				className="scroll-mt-24 border-(--border) border-b p-5 sm:p-7"

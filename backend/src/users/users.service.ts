@@ -1,3 +1,4 @@
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { rebaseAvatarUrl } from "./avatar-url";
 import {
 	BadGatewayException,
@@ -50,12 +51,16 @@ export class UsersService {
 		private readonly listsService: ListsService,
 		private readonly reviewsService: ReviewsService,
 		private readonly shelfService: ShelfService,
+		private readonly privateSettings: PrivateSettingsService,
 	) {}
 
 	/**
 	 * Get user settings by DID
 	 */
-	async getUserSettings(did: string): Promise<UserSettingsDto> {
+	async getUserSettings(
+		did: string,
+		_session?: ATSession,
+	): Promise<UserSettingsDto> {
 		const user = await this.prisma.user.findUnique({
 			where: { did },
 			select: {
@@ -149,7 +154,9 @@ export class UsersService {
 			where: { did },
 			data: {
 				...(dto.timezone !== undefined && { timezone: dto.timezone }),
-				...(dto.timeFormat !== undefined && { timeFormat: dto.timeFormat }),
+				...(dto.timeFormat !== undefined && {
+					timeFormat: dto.timeFormat,
+				}),
 				...(dto.watchCountry !== undefined && {
 					watchCountry: dto.watchCountry,
 				}),
@@ -219,6 +226,14 @@ export class UsersService {
 			welcomeTourWebVersion: updatedUser.welcomeTourWebVersion,
 			welcomeTourMobileVersion: updatedUser.welcomeTourMobileVersion,
 		};
+	}
+
+	async deletePrivateSettings(did: string, session: ATSession) {
+		await this.privateSettings.delete(did, session);
+		await this.prisma.user.update({
+			where: { did },
+			data: { privateSettingsHasCopy: false },
+		});
 	}
 
 	async updateUserProfile(
@@ -405,11 +420,17 @@ export class UsersService {
 
 	async getPublicProfileByHandle(
 		handle: string,
+		viewerDid?: string,
 	): Promise<PublicUserProfileDto> {
 		const normalizedHandle = handle.trim().replace(/^@/, "").toLowerCase();
 		const user = await this.prisma.user.findUnique({
 			where: { handle: normalizedHandle },
 			select: {
+				watchVisibility: true,
+				privacyScopes: {
+					select: { category: true, visibility: true, targetVisibility: true },
+				},
+				watchPrivacyMigration: { select: { jobId: true } },
 				did: true,
 				handle: true,
 				displayName: true,
@@ -433,9 +454,25 @@ export class UsersService {
 			throw new NotFoundException("User not found");
 		}
 
-		const stats = await this.getProfileStats(user.did, user.timezone);
+		const watchesPublic =
+			user.watchVisibility === "public" && !user.watchPrivacyMigration;
+		const stats =
+			viewerDid === user.did || watchesPublic
+				? await this.getProfileStats(user.did, user.timezone)
+				: { activityLast30Days: [], mostWatchedShow: null, watchedThisYear: 0 };
 
 		return {
+			watchesPublic,
+			libraryPublic: !(user.privacyScopes ?? []).some(
+				(s) =>
+					s.category === "library" &&
+					(s.visibility !== "public" || s.targetVisibility),
+			),
+			notesPublic: !(user.privacyScopes ?? []).some(
+				(s) =>
+					s.category === "notes" &&
+					(s.visibility !== "public" || s.targetVisibility),
+			),
 			did: user.did,
 			handle: user.handle,
 			displayName: user.displayName,

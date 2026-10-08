@@ -1,3 +1,4 @@
+import { publicWatchOwnerSql } from "../privacy/watch-access";
 import { rebaseAvatarUrl } from "../users/avatar-url";
 import {
 	BadRequestException,
@@ -97,11 +98,19 @@ export class SocialUsersService {
 			};
 		}
 
-		const activeUsers = await this.prisma.user.findMany({
-			where: { did: { notIn: [...excludeDids] } },
+		const ranked = await this.prisma.$queryRaw<{ did: string }[]>(Prisma.sql`
+   SELECT u.did FROM "User" u
+   WHERE u.did NOT IN (${Prisma.join([...excludeDids])})
+   ORDER BY (SELECT COUNT(*) FROM "TrackedMovie" tm WHERE tm."userDid" = u.did
+    AND ${publicWatchOwnerSql(Prisma.sql`u.did`)}) DESC, u.did ASC LIMIT ${safeLimit}`);
+		const selected = await this.prisma.user.findMany({
+			where: { did: { in: ranked.map((row) => row.did) } },
 			select: socialUserSelect,
-			orderBy: { trackedMovies: { _count: "desc" } },
-			take: safeLimit,
+		});
+		const byDid = new Map(selected.map((user) => [user.did, user]));
+		const activeUsers = ranked.flatMap((row) => {
+			const user = byDid.get(row.did);
+			return user ? [user] : [];
 		});
 
 		const cards = await this.buildSocialUserCards(

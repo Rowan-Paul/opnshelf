@@ -52,6 +52,8 @@ import { TmdbNotFoundError, TmdbServiceError } from "../tmdb/tmdb-http";
 import { IngesterService } from "./ingester.service";
 
 type MockPrismaService = {
+	$queryRaw: Mock;
+	$transaction: Mock;
 	user: {
 		findUnique: Mock;
 		findMany: Mock;
@@ -129,6 +131,8 @@ describe("IngesterService", () => {
 		vi.clearAllMocks();
 
 		mockPrismaService = {
+			$queryRaw: vi.fn(),
+			$transaction: vi.fn(),
 			user: {
 				findUnique: vi.fn(),
 				findMany: vi.fn().mockResolvedValue([]),
@@ -143,6 +147,15 @@ describe("IngesterService", () => {
 			},
 		};
 
+		mockPrismaService.$queryRaw = vi
+			.fn()
+			.mockResolvedValue([{ did: "did:plc:abc123" }]);
+		mockPrismaService.$transaction = vi
+			.fn()
+			.mockImplementation(
+				(work: (tx: typeof mockPrismaService) => Promise<unknown>) =>
+					work(mockPrismaService),
+			);
 		mockMoviesService = {
 			getMovieByTMDBId: vi.fn(),
 			getMovieDetails: vi.fn(),
@@ -619,7 +632,35 @@ describe("IngesterService", () => {
 			);
 		});
 
+		it("ignores a delayed public delete when privacy takes over after the initial lookup", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+				watchPrivacyManaged: false,
+			});
+			// The locked row query sees the committed handover even though the
+			// earlier unlocked lookup saw an account still using public ingestion.
+			mockPrismaService.$queryRaw.mockResolvedValue([]);
+			await setupRecordHandler()({
+				id: 99,
+				type: "record",
+				action: "delete",
+				did: "did:plc:abc123",
+				rev: "delayed-public-delete",
+				collection: "xyz.opnshelf.episode",
+				rkey: "preserved-private-episode",
+				live: true,
+			});
+			expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
+			expect(
+				mockPrismaService.trackedEpisode.deleteMany,
+			).not.toHaveBeenCalled();
+		});
+
 		it("should delete tracked episode on xyz.opnshelf.episode delete", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+				watchPrivacyManaged: false,
+			});
 			const recordHandler = setupRecordHandler();
 
 			await recordHandler({
@@ -808,7 +849,11 @@ describe("IngesterService", () => {
 				live: true,
 			}) as unknown as RecordEvent;
 
-		it("uses the tracked-DID cache fast-path after addRepo (no per-event DB lookup)", async () => {
+		it("rechecks Watch privacy even after caching a tracked DID", async () => {
+			mockPrismaService.user.findUnique.mockResolvedValue({
+				did: "did:plc:abc123",
+				watchPrivacyManaged: false,
+			});
 			const recordHandler = setupRecordHandler();
 			// Registering the repo populates the in-memory tracked-DID set.
 			await service.addRepo("did:plc:abc123");
@@ -816,8 +861,8 @@ describe("IngesterService", () => {
 
 			await recordHandler(movieCreateEvent(19, "movie-cache-hit"));
 
-			// Cache hit ⇒ the per-event user.findUnique is skipped entirely.
-			expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled();
+			// Tracking is cached, but privacy must be checked under the account lock.
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledTimes(1);
 			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalled();
 		});
 
@@ -831,7 +876,7 @@ describe("IngesterService", () => {
 
 			await recordHandler(movieCreateEvent(18, "movie-cache-miss"));
 
-			expect(mockPrismaService.user.findUnique).toHaveBeenCalledTimes(1);
+			expect(mockPrismaService.user.findUnique).toHaveBeenCalledTimes(2);
 			expect(mockPrismaService.trackedMovie.upsert).toHaveBeenCalled();
 		});
 
@@ -959,6 +1004,7 @@ describe("IngesterService", () => {
 				expect(deleteRecord).toHaveBeenLastCalledWith(
 					"did:plc:owner-b",
 					"shared-rkey",
+					...(index < 4 ? ["stream"] : []),
 				);
 			}
 		});

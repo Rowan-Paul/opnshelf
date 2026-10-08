@@ -1,3 +1,4 @@
+import { mockWatchCoordinator } from "../../../test/watch-privacy";
 import type { Mock } from "vitest";
 import { Agent } from "@atproto/api";
 import type { AuthService } from "../../auth/auth.service";
@@ -41,6 +42,7 @@ describe("WatchImportWriter", () => {
 			moviesService,
 			showsService,
 			authService,
+			mockWatchCoordinator(),
 		);
 
 		(moviesService.buildMovieWatchRecord as Mock).mockReturnValue({

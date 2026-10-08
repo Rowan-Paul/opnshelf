@@ -1,3 +1,4 @@
+import { publicWatchOwner } from "../privacy/watch-access";
 import type { Mock } from "vitest";
 import type { PrismaService } from "../prisma/prisma.service";
 import { ActivityFeedService } from "./activity-feed.service";
@@ -122,12 +123,14 @@ describe("ActivityFeedService", () => {
 			where: {
 				userDid: { in: ["did:plc:friend-1"] },
 				watchedDate: { not: null },
+				user: publicWatchOwner,
 			},
 		});
 		expect(prisma.trackedEpisode.count).toHaveBeenCalledWith({
 			where: {
 				userDid: { in: ["did:plc:friend-1"] },
 				watchedDate: { not: null },
+				user: publicWatchOwner,
 			},
 		});
 		const activityQuery = (prisma.$queryRaw as Mock).mock.calls[0]?.[0];
@@ -373,7 +376,11 @@ describe("ActivityFeedService", () => {
 		).toHaveLength(1);
 		expect((circlePrisma.follow.findMany as Mock).mock.calls).toHaveLength(0);
 		expect(circlePrisma.trackedMovie.count).toHaveBeenCalledWith({
-			where: { userDid: { in: ["did:plc:a"] }, watchedDate: { not: null } },
+			where: {
+				userDid: { in: ["did:plc:a"] },
+				watchedDate: { not: null },
+				user: publicWatchOwner,
+			},
 		});
 		expect(feed.total).toBe(0);
 	});

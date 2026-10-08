@@ -1,3 +1,4 @@
+import { publicWatchOwnerSql } from "../privacy/watch-access";
 import { Prisma } from "../generated/client";
 
 /**
@@ -73,7 +74,7 @@ export function followedActivityFeedQuery(
 					NULL::text AS "reviewId"
 				FROM "TrackedMovie" tm
 				INNER JOIN "Movie" m ON m."movieId" = tm."movieId"
-				WHERE tm."userDid" IN (${followedDidValues})
+				WHERE tm."userDid" IN (${followedDidValues}) AND ${publicWatchOwnerSql(Prisma.sql`tm."userDid"`)}
 					AND tm."watchedDate" IS NOT NULL
 
 				UNION ALL
@@ -108,7 +109,7 @@ export function followedActivityFeedQuery(
 				LEFT JOIN "Episode" e ON e."showId" = te."showId"
 					AND e."seasonNumber" = te."seasonNumber"
 					AND e."episodeNumber" = te."episodeNumber"
-				WHERE te."userDid" IN (${followedDidValues})
+				WHERE te."userDid" IN (${followedDidValues}) AND ${publicWatchOwnerSql(Prisma.sql`te."userDid"`)}
 					AND te."watchedDate" IS NOT NULL
 
 				UNION ALL
@@ -175,7 +176,7 @@ export function movieWatchersQuery(
 					COALESCE(tm."watchedDate", tm."createdAt") AS "activityAt",
 					tm."createdAt"
 				FROM "TrackedMovie" tm
-				WHERE tm."userDid" IN (${followedDidValues})
+				WHERE tm."userDid" IN (${followedDidValues}) AND ${publicWatchOwnerSql(Prisma.sql`tm."userDid"`)}
 					AND tm."movieId" = ${movieId}
 				ORDER BY
 					tm."userDid",
@@ -221,7 +222,7 @@ export function showWatchersQuery(
 					COALESCE(te."watchedDate", te."createdAt") AS "activityAt",
 					te."createdAt"
 				FROM "TrackedEpisode" te
-				WHERE te."userDid" IN (${followedDidValues})
+				WHERE te."userDid" IN (${followedDidValues}) AND ${publicWatchOwnerSql(Prisma.sql`te."userDid"`)}
 					AND te."showId" = ${scope.showId}
 					${seasonCondition}
 					${episodeCondition}

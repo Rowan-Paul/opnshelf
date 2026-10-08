@@ -1,4 +1,6 @@
+import { PrivacyModule } from "../privacy/privacy.module";
 import { forwardRef, Module } from "@nestjs/common";
+import { PdsModule } from "../pds/pds.module";
 import { AuthModule } from "../auth/auth.module";
 import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
@@ -21,6 +23,8 @@ import { UsersService } from "./users.service";
 
 @Module({
 	imports: [
+		forwardRef(() => PrivacyModule),
+		PdsModule,
 		PrismaModule,
 		ListsModule,
 		MoviesModule,

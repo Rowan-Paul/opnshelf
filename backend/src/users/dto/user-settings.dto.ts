@@ -313,6 +313,12 @@ export class MostWatchedShowDto {
 }
 
 export class PublicUserProfileDto {
+	@ApiProperty({ description: "Whether Library is publicly visible" })
+	libraryPublic!: boolean;
+	@ApiProperty({ description: "Whether Notes are publicly visible" })
+	notesPublic!: boolean;
+	@ApiProperty({ description: "Whether Watches are publicly visible" })
+	watchesPublic!: boolean;
 	@ApiProperty({
 		description: "Stable DID for the user",
 	})

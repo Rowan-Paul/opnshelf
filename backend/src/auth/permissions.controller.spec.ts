@@ -15,6 +15,7 @@ vi.mock("@atproto/tap", () => ({
 	SimpleIndexer: vi.fn(),
 }));
 
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { AuthService } from "./auth.service";
 import { PermissionsController } from "./permissions.controller";
 
@@ -47,10 +48,27 @@ describe("PermissionsController", () => {
 
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [PermissionsController],
-			providers: [{ provide: AuthService, useValue: mockAuthService }],
+			providers: [
+				{ provide: AuthService, useValue: mockAuthService },
+				{
+					provide: PrivateSettingsService,
+					useValue: { assertAvailable: vi.fn() },
+				},
+			],
 		}).compile();
 
 		controller = module.get<PermissionsController>(PermissionsController);
+	});
+
+	it("does not reconnect the retired Settings experiment", async () => {
+		mockAuthService.getUser.mockResolvedValue({ handle: "owner.example" });
+		await expect(
+			controller.permissions({ user: { did: "did:plc:owner" } } as never, {
+				integration: "spaces",
+				action: "connect",
+			}),
+		).rejects.toThrow("retired");
+		expect(mockAuthService.authorizePermissionChange).not.toHaveBeenCalled();
 	});
 
 	describe("permissions", () => {
@@ -85,6 +103,8 @@ describe("PermissionsController", () => {
 				{
 					blogEnabled: true,
 					blueskyEnabled: false,
+					privateSettingsEnabled: false,
+					watchPrivacyEnabled: undefined,
 					reviewsMirrorFormat: "leaflet",
 				},
 			);
@@ -118,6 +138,8 @@ describe("PermissionsController", () => {
 					atStoreReviewEnabled: true,
 					blogEnabled: false,
 					blueskyEnabled: false,
+					privateSettingsEnabled: false,
+					watchPrivacyEnabled: undefined,
 					reviewsMirrorFormat: "markdown",
 				},
 				{ platform: "mobile" },
@@ -223,6 +245,8 @@ describe("PermissionsController", () => {
 				{
 					blogEnabled: true,
 					blueskyEnabled: false,
+					privateSettingsEnabled: false,
+					watchPrivacyEnabled: undefined,
 					reviewsMirrorFormat: "leaflet",
 				},
 			);

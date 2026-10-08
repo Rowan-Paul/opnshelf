@@ -2464,6 +2464,21 @@
         ]
       }
     },
+    "/users/me/settings/private": {
+      "delete": {
+        "operationId": "UsersController_deletePrivateSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Private record deleted"
+          }
+        },
+        "summary": "Delete the private settings record while retaining the last local preference",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/me/profile": {
       "patch": {
         "operationId": "UsersController_updateMyProfile",
@@ -3171,6 +3186,486 @@
         ]
       }
     },
+    "/users/me/privacy": {
+      "get": {
+        "operationId": "PrivacyController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/privacy/change": {
+      "post": {
+        "operationId": "PrivacyController_change",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/privacy/retry": {
+      "post": {
+        "operationId": "PrivacyController_retry",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/privacy/lists/default": {
+      "post": {
+        "operationId": "PrivacyController_listsDefault",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyDefaultDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/privacy/lists/change-all": {
+      "post": {
+        "operationId": "PrivacyController_changeAllLists",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/watch-privacy": {
+      "get": {
+        "operationId": "WatchPrivacyController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      },
+      "post": {
+        "operationId": "WatchPrivacyController_change",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchPrivacyChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/watch-privacy/retry": {
+      "post": {
+        "operationId": "WatchPrivacyController_retry",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/users/me/watch-privacy/sync": {
+      "post": {
+        "operationId": "WatchPrivacyController_sync",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchPrivacyStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/library": {
+      "get": {
+        "operationId": "LibraryController_getMyLibrary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Owned items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the authenticated user's library",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/library/user/{userDid}": {
+      "get": {
+        "operationId": "LibraryController_getUserLibrary",
+        "parameters": [
+          {
+            "name": "userDid",
+            "required": true,
+            "in": "path",
+            "description": "User DID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Owned items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a user's public library",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/library/for-item/{mediaType}/{mediaId}": {
+      "get": {
+        "operationId": "LibraryController_getLibraryForItem",
+        "parameters": [
+          {
+            "name": "mediaType",
+            "required": true,
+            "in": "path",
+            "description": "movie, show, season, or episode",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaId",
+            "required": true,
+            "in": "path",
+            "description": "TMDB movie ID or show ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "seasonNumber",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "episodeNumber",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Owned formats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryOwnershipDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the formats the user owns an item in (ownership indicator)",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/library/items": {
+      "post": {
+        "operationId": "LibraryController_addToLibrary",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddToLibraryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryItemDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an owned item to the library",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/library/items/{mediaType}/{mediaId}/{format}": {
+      "delete": {
+        "operationId": "LibraryController_removeFromLibrary",
+        "parameters": [
+          {
+            "name": "mediaType",
+            "required": true,
+            "in": "path",
+            "description": "movie, show, season, or episode",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaId",
+            "required": true,
+            "in": "path",
+            "description": "TMDB movie ID or show ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "required": true,
+            "in": "path",
+            "description": "digital, bluray, bluray4k, or dvd",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "seasonNumber",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "episodeNumber",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item removed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove an owned item (by format) from the library",
+        "tags": [
+          "library"
+        ]
+      }
+    },
     "/lists": {
       "get": {
         "operationId": "ListsController_getUserLists",
@@ -3785,6 +4280,210 @@
         "summary": "Get all lists with membership status for an item",
         "tags": [
           "lists"
+        ]
+      }
+    },
+    "/notes/user/{userDid}": {
+      "get": {
+        "operationId": "NotesController_getNote",
+        "parameters": [
+          {
+            "name": "userDid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaType",
+            "required": true,
+            "in": "query",
+            "description": "Media type (movie, show, season, episode)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "show",
+                "season",
+                "episode"
+              ]
+            }
+          },
+          {
+            "name": "mediaId",
+            "required": true,
+            "in": "query",
+            "description": "TMDB movie ID or show ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "seasonNumber",
+            "required": false,
+            "in": "query",
+            "description": "Season number for season/episode items",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "episodeNumber",
+            "required": false,
+            "in": "query",
+            "description": "Episode number for episode items",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a note for a user and media item",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/notes/user/{userDid}/notes": {
+      "get": {
+        "operationId": "NotesController_getUserNotes",
+        "parameters": [
+          {
+            "name": "userDid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number to return (1-based)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedNotesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get paginated notes for a user",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/notes": {
+      "post": {
+        "operationId": "NotesController_upsertNote",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertNoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note upserted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create or update a note",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/notes/{noteId}": {
+      "delete": {
+        "operationId": "NotesController_deleteNote",
+        "parameters": [
+          {
+            "name": "noteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note deleted"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a note",
+        "tags": [
+          "notes"
         ]
       }
     },
@@ -5034,453 +5733,6 @@
         "summary": "Whether the user's historical watch records are still backfilling from their PDS",
         "tags": [
           "shelf"
-        ]
-      }
-    },
-    "/library": {
-      "get": {
-        "operationId": "LibraryController_getMyLibrary",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Owned items",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LibraryItemDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get the authenticated user's library",
-        "tags": [
-          "library"
-        ]
-      }
-    },
-    "/library/user/{userDid}": {
-      "get": {
-        "operationId": "LibraryController_getUserLibrary",
-        "parameters": [
-          {
-            "name": "userDid",
-            "required": true,
-            "in": "path",
-            "description": "User DID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Owned items",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LibraryItemDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get a user's public library",
-        "tags": [
-          "library"
-        ]
-      }
-    },
-    "/library/for-item/{mediaType}/{mediaId}": {
-      "get": {
-        "operationId": "LibraryController_getLibraryForItem",
-        "parameters": [
-          {
-            "name": "mediaType",
-            "required": true,
-            "in": "path",
-            "description": "movie, show, season, or episode",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "mediaId",
-            "required": true,
-            "in": "path",
-            "description": "TMDB movie ID or show ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "seasonNumber",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "episodeNumber",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Owned formats",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LibraryOwnershipDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get the formats the user owns an item in (ownership indicator)",
-        "tags": [
-          "library"
-        ]
-      }
-    },
-    "/library/items": {
-      "post": {
-        "operationId": "LibraryController_addToLibrary",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddToLibraryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Item added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryItemDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Add an owned item to the library",
-        "tags": [
-          "library"
-        ]
-      }
-    },
-    "/library/items/{mediaType}/{mediaId}/{format}": {
-      "delete": {
-        "operationId": "LibraryController_removeFromLibrary",
-        "parameters": [
-          {
-            "name": "mediaType",
-            "required": true,
-            "in": "path",
-            "description": "movie, show, season, or episode",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "mediaId",
-            "required": true,
-            "in": "path",
-            "description": "TMDB movie ID or show ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "format",
-            "required": true,
-            "in": "path",
-            "description": "digital, bluray, bluray4k, or dvd",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "seasonNumber",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "episodeNumber",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Item removed"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Remove an owned item (by format) from the library",
-        "tags": [
-          "library"
-        ]
-      }
-    },
-    "/notes/user/{userDid}": {
-      "get": {
-        "operationId": "NotesController_getNote",
-        "parameters": [
-          {
-            "name": "userDid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "mediaType",
-            "required": true,
-            "in": "query",
-            "description": "Media type (movie, show, season, episode)",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "movie",
-                "show",
-                "season",
-                "episode"
-              ]
-            }
-          },
-          {
-            "name": "mediaId",
-            "required": true,
-            "in": "query",
-            "description": "TMDB movie ID or show ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "seasonNumber",
-            "required": false,
-            "in": "query",
-            "description": "Season number for season/episode items",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "episodeNumber",
-            "required": false,
-            "in": "query",
-            "description": "Episode number for episode items",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Note retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoteResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get a note for a user and media item",
-        "tags": [
-          "notes"
-        ]
-      }
-    },
-    "/notes/user/{userDid}/notes": {
-      "get": {
-        "operationId": "NotesController_getUserNotes",
-        "parameters": [
-          {
-            "name": "userDid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page number to return (1-based)",
-            "schema": {
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "description": "Number of items to return per page",
-            "schema": {
-              "default": 20,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notes retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedNotesResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get paginated notes for a user",
-        "tags": [
-          "notes"
-        ]
-      }
-    },
-    "/notes": {
-      "post": {
-        "operationId": "NotesController_upsertNote",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpsertNoteDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Note upserted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoteResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create or update a note",
-        "tags": [
-          "notes"
-        ]
-      }
-    },
-    "/notes/{noteId}": {
-      "delete": {
-        "operationId": "NotesController_deleteNote",
-        "parameters": [
-          {
-            "name": "noteId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Note deleted"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete a note",
-        "tags": [
-          "notes"
         ]
       }
     },
@@ -7849,7 +8101,9 @@
             "enum": [
               "atstore",
               "blog",
-              "bluesky"
+              "bluesky",
+              "spaces",
+              "watches"
             ]
           },
           "action": {
@@ -8901,6 +9155,18 @@
       "PublicUserProfileDto": {
         "type": "object",
         "properties": {
+          "libraryPublic": {
+            "type": "boolean",
+            "description": "Whether Library is publicly visible"
+          },
+          "notesPublic": {
+            "type": "boolean",
+            "description": "Whether Notes are publicly visible"
+          },
+          "watchesPublic": {
+            "type": "boolean",
+            "description": "Whether Watches are publicly visible"
+          },
           "did": {
             "type": "string",
             "description": "Stable DID for the user"
@@ -8972,6 +9238,9 @@
           }
         },
         "required": [
+          "libraryPublic",
+          "notesPublic",
+          "watchesPublic",
           "did",
           "handle",
           "displayName",
@@ -9998,6 +10267,400 @@
           "readThrough"
         ]
       },
+      "PrivacyMigrationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "copied": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number",
+            "nullable": true,
+            "description": "Distinct records in this migration; null until counted or when unavailable."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "target",
+          "status",
+          "copied",
+          "total",
+          "error"
+        ]
+      },
+      "PrivacyScopeDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "watches",
+              "library",
+              "notes",
+              "lists"
+            ]
+          },
+          "listRkey": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "migration": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyMigrationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "category",
+          "listRkey",
+          "label",
+          "visibility",
+          "migration"
+        ]
+      },
+      "PrivacyStatusDto": {
+        "type": "object",
+        "properties": {
+          "availability": {
+            "type": "string",
+            "enum": [
+              "available",
+              "unsupported",
+              "unavailable"
+            ]
+          },
+          "authorized": {
+            "type": "boolean"
+          },
+          "listsDefaultVisibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrivacyScopeDto"
+            }
+          },
+          "alphaDetails": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "availability",
+          "authorized",
+          "listsDefaultVisibility",
+          "scopes",
+          "alphaDetails"
+        ]
+      },
+      "PrivacyChangeDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "watches",
+              "library",
+              "notes",
+              "lists"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "listRkey": {
+            "type": "string"
+          },
+          "publicationConfirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "category",
+          "visibility"
+        ]
+      },
+      "PrivacyDefaultDto": {
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          }
+        },
+        "required": [
+          "visibility"
+        ]
+      },
+      "WatchPrivacyMigrationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "copied": {
+            "type": "number"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "target",
+          "status",
+          "copied",
+          "error"
+        ]
+      },
+      "WatchPrivacyStatusDto": {
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "syncError": {
+            "type": "string",
+            "nullable": true
+          },
+          "migration": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WatchPrivacyMigrationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "visibility",
+          "connected",
+          "lastSyncedAt",
+          "syncError",
+          "migration"
+        ]
+      },
+      "WatchPrivacyChangeDto": {
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "publicationConfirmed": {
+            "type": "boolean",
+            "description": "Explicit consent to publish all Watches"
+          }
+        },
+        "required": [
+          "visibility"
+        ]
+      },
+      "LibraryItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rkey": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie ID or show ID"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "digital",
+              "bluray",
+              "bluray4k",
+              "dvd"
+            ]
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          },
+          "episodeName": {
+            "type": "string"
+          },
+          "boxSet": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "media": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "rkey",
+          "mediaType",
+          "mediaId",
+          "format",
+          "createdAt",
+          "media"
+        ]
+      },
+      "LibraryOwnershipDto": {
+        "type": "object",
+        "properties": {
+          "rkey": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "digital",
+              "bluray",
+              "bluray4k",
+              "dvd"
+            ]
+          },
+          "boxSet": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rkey",
+          "format"
+        ]
+      },
+      "AddToLibraryDto": {
+        "type": "object",
+        "properties": {
+          "mediaType": {
+            "type": "string",
+            "description": "Media type",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie ID or show ID"
+          },
+          "format": {
+            "type": "string",
+            "description": "Format the item is owned in",
+            "enum": [
+              "digital",
+              "bluray",
+              "bluray4k",
+              "dvd"
+            ]
+          },
+          "seasonNumber": {
+            "type": "number",
+            "description": "Season number for season/episode items"
+          },
+          "episodeNumber": {
+            "type": "number",
+            "description": "Episode number for episode items"
+          },
+          "boxSet": {
+            "type": "string",
+            "description": "Optional named box set"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional notes about the owned item"
+          }
+        },
+        "required": [
+          "mediaType",
+          "mediaId",
+          "format"
+        ]
+      },
       "ListSummaryDto": {
         "type": "object",
         "properties": {
@@ -10400,6 +11063,189 @@
           "listSlug",
           "isDefault",
           "isInList"
+        ]
+      },
+      "NoteResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rkey": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string"
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rkey",
+          "content",
+          "mediaType",
+          "mediaId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UserNoteDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string"
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          },
+          "mediaLabel": {
+            "type": "string",
+            "description": "Human-readable label for the media. Display only — never build a URL from it."
+          },
+          "mediaTitle": {
+            "type": "string",
+            "description": "Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023)."
+          },
+          "posterPath": {
+            "type": "string",
+            "description": "Poster path for the movie or show"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "mediaType",
+          "mediaId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedNotesResponseDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserNoteDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
+        ]
+      },
+      "UpsertNoteDto": {
+        "type": "object",
+        "properties": {
+          "mediaType": {
+            "type": "string",
+            "description": "Media type",
+            "enum": [
+              "movie",
+              "show",
+              "season",
+              "episode"
+            ]
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie ID or show ID"
+          },
+          "seasonNumber": {
+            "type": "number",
+            "description": "Season number for season/episode items"
+          },
+          "episodeNumber": {
+            "type": "number",
+            "description": "Episode number for episode items"
+          },
+          "content": {
+            "type": "string",
+            "description": "Note content",
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "mediaType",
+          "mediaId",
+          "content"
         ]
       },
       "UserRelationshipDto": {
@@ -11618,326 +12464,6 @@
           "isSyncing",
           "trackedMovieCount",
           "trackedEpisodeCount"
-        ]
-      },
-      "LibraryItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "rkey": {
-            "type": "string"
-          },
-          "mediaType": {
-            "type": "string",
-            "enum": [
-              "movie",
-              "show",
-              "season",
-              "episode"
-            ]
-          },
-          "mediaId": {
-            "type": "string",
-            "description": "TMDB movie ID or show ID"
-          },
-          "format": {
-            "type": "string",
-            "enum": [
-              "digital",
-              "bluray",
-              "bluray4k",
-              "dvd"
-            ]
-          },
-          "seasonNumber": {
-            "type": "number"
-          },
-          "episodeNumber": {
-            "type": "number"
-          },
-          "episodeName": {
-            "type": "string"
-          },
-          "boxSet": {
-            "type": "string"
-          },
-          "notes": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "media": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "id",
-          "rkey",
-          "mediaType",
-          "mediaId",
-          "format",
-          "createdAt",
-          "media"
-        ]
-      },
-      "LibraryOwnershipDto": {
-        "type": "object",
-        "properties": {
-          "rkey": {
-            "type": "string"
-          },
-          "format": {
-            "type": "string",
-            "enum": [
-              "digital",
-              "bluray",
-              "bluray4k",
-              "dvd"
-            ]
-          },
-          "boxSet": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "rkey",
-          "format"
-        ]
-      },
-      "AddToLibraryDto": {
-        "type": "object",
-        "properties": {
-          "mediaType": {
-            "type": "string",
-            "description": "Media type",
-            "enum": [
-              "movie",
-              "show",
-              "season",
-              "episode"
-            ]
-          },
-          "mediaId": {
-            "type": "string",
-            "description": "TMDB movie ID or show ID"
-          },
-          "format": {
-            "type": "string",
-            "description": "Format the item is owned in",
-            "enum": [
-              "digital",
-              "bluray",
-              "bluray4k",
-              "dvd"
-            ]
-          },
-          "seasonNumber": {
-            "type": "number",
-            "description": "Season number for season/episode items"
-          },
-          "episodeNumber": {
-            "type": "number",
-            "description": "Episode number for episode items"
-          },
-          "boxSet": {
-            "type": "string",
-            "description": "Optional named box set"
-          },
-          "notes": {
-            "type": "string",
-            "description": "Optional notes about the owned item"
-          }
-        },
-        "required": [
-          "mediaType",
-          "mediaId",
-          "format"
-        ]
-      },
-      "NoteResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "rkey": {
-            "type": "string"
-          },
-          "content": {
-            "type": "string"
-          },
-          "mediaType": {
-            "type": "string",
-            "enum": [
-              "movie",
-              "show",
-              "season",
-              "episode"
-            ]
-          },
-          "mediaId": {
-            "type": "string"
-          },
-          "seasonNumber": {
-            "type": "number"
-          },
-          "episodeNumber": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "rkey",
-          "content",
-          "mediaType",
-          "mediaId",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "UserNoteDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "content": {
-            "type": "string"
-          },
-          "mediaType": {
-            "type": "string",
-            "enum": [
-              "movie",
-              "show",
-              "season",
-              "episode"
-            ]
-          },
-          "mediaId": {
-            "type": "string"
-          },
-          "seasonNumber": {
-            "type": "number"
-          },
-          "episodeNumber": {
-            "type": "number"
-          },
-          "mediaLabel": {
-            "type": "string",
-            "description": "Human-readable label for the media. Display only — never build a URL from it."
-          },
-          "mediaTitle": {
-            "type": "string",
-            "description": "Title of the movie or show that mediaId identifies. Never composite — this is what URL slugs are built from (ADR 0023)."
-          },
-          "posterPath": {
-            "type": "string",
-            "description": "Poster path for the movie or show"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "content",
-          "mediaType",
-          "mediaId",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "PaginatedNotesResponseDto": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "number",
-            "description": "Total count of items across all pages"
-          },
-          "page": {
-            "type": "number",
-            "description": "Current page number after server-side clamping"
-          },
-          "pageSize": {
-            "type": "number",
-            "description": "Number of items per page"
-          },
-          "totalPages": {
-            "type": "number",
-            "description": "Total number of available pages"
-          },
-          "hasNextPage": {
-            "type": "boolean",
-            "description": "Whether a next page exists"
-          },
-          "hasPreviousPage": {
-            "type": "boolean",
-            "description": "Whether a previous page exists"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserNoteDto"
-            }
-          }
-        },
-        "required": [
-          "total",
-          "page",
-          "pageSize",
-          "totalPages",
-          "hasNextPage",
-          "hasPreviousPage",
-          "items"
-        ]
-      },
-      "UpsertNoteDto": {
-        "type": "object",
-        "properties": {
-          "mediaType": {
-            "type": "string",
-            "description": "Media type",
-            "enum": [
-              "movie",
-              "show",
-              "season",
-              "episode"
-            ]
-          },
-          "mediaId": {
-            "type": "string",
-            "description": "TMDB movie ID or show ID"
-          },
-          "seasonNumber": {
-            "type": "number",
-            "description": "Season number for season/episode items"
-          },
-          "episodeNumber": {
-            "type": "number",
-            "description": "Episode number for episode items"
-          },
-          "content": {
-            "type": "string",
-            "description": "Note content",
-            "maxLength": 5000
-          }
-        },
-        "required": [
-          "mediaType",
-          "mediaId",
-          "content"
         ]
       },
       "RatingResponseDto": {

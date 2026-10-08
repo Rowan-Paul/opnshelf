@@ -1,6 +1,11 @@
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
+import { UseInterceptors } from "@nestjs/common";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { WatchReadGuard } from "../privacy/watch-access";
 import { UpdateWatchDateDto } from "../common/update-watch-date.dto";
 import {
 	Body,
+	ForbiddenException,
 	Controller,
 	Delete,
 	Get,
@@ -144,6 +149,8 @@ export class MoviesController {
 	}
 
 	@Get("user/:userDid")
+	@Header("Cache-Control", "private, no-store")
+	@UseGuards(OptionalAuthGuard, WatchReadGuard)
 	@ApiOperation({ summary: "Get tracked movies for a user" })
 	@ApiResponse({ status: 200, type: [UserMovieDto] })
 	async getUserMovies(@Param("userDid") userDid: string) {
@@ -159,6 +166,7 @@ export class MoviesController {
 	}
 
 	@Post("watched")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "Mark a movie as watched" })
 	@ApiBody({ type: MarkWatchedDto })
@@ -202,6 +210,7 @@ export class MoviesController {
 	}
 
 	@Delete("watched/:movieId")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@ApiOperation({ summary: "Unmark a movie as watched" })
@@ -251,6 +260,8 @@ export class MoviesController {
 	}
 
 	@Get("user/:userDid/watch-counts")
+	@Header("Cache-Control", "private, no-store")
+	@UseGuards(OptionalAuthGuard, WatchReadGuard)
 	@ApiOperation({ summary: "Get how many times a user watched each movie" })
 	@ApiResponse({ status: 200, type: [MovieWatchCountDto] })
 	getUserMovieWatchCounts(@Param("userDid") userDid: string) {
@@ -275,7 +286,9 @@ export class MoviesController {
 	) {
 		// Ensure user can only access their own history
 		if (req.user.did !== userDid) {
-			throw new Error("Unauthorized");
+			throw new ForbiddenException(
+				"Watch history is only available to its owner",
+			);
 		}
 
 		const history = await this.moviesService.getMovieWatchHistory(
@@ -289,6 +302,7 @@ export class MoviesController {
 	}
 
 	@Patch("history/:trackedMovieId")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@ApiOperation({ summary: "Correct the date of an existing Watch" })
@@ -311,6 +325,7 @@ export class MoviesController {
 	}
 
 	@Delete("history/:trackedMovieId")
+	@UseInterceptors(WatchWriteInterceptor)
 	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@ApiOperation({ summary: "Delete a specific watch history entry" })

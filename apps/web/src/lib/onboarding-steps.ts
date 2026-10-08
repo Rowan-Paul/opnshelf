@@ -12,6 +12,7 @@ import {
 export const ONBOARDING_STEPS = [
 	"welcome",
 	"profile",
+	"privacy",
 	"preferences",
 	"services",
 	"notifications",

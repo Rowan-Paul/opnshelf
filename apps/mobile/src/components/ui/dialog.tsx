@@ -4,9 +4,10 @@ import {
 	type ReactNode,
 	useCallback,
 	useContext,
+	useRef,
 	useState,
 } from "react";
-import { Modal, Pressable, View } from "react-native";
+import { Modal, Platform, Pressable, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -15,6 +16,8 @@ type DialogAction = {
 	label: string;
 	variant?: "default" | "destructive" | "ghost";
 	onPress?: () => void;
+	/** Present another native modal only after this dialog has dismissed. */
+	onDismiss?: () => void;
 };
 
 /** Dismiss-only actions ("Cancel", "Keep editing") get quiet outline styling. */
@@ -55,6 +58,12 @@ const DialogContext = createContext<DialogContextValue | null>(null);
 export function DialogProvider({ children }: { children: ReactNode }) {
 	const [dialog, setDialog] = useState<DialogOptions | null>(null);
 	const [inputValue, setInputValue] = useState("");
+	const afterDismiss = useRef<(() => void) | undefined>(undefined);
+	const didDismiss = () => {
+		const callback = afterDismiss.current;
+		afterDismiss.current = undefined;
+		callback?.();
+	};
 
 	const showDialog = useCallback((options: DialogOptions) => {
 		setInputValue(options.input?.initialValue ?? "");
@@ -63,8 +72,10 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 
 	const dismiss = useCallback(() => setDialog(null), []);
 	const pressAction = (action: DialogAction) => {
+		afterDismiss.current = action.onDismiss;
 		dismiss();
 		action.onPress?.();
+		if (Platform.OS !== "ios") didDismiss();
 	};
 	const actions = dialog?.actions ?? [];
 	const stacked = actions.length > 2;
@@ -85,6 +96,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 				transparent
 				animationType="fade"
 				onRequestClose={dismiss}
+				onDismiss={didDismiss}
 			>
 				<View className="flex-1 items-center justify-center bg-black/50 p-6">
 					<Pressable className="absolute inset-0" onPress={dismiss} />

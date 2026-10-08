@@ -37,6 +37,7 @@ import {
 import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
+import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,7 @@ function AppearanceSetting() {
 export type SettingsCategory =
 	| "profile"
 	| "preferences"
+	| "privacy"
 	| "notifications"
 	| "connections"
 	| "account"
@@ -169,6 +171,7 @@ export type SettingsCategory =
 const SETTINGS_TITLES: Record<SettingsCategory, string> = {
 	profile: "Profile",
 	preferences: "Preferences",
+	privacy: "Privacy",
 	notifications: "Notifications",
 	connections: "Connections",
 	account: "Account",
@@ -245,7 +248,7 @@ export function SettingsCategoryScreen({
 	});
 
 	const requestPermissionChange = async (
-		integration: "blog" | "bluesky",
+		integration: "blog" | "bluesky" | "spaces" | "watches",
 		action: "connect" | "disconnect",
 	) => {
 		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
@@ -517,6 +520,7 @@ export function SettingsCategoryScreen({
 						</View>
 					)}
 
+					{section === "privacy" && <PrivacySection />}
 					{section === "preferences" && (
 						<>
 							<SettingsSection
@@ -586,7 +590,6 @@ export function SettingsCategoryScreen({
 									</View>
 								)}
 							</SettingsSection>
-
 							{/* Streaming country */}
 							<SettingsSection
 								title="Streaming"
@@ -934,6 +937,7 @@ const SETTINGS_AREAS: {
 	href:
 		| "/edit-profile"
 		| "/settings/preferences"
+		| "/settings/privacy"
 		| "/settings/notifications"
 		| "/settings/connections"
 		| "/settings/account"
@@ -942,6 +946,12 @@ const SETTINGS_AREAS: {
 	description: string;
 	Icon: typeof UserPen;
 }[] = [
+	{
+		href: "/settings/privacy",
+		label: SETTINGS_TITLES.privacy,
+		description: "Public and Private data · Alpha",
+		Icon: Smartphone,
+	},
 	{
 		href: "/edit-profile",
 		label: SETTINGS_TITLES.profile,

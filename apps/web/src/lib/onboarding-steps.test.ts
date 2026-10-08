@@ -18,6 +18,7 @@ describe("onboarding steps", () => {
 		expect(ONBOARDING_STEPS).toEqual([
 			"welcome",
 			"profile",
+			"privacy",
 			"preferences",
 			"services",
 			"notifications",
@@ -30,7 +31,8 @@ describe("onboarding steps", () => {
 
 	it("advances to the linear successor", () => {
 		expect(nextOnboardingStep("welcome")).toBe("profile");
-		expect(nextOnboardingStep("profile")).toBe("preferences");
+		expect(nextOnboardingStep("profile")).toBe("privacy");
+		expect(nextOnboardingStep("privacy")).toBe("preferences");
 		expect(nextOnboardingStep("preferences")).toBe("services");
 		expect(nextOnboardingStep("services")).toBe("notifications");
 		expect(nextOnboardingStep("notifications")).toBe("trakt");

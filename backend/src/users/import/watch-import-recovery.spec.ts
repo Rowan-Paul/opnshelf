@@ -1,3 +1,4 @@
+import { mockWatchCoordinator } from "../../../test/watch-privacy";
 import type { MoviesService } from "../../movies/movies.service";
 import type { ShowsService } from "../../shows/shows.service";
 import type { PrismaService } from "../../prisma/prisma.service";
@@ -49,6 +50,7 @@ const writer = new WatchImportWriter(
 		indexTrackedEpisode: episodeIndex,
 	} as unknown as ShowsService,
 	{ restore: vi.fn() },
+	mockWatchCoordinator(),
 );
 const session = { did: "did:plc:owner" };
 const originalDate = "2020-01-01T00:00:00Z";

@@ -1,0 +1,14 @@
+{
+  "lexicon": 1,
+  "id": "xyz.opnshelf.settings",
+  "defs": {
+    "main": {
+      "type": "space",
+      "name": "Opnshelf Settings",
+      "collections": [
+        "xyz.opnshelf.privateSettings"
+      ],
+      "key": "literal:self"
+    }
+  }
+}

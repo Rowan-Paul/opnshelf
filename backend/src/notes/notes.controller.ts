@@ -1,3 +1,13 @@
+import { UseFilters } from "@nestjs/common";
+import { WatchPrivacyPdsFilter } from "../privacy/privacy-pds.filter";
+import { Header } from "@nestjs/common";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { ContentPrivacyGuard } from "../privacy/content-privacy.guard";
+import { UseInterceptors } from "@nestjs/common";
+import {
+	ContentPrivacyCategory,
+	ContentPrivacyInterceptor,
+} from "../privacy/content-privacy.interceptor";
 import {
 	Body,
 	Controller,
@@ -30,6 +40,7 @@ import { NotesService, type ATSession } from "./notes.service";
 
 @ApiTags("notes")
 @Controller("notes")
+@UseFilters(WatchPrivacyPdsFilter)
 export class NotesController {
 	constructor(private readonly notesService: NotesService) {}
 
@@ -99,6 +110,9 @@ export class NotesController {
 	}
 
 	@Get("user/:userDid/notes")
+	@ContentPrivacyCategory("notes")
+	@UseGuards(OptionalAuthGuard, ContentPrivacyGuard)
+	@Header("Cache-Control", "private, no-store")
 	@ApiOperation({ summary: "Get paginated notes for a user" })
 	@ApiOkResponse({
 		description: "Notes retrieved",
@@ -132,6 +146,8 @@ export class NotesController {
 	}
 
 	@Post()
+	@ContentPrivacyCategory("notes")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Create or update a note" })
@@ -164,6 +180,8 @@ export class NotesController {
 	}
 
 	@Delete(":noteId")
+	@ContentPrivacyCategory("notes")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Delete a note" })

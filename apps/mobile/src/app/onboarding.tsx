@@ -22,6 +22,7 @@ import { SuggestionsStep } from "@/components/onboarding/SuggestionsStep";
 import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
+import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const logo = require("../../assets/images/icon.png");
 type OnboardingStep =
 	| "welcome"
 	| "profile"
+	| "privacy"
 	| "preferences"
 	| "services"
 	| "notifications"
@@ -55,6 +57,7 @@ type OnboardingStep =
 const STEP_SEQUENCE: OnboardingStep[] = [
 	"welcome",
 	"profile",
+	"privacy",
 	"preferences",
 	"services",
 	"notifications",
@@ -201,7 +204,18 @@ export default function OnboardingScreen() {
 					<WelcomeStep onNext={() => setStep("profile")} />
 				)}
 				{step === "profile" && (
-					<ProfileStep onNext={() => setStep("preferences")} />
+					<ProfileStep onNext={() => setStep("privacy")} />
+				)}
+				{step === "privacy" && (
+					<ScrollView
+						contentInsetAdjustmentBehavior="automatic"
+						contentContainerClassName="p-5"
+					>
+						<PrivacySection
+							onboarding
+							onContinue={() => setStep("preferences")}
+						/>
+					</ScrollView>
 				)}
 				{step === "preferences" && (
 					<PreferencesStep onNext={() => setStep("services")} />
