@@ -97,21 +97,29 @@ describe("Privacy Alpha mobile", () => {
 	it("defaults onboarding to Public without writing", () => {
 		const next = vi.fn();
 		const renderer = render(true, next);
-		expect(button(renderer, "Public").props.accessibilityState.selected).toBe(
-			true,
-		);
+		expect(
+			renderer.root.findAll(
+				(node) => node.type === "button" && node.props.label === "Public",
+			)[0].props.accessibilityState.selected,
+		).toBe(true);
 		act(() => button(renderer, "Continue").props.onPress());
 		expect(next).toHaveBeenCalled();
 		expect(mocks.mutate).not.toHaveBeenCalled();
 	});
-	it("applies Private to all categories from onboarding", () => {
+	it("shows category choices immediately in onboarding", () => {
 		const renderer = render(true);
-		act(() => button(renderer, "Private").props.onPress());
-		act(() => button(renderer, "Continue").props.onPress());
+		const choices = renderer.root.findAll(
+			(node) => node.type === "button" && node.props.label === "Private",
+		);
+		expect(choices.length).toBeGreaterThan(1);
+		act(() => choices[0].props.onPress());
 		expect(mocks.mutate).toHaveBeenCalledWith(
 			expect.objectContaining({
-				kind: "initial",
-				body: expect.objectContaining({ visibility: "private" }),
+				kind: "change",
+				body: expect.objectContaining({
+					category: "watches",
+					visibility: "private",
+				}),
 			}),
 		);
 	});

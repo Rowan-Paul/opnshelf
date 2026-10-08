@@ -144,9 +144,7 @@ describe("Privacy settings", () => {
 			error: null,
 		};
 		render(<PrivacySection />);
-		fireEvent.click(
-			screen.getByRole("button", { name: "Manage individual Lists" }),
-		);
+		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
 		expect(screen.getByText(/2\/2 records copied.*Finishing/)).toBeDefined();
 		expect(
 			screen.getByText(/Records include the List details and its items/),
@@ -175,7 +173,7 @@ describe("Privacy settings", () => {
 		const next = vi.fn();
 		render(<PrivacySection onboarding onContinue={next} />);
 		expect(
-			screen
+			within(screen.getByRole("group", { name: "Shelf visibility" }))
 				.getByRole("button", { name: "Public" })
 				.getAttribute("aria-pressed"),
 		).toBe("true");
@@ -183,17 +181,52 @@ describe("Privacy settings", () => {
 		expect(next).toHaveBeenCalled();
 		expect(mocks.mutate).not.toHaveBeenCalled();
 	});
-	it("moves all four categories when onboarding selects Private", () => {
-		mocks.data.scopes = mocks.data.scopes.map((scope) => ({
-			...scope,
-			visibility: "public",
-		}));
+	it("shows category choices immediately during onboarding", () => {
 		render(<PrivacySection onboarding onContinue={vi.fn()} />);
-		fireEvent.click(screen.getByRole("button", { name: "Private" }));
-		fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+		expect(
+			screen.getByRole("group", { name: "Shelf visibility" }),
+		).toBeDefined();
+		expect(
+			screen.getByRole("group", { name: "Lists visibility" }),
+		).toBeDefined();
+		expect(screen.queryByText("Customize by category")).toBeNull();
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Shelf visibility" })).getByRole(
+				"button",
+				{ name: "Private" },
+			),
+		);
 		expect(mocks.mutate).toHaveBeenCalledWith({
-			kind: "initial",
-			body: { category: "watches", visibility: "private" },
+			kind: "change",
+			body: { category: "watches", listRkey: undefined, visibility: "private" },
 		});
+	});
+	it("reopens List progress after a migration starts but allows dismissal during polling", () => {
+		const { rerender } = render(<PrivacySection />);
+		const list = mocks.data.scopes[1];
+		mocks.data = {
+			...mocks.data,
+			scopes: [
+				mocks.data.scopes[0],
+				{
+					...list,
+					migration: {
+						id: "move",
+						target: "private",
+						status: "running",
+						copied: 0,
+						total: 2,
+						error: null,
+					},
+				},
+			],
+		};
+		rerender(<PrivacySection />);
+		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
+		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+		mocks.data = { ...mocks.data, scopes: [...mocks.data.scopes] };
+		rerender(<PrivacySection />);
+		expect(screen.queryByRole("dialog")).toBeNull();
+		expect(screen.queryByText(/Lists are changing visibility/)).toBeNull();
 	});
 });

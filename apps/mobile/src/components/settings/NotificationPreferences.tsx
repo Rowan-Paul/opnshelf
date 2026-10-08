@@ -46,7 +46,12 @@ const CATEGORIES = [
 ] as const;
 type SettingKey = keyof UpdateNotificationSettingsDto;
 
-export function NotificationPreferences() {
+export function NotificationPreferences({
+	onboarding = false,
+}: {
+	onboarding?: boolean;
+}) {
+	const [emailExpanded, setEmailExpanded] = useState(false);
 	const toast = useToast();
 	const queryClient = useQueryClient();
 	const [emailInput, setEmailInput] = useState("");
@@ -268,90 +273,102 @@ export function NotificationPreferences() {
 						Confirm an email address to receive email notifications.
 					</Text>
 				)}
-				{settings.emailVerified && (
+				{onboarding && (
 					<Button
-						label="Send test email"
-						size="sm"
+						label={emailExpanded ? "Hide email options" : "Email options"}
 						variant="secondary"
-						disabled={testNotification.isPending}
-						onPress={() => void sendTest("email")}
+						size="sm"
+						onPress={() => setEmailExpanded(!emailExpanded)}
 					/>
 				)}
-				{!awaitingCode ? (
-					<View className="gap-2">
-						{(!settings.emailVerified || !settings.email || emailInput) && (
-							<TextField
-								label="Email address"
-								value={emailInput}
-								onChangeText={setEmailInput}
-								keyboardType="email-address"
-								autoCapitalize="none"
-								autoComplete="email"
+				{(!onboarding || emailExpanded || !settings.emailVerified) && (
+					<>
+						{settings.emailVerified && (
+							<Button
+								label="Send test email"
+								size="sm"
+								variant="secondary"
+								disabled={testNotification.isPending}
+								onPress={() => void sendTest("email")}
 							/>
 						)}
-						{emailInput.trim() && (
-							<Button
-								label={
-									settings.emailVerified
-										? "Change email address"
-										: "Send confirmation code"
-								}
-								size="sm"
-								variant="secondary"
-								loading={requestEmail.isPending}
-								loadingLabel="Sending code…"
-								onPress={() => void sendCode()}
-								className="self-start"
-							/>
+						{!awaitingCode ? (
+							<View className="gap-2">
+								{(!settings.emailVerified || !settings.email || emailInput) && (
+									<TextField
+										label="Email address"
+										value={emailInput}
+										onChangeText={setEmailInput}
+										keyboardType="email-address"
+										autoCapitalize="none"
+										autoComplete="email"
+									/>
+								)}
+								{emailInput.trim() && (
+									<Button
+										label={
+											settings.emailVerified
+												? "Change email address"
+												: "Send confirmation code"
+										}
+										size="sm"
+										variant="secondary"
+										loading={requestEmail.isPending}
+										loadingLabel="Sending code…"
+										onPress={() => void sendCode()}
+										className="self-start"
+									/>
+								)}
+								{settings.emailVerified && !emailInput && (
+									<Button
+										label="Use a different email"
+										size="sm"
+										variant="secondary"
+										onPress={() => setEmailInput(settings.email ?? "")}
+										className="self-start"
+									/>
+								)}
+							</View>
+						) : (
+							<View className="gap-2">
+								<TextField
+									label="Six-digit code"
+									value={code}
+									onChangeText={setCode}
+									keyboardType="number-pad"
+									maxLength={6}
+								/>
+								<Button
+									label="Confirm email"
+									size="sm"
+									loading={confirmEmail.isPending}
+									loadingLabel="Confirming email…"
+									disabled={code.length !== 6}
+									onPress={() => void verifyCode()}
+									className="self-start"
+								/>
+								<View className="flex-row flex-wrap gap-2">
+									<Button
+										label="Resend code"
+										size="sm"
+										variant="secondary"
+										loading={requestEmail.isPending}
+										loadingLabel="Resending code…"
+										onPress={() => void sendCode()}
+									/>
+									<Button
+										label="Change email address"
+										size="sm"
+										variant="secondary"
+										onPress={() => {
+											setCode("");
+											setAwaitingCode(false);
+										}}
+									/>
+								</View>
+							</View>
 						)}
-						{settings.emailVerified && !emailInput && (
-							<Button
-								label="Use a different email"
-								size="sm"
-								variant="secondary"
-								onPress={() => setEmailInput(settings.email ?? "")}
-								className="self-start"
-							/>
-						)}
-					</View>
-				) : (
-					<View className="gap-2">
-						<TextField
-							label="Six-digit code"
-							value={code}
-							onChangeText={setCode}
-							keyboardType="number-pad"
-							maxLength={6}
-						/>
-						<Button
-							label="Confirm email"
-							size="sm"
-							loading={confirmEmail.isPending}
-							loadingLabel="Confirming email…"
-							disabled={code.length !== 6}
-							onPress={() => void verifyCode()}
-							className="self-start"
-						/>
-						<View className="flex-row flex-wrap gap-2">
-							<Button
-								label="Resend code"
-								size="sm"
-								variant="secondary"
-								loading={requestEmail.isPending}
-								loadingLabel="Resending code…"
-								onPress={() => void sendCode()}
-							/>
-							<Button
-								label="Change email address"
-								size="sm"
-								variant="secondary"
-								onPress={() => {
-									setCode("");
-									setAwaitingCode(false);
-								}}
-							/>
-						</View>
-					</View>
+					</>
 				)}
 			</View>
 

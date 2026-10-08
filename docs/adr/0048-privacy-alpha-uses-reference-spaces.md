@@ -5,9 +5,9 @@ sync experiment, ADR 0046's conditional-private-deletion release prerequisite,
 and ADR 0047's Tranquil-specific capability requirement.
 
 Privacy is an explicitly labeled alpha supporting the reference Spaces API and
-compatible PDSs. Tranquil-only extensions cannot be required. New Users see one
-Public/Private choice during onboarding, initially Public, with category
-customization. A dedicated Privacy settings screen exposes Shelf, Library,
+compatible PDSs. Tranquil-only extensions cannot be required. On 2026-10-08 the
+operator requested that onboarding always show the category choices. New Users see Public/Private controls for each category, initially
+Public. A dedicated Privacy settings screen exposes Shelf, Library,
 Notes and Lists on both clients. All four categories must work before release.
 Authorization is part of choosing Private, not a separate connection control.
 Unsupported PDSs retain Public behavior and explain why Private is unavailable.

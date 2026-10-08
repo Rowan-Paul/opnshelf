@@ -35,7 +35,11 @@ const CATEGORIES = [
 	},
 ] as const;
 
-export function NotificationEmailSection() {
+export function NotificationEmailSection({
+	onboarding = false,
+}: {
+	onboarding?: boolean;
+}) {
 	const queryClient = useQueryClient();
 	const [emailInput, setEmailInput] = useState("");
 	const [code, setCode] = useState("");
@@ -128,10 +132,20 @@ export function NotificationEmailSection() {
 	};
 
 	return (
-		<section className="p-5 sm:p-7">
-			<h2 className="mb-1 font-semibold text-lg">Email delivery</h2>
+		<section className={onboarding ? "" : "p-5 sm:p-7"}>
+			<h2
+				className={
+					onboarding
+						? "mb-2 font-semibold text-2xl"
+						: "mb-1 font-semibold text-lg"
+				}
+			>
+				{onboarding ? "Stay up to date" : "Email delivery"}
+			</h2>
 			<p className="mb-6 text-(--foreground-muted) text-sm">
-				Choose which updates Opnshelf emails you.
+				{onboarding
+					? "Choose the emails you’d like to receive. You can change these in Settings anytime."
+					: "Choose which updates Opnshelf emails you."}
 			</p>
 			{isLoading ? (
 				<div className="max-w-lg space-y-3" aria-hidden="true">
@@ -148,100 +162,120 @@ export function NotificationEmailSection() {
 				</button>
 			) : (
 				<div className="max-w-lg space-y-6">
-					<div className="space-y-3">
-						{settings.emailVerified && settings.email ? (
-							<p className="text-(--foreground-muted) text-sm">
-								Sending to {settings.email}
-							</p>
-						) : (
-							<p className="text-(--foreground-muted) text-sm">
-								Confirm an email address to receive notifications.
-							</p>
-						)}
-						{settings.emailVerified && (
-							<button
-								type="button"
-								className="btn btn-secondary"
-								disabled={testNotification.isPending}
-								onClick={() => void sendTest("email")}
-							>
-								Send test email
-							</button>
-						)}
-						{!awaitingCode ? (
-							<div className="space-y-2">
-								{(!settings.emailVerified || !settings.email || emailInput) && (
-									<input
-										type="email"
-										aria-label="Notification email address"
-										value={emailInput}
-										onChange={(event) => setEmailInput(event.target.value)}
-										className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
-										placeholder="you@example.com"
-									/>
+					<details
+						open={onboarding && settings.emailVerified ? undefined : true}
+						className="group"
+					>
+						<summary
+							className={
+								onboarding
+									? "cursor-pointer text-(--foreground-muted) text-sm"
+									: "hidden"
+							}
+						>
+							{settings.emailVerified && settings.email
+								? `Sending to ${settings.email}`
+								: "Set up your email address"}
+						</summary>
+						<div className={onboarding ? "mt-4" : ""}>
+							<div className="space-y-3">
+								{settings.emailVerified && settings.email ? (
+									<p className="text-(--foreground-muted) text-sm">
+										Sending to {settings.email}
+									</p>
+								) : (
+									<p className="text-(--foreground-muted) text-sm">
+										Confirm an email address to receive notifications.
+									</p>
 								)}
-								{emailInput ? (
+								{settings.emailVerified && (
 									<button
 										type="button"
 										className="btn btn-secondary"
-										disabled={requestEmail.isPending}
-										onClick={() => void sendCode()}
+										disabled={testNotification.isPending}
+										onClick={() => void sendTest("email")}
 									>
-										Send confirmation code
+										Send test email
 									</button>
-								) : settings.emailVerified ? (
-									<button
-										type="button"
-										className="btn btn-secondary"
-										onClick={() => setEmailInput(settings.email ?? "")}
-									>
-										Use a different email
-									</button>
-								) : null}
+								)}
+								{!awaitingCode ? (
+									<div className="space-y-2">
+										{(!settings.emailVerified ||
+											!settings.email ||
+											emailInput) && (
+											<input
+												type="email"
+												aria-label="Notification email address"
+												value={emailInput}
+												onChange={(event) => setEmailInput(event.target.value)}
+												className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
+												placeholder="you@example.com"
+											/>
+										)}
+										{emailInput ? (
+											<button
+												type="button"
+												className="btn btn-secondary"
+												disabled={requestEmail.isPending}
+												onClick={() => void sendCode()}
+											>
+												Send confirmation code
+											</button>
+										) : settings.emailVerified ? (
+											<button
+												type="button"
+												className="btn btn-secondary"
+												onClick={() => setEmailInput(settings.email ?? "")}
+											>
+												Use a different email
+											</button>
+										) : null}
+									</div>
+								) : (
+									<div className="space-y-2">
+										<input
+											type="text"
+											inputMode="numeric"
+											aria-label="Six-digit confirmation code"
+											maxLength={6}
+											value={code}
+											onChange={(event) => setCode(event.target.value)}
+											className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
+											placeholder="Six-digit code"
+										/>
+										<button
+											type="button"
+											className="btn btn-secondary"
+											disabled={code.length !== 6 || confirmEmail.isPending}
+											onClick={() => void verifyCode()}
+										>
+											Confirm email
+										</button>
+										<div className="flex flex-wrap gap-2">
+											<button
+												type="button"
+												className="btn btn-secondary"
+												disabled={requestEmail.isPending}
+												onClick={() => void sendCode()}
+											>
+												Resend code
+											</button>
+											<button
+												type="button"
+												className="btn btn-secondary"
+												onClick={() => {
+													setCode("");
+													setAwaitingCode(false);
+												}}
+											>
+												Change email address
+											</button>
+										</div>
+									</div>
+								)}
 							</div>
-						) : (
-							<div className="space-y-2">
-								<input
-									type="text"
-									inputMode="numeric"
-									aria-label="Six-digit confirmation code"
-									maxLength={6}
-									value={code}
-									onChange={(event) => setCode(event.target.value)}
-									className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
-									placeholder="Six-digit code"
-								/>
-								<button
-									type="button"
-									className="btn btn-secondary"
-									disabled={code.length !== 6 || confirmEmail.isPending}
-									onClick={() => void verifyCode()}
-								>
-									Confirm email
-								</button>
-								<div className="flex flex-wrap gap-2">
-									<button
-										type="button"
-										className="btn btn-secondary"
-										disabled={requestEmail.isPending}
-										onClick={() => void sendCode()}
-									>
-										Resend code
-									</button>
-									<button
-										type="button"
-										className="btn btn-secondary"
-										onClick={() => {
-											setCode("");
-											setAwaitingCode(false);
-										}}
-									>
-										Change email address
-									</button>
-								</div>
-							</div>
-						)}
-					</div>
+						</div>
+					</details>
 					<div className="space-y-4">
 						{CATEGORIES.map((category) => (
 							<div
@@ -271,14 +305,16 @@ export function NotificationEmailSection() {
 					</div>
 				</div>
 			)}
-			<div className="mt-8 space-y-3 border-(--border) border-t pt-6">
-				<h3 className="font-semibold">Mobile notifications</h3>
-				<p className="text-(--foreground-muted) text-sm">
-					Open Settings → Notifications in the Mobile App to enable alerts on
-					your phone and send a test notification.
-				</p>
-				<StoreBadges className="justify-start" />
-			</div>
+			{!onboarding && (
+				<div className="mt-8 space-y-3 border-(--border) border-t pt-6">
+					<h3 className="font-semibold">Mobile notifications</h3>
+					<p className="text-(--foreground-muted) text-sm">
+						Open Settings → Notifications in the Mobile App to enable alerts on
+						your phone and send a test notification.
+					</p>
+					<StoreBadges className="justify-start" />
+				</div>
+			)}
 		</section>
 	);
 }

@@ -4,7 +4,7 @@ import {
 	type PrivacyScopeDto,
 	usePrivacy,
 } from "@opnshelf/api";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,6 @@ export function PrivacySection({
 }) {
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
-	const [initial, setInitial] = useState<"public" | "private">("public");
-	const [customize, setCustomize] = useState(false);
 	const [manageLists, setManageLists] = useState(false);
 
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
@@ -40,6 +38,20 @@ export function PrivacySection({
 		return runAuthorizationUrl(result.data.authorizationUrl);
 	});
 	const data = query.data;
+	const shownListMigrations = useRef(new Set<string>());
+	useEffect(() => {
+		const migrations =
+			data?.scopes.flatMap((scope) =>
+				scope.category === "lists" && scope.migration
+					? [scope.migration.id]
+					: [],
+			) ?? [];
+		if (migrations.some((id) => !shownListMigrations.current.has(id))) {
+			setManageLists(true);
+		}
+		for (const id of migrations) shownListMigrations.current.add(id);
+	}, [data?.scopes]);
+
 	const choose = (action: PrivacyAction) => {
 		if (action.body.visibility !== "public" || action.kind === "default") {
 			mutation.mutate(action);
@@ -68,7 +80,7 @@ export function PrivacySection({
 		});
 	};
 	const chooseLists = (visibility: "public" | "private") => {
-		const actions = [
+		const actions: Parameters<typeof showDialog>[0]["actions"] = [
 			{ label: "Cancel" },
 			{
 				label: "New Lists only",
@@ -86,6 +98,9 @@ export function PrivacySection({
 		)
 			actions.push({
 				label: "All Lists",
+				onDismiss: () => {
+					if (visibility === "private") setManageLists(true);
+				},
 				onPress: () =>
 					choose({ kind: "allLists", body: { category: "lists", visibility } }),
 			});
@@ -201,7 +216,13 @@ export function PrivacySection({
 		);
 	};
 	return (
-		<View className="gap-4">
+		<View
+			className={
+				onboarding
+					? "gap-4 rounded-xl border border-border bg-card p-5"
+					: "gap-4"
+			}
+		>
 			<View className="gap-3 pb-2">
 				<View className="flex-row flex-wrap items-center gap-3">
 					<Text className="font-semibold text-2xl text-foreground">
@@ -257,115 +278,61 @@ export function PrivacySection({
 								: "We could not check Spaces support. Try again before choosing Private."}
 						</Text>
 					)}
-					{onboarding &&
-					!customize &&
-					!data.scopes.some(
-						(scope) => scope.visibility === "private" || scope.migration,
-					) &&
-					data.listsDefaultVisibility === "public" ? (
-						<View className="gap-4">
-							<View className="flex-row gap-2">
-								{(["public", "private"] as const).map((choice) => (
+
+					{data.scopes.filter((scope) => scope.category !== "lists").map(row)}
+					<View className="gap-3 rounded-2xl border border-border bg-background-elevated p-4">
+						<View className="flex-row flex-wrap items-center justify-between gap-3">
+							<View className="min-w-24 flex-1 gap-1">
+								<Text className="font-semibold text-foreground">Lists</Text>
+								<Text className="text-muted-foreground text-xs">
+									Default for new Lists.
+								</Text>
+							</View>
+							<View className="flex-row gap-1 self-start rounded-full bg-background-subtle p-1">
+								{(["public", "private"] as const).map((visibility) => (
 									<Button
-										key={choice}
-										variant={initial === choice ? "primary" : "secondary"}
-										accessibilityState={{ selected: initial === choice }}
-										disabled={
-											choice === "private" && data.availability !== "available"
+										key={visibility}
+										variant="secondary"
+										size="sm"
+										className={
+											data.listsDefaultVisibility === visibility
+												? "h-11 border-primary/50 bg-background-elevated"
+												: "h-11 border-transparent"
 										}
-										onPress={() => setInitial(choice)}
-										label={choice === "public" ? "Public" : "Private"}
+										accessibilityState={{
+											selected: data.listsDefaultVisibility === visibility,
+										}}
+										disabled={
+											pendingKey === "default" ||
+											pendingKey === "allLists" ||
+											(visibility === "private" &&
+												data.availability !== "available")
+										}
+										onPress={() => chooseLists(visibility)}
+										accessibilityLabel={`Lists ${visibility}`}
+										label={visibility === "public" ? "Public" : "Private"}
 									/>
 								))}
 							</View>
+						</View>
+						<View className="gap-3 border-border border-t pt-3">
 							<Button
+								className="self-start border-transparent px-0"
 								variant="secondary"
-								onPress={() => setCustomize(true)}
-								label="Customize by category"
-							/>
-							<Button
-								disabled={mutation.isPending}
-								onPress={() => {
-									if (initial === "public") onContinue?.();
-									else {
-										setCustomize(true);
-										mutation.mutate({
-											kind: "initial",
-											body: { category: "watches", visibility: initial },
-										});
-									}
-								}}
-								label="Continue"
+								label="Manage individual Lists"
+								onPress={() => setManageLists(true)}
 							/>
 						</View>
-					) : (
-						<>
-							{data.scopes
-								.filter((scope) => scope.category !== "lists")
-								.map(row)}
-							<View className="gap-3 rounded-2xl border border-border bg-background-elevated p-4">
-								<View className="flex-row flex-wrap items-center justify-between gap-3">
-									<View className="min-w-24 flex-1 gap-1">
-										<Text className="font-semibold text-foreground">Lists</Text>
-										<Text className="text-muted-foreground text-xs">
-											Default for new Lists.
-										</Text>
-									</View>
-									<View className="flex-row gap-1 self-start rounded-full bg-background-subtle p-1">
-										{(["public", "private"] as const).map((visibility) => (
-											<Button
-												key={visibility}
-												variant="secondary"
-												size="sm"
-												className={
-													data.listsDefaultVisibility === visibility
-														? "h-11 border-primary/50 bg-background-elevated"
-														: "h-11 border-transparent"
-												}
-												accessibilityState={{
-													selected: data.listsDefaultVisibility === visibility,
-												}}
-												disabled={
-													pendingKey === "default" ||
-													pendingKey === "allLists" ||
-													(visibility === "private" &&
-														data.availability !== "available")
-												}
-												onPress={() => chooseLists(visibility)}
-												accessibilityLabel={`Lists ${visibility}`}
-												label={visibility === "public" ? "Public" : "Private"}
-											/>
-										))}
-									</View>
-								</View>
-								<View className="gap-3 border-border border-t pt-3">
-									<Button
-										className="self-start border-transparent px-0"
-										variant="secondary"
-										label="Manage individual Lists"
-										onPress={() => setManageLists(true)}
-									/>
-									{data.scopes.some(
-										(scope) => scope.category === "lists" && scope.migration,
-									) && (
-										<Text accessibilityLiveRegion="polite" className="text-sm">
-											Lists are changing visibility. Open Manage individual
-											Lists for progress or to resume.
-										</Text>
-									)}
-								</View>
-							</View>
-							{onboarding && (
-								<Button
-									disabled={
-										mutation.isPending ||
-										data.scopes.some((scope) => scope.migration)
-									}
-									onPress={onContinue}
-									label="Continue"
-								/>
-							)}
-						</>
+					</View>
+					{onboarding && (
+						<Button
+							disabled={
+								mutation.isPending ||
+								data.scopes.some((scope) => scope.migration)
+							}
+							onPress={onContinue}
+							label="Continue"
+						/>
 					)}
 				</>
 			)}

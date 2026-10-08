@@ -26,8 +26,6 @@ export function PrivacySection({
 }) {
 	const { user } = useAuth();
 	const [confirmation, setConfirmation] = useState<PrivacyAction | null>(null);
-	const [initial, setInitial] = useState<"public" | "private">("public");
-	const [customize, setCustomize] = useState(false);
 	const [manageLists, setManageLists] = useState(false);
 	const [listChoice, setListChoice] = useState<"public" | "private" | null>(
 		null,
@@ -84,7 +82,6 @@ export function PrivacySection({
 				saved.action &&
 				query.data.authorized
 			) {
-				setCustomize(true);
 				mutation.mutate(saved.action);
 			}
 		} catch {
@@ -92,11 +89,29 @@ export function PrivacySection({
 		}
 	}, [query.data, user, mutation.mutate, onboarding]);
 	const data = query.data;
+	const shownListMigrations = useRef(new Set<string>());
+	useEffect(() => {
+		const migrations =
+			data?.scopes.flatMap((scope) =>
+				scope.category === "lists" && scope.migration
+					? [scope.migration.id]
+					: [],
+			) ?? [];
+		if (migrations.some((id) => !shownListMigrations.current.has(id))) {
+			setManageLists(true);
+		}
+		for (const id of migrations) shownListMigrations.current.add(id);
+	}, [data?.scopes]);
+
 	const choose = (action: PrivacyAction) => {
 		if (action.body.visibility === "public" && action.kind !== "default") {
 			setManageLists(false);
 			setConfirmation(action);
-		} else mutation.mutate(action);
+		} else {
+			mutation.mutate(action);
+			if (action.body.category === "lists" && action.kind !== "default")
+				setManageLists(true);
+		}
 	};
 	const scopeRow = (scope: PrivacyScopeDto) => {
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
@@ -107,7 +122,7 @@ export function PrivacySection({
 				key={key}
 				className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5"
 			>
-				<div className="flex flex-wrap items-center justify-between gap-4">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div className="space-y-1">
 						<h3 className="font-semibold">{label}</h3>
 						{scope.category !== "lists" && (
@@ -121,7 +136,7 @@ export function PrivacySection({
 						)}
 					</div>
 					<fieldset
-						className="flex gap-1 rounded-full bg-(--background-subtle) p-1"
+						className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
 						aria-label={`${label} visibility`}
 					>
 						{(["public", "private"] as const).map((visibility) => (
@@ -202,7 +217,11 @@ export function PrivacySection({
 		);
 	};
 	return (
-		<section className="space-y-3 p-5 sm:p-7">
+		<section
+			className={
+				onboarding ? "card space-y-3 p-5 sm:p-7" : "space-y-3 p-5 sm:p-7"
+			}
+		>
 			<div className="space-y-3 pb-5">
 				<div className="flex flex-wrap items-center gap-3">
 					<h2 className="font-semibold text-2xl tracking-tight">
@@ -262,122 +281,69 @@ export function PrivacySection({
 								: "We could not check Spaces support. Try again before choosing Private."}
 						</p>
 					)}
-					{onboarding &&
-					!customize &&
-					!data.scopes.some(
-						(scope) => scope.visibility === "private" || scope.migration,
-					) &&
-					data.listsDefaultVisibility === "public" ? (
-						<div className="space-y-5">
-							<div className="flex gap-3">
-								{(["public", "private"] as const).map((choice) => (
+
+					{data.scopes
+						.filter((scope) => scope.category !== "lists")
+						.map(scopeRow)}
+					<div className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5">
+						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+							<div className="space-y-1">
+								<h3 className="font-semibold">Lists</h3>
+								<p className="text-(--foreground-muted) text-xs">
+									Default for new Lists.
+								</p>
+							</div>
+							<fieldset
+								aria-label="Lists visibility"
+								className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
+							>
+								{(["public", "private"] as const).map((visibility) => (
 									<Button
-										key={choice}
-										aria-pressed={initial === choice}
-										variant={initial === choice ? "default" : "outline"}
-										disabled={
-											choice === "private" && data.availability !== "available"
+										key={visibility}
+										variant="ghost"
+										className={
+											data.listsDefaultVisibility === visibility
+												? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
+												: "min-w-20 rounded-full border border-transparent"
 										}
-										onClick={() => setInitial(choice)}
+										aria-pressed={data.listsDefaultVisibility === visibility}
+										disabled={
+											pendingKey === "default" ||
+											pendingKey === "allLists" ||
+											(visibility === "private" &&
+												data.availability !== "available")
+										}
+										onClick={() => setListChoice(visibility)}
 									>
-										{choice === "public" ? "Public" : "Private"}
+										{visibility === "public" ? "Public" : "Private"}
 									</Button>
 								))}
-							</div>
-							<Button variant="ghost" onClick={() => setCustomize(true)}>
-								Customize by category
-							</Button>
+							</fieldset>
+						</div>
+						{(pendingKey === "default" || pendingKey === "allLists") && (
+							<output>Updating Lists…</output>
+						)}
+						<div className="border-(--border) border-t pt-3">
 							<Button
-								disabled={mutation.isPending}
-								onClick={() => {
-									if (initial === "public") onContinue?.();
-									else {
-										setCustomize(true);
-										mutation.mutate({
-											kind: "initial",
-											body: { category: "watches", visibility: initial },
-										});
-									}
-								}}
+								className="-ml-3"
+								variant="ghost"
+								onClick={() => setManageLists(true)}
 							>
-								Continue
+								Manage individual Lists
 							</Button>
 						</div>
-					) : (
-						<>
-							{data.scopes
-								.filter((scope) => scope.category !== "lists")
-								.map(scopeRow)}
-							<div className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5">
-								<div className="flex flex-wrap items-center justify-between gap-4">
-									<div className="space-y-1">
-										<h3 className="font-semibold">Lists</h3>
-										<p className="text-(--foreground-muted) text-xs">
-											Default for new Lists.
-										</p>
-									</div>
-									<fieldset
-										aria-label="Lists visibility"
-										className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
-									>
-										{(["public", "private"] as const).map((visibility) => (
-											<Button
-												key={visibility}
-												variant="ghost"
-												className={
-													data.listsDefaultVisibility === visibility
-														? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
-														: "min-w-20 rounded-full border border-transparent"
-												}
-												aria-pressed={
-													data.listsDefaultVisibility === visibility
-												}
-												disabled={
-													pendingKey === "default" ||
-													pendingKey === "allLists" ||
-													(visibility === "private" &&
-														data.availability !== "available")
-												}
-												onClick={() => setListChoice(visibility)}
-											>
-												{visibility === "public" ? "Public" : "Private"}
-											</Button>
-										))}
-									</fieldset>
-								</div>
-								{(pendingKey === "default" || pendingKey === "allLists") && (
-									<output>Updating Lists…</output>
-								)}
-								<div className="border-(--border) border-t pt-3">
-									<Button
-										className="-ml-3"
-										variant="ghost"
-										onClick={() => setManageLists(true)}
-									>
-										Manage individual Lists
-									</Button>
-									{data.scopes.some(
-										(scope) => scope.category === "lists" && scope.migration,
-									) && (
-										<output className="text-sm">
-											Lists are changing visibility. Open Manage individual
-											Lists for progress or to resume.
-										</output>
-									)}
-								</div>
-							</div>
-							{onboarding && (
-								<Button
-									disabled={
-										mutation.isPending ||
-										data.scopes.some((scope) => scope.migration)
-									}
-									onClick={onContinue}
-								>
-									Continue
-								</Button>
-							)}
-						</>
+					</div>
+					{onboarding && (
+						<Button
+							disabled={
+								mutation.isPending ||
+								data.scopes.some((scope) => scope.migration)
+							}
+							className="btn btn-primary mt-4 w-full"
+							onClick={onContinue}
+						>
+							Continue
+						</Button>
 					)}
 				</>
 			)}
@@ -428,12 +394,13 @@ export function PrivacySection({
 							existing Lists. Individual Lists can be changed separately.
 						</DialogDescription>
 					</DialogHeader>
-					<DialogFooter className="flex-wrap">
+					<DialogFooter className="gap-2 sm:flex-col sm:items-stretch">
 						<Button variant="ghost" onClick={() => setListChoice(null)}>
 							Cancel
 						</Button>
 						<Button
-							variant="outline"
+							variant="ghost"
+							className="btn btn-secondary"
 							onClick={() => {
 								if (listChoice)
 									choose({
