@@ -83,13 +83,18 @@ export function usePrivacy(
 						throwOnError: true,
 					})
 				).data;
-			if (action.kind === "allLists")
+			if (action.kind === "allLists") {
+				await privacyControllerChangeAllLists({
+					body: action.body,
+					throwOnError: true,
+				});
 				return (
-					await privacyControllerChangeAllLists({
-						body: action.body,
+					await privacyControllerListsDefault({
+						body: { visibility: action.body.visibility },
 						throwOnError: true,
 					})
 				).data;
+			}
 			if (action.kind === "retry")
 				return (
 					await privacyControllerRetry({

@@ -48,9 +48,10 @@ describe("Privacy settings", () => {
 	it("chooses Private directly without a separate connection control", () => {
 		render(<PrivacySection />);
 		fireEvent.click(
-			within(
-				screen.getByRole("group", { name: "Watches visibility" }),
-			).getByRole("button", { name: "Private" }),
+			within(screen.getByRole("group", { name: "Shelf visibility" })).getByRole(
+				"button",
+				{ name: "Private" },
+			),
 		);
 		expect(mocks.mutate).toHaveBeenCalledWith({
 			kind: "change",
@@ -61,12 +62,16 @@ describe("Privacy settings", () => {
 	it("requires explicit confirmation before publishing an existing List", () => {
 		render(<PrivacySection />);
 		fireEvent.click(
+			screen.getByRole("button", { name: "Manage individual Lists" }),
+		);
+		fireEvent.click(
 			within(
 				screen.getByRole("group", { name: "Favorites visibility" }),
 			).getByRole("button", { name: "Public" }),
 		);
 		expect(mocks.mutate).not.toHaveBeenCalled();
 		fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
 		expect(mocks.mutate).toHaveBeenCalledWith({
 			kind: "change",
 			body: {
@@ -77,12 +82,83 @@ describe("Privacy settings", () => {
 			},
 		});
 	});
+	it("keeps Lists compact and changes nothing until a scope is chosen", () => {
+		render(<PrivacySection />);
+		expect(screen.queryByText("Favorites")).toBeNull();
+		expect(screen.queryByText("Learn more")).toBeNull();
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Lists visibility" })).getByRole(
+				"button",
+				{ name: "Private" },
+			),
+		);
+		expect(mocks.mutate).not.toHaveBeenCalled();
+		fireEvent.click(screen.getByRole("button", { name: "New Lists only" }));
+		expect(mocks.mutate).toHaveBeenCalledWith({
+			kind: "default",
+			body: { category: "lists", visibility: "private" },
+		});
+	});
+	it("confirms publication when applying Public to all Lists", () => {
+		render(<PrivacySection />);
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Lists visibility" })).getByRole(
+				"button",
+				{ name: "Public" },
+			),
+		);
+		fireEvent.click(screen.getByRole("button", { name: "All Lists" }));
+		expect(mocks.mutate).not.toHaveBeenCalled();
+		fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
+		expect(mocks.mutate).toHaveBeenCalledWith({
+			kind: "allLists",
+			body: {
+				category: "lists",
+				visibility: "public",
+				publicationConfirmed: true,
+			},
+		});
+	});
+	it("cancels a Lists choice without writing", () => {
+		render(<PrivacySection />);
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Lists visibility" })).getByRole(
+				"button",
+				{ name: "Private" },
+			),
+		);
+		fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+		expect(mocks.mutate).not.toHaveBeenCalled();
+	});
+
+	it("explains List copy progress and distinguishes finishing from completion", () => {
+		const list = mocks.data.scopes.find((scope) => scope.category === "lists");
+		if (!list) throw new Error("Missing List");
+		list.migration = {
+			id: "move",
+			target: "private",
+			status: "queued",
+			copied: 2,
+			total: 2,
+			error: null,
+		};
+		render(<PrivacySection />);
+		fireEvent.click(
+			screen.getByRole("button", { name: "Manage individual Lists" }),
+		);
+		expect(screen.getByText(/2\/2 records copied.*Finishing/)).toBeDefined();
+		expect(
+			screen.getByText(/Records include the List details and its items/),
+		).toBeDefined();
+	});
+
 	it("leaves Public usable on unsupported PDSs", () => {
 		mocks.data.availability = "unsupported";
 		render(<PrivacySection />);
 		expect(screen.getByText(/does not support Spaces yet/)).toBeDefined();
 		const group = within(
-			screen.getByRole("group", { name: "Watches visibility" }),
+			screen.getByRole("group", { name: "Shelf visibility" }),
 		);
 		expect(
 			group.getByRole("button", { name: "Private" }).hasAttribute("disabled"),

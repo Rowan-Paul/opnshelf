@@ -39,6 +39,13 @@ export class PrivacyMigrationDto {
 	@ApiProperty({ enum: ["public", "private"] }) target!: PrivacyVisibility;
 	@ApiProperty() status!: string;
 	@ApiProperty() copied!: number;
+	@ApiProperty({
+		type: Number,
+		nullable: true,
+		description:
+			"Distinct records in this migration; null until counted or when unavailable.",
+	})
+	total!: number | null;
 	@ApiProperty({ type: String, nullable: true }) error!: string | null;
 }
 export class PrivacyScopeDto {

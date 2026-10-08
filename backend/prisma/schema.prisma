@@ -828,6 +828,7 @@ model PrivacyScope {
  managed Boolean @default(false)
  migrationId String? @unique
  targetVisibility String?
+ totalRecords Int?
  status String?
  error String?
  syncAttemptedAt DateTime?

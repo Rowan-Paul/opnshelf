@@ -181,6 +181,19 @@ describe.skipIf(!url)("content Privacy Alpha on PostgreSQL", () => {
 			expect(await db.privacyCopy.count({ where: { scopeId: state.id } })).toBe(
 				values.length,
 			);
+			expect(
+				(await db.privacyScope.findUniqueOrThrow({ where: { id: state.id } }))
+					.totalRecords,
+			).toBe(values.length);
+			// Simulate a crash after journaling but before deleting one source record.
+			const first = original.entries().next().value;
+			if (!first) throw new Error("Expected source record");
+			pds.publicRecords.set(first[0], first[1]);
+			await privacy.runMigration(state.id);
+			expect(
+				(await db.privacyScope.findUniqueOrThrow({ where: { id: state.id } }))
+					.totalRecords,
+			).toBe(values.length);
 			await expect(
 				coordinator.write(did, category, listRkey, async () => {}),
 			).rejects.toThrow("changing privacy");
@@ -205,7 +218,15 @@ describe.skipIf(!url)("content Privacy Alpha on PostgreSQL", () => {
 				write,
 			);
 			expect(write).not.toHaveBeenCalled();
-			await privacy.start(did, pds.session, category, "public", true, listRkey);
+			const reverse = await privacy.start(
+				did,
+				pds.session,
+				category,
+				"public",
+				true,
+				listRkey,
+			);
+			expect(reverse?.totalRecords).toBeNull();
 			await privacy.runMigration(state.id);
 			await privacy.runMigration(state.id);
 			expect(

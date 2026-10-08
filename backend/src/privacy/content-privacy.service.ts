@@ -201,6 +201,21 @@ export class ContentPrivacyService {
 				if (target === "private") await pds.assertPrivate();
 				else await pds.assertExistingPrivate();
 				const sources = await this.snapshot(pds, state, target === "public");
+				// A verified copy can still be in the source after an interrupted deletion.
+				// Count the union so retries do not inflate the denominator.
+				const copied = await this.prisma.privacyCopy.findMany({
+					where: { scopeId: id, migrationId: generation },
+					select: { collection: true, rkey: true },
+				});
+				const totalRecords = new Set(
+					[...sources, ...copied].map(
+						(record) => `${record.collection}/${record.rkey}`,
+					),
+				).size;
+				await this.prisma.privacyScope.update({
+					where: { id, migrationId: generation },
+					data: { totalRecords },
+				});
 				const journal = new ContentPrivacyJournal(
 					this.prisma,
 					id,
@@ -264,6 +279,7 @@ export class ContentPrivacyService {
 						data: {
 							visibility: target,
 							targetVisibility: null,
+							totalRecords: null,
 							migrationId: null,
 							status: null,
 							error: null,

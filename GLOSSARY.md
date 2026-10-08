@@ -5,7 +5,7 @@ A social media tracking and review platform where users log, rate, and review mo
 ## Language
 
 **Data Visibility**:
-A User's choice of Public or Private for their content: by category for Watches,
+A User's choice of Public or Private for their content: by category for the Shelf,
 Library Items and Notes, and per List with a default for Lists. Settings remain ordinary account preferences; they are not synchronized to Spaces.
 _Avoid_: Sync (visibility controls who can read, not whether data is synchronized)
 
@@ -291,14 +291,14 @@ _Avoid_: Percentage rollout (that's a feature flag), promotion (that's moving be
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
 
-**Watch privacy**:
+**Shelf privacy**:
 The account-wide choice between Public and Private for movie and episode
 **Watches**. Changing it moves existing Watches as well as changing where new
 Watches are stored. Other data categories retain their own visibility.
 _Avoid_: private account (other categories can remain Public).
 
 **Privacy Alpha**:
-The evolving Public/Private controls for **Watches**, **Library**, **Notes** and
+The evolving Public/Private controls for **Shelf**, **Library**, **Notes** and
 **Lists**, available in Privacy settings and onboarding. Public is the initial
 choice. Private uses owner-only **Spaces** on compatible PDSs, including the
 reference Spaces alpha. Reviews and Ratings retain their existing visibility.
@@ -311,12 +311,13 @@ _Avoid_: Watch access, Connect privacy, privacy enabled.
 
 **List default visibility**:
 The Public/Private choice applied only to newly created Lists. Existing Lists
-keep their individual choice; **Change all Lists** explicitly moves them.
+keep their individual choice unless the User selects **All Lists** when changing
+the default. **Manage individual Lists** opens the per-List visibility controls.
 
 **Sync Watches**:
 Refresh the User's Watches from their selected public repository or private
 Space, including edits made by other authorized apps. This does not change
-Watch privacy and is separate from a **Trakt Import**.
+Shelf privacy and is separate from a **Trakt Import**.
 _Avoid_: Trakt sync.
 
 **Watch Privacy Migration**:

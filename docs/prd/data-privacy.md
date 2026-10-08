@@ -10,7 +10,7 @@ on Web and Mobile, available again in Settings so choices can be changed later.
 
 | Category | Agreed control |
 | --- | --- |
-| Watches | One Public / Private choice for all Watches |
+| Shelf | One Public / Private choice for all Watches |
 | Lists | Default visibility for Lists, with a choice for each List |
 | Library | One Public / Private choice for all Library Items |
 | Notes | One Public / Private choice for all Notes |
@@ -29,8 +29,9 @@ customization. Private authorization occurs within this flow. Declining it keeps
 the previous visibility; no connection-control step is exposed. Unsupported PDSs
 keep Public usable and explain why Private is unavailable.
 
-A Lists default change applies only to new Lists. Existing Lists retain their
-visibility; a separate bulk action changes all Lists. The release covers all four
+The Lists choice asks whether to apply the default to New Lists only or All
+Lists. Individual visibility and migration recovery live in a Manage individual
+Lists modal. The release covers all four
 categories, with matching Web and Mobile flows and no placeholder controls.
 
 ## Initial visibility
@@ -66,7 +67,7 @@ Use reference Spaces endpoints, never require a Tranquil-only capability. Copy
 and verify complete records, retain a temporary recovery journal, recheck the
 source, then delete originals. Public-source CAS remains supported. Private
 cleanup cannot close the race with an external app editing after the last check;
-this is an accepted alpha limitation documented in Learn more, without an extra
+this is an accepted alpha limitation documented in ADR 0048, without an extra
 concurrency warning. Detected conflicts stop the job; permanent private backups
 are not the product behavior. Ordinary switching deletes migrated records, not
 whole content Spaces. Pause affected category edits while migration runs.

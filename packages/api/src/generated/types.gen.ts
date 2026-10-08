@@ -1472,6 +1472,10 @@ export type PrivacyMigrationDto = {
     target: 'public' | 'private';
     status: string;
     copied: number;
+    /**
+     * Distinct records in this migration; null until counted or when unavailable.
+     */
+    total: number | null;
     error: string | null;
 };
 

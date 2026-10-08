@@ -28,6 +28,10 @@ export function PrivacySection({
 	const [confirmation, setConfirmation] = useState<PrivacyAction | null>(null);
 	const [initial, setInitial] = useState<"public" | "private">("public");
 	const [customize, setCustomize] = useState(false);
+	const [manageLists, setManageLists] = useState(false);
+	const [listChoice, setListChoice] = useState<"public" | "private" | null>(
+		null,
+	);
 	const resumed = useRef(false);
 	const [declined, setDeclined] = useState(false);
 	useEffect(() => {
@@ -89,13 +93,15 @@ export function PrivacySection({
 	}, [query.data, user, mutation.mutate, onboarding]);
 	const data = query.data;
 	const choose = (action: PrivacyAction) => {
-		if (action.body.visibility === "public" && action.kind !== "default")
+		if (action.body.visibility === "public" && action.kind !== "default") {
+			setManageLists(false);
 			setConfirmation(action);
-		else mutation.mutate(action);
+		} else mutation.mutate(action);
 	};
 	const scopeRow = (scope: PrivacyScopeDto) => {
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
 		const moving = scope.migration;
+		const label = scope.category === "watches" ? "Shelf" : scope.label;
 		return (
 			<div
 				key={key}
@@ -103,7 +109,7 @@ export function PrivacySection({
 			>
 				<div className="flex flex-wrap items-center justify-between gap-4">
 					<div className="space-y-1">
-						<h3 className="font-semibold">{scope.label}</h3>
+						<h3 className="font-semibold">{label}</h3>
 						{scope.category !== "lists" && (
 							<p className="text-(--foreground-muted) text-xs">
 								{scope.category === "watches"
@@ -116,7 +122,7 @@ export function PrivacySection({
 					</div>
 					<fieldset
 						className="flex gap-1 rounded-full bg-(--background-subtle) p-1"
-						aria-label={`${scope.label} visibility`}
+						aria-label={`${label} visibility`}
 					>
 						{(["public", "private"] as const).map((visibility) => (
 							<Button
@@ -151,17 +157,25 @@ export function PrivacySection({
 					</fieldset>
 				</div>
 				{pendingKey === key && (
-					<output className="text-sm">Updating {scope.label}…</output>
+					<output className="text-sm">Updating {label}…</output>
 				)}
 				{moving && (
 					<div aria-live="polite" className="space-y-2 text-sm">
 						<p>
 							Changing to {moving.target === "private" ? "Private" : "Public"} ·{" "}
-							{moving.copied} copied
+							{moving.total == null
+								? `${moving.copied} records copied`
+								: `${moving.copied}/${moving.total} records copied`}
+							{moving.total != null &&
+								moving.copied >= moving.total &&
+								["queued", "running"].includes(moving.status) &&
+								" · Finishing…"}
 						</p>
 						<p className="text-(--foreground-muted)">
-							Hidden from others while moving. Edits to {scope.label} pause; you
-							can leave this page.
+							{scope.category === "lists" &&
+								"Records include the List details and its items. "}
+							Hidden from others while moving. Edits to {label} pause; you can
+							leave this page.
 						</p>
 						{moving.error && <p role="alert">{moving.error}</p>}
 						{!["queued", "running"].includes(moving.status) && (
@@ -202,16 +216,6 @@ export function PrivacySection({
 					Public is visible to everyone. Private is for you and the apps you
 					authorize.
 				</p>
-				<details className="text-sm">
-					<summary className="w-fit cursor-pointer text-(--foreground-muted) underline-offset-4 hover:text-(--foreground) hover:underline">
-						Learn more
-					</summary>
-					<p className="max-w-xl pt-3 text-(--foreground-muted) leading-relaxed">
-						Reviews and Ratings keep their current visibility. Other public
-						content may still reveal related information. {data?.alphaDetails}{" "}
-						Your PDS can read private data; Spaces are not encrypted end to end.
-					</p>
-				</details>
 			</div>
 			{declined && (
 				<output>
@@ -305,74 +309,62 @@ export function PrivacySection({
 								.filter((scope) => scope.category !== "lists")
 								.map(scopeRow)}
 							<div className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5">
-								<h3 className="font-semibold">New Lists</h3>
-								<p className="text-(--foreground-muted) text-sm">
-									Default for Lists you create next.
-								</p>
-								<div className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1">
-									{(["public", "private"] as const).map((visibility) => (
-										<Button
-											key={visibility}
-											variant="ghost"
-											className={
-												data.listsDefaultVisibility === visibility
-													? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
-													: "min-w-20 rounded-full border border-transparent"
-											}
-											aria-pressed={data.listsDefaultVisibility === visibility}
-											disabled={
-												pendingKey === "default" ||
-												(visibility === "private" &&
-													data.availability !== "available")
-											}
-											onClick={() =>
-												choose({
-													kind: "default",
-													body: { category: "lists", visibility },
-												})
-											}
-										>
-											{visibility === "public" ? "Public" : "Private"}
-										</Button>
-									))}
-								</div>
-							</div>
-							<div className="space-y-3 pt-6">
-								<h3 className="font-semibold text-lg">Your Lists</h3>
-								<details className="text-sm">
-									<summary className="w-fit cursor-pointer text-(--foreground-muted)">
-										Change all Lists
-									</summary>
-									<div className="my-3 flex flex-wrap gap-2">
+								<div className="flex flex-wrap items-center justify-between gap-4">
+									<div className="space-y-1">
+										<h3 className="font-semibold">Lists</h3>
+										<p className="text-(--foreground-muted) text-xs">
+											Default for new Lists.
+										</p>
+									</div>
+									<fieldset
+										aria-label="Lists visibility"
+										className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
+									>
 										{(["public", "private"] as const).map((visibility) => (
 											<Button
 												key={visibility}
-												variant="outline"
+												variant="ghost"
+												className={
+													data.listsDefaultVisibility === visibility
+														? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
+														: "min-w-20 rounded-full border border-transparent"
+												}
+												aria-pressed={
+													data.listsDefaultVisibility === visibility
+												}
 												disabled={
+													pendingKey === "default" ||
 													pendingKey === "allLists" ||
-													data.scopes.some(
-														(scope) =>
-															scope.category === "lists" && scope.migration,
-													) ||
 													(visibility === "private" &&
 														data.availability !== "available")
 												}
-												onClick={() =>
-													choose({
-														kind: "allLists",
-														body: { category: "lists", visibility },
-													})
-												}
+												onClick={() => setListChoice(visibility)}
 											>
-												Change all Lists to{" "}
 												{visibility === "public" ? "Public" : "Private"}
 											</Button>
 										))}
-									</div>
-								</details>
-								{data.scopes
-									.filter((scope) => scope.category === "lists")
-									.map(scopeRow)}
+									</fieldset>
+								</div>
+								{(pendingKey === "default" || pendingKey === "allLists") && (
+									<output>Updating Lists…</output>
+								)}
+								<div className="border-(--border) border-t pt-3">
+									<Button
+										className="-ml-3"
+										variant="ghost"
+										onClick={() => setManageLists(true)}
+									>
+										Manage individual Lists
+									</Button>
+									{data.scopes.some(
+										(scope) => scope.category === "lists" && scope.migration,
+									) && (
+										<output className="text-sm">
+											Lists are changing visibility. Open Manage individual
+											Lists for progress or to resume.
+										</output>
+									)}
+								</div>
 							</div>
 							{onboarding && (
 								<Button
@@ -396,6 +388,83 @@ export function PrivacySection({
 						: "Could not complete this change. Try again."}
 				</p>
 			)}
+			<Dialog open={manageLists} onOpenChange={setManageLists}>
+				<DialogContent className="max-h-[85dvh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>Your Lists</DialogTitle>
+						<DialogDescription>
+							Choose visibility for each List.
+						</DialogDescription>
+					</DialogHeader>
+					{data?.scopes
+						.filter((scope) => scope.category === "lists")
+						.map(scopeRow)}
+					{mutation.isError &&
+						mutation.variables?.body.category === "lists" && (
+							<p role="alert">
+								{mutation.error instanceof Error
+									? mutation.error.message
+									: "Could not complete this change. Try again."}
+							</p>
+						)}
+					{!data?.scopes.some((scope) => scope.category === "lists") && (
+						<p>No Lists yet.</p>
+					)}
+				</DialogContent>
+			</Dialog>
+			<Dialog
+				open={listChoice !== null}
+				onOpenChange={(open) => {
+					if (!open) setListChoice(null);
+				}}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							Make Lists {listChoice === "private" ? "Private" : "Public"}?
+						</DialogTitle>
+						<DialogDescription>
+							Use this choice for new Lists only, or also change all your
+							existing Lists. Individual Lists can be changed separately.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter className="flex-wrap">
+						<Button variant="ghost" onClick={() => setListChoice(null)}>
+							Cancel
+						</Button>
+						<Button
+							variant="outline"
+							onClick={() => {
+								if (listChoice)
+									choose({
+										kind: "default",
+										body: { category: "lists", visibility: listChoice },
+									});
+								setListChoice(null);
+							}}
+						>
+							New Lists only
+						</Button>
+						<Button
+							disabled={data?.scopes.some(
+								(scope) =>
+									scope.category === "lists" && Boolean(scope.migration),
+							)}
+							onClick={() => {
+								if (listChoice)
+									choose({
+										kind: "allLists",
+										body: { category: "lists", visibility: listChoice },
+									});
+								setListChoice(null);
+							}}
+						>
+							All Lists
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
 			<Dialog
 				open={confirmation !== null}
 				onOpenChange={(open) => {
@@ -423,6 +492,8 @@ export function PrivacySection({
 										body: { ...confirmation.body, publicationConfirmed: true },
 									});
 								setConfirmation(null);
+								if (confirmation?.body.category === "lists")
+									setManageLists(true);
 							}}
 						>
 							Publish

@@ -7,15 +7,16 @@ and ADR 0047's Tranquil-specific capability requirement.
 Privacy is an explicitly labeled alpha supporting the reference Spaces API and
 compatible PDSs. Tranquil-only extensions cannot be required. New Users see one
 Public/Private choice during onboarding, initially Public, with category
-customization. A dedicated Privacy settings screen exposes Watches, Library,
+customization. A dedicated Privacy settings screen exposes Shelf, Library,
 Notes and Lists on both clients. All four categories must work before release.
 Authorization is part of choosing Private, not a separate connection control.
 Unsupported PDSs retain Public behavior and explain why Private is unavailable.
 
 Category changes include existing records. Lists additionally have an individual
-visibility; changing the default affects only new Lists, with a separate action
-to change all existing Lists. Reviews, Ratings and other categories retain their
-existing behavior. Publication requires confirmation. Migration progress and
+visibility. The Lists choice prompts for New Lists only or All Lists; the latter
+changes existing Lists and the default together. Individual controls and recovery
+remain available in a Manage individual Lists modal. Reviews, Ratings and other
+categories retain their existing behavior. Publication requires confirmation. Migration progress and
 recovery are visible, with edits paused only for the affected category.
 
 The current reference Spaces API has no private-record conditional deletion.
@@ -24,7 +25,8 @@ the temporary recovery journal, recheck the source, and delete the private
 original using the reference API. Stop on detected conflicts. This knowingly
 cannot prevent another authorized app editing between the last check and delete;
 it must not be described as atomic or race-free. The operator accepts that alpha
-limitation without a separate concurrency warning. Document it in alpha details.
+limitation without a separate concurrency warning. Keep that limitation documented
+here; the settings screen does not need a Learn more disclosure.
 Do not retain permanent private backups or delete whole content Spaces as part
 of a visibility switch. Existing public-source CAS remains useful and portable.
 

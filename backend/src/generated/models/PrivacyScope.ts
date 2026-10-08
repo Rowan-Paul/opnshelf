@@ -20,8 +20,18 @@ export type PrivacyScopeModel = runtime.Types.Result.DefaultSelection<Prisma.$Pr
 
 export type AggregatePrivacyScope = {
   _count: PrivacyScopeCountAggregateOutputType | null
+  _avg: PrivacyScopeAvgAggregateOutputType | null
+  _sum: PrivacyScopeSumAggregateOutputType | null
   _min: PrivacyScopeMinAggregateOutputType | null
   _max: PrivacyScopeMaxAggregateOutputType | null
+}
+
+export type PrivacyScopeAvgAggregateOutputType = {
+  totalRecords: number | null
+}
+
+export type PrivacyScopeSumAggregateOutputType = {
+  totalRecords: number | null
 }
 
 export type PrivacyScopeMinAggregateOutputType = {
@@ -34,6 +44,7 @@ export type PrivacyScopeMinAggregateOutputType = {
   managed: boolean | null
   migrationId: string | null
   targetVisibility: string | null
+  totalRecords: number | null
   status: string | null
   error: string | null
   syncAttemptedAt: Date | null
@@ -52,6 +63,7 @@ export type PrivacyScopeMaxAggregateOutputType = {
   managed: boolean | null
   migrationId: string | null
   targetVisibility: string | null
+  totalRecords: number | null
   status: string | null
   error: string | null
   syncAttemptedAt: Date | null
@@ -70,6 +82,7 @@ export type PrivacyScopeCountAggregateOutputType = {
   managed: number
   migrationId: number
   targetVisibility: number
+  totalRecords: number
   status: number
   error: number
   syncAttemptedAt: number
@@ -79,6 +92,14 @@ export type PrivacyScopeCountAggregateOutputType = {
   _all: number
 }
 
+
+export type PrivacyScopeAvgAggregateInputType = {
+  totalRecords?: true
+}
+
+export type PrivacyScopeSumAggregateInputType = {
+  totalRecords?: true
+}
 
 export type PrivacyScopeMinAggregateInputType = {
   id?: true
@@ -90,6 +111,7 @@ export type PrivacyScopeMinAggregateInputType = {
   managed?: true
   migrationId?: true
   targetVisibility?: true
+  totalRecords?: true
   status?: true
   error?: true
   syncAttemptedAt?: true
@@ -108,6 +130,7 @@ export type PrivacyScopeMaxAggregateInputType = {
   managed?: true
   migrationId?: true
   targetVisibility?: true
+  totalRecords?: true
   status?: true
   error?: true
   syncAttemptedAt?: true
@@ -126,6 +149,7 @@ export type PrivacyScopeCountAggregateInputType = {
   managed?: true
   migrationId?: true
   targetVisibility?: true
+  totalRecords?: true
   status?: true
   error?: true
   syncAttemptedAt?: true
@@ -173,6 +197,18 @@ export type PrivacyScopeAggregateArgs<ExtArgs extends runtime.Types.Extensions.I
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: PrivacyScopeAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: PrivacyScopeSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: PrivacyScopeMinAggregateInputType
@@ -203,6 +239,8 @@ export type PrivacyScopeGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   _count?: PrivacyScopeCountAggregateInputType | true
+  _avg?: PrivacyScopeAvgAggregateInputType
+  _sum?: PrivacyScopeSumAggregateInputType
   _min?: PrivacyScopeMinAggregateInputType
   _max?: PrivacyScopeMaxAggregateInputType
 }
@@ -217,6 +255,7 @@ export type PrivacyScopeGroupByOutputType = {
   managed: boolean
   migrationId: string | null
   targetVisibility: string | null
+  totalRecords: number | null
   status: string | null
   error: string | null
   syncAttemptedAt: Date | null
@@ -224,6 +263,8 @@ export type PrivacyScopeGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   _count: PrivacyScopeCountAggregateOutputType | null
+  _avg: PrivacyScopeAvgAggregateOutputType | null
+  _sum: PrivacyScopeSumAggregateOutputType | null
   _min: PrivacyScopeMinAggregateOutputType | null
   _max: PrivacyScopeMaxAggregateOutputType | null
 }
@@ -256,6 +297,7 @@ export type PrivacyScopeWhereInput = {
   managed?: Prisma.BoolFilter<"PrivacyScope"> | boolean
   migrationId?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   targetVisibility?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
+  totalRecords?: Prisma.IntNullableFilter<"PrivacyScope"> | number | null
   status?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   error?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   syncAttemptedAt?: Prisma.DateTimeNullableFilter<"PrivacyScope"> | Date | string | null
@@ -276,6 +318,7 @@ export type PrivacyScopeOrderByWithRelationInput = {
   managed?: Prisma.SortOrder
   migrationId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetVisibility?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalRecords?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   syncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -300,6 +343,7 @@ export type PrivacyScopeWhereUniqueInput = Prisma.AtLeast<{
   visibility?: Prisma.StringFilter<"PrivacyScope"> | string
   managed?: Prisma.BoolFilter<"PrivacyScope"> | boolean
   targetVisibility?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
+  totalRecords?: Prisma.IntNullableFilter<"PrivacyScope"> | number | null
   status?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   error?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   syncAttemptedAt?: Prisma.DateTimeNullableFilter<"PrivacyScope"> | Date | string | null
@@ -320,6 +364,7 @@ export type PrivacyScopeOrderByWithAggregationInput = {
   managed?: Prisma.SortOrder
   migrationId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetVisibility?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalRecords?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   syncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -327,8 +372,10 @@ export type PrivacyScopeOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PrivacyScopeCountOrderByAggregateInput
+  _avg?: Prisma.PrivacyScopeAvgOrderByAggregateInput
   _max?: Prisma.PrivacyScopeMaxOrderByAggregateInput
   _min?: Prisma.PrivacyScopeMinOrderByAggregateInput
+  _sum?: Prisma.PrivacyScopeSumOrderByAggregateInput
 }
 
 export type PrivacyScopeScalarWhereWithAggregatesInput = {
@@ -344,6 +391,7 @@ export type PrivacyScopeScalarWhereWithAggregatesInput = {
   managed?: Prisma.BoolWithAggregatesFilter<"PrivacyScope"> | boolean
   migrationId?: Prisma.StringNullableWithAggregatesFilter<"PrivacyScope"> | string | null
   targetVisibility?: Prisma.StringNullableWithAggregatesFilter<"PrivacyScope"> | string | null
+  totalRecords?: Prisma.IntNullableWithAggregatesFilter<"PrivacyScope"> | number | null
   status?: Prisma.StringNullableWithAggregatesFilter<"PrivacyScope"> | string | null
   error?: Prisma.StringNullableWithAggregatesFilter<"PrivacyScope"> | string | null
   syncAttemptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PrivacyScope"> | Date | string | null
@@ -361,6 +409,7 @@ export type PrivacyScopeCreateInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -381,6 +430,7 @@ export type PrivacyScopeUncheckedCreateInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -399,6 +449,7 @@ export type PrivacyScopeUpdateInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -419,6 +470,7 @@ export type PrivacyScopeUncheckedUpdateInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -438,6 +490,7 @@ export type PrivacyScopeCreateManyInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -455,6 +508,7 @@ export type PrivacyScopeUpdateManyMutationInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -473,6 +527,7 @@ export type PrivacyScopeUncheckedUpdateManyInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -506,12 +561,17 @@ export type PrivacyScopeCountOrderByAggregateInput = {
   managed?: Prisma.SortOrder
   migrationId?: Prisma.SortOrder
   targetVisibility?: Prisma.SortOrder
+  totalRecords?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrder
   syncAttemptedAt?: Prisma.SortOrder
   syncedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type PrivacyScopeAvgOrderByAggregateInput = {
+  totalRecords?: Prisma.SortOrder
 }
 
 export type PrivacyScopeMaxOrderByAggregateInput = {
@@ -524,6 +584,7 @@ export type PrivacyScopeMaxOrderByAggregateInput = {
   managed?: Prisma.SortOrder
   migrationId?: Prisma.SortOrder
   targetVisibility?: Prisma.SortOrder
+  totalRecords?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrder
   syncAttemptedAt?: Prisma.SortOrder
@@ -542,12 +603,17 @@ export type PrivacyScopeMinOrderByAggregateInput = {
   managed?: Prisma.SortOrder
   migrationId?: Prisma.SortOrder
   targetVisibility?: Prisma.SortOrder
+  totalRecords?: Prisma.SortOrder
   status?: Prisma.SortOrder
   error?: Prisma.SortOrder
   syncAttemptedAt?: Prisma.SortOrder
   syncedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type PrivacyScopeSumOrderByAggregateInput = {
+  totalRecords?: Prisma.SortOrder
 }
 
 export type PrivacyScopeScalarRelationFilter = {
@@ -620,6 +686,7 @@ export type PrivacyScopeCreateWithoutUserInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -638,6 +705,7 @@ export type PrivacyScopeUncheckedCreateWithoutUserInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -686,6 +754,7 @@ export type PrivacyScopeScalarWhereInput = {
   managed?: Prisma.BoolFilter<"PrivacyScope"> | boolean
   migrationId?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   targetVisibility?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
+  totalRecords?: Prisma.IntNullableFilter<"PrivacyScope"> | number | null
   status?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   error?: Prisma.StringNullableFilter<"PrivacyScope"> | string | null
   syncAttemptedAt?: Prisma.DateTimeNullableFilter<"PrivacyScope"> | Date | string | null
@@ -703,6 +772,7 @@ export type PrivacyScopeCreateWithoutCopiesInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -722,6 +792,7 @@ export type PrivacyScopeUncheckedCreateWithoutCopiesInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -755,6 +826,7 @@ export type PrivacyScopeUpdateWithoutCopiesInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -774,6 +846,7 @@ export type PrivacyScopeUncheckedUpdateWithoutCopiesInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -791,6 +864,7 @@ export type PrivacyScopeCreateManyUserInput = {
   managed?: boolean
   migrationId?: string | null
   targetVisibility?: string | null
+  totalRecords?: number | null
   status?: string | null
   error?: string | null
   syncAttemptedAt?: Date | string | null
@@ -808,6 +882,7 @@ export type PrivacyScopeUpdateWithoutUserInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -826,6 +901,7 @@ export type PrivacyScopeUncheckedUpdateWithoutUserInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -844,6 +920,7 @@ export type PrivacyScopeUncheckedUpdateManyWithoutUserInput = {
   managed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   migrationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   targetVisibility?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalRecords?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   syncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -893,6 +970,7 @@ export type PrivacyScopeSelect<ExtArgs extends runtime.Types.Extensions.Internal
   managed?: boolean
   migrationId?: boolean
   targetVisibility?: boolean
+  totalRecords?: boolean
   status?: boolean
   error?: boolean
   syncAttemptedAt?: boolean
@@ -914,6 +992,7 @@ export type PrivacyScopeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   managed?: boolean
   migrationId?: boolean
   targetVisibility?: boolean
+  totalRecords?: boolean
   status?: boolean
   error?: boolean
   syncAttemptedAt?: boolean
@@ -933,6 +1012,7 @@ export type PrivacyScopeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   managed?: boolean
   migrationId?: boolean
   targetVisibility?: boolean
+  totalRecords?: boolean
   status?: boolean
   error?: boolean
   syncAttemptedAt?: boolean
@@ -952,6 +1032,7 @@ export type PrivacyScopeSelectScalar = {
   managed?: boolean
   migrationId?: boolean
   targetVisibility?: boolean
+  totalRecords?: boolean
   status?: boolean
   error?: boolean
   syncAttemptedAt?: boolean
@@ -960,7 +1041,7 @@ export type PrivacyScopeSelectScalar = {
   updatedAt?: boolean
 }
 
-export type PrivacyScopeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "key" | "category" | "listRkey" | "visibility" | "managed" | "migrationId" | "targetVisibility" | "status" | "error" | "syncAttemptedAt" | "syncedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["privacyScope"]>
+export type PrivacyScopeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "key" | "category" | "listRkey" | "visibility" | "managed" | "migrationId" | "targetVisibility" | "totalRecords" | "status" | "error" | "syncAttemptedAt" | "syncedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["privacyScope"]>
 export type PrivacyScopeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   copies?: boolean | Prisma.PrivacyScope$copiesArgs<ExtArgs>
@@ -989,6 +1070,7 @@ export type $PrivacyScopePayload<ExtArgs extends runtime.Types.Extensions.Intern
     managed: boolean
     migrationId: string | null
     targetVisibility: string | null
+    totalRecords: number | null
     status: string | null
     error: string | null
     syncAttemptedAt: Date | null
@@ -1429,6 +1511,7 @@ export interface PrivacyScopeFieldRefs {
   readonly managed: Prisma.FieldRef<"PrivacyScope", 'Boolean'>
   readonly migrationId: Prisma.FieldRef<"PrivacyScope", 'String'>
   readonly targetVisibility: Prisma.FieldRef<"PrivacyScope", 'String'>
+  readonly totalRecords: Prisma.FieldRef<"PrivacyScope", 'Int'>
   readonly status: Prisma.FieldRef<"PrivacyScope", 'String'>
   readonly error: Prisma.FieldRef<"PrivacyScope", 'String'>
   readonly syncAttemptedAt: Prisma.FieldRef<"PrivacyScope", 'DateTime'>

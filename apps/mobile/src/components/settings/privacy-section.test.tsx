@@ -27,8 +27,21 @@ vi.mock("@/components/ui/dialog", () => ({
 vi.mock("react-native", async () => {
 	const { createElement } = await import("react");
 	return {
+		Modal: (props: Record<string, unknown>) =>
+			props.visible
+				? createElement("dialog", props, props.children as never)
+				: null,
+		ScrollView: (props: Record<string, unknown>) =>
+			createElement("scroll", props, props.children as never),
 		View: (props: Record<string, unknown>) =>
 			createElement("view", props, props.children as never),
+	};
+});
+vi.mock("react-native-safe-area-context", async () => {
+	const { createElement } = await import("react");
+	return {
+		SafeAreaView: (props: Record<string, unknown>) =>
+			createElement("safearea", props, props.children as never),
 	};
 });
 vi.mock("@/components/ui/text", async () => {
@@ -113,6 +126,78 @@ describe("Privacy Alpha mobile", () => {
 		expect(next).toHaveBeenCalled();
 		expect(mocks.mutate).not.toHaveBeenCalled();
 	});
+	it("asks how to apply a Lists choice before writing", () => {
+		const renderer = render();
+		const choice = renderer.root
+			.findAll(
+				(node) => node.type === "button" && node.props.label === "Private",
+			)
+			.at(-1);
+		if (!choice) throw new Error("Lists choice missing");
+		act(() => choice.props.onPress());
+		expect(mocks.mutate).not.toHaveBeenCalled();
+		const dialog = mocks.showDialog.mock.calls[0][0];
+		act(() =>
+			dialog.actions
+				.find((action: { label: string }) => action.label === "New Lists only")
+				.onPress(),
+		);
+		expect(mocks.mutate).toHaveBeenCalledWith({
+			kind: "default",
+			body: { category: "lists", visibility: "private" },
+		});
+	});
+	it("confirms publication after choosing all Lists", () => {
+		const renderer = render();
+		const choice = renderer.root
+			.findAll(
+				(node) => node.type === "button" && node.props.label === "Public",
+			)
+			.at(-1);
+		if (!choice) throw new Error("Lists choice missing");
+		act(() => choice.props.onPress());
+		act(() =>
+			mocks.showDialog.mock.calls[0][0].actions
+				.find((action: { label: string }) => action.label === "All Lists")
+				.onPress(),
+		);
+		expect(mocks.mutate).not.toHaveBeenCalled();
+		act(() =>
+			mocks.showDialog.mock.calls[1][0].actions
+				.find((action: { label: string }) => action.label === "Publish")
+				.onPress(),
+		);
+		act(() =>
+			mocks.showDialog.mock.calls[1][0].actions
+				.find((action: { label: string }) => action.label === "Publish")
+				.onDismiss(),
+		);
+		expect(renderer.root.findByType("dialog").props.visible).toBe(true);
+		expect(mocks.mutate).toHaveBeenCalledWith({
+			kind: "allLists",
+			body: {
+				category: "lists",
+				visibility: "public",
+				publicationConfirmed: true,
+			},
+		});
+	});
+
+	it("shows copy totals and finishing state", () => {
+		if (!mocks.data) throw new Error("Missing status");
+		mocks.data.scopes[0].migration = {
+			id: "move",
+			target: "private",
+			status: "queued",
+			copied: 3,
+			total: 3,
+			error: null,
+		};
+		const renderer = render();
+		expect(JSON.stringify(renderer.toJSON())).toContain("3/3 records copied");
+		expect(JSON.stringify(renderer.toJSON())).toContain("Finishing…");
+	});
+
 	it("requires a publication confirmation", () => {
 		const renderer = render();
 		// The category row is the first Public button; the new-List default is separate.

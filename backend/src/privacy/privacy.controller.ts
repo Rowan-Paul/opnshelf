@@ -87,6 +87,7 @@ export class PrivacyController {
 				migration: watches.migration
 					? {
 							...watches.migration,
+							total: null,
 							target: visibility(watches.migration.target),
 						}
 					: null,
@@ -115,6 +116,7 @@ export class PrivacyController {
 								target: visibility(state.targetVisibility),
 								status: state.status ?? "queued",
 								copied: state._count.copies,
+								total: state.totalRecords,
 								error: state.error,
 							}
 						: null,

@@ -10286,6 +10286,11 @@
           "copied": {
             "type": "number"
           },
+          "total": {
+            "type": "number",
+            "nullable": true,
+            "description": "Distinct records in this migration; null until counted or when unavailable."
+          },
           "error": {
             "type": "string",
             "nullable": true
@@ -10296,6 +10301,7 @@
           "target",
           "status",
           "copied",
+          "total",
           "error"
         ]
       },

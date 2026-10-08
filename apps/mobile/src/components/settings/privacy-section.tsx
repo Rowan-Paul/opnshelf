@@ -5,7 +5,8 @@ import {
 	usePrivacy,
 } from "@opnshelf/api";
 import { useState } from "react";
-import { View } from "react-native";
+import { Modal, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
@@ -23,8 +24,8 @@ export function PrivacySection({
 	const { showDialog } = useDialog();
 	const [initial, setInitial] = useState<"public" | "private">("public");
 	const [customize, setCustomize] = useState(false);
-	const [details, setDetails] = useState(false);
-	const [bulk, setBulk] = useState(false);
+	const [manageLists, setManageLists] = useState(false);
+
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
 		const codeChallenge = (await beginHandoff()) ?? undefined;
 		const result = await authControllerPermissions({
@@ -44,6 +45,7 @@ export function PrivacySection({
 			mutation.mutate(action);
 			return;
 		}
+		setManageLists(false);
 		showDialog({
 			title: "Make this data Public?",
 			description:
@@ -52,18 +54,53 @@ export function PrivacySection({
 				{ label: "Cancel" },
 				{
 					label: "Publish",
-					onPress: () =>
+					onDismiss: () => {
+						if (action.body.category === "lists") setManageLists(true);
+					},
+					onPress: () => {
 						mutation.mutate({
 							...action,
 							body: { ...action.body, publicationConfirmed: true },
-						}),
+						});
+					},
 				},
 			],
 		});
 	};
+	const chooseLists = (visibility: "public" | "private") => {
+		const actions = [
+			{ label: "Cancel" },
+			{
+				label: "New Lists only",
+				onPress: () =>
+					choose({
+						kind: "default",
+						body: { category: "lists" as const, visibility },
+					}),
+			},
+		];
+		if (
+			!data?.scopes.some(
+				(scope) => scope.category === "lists" && scope.migration,
+			)
+		)
+			actions.push({
+				label: "All Lists",
+				onPress: () =>
+					choose({ kind: "allLists", body: { category: "lists", visibility } }),
+			});
+		showDialog({
+			title: `Make Lists ${visibility === "private" ? "Private" : "Public"}?`,
+			description:
+				"Use this choice for new Lists only, or also change all your existing Lists. Individual Lists can be changed separately.",
+			actions,
+		});
+	};
+
 	const row = (scope: PrivacyScopeDto) => {
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
 		const moving = scope.migration;
+		const label = scope.category === "watches" ? "Shelf" : scope.label;
 		return (
 			<View
 				key={key}
@@ -71,7 +108,7 @@ export function PrivacySection({
 			>
 				<View className="flex-row flex-wrap items-center justify-between gap-3">
 					<View className="min-w-24 flex-1 gap-1">
-						<Text className="font-semibold text-foreground">{scope.label}</Text>
+						<Text className="font-semibold text-foreground">{label}</Text>
 						{scope.category !== "lists" && (
 							<Text className="text-muted-foreground text-xs">
 								{scope.category === "watches"
@@ -118,17 +155,25 @@ export function PrivacySection({
 					</View>
 				</View>
 				{pendingKey === key && (
-					<Text accessibilityLiveRegion="polite">Updating {scope.label}…</Text>
+					<Text accessibilityLiveRegion="polite">Updating {label}…</Text>
 				)}
 				{moving && (
 					<View className="gap-2">
 						<Text>
 							Changing to {moving.target === "private" ? "Private" : "Public"} ·{" "}
-							{moving.copied} copied
+							{moving.total == null
+								? `${moving.copied} records copied`
+								: `${moving.copied}/${moving.total} records copied`}
+							{moving.total != null &&
+								moving.copied >= moving.total &&
+								["queued", "running"].includes(moving.status) &&
+								" · Finishing…"}
 						</Text>
 						<Text className="text-muted-foreground text-sm">
-							Hidden from others while moving. Edits to {scope.label} pause; you
-							can leave this page.
+							{scope.category === "lists" &&
+								"Records include the List details and its items. "}
+							Hidden from others while moving. Edits to {label} pause; you can
+							leave this page.
 						</Text>
 						{moving.error && (
 							<Text accessibilityRole="alert">{moving.error}</Text>
@@ -170,22 +215,7 @@ export function PrivacySection({
 					Public is visible to everyone. Private is for you and the apps you
 					authorize.
 				</Text>
-				<Button
-					variant="secondary"
-					size="sm"
-					className="self-start border-transparent px-0"
-					onPress={() => setDetails(!details)}
-					accessibilityState={{ expanded: details }}
-					label={details ? "Hide privacy details" : "Learn more"}
-				/>
 			</View>
-			{details && (
-				<Text className="text-muted-foreground text-sm">
-					Reviews and Ratings keep their current visibility. Other public
-					content may still reveal related information. {data?.alphaDetails}{" "}
-					Your PDS can read private data; Spaces are not encrypted end to end.
-				</Text>
-			)}
 			{!data ? (
 				query.isError ? (
 					<View>
@@ -274,83 +304,56 @@ export function PrivacySection({
 								.filter((scope) => scope.category !== "lists")
 								.map(row)}
 							<View className="gap-3 rounded-2xl border border-border bg-background-elevated p-4">
-								<Text className="font-semibold text-foreground">New Lists</Text>
-								<Text className="text-muted-foreground text-sm">
-									Default for Lists you create next.
-								</Text>
-								<View className="flex-row gap-1 self-start rounded-full bg-background-subtle p-1">
-									{(["public", "private"] as const).map((visibility) => (
-										<Button
-											key={visibility}
-											variant="secondary"
-											size="sm"
-											className={
-												data.listsDefaultVisibility === visibility
-													? "h-11 border-primary/50 bg-background-elevated"
-													: "h-11 border-transparent"
-											}
-											accessibilityState={{
-												selected: data.listsDefaultVisibility === visibility,
-											}}
-											disabled={
-												pendingKey === "default" ||
-												(visibility === "private" &&
-													data.availability !== "available")
-											}
-											onPress={() =>
-												choose({
-													kind: "default",
-													body: { category: "lists", visibility },
-												})
-											}
-											label={visibility === "public" ? "Public" : "Private"}
-										/>
-									))}
+								<View className="flex-row flex-wrap items-center justify-between gap-3">
+									<View className="min-w-24 flex-1 gap-1">
+										<Text className="font-semibold text-foreground">Lists</Text>
+										<Text className="text-muted-foreground text-xs">
+											Default for new Lists.
+										</Text>
+									</View>
+									<View className="flex-row gap-1 self-start rounded-full bg-background-subtle p-1">
+										{(["public", "private"] as const).map((visibility) => (
+											<Button
+												key={visibility}
+												variant="secondary"
+												size="sm"
+												className={
+													data.listsDefaultVisibility === visibility
+														? "h-11 border-primary/50 bg-background-elevated"
+														: "h-11 border-transparent"
+												}
+												accessibilityState={{
+													selected: data.listsDefaultVisibility === visibility,
+												}}
+												disabled={
+													pendingKey === "default" ||
+													pendingKey === "allLists" ||
+													(visibility === "private" &&
+														data.availability !== "available")
+												}
+												onPress={() => chooseLists(visibility)}
+												accessibilityLabel={`Lists ${visibility}`}
+												label={visibility === "public" ? "Public" : "Private"}
+											/>
+										))}
+									</View>
 								</View>
-							</View>
-							<View className="gap-3 pt-3">
-								<View className="flex-row items-center justify-between">
-									<Text className="font-semibold text-foreground text-lg">
-										Your Lists
-									</Text>
+								<View className="gap-3 border-border border-t pt-3">
 									<Button
+										className="self-start border-transparent px-0"
 										variant="secondary"
-										size="sm"
-										className="border-transparent"
-										label="Change all Lists"
-										onPress={() => setBulk(!bulk)}
-										accessibilityState={{ expanded: bulk }}
+										label="Manage individual Lists"
+										onPress={() => setManageLists(true)}
 									/>
+									{data.scopes.some(
+										(scope) => scope.category === "lists" && scope.migration,
+									) && (
+										<Text accessibilityLiveRegion="polite" className="text-sm">
+											Lists are changing visibility. Open Manage individual
+											Lists for progress or to resume.
+										</Text>
+									)}
 								</View>
-								{bulk &&
-									(["public", "private"] as const).map((visibility) => (
-										<Button
-											key={visibility}
-											variant="secondary"
-											disabled={
-												pendingKey === "allLists" ||
-												data.scopes.some(
-													(scope) =>
-														scope.category === "lists" && scope.migration,
-												) ||
-												(visibility === "private" &&
-													data.availability !== "available")
-											}
-											onPress={() =>
-												choose({
-													kind: "allLists",
-													body: { category: "lists", visibility },
-												})
-											}
-											label={
-												"Change all Lists to " +
-												(visibility === "public" ? "Public" : "Private")
-											}
-										/>
-									))}
-								{data.scopes
-									.filter((scope) => scope.category === "lists")
-									.map(row)}
 							</View>
 							{onboarding && (
 								<Button
@@ -373,6 +376,41 @@ export function PrivacySection({
 						: "Could not complete this change. Try again."}
 				</Text>
 			)}
+			<Modal
+				visible={manageLists}
+				animationType="slide"
+				presentationStyle="pageSheet"
+				onRequestClose={() => setManageLists(false)}
+			>
+				<SafeAreaView className="flex-1 bg-background">
+					<View className="flex-row items-center justify-between p-5">
+						<Text className="font-semibold text-xl">Your Lists</Text>
+						<Button
+							variant="secondary"
+							label="Done"
+							onPress={() => setManageLists(false)}
+						/>
+					</View>
+					<ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
+						<Text className="text-muted-foreground">
+							Choose visibility for each List.
+						</Text>
+						{data?.scopes
+							.filter((scope) => scope.category === "lists")
+							.map(row)}
+						{!data?.scopes.some((scope) => scope.category === "lists") && (
+							<Text>No Lists yet.</Text>
+						)}
+						{mutation.isError && (
+							<Text accessibilityRole="alert">
+								{mutation.error instanceof Error
+									? mutation.error.message
+									: "Could not complete this change. Try again."}
+							</Text>
+						)}
+					</ScrollView>
+				</SafeAreaView>
+			</Modal>
 		</View>
 	);
 }

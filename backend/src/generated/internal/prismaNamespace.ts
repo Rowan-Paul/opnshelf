@@ -3470,6 +3470,7 @@ export const PrivacyScopeScalarFieldEnum = {
   managed: 'managed',
   migrationId: 'migrationId',
   targetVisibility: 'targetVisibility',
+  totalRecords: 'totalRecords',
   status: 'status',
   error: 'error',
   syncAttemptedAt: 'syncAttemptedAt',
