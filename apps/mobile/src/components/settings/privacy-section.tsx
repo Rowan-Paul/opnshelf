@@ -414,19 +414,17 @@ export function PrivacySection({
 	} = privacyProgressTitle(progressScopes, mutation.isPending);
 
 	return (
-		<View
-			className={
-				listRkey
-					? "self-start"
-					: onboarding
-						? "gap-4 rounded-xl border border-border bg-card p-5"
-						: "gap-4"
-			}
-		>
+		<View className={listRkey ? "self-start" : "gap-4"}>
 			{!listRkey && (
-				<View className="gap-3 pb-2">
+				<View className={onboarding ? "gap-1 pb-2" : "gap-3 pb-2"}>
 					<View className="flex-row flex-wrap items-center gap-3">
-						<Text className="font-semibold text-2xl text-foreground">
+						<Text
+							className={
+								onboarding
+									? "font-bold font-display text-3xl text-foreground"
+									: "font-semibold text-2xl text-foreground"
+							}
+						>
 							Who can see your data
 						</Text>
 						<View className="rounded-md bg-primary/10 px-2 py-1">

@@ -209,7 +209,8 @@ export default function OnboardingScreen() {
 				{step === "privacy" && (
 					<ScrollView
 						contentInsetAdjustmentBehavior="automatic"
-						contentContainerClassName="p-5"
+						contentContainerClassName="pt-1 pb-4"
+						showsVerticalScrollIndicator={false}
 					>
 						<PrivacySection
 							onboarding
