@@ -55,12 +55,12 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 						</Link>
 					)}
 					<View className="gap-3">
-						<Text className="font-bold font-display text-3xl text-foreground">
-							{slug
-								? (entry?.title ??
-									(!notes.data ? "Release notes" : "Release note not found"))
-								: "What’s new"}
-						</Text>
+						{slug && (
+							<Text className="font-bold font-display text-3xl text-foreground">
+								{entry?.title ??
+									(!notes.data ? "Release notes" : "Release note not found")}
+							</Text>
+						)}
 						{!slug && (
 							<Text className="text-muted-foreground">
 								The latest improvements, and how to use them.
