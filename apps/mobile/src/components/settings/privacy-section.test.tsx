@@ -497,6 +497,31 @@ describe("Privacy Alpha mobile", () => {
 		expect(JSON.stringify(renderer.toJSON())).toContain("Finishing…");
 	});
 
+	it("shows a stopped change as stopped rather than running or complete", () => {
+		if (!mocks.data) throw new Error("Missing status");
+		mocks.data.scopes[0].migration = {
+			id: "move",
+			target: "private",
+			status: "failed",
+			copied: 1,
+			total: 3,
+			error: "Copy interrupted",
+		};
+		const renderer = render();
+		const json = JSON.stringify(renderer.toJSON());
+		expect(json).toContain("Visibility change stopped");
+		expect(json).not.toContain("is Private");
+		expect(button(renderer, "Done")).toBeTruthy();
+		expect(button(renderer, "Resume")).toBeTruthy();
+		expect(
+			renderer.root.findAll(
+				(node) =>
+					node.type === "button" &&
+					node.props.label === "Keep going in background",
+			),
+		).toHaveLength(0);
+	});
+
 	it("requires a publication confirmation", () => {
 		const renderer = render();
 		// The category row is the first Public button; the new-List default is separate.

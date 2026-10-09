@@ -407,10 +407,11 @@ export function PrivacySection({
 			</View>
 		);
 	};
-	const { target, title: progressTitle } = privacyProgressTitle(
-		progressScopes,
-		changing,
-	);
+	const {
+		state: progressState,
+		target,
+		title: progressTitle,
+	} = privacyProgressTitle(progressScopes, mutation.isPending);
 
 	return (
 		<View
@@ -660,10 +661,16 @@ export function PrivacySection({
 						<View className="flex-row items-center gap-3">
 							<View
 								className={`h-10 w-10 items-center justify-center rounded-xl ${
-									changing ? "bg-primary/15" : "bg-green-500/15"
+									progressState === "running"
+										? "bg-primary/15"
+										: progressState === "stopped"
+											? "bg-destructive/15"
+											: "bg-green-500/15"
 								}`}
 							>
-								{!changing ? (
+								{progressState === "stopped" ? (
+									<CircleAlert size={20} color="#ef4444" />
+								) : progressState === "done" ? (
 									<Check size={20} color="#16a34a" />
 								) : target === "Public" ? (
 									<Globe size={20} color="#d97706" />
@@ -679,11 +686,13 @@ export function PrivacySection({
 									{progressTitle}
 								</Text>
 								<Text className="text-muted-foreground text-xs">
-									{changing
+									{progressState === "running"
 										? "Hidden from others while this runs."
-										: target === "Private"
-											? "Only you and the apps you authorize can see it."
-											: "Your visibility change is complete."}
+										: progressState === "stopped"
+											? "Resume to finish. Edits stay paused until then."
+											: target === "Private"
+												? "Only you and the apps you authorize can see it."
+												: "Your visibility change is complete."}
 								</Text>
 							</View>
 						</View>
@@ -701,10 +710,14 @@ export function PrivacySection({
 						</ScrollView>
 						<View className="gap-2.5">
 							<Button
-								label={changing ? "Keep going in background" : "Done"}
+								label={
+									progressState === "running"
+										? "Keep going in background"
+										: "Done"
+								}
 								onPress={() => setManageLists(false)}
 							/>
-							{changing && (
+							{progressState === "running" && (
 								<Text className="text-center text-muted-foreground text-xs">
 									Edits pause until it finishes.
 								</Text>

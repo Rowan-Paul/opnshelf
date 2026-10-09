@@ -329,10 +329,11 @@ export function PrivacySection({
 			</li>
 		);
 	};
-	const { target, title: progressTitle } = privacyProgressTitle(
-		progressScopes,
-		changing,
-	);
+	const {
+		state: progressState,
+		target,
+		title: progressTitle,
+	} = privacyProgressTitle(progressScopes, mutation.isPending);
 
 	return (
 		<section
@@ -536,12 +537,16 @@ export function PrivacySection({
 					<DialogHeader className="flex-row items-center gap-3 space-y-0 text-left">
 						<div
 							className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
-								changing
+								progressState === "running"
 									? "bg-(--accent-muted) text-(--accent-hover)"
-									: "bg-green-500/15 text-green-600"
+									: progressState === "stopped"
+										? "bg-(--destructive)/15 text-(--destructive)"
+										: "bg-green-500/15 text-green-600"
 							}`}
 						>
-							{!changing ? (
+							{progressState === "stopped" ? (
+								<CircleAlert className="size-5" />
+							) : progressState === "done" ? (
 								<Check className="size-5" />
 							) : target === "Public" ? (
 								<Globe className="size-5" />
@@ -554,11 +559,13 @@ export function PrivacySection({
 								{progressTitle}
 							</DialogTitle>
 							<DialogDescription className="text-xs">
-								{changing
+								{progressState === "running"
 									? "Hidden from others while this runs."
-									: target === "Private"
-										? "Only you and the apps you authorize can see it."
-										: "Your visibility change is complete."}
+									: progressState === "stopped"
+										? "Resume to finish. Edits stay paused until then."
+										: target === "Private"
+											? "Only you and the apps you authorize can see it."
+											: "Your visibility change is complete."}
 							</DialogDescription>
 						</div>
 					</DialogHeader>
@@ -574,9 +581,11 @@ export function PrivacySection({
 					</ul>
 					<DialogFooter className="flex-col gap-2.5 sm:flex-col">
 						<Button className="w-full" onClick={() => setShowProgress(false)}>
-							{changing ? "Keep going in background" : "Done"}
+							{progressState === "running"
+								? "Keep going in background"
+								: "Done"}
 						</Button>
-						{changing && (
+						{progressState === "running" && (
 							<p className="text-center text-(--foreground-muted) text-xs">
 								Edits pause until it finishes.
 							</p>

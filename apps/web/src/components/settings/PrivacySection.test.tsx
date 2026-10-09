@@ -447,6 +447,13 @@ describe("Privacy settings", () => {
 			error: "Copy interrupted",
 		};
 		render(<PrivacySection />);
+		expect(
+			screen.getByRole("dialog", { name: "Visibility change stopped" }),
+		).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Done" })).toBeTruthy();
+		expect(
+			screen.queryByRole("button", { name: "Keep going in background" }),
+		).toBeNull();
 		fireEvent.click(screen.getByRole("button", { name: "Resume" }));
 		expect(mocks.mutate).toHaveBeenCalledWith({
 			kind: "retry",
