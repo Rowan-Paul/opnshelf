@@ -239,12 +239,16 @@ export function TraktSyncManager({
 	);
 }
 
-function SyncSettings({
+export function SyncSettings({
 	status,
 	onSaved,
+	className = card,
+	showHeading = true,
 }: {
 	status: SyncStatusDto;
 	onSaved: () => unknown;
+	className?: string;
+	showHeading?: boolean;
 }) {
 	const [settings, setSettings] = useState<SyncSettingsDto>(() =>
 		traktSettings(status),
@@ -261,8 +265,10 @@ function SyncSettings({
 		status.importStatus &&
 		!["completed", "continued_in_sync"].includes(status.importStatus);
 	return (
-		<section className={card}>
-			<h2 className="font-semibold text-xl">What to keep in sync</h2>
+		<section className={className}>
+			{showHeading && (
+				<h2 className="font-semibold text-xl">What to keep in sync</h2>
+			)}
 			<form
 				className="mt-5 space-y-5"
 				onSubmit={(e) => {

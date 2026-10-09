@@ -1876,6 +1876,10 @@ export type SyncStatusDto = {
 
 export type SyncConnectDto = {
     platform: 'web' | 'mobile';
+    /**
+     * Return to Onboarding after Trakt authorization instead of Trakt Sync.
+     */
+    returnTo?: 'onboarding';
 };
 
 export type SyncAuthorizeDto = {

@@ -41,7 +41,7 @@ export class TraktSyncController {
 	@UseGuards(AuthGuard)
 	@ApiResponse({ status: 201, type: SyncAuthorizeDto })
 	connect(@Req() req: AuthenticatedRequest, @Body() dto: SyncConnectDto) {
-		return this.sync.authorize(req.user.did, dto.platform);
+		return this.sync.authorize(req.user.did, dto.platform, dto.returnTo);
 	}
 	@Get("callback")
 	async callback(
