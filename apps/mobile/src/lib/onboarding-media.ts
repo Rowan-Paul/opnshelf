@@ -31,13 +31,29 @@ export function isSwipeAccepted(translationX: number, width: number) {
 	return Math.abs(translationX) >= width * 0.25;
 }
 
-/** Keep the full card between the onboarding header and controls. */
-export function onboardingCardWidth(
+/** Narrowest poster worth showing; below this the card drops the poster. */
+const MIN_POSTER_WIDTH = 120;
+
+/**
+ * Fit the full card, poster plus a two-line title block, inside the measured
+ * stack area between the onboarding heading and the swipe controls. Text line
+ * heights grow with the system font scale, padding does not.
+ */
+export function onboardingCardLayout(
 	viewportWidth: number,
-	viewportHeight: number,
+	stackHeight: number,
+	compact: boolean,
+	fontScale: number,
 ) {
-	const heightConstrainedWidth = Math.floor(
-		Math.max(184, (viewportHeight - 340) / 1.5),
+	// Title block: padding and gap, then two title lines and the type/year line.
+	const infoHeight = Math.ceil(
+		compact ? 24 + 4 + (56 + 16) * fontScale : 32 + 8 + (56 + 20) * fontScale,
 	);
-	return Math.min(viewportWidth - 64, 280, heightConstrainedWidth);
+	const maxWidth = Math.min(viewportWidth - 64, 280);
+	// Room for the next card peeking 8px below the current one.
+	const posterWidth = Math.floor((stackHeight - infoHeight - 8) / 1.5);
+	if (posterWidth < MIN_POSTER_WIDTH) {
+		return { width: maxWidth, showPoster: false };
+	}
+	return { width: Math.min(maxWidth, posterWidth), showPoster: true };
 }
