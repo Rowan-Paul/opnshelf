@@ -6,8 +6,12 @@ let baseUrl = 'http://127.0.0.1:3001';
 /** Session token for mobile auth (cookies don't work in native apps) */
 let sessionToken: string | null = null;
 
-/** Called when any API request returns 401. Set by the app to redirect to login. */
-let onUnauthorized: (() => void) | null = null;
+/**
+ * Called when any API request returns 401. Set by the app to redirect to login.
+ * Receives the bearer token the rejected request carried (null for cookie
+ * auth), so the app can tell a stale token's 401 from the current one's.
+ */
+let onUnauthorized: ((requestToken: string | null) => void) | null = null;
 
 /**
  * Which install this client is (ADR-0015). Sent on every request; the backend
@@ -24,7 +28,9 @@ export function setDeviceIdentity(
 	updateClientConfig();
 }
 
-export function setOnUnauthorized(callback: (() => void) | null): void {
+export function setOnUnauthorized(
+	callback: ((requestToken: string | null) => void) | null,
+): void {
 	onUnauthorized = callback;
 }
 
@@ -69,9 +75,10 @@ function updateClientConfig() {
 	});
 }
 
-client.interceptors.response.use(async (response) => {
+client.interceptors.response.use(async (response, request) => {
 	if (response.status === 401) {
-		onUnauthorized?.();
+		const authorization = request.headers.get("Authorization");
+		onUnauthorized?.(authorization?.replace(/^Bearer /, "") ?? null);
 	}
 	// Nest answers a `null` controller result with a bodiless 200, and the
 	// generated client turns an empty body into `{}`. Endpoints typed
