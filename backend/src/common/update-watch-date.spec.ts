@@ -19,9 +19,11 @@ const { getRecord, applyWrites } = vi.hoisted(() => ({
 	applyWrites: vi.fn(),
 }));
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn(() => ({
-		com: { atproto: { repo: { getRecord, applyWrites } } },
-	})),
+	Agent: vi.fn(function () {
+		return {
+			com: { atproto: { repo: { getRecord, applyWrites } } },
+		};
+	}),
 }));
 const session = { did: "did:plc:owner" };
 

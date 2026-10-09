@@ -180,15 +180,17 @@ describe("TraktImportWorker", () => {
 			record: {},
 			collection: "xyz.opnshelf.episode",
 		});
-		(Agent as unknown as Mock).mockImplementation(() => ({
-			com: {
-				atproto: {
-					repo: {
-						applyWrites: vi.fn().mockResolvedValue({ data: {} }),
+		(Agent as unknown as Mock).mockImplementation(function () {
+			return {
+				com: {
+					atproto: {
+						repo: {
+							applyWrites: vi.fn().mockResolvedValue({ data: {} }),
+						},
 					},
 				},
-			},
-		}));
+			};
+		});
 	});
 
 	afterEach(() => {
@@ -241,20 +243,22 @@ describe("TraktImportWorker", () => {
 		// The PDS repo-write budget is exhausted and refills ~30 min out. atproto
 		// signals this via ratelimit-reset (an absolute epoch), NOT Retry-After.
 		const resetEpoch = Math.floor(Date.now() / 1000) + 1800;
-		(Agent as unknown as Mock).mockImplementation(() => ({
-			com: {
-				atproto: {
-					repo: {
-						applyWrites: vi.fn().mockRejectedValue(
-							Object.assign(new Error("Rate Limit Exceeded"), {
-								status: 429,
-								headers: { "ratelimit-reset": String(resetEpoch) },
-							}),
-						),
+		(Agent as unknown as Mock).mockImplementation(function () {
+			return {
+				com: {
+					atproto: {
+						repo: {
+							applyWrites: vi.fn().mockRejectedValue(
+								Object.assign(new Error("Rate Limit Exceeded"), {
+									status: 429,
+									headers: { "ratelimit-reset": String(resetEpoch) },
+								}),
+							),
+						},
 					},
 				},
-			},
-		}));
+			};
+		});
 
 		(global.fetch as Mock).mockResolvedValue(
 			new Response(
@@ -461,21 +465,23 @@ describe("TraktImportWorker", () => {
 		// gone (500 < the 1000-point reserve) and refills ~30 min out. The import
 		// must stop and wait so the user's own writes aren't starved.
 		const resetEpoch = Math.floor(Date.now() / 1000) + 1800;
-		(Agent as unknown as Mock).mockImplementation(() => ({
-			com: {
-				atproto: {
-					repo: {
-						applyWrites: vi.fn().mockResolvedValue({
-							data: {},
-							headers: {
-								"ratelimit-remaining": "500",
-								"ratelimit-reset": String(resetEpoch),
-							},
-						}),
+		(Agent as unknown as Mock).mockImplementation(function () {
+			return {
+				com: {
+					atproto: {
+						repo: {
+							applyWrites: vi.fn().mockResolvedValue({
+								data: {},
+								headers: {
+									"ratelimit-remaining": "500",
+									"ratelimit-reset": String(resetEpoch),
+								},
+							}),
+						},
 					},
 				},
-			},
-		}));
+			};
+		});
 
 		(global.fetch as Mock).mockResolvedValue(
 			new Response(
@@ -516,18 +522,20 @@ describe("TraktImportWorker", () => {
 		(moviesService.indexTrackedMovie as Mock).mockResolvedValue(undefined);
 
 		// Plenty of budget left (4000 ≥ 1000 reserve) → no pause.
-		(Agent as unknown as Mock).mockImplementation(() => ({
-			com: {
-				atproto: {
-					repo: {
-						applyWrites: vi.fn().mockResolvedValue({
-							data: {},
-							headers: { "ratelimit-remaining": "4000" },
-						}),
+		(Agent as unknown as Mock).mockImplementation(function () {
+			return {
+				com: {
+					atproto: {
+						repo: {
+							applyWrites: vi.fn().mockResolvedValue({
+								data: {},
+								headers: { "ratelimit-remaining": "4000" },
+							}),
+						},
 					},
 				},
-			},
-		}));
+			};
+		});
 
 		(global.fetch as Mock).mockResolvedValue(
 			new Response(

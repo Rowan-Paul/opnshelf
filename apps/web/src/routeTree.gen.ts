@@ -9,109 +9,59 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TraktSyncRouteImport } from './routes/trakt-sync'
-import { Route as TraktImportRouteImport } from './routes/trakt-import'
-import { Route as TosRouteImport } from './routes/tos'
-import { Route as SocialRouteImport } from './routes/social'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as PickForMeRouteImport } from './routes/pick-for-me'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WhatsNewIndexRouteImport } from './routes/whats-new.index'
-import { Route as SocialIndexRouteImport } from './routes/social/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings.index'
-import { Route as WhatsNewSlugRouteImport } from './routes/whats-new.$slug'
-import { Route as SocialFindRouteImport } from './routes/social/find'
-import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
-import { Route as SignupAppleRouteImport } from './routes/signup_.apple'
-import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
-import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
-import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
-import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
-import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
+import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PickForMeRouteImport } from './routes/pick-for-me'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SocialRouteImport } from './routes/social'
+import { Route as TosRouteImport } from './routes/tos'
+import { Route as TraktImportRouteImport } from './routes/trakt-import'
+import { Route as TraktSyncRouteImport } from './routes/trakt-sync'
 import { Route as AdminFeaturedRouteImport } from './routes/admin.featured'
-import { Route as SocialCirclesIndexRouteImport } from './routes/social/circles/index'
-import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
-import { Route as SocialCirclesCircleIdRouteImport } from './routes/social/circles/$circleId'
-import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
-import { Route as ReviewsHandleRkeyRouteImport } from './routes/reviews.$handle.$rkey'
-import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle/up-next'
-import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle/shelf'
-import { Route as ProfileHandleReviewsRouteImport } from './routes/profile.$handle/reviews'
-import { Route as ProfileHandleNotesRouteImport } from './routes/profile.$handle/notes'
-import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle/lists'
-import { Route as ProfileHandleLibraryRouteImport } from './routes/profile.$handle/library'
-import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
-import { Route as PeoplePersonIdPersonNameRouteImport } from './routes/people/$personId/$personName'
+import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
+import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
+import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
+import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
+import { Route as SignupAppleRouteImport } from './routes/signup_.apple'
+import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
+import { Route as SocialIndexRouteImport } from './routes/social/index'
+import { Route as SocialFindRouteImport } from './routes/social/find'
+import { Route as WhatsNewIndexRouteImport } from './routes/whats-new.index'
+import { Route as WhatsNewSlugRouteImport } from './routes/whats-new.$slug'
 import { Route as DiscoverCollectionsIdRouteImport } from './routes/discover/collections/$id'
-import { Route as ShowsShowIdShowNameIndexRouteImport } from './routes/shows/$showId/$showName/index'
-import { Route as ProfileHandleListsIndexRouteImport } from './routes/profile.$handle/lists.index'
+import { Route as PeoplePersonIdPersonNameRouteImport } from './routes/people/$personId/$personName'
+import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
+import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
+import { Route as ProfileHandleLibraryRouteImport } from './routes/profile.$handle/library'
+import { Route as ProfileHandleListsRouteImport } from './routes/profile.$handle/lists'
+import { Route as ProfileHandleNotesRouteImport } from './routes/profile.$handle/notes'
+import { Route as ProfileHandleReviewsRouteImport } from './routes/profile.$handle/reviews'
+import { Route as ProfileHandleShelfRouteImport } from './routes/profile.$handle/shelf'
+import { Route as ProfileHandleUpNextRouteImport } from './routes/profile.$handle/up-next'
+import { Route as ReviewsHandleRkeyRouteImport } from './routes/reviews.$handle.$rkey'
+import { Route as ShowsShowIdShowNameRouteImport } from './routes/shows/$showId/$showName'
+import { Route as SocialCirclesIndexRouteImport } from './routes/social/circles/index'
+import { Route as SocialCirclesCircleIdRouteImport } from './routes/social/circles/$circleId'
 import { Route as MoviesMovieIdMovieNameIndexRouteImport } from './routes/movies/$movieId/$movieName/index'
-import { Route as ShowsShowIdShowNameCreditsRouteImport } from './routes/shows/$showId/$showName/credits'
-import { Route as ProfileHandleListsListSlugRouteImport } from './routes/profile.$handle/lists.$listSlug'
 import { Route as MoviesMovieIdMovieNameCreditsRouteImport } from './routes/movies/$movieId/$movieName/credits'
+import { Route as ProfileHandleListsIndexRouteImport } from './routes/profile.$handle/lists.index'
+import { Route as ProfileHandleListsListSlugRouteImport } from './routes/profile.$handle/lists.$listSlug'
+import { Route as ShowsShowIdShowNameIndexRouteImport } from './routes/shows/$showId/$showName/index'
+import { Route as ShowsShowIdShowNameCreditsRouteImport } from './routes/shows/$showId/$showName/credits'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberIndexRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber/index'
 import { Route as ShowsShowIdShowNameSeasonsSeasonNumberEpisodesEpisodeNumberRouteImport } from './routes/shows/$showId/$showName/seasons.$seasonNumber.episodes.$episodeNumber'
 
-const TraktSyncRoute = TraktSyncRouteImport.update({
-  id: '/trakt-sync',
-  path: '/trakt-sync',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TraktImportRoute = TraktImportRouteImport.update({
-  id: '/trakt-import',
-  path: '/trakt-import',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TosRoute = TosRouteImport.update({
-  id: '/tos',
-  path: '/tos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SocialRoute = SocialRouteImport.update({
-  id: '/social',
-  path: '/social',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PickForMeRoute = PickForMeRouteImport.update({
-  id: '/pick-for-me',
-  path: '/pick-for-me',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarRoute = CalendarRouteImport.update({
@@ -119,69 +69,59 @@ const CalendarRoute = CalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WhatsNewIndexRoute = WhatsNewIndexRouteImport.update({
-  id: '/whats-new/',
-  path: '/whats-new/',
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SocialIndexRoute = SocialIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SocialRoute,
-} as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const WhatsNewSlugRoute = WhatsNewSlugRouteImport.update({
-  id: '/whats-new/$slug',
-  path: '/whats-new/$slug',
+const PickForMeRoute = PickForMeRouteImport.update({
+  id: '/pick-for-me',
+  path: '/pick-for-me',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SocialFindRoute = SocialFindRouteImport.update({
-  id: '/find',
-  path: '/find',
-  getParentRoute: () => SocialRoute,
-} as any)
-const SignupGoogleRoute = SignupGoogleRouteImport.update({
-  id: '/signup_/google',
-  path: '/signup/google',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignupAppleRoute = SignupAppleRouteImport.update({
-  id: '/signup_/apple',
-  path: '/signup/apple',
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsSectionRoute = SettingsSectionRouteImport.update({
-  id: '/$section',
-  path: '/$section',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const ProfileHandleRoute = ProfileHandleRouteImport.update({
-  id: '/profile/$handle',
-  path: '/profile/$handle',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
-  id: '/embed/review-editor',
-  path: '/embed/review-editor',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthCompleteRoute = AuthCompleteRouteImport.update({
-  id: '/auth/complete',
-  path: '/auth/complete',
+const SocialRoute = SocialRouteImport.update({
+  id: '/social',
+  path: '/social',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiReleaseNotesRoute = ApiReleaseNotesRouteImport.update({
-  id: '/api/release-notes',
-  path: '/api/release-notes',
+const TosRoute = TosRouteImport.update({
+  id: '/tos',
+  path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TraktImportRoute = TraktImportRouteImport.update({
+  id: '/trakt-import',
+  path: '/trakt-import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TraktSyncRoute = TraktSyncRouteImport.update({
+  id: '/trakt-sync',
+  path: '/trakt-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFeaturedRoute = AdminFeaturedRouteImport.update({
@@ -189,59 +129,80 @@ const AdminFeaturedRoute = AdminFeaturedRouteImport.update({
   path: '/admin/featured',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SocialCirclesIndexRoute = SocialCirclesIndexRouteImport.update({
-  id: '/circles/',
-  path: '/circles/',
+const ApiReleaseNotesRoute = ApiReleaseNotesRouteImport.update({
+  id: '/api/release-notes',
+  path: '/api/release-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCompleteRoute = AuthCompleteRouteImport.update({
+  id: '/auth/complete',
+  path: '/auth/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
+  id: '/embed/review-editor',
+  path: '/embed/review-editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileHandleRoute = ProfileHandleRouteImport.update({
+  id: '/profile/$handle',
+  path: '/profile/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsSectionRoute = SettingsSectionRouteImport.update({
+  id: '/$section',
+  path: '/$section',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SignupAppleRoute = SignupAppleRouteImport.update({
+  id: '/signup_/apple',
+  path: '/signup/apple',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupGoogleRoute = SignupGoogleRouteImport.update({
+  id: '/signup_/google',
+  path: '/signup/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialIndexRoute = SocialIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => SocialRoute,
 } as any)
+const SocialFindRoute = SocialFindRouteImport.update({
+  id: '/find',
+  path: '/find',
+  getParentRoute: () => SocialRoute,
+} as any)
+const WhatsNewIndexRoute = WhatsNewIndexRouteImport.update({
+  id: '/whats-new/',
+  path: '/whats-new/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WhatsNewSlugRoute = WhatsNewSlugRouteImport.update({
+  id: '/whats-new/$slug',
+  path: '/whats-new/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoverCollectionsIdRoute = DiscoverCollectionsIdRouteImport.update({
+  id: '/discover/collections/$id',
+  path: '/discover/collections/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeoplePersonIdPersonNameRoute =
+  PeoplePersonIdPersonNameRouteImport.update({
+    id: '/people/$personId/$personName',
+    path: '/people/$personId/$personName',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ProfileHandleIndexRoute = ProfileHandleIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => ProfileHandleRoute,
-} as any)
-const SocialCirclesCircleIdRoute = SocialCirclesCircleIdRouteImport.update({
-  id: '/circles/$circleId',
-  path: '/circles/$circleId',
-  getParentRoute: () => SocialRoute,
-} as any)
-const ShowsShowIdShowNameRoute = ShowsShowIdShowNameRouteImport.update({
-  id: '/shows/$showId/$showName',
-  path: '/shows/$showId/$showName',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReviewsHandleRkeyRoute = ReviewsHandleRkeyRouteImport.update({
-  id: '/reviews/$handle/$rkey',
-  path: '/reviews/$handle/$rkey',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileHandleUpNextRoute = ProfileHandleUpNextRouteImport.update({
-  id: '/up-next',
-  path: '/up-next',
-  getParentRoute: () => ProfileHandleRoute,
-} as any)
-const ProfileHandleShelfRoute = ProfileHandleShelfRouteImport.update({
-  id: '/shelf',
-  path: '/shelf',
-  getParentRoute: () => ProfileHandleRoute,
-} as any)
-const ProfileHandleReviewsRoute = ProfileHandleReviewsRouteImport.update({
-  id: '/reviews',
-  path: '/reviews',
-  getParentRoute: () => ProfileHandleRoute,
-} as any)
-const ProfileHandleNotesRoute = ProfileHandleNotesRouteImport.update({
-  id: '/notes',
-  path: '/notes',
-  getParentRoute: () => ProfileHandleRoute,
-} as any)
-const ProfileHandleListsRoute = ProfileHandleListsRouteImport.update({
-  id: '/lists',
-  path: '/lists',
-  getParentRoute: () => ProfileHandleRoute,
-} as any)
-const ProfileHandleLibraryRoute = ProfileHandleLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
   getParentRoute: () => ProfileHandleRoute,
 } as any)
 const ProfileHandleConnectionsRoute =
@@ -250,27 +211,55 @@ const ProfileHandleConnectionsRoute =
     path: '/connections',
     getParentRoute: () => ProfileHandleRoute,
   } as any)
-const PeoplePersonIdPersonNameRoute =
-  PeoplePersonIdPersonNameRouteImport.update({
-    id: '/people/$personId/$personName',
-    path: '/people/$personId/$personName',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const DiscoverCollectionsIdRoute = DiscoverCollectionsIdRouteImport.update({
-  id: '/discover/collections/$id',
-  path: '/discover/collections/$id',
+const ProfileHandleLibraryRoute = ProfileHandleLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleListsRoute = ProfileHandleListsRouteImport.update({
+  id: '/lists',
+  path: '/lists',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleNotesRoute = ProfileHandleNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleReviewsRoute = ProfileHandleReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleShelfRoute = ProfileHandleShelfRouteImport.update({
+  id: '/shelf',
+  path: '/shelf',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ProfileHandleUpNextRoute = ProfileHandleUpNextRouteImport.update({
+  id: '/up-next',
+  path: '/up-next',
+  getParentRoute: () => ProfileHandleRoute,
+} as any)
+const ReviewsHandleRkeyRoute = ReviewsHandleRkeyRouteImport.update({
+  id: '/reviews/$handle/$rkey',
+  path: '/reviews/$handle/$rkey',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShowsShowIdShowNameIndexRoute =
-  ShowsShowIdShowNameIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => ShowsShowIdShowNameRoute,
-  } as any)
-const ProfileHandleListsIndexRoute = ProfileHandleListsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProfileHandleListsRoute,
+const ShowsShowIdShowNameRoute = ShowsShowIdShowNameRouteImport.update({
+  id: '/shows/$showId/$showName',
+  path: '/shows/$showId/$showName',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialCirclesIndexRoute = SocialCirclesIndexRouteImport.update({
+  id: '/circles/',
+  path: '/circles/',
+  getParentRoute: () => SocialRoute,
+} as any)
+const SocialCirclesCircleIdRoute = SocialCirclesCircleIdRouteImport.update({
+  id: '/circles/$circleId',
+  path: '/circles/$circleId',
+  getParentRoute: () => SocialRoute,
 } as any)
 const MoviesMovieIdMovieNameIndexRoute =
   MoviesMovieIdMovieNameIndexRouteImport.update({
@@ -278,23 +267,34 @@ const MoviesMovieIdMovieNameIndexRoute =
     path: '/movies/$movieId/$movieName/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ShowsShowIdShowNameCreditsRoute =
-  ShowsShowIdShowNameCreditsRouteImport.update({
-    id: '/credits',
-    path: '/credits',
-    getParentRoute: () => ShowsShowIdShowNameRoute,
+const MoviesMovieIdMovieNameCreditsRoute =
+  MoviesMovieIdMovieNameCreditsRouteImport.update({
+    id: '/movies/$movieId/$movieName/credits',
+    path: '/movies/$movieId/$movieName/credits',
+    getParentRoute: () => rootRouteImport,
   } as any)
+const ProfileHandleListsIndexRoute = ProfileHandleListsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileHandleListsRoute,
+} as any)
 const ProfileHandleListsListSlugRoute =
   ProfileHandleListsListSlugRouteImport.update({
     id: '/$listSlug',
     path: '/$listSlug',
     getParentRoute: () => ProfileHandleListsRoute,
   } as any)
-const MoviesMovieIdMovieNameCreditsRoute =
-  MoviesMovieIdMovieNameCreditsRouteImport.update({
-    id: '/movies/$movieId/$movieName/credits',
-    path: '/movies/$movieId/$movieName/credits',
-    getParentRoute: () => rootRouteImport,
+const ShowsShowIdShowNameIndexRoute =
+  ShowsShowIdShowNameIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ShowsShowIdShowNameRoute,
+  } as any)
+const ShowsShowIdShowNameCreditsRoute =
+  ShowsShowIdShowNameCreditsRouteImport.update({
+    id: '/credits',
+    path: '/credits',
+    getParentRoute: () => ShowsShowIdShowNameRoute,
   } as any)
 const ShowsShowIdShowNameSeasonsSeasonNumberRoute =
   ShowsShowIdShowNameSeasonsSeasonNumberRouteImport.update({
@@ -648,81 +648,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/trakt-sync': {
-      id: '/trakt-sync'
-      path: '/trakt-sync'
-      fullPath: '/trakt-sync'
-      preLoaderRoute: typeof TraktSyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trakt-import': {
-      id: '/trakt-import'
-      path: '/trakt-import'
-      fullPath: '/trakt-import'
-      preLoaderRoute: typeof TraktImportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tos': {
-      id: '/tos'
-      path: '/tos'
-      fullPath: '/tos'
-      preLoaderRoute: typeof TosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/social': {
-      id: '/social'
-      path: '/social'
-      fullPath: '/social'
-      preLoaderRoute: typeof SocialRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pick-for-me': {
-      id: '/pick-for-me'
-      path: '/pick-for-me'
-      fullPath: '/pick-for-me'
-      preLoaderRoute: typeof PickForMeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar': {
@@ -732,95 +662,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/whats-new/': {
-      id: '/whats-new/'
-      path: '/whats-new'
-      fullPath: '/whats-new/'
-      preLoaderRoute: typeof WhatsNewIndexRouteImport
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/social/': {
-      id: '/social/'
-      path: '/'
-      fullPath: '/social/'
-      preLoaderRoute: typeof SocialIndexRouteImport
-      parentRoute: typeof SocialRoute
-    }
-    '/settings/': {
-      id: '/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/whats-new/$slug': {
-      id: '/whats-new/$slug'
-      path: '/whats-new/$slug'
-      fullPath: '/whats-new/$slug'
-      preLoaderRoute: typeof WhatsNewSlugRouteImport
+    '/pick-for-me': {
+      id: '/pick-for-me'
+      path: '/pick-for-me'
+      fullPath: '/pick-for-me'
+      preLoaderRoute: typeof PickForMeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/social/find': {
-      id: '/social/find'
-      path: '/find'
-      fullPath: '/social/find'
-      preLoaderRoute: typeof SocialFindRouteImport
-      parentRoute: typeof SocialRoute
-    }
-    '/signup_/google': {
-      id: '/signup_/google'
-      path: '/signup/google'
-      fullPath: '/signup/google'
-      preLoaderRoute: typeof SignupGoogleRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/signup_/apple': {
-      id: '/signup_/apple'
-      path: '/signup/apple'
-      fullPath: '/signup/apple'
-      preLoaderRoute: typeof SignupAppleRouteImport
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/$section': {
-      id: '/settings/$section'
-      path: '/$section'
-      fullPath: '/settings/$section'
-      preLoaderRoute: typeof SettingsSectionRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/profile/$handle': {
-      id: '/profile/$handle'
-      path: '/profile/$handle'
-      fullPath: '/profile/$handle'
-      preLoaderRoute: typeof ProfileHandleRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/embed/review-editor': {
-      id: '/embed/review-editor'
-      path: '/embed/review-editor'
-      fullPath: '/embed/review-editor'
-      preLoaderRoute: typeof EmbedReviewEditorRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/complete': {
-      id: '/auth/complete'
-      path: '/auth/complete'
-      fullPath: '/auth/complete'
-      preLoaderRoute: typeof AuthCompleteRouteImport
+    '/social': {
+      id: '/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof SocialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/release-notes': {
-      id: '/api/release-notes'
-      path: '/api/release-notes'
-      fullPath: '/api/release-notes'
-      preLoaderRoute: typeof ApiReleaseNotesRouteImport
+    '/tos': {
+      id: '/tos'
+      path: '/tos'
+      fullPath: '/tos'
+      preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trakt-import': {
+      id: '/trakt-import'
+      path: '/trakt-import'
+      fullPath: '/trakt-import'
+      preLoaderRoute: typeof TraktImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trakt-sync': {
+      id: '/trakt-sync'
+      path: '/trakt-sync'
+      fullPath: '/trakt-sync'
+      preLoaderRoute: typeof TraktSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/featured': {
@@ -830,95 +746,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFeaturedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/social/circles/': {
-      id: '/social/circles/'
-      path: '/circles'
-      fullPath: '/social/circles/'
-      preLoaderRoute: typeof SocialCirclesIndexRouteImport
-      parentRoute: typeof SocialRoute
+    '/api/release-notes': {
+      id: '/api/release-notes'
+      path: '/api/release-notes'
+      fullPath: '/api/release-notes'
+      preLoaderRoute: typeof ApiReleaseNotesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/profile/$handle/': {
-      id: '/profile/$handle/'
+    '/auth/complete': {
+      id: '/auth/complete'
+      path: '/auth/complete'
+      fullPath: '/auth/complete'
+      preLoaderRoute: typeof AuthCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embed/review-editor': {
+      id: '/embed/review-editor'
+      path: '/embed/review-editor'
+      fullPath: '/embed/review-editor'
+      preLoaderRoute: typeof EmbedReviewEditorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$handle': {
+      id: '/profile/$handle'
+      path: '/profile/$handle'
+      fullPath: '/profile/$handle'
+      preLoaderRoute: typeof ProfileHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
       path: '/'
-      fullPath: '/profile/$handle/'
-      preLoaderRoute: typeof ProfileHandleIndexRouteImport
-      parentRoute: typeof ProfileHandleRoute
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
     }
-    '/social/circles/$circleId': {
-      id: '/social/circles/$circleId'
-      path: '/circles/$circleId'
-      fullPath: '/social/circles/$circleId'
-      preLoaderRoute: typeof SocialCirclesCircleIdRouteImport
+    '/settings/$section': {
+      id: '/settings/$section'
+      path: '/$section'
+      fullPath: '/settings/$section'
+      preLoaderRoute: typeof SettingsSectionRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/signup_/apple': {
+      id: '/signup_/apple'
+      path: '/signup/apple'
+      fullPath: '/signup/apple'
+      preLoaderRoute: typeof SignupAppleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup_/google': {
+      id: '/signup_/google'
+      path: '/signup/google'
+      fullPath: '/signup/google'
+      preLoaderRoute: typeof SignupGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/social/': {
+      id: '/social/'
+      path: '/'
+      fullPath: '/social/'
+      preLoaderRoute: typeof SocialIndexRouteImport
       parentRoute: typeof SocialRoute
     }
-    '/shows/$showId/$showName': {
-      id: '/shows/$showId/$showName'
-      path: '/shows/$showId/$showName'
-      fullPath: '/shows/$showId/$showName'
-      preLoaderRoute: typeof ShowsShowIdShowNameRouteImport
+    '/social/find': {
+      id: '/social/find'
+      path: '/find'
+      fullPath: '/social/find'
+      preLoaderRoute: typeof SocialFindRouteImport
+      parentRoute: typeof SocialRoute
+    }
+    '/whats-new/': {
+      id: '/whats-new/'
+      path: '/whats-new'
+      fullPath: '/whats-new/'
+      preLoaderRoute: typeof WhatsNewIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reviews/$handle/$rkey': {
-      id: '/reviews/$handle/$rkey'
-      path: '/reviews/$handle/$rkey'
-      fullPath: '/reviews/$handle/$rkey'
-      preLoaderRoute: typeof ReviewsHandleRkeyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile/$handle/up-next': {
-      id: '/profile/$handle/up-next'
-      path: '/up-next'
-      fullPath: '/profile/$handle/up-next'
-      preLoaderRoute: typeof ProfileHandleUpNextRouteImport
-      parentRoute: typeof ProfileHandleRoute
-    }
-    '/profile/$handle/shelf': {
-      id: '/profile/$handle/shelf'
-      path: '/shelf'
-      fullPath: '/profile/$handle/shelf'
-      preLoaderRoute: typeof ProfileHandleShelfRouteImport
-      parentRoute: typeof ProfileHandleRoute
-    }
-    '/profile/$handle/reviews': {
-      id: '/profile/$handle/reviews'
-      path: '/reviews'
-      fullPath: '/profile/$handle/reviews'
-      preLoaderRoute: typeof ProfileHandleReviewsRouteImport
-      parentRoute: typeof ProfileHandleRoute
-    }
-    '/profile/$handle/notes': {
-      id: '/profile/$handle/notes'
-      path: '/notes'
-      fullPath: '/profile/$handle/notes'
-      preLoaderRoute: typeof ProfileHandleNotesRouteImport
-      parentRoute: typeof ProfileHandleRoute
-    }
-    '/profile/$handle/lists': {
-      id: '/profile/$handle/lists'
-      path: '/lists'
-      fullPath: '/profile/$handle/lists'
-      preLoaderRoute: typeof ProfileHandleListsRouteImport
-      parentRoute: typeof ProfileHandleRoute
-    }
-    '/profile/$handle/library': {
-      id: '/profile/$handle/library'
-      path: '/library'
-      fullPath: '/profile/$handle/library'
-      preLoaderRoute: typeof ProfileHandleLibraryRouteImport
-      parentRoute: typeof ProfileHandleRoute
-    }
-    '/profile/$handle/connections': {
-      id: '/profile/$handle/connections'
-      path: '/connections'
-      fullPath: '/profile/$handle/connections'
-      preLoaderRoute: typeof ProfileHandleConnectionsRouteImport
-      parentRoute: typeof ProfileHandleRoute
-    }
-    '/people/$personId/$personName': {
-      id: '/people/$personId/$personName'
-      path: '/people/$personId/$personName'
-      fullPath: '/people/$personId/$personName'
-      preLoaderRoute: typeof PeoplePersonIdPersonNameRouteImport
+    '/whats-new/$slug': {
+      id: '/whats-new/$slug'
+      path: '/whats-new/$slug'
+      fullPath: '/whats-new/$slug'
+      preLoaderRoute: typeof WhatsNewSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discover/collections/$id': {
@@ -928,19 +837,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiscoverCollectionsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/shows/$showId/$showName/': {
-      id: '/shows/$showId/$showName/'
-      path: '/'
-      fullPath: '/shows/$showId/$showName/'
-      preLoaderRoute: typeof ShowsShowIdShowNameIndexRouteImport
-      parentRoute: typeof ShowsShowIdShowNameRoute
+    '/people/$personId/$personName': {
+      id: '/people/$personId/$personName'
+      path: '/people/$personId/$personName'
+      fullPath: '/people/$personId/$personName'
+      preLoaderRoute: typeof PeoplePersonIdPersonNameRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/profile/$handle/lists/': {
-      id: '/profile/$handle/lists/'
+    '/profile/$handle/': {
+      id: '/profile/$handle/'
       path: '/'
-      fullPath: '/profile/$handle/lists/'
-      preLoaderRoute: typeof ProfileHandleListsIndexRouteImport
-      parentRoute: typeof ProfileHandleListsRoute
+      fullPath: '/profile/$handle/'
+      preLoaderRoute: typeof ProfileHandleIndexRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/connections': {
+      id: '/profile/$handle/connections'
+      path: '/connections'
+      fullPath: '/profile/$handle/connections'
+      preLoaderRoute: typeof ProfileHandleConnectionsRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/library': {
+      id: '/profile/$handle/library'
+      path: '/library'
+      fullPath: '/profile/$handle/library'
+      preLoaderRoute: typeof ProfileHandleLibraryRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/lists': {
+      id: '/profile/$handle/lists'
+      path: '/lists'
+      fullPath: '/profile/$handle/lists'
+      preLoaderRoute: typeof ProfileHandleListsRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/notes': {
+      id: '/profile/$handle/notes'
+      path: '/notes'
+      fullPath: '/profile/$handle/notes'
+      preLoaderRoute: typeof ProfileHandleNotesRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/reviews': {
+      id: '/profile/$handle/reviews'
+      path: '/reviews'
+      fullPath: '/profile/$handle/reviews'
+      preLoaderRoute: typeof ProfileHandleReviewsRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/shelf': {
+      id: '/profile/$handle/shelf'
+      path: '/shelf'
+      fullPath: '/profile/$handle/shelf'
+      preLoaderRoute: typeof ProfileHandleShelfRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/profile/$handle/up-next': {
+      id: '/profile/$handle/up-next'
+      path: '/up-next'
+      fullPath: '/profile/$handle/up-next'
+      preLoaderRoute: typeof ProfileHandleUpNextRouteImport
+      parentRoute: typeof ProfileHandleRoute
+    }
+    '/reviews/$handle/$rkey': {
+      id: '/reviews/$handle/$rkey'
+      path: '/reviews/$handle/$rkey'
+      fullPath: '/reviews/$handle/$rkey'
+      preLoaderRoute: typeof ReviewsHandleRkeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shows/$showId/$showName': {
+      id: '/shows/$showId/$showName'
+      path: '/shows/$showId/$showName'
+      fullPath: '/shows/$showId/$showName'
+      preLoaderRoute: typeof ShowsShowIdShowNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/social/circles/': {
+      id: '/social/circles/'
+      path: '/circles'
+      fullPath: '/social/circles/'
+      preLoaderRoute: typeof SocialCirclesIndexRouteImport
+      parentRoute: typeof SocialRoute
+    }
+    '/social/circles/$circleId': {
+      id: '/social/circles/$circleId'
+      path: '/circles/$circleId'
+      fullPath: '/social/circles/$circleId'
+      preLoaderRoute: typeof SocialCirclesCircleIdRouteImport
+      parentRoute: typeof SocialRoute
     }
     '/movies/$movieId/$movieName/': {
       id: '/movies/$movieId/$movieName/'
@@ -949,12 +935,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MoviesMovieIdMovieNameIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/shows/$showId/$showName/credits': {
-      id: '/shows/$showId/$showName/credits'
-      path: '/credits'
-      fullPath: '/shows/$showId/$showName/credits'
-      preLoaderRoute: typeof ShowsShowIdShowNameCreditsRouteImport
-      parentRoute: typeof ShowsShowIdShowNameRoute
+    '/movies/$movieId/$movieName/credits': {
+      id: '/movies/$movieId/$movieName/credits'
+      path: '/movies/$movieId/$movieName/credits'
+      fullPath: '/movies/$movieId/$movieName/credits'
+      preLoaderRoute: typeof MoviesMovieIdMovieNameCreditsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$handle/lists/': {
+      id: '/profile/$handle/lists/'
+      path: '/'
+      fullPath: '/profile/$handle/lists/'
+      preLoaderRoute: typeof ProfileHandleListsIndexRouteImport
+      parentRoute: typeof ProfileHandleListsRoute
     }
     '/profile/$handle/lists/$listSlug': {
       id: '/profile/$handle/lists/$listSlug'
@@ -963,12 +956,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileHandleListsListSlugRouteImport
       parentRoute: typeof ProfileHandleListsRoute
     }
-    '/movies/$movieId/$movieName/credits': {
-      id: '/movies/$movieId/$movieName/credits'
-      path: '/movies/$movieId/$movieName/credits'
-      fullPath: '/movies/$movieId/$movieName/credits'
-      preLoaderRoute: typeof MoviesMovieIdMovieNameCreditsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/shows/$showId/$showName/': {
+      id: '/shows/$showId/$showName/'
+      path: '/'
+      fullPath: '/shows/$showId/$showName/'
+      preLoaderRoute: typeof ShowsShowIdShowNameIndexRouteImport
+      parentRoute: typeof ShowsShowIdShowNameRoute
+    }
+    '/shows/$showId/$showName/credits': {
+      id: '/shows/$showId/$showName/credits'
+      path: '/credits'
+      fullPath: '/shows/$showId/$showName/credits'
+      preLoaderRoute: typeof ShowsShowIdShowNameCreditsRouteImport
+      parentRoute: typeof ShowsShowIdShowNameRoute
     }
     '/shows/$showId/$showName/seasons/$seasonNumber': {
       id: '/shows/$showId/$showName/seasons/$seasonNumber'

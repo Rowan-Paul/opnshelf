@@ -22,18 +22,20 @@ const mockPutRecord = vi.fn();
 const mockDeleteRecord = vi.fn();
 const mockApplyWrites = vi.fn();
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn().mockImplementation(() => ({
-		com: {
-			atproto: {
-				repo: {
-					putRecord: mockPutRecord,
-					getRecord: mockGetRecord,
-					deleteRecord: mockDeleteRecord,
-					applyWrites: mockApplyWrites,
+	Agent: vi.fn().mockImplementation(function () {
+		return {
+			com: {
+				atproto: {
+					repo: {
+						putRecord: mockPutRecord,
+						getRecord: mockGetRecord,
+						deleteRecord: mockDeleteRecord,
+						applyWrites: mockApplyWrites,
+					},
 				},
 			},
-		},
-	})),
+		};
+	}),
 }));
 
 vi.mock("../lexicons/xyz/opnshelf/episode", () => ({

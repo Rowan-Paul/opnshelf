@@ -15,26 +15,30 @@ vi.mock("@atproto/api", async () => {
 
 	return {
 		...actual,
-		Agent: vi.fn().mockImplementation(() => ({
-			uploadBlob: mockUploadBlob,
-			com: {
-				atproto: {
-					repo: {
-						getRecord: mockGetRecord,
-						putRecord: mockPutRecord,
+		Agent: vi.fn().mockImplementation(function () {
+			return {
+				uploadBlob: mockUploadBlob,
+				com: {
+					atproto: {
+						repo: {
+							getRecord: mockGetRecord,
+							putRecord: mockPutRecord,
+						},
 					},
 				},
-			},
-		})),
+			};
+		}),
 	};
 });
 
 vi.mock("@atproto/identity", () => ({
-	IdResolver: vi.fn().mockImplementation(() => ({
-		did: {
-			resolveAtprotoData: mockResolveAtprotoData,
-		},
-	})),
+	IdResolver: vi.fn().mockImplementation(function () {
+		return {
+			did: {
+				resolveAtprotoData: mockResolveAtprotoData,
+			},
+		};
+	}),
 }));
 
 // Keep the real safeFetch (URL checks, redirect following) but swap the

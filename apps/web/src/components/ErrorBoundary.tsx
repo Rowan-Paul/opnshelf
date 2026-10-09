@@ -4,18 +4,23 @@ import { useEffect } from "react";
 import { posthog } from "#/integrations/posthog/provider";
 
 interface ErrorComponentProps {
-	error?: Error;
+	// The router types thrown values as unknown: anything can be thrown.
+	error?: unknown;
 	reset?: () => void;
 }
 
-export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
+export function DefaultErrorComponent({
+	error: thrown,
+	reset,
+}: ErrorComponentProps) {
 	const router = useRouter();
+	const error = thrown instanceof Error ? thrown : undefined;
 
 	useEffect(() => {
-		if (error) {
-			posthog.captureException(error, { error_boundary: "tanstack_router" });
+		if (thrown) {
+			posthog.captureException(thrown, { error_boundary: "tanstack_router" });
 		}
-	}, [error]);
+	}, [thrown]);
 
 	const handleRetry = () => {
 		if (reset) {

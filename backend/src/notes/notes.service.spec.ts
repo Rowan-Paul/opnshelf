@@ -18,16 +18,18 @@ vi.mock("../prisma/prisma.service", () => ({
 const mockPutRecord = vi.fn();
 const mockDeleteRecord = vi.fn();
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn().mockImplementation(() => ({
-		com: {
-			atproto: {
-				repo: {
-					putRecord: mockPutRecord,
-					deleteRecord: mockDeleteRecord,
+	Agent: vi.fn().mockImplementation(function () {
+		return {
+			com: {
+				atproto: {
+					repo: {
+						putRecord: mockPutRecord,
+						deleteRecord: mockDeleteRecord,
+					},
 				},
 			},
-		},
-	})),
+		};
+	}),
 }));
 
 vi.mock("@atproto/common", () => ({

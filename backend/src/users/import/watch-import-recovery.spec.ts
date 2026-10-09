@@ -10,9 +10,11 @@ const { applyWrites, getRecord } = vi.hoisted(() => ({
 	getRecord: vi.fn(),
 }));
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn(() => ({
-		com: { atproto: { repo: { applyWrites, getRecord } } },
-	})),
+	Agent: vi.fn(function () {
+		return {
+			com: { atproto: { repo: { applyWrites, getRecord } } },
+		};
+	}),
 }));
 
 const movieIndex = vi.fn();

@@ -13,12 +13,14 @@ const atpAgentHarness = vi.hoisted(() => ({
 
 vi.mock("@atproto/api", () => ({
 	Agent: vi.fn(),
-	AtpAgent: vi.fn().mockImplementation(() => ({
-		createAccount: atpAgentHarness.createAccount,
-		get session() {
-			return atpAgentHarness.session;
-		},
-	})),
+	AtpAgent: vi.fn().mockImplementation(function () {
+		return {
+			createAccount: atpAgentHarness.createAccount,
+			get session() {
+				return atpAgentHarness.session;
+			},
+		};
+	}),
 }));
 
 import { PrismaService } from "../prisma/prisma.service";

@@ -9,22 +9,26 @@ const mockListRecords = vi.fn();
 const mockRemoveRepos = vi.fn();
 
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn().mockImplementation(() => ({
-		com: {
-			atproto: {
-				repo: {
-					listRecords: mockListRecords,
-					deleteRecord: mockDeleteRecord,
+	Agent: vi.fn().mockImplementation(function () {
+		return {
+			com: {
+				atproto: {
+					repo: {
+						listRecords: mockListRecords,
+						deleteRecord: mockDeleteRecord,
+					},
 				},
 			},
-		},
-	})),
+		};
+	}),
 }));
 
 vi.mock("@atproto/tap", () => ({
-	Tap: vi.fn().mockImplementation(() => ({
-		removeRepos: mockRemoveRepos,
-	})),
+	Tap: vi.fn().mockImplementation(function () {
+		return {
+			removeRepos: mockRemoveRepos,
+		};
+	}),
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
