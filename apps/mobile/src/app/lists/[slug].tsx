@@ -418,7 +418,7 @@ export default function ListDetailScreen() {
 						}}
 						ListHeaderComponent={
 							<View className="gap-3 px-1 pb-4">
-								<ListInfoCard {...list} showProgress={showProgress} />
+								<ListInfoCard {...list} showProgress={showProgress} isOwner />
 
 								<TextField
 									leading={<Search color="#94a3b8" size={18} />}

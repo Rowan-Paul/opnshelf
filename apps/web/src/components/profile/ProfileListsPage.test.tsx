@@ -2,6 +2,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ProfileListsPage } from "./ProfileListsPage";
 
+vi.mock("#/components/settings/PrivacySection", () => ({
+	PrivacySection: () => null,
+}));
+
 const { mutate } = vi.hoisted(() => ({ mutate: vi.fn() }));
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@tanstack/react-query")>()),

@@ -38,6 +38,7 @@ import {
 	LIST_ITEMS_GRID,
 	ListDetailSkeleton,
 } from "#/components/profile/list-skeletons";
+import { PrivacySection } from "#/components/settings/PrivacySection";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -571,6 +572,11 @@ export function ProfileListsPage({
 								</span>
 							</div>
 
+							{isOwner ? (
+								<PrivacySection listRkey={listDetails.rkey} />
+							) : (
+								<p className="text-(--foreground-muted) text-sm">Public</p>
+							)}
 							{listDetails.description && (
 								<p className="text-(--foreground-muted) text-sm">
 									{listDetails.description}

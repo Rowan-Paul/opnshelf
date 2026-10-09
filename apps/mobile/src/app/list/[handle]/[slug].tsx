@@ -135,6 +135,7 @@ export default function PublicListScreen() {
 						ListHeaderComponent={
 							<View className="gap-3 px-1 pb-4">
 								<ListInfoCard
+									isOwner={user?.did === userDid}
 									{...list}
 									creator={creator}
 									showProgress={isAuthenticated && list.total > 0}

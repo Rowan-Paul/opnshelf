@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { privacyControllerStatusOptions } from "./generated/@tanstack/react-query.gen";
 import {
 	privacyControllerChange,
@@ -8,7 +8,12 @@ import {
 	privacyControllerRetry,
 	privacyControllerStatus,
 } from "./generated/sdk.gen";
-import type { PrivacyChangeDto, PrivacyStatusDto } from "./generated/types.gen";
+import type {
+	PrivacyChangeDto,
+	PrivacyScopeDto,
+	PrivacyStatusDto,
+} from "./generated/types.gen";
+import { getErrorMessage, getHttpStatus } from "./http-errors";
 
 export type PrivacyAction = {
 	kind: "change" | "retry" | "default" | "allLists" | "initial";
@@ -56,72 +61,109 @@ export function usePrivacy(
 	}, [query.data, client]);
 	const mutation = useMutation({
 		mutationFn: async (action: PrivacyAction) => {
-			if (
-				action.body.visibility === "private" ||
-				action.kind === "retry" ||
-				(action.kind !== "default" &&
-					query.data?.scopes.some(
-						(scope) =>
-							scope.category === action.body.category &&
-							scope.visibility === "private",
-					))
-			) {
-				const fresh = await privacyControllerStatus({ throwOnError: true });
-				if (!fresh.data.authorized) {
-					if (!(await authorize(action))) return;
-					const granted = await privacyControllerStatus({ throwOnError: true });
-					if (!granted.data.authorized)
-						throw new Error(
-							"Private access was not authorized. Your visibility is unchanged.",
-						);
+			try {
+				if (
+					action.body.visibility === "private" ||
+					action.kind === "retry" ||
+					(action.kind !== "default" &&
+						query.data?.scopes.some(
+							(scope) =>
+								scope.category === action.body.category &&
+								scope.visibility === "private",
+						))
+				) {
+					const fresh = await privacyControllerStatus({ throwOnError: true });
+					if (!fresh.data.authorized) {
+						if (!(await authorize(action))) return;
+						const granted = await privacyControllerStatus({
+							throwOnError: true,
+						});
+						if (!granted.data.authorized)
+							throw new Error(
+								"Private access was not authorized. Your visibility is unchanged.",
+							);
+					}
 				}
-			}
-			if (action.kind === "default")
-				return (
+				if (action.kind === "default")
+					return (
+						await privacyControllerListsDefault({
+							body: { visibility: action.body.visibility },
+							throwOnError: true,
+						})
+					).data;
+				if (action.kind === "allLists")
+					return (
+						await privacyControllerChangeAllLists({
+							body: action.body,
+							throwOnError: true,
+						})
+					).data;
+				if (action.kind === "retry")
+					return (
+						await privacyControllerRetry({
+							body: action.body,
+							throwOnError: true,
+						})
+					).data;
+				if (action.kind === "initial") {
+					for (const category of ["watches", "library", "notes"] as const)
+						await privacyControllerChange({
+							body: { ...action.body, category },
+							throwOnError: true,
+						});
 					await privacyControllerListsDefault({
 						body: { visibility: action.body.visibility },
 						throwOnError: true,
-					})
-				).data;
-			if (action.kind === "allLists") {
-				await privacyControllerChangeAllLists({
-					body: action.body,
-					throwOnError: true,
-				});
+					});
+					return (
+						await privacyControllerChangeAllLists({
+							body: { ...action.body, category: "lists" },
+							throwOnError: true,
+						})
+					).data;
+				}
 				return (
-					await privacyControllerListsDefault({
-						body: { visibility: action.body.visibility },
-						throwOnError: true,
-					})
-				).data;
-			}
-			if (action.kind === "retry")
-				return (
-					await privacyControllerRetry({
+					await privacyControllerChange({
 						body: action.body,
 						throwOnError: true,
 					})
 				).data;
-			if (action.kind === "initial") {
-				for (const category of ["watches", "library", "notes"] as const)
-					await privacyControllerChange({
-						body: { ...action.body, category },
-						throwOnError: true,
-					});
-				await privacyControllerListsDefault({
-					body: { visibility: action.body.visibility },
-					throwOnError: true,
-				});
-				return (
-					await privacyControllerChangeAllLists({
-						body: { ...action.body, category: "lists" },
-						throwOnError: true,
-					})
-				).data;
+			} catch (error) {
+				// A duplicate request can lose the worker lock after its first request was
+				// accepted. Reconcile the actual status before reporting a failed change.
+				const message =
+					error && typeof error === "object" && "message" in error
+						? String(error.message)
+						: "";
+				if (
+					getHttpStatus(error) === 409 &&
+					/another watch operation/i.test(message) &&
+					action.kind !== "initial"
+				) {
+					const fresh = await privacyControllerStatus({ throwOnError: true });
+					const target = action.body.visibility;
+					const matches = (scope: PrivacyScopeDto) =>
+						scope.migration
+							? scope.migration.target === target &&
+								["queued", "running"].includes(scope.migration.status)
+							: scope.visibility === target;
+					const relevant = fresh.data.scopes.filter((scope) =>
+						action.kind === "allLists"
+							? scope.category === "lists"
+							: scope.category === action.body.category &&
+								scope.listRkey === (action.body.listRkey ?? null),
+					);
+					const accepted =
+						action.kind === "default"
+							? fresh.data.listsDefaultVisibility === target
+							: action.kind === "allLists"
+								? fresh.data.listsDefaultVisibility === target &&
+									relevant.every(matches)
+								: relevant.length === 1 && matches(relevant[0]);
+					if (accepted) return fresh.data;
+				}
+				throw error;
 			}
-			return (
-				await privacyControllerChange({ body: action.body, throwOnError: true })
-			).data;
 		},
 		onSuccess: (data: PrivacyStatusDto | undefined) => {
 			if (data)
@@ -145,4 +187,63 @@ export function usePrivacy(
 				? privacyActionKey(mutation.variables)
 				: null,
 	};
+}
+
+/** Keep a finished migration visible until the next change or leaving the page. */
+export function usePrivacyProgress(
+	scopes: PrivacyScopeDto[] | undefined,
+	pending: boolean,
+) {
+	const [history, setHistory] = useState<PrivacyScopeDto[]>([]);
+	useEffect(() => {
+		if (pending) setHistory([]);
+	}, [pending]);
+	useEffect(() => {
+		if (!scopes) return;
+		setHistory((previous) => {
+			const entries = new Map(
+				previous.map((scope) => [
+					`${scope.category}:${scope.listRkey ?? ""}`,
+					scope,
+				]),
+			);
+			for (const scope of scopes)
+				if (scope.migration)
+					entries.set(`${scope.category}:${scope.listRkey ?? ""}`, scope);
+			return [...entries.values()];
+		});
+	}, [scopes]);
+	return history.map((previous) => {
+		const current = scopes?.find(
+			(scope) =>
+				scope.category === previous.category &&
+				scope.listRkey === previous.listRkey,
+		);
+		if (current?.migration) return current;
+		const moving = previous.migration;
+		if (current && moving && current.visibility === moving.target)
+			return {
+				...current,
+				migration: {
+					...moving,
+					status: "completed",
+					copied: moving.total ?? moving.copied,
+					error: null,
+				},
+			};
+		return previous;
+	});
+}
+
+export function privacyErrorMessage(error: unknown, fallback: string) {
+	const message = getErrorMessage(error, fallback);
+	if (
+		/fetch failed|failed to fetch|network request failed|could not connect to the server/i.test(
+			message,
+		)
+	)
+		return "We could not reach the server. Please check your connection and try again.";
+	if (/another watch operation|watch operations are busy/i.test(message))
+		return "Your account is still finishing another change. Please wait a moment, then try again.";
+	return message;
 }

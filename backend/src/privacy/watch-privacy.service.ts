@@ -72,6 +72,13 @@ export class WatchPrivacyService {
 						copied: await this.prisma.watchPrivacyCopy.count({
 							where: { jobId: migration.jobId },
 						}),
+						total:
+							migration.job.data &&
+							typeof migration.job.data === "object" &&
+							!Array.isArray(migration.job.data) &&
+							typeof migration.job.data.totalRecords === "number"
+								? migration.job.data.totalRecords
+								: null,
 						error: migration.job.lastError,
 					}
 				: null,
@@ -114,7 +121,10 @@ export class WatchPrivacyService {
 			)
 				throw error;
 		}
-		await this.coordinator.start(did, target, confirmed);
+		const totalRecords = (
+			await this.snapshot(pds, target === "private" ? "public" : "private")
+		).length;
+		await this.coordinator.start(did, target, confirmed, totalRecords);
 		return this.status(did, session);
 	}
 	async retry(did: string, session: unknown) {
@@ -166,6 +176,31 @@ export class WatchPrivacyService {
 				if (target === "private") await pds.assertPrivate();
 				else {
 					await pds.assertExistingPrivate();
+				}
+				const job = await this.prisma.backgroundJob.findUniqueOrThrow({
+					where: { id: migration.jobId },
+				});
+				const data =
+					job.data && typeof job.data === "object" && !Array.isArray(job.data)
+						? job.data
+						: {};
+				if (typeof data.totalRecords !== "number") {
+					const sources = await this.snapshot(
+						pds,
+						target === "private" ? "public" : "private",
+					);
+					const copies = await this.prisma.watchPrivacyCopy.findMany({
+						where: { jobId: migration.jobId },
+					});
+					const totalRecords = new Set(
+						[...sources, ...copies].map(
+							(record) => `${record.collection}/${record.rkey}`,
+						),
+					).size;
+					await this.prisma.backgroundJob.update({
+						where: { id: migration.jobId },
+						data: { data: { ...data, totalRecords } },
+					});
 				}
 				const journal = new PrismaWatchMigrationJournal(
 					this.prisma,

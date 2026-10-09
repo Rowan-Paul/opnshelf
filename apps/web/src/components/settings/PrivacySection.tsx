@@ -3,10 +3,12 @@ import {
 	getErrorMessage,
 	type PrivacyAction,
 	type PrivacyScopeDto,
+	privacyErrorMessage,
 	usePrivacy,
+	usePrivacyProgress,
 } from "@opnshelf/api";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -22,9 +24,11 @@ const PENDING = "opnshelf-privacy-choice";
 export function PrivacySection({
 	onboarding = false,
 	onContinue,
+	listRkey,
 }: {
 	onboarding?: boolean;
 	onContinue?: () => void;
+	listRkey?: string;
 }) {
 	const { user } = useAuth();
 	const [confirmation, setConfirmation] = useState<PrivacyAction | null>(null);
@@ -34,6 +38,7 @@ export function PrivacySection({
 	);
 	const resumed = useRef(false);
 	const [showProgress, setShowProgress] = useState(false);
+	const [showError, setShowError] = useState(false);
 	const [declined, setDeclined] = useState(false);
 	useEffect(() => {
 		setDeclined(
@@ -52,9 +57,12 @@ export function PrivacySection({
 		window.location.assign(result.data.authorizationUrl);
 		return false;
 	});
-	const errorMessage = getErrorMessage(
+	const errorMessage = privacyErrorMessage(
 		mutation.error,
-		"Could not complete this change. Try again.",
+		getErrorMessage(
+			mutation.error,
+			"Could not complete this change. Try again.",
+		),
 	);
 	const shownError = useRef<unknown>(null);
 	useEffect(() => {
@@ -66,8 +74,8 @@ export function PrivacySection({
 		shownError.current = mutation.error;
 		setManageLists(false);
 		setShowProgress(false);
-		toast.error(errorMessage);
-	}, [mutation.isError, mutation.error, errorMessage]);
+		setShowError(true);
+	}, [mutation.isError, mutation.error]);
 
 	useEffect(() => {
 		if (resumed.current || !query.data || !user) return;
@@ -111,10 +119,19 @@ export function PrivacySection({
 		}
 	}, [query.data, user, mutation.mutate, onboarding]);
 	const data = query.data;
+	const scopes = useMemo(
+		() =>
+			data?.scopes.filter((scope) => !listRkey || scope.listRkey === listRkey),
+		[data?.scopes, listRkey],
+	);
+	const progressScopes = usePrivacyProgress(scopes, mutation.isPending);
+	const changing = Boolean(
+		mutation.isPending || scopes?.some((scope) => scope.migration),
+	);
 	const shownMigrations = useRef(new Set<string>());
 	useEffect(() => {
 		const migrations =
-			data?.scopes.flatMap((scope) =>
+			scopes?.flatMap((scope) =>
 				scope.migration ? [scope.migration.id] : [],
 			) ?? [];
 		if (
@@ -125,9 +142,14 @@ export function PrivacySection({
 			setShowProgress(true);
 		}
 		for (const id of migrations) shownMigrations.current.add(id);
-	}, [data?.scopes, mutation.isError]);
+	}, [scopes, mutation.isError]);
 
-	const submit = (action: PrivacyAction) => mutation.mutate(action);
+	const submit = (action: PrivacyAction) => {
+		if (mutation.isPending) return;
+		setManageLists(false);
+		setShowProgress(true);
+		mutation.mutate(action);
+	};
 	const choose = (action: PrivacyAction) => {
 		if (action.body.visibility === "public" && action.kind !== "default") {
 			setManageLists(false);
@@ -139,11 +161,19 @@ export function PrivacySection({
 	const scopeRow = (scope: PrivacyScopeDto) => {
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
 		const moving = scope.migration;
-		const label = scope.category === "watches" ? "Shelf" : scope.label;
+		const label = listRkey
+			? "Visibility"
+			: scope.category === "watches"
+				? "Shelf"
+				: scope.label;
 		return (
 			<div
 				key={key}
-				className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5"
+				className={
+					listRkey
+						? "space-y-3"
+						: "space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5"
+				}
 			>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div className="space-y-1">
@@ -160,7 +190,7 @@ export function PrivacySection({
 					</div>
 					<fieldset
 						className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
-						aria-label={`${label} visibility`}
+						aria-label={listRkey ? "List visibility" : `${label} visibility`}
 					>
 						{(["public", "private"] as const).map((visibility) => (
 							<Button
@@ -223,23 +253,27 @@ export function PrivacySection({
 				{moving && (
 					<div aria-live="polite" className="space-y-2 text-sm">
 						<p>
-							Changing to {moving.target === "private" ? "Private" : "Public"} ·{" "}
+							{moving.status === "completed" ? "Changed to" : "Changing to"}{" "}
+							{moving.target === "private" ? "Private" : "Public"} ·{" "}
 							{moving.total == null
-								? `${moving.copied} records copied`
+								? `${moving.copied}/… records copied · Counting records…`
 								: `${moving.copied}/${moving.total} records copied`}
-							{moving.total != null &&
+							{moving.status !== "completed" &&
+								moving.total != null &&
 								moving.copied >= moving.total &&
 								["queued", "running"].includes(moving.status) &&
 								" · Finishing…"}
 						</p>
-						<p className="text-(--foreground-muted)">
-							{scope.category === "lists" &&
-								"Records include the List details and its items. "}
-							Hidden from others while moving. Edits to {label} pause; you can
-							leave this page.
-						</p>
+						{moving.status !== "completed" && (
+							<p className="text-(--foreground-muted)">
+								{scope.category === "lists" &&
+									"Records include the List details and its items. "}
+								Hidden from others while moving. Edits to {label} pause; you can
+								leave this page.
+							</p>
+						)}
 						{moving.error && <p role="alert">{moving.error}</p>}
-						{!["queued", "running"].includes(moving.status) && (
+						{!["queued", "running", "completed"].includes(moving.status) && (
 							<Button
 								variant="outline"
 								disabled={pendingKey === key}
@@ -266,23 +300,29 @@ export function PrivacySection({
 	return (
 		<section
 			className={
-				onboarding ? "card space-y-3 p-5 sm:p-7" : "space-y-3 p-5 sm:p-7"
+				listRkey
+					? "space-y-3"
+					: onboarding
+						? "card space-y-3 p-5 sm:p-7"
+						: "space-y-3 p-5 sm:p-7"
 			}
 		>
-			<div className="space-y-3 pb-5">
-				<div className="flex flex-wrap items-center gap-3">
-					<h2 className="font-semibold text-2xl tracking-tight">
-						Who can see your data
-					</h2>
-					<span className="rounded-md bg-(--accent-subtle) px-2 py-1 font-medium text-xs">
-						Alpha
-					</span>
+			{!listRkey && (
+				<div className="space-y-3 pb-5">
+					<div className="flex flex-wrap items-center gap-3">
+						<h2 className="font-semibold text-2xl tracking-tight">
+							Who can see your data
+						</h2>
+						<span className="rounded-md bg-(--accent-subtle) px-2 py-1 font-medium text-xs">
+							Alpha
+						</span>
+					</div>
+					<p className="max-w-lg text-(--foreground-muted) text-sm leading-relaxed">
+						Public is visible to everyone. Private is for you and the apps you
+						authorize.
+					</p>
 				</div>
-				<p className="max-w-lg text-(--foreground-muted) text-sm leading-relaxed">
-					Public is visible to everyone. Private is for you and the apps you
-					authorize.
-				</p>
-			</div>
+			)}
 			{declined && (
 				<output>
 					Private access was not authorized. Your visibility is unchanged.
@@ -301,7 +341,7 @@ export function PrivacySection({
 					</div>
 				) : (
 					<div aria-hidden="true" className="space-y-5">
-						{[0, 1, 2, 3].map((key) => (
+						{(listRkey ? [0] : [0, 1, 2, 3]).map((key) => (
 							<div
 								key={key}
 								className="h-24 animate-pulse rounded-2xl bg-(--border)"
@@ -329,64 +369,68 @@ export function PrivacySection({
 						</p>
 					)}
 
-					{data.scopes
-						.filter((scope) => scope.category !== "lists")
-						.map(scopeRow)}
-					<div className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5">
-						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-							<div className="space-y-1">
-								<h3 className="font-semibold">Lists</h3>
-								<p className="text-(--foreground-muted) text-xs">
-									Default for new Lists.
-								</p>
+					{listRkey
+						? scopes?.map(scopeRow)
+						: data.scopes
+								.filter((scope) => scope.category !== "lists")
+								.map(scopeRow)}
+					{!listRkey && (
+						<div className="space-y-3 rounded-2xl border border-(--border) bg-(--background-elevated) p-4 sm:p-5">
+							<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+								<div className="space-y-1">
+									<h3 className="font-semibold">Lists</h3>
+									<p className="text-(--foreground-muted) text-xs">
+										Default for new Lists.
+									</p>
+								</div>
+								<fieldset
+									aria-label="Lists visibility"
+									className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
+								>
+									{(["public", "private"] as const).map((visibility) => (
+										<Button
+											key={visibility}
+											variant="ghost"
+											className={
+												data.listsDefaultVisibility === visibility
+													? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
+													: "min-w-20 rounded-full border border-transparent"
+											}
+											aria-pressed={data.listsDefaultVisibility === visibility}
+											disabled={
+												pendingKey === "default" ||
+												pendingKey === "allLists" ||
+												(visibility === "private" &&
+													data.availability !== "available")
+											}
+											onClick={() => setListChoice(visibility)}
+										>
+											{visibility === "public" ? "Public" : "Private"}
+										</Button>
+									))}
+								</fieldset>
 							</div>
-							<fieldset
-								aria-label="Lists visibility"
-								className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
-							>
-								{(["public", "private"] as const).map((visibility) => (
-									<Button
-										key={visibility}
-										variant="ghost"
-										className={
-											data.listsDefaultVisibility === visibility
-												? "min-w-20 rounded-full border border-(--accent)/50 bg-(--background-elevated) shadow-sm"
-												: "min-w-20 rounded-full border border-transparent"
-										}
-										aria-pressed={data.listsDefaultVisibility === visibility}
-										disabled={
-											pendingKey === "default" ||
-											pendingKey === "allLists" ||
-											(visibility === "private" &&
-												data.availability !== "available")
-										}
-										onClick={() => setListChoice(visibility)}
-									>
-										{visibility === "public" ? "Public" : "Private"}
-									</Button>
-								))}
-							</fieldset>
-						</div>
-						{(pendingKey === "default" || pendingKey === "allLists") && (
-							<output>Updating Lists…</output>
-						)}
-						<div className="border-(--border) border-t pt-3">
-							<Button
-								className="-ml-3"
-								variant="ghost"
-								onClick={() => setManageLists(true)}
-							>
-								Manage individual Lists
-							</Button>
-							{data.scopes.some(
-								(scope) => scope.category === "lists" && scope.migration,
-							) && (
-								<Button variant="ghost" onClick={() => setShowProgress(true)}>
-									View List progress
-								</Button>
+							{(pendingKey === "default" || pendingKey === "allLists") && (
+								<output>Updating Lists…</output>
 							)}
+							<div className="border-(--border) border-t pt-3">
+								<Button
+									className="-ml-3"
+									variant="ghost"
+									onClick={() => setManageLists(true)}
+								>
+									Manage individual Lists
+								</Button>
+								{data.scopes.some(
+									(scope) => scope.category === "lists" && scope.migration,
+								) && (
+									<Button variant="ghost" onClick={() => setShowProgress(true)}>
+										View List progress
+									</Button>
+								)}
+							</div>
 						</div>
-					</div>
+					)}
 					{onboarding && (
 						<Button
 							disabled={
@@ -401,18 +445,38 @@ export function PrivacySection({
 					)}
 				</>
 			)}
-			{mutation.isError && <p className="mt-4 text-sm">{errorMessage}</p>}
+			<Dialog open={showError} onOpenChange={setShowError}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Could not change privacy</DialogTitle>
+						<DialogDescription>{errorMessage}</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button onClick={() => setShowError(false)}>OK</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 			<Dialog open={showProgress} onOpenChange={setShowProgress}>
 				<DialogContent className="max-h-[85dvh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>Privacy change progress</DialogTitle>
 						<DialogDescription>
-							You can close this dialog while your visibility changes continue.
+							{changing
+								? "You can close this dialog while your visibility changes continue."
+								: "Privacy changes complete."}
 						</DialogDescription>
 					</DialogHeader>
-					{data?.scopes.map(progressRow)}
-					{!data?.scopes.some((scope) => scope.migration) && (
-						<p>Privacy changes complete.</p>
+					{mutation.isPending && (
+						<output className="block space-y-3">
+							<p>Checking your privacy change…</p>
+							<div className="h-20 animate-pulse rounded-xl bg-(--background-subtle)" />
+						</output>
+					)}
+					{progressScopes.map(progressRow)}
+					{!changing && (
+						<DialogFooter>
+							<Button onClick={() => setShowProgress(false)}>Done</Button>
+						</DialogFooter>
 					)}
 				</DialogContent>
 			</Dialog>
@@ -427,10 +491,6 @@ export function PrivacySection({
 					{data?.scopes
 						.filter((scope) => scope.category === "lists")
 						.map(scopeRow)}
-					{mutation.isError &&
-						mutation.variables?.body.category === "lists" && (
-							<p>{errorMessage}</p>
-						)}
 					{!data?.scopes.some((scope) => scope.category === "lists") && (
 						<p>No Lists yet.</p>
 					)}

@@ -3,6 +3,8 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PrivacySection } from "./privacy-section";
 
+vi.mock("lucide-react-native", () => ({ X: () => null }));
+
 const mocks = vi.hoisted(() => ({
 	data: undefined as PrivacyStatusDto | undefined,
 	mutate: vi.fn(),
@@ -13,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 	mutationError: null as unknown,
 }));
 vi.mock("@opnshelf/api", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@opnshelf/api")>()),
 	getErrorMessage: (await importOriginal<typeof import("@opnshelf/api")>())
 		.getErrorMessage,
 	authControllerPermissions: vi.fn(async () => ({
@@ -43,6 +46,8 @@ vi.mock("react-native", async () => {
 	const { createElement } = await import("react");
 	return {
 		Platform: { OS: "ios" },
+		Pressable: (props: Record<string, unknown>) =>
+			createElement("pressable", props, props.children as never),
 		Modal: (props: Record<string, unknown>) =>
 			props.visible
 				? createElement("dialog", props, props.children as never)
@@ -193,7 +198,7 @@ describe("Privacy Alpha mobile", () => {
 				.find((action: { label: string }) => action.label === "Publish")
 				.onDismiss(),
 		);
-		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
 		expect(mocks.mutate).toHaveBeenCalledWith({
 			kind: "allLists",
 			body: {
@@ -259,8 +264,8 @@ describe("Privacy Alpha mobile", () => {
 			kind: "allLists",
 			body: { category: "lists", visibility: "private" },
 		});
-		// Bulk progress stays on this page, including after the server accepts migrations.
-		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		// Progress opens while acceptance checks are still pending.
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
 		if (!mocks.data) throw new Error("Missing status");
 		mocks.data = {
 			...mocks.data,
@@ -296,7 +301,9 @@ describe("Privacy Alpha mobile", () => {
 		).toHaveLength(0);
 		const dismiss = renderer.root.findByType("dialog").props.onDismiss;
 		act(() => {
-			button(renderer, "Done").props.onPress();
+			renderer.root
+				.find((node) => String(node.type) === "pressable")
+				.props.onPress();
 			dismiss();
 		});
 		act(() => button(renderer, "Manage individual Lists").props.onPress());
@@ -431,7 +438,8 @@ describe("Privacy Alpha mobile", () => {
 		expect(mocks.showDialog).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: "Could not change privacy",
-				description: "Another Watch operation is in progress. Try again.",
+				description:
+					"Your account is still finishing another change. Please wait a moment, then try again.",
 			}),
 		);
 		act(() => renderer.update(<PrivacySection />));
@@ -536,11 +544,20 @@ describe("Privacy Alpha mobile", () => {
 		);
 		mocks.data = {
 			...mocks.data,
-			scopes: mocks.data.scopes.map((scope) => ({ ...scope, migration: null })),
+			scopes: mocks.data.scopes.map((scope) => ({
+				...scope,
+				visibility: scope.migration?.target ?? scope.visibility,
+				migration: null,
+			})),
 		};
 		act(() => renderer.update(<PrivacySection />));
 		expect(JSON.stringify(renderer.toJSON())).toContain(
 			"Privacy changes complete.",
 		);
+		expect(JSON.stringify(renderer.toJSON())).toContain("2/2 records copied");
+		expect(JSON.stringify(renderer.toJSON())).not.toContain(
+			"You can close this dialog while",
+		);
+		expect(button(renderer, "Done")).toBeTruthy();
 	});
 });

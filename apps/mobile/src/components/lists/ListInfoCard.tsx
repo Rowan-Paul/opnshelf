@@ -1,5 +1,6 @@
 import type { ListWithItemsDto } from "@opnshelf/api";
 import { View } from "react-native";
+import { PrivacySection } from "@/components/settings/privacy-section";
 import { Text } from "@/components/ui/text";
 import { formatRelativeTime } from "@/lib/relative-time";
 
@@ -18,6 +19,9 @@ type ListInfoCardProps = Pick<
 	"description" | "total" | "updatedAt" | "watchedCount"
 > & {
 	creator?: string;
+	uri?: string;
+	rkey?: string;
+	isOwner?: boolean;
 	showProgress: boolean;
 };
 
@@ -28,6 +32,9 @@ export function ListInfoCard({
 	watchedCount,
 	creator,
 	showProgress,
+	uri,
+	rkey,
+	isOwner = false,
 }: ListInfoCardProps) {
 	const progressPct = total > 0 ? Math.round((watchedCount / total) * 100) : 0;
 
@@ -50,6 +57,13 @@ export function ListInfoCard({
 				</Text>
 			</View>
 
+			{isOwner && rkey ? (
+				<PrivacySection listRkey={rkey} />
+			) : (
+				<Text className="text-muted-foreground text-xs">
+					{uri?.includes("/space/") ? "Private" : "Public"}
+				</Text>
+			)}
 			{showProgress ? (
 				<View className="gap-1">
 					<View className="flex-row items-center justify-between">
