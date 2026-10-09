@@ -236,7 +236,6 @@ export function NotificationPreferences({
 						size="sm"
 						onPress={() => void enablePush()}
 						disabled={!Device.isDevice}
-						className="self-start"
 					/>
 				}
 				{pushError && (
@@ -244,7 +243,7 @@ export function NotificationPreferences({
 						{pushError}
 					</Text>
 				)}
-				{pushGranted && (
+				{pushGranted && settings.pushDeviceCount > 0 && (
 					<Button
 						label="Send test mobile notification"
 						size="sm"
@@ -402,7 +401,7 @@ export function NotificationPreferences({
 							disabled={!pushGranted || pendingKey === category.push}
 						/>
 						<Switch
-							value={settings[category.email]}
+							value={settings.emailVerified && settings[category.email]}
 							onValueChange={(checked) => void change(category.email, checked)}
 							disabled={
 								!settings.emailVerified || pendingKey === category.email
