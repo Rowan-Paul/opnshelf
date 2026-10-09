@@ -51,10 +51,9 @@ export default function AuthCompleteScreen() {
 		handled.current = true;
 		// The AT Store prompt navigates on its own after its grant, and stepping
 		// back here could pop the screen it just opened, so it keeps its route.
+		const reauthorization = consumeReauthorization();
 		const returnToCaller =
-			permission !== "atstore" &&
-			consumeReauthorization() &&
-			router.canGoBack();
+			reauthorization && permission !== "atstore" && router.canGoBack();
 
 		if (error) {
 			setMessage(authErrorMessage(error));

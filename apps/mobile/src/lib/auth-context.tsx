@@ -119,9 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const reauthorizing = useRef(false);
 	// A current-token 401 held back during re-authorization, settled when it ends.
 	const rejectedWhileReauthorizing = useRef<string | null>(null);
-	// Until when the auth/complete route may still claim the re-authorization.
-	// Android can deliver its duplicate redirect after the auth session settled.
-	const reauthorizationReturnUntil = useRef(0);
+	// Set by a signed-in user's flow for the auth/complete route to claim. It
+	// outlives the flow because Android can deliver its duplicate redirect after
+	// the auth session settled; the next flow or a cleared session resets it.
+	const reauthorizationReturn = useRef(false);
 
 	// Use queryKey + a manual queryFn (rather than spreading the generated
 	// `...authControllerMeOptions()`) to avoid a query-core type mismatch between
@@ -168,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [queryClient]);
 
 	const clearSession = useCallback(async () => {
+		reauthorizationReturn.current = false;
 		await saveSessionToken(null);
 		posthog?.reset();
 		await resetIdentityCache();
@@ -240,10 +242,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[queryClient, resetIdentityCache],
 	);
 
+	// A handoff from redemption through installing its session, so a settling
+	// re-authorization can wait for the new token rather than the code alone.
+	const installingHandoff = useRef<Promise<unknown> | null>(null);
 	const completeHandoff = useCallback(
 		async (code: string): Promise<UserDto | null> => {
-			const sessionId = await redeemHandoffCode(code);
-			return completeSession(sessionId);
+			const install = redeemHandoffCode(code).then(completeSession);
+			installingHandoff.current = install;
+			try {
+				return await install;
+			} finally {
+				if (installingHandoff.current === install)
+					installingHandoff.current = null;
+			}
 		},
 		[completeSession],
 	);
@@ -341,17 +352,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			// Snapshot first: settling compares against this rather than asking
 			// whether any token exists.
 			const tokenBefore = await loadSessionToken();
-			const reauthorization = tokenBefore !== null;
-			reauthorizing.current = reauthorization;
+			reauthorizing.current = tokenBefore !== null;
+			reauthorizationReturn.current = tokenBefore !== null;
 			rejectedWhileReauthorizing.current = null;
-			if (reauthorization)
-				reauthorizationReturnUntil.current = Number.POSITIVE_INFINITY;
 			try {
 				return await finishAuthFlow(authUrl, tokenBefore);
 			} finally {
+				// A deep-link handoff that began while settling may still be
+				// installing the new session; let it land before judging the old one.
+				await installingHandoff.current?.catch(() => undefined);
 				reauthorizing.current = false;
-				if (reauthorization && reauthorizationReturnUntil.current > 0)
-					reauthorizationReturnUntil.current = Date.now() + SETTLE_TIMEOUT_MS;
 				// Cancelled or failed without replacing the token that was rejected:
 				// that session really is gone.
 				const rejected = rejectedWhileReauthorizing.current;
@@ -363,8 +373,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	);
 
 	const consumeReauthorization = useCallback(() => {
-		const pending = reauthorizationReturnUntil.current > Date.now();
-		reauthorizationReturnUntil.current = 0;
+		const pending = reauthorizationReturn.current;
+		reauthorizationReturn.current = false;
 		return pending;
 	}, []);
 

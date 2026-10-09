@@ -694,6 +694,69 @@ describe("AuthProvider", () => {
 			harness.unmount();
 		});
 
+		it("waits for a deep-link handoff still installing before expiring", async () => {
+			// Android: the auth session settles while the route's exchange is still
+			// running. The held-back 401 must not log out the session it installs.
+			mocks.loadSessionToken.mockResolvedValue("old-session");
+			mocks.getSessionToken.mockReturnValue("old-session");
+			mocks.authControllerMe.mockResolvedValue({ data: testUser });
+			mocks.saveSessionToken.mockImplementation(async (token) => {
+				mocks.getSessionToken.mockReturnValue(token);
+			});
+			let finishExchange!: (sessionId: string) => void;
+			mocks.redeemHandoffCode.mockReturnValue(
+				new Promise((resolve) => {
+					finishExchange = resolve;
+				}),
+			);
+			const harness = await renderAuth();
+			const unauthorized = mocks.setOnUnauthorized.mock.calls.at(-1)?.[0];
+			let routeHandoff!: Promise<unknown>;
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				unauthorized("old-session");
+				routeHandoff = harness.auth.completeHandoff("handoff-code");
+				return { type: "dismiss" };
+			});
+			mocks.loadSessionToken
+				.mockResolvedValueOnce("old-session")
+				.mockResolvedValue("old-session");
+
+			let flow!: Promise<boolean>;
+			await act(async () => {
+				flow = harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			});
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 3200));
+			});
+			await act(async () => {
+				finishExchange("new-session");
+				await routeHandoff;
+				await flow;
+			});
+
+			expect(mocks.getSessionToken()).toBe("new-session");
+			expect(mocks.routerReplace).not.toHaveBeenCalled();
+			harness.unmount();
+		});
+
+		it("drops an unclaimed re-authorization when a new flow starts", async () => {
+			mocks.loadSessionToken.mockResolvedValueOnce("old-session");
+			mocks.getSessionToken.mockReturnValue("old-session");
+			mocks.authControllerMe.mockResolvedValue({ data: testUser });
+			const harness = await renderAuth();
+			await act(async () => {
+				await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			});
+
+			mocks.loadSessionToken.mockResolvedValue(null);
+			await act(async () => {
+				await harness.auth.login();
+			});
+
+			expect(harness.auth.consumeReauthorization()).toBe(false);
+			harness.unmount();
+		}, 10_000);
+
 		it("does not treat a signed-out login as a re-authorization", async () => {
 			let reauthorizing: boolean | undefined;
 			mocks.openAuthSessionAsync.mockImplementation(async () => {

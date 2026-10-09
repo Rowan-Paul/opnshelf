@@ -238,6 +238,8 @@ describe("the auth/complete deep link", () => {
 
 			expect(mocks.back).not.toHaveBeenCalled();
 			expect(mocks.replace).toHaveBeenCalledWith("/atstore-review");
+			// Still claimed, so it cannot leak into a later sign-in.
+			expect(mocks.consumeReauthorization).toHaveBeenCalledOnce();
 		});
 
 		it("falls back to the index gate when there is nothing to return to", async () => {
