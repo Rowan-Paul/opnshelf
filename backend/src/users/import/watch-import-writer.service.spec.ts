@@ -55,15 +55,17 @@ describe("WatchImportWriter", () => {
 			record: {},
 			collection: "xyz.opnshelf.episode",
 		});
-		(Agent as unknown as Mock).mockImplementation(() => ({
-			com: {
-				atproto: {
-					repo: {
-						applyWrites: vi.fn().mockResolvedValue({ data: {} }),
+		(Agent as unknown as Mock).mockImplementation(function () {
+			return {
+				com: {
+					atproto: {
+						repo: {
+							applyWrites: vi.fn().mockResolvedValue({ data: {} }),
+						},
 					},
 				},
-			},
-		}));
+			};
+		});
 	});
 
 	afterEach(() => {

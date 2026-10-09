@@ -7,9 +7,11 @@ const agentHarness = vi.hoisted(() => ({
 }));
 
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn(() => ({
-		com: { atproto: { repo: agentHarness } },
-	})),
+	Agent: vi.fn(function () {
+		return {
+			com: { atproto: { repo: agentHarness } },
+		};
+	}),
 }));
 
 vi.mock("@atproto/common", () => ({

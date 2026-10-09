@@ -652,18 +652,22 @@ export class AuthService {
 			return constraintFields.includes("handle");
 		}
 
-		// Prisma's JS driver adapters wrap the database cause one level deeper:
-		// meta.driverAdapterError.cause.constraint.fields. This is the production
-		// shape emitted by @prisma/adapter-pg for P2002 errors.
-		const adapterConstraintFields = (
+		// Prisma's JS driver adapters wrap the database cause one level deeper.
+		// This is the production shape emitted by @prisma/adapter-pg for P2002
+		// errors: meta.driverAdapterError.cause.constraint.fields before 7.10,
+		// and .index (the constraint name, e.g. "User_handle_key") since.
+		const adapterConstraint = (
 			meta as {
 				driverAdapterError?: {
-					cause?: { constraint?: { fields?: unknown } };
+					cause?: { constraint?: { fields?: unknown; index?: unknown } };
 				};
 			}
-		).driverAdapterError?.cause?.constraint?.fields;
-		return Array.isArray(adapterConstraintFields)
-			? adapterConstraintFields.includes("handle")
+		).driverAdapterError?.cause?.constraint;
+		if (typeof adapterConstraint?.index === "string") {
+			return adapterConstraint.index.toLowerCase().includes("handle");
+		}
+		return Array.isArray(adapterConstraint?.fields)
+			? adapterConstraint.fields.includes("handle")
 			: false;
 	}
 

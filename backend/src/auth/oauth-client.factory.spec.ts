@@ -6,14 +6,16 @@ import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing OAuthClientFactory
 vi.mock("../prisma/prisma.service", () => ({
-	PrismaService: vi.fn().mockImplementation(() => ({
-		authState: {
-			findUnique: vi.fn(),
-			upsert: vi.fn(),
-			delete: vi.fn(),
-			deleteMany: vi.fn(),
-		},
-	})),
+	PrismaService: vi.fn().mockImplementation(function () {
+		return {
+			authState: {
+				findUnique: vi.fn(),
+				upsert: vi.fn(),
+				delete: vi.fn(),
+				deleteMany: vi.fn(),
+			},
+		};
+	}),
 }));
 
 // Every `new NodeOAuthClient()` returns the same shared mock so the tests can
@@ -24,7 +26,9 @@ const sharedOAuthClient = vi.hoisted(() => ({
 	restore: vi.fn(),
 }));
 vi.mock("@atproto/oauth-client-node", () => ({
-	NodeOAuthClient: vi.fn().mockImplementation(() => sharedOAuthClient),
+	NodeOAuthClient: vi.fn().mockImplementation(function () {
+		return sharedOAuthClient;
+	}),
 	// Vitest throws on undefined named exports (Jest returned undefined);
 	// oauth-client.factory imports this at module load.
 	requestLocalLock: vi.fn(),

@@ -26,12 +26,16 @@ const mockTapInstance = {
 };
 
 vi.mock("@atproto/tap", () => ({
-	Tap: vi.fn().mockImplementation(() => mockTapInstance),
-	SimpleIndexer: vi.fn().mockImplementation(() => ({
-		record: vi.fn(),
-		identity: vi.fn(),
-		error: vi.fn(),
-	})),
+	Tap: vi.fn().mockImplementation(function () {
+		return mockTapInstance;
+	}),
+	SimpleIndexer: vi.fn().mockImplementation(function () {
+		return {
+			record: vi.fn(),
+			identity: vi.fn(),
+			error: vi.fn(),
+		};
+	}),
 }));
 
 import type { IdentityEvent, RecordEvent } from "@atproto/tap";
@@ -273,13 +277,15 @@ describe("IngesterService", () => {
 			evt: IdentityEvent,
 		) => Promise<void>) => {
 			let identityHandler: ((evt: IdentityEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as Mock).mockImplementation(() => ({
-				record: vi.fn(),
-				identity: vi.fn((handler) => {
-					identityHandler = handler;
-				}),
-				error: vi.fn(),
-			}));
+			(SimpleIndexer as Mock).mockImplementation(function () {
+				return {
+					record: vi.fn(),
+					identity: vi.fn((handler) => {
+						identityHandler = handler;
+					}),
+					error: vi.fn(),
+				};
+			});
 			service.onModuleInit();
 			if (!identityHandler) {
 				throw new Error("identity handler was not registered");
@@ -368,13 +374,15 @@ describe("IngesterService", () => {
 	describe("record ingestion", () => {
 		const setupRecordHandler = (): ((evt: RecordEvent) => Promise<void>) => {
 			let recordHandler: ((evt: RecordEvent) => Promise<void>) | undefined;
-			(SimpleIndexer as Mock).mockImplementation(() => ({
-				record: vi.fn((handler) => {
-					recordHandler = handler;
-				}),
-				identity: vi.fn(),
-				error: vi.fn(),
-			}));
+			(SimpleIndexer as Mock).mockImplementation(function () {
+				return {
+					record: vi.fn((handler) => {
+						recordHandler = handler;
+					}),
+					identity: vi.fn(),
+					error: vi.fn(),
+				};
+			});
 			service.onModuleInit();
 			if (!recordHandler) {
 				throw new Error("record handler was not registered");

@@ -24,18 +24,20 @@ const mockApplyWrites = vi.fn();
 const mockPutRecord = vi.fn();
 const mockDeleteRecord = vi.fn();
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn().mockImplementation(() => ({
-		com: {
-			atproto: {
-				repo: {
-					putRecord: mockPutRecord,
-					getRecord: mockGetRecord,
-					applyWrites: mockApplyWrites,
-					deleteRecord: mockDeleteRecord,
+	Agent: vi.fn().mockImplementation(function () {
+		return {
+			com: {
+				atproto: {
+					repo: {
+						putRecord: mockPutRecord,
+						getRecord: mockGetRecord,
+						applyWrites: mockApplyWrites,
+						deleteRecord: mockDeleteRecord,
+					},
 				},
 			},
-		},
-	})),
+		};
+	}),
 }));
 
 // Mock lexicon module. Hoisted so it exists when the (also-hoisted) factory
