@@ -29,6 +29,10 @@ export function PrivacySection({
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
 	const [sheet, setSheet] = useState<"lists" | "progress" | null>(null);
+	const currentSheet = useRef(sheet);
+	useEffect(() => {
+		currentSheet.current = sheet;
+	}, [sheet]);
 	// A hidden iOS sheet remains presented until its native dismissal completes.
 	const sheetPresented = useRef(false);
 	const setManageLists = useCallback((visible: boolean) => {
@@ -82,12 +86,12 @@ export function PrivacySection({
 	);
 	const shownMigrations = useRef(new Set<string>());
 	const openProgress = useCallback(() => {
-		if (sheet === "progress") return;
+		if (currentSheet.current === "progress") return;
 		afterClosingSheet(() => {
 			sheetPresented.current = true;
 			setSheet("progress");
 		});
-	}, [afterClosingSheet, sheet]);
+	}, [afterClosingSheet]);
 	useEffect(() => {
 		const migrations =
 			scopes?.flatMap((scope) =>

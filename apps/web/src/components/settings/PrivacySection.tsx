@@ -139,6 +139,8 @@ export function PrivacySection({
 			migrations.some((id) => !shownMigrations.current.has(id))
 		) {
 			setManageLists(false);
+			setListChoice(null);
+			setConfirmation(null);
 			setShowProgress(true);
 		}
 		for (const id of migrations) shownMigrations.current.add(id);

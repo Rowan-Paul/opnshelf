@@ -275,6 +275,42 @@ describe("Privacy settings", () => {
 		).toBeDefined();
 	});
 
+	it.each([
+		"choice",
+		"confirmation",
+	])("closes the %s dialog when an external migration starts", (stage) => {
+		const { rerender } = render(<PrivacySection />);
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Lists visibility" })).getByRole(
+				"button",
+				{ name: "Public" },
+			),
+		);
+		if (stage === "confirmation") {
+			fireEvent.click(screen.getByRole("button", { name: "All Lists" }));
+		}
+		mocks.data = {
+			...mocks.data,
+			scopes: mocks.data.scopes.map((scope) => ({
+				...scope,
+				migration: {
+					id: `external-${scope.category}`,
+					target: "private",
+					status: "queued",
+					copied: 0,
+					total: 2,
+					error: null,
+				},
+			})),
+		};
+		rerender(<PrivacySection />);
+		expect(screen.getAllByRole("dialog")).toHaveLength(1);
+		expect(
+			screen.getByRole("dialog", { name: "Privacy change progress" }),
+		).toBeDefined();
+		expect(mocks.mutate).not.toHaveBeenCalled();
+	});
+
 	it("cancels a Lists choice without writing", () => {
 		render(<PrivacySection />);
 		fireEvent.click(
