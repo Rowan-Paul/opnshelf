@@ -52,6 +52,13 @@ interface AuthContextType {
 	/** Continue an authorization request already created by the backend. */
 	runAuthorizationUrl: (authorizationUrl: string) => Promise<boolean>;
 	/**
+	 * True while a signed-in user re-authorizes in the in-app auth session (a
+	 * permission change such as Private access). The screen that started it is
+	 * still underneath, so the `auth/complete` route returns to it instead of
+	 * restarting navigation from the index gate.
+	 */
+	isReauthorizing: () => boolean;
+	/**
 	 * Persist a session id returned by the OAuth flow and fetch the user. Used by
 	 * the in-app auth session result and by the `auth/complete` deep-link route
 	 * (Android sometimes delivers the redirect there instead of resolving the
@@ -108,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [hasSessionToken, setHasSessionToken] = useState(false);
 	const isExpiringSession = useRef(false);
+	const reauthorizing = useRef(false);
 
 	// Use queryKey + a manual queryFn (rather than spreading the generated
 	// `...authControllerMeOptions()`) to avoid a query-core type mismatch between
@@ -164,9 +172,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// the session and route to login with a reason so the screen can explain it.
 	// Guests have no session to expire — a stray 401 from an auth-only endpoint
 	// must not bounce them to login, so bail when there's no token.
+	// A permission change revokes the old session the moment its callback runs,
+	// before the app has the new one. A 401 for that old token, or any 401 while
+	// the re-authorization is still settling, is not an expired session.
 	useEffect(() => {
-		setOnUnauthorized(() => {
-			if (!getSessionToken() || isExpiringSession.current) return;
+		setOnUnauthorized((requestToken) => {
+			const token = getSessionToken();
+			if (!token || isExpiringSession.current) return;
+			if (reauthorizing.current) return;
+			if (requestToken && requestToken !== token) return;
 			isExpiringSession.current = true;
 			void clearSession().then(
 				() => {
@@ -264,11 +278,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	 * means "not completed *here*" becomes a wrong error message - which is
 	 * what it did on Android, at three separate call sites.
 	 */
-	const runAuthFlow = useCallback(
-		async (authUrl: string) => {
-			// Snapshot first: settling compares against this rather than asking
-			// whether any token exists.
-			const tokenBefore = await loadSessionToken();
+	const finishAuthFlow = useCallback(
+		async (authUrl: string, tokenBefore: string | null) => {
 			const result = await WebBrowser.openAuthSessionAsync(
 				authUrl,
 				AUTH_REDIRECT_URL,
@@ -310,6 +321,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		},
 		[completeHandoff, completeSession, settleElsewhere],
 	);
+
+	const runAuthFlow = useCallback(
+		async (authUrl: string) => {
+			// Snapshot first: settling compares against this rather than asking
+			// whether any token exists.
+			const tokenBefore = await loadSessionToken();
+			reauthorizing.current = tokenBefore !== null;
+			try {
+				return await finishAuthFlow(authUrl, tokenBefore);
+			} finally {
+				reauthorizing.current = false;
+			}
+		},
+		[finishAuthFlow],
+	);
+
+	const isReauthorizing = useCallback(() => reauthorizing.current, []);
 
 	const login = useCallback(
 		async (handle?: string) => {
@@ -408,6 +436,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		completeSession,
 		completeHandoff,
 		runAuthorizationUrl: runAuthFlow,
+		isReauthorizing,
 		register,
 		signOut,
 	};

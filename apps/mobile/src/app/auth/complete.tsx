@@ -14,6 +14,11 @@ import { NoPendingHandoffError } from "@/lib/handoff-error";
  * screen never renders. On Android the OS often delivers the redirect here as a
  * fresh intent instead, so this route redeems the handoff code (ADR 0026) and
  * routes the user on — without it expo-router shows "Unmatched Route".
+ *
+ * A signed-in user re-authorizing (a permission change) started from a screen
+ * that is still underneath, mid-flow. Replacing to the index gate would mount a
+ * fresh copy of that screen and lose its state (onboarding restarted at
+ * Welcome), so this route steps back to it instead.
  */
 type CompleteParams = {
 	/** Single-use Mobile Handoff Code, redeemed with the stored verifier. */
@@ -31,7 +36,7 @@ function isMaintenanceError(error: unknown): boolean {
 }
 
 export default function AuthCompleteScreen() {
-	const { completeSession, completeHandoff } = useAuth();
+	const { completeSession, completeHandoff, isReauthorizing } = useAuth();
 	const { code, session, error, permission } =
 		useLocalSearchParams<CompleteParams>();
 	const [message, setMessage] = useState<string | null>(null);
@@ -43,11 +48,17 @@ export default function AuthCompleteScreen() {
 			return;
 		}
 		handled.current = true;
+		// Read once: the auth session clears it as soon as this route's exchange
+		// lands the new session.
+		const returnToCaller = isReauthorizing() && router.canGoBack();
 
 		if (error) {
 			setMessage(authErrorMessage(error));
 			const timer = setTimeout(
-				() => router.replace(permission === "atstore" ? "/" : "/login"),
+				() =>
+					returnToCaller
+						? router.back()
+						: router.replace(permission === "atstore" ? "/" : "/login"),
 				1500,
 			);
 			return () => clearTimeout(timer);
@@ -64,6 +75,10 @@ export default function AuthCompleteScreen() {
 
 		complete
 			.then(() => {
+				if (returnToCaller) {
+					router.back();
+					return;
+				}
 				// Hand off to the index gate, which routes to verify-email /
 				// onboarding / tabs based on the freshly fetched user.
 				router.replace(
@@ -77,7 +92,8 @@ export default function AuthCompleteScreen() {
 				// login screen. Hand to the index gate, which sends them to login
 				// only if no session actually landed.
 				if (err instanceof NoPendingHandoffError) {
-					router.replace("/" as Href);
+					if (returnToCaller) router.back();
+					else router.replace("/" as Href);
 					return;
 				}
 				console.error("Failed to complete auth:", err);
@@ -88,7 +104,15 @@ export default function AuthCompleteScreen() {
 				);
 				setTimeout(() => router.replace("/login"), 1500);
 			});
-	}, [completeHandoff, completeSession, code, session, error, permission]);
+	}, [
+		completeHandoff,
+		completeSession,
+		isReauthorizing,
+		code,
+		session,
+		error,
+		permission,
+	]);
 
 	return (
 		<Screen>

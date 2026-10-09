@@ -13,13 +13,20 @@ import { NoPendingHandoffError } from "@/lib/handoff-error";
 
 const mocks = vi.hoisted(() => ({
 	replace: vi.fn(),
+	back: vi.fn(),
+	canGoBack: vi.fn(),
+	isReauthorizing: vi.fn(),
 	completeHandoff: vi.fn(),
 	completeSession: vi.fn(),
 	params: {} as Record<string, string | undefined>,
 }));
 
 vi.mock("expo-router", () => ({
-	router: { replace: mocks.replace },
+	router: {
+		replace: mocks.replace,
+		back: mocks.back,
+		canGoBack: mocks.canGoBack,
+	},
 	useLocalSearchParams: () => mocks.params,
 }));
 
@@ -53,6 +60,7 @@ vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({
 		completeHandoff: mocks.completeHandoff,
 		completeSession: mocks.completeSession,
+		isReauthorizing: mocks.isReauthorizing,
 	}),
 }));
 
@@ -95,6 +103,8 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	vi.useFakeTimers();
 	mocks.params = {};
+	mocks.isReauthorizing.mockReturnValue(false);
+	mocks.canGoBack.mockReturnValue(true);
 	mocks.completeHandoff.mockResolvedValue({ did: "did:plc:abc" });
 	mocks.completeSession.mockResolvedValue({ did: "did:plc:abc" });
 });
@@ -178,6 +188,55 @@ describe("the auth/complete deep link", () => {
 		await settle();
 
 		expect(mocks.replace).toHaveBeenCalledWith("/login");
+	});
+
+	describe("when a signed-in user is re-authorizing", () => {
+		// Android delivers the permission-change redirect here as well. The
+		// screen that asked (onboarding's privacy step) is still underneath;
+		// replacing to the index gate restarted onboarding at Welcome.
+		beforeEach(() => {
+			mocks.isReauthorizing.mockReturnValue(true);
+		});
+
+		it("returns to the screen that started it", async () => {
+			mocks.params = { code: "handoff-code" };
+			renderScreen();
+			await settle();
+
+			expect(mocks.completeHandoff).toHaveBeenCalledWith("handoff-code");
+			expect(mocks.back).toHaveBeenCalledOnce();
+			expect(mocks.replace).not.toHaveBeenCalled();
+		});
+
+		it("returns there when the auth session redeemed the code first", async () => {
+			mocks.completeHandoff.mockRejectedValue(
+				new NoPendingHandoffError("No pending sign-in to complete"),
+			);
+			mocks.params = { code: "handoff-code" };
+			renderScreen();
+			await settle();
+
+			expect(mocks.back).toHaveBeenCalledOnce();
+			expect(mocks.replace).not.toHaveBeenCalled();
+		});
+
+		it("returns there after a declined permission instead of the login screen", async () => {
+			mocks.params = { error: "permission_declined" };
+			renderScreen();
+			await settle();
+
+			expect(mocks.back).toHaveBeenCalledOnce();
+			expect(mocks.replace).not.toHaveBeenCalled();
+		});
+
+		it("falls back to the index gate when there is nothing to return to", async () => {
+			mocks.canGoBack.mockReturnValue(false);
+			mocks.params = { code: "handoff-code" };
+			renderScreen();
+			await settle();
+
+			expect(mocks.replace).toHaveBeenCalledWith("/");
+		});
 	});
 
 	describe("error codes", () => {

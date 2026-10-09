@@ -586,6 +586,82 @@ describe("AuthProvider", () => {
 		harness.unmount();
 	});
 
+	describe("401s around a permission change", () => {
+		// The callback revokes the old session before the app holds the new one,
+		// so requests in between 401. Logging out there sent onboarding back to
+		// the login screen and then restarted it at Welcome.
+		it("ignores a 401 for a token that has since been replaced", async () => {
+			mocks.loadSessionToken.mockResolvedValue("new-session");
+			mocks.getSessionToken.mockReturnValue("new-session");
+			mocks.authControllerMe.mockResolvedValue({ data: testUser });
+			const harness = await renderAuth();
+			const unauthorized = mocks.setOnUnauthorized.mock.calls.at(-1)?.[0];
+
+			await act(async () => {
+				unauthorized("old-session");
+			});
+
+			expect(mocks.saveSessionToken).not.toHaveBeenCalled();
+			expect(mocks.routerReplace).not.toHaveBeenCalled();
+			harness.unmount();
+		});
+
+		it("ignores a 401 while a signed-in user is re-authorizing", async () => {
+			mocks.loadSessionToken.mockResolvedValue("old-session");
+			mocks.getSessionToken.mockReturnValue("old-session");
+			mocks.authControllerMe.mockResolvedValue({ data: testUser });
+			let finishBrowser!: (result: { type: string; url?: string }) => void;
+			mocks.openAuthSessionAsync.mockReturnValue(
+				new Promise((resolve) => {
+					finishBrowser = resolve;
+				}),
+			);
+			const harness = await renderAuth();
+			const unauthorized = mocks.setOnUnauthorized.mock.calls.at(-1)?.[0];
+
+			let flow!: Promise<boolean>;
+			await act(async () => {
+				flow = harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			});
+			await vi.waitFor(() =>
+				expect(mocks.openAuthSessionAsync).toHaveBeenCalled(),
+			);
+			expect(harness.auth.isReauthorizing()).toBe(true);
+			await act(async () => {
+				unauthorized("old-session");
+			});
+			expect(mocks.routerReplace).not.toHaveBeenCalled();
+
+			mocks.redeemHandoffCode.mockResolvedValue("new-session");
+			await act(async () => {
+				finishBrowser({
+					type: "success",
+					url: "opnshelf://auth/complete?code=handoff-code",
+				});
+				await flow;
+			});
+			expect(harness.auth.isReauthorizing()).toBe(false);
+			expect(mocks.routerReplace).not.toHaveBeenCalled();
+			harness.unmount();
+		});
+
+		it("does not treat a signed-out login as a re-authorization", async () => {
+			let reauthorizing: boolean | undefined;
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				reauthorizing = harness.auth.isReauthorizing();
+				return { type: "cancel" };
+			});
+			const harness = await renderAuth();
+
+			await act(async () => {
+				await harness.auth.login();
+			});
+
+			expect(reauthorizing).toBe(false);
+			harness.unmount();
+		});
+	});
+
 	it("clears account A before completing account B and keeps B's me data", async () => {
 		const harness = await renderAuth();
 		seedIdentityCaches(harness.queryClient);
