@@ -30,6 +30,7 @@ import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
 import {
 	StreamingServicePicker,
+	sameServices,
 	toggleService,
 } from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
@@ -513,6 +514,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	});
 
 	const handleContinue = () => {
+		// Nothing to save when the selection is untouched, and never save over
+		// services that failed to load: that would replace them with an empty list.
+		if (!settings || sameServices(selected, settings.streamingServiceIds)) {
+			onNext();
+			return;
+		}
 		updateSettings.mutate(
 			{ body: { streamingServiceIds: selected } },
 			{ onSuccess: onNext },

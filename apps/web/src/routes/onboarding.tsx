@@ -29,6 +29,7 @@ import { FollowSuggestionsStep } from "#/components/onboarding/FollowSuggestions
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
 import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
 import StreamingServicePicker, {
+	sameServices,
 	toggleService,
 } from "#/components/StreamingServicePicker";
 import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
@@ -695,6 +696,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	});
 
 	function handleSave() {
+		// Nothing to save when the selection is untouched, and never save over
+		// services that failed to load: that would replace them with an empty list.
+		if (!settings || sameServices(selected, settings.streamingServiceIds)) {
+			onNext();
+			return;
+		}
 		updateSettingsMutation.mutate(
 			{ body: { streamingServiceIds: selected } },
 			{ onSuccess: onNext },
