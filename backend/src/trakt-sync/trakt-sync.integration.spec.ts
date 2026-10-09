@@ -288,6 +288,22 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			"opnshelf://trakt-sync?connection=failed",
 		);
 	});
+	it("returns to Onboarding when authorization starts there", async () => {
+		const web = await service.authorize(userDid, "web", "onboarding");
+		await expect(
+			service.callback(
+				new URL(web.url).searchParams.get("state") ?? "",
+				undefined,
+			),
+		).resolves.toBe("http://localhost:3000/onboarding?connection=cancelled");
+		const mobile = await service.authorize(userDid, "mobile", "onboarding");
+		await expect(
+			service.callback(
+				new URL(mobile.url).searchParams.get("state") ?? "",
+				undefined,
+			),
+		).resolves.toBe("opnshelf://onboarding?connection=cancelled");
+	});
 	it("disconnects for account deletion even when remote revocation fails", async () => {
 		remoteApi.revoke.mockRejectedValueOnce(new Error("Trakt unavailable"));
 		await service.disconnectForDeletion(userDid);

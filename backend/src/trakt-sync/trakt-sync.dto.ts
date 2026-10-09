@@ -28,6 +28,14 @@ export class SyncConnectDto {
 	@ApiProperty({ enum: ["web", "mobile"] }) @IsIn(["web", "mobile"]) platform:
 		| "web"
 		| "mobile";
+	@ApiPropertyOptional({
+		enum: ["onboarding"],
+		description:
+			"Return to Onboarding after Trakt authorization instead of Trakt Sync.",
+	})
+	@IsOptional()
+	@IsIn(["onboarding"])
+	returnTo?: "onboarding";
 }
 export class SyncAuthorizeDto {
 	@ApiProperty() url: string;

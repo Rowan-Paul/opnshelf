@@ -178,7 +178,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			importStatus: job?.status,
 		};
 	}
-	async authorize(userDid: string, platform: "web" | "mobile") {
+	async authorize(
+		userDid: string,
+		platform: "web" | "mobile",
+		returnTo?: "onboarding",
+	) {
 		if (!this.configured)
 			throw new BadRequestException(
 				"Trakt Sync is not configured on this server.",
@@ -188,7 +192,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		await this.prisma.authState.create({
 			data: {
 				key: `trakt:${state}`,
-				stateData: this.crypt(JSON.stringify({ userDid, verifier, platform })),
+				stateData: this.crypt(
+					JSON.stringify({ userDid, verifier, platform, returnTo }),
+				),
 				expiresAt: new Date(Date.now() + 10 * 60_000),
 			},
 		});
@@ -214,11 +220,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				userDid: string;
 				verifier: string;
 				platform: string;
+				returnTo?: string;
 			};
+			const path = data.returnTo === "onboarding" ? "onboarding" : "trakt-sync";
 			redirect =
 				data.platform === "mobile"
-					? "opnshelf://trakt-sync"
-					: `${this.config.FRONTEND_URL}/trakt-sync`;
+					? `opnshelf://${path}`
+					: `${this.config.FRONTEND_URL}/${path}`;
 			if (!saved || saved.expiresAt <= new Date())
 				throw new BadRequestException(
 					"Trakt authorization expired. Start again.",

@@ -268,12 +268,16 @@ export function TraktSyncManager({
 	);
 }
 
-function SyncSettings({
+export function SyncSettings({
 	status,
 	onSaved,
+	className = card,
+	showHeading = true,
 }: {
 	status: SyncStatusDto;
 	onSaved: () => unknown;
+	className?: string;
+	showHeading?: boolean;
 }) {
 	const [settings, setSettings] = useState<SyncSettingsDto>(() =>
 		traktSettings(status),
@@ -290,10 +294,12 @@ function SyncSettings({
 		status.importStatus &&
 		!["completed", "continued_in_sync"].includes(status.importStatus);
 	return (
-		<View className={card}>
-			<Text className="font-semibold text-foreground text-xl">
-				What to keep in sync
-			</Text>
+		<View className={className}>
+			{showHeading ? (
+				<Text className="font-semibold text-foreground text-xl">
+					What to keep in sync
+				</Text>
+			) : null}
 			<Toggle
 				label="Watch history"
 				value={settings.watches}

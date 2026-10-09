@@ -6,7 +6,7 @@ The targeted confirmation routes follow the [official Trakt sync contract](https
 
 ## Server configuration and rollout
 
-Trakt Sync uses the existing `TRAKT_API_KEY` as the OAuth client ID, `BACKEND_PUBLIC_URL` to construct `/trakt-sync/callback`, `FRONTEND_URL` for the Web return route, and `PROVIDER_STATE_SECRET` to encrypt access/refresh tokens and single-use OAuth state. Register the exact callback URL with the Trakt application before enabling the UI against a deployed backend. Mobile returns to `opnshelf://trakt-sync`. No Trakt password is collected.
+Trakt Sync uses the existing `TRAKT_API_KEY` as the OAuth client ID, `BACKEND_PUBLIC_URL` to construct `/trakt-sync/callback`, `FRONTEND_URL` for the Web return route, and `PROVIDER_STATE_SECRET` to encrypt access/refresh tokens and single-use OAuth state. Register the exact callback URL with the Trakt application before enabling the UI against a deployed backend. Mobile returns to `opnshelf://trakt-sync`. A connection started from Onboarding (`returnTo: "onboarding"`) returns to `/onboarding` on Web and `opnshelf://onboarding` on Mobile instead. No Trakt password is collected.
 
 Keep `PROVIDER_STATE_SECRET` stable: changing it makes retained credentials unreadable and requires reconnection. Do not log OAuth codes, tokens, authorization URLs with state, or encrypted credential values. OAuth state expires after ten minutes. Tokens and sync links are server-owned state, never public PDS records.
 
