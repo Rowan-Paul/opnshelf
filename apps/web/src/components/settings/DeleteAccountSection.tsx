@@ -65,7 +65,7 @@ export function DeleteAccountSection() {
 		<>
 			<section
 				id="danger-zone"
-				className="scroll-mt-24 rounded-xl border border-red-200 bg-red-50 p-5 sm:p-6 dark:border-red-900 dark:bg-red-950/30"
+				className="mt-6 scroll-mt-24 rounded-xl border border-red-200 bg-red-50 p-5 sm:p-6 dark:border-red-900 dark:bg-red-950/30"
 			>
 				<h2 className="mb-1 font-semibold text-lg text-red-900 dark:text-red-100">
 					Danger Zone
