@@ -822,10 +822,8 @@ function TraktStep({
 		/>
 	);
 
-	if (!status.data) {
-		return status.isError ? (
-			<div className="card p-6">{importPanel}</div>
-		) : (
+	if (status.isPending) {
+		return (
 			<output
 				aria-label="Loading Trakt"
 				className="card block h-96 animate-pulse"
@@ -834,11 +832,9 @@ function TraktStep({
 	}
 
 	const data = status.data;
-	const connected =
-		data.status !== "disconnected" && data.status !== "reconnect";
-
-	// Trakt Sync is not set up on this server: offer the Import on its own.
-	if (!data.configured) {
+	// Trakt Sync is unavailable (not set up, or its status failed to load):
+	// offer the Import on its own.
+	if (!data?.configured) {
 		return (
 			<div className="card p-6">
 				<TraktImport
@@ -851,6 +847,9 @@ function TraktStep({
 			</div>
 		);
 	}
+
+	const connected =
+		data.status !== "disconnected" && data.status !== "reconnect";
 
 	if (connected) {
 		const enabled = data.status === "active" || data.status === "preparing";
