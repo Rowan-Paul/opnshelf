@@ -398,6 +398,7 @@ export function PrivacySection({
 					<Pressable
 						accessibilityRole="button"
 						accessibilityLabel="Retry loading List visibility"
+						className="min-h-11 min-w-11 justify-center"
 						disabled={!query.isError}
 						onPress={() => void query.refetch()}
 					>
@@ -413,8 +414,7 @@ export function PrivacySection({
 					<Pressable
 						accessibilityRole="button"
 						accessibilityLabel={`List visibility: ${scopes?.[0]?.visibility === "private" ? "Private" : "Public"}. Change visibility`}
-						hitSlop={12}
-						className="flex-row items-center gap-1.5"
+						className="min-h-11 min-w-11 flex-row items-center gap-1.5"
 						onPress={() => (changing ? openProgress() : chooseListVisibility())}
 					>
 						{scopes?.[0]?.visibility === "private" ? (
