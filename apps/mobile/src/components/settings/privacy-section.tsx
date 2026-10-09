@@ -4,13 +4,24 @@ import {
 	type PrivacyAction,
 	type PrivacyScopeDto,
 	privacyErrorMessage,
+	privacyProgressTitle,
 	usePrivacy,
 	usePrivacyProgress,
 } from "@opnshelf/api";
-import { ChevronDown, Globe, Lock, X } from "lucide-react-native";
+import {
+	Check,
+	ChevronDown,
+	CircleAlert,
+	Globe,
+	Lock,
+	X,
+} from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+	SafeAreaView,
+	useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
@@ -28,6 +39,7 @@ export function PrivacySection({
 }) {
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
+	const insets = useSafeAreaInsets();
 	const [sheet, setSheet] = useState<"lists" | "progress" | null>(null);
 	const currentSheet = useRef(sheet);
 	useEffect(() => {
@@ -314,56 +326,91 @@ export function PrivacySection({
 		if (!moving) return null;
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
 		const label = scope.category === "watches" ? "Shelf" : scope.label;
+		const active = ["queued", "running"].includes(moving.status);
+		const done = moving.status === "completed";
+		const failed = !active && !done;
+		const fraction =
+			done || (moving.total != null && moving.copied >= moving.total)
+				? 1
+				: moving.total
+					? moving.copied / moving.total
+					: 0;
+		const count = `${moving.copied}/${moving.total ?? "…"}`;
 		return (
-			<View key={key} className="gap-2 border-border border-b pb-4">
-				<Text className="font-semibold text-foreground">{label}</Text>
-				{moving && (
-					<View className="gap-2">
-						<Text>
-							{moving.status === "completed" ? "Changed to" : "Changing to"}{" "}
-							{moving.target === "private" ? "Private" : "Public"} ·{" "}
-							{moving.total == null
-								? `${moving.copied}/… records copied · Counting records…`
-								: `${moving.copied}/${moving.total} records copied`}
-							{moving.status !== "completed" &&
-								moving.total != null &&
-								moving.copied >= moving.total &&
-								["queued", "running"].includes(moving.status) &&
-								" · Finishing…"}
+			<View
+				key={key}
+				className="gap-2"
+				accessible
+				accessibilityLabel={`${label}: ${
+					done
+						? `${moving.target === "private" ? "Private" : "Public"}, ${count} records copied`
+						: failed
+							? `stopped at ${count} records`
+							: `${count} records copied`
+				}`}
+			>
+				<View className="flex-row items-center justify-between gap-3">
+					<Text
+						numberOfLines={1}
+						className="flex-1 font-medium text-foreground text-sm"
+					>
+						{label}
+					</Text>
+					{done ? (
+						<Check size={16} color="#16a34a" />
+					) : failed ? (
+						<CircleAlert size={16} color="#ef4444" />
+					) : (
+						<Text className="text-muted-foreground text-xs tabular-nums">
+							{moving.total != null && moving.copied >= moving.total
+								? "Finishing…"
+								: moving.status === "queued" && moving.copied === 0
+									? "Waiting"
+									: count}
 						</Text>
-						{moving.status !== "completed" && (
-							<Text className="text-muted-foreground text-sm">
-								{scope.category === "lists" &&
-									"Records include the List details and its items. "}
-								Hidden from others while moving. Edits to {label} pause; you can
-								leave this page.
-							</Text>
-						)}
-						{moving.error && (
-							<Text accessibilityRole="alert">{moving.error}</Text>
-						)}
-						{!["queued", "running", "completed"].includes(moving.status) && (
-							<Button
-								variant="secondary"
-								disabled={pendingKey === key}
-								onPress={() =>
-									mutation.mutate({
-										kind: "retry",
-										body: {
-											category: scope.category,
-											listRkey: scope.listRkey ?? undefined,
-											visibility: moving.target,
-										},
-									})
-								}
-								label="Resume"
-							/>
-						)}
+					)}
+				</View>
+				<View className="h-1.5 overflow-hidden rounded-full bg-background-strong">
+					<View
+						className={`h-full rounded-full ${
+							done ? "bg-green-500" : failed ? "bg-destructive" : "bg-primary"
+						}`}
+						style={{ width: `${Math.round(fraction * 100)}%` }}
+					/>
+				</View>
+				{failed && (
+					<View className="flex-row items-center justify-between gap-3 rounded-xl bg-destructive/10 p-3">
+						<Text
+							accessibilityRole="alert"
+							className="flex-1 text-foreground text-xs"
+						>
+							{moving.error ?? `Stopped at ${count} records.`}
+						</Text>
+						<Button
+							variant="secondary"
+							size="sm"
+							disabled={pendingKey === key}
+							onPress={() =>
+								mutation.mutate({
+									kind: "retry",
+									body: {
+										category: scope.category,
+										listRkey: scope.listRkey ?? undefined,
+										visibility: moving.target,
+									},
+								})
+							}
+							label="Resume"
+						/>
 					</View>
 				)}
 			</View>
 		);
 	};
+	const { target, title: progressTitle } = privacyProgressTitle(
+		progressScopes,
+		changing,
+	);
 
 	return (
 		<View
@@ -548,21 +595,21 @@ export function PrivacySection({
 			)}
 
 			<Modal
-				visible={sheet !== null}
+				visible={sheet === "lists"}
 				animationType="slide"
 				presentationStyle="pageSheet"
 				onRequestClose={() => setManageLists(false)}
 				onDismiss={sheetDidDismiss}
 			>
 				<View className="flex-1 bg-background">
-					<SafeAreaView style={{ flex: 1 }} edges={["bottom"]}>
+					<SafeAreaView
+						style={{ flex: 1 }}
+						// The page sheet is full screen on Android, so it needs the top inset too.
+						edges={Platform.OS === "ios" ? ["bottom"] : ["top", "bottom"]}
+					>
 						<View className="flex-row items-center justify-between p-5">
 							<Text className="flex-1 font-semibold text-xl">
-								{sheet === "progress"
-									? "Privacy change progress"
-									: listRkey
-										? "List visibility"
-										: "Your Lists"}
+								{listRkey ? "List visibility" : "Your Lists"}
 							</Text>
 							<Pressable
 								accessibilityRole="button"
@@ -577,45 +624,93 @@ export function PrivacySection({
 							style={{ flex: 1 }}
 							contentContainerStyle={{ padding: 20, gap: 12 }}
 						>
-							{sheet === "progress" ? (
-								<>
-									{changing && (
-										<Text className="text-muted-foreground">
-											You can close this dialog while your visibility changes
-											continue.
-										</Text>
-									)}
-									{mutation.isPending && (
-										<View className="gap-3" accessibilityLiveRegion="polite">
-											<Text>Checking your privacy change…</Text>
-											<View className="h-20 rounded-xl bg-background-subtle" />
-										</View>
-									)}
-									{progressScopes.map(progressRow)}
-									{!changing && <Text>Privacy changes complete.</Text>}
-								</>
-							) : (
-								<>
-									<Text className="text-muted-foreground">
-										{listRkey
-											? "Public is visible to everyone. Private is for you and the apps you authorize."
-											: "Choose visibility for each List."}
-									</Text>
-									{scopes
-										?.filter((scope) => scope.category === "lists")
-										.map(row)}
-									{!data?.scopes.some(
-										(scope) => scope.category === "lists",
-									) && <Text>No Lists yet.</Text>}
-								</>
+							<Text className="text-muted-foreground">
+								{listRkey
+									? "Public is visible to everyone. Private is for you and the apps you authorize."
+									: "Choose visibility for each List."}
+							</Text>
+							{scopes?.filter((scope) => scope.category === "lists").map(row)}
+							{!data?.scopes.some((scope) => scope.category === "lists") && (
+								<Text>No Lists yet.</Text>
 							)}
 						</ScrollView>
-						{sheet === "progress" && !changing && (
-							<View className="p-5">
-								<Button label="Done" onPress={() => setManageLists(false)} />
-							</View>
-						)}
 					</SafeAreaView>
+				</View>
+			</Modal>
+			<Modal
+				visible={sheet === "progress"}
+				animationType="slide"
+				transparent
+				statusBarTranslucent
+				navigationBarTranslucent
+				onRequestClose={() => setManageLists(false)}
+				onDismiss={sheetDidDismiss}
+			>
+				<View className="flex-1 justify-end">
+					<Pressable
+						className="flex-1"
+						accessibilityLabel="Close progress"
+						onPress={() => setManageLists(false)}
+					/>
+					<View
+						className="gap-5 rounded-t-3xl border border-border bg-card px-5 pt-2"
+						style={{ paddingBottom: insets.bottom + 20, maxHeight: "85%" }}
+					>
+						<View className="h-1 w-9 self-center rounded-full bg-border-strong" />
+						<View className="flex-row items-center gap-3">
+							<View
+								className={`h-10 w-10 items-center justify-center rounded-xl ${
+									changing ? "bg-primary/15" : "bg-green-500/15"
+								}`}
+							>
+								{!changing ? (
+									<Check size={20} color="#16a34a" />
+								) : target === "Public" ? (
+									<Globe size={20} color="#d97706" />
+								) : (
+									<Lock size={20} color="#d97706" />
+								)}
+							</View>
+							<View className="flex-1 gap-0.5">
+								<Text
+									accessibilityRole="header"
+									className="font-bold font-display text-foreground text-lg"
+								>
+									{progressTitle}
+								</Text>
+								<Text className="text-muted-foreground text-xs">
+									{changing
+										? "Hidden from others while this runs."
+										: target === "Private"
+											? "Only you and the apps you authorize can see it."
+											: "Your visibility change is complete."}
+								</Text>
+							</View>
+						</View>
+						<ScrollView
+							style={{ flexGrow: 0 }}
+							contentContainerStyle={{ gap: 16 }}
+						>
+							{mutation.isPending && progressScopes.length === 0 && (
+								<View className="gap-2" accessibilityLiveRegion="polite">
+									<View className="h-4 w-32 rounded bg-background-subtle" />
+									<View className="h-1.5 rounded-full bg-background-subtle" />
+								</View>
+							)}
+							{progressScopes.map(progressRow)}
+						</ScrollView>
+						<View className="gap-2.5">
+							<Button
+								label={changing ? "Keep going in background" : "Done"}
+								onPress={() => setManageLists(false)}
+							/>
+							{changing && (
+								<Text className="text-center text-muted-foreground text-xs">
+									Edits pause until it finishes.
+								</Text>
+							)}
+						</View>
+					</View>
 				</View>
 			</Modal>
 		</View>

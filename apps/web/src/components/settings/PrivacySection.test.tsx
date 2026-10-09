@@ -3,6 +3,9 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PrivacySection } from "./PrivacySection";
 
+// Progress titles name what is moving, such as "Making Favorites Private".
+const IN_PROGRESS = /^(Making .+ (Private|Public)|Changing visibility)$/;
+
 const mocks = vi.hoisted(() => ({
 	isPending: false,
 	mutate: vi.fn(),
@@ -203,7 +206,7 @@ describe("Privacy settings", () => {
 		};
 		rerender(<PrivacySection />);
 		const progress = screen.getByRole("dialog", {
-			name: "Privacy change progress",
+			name: IN_PROGRESS,
 		});
 		expect(
 			within(progress).queryByRole("button", { name: "Public" }),
@@ -216,9 +219,7 @@ describe("Privacy settings", () => {
 		expect(within(management).queryByText(/records copied/)).toBeNull();
 		fireEvent.keyDown(management, { key: "Escape" });
 		fireEvent.click(screen.getByRole("button", { name: "View List progress" }));
-		expect(
-			screen.getByRole("dialog", { name: "Privacy change progress" }),
-		).toBeDefined();
+		expect(screen.getByRole("dialog", { name: IN_PROGRESS })).toBeDefined();
 	});
 
 	it("records migrations suppressed during errors so later actions do not reopen them", () => {
@@ -270,9 +271,7 @@ describe("Privacy settings", () => {
 			),
 		};
 		rerender(<PrivacySection />);
-		expect(
-			screen.getByRole("dialog", { name: "Privacy change progress" }),
-		).toBeDefined();
+		expect(screen.getByRole("dialog", { name: IN_PROGRESS })).toBeDefined();
 	});
 
 	it.each([
@@ -305,9 +304,7 @@ describe("Privacy settings", () => {
 		};
 		rerender(<PrivacySection />);
 		expect(screen.getAllByRole("dialog")).toHaveLength(1);
-		expect(
-			screen.getByRole("dialog", { name: "Privacy change progress" }),
-		).toBeDefined();
+		expect(screen.getByRole("dialog", { name: IN_PROGRESS })).toBeDefined();
 		expect(mocks.mutate).not.toHaveBeenCalled();
 	});
 
@@ -335,13 +332,9 @@ describe("Privacy settings", () => {
 			error: null,
 		};
 		render(<PrivacySection />);
-		expect(
-			screen.getByRole("dialog", { name: "Privacy change progress" }),
-		).toBeDefined();
-		expect(screen.getByText(/2\/2 records copied.*Finishing/)).toBeDefined();
-		expect(
-			screen.getByText(/Records include the List details and its items/),
-		).toBeDefined();
+		expect(screen.getByRole("dialog", { name: IN_PROGRESS })).toBeDefined();
+		expect(screen.getByText(/2\/2 records copied/)).toBeDefined();
+		expect(screen.getByText("Finishing…")).toBeDefined();
 	});
 
 	it("leaves Public usable on unsupported PDSs", () => {
@@ -415,9 +408,7 @@ describe("Privacy settings", () => {
 			],
 		};
 		rerender(<PrivacySection />);
-		expect(
-			screen.getByRole("dialog", { name: "Privacy change progress" }),
-		).toBeDefined();
+		expect(screen.getByRole("dialog", { name: IN_PROGRESS })).toBeDefined();
 		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 		mocks.data = { ...mocks.data, scopes: [...mocks.data.scopes] };
 		rerender(<PrivacySection />);
@@ -440,11 +431,10 @@ describe("Privacy settings", () => {
 		};
 		rerender(<PrivacySection />);
 		expect(
-			screen.getByRole("dialog", { name: "Privacy change progress" })
-				.textContent,
-		).toContain("Privacy changes complete.");
-		expect(screen.getByText(/2\/2 records copied/)).toBeTruthy();
-		expect(screen.queryByText(/You can close this dialog while/)).toBeNull();
+			screen.getByRole("dialog", { name: "Favorites is Private" }),
+		).toBeTruthy();
+		expect(screen.getByLabelText(/2\/2 records copied/)).toBeTruthy();
+		expect(screen.queryByText("Edits pause until it finishes.")).toBeNull();
 		expect(screen.getByRole("button", { name: "Done" })).toBeTruthy();
 	});
 	it("resumes a failed migration from progress without changing its target", () => {
@@ -476,9 +466,9 @@ it("shows immediate pending feedback while checking the privacy change", () => {
 	mocks.isPending = true;
 	rerender(<PrivacySection />);
 	expect(
-		within(
-			screen.getByRole("dialog", { name: "Privacy change progress" }),
-		).getByText("Checking your privacy change…"),
+		within(screen.getByRole("dialog", { name: IN_PROGRESS })).getByText(
+			"Checking your privacy change…",
+		),
 	).toBeTruthy();
 	expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
 });

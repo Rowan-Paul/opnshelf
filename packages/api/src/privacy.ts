@@ -235,6 +235,39 @@ export function usePrivacyProgress(
 	});
 }
 
+/** Heading for the progress dialog, phrased from what is moving and where to. */
+export function privacyProgressTitle(
+	scopes: PrivacyScopeDto[],
+	changing: boolean,
+) {
+	const targets = new Set(
+		scopes.flatMap((scope) =>
+			scope.migration ? [scope.migration.target] : [],
+		),
+	);
+	if (targets.size !== 1)
+		return {
+			target: null,
+			title: changing ? "Changing visibility" : "Visibility changed",
+		};
+	const target = [...targets][0] === "private" ? "Private" : "Public";
+	const subject =
+		scopes.length === 1
+			? scopes[0].category === "watches"
+				? "Shelf"
+				: scopes[0].label
+			: scopes.every((scope) => scope.category === "lists")
+				? `${scopes.length} Lists`
+				: "your data";
+	if (changing) return { target, title: `Making ${subject} ${target}` };
+	return {
+		target,
+		title: `${subject[0].toUpperCase()}${subject.slice(1)} ${
+			scopes.length === 1 ? "is" : "are"
+		} ${target}`,
+	};
+}
+
 export function privacyErrorMessage(error: unknown, fallback: string) {
 	const message = getErrorMessage(error, fallback);
 	if (

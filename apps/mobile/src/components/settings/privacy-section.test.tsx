@@ -5,6 +5,8 @@ import { PrivacySection } from "./privacy-section";
 
 vi.mock("lucide-react-native", () => ({
 	X: () => null,
+	Check: () => null,
+	CircleAlert: () => null,
 	ChevronDown: () => null,
 	Globe: () => null,
 	Lock: () => null,
@@ -68,6 +70,7 @@ vi.mock("react-native-safe-area-context", async () => {
 	return {
 		SafeAreaView: (props: Record<string, unknown>) =>
 			createElement("safearea", props, props.children as never),
+		useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 	};
 });
 vi.mock("@/components/ui/text", async () => {
@@ -295,7 +298,7 @@ describe("Privacy Alpha mobile", () => {
 		act(() => renderer.update(<PrivacySection />));
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
 		expect(JSON.stringify(renderer.toJSON())).toContain(
-			"Privacy change progress",
+			"Making Favorites Private",
 		);
 		expect(
 			renderer.root
@@ -545,8 +548,9 @@ describe("Privacy Alpha mobile", () => {
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
 		act(() => dismiss());
 		expect(JSON.stringify(renderer.toJSON())).toContain(
-			"Privacy change progress",
+			"Making Favorites Private",
 		);
+		expect(button(renderer, "Keep going in background")).toBeTruthy();
 		mocks.data = {
 			...mocks.data,
 			scopes: mocks.data.scopes.map((scope) => ({
@@ -556,12 +560,10 @@ describe("Privacy Alpha mobile", () => {
 			})),
 		};
 		act(() => renderer.update(<PrivacySection />));
-		expect(JSON.stringify(renderer.toJSON())).toContain(
-			"Privacy changes complete.",
-		);
+		expect(JSON.stringify(renderer.toJSON())).toContain("Favorites is Private");
 		expect(JSON.stringify(renderer.toJSON())).toContain("2/2 records copied");
 		expect(JSON.stringify(renderer.toJSON())).not.toContain(
-			"You can close this dialog while",
+			"Edits pause until it finishes.",
 		);
 		expect(button(renderer, "Done")).toBeTruthy();
 	});
