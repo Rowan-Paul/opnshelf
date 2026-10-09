@@ -1,13 +1,7 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { router } from "expo-router";
 import { type ReactNode, useEffect, useState } from "react";
-import {
-	ActivityIndicator,
-	Pressable,
-	Text,
-	useColorScheme,
-	View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { AppleMark } from "@/components/marks/AppleMark";
 import { GoogleMark } from "@/components/marks/GoogleMark";
 import { useToast } from "@/components/ui/toast";
@@ -55,13 +49,15 @@ const LABEL_FONT = "Inter-SemiBold";
  * https://developers.google.com/identity/branding-guidelines
  *
  * The fill, stroke and text colours are branding requirements and are not
- * theme tokens — they must be these values, in these themes. The type size is
- * the one deliberate departure: the spec's 14/20 pairs with Google's own 40pt
- * reference button, and this one is 48 to sit level with Apple's.
+ * theme tokens — they must be these values. This is Google's light theme, which
+ * Google permits on any background. The type size is the one deliberate
+ * departure: the spec's 14/20 pairs with Google's own 40pt reference button,
+ * and this one is 48 to sit level with Apple's.
  */
 const GOOGLE = {
-	light: { fill: "#FFFFFF", stroke: "#747775", text: "#1F1F1F" },
-	dark: { fill: "#131314", stroke: "#8E918F", text: "#E3E3E3" },
+	fill: "#FFFFFF",
+	stroke: "#747775",
+	text: "#1F1F1F",
 	/** Google specifies 10px between the mark and the label on Android. */
 	gap: 10,
 } as const;
@@ -70,13 +66,15 @@ const GOOGLE = {
  * Apple's approved button colours for a custom button, which is Android only —
  * iOS uses `AppleAuthenticationButton` and lets the system draw it.
  *
- * Apple permits black, white, and white with an outline. These mirror Google's
- * two themes so the pair reads as one control in both, rather than as a vendor
- * button next to an app button.
+ * Apple permits black, white, and white with an outline, and reserves black for
+ * light backgrounds. White with an outline works on both, so both providers stay
+ * white in every theme: the pair reads as one control, where Apple's black
+ * beside Google's dark grey read as two unrelated buttons in dark mode.
  */
 const APPLE = {
-	light: { fill: "#FFFFFF", stroke: "#000000", content: "#000000" },
-	dark: { fill: "#000000", stroke: "#000000", content: "#FFFFFF" },
+	fill: "#FFFFFF",
+	stroke: "#000000",
+	content: "#000000",
 } as const;
 
 interface ProviderButtonsProps {
@@ -173,13 +171,10 @@ export function ProviderButtons({
 }: ProviderButtonsProps) {
 	const { runAuthorizationUrl } = useAuth();
 	const toast = useToast();
-	const dark = useColorScheme() === "dark";
 	const [busy, setBusy] = useState<Provider | null>(null);
 
 	const googleAvailable = isGoogleConfigured();
 	const locked = disabled || busy !== null;
-	const google = dark ? GOOGLE.dark : GOOGLE.light;
-	const apple = dark ? APPLE.dark : APPLE.light;
 
 	useEffect(() => {
 		onBusyChange?.(busy !== null);
@@ -250,17 +245,14 @@ export function ProviderButtons({
 		<View className="gap-3">
 			{supportsNativeApple() ? (
 				// Drawn by the system, so it is compliant by construction — the only
-				// things set here are the two Apple exposes as adjustable. The style
-				// tracks the theme the same way Google's does: a light surface with
-				// an outline, or a dark one.
+				// things set here are the two Apple exposes as adjustable. White with
+				// an outline, like the custom button, in every theme.
 				<AppleAuthentication.AppleAuthenticationButton
 					buttonType={
 						AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
 					}
 					buttonStyle={
-						dark
-							? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-							: AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
+						AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE
 					}
 					cornerRadius={APPLE_CORNER_RADIUS}
 					style={{ height: BUTTON_HEIGHT, opacity: locked ? 0.6 : 1 }}
@@ -271,10 +263,10 @@ export function ProviderButtons({
 			) : (
 				<ProviderButton
 					label="Continue with Apple"
-					mark={<AppleMark size={MARK_SIZE} color={apple.content} />}
-					fill={apple.fill}
-					stroke={apple.stroke}
-					textColor={apple.content}
+					mark={<AppleMark size={MARK_SIZE} color={APPLE.content} />}
+					fill={APPLE.fill}
+					stroke={APPLE.stroke}
+					textColor={APPLE.content}
 					busy={busy === "apple"}
 					disabled={locked}
 					onPress={() => onPress("apple")}
@@ -286,9 +278,9 @@ export function ProviderButtons({
 					label="Continue with Google"
 					mark={<GoogleMark size={MARK_SIZE} />}
 					gap={GOOGLE.gap}
-					fill={google.fill}
-					stroke={google.stroke}
-					textColor={google.text}
+					fill={GOOGLE.fill}
+					stroke={GOOGLE.stroke}
+					textColor={GOOGLE.text}
 					busy={busy === "google"}
 					disabled={locked}
 					onPress={() => onPress("google")}

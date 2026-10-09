@@ -234,20 +234,21 @@ describe("ProviderButtons", () => {
 			expect(appleBox.borderRadius).toBe(16);
 		});
 
-		it("paints Google in its published colours, per theme", () => {
+		it("paints both providers white in every theme", () => {
 			// Branding requirements, not theme tokens:
 			// https://developers.google.com/identity/branding-guidelines
-			const light = boxes(render())[1];
-			expect(light.backgroundColor).toBe("#FFFFFF");
-			expect(light.borderColor).toBe("#747775");
-
-			mocks.colorScheme.mockReturnValue("dark");
-			const dark = boxes(render())[1];
-			expect(dark.backgroundColor).toBe("#131314");
-			expect(dark.borderColor).toBe("#8E918F");
+			// Apple reserves black for light backgrounds, so the pair stays on the
+			// light styles in dark mode too.
+			for (const scheme of ["light", "dark"]) {
+				mocks.colorScheme.mockReturnValue(scheme);
+				const [apple, google] = boxes(render());
+				expect(apple.backgroundColor).toBe("#FFFFFF");
+				expect(google.backgroundColor).toBe("#FFFFFF");
+				expect(google.borderColor).toBe("#747775");
+			}
 		});
 
-		it("matches the native Apple button to the theme the same way", () => {
+		it("draws the native Apple button white with an outline", () => {
 			mocks.supportsNativeApple.mockReturnValue(true);
 			const outlined = render().root.find(
 				(node) => hostType(node) === "apple-button",
@@ -259,10 +260,10 @@ describe("ProviderButtons", () => {
 			expect(outlined.props.style.height).toBe(48);
 
 			mocks.colorScheme.mockReturnValue("dark");
-			const filled = render().root.find(
+			const dark = render().root.find(
 				(node) => hostType(node) === "apple-button",
 			);
-			expect(filled.props.buttonStyle).toBe("BLACK");
+			expect(dark.props.buttonStyle).toBe("WHITE_OUTLINE");
 		});
 
 		it("shows each provider's mark", () => {
