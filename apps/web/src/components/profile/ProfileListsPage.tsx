@@ -520,7 +520,9 @@ export function ProfileListsPage({
 									<PrivacySection listRkey={listDetails.rkey} />
 								) : (
 									<span className="text-(--foreground-muted) text-xs">
-										Public
+										{listDetails.uri?.includes("/space/")
+											? "Private"
+											: "Public"}
 									</span>
 								)}
 
