@@ -7,7 +7,7 @@ import {
 	usePrivacy,
 	usePrivacyProgress,
 } from "@opnshelf/api";
-import { X } from "lucide-react-native";
+import { ChevronDown, Globe, Lock, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -166,6 +166,34 @@ export function PrivacySection({
 			}),
 		);
 	};
+	const chooseListVisibility = () => {
+		const scope = scopes?.[0];
+		if (!scope) return;
+		const visibility = scope.visibility === "public" ? "private" : "public";
+		const canChange =
+			visibility === "public" || data?.availability === "available";
+		showDialog({
+			title: "List visibility",
+			description: `This List is ${scope.visibility === "public" ? "Public" : "Private"}. Public is visible to everyone. Private is for you and the apps you authorize.${canChange ? "" : " Private visibility is currently unavailable on your PDS."}`,
+			actions: [
+				{ label: "Cancel" },
+				...(canChange
+					? [
+							{
+								label: visibility === "public" ? "Make Public" : "Make Private",
+								variant: "default" as const,
+								onDismiss: () =>
+									choose({
+										kind: "change",
+										body: { category: "lists", listRkey, visibility },
+									}),
+							},
+						]
+					: []),
+			],
+		});
+	};
+
 	const chooseLists = (visibility: "public" | "private") => {
 		const actions: Parameters<typeof showDialog>[0]["actions"] = [
 			{ label: "Cancel" },
@@ -216,18 +244,22 @@ export function PrivacySection({
 				}
 			>
 				<View className="flex-row flex-wrap items-center justify-between gap-3">
-					<View className="min-w-24 flex-1 gap-1">
-						<Text className="font-semibold text-foreground">{label}</Text>
-						{scope.category !== "lists" && (
-							<Text className="text-muted-foreground text-xs">
-								{scope.category === "watches"
-									? "Movies & episodes"
-									: scope.category === "library"
-										? "Your saved collection"
-										: "Your personal notes"}
-							</Text>
-						)}
-					</View>
+					{!listRkey && (
+						<View className="min-w-24 flex-1 gap-1">
+							{!listRkey && (
+								<Text className="font-semibold text-foreground">{label}</Text>
+							)}
+							{scope.category !== "lists" && (
+								<Text className="text-muted-foreground text-xs">
+									{scope.category === "watches"
+										? "Movies & episodes"
+										: scope.category === "library"
+											? "Your saved collection"
+											: "Your personal notes"}
+								</Text>
+							)}
+						</View>
+					)}
 					<View className="flex-row gap-1 rounded-full bg-background-subtle p-1">
 						{(["public", "private"] as const).map((visibility) => (
 							<Button
@@ -336,9 +368,11 @@ export function PrivacySection({
 	return (
 		<View
 			className={
-				onboarding
-					? "gap-4 rounded-xl border border-border bg-card p-5"
-					: "gap-4"
+				listRkey
+					? "self-start"
+					: onboarding
+						? "gap-4 rounded-xl border border-border bg-card p-5"
+						: "gap-4"
 			}
 		>
 			{!listRkey && (
@@ -359,7 +393,46 @@ export function PrivacySection({
 					</Text>
 				</View>
 			)}
-			{!data ? (
+			{listRkey ? (
+				!data ? (
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel="Retry loading List visibility"
+						disabled={!query.isError}
+						onPress={() => void query.refetch()}
+					>
+						{query.isError ? (
+							<Text className="text-muted-foreground text-xs">
+								Retry visibility
+							</Text>
+						) : (
+							<View className="h-4 w-20 rounded bg-background-subtle" />
+						)}
+					</Pressable>
+				) : (
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel={`List visibility: ${scopes?.[0]?.visibility === "private" ? "Private" : "Public"}. Change visibility`}
+						hitSlop={12}
+						className="flex-row items-center gap-1.5"
+						onPress={() => (changing ? openProgress() : chooseListVisibility())}
+					>
+						{scopes?.[0]?.visibility === "private" ? (
+							<Lock size={13} color="#64748b" />
+						) : (
+							<Globe size={13} color="#64748b" />
+						)}
+						<Text className="text-muted-foreground text-xs">
+							{changing
+								? "Changing visibility…"
+								: scopes?.[0]?.visibility === "private"
+									? "Private"
+									: "Public"}
+						</Text>
+						<ChevronDown size={12} color="#64748b" />
+					</Pressable>
+				)
+			) : !data ? (
 				query.isError ? (
 					<View>
 						<Text>Could not load Privacy.</Text>
@@ -487,7 +560,9 @@ export function PrivacySection({
 							<Text className="flex-1 font-semibold text-xl">
 								{sheet === "progress"
 									? "Privacy change progress"
-									: "Your Lists"}
+									: listRkey
+										? "List visibility"
+										: "Your Lists"}
 							</Text>
 							<Pressable
 								accessibilityRole="button"
@@ -522,10 +597,12 @@ export function PrivacySection({
 							) : (
 								<>
 									<Text className="text-muted-foreground">
-										Choose visibility for each List.
+										{listRkey
+											? "Public is visible to everyone. Private is for you and the apps you authorize."
+											: "Choose visibility for each List."}
 									</Text>
-									{data?.scopes
-										.filter((scope) => scope.category === "lists")
+									{scopes
+										?.filter((scope) => scope.category === "lists")
 										.map(row)}
 									{!data?.scopes.some(
 										(scope) => scope.category === "lists",

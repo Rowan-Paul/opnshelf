@@ -516,6 +516,14 @@ export function ProfileListsPage({
 									Updated {formatRelativeTime(listDetails.updatedAt)}
 								</span>
 
+								{isOwner ? (
+									<PrivacySection listRkey={listDetails.rkey} />
+								) : (
+									<span className="text-(--foreground-muted) text-xs">
+										Public
+									</span>
+								)}
+
 								<span className="ml-auto">
 									{reorderMode ? (
 										<div className="flex items-center gap-2">
@@ -572,11 +580,6 @@ export function ProfileListsPage({
 								</span>
 							</div>
 
-							{isOwner ? (
-								<PrivacySection listRkey={listDetails.rkey} />
-							) : (
-								<p className="text-(--foreground-muted) text-sm">Public</p>
-							)}
 							{listDetails.description && (
 								<p className="text-(--foreground-muted) text-sm">
 									{listDetails.description}

@@ -485,6 +485,12 @@ it("shows immediate pending feedback while checking the privacy change", () => {
 it("uses the current List scope when switching from its detail page", () => {
 	render(<PrivacySection listRkey="favorites" />);
 	expect(screen.queryByText("Who can see your data")).toBeNull();
+	expect(screen.queryByRole("group", { name: "List visibility" })).toBeNull();
+	fireEvent.click(
+		screen.getByRole("button", {
+			name: "List visibility: Private. Change visibility",
+		}),
+	);
 	const choices = within(
 		screen.getByRole("group", { name: "List visibility" }),
 	);

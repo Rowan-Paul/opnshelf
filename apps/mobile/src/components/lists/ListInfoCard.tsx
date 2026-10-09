@@ -46,7 +46,7 @@ export function ListInfoCard({
 				</Text>
 			) : null}
 
-			<View className="flex-row flex-wrap gap-x-3 gap-y-1">
+			<View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
 				{creator ? (
 					<Text className="text-muted-foreground text-xs">
 						Created by @{creator}
@@ -55,15 +55,15 @@ export function ListInfoCard({
 				<Text className="text-muted-foreground text-xs">
 					Updated {formatRelativeTime(updatedAt)}
 				</Text>
+				{isOwner && rkey ? (
+					<PrivacySection listRkey={rkey} />
+				) : (
+					<Text className="text-muted-foreground text-xs">
+						{uri?.includes("/space/") ? "Private" : "Public"}
+					</Text>
+				)}
 			</View>
 
-			{isOwner && rkey ? (
-				<PrivacySection listRkey={rkey} />
-			) : (
-				<Text className="text-muted-foreground text-xs">
-					{uri?.includes("/space/") ? "Private" : "Public"}
-				</Text>
-			)}
 			{showProgress ? (
 				<View className="gap-1">
 					<View className="flex-row items-center justify-between">

@@ -7,6 +7,7 @@ import {
 	usePrivacy,
 	usePrivacyProgress,
 } from "@opnshelf/api";
+import { ChevronDown, Globe, Lock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "#/components/ui/button";
@@ -178,18 +179,20 @@ export function PrivacySection({
 				}
 			>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<div className="space-y-1">
-						<h3 className="font-semibold">{label}</h3>
-						{scope.category !== "lists" && (
-							<p className="text-(--foreground-muted) text-xs">
-								{scope.category === "watches"
-									? "Movies & episodes"
-									: scope.category === "library"
-										? "Your saved collection"
-										: "Your personal notes"}
-							</p>
-						)}
-					</div>
+					{!listRkey && (
+						<div className="space-y-1">
+							{!listRkey && <h3 className="font-semibold">{label}</h3>}
+							{scope.category !== "lists" && (
+								<p className="text-(--foreground-muted) text-xs">
+									{scope.category === "watches"
+										? "Movies & episodes"
+										: scope.category === "library"
+											? "Your saved collection"
+											: "Your personal notes"}
+								</p>
+							)}
+						</div>
+					)}
 					<fieldset
 						className="flex w-fit gap-1 rounded-full bg-(--background-subtle) p-1"
 						aria-label={listRkey ? "List visibility" : `${label} visibility`}
@@ -251,7 +254,7 @@ export function PrivacySection({
 		const label = scope.category === "watches" ? "Shelf" : scope.label;
 		return (
 			<div key={key} className="space-y-2 border-(--border) border-b pb-4">
-				<h3 className="font-semibold">{label}</h3>
+				{!listRkey && <h3 className="font-semibold">{label}</h3>}
 				{moving && (
 					<div aria-live="polite" className="space-y-2 text-sm">
 						<p>
@@ -303,7 +306,7 @@ export function PrivacySection({
 		<section
 			className={
 				listRkey
-					? "space-y-3"
+					? "inline-flex"
 					: onboarding
 						? "card space-y-3 p-5 sm:p-7"
 						: "space-y-3 p-5 sm:p-7"
@@ -330,7 +333,45 @@ export function PrivacySection({
 					Private access was not authorized. Your visibility is unchanged.
 				</output>
 			)}
-			{!data ? (
+			{listRkey ? (
+				!data ? (
+					query.isError ? (
+						<button
+							type="button"
+							className="text-(--foreground-muted) text-xs"
+							onClick={() => void query.refetch()}
+						>
+							Retry visibility
+						</button>
+					) : (
+						<output
+							className="h-4 w-20 animate-pulse rounded bg-(--background-subtle)"
+							aria-label="Loading List visibility"
+						/>
+					)
+				) : (
+					<button
+						type="button"
+						aria-label={`List visibility: ${scopes?.[0]?.visibility === "private" ? "Private" : "Public"}. Change visibility`}
+						className="inline-flex items-center gap-1.5 rounded text-(--foreground-muted) text-xs transition-colors hover:text-(--foreground) focus-visible:outline-(--accent) focus-visible:outline-2"
+						onClick={() =>
+							changing ? setShowProgress(true) : setManageLists(true)
+						}
+					>
+						{scopes?.[0]?.visibility === "private" ? (
+							<Lock className="size-3.5" />
+						) : (
+							<Globe className="size-3.5" />
+						)}
+						{changing
+							? "Changing visibility…"
+							: scopes?.[0]?.visibility === "private"
+								? "Private"
+								: "Public"}
+						<ChevronDown className="size-3" />
+					</button>
+				)
+			) : !data ? (
 				query.isError ? (
 					<div role="alert">
 						<p>Could not load Privacy.</p>
@@ -485,14 +526,16 @@ export function PrivacySection({
 			<Dialog open={manageLists} onOpenChange={setManageLists}>
 				<DialogContent className="max-h-[85dvh] overflow-y-auto">
 					<DialogHeader>
-						<DialogTitle>Your Lists</DialogTitle>
+						<DialogTitle>
+							{listRkey ? "List visibility" : "Your Lists"}
+						</DialogTitle>
 						<DialogDescription>
-							Choose visibility for each List.
+							{listRkey
+								? "Public is visible to everyone. Private is for you and the apps you authorize."
+								: "Choose visibility for each List."}
 						</DialogDescription>
 					</DialogHeader>
-					{data?.scopes
-						.filter((scope) => scope.category === "lists")
-						.map(scopeRow)}
+					{scopes?.filter((scope) => scope.category === "lists").map(scopeRow)}
 					{!data?.scopes.some((scope) => scope.category === "lists") && (
 						<p>No Lists yet.</p>
 					)}

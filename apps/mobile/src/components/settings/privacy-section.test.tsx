@@ -3,7 +3,12 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PrivacySection } from "./privacy-section";
 
-vi.mock("lucide-react-native", () => ({ X: () => null }));
+vi.mock("lucide-react-native", () => ({
+	X: () => null,
+	ChevronDown: () => null,
+	Globe: () => null,
+	Lock: () => null,
+}));
 
 const mocks = vi.hoisted(() => ({
 	data: undefined as PrivacyStatusDto | undefined,
@@ -559,5 +564,46 @@ describe("Privacy Alpha mobile", () => {
 			"You can close this dialog while",
 		);
 		expect(button(renderer, "Done")).toBeTruthy();
+	});
+});
+
+it("opens choices only for the List shown in its metadata control", () => {
+	if (!mocks.data) throw new Error("Missing status");
+	mocks.data.scopes = [
+		{
+			category: "lists",
+			listRkey: "favorites",
+			label: "Favorites",
+			visibility: "public",
+			migration: null,
+		},
+		{
+			category: "lists",
+			listRkey: "another",
+			label: "Another",
+			visibility: "private",
+			migration: null,
+		},
+	];
+	let renderer!: ReactTestRenderer;
+	act(() => {
+		renderer = create(<PrivacySection listRkey="favorites" />);
+	});
+	expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+	const trigger = renderer.root.findByProps({
+		accessibilityLabel: "List visibility: Public. Change visibility",
+	});
+	act(() => trigger.props.onPress());
+	expect(mocks.showDialog).toHaveBeenCalledWith(
+		expect.objectContaining({ title: "List visibility" }),
+	);
+	expect(JSON.stringify(mocks.showDialog.mock.calls)).not.toContain("Another");
+	const action = mocks.showDialog.mock.calls[0][0].actions.find(
+		(action: { label: string }) => action.label === "Make Private",
+	);
+	act(() => action.onDismiss());
+	expect(mocks.mutate).toHaveBeenCalledWith({
+		kind: "change",
+		body: { category: "lists", listRkey: "favorites", visibility: "private" },
 	});
 });
