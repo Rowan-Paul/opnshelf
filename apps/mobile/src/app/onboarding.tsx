@@ -522,20 +522,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	return (
 		<StepScaffold
 			footer={
-				<>
-					<PrimaryButton
-						label="Continue"
-						onPress={handleContinue}
-						loading={updateSettings.isPending}
-						disabled={settingsLoading}
-					/>
-					<Button
-						label="Skip for now"
-						variant="secondary"
-						onPress={onNext}
-						disabled={updateSettings.isPending}
-					/>
-				</>
+				<PrimaryButton
+					label="Continue"
+					onPress={handleContinue}
+					loading={updateSettings.isPending}
+					disabled={settingsLoading}
+				/>
 			}
 		>
 			<View className="gap-1">

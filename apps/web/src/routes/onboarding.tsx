@@ -143,9 +143,7 @@ function OnboardingPage() {
 						{step === "preferences" && (
 							<PreferencesStep onNext={goToNextStep} />
 						)}
-						{step === "services" && (
-							<ServicesStep onNext={goToNextStep} onSkip={goToNextStep} />
-						)}
+						{step === "services" && <ServicesStep onNext={goToNextStep} />}
 						{step === "notifications" && (
 							<div className="card space-y-6 p-5 sm:p-7">
 								<NotificationEmailSection onboarding />
@@ -669,13 +667,7 @@ const SERVICE_SKELETON_KEYS = Array.from(
 	(_, i) => `service-skeleton-${i + 1}`,
 );
 
-function ServicesStep({
-	onNext,
-	onSkip,
-}: {
-	onNext: () => void;
-	onSkip: () => void;
-}) {
+function ServicesStep({ onNext }: { onNext: () => void }) {
 	const queryClient = useQueryClient();
 	const { data: settings, isLoading: settingsLoading } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -758,14 +750,6 @@ function ServicesStep({
 							<ArrowRight className="size-4" />
 						</>
 					)}
-				</button>
-				<button
-					type="button"
-					onClick={onSkip}
-					disabled={updateSettingsMutation.isPending}
-					className="btn btn-ghost w-full"
-				>
-					Skip for now
 				</button>
 			</div>
 		</div>
