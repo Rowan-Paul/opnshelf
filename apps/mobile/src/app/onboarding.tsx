@@ -232,13 +232,15 @@ export default function OnboardingScreen() {
 							/>
 						}
 					>
-						<Text className="font-display font-semibold text-2xl text-foreground">
-							Stay up to date
-						</Text>
-						<Text className="text-muted-foreground text-sm">
-							Choose mobile and email notifications. You can change these in
-							Settings anytime.
-						</Text>
+						<View className="gap-1">
+							<Text className="font-bold font-display text-3xl text-foreground">
+								Stay up to date
+							</Text>
+							<Text className="text-muted-foreground text-sm leading-5">
+								Choose mobile and email notifications. You can change these in
+								Settings anytime.
+							</Text>
+						</View>
 						<View className="rounded-xl border border-border bg-card p-4">
 							<NotificationPreferences onboarding />
 						</View>
