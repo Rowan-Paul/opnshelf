@@ -246,9 +246,11 @@ describe("ProviderButtons", () => {
 				expect(google.backgroundColor).toBe("#FFFFFF");
 				expect(google.borderColor).toBe("#747775");
 			}
+			// The custom Apple button drops its outline on a dark background.
+			expect(boxes(render())[0].borderColor).toBe("#FFFFFF");
 		});
 
-		it("draws the native Apple button white with an outline", () => {
+		it("draws the native Apple button white, outlined only in light mode", () => {
 			mocks.supportsNativeApple.mockReturnValue(true);
 			const outlined = render().root.find(
 				(node) => hostType(node) === "apple-button",
@@ -263,7 +265,8 @@ describe("ProviderButtons", () => {
 			const dark = render().root.find(
 				(node) => hostType(node) === "apple-button",
 			);
-			expect(dark.props.buttonStyle).toBe("WHITE_OUTLINE");
+			// Apple reserves the outline for light backgrounds.
+			expect(dark.props.buttonStyle).toBe("WHITE");
 		});
 
 		it("shows each provider's mark", () => {
