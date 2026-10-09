@@ -46,7 +46,8 @@ export function WatchedMediaSwipe({
 	const { height, width } = useWindowDimensions();
 	const insets = useSafeAreaInsets();
 	const compact = height < 720;
-	const cardWidth = onboardingCardWidth(width, height);
+	const [stackHeight, setStackHeight] = useState(0);
+	const cardWidth = onboardingCardWidth(width, stackHeight, compact);
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const [index, setIndex] = useState(0);
@@ -208,7 +209,10 @@ export function WatchedMediaSwipe({
 				</Text>
 			</View>
 
-			<View className="relative min-h-0 flex-1 items-center justify-center">
+			<View
+				className="relative min-h-0 flex-1 items-center justify-center"
+				onLayout={(event) => setStackHeight(event.nativeEvent.layout.height)}
+			>
 				{discovery.isLoading ? <ActivityIndicator color="#f3bc00" /> : null}
 				{discovery.isError ? (
 					<View className="items-center gap-3">
@@ -233,7 +237,7 @@ export function WatchedMediaSwipe({
 						</Pressable>
 					</View>
 				) : null}
-				{next ? (
+				{next && stackHeight ? (
 					<View className="absolute inset-0 items-center justify-center">
 						<MediaSwipeCard
 							item={next}
@@ -248,7 +252,12 @@ export function WatchedMediaSwipe({
 				) : null}
 				{current ? (
 					<GestureDetector gesture={gesture}>
-						<Animated.View style={[{ width: cardWidth }, animatedStyle]}>
+						<Animated.View
+							style={[
+								{ width: cardWidth, opacity: stackHeight ? 1 : 0 },
+								animatedStyle,
+							]}
+						>
 							<MediaSwipeCard item={current} compact={compact} />
 							<Animated.View
 								pointerEvents="none"

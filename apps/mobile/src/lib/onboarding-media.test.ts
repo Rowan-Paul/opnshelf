@@ -44,9 +44,9 @@ describe("onboarding media", () => {
 		expect(isSwipeAccepted(-100, 320)).toBe(true);
 	});
 
-	it("shrinks the card to fit short screens", () => {
-		expect(onboardingCardWidth(375, 667)).toBe(218);
-		expect(onboardingCardWidth(390, 844)).toBe(280);
-		expect(onboardingCardWidth(320, 568)).toBe(184);
+	it("shrinks the card to fit the measured stack height", () => {
+		expect(onboardingCardWidth(390, 600, false)).toBe(280);
+		expect(onboardingCardWidth(394, 420, true)).toBe(208);
+		expect(onboardingCardWidth(320, 900, false)).toBe(256);
 	});
 });
