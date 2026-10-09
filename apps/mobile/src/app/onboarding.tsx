@@ -30,6 +30,7 @@ import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
 import {
 	StreamingServicePicker,
+	sameServices,
 	toggleService,
 } from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
@@ -514,6 +515,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	});
 
 	const handleContinue = () => {
+		// Nothing to save when the selection is untouched, and never save over
+		// services that failed to load: that would replace them with an empty list.
+		if (!settings || sameServices(selected, settings.streamingServiceIds)) {
+			onNext();
+			return;
+		}
 		updateSettings.mutate(
 			{ body: { streamingServiceIds: selected } },
 			{ onSuccess: onNext },
@@ -523,20 +530,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	return (
 		<StepScaffold
 			footer={
-				<>
-					<PrimaryButton
-						label="Continue"
-						onPress={handleContinue}
-						loading={updateSettings.isPending}
-						disabled={settingsLoading}
-					/>
-					<Button
-						label="Skip for now"
-						variant="secondary"
-						onPress={onNext}
-						disabled={updateSettings.isPending}
-					/>
-				</>
+				<PrimaryButton
+					label="Continue"
+					onPress={handleContinue}
+					loading={updateSettings.isPending}
+					disabled={settingsLoading}
+				/>
 			}
 		>
 			<View className="gap-1">

@@ -1,6 +1,7 @@
 import type { StreamingServiceDto } from "@opnshelf/api";
 import { describe, expect, it } from "vitest";
 import {
+	sameServices,
 	TOP_SERVICE_COUNT,
 	toggleService,
 	visibleServices,
@@ -49,5 +50,21 @@ describe("toggleService", () => {
 	it("adds a missing id and removes a present one without reordering", () => {
 		expect(toggleService([8, 337], 2)).toEqual([8, 337, 2]);
 		expect(toggleService([8, 337, 2], 337)).toEqual([8, 2]);
+	});
+});
+
+describe("sameServices", () => {
+	it("ignores order", () => {
+		expect(sameServices([1, 2, 3], [3, 1, 2])).toBe(true);
+	});
+
+	it("tells an added or removed service apart", () => {
+		expect(sameServices([1, 2], [1, 2, 3])).toBe(false);
+		expect(sameServices([1, 2, 3], [1, 2])).toBe(false);
+		expect(sameServices([1, 2], [1, 3])).toBe(false);
+	});
+
+	it("treats two empty selections as the same", () => {
+		expect(sameServices([], [])).toBe(true);
 	});
 });
