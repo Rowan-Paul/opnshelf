@@ -626,13 +626,16 @@ describe("AuthProvider", () => {
 			await vi.waitFor(() =>
 				expect(mocks.openAuthSessionAsync).toHaveBeenCalled(),
 			);
-			expect(harness.auth.isReauthorizing()).toBe(true);
 			await act(async () => {
 				unauthorized("old-session");
 			});
 			expect(mocks.routerReplace).not.toHaveBeenCalled();
 
 			mocks.redeemHandoffCode.mockResolvedValue("new-session");
+			// Like the real client, persisting a token makes it the current one.
+			mocks.saveSessionToken.mockImplementation(async (token) => {
+				mocks.getSessionToken.mockReturnValue(token);
+			});
 			await act(async () => {
 				finishBrowser({
 					type: "success",
@@ -640,15 +643,61 @@ describe("AuthProvider", () => {
 				});
 				await flow;
 			});
-			expect(harness.auth.isReauthorizing()).toBe(false);
+			// The rejected token was replaced, so the held-back 401 is moot.
 			expect(mocks.routerReplace).not.toHaveBeenCalled();
+			harness.unmount();
+		});
+
+		it("expires the session when re-authorization ends without replacing a rejected token", async () => {
+			mocks.loadSessionToken.mockResolvedValue("old-session");
+			mocks.getSessionToken.mockReturnValue("old-session");
+			mocks.authControllerMe.mockResolvedValue({ data: testUser });
+			const harness = await renderAuth();
+			const unauthorized = mocks.setOnUnauthorized.mock.calls.at(-1)?.[0];
+			mocks.openAuthSessionAsync.mockImplementation(async () => {
+				unauthorized("old-session");
+				return { type: "cancel" };
+			});
+
+			await act(async () => {
+				await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			});
+
+			await vi.waitFor(() =>
+				expect(mocks.routerReplace).toHaveBeenCalledWith({
+					pathname: "/login",
+					params: { reason: "session_expired" },
+				}),
+			);
+			harness.unmount();
+		});
+
+		it("lets the deep-link route claim a re-authorization that already settled", async () => {
+			// Android can deliver its duplicate redirect after the auth session
+			// finished; the route must still return to the caller.
+			mocks.loadSessionToken.mockResolvedValue("old-session");
+			mocks.getSessionToken.mockReturnValue("old-session");
+			mocks.authControllerMe.mockResolvedValue({ data: testUser });
+			mocks.redeemHandoffCode.mockResolvedValue("new-session");
+			mocks.openAuthSessionAsync.mockResolvedValue({
+				type: "success",
+				url: "opnshelf://auth/complete?code=handoff-code",
+			});
+			const harness = await renderAuth();
+
+			await act(async () => {
+				await harness.auth.runAuthorizationUrl("https://pds.test/authorize");
+			});
+
+			expect(harness.auth.consumeReauthorization()).toBe(true);
+			expect(harness.auth.consumeReauthorization()).toBe(false);
 			harness.unmount();
 		});
 
 		it("does not treat a signed-out login as a re-authorization", async () => {
 			let reauthorizing: boolean | undefined;
 			mocks.openAuthSessionAsync.mockImplementation(async () => {
-				reauthorizing = harness.auth.isReauthorizing();
+				reauthorizing = harness.auth.consumeReauthorization();
 				return { type: "cancel" };
 			});
 			const harness = await renderAuth();
@@ -658,6 +707,7 @@ describe("AuthProvider", () => {
 			});
 
 			expect(reauthorizing).toBe(false);
+			expect(harness.auth.consumeReauthorization()).toBe(false);
 			harness.unmount();
 		});
 	});

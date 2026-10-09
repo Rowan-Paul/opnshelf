@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 	replace: vi.fn(),
 	back: vi.fn(),
 	canGoBack: vi.fn(),
-	isReauthorizing: vi.fn(),
+	consumeReauthorization: vi.fn(),
 	completeHandoff: vi.fn(),
 	completeSession: vi.fn(),
 	params: {} as Record<string, string | undefined>,
@@ -60,7 +60,7 @@ vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({
 		completeHandoff: mocks.completeHandoff,
 		completeSession: mocks.completeSession,
-		isReauthorizing: mocks.isReauthorizing,
+		consumeReauthorization: mocks.consumeReauthorization,
 	}),
 }));
 
@@ -103,7 +103,7 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	vi.useFakeTimers();
 	mocks.params = {};
-	mocks.isReauthorizing.mockReturnValue(false);
+	mocks.consumeReauthorization.mockReturnValue(false);
 	mocks.canGoBack.mockReturnValue(true);
 	mocks.completeHandoff.mockResolvedValue({ did: "did:plc:abc" });
 	mocks.completeSession.mockResolvedValue({ did: "did:plc:abc" });
@@ -195,7 +195,7 @@ describe("the auth/complete deep link", () => {
 		// screen that asked (onboarding's privacy step) is still underneath;
 		// replacing to the index gate restarted onboarding at Welcome.
 		beforeEach(() => {
-			mocks.isReauthorizing.mockReturnValue(true);
+			mocks.consumeReauthorization.mockReturnValue(true);
 		});
 
 		it("returns to the screen that started it", async () => {
@@ -227,6 +227,17 @@ describe("the auth/complete deep link", () => {
 
 			expect(mocks.back).toHaveBeenCalledOnce();
 			expect(mocks.replace).not.toHaveBeenCalled();
+		});
+
+		it("leaves an AT Store grant to its own route", async () => {
+			// The AT Store prompt opens the review screen itself; stepping back
+			// would pop it.
+			mocks.params = { code: "handoff-code", permission: "atstore" };
+			renderScreen();
+			await settle();
+
+			expect(mocks.back).not.toHaveBeenCalled();
+			expect(mocks.replace).toHaveBeenCalledWith("/atstore-review");
 		});
 
 		it("falls back to the index gate when there is nothing to return to", async () => {

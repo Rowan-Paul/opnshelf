@@ -52,12 +52,13 @@ interface AuthContextType {
 	/** Continue an authorization request already created by the backend. */
 	runAuthorizationUrl: (authorizationUrl: string) => Promise<boolean>;
 	/**
-	 * True while a signed-in user re-authorizes in the in-app auth session (a
-	 * permission change such as Private access). The screen that started it is
-	 * still underneath, so the `auth/complete` route returns to it instead of
-	 * restarting navigation from the index gate.
+	 * Whether a signed-in user's re-authorization in the in-app auth session (a
+	 * permission change such as Private access) is in flight or just finished.
+	 * The screen that started it is still underneath, so the `auth/complete`
+	 * route returns to it instead of restarting navigation from the index gate.
+	 * One-shot: reading it clears it.
 	 */
-	isReauthorizing: () => boolean;
+	consumeReauthorization: () => boolean;
 	/**
 	 * Persist a session id returned by the OAuth flow and fetch the user. Used by
 	 * the in-app auth session result and by the `auth/complete` deep-link route
@@ -116,6 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [hasSessionToken, setHasSessionToken] = useState(false);
 	const isExpiringSession = useRef(false);
 	const reauthorizing = useRef(false);
+	// A current-token 401 held back during re-authorization, settled when it ends.
+	const rejectedWhileReauthorizing = useRef<string | null>(null);
+	// Until when the auth/complete route may still claim the re-authorization.
+	// Android can deliver its duplicate redirect after the auth session settled.
+	const reauthorizationReturnUntil = useRef(0);
 
 	// Use queryKey + a manual queryFn (rather than spreading the generated
 	// `...authControllerMeOptions()`) to avoid a query-core type mismatch between
@@ -175,28 +181,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// A permission change revokes the old session the moment its callback runs,
 	// before the app has the new one. A 401 for that old token, or any 401 while
 	// the re-authorization is still settling, is not an expired session.
+	const expireSession = useCallback(() => {
+		if (!getSessionToken() || isExpiringSession.current) return;
+		isExpiringSession.current = true;
+		void clearSession().then(
+			() => {
+				router.replace({
+					pathname: "/login",
+					params: { reason: "session_expired" },
+				});
+			},
+			() => {
+				isExpiringSession.current = false;
+				console.error("Failed to clear the expired session");
+			},
+		);
+	}, [clearSession]);
+
 	useEffect(() => {
 		setOnUnauthorized((requestToken) => {
 			const token = getSessionToken();
-			if (!token || isExpiringSession.current) return;
-			if (reauthorizing.current) return;
+			if (!token) return;
 			if (requestToken && requestToken !== token) return;
-			isExpiringSession.current = true;
-			void clearSession().then(
-				() => {
-					router.replace({
-						pathname: "/login",
-						params: { reason: "session_expired" },
-					});
-				},
-				() => {
-					isExpiringSession.current = false;
-					console.error("Failed to clear the expired session");
-				},
-			);
+			if (reauthorizing.current) {
+				rejectedWhileReauthorizing.current = token;
+				return;
+			}
+			expireSession();
 		});
 		return () => setOnUnauthorized(null);
-	}, [clearSession]);
+	}, [expireSession]);
 
 	// Persist a session id and fetch the user. Shared by the in-app auth session
 	// result and the `auth/complete` deep-link route.
@@ -327,17 +341,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			// Snapshot first: settling compares against this rather than asking
 			// whether any token exists.
 			const tokenBefore = await loadSessionToken();
-			reauthorizing.current = tokenBefore !== null;
+			const reauthorization = tokenBefore !== null;
+			reauthorizing.current = reauthorization;
+			rejectedWhileReauthorizing.current = null;
+			if (reauthorization)
+				reauthorizationReturnUntil.current = Number.POSITIVE_INFINITY;
 			try {
 				return await finishAuthFlow(authUrl, tokenBefore);
 			} finally {
 				reauthorizing.current = false;
+				if (reauthorization && reauthorizationReturnUntil.current > 0)
+					reauthorizationReturnUntil.current = Date.now() + SETTLE_TIMEOUT_MS;
+				// Cancelled or failed without replacing the token that was rejected:
+				// that session really is gone.
+				const rejected = rejectedWhileReauthorizing.current;
+				rejectedWhileReauthorizing.current = null;
+				if (rejected && rejected === getSessionToken()) expireSession();
 			}
 		},
-		[finishAuthFlow],
+		[finishAuthFlow, expireSession],
 	);
 
-	const isReauthorizing = useCallback(() => reauthorizing.current, []);
+	const consumeReauthorization = useCallback(() => {
+		const pending = reauthorizationReturnUntil.current > Date.now();
+		reauthorizationReturnUntil.current = 0;
+		return pending;
+	}, []);
 
 	const login = useCallback(
 		async (handle?: string) => {
@@ -436,7 +465,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		completeSession,
 		completeHandoff,
 		runAuthorizationUrl: runAuthFlow,
-		isReauthorizing,
+		consumeReauthorization,
 		register,
 		signOut,
 	};

@@ -36,7 +36,8 @@ function isMaintenanceError(error: unknown): boolean {
 }
 
 export default function AuthCompleteScreen() {
-	const { completeSession, completeHandoff, isReauthorizing } = useAuth();
+	const { completeSession, completeHandoff, consumeReauthorization } =
+		useAuth();
 	const { code, session, error, permission } =
 		useLocalSearchParams<CompleteParams>();
 	const [message, setMessage] = useState<string | null>(null);
@@ -48,9 +49,12 @@ export default function AuthCompleteScreen() {
 			return;
 		}
 		handled.current = true;
-		// Read once: the auth session clears it as soon as this route's exchange
-		// lands the new session.
-		const returnToCaller = isReauthorizing() && router.canGoBack();
+		// The AT Store prompt navigates on its own after its grant, and stepping
+		// back here could pop the screen it just opened, so it keeps its route.
+		const returnToCaller =
+			permission !== "atstore" &&
+			consumeReauthorization() &&
+			router.canGoBack();
 
 		if (error) {
 			setMessage(authErrorMessage(error));
@@ -107,7 +111,7 @@ export default function AuthCompleteScreen() {
 	}, [
 		completeHandoff,
 		completeSession,
-		isReauthorizing,
+		consumeReauthorization,
 		code,
 		session,
 		error,
