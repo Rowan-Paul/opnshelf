@@ -49,9 +49,12 @@ export function BlogMirrorSection() {
 		data: myPublications,
 		isLoading: publicationsLoading,
 		isError: publicationsError,
+		isFetching: publicationsChecking,
+		refetch: checkPublications,
 	} = useQuery({
 		...reviewsControllerListMyPublicationsOptions(),
 		enabled: isAuthenticated,
+		refetchOnWindowFocus: "always",
 	});
 
 	// The currently-stored target URI (null = no blog mirror).
@@ -113,21 +116,24 @@ export function BlogMirrorSection() {
 					to one of your own blogs as well.
 				</p>
 
-				<IntegrationPermissionRow
-					name="Blog mirroring"
-					description={
-						storedPublicationUri
-							? "Allow Opnshelf to publish and update review mirrors in the selected publication."
-							: "Choose a publication below before connecting Blog mirroring."
-					}
-					connected={userSettings?.blogIntegrationEnabled ?? false}
-					disabled={
-						permissionChangePending ||
-						(!(userSettings?.blogIntegrationEnabled ?? false) &&
-							!storedPublicationUri)
-					}
-					onConfirm={(action) => requestPermissionChange("blog", action)}
-				/>
+				{userSettings?.blogIntegrationEnabled ||
+				myPublications?.items.some(
+					(pub) => pub.uri === storedPublicationUri,
+				) ? (
+					<IntegrationPermissionRow
+						name="Blog mirroring"
+						description="Allow Opnshelf to publish and update review mirrors in the selected publication."
+						connected={userSettings?.blogIntegrationEnabled ?? false}
+						disabled={permissionChangePending}
+						onConfirm={(action) => requestPermissionChange("blog", action)}
+					/>
+				) : (
+					<p className="mb-4 text-(--foreground-muted) text-sm">
+						{myPublications?.items.length === 0
+							? "Create a publication in a Standard.site-compatible app using this account, then return here to connect Blog mirroring."
+							: "Choose a publication to connect Blog mirroring."}
+					</p>
+				)}
 
 				{storedTargetMissing && (
 					<div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
@@ -182,12 +188,24 @@ export function BlogMirrorSection() {
 								</div>
 							</label>
 						))}
-						<p className="pt-1 text-(--foreground-muted) text-xs">
-							Disconnect above to stop mirroring. Your publication choice stays
-							saved for reconnection.
-						</p>
+						{userSettings?.blogIntegrationEnabled && (
+							<p className="pt-1 text-(--foreground-muted) text-xs">
+								Disconnect above to stop mirroring. Your publication choice
+								stays saved for reconnection.
+							</p>
+						)}
 					</fieldset>
 				)}
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					className="mt-4"
+					disabled={publicationsChecking}
+					onClick={() => void checkPublications({ cancelRefetch: false })}
+				>
+					{publicationsChecking ? "Checking…" : "Check for publications"}
+				</Button>
 			</section>
 
 			<Dialog

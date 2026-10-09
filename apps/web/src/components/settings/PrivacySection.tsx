@@ -33,7 +33,7 @@ export function PrivacySection({
 		null,
 	);
 	const resumed = useRef(false);
-	const bulkListChange = useRef(false);
+	const [showProgress, setShowProgress] = useState(false);
 	const [declined, setDeclined] = useState(false);
 	useEffect(() => {
 		setDeclined(
@@ -65,6 +65,7 @@ export function PrivacySection({
 		if (shownError.current === mutation.error) return;
 		shownError.current = mutation.error;
 		setManageLists(false);
+		setShowProgress(false);
 		toast.error(errorMessage);
 	}, [mutation.isError, mutation.error, errorMessage]);
 
@@ -103,7 +104,6 @@ export function PrivacySection({
 				saved.action &&
 				query.data.authorized
 			) {
-				bulkListChange.current = saved.action.kind === "allLists";
 				mutation.mutate(saved.action);
 			}
 		} catch {
@@ -111,29 +111,23 @@ export function PrivacySection({
 		}
 	}, [query.data, user, mutation.mutate, onboarding]);
 	const data = query.data;
-	const shownListMigrations = useRef(new Set<string>());
+	const shownMigrations = useRef(new Set<string>());
 	useEffect(() => {
 		const migrations =
 			data?.scopes.flatMap((scope) =>
-				scope.category === "lists" && scope.migration
-					? [scope.migration.id]
-					: [],
+				scope.migration ? [scope.migration.id] : [],
 			) ?? [];
 		if (
 			!mutation.isError &&
-			!bulkListChange.current &&
-			migrations.some((id) => !shownListMigrations.current.has(id))
+			migrations.some((id) => !shownMigrations.current.has(id))
 		) {
-			setManageLists(true);
+			setManageLists(false);
+			setShowProgress(true);
 		}
-		for (const id of migrations) shownListMigrations.current.add(id);
+		for (const id of migrations) shownMigrations.current.add(id);
 	}, [data?.scopes, mutation.isError]);
 
-	const submit = (action: PrivacyAction) => {
-		if (action.body.category === "lists")
-			bulkListChange.current = action.kind === "allLists";
-		mutation.mutate(action);
-	};
+	const submit = (action: PrivacyAction) => mutation.mutate(action);
 	const choose = (action: PrivacyAction) => {
 		if (action.body.visibility === "public" && action.kind !== "default") {
 			setManageLists(false);
@@ -204,6 +198,29 @@ export function PrivacySection({
 					<output className="text-sm">Updating {label}…</output>
 				)}
 				{moving && (
+					<Button
+						variant="ghost"
+						className="w-fit"
+						onClick={() => {
+							setManageLists(false);
+							setShowProgress(true);
+						}}
+					>
+						View progress
+					</Button>
+				)}
+			</div>
+		);
+	};
+	const progressRow = (scope: PrivacyScopeDto) => {
+		const moving = scope.migration;
+		if (!moving) return null;
+		const key = `${scope.category}:${scope.listRkey ?? ""}`;
+		const label = scope.category === "watches" ? "Shelf" : scope.label;
+		return (
+			<div key={key} className="space-y-2 border-(--border) border-b pb-4">
+				<h3 className="font-semibold">{label}</h3>
+				{moving && (
 					<div aria-live="polite" className="space-y-2 text-sm">
 						<p>
 							Changing to {moving.target === "private" ? "Private" : "Public"} ·{" "}
@@ -245,6 +262,7 @@ export function PrivacySection({
 			</div>
 		);
 	};
+
 	return (
 		<section
 			className={
@@ -358,13 +376,15 @@ export function PrivacySection({
 								variant="ghost"
 								onClick={() => setManageLists(true)}
 							>
-								{bulkListChange.current &&
-								data.scopes.some(
-									(scope) => scope.category === "lists" && scope.migration,
-								)
-									? "View List progress"
-									: "Manage individual Lists"}
+								Manage individual Lists
 							</Button>
+							{data.scopes.some(
+								(scope) => scope.category === "lists" && scope.migration,
+							) && (
+								<Button variant="ghost" onClick={() => setShowProgress(true)}>
+									View List progress
+								</Button>
+							)}
 						</div>
 					</div>
 					{onboarding && (
@@ -382,6 +402,20 @@ export function PrivacySection({
 				</>
 			)}
 			{mutation.isError && <p className="mt-4 text-sm">{errorMessage}</p>}
+			<Dialog open={showProgress} onOpenChange={setShowProgress}>
+				<DialogContent className="max-h-[85dvh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>Privacy change progress</DialogTitle>
+						<DialogDescription>
+							You can close this dialog while your visibility changes continue.
+						</DialogDescription>
+					</DialogHeader>
+					{data?.scopes.map(progressRow)}
+					{!data?.scopes.some((scope) => scope.migration) && (
+						<p>Privacy changes complete.</p>
+					)}
+				</DialogContent>
+			</Dialog>
 			<Dialog open={manageLists} onOpenChange={setManageLists}>
 				<DialogContent className="max-h-[85dvh] overflow-y-auto">
 					<DialogHeader>

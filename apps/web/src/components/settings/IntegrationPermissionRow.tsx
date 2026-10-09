@@ -33,23 +33,14 @@ export function IntegrationPermissionRow({
 
 	return (
 		<>
-			<div className="flex items-center justify-between gap-4 rounded-lg border border-(--border) p-3">
-				{/* The badge sits on its own line so rows stay aligned no matter how
-				    long the integration name is. */}
+			<div className="flex items-center justify-between gap-4 pb-4">
 				<div className="min-w-0">
-					<p className="font-medium text-sm">{name}</p>
-					<span
-						className={
-							connected
-								? "mt-1 inline-block rounded-full bg-emerald-500/12 px-2 py-0.5 font-medium text-emerald-700 text-xs dark:text-emerald-300"
-								: "mt-1 inline-block rounded-full bg-(--background-subtle) px-2 py-0.5 font-medium text-(--foreground-muted) text-xs"
-						}
-					>
-						{connected ? "Connected" : "Not connected"}
-					</span>
-					<p className="mt-1 text-(--foreground-muted) text-sm">
-						{description}
-					</p>
+					{connected && (
+						<p className="text-(--foreground-muted) text-sm">Connected</p>
+					)}
+					{disabled && !connected && (
+						<p className="text-(--foreground-muted) text-sm">{description}</p>
+					)}
 				</div>
 				<Button
 					type="button"

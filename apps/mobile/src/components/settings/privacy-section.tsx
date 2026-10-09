@@ -23,31 +23,31 @@ export function PrivacySection({
 }) {
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
-	const [manageLists, setManageListsVisible] = useState(false);
+	const [sheet, setSheet] = useState<"lists" | "progress" | null>(null);
 	// A hidden iOS sheet remains presented until its native dismissal completes.
-	const listsPresented = useRef(false);
+	const sheetPresented = useRef(false);
 	const setManageLists = useCallback((visible: boolean) => {
-		if (visible) listsPresented.current = true;
-		setManageListsVisible(visible);
+		if (visible) sheetPresented.current = true;
+		setSheet(visible ? "lists" : null);
 	}, []);
-	const afterListsDismiss = useRef<(() => void) | undefined>(undefined);
-	const listsDidDismiss = useCallback(() => {
-		listsPresented.current = false;
-		const callback = afterListsDismiss.current;
-		afterListsDismiss.current = undefined;
+	const afterSheetDismiss = useRef<(() => void) | undefined>(undefined);
+	const sheetDidDismiss = useCallback(() => {
+		sheetPresented.current = false;
+		const callback = afterSheetDismiss.current;
+		afterSheetDismiss.current = undefined;
 		callback?.();
 	}, []);
-	const afterClosingLists = useCallback(
+	const afterClosingSheet = useCallback(
 		(callback: () => void) => {
-			if (!listsPresented.current) {
+			if (!sheetPresented.current) {
 				callback();
 				return;
 			}
-			afterListsDismiss.current = callback;
+			afterSheetDismiss.current = callback;
 			setManageLists(false);
-			if (Platform.OS !== "ios") listsDidDismiss();
+			if (Platform.OS !== "ios") sheetDidDismiss();
 		},
-		[listsDidDismiss, setManageLists],
+		[sheetDidDismiss, setManageLists],
 	);
 
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
@@ -62,30 +62,30 @@ export function PrivacySection({
 			throwOnError: true,
 		});
 		// ASWebAuthenticationSession must not compete with an animating native sheet.
-		await new Promise<void>((resolve) => afterClosingLists(resolve));
+		await new Promise<void>((resolve) => afterClosingSheet(resolve));
 		return runAuthorizationUrl(result.data.authorizationUrl);
 	});
 	const data = query.data;
-	const shownListMigrations = useRef(new Set<string>());
-	const bulkListChange = useRef(false);
+	const shownMigrations = useRef(new Set<string>());
+	const openProgress = useCallback(() => {
+		if (sheet === "progress") return;
+		afterClosingSheet(() => {
+			sheetPresented.current = true;
+			setSheet("progress");
+		});
+	}, [afterClosingSheet, sheet]);
 	useEffect(() => {
-		// A partially accepted bulk request can report migrations alongside an error.
-		// Let the error dialog remain visible; progress is still available manually.
 		const migrations =
 			data?.scopes.flatMap((scope) =>
-				scope.category === "lists" && scope.migration
-					? [scope.migration.id]
-					: [],
+				scope.migration ? [scope.migration.id] : [],
 			) ?? [];
 		if (
 			!mutation.isError &&
-			!bulkListChange.current &&
-			migrations.some((id) => !shownListMigrations.current.has(id))
-		) {
-			setManageLists(true);
-		}
-		for (const id of migrations) shownListMigrations.current.add(id);
-	}, [data?.scopes, mutation.isError, setManageLists]);
+			migrations.some((id) => !shownMigrations.current.has(id))
+		)
+			openProgress();
+		for (const id of migrations) shownMigrations.current.add(id);
+	}, [data?.scopes, mutation.isError, openProgress]);
 
 	const errorMessage = getErrorMessage(
 		mutation.error,
@@ -99,7 +99,7 @@ export function PrivacySection({
 		}
 		if (shownError.current === mutation.error) return;
 		shownError.current = mutation.error;
-		afterClosingLists(() =>
+		afterClosingSheet(() =>
 			showDialog({
 				title: "Could not change privacy",
 				description: errorMessage,
@@ -111,12 +111,10 @@ export function PrivacySection({
 		mutation.error,
 		errorMessage,
 		showDialog,
-		afterClosingLists,
+		afterClosingSheet,
 	]);
 
 	const submit = (action: PrivacyAction) => {
-		if (action.body.category === "lists")
-			bulkListChange.current = action.kind === "allLists";
 		mutation.mutate(action);
 	};
 	const choose = (action: PrivacyAction) => {
@@ -124,7 +122,7 @@ export function PrivacySection({
 			submit(action);
 			return;
 		}
-		afterClosingLists(() =>
+		afterClosingSheet(() =>
 			showDialog({
 				title: "Make this data Public?",
 				description:
@@ -238,6 +236,25 @@ export function PrivacySection({
 					<Text accessibilityLiveRegion="polite">Updating {label}…</Text>
 				)}
 				{moving && (
+					<Button
+						variant="secondary"
+						className="self-start"
+						label="View progress"
+						onPress={openProgress}
+					/>
+				)}
+			</View>
+		);
+	};
+	const progressRow = (scope: PrivacyScopeDto) => {
+		const moving = scope.migration;
+		if (!moving) return null;
+		const key = `${scope.category}:${scope.listRkey ?? ""}`;
+		const label = scope.category === "watches" ? "Shelf" : scope.label;
+		return (
+			<View key={key} className="gap-2 border-border border-b pb-4">
+				<Text className="font-semibold text-foreground">{label}</Text>
+				{moving && (
 					<View className="gap-2">
 						<Text>
 							Changing to {moving.target === "private" ? "Private" : "Public"} ·{" "}
@@ -280,6 +297,7 @@ export function PrivacySection({
 			</View>
 		);
 	};
+
 	return (
 		<View
 			className={
@@ -384,16 +402,18 @@ export function PrivacySection({
 							<Button
 								className="self-start border-transparent px-0"
 								variant="secondary"
-								label={
-									bulkListChange.current &&
-									data.scopes.some(
-										(scope) => scope.category === "lists" && scope.migration,
-									)
-										? "View List progress"
-										: "Manage individual Lists"
-								}
+								label="Manage individual Lists"
 								onPress={() => setManageLists(true)}
 							/>
+							{data.scopes.some(
+								(scope) => scope.category === "lists" && scope.migration,
+							) && (
+								<Button
+									variant="secondary"
+									label="View List progress"
+									onPress={openProgress}
+								/>
+							)}
 						</View>
 					</View>
 					{onboarding && (
@@ -412,15 +432,17 @@ export function PrivacySection({
 				<Text accessibilityRole="alert">{errorMessage}</Text>
 			)}
 			<Modal
-				visible={manageLists}
+				visible={sheet !== null}
 				animationType="slide"
 				presentationStyle="pageSheet"
 				onRequestClose={() => setManageLists(false)}
-				onDismiss={listsDidDismiss}
+				onDismiss={sheetDidDismiss}
 			>
 				<SafeAreaView className="flex-1 bg-background">
 					<View className="flex-row items-center justify-between p-5">
-						<Text className="font-semibold text-xl">Your Lists</Text>
+						<Text className="font-semibold text-xl">
+							{sheet === "progress" ? "Privacy change progress" : "Your Lists"}
+						</Text>
 						<Button
 							variant="secondary"
 							label="Done"
@@ -428,14 +450,29 @@ export function PrivacySection({
 						/>
 					</View>
 					<ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-						<Text className="text-muted-foreground">
-							Choose visibility for each List.
-						</Text>
-						{data?.scopes
-							.filter((scope) => scope.category === "lists")
-							.map(row)}
-						{!data?.scopes.some((scope) => scope.category === "lists") && (
-							<Text>No Lists yet.</Text>
+						{sheet === "progress" ? (
+							<>
+								<Text className="text-muted-foreground">
+									You can close this dialog while your visibility changes
+									continue.
+								</Text>
+								{data?.scopes.map(progressRow)}
+								{!data?.scopes.some((scope) => scope.migration) && (
+									<Text>Privacy changes complete.</Text>
+								)}
+							</>
+						) : (
+							<>
+								<Text className="text-muted-foreground">
+									Choose visibility for each List.
+								</Text>
+								{data?.scopes
+									.filter((scope) => scope.category === "lists")
+									.map(row)}
+								{!data?.scopes.some((scope) => scope.category === "lists") && (
+									<Text>No Lists yet.</Text>
+								)}
+							</>
 						)}
 						{mutation.isError && (
 							<Text accessibilityRole="alert">{errorMessage}</Text>

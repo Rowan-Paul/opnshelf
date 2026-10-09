@@ -223,7 +223,11 @@ describe("Privacy Alpha mobile", () => {
 		mocks.data.scopes.push(scope);
 		const renderer = render();
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
-		act(() => renderer.root.findByType("dialog").props.onRequestClose());
+		const dismiss = renderer.root.findByType("dialog").props.onDismiss;
+		act(() => {
+			renderer.root.findByType("dialog").props.onRequestClose();
+			dismiss();
+		});
 		mocks.data = { ...mocks.data, scopes: [...mocks.data.scopes] };
 		act(() => renderer.update(<PrivacySection />));
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
@@ -279,17 +283,25 @@ describe("Privacy Alpha mobile", () => {
 			],
 		};
 		act(() => renderer.update(<PrivacySection />));
-		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
-		act(() =>
-			renderer.root
-				.findAll(
-					(node) => node.type === "button" && node.props.label === "Private",
-				)[0]
-				.props.onPress(),
-		);
-		act(() => renderer.update(<PrivacySection />));
-		act(() => button(renderer, "View List progress").props.onPress());
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
+		expect(JSON.stringify(renderer.toJSON())).toContain(
+			"Privacy change progress",
+		);
+		expect(
+			renderer.root
+				.findByType("dialog")
+				.findAll(
+					(node) => node.type === "button" && node.props.label === "Public",
+				),
+		).toHaveLength(0);
+		const dismiss = renderer.root.findByType("dialog").props.onDismiss;
+		act(() => {
+			button(renderer, "Done").props.onPress();
+			dismiss();
+		});
+		act(() => button(renderer, "Manage individual Lists").props.onPress());
+		expect(JSON.stringify(renderer.toJSON())).toContain("Your Lists");
+		expect(JSON.stringify(renderer.toJSON())).not.toContain("records copied");
 	});
 
 	it("does not suppress migrations when bulk publication is cancelled", () => {
@@ -490,6 +502,45 @@ describe("Privacy Alpha mobile", () => {
 			expect.objectContaining({
 				body: expect.objectContaining({ publicationConfirmed: true }),
 			}),
+		);
+	});
+	it("waits for management to dismiss before showing progress on iOS", () => {
+		const renderer = render();
+		act(() => button(renderer, "Manage individual Lists").props.onPress());
+		const dismiss = renderer.root.findByType("dialog").props.onDismiss;
+		if (!mocks.data) throw new Error("Missing status");
+		mocks.data = {
+			...mocks.data,
+			scopes: [
+				{
+					category: "lists",
+					label: "Favorites",
+					listRkey: "favorites",
+					visibility: "public",
+					migration: {
+						id: "move",
+						target: "private",
+						status: "running",
+						copied: 0,
+						total: 2,
+						error: null,
+					},
+				},
+			],
+		};
+		act(() => renderer.update(<PrivacySection />));
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		act(() => dismiss());
+		expect(JSON.stringify(renderer.toJSON())).toContain(
+			"Privacy change progress",
+		);
+		mocks.data = {
+			...mocks.data,
+			scopes: mocks.data.scopes.map((scope) => ({ ...scope, migration: null })),
+		};
+		act(() => renderer.update(<PrivacySection />));
+		expect(JSON.stringify(renderer.toJSON())).toContain(
+			"Privacy changes complete.",
 		);
 	});
 });

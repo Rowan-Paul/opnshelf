@@ -284,15 +284,25 @@ export function NotificationPreferences({
 				)}
 				{(!onboarding || emailExpanded || !settings.emailVerified) && (
 					<>
-						{settings.emailVerified && (
-							<Button
-								label="Send test email"
-								size="sm"
-								variant="secondary"
-								disabled={testNotification.isPending}
-								onPress={() => void sendTest("email")}
-							/>
-						)}
+						<View className="flex-row flex-wrap gap-2">
+							{settings.emailVerified && (
+								<Button
+									label="Send test email"
+									size="sm"
+									variant="secondary"
+									disabled={testNotification.isPending}
+									onPress={() => void sendTest("email")}
+								/>
+							)}
+							{settings.emailVerified && !emailInput && !awaitingCode && (
+								<Button
+									label="Use a different email"
+									size="sm"
+									variant="secondary"
+									onPress={() => setEmailInput(settings.email ?? "")}
+								/>
+							)}
+						</View>
 						{!awaitingCode ? (
 							<View className="gap-2">
 								{(!settings.emailVerified || !settings.email || emailInput) && (
@@ -317,15 +327,6 @@ export function NotificationPreferences({
 										loading={requestEmail.isPending}
 										loadingLabel="Sending code…"
 										onPress={() => void sendCode()}
-										className="self-start"
-									/>
-								)}
-								{settings.emailVerified && !emailInput && (
-									<Button
-										label="Use a different email"
-										size="sm"
-										variant="secondary"
-										onPress={() => setEmailInput(settings.email ?? "")}
 										className="self-start"
 									/>
 								)}

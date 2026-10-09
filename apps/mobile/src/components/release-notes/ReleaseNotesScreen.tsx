@@ -55,9 +55,6 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 						</Link>
 					)}
 					<View className="gap-3">
-						<Text className="font-semibold text-primary text-xs uppercase tracking-widest">
-							Opnshelf · Release notes
-						</Text>
 						<Text className="font-bold font-display text-3xl text-foreground">
 							{slug
 								? (entry?.title ??

@@ -36,7 +36,9 @@ Opening a detail URL or editing existing copy does not acknowledge the history.
 - Both clients use `/whats-new` and `/whats-new/<slug>` (ADR 0023). For this OTA,
   Bluesky HTTPS links remain in Web. Native capture is deferred on both platforms
   together (ADR 0022), as the operator confirmed during PR review. Signed-out
-  discovery is the public Web footer; Mobile discovery is Settings.
+  discovery is the public Web footer; Mobile discovery is a dedicated What’s new
+  control on the Profile hub (updated from Settings following operator feedback
+  on 2026-10-08).
 - Publishing or correcting notes requires a production Web deployment. A Web
   outage also affects Mobile notes; cached content remains visible on refetch
   failure. Read-state failure does not prevent public reading.
