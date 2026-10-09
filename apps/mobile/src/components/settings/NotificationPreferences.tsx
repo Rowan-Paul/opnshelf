@@ -236,7 +236,6 @@ export function NotificationPreferences({
 						size="sm"
 						onPress={() => void enablePush()}
 						disabled={!Device.isDevice}
-						className="self-start"
 					/>
 				}
 				{pushError && (
@@ -244,7 +243,7 @@ export function NotificationPreferences({
 						{pushError}
 					</Text>
 				)}
-				{pushGranted && (
+				{pushGranted && settings.pushDeviceCount > 0 && (
 					<Button
 						label="Send test mobile notification"
 						size="sm"
@@ -375,11 +374,11 @@ export function NotificationPreferences({
 			</View>
 
 			<View className="gap-3">
-				<View className="flex-row justify-end gap-5">
-					<Text className="w-12 text-center text-muted-foreground text-xs">
+				<View className="flex-row justify-end gap-3">
+					<Text className="w-16 text-center text-muted-foreground text-xs">
 						Mobile
 					</Text>
-					<Text className="w-12 text-center text-muted-foreground text-xs">
+					<Text className="w-16 text-center text-muted-foreground text-xs">
 						Email
 					</Text>
 				</View>
@@ -396,18 +395,24 @@ export function NotificationPreferences({
 								{category.detail}
 							</Text>
 						</View>
-						<Switch
-							value={settings[category.push]}
-							onValueChange={(checked) => void change(category.push, checked)}
-							disabled={!pushGranted || pendingKey === category.push}
-						/>
-						<Switch
-							value={settings[category.email]}
-							onValueChange={(checked) => void change(category.email, checked)}
-							disabled={
-								!settings.emailVerified || pendingKey === category.email
-							}
-						/>
+						<View className="w-16 items-center">
+							<Switch
+								value={settings[category.push]}
+								onValueChange={(checked) => void change(category.push, checked)}
+								disabled={!pushGranted || pendingKey === category.push}
+							/>
+						</View>
+						<View className="w-16 items-center">
+							<Switch
+								value={settings.emailVerified && settings[category.email]}
+								onValueChange={(checked) =>
+									void change(category.email, checked)
+								}
+								disabled={
+									!settings.emailVerified || pendingKey === category.email
+								}
+							/>
+						</View>
 					</View>
 				))}
 			</View>

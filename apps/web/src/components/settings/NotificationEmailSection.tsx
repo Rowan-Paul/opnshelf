@@ -295,7 +295,7 @@ export function NotificationEmailSection({
 								</div>
 								<Switch
 									id={category.key}
-									checked={settings[category.key]}
+									checked={settings.emailVerified && settings[category.key]}
 									onCheckedChange={(checked) =>
 										void change(category.key, checked)
 									}
