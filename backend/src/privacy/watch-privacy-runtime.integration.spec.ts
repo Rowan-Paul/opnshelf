@@ -186,6 +186,7 @@ describe.skipIf(!url)("Watch privacy runtime on PostgreSQL", () => {
 		);
 		expect((await privacy.status(did, pds.session)).visibility).toBe("public");
 		await privacy.start(did, pds.session, "private", false);
+		expect((await privacy.status(did, pds.session)).migration?.total).toBe(1);
 		expect(await db.user.count({ where: { did, ...publicWatchOwner } })).toBe(
 			0,
 		);

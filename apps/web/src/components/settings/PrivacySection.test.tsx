@@ -4,12 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PrivacySection } from "./PrivacySection";
 
 const mocks = vi.hoisted(() => ({
+	isPending: false,
 	mutate: vi.fn(),
 	data: {} as PrivacyStatusDto,
 	error: null as unknown,
 	toastError: vi.fn(),
 }));
 vi.mock("@opnshelf/api", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@opnshelf/api")>()),
 	getErrorMessage: (await importOriginal<typeof import("@opnshelf/api")>())
 		.getErrorMessage,
 	authControllerPermissions: vi.fn(),
@@ -17,7 +19,7 @@ vi.mock("@opnshelf/api", async (importOriginal) => ({
 		query: { data: mocks.data },
 		mutation: {
 			mutate: mocks.mutate,
-			isPending: false,
+			isPending: mocks.isPending,
 			isError: mocks.error !== null,
 			error: mocks.error,
 		},
@@ -31,6 +33,7 @@ vi.mock("#/lib/auth-context", () => ({
 beforeEach(() => {
 	mocks.mutate.mockReset();
 	mocks.error = null;
+	mocks.isPending = false;
 	mocks.toastError.mockReset();
 	sessionStorage.clear();
 	mocks.data = {
@@ -57,24 +60,27 @@ beforeEach(() => {
 	};
 });
 describe("Privacy settings", () => {
-	it("toasts the API error once and keeps its reason visible", () => {
+	it("shows account contention in a friendly modal once, without inline status", () => {
 		mocks.error = {
 			statusCode: 409,
 			message: "Another Watch operation is in progress. Try again.",
 		};
 		const { rerender } = render(<PrivacySection />);
-		expect(mocks.toastError).toHaveBeenCalledWith(
-			"Another Watch operation is in progress. Try again.",
-		);
+		const dialog = screen.getByRole("dialog", {
+			name: "Could not change privacy",
+		});
 		expect(
-			screen.getByText("Another Watch operation is in progress. Try again.")
-				.textContent,
-		).toBe("Another Watch operation is in progress. Try again.");
+			within(dialog).getByText(
+				"Your account is still finishing another change. Please wait a moment, then try again.",
+			),
+		).toBeTruthy();
+		expect(
+			screen.queryByText("Another Watch operation is in progress. Try again."),
+		).toBeNull();
+		fireEvent.click(within(dialog).getByRole("button", { name: "OK" }));
 		rerender(<PrivacySection />);
-		expect(mocks.toastError).toHaveBeenCalledOnce();
-		expect(screen.queryByRole("alert")).toBeNull();
+		expect(screen.queryByRole("dialog")).toBeNull();
 	});
-
 	it("resumes a legacy combined onboarding choice after OAuth", () => {
 		const action = {
 			kind: "initial",
@@ -168,7 +174,7 @@ describe("Privacy settings", () => {
 			},
 		});
 	});
-	it("keeps accepted bulk changes on the privacy page with optional progress", () => {
+	it("opens separate progress for accepted bulk changes", () => {
 		const { rerender } = render(<PrivacySection />);
 		fireEvent.click(
 			within(screen.getByRole("group", { name: "Lists visibility" })).getByRole(
@@ -196,16 +202,23 @@ describe("Privacy settings", () => {
 			),
 		};
 		rerender(<PrivacySection />);
-		expect(screen.queryByRole("dialog")).toBeNull();
+		const progress = screen.getByRole("dialog", {
+			name: "Privacy change progress",
+		});
+		expect(
+			within(progress).queryByRole("button", { name: "Public" }),
+		).toBeNull();
+		fireEvent.keyDown(progress, { key: "Escape" });
 		fireEvent.click(
-			within(screen.getByRole("group", { name: "Shelf visibility" })).getByRole(
-				"button",
-				{ name: "Private" },
-			),
+			screen.getByRole("button", { name: "Manage individual Lists" }),
 		);
-		rerender(<PrivacySection />);
+		const management = screen.getByRole("dialog", { name: "Your Lists" });
+		expect(within(management).queryByText(/records copied/)).toBeNull();
+		fireEvent.keyDown(management, { key: "Escape" });
 		fireEvent.click(screen.getByRole("button", { name: "View List progress" }));
-		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
+		expect(
+			screen.getByRole("dialog", { name: "Privacy change progress" }),
+		).toBeDefined();
 	});
 
 	it("records migrations suppressed during errors so later actions do not reopen them", () => {
@@ -219,7 +232,10 @@ describe("Privacy settings", () => {
 			error: null,
 		};
 		const { rerender } = render(<PrivacySection />);
-		expect(screen.queryByRole("dialog")).toBeNull();
+		expect(
+			screen.getByRole("dialog", { name: "Could not change privacy" }),
+		).toBeTruthy();
+		fireEvent.click(screen.getByRole("button", { name: "OK" }));
 		mocks.error = null;
 		rerender(<PrivacySection />);
 		expect(screen.queryByRole("dialog")).toBeNull();
@@ -254,7 +270,45 @@ describe("Privacy settings", () => {
 			),
 		};
 		rerender(<PrivacySection />);
-		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
+		expect(
+			screen.getByRole("dialog", { name: "Privacy change progress" }),
+		).toBeDefined();
+	});
+
+	it.each([
+		"choice",
+		"confirmation",
+	])("closes the %s dialog when an external migration starts", (stage) => {
+		const { rerender } = render(<PrivacySection />);
+		fireEvent.click(
+			within(screen.getByRole("group", { name: "Lists visibility" })).getByRole(
+				"button",
+				{ name: "Public" },
+			),
+		);
+		if (stage === "confirmation") {
+			fireEvent.click(screen.getByRole("button", { name: "All Lists" }));
+		}
+		mocks.data = {
+			...mocks.data,
+			scopes: mocks.data.scopes.map((scope) => ({
+				...scope,
+				migration: {
+					id: `external-${scope.category}`,
+					target: "private",
+					status: "queued",
+					copied: 0,
+					total: 2,
+					error: null,
+				},
+			})),
+		};
+		rerender(<PrivacySection />);
+		expect(screen.getAllByRole("dialog")).toHaveLength(1);
+		expect(
+			screen.getByRole("dialog", { name: "Privacy change progress" }),
+		).toBeDefined();
+		expect(mocks.mutate).not.toHaveBeenCalled();
 	});
 
 	it("cancels a Lists choice without writing", () => {
@@ -281,7 +335,9 @@ describe("Privacy settings", () => {
 			error: null,
 		};
 		render(<PrivacySection />);
-		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
+		expect(
+			screen.getByRole("dialog", { name: "Privacy change progress" }),
+		).toBeDefined();
 		expect(screen.getByText(/2\/2 records copied.*Finishing/)).toBeDefined();
 		expect(
 			screen.getByText(/Records include the List details and its items/),
@@ -359,11 +415,99 @@ describe("Privacy settings", () => {
 			],
 		};
 		rerender(<PrivacySection />);
-		expect(screen.getByRole("dialog", { name: "Your Lists" })).toBeDefined();
+		expect(
+			screen.getByRole("dialog", { name: "Privacy change progress" }),
+		).toBeDefined();
 		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 		mocks.data = { ...mocks.data, scopes: [...mocks.data.scopes] };
 		rerender(<PrivacySection />);
 		expect(screen.queryByRole("dialog")).toBeNull();
 		expect(screen.queryByText(/Lists are changing visibility/)).toBeNull();
+	});
+	it("shows completion without leaving the progress dialog", () => {
+		mocks.data.scopes[1].migration = {
+			id: "move",
+			target: "private",
+			status: "running",
+			copied: 1,
+			total: 2,
+			error: null,
+		};
+		const { rerender } = render(<PrivacySection />);
+		mocks.data = {
+			...mocks.data,
+			scopes: mocks.data.scopes.map((scope) => ({ ...scope, migration: null })),
+		};
+		rerender(<PrivacySection />);
+		expect(
+			screen.getByRole("dialog", { name: "Privacy change progress" })
+				.textContent,
+		).toContain("Privacy changes complete.");
+		expect(screen.getByText(/2\/2 records copied/)).toBeTruthy();
+		expect(screen.queryByText(/You can close this dialog while/)).toBeNull();
+		expect(screen.getByRole("button", { name: "Done" })).toBeTruthy();
+	});
+	it("resumes a failed migration from progress without changing its target", () => {
+		mocks.data.scopes[1].migration = {
+			id: "failed",
+			target: "private",
+			status: "failed",
+			copied: 1,
+			total: 2,
+			error: "Copy interrupted",
+		};
+		render(<PrivacySection />);
+		fireEvent.click(screen.getByRole("button", { name: "Resume" }));
+		expect(mocks.mutate).toHaveBeenCalledWith({
+			kind: "retry",
+			body: { category: "lists", listRkey: "favorites", visibility: "private" },
+		});
+	});
+});
+
+it("shows immediate pending feedback while checking the privacy change", () => {
+	const { rerender } = render(<PrivacySection />);
+	fireEvent.click(
+		within(screen.getByRole("group", { name: "Shelf visibility" })).getByRole(
+			"button",
+			{ name: "Private" },
+		),
+	);
+	mocks.isPending = true;
+	rerender(<PrivacySection />);
+	expect(
+		within(
+			screen.getByRole("dialog", { name: "Privacy change progress" }),
+		).getByText("Checking your privacy change…"),
+	).toBeTruthy();
+	expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
+});
+it("uses the current List scope when switching from its detail page", () => {
+	render(<PrivacySection listRkey="favorites" />);
+	expect(screen.queryByText("Who can see your data")).toBeNull();
+	expect(screen.queryByRole("group", { name: "List visibility" })).toBeNull();
+	fireEvent.click(
+		screen.getByRole("button", {
+			name: "List visibility: Private. Change visibility",
+		}),
+	);
+	const choices = within(
+		screen.getByRole("group", { name: "List visibility" }),
+	);
+	expect(
+		choices
+			.getByRole("button", { name: "Private" })
+			.getAttribute("aria-pressed"),
+	).toBe("true");
+	fireEvent.click(choices.getByRole("button", { name: "Public" }));
+	fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+	expect(mocks.mutate).toHaveBeenCalledWith({
+		kind: "change",
+		body: {
+			category: "lists",
+			listRkey: "favorites",
+			visibility: "public",
+			publicationConfirmed: true,
+		},
 	});
 });

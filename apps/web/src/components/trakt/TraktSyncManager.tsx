@@ -26,7 +26,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Check, Link2 } from "lucide-react";
+import { Check, Link2 } from "lucide-react";
 import { useState } from "react";
 
 const rootKey = ["trakt-sync"];
@@ -81,10 +81,6 @@ export function TraktSyncManager({
 	return (
 		<div className="mx-auto max-w-3xl space-y-6">
 			<header className="space-y-3">
-				<div className="flex items-center gap-3 text-(--accent)">
-					<ArrowLeftRight className="size-6" />
-					<span className="font-medium text-sm">Your history, together</span>
-				</div>
 				<h1 className="font-display font-semibold text-3xl sm:text-4xl">
 					Trakt Sync
 				</h1>

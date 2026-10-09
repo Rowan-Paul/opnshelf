@@ -13,10 +13,11 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nativeApplicationVersion } from "expo-application";
-import { Link, Stack } from "expo-router";
+import { Link, Stack, useFocusEffect } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
+	ArrowLeftRight,
 	Bell,
 	ChevronRight,
 	Compass,
@@ -29,12 +30,12 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
+	AppState,
 	Pressable,
 	ScrollView,
 	Switch,
 	View,
 } from "react-native";
-import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { PrivacySection } from "@/components/settings/privacy-section";
@@ -62,7 +63,6 @@ import {
 	isAccountDeletionRunning,
 	useAccountDeletionJob,
 } from "@/lib/use-account-deletion";
-import { useReleaseNotes } from "@/lib/use-release-notes";
 
 /** Amber primary used for active switches + selected radios. */
 const PRIMARY = "#f3bc00";
@@ -267,10 +267,26 @@ export function SettingsCategoryScreen({
 		data: myPublications,
 		isLoading: publicationsLoading,
 		isError: publicationsError,
+		isFetching: publicationsChecking,
+		refetch: checkPublications,
 	} = useQuery({
 		...reviewsControllerListMyPublicationsOptions(),
 		enabled: !!user && section === "connections",
 	});
+	useFocusEffect(
+		useCallback(() => {
+			if (!user || section !== "connections") return;
+			void checkPublications({ cancelRefetch: false });
+			let previousState = AppState.currentState;
+			const subscription = AppState.addEventListener("change", (state) => {
+				if (state === "active" && previousState !== "active") {
+					void checkPublications({ cancelRefetch: false });
+				}
+				previousState = state;
+			});
+			return () => subscription.remove();
+		}, [user, section, checkPublications]),
+	);
 
 	const storedPublicationUri = settings?.reviewsPublicationUri ?? null;
 
@@ -689,23 +705,26 @@ export function SettingsCategoryScreen({
 								title="Blog mirror"
 								description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own blogs."
 							>
-								<IntegrationPermissionRow
-									name="Blog mirroring"
-									description={
-										storedPublicationUri
-											? "Allow Opnshelf to publish and update Review mirrors in the selected publication."
-											: "Choose a publication below before connecting Blog mirroring."
-									}
-									connected={settings?.blogIntegrationEnabled ?? false}
-									disabled={
-										permissionChangeMutation.isPending ||
-										(!(settings?.blogIntegrationEnabled ?? false) &&
-											!storedPublicationUri)
-									}
-									onConfirm={(action) =>
-										requestPermissionChange("blog", action)
-									}
-								/>
+								{settings?.blogIntegrationEnabled ||
+								myPublications?.items.some(
+									(pub) => pub.uri === storedPublicationUri,
+								) ? (
+									<IntegrationPermissionRow
+										name="Blog mirroring"
+										description="Allow Opnshelf to publish and update Review mirrors in the selected publication."
+										connected={settings?.blogIntegrationEnabled ?? false}
+										disabled={permissionChangeMutation.isPending}
+										onConfirm={(action) =>
+											requestPermissionChange("blog", action)
+										}
+									/>
+								) : (
+									<Text className="text-muted-foreground text-sm leading-5">
+										{myPublications?.items.length === 0
+											? "Create a publication in a Standard.site-compatible app using this account, then return here to connect Blog mirroring."
+											: "Choose a publication to connect Blog mirroring."}
+									</Text>
+								)}
 
 								{storedTargetMissing && (
 									<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
@@ -768,12 +787,29 @@ export function SettingsCategoryScreen({
 												</Pressable>
 											);
 										})}
-										<Text className="pt-1 text-muted-foreground text-xs leading-5">
-											Disconnect above to stop mirroring. Your publication
-											choice stays saved for reconnection.
-										</Text>
+										{settings?.blogIntegrationEnabled && (
+											<Text className="pt-1 text-muted-foreground text-xs leading-5">
+												Disconnect above to stop mirroring. Your publication
+												choice stays saved for reconnection.
+											</Text>
+										)}
 									</View>
 								)}
+								<View className="self-start">
+									<Button
+										label={
+											publicationsChecking
+												? "Checking…"
+												: "Check for publications"
+										}
+										variant="secondary"
+										size="sm"
+										disabled={publicationsChecking}
+										onPress={() =>
+											void checkPublications({ cancelRefetch: false })
+										}
+									/>
+								</View>
 							</SettingsSection>
 
 							<SettingsSection
@@ -794,17 +830,19 @@ export function SettingsCategoryScreen({
 							{/* Import history */}
 							<View className="gap-3 rounded-xl border border-border bg-card p-4">
 								<Text className="font-display font-semibold text-foreground text-lg">
-									Import history
+									Trakt
 								</Text>
 								<Link href="/trakt-sync" asChild>
-									<Pressable className="rounded-lg border border-border bg-background-subtle p-3">
-										<Text className="font-medium text-foreground">
-											Keep in sync with Trakt
+									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border p-3">
+										<ArrowLeftRight color="#94a3b8" size={20} />
+										<Text className="flex-1 font-medium text-foreground">
+											Keep in sync
 										</Text>
+										<ChevronRight color="#94a3b8" size={18} />
 									</Pressable>
 								</Link>
 								<Link href="/trakt-import" asChild>
-									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
+									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border p-3">
 										<Download color="#94a3b8" size={20} />
 										<Text className="flex-1 font-medium text-foreground">
 											{getTraktSettingsLabel(traktJob)}
@@ -1001,7 +1039,6 @@ const SETTINGS_AREAS: {
 
 /** The settings index is deliberately a short catalogue, not a control panel. */
 export default function SettingsScreen() {
-	const { unread } = useReleaseNotes();
 	return (
 		<>
 			<Stack.Screen options={{ title: "Settings" }} />
@@ -1015,24 +1052,6 @@ export default function SettingsScreen() {
 						Choose an area to manage.
 					</Text>
 					<View className="overflow-hidden rounded-xl border border-border bg-card">
-						<Link href="/whats-new" asChild>
-							<Pressable
-								accessibilityRole="link"
-								className="flex-row items-center gap-3 border-border border-b p-4"
-							>
-								<MessageSquare color="#94a3b8" size={20} />
-								<View className="flex-1 gap-0.5">
-									<Text className="font-medium text-foreground">
-										What’s new
-									</Text>
-									<Text className="text-muted-foreground text-sm">
-										Release notes and improvements
-									</Text>
-								</View>
-								{unread && <UnreadDot />}
-								<ChevronRight color="#94a3b8" size={18} />
-							</Pressable>
-						</Link>
 						{SETTINGS_AREAS.map(({ href, label, description, Icon }, index) => (
 							<Link key={href} href={href} asChild>
 								<Pressable

@@ -1,3 +1,4 @@
+import type { Prisma } from "../generated/client";
 import { randomUUID } from "node:crypto";
 import {
 	ConflictException,
@@ -136,51 +137,87 @@ export class ContentPrivacyCoordinator {
 		target: PrivacyVisibility,
 		confirmed: boolean,
 		listRkey?: string,
+		totalRecords?: number,
 	) {
+		this.confirmPublication(target, confirmed);
+		return this.locks.run(did, async () => {
+			await this.assertAccount(did);
+			return this.prisma.$transaction(async (tx) => {
+				await tx.$queryRaw`SELECT did FROM "User" WHERE did = ${did} FOR UPDATE`;
+				return this.queue(tx, did, category, target, listRkey, totalRecords);
+			});
+		});
+	}
+	/** Acceptance is atomic: the worker cannot start one List between requests
+	 * for the remaining Lists and their default. Preflight happens before this. */
+	async startAllLists(
+		did: string,
+		rkeys: string[],
+		target: PrivacyVisibility,
+		confirmed: boolean,
+		totals: Record<string, number | undefined> = {},
+	) {
+		this.confirmPublication(target, confirmed);
+		return this.locks.run(did, async () => {
+			await this.assertAccount(did);
+			return this.prisma.$transaction(async (tx) => {
+				await tx.$queryRaw`SELECT did FROM "User" WHERE did = ${did} FOR UPDATE`;
+				for (const rkey of rkeys)
+					await this.queue(tx, did, "lists", target, rkey, totals[rkey]);
+				await tx.user.update({
+					where: { did },
+					data: { listsDefaultVisibility: target },
+				});
+			});
+		});
+	}
+	private confirmPublication(target: PrivacyVisibility, confirmed: boolean) {
 		if (target === "public" && !confirmed)
 			throw new ConflictException(
 				"Confirm publication before making this data Public.",
 			);
-		return this.locks.run(did, async () => {
-			await this.assertAccount(did);
-			const key = contentScopeKey(category, listRkey);
-			return this.prisma.$transaction(async (tx) => {
-				// Ingestion takes the same row lock before committing a public projection.
-				await tx.$queryRaw`SELECT did FROM "User" WHERE did = ${did} FOR UPDATE`;
-				const current = await tx.privacyScope.findUnique({
-					where: { userDid_key: { userDid: did, key } },
-				});
-				if (current?.targetVisibility) {
-					if (current.targetVisibility !== target)
-						throw new ConflictException(
-							"Finish this privacy change before reversing it.",
-						);
-					return current;
-				}
-				if ((current?.visibility ?? "public") === target) return current;
-				return tx.privacyScope.upsert({
-					where: { userDid_key: { userDid: did, key } },
-					create: {
-						userDid: did,
-						key,
-						category,
-						listRkey,
-						managed: true,
-						migrationId: randomUUID(),
-						targetVisibility: target,
-						totalRecords: null,
-						status: "queued",
-					},
-					update: {
-						managed: true,
-						migrationId: randomUUID(),
-						targetVisibility: target,
-						totalRecords: null,
-						status: "queued",
-						error: null,
-					},
-				});
-			});
+	}
+	private async queue(
+		tx: Prisma.TransactionClient,
+		did: string,
+		category: ContentCategory,
+		target: PrivacyVisibility,
+		listRkey?: string,
+		totalRecords?: number,
+	) {
+		const key = contentScopeKey(category, listRkey);
+		const current = await tx.privacyScope.findUnique({
+			where: { userDid_key: { userDid: did, key } },
+		});
+		if (current?.targetVisibility) {
+			if (current.targetVisibility !== target)
+				throw new ConflictException(
+					"Finish this privacy change before reversing it.",
+				);
+			return current;
+		}
+		if ((current?.visibility ?? "public") === target) return current;
+		return tx.privacyScope.upsert({
+			where: { userDid_key: { userDid: did, key } },
+			create: {
+				userDid: did,
+				key,
+				category,
+				listRkey,
+				managed: true,
+				migrationId: randomUUID(),
+				targetVisibility: target,
+				totalRecords: totalRecords ?? null,
+				status: "queued",
+			},
+			update: {
+				managed: true,
+				migrationId: randomUUID(),
+				targetVisibility: target,
+				totalRecords: totalRecords ?? null,
+				status: "queued",
+				error: null,
+			},
 		});
 	}
 	async retry(did: string, category: ContentCategory, listRkey?: string) {

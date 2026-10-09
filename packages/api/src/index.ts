@@ -68,7 +68,13 @@ export {
 } from "./mutation-failure";
 export { onboardingDiscoveryOptions } from "./onboarding-discovery";
 export { preparePostHogEvent } from "./posthog-event";
-export { type PrivacyAction, privacyActionKey, usePrivacy } from "./privacy";
+export {
+	type PrivacyAction,
+	privacyActionKey,
+	privacyErrorMessage,
+	usePrivacy,
+	usePrivacyProgress,
+} from "./privacy";
 export * from "./release-notes";
 export {
 	getYouTubeEmbedUrl,
@@ -85,6 +91,7 @@ export {
 	isKnownTraktImportStatus,
 	isTerminalTraktImportStatus,
 } from "./trakt-import-status";
+export * from "./trakt-sync";
 export {
 	invalidateWatchActivityQueries,
 	isWatchActivityQueryKey,
@@ -100,4 +107,3 @@ export {
 	restorePickerFilters,
 } from "./watch-picker";
 export { getWatchProviderLink } from "./watch-provider-link";
-export * from "./trakt-sync";

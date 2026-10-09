@@ -70,6 +70,31 @@ describe.skipIf(!url)("content Privacy Alpha on PostgreSQL", () => {
 		await db.$disconnect();
 		await pool.end();
 	});
+	it("rolls back all List acceptance and the default when one List cannot reverse", async () => {
+		await db.privacyScope.create({
+			data: {
+				userDid: did,
+				key: "lists:second",
+				category: "lists",
+				listRkey: "second",
+				visibility: "private",
+				targetVisibility: "public",
+				migrationId: "existing",
+				status: "queued",
+			},
+		});
+		await expect(
+			coordinator.startAllLists(did, ["first", "second"], "private", false),
+		).rejects.toThrow("before reversing");
+		expect(await coordinator.scope(did, "lists", "first")).toBeNull();
+		expect(
+			(await db.user.findUniqueOrThrow({ where: { did } }))
+				.listsDefaultVisibility,
+		).toBe("public");
+		expect((await coordinator.scope(did, "lists", "second"))?.migrationId).toBe(
+			"existing",
+		);
+	});
 	it.each(["library", "notes", "lists"] as const)(
 		"round trips %s with full values and stable identity using standard deletion",
 		async (category) => {
@@ -177,6 +202,7 @@ describe.skipIf(!url)("content Privacy Alpha on PostgreSQL", () => {
 			);
 			expect(state).not.toBeNull();
 			if (!state) throw new Error("Expected migration");
+			expect(state.totalRecords).toBe(values.length);
 			await privacy.runMigration(state.id);
 			expect(await db.privacyCopy.count({ where: { scopeId: state.id } })).toBe(
 				values.length,
@@ -226,7 +252,7 @@ describe.skipIf(!url)("content Privacy Alpha on PostgreSQL", () => {
 				true,
 				listRkey,
 			);
-			expect(reverse?.totalRecords).toBeNull();
+			expect(reverse?.totalRecords).toBe(values.length);
 			await privacy.runMigration(state.id);
 			await privacy.runMigration(state.id);
 			expect(

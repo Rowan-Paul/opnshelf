@@ -26,8 +26,8 @@ session. Not deployed.
   matching Mobile App routes for in-app navigation. Bluesky HTTPS links open
   the Web App. Native capture of these links on both platforms is deferred to
   a future store build; this release retains the OTA rollout.
-- Put **What's new** in the Web account menu and Mobile Settings, with an
-  unread indicator also on the control leading to that destination. Include
+- Put **What's new** in the Web account menu and Mobile Profile hub, with an
+  unread indicator on the dedicated control. Include
   a public Web footer link for signed-out visitors.
 
 ## Read state and entries

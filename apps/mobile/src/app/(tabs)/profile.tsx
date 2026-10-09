@@ -6,6 +6,7 @@ import {
 	Film,
 	List,
 	type LucideIcon,
+	Megaphone,
 	Pencil,
 	Settings,
 	Star,
@@ -63,22 +64,33 @@ export default function ProfileTab() {
 					<Text className="font-bold font-display text-2xl text-foreground">
 						Your profile
 					</Text>
-					<Link href="/settings" asChild>
-						<Pressable
-							accessibilityRole="button"
-							accessibilityLabel={
-								unread ? "Settings, unread release notes" : "Settings"
-							}
-							className="size-11 items-center justify-center"
-						>
-							<Settings color="#94a3b8" size={22} />
-							{unread && (
-								<View className="absolute top-1 right-1">
-									<UnreadDot />
-								</View>
-							)}
-						</Pressable>
-					</Link>
+					<View className="flex-row items-center gap-1">
+						<Link href="/whats-new" asChild>
+							<Pressable
+								accessibilityRole="link"
+								accessibilityLabel={
+									unread ? "What’s new, unread release notes" : "What’s new"
+								}
+								className="size-11 items-center justify-center"
+							>
+								<Megaphone color="#94a3b8" size={22} />
+								{unread && (
+									<View className="absolute top-1 right-1">
+										<UnreadDot />
+									</View>
+								)}
+							</Pressable>
+						</Link>
+						<Link href="/settings" asChild>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel="Settings"
+								className="size-11 items-center justify-center"
+							>
+								<Settings color="#94a3b8" size={22} />
+							</Pressable>
+						</Link>
+					</View>
 				</View>
 				{isPending ? (
 					<>

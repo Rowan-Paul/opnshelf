@@ -1,8 +1,8 @@
 import type { PrismaService } from "../prisma/prisma.service";
-import type { WatchAccountLock } from "./watch-account-lock";
 import { ContentPrivacyCoordinator } from "./content-privacy-coordinator";
-import { watchOperation } from "./watch-operation";
 import { privacyRepositoryConfig } from "./privacy-category";
+import type { WatchAccountLock } from "./watch-account-lock";
+import { watchOperation } from "./watch-operation";
 
 describe("nested List privacy", () => {
 	it("uses the new-List default without mutating the enclosing Watch write", async () => {
@@ -48,5 +48,44 @@ describe("nested List privacy", () => {
 				}),
 			}),
 		);
+	});
+});
+
+describe("bulk List privacy acceptance", () => {
+	it("accepts every List and the default under one account lock", async () => {
+		const upsert = vi.fn().mockResolvedValue({});
+		const update = vi.fn();
+		const tx = {
+			$queryRaw: vi.fn(),
+			privacyScope: { findUnique: vi.fn().mockResolvedValue(null), upsert },
+			user: { update },
+		};
+		const prisma = {
+			user: { findUnique: vi.fn().mockResolvedValue({ did: "owner" }) },
+			backgroundJob: { findFirst: vi.fn().mockResolvedValue(null) },
+			$transaction: vi.fn(async (work) => work(tx)),
+		} as unknown as PrismaService;
+		let locked = false;
+		const run = vi.fn(async (_did, work) => {
+			if (locked) throw new Error("Another Watch operation is in progress");
+			locked = true;
+			return work(new AbortController().signal);
+		});
+		const coordinator = new ContentPrivacyCoordinator(prisma, {
+			run,
+		} as unknown as WatchAccountLock);
+		await coordinator.startAllLists(
+			"owner",
+			["first", "second"],
+			"private",
+			false,
+		);
+		expect(run).toHaveBeenCalledOnce();
+		expect(prisma.$transaction).toHaveBeenCalledOnce();
+		expect(upsert).toHaveBeenCalledTimes(2);
+		expect(update).toHaveBeenCalledWith({
+			where: { did: "owner" },
+			data: { listsDefaultVisibility: "private" },
+		});
 	});
 });

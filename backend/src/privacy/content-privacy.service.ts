@@ -38,7 +38,7 @@ import {
 	WatchMigrationConflict,
 } from "./watch-record-migration";
 
-function categoryOf(state: PrivacyScope): ContentCategory {
+function categoryOf(state: Pick<PrivacyScope, "category">): ContentCategory {
 	if (
 		state.category !== "library" &&
 		state.category !== "notes" &&
@@ -92,12 +92,76 @@ export class ContentPrivacyService {
 		confirmed: boolean,
 		listRkey?: string,
 	) {
+		const total = await this.preflight(
+			did,
+			session,
+			category,
+			target,
+			listRkey,
+		);
+		if (total === undefined)
+			return this.coordinator.scope(did, category, listRkey);
+		return this.coordinator.start(
+			did,
+			category,
+			target,
+			confirmed,
+			listRkey,
+			total,
+		);
+	}
+	async startAllLists(
+		did: string,
+		session: unknown,
+		target: PrivacyVisibility,
+		confirmed: boolean,
+	) {
+		const lists = await this.prisma.list.findMany({
+			where: { userDid: did },
+			select: { rkey: true },
+		});
+		const totals: Record<string, number | undefined> = {};
+		for (const list of lists)
+			totals[list.rkey] = await this.preflight(
+				did,
+				session,
+				"lists",
+				target,
+				list.rkey,
+			);
+		if (
+			target === "private" &&
+			!includesWatchSpaceGrant(
+				(await requireWatchSession(session).getTokenInfo()).scope,
+				privacyRepositoryConfig("lists", "new").scope,
+				did,
+			)
+		) {
+			throw new ForbiddenException(
+				"Authorize Private data access before continuing.",
+			);
+		}
+		return this.coordinator.startAllLists(
+			did,
+			lists.map((list) => list.rkey),
+			target,
+			confirmed,
+			totals,
+		);
+	}
+	private async preflight(
+		did: string,
+		session: unknown,
+		category: ContentCategory,
+		target: PrivacyVisibility,
+		listRkey?: string,
+	) {
 		const current = await this.coordinator.scope(did, category, listRkey);
 		if (
 			!current?.targetVisibility &&
 			(current?.visibility ?? "public") === target
 		)
-			return current;
+			return undefined;
 		const config = privacyRepositoryConfig(category, listRkey);
 		if (
 			!includesWatchSpaceGrant(
@@ -130,11 +194,18 @@ export class ContentPrivacyService {
 			)
 				throw error;
 		}
-		return this.coordinator.start(did, category, target, confirmed, listRkey);
+
+		return (
+			await this.snapshot(
+				pds,
+				{ category, listRkey: listRkey ?? null },
+				target === "public",
+			)
+		).length;
 	}
 	private async snapshot(
 		pds: WatchMigrationPds,
-		state: PrivacyScope,
+		state: Pick<PrivacyScope, "category" | "listRkey">,
 		privateRepo: boolean,
 	): Promise<ContentSnapshot> {
 		const records: ContentSnapshot = [];

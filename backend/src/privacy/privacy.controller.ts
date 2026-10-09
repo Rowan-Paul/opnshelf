@@ -87,7 +87,6 @@ export class PrivacyController {
 				migration: watches.migration
 					? {
 							...watches.migration,
-							total: null,
 							target: visibility(watches.migration.target),
 						}
 					: null,
@@ -194,19 +193,12 @@ export class PrivacyController {
 		@Req() req: AuthenticatedRequest,
 		@Body() body: PrivacyChangeDto,
 	) {
-		const lists = await this.prisma.list.findMany({
-			where: { userDid: req.user.did },
-			select: { rkey: true },
-		});
-		for (const list of lists)
-			await this.content.start(
-				req.user.did,
-				req.user.session,
-				"lists",
-				body.visibility,
-				body.publicationConfirmed === true,
-				list.rkey,
-			);
+		await this.content.startAllLists(
+			req.user.did,
+			req.user.session,
+			body.visibility,
+			body.publicationConfirmed === true,
+		);
 		return this.status(req);
 	}
 }

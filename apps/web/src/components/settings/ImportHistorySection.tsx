@@ -5,7 +5,7 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Download } from "lucide-react";
+import { ArrowLeftRight, ChevronRight, Download } from "lucide-react";
 import { useAuth } from "#/lib/auth-context";
 
 function getTraktSettingsLabel(job?: TraktImportJobDto | null): string {
@@ -40,15 +40,17 @@ export function ImportHistorySection() {
 			</p>
 			<Link
 				to="/trakt-sync"
-				className="mb-3 flex max-w-lg items-center justify-between rounded-xl border border-(--border) p-4 font-medium"
+				className="mb-3 flex max-w-lg items-center gap-3 rounded-xl border border-(--border) p-4 transition-colors hover:bg-(--background-subtle)"
 			>
-				Keep in sync <ChevronRight className="size-4" />
+				<ArrowLeftRight className="size-5 text-(--foreground-muted)" />
+				<span className="flex-1 font-medium">Keep in sync</span>
+				<ChevronRight className="size-4 text-(--foreground-muted)" />
 			</Link>
 			<Link
 				to="/trakt-import"
-				className="flex max-w-lg items-center gap-3 rounded-xl border border-(--border) bg-(--background-subtle) p-4 transition-colors hover:bg-(--background-elevated)"
+				className="flex max-w-lg items-center gap-3 rounded-xl border border-(--border) p-4 transition-colors hover:bg-(--background-subtle)"
 			>
-				<Download className="size-5 text-(--accent)" />
+				<Download className="size-5 text-(--foreground-muted)" />
 				<div className="min-w-0 flex-1">
 					<p className="font-medium">{getTraktSettingsLabel(traktImport)}</p>
 					{traktImport ? (

@@ -97,6 +97,7 @@ export class WatchPrivacyCoordinator {
 		ownerDid: string,
 		target: WatchVisibility,
 		publicationConfirmed: boolean,
+		totalRecords?: number,
 	) {
 		if (target !== "public" && target !== "private")
 			throw new Error("Invalid Watch visibility");
@@ -143,6 +144,7 @@ export class WatchPrivacyCoordinator {
 					type: WATCH_PRIVACY_JOB_TYPE,
 					userDid: ownerDid,
 					status: "queued",
+					data: totalRecords == null ? {} : { totalRecords },
 					watchPrivacyMigration: {
 						create: {
 							userDid: ownerDid,

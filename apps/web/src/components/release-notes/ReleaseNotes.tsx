@@ -58,9 +58,6 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 					</Link>
 				)}
 				<header className="mb-10 space-y-3">
-					<p className="font-semibold text-(--accent) text-xs uppercase tracking-widest">
-						Opnshelf · Release notes
-					</p>
 					<h1 className="text-display-1">
 						{slug
 							? (entry?.title ??

@@ -136,9 +136,6 @@ export function TraktSyncManager({
 	return (
 		<View className="gap-5">
 			<View className="gap-3">
-				<Text className="font-display font-semibold text-2xl text-foreground">
-					Your history, together
-				</Text>
 				<Text className={copy}>
 					Keep your Watches and Ratings in sync, even when the app is closed.
 					You choose what moves and in which direction.

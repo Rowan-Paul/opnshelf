@@ -188,16 +188,27 @@ export function NotificationEmailSection({
 										Confirm an email address to receive notifications.
 									</p>
 								)}
-								{settings.emailVerified && (
-									<button
-										type="button"
-										className="btn btn-secondary"
-										disabled={testNotification.isPending}
-										onClick={() => void sendTest("email")}
-									>
-										Send test email
-									</button>
-								)}
+								<div className="flex flex-wrap gap-3">
+									{settings.emailVerified && (
+										<button
+											type="button"
+											className="btn btn-secondary"
+											disabled={testNotification.isPending}
+											onClick={() => void sendTest("email")}
+										>
+											Send test email
+										</button>
+									)}
+									{settings.emailVerified && !emailInput && !awaitingCode && (
+										<button
+											type="button"
+											className="btn btn-secondary"
+											onClick={() => setEmailInput(settings.email ?? "")}
+										>
+											Use a different email
+										</button>
+									)}
+								</div>
 								{!awaitingCode ? (
 									<div className="space-y-2">
 										{(!settings.emailVerified ||
@@ -220,14 +231,6 @@ export function NotificationEmailSection({
 												onClick={() => void sendCode()}
 											>
 												Send confirmation code
-											</button>
-										) : settings.emailVerified ? (
-											<button
-												type="button"
-												className="btn btn-secondary"
-												onClick={() => setEmailInput(settings.email ?? "")}
-											>
-												Use a different email
 											</button>
 										) : null}
 									</div>

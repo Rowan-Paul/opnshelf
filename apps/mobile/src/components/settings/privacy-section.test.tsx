@@ -3,6 +3,13 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PrivacySection } from "./privacy-section";
 
+vi.mock("lucide-react-native", () => ({
+	X: () => null,
+	ChevronDown: () => null,
+	Globe: () => null,
+	Lock: () => null,
+}));
+
 const mocks = vi.hoisted(() => ({
 	data: undefined as PrivacyStatusDto | undefined,
 	mutate: vi.fn(),
@@ -13,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 	mutationError: null as unknown,
 }));
 vi.mock("@opnshelf/api", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@opnshelf/api")>()),
 	getErrorMessage: (await importOriginal<typeof import("@opnshelf/api")>())
 		.getErrorMessage,
 	authControllerPermissions: vi.fn(async () => ({
@@ -43,6 +51,8 @@ vi.mock("react-native", async () => {
 	const { createElement } = await import("react");
 	return {
 		Platform: { OS: "ios" },
+		Pressable: (props: Record<string, unknown>) =>
+			createElement("pressable", props, props.children as never),
 		Modal: (props: Record<string, unknown>) =>
 			props.visible
 				? createElement("dialog", props, props.children as never)
@@ -193,7 +203,7 @@ describe("Privacy Alpha mobile", () => {
 				.find((action: { label: string }) => action.label === "Publish")
 				.onDismiss(),
 		);
-		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
 		expect(mocks.mutate).toHaveBeenCalledWith({
 			kind: "allLists",
 			body: {
@@ -223,7 +233,11 @@ describe("Privacy Alpha mobile", () => {
 		mocks.data.scopes.push(scope);
 		const renderer = render();
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
-		act(() => renderer.root.findByType("dialog").props.onRequestClose());
+		const dismiss = renderer.root.findByType("dialog").props.onDismiss;
+		act(() => {
+			renderer.root.findByType("dialog").props.onRequestClose();
+			dismiss();
+		});
 		mocks.data = { ...mocks.data, scopes: [...mocks.data.scopes] };
 		act(() => renderer.update(<PrivacySection />));
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
@@ -255,8 +269,8 @@ describe("Privacy Alpha mobile", () => {
 			kind: "allLists",
 			body: { category: "lists", visibility: "private" },
 		});
-		// Bulk progress stays on this page, including after the server accepts migrations.
-		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		// Progress opens while acceptance checks are still pending.
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
 		if (!mocks.data) throw new Error("Missing status");
 		mocks.data = {
 			...mocks.data,
@@ -279,17 +293,27 @@ describe("Privacy Alpha mobile", () => {
 			],
 		};
 		act(() => renderer.update(<PrivacySection />));
-		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
-		act(() =>
-			renderer.root
-				.findAll(
-					(node) => node.type === "button" && node.props.label === "Private",
-				)[0]
-				.props.onPress(),
-		);
-		act(() => renderer.update(<PrivacySection />));
-		act(() => button(renderer, "View List progress").props.onPress());
 		expect(renderer.root.findAllByType("dialog")).toHaveLength(1);
+		expect(JSON.stringify(renderer.toJSON())).toContain(
+			"Privacy change progress",
+		);
+		expect(
+			renderer.root
+				.findByType("dialog")
+				.findAll(
+					(node) => node.type === "button" && node.props.label === "Public",
+				),
+		).toHaveLength(0);
+		const dismiss = renderer.root.findByType("dialog").props.onDismiss;
+		act(() => {
+			renderer.root
+				.find((node) => String(node.type) === "pressable")
+				.props.onPress();
+			dismiss();
+		});
+		act(() => button(renderer, "Manage individual Lists").props.onPress());
+		expect(JSON.stringify(renderer.toJSON())).toContain("Your Lists");
+		expect(JSON.stringify(renderer.toJSON())).not.toContain("records copied");
 	});
 
 	it("does not suppress migrations when bulk publication is cancelled", () => {
@@ -419,7 +443,8 @@ describe("Privacy Alpha mobile", () => {
 		expect(mocks.showDialog).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: "Could not change privacy",
-				description: "Another Watch operation is in progress. Try again.",
+				description:
+					"Your account is still finishing another change. Please wait a moment, then try again.",
 			}),
 		);
 		act(() => renderer.update(<PrivacySection />));
@@ -491,5 +516,94 @@ describe("Privacy Alpha mobile", () => {
 				body: expect.objectContaining({ publicationConfirmed: true }),
 			}),
 		);
+	});
+	it("waits for management to dismiss before showing progress on iOS", () => {
+		const renderer = render();
+		act(() => button(renderer, "Manage individual Lists").props.onPress());
+		const dismiss = renderer.root.findByType("dialog").props.onDismiss;
+		if (!mocks.data) throw new Error("Missing status");
+		mocks.data = {
+			...mocks.data,
+			scopes: [
+				{
+					category: "lists",
+					label: "Favorites",
+					listRkey: "favorites",
+					visibility: "public",
+					migration: {
+						id: "move",
+						target: "private",
+						status: "running",
+						copied: 0,
+						total: 2,
+						error: null,
+					},
+				},
+			],
+		};
+		act(() => renderer.update(<PrivacySection />));
+		expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+		act(() => dismiss());
+		expect(JSON.stringify(renderer.toJSON())).toContain(
+			"Privacy change progress",
+		);
+		mocks.data = {
+			...mocks.data,
+			scopes: mocks.data.scopes.map((scope) => ({
+				...scope,
+				visibility: scope.migration?.target ?? scope.visibility,
+				migration: null,
+			})),
+		};
+		act(() => renderer.update(<PrivacySection />));
+		expect(JSON.stringify(renderer.toJSON())).toContain(
+			"Privacy changes complete.",
+		);
+		expect(JSON.stringify(renderer.toJSON())).toContain("2/2 records copied");
+		expect(JSON.stringify(renderer.toJSON())).not.toContain(
+			"You can close this dialog while",
+		);
+		expect(button(renderer, "Done")).toBeTruthy();
+	});
+});
+
+it("opens choices only for the List shown in its metadata control", () => {
+	if (!mocks.data) throw new Error("Missing status");
+	mocks.data.scopes = [
+		{
+			category: "lists",
+			listRkey: "favorites",
+			label: "Favorites",
+			visibility: "public",
+			migration: null,
+		},
+		{
+			category: "lists",
+			listRkey: "another",
+			label: "Another",
+			visibility: "private",
+			migration: null,
+		},
+	];
+	let renderer!: ReactTestRenderer;
+	act(() => {
+		renderer = create(<PrivacySection listRkey="favorites" />);
+	});
+	expect(renderer.root.findAllByType("dialog")).toHaveLength(0);
+	const trigger = renderer.root.findByProps({
+		accessibilityLabel: "List visibility: Public. Change visibility",
+	});
+	act(() => trigger.props.onPress());
+	expect(mocks.showDialog).toHaveBeenCalledWith(
+		expect.objectContaining({ title: "List visibility" }),
+	);
+	expect(JSON.stringify(mocks.showDialog.mock.calls)).not.toContain("Another");
+	const action = mocks.showDialog.mock.calls[0][0].actions.find(
+		(action: { label: string }) => action.label === "Make Private",
+	);
+	act(() => action.onDismiss());
+	expect(mocks.mutate).toHaveBeenCalledWith({
+		kind: "change",
+		body: { category: "lists", listRkey: "favorites", visibility: "private" },
 	});
 });
