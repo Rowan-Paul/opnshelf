@@ -2,7 +2,7 @@ import { onboardingDiscoveryOptions } from "@opnshelf/api";
 import { describe, expect, it } from "vitest";
 import {
 	isSwipeAccepted,
-	onboardingCardWidth,
+	onboardingCardLayout,
 	toOnboardingMediaItem,
 } from "./onboarding-media";
 
@@ -45,8 +45,28 @@ describe("onboarding media", () => {
 	});
 
 	it("shrinks the card to fit the measured stack height", () => {
-		expect(onboardingCardWidth(390, 600, false)).toBe(280);
-		expect(onboardingCardWidth(394, 420, true)).toBe(208);
-		expect(onboardingCardWidth(320, 900, false)).toBe(256);
+		expect(onboardingCardLayout(390, 600, false, 1)).toEqual({
+			width: 280,
+			showPoster: true,
+		});
+		expect(onboardingCardLayout(394, 420, true, 1)).toEqual({
+			width: 208,
+			showPoster: true,
+		});
+		expect(onboardingCardLayout(320, 900, false, 1)).toEqual({
+			width: 256,
+			showPoster: true,
+		});
+	});
+
+	it("reserves more title room as the font scale grows", () => {
+		expect(onboardingCardLayout(394, 420, true, 1.5).width).toBe(184);
+	});
+
+	it("drops the poster when it would be too narrow to read", () => {
+		expect(onboardingCardLayout(394, 250, true, 2)).toEqual({
+			width: 280,
+			showPoster: false,
+		});
 	});
 });
