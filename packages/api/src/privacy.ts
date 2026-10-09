@@ -235,6 +235,59 @@ export function usePrivacyProgress(
 	});
 }
 
+/** Heading and state for the progress dialog. A failed change keeps its
+ * migration, so "stopped" is told apart from one that is still running. */
+export function privacyProgressTitle(
+	scopes: PrivacyScopeDto[],
+	pending: boolean,
+) {
+	const statuses = scopes.flatMap((scope) =>
+		scope.migration ? [scope.migration.status] : [],
+	);
+	const state: "running" | "stopped" | "done" =
+		pending || statuses.some((status) => ["queued", "running"].includes(status))
+			? "running"
+			: statuses.some((status) => status !== "completed")
+				? "stopped"
+				: "done";
+	const targets = new Set(
+		scopes.flatMap((scope) =>
+			scope.migration ? [scope.migration.target] : [],
+		),
+	);
+	const target =
+		targets.size !== 1
+			? null
+			: [...targets][0] === "private"
+				? "Private"
+				: "Public";
+	if (state === "stopped")
+		return { state, target, title: "Visibility change stopped" };
+	if (!target)
+		return {
+			state,
+			target,
+			title: state === "running" ? "Changing visibility" : "Visibility changed",
+		};
+	const subject =
+		scopes.length === 1
+			? scopes[0].category === "watches"
+				? "Shelf"
+				: scopes[0].label
+			: scopes.every((scope) => scope.category === "lists")
+				? `${scopes.length} Lists`
+				: "your data";
+	if (state === "running")
+		return { state, target, title: `Making ${subject} ${target}` };
+	return {
+		state,
+		target,
+		title: `${subject[0].toUpperCase()}${subject.slice(1)} ${
+			scopes.length === 1 ? "is" : "are"
+		} ${target}`,
+	};
+}
+
 export function privacyErrorMessage(error: unknown, fallback: string) {
 	const message = getErrorMessage(error, fallback);
 	if (

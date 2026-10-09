@@ -72,6 +72,7 @@ export {
 	type PrivacyAction,
 	privacyActionKey,
 	privacyErrorMessage,
+	privacyProgressTitle,
 	usePrivacy,
 	usePrivacyProgress,
 } from "./privacy";

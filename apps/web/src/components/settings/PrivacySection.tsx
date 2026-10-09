@@ -4,10 +4,11 @@ import {
 	type PrivacyAction,
 	type PrivacyScopeDto,
 	privacyErrorMessage,
+	privacyProgressTitle,
 	usePrivacy,
 	usePrivacyProgress,
 } from "@opnshelf/api";
-import { ChevronDown, Globe, Lock } from "lucide-react";
+import { Check, ChevronDown, CircleAlert, Globe, Lock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "#/components/ui/button";
@@ -252,55 +253,87 @@ export function PrivacySection({
 		if (!moving) return null;
 		const key = `${scope.category}:${scope.listRkey ?? ""}`;
 		const label = scope.category === "watches" ? "Shelf" : scope.label;
+		const active = ["queued", "running"].includes(moving.status);
+		const done = moving.status === "completed";
+		const failed = !active && !done;
+		const fraction =
+			done || (moving.total != null && moving.copied >= moving.total)
+				? 1
+				: moving.total
+					? moving.copied / moving.total
+					: 0;
+		const count = `${moving.copied}/${moving.total ?? "…"}`;
 		return (
-			<div key={key} className="space-y-2 border-(--border) border-b pb-4">
-				{!listRkey && <h3 className="font-semibold">{label}</h3>}
-				{moving && (
-					<div aria-live="polite" className="space-y-2 text-sm">
-						<p>
-							{moving.status === "completed" ? "Changed to" : "Changing to"}{" "}
-							{moving.target === "private" ? "Private" : "Public"} ·{" "}
-							{moving.total == null
-								? `${moving.copied}/… records copied · Counting records…`
-								: `${moving.copied}/${moving.total} records copied`}
-							{moving.status !== "completed" &&
-								moving.total != null &&
-								moving.copied >= moving.total &&
-								["queued", "running"].includes(moving.status) &&
-								" · Finishing…"}
+			<li key={key} className="space-y-2">
+				<div className="flex items-center justify-between gap-3 text-sm">
+					<span className="truncate font-medium">{label}</span>
+					{done ? (
+						<Check
+							className="size-4 shrink-0 text-green-600"
+							aria-label={`${moving.target === "private" ? "Private" : "Public"}, ${count} records copied`}
+						/>
+					) : failed ? (
+						<CircleAlert
+							className="size-4 shrink-0 text-(--destructive)"
+							aria-label={`Stopped at ${count} records`}
+						/>
+					) : (
+						<span className="shrink-0 text-(--foreground-muted) text-xs tabular-nums">
+							<span className="sr-only">{count} records copied · </span>
+							<span>
+								{moving.total != null && moving.copied >= moving.total
+									? "Finishing…"
+									: moving.status === "queued" && moving.copied === 0
+										? "Waiting"
+										: count}
+							</span>
+						</span>
+					)}
+				</div>
+				<div className="h-1.5 overflow-hidden rounded-full bg-(--background-strong)">
+					<div
+						className={`h-full rounded-full transition-[width] duration-500 ${
+							done
+								? "bg-green-500"
+								: failed
+									? "bg-(--destructive)"
+									: "bg-(--accent)"
+						}`}
+						style={{ width: `${Math.round(fraction * 100)}%` }}
+					/>
+				</div>
+				{failed && (
+					<div className="flex items-center justify-between gap-3 rounded-xl bg-(--destructive)/10 p-3">
+						<p role="alert" className="text-xs">
+							{moving.error ?? `Stopped at ${count} records.`}
 						</p>
-						{moving.status !== "completed" && (
-							<p className="text-(--foreground-muted)">
-								{scope.category === "lists" &&
-									"Records include the List details and its items. "}
-								Hidden from others while moving. Edits to {label} pause; you can
-								leave this page.
-							</p>
-						)}
-						{moving.error && <p role="alert">{moving.error}</p>}
-						{!["queued", "running", "completed"].includes(moving.status) && (
-							<Button
-								variant="outline"
-								disabled={pendingKey === key}
-								onClick={() =>
-									mutation.mutate({
-										kind: "retry",
-										body: {
-											category: scope.category,
-											listRkey: scope.listRkey ?? undefined,
-											visibility: moving.target,
-										},
-									})
-								}
-							>
-								Resume
-							</Button>
-						)}
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={pendingKey === key}
+							onClick={() =>
+								mutation.mutate({
+									kind: "retry",
+									body: {
+										category: scope.category,
+										listRkey: scope.listRkey ?? undefined,
+										visibility: moving.target,
+									},
+								})
+							}
+						>
+							Resume
+						</Button>
 					</div>
 				)}
-			</div>
+			</li>
 		);
 	};
+	const {
+		state: progressState,
+		target,
+		title: progressTitle,
+	} = privacyProgressTitle(progressScopes, mutation.isPending);
 
 	return (
 		<section
@@ -500,27 +533,64 @@ export function PrivacySection({
 				</DialogContent>
 			</Dialog>
 			<Dialog open={showProgress} onOpenChange={setShowProgress}>
-				<DialogContent className="max-h-[85dvh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>Privacy change progress</DialogTitle>
-						<DialogDescription>
-							{changing
-								? "You can close this dialog while your visibility changes continue."
-								: "Privacy changes complete."}
-						</DialogDescription>
+				<DialogContent className="max-h-[85dvh] gap-5 overflow-y-auto sm:max-w-md">
+					<DialogHeader className="flex-row items-center gap-3 space-y-0 text-left">
+						<div
+							className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
+								progressState === "running"
+									? "bg-(--accent-muted) text-(--accent-hover)"
+									: progressState === "stopped"
+										? "bg-(--destructive)/15 text-(--destructive)"
+										: "bg-green-500/15 text-green-600"
+							}`}
+						>
+							{progressState === "stopped" ? (
+								<CircleAlert className="size-5" />
+							) : progressState === "done" ? (
+								<Check className="size-5" />
+							) : target === "Public" ? (
+								<Globe className="size-5" />
+							) : (
+								<Lock className="size-5" />
+							)}
+						</div>
+						<div className="space-y-0.5">
+							<DialogTitle className="font-display">
+								{progressTitle}
+							</DialogTitle>
+							<DialogDescription className="text-xs">
+								{progressState === "running"
+									? "Hidden from others while this runs."
+									: progressState === "stopped"
+										? "Resume to finish. Edits stay paused until then."
+										: target === "Private"
+											? "Only you and the apps you authorize can see it."
+											: "Your visibility change is complete."}
+							</DialogDescription>
+						</div>
 					</DialogHeader>
-					{mutation.isPending && (
-						<output className="block space-y-3">
-							<p>Checking your privacy change…</p>
-							<div className="h-20 animate-pulse rounded-xl bg-(--background-subtle)" />
+					{mutation.isPending && progressScopes.length === 0 && (
+						<output className="block space-y-2">
+							<span className="sr-only">Checking your privacy change…</span>
+							<div className="h-4 w-32 animate-pulse rounded bg-(--background-subtle)" />
+							<div className="h-1.5 animate-pulse rounded-full bg-(--background-subtle)" />
 						</output>
 					)}
-					{progressScopes.map(progressRow)}
-					{!changing && (
-						<DialogFooter>
-							<Button onClick={() => setShowProgress(false)}>Done</Button>
-						</DialogFooter>
-					)}
+					<ul aria-live="polite" className="space-y-4">
+						{progressScopes.map(progressRow)}
+					</ul>
+					<DialogFooter className="flex-col gap-2.5 sm:flex-col">
+						<Button className="w-full" onClick={() => setShowProgress(false)}>
+							{progressState === "running"
+								? "Keep going in background"
+								: "Done"}
+						</Button>
+						{progressState === "running" && (
+							<p className="text-center text-(--foreground-muted) text-xs">
+								Edits pause until it finishes.
+							</p>
+						)}
+					</DialogFooter>
 				</DialogContent>
 			</Dialog>
 			<Dialog open={manageLists} onOpenChange={setManageLists}>
