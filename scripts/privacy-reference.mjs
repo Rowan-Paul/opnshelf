@@ -291,6 +291,9 @@ async function startPds() {
 			"linux/amd64",
 			"--name",
 			container,
+			// Bind-mounted data stays private and writable by the host runner on Linux.
+			"--user",
+			`${process.getuid()}:${process.getgid()}`,
 			"--network",
 			`container:${resolverContainer}`,
 			"--mount",
