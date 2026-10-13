@@ -50,6 +50,8 @@ Set `PDS_ADMIN_PASSWORD` to `operator.opnshelf.social`'s independently rotatable
 
 Promote `operator.opnshelf.social` with Tranquil's authenticated `/_admin.setAdminStatus` endpoint using an existing administrator; never modify the PDS database directly. Confirm it is permitted to send DMs to `rowanpaulflynn.dev` before go-live. Use Railway shell access and `node dist/cli.js enroll` to mint the initial passkey enrollment link.
 
+Before any later full-image replacement, run the [image provenance and migration check](pds-image-provenance.md).
+
 ## Pre-cutover rehearsal
 
 1. Build the target services, verify health checks, and copy the legacy blob volume to the target bucket. Compare complete object counts and checksums.
