@@ -12,6 +12,13 @@ import { homedir } from "node:os";
 import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import https from "node:https";
+import {
+	claim,
+	release,
+	owner,
+	processIdentity,
+	recordRoutes,
+} from "./dev-session.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const state = resolve(
@@ -43,6 +50,19 @@ const compose = [
 ];
 const children = new Set();
 let stopping = false;
+let claimed = false;
+const resource = "stack:spaces-local";
+const sessionPath = join(state, "session.json");
+const session = {
+	owner,
+	worktree: root,
+	pid: process.pid,
+	identity: processIdentity(process.pid),
+	backend: "http://127.0.0.1:3102",
+	pds: "https://pds.127.0.0.1.nip.io",
+	ports: { web: 3000, backend: 3102, pds: 3443, metro: 8083 },
+	processes: [],
+};
 
 function run(bin, args, cwd = root, extra = {}) {
 	const result = spawnSync(bin, args, {
@@ -63,6 +83,12 @@ function start(name, bin, args, cwd, extra = {}) {
 	});
 	closeSync(log);
 	children.add(child);
+	session.processes.push({
+		name,
+		pid: child.pid,
+		log: join(state, `${name}.log`),
+	});
+	writeFileSync(sessionPath, JSON.stringify(session, null, 2), { mode: 0o600 });
 	child.on("error", () => {
 		console.error(`${name} failed to start; see ${state}/${name}.log`);
 		shutdown(1);
@@ -87,6 +113,19 @@ function shutdown(code = 0) {
 		} catch {
 			/* Already stopped. */
 		}
+	}
+	if (claimed) {
+		release(resource, owner);
+		claimed = false;
+	}
+	if (
+		existsSync(sessionPath) &&
+		JSON.parse(readFileSync(sessionPath)).pid === process.pid
+	) {
+		session.stoppedAt = new Date().toISOString();
+		writeFileSync(sessionPath, JSON.stringify(session, null, 2), {
+			mode: 0o600,
+		});
 	}
 	process.exitCode = code;
 	console.log(
@@ -139,8 +178,45 @@ async function waitFor(check, label) {
 }
 
 async function main() {
+	if (command === "status") {
+		console.log(
+			existsSync(sessionPath)
+				? readFileSync(sessionPath, "utf8")
+				: "No local Spaces session recorded",
+		);
+		return;
+	}
 	if (command === "stop") {
+		if (!existsSync(sessionPath))
+			throw new Error(
+				"No session ownership recorded; inspect containers before stopping them",
+			);
+		const previous = JSON.parse(readFileSync(sessionPath));
+		if (previous.owner !== owner || previous.worktree !== root)
+			throw new Error(
+				`Stack belongs to ${previous.owner} in ${previous.worktree}`,
+			);
+		if (
+			!previous.stoppedAt &&
+			processIdentity(previous.pid) === previous.identity
+		) {
+			process.kill(previous.pid, "SIGTERM");
+			await waitFor(
+				() => processIdentity(previous.pid) !== previous.identity,
+				"owned runner shutdown",
+			);
+		}
+		claim(resource, {
+			owner,
+			worktree: root,
+			pid: process.pid,
+			identity: session.identity,
+			sessionPath,
+		});
+		claimed = true;
 		run("docker", [...compose, "stop"]);
+		release(resource, owner);
+		claimed = false;
 		return;
 	}
 	mkdirSync(state, { recursive: true, mode: 0o700 });
@@ -151,6 +227,19 @@ async function main() {
 		throw new Error(
 			"Set TRANQUIL_SOURCE to your Spaces-enabled Tranquil checkout",
 		);
+	if (!["setup", "start"].includes(command))
+		throw new Error("Use setup, start, status or stop");
+	claim(resource, {
+		owner,
+		worktree: root,
+		pid: process.pid,
+		identity: session.identity,
+		logs: state,
+		sessionPath,
+		ports: session.ports,
+	});
+	claimed = true;
+	writeFileSync(sessionPath, JSON.stringify(session, null, 2), { mode: 0o600 });
 	if (command === "setup") {
 		if (!existsSync(cert) || !existsSync(key)) {
 			run("openssl", [
@@ -242,7 +331,6 @@ allow_http_proxy = true
 allow_private_fetch = true
 invite_code_required = false
 disable_rate_limiting = true
-enable_atproto_spaces = true
 [server.tls]
 cert_path = ${JSON.stringify(cert)}
 key_path = ${JSON.stringify(key)}
@@ -273,9 +361,10 @@ allow_insecure = true
 		console.log(
 			"Setup complete. Run pnpm dev:spaces with the same TRANQUIL_SOURCE and CARGO_TARGET_DIR.",
 		);
+		shutdown();
 		return;
 	}
-	if (command !== "start") throw new Error("Use setup, start or stop");
+
 	if (!existsSync(config)) throw new Error("Run pnpm dev:spaces:setup first");
 	// Refuse to mistake an existing process for one owned by this stack.
 	for (const port of [3000, 3102, 3443, 8083]) {
@@ -393,6 +482,7 @@ allow_insecure = true
 		async () => (await fetch("http://127.0.0.1:8083/status")).ok,
 		"Metro",
 	);
+	recordRoutes();
 	console.log(
 		`Ready: http://127.0.0.1:3000/signup\nEmail inbox: http://127.0.0.1:8025\nPDS: https://pds.127.0.0.1.nip.io\nLogs: ${state}\nCtrl-C stops application processes and keeps local data.`,
 	);

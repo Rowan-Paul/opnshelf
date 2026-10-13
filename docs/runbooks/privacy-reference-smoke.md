@@ -1,5 +1,30 @@
 # Privacy Alpha reference PDS verification
 
+Run `pnpm test:privacy-reference` with Docker running (Linux or macOS/OrbStack).
+It starts the reference Spaces image pinned below with only host-loopback port
+3213 published. A synthetic PLC resolver on 3214 shares its isolated container
+network namespace; that resolver is never published to the host. It creates disposable publisher/user
+accounts and publishes this checkout's Core and Space declarations to the local
+reference PDS. The resolver only stores synthetic PLC operations; it does not
+validate PLC updates and is not a PLC implementation test.
+
+The reference server and its OAuth implementation are unmodified. The check runs
+PAR, loads the consent page, signs in through its CSRF-protected provider API,
+verifies declined consent, exchanges a PKCE code, and uses DPoP-bound access tokens
+for Public → Private → Public operations across all six collections. Production
+capability parsing must accept the actual issued owner-qualified scopes. Tokens
+and signing keys remain in memory/stdin and are never printed. Containers and
+synthetic storage are removed on completion or interruption. No personal account,
+public relay, hosted database or production namespace is used.
+
+CI runs this gate for Privacy/auth-scope/declaration changes and includes its
+result in CI result. Browser/native presentation still needs separate client
+verification through [local scenarios](development-sessions.md) and the
+[real local stack](spaces-local-trial.md): the synthetic provider API check does
+not demonstrate native system-browser presentation.
+
+## Standalone account-session wire check
+
 Run `backend/scripts/privacy-reference-smoke.ts` only against a disposable local
 reference Spaces PDS with a local PLC, open synthetic account registration, and
 no real user data. `PRIVACY_REFERENCE_PDS_URL` defaults to `http://127.0.0.1:3203`
@@ -9,7 +34,7 @@ and the script rejects non-loopback hosts.
 NODE_ENV=test DATABASE_URL=postgresql://localhost:5432/opnshelf_codegen pnpm --filter backend exec ts-node --transpile-only scripts/privacy-reference-smoke.ts
 ```
 
-The script creates a synthetic account, generates its credentials in memory,
+The standalone script creates a synthetic account, generates its credentials in memory,
 and verifies all six collections across Watches, Library, Notes and Lists:
 Public → Private → Public, preserved record values and rkeys, private put/get/
 applyWrites, standard private deletion and public conditional deletion. Destroy

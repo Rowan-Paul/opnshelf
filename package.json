@@ -16,7 +16,16 @@
     "prepare": "husky",
     "dev:spaces": "node scripts/local-spaces.mjs start",
     "dev:spaces:setup": "node scripts/local-spaces.mjs setup",
-    "dev:spaces:stop": "node scripts/local-spaces.mjs stop"
+    "dev:spaces:stop": "node scripts/local-spaces.mjs stop",
+    "test:scripts": "node --test scripts/*.test.cjs scripts/*.test.mjs",
+    "dev:status": "node scripts/dev-session.mjs status",
+    "dev:doctor": "node scripts/dev-session.mjs doctor",
+    "dev:device:claim": "node scripts/dev-session.mjs claim-device",
+    "dev:device:release": "node scripts/dev-session.mjs release-device",
+    "dev:device:record": "node scripts/dev-session.mjs record-build",
+    "dev:scenarios": "node scripts/ui-scenarios.mjs",
+    "test:privacy-reference": "node scripts/privacy-reference.mjs",
+    "review:status": "node scripts/review-readiness.mjs"
   },
   "workspaces": [
     "apps/*",

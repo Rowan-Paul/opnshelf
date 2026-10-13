@@ -1,10 +1,11 @@
-# Private Settings local trial
+# Privacy Alpha local trial
 
-Private Settings currently stores `timeFormat`. The feature is disabled by
-default; ADR 0045 defines its ownership and failure behavior. This local stack
-runs the normal Opnshelf backend and clients, Tranquil server and consent UI,
-PLC directory, Tab, Postgres and Mailpit. There are no simulated logins,
-permission changes, PDS responses or application database adapters.
+This stack runs the normal Opnshelf clients and backend, a Spaces-enabled
+Tranquil PDS/consent UI, local PLC, Tab, Postgres and Mailpit. ADR 0048 retired
+the Private Settings experiment. Privacy now covers Shelf, Library, Notes and
+Lists; ordinary time-format preferences remain application settings.
+
+Read [session ownership](development-sessions.md) before starting or stopping it.
 
 ## Start the stack
 
@@ -63,33 +64,32 @@ through the Web signup form; the handle domain is `pds.127.0.0.1.nip.io`. Copy
 the verification code from Mailpit, then complete the real PDS login and Core consent redirect.
 Do not use personal passwords or real email addresses in this development stack.
 Google/Apple sign-in, push/email delivery and TMDB catalogue lookups require their
-separate integrations and are intentionally unconfigured. Private Settings and
-password signup do not require them. Skip streaming-service selection and the
+separate integrations and are intentionally unconfigured. Privacy and password signup do not require them. Skip streaming-service selection and the
 watched-title step when catalogue requests are unavailable. Dismiss the first-run
 tour before opening Settings.
 
-## Browser verification
+## Browser and Mobile verification
 
-1. Sign up, verify the captured email, and complete PDS login and Core consent.
-   Finish onboarding, then open Settings → Preferences.
-2. Connect Private Settings. Confirm the warning about other devices, inspect the
-   added Space permission on the PDS, and approve. The callback must return to
-   the local app with its session cookie.
-3. Save the current time format, change it and reload. The setting must persist.
-4. Disconnect. Complete the reduced-scope authorization. The private record stays
-   on the PDS; ordinary local settings remain usable.
-5. Connect again and confirm the saved private value is recovered. Tranquil may
-   reuse remembered consent, so a new consent screen is not guaranteed each time.
-6. Delete the private copy. The local value stays, and reload must not recreate
-   the private record. Explicitly save it to recreate it.
-7. On a fresh grant, deny or partially grant optional access. Existing sessions
-   must survive; a partial grant must not replace a working session.
+1. Sign up, verify the Mailpit email, complete real PDS consent, and finish
+   onboarding. Public is initially selected for every Privacy category.
+2. Open Settings → Privacy. Switch Notes to Private and approve added access.
+   The callback returns to this screen and the category migration completes.
+3. Create a synthetic Note, reload, and confirm it remains available to its owner.
+4. Switch Notes to Public, confirm publication and verify completion. A denied
+   or cancelled authorization must preserve the existing session and visibility.
+5. Create a synthetic List, switch All Lists to Private, and observe progress
+   with counts. Individual List changes and retries remain usable. Public
+   confirmation is required when switching back.
+6. Repeat Shelf and Library Public → Private → Public with synthetic records.
+   Use [UI scenarios](development-sessions.md) for deterministic failures,
+   delayed callbacks, short screens and large text.
 
-For Mobile, use the development client with Metro on port 8083. Sign in normally;
-there is no dummy-session link. On an iOS simulator, trust the local certificate
-in the simulator before testing the system-browser OAuth handoff. Android's
-loopback addresses need emulator port forwarding or a matching device-local
-configuration. No native configuration or version change is needed for Spaces.
+For Mobile, connect the development client to Metro on port 8083 and sign in
+normally. Trust the local certificate in the iOS simulator before the system
+browser handoff. Android requires loopback forwarding and matching certificate
+trust. Check the original platform when addressing a native-specific failure.
+For reference-PDS interoperability use [reference verification](privacy-reference-smoke.md);
+Tranquil UI checks alone do not prove reference consent compatibility.
 
 ## Stop and restart
 
@@ -106,45 +106,9 @@ backend, application migrations, or after the local certificate expires (remove
 the expired certificate and key first). Never use Staging for this trial: it
 shares the production PDS.
 
-## Verification recorded on 2026-10-06
+## Historical verification
 
-The real browser flow exercised account creation, captured-email verification,
-PDS password login, published Core consent, onboarding, and Private Settings
-consent. Saving a copy, changing `timeFormat`, and reloading recovered the remote
-value. After disconnecting, changing the local value, and reconnecting, the
-remote value was recovered again. Deleting the private copy retained the local
-value; reload and a complete application-process restart did not recreate it.
-The last browser state is connected with no private copy, ready to save again.
-
-Checks run from Opnshelf:
-
-- `pnpm typecheck` and `pnpm check`: passed.
-- `pnpm --filter backend run test`: 1,160 passed; two existing skips.
-- `pnpm --filter backend run build`: passed.
-- `pnpm --filter web run test`: 415 passed; one existing skip.
-- `pnpm --filter mobile run test`: 363 passed; one existing skip.
-- `node --check scripts/local-spaces.mjs` and Compose configuration validation:
-  passed. Setup and repeated starts completed; the backend binds loopback only.
-
-Checks run from the Spaces-enabled Tranquil checkout:
-
-- `cargo build -p tranquil-server --features native-tls-roots`: passed; Cargo
-  updated the lockfile for the resolver dependencies.
-- `cargo test --locked -p tranquil-config -p tranquil-scopes -p tranquil-lexicon
-  --features tranquil-lexicon/resolve -- --test-threads=1`: 214 passed. The first
-  parallel run hit an existing config-test race over `SENDMAIL_PATH`; serial
-  execution passed.
-- `cargo clippy --locked -p tranquil-config -p tranquil-scopes -p tranquil-lexicon
-  --features tranquil-lexicon/resolve --all-targets -- -D warnings`: passed.
-- `cargo fmt --all -- --check`: passed.
-- `pnpm --dir frontend test:run`: 238 passed.
-- `pnpm --dir frontend check`: no errors or warnings.
-- `pnpm --dir frontend build`: passed with the local signup URL.
-
-The native simulator OAuth handoff and fresh declined/partial grants were not
-manually repeated in this run. Existing automated scope and session tests remain
-in place. No Mobile version was changed and no OTA/store release was made.
-
-The typed Web login form was also regression-tested and browser-verified. It
-now sends the handle directly into backend OAuth resolution, matching Mobile,
-instead of rejecting local accounts through a Bluesky public-API pre-check.
+The 2026-10-06 run verified real signup, email verification and the now-retired
+Private Settings experiment. It is not evidence for current Privacy Alpha.
+Current category and reference OAuth evidence is recorded in
+[Privacy reference verification](privacy-reference-smoke.md).

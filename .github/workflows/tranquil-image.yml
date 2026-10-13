@@ -11,6 +11,15 @@ on:
         description: "Upstream git ref to build (default: upstream HEAD)"
         required: false
         default: ""
+      baseline_image:
+        description: "Deployed image digest when production differs from latest (repository@sha256:...)"
+        required: false
+      baseline_source_url:
+        description: "Legacy image bootstrap only: repository containing the exact deployed source"
+        required: false
+      baseline_source_ref:
+        description: "Legacy image bootstrap only: full commit SHA of the deployed runtime"
+        required: false
       reason:
         description: "Why this build is being dispatched"
         required: true
@@ -31,12 +40,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
       - name: Clone upstream source
+        env:
+          SOURCE_REF: ${{ inputs.ref }}
         run: |
           set -euo pipefail
           git clone "$UPSTREAM_URL" .upstream
-          if [ -n "${{ inputs.ref }}" ]; then
-            git -C .upstream checkout "${{ inputs.ref }}"
+          if [ -n "$SOURCE_REF" ]; then
+            git -C .upstream checkout "$SOURCE_REF"
           fi
           SHA12="$(git -C .upstream rev-parse --short=12 HEAD)"
           VERSION="$(grep -m1 -E '^version *= *\"' .upstream/Cargo.toml | sed -E 's/.*\"([^\"]+)\".*/\1/')"
@@ -56,11 +73,38 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify deployed migration history
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          BASELINE_IMAGE: ${{ inputs.baseline_image }}
+          BASELINE_SOURCE_URL: ${{ inputs.baseline_source_url }}
+          BASELINE_SOURCE_REF: ${{ inputs.baseline_source_ref }}
+        run: |
+          set -euo pipefail
+          BASELINE_IMAGE="${BASELINE_IMAGE:-$HUB_REPO:latest}"
+          if [ "$BASELINE_IMAGE" != "$HUB_REPO:latest" ]; then
+            [[ "$BASELINE_IMAGE" =~ ^rowanpaul/tranquil-pds@sha256:[0-9a-f]{64}$ ]] || { echo 'Use the deployed immutable image digest'; exit 1; }
+          fi
+          docker pull "$BASELINE_IMAGE"
+          legacy=()
+          if [ -n "$BASELINE_SOURCE_REF" ]; then
+            [[ "$BASELINE_SOURCE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'Use a full deployed commit SHA'; exit 1; }
+            [[ "$BASELINE_SOURCE_URL" == https://* ]] || { echo 'Use the deployed HTTPS source repository'; exit 1; }
+            git clone "$BASELINE_SOURCE_URL" .baseline
+            git -C .baseline checkout "$BASELINE_SOURCE_REF"
+            legacy=(.baseline)
+          fi
+          node scripts/pds-image-provenance.mjs prepare .upstream "$BASELINE_IMAGE" "${legacy[@]}"
+
       - name: Build (linux/amd64, upstream Dockerfile)
         if: steps.dedupe.outputs.skip != 'true'
         run: |
           set -euo pipefail
-          docker build --platform linux/amd64 -f .upstream/Dockerfile -t tranquil-candidate:ci .upstream
+          docker build --platform linux/amd64 -f .upstream/Dockerfile -t tranquil-candidate:ci \
+            --label "org.opencontainers.image.source=$UPSTREAM_URL" \
+            --label "org.opencontainers.image.revision=$(git -C .upstream rev-parse HEAD)" \
+            --label "xyz.opnshelf.pds.migrations=$(cat candidate-migrations.json)" \
+            --label "xyz.opnshelf.pds.baseline=$(node -p 'require("./candidate-provenance.json").baselineDigest')" .upstream
 
       - name: Gate boot and S3 blob backend
         if: steps.dedupe.outputs.skip != 'true'

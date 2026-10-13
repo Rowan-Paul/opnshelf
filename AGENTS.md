@@ -56,6 +56,10 @@ The root has no test script. Select gates by affected workspace, including downs
 
 CI regenerates the API artifacts on a clean checkout, then runs `git diff --exit-code -- backend/openapi.json packages/api/src/generated`. That clean-checkout drift gate is not a local handoff gate because intended generated changes can still be unstaged.
 
+For repository scripts and workflow changes, also run `pnpm test:scripts`.
+For local servers or device verification, read [development sessions](docs/runbooks/development-sessions.md).
+For Spaces protocol changes, read [reference verification](docs/runbooks/privacy-reference-smoke.md).
+
 ## Generated files
 
 Never hand-edit generated output. Change its source, run the owning command, and review the resulting diff.
@@ -86,21 +90,8 @@ Never hand-edit generated output. Change its source, run the owning command, and
 - Stage the paths you changed. Never `git add -A` or `git add .`: sessions share this tree and a blanket add swallows another one's unstaged work.
 - Commit subjects are plain imperative sentences, no `feat:` or `fix:` prefix. The body says why the old behavior was wrong and what changed, ends with `Closes #<number>` where an issue exists, and carries the `Co-Authored-By` trailer.
 - Keep commits focused on the requested change. Do not amend, rebase, force-push, merge, deploy, or publish unless the operator explicitly requests it.
-- When the operator requests publication, push the issue branch and open a ready pull request into `develop`. The pull request explains the problem and solution, links its issue, and includes before/after images for visual UI changes or a short recording for motion and timing changes. End the body with the model and harness that performed the work.
-- When asked to babysit a pull request, poll checks and comments newer than the latest push. Verify automated findings against the source, fix confirmed problems, and explain dismissed false positives. Continue until required checks are terminal and report the pull request URL and final state.
-- Squash-merge only when the operator requests it. Merge authorization includes the post-merge cleanup below unless the operator asks to retain something.
-- Move releases from `develop` to `main` through a separate pull request. Never open an issue-branch pull request into `main`.
+- Before publishing, reviewing, monitoring, or merging a PR, read [publication and cleanup](docs/agents/publication.md). Follow its completion criteria, including cleanup after merge.
 - Report changed files and the verification commands actually run, including any skipped or failing checks.
-
-### Post-merge cleanup
-
-After confirming the pull request is merged, finish these steps before handoff:
-
-1. Close linked issues fully resolved by the merged change, even if GitHub did not auto-close them because the target was `develop`. Keep partially resolved or broader tracking issues open and update their remaining work with the merged PR link.
-2. Stop development servers, Metro instances, fixture servers, and other temporary processes started for this task. Preserve anything another active task uses or the operator asked to keep running.
-3. Inspect the task's worktrees for modified, staged, and untracked files and commits beyond the merged PR head. Remove only completed task worktrees with no remaining work, then delete their local and remote issue branches. Preserve unrelated worktrees and branches; never force-remove a dirty worktree or discard unpublished work to complete cleanup.
-4. Fetch the latest remote refs and prune stale tracking refs. Fast-forward the local `develop` checkout to `origin/develop` when it is clean and not in use by another task. Preserve a dirty, divergent, or busy checkout and report why its update was deferred.
-5. Report the merged PRs, issue closures or remaining work, cleanup performed, and anything deliberately retained or blocked. A merged PR alone is not a completed handoff.
 
 ## Agent skills
 
