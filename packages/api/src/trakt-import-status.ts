@@ -28,21 +28,17 @@ export type TraktImportStatusJob = {
 };
 
 export function isActiveTraktImportStatus(status: string): boolean {
-	return ACTIVE_TRAKT_IMPORT_STATUSES.includes(
-		status as (typeof ACTIVE_TRAKT_IMPORT_STATUSES)[number],
-	);
+	return ACTIVE_TRAKT_IMPORT_STATUSES.some((known) => known === status);
 }
 
 export function isTerminalTraktImportStatus(status: string): boolean {
-	return TERMINAL_TRAKT_IMPORT_STATUSES.includes(
-		status as (typeof TERMINAL_TRAKT_IMPORT_STATUSES)[number],
-	);
+	return TERMINAL_TRAKT_IMPORT_STATUSES.some((known) => known === status);
 }
 
 export function isKnownTraktImportStatus(
 	status: string,
 ): status is KnownTraktImportStatus {
-	return KNOWN_TRAKT_IMPORT_STATUSES.includes(status as KnownTraktImportStatus);
+	return KNOWN_TRAKT_IMPORT_STATUSES.some((known) => known === status);
 }
 
 export function getTraktImportStatusMessage(
