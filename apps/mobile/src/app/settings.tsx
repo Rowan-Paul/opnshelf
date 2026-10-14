@@ -26,6 +26,7 @@ import {
 	Compass,
 	Download,
 	MessageSquare,
+	RotateCcw,
 	Smartphone,
 	Trash2,
 	UserPen,
@@ -553,20 +554,34 @@ export function SettingsCategoryScreen({
 					)}
 
 					{section === "help" && (
-						<SettingsSection
-							title="Onboarding"
-							description="Start account setup again. Your existing profile, preferences and Shelf will be kept. Changes you make during setup will be saved."
-						>
-							<Button
-								label={
-									resetOnboarding.isPending
-										? "Resetting onboarding…"
-										: "Reset onboarding"
-								}
+						<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<Text className="font-display font-semibold text-foreground text-lg">
+								Onboarding
+							</Text>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityState={{
+									disabled: resetOnboarding.isPending,
+									busy: resetOnboarding.isPending,
+								}}
 								disabled={resetOnboarding.isPending}
 								onPress={() => resetOnboarding.mutate({})}
-							/>
-						</SettingsSection>
+								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+							>
+								<RotateCcw color="#94a3b8" size={20} />
+								<Text className="flex-1 font-medium text-foreground">
+									{resetOnboarding.isPending
+										? "Resetting onboarding…"
+										: "Reset onboarding"}
+								</Text>
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+							<Text className="text-muted-foreground text-sm">
+								Start account setup again. Your existing profile, preferences
+								and Shelf will be kept. Changes you make during setup will be
+								saved.
+							</Text>
+						</View>
 					)}
 
 					{section === "privacy" && <PrivacySection />}
