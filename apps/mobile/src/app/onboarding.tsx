@@ -29,10 +29,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TraktMark } from "@/components/marks/TraktMark";
+import {
+	type NotificationStage,
+	NotificationStep,
+} from "@/components/onboarding/notification-step";
 import { SuggestionsStep } from "@/components/onboarding/SuggestionsStep";
 import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
-import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
@@ -161,16 +164,26 @@ export default function OnboardingScreen() {
 		setStep("trakt");
 		queryClient.invalidateQueries({ queryKey: traktStatusKey });
 	}, [connection, queryClient]);
+	const [notificationStage, setNotificationStage] =
+		useState<NotificationStage>("topics");
+	const [notificationsBusy, setNotificationsBusy] = useState(false);
 	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
 
 	const goBack = useCallback(() => {
+		if (notificationsBusy) return;
+		if (step === "notifications" && notificationStage !== "topics") {
+			setNotificationStage(
+				notificationStage === "confirmation" ? "delivery" : "topics",
+			);
+			return;
+		}
 		setStep((current) => {
 			const idx = STEP_SEQUENCE.indexOf(current);
 			return idx > 0 ? STEP_SEQUENCE[idx - 1] : current;
 		});
-	}, []);
+	}, [step, notificationStage, notificationsBusy]);
 
 	// Android hardware back steps the wizard backwards; at the first/last step we
 	// let the OS handle it.
@@ -216,6 +229,10 @@ export default function OnboardingScreen() {
 					<Pressable
 						hitSlop={8}
 						onPress={goBack}
+						disabled={notificationsBusy}
+						accessibilityRole="button"
+						accessibilityLabel="Back"
+						accessibilityState={{ disabled: notificationsBusy }}
 						className="flex-row items-center"
 					>
 						<ChevronLeft color="#94a3b8" size={26} />
@@ -249,27 +266,12 @@ export default function OnboardingScreen() {
 					<ServicesStep onNext={() => setStep("notifications")} />
 				)}
 				{step === "notifications" && (
-					<StepScaffold
-						footer={
-							<PrimaryButton
-								label="Continue"
-								onPress={() => setStep("trakt")}
-							/>
-						}
-					>
-						<View className="gap-1">
-							<Text className="font-bold font-display text-3xl text-foreground">
-								Stay up to date
-							</Text>
-							<Text className="text-muted-foreground text-sm leading-5">
-								Choose mobile and email notifications. You can change these in
-								Settings anytime.
-							</Text>
-						</View>
-						<View className="rounded-xl border border-border bg-card p-4">
-							<NotificationPreferences onboarding />
-						</View>
-					</StepScaffold>
+					<NotificationStep
+						stage={notificationStage}
+						onStageChange={setNotificationStage}
+						onBusyChange={setNotificationsBusy}
+						onNext={() => setStep("trakt")}
+					/>
 				)}
 				{step === "trakt" && (
 					<TraktStep
