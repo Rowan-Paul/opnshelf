@@ -530,10 +530,12 @@ export class NotificationWorkerService
 			];
 		});
 		// A title can be represented by more than one season/episode in a Watchlist.
-		const unique = selection.filter(
-			(item, index) =>
-				selection.findIndex((other) => other.path === item.path) === index,
-		);
+		const seenPaths = new Set<string>();
+		const unique = selection.filter((item) => {
+			if (seenPaths.has(item.path)) return false;
+			seenPaths.add(item.path);
+			return true;
+		});
 		if (!unique.length) return null;
 		return {
 			key: `watchlist:${date}`,
