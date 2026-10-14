@@ -542,6 +542,7 @@ export function SettingsCategoryScreen({
 							</Text>
 							<Pressable
 								onPress={replayWelcomeTour}
+								accessibilityRole="button"
 								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
 							>
 								<Compass color="#94a3b8" size={20} />
@@ -576,11 +577,6 @@ export function SettingsCategoryScreen({
 								</Text>
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>
-							<Text className="text-muted-foreground text-sm">
-								Start account setup again. Your existing profile, preferences
-								and Shelf will be kept. Changes you make during setup will be
-								saved.
-							</Text>
 						</View>
 					)}
 
