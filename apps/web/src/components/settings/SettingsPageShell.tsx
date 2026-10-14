@@ -53,7 +53,7 @@ export const SETTINGS_AREAS = [
 	{
 		section: "help",
 		label: "Help",
-		description: "Welcome tour and feedback",
+		description: "Onboarding, welcome tour and feedback",
 		Icon: CircleHelp,
 	},
 ] as const;

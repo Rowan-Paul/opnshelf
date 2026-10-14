@@ -189,6 +189,11 @@ export function createScenarioServer(initial = "normal") {
 			json({ sessionId: "fixture-only" });
 			return;
 		}
+		if (url.pathname === "/users/me/onboarding/reset" && req.method === "POST") {
+			completed = false;
+			res.writeHead(204).end();
+			return;
+		}
 		if (url.pathname === "/users/me/onboarding/complete") {
 			completed = true;
 			json({

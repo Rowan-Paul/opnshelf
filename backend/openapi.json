@@ -2666,6 +2666,24 @@
         ]
       }
     },
+    "/users/me/onboarding/reset": {
+      "post": {
+        "operationId": "UsersController_resetOnboarding",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Onboarding reset"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Reset onboarding for the current user without removing their data",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/users/me/onboarding/complete": {
       "post": {
         "operationId": "UsersController_completeOnboarding",

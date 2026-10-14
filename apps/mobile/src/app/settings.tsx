@@ -1,19 +1,22 @@
 import {
+	authControllerMeQueryKey,
 	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
 	isActiveTraktImportStatus,
 	reviewsControllerListMyPublicationsOptions,
 	type TraktImportJobDto,
+	type UserDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
+	usersControllerResetOnboardingMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nativeApplicationVersion } from "expo-application";
-import { Link, Stack, useFocusEffect } from "expo-router";
+import { Link, router, Stack, useFocusEffect } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
@@ -23,6 +26,7 @@ import {
 	Compass,
 	Download,
 	MessageSquare,
+	RotateCcw,
 	Smartphone,
 	Trash2,
 	UserPen,
@@ -189,6 +193,19 @@ export function SettingsCategoryScreen({
 	const { open: openFeedback } = useFeedback();
 	const toast = useToast();
 	const queryClient = useQueryClient();
+	const resetOnboarding = useMutation({
+		...usersControllerResetOnboardingMutation(),
+		onSuccess: async () => {
+			await queryClient.cancelQueries({ queryKey: authControllerMeQueryKey() });
+			queryClient.setQueryData<UserDto>(authControllerMeQueryKey(), (old) =>
+				old
+					? { ...old, onboardingCompletedAt: null, needsOnboarding: true }
+					: old,
+			);
+			router.replace("/onboarding");
+		},
+		onError: () => toast.error("Could not reset onboarding. Please try again."),
+	});
 	const [isSigningOut, setIsSigningOut] = useState(false);
 
 	const handleSignOut = async () => {
@@ -525,11 +542,38 @@ export function SettingsCategoryScreen({
 							</Text>
 							<Pressable
 								onPress={replayWelcomeTour}
+								accessibilityRole="button"
 								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
 							>
 								<Compass color="#94a3b8" size={20} />
 								<Text className="flex-1 font-medium text-foreground">
 									Take the tour again
+								</Text>
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+						</View>
+					)}
+
+					{section === "help" && (
+						<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<Text className="font-display font-semibold text-foreground text-lg">
+								Onboarding
+							</Text>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityState={{
+									disabled: resetOnboarding.isPending,
+									busy: resetOnboarding.isPending,
+								}}
+								disabled={resetOnboarding.isPending}
+								onPress={() => resetOnboarding.mutate({})}
+								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+							>
+								<RotateCcw color="#94a3b8" size={20} />
+								<Text className="flex-1 font-medium text-foreground">
+									{resetOnboarding.isPending
+										? "Resetting onboarding…"
+										: "Reset onboarding"}
 								</Text>
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>
@@ -1032,7 +1076,7 @@ const SETTINGS_AREAS: {
 	{
 		href: "/settings/help",
 		label: SETTINGS_TITLES.help,
-		description: "Welcome tour and feedback",
+		description: "Onboarding, welcome tour and feedback",
 		Icon: MessageSquare,
 	},
 ];

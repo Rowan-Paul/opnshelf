@@ -319,6 +319,24 @@ describe("UsersService", () => {
 		});
 	});
 
+	it("resets only onboarding completion for the current user", async () => {
+		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:123" });
+		prisma.user.update = vi.fn().mockResolvedValue({ did: "did:plc:123" });
+		await service.resetOnboarding("did:plc:123");
+		expect(prisma.user.update).toHaveBeenCalledWith({
+			where: { did: "did:plc:123" },
+			data: { onboardingCompletedAt: null },
+			select: { did: true },
+		});
+	});
+
+	it("rejects an onboarding reset for a missing user", async () => {
+		prisma.user.findUnique = vi.fn().mockResolvedValue(null);
+		await expect(service.resetOnboarding("did:plc:missing")).rejects.toThrow(
+			NotFoundException,
+		);
+	});
+
 	it("completes onboarding for an existing user", async () => {
 		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:123" });
 		prisma.user.update = vi.fn().mockResolvedValue({

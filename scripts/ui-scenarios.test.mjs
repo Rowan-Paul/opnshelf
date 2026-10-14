@@ -19,6 +19,19 @@ test("local scenarios reset failures and never proxy unknown or cross-origin req
 			409,
 		);
 		assert.equal((await fetch(`${base}/users/me/settings`)).status, 200);
+		await fetch(`${base}/users/me/onboarding/complete`, { method: "POST" });
+		const before = await (await fetch(`${base}/auth/me`)).json();
+		assert.equal(before.needsOnboarding, false);
+		assert.equal(
+			(await fetch(`${base}/users/me/onboarding/reset`, { method: "POST" })).status,
+			204,
+		);
+		const after = await (await fetch(`${base}/auth/me`)).json();
+		assert.deepEqual(after, {
+			...before,
+			needsOnboarding: true,
+			onboardingCompletedAt: null,
+		});
 		assert.equal((await fetch(`${base}/unknown`)).status, 404);
 		assert.equal(
 			(
