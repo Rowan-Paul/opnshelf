@@ -40,7 +40,8 @@ const SECTION_COPY = {
 	},
 	help: {
 		title: "Help",
-		description: "Revisit the tour and find ways to get in touch.",
+		description:
+			"Restart onboarding, revisit the tour and find ways to get in touch.",
 	},
 } as const;
 

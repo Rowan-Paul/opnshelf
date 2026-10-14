@@ -406,6 +406,21 @@ export class UsersController {
 		};
 	}
 
+	@Post("me/onboarding/reset")
+	@UseGuards(AuthGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({
+		summary:
+			"Reset onboarding for the current user without removing their data",
+	})
+	@ApiResponse({ status: 204, description: "Onboarding reset" })
+	@ApiResponse({ status: 401, description: "Not authenticated" })
+	async resetOnboarding(@Req() req: AuthenticatedRequest): Promise<void> {
+		const did = req.user?.did;
+		if (!did) throw new BadRequestException("User not found in request");
+		await this.usersService.resetOnboarding(did);
+	}
+
 	@Post("me/onboarding/complete")
 	@UseGuards(AuthGuard)
 	@ApiOperation({ summary: "Complete onboarding for the current user" })

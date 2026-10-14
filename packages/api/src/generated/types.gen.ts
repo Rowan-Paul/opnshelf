@@ -4646,6 +4646,29 @@ export type UsersControllerGetMyAccountDeletionResponses = {
 
 export type UsersControllerGetMyAccountDeletionResponse = UsersControllerGetMyAccountDeletionResponses[keyof UsersControllerGetMyAccountDeletionResponses];
 
+export type UsersControllerResetOnboardingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/me/onboarding/reset';
+};
+
+export type UsersControllerResetOnboardingErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type UsersControllerResetOnboardingResponses = {
+    /**
+     * Onboarding reset
+     */
+    204: void;
+};
+
+export type UsersControllerResetOnboardingResponse = UsersControllerResetOnboardingResponses[keyof UsersControllerResetOnboardingResponses];
+
 export type UsersControllerCompleteOnboardingData = {
     body?: never;
     path?: never;

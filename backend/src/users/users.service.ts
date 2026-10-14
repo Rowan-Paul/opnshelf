@@ -579,6 +579,16 @@ export class UsersService {
 		};
 	}
 
+	async resetOnboarding(did: string): Promise<void> {
+		const user = await this.prisma.user.findUnique({ where: { did } });
+		if (!user) throw new NotFoundException("User not found");
+		await this.prisma.user.update({
+			where: { did },
+			data: { onboardingCompletedAt: null },
+			select: { did: true },
+		});
+	}
+
 	async completeOnboarding(
 		did: string,
 	): Promise<CompleteOnboardingResponseDto> {

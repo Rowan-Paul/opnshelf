@@ -1,19 +1,22 @@
 import {
+	authControllerMeQueryKey,
 	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
 	isActiveTraktImportStatus,
 	reviewsControllerListMyPublicationsOptions,
 	type TraktImportJobDto,
+	type UserDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
+	usersControllerResetOnboardingMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nativeApplicationVersion } from "expo-application";
-import { Link, Stack, useFocusEffect } from "expo-router";
+import { Link, router, Stack, useFocusEffect } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
@@ -189,6 +192,19 @@ export function SettingsCategoryScreen({
 	const { open: openFeedback } = useFeedback();
 	const toast = useToast();
 	const queryClient = useQueryClient();
+	const resetOnboarding = useMutation({
+		...usersControllerResetOnboardingMutation(),
+		onSuccess: async () => {
+			await queryClient.cancelQueries({ queryKey: authControllerMeQueryKey() });
+			queryClient.setQueryData<UserDto>(authControllerMeQueryKey(), (old) =>
+				old
+					? { ...old, onboardingCompletedAt: null, needsOnboarding: true }
+					: old,
+			);
+			router.replace("/onboarding");
+		},
+		onError: () => toast.error("Could not reset onboarding. Please try again."),
+	});
 	const [isSigningOut, setIsSigningOut] = useState(false);
 
 	const handleSignOut = async () => {
@@ -534,6 +550,23 @@ export function SettingsCategoryScreen({
 								<ChevronRight color="#94a3b8" size={18} />
 							</Pressable>
 						</View>
+					)}
+
+					{section === "help" && (
+						<SettingsSection
+							title="Onboarding"
+							description="Start account setup again. Your existing profile, preferences and Shelf will be kept. Changes you make during setup will be saved."
+						>
+							<Button
+								label={
+									resetOnboarding.isPending
+										? "Resetting onboarding…"
+										: "Reset onboarding"
+								}
+								disabled={resetOnboarding.isPending}
+								onPress={() => resetOnboarding.mutate({})}
+							/>
+						</SettingsSection>
 					)}
 
 					{section === "privacy" && <PrivacySection />}
@@ -1032,7 +1065,7 @@ const SETTINGS_AREAS: {
 	{
 		href: "/settings/help",
 		label: SETTINGS_TITLES.help,
-		description: "Welcome tour and feedback",
+		description: "Onboarding, welcome tour and feedback",
 		Icon: MessageSquare,
 	},
 ];
