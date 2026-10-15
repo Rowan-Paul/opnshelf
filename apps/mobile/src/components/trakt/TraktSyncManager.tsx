@@ -10,6 +10,7 @@ import {
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
+	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
 	traktError,
 	traktResolutionLabel,
@@ -366,6 +367,8 @@ export function SyncSettings({
 		traktSettings(status),
 	);
 	const [reviewing, setReviewing] = useState(false);
+	const [choosingRecords, setChoosingRecords] = useState(false);
+	const [showRecordDetails, setShowRecordDetails] = useState(false);
 	const { width, fontScale } = useWindowDimensions();
 	const compactDirections = width / fontScale < 480;
 	const insets = useSafeAreaInsets();
@@ -420,55 +423,71 @@ export function SyncSettings({
 					Sync settings
 				</Text>
 			)}
-			<Toggle
-				label="Watch history"
-				value={settings.watches}
-				onChange={(watches) => setSettings({ ...settings, watches })}
-			/>
-			<Toggle
-				label="Ratings"
-				value={settings.ratings}
-				onChange={(ratings) => setSettings({ ...settings, ratings })}
-			/>
-			<Toggle
-				label="Custom Lists"
-				value={settings.lists ?? false}
-				onChange={(lists) => setSettings({ ...settings, lists })}
-			/>
-			<Toggle
-				label="Watchlist"
-				value={settings.watchlist ?? false}
-				onChange={(watchlist) => setSettings({ ...settings, watchlist })}
-			/>
-			<Toggle
-				label="Favorites"
-				value={settings.favorites ?? false}
-				onChange={(favorites) => setSettings({ ...settings, favorites })}
-			/>
-			{(settings.lists || settings.watchlist) && (
-				<Text className={copy}>{TRAKT_LIST_COPY}</Text>
-			)}
-			{settings.favorites && (
-				<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
-			)}
-			<Toggle
-				label="Notes"
-				value={settings.notes ?? false}
-				onChange={(notes) => setSettings({ ...settings, notes })}
-			/>
-			<Toggle
-				label="Library"
-				value={settings.library ?? false}
-				onChange={(library) => setSettings({ ...settings, library })}
-			/>
-			<Toggle
-				label="Reviews"
-				value={settings.reviews ?? false}
-				onChange={(reviews) => setSettings({ ...settings, reviews })}
-			/>
-			{requiresContentConsent && (
-				<Text className={copy}>{TRAKT_CONTENT_COPY}</Text>
-			)}
+			<View className="gap-3">
+				<View className="flex-row items-start justify-between gap-4">
+					<View className="flex-1 gap-1">
+						<Text className="font-medium text-foreground text-sm">Records</Text>
+						<Text className={copy}>
+							{TRAKT_SYNC_RECORDS.filter(({ value }) => settings[value])
+								.map(({ label }) => label)
+								.join(", ") || "Choose at least one record type"}
+						</Text>
+					</View>
+					<Pressable
+						accessibilityRole="button"
+						accessibilityState={{ expanded: choosingRecords }}
+						className="min-h-11 justify-center"
+						onPress={() => setChoosingRecords(!choosingRecords)}
+					>
+						<Text className="font-medium text-primary text-sm">
+							{choosingRecords ? "Done" : "Choose records"}
+						</Text>
+					</Pressable>
+				</View>
+				{choosingRecords && (
+					<View className="gap-3 rounded-xl border border-border p-3">
+						{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
+							<Toggle
+								key={value}
+								label={label}
+								value={settings[value] ?? false}
+								onChange={(selected) =>
+									setSettings({ ...settings, [value]: selected })
+								}
+							/>
+						))}
+					</View>
+				)}
+				{(requiresListConsent || requiresContentConsent) && (
+					<View className="gap-2">
+						<Pressable
+							accessibilityRole="button"
+							accessibilityState={{ expanded: showRecordDetails }}
+							className="min-h-11 justify-center"
+							onPress={() => setShowRecordDetails(!showRecordDetails)}
+						>
+							<Text className={copy}>
+								{showRecordDetails
+									? "Hide record details"
+									: "About these records"}
+							</Text>
+						</Pressable>
+						{showRecordDetails && (
+							<View className="gap-2">
+								{(settings.lists || settings.watchlist) && (
+									<Text className={copy}>{TRAKT_LIST_COPY}</Text>
+								)}
+								{settings.favorites && (
+									<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
+								)}
+								{requiresContentConsent && (
+									<Text className={copy}>{TRAKT_CONTENT_COPY}</Text>
+								)}
+							</View>
+						)}
+					</View>
+				)}
+			</View>
 			<Text className="font-medium text-foreground text-sm">Direction</Text>
 			<View
 				accessibilityRole="radiogroup"

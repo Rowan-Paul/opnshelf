@@ -36,6 +36,16 @@ export const TRAKT_SYNC_SCOPES: {
 	{ value: "all", label: "All existing history and future changes" },
 	{ value: "future", label: "Future changes only" },
 ];
+export const TRAKT_SYNC_RECORDS = [
+	{ value: "watches", label: "Watch history" },
+	{ value: "ratings", label: "Ratings" },
+	{ value: "watchlist", label: "Watchlist" },
+	{ value: "favorites", label: "Favorites" },
+	{ value: "lists", label: "Custom Lists" },
+	{ value: "library", label: "Library" },
+	{ value: "notes", label: "Notes" },
+	{ value: "reviews", label: "Reviews" },
+] as const;
 export const TRAKT_PUBLICATION_COPY =
 	"I understand that sync uses the destination’s privacy settings. Private content can become public when transferred to a public destination. Ratings and Reviews in Opnshelf are public.";
 export const TRAKT_LIST_COPY =

@@ -171,6 +171,7 @@ it.each([
 		);
 		act(() => control.props.onValueChange(value));
 	};
+	press("Choose records");
 	toggle("Watch history", false);
 	toggle("Ratings", false);
 	toggle(
@@ -227,4 +228,28 @@ it.each([
 			listPublicationConsent: true,
 		}),
 	});
+});
+
+it("keeps record choices collapsed and retains changes when closed", () => {
+	mount();
+	const notes = () =>
+		renderer.root.findAll(
+			(node) =>
+				node.type === "switch" && node.props.accessibilityLabel === "Notes",
+		);
+	expect(notes()).toHaveLength(0);
+	press("Choose records");
+	act(() => notes()[0].props.onValueChange(true));
+	press("Done");
+	expect(notes()).toHaveLength(0);
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "text" &&
+				node.props.children === "Watch history, Ratings, Notes",
+		),
+	).not.toHaveLength(0);
+	press("Choose records");
+	expect(notes()[0].props.value).toBe(true);
+	expect(mocks.mutate).not.toHaveBeenCalled();
 });

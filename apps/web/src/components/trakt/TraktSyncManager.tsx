@@ -10,6 +10,7 @@ import {
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
+	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
 	traktError,
 	traktResolutionLabel,
@@ -359,6 +360,7 @@ export function SyncSettings({
 		traktSettings(status),
 	);
 	const [reviewing, setReviewing] = useState(false);
+	const [choosingRecords, setChoosingRecords] = useState(false);
 	const submitButton = useRef<HTMLButtonElement>(null);
 	const managed =
 		status.status === "active" ||
@@ -411,59 +413,63 @@ export function SyncSettings({
 					setReviewing(true);
 				}}
 			>
-				<fieldset className="flex flex-wrap gap-5">
-					<legend className="mb-2 font-medium text-sm">Records</legend>
-					{(
-						[
-							"watches",
-							"ratings",
-							"lists",
-							"watchlist",
-							"favorites",
-							"notes",
-							"library",
-							"reviews",
-						] as const
-					).map((name) => (
-						<label key={name} className="flex items-center gap-2 text-sm">
-							<input
-								type="checkbox"
-								checked={settings[name] ?? false}
-								onChange={(event) =>
-									setSettings({ ...settings, [name]: event.target.checked })
-								}
-							/>
-							{name === "watches"
-								? "Watch history"
-								: name === "ratings"
-									? "Ratings"
-									: name === "lists"
-										? "Custom Lists"
-										: name === "watchlist"
-											? "Watchlist"
-											: name === "favorites"
-												? "Favorites"
-												: name === "notes"
-													? "Notes"
-													: name === "library"
-														? "Library"
-														: "Reviews"}
-						</label>
-					))}
-				</fieldset>
-				{(settings.lists || settings.watchlist) && (
-					<p className="text-(--foreground-muted) text-sm">{TRAKT_LIST_COPY}</p>
-				)}
-				{settings.favorites && (
-					<p className="text-(--foreground-muted) text-sm">
-						{TRAKT_FAVORITES_COPY}
-					</p>
-				)}
-				{requiresContentConsent && (
-					<p className="text-(--foreground-muted) text-sm">
-						{TRAKT_CONTENT_COPY}
-					</p>
-				)}
+				<div className="space-y-3">
+					<div className="flex items-start justify-between gap-4">
+						<div className="min-w-0 space-y-1">
+							<p className="font-medium text-sm">Records</p>
+							<p className="text-(--foreground-muted) text-sm leading-relaxed">
+								{TRAKT_SYNC_RECORDS.filter(({ value }) => settings[value])
+									.map(({ label }) => label)
+									.join(", ") || "Choose at least one record type"}
+							</p>
+						</div>
+						<button
+							type="button"
+							aria-expanded={choosingRecords}
+							className="shrink-0 rounded-md py-1 font-medium text-(--accent) text-sm underline-offset-4 hover:underline focus-visible:outline-2"
+							onClick={() => setChoosingRecords(!choosingRecords)}
+						>
+							{choosingRecords ? "Done" : "Choose records"}
+						</button>
+					</div>
+					{choosingRecords && (
+						<fieldset className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-(--border) p-3">
+							<legend className="sr-only">Records</legend>
+							{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
+								<label
+									key={value}
+									className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm hover:bg-(--background)"
+								>
+									<input
+										type="checkbox"
+										checked={settings[value] ?? false}
+										onChange={(event) =>
+											setSettings({
+												...settings,
+												[value]: event.target.checked,
+											})
+										}
+									/>
+									{label}
+								</label>
+							))}
+						</fieldset>
+					)}
+					{(requiresListConsent || requiresContentConsent) && (
+						<details className="text-(--foreground-muted) text-sm">
+							<summary className="cursor-pointer py-1">
+								About these records
+							</summary>
+							<div className="space-y-2 pt-2 leading-relaxed">
+								{(settings.lists || settings.watchlist) && (
+									<p>{TRAKT_LIST_COPY}</p>
+								)}
+								{settings.favorites && <p>{TRAKT_FAVORITES_COPY}</p>}
+								{requiresContentConsent && <p>{TRAKT_CONTENT_COPY}</p>}
+							</div>
+						</details>
+					)}
+				</div>
 				<fieldset>
 					<legend className="mb-2 font-medium text-sm">Direction</legend>
 					<div className="grid grid-cols-3 gap-2 sm:gap-3">
