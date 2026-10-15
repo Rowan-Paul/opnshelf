@@ -102,6 +102,14 @@ export class SyncStatusDto {
 	@ApiProperty() publicationConsent: boolean;
 	@ApiPropertyOptional() lastSuccessAt?: string;
 	@ApiPropertyOptional() lastError?: string;
+	@ApiProperty({
+		description: "Records still waiting to transfer while sync catches up",
+	})
+	remaining: number;
+	@ApiPropertyOptional({
+		description: "Catch-up progress (0–100) while records remain",
+	})
+	progress?: number;
 	@ApiProperty() needsAttention: number;
 	@ApiProperty() ignored: number;
 	@ApiPropertyOptional() importStatus?: string;

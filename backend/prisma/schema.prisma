@@ -127,6 +127,8 @@ model TraktSyncConnection {
   leaseUntil DateTime?
   remoteSnapshot Json @default("[]")
   remoteReadAt DateTime?
+  remaining Int @default(0)
+  remainingTotal Int @default(0)
   entries TraktSyncEntry[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

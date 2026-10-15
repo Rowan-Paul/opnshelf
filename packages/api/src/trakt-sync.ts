@@ -70,6 +70,19 @@ export function traktError(error: unknown): string {
 	return "Could not complete this action. Try again.";
 }
 /**
+ * The site-wide banner line while Trakt Sync is still comparing or catching up
+ * on a backlog larger than one batch, or `null` when it has nothing to report.
+ */
+export function traktSyncCatchUpMessage(
+	sync: Pick<SyncStatusDto, "status" | "remaining" | "progress"> | undefined,
+): string | null {
+	if (sync?.status === "preparing")
+		return "Comparing your Trakt history in the background";
+	if (sync?.status === "active" && sync.remaining > 0)
+		return `Syncing your Trakt history in the background${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
+	return null;
+}
+/**
  * Whether the User's Watch history is already coming over from Trakt — an
  * Import that has not stopped, or Trakt Sync bringing Watches in — so
  * onboarding can skip asking which titles they have watched.

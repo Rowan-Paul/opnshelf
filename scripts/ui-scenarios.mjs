@@ -23,6 +23,7 @@ export const scenarios = [
 	"conflict",
 	"compact",
 	"large-text",
+	"trakt-sync-catch-up",
 ];
 function sample(schema, seen = new Set()) {
 	if (!schema) return {};
@@ -280,7 +281,20 @@ export function createScenarioServer(initial = "normal") {
 			return;
 		}
 		if (url.pathname === "/trakt-sync") {
-			json({ configured: false, connected: false });
+			json(
+				scenario === "trakt-sync-catch-up"
+					? {
+							...sample(spec.components.schemas.SyncStatusDto),
+							configured: true,
+							status: "active",
+							username: "fixture",
+							direction: "inbound",
+							watches: true,
+							remaining: 15,
+							progress: 40,
+						}
+					: { configured: false, connected: false },
+			);
 			return;
 		}
 		if (url.pathname === "/discover/onboarding") {

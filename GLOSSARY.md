@@ -208,7 +208,7 @@ A dismissible card in the reserved slot on **Home** that asks for one optional a
 _Avoid_: CTA (names a button, and every button on the site is one), Banner (that is the site-wide strip), notification, nag
 
 **Banner**:
-The slim full-width strip directly below the header, carrying one site-wide message on every page. Today there is one: **Trakt Import** progress. Distinct from a **Prompt**, which appears only on **Home** and asks for an action.
+The slim full-width strip directly below the header, carrying one site-wide message on every page. Today it carries **Trakt Import** progress or, with no Import to report, **Trakt Sync** catch-up progress while the first comparison runs or more than one batch of records is still waiting to transfer. Distinct from a **Prompt**, which appears only on **Home** and asks for an action.
 _Avoid_: Prompt (that is the Home card), toast, notification, alert
 
 **Home-Screen Widget**:
