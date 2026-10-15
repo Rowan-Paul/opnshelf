@@ -5,6 +5,7 @@ import {
 	type ArgumentsHost,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { TmdbServiceError, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import { AllExceptionsFilter } from "./http-exception.filter";
 
 describe("AllExceptionsFilter", () => {
@@ -128,3 +129,71 @@ describe("AllExceptionsFilter", () => {
 		log.mockRestore();
 	});
 });
+
+const catalogueErrorCases: [Error, number, string][] = [
+	...[401, 403, 422, 429, 503].map<[Error, number, string]>((status) => [
+		tmdbErrorForResponse(new Response(null, { status }), "Episode not found"),
+		500,
+		"Internal server error",
+	]),
+	[
+		tmdbErrorForResponse(
+			new Response(null, { status: 404 }),
+			"Episode not found",
+		),
+		404,
+		"Episode not found",
+	],
+	[
+		tmdbErrorForResponse(
+			new Response(null, { status: 404 }),
+			"Season not found",
+		),
+		404,
+		"Season not found",
+	],
+	[
+		new TmdbServiceError("upstream private details", 503),
+		500,
+		"Internal server error",
+	],
+	[new Error("private details"), 500, "Internal server error"],
+];
+it.each(catalogueErrorCases)(
+	"maps catalogue errors at the HTTP boundary: %s",
+	(error, status, message) => {
+		const warn = vi
+			.spyOn(Logger.prototype, "warn")
+			.mockImplementation(() => {});
+		const logError = vi
+			.spyOn(Logger.prototype, "error")
+			.mockImplementation(() => {});
+		const response = {
+			setHeader: vi.fn(),
+			status: vi.fn().mockReturnThis(),
+			json: vi.fn(),
+		};
+		const host = {
+			switchToHttp: () => ({
+				getResponse: () => response,
+				getRequest: () => ({
+					method: "GET",
+					url: "/shows/tmdb/252608/season/2/episode/1",
+				}),
+			}),
+		} as ArgumentsHost;
+		new AllExceptionsFilter().catch(error, host);
+		expect(response.status).toHaveBeenCalledWith(status);
+		expect(response.json).toHaveBeenCalledWith({
+			statusCode: status,
+			message,
+			error: status === 404 ? "Not Found" : "Internal Server Error",
+		});
+		expect(response.setHeader).toHaveBeenCalledWith(
+			"Cache-Control",
+			"private, no-store",
+		);
+		warn.mockRestore();
+		logError.mockRestore();
+	},
+);

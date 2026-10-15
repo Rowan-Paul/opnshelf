@@ -7,6 +7,7 @@ import {
 	Logger,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { TmdbNotFoundError } from "../tmdb/tmdb-http";
 
 interface ErrorBody {
 	statusCode: number;
@@ -52,7 +53,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
 			error: "Internal Server Error",
 		};
 
-		if (exception instanceof HttpException) {
+		if (exception instanceof TmdbNotFoundError) {
+			status = HttpStatus.NOT_FOUND;
+			body = {
+				statusCode: status,
+				message: exception.message,
+				error: "Not Found",
+			};
+		} else if (exception instanceof HttpException) {
 			status = exception.getStatus();
 			const res = exception.getResponse();
 			if (typeof res === "string") {
