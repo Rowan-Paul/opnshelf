@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import MediaActionsBar from "./MediaActionsBar";
 
 const mocks = vi.hoisted(() => ({
+	rating: 0,
 	query: vi.fn(() => ({
 		data: {
 			items: [
@@ -35,7 +36,7 @@ vi.mock("#/lib/hooks", () => ({
 }));
 vi.mock("#/lib/hooks/useNotes", () => ({ useNote: () => ({}) }));
 vi.mock("#/lib/hooks/useRatings", () => ({
-	useRating: () => ({}),
+	useRating: () => ({ data: { rating: mocks.rating } }),
 	useSetRating: () => ({}),
 	useClearRating: () => ({}),
 }));
@@ -94,4 +95,21 @@ it("opens the newest author-filtered review from the header and saves an update"
 		},
 	});
 	expect(mocks.create).not.toHaveBeenCalled();
+});
+
+it("shows the saved rating without opening the editor and updates when cleared", () => {
+	mocks.rating = 8;
+	const { rerender } = render(
+		<MediaActionsBar mediaType="movie" mediaId="123" />,
+	);
+	const action = screen.getByRole("button", {
+		name: "Your rating: 8 out of 10. Rate and review",
+	});
+	expect(action.textContent).toBe("8/10");
+	expect(screen.queryByLabelText("Review body")).toBeNull();
+	mocks.rating = 0;
+	rerender(<MediaActionsBar mediaType="movie" mediaId="123" />);
+	expect(
+		screen.getByRole("button", { name: "Rate and review" }).textContent,
+	).toBe("");
 });
