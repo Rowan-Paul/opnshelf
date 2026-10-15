@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { LocalSyncLists } from "./local-lists.service";
 import { LocalSyncRecords } from "./local-records.service";
 import type { SyncRecord } from "./reconcile";
 import type { PrismaService } from "../prisma/prisma.service";
@@ -32,6 +33,7 @@ const local = new LocalSyncRecords(
 		AuthService,
 		"restore"
 	>,
+	{} as LocalSyncLists,
 );
 const record: SyncRecord = {
 	key: "movie:original",

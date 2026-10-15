@@ -4,6 +4,7 @@ import {
 	type SyncSettingsDto,
 	type SyncStatusDto,
 	TRAKT_HANDOFF_COPY,
+	TRAKT_LIST_COPY,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
@@ -160,6 +161,7 @@ export function TraktSyncManager({
 		data.status === "paused" &&
 		data.direction !== "outbound" &&
 		!data.publicationConsent &&
+		!data.listPublicationConsent &&
 		!data.lastSuccessAt;
 	return (
 		<View className="gap-5">
@@ -215,9 +217,14 @@ export function TraktSyncManager({
 								}
 							</Text>
 							<Text className="rounded-lg bg-background-subtle px-3 py-2 text-foreground text-sm">
-								{[data.watches && "Watch history", data.ratings && "Ratings"]
+								{[
+									data.watches && "Watch history",
+									data.ratings && "Ratings",
+									data.lists && "Custom Lists",
+									data.watchlist && "Watchlist",
+								]
 									.filter(Boolean)
-									.join(" and ")}
+									.join(", ")}
 							</Text>
 						</View>
 						<Text selectable className={copy}>
@@ -305,7 +312,7 @@ export function TraktSyncManager({
 			</View>
 			{connected && (editing || needsSetup) && (
 				<SyncSettings
-					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.historyScope}`}
+					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.listPublicationConsent}:${data.historyScope}`}
 					status={data}
 					className={embedded ? "gap-4 border-border border-t pt-4" : card}
 					onSaved={() => {
@@ -359,7 +366,11 @@ export function SyncSettings({
 		status.status === "active" ||
 		status.status === "preparing" ||
 		status.direction === "outbound" ||
-		Boolean(status.lastSuccessAt || status.publicationConsent);
+		Boolean(
+			status.lastSuccessAt ||
+				status.publicationConsent ||
+				status.listPublicationConsent,
+		);
 	const save = useMutation({
 		...traktSyncControllerConfigureMutation(),
 		onSuccess: () => {
@@ -370,10 +381,19 @@ export function SyncSettings({
 	const unfinished =
 		status.importStatus &&
 		!["completed", "continued_in_sync"].includes(status.importStatus);
-	const requiresConsent = settings.direction !== "outbound";
-	const canSave =
-		(!requiresConsent || settings.publicationConsent) &&
-		(!unfinished || settings.handoffImport);
+	const requiresHistoryConsent =
+		settings.direction !== "outbound" && (settings.watches || settings.ratings);
+	const requiresListConsent = Boolean(settings.lists || settings.watchlist);
+	const requiresConsent = requiresHistoryConsent || requiresListConsent;
+	const hasConsent = Boolean(
+		(!requiresHistoryConsent || settings.publicationConsent) &&
+			(!requiresListConsent || settings.listPublicationConsent),
+	);
+	const hadConsent = Boolean(
+		(!requiresHistoryConsent || status.publicationConsent) &&
+			(!requiresListConsent || status.listPublicationConsent),
+	);
+	const canSave = hasConsent && (!unfinished || settings.handoffImport);
 	const dismiss = () => {
 		if (!save.isPending) setReviewing(false);
 	};
@@ -394,6 +414,17 @@ export function SyncSettings({
 				value={settings.ratings}
 				onChange={(ratings) => setSettings({ ...settings, ratings })}
 			/>
+			<Toggle
+				label="Custom Lists"
+				value={settings.lists ?? false}
+				onChange={(lists) => setSettings({ ...settings, lists })}
+			/>
+			<Toggle
+				label="Watchlist"
+				value={settings.watchlist ?? false}
+				onChange={(watchlist) => setSettings({ ...settings, watchlist })}
+			/>
+			{requiresListConsent && <Text className={copy}>{TRAKT_LIST_COPY}</Text>}
 			<Text className="font-medium text-foreground text-sm">Direction</Text>
 			<View
 				accessibilityRole="radiogroup"
@@ -491,7 +522,12 @@ export function SyncSettings({
 				label={
 					onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"
 				}
-				disabled={!settings.watches && !settings.ratings}
+				disabled={
+					!settings.watches &&
+					!settings.ratings &&
+					!settings.lists &&
+					!settings.watchlist
+				}
 				onPress={() => setReviewing(true)}
 			/>
 			{onCancel && <Action label="Cancel" onPress={onCancel} />}
@@ -549,9 +585,11 @@ export function SyncSettings({
 										[
 											settings.watches && "Watch history",
 											settings.ratings && "Ratings",
+											settings.lists && "Custom Lists",
+											settings.watchlist && "Watchlist",
 										]
 											.filter(Boolean)
-											.join(" and "),
+											.join(", "),
 									],
 									[
 										"Direction",
@@ -585,17 +623,18 @@ export function SyncSettings({
 								in Settings.
 							</Text>
 							{requiresConsent &&
-								(status.publicationConsent ? (
-									<Text className={copy}>
-										Watches and Ratings brought into Opnshelf become public,
-										even if your Trakt profile is private.
-									</Text>
+								(hadConsent ? (
+									<Text className={copy}>{TRAKT_PUBLICATION_COPY}</Text>
 								) : (
 									<Toggle
 										label={TRAKT_PUBLICATION_COPY}
-										value={settings.publicationConsent}
-										onChange={(publicationConsent) =>
-											setSettings({ ...settings, publicationConsent })
+										value={hasConsent}
+										onChange={(consent) =>
+											setSettings({
+												...settings,
+												publicationConsent: consent,
+												listPublicationConsent: consent,
+											})
 										}
 									/>
 								))}
@@ -821,37 +860,42 @@ function SyncIssue({
 					onPress={() => resolve({ action: "separate" })}
 				/>
 			)}
-			{connected && item.trakt?.mediaId === null && (
-				<View className="gap-2">
-					<Text className="text-foreground text-sm">
-						Find the matching title
-					</Text>
-					<TextInput
-						accessibilityLabel="Find the matching title"
-						className="rounded-xl border border-border bg-background px-3 py-3 text-foreground"
-						value={search}
-						onChangeText={setSearch}
-						placeholder={item.trakt.title}
-						onSubmitEditing={() => setQuery(search)}
-					/>
-					<Action label="Search" onPress={() => setQuery(search)} />
-					{matches.isFetching && (
-						<View className="h-14 animate-pulse rounded-xl bg-background-subtle" />
-					)}
-					{matches.error && (
-						<Text selectable accessibilityRole="alert" className={copy}>
-							{traktError(matches.error)}
+			{connected &&
+				item.kind !== "list" &&
+				item.kind !== "watchlist" &&
+				item.trakt?.mediaId === null && (
+					<View className="gap-2">
+						<Text className="text-foreground text-sm">
+							Find the matching title
 						</Text>
-					)}
-					{matches.data?.map((m) => (
-						<Action
-							key={m.tmdbId}
-							label={`${m.title}${m.year ? ` (${m.year})` : ""}`}
-							onPress={() => setChoice({ action: "match", mediaId: m.tmdbId })}
+						<TextInput
+							accessibilityLabel="Find the matching title"
+							className="rounded-xl border border-border bg-background px-3 py-3 text-foreground"
+							value={search}
+							onChangeText={setSearch}
+							placeholder={item.trakt.title}
+							onSubmitEditing={() => setQuery(search)}
 						/>
-					))}
-				</View>
-			)}
+						<Action label="Search" onPress={() => setQuery(search)} />
+						{matches.isFetching && (
+							<View className="h-14 animate-pulse rounded-xl bg-background-subtle" />
+						)}
+						{matches.error && (
+							<Text selectable accessibilityRole="alert" className={copy}>
+								{traktError(matches.error)}
+							</Text>
+						)}
+						{matches.data?.map((m) => (
+							<Action
+								key={m.tmdbId}
+								label={`${m.title}${m.year ? ` (${m.year})` : ""}`}
+								onPress={() =>
+									setChoice({ action: "match", mediaId: m.tmdbId })
+								}
+							/>
+						))}
+					</View>
+				)}
 			{choice && (
 				<View className="gap-3 rounded-xl border border-primary p-3">
 					<Text className={copy}>

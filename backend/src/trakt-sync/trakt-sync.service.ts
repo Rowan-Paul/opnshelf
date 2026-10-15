@@ -1,3 +1,5 @@
+import { TID } from "@atproto/common";
+import { encodeList, listValue, memberKey } from "./list-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
 import { watchOperation } from "../privacy/watch-operation";
 import {
@@ -30,6 +32,7 @@ import { activeTraktImports } from "../users/import/import-activity";
 import { LocalSyncRecords } from "./local-records.service";
 import {
 	candidates,
+	isListRecord,
 	decide,
 	equivalent,
 	fingerprint,
@@ -66,7 +69,18 @@ const display = (r: SyncRecord | null) =>
 				title: r.title,
 				season: r.season,
 				episode: r.episode,
-				displayValue: r.value === null ? "No date" : String(r.value),
+				displayValue: isListRecord(r)
+					? `${r.title} · ${listValue(r).items.length} items · ${r.visibility ?? "private"} · ${listValue(r).description} · ${listValue(
+							r,
+						)
+							.items.map(
+								(i) =>
+									`${i.mediaType} ${i.mediaId ?? "unmatched"}${i.season ? ` S${i.season}` : ""}${i.episode ? ` E${i.episode}` : ""}${i.notes ? ` (${i.notes})` : ""}`,
+							)
+							.join(", ")}`
+					: r.value === null
+						? "No date"
+						: String(r.value),
 			}
 		: undefined;
 const applyMappings = (
@@ -74,7 +88,7 @@ const applyMappings = (
 	entries: Pick<TraktSyncEntry, "remoteBase">[],
 ) =>
 	remote.map((r) => {
-		if (r.mediaId) return r;
+		if (isListRecord(r) || r.mediaId) return r;
 		const mapped = entries
 			.map((e) => readRecord(e.remoteBase))
 			.find(
@@ -89,7 +103,13 @@ const applyMappings = (
 		return mapped ? { ...r, mediaId: mapped.mediaId } : r;
 	});
 const enabled = (c: TraktSyncConnection, r: Pick<SyncRecord, "kind">) =>
-	r.kind === "watch" ? c.watches : c.ratings;
+	r.kind === "watch"
+		? c.watches
+		: r.kind === "rating"
+			? c.ratings
+			: r.kind === "list"
+				? c.lists
+				: c.watchlist;
 
 @Injectable()
 export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
@@ -171,6 +191,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			direction: c?.direction ?? "both",
 			watches: c?.watches ?? true,
 			ratings: c?.ratings ?? true,
+			lists: c?.lists ?? false,
+			watchlist: c?.watchlist ?? false,
+			listPublicationConsent: c?.listPublicationConsent ?? false,
 			historyScope: c?.historyScope ?? "all",
 			publicationConsent: c?.publicationConsent ?? false,
 			lastSuccessAt: c?.lastSuccessAt?.toISOString(),
@@ -401,11 +424,19 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		return this.crypt(c.accessToken, true);
 	}
 	async configure(userDid: string, dto: SyncSettingsDto) {
-		if (!dto.watches && !dto.ratings)
-			throw new BadRequestException("Choose Watches, Ratings, or both.");
-		if (dto.direction !== "outbound" && !dto.publicationConsent)
+		if (!dto.watches && !dto.ratings && !dto.lists && !dto.watchlist)
+			throw new BadRequestException("Choose at least one record type.");
+		if (
+			dto.direction !== "outbound" &&
+			(dto.watches || dto.ratings) &&
+			!dto.publicationConsent
+		)
 			throw new BadRequestException(
 				"Acknowledge that incoming Watches and Ratings become public.",
+			);
+		if ((dto.lists || dto.watchlist) && !dto.listPublicationConsent)
+			throw new BadRequestException(
+				"Acknowledge that private List contents may become public on the destination.",
 			);
 		const c = await this.requireConnection(userDid);
 		await this.locked(c, async (lease) => {
@@ -425,6 +456,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			await this.token(c);
 			await lease();
 			const { handoffImport: _handoff, ...settings } = dto;
+			settings.lists ??= false;
+			settings.watchlist ??= false;
+			settings.listPublicationConsent ??= false;
 			if (job && !["completed", "continued_in_sync"].includes(job.status)) {
 				if (activeTraktImports.has(userDid))
 					throw new ConflictException(
@@ -540,11 +574,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					"Confirm publication in Trakt Sync settings first.",
 				);
 			const token = await this.token(c);
-			const remote = await this.api.snapshot(token);
-			const before = await this.local.snapshot(userDid);
+			const remote = await this.api.snapshot(token, c);
+			const before = await this.local.snapshot(userDid, c);
 			const result = await operation();
 			await lease();
-			const after = await this.local.snapshot(userDid);
+			const after = await this.local.snapshot(userDid, c);
 			const job = await this.prisma.backgroundJob.findFirst({
 				where: { userDid, type: "trakt_import" },
 				include: { traktMatches: true },
@@ -637,6 +671,32 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			e.localKey = l.key;
 			e.linked = e.eligible;
 		}
+		for (const e of entries) {
+			if (!e.pending || !isListRecord(e)) continue;
+			const intent = e.pending as { direction: string; desired?: unknown };
+			const desired = readRecord(intent.desired);
+			if (intent.direction !== "push" || e.remoteKey || !desired) continue;
+			const possible = remote.filter(
+				(r) =>
+					r.kind === desired.kind &&
+					r.title === desired.title &&
+					!entries.some((other) => other.remoteKey === r.key),
+			);
+			if (possible.length === 1) {
+				e.remoteKey = possible[0].key;
+				await this.prisma.traktSyncEntry.update({
+					where: { id: e.id },
+					data: {
+						remoteKey: e.remoteKey,
+						remoteBase: json(possible[0]),
+						pending: Prisma.DbNull,
+						issue:
+							"A List creation was interrupted. Choose which version to keep before continuing.",
+						resolution: null,
+					},
+				});
+			}
+		}
 		const usedLocal = new Set(entries.map((e) => e.localKey));
 		const usedRemote = new Set(entries.map((e) => e.remoteKey));
 		const newLocal = local.filter((r) => !usedLocal.has(r.key));
@@ -665,15 +725,18 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						!remote.some((v) => v.key === e.remoteKey) &&
 						mediaKey(readRecord(e.remoteBase) ?? r) === mediaKey(r),
 				);
-			const matches = r.mediaId
-				? candidates(
-						r,
-						newLocal.filter((l) => !usedLocal.has(l.key)),
-					)
-				: [];
+			const matches =
+				r.mediaId || isListRecord(r)
+					? candidates(
+							r,
+							newLocal.filter((l) => !usedLocal.has(l.key)),
+						)
+					: [];
 			const match =
 				matches.length === 1 &&
-				(r.kind === "rating" ||
+				((r.kind !== "watch" &&
+					(!isListRecord(r) ||
+						candidates(matches[0], newRemote).length === 1)) ||
 					(r.value !== null &&
 						matches[0].value !== null &&
 						equivalent(matches[0], r) &&
@@ -692,11 +755,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					remoteBase: json(r),
 					linked: Boolean(eligible && match && equivalent(match, r)),
 					eligible,
-					issue: !r.mediaId
-						? "Choose a TMDB match for this title."
-						: possibleReplacement || (!match && matches.length)
-							? "Confirm whether these Watches are the same viewing."
-							: null,
+					issue:
+						r.problem ??
+						(!r.mediaId && !isListRecord(r)
+							? "Choose a TMDB match for this title."
+							: possibleReplacement || (!match && matches.length)
+								? isListRecord(r)
+									? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
+									: "Confirm whether these Watches are the same viewing."
+								: null),
 				},
 			});
 			if (match) usedLocal.add(match.key);
@@ -725,8 +792,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					eligible:
 						enabled(c, l) && (c.initialised || c.historyScope === "all"),
 					issue:
-						l.kind === "watch" && near.length
-							? "Confirm whether these Watches are the same viewing."
+						near.length && (l.kind === "watch" || isListRecord(l))
+							? isListRecord(l)
+								? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
+								: "Confirm whether these Watches are the same viewing."
 							: null,
 				},
 			});
@@ -734,7 +803,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	async issues(userDid: string, query: SyncIssuesQueryDto) {
 		const c = await this.requireConnection(userDid);
-		const local = await this.local.snapshot(userDid);
+		const local = await this.local.snapshot(userDid, c);
 		const remote = records(c.remoteSnapshot);
 		const entries = await this.prisma.traktSyncEntry.findMany({
 			where: {
@@ -762,7 +831,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					opnshelf: display(l),
 					trakt: display(r),
 					candidates:
-						source && (!e.linked || (l && !r))
+						source && !isListRecord(source) && (!e.linked || (l && !r))
 							? (e.linked
 									? remote.filter((v) => mediaKey(v) === mediaKey(source))
 									: candidates(source, l ? remote : local)
@@ -790,6 +859,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			)
 				throw new BadRequestException(
 					"Bulk resolution is only available for Rating conflicts.",
+				);
+			if (
+				isListRecord(entry) &&
+				["match", "link", "separate"].includes(dto.action)
+			)
+				throw new BadRequestException(
+					"Choose a List version, retry, or ignore this List.",
 				);
 			if (dto.action === "match") {
 				const r = readRecord(entry.remoteBase);
@@ -1002,7 +1078,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	private async process(c: TraktSyncConnection, lease: () => Promise<void>) {
 		const token = await this.token(c);
 		let remote = records(c.remoteSnapshot);
-		const local = await this.local.snapshot(c.userDid);
+		const local = await this.local.snapshot(c.userDid, c);
 		const known = await this.prisma.traktSyncEntry.findMany({
 			where: { connectionId: c.id },
 		});
@@ -1015,7 +1091,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					(e) =>
 						!e.ignored &&
 						(!e.issue || e.resolution || e.pending) &&
-						enabled(c, { kind: e.kind as "watch" | "rating" }) &&
+						enabled(c, { kind: e.kind as SyncRecord["kind"] }) &&
 						(e.resolution === "opnshelf" ||
 							e.pending ||
 							fingerprint(local.find((l) => l.key === e.localKey) ?? null) !==
@@ -1027,7 +1103,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			!c.remoteReadAt ||
 			c.remoteReadAt.getTime() < Date.now() - 15 * 60_000
 		) {
-			remote = await this.api.snapshot(token);
+			remote = await this.api.snapshot(token, c);
 			await this.prisma.traktSyncConnection.update({
 				where: { id: c.id },
 				data: {
@@ -1045,7 +1121,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				where: { connectionId: c.id, linked: false },
 			});
 			for (const e of unlinked) {
-				if (!enabled(c, { kind: e.kind as "watch" | "rating" })) continue;
+				if (!enabled(c, { kind: e.kind as SyncRecord["kind"] })) continue;
 				await this.prisma.traktSyncEntry.update({
 					where: { id: e.id },
 					data: {
@@ -1080,7 +1156,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		let stopped = false;
 		let remaining = 0;
 		for (const entry of entries) {
-			if (!enabled(c, { kind: entry.kind as "watch" | "rating" })) continue;
+			if (!enabled(c, { kind: entry.kind as SyncRecord["kind"] })) continue;
 			const l = local.find((r) => r.key === entry.localKey) ?? null;
 			let r = remote.find((r) => r.key === entry.remoteKey) ?? null;
 			const mapped = readRecord(entry.remoteBase);
@@ -1089,7 +1165,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			if (stopped) {
 				if (
 					(!entry.issue || entry.resolution || entry.pending) &&
-					!(r && !r.mediaId) &&
+					!(r && !r.mediaId && !isListRecord(r)) &&
 					(entry.pending ||
 						decide(
 							{
@@ -1127,8 +1203,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				continue;
 			}
 			if (entry.issue && !entry.resolution && !entry.pending) continue;
-			if (r && !r.mediaId) {
-				await this.issue(entry.id, "Choose a TMDB match for this title.");
+			if (r?.problem || (r && !r.mediaId && !isListRecord(r))) {
+				await this.issue(
+					entry.id,
+					r.problem ?? "Choose a TMDB match for this title.",
+				);
 				continue;
 			}
 			const base = {
@@ -1165,7 +1244,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					entry.id,
 					entry.kind === "rating"
 						? "Both services have different Ratings. Choose which to use."
-						: "Both services changed this Watch. Choose which version to keep; choosing a missing version deletes the other.",
+						: isListRecord(entry)
+							? "Both services changed this List. Choose which version to keep; choosing a missing version deletes the other."
+							: "Both services changed this Watch. Choose which version to keep; choosing a missing version deletes the other.",
 				);
 				continue;
 			}
@@ -1258,8 +1339,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			direction: "push" | "pull";
 			desired: SyncRecord | null;
 			previous: SyncRecord | null;
+			source?: SyncRecord | null;
 		} | null;
-		const desired = pending
+		let desired = pending
 			? readRecord(pending.desired)
 			: direction === "push"
 				? local
@@ -1269,10 +1351,37 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			: direction === "push"
 				? remote
 				: local;
+		const source = direction === "push" ? local : remote;
+		if (
+			!pending &&
+			desired &&
+			previous &&
+			isListRecord(desired) &&
+			c.direction !== "both"
+		) {
+			const value = listValue(desired);
+			const destination = listValue(previous);
+			const baseline = readRecord(
+				direction === "push" ? entry.localBase : entry.remoteBase,
+			);
+			const linkedMembers =
+				entry.linked && baseline
+					? new Set(listValue(baseline).items.map(memberKey))
+					: new Set<string>();
+			const sourceMembers = new Set(value.items.map(memberKey));
+			const unrelated = destination.items.filter(
+				(i) =>
+					!sourceMembers.has(memberKey(i)) && !linkedMembers.has(memberKey(i)),
+			);
+			desired = {
+				...desired,
+				value: encodeList({ ...value, items: [...value.items, ...unrelated] }),
+			};
+		}
 		if (
 			pending &&
-			fingerprint(direction === "push" ? local : remote) !==
-				fingerprint(desired)
+			fingerprint(source) !==
+				fingerprint(pending.source === undefined ? desired : pending.source)
 		) {
 			await this.prisma.traktSyncEntry.update({
 				where: { id: entry.id },
@@ -1305,14 +1414,26 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						direction,
 						desired,
 						previous,
+						source,
 					} as unknown as Prisma.InputJsonValue,
 				},
 			});
 		if (direction === "pull") {
-			if (!c.publicationConsent)
+			if (
+				!(isListRecord(desired ?? previous ?? { kind: "watch" })
+					? c.listPublicationConsent
+					: c.publicationConsent)
+			)
 				throw new Error(
 					"Acknowledge public publication in sync settings first.",
 				);
+			if (desired && isListRecord(desired) && !previous && !entry.localKey) {
+				entry.localKey = `${desired.kind}:${TID.nextStr()}`;
+				await this.prisma.traktSyncEntry.update({
+					where: { id: entry.id },
+					data: { localKey: entry.localKey },
+				});
+			}
 			const result = await this.local.write(
 				c.userDid,
 				c.id,
@@ -1320,7 +1441,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				previous,
 				entry.localKey?.slice(entry.localKey.indexOf(":") + 1),
 			);
-			await this.complete(entry, result, desired);
+			await this.complete(
+				entry,
+				result,
+				desired && isListRecord(desired) ? remote : desired,
+			);
 			return;
 		}
 		const lastLocal = readRecord(entry.localBase);
@@ -1347,13 +1472,42 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				);
 			}
 		}
+		if (pending && desired?.kind === "list" && !remote && !entry.remoteKey)
+			throw new Error(
+				"The outcome of creating this Trakt List is unknown. Check Trakt, then choose a version before retrying.",
+			);
 		if (previous && (desired === null || desired.kind === "watch"))
 			await this.api.write(token, previous, true);
 		if (desired)
-			await this.api.write(token, {
-				...desired,
-				...(remote?.traktId ? { traktId: remote.traktId } : {}),
-			});
+			await this.api.write(
+				token,
+				{
+					...desired,
+					...(isListRecord(desired)
+						? { traktId: remote?.traktId }
+						: remote?.traktId
+							? { traktId: remote.traktId }
+							: {}),
+				},
+				false,
+				remote,
+				async (created) => {
+					entry.remoteKey = created.key;
+					await this.prisma.traktSyncEntry.update({
+						where: { id: entry.id },
+						data: {
+							remoteKey: created.key,
+							remoteBase: json(created),
+							pending: {
+								direction,
+								desired,
+								previous: created,
+								source,
+							} as unknown as Prisma.InputJsonValue,
+						},
+					});
+				},
+			);
 		const target = desired ?? previous;
 		if (!target) throw new Error("Missing transfer target.");
 		const confirmation = applyMappings(
@@ -1366,9 +1520,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		// A scoped read must never replace the full snapshot or advance its freshness.
 		const refreshed = [
 			...snapshot.filter((r) =>
-				target.kind === "rating"
-					? !(r.kind === "rating" && r.mediaType === target.mediaType)
-					: r.key !== previous?.key && mediaKey(r) !== mediaKey(target),
+				isListRecord(target)
+					? r.kind !== target.kind
+					: target.kind === "rating"
+						? !(r.kind === "rating" && r.mediaType === target.mediaType)
+						: r.key !== previous?.key && mediaKey(r) !== mediaKey(target),
 			),
 			...confirmation,
 		];
@@ -1387,6 +1543,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				remoteSnapshot: refreshed as unknown as Prisma.InputJsonValue,
 			},
 		});
-		await this.complete(entry, desired, matches[0] ?? null);
+		await this.complete(
+			entry,
+			desired && isListRecord(desired) ? local : desired,
+			matches[0] ?? null,
+		);
 	}
 }

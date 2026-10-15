@@ -10,7 +10,7 @@ Status: agreed design implemented in the #260 working branch. Verified with loca
 - Sync is optional. Offer Import once alongside Keep in sync.
 - Preserve existing Trakt Import results and Unmatched-item reconciliation.
 - Offer setup during Onboarding and connection management in Settings on both Web and Mobile.
-- Watchlist, custom Lists, Library ownership, and Reviews are outside the first version. Draft separate follow-up issues for review before posting; none have been posted.
+- The original version excluded Lists and watchlist. The operator requested both on 2026-10-15; the extension in ADR 0049 defines their opt-in, pairing, privacy and reconciliation rules. Library ownership and Reviews remain outside scope.
 
 ## Agreed transfer rules
 

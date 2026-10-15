@@ -11570,6 +11570,15 @@
           "ratings": {
             "type": "boolean"
           },
+          "lists": {
+            "type": "boolean"
+          },
+          "watchlist": {
+            "type": "boolean"
+          },
+          "listPublicationConsent": {
+            "type": "boolean"
+          },
           "historyScope": {
             "type": "string",
             "enum": [
@@ -11666,6 +11675,18 @@
           },
           "ratings": {
             "type": "boolean"
+          },
+          "lists": {
+            "type": "boolean",
+            "default": false
+          },
+          "watchlist": {
+            "type": "boolean",
+            "default": false
+          },
+          "listPublicationConsent": {
+            "type": "boolean",
+            "default": false
           },
           "historyScope": {
             "type": "string",

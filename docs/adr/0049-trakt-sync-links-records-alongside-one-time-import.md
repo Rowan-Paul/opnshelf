@@ -13,3 +13,36 @@ The first version uses public Watches and Ratings, with explicit publication ack
 An unfinished Import may permanently hand control to sync after its in-flight work finishes. Its Continued in Trakt Sync status preserves real historical progress and outcomes without claiming completion; the old Import cannot resume, even after sync disconnects. Matching and retries remain available through sync bookkeeping. A pause alone was rejected because it leaves the old importer resumable and able to compete with sync. Users can instead finish the Import before enabling sync.
 
 The cost is persistent reconciliation state and item-level conflicts instead of a stateless copy job. This supports honest outcomes and prevents silent data loss. The detailed product rules and implementation verification requirements are in [the design brief](../prd/trakt-sync.md).
+
+## List and watchlist extension (2026-10-15)
+
+The operator requested custom List and watchlist sync, including private Trakt
+data with an explicit publication warning. Both are independent opt-in types,
+off for existing connections. The shared direction and history scope apply.
+Watchlist sync is separate from custom Lists; Trakt's automatic watchlist
+removals are ordinary source membership removals. Favorites remain separate.
+
+Retain each destination's visibility. New Opnshelf Lists follow the User's List
+default; new Trakt Lists inherit the source visibility. One publication acknowledgement covers all selected types. It includes List
+transfers in either direction; existing Watch/Rating consent does not silently
+acknowledge newly enabled List transfers. Sync does not silently change a privacy setting. Private
+Lists use their reference Spaces repository under the existing account lock;
+privacy migrations hold List sync until the move finishes. The accepted Spaces
+alpha concurrency limitation in ADR 0048 still applies.
+
+Pair only an unambiguous same-name custom List, and pair the watchlist by its
+role. Remember stable record IDs after pairing so renames do not create new
+Lists. Reconcile names, descriptions, ordered memberships and item notes. Initial
+two-way differences and concurrent edits require a source choice for the List.
+One-way transfers preserve destination-only memberships until they become
+linked; removals apply only to previously synchronized memberships. Unsupported
+media, missing TMDB mappings and length limits remain visible in Needs attention
+instead of truncating text or dropping items. Existing destination-only metadata
+is preserved. Default Lists cannot be deleted.
+
+A failed or interrupted multi-record transfer is not a cross-service transaction.
+Retain its intent and remote creation identity; verify state before retrying.
+Partial state that differs from both expected versions requires a source choice
+rather than overwriting intervening edits. Complete authoritative reads precede
+removal decisions. Local manual order remains a database projection, as in the
+existing Lists feature.

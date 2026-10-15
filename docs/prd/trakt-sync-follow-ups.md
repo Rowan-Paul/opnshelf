@@ -1,7 +1,7 @@
 # Trakt Sync follow-up issue drafts
 
 Not posted. Final titles and bodies are provided below for operator review.
-These are proposed sub-issues of [#260](https://github.com/Rowan-Paul/opnshelf/issues/260); the first version remains Watches and Ratings only.
+These are proposed sub-issues of [#260](https://github.com/Rowan-Paul/opnshelf/issues/260); the original version covered Watches and Ratings only. On 2026-10-15 the operator requested implementation of drafts 1 and 2 together; their current rules are recorded in ADR 0049. Drafts 3 and 4 remain proposals.
 
 Open and closed issue searches found no dedicated issue for these four categories. Historical umbrella requests [#14](https://github.com/Rowan-Paul/opnshelf/issues/14), [#43](https://github.com/Rowan-Paul/opnshelf/issues/43), and [#44](https://github.com/Rowan-Paul/opnshelf/issues/44) were closed as not planned and contain no category-specific requirements. Link these as background rather than reopening them without operator approval.
 

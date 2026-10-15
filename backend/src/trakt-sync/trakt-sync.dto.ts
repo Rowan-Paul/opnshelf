@@ -15,6 +15,18 @@ export class SyncSettingsDto {
 	direction: "inbound" | "outbound" | "both";
 	@ApiProperty() @IsBoolean() watches: boolean;
 	@ApiProperty() @IsBoolean() ratings: boolean;
+	@ApiPropertyOptional({ default: false })
+	@IsOptional()
+	@IsBoolean()
+	lists?: boolean;
+	@ApiPropertyOptional({ default: false })
+	@IsOptional()
+	@IsBoolean()
+	watchlist?: boolean;
+	@ApiPropertyOptional({ default: false })
+	@IsOptional()
+	@IsBoolean()
+	listPublicationConsent?: boolean;
 	@ApiProperty({ enum: ["all", "future"] })
 	@IsIn(["all", "future"])
 	historyScope: "all" | "future";
@@ -98,6 +110,9 @@ export class SyncStatusDto {
 	@ApiProperty({ enum: ["inbound", "outbound", "both"] }) direction: string;
 	@ApiProperty() watches: boolean;
 	@ApiProperty() ratings: boolean;
+	@ApiPropertyOptional() lists?: boolean;
+	@ApiPropertyOptional() watchlist?: boolean;
+	@ApiPropertyOptional() listPublicationConsent?: boolean;
 	@ApiProperty({ enum: ["all", "future"] }) historyScope: string;
 	@ApiProperty() publicationConsent: boolean;
 	@ApiPropertyOptional() lastSuccessAt?: string;

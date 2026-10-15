@@ -4,6 +4,7 @@ import {
 	type SyncSettingsDto,
 	type SyncStatusDto,
 	TRAKT_HANDOFF_COPY,
+	TRAKT_LIST_COPY,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
@@ -108,6 +109,7 @@ export function TraktSyncManager({
 		data.status === "paused" &&
 		data.direction !== "outbound" &&
 		!data.publicationConsent &&
+		!data.listPublicationConsent &&
 		!data.lastSuccessAt;
 	return (
 		<div className={embedded ? "space-y-5" : "mx-auto max-w-3xl space-y-6"}>
@@ -125,8 +127,8 @@ export function TraktSyncManager({
 						Trakt Sync
 					</h1>
 					<p className="max-w-xl text-(--foreground-muted)">
-						Keep your Watches and Ratings in sync, even when the app is closed.
-						You choose what moves and in which direction.
+						Keep your Watches, Ratings, Lists and watchlist in sync, even when
+						the app is closed. You choose what moves and in which direction.
 					</p>
 				</header>
 			)}
@@ -183,9 +185,14 @@ export function TraktSyncManager({
 								}
 							</span>
 							<span className="rounded-lg bg-(--background-subtle) px-3 py-1.5">
-								{[data.watches && "Watch history", data.ratings && "Ratings"]
+								{[
+									data.watches && "Watch history",
+									data.ratings && "Ratings",
+									data.lists && "Custom Lists",
+									data.watchlist && "Watchlist",
+								]
 									.filter(Boolean)
-									.join(" and ")}
+									.join(", ")}
 							</span>
 						</div>
 						<p className="mt-4 text-(--foreground-muted) text-sm">
@@ -297,7 +304,7 @@ export function TraktSyncManager({
 			</section>
 			{connected && (editing || needsSetup) && (
 				<SyncSettings
-					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.historyScope}`}
+					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.listPublicationConsent}:${data.historyScope}`}
 					status={data}
 					className={embedded ? "border-(--border) border-t pt-5" : card}
 					onSaved={() => {
@@ -349,7 +356,11 @@ export function SyncSettings({
 		status.status === "active" ||
 		status.status === "preparing" ||
 		status.direction === "outbound" ||
-		Boolean(status.lastSuccessAt || status.publicationConsent);
+		Boolean(
+			status.lastSuccessAt ||
+				status.publicationConsent ||
+				status.listPublicationConsent,
+		);
 	const save = useMutation({
 		...traktSyncControllerConfigureMutation(),
 		onSuccess: () => {
@@ -360,10 +371,19 @@ export function SyncSettings({
 	const unfinished =
 		status.importStatus &&
 		!["completed", "continued_in_sync"].includes(status.importStatus);
-	const requiresConsent = settings.direction !== "outbound";
-	const canSave =
-		(!requiresConsent || settings.publicationConsent) &&
-		(!unfinished || settings.handoffImport);
+	const requiresHistoryConsent =
+		settings.direction !== "outbound" && (settings.watches || settings.ratings);
+	const requiresListConsent = Boolean(settings.lists || settings.watchlist);
+	const requiresConsent = requiresHistoryConsent || requiresListConsent;
+	const hasConsent = Boolean(
+		(!requiresHistoryConsent || settings.publicationConsent) &&
+			(!requiresListConsent || settings.listPublicationConsent),
+	);
+	const hadConsent = Boolean(
+		(!requiresHistoryConsent || status.publicationConsent) &&
+			(!requiresListConsent || status.listPublicationConsent),
+	);
+	const canSave = hasConsent && (!unfinished || settings.handoffImport);
 	return (
 		<section className={className}>
 			{showHeading && <h2 className="font-semibold text-lg">Sync settings</h2>}
@@ -376,19 +396,30 @@ export function SyncSettings({
 			>
 				<fieldset className="flex flex-wrap gap-5">
 					<legend className="mb-2 font-medium text-sm">Records</legend>
-					{(["watches", "ratings"] as const).map((name) => (
-						<label key={name} className="flex items-center gap-2 text-sm">
-							<input
-								type="checkbox"
-								checked={settings[name]}
-								onChange={(event) =>
-									setSettings({ ...settings, [name]: event.target.checked })
-								}
-							/>
-							{name === "watches" ? "Watch history" : "Ratings"}
-						</label>
-					))}
+					{(["watches", "ratings", "lists", "watchlist"] as const).map(
+						(name) => (
+							<label key={name} className="flex items-center gap-2 text-sm">
+								<input
+									type="checkbox"
+									checked={settings[name] ?? false}
+									onChange={(event) =>
+										setSettings({ ...settings, [name]: event.target.checked })
+									}
+								/>
+								{name === "watches"
+									? "Watch history"
+									: name === "ratings"
+										? "Ratings"
+										: name === "lists"
+											? "Custom Lists"
+											: "Watchlist"}
+							</label>
+						),
+					)}
 				</fieldset>
+				{requiresListConsent && (
+					<p className="text-(--foreground-muted) text-sm">{TRAKT_LIST_COPY}</p>
+				)}
 				<fieldset>
 					<legend className="mb-2 font-medium text-sm">Direction</legend>
 					<div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -463,7 +494,12 @@ export function SyncSettings({
 						ref={submitButton}
 						type="submit"
 						className="btn btn-primary"
-						disabled={!settings.watches && !settings.ratings}
+						disabled={
+							!settings.watches &&
+							!settings.ratings &&
+							!settings.lists &&
+							!settings.watchlist
+						}
 					>
 						{onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"}
 					</button>
@@ -512,9 +548,11 @@ export function SyncSettings({
 								[
 									settings.watches && "Watch history",
 									settings.ratings && "Ratings",
+									settings.lists && "Custom Lists",
+									settings.watchlist && "Watchlist",
 								]
 									.filter(Boolean)
-									.join(" and "),
+									.join(", "),
 							],
 							[
 								"Direction",
@@ -541,21 +579,21 @@ export function SyncSettings({
 						Settings.
 					</p>
 					{requiresConsent &&
-						(status.publicationConsent ? (
+						(hadConsent ? (
 							<p className="text-(--foreground-muted) text-sm">
-								Watches and Ratings brought into Opnshelf become public, even if
-								your Trakt profile is private.
+								{TRAKT_PUBLICATION_COPY}
 							</p>
 						) : (
 							<label className="flex items-start gap-3 rounded-xl border border-(--border) p-4 text-sm">
 								<input
 									className="mt-1"
 									type="checkbox"
-									checked={settings.publicationConsent}
+									checked={hasConsent}
 									onChange={(event) =>
 										setSettings({
 											...settings,
 											publicationConsent: event.target.checked,
+											listPublicationConsent: event.target.checked,
 										})
 									}
 								/>
@@ -820,49 +858,54 @@ function SyncIssue({
 					These are different Watches
 				</button>
 			)}
-			{connected && item.trakt?.mediaId === null && (
-				<form
-					className="mt-4 space-y-2"
-					onSubmit={(e) => {
-						e.preventDefault();
-						setQuery(search);
-					}}
-				>
-					<label className="block text-sm" htmlFor={`match-${item.id}`}>
-						Find the matching title
-					</label>
-					<div className="flex flex-wrap gap-2">
-						<input
-							id={`match-${item.id}`}
-							className="input min-w-0 flex-1"
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							placeholder={item.trakt.title}
-						/>
-						<button
-							type="submit"
-							className="btn btn-secondary max-w-full whitespace-normal"
-						>
-							Search
-						</button>
-					</div>
-					{matches.isFetching && (
-						<div className="h-14 animate-pulse rounded-xl bg-(--background-subtle)" />
-					)}
-					{matches.error && <p role="alert">{traktError(matches.error)}</p>}
-					{matches.data?.map((m) => (
-						<button
-							type="button"
-							key={m.tmdbId}
-							className="block w-full rounded-lg border border-(--border) p-3 text-left"
-							onClick={() => setChoice({ action: "match", mediaId: m.tmdbId })}
-						>
-							{m.title}
-							{m.year ? ` (${m.year})` : ""}
-						</button>
-					))}
-				</form>
-			)}
+			{connected &&
+				item.kind !== "list" &&
+				item.kind !== "watchlist" &&
+				item.trakt?.mediaId === null && (
+					<form
+						className="mt-4 space-y-2"
+						onSubmit={(e) => {
+							e.preventDefault();
+							setQuery(search);
+						}}
+					>
+						<label className="block text-sm" htmlFor={`match-${item.id}`}>
+							Find the matching title
+						</label>
+						<div className="flex flex-wrap gap-2">
+							<input
+								id={`match-${item.id}`}
+								className="input min-w-0 flex-1"
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								placeholder={item.trakt.title}
+							/>
+							<button
+								type="submit"
+								className="btn btn-secondary max-w-full whitespace-normal"
+							>
+								Search
+							</button>
+						</div>
+						{matches.isFetching && (
+							<div className="h-14 animate-pulse rounded-xl bg-(--background-subtle)" />
+						)}
+						{matches.error && <p role="alert">{traktError(matches.error)}</p>}
+						{matches.data?.map((m) => (
+							<button
+								type="button"
+								key={m.tmdbId}
+								className="block w-full rounded-lg border border-(--border) p-3 text-left"
+								onClick={() =>
+									setChoice({ action: "match", mediaId: m.tmdbId })
+								}
+							>
+								{m.title}
+								{m.year ? ` (${m.year})` : ""}
+							</button>
+						))}
+					</form>
+				)}
 			{choice && (
 				<div className="mt-4 space-y-3 rounded-xl border border-(--accent) p-4">
 					<p>
