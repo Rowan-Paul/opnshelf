@@ -3,13 +3,10 @@ import {
 	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
-	isActiveTraktImportStatus,
 	reviewsControllerListMyPublicationsOptions,
-	type TraktImportJobDto,
 	type UserDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
-	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerResetOnboardingMutation,
 	usersControllerUpdateMySettingsMutation,
@@ -20,7 +17,6 @@ import { Link, router, Stack, useFocusEffect } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
-	ArrowLeftRight,
 	Bell,
 	ChevronRight,
 	Compass,
@@ -45,6 +41,7 @@ import { NotificationPreferences } from "@/components/settings/NotificationPrefe
 import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
+import { TraktSyncManager } from "@/components/trakt/TraktSyncManager";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { useDialog } from "@/components/ui/dialog";
@@ -229,10 +226,6 @@ export function SettingsCategoryScreen({
 	} = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user && (section === "preferences" || section === "connections"),
-	});
-	const { data: traktJob } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: !!user && section === "connections",
 	});
 
 	const updateSettingsMutation = useMutation({
@@ -871,29 +864,14 @@ export function SettingsCategoryScreen({
 								/>
 							</SettingsSection>
 
-							{/* Import history */}
-							<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<View className="gap-4 rounded-xl border border-border bg-card p-4">
 								<Text className="font-display font-semibold text-foreground text-lg">
 									Trakt
 								</Text>
-								<Link href="/trakt-sync" asChild>
-									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border p-3">
-										<ArrowLeftRight color="#94a3b8" size={20} />
-										<Text className="flex-1 font-medium text-foreground">
-											Keep in sync
-										</Text>
-										<ChevronRight color="#94a3b8" size={18} />
-									</Pressable>
-								</Link>
-								<Link href="/trakt-import" asChild>
-									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border p-3">
-										<Download color="#94a3b8" size={20} />
-										<Text className="flex-1 font-medium text-foreground">
-											{getTraktSettingsLabel(traktJob)}
-										</Text>
-										<ChevronRight color="#94a3b8" size={18} />
-									</Pressable>
-								</Link>
+								<Text className="text-muted-foreground text-sm">
+									Keep your Watch history and Ratings in sync with Trakt.
+								</Text>
+								<TraktSyncManager embedded />
 							</View>
 						</>
 					)}
@@ -1009,19 +987,6 @@ export function SettingsCategoryScreen({
 			    (AccountDeletionGate), so it also shows after an app restart. */}
 		</>
 	);
-}
-
-function getTraktSettingsLabel(job: TraktImportJobDto | null | undefined) {
-	if (!job) return "Import from Trakt";
-	if (isActiveTraktImportStatus(job.status)) {
-		return "Trakt import in progress";
-	}
-	if (job.status === "paused" || job.status === "failed")
-		return "Resume Trakt import";
-	if (job.unmatchedGroups.length > 0) {
-		return `Match ${job.unmatchedGroups.length} ${job.unmatchedGroups.length === 1 ? "title" : "titles"}`;
-	}
-	return "View Trakt import";
 }
 
 const SETTINGS_AREAS: {

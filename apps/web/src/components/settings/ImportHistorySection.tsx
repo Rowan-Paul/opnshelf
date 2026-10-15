@@ -1,34 +1,6 @@
-import {
-	isActiveTraktImportStatus,
-	type TraktImportJobDto,
-	usersControllerGetMyCurrentTraktImportOptions,
-} from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, ChevronRight, Download } from "lucide-react";
-import { useAuth } from "#/lib/auth-context";
-
-function getTraktSettingsLabel(job?: TraktImportJobDto | null): string {
-	if (!job) return "Import from Trakt";
-	if (job.status === "paused" || job.status === "failed") {
-		return "Resume Trakt import";
-	}
-	if (isActiveTraktImportStatus(job.status)) {
-		return "Trakt import in progress";
-	}
-	if (job.unmatchedGroups.length > 0) {
-		return `Match ${job.unmatchedGroups.length} ${job.unmatchedGroups.length === 1 ? "title" : "titles"}`;
-	}
-	return "View Trakt import";
-}
+import { TraktSyncManager } from "#/components/trakt/TraktSyncManager";
 
 export function ImportHistorySection() {
-	const { isAuthenticated } = useAuth();
-	const { data: traktImport } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: isAuthenticated,
-	});
-
 	return (
 		<section
 			id="import-history"
@@ -36,31 +8,9 @@ export function ImportHistorySection() {
 		>
 			<h2 className="mb-1 font-semibold text-lg">Trakt</h2>
 			<p className="mb-5 text-(--foreground-muted) text-sm">
-				Bring your public Trakt watch history into your Shelf
+				Keep your Watch history and Ratings in sync with Trakt.
 			</p>
-			<Link
-				to="/trakt-sync"
-				className="mb-3 flex max-w-lg items-center gap-3 rounded-xl border border-(--border) p-4 transition-colors hover:bg-(--background-subtle)"
-			>
-				<ArrowLeftRight className="size-5 text-(--foreground-muted)" />
-				<span className="flex-1 font-medium">Keep in sync</span>
-				<ChevronRight className="size-4 text-(--foreground-muted)" />
-			</Link>
-			<Link
-				to="/trakt-import"
-				className="flex max-w-lg items-center gap-3 rounded-xl border border-(--border) p-4 transition-colors hover:bg-(--background-subtle)"
-			>
-				<Download className="size-5 text-(--foreground-muted)" />
-				<div className="min-w-0 flex-1">
-					<p className="font-medium">{getTraktSettingsLabel(traktImport)}</p>
-					{traktImport ? (
-						<p className="mt-0.5 text-(--foreground-muted) text-xs">
-							@{traktImport.profileUsername ?? traktImport.traktUsername}
-						</p>
-					) : null}
-				</div>
-				<ChevronRight className="size-4 text-(--foreground-muted)" />
-			</Link>
+			<TraktSyncManager embedded />
 		</section>
 	);
 }

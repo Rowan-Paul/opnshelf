@@ -26,8 +26,24 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Check, Link2 } from "lucide-react";
-import { useState } from "react";
+import {
+	ArrowLeft,
+	ArrowLeftRight,
+	ArrowRight,
+	Check,
+	ChevronLeft,
+	Link2,
+	Settings2,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { TraktMark } from "#/components/TraktMark";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 
 const rootKey = ["trakt-sync"];
 const card =
@@ -35,8 +51,10 @@ const card =
 
 export function TraktSyncManager({
 	connectionFailed = false,
+	embedded = false,
 }: {
 	connectionFailed?: boolean;
+	embedded?: boolean;
 }) {
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
@@ -57,6 +75,7 @@ export function TraktSyncManager({
 		onSuccess: refresh,
 	});
 	const [disconnect, setDisconnect] = useState(false);
+	const [editing, setEditing] = useState(false);
 	if (!status.data)
 		return status.isError ? (
 			<p role="alert">
@@ -72,30 +91,46 @@ export function TraktSyncManager({
 		) : (
 			<output
 				aria-label="Loading Trakt Sync"
-				className={`${card} block h-72 animate-pulse`}
-			/>
+				className={`${embedded ? "" : card} block animate-pulse space-y-4`}
+			>
+				<span className="block h-5 w-36 rounded bg-(--background-subtle)" />
+				<span className="block h-4 w-24 rounded bg-(--background-subtle)" />
+				<span className="block h-8 w-64 max-w-full rounded bg-(--background-subtle)" />
+				<span className="block h-4 w-full rounded bg-(--background-subtle)" />
+				<span className="block h-10 w-80 max-w-full rounded bg-(--background-subtle)" />
+			</output>
 		);
 	const data = status.data;
 	const connected =
 		data.status !== "disconnected" && data.status !== "reconnect";
+	const needsSetup =
+		connected &&
+		data.status === "paused" &&
+		data.direction !== "outbound" &&
+		!data.publicationConsent &&
+		!data.lastSuccessAt;
 	return (
-		<div className="mx-auto max-w-3xl space-y-6">
-			<header className="space-y-3">
-				<h1 className="font-display font-semibold text-3xl sm:text-4xl">
-					Trakt Sync
-				</h1>
-				<p className="max-w-xl text-(--foreground-muted)">
-					Keep your Watches and Ratings in sync, even when the app is closed.
-					You choose what moves and in which direction.
-				</p>
-				<Link
-					to="/trakt-import"
-					className="inline-block text-(--accent) underline underline-offset-4"
-				>
-					Import once or view previous Import results
-				</Link>
-			</header>
-			<section className={card} aria-label="Trakt connection">
+		<div className={embedded ? "space-y-5" : "mx-auto max-w-3xl space-y-6"}>
+			{!embedded && (
+				<header className="space-y-3">
+					<Link
+						to="/settings/$section"
+						params={{ section: "connections" }}
+						className="inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+					>
+						<ChevronLeft className="size-4" />
+						Back to Settings
+					</Link>
+					<h1 className="font-display font-semibold text-3xl sm:text-4xl">
+						Trakt Sync
+					</h1>
+					<p className="max-w-xl text-(--foreground-muted)">
+						Keep your Watches and Ratings in sync, even when the app is closed.
+						You choose what moves and in which direction.
+					</p>
+				</header>
+			)}
+			<section className={embedded ? "" : card} aria-label="Trakt connection">
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div>
 						<h2 className="font-semibold text-lg">
@@ -104,15 +139,17 @@ export function TraktSyncManager({
 								: "Connect your Trakt account"}
 						</h2>
 						<p className="mt-1 text-(--foreground-muted) text-sm">
-							{data.status === "preparing"
-								? "Comparing your history. You can leave this screen."
-								: data.status === "active"
-									? "Sync is on"
-									: data.status === "paused"
-										? "Sync is paused"
-										: data.status === "reconnect"
-											? "Reconnect to continue"
-											: "No account connected"}
+							{needsSetup
+								? "Connected. Sync is not enabled yet."
+								: data.status === "preparing"
+									? "Comparing your history. You can leave this screen."
+									: data.status === "active"
+										? "Sync is on"
+										: data.status === "paused"
+											? "Sync is paused"
+											: data.status === "reconnect"
+												? "Reconnect to continue"
+												: "No account connected"}
 						</p>
 					</div>
 					<Link2 className="size-5 text-(--foreground-muted)" />
@@ -135,8 +172,22 @@ export function TraktSyncManager({
 								? "Reconnect Trakt"
 								: "Connect Trakt"}
 					</button>
-				) : (
+				) : !needsSetup ? (
 					<>
+						<div className="mt-4 flex flex-wrap gap-2 text-sm">
+							<span className="rounded-lg bg-(--background-subtle) px-3 py-1.5 font-medium">
+								{
+									TRAKT_SYNC_DIRECTIONS.find(
+										(choice) => choice.value === data.direction,
+									)?.label
+								}
+							</span>
+							<span className="rounded-lg bg-(--background-subtle) px-3 py-1.5">
+								{[data.watches && "Watch history", data.ratings && "Ratings"]
+									.filter(Boolean)
+									.join(" and ")}
+							</span>
+						</div>
 						<p className="mt-4 text-(--foreground-muted) text-sm">
 							{data.lastSuccessAt
 								? `Last successful check: ${new Date(data.lastSuccessAt).toLocaleString()}`
@@ -145,6 +196,15 @@ export function TraktSyncManager({
 							transfers.
 						</p>
 						<div className="mt-4 flex flex-wrap gap-2">
+							<button
+								type="button"
+								className="btn btn-secondary"
+								onClick={() => setEditing(!editing)}
+								aria-expanded={editing}
+							>
+								<Settings2 className="size-4" />
+								Sync settings
+							</button>
 							{(
 								[
 									"sync",
@@ -180,7 +240,7 @@ export function TraktSyncManager({
 							</button>
 						</div>
 					</>
-				)}
+				) : null}
 				{disconnect && (
 					<div className="mt-4 space-y-3 rounded-xl border border-(--border) p-4">
 						<p>
@@ -227,14 +287,32 @@ export function TraktSyncManager({
 					</p>
 				)}
 			</section>
-			{connected && (
+			{connected && (editing || needsSetup) && (
 				<SyncSettings
 					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.historyScope}`}
 					status={data}
-					onSaved={refresh}
+					className={embedded ? "border-(--border) border-t pt-5" : card}
+					onSaved={() => {
+						setEditing(false);
+						return refresh();
+					}}
+					onCancel={editing ? () => setEditing(false) : undefined}
 				/>
 			)}
-			{data.username && <SyncIssues connected={connected} />}
+			{embedded && (data.status === "disconnected" || data.importStatus) && (
+				<Link
+					to="/trakt-import"
+					className="inline-block text-(--foreground-muted) text-sm underline underline-offset-4"
+				>
+					{data.importStatus
+						? "View previous Import results"
+						: "Import public history once instead"}
+				</Link>
+			)}
+			{data.username &&
+				(!embedded || data.needsAttention > 0 || data.ignored > 0) && (
+					<SyncIssues connected={connected} />
+				)}
 		</div>
 	);
 }
@@ -244,16 +322,26 @@ export function SyncSettings({
 	onSaved,
 	className = card,
 	showHeading = true,
+	onboarding = false,
+	onCancel,
 }: {
 	status: SyncStatusDto;
 	onSaved: () => unknown;
 	className?: string;
 	showHeading?: boolean;
+	onboarding?: boolean;
+	onCancel?: () => void;
 }) {
 	const [settings, setSettings] = useState<SyncSettingsDto>(() =>
 		traktSettings(status),
 	);
 	const [reviewing, setReviewing] = useState(false);
+	const submitButton = useRef<HTMLButtonElement>(null);
+	const managed =
+		status.status === "active" ||
+		status.status === "preparing" ||
+		status.direction === "outbound" ||
+		Boolean(status.lastSuccessAt || status.publicationConsent);
 	const save = useMutation({
 		...traktSyncControllerConfigureMutation(),
 		onSuccess: () => {
@@ -264,58 +352,89 @@ export function SyncSettings({
 	const unfinished =
 		status.importStatus &&
 		!["completed", "continued_in_sync"].includes(status.importStatus);
+	const requiresConsent = settings.direction !== "outbound";
+	const canSave =
+		(!requiresConsent || settings.publicationConsent) &&
+		(!unfinished || settings.handoffImport);
 	return (
 		<section className={className}>
-			{showHeading && (
-				<h2 className="font-semibold text-xl">What to keep in sync</h2>
-			)}
+			{showHeading && <h2 className="font-semibold text-lg">Sync settings</h2>}
 			<form
-				className="mt-5 space-y-5"
-				onSubmit={(e) => {
-					e.preventDefault();
+				className="mt-4 space-y-5"
+				onSubmit={(event) => {
+					event.preventDefault();
 					setReviewing(true);
 				}}
 			>
 				<fieldset className="flex flex-wrap gap-5">
-					<legend className="mb-2 text-(--foreground-muted) text-sm">
-						Choose your records
-					</legend>
+					<legend className="mb-2 font-medium text-sm">Records</legend>
 					{(["watches", "ratings"] as const).map((name) => (
-						<label key={name} className="flex items-center gap-2">
+						<label key={name} className="flex items-center gap-2 text-sm">
 							<input
 								type="checkbox"
 								checked={settings[name]}
-								onChange={(e) =>
-									setSettings({ ...settings, [name]: e.target.checked })
+								onChange={(event) =>
+									setSettings({ ...settings, [name]: event.target.checked })
 								}
 							/>
 							{name === "watches" ? "Watch history" : "Ratings"}
 						</label>
 					))}
 				</fieldset>
-				<fieldset className="space-y-2">
-					<legend className="mb-2 font-medium">Direction</legend>
-					{TRAKT_SYNC_DIRECTIONS.map((choice) => (
-						<label
-							key={choice.value}
-							className="flex items-center gap-3 rounded-xl border border-(--border) p-3"
-						>
-							<input
-								type="radio"
-								name="direction"
-								checked={settings.direction === choice.value}
-								onChange={() =>
-									setSettings({ ...settings, direction: choice.value })
-								}
-							/>
-							{choice.label}
-						</label>
-					))}
+				<fieldset>
+					<legend className="mb-2 font-medium text-sm">Direction</legend>
+					<div className="grid grid-cols-3 gap-2 sm:gap-3">
+						{TRAKT_SYNC_DIRECTIONS.map((choice) => {
+							const Arrow =
+								choice.value === "inbound"
+									? ArrowRight
+									: choice.value === "outbound"
+										? ArrowLeft
+										: ArrowLeftRight;
+							return (
+								<label key={choice.value} className="relative cursor-pointer">
+									<input
+										type="radio"
+										name="direction"
+										aria-label={choice.label}
+										className="peer sr-only"
+										checked={settings.direction === choice.value}
+										onChange={() =>
+											setSettings({ ...settings, direction: choice.value })
+										}
+									/>
+									<span className="flex h-full flex-col items-center gap-2 rounded-xl border border-(--border) px-2 py-4 text-center transition-colors peer-checked:border-(--accent) peer-checked:bg-(--accent)/10 peer-focus-visible:ring-(--accent) peer-focus-visible:ring-2">
+										<span
+											aria-hidden="true"
+											className="flex items-center gap-2"
+										>
+											<TraktMark className="size-5" />
+											<Arrow className="size-4 text-(--foreground-muted)" />
+											<img
+												src="/icon.png"
+												alt=""
+												className="size-5 rounded-md"
+											/>
+										</span>
+										<span className="font-semibold text-sm">
+											{choice.title}
+										</span>
+										<span className="max-w-32 text-(--foreground-muted) text-xs leading-relaxed">
+											{choice.description}
+										</span>
+									</span>
+								</label>
+							);
+						})}
+					</div>
 				</fieldset>
 				<fieldset className="space-y-2">
-					<legend className="mb-2 font-medium">Include unlinked records</legend>
+					<legend className="mb-2 font-medium text-sm">History</legend>
 					{TRAKT_SYNC_SCOPES.map((choice) => (
-						<label key={choice.value} className="flex items-center gap-3">
+						<label
+							key={choice.value}
+							className="flex items-center gap-3 text-sm"
+						>
 							<input
 								type="radio"
 								name="scope"
@@ -327,110 +446,171 @@ export function SyncSettings({
 							{choice.label}
 						</label>
 					))}
-					<p className="text-(--foreground-muted) text-sm">
+					<p className="text-(--foreground-muted) text-xs leading-relaxed">
 						{TRAKT_SCOPE_COPY}
 					</p>
 				</fieldset>
-				{settings.direction !== "outbound" && (
-					<label className="flex items-start gap-3 rounded-xl bg-(--background-subtle) p-4">
-						<input
-							className="mt-1"
-							type="checkbox"
-							checked={settings.publicationConsent}
-							onChange={(e) =>
-								setSettings({
-									...settings,
-									publicationConsent: e.target.checked,
-								})
-							}
-						/>
-						<span className="text-sm">{TRAKT_PUBLICATION_COPY}</span>
-					</label>
-				)}
-				{unfinished && (
-					<div className="space-y-2 rounded-xl border border-(--border) p-4">
-						<label className="flex items-start gap-3">
-							<input
-								className="mt-1"
-								type="checkbox"
-								checked={settings.handoffImport ?? false}
-								onChange={(e) =>
-									setSettings({ ...settings, handoffImport: e.target.checked })
-								}
-							/>
-							<span className="text-sm">{TRAKT_HANDOFF_COPY}</span>
-						</label>
-						<Link to="/trakt-import" className="text-(--accent) underline">
-							Finish Import first
-						</Link>
-					</div>
-				)}
-				{!reviewing ? (
+				<div className="flex flex-wrap gap-2">
 					<button
+						ref={submitButton}
 						type="submit"
-						className="btn btn-primary max-w-full whitespace-normal"
-						disabled={
-							(!settings.watches && !settings.ratings) ||
-							(settings.direction !== "outbound" &&
-								!settings.publicationConsent) ||
-							Boolean(unfinished && !settings.handoffImport)
-						}
+						className="btn btn-primary"
+						disabled={!settings.watches && !settings.ratings}
 					>
-						Review sync settings
+						{onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"}
 					</button>
-				) : (
-					<div className="space-y-3 rounded-xl border border-(--accent) p-4">
-						<h3 className="font-semibold">Confirm these transfers</h3>
-						<p>
-							{[
-								settings.watches && "Watch history",
-								settings.ratings && "Ratings",
-							]
-								.filter(Boolean)
-								.join(" and ")}{" "}
-							·{" "}
-							{
-								TRAKT_SYNC_DIRECTIONS.find(
-									(d) => d.value === settings.direction,
-								)?.label
-							}{" "}
-							·{" "}
-							{
-								TRAKT_SYNC_SCOPES.find((s) => s.value === settings.historyScope)
-									?.label
-							}
-						</p>
-						<p className="text-(--foreground-muted) text-sm">
-							Edits and deletions propagate for linked records. Disabling a type
-							preserves records. Conflicts that need your choice appear below.
-						</p>
-						<div className="flex flex-wrap gap-2">
-							<button
-								type="button"
-								className="btn btn-secondary max-w-full whitespace-normal"
-								onClick={() => setReviewing(false)}
-							>
-								Back
-							</button>
-							<button
-								type="button"
-								className="btn btn-primary max-w-full whitespace-normal"
-								disabled={save.isPending}
-								onClick={() => save.mutate({ body: settings })}
-							>
-								{save.isPending ? "Preparing sync…" : "Confirm and enable sync"}
-							</button>
-						</div>
-					</div>
-				)}
-				{save.error && <p role="alert">{traktError(save.error)}</p>}
+					{onCancel && (
+						<button
+							type="button"
+							className="btn btn-secondary"
+							onClick={onCancel}
+						>
+							Cancel
+						</button>
+					)}
+				</div>
 				{save.isSuccess && (
-					<p className="flex items-center gap-2">
+					<output className="flex items-center gap-2 text-sm">
 						<Check className="size-4" />
 						Settings saved
-					</p>
+					</output>
 				)}
 			</form>
+			<Dialog
+				open={reviewing}
+				onOpenChange={(open) => {
+					if (!save.isPending) setReviewing(open);
+				}}
+			>
+				<DialogContent
+					className="max-h-[85dvh] overflow-y-auto"
+					onCloseAutoFocus={(event) => {
+						event.preventDefault();
+						submitButton.current?.focus();
+					}}
+				>
+					<DialogHeader>
+						<DialogTitle>
+							{managed ? "Update Trakt Sync" : "Enable Trakt Sync"}
+						</DialogTitle>
+						<DialogDescription>
+							Confirm what will move between your accounts.
+						</DialogDescription>
+					</DialogHeader>
+					<dl className="space-y-3 rounded-xl bg-(--background-subtle) p-4 text-sm">
+						{[
+							[
+								"Records",
+								[
+									settings.watches && "Watch history",
+									settings.ratings && "Ratings",
+								]
+									.filter(Boolean)
+									.join(" and "),
+							],
+							[
+								"Direction",
+								TRAKT_SYNC_DIRECTIONS.find(
+									(choice) => choice.value === settings.direction,
+								)?.label,
+							],
+							[
+								"History",
+								TRAKT_SYNC_SCOPES.find(
+									(choice) => choice.value === settings.historyScope,
+								)?.label,
+							],
+						].map(([label, value]) => (
+							<div key={label}>
+								<dt className="text-(--foreground-muted) text-xs">{label}</dt>
+								<dd className="mt-1 font-medium">{value}</dd>
+							</div>
+						))}
+					</dl>
+					<p className="text-(--foreground-muted) text-sm">
+						Edits and deletions propagate for linked records. Disabling a type
+						preserves records. Conflicts that need your choice appear in
+						Settings.
+					</p>
+					{requiresConsent &&
+						(status.publicationConsent ? (
+							<p className="text-(--foreground-muted) text-sm">
+								Watches and Ratings brought into Opnshelf become public, even if
+								your Trakt profile is private.
+							</p>
+						) : (
+							<label className="flex items-start gap-3 rounded-xl border border-(--border) p-4 text-sm">
+								<input
+									className="mt-1"
+									type="checkbox"
+									checked={settings.publicationConsent}
+									onChange={(event) =>
+										setSettings({
+											...settings,
+											publicationConsent: event.target.checked,
+										})
+									}
+								/>
+								<span>{TRAKT_PUBLICATION_COPY}</span>
+							</label>
+						))}
+					{unfinished && (
+						<div className="space-y-2 rounded-xl border border-(--border) p-4">
+							<label className="flex items-start gap-3 text-sm">
+								<input
+									className="mt-1"
+									type="checkbox"
+									checked={settings.handoffImport ?? false}
+									onChange={(event) =>
+										setSettings({
+											...settings,
+											handoffImport: event.target.checked,
+										})
+									}
+								/>
+								<span>{TRAKT_HANDOFF_COPY}</span>
+							</label>
+							<Link
+								to="/trakt-import"
+								className="text-(--accent) text-sm underline"
+							>
+								Finish Import first
+							</Link>
+						</div>
+					)}
+					{save.error && (
+						<p role="alert" className="text-(--destructive) text-sm">
+							{traktError(save.error)}
+						</p>
+					)}
+					<div className="flex flex-wrap justify-end gap-2">
+						<button
+							type="button"
+							className="btn btn-secondary"
+							disabled={save.isPending}
+							onClick={() => setReviewing(false)}
+						>
+							Back
+						</button>
+						<button
+							type="button"
+							className="btn btn-primary disabled:opacity-50"
+							disabled={save.isPending || !canSave}
+							onClick={() => save.mutate({ body: settings })}
+						>
+							{save.isPending
+								? "Saving…"
+								: onboarding
+									? "Enable sync and continue"
+									: managed
+										? status.status === "paused"
+											? "Save and resume sync"
+											: "Confirm changes"
+										: "Confirm and enable sync"}
+						</button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</section>
 	);
 }
