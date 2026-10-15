@@ -54,7 +54,8 @@ Only one fixture runner can own the fixed ports. Web is at
 `http://127.0.0.1:3391/__scenario`, and Metro at 8084. The controller resets the
 scenario; reload the client to clear cached state. Scenarios include normal,
 failed-settings (503), delayed-auth (4.5-second return), sheet-overlap (ungranted
-Privacy), migration-running (3/10 records), conflict (409), compact and large-text.
+Privacy), migration-running (3/10 records), conflict (409), compact, large-text
+and trakt-sync-catch-up (Trakt Sync Banner at 40%).
 Open `/settings/privacy` to exercise scope dialogs, individual Lists and progress.
 
 Web uses the synthetic account directly. On Mobile, connect the development

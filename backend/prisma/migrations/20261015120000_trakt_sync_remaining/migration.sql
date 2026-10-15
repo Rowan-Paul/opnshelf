@@ -1,0 +1,2 @@
+ALTER TABLE "TraktSyncConnection" ADD COLUMN "remaining" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "TraktSyncConnection" ADD COLUMN "remainingTotal" INTEGER NOT NULL DEFAULT 0;

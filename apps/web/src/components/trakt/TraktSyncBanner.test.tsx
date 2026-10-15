@@ -4,6 +4,7 @@ import { TraktSyncBanner } from "./TraktSyncBanner";
 
 const mockUseAuth = vi.fn();
 const mockUseQuery = vi.fn();
+const mockUseSyncQuery = vi.fn();
 const mockMutate = vi.fn();
 const mockInvalidateQueries = vi.fn();
 
@@ -14,7 +15,8 @@ vi.mock("#/lib/auth-context", () => ({
 // Mock only useQuery so we control the job; the real @opnshelf/api status
 // helpers (isActiveTraktImportStatus, progress, getRetryReason) run for real.
 vi.mock("@tanstack/react-query", () => ({
-	useQuery: (opts: unknown) => mockUseQuery(opts),
+	useQuery: (opts: { queryKey: unknown[] }) =>
+		opts.queryKey[0] === "trakt-sync" ? mockUseSyncQuery() : mockUseQuery(opts),
 	useMutation: () => ({ mutate: mockMutate, isPending: false }),
 	useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
 }));
@@ -56,6 +58,7 @@ function job(overrides: Record<string, unknown>) {
 describe("TraktSyncBanner", () => {
 	beforeEach(() => {
 		mockUseAuth.mockReturnValue({ isAuthenticated: true });
+		mockUseSyncQuery.mockReturnValue({ data: undefined });
 	});
 	afterEach(() => cleanup());
 
@@ -112,5 +115,42 @@ describe("TraktSyncBanner", () => {
 		render(<TraktSyncBanner />);
 		expect(screen.getByText(/stays under its PDS write limit/)).toBeTruthy();
 		expect(screen.getByText(/Resuming in/)).toBeTruthy();
+	});
+
+	describe("Trakt Sync catch-up", () => {
+		const sync = (overrides: Record<string, unknown>) => ({
+			data: { status: "active", remaining: 0, ...overrides },
+		});
+
+		it("shows progress while sync works through a backlog", () => {
+			mockUseQuery.mockReturnValue({ data: undefined });
+			mockUseSyncQuery.mockReturnValue(sync({ remaining: 15, progress: 40 }));
+			render(<TraktSyncBanner />);
+			expect(
+				screen.getByText(/Syncing your Trakt history in the background — 40%/),
+			).toBeTruthy();
+		});
+
+		it("shows the first comparison", () => {
+			mockUseQuery.mockReturnValue({ data: undefined });
+			mockUseSyncQuery.mockReturnValue(sync({ status: "preparing" }));
+			render(<TraktSyncBanner />);
+			expect(screen.getByText(/Comparing your Trakt history/)).toBeTruthy();
+		});
+
+		it("renders nothing once sync has caught up", () => {
+			mockUseQuery.mockReturnValue({ data: undefined });
+			mockUseSyncQuery.mockReturnValue(sync({}));
+			const { container } = render(<TraktSyncBanner />);
+			expect(container.firstChild).toBeNull();
+		});
+
+		it("gives an active Import the banner", () => {
+			mockUseQuery.mockReturnValue({ data: job({ status: "running" }) });
+			mockUseSyncQuery.mockReturnValue(sync({ remaining: 15, progress: 40 }));
+			render(<TraktSyncBanner />);
+			expect(screen.getByText(/Importing your Trakt history/)).toBeTruthy();
+			expect(screen.queryByText(/Syncing your Trakt history/)).toBeNull();
+		});
 	});
 });

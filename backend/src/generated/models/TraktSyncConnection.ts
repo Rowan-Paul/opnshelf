@@ -20,8 +20,20 @@ export type TraktSyncConnectionModel = runtime.Types.Result.DefaultSelection<Pri
 
 export type AggregateTraktSyncConnection = {
   _count: TraktSyncConnectionCountAggregateOutputType | null
+  _avg: TraktSyncConnectionAvgAggregateOutputType | null
+  _sum: TraktSyncConnectionSumAggregateOutputType | null
   _min: TraktSyncConnectionMinAggregateOutputType | null
   _max: TraktSyncConnectionMaxAggregateOutputType | null
+}
+
+export type TraktSyncConnectionAvgAggregateOutputType = {
+  remaining: number | null
+  remainingTotal: number | null
+}
+
+export type TraktSyncConnectionSumAggregateOutputType = {
+  remaining: number | null
+  remainingTotal: number | null
 }
 
 export type TraktSyncConnectionMinAggregateOutputType = {
@@ -45,6 +57,8 @@ export type TraktSyncConnectionMinAggregateOutputType = {
   leaseId: string | null
   leaseUntil: Date | null
   remoteReadAt: Date | null
+  remaining: number | null
+  remainingTotal: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -70,6 +84,8 @@ export type TraktSyncConnectionMaxAggregateOutputType = {
   leaseId: string | null
   leaseUntil: Date | null
   remoteReadAt: Date | null
+  remaining: number | null
+  remainingTotal: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -96,11 +112,23 @@ export type TraktSyncConnectionCountAggregateOutputType = {
   leaseUntil: number
   remoteSnapshot: number
   remoteReadAt: number
+  remaining: number
+  remainingTotal: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
+
+export type TraktSyncConnectionAvgAggregateInputType = {
+  remaining?: true
+  remainingTotal?: true
+}
+
+export type TraktSyncConnectionSumAggregateInputType = {
+  remaining?: true
+  remainingTotal?: true
+}
 
 export type TraktSyncConnectionMinAggregateInputType = {
   id?: true
@@ -123,6 +151,8 @@ export type TraktSyncConnectionMinAggregateInputType = {
   leaseId?: true
   leaseUntil?: true
   remoteReadAt?: true
+  remaining?: true
+  remainingTotal?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -148,6 +178,8 @@ export type TraktSyncConnectionMaxAggregateInputType = {
   leaseId?: true
   leaseUntil?: true
   remoteReadAt?: true
+  remaining?: true
+  remainingTotal?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -174,6 +206,8 @@ export type TraktSyncConnectionCountAggregateInputType = {
   leaseUntil?: true
   remoteSnapshot?: true
   remoteReadAt?: true
+  remaining?: true
+  remainingTotal?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -217,6 +251,18 @@ export type TraktSyncConnectionAggregateArgs<ExtArgs extends runtime.Types.Exten
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: TraktSyncConnectionAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: TraktSyncConnectionSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: TraktSyncConnectionMinAggregateInputType
@@ -247,6 +293,8 @@ export type TraktSyncConnectionGroupByArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   _count?: TraktSyncConnectionCountAggregateInputType | true
+  _avg?: TraktSyncConnectionAvgAggregateInputType
+  _sum?: TraktSyncConnectionSumAggregateInputType
   _min?: TraktSyncConnectionMinAggregateInputType
   _max?: TraktSyncConnectionMaxAggregateInputType
 }
@@ -273,9 +321,13 @@ export type TraktSyncConnectionGroupByOutputType = {
   leaseUntil: Date | null
   remoteSnapshot: runtime.JsonValue
   remoteReadAt: Date | null
+  remaining: number
+  remainingTotal: number
   createdAt: Date
   updatedAt: Date
   _count: TraktSyncConnectionCountAggregateOutputType | null
+  _avg: TraktSyncConnectionAvgAggregateOutputType | null
+  _sum: TraktSyncConnectionSumAggregateOutputType | null
   _min: TraktSyncConnectionMinAggregateOutputType | null
   _max: TraktSyncConnectionMaxAggregateOutputType | null
 }
@@ -320,6 +372,8 @@ export type TraktSyncConnectionWhereInput = {
   leaseUntil?: Prisma.DateTimeNullableFilter<"TraktSyncConnection"> | Date | string | null
   remoteSnapshot?: Prisma.JsonFilter<"TraktSyncConnection">
   remoteReadAt?: Prisma.DateTimeNullableFilter<"TraktSyncConnection"> | Date | string | null
+  remaining?: Prisma.IntFilter<"TraktSyncConnection"> | number
+  remainingTotal?: Prisma.IntFilter<"TraktSyncConnection"> | number
   createdAt?: Prisma.DateTimeFilter<"TraktSyncConnection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TraktSyncConnection"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -348,6 +402,8 @@ export type TraktSyncConnectionOrderByWithRelationInput = {
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   remoteSnapshot?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  remaining?: Prisma.SortOrder
+  remainingTotal?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -380,6 +436,8 @@ export type TraktSyncConnectionWhereUniqueInput = Prisma.AtLeast<{
   leaseUntil?: Prisma.DateTimeNullableFilter<"TraktSyncConnection"> | Date | string | null
   remoteSnapshot?: Prisma.JsonFilter<"TraktSyncConnection">
   remoteReadAt?: Prisma.DateTimeNullableFilter<"TraktSyncConnection"> | Date | string | null
+  remaining?: Prisma.IntFilter<"TraktSyncConnection"> | number
+  remainingTotal?: Prisma.IntFilter<"TraktSyncConnection"> | number
   createdAt?: Prisma.DateTimeFilter<"TraktSyncConnection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TraktSyncConnection"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -408,11 +466,15 @@ export type TraktSyncConnectionOrderByWithAggregationInput = {
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   remoteSnapshot?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  remaining?: Prisma.SortOrder
+  remainingTotal?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TraktSyncConnectionCountOrderByAggregateInput
+  _avg?: Prisma.TraktSyncConnectionAvgOrderByAggregateInput
   _max?: Prisma.TraktSyncConnectionMaxOrderByAggregateInput
   _min?: Prisma.TraktSyncConnectionMinOrderByAggregateInput
+  _sum?: Prisma.TraktSyncConnectionSumOrderByAggregateInput
 }
 
 export type TraktSyncConnectionScalarWhereWithAggregatesInput = {
@@ -440,6 +502,8 @@ export type TraktSyncConnectionScalarWhereWithAggregatesInput = {
   leaseUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"TraktSyncConnection"> | Date | string | null
   remoteSnapshot?: Prisma.JsonWithAggregatesFilter<"TraktSyncConnection">
   remoteReadAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TraktSyncConnection"> | Date | string | null
+  remaining?: Prisma.IntWithAggregatesFilter<"TraktSyncConnection"> | number
+  remainingTotal?: Prisma.IntWithAggregatesFilter<"TraktSyncConnection"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TraktSyncConnection"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TraktSyncConnection"> | Date | string
 }
@@ -465,6 +529,8 @@ export type TraktSyncConnectionCreateInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutTraktConnectionsInput
@@ -493,6 +559,8 @@ export type TraktSyncConnectionUncheckedCreateInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   entries?: Prisma.TraktSyncEntryUncheckedCreateNestedManyWithoutConnectionInput
@@ -519,6 +587,8 @@ export type TraktSyncConnectionUpdateInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutTraktConnectionsNestedInput
@@ -547,6 +617,8 @@ export type TraktSyncConnectionUncheckedUpdateInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.TraktSyncEntryUncheckedUpdateManyWithoutConnectionNestedInput
@@ -574,6 +646,8 @@ export type TraktSyncConnectionCreateManyInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -599,6 +673,8 @@ export type TraktSyncConnectionUpdateManyMutationInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -625,6 +701,8 @@ export type TraktSyncConnectionUncheckedUpdateManyInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -666,8 +744,15 @@ export type TraktSyncConnectionCountOrderByAggregateInput = {
   leaseUntil?: Prisma.SortOrder
   remoteSnapshot?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrder
+  remaining?: Prisma.SortOrder
+  remainingTotal?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type TraktSyncConnectionAvgOrderByAggregateInput = {
+  remaining?: Prisma.SortOrder
+  remainingTotal?: Prisma.SortOrder
 }
 
 export type TraktSyncConnectionMaxOrderByAggregateInput = {
@@ -691,6 +776,8 @@ export type TraktSyncConnectionMaxOrderByAggregateInput = {
   leaseId?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrder
+  remaining?: Prisma.SortOrder
+  remainingTotal?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -716,8 +803,15 @@ export type TraktSyncConnectionMinOrderByAggregateInput = {
   leaseId?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrder
+  remaining?: Prisma.SortOrder
+  remainingTotal?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type TraktSyncConnectionSumOrderByAggregateInput = {
+  remaining?: Prisma.SortOrder
+  remainingTotal?: Prisma.SortOrder
 }
 
 export type TraktSyncConnectionScalarRelationFilter = {
@@ -802,6 +896,8 @@ export type TraktSyncConnectionCreateWithoutUserInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   entries?: Prisma.TraktSyncEntryCreateNestedManyWithoutConnectionInput
@@ -828,6 +924,8 @@ export type TraktSyncConnectionUncheckedCreateWithoutUserInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   entries?: Prisma.TraktSyncEntryUncheckedCreateNestedManyWithoutConnectionInput
@@ -884,6 +982,8 @@ export type TraktSyncConnectionScalarWhereInput = {
   leaseUntil?: Prisma.DateTimeNullableFilter<"TraktSyncConnection"> | Date | string | null
   remoteSnapshot?: Prisma.JsonFilter<"TraktSyncConnection">
   remoteReadAt?: Prisma.DateTimeNullableFilter<"TraktSyncConnection"> | Date | string | null
+  remaining?: Prisma.IntFilter<"TraktSyncConnection"> | number
+  remainingTotal?: Prisma.IntFilter<"TraktSyncConnection"> | number
   createdAt?: Prisma.DateTimeFilter<"TraktSyncConnection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TraktSyncConnection"> | Date | string
 }
@@ -909,6 +1009,8 @@ export type TraktSyncConnectionCreateWithoutEntriesInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutTraktConnectionsInput
@@ -936,6 +1038,8 @@ export type TraktSyncConnectionUncheckedCreateWithoutEntriesInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -977,6 +1081,8 @@ export type TraktSyncConnectionUpdateWithoutEntriesInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutTraktConnectionsNestedInput
@@ -1004,6 +1110,8 @@ export type TraktSyncConnectionUncheckedUpdateWithoutEntriesInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1029,6 +1137,8 @@ export type TraktSyncConnectionCreateManyUserInput = {
   leaseUntil?: Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
+  remaining?: number
+  remainingTotal?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1054,6 +1164,8 @@ export type TraktSyncConnectionUpdateWithoutUserInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.TraktSyncEntryUpdateManyWithoutConnectionNestedInput
@@ -1080,6 +1192,8 @@ export type TraktSyncConnectionUncheckedUpdateWithoutUserInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.TraktSyncEntryUncheckedUpdateManyWithoutConnectionNestedInput
@@ -1106,6 +1220,8 @@ export type TraktSyncConnectionUncheckedUpdateManyWithoutUserInput = {
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  remainingTotal?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1163,6 +1279,8 @@ export type TraktSyncConnectionSelect<ExtArgs extends runtime.Types.Extensions.I
   leaseUntil?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
+  remaining?: boolean
+  remainingTotal?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1192,6 +1310,8 @@ export type TraktSyncConnectionSelectCreateManyAndReturn<ExtArgs extends runtime
   leaseUntil?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
+  remaining?: boolean
+  remainingTotal?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1219,6 +1339,8 @@ export type TraktSyncConnectionSelectUpdateManyAndReturn<ExtArgs extends runtime
   leaseUntil?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
+  remaining?: boolean
+  remainingTotal?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1246,11 +1368,13 @@ export type TraktSyncConnectionSelectScalar = {
   leaseUntil?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
+  remaining?: boolean
+  remainingTotal?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TraktSyncConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "traktUserId" | "username" | "accessToken" | "refreshToken" | "expiresAt" | "status" | "direction" | "watches" | "ratings" | "historyScope" | "publicationConsent" | "initialised" | "nextRunAt" | "lastSuccessAt" | "lastError" | "leaseId" | "leaseUntil" | "remoteSnapshot" | "remoteReadAt" | "createdAt" | "updatedAt", ExtArgs["result"]["traktSyncConnection"]>
+export type TraktSyncConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "traktUserId" | "username" | "accessToken" | "refreshToken" | "expiresAt" | "status" | "direction" | "watches" | "ratings" | "historyScope" | "publicationConsent" | "initialised" | "nextRunAt" | "lastSuccessAt" | "lastError" | "leaseId" | "leaseUntil" | "remoteSnapshot" | "remoteReadAt" | "remaining" | "remainingTotal" | "createdAt" | "updatedAt", ExtArgs["result"]["traktSyncConnection"]>
 export type TraktSyncConnectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   entries?: boolean | Prisma.TraktSyncConnection$entriesArgs<ExtArgs>
@@ -1291,6 +1415,8 @@ export type $TraktSyncConnectionPayload<ExtArgs extends runtime.Types.Extensions
     leaseUntil: Date | null
     remoteSnapshot: runtime.JsonValue
     remoteReadAt: Date | null
+    remaining: number
+    remainingTotal: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["traktSyncConnection"]>
@@ -1739,6 +1865,8 @@ export interface TraktSyncConnectionFieldRefs {
   readonly leaseUntil: Prisma.FieldRef<"TraktSyncConnection", 'DateTime'>
   readonly remoteSnapshot: Prisma.FieldRef<"TraktSyncConnection", 'Json'>
   readonly remoteReadAt: Prisma.FieldRef<"TraktSyncConnection", 'DateTime'>
+  readonly remaining: Prisma.FieldRef<"TraktSyncConnection", 'Int'>
+  readonly remainingTotal: Prisma.FieldRef<"TraktSyncConnection", 'Int'>
   readonly createdAt: Prisma.FieldRef<"TraktSyncConnection", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TraktSyncConnection", 'DateTime'>
 }

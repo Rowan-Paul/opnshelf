@@ -175,6 +175,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			publicationConsent: c?.publicationConsent ?? false,
 			lastSuccessAt: c?.lastSuccessAt?.toISOString(),
 			lastError: c?.lastError ?? undefined,
+			remaining: c?.status === "active" ? c.remaining : 0,
+			progress:
+				c?.status === "active" && c.remaining && c.remainingTotal
+					? Math.floor(
+							((c.remainingTotal - c.remaining) / c.remainingTotal) * 100,
+						)
+					: undefined,
 			needsAttention: counts.find((g) => !g.ignored)?._count ?? 0,
 			ignored: counts.find((g) => g.ignored)?._count ?? 0,
 			importStatus: job?.status,
@@ -1053,7 +1060,12 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			await this.prisma.traktSyncConnection.update({
 				where: { id: c.id },
-				data: { initialised: true, nextRunAt: new Date() },
+				data: {
+					initialised: true,
+					nextRunAt: new Date(),
+					remaining: 0,
+					remainingTotal: 0,
+				},
 			});
 			return;
 		}
@@ -1063,6 +1075,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			orderBy: { updatedAt: "asc" },
 		});
 		let writes = 0;
+		// Once this run yields, the rest of the loop only counts what is left,
+		// so clients can show how far a large catch-up has come.
+		let stopped = false;
+		let remaining = 0;
 		for (const entry of entries) {
 			if (!enabled(c, { kind: entry.kind as "watch" | "rating" })) continue;
 			const l = local.find((r) => r.key === entry.localKey) ?? null;
@@ -1070,6 +1086,27 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const mapped = readRecord(entry.remoteBase);
 			if (r && !r.mediaId && mapped?.mediaId)
 				r = { ...r, mediaId: mapped.mediaId };
+			if (stopped) {
+				if (
+					(!entry.issue || entry.resolution || entry.pending) &&
+					!(r && !r.mediaId) &&
+					(entry.pending ||
+						decide(
+							{
+								linked: entry.linked,
+								eligible: entry.eligible,
+								localBase: readRecord(entry.localBase),
+								remoteBase: readRecord(entry.remoteBase),
+							},
+							l,
+							r,
+							c.direction as Direction,
+							entry.resolution,
+						) !== "none")
+				)
+					remaining++;
+				continue;
+			}
 			if (
 				entry.linked &&
 				entry.kind === "watch" &&
@@ -1165,7 +1202,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			// Inbound items have independent stable keys. Yield after outbound work,
 			// whose readback can affect collision checks for another viewing.
-			if (decision === "push" || writes >= 10) break;
+			if (decision === "push" || writes >= 10) stopped = true;
 		}
 		await this.prisma.traktSyncConnection.update({
 			where: { id: c.id },
@@ -1173,6 +1210,12 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				lastSuccessAt: new Date(),
 				lastError: null,
 				nextRunAt: new Date(Date.now() + 5000),
+				remaining,
+				// The largest backlog since sync last caught up, so progress
+				// only moves forward while new changes trickle in.
+				remainingTotal: remaining
+					? Math.max(c.remainingTotal, remaining + writes)
+					: 0,
 			},
 		});
 	}

@@ -3,6 +3,8 @@ import {
 	getRetryReason,
 	getTraktImportStatusProgress,
 	isActiveTraktImportStatus,
+	traktSyncCatchUpMessage,
+	traktSyncControllerStatus,
 	usersControllerAcknowledgeMyTraktImportMutation,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMyCurrentTraktImportQueryKey,
@@ -37,7 +39,8 @@ function PauseCountdown({ nextRunAt }: { nextRunAt: string }) {
  * large history can span hours or days — this keeps the user informed (and
  * reassured the site stays usable) wherever they are, not just on the import
  * screen. Renders nothing unless an authenticated user has an active job.
- * Mounted once in the root layout; the query polls only while a job is active.
+ * With no Import to report, it shows Trakt Sync's catch-up progress instead.
+ * Mounted once in the root layout; queries poll only while work is running.
  */
 export function TraktSyncBanner() {
 	const { isAuthenticated, user } = useAuth();
@@ -52,6 +55,15 @@ export function TraktSyncBanner() {
 				: false;
 		},
 	});
+	// Shares Trakt Sync's status cache, so Settings changes show up here at once.
+	const { data: sync } = useQuery({
+		queryKey: ["trakt-sync", "status"],
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		enabled: isAuthenticated,
+		refetchInterval: (query) =>
+			traktSyncCatchUpMessage(query.state.data) ? 5000 : false,
+	});
 	const acknowledge = useMutation({
 		mutationKey: ["trakt", "import", "acknowledge"],
 		...usersControllerAcknowledgeMyTraktImportMutation(),
@@ -61,14 +73,30 @@ export function TraktSyncBanner() {
 			}),
 	});
 
-	if (!isAuthenticated || !job) {
-		return null;
-	}
-	const active = isActiveTraktImportStatus(job.status);
+	if (!isAuthenticated) return null;
+	const active = job ? isActiveTraktImportStatus(job.status) : false;
 	const terminalNotice =
+		!!job &&
 		!job.acknowledgedAt &&
 		(job.status === "completed" || job.status === "failed");
-	if (!active && !terminalNotice) return null;
+	if (!job || (!active && !terminalNotice)) {
+		const syncMessage = traktSyncCatchUpMessage(sync);
+		if (!syncMessage) return null;
+		return (
+			<Link
+				to="/trakt-sync"
+				search={{}}
+				className="block border-(--border) border-b bg-(--background-subtle) hover:bg-(--background-elevated)"
+			>
+				<div className="container-app flex items-center gap-2 py-2 text-(--foreground-muted) text-sm">
+					<Loader2 className="size-4 shrink-0 animate-spin" />
+					<span className="min-w-0 flex-1">
+						{syncMessage}. You can keep using the site as usual.
+					</span>
+				</div>
+			</Link>
+		);
+	}
 
 	if (!active) {
 		const hasUnmatched = job.unmatchedGroups.length > 0;

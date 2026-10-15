@@ -11586,6 +11586,14 @@
           "lastError": {
             "type": "string"
           },
+          "remaining": {
+            "type": "number",
+            "description": "Records still waiting to transfer while sync catches up"
+          },
+          "progress": {
+            "type": "number",
+            "description": "Catch-up progress (0–100) while records remain"
+          },
           "needsAttention": {
             "type": "number"
           },
@@ -11604,6 +11612,7 @@
           "ratings",
           "historyScope",
           "publicationConsent",
+          "remaining",
           "needsAttention",
           "ignored"
         ]
