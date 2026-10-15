@@ -20,7 +20,7 @@ The operator requested custom List and watchlist sync, including private Trakt
 data with an explicit publication warning. Both are independent opt-in types,
 off for existing connections. The shared direction and history scope apply.
 Watchlist sync is separate from custom Lists; Trakt's automatic watchlist
-removals are ordinary source membership removals. Favorites remain separate.
+removals are ordinary source membership removals. Favorites use a separate scope, as defined below.
 
 Retain each destination's visibility. New Opnshelf Lists follow the User's List
 default; new Trakt Lists inherit the source visibility. One publication acknowledgement covers all selected types. It includes List
@@ -46,3 +46,24 @@ Partial state that differs from both expected versions requires a source choice
 rather than overwriting intervening edits. Complete authoritative reads precede
 removal decisions. Local manual order remains a database projection, as in the
 existing Lists feature.
+
+
+## Favorites extension (2026-10-15)
+
+The operator requested Favorites after the List extension merged. Pair the
+Opnshelf default Favorites List with Trakt's dedicated Favorites feature by role,
+independently of custom Lists and watchlist. Favorites is opt-in and disabled for
+existing connections. Reuse List reconciliation, history scope, direction,
+conflict recovery, and the single shared publication acknowledgement.
+
+Trakt Favorites supports movies and shows only. Preserve unsupported seasons and
+episodes in Needs attention without converting them to parent shows. Read the
+account's `limits.favorites.item_count`; capacity failures never truncate data.
+Transfers add before removing, so a replacement at capacity needs space freed on
+Trakt before retrying. Names and descriptions stay local to default Lists; notes
+and order are synchronized. Favorites cannot be deleted as a List.
+
+Private Opnshelf Favorites remain available for inbound sync. Hold private
+outbound Favorites in Needs attention until Trakt's effective privacy behavior
+is verified; do not assume the public/private account flag proves preservation.
+No separate one-time Import is added. See [the investigation](../research/trakt-favorites.md).

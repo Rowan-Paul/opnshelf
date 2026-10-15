@@ -109,7 +109,9 @@ const enabled = (c: TraktSyncConnection, r: Pick<SyncRecord, "kind">) =>
 			? c.ratings
 			: r.kind === "list"
 				? c.lists
-				: c.watchlist;
+				: r.kind === "favorites"
+					? c.favorites
+					: c.watchlist;
 
 @Injectable()
 export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
@@ -193,6 +195,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			ratings: c?.ratings ?? true,
 			lists: c?.lists ?? false,
 			watchlist: c?.watchlist ?? false,
+			favorites: c?.favorites ?? false,
 			listPublicationConsent: c?.listPublicationConsent ?? false,
 			historyScope: c?.historyScope ?? "all",
 			publicationConsent: c?.publicationConsent ?? false,
@@ -424,7 +427,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		return this.crypt(c.accessToken, true);
 	}
 	async configure(userDid: string, dto: SyncSettingsDto) {
-		if (!dto.watches && !dto.ratings && !dto.lists && !dto.watchlist)
+		if (
+			!dto.watches &&
+			!dto.ratings &&
+			!dto.lists &&
+			!dto.watchlist &&
+			!dto.favorites
+		)
 			throw new BadRequestException("Choose at least one record type.");
 		if (
 			dto.direction !== "outbound" &&
@@ -434,7 +443,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			throw new BadRequestException(
 				"Acknowledge that incoming Watches and Ratings become public.",
 			);
-		if ((dto.lists || dto.watchlist) && !dto.listPublicationConsent)
+		if (
+			(dto.lists || dto.watchlist || dto.favorites) &&
+			!dto.listPublicationConsent
+		)
 			throw new BadRequestException(
 				"Acknowledge that private List contents may become public on the destination.",
 			);
@@ -458,6 +470,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const { handoffImport: _handoff, ...settings } = dto;
 			settings.lists ??= false;
 			settings.watchlist ??= false;
+			settings.favorites ??= false;
 			settings.listPublicationConsent ??= false;
 			if (job && !["completed", "continued_in_sync"].includes(job.status)) {
 				if (activeTraktImports.has(userDid))

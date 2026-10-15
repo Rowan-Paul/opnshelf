@@ -11576,6 +11576,9 @@
           "watchlist": {
             "type": "boolean"
           },
+          "favorites": {
+            "type": "boolean"
+          },
           "listPublicationConsent": {
             "type": "boolean"
           },
@@ -11681,6 +11684,10 @@
             "default": false
           },
           "watchlist": {
+            "type": "boolean",
+            "default": false
+          },
+          "favorites": {
             "type": "boolean",
             "default": false
           },

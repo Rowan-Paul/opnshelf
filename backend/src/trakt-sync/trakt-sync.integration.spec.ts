@@ -226,7 +226,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	const curated = (
 		key: string,
 		members: string[],
-		kind: "list" | "watchlist" = "list",
+		kind: "list" | "watchlist" | "favorites" = "list",
 	): SyncRecord => ({
 		key,
 		rkey: key.split(":")[1],
@@ -235,17 +235,27 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		mediaId: null,
 		season: 0,
 		episode: 0,
-		title: kind === "watchlist" ? "Watchlist" : "Weekend",
+		title:
+			kind === "watchlist"
+				? "Watchlist"
+				: kind === "favorites"
+					? "Favorites"
+					: "Weekend",
 		visibility: "private",
 		value: encodeList({
-			name: kind === "watchlist" ? "Watchlist" : "Weekend",
+			name:
+				kind === "watchlist"
+					? "Watchlist"
+					: kind === "favorites"
+						? "Favorites"
+						: "Weekend",
 			description: "",
 			items: members.map(membership),
 		}),
 	});
 	async function configureLists(
 		direction: "inbound" | "outbound" | "both",
-		kind: "list" | "watchlist" = "list",
+		kind: "list" | "watchlist" | "favorites" = "list",
 	) {
 		await service.configure(userDid, {
 			direction,
@@ -253,12 +263,48 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			ratings: false,
 			lists: kind === "list",
 			watchlist: kind === "watchlist",
+			favorites: kind === "favorites",
 			listPublicationConsent: true,
 			publicationConsent: false,
 			historyScope: "all",
 		});
 		await tick();
 	}
+	it("pairs default Favorites by role and keeps custom Lists separate", async () => {
+		localRecords = [
+			{
+				...curated("favorites:local", ["12"], "favorites"),
+				title: "Renamed locally",
+			},
+		];
+		remoteRecords = [
+			curated("favorites:trakt", ["12", "13"], "favorites"),
+			curated("list:22", ["99"]),
+		];
+		await configureLists("inbound", "favorites");
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		expect(listValue(localRecords[0]).items.map((i) => i.mediaId)).toEqual([
+			"12",
+			"13",
+		]);
+		expect(localRecords[0].key).toBe("favorites:local");
+		expect(
+			await db.traktSyncEntry.count({
+				where: { connection: { userDid }, kind: "list", eligible: true },
+			}),
+		).toBe(0);
+	});
+	it("requires a source choice for initial two-way Favorites differences", async () => {
+		localRecords = [curated("favorites:local", ["12"], "favorites")];
+		remoteRecords = [curated("favorites:trakt", ["13"], "favorites")];
+		await configureLists("both", "favorites");
+		await tick();
+		expect(listValue(localRecords[0]).items.map((i) => i.mediaId)).toEqual([
+			"12",
+		]);
+		expect((await service.status(userDid)).needsAttention).toBe(1);
+	});
 	it("requires fresh List publication consent even after Watch consent", async () => {
 		await configure();
 		await expect(

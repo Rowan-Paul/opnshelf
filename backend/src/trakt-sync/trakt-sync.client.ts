@@ -166,7 +166,9 @@ export class TraktSyncClient {
 					? "Reconnect Trakt to continue syncing."
 					: response.status === 429
 						? "Trakt rate limit reached. Sync will retry."
-						: "Trakt could not complete the request. Sync will retry.",
+						: response.status === 420 && path.startsWith("/sync/favorites")
+							? "Your Trakt Favorites limit was reached. Free space and retry; no Favorites were truncated."
+							: "Trakt could not complete the request. Sync will retry.",
 				response.status,
 				Number.isFinite(retry) && retry > 0 ? retry : 60,
 				{
@@ -234,7 +236,7 @@ export class TraktSyncClient {
 	}
 	async snapshot(
 		token: string,
-		options: { lists?: boolean; watchlist?: boolean } = {},
+		options: { lists?: boolean; watchlist?: boolean; favorites?: boolean } = {},
 	): Promise<SyncRecord[]> {
 		const before = (await this.request("/sync/last_activities", token)).data;
 		const watches = await this.pages("/sync/history", token, "watch");
@@ -244,7 +246,7 @@ export class TraktSyncClient {
 				...(await this.pages(`/sync/ratings/${type}`, token, "rating")),
 			);
 		const lists =
-			options.lists || options.watchlist
+			options.lists || options.watchlist || options.favorites
 				? await snapshotLists(this, token, options)
 				: [];
 		const after = (await this.request("/sync/last_activities", token)).data;
@@ -264,6 +266,7 @@ export class TraktSyncClient {
 			return snapshotLists(this, token, {
 				lists: record.kind === "list",
 				watchlist: record.kind === "watchlist",
+				favorites: record.kind === "favorites",
 			});
 		const plural = `${record.mediaType}s`;
 		if (record.kind === "rating")

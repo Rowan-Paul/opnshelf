@@ -37,9 +37,11 @@ export const TRAKT_SYNC_SCOPES: {
 	{ value: "future", label: "Future changes only" },
 ];
 export const TRAKT_PUBLICATION_COPY =
-	"I understand that sync can make private content public. Watches and Ratings imported into Opnshelf are public. Lists and watchlists use the privacy settings where they’re saved.";
+	"I understand that sync can make private content public. Watches and Ratings imported into Opnshelf are public. Lists, watchlists and Favorites use the privacy settings where they’re saved.";
 export const TRAKT_LIST_COPY =
 	"Sync custom Lists, including notes and manual order. Lists with the same name may need your choice before pairing. Watchlist sync includes Trakt’s automatic removals after watching.";
+export const TRAKT_FAVORITES_COPY =
+	"Sync favorite movies and shows, including notes and manual order. Private Favorites cannot be sent to Trakt yet. Unsupported items and Trakt limits appear in Needs attention.";
 export const TRAKT_SCOPE_COPY =
 	"Previously linked records catch up when re-enabled. Future changes start when the initial comparison finishes and refer to when a record is added or changed, not when you watched it.";
 export const TRAKT_HANDOFF_COPY =
@@ -51,6 +53,7 @@ export function traktSettings(status: SyncStatusDto): SyncSettingsDto {
 		ratings: status.ratings,
 		lists: status.lists ?? false,
 		watchlist: status.watchlist ?? false,
+		favorites: status.favorites ?? false,
 		listPublicationConsent: status.listPublicationConsent ?? false,
 		historyScope: status.historyScope,
 		publicationConsent: status.publicationConsent,

@@ -119,6 +119,7 @@ model TraktSyncConnection {
   ratings Boolean @default(true)
   lists Boolean @default(false)
   watchlist Boolean @default(false)
+  favorites Boolean @default(false)
   listPublicationConsent Boolean @default(false)
   historyScope String @default("all")
   publicationConsent Boolean @default(false)

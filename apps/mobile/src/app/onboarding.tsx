@@ -758,7 +758,7 @@ function TraktStep({
 				</View>
 				<View className="gap-1.5">
 					{[
-						"Bring over your Watch history, Ratings, Lists and watchlist",
+						"Bring over your Watch history, Ratings, Lists, watchlist and Favorites",
 						"New Watches keep flowing, in the direction you choose",
 						"Review every transfer before sync starts",
 					].map((line) => (

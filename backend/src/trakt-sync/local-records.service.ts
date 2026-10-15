@@ -61,7 +61,7 @@ export class LocalSyncRecords {
 	}
 	async snapshot(
 		userDid: string,
-		options: { lists?: boolean; watchlist?: boolean } = {},
+		options: { lists?: boolean; watchlist?: boolean; favorites?: boolean } = {},
 	): Promise<SyncRecord[]> {
 		const [movies, episodes, ratings] = await this.prisma.$transaction([
 			this.prisma.trackedMovie.findMany({
@@ -97,7 +97,7 @@ export class LocalSyncRecords {
 			}),
 		]);
 		const lists =
-			options.lists || options.watchlist
+			options.lists || options.watchlist || options.favorites
 				? await this.lists.snapshot(userDid, options)
 				: [];
 		return [

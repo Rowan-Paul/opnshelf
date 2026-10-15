@@ -116,15 +116,17 @@ function record(
 	} | null,
 	rows: Row[],
 	watchlistVisibility: "public" | "private" = "private",
+	defaultKind: "watchlist" | "favorites" = "watchlist",
 ): SyncRecord {
-	const kind = metadata ? "list" : "watchlist";
+	const kind = metadata ? "list" : defaultKind;
+	const defaultName = defaultKind === "favorites" ? "Favorites" : "Watchlist";
 	const items = rows.map(member);
 	return {
-		key: metadata ? `list:${metadata.ids.trakt}` : "watchlist:trakt",
+		key: metadata ? `list:${metadata.ids.trakt}` : `${defaultKind}:trakt`,
 		kind,
 		mediaType: "list",
 		mediaId: null,
-		title: metadata?.name ?? "Watchlist",
+		title: metadata?.name ?? defaultName,
 		season: 0,
 		episode: 0,
 		traktId: metadata?.ids.trakt,
@@ -133,11 +135,17 @@ function record(
 				? "public"
 				: "private"
 			: watchlistVisibility,
-		problem: items.some((i) => !i)
+		problem: items.some(
+			(i) =>
+				!i ||
+				(kind === "favorites" &&
+					i.mediaType !== "movie" &&
+					i.mediaType !== "show"),
+		)
 			? "This List contains unsupported media types. They remain on Trakt; remove them or keep this List out of sync."
 			: undefined,
 		value: encodeList({
-			name: metadata?.name ?? "Watchlist",
+			name: metadata?.name ?? defaultName,
 			description: metadata?.description ?? "",
 			items: items.filter((i): i is ListMember => i !== null),
 		}),
@@ -151,7 +159,7 @@ async function customLists(api: Api, token: string) {
 export async function snapshotLists(
 	api: Api,
 	token: string,
-	options: { lists?: boolean; watchlist?: boolean },
+	options: { lists?: boolean; watchlist?: boolean; favorites?: boolean },
 ): Promise<SyncRecord[]> {
 	const result: SyncRecord[] = [];
 	if (options.lists) {
@@ -175,21 +183,30 @@ export async function snapshotLists(
 				"Trakt Lists changed during the read. No removals were applied.",
 			);
 	}
-	if (options.watchlist) {
+	if (options.watchlist || options.favorites) {
 		const settings = z
 			.object({ user: z.object({ private: z.boolean() }) })
 			.parse((await api.request("/users/settings", token)).data);
-		result.push(
-			record(
-				null,
-				await pages(api, token, "/sync/watchlist/all/rank/asc"),
-				settings.user.private ? "private" : "public",
-			),
-		);
+		for (const kind of ["watchlist", "favorites"] as const) {
+			if (!options[kind]) continue;
+			result.push(
+				record(
+					null,
+					await pages(api, token, `/sync/${kind}/all/rank/asc`),
+					settings.user.private ? "private" : "public",
+					kind,
+				),
+			);
+		}
 	}
 	return result;
 }
-async function payload(api: Api, token: string, item: ListMember) {
+async function payload(
+	api: Api,
+	token: string,
+	item: ListMember,
+	includeNotes = true,
+) {
 	const type = item.mediaType === "movie" ? "movie" : "show";
 	const response = await api.request(
 		`/search/tmdb/${item.mediaId}?type=${type}`,
@@ -235,7 +252,10 @@ async function payload(api: Api, token: string, item: ListMember) {
 		).ids.trakt;
 	return {
 		[`${item.mediaType}s`]: [
-			{ ids: { trakt: id }, ...(item.notes ? { notes: item.notes } : {}) },
+			{
+				ids: { trakt: id },
+				...(includeNotes && item.notes ? { notes: item.notes } : {}),
+			},
 		],
 	};
 }
@@ -258,9 +278,9 @@ export async function writeList(
 	previous?: SyncRecord | null,
 	onCreated?: (record: SyncRecord) => Promise<void>,
 ) {
-	if (desired.kind === "watchlist" && remove)
+	if (desired.kind !== "list" && remove)
 		throw new Error(
-			"The watchlist cannot be deleted. Remove its memberships instead.",
+			"Default Lists cannot be deleted. Remove their memberships instead.",
 		);
 	if (remove) {
 		if (!desired.traktId) throw new Error("Missing Trakt List identity.");
@@ -278,9 +298,24 @@ export async function writeList(
 		throw new Error(
 			"A List note exceeds Trakt's 500-character limit. No text was truncated.",
 		);
+	if (desired.kind === "favorites") {
+		if (desired.visibility === "private")
+			throw new Error(
+				"Private Favorites cannot be sent to Trakt until its Favorites privacy behavior is verified. Your List is preserved.",
+			);
+		if (
+			value.items.some(
+				(item) => item.mediaType !== "movie" && item.mediaType !== "show",
+			)
+		)
+			throw new Error(
+				"Trakt Favorites supports movies and shows only. Seasons and episodes were preserved; no parent shows were substituted.",
+			);
+	}
 	// Resolve every membership before any destructive operation.
 	const bodies = [];
-	for (const item of value.items) bodies.push(await payload(api, token, item));
+	for (const item of value.items)
+		bodies.push(await payload(api, token, item, desired.kind !== "favorites"));
 	let id = desired.traktId;
 	if (desired.kind === "list" && !id) {
 		const created = metadataSchema.parse(
@@ -298,13 +333,13 @@ export async function writeList(
 		await onCreated?.(record(created, []));
 	}
 	const base =
-		desired.kind === "watchlist"
-			? "/sync/watchlist"
+		desired.kind !== "list"
+			? `/sync/${desired.kind}`
 			: `/users/me/lists/${id}/items`;
 	const rows = await pages(
 		api,
 		token,
-		`${base}${desired.kind === "watchlist" ? "/all/rank/asc" : ""}`,
+		`${base}${desired.kind !== "list" ? "/all/rank/asc" : ""}`,
 	);
 	if (previous !== undefined && previous !== null) {
 		const metadata =
@@ -313,17 +348,47 @@ export async function writeList(
 						(await api.request(`/users/me/lists/${id}`, token)).data,
 					)
 				: null;
-		const current = record(metadata, rows, previous.visibility);
+		const current = record(
+			metadata,
+			rows,
+			previous.visibility,
+			desired.kind === "favorites" ? "favorites" : "watchlist",
+		);
 		if (fingerprint(current) !== fingerprint(previous))
 			throw new Error(
 				"The Trakt List changed before transfer. Choose which version to keep.",
 			);
 	}
 	const existing = rows.map((row) => ({ row, item: member(row) }));
-	if (existing.some((i) => !i.item))
+	if (
+		existing.some(
+			(i) =>
+				!i.item ||
+				(desired.kind === "favorites" &&
+					i.item.mediaType !== "movie" &&
+					i.item.mediaType !== "show"),
+		)
+	)
 		throw new Error(
 			"The destination List contains unsupported media. Nothing was removed.",
 		);
+	if (desired.kind === "favorites") {
+		const settings = z
+			.object({
+				limits: z.object({
+					favorites: z.object({ item_count: z.number().int().nonnegative() }),
+				}),
+			})
+			.parse((await api.request("/users/settings", token)).data);
+		const count = new Set([
+			...existing.flatMap((e) => (e.item ? [memberKey(e.item)] : [])),
+			...value.items.map(memberKey),
+		]).size;
+		if (count > settings.limits.favorites.item_count)
+			throw new Error(
+				"This transfer would exceed your Trakt Favorites limit. Free space on Trakt and retry; no Favorites were removed or truncated.",
+			);
+	}
 	if (desired.kind === "list")
 		await api.request(
 			`/users/me/lists/${id}`,
@@ -336,9 +401,27 @@ export async function writeList(
 		const old = existing.find(
 			(i) => i.item && memberKey(i.item) === memberKey(item),
 		);
-		if (!old)
+		if (!old) {
 			assertOutcome((await api.request(base, token, bodies[index])).data);
-		else if (old.item?.notes !== item.notes)
+			if (desired.kind === "favorites" && item.notes) {
+				const added = (await pages(api, token, `${base}/all/rank/asc`)).find(
+					(row) => {
+						const found = member(row);
+						return found && memberKey(found) === memberKey(item);
+					},
+				);
+				if (!added)
+					throw new Error(
+						"Trakt has not confirmed the new Favorite. Retry to reconcile.",
+					);
+				await api.request(
+					`${base}/${added.id}`,
+					token,
+					{ notes: item.notes },
+					"PUT",
+				);
+			}
+		} else if (old.item?.notes !== item.notes)
 			await api.request(
 				`${base}/${old.row.id}`,
 				token,
@@ -363,7 +446,7 @@ export async function writeList(
 	const current = await pages(
 		api,
 		token,
-		`${base}${desired.kind === "watchlist" ? "/all/rank/asc" : ""}`,
+		`${base}${desired.kind !== "list" ? "/all/rank/asc" : ""}`,
 	);
 	const rank = value.items.map(
 		(i) =>
@@ -378,8 +461,8 @@ export async function writeList(
 		);
 	if (rank.length) {
 		const path =
-			desired.kind === "watchlist"
-				? "/sync/watchlist/reorder"
+			desired.kind !== "list"
+				? `/sync/${desired.kind}/reorder`
 				: `/users/me/lists/${id}/items/reorder`;
 		const outcome = z
 			.object({ skipped_ids: z.array(z.number()), updated: z.number() })
@@ -392,6 +475,7 @@ export async function writeList(
 	const confirmation = await snapshotLists(api, token, {
 		lists: desired.kind === "list",
 		watchlist: desired.kind === "watchlist",
+		favorites: desired.kind === "favorites",
 	});
 	if (!confirmation.some((r) => equivalent(r, desired)))
 		throw new Error(

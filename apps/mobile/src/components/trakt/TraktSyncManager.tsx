@@ -3,6 +3,7 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
+	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
 	TRAKT_LIST_COPY,
 	TRAKT_PUBLICATION_COPY,
@@ -222,6 +223,7 @@ export function TraktSyncManager({
 									data.ratings && "Ratings",
 									data.lists && "Custom Lists",
 									data.watchlist && "Watchlist",
+									data.favorites && "Favorites",
 								]
 									.filter(Boolean)
 									.join(", ")}
@@ -312,7 +314,7 @@ export function TraktSyncManager({
 			</View>
 			{connected && (editing || needsSetup) && (
 				<SyncSettings
-					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.listPublicationConsent}:${data.historyScope}`}
+					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.listPublicationConsent}:${data.historyScope}`}
 					status={data}
 					className={embedded ? "gap-4 border-border border-t pt-4" : card}
 					onSaved={() => {
@@ -383,7 +385,9 @@ export function SyncSettings({
 		!["completed", "continued_in_sync"].includes(status.importStatus);
 	const requiresHistoryConsent =
 		settings.direction !== "outbound" && (settings.watches || settings.ratings);
-	const requiresListConsent = Boolean(settings.lists || settings.watchlist);
+	const requiresListConsent = Boolean(
+		settings.lists || settings.watchlist || settings.favorites,
+	);
 	const requiresConsent = requiresHistoryConsent || requiresListConsent;
 	const hasConsent = Boolean(
 		(!requiresHistoryConsent || settings.publicationConsent) &&
@@ -424,7 +428,17 @@ export function SyncSettings({
 				value={settings.watchlist ?? false}
 				onChange={(watchlist) => setSettings({ ...settings, watchlist })}
 			/>
-			{requiresListConsent && <Text className={copy}>{TRAKT_LIST_COPY}</Text>}
+			<Toggle
+				label="Favorites"
+				value={settings.favorites ?? false}
+				onChange={(favorites) => setSettings({ ...settings, favorites })}
+			/>
+			{(settings.lists || settings.watchlist) && (
+				<Text className={copy}>{TRAKT_LIST_COPY}</Text>
+			)}
+			{settings.favorites && (
+				<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
+			)}
 			<Text className="font-medium text-foreground text-sm">Direction</Text>
 			<View
 				accessibilityRole="radiogroup"
@@ -526,7 +540,8 @@ export function SyncSettings({
 					!settings.watches &&
 					!settings.ratings &&
 					!settings.lists &&
-					!settings.watchlist
+					!settings.watchlist &&
+					!settings.favorites
 				}
 				onPress={() => setReviewing(true)}
 			/>
@@ -587,6 +602,7 @@ export function SyncSettings({
 											settings.ratings && "Ratings",
 											settings.lists && "Custom Lists",
 											settings.watchlist && "Watchlist",
+											settings.favorites && "Favorites",
 										]
 											.filter(Boolean)
 											.join(", "),
@@ -863,6 +879,7 @@ function SyncIssue({
 			{connected &&
 				item.kind !== "list" &&
 				item.kind !== "watchlist" &&
+				item.kind !== "favorites" &&
 				item.trakt?.mediaId === null && (
 					<View className="gap-2">
 						<Text className="text-foreground text-sm">

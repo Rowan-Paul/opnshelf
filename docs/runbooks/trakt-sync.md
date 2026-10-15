@@ -125,3 +125,20 @@ The disposable database container, fixture servers and owned device session were
 stopped after verification. Local screenshots are available at
 `/tmp/opnshelf-list-web-settings.png`, `/tmp/opnshelf-list-web-consent.png` and
 `/tmp/opnshelf-list-android-consent.png`.
+
+
+## Favorites
+
+Apply migration `20261015210000_trakt_favorites_sync` before the backend rollout.
+Favorites starts disabled for existing connections. Select Favorites on either
+client to pair the built-in Lists by role; custom Lists named Favorites remain
+custom Lists. The existing direction, history scope, and publication confirmation
+apply. This does not change the Watch-history-only one-time Import.
+
+Trakt supports favorite movies and shows, with an account-specific item limit.
+Seasons, episodes, unmapped titles, oversized notes, and capacity failures stay
+in Needs attention. No items are truncated or promoted to parent shows. A transfer
+that would temporarily exceed capacity while adding before removing needs space
+freed on Trakt first. Private outbound Favorites is held until Trakt privacy is
+verified; inbound sync preserves the Opnshelf destination's List privacy setting.
+Mobile version is unchanged: release through an approved OTA update.

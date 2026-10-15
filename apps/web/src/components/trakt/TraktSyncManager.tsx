@@ -3,6 +3,7 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
+	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
 	TRAKT_LIST_COPY,
 	TRAKT_PUBLICATION_COPY,
@@ -127,8 +128,9 @@ export function TraktSyncManager({
 						Trakt Sync
 					</h1>
 					<p className="max-w-xl text-(--foreground-muted)">
-						Keep your Watches, Ratings, Lists and watchlist in sync, even when
-						the app is closed. You choose what moves and in which direction.
+						Keep your Watches, Ratings, Lists, watchlist and Favorites in sync,
+						even when the app is closed. You choose what moves and in which
+						direction.
 					</p>
 				</header>
 			)}
@@ -190,6 +192,7 @@ export function TraktSyncManager({
 									data.ratings && "Ratings",
 									data.lists && "Custom Lists",
 									data.watchlist && "Watchlist",
+									data.favorites && "Favorites",
 								]
 									.filter(Boolean)
 									.join(", ")}
@@ -304,7 +307,7 @@ export function TraktSyncManager({
 			</section>
 			{connected && (editing || needsSetup) && (
 				<SyncSettings
-					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.listPublicationConsent}:${data.historyScope}`}
+					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.listPublicationConsent}:${data.historyScope}`}
 					status={data}
 					className={embedded ? "border-(--border) border-t pt-5" : card}
 					onSaved={() => {
@@ -373,7 +376,9 @@ export function SyncSettings({
 		!["completed", "continued_in_sync"].includes(status.importStatus);
 	const requiresHistoryConsent =
 		settings.direction !== "outbound" && (settings.watches || settings.ratings);
-	const requiresListConsent = Boolean(settings.lists || settings.watchlist);
+	const requiresListConsent = Boolean(
+		settings.lists || settings.watchlist || settings.favorites,
+	);
 	const requiresConsent = requiresHistoryConsent || requiresListConsent;
 	const hasConsent = Boolean(
 		(!requiresHistoryConsent || settings.publicationConsent) &&
@@ -396,29 +401,36 @@ export function SyncSettings({
 			>
 				<fieldset className="flex flex-wrap gap-5">
 					<legend className="mb-2 font-medium text-sm">Records</legend>
-					{(["watches", "ratings", "lists", "watchlist"] as const).map(
-						(name) => (
-							<label key={name} className="flex items-center gap-2 text-sm">
-								<input
-									type="checkbox"
-									checked={settings[name] ?? false}
-									onChange={(event) =>
-										setSettings({ ...settings, [name]: event.target.checked })
-									}
-								/>
-								{name === "watches"
-									? "Watch history"
-									: name === "ratings"
-										? "Ratings"
-										: name === "lists"
-											? "Custom Lists"
-											: "Watchlist"}
-							</label>
-						),
-					)}
+					{(
+						["watches", "ratings", "lists", "watchlist", "favorites"] as const
+					).map((name) => (
+						<label key={name} className="flex items-center gap-2 text-sm">
+							<input
+								type="checkbox"
+								checked={settings[name] ?? false}
+								onChange={(event) =>
+									setSettings({ ...settings, [name]: event.target.checked })
+								}
+							/>
+							{name === "watches"
+								? "Watch history"
+								: name === "ratings"
+									? "Ratings"
+									: name === "lists"
+										? "Custom Lists"
+										: name === "watchlist"
+											? "Watchlist"
+											: "Favorites"}
+						</label>
+					))}
 				</fieldset>
-				{requiresListConsent && (
+				{(settings.lists || settings.watchlist) && (
 					<p className="text-(--foreground-muted) text-sm">{TRAKT_LIST_COPY}</p>
+				)}
+				{settings.favorites && (
+					<p className="text-(--foreground-muted) text-sm">
+						{TRAKT_FAVORITES_COPY}
+					</p>
 				)}
 				<fieldset>
 					<legend className="mb-2 font-medium text-sm">Direction</legend>
@@ -498,7 +510,8 @@ export function SyncSettings({
 							!settings.watches &&
 							!settings.ratings &&
 							!settings.lists &&
-							!settings.watchlist
+							!settings.watchlist &&
+							!settings.favorites
 						}
 					>
 						{onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"}
@@ -550,6 +563,7 @@ export function SyncSettings({
 									settings.ratings && "Ratings",
 									settings.lists && "Custom Lists",
 									settings.watchlist && "Watchlist",
+									settings.favorites && "Favorites",
 								]
 									.filter(Boolean)
 									.join(", "),
@@ -861,6 +875,7 @@ function SyncIssue({
 			{connected &&
 				item.kind !== "list" &&
 				item.kind !== "watchlist" &&
+				item.kind !== "favorites" &&
 				item.trakt?.mediaId === null && (
 					<form
 						className="mt-4 space-y-2"

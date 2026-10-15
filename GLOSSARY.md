@@ -118,7 +118,7 @@ One stop on the **Welcome Tour**: navigate to a surface, then explain one thing 
 _Avoid_: Spotlight (the dimmed cutout is one part of a Step, and bare "Spotlight" collides with **Discover** and with the macOS feature), coach mark, tooltip (that's the Radix hover component), slide, page
 
 **Trakt Sync**:
-An optional ongoing transfer of a User's chosen Watch history, Ratings, custom Lists and watchlist from Trakt to Opnshelf, from Opnshelf to Trakt, or in both directions, as selected by the User. Distinct from **Trakt Import**, which transfers a fixed snapshot once.
+An optional ongoing transfer of a User's chosen Watch history, Ratings, custom Lists, watchlist and Favorites from Trakt to Opnshelf, from Opnshelf to Trakt, or in both directions, as selected by the User. Distinct from **Trakt Import**, which transfers a fixed snapshot once.
 _Avoid_: Trakt Import (for an ongoing connection), backup (does not describe synchronization)
 
 **Continued in Trakt Sync**:

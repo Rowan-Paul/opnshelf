@@ -26,6 +26,10 @@ export class SyncSettingsDto {
 	@ApiPropertyOptional({ default: false })
 	@IsOptional()
 	@IsBoolean()
+	favorites?: boolean;
+	@ApiPropertyOptional({ default: false })
+	@IsOptional()
+	@IsBoolean()
 	listPublicationConsent?: boolean;
 	@ApiProperty({ enum: ["all", "future"] })
 	@IsIn(["all", "future"])
@@ -112,6 +116,7 @@ export class SyncStatusDto {
 	@ApiProperty() ratings: boolean;
 	@ApiPropertyOptional() lists?: boolean;
 	@ApiPropertyOptional() watchlist?: boolean;
+	@ApiPropertyOptional() favorites?: boolean;
 	@ApiPropertyOptional() listPublicationConsent?: boolean;
 	@ApiProperty({ enum: ["all", "future"] }) historyScope: string;
 	@ApiProperty() publicationConsent: boolean;

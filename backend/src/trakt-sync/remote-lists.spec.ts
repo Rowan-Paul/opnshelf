@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { snapshotLists, writeList } from "./remote-lists";
-import { encodeList, memberKey } from "./list-value";
+import { encodeList, listValue, memberKey } from "./list-value";
 import type { SyncRecord } from "./reconcile";
 
 const metadata = {
@@ -212,4 +212,123 @@ it("preserves legacy scoped show identities when encoding Lists and pairing memb
 		{ ...legacy, mediaType: "episode", mediaId: "12", season: 2, episode: 3 },
 	]);
 	expect(memberKey(legacy)).toBe("episode:12:2:3");
+});
+
+describe("Trakt Favorites transport", () => {
+	const favorite = (items = listValue(record).items): SyncRecord => ({
+		...record,
+		kind: "favorites",
+		key: "favorites:local",
+		title: "Favorites",
+		visibility: "public",
+		value: encodeList({ name: "Favorites", description: "", items }),
+	});
+	it("reads Favorites separately from personal Lists and watchlist", async () => {
+		const request = vi.fn(async (path: string, _token?: string) =>
+			path === "/users/settings"
+				? response({ user: { private: true } })
+				: response([movie], 1),
+		);
+		const [result] = await snapshotLists({ request }, "fixture", {
+			favorites: true,
+		});
+		expect(result).toMatchObject({
+			kind: "favorites",
+			key: "favorites:trakt",
+			visibility: "private",
+			value: favorite().value,
+		});
+		expect(request).toHaveBeenCalledWith(
+			"/sync/favorites/all/rank/asc?page=1&limit=100",
+			"fixture",
+		);
+		expect(request).not.toHaveBeenCalledWith("/users/me/lists", "fixture");
+	});
+	it("holds private outbound Favorites without publishing them", async () => {
+		const request = vi.fn();
+		await expect(
+			writeList(
+				{ request },
+				"fixture",
+				{ ...favorite(), visibility: "private" },
+				false,
+			),
+		).rejects.toThrow("privacy behavior is verified");
+		expect(request).not.toHaveBeenCalled();
+	});
+	it("preserves seasons and episodes rather than substituting parent shows", async () => {
+		const request = vi.fn();
+		await expect(
+			writeList(
+				{ request },
+				"fixture",
+				favorite([
+					{
+						mediaType: "episode",
+						mediaId: "12",
+						season: 1,
+						episode: 2,
+						notes: "",
+					},
+				]),
+				false,
+			),
+		).rejects.toThrow("movies and shows only");
+		expect(request).not.toHaveBeenCalled();
+	});
+	it("checks the account capacity before any writes or removals", async () => {
+		const request = vi.fn(async (path: string, _token?: string) => {
+			if (path.startsWith("/search/"))
+				return response([{ type: "movie", movie: movie.movie }]);
+			if (path === "/users/settings")
+				return response({ limits: { favorites: { item_count: 0 } } });
+			return response([], 0);
+		});
+		await expect(
+			writeList({ request }, "fixture", favorite(), false),
+		).rejects.toThrow("Favorites limit");
+		expect(request.mock.calls.every((call) => call.length === 2)).toBe(true);
+	});
+	it("adds, updates notes and reorders Favorites through their dedicated endpoints", async () => {
+		let rows: (typeof movie)[] = [];
+		const request = vi.fn(
+			async (
+				path: string,
+				_token?: string,
+				body?: unknown,
+				method?: string,
+			) => {
+				if (path.startsWith("/search/"))
+					return response([{ type: "movie", movie: movie.movie }]);
+				if (path === "/users/settings")
+					return response({
+						user: { private: false },
+						limits: { favorites: { item_count: 100 } },
+					});
+				if (path.includes("?page=")) return response(rows, rows.length);
+				if (path === "/sync/favorites" && body) {
+					expect(body).toEqual({ movies: [{ ids: { trakt: 9 } }] });
+					rows = [{ ...movie, notes: "" }];
+					return response({ added: { movies: 1 }, not_found: {} });
+				}
+				if (path === "/sync/favorites/7" && method === "PUT") {
+					rows = [movie];
+					return response(null);
+				}
+				if (path === "/sync/favorites/reorder")
+					return response({ updated: 1, skipped_ids: [] });
+				throw new Error(`Unexpected request ${path}`);
+			},
+		);
+		await writeList({ request }, "fixture", favorite(), false);
+		expect(request).toHaveBeenCalledWith(
+			"/sync/favorites/7",
+			"fixture",
+			{ notes: "A note" },
+			"PUT",
+		);
+		expect(request).toHaveBeenCalledWith("/sync/favorites/reorder", "fixture", {
+			rank: [7],
+		});
+	});
 });

@@ -156,7 +156,10 @@ it("closes the confirmation sheet when navigating to finish an Import", () => {
 	expect(mocks.mutate).not.toHaveBeenCalled();
 });
 
-it("uses one publication acknowledgement for List-only sync", () => {
+it.each([
+	"lists",
+	"favorites",
+])("uses one publication acknowledgement for %s-only sync", (scope) => {
 	mount();
 	const toggle = (label: string, value: boolean) => {
 		const control = renderer.root.find(
@@ -167,8 +170,8 @@ it("uses one publication acknowledgement for List-only sync", () => {
 	};
 	toggle("Watch history", false);
 	toggle("Ratings", false);
-	toggle("Custom Lists", true);
-	toggle("Watchlist", true);
+	toggle(scope === "favorites" ? "Favorites" : "Custom Lists", true);
+	if (scope === "lists") toggle("Watchlist", true);
 	press("Enable sync");
 	const confirm = () =>
 		renderer.root.find(
@@ -202,8 +205,9 @@ it("uses one publication acknowledgement for List-only sync", () => {
 		body: expect.objectContaining({
 			watches: false,
 			ratings: false,
-			lists: true,
-			watchlist: true,
+			lists: scope === "lists",
+			watchlist: scope === "lists",
+			favorites: scope === "favorites",
 			listPublicationConsent: true,
 		}),
 	});

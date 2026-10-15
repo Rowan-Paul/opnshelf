@@ -869,8 +869,8 @@ export function SettingsCategoryScreen({
 									Trakt
 								</Text>
 								<Text className="text-muted-foreground text-sm">
-									Keep your Watch history, Ratings, Lists and watchlist in sync
-									with Trakt.
+									Keep your Watch history, Ratings, Lists, watchlist and
+									Favorites in sync with Trakt.
 								</Text>
 								<TraktSyncManager embedded />
 							</View>

@@ -3146,6 +3146,7 @@ export const TraktSyncConnectionScalarFieldEnum = {
   ratings: 'ratings',
   lists: 'lists',
   watchlist: 'watchlist',
+  favorites: 'favorites',
   listPublicationConsent: 'listPublicationConsent',
   historyScope: 'historyScope',
   publicationConsent: 'publicationConsent',
