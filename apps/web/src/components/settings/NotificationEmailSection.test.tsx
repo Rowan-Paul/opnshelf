@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationEmailSection } from "./NotificationEmailSection";
 
@@ -30,8 +30,8 @@ describe("email setup", () => {
 		render(<NotificationEmailSection onboarding />);
 		expect(screen.getByText("Sending to viewer@example.com")).toBeDefined();
 		expect(
-			screen.getByRole("button", { name: "Send test email" }),
-		).toBeDefined();
+			screen.queryByRole("button", { name: "Send test email" }),
+		).toBeNull();
 		expect(
 			screen.getByRole("button", { name: "Use a different email" }),
 		).toBeDefined();
@@ -45,9 +45,24 @@ describe("email setup", () => {
 		mocks.settings = { ...mocks.settings, emailVerified: true };
 		rerender(<NotificationEmailSection onboarding />);
 		expect(
-			screen.getByRole("button", { name: "Send test email" }),
-		).toBeDefined();
+			screen.queryByRole("button", { name: "Send test email" }),
+		).toBeNull();
 		expect(screen.getAllByRole("switch")).toHaveLength(4);
+	});
+	it("offers confirmation without a test action when changing the onboarding address", () => {
+		render(<NotificationEmailSection onboarding />);
+		fireEvent.click(
+			screen.getByRole("button", { name: "Use a different email" }),
+		);
+		expect(
+			screen.getByRole("textbox", { name: "Notification email address" }),
+		).toBeDefined();
+		expect(
+			screen.getByRole("button", { name: "Send confirmation code" }),
+		).toBeDefined();
+		expect(
+			screen.queryByRole("button", { name: "Send test email" }),
+		).toBeNull();
 	});
 	it("keeps maintenance options visible in Settings", () => {
 		render(<NotificationEmailSection />);
