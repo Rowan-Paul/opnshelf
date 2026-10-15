@@ -11,6 +11,7 @@ import { SyncSettings, TraktSyncManager } from "./TraktSyncManager";
 
 const mocks = vi.hoisted(() => ({
 	configure: vi.fn(async () => ({})),
+	action: vi.fn(async () => ({})),
 	resolve: vi.fn(async () => ({})),
 	importStatus: "paused",
 	issue: false,
@@ -58,6 +59,7 @@ vi.mock("@opnshelf/api", async (original) => ({
 		},
 	}),
 	traktSyncControllerConfigureMutation: () => ({ mutationFn: mocks.configure }),
+	traktSyncControllerActionMutation: () => ({ mutationFn: mocks.action }),
 	traktSyncControllerResolveMutation: () => ({ mutationFn: mocks.resolve }),
 }));
 function mount(connectionFailed = false, embedded = false) {
@@ -82,6 +84,20 @@ beforeEach(() => {
 	mocks.consent = false;
 });
 describe("Trakt Sync setup and conflict choices", () => {
+	it("allows disconnecting before setup without enabling sync or consenting", async () => {
+		mount(false, true);
+		fireEvent.click(await screen.findByRole("button", { name: "Disconnect" }));
+		fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+		await waitFor(() =>
+			expect(mocks.action).toHaveBeenCalledWith(
+				{ body: { action: "disconnect" } },
+				expect.anything(),
+			),
+		);
+		expect(mocks.configure).not.toHaveBeenCalled();
+		expect(screen.queryByLabelText(/I understand that Watches/)).toBeNull();
+	});
+
 	it("shows an OAuth callback failure after returning to the app", async () => {
 		mount(true);
 		expect(

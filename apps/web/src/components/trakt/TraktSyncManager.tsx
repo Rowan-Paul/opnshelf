@@ -240,7 +240,15 @@ export function TraktSyncManager({
 							</button>
 						</div>
 					</>
-				) : null}
+				) : (
+					<button
+						type="button"
+						className="btn btn-secondary mt-4"
+						onClick={() => setDisconnect(true)}
+					>
+						Disconnect
+					</button>
+				)}
 				{disconnect && (
 					<div className="mt-4 space-y-3 rounded-xl border border-(--border) p-4">
 						<p>

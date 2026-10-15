@@ -259,7 +259,9 @@ export function TraktSyncManager({
 							<Action label="Disconnect" onPress={() => setDisconnect(true)} />
 						</View>
 					</>
-				) : null}
+				) : (
+					<Action label="Disconnect" onPress={() => setDisconnect(true)} />
+				)}
 				{disconnect && (
 					<View className="gap-3 rounded-xl border border-border p-3">
 						<Text className={copy}>
@@ -576,6 +578,7 @@ export function SyncSettings({
 									/>
 									<Link
 										href="/trakt-import"
+										onPress={() => setReviewing(false)}
 										className="text-primary text-sm underline"
 									>
 										Finish Import first
