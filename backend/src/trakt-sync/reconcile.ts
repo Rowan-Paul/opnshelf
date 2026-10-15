@@ -1,9 +1,9 @@
 /** Pure reconciliation policy. Transport IDs and last successful values survive disconnects. */
 export type Direction = "inbound" | "outbound" | "both";
-export type MediaType = "movie" | "show" | "season" | "episode";
+export type MediaType = "movie" | "show" | "season" | "episode" | "list";
 export type SyncRecord = {
 	key: string;
-	kind: "watch" | "rating";
+	kind: "watch" | "rating" | "list" | "watchlist";
 	mediaType: MediaType;
 	mediaId: string | null;
 	season: number;
@@ -14,6 +14,8 @@ export type SyncRecord = {
 	traktParentId?: number;
 	rkey?: string;
 	cid?: string;
+	problem?: string;
+	visibility?: "public" | "private";
 };
 export type Baseline = {
 	linked: boolean;
@@ -23,12 +25,19 @@ export type Baseline = {
 };
 export type Decision = "none" | "push" | "pull" | "conflict";
 
+export function isListRecord(record: { kind: string }): boolean {
+	return record.kind === "list" || record.kind === "watchlist";
+}
+
 export function mediaKey(record: SyncRecord): string {
+	if (isListRecord(record)) return record.kind;
 	return `${record.kind}:${record.mediaType}:${record.mediaId}:${record.season}:${record.episode}`;
 }
 
 export function fingerprint(record: SyncRecord | null): string {
-	return record ? JSON.stringify([mediaKey(record), record.value]) : "missing";
+	return record
+		? JSON.stringify([mediaKey(record), record.value, record.visibility])
+		: "missing";
 }
 
 export function minute(value: SyncRecord["value"]): number | null {
@@ -61,6 +70,7 @@ export function decide(
 	if (resolution === "opnshelf") return "push";
 	if (resolution === "trakt") return "pull";
 	if (equivalent(local, remote)) return "none";
+	if (base.linked && !localChanged && !remoteChanged) return "none";
 	// Initial absence is not a deletion. One-way sync never erases unrelated data.
 	if (direction === "inbound") return remote || base.linked ? "pull" : "none";
 	if (direction === "outbound") return local || base.linked ? "push" : "none";
@@ -82,7 +92,10 @@ export function candidates(
 	return others.filter(
 		(other) =>
 			mediaKey(record) === mediaKey(other) &&
-			(record.kind === "rating" ||
+			(!isListRecord(record) ||
+				record.kind === "watchlist" ||
+				record.title === other.title) &&
+			(record.kind !== "watch" ||
 				record.value === null ||
 				other.value === null ||
 				Math.abs((minute(record.value) ?? 0) - (minute(other.value) ?? 0)) <=
@@ -95,8 +108,10 @@ export function readRecord(value: unknown): SyncRecord | null {
 	const v = value as Partial<SyncRecord>;
 	if (
 		typeof v.key !== "string" ||
-		!["watch", "rating"].includes(v.kind ?? "") ||
-		!["movie", "show", "season", "episode"].includes(v.mediaType ?? "") ||
+		!["watch", "rating", "list", "watchlist"].includes(v.kind ?? "") ||
+		!["movie", "show", "season", "episode", "list"].includes(
+			v.mediaType ?? "",
+		) ||
 		!(v.mediaId === null || typeof v.mediaId === "string") ||
 		typeof v.season !== "number" ||
 		typeof v.episode !== "number" ||

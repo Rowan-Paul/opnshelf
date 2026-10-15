@@ -1,3 +1,5 @@
+import { ListsModule } from "../lists/lists.module";
+import { LocalSyncLists } from "./local-lists.service";
 import { forwardRef, Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
 import { MoviesModule } from "../movies/movies.module";
@@ -12,13 +14,19 @@ import { TraktSyncService } from "./trakt-sync.service";
 @Module({
 	imports: [
 		PrismaModule,
+		ListsModule,
 		MoviesModule,
 		ShowsModule,
 		RatingsModule,
 		forwardRef(() => AuthModule),
 	],
 	controllers: [TraktSyncController],
-	providers: [TraktSyncClient, LocalSyncRecords, TraktSyncService],
+	providers: [
+		LocalSyncLists,
+		TraktSyncClient,
+		LocalSyncRecords,
+		TraktSyncService,
+	],
 	exports: [TraktSyncService],
 })
 export class TraktSyncModule {}

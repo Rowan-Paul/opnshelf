@@ -96,7 +96,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 			),
 		);
 		expect(mocks.configure).not.toHaveBeenCalled();
-		expect(screen.queryByLabelText(/I understand that Watches/)).toBeNull();
+		expect(screen.queryByLabelText(/I understand that sync/)).toBeNull();
 	});
 
 	it("shows an OAuth callback failure after returning to the app", async () => {
@@ -109,7 +109,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 	it("requires publication consent, Import handoff, and a concrete review before enabling", async () => {
 		mount();
 		const review = await screen.findByRole("button", { name: "Enable sync" });
-		expect(screen.queryByLabelText(/I understand that Watches/)).toBeNull();
+		expect(screen.queryByLabelText(/I understand that sync/)).toBeNull();
 		fireEvent.click(review);
 		const confirm = screen.getByRole("button", {
 			name: "Confirm and enable sync",
@@ -117,7 +117,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		expect(screen.getByRole("dialog")).toBeTruthy();
 		expect(confirm.disabled).toBe(true);
 		expect(mocks.configure).not.toHaveBeenCalled();
-		fireEvent.click(screen.getByLabelText(/I understand that Watches/));
+		fireEvent.click(screen.getByLabelText(/I understand that sync/));
 		expect(confirm.disabled).toBe(true);
 		fireEvent.click(screen.getByLabelText(/Continue my unfinished Import/));
 		expect(confirm.disabled).toBe(false);
@@ -142,7 +142,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		expect(await screen.findByText("Sync is on")).toBeTruthy();
 		expect(screen.queryByRole("heading", { name: "Trakt Sync" })).toBeNull();
 		expect(screen.queryByText(/Import public history/)).toBeNull();
-		expect(screen.queryByLabelText(/I understand that Watches/)).toBeNull();
+		expect(screen.queryByLabelText(/I understand that sync/)).toBeNull();
 		expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
 		fireEvent.click(screen.getByRole("button", { name: "Sync settings" }));
 		fireEvent.click(screen.getByRole("radio", { name: "Opnshelf → Trakt" }));
@@ -184,7 +184,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 			name: "Enable sync and continue",
 		}) as HTMLButtonElement;
 		expect(confirm.disabled).toBe(true);
-		fireEvent.click(screen.getByLabelText(/I understand that Watches/));
+		fireEvent.click(screen.getByLabelText(/I understand that sync/));
 		fireEvent.click(confirm);
 		await waitFor(() => expect(saved).toHaveBeenCalledOnce());
 	});
@@ -207,4 +207,39 @@ describe("Trakt Sync setup and conflict choices", () => {
 			),
 		);
 	});
+});
+
+it("uses one publication checkbox for List-only sync", async () => {
+	mocks.importStatus = "completed";
+	mount();
+	fireEvent.click(await screen.findByLabelText("Watch history"));
+	fireEvent.click(screen.getByLabelText("Ratings"));
+	fireEvent.click(screen.getByLabelText("Custom Lists"));
+	fireEvent.click(screen.getByLabelText("Watchlist"));
+	fireEvent.click(screen.getByRole("button", { name: "Enable sync" }));
+	const confirm = screen.getByRole("button", {
+		name: "Confirm and enable sync",
+	});
+	expect(confirm.hasAttribute("disabled")).toBe(true);
+	expect(
+		screen.getAllByRole("checkbox", { name: /I understand/ }),
+	).toHaveLength(1);
+	fireEvent.click(screen.getByLabelText(/I understand that sync/));
+	expect(confirm.hasAttribute("disabled")).toBe(false);
+	fireEvent.click(confirm);
+	await waitFor(() =>
+		expect(mocks.configure).toHaveBeenCalledWith(
+			expect.objectContaining({
+				body: expect.objectContaining({
+					watches: false,
+					ratings: false,
+					lists: true,
+					watchlist: true,
+					publicationConsent: true,
+					listPublicationConsent: true,
+				}),
+			}),
+			expect.anything(),
+		),
+	);
 });

@@ -155,3 +155,56 @@ it("closes the confirmation sheet when navigating to finish an Import", () => {
 	expect(renderer.root.findByType(Modal).props.visible).toBe(false);
 	expect(mocks.mutate).not.toHaveBeenCalled();
 });
+
+it("uses one publication acknowledgement for List-only sync", () => {
+	mount();
+	const toggle = (label: string, value: boolean) => {
+		const control = renderer.root.find(
+			(node) =>
+				node.type === "switch" && node.props.accessibilityLabel === label,
+		);
+		act(() => control.props.onValueChange(value));
+	};
+	toggle("Watch history", false);
+	toggle("Ratings", false);
+	toggle("Custom Lists", true);
+	toggle("Watchlist", true);
+	press("Enable sync");
+	const confirm = () =>
+		renderer.root.find(
+			(node) =>
+				node.type === "text" &&
+				node.props.children === "Confirm and enable sync",
+		).parent;
+	expect(confirm()?.props.disabled).toBe(true);
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "switch" &&
+				node.props.accessibilityLabel.startsWith("I understand"),
+		),
+	).toHaveLength(1);
+	const consent = renderer.root.find(
+		(node) =>
+			node.type === "switch" &&
+			node.props.accessibilityLabel.startsWith("I understand that sync"),
+	);
+	act(() => consent.props.onValueChange(true));
+	const handoff = renderer.root.find(
+		(node) =>
+			node.type === "switch" &&
+			node.props.accessibilityLabel.startsWith("Continue my unfinished Import"),
+	);
+	act(() => handoff.props.onValueChange(true));
+	expect(confirm()?.props.disabled).toBe(false);
+	press("Confirm and enable sync");
+	expect(mocks.mutate).toHaveBeenCalledWith({
+		body: expect.objectContaining({
+			watches: false,
+			ratings: false,
+			lists: true,
+			watchlist: true,
+			listPublicationConsent: true,
+		}),
+	});
+});

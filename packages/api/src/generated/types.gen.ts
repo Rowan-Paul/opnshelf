@@ -1865,6 +1865,9 @@ export type SyncStatusDto = {
     direction: 'inbound' | 'outbound' | 'both';
     watches: boolean;
     ratings: boolean;
+    lists?: boolean;
+    watchlist?: boolean;
+    listPublicationConsent?: boolean;
     historyScope: 'all' | 'future';
     publicationConsent: boolean;
     lastSuccessAt?: string;
@@ -1898,6 +1901,9 @@ export type SyncSettingsDto = {
     direction: 'inbound' | 'outbound' | 'both';
     watches: boolean;
     ratings: boolean;
+    lists?: boolean;
+    watchlist?: boolean;
+    listPublicationConsent?: boolean;
     historyScope: 'all' | 'future';
     publicationConsent: boolean;
     handoffImport?: boolean;

@@ -6,7 +6,13 @@ import { parseEnvironment } from "../config/env.schema";
 import { PrismaClient } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { LocalSyncRecords } from "./local-records.service";
-import { equivalent, mediaKey, type SyncRecord } from "./reconcile";
+import { encodeList, listValue, type ListMember } from "./list-value";
+import {
+	equivalent,
+	mediaKey,
+	isListRecord,
+	type SyncRecord,
+} from "./reconcile";
 import { type TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
 import { TraktImportJobStore } from "../users/import/trakt-import-job.store";
 import { TraktSyncService } from "./trakt-sync.service";
@@ -56,32 +62,49 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				),
 			),
 		),
-		write: vi.fn(async (_token: string, r: SyncRecord, remove = false) => {
-			if (remove) {
-				remoteRecords = remoteRecords.filter((v) => v.key !== r.key);
-				return;
-			}
-			const previous =
-				r.kind === "rating"
-					? remoteRecords.find(
-							(v) => v.kind === "rating" && v.mediaId === r.mediaId,
-						)
-					: undefined;
-			if (previous) previous.value = r.value;
-			else
-				remoteRecords.push({
-					...r,
-					key: `${r.kind}:${++serial}`,
-					rkey: undefined,
-					cid: undefined,
-					value:
-						r.kind === "watch" && typeof r.value === "string"
-							? new Date(
-									Math.floor(Date.parse(r.value) / 60000) * 60000,
-								).toISOString()
-							: r.value,
-				});
-		}),
+		write: vi.fn(
+			async (
+				_token: string,
+				r: SyncRecord,
+				remove = false,
+				_previous?: SyncRecord | null,
+				onCreated?: (record: SyncRecord) => Promise<void>,
+			) => {
+				if (remove) {
+					remoteRecords = remoteRecords.filter((v) => v.key !== r.key);
+					return;
+				}
+				const previous =
+					isListRecord(r) && r.traktId
+						? remoteRecords.find(
+								(v) => v.kind === r.kind && v.traktId === r.traktId,
+							)
+						: r.kind === "rating"
+							? remoteRecords.find(
+									(v) => v.kind === "rating" && v.mediaId === r.mediaId,
+								)
+							: undefined;
+				if (previous) {
+					previous.value = r.value;
+					previous.title = r.title;
+				} else
+					remoteRecords.push({
+						...r,
+						key: `${r.kind}:${++serial}`,
+						traktId: isListRecord(r) ? serial : r.traktId,
+						rkey: undefined,
+						cid: undefined,
+						value:
+							r.kind === "watch" && typeof r.value === "string"
+								? new Date(
+										Math.floor(Date.parse(r.value) / 60000) * 60000,
+									).toISOString()
+								: r.value,
+					});
+				const created = remoteRecords.at(-1);
+				if (isListRecord(r) && !previous && created) await onCreated?.(created);
+			},
+		),
 	};
 	const localApi = {
 		validateMatch: vi.fn(async () => undefined),
@@ -93,6 +116,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				_connection: string,
 				desired: SyncRecord | null,
 				previous: SyncRecord | null,
+				reservedRkey?: string,
 			) => {
 				if (!desired) {
 					localRecords = localRecords.filter((r) => r.key !== previous?.key);
@@ -100,8 +124,14 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				}
 				const record = {
 					...desired,
-					key: previous?.key ?? `movie:local-${desired.key}`,
-					rkey: previous?.rkey ?? `local-${desired.key}`,
+					key:
+						previous?.key ??
+						(isListRecord(desired)
+							? `${desired.kind}:${reservedRkey}`
+							: `movie:local-${desired.key}`),
+					rkey:
+						previous?.rkey ??
+						(isListRecord(desired) ? reservedRkey : `local-${desired.key}`),
 				};
 				localRecords = [
 					...localRecords.filter((r) => r.key !== record.key),
@@ -185,6 +215,153 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await db.backgroundJob.deleteMany({ where: { userDid } });
 		await db.$disconnect();
 		await lockPool.end();
+	});
+	const membership = (id: string): ListMember => ({
+		mediaType: "movie",
+		mediaId: id,
+		season: 0,
+		episode: 0,
+		notes: "",
+	});
+	const curated = (
+		key: string,
+		members: string[],
+		kind: "list" | "watchlist" = "list",
+	): SyncRecord => ({
+		key,
+		rkey: key.split(":")[1],
+		kind,
+		mediaType: "list",
+		mediaId: null,
+		season: 0,
+		episode: 0,
+		title: kind === "watchlist" ? "Watchlist" : "Weekend",
+		visibility: "private",
+		value: encodeList({
+			name: kind === "watchlist" ? "Watchlist" : "Weekend",
+			description: "",
+			items: members.map(membership),
+		}),
+	});
+	async function configureLists(
+		direction: "inbound" | "outbound" | "both",
+		kind: "list" | "watchlist" = "list",
+	) {
+		await service.configure(userDid, {
+			direction,
+			watches: false,
+			ratings: false,
+			lists: kind === "list",
+			watchlist: kind === "watchlist",
+			listPublicationConsent: true,
+			publicationConsent: false,
+			historyScope: "all",
+		});
+		await tick();
+	}
+	it("requires fresh List publication consent even after Watch consent", async () => {
+		await configure();
+		await expect(
+			service.configure(userDid, {
+				direction: "both",
+				watches: true,
+				ratings: true,
+				lists: true,
+				publicationConsent: true,
+				historyScope: "all",
+			}),
+		).rejects.toThrow("List contents may become public");
+	});
+	it("imports private custom Lists and follows their stable link through renames", async () => {
+		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		await configureLists("inbound");
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		const identity = localRecords[0].key;
+		remoteRecords[0] = {
+			...remoteRecords[0],
+			title: "Renamed",
+			value: encodeList({
+				...listValue(remoteRecords[0]),
+				name: "Renamed",
+				items: [membership("13"), membership("12")],
+			}),
+		};
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		expect(localRecords[0].key).toBe(identity);
+		expect(listValue(localRecords[0]).name).toBe("Renamed");
+		expect(listValue(localRecords[0]).items.map((i) => i.mediaId)).toEqual([
+			"13",
+			"12",
+		]);
+	});
+	it("preserves unrelated memberships through one-way source edits and removals", async () => {
+		localRecords = [curated("list:local", ["99"])];
+		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		await configureLists("inbound");
+		await tick();
+		expect(listValue(localRecords[0]).items.map((i) => i.mediaId)).toEqual([
+			"12",
+			"99",
+		]);
+		localApi.write.mockClear();
+		await tick();
+		expect(localApi.write).not.toHaveBeenCalled();
+		remoteRecords[0] = {
+			...remoteRecords[0],
+			value: encodeList({ ...listValue(remoteRecords[0]), items: [] }),
+		};
+		await tick();
+		expect(listValue(localRecords[0]).items.map((i) => i.mediaId)).toEqual([
+			"99",
+		]);
+	});
+	it("requires a choice for initial two-way List differences, then updates the paired List", async () => {
+		localRecords = [curated("list:local", ["12"])];
+		remoteRecords = [{ ...curated("list:22", ["13"]), traktId: 22 }];
+		await configureLists("both");
+		await tick();
+		expect(remoteApi.write).not.toHaveBeenCalled();
+		const issues = await service.issues(userDid, {});
+		expect(issues.items).toHaveLength(1);
+		expect(issues.items[0].issue).toContain("List");
+		expect(issues.items[0].candidates).toEqual([]);
+		await service.resolve(userDid, issues.items[0].id, { action: "opnshelf" });
+		await tick();
+		expect(remoteRecords).toHaveLength(1);
+		expect(remoteRecords[0].key).toBe("list:22");
+		expect(equivalent(remoteRecords[0], localRecords[0])).toBe(true);
+	});
+	it("propagates Trakt automatic watchlist removals as membership changes", async () => {
+		localRecords = [curated("watchlist:local", ["12"], "watchlist")];
+		remoteRecords = [curated("watchlist:trakt", ["12"], "watchlist")];
+		await configureLists("inbound", "watchlist");
+		await tick();
+		remoteRecords = [curated("watchlist:trakt", [], "watchlist")];
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		expect(listValue(localRecords[0]).items).toEqual([]);
+	});
+	it("propagates a linked custom List deletion without deleting unrelated Lists", async () => {
+		localRecords = [
+			curated("list:local", ["12"]),
+			{
+				...curated("list:unrelated", ["99"]),
+				title: "Other",
+				value: encodeList({
+					name: "Other",
+					description: "",
+					items: [membership("99")],
+				}),
+			},
+		];
+		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		await configureLists("inbound");
+		await tick();
+		remoteRecords = [];
+		await tick();
+		expect(localRecords.map((r) => r.key)).toEqual(["list:unrelated"]);
 	});
 	it("holds Watch sync and recovery when the Shelf is private", async () => {
 		remoteRecords = [watch("remote-private")];

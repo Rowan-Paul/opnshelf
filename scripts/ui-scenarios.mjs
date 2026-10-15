@@ -24,6 +24,7 @@ export const scenarios = [
 	"compact",
 	"large-text",
 	"trakt-sync-catch-up",
+	"trakt-sync-lists",
 ];
 function sample(schema, seen = new Set()) {
 	if (!schema) return {};
@@ -282,15 +283,19 @@ export function createScenarioServer(initial = "normal") {
 		}
 		if (url.pathname === "/trakt-sync") {
 			json(
-				scenario === "trakt-sync-catch-up"
+				["trakt-sync-catch-up", "trakt-sync-lists"].includes(scenario)
 					? {
 							...sample(spec.components.schemas.SyncStatusDto),
 							configured: true,
-							status: "active",
+							status: scenario === "trakt-sync-lists" ? "paused" : "active",
 							username: "fixture",
 							direction: "inbound",
 							watches: true,
-							remaining: 15,
+							ratings: true,
+							lists: scenario === "trakt-sync-lists",
+							watchlist: scenario === "trakt-sync-lists",
+							historyScope: "all",
+							remaining: scenario === "trakt-sync-lists" ? 0 : 15,
 							progress: 40,
 						}
 					: { configured: false, connected: false },

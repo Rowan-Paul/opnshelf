@@ -53,3 +53,75 @@ Trakt has no conditional write primitive in this integration. Fresh reads detect
 - Full test suites passed: Backend 1,301 (including 26 persisted Trakt cases on disposable PostgreSQL), Web 437, Mobile 382. Optional integration/performance tests remain skipped.
 - Web `/trakt-sync?connection=failed` verified in the browser at 1280 × 800 with a fixture API: the callback error appears within the connection panel. Mobile uses the same message for callback deep links and auth-session results; the iOS recheck was blocked because the simulator belongs to another active session.
 - OAuth failure redirects, expired/reused state, best-effort revocation, movie/show ID collisions, scoped snapshot preservation, empty responses, and per-account request pacing have regression coverage. Live Trakt/PDS acceptance remains outstanding.
+
+## List and watchlist extension (October 15)
+
+Custom Lists and watchlist are independent opt-in switches, off for existing
+connections. They use the same direction, history scope, pause/resume and
+account-scoped links as Watches and Ratings. Custom List names, descriptions,
+notes, memberships and manual order transfer; watchlist sync transfers membership,
+notes and manual order. Trakt's automatic removals after watching are source
+membership removals. Favorites remain outside these switches.
+
+Existing destination visibility stays unchanged. New Opnshelf Lists follow the
+User's List default; new Trakt Lists inherit source visibility. One publication checkbox covers the selected types, including Lists and
+watchlist. When List transfers are newly enabled, that same checkbox includes
+their publication warning. Private Opnshelf Lists are read and written through their own reference
+Space, with the existing account lock and migration hold. Only enabled private
+List types are accessed. Unsupported metadata representations and missing TMDB
+mappings become Needs attention; text is never truncated to fit another service.
+
+Initial one-way transfers merge destination-only memberships, and subsequent
+removals affect previously synchronized source memberships. Two-way differences
+require a List-level source choice. Stable IDs retain pairing across renames.
+Interrupted creation retains its record identity; incomplete or changed reads do
+not establish deletion. A partial transfer changed outside its expected state
+requires a source choice. Trakt writes and reference private writes retain the
+concurrency limitations described above and in ADR 0048.
+
+Apply `20261015140000_trakt_list_sync` through the approved deployment process
+before enabling these controls against a deployed backend. It adds three Boolean
+columns with false defaults. It has been applied only to a disposable local
+PostgreSQL container for this change. The Mobile version is unchanged; this change
+uses the OTA release route. No hosted migration, deployment, release or live Trakt
+or PDS write was performed.
+
+Local verification on 2026-10-15:
+
+- `pnpm prisma:generate` and `pnpm generate:api`; reviewed the Boolean settings and
+  status additions in OpenAPI and the generated client.
+- `pnpm typecheck`, `pnpm check`, `pnpm --filter @opnshelf/api exec tsc --noEmit`,
+  `pnpm --filter backend run build`, and `pnpm test:scripts`.
+- Full suites: Backend 1,347 passed, including 34 persisted reconciliation tests
+  against disposable PostgreSQL; Web 483 passed; Mobile 415 passed. Optional
+  unrelated integration/performance fixtures remain skipped. One database test
+  exceeded its five-second timeout during simultaneous workspace builds/tests;
+  the complete Backend suite passed when rerun without that load.
+- List transport tests cover private metadata, notes, ordering, incomplete and
+  changed reads, unsupported media, legacy scoped show identities, size limits, destination changes and retained
+  remote creation identity. PDS fixtures exercise public and reference-Space
+  writes, selected-type reads, recovery, conflict checks and extension preservation.
+- Web `/trakt-sync` at `http://127.0.0.1:3390/trakt-sync`, using the
+  `trakt-sync-lists` fixture: four record switches, List scope copy, single combined
+  publication acknowledgement, disabled confirmation before consent. The T3
+  browser snapshot timed out twice, so verification used local Playwright/Chrome.
+- Android 17 / Pixel 10, `opnshelf://trakt-sync`: verified the original List
+  switches and confirmation sheet using this checkout's development client, with
+  its native fingerprint checked. The later single-checkbox revision passed
+  Mobile component tests; its native visual recheck was blocked because both
+  Android and iOS were held by other automation sessions. Web visual verification
+  confirmed exactly one publication checkbox for that revision.
+
+
+Changed source areas: Trakt reconciliation and its local/remote List adapters;
+connection schema and migration; shared API DTOs, generated types and copy; Web
+and Mobile Settings/Onboarding and consent tests; the local UI scenario runner;
+GLOSSARY, ADR 0049 and the Trakt product briefs. Controlled live-service round trips
+remain a rollout acceptance check, especially Trakt account limits, VIP-only
+notes and unsupported media. Failures remain unresolved instead of claiming a
+successful transfer.
+
+The disposable database container, fixture servers and owned device session were
+stopped after verification. Local screenshots are available at
+`/tmp/opnshelf-list-web-settings.png`, `/tmp/opnshelf-list-web-consent.png` and
+`/tmp/opnshelf-list-android-consent.png`.

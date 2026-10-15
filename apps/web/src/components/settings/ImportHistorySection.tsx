@@ -8,7 +8,8 @@ export function ImportHistorySection() {
 		>
 			<h2 className="mb-1 font-semibold text-lg">Trakt</h2>
 			<p className="mb-5 text-(--foreground-muted) text-sm">
-				Keep your Watch history and Ratings in sync with Trakt.
+				Keep your Watch history, Ratings, Lists and watchlist in sync with
+				Trakt.
 			</p>
 			<TraktSyncManager embedded />
 		</section>

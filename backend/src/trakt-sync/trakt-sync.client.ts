@@ -2,7 +2,9 @@ import { createHash } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { z } from "zod";
 import { BackendEnv } from "../config/env.schema";
-import { type MediaType, type SyncRecord } from "./reconcile";
+import { isListRecord, type MediaType, type SyncRecord } from "./reconcile";
+
+import { snapshotLists, writeList } from "./remote-lists";
 
 const ids = z.object({
 	trakt: z.number().int().positive(),
@@ -122,6 +124,7 @@ export class TraktSyncClient {
 		path: string,
 		token?: string,
 		body?: unknown,
+		method = body === undefined ? "GET" : "POST",
 	): Promise<{ data: unknown; headers: Headers }> {
 		// Pace both reads and writes below Trakt's per-user limits. No credential logging.
 		const now = Date.now();
@@ -135,7 +138,7 @@ export class TraktSyncClient {
 		this.nextRequests.set(key, Math.max(now, next) + 1100);
 		if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
 		const response = await fetch(`https://api.trakt.tv${path}`, {
-			method: body === undefined ? "GET" : "POST",
+			method,
 			headers: {
 				"Content-Type": "application/json",
 				"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
@@ -229,7 +232,10 @@ export class TraktSyncClient {
 			})
 			.parse((await this.request("/users/settings", token)).data).user;
 	}
-	async snapshot(token: string): Promise<SyncRecord[]> {
+	async snapshot(
+		token: string,
+		options: { lists?: boolean; watchlist?: boolean } = {},
+	): Promise<SyncRecord[]> {
 		const before = (await this.request("/sync/last_activities", token)).data;
 		const watches = await this.pages("/sync/history", token, "watch");
 		const ratings: SyncRecord[] = [];
@@ -237,12 +243,16 @@ export class TraktSyncClient {
 			ratings.push(
 				...(await this.pages(`/sync/ratings/${type}`, token, "rating")),
 			);
+		const lists =
+			options.lists || options.watchlist
+				? await snapshotLists(this, token, options)
+				: [];
 		const after = (await this.request("/sync/last_activities", token)).data;
 		if (JSON.stringify(before) !== JSON.stringify(after))
 			throw new TraktSyncError(
 				"Trakt changed during the read. Sync will read a fresh snapshot.",
 			);
-		return [...watches, ...ratings];
+		return [...watches, ...ratings, ...lists];
 	}
 	/** Confirm only the affected title's Watches, or the affected Rating category.
 	 * Ratings have no item-ID filter: the final path segment filters rating value. */
@@ -250,6 +260,11 @@ export class TraktSyncClient {
 		token: string,
 		record: SyncRecord,
 	): Promise<SyncRecord[]> {
+		if (isListRecord(record))
+			return snapshotLists(this, token, {
+				lists: record.kind === "list",
+				watchlist: record.kind === "watchlist",
+			});
 		const plural = `${record.mediaType}s`;
 		if (record.kind === "rating")
 			return this.pages(`/sync/ratings/${plural}`, token, "rating");
@@ -341,7 +356,15 @@ export class TraktSyncClient {
 			throw new TraktSyncError("Trakt returned incomplete results.");
 		return result;
 	}
-	async write(token: string, record: SyncRecord, remove = false) {
+	async write(
+		token: string,
+		record: SyncRecord,
+		remove = false,
+		previous?: SyncRecord | null,
+		onCreated?: (record: SyncRecord) => Promise<void>,
+	) {
+		if (isListRecord(record))
+			return writeList(this, token, record, remove, previous, onCreated);
 		if (record.kind === "watch" && remove) {
 			const id = Number(record.key.slice("watch:".length));
 			if (!Number.isSafeInteger(id) || id < 1)
@@ -362,6 +385,7 @@ export class TraktSyncClient {
 				show: "shows",
 				season: "seasons",
 				episode: "episodes",
+				list: "lists",
 			};
 			body = {
 				[plural[record.mediaType]]: [

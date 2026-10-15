@@ -1,3 +1,4 @@
+import { LocalSyncLists } from "./local-lists.service";
 import { createHash } from "node:crypto";
 import { Agent } from "@atproto/api";
 import { Inject, Injectable } from "@nestjs/common";
@@ -10,7 +11,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { RatingsService } from "../ratings/ratings.service";
 import { buildEpisodeWatchRecord } from "../shows/episode-watch-record";
 import { ShowsService } from "../shows/shows.service";
-import { type SyncRecord } from "./reconcile";
+import { isListRecord, type SyncRecord } from "./reconcile";
 import {
 	rankMovieMatchCandidates,
 	rankShowMatchCandidates,
@@ -38,6 +39,7 @@ export class LocalSyncRecords {
 		private readonly shows: ShowsService,
 		private readonly ratings: RatingsService,
 		@Inject(AUTH_SERVICE) private readonly auth: Pick<AuthService, "restore">,
+		private readonly lists: LocalSyncLists,
 	) {}
 	async matches(record: SyncRecord, query: string) {
 		if (record.mediaType === "movie")
@@ -57,7 +59,10 @@ export class LocalSyncRecords {
 				: await this.shows.getShowDetails(id);
 		if (!media?.id) throw new Error("This title could not be found.");
 	}
-	async snapshot(userDid: string): Promise<SyncRecord[]> {
+	async snapshot(
+		userDid: string,
+		options: { lists?: boolean; watchlist?: boolean } = {},
+	): Promise<SyncRecord[]> {
 		const [movies, episodes, ratings] = await this.prisma.$transaction([
 			this.prisma.trackedMovie.findMany({
 				where: { userDid, status: "watched" },
@@ -91,7 +96,12 @@ export class LocalSyncRecords {
 				select: { showId: true, title: true },
 			}),
 		]);
+		const lists =
+			options.lists || options.watchlist
+				? await this.lists.snapshot(userDid, options)
+				: [];
 		return [
+			...lists,
 			...movies.map(
 				(r): SyncRecord => ({
 					key: `movie:${r.rkey}`,
@@ -148,6 +158,8 @@ export class LocalSyncRecords {
 	}
 	/** Confirm absence in the source of truth, not merely a temporarily incomplete index. */
 	async confirmDeleted(userDid: string, previous: SyncRecord) {
+		if (isListRecord(previous))
+			return this.lists.confirmDeleted(userDid, previous);
 		const agent = await this.agent(userDid);
 		try {
 			await agent.com.atproto.repo.getRecord({
@@ -171,6 +183,11 @@ export class LocalSyncRecords {
 	): Promise<SyncRecord | null> {
 		const source = desired ?? previous;
 		if (!source) return null;
+		if (isListRecord(source)) {
+			const listRkey = previous?.rkey ?? reservedRkey;
+			if (!listRkey) throw new Error("Missing reserved List identity.");
+			return this.lists.write(userDid, desired, previous, listRkey);
+		}
 		if (!source.mediaId)
 			throw new Error("Choose a TMDB match before importing this item.");
 		const agent = await this.agent(userDid);
@@ -246,7 +263,7 @@ export class LocalSyncRecords {
 		let record: Record<string, unknown>;
 		if (desired.kind === "rating")
 			record = ratingSchema.build({
-				mediaType: desired.mediaType,
+				mediaType: desired.mediaType as "movie" | "show" | "season" | "episode",
 				mediaId: source.mediaId,
 				seasonNumber: desired.season || undefined,
 				episodeNumber: desired.episode || undefined,
