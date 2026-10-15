@@ -1,4 +1,4 @@
-# Builds the Tranquil PDS upstream image and publishes it directly to Docker Hub.
+# Builds the Tranquil PDS fork image and publishes it directly to Docker Hub.
 # Railway follows `latest`; do not add a repository pin-bump or promotion step here.
 name: tranquil-image
 
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Upstream git ref to build (default: upstream HEAD)"
+        description: "Fork git ref to build (default: fork HEAD)"
         required: false
         default: ""
       baseline_image:
@@ -32,7 +32,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  UPSTREAM_URL: https://tangled.org/tranquil.farm/tranquil-pds
+  UPSTREAM_URL: https://tangled.org/rowanpaulflynn.dev/tranquil-pds
   HUB_REPO: rowanpaul/tranquil-pds
 
 jobs:
@@ -100,7 +100,7 @@ jobs:
         if: steps.dedupe.outputs.skip != 'true'
         run: |
           set -euo pipefail
-          docker build --platform linux/amd64 -f .upstream/Dockerfile -t tranquil-candidate:ci \
+          docker build --platform linux/amd64 --build-arg CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 -f .upstream/Dockerfile -t tranquil-candidate:ci \
             --label "org.opencontainers.image.source=$UPSTREAM_URL" \
             --label "org.opencontainers.image.revision=$(git -C .upstream rev-parse HEAD)" \
             --label "xyz.opnshelf.pds.migrations=$(cat candidate-migrations.json)" \
@@ -113,10 +113,11 @@ jobs:
           cleanup() { docker rm -f tqgate-pds tqgate-minio tqgate-pg >/dev/null 2>&1 || true; docker network rm tqgate >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           docker network create tqgate
-          docker run -d --name tqgate-pg --network tqgate -e POSTGRES_USER=tranquil -e POSTGRES_DB=tranquil -e POSTGRES_HOST_AUTH_METHOD=trust postgres:15
-          docker run -d --name tqgate-minio --network tqgate -e MINIO_ROOT_USER=gate -e MINIO_ROOT_PASSWORD=gate-secret-12345 minio/minio server /data
+          docker run -d --name tqgate-pg --network tqgate -e POSTGRES_USER=tranquil -e POSTGRES_DB=tranquil -e POSTGRES_HOST_AUTH_METHOD=trust postgres:18-alpine
+          docker run -d --name tqgate-minio --network tqgate -p 127.0.0.1:19000:9000 -e MINIO_ROOT_USER=gate -e MINIO_ROOT_PASSWORD=gate-secret-12345 cgr.dev/chainguard/minio:latest server /data
           sleep 5
-          docker run --rm --network tqgate --entrypoint sh minio/mc -c "mc alias set m http://tqgate-minio:9000 gate gate-secret-12345 >/dev/null && mc mb m/tenant"
+          curl --fail --silent --show-error --aws-sigv4 'aws:amz:us-east-1:s3' \
+            --user 'gate:gate-secret-12345' --request PUT http://127.0.0.1:19000/tenant
           docker run -d --name tqgate-pds --network tqgate -p 13000:3000 \
             -e DATABASE_URL=postgres://tranquil@tqgate-pg:5432/tranquil \
             -e PDS_HOSTNAME=gate.test -e MASTER_KEY=gate-master-key-0123456789abcdef01 \
