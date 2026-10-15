@@ -2,6 +2,7 @@ import {
 	authControllerMeOptions,
 	authControllerResendVerificationMutation,
 	authControllerVerifyEmailMutation,
+	bringsTraktWatches,
 	traktError,
 	traktSyncControllerConnectMutation,
 	traktSyncControllerStatus,
@@ -123,9 +124,26 @@ function OnboardingPage() {
 		}
 	}, [authLoading, currentImport]);
 
+	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
+	const { data: traktSync } = useQuery({
+		queryKey: traktStatusKey,
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		enabled: isAuthenticated && !authLoading,
+	});
+	// Watch history already coming from Trakt makes the watched step redundant.
+	const skipWatched =
+		importStarted || bringsTraktWatches(currentImport, traktSync);
+
 	// Every step hands off to its linear successor; the Trakt step's skip and
 	// complete paths both land on suggestions.
-	const goToNextStep = () => setStep((current) => nextOnboardingStep(current));
+	const goToNextStep = () =>
+		setStep((current) => {
+			const next = nextOnboardingStep(current);
+			return next === "watched" && skipWatched
+				? nextOnboardingStep(next)
+				: next;
+		});
 
 	if (authLoading) {
 		return (
