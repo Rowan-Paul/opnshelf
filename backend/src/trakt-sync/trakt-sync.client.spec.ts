@@ -34,7 +34,68 @@ describe("Trakt transport boundaries", () => {
 		await expect(
 			new TraktSyncClient(config).revoke("fixture"),
 		).resolves.toBeUndefined();
+		expect(fetch).toHaveBeenCalledWith(
+			"https://api.trakt.tv/oauth/revoke",
+			expect.objectContaining({
+				headers: expect.objectContaining({
+					"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
+				}),
+			}),
+		);
 	});
+	it.each([
+		[
+			"application/json",
+			JSON.stringify({
+				error: "invalid_grant",
+				error_description: "private-code private-token",
+			}),
+			"invalid_grant",
+			"json",
+		],
+		[
+			"application/json",
+			JSON.stringify({ error: "private-token", access_token: "private-token" }),
+			undefined,
+			"json",
+		],
+		["text/html", "<html>private-code private-token</html>", undefined, "html"],
+		["application/json", "malformed private-token", undefined, "json"],
+	] as const)(
+		"retains safe diagnostics for %s responses",
+		async (contentType, body, oauthError, responseFormat) => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn(
+					async () =>
+						new Response(body, {
+							status: 403,
+							headers: {
+								"content-type": contentType,
+								server: "cloudflare",
+								"cf-mitigated": "challenge",
+								"cf-ray": "a123456789abcdef-AMS",
+								"set-cookie": "private-token",
+							},
+						}),
+				),
+			);
+			const error = await new TraktSyncClient(config)
+				.exchange("private-code", "private-verifier")
+				.catch((error: unknown) => error);
+			expect(error).toMatchObject({
+				status: 403,
+				diagnostics: {
+					responseFormat,
+					oauthError,
+					cloudflare: true,
+					challenge: true,
+					cloudflareRay: "a123456789abcdef-AMS",
+				},
+			});
+			expect(JSON.stringify(error)).not.toContain("private-");
+		},
+	);
 	it("paces separate accounts independently", async () => {
 		vi.useFakeTimers();
 		const fetcher = vi.fn(async () => new Response("{}"));
