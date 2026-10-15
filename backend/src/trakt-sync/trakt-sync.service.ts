@@ -10,12 +10,14 @@ import {
 import {
 	BadRequestException,
 	ConflictException,
+	HttpException,
 	Injectable,
 	Logger,
 	NotFoundException,
 	type OnModuleDestroy,
 	type OnModuleInit,
 } from "@nestjs/common";
+import { ZodError } from "zod";
 import { BackendEnv } from "../config/env.schema";
 import {
 	Prisma,
@@ -212,6 +214,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	async callback(state: string, code?: string) {
 		let redirect = `${this.config.FRONTEND_URL}/trakt-sync`;
+		let stage = "state-validation";
 		try {
 			const saved = await this.prisma.authState.findUnique({
 				where: { key: `trakt:${state}` },
@@ -239,9 +242,12 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					"Trakt authorization has already been used.",
 				);
 			if (!code) return `${redirect}?connection=cancelled`;
+			stage = "token-exchange";
 			const token = await this.api.exchange(code, data.verifier);
 			try {
+				stage = "profile-fetch";
 				const profile = await this.api.profile(token.access_token);
+				stage = "connection-save";
 				const previous = await this.current(data.userDid);
 				if (
 					previous &&
@@ -285,7 +291,30 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				throw error;
 			}
 			return `${redirect}?connection=connected`;
-		} catch {
+		} catch (error) {
+			// Never log exception messages, payloads, codes, state, or credentials.
+			this.logger.warn(
+				JSON.stringify({
+					message: "Trakt OAuth callback failed",
+					stage,
+					category:
+						error instanceof TraktSyncError
+							? "trakt-api"
+							: error instanceof ZodError
+								? "response-validation"
+								: error instanceof HttpException
+									? "request-validation"
+									: "internal",
+					status:
+						error instanceof TraktSyncError
+							? error.status
+							: error instanceof HttpException
+								? error.getStatus()
+								: undefined,
+					response:
+						error instanceof TraktSyncError ? error.diagnostics : undefined,
+				}),
+			);
 			return `${redirect}?connection=failed`;
 		}
 	}

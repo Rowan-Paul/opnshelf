@@ -31,11 +31,32 @@ export const tokenSchema = z.object({
 	created_at: z.number().positive(),
 });
 export type TraktToken = z.infer<typeof tokenSchema>;
+const oauthErrorSchema = z.object({
+	error: z.enum([
+		"invalid_request",
+		"invalid_client",
+		"invalid_grant",
+		"unauthorized_client",
+		"unsupported_grant_type",
+		"invalid_scope",
+		"access_denied",
+		"server_error",
+		"temporarily_unavailable",
+	]),
+});
+type TraktResponseDiagnostics = {
+	responseFormat: "json" | "html" | "other";
+	oauthError?: string;
+	cloudflare: boolean;
+	challenge: boolean;
+	cloudflareRay?: string;
+};
 export class TraktSyncError extends Error {
 	constructor(
 		message: string,
 		readonly status = 0,
 		readonly retrySeconds = 60,
+		readonly diagnostics?: TraktResponseDiagnostics,
 	) {
 		super(message);
 	}
@@ -117,6 +138,7 @@ export class TraktSyncClient {
 			method: body === undefined ? "GET" : "POST",
 			headers: {
 				"Content-Type": "application/json",
+				"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
 				"trakt-api-key": this.clientId,
 				"trakt-api-version": "2",
 				...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -126,6 +148,16 @@ export class TraktSyncClient {
 		});
 		if (!response.ok) {
 			const retry = Number(response.headers.get("retry-after"));
+			const contentType = response.headers.get("content-type") ?? "";
+			let oauthError: string | undefined;
+			if (contentType.includes("json")) {
+				// Only retain known OAuth error codes, never descriptions or raw bodies.
+				const parsed = oauthErrorSchema.safeParse(
+					await response.json().catch(() => null),
+				);
+				oauthError = parsed.success ? parsed.data.error : undefined;
+			}
+			const ray = response.headers.get("cf-ray") ?? "";
 			throw new TraktSyncError(
 				response.status === 401
 					? "Reconnect Trakt to continue syncing."
@@ -134,6 +166,19 @@ export class TraktSyncClient {
 						: "Trakt could not complete the request. Sync will retry.",
 				response.status,
 				Number.isFinite(retry) && retry > 0 ? retry : 60,
+				{
+					responseFormat: contentType.includes("json")
+						? "json"
+						: contentType.includes("html")
+							? "html"
+							: "other",
+					oauthError,
+					cloudflare: response.headers.get("server") === "cloudflare",
+					challenge: response.headers.get("cf-mitigated") === "challenge",
+					cloudflareRay: /^[a-f0-9]{16,32}-[A-Z]{3}$/i.test(ray)
+						? ray
+						: undefined,
+				},
 			);
 		}
 		const text = await response.text();
