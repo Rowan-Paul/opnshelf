@@ -113,10 +113,12 @@ jobs:
           cleanup() { docker rm -f tqgate-pds tqgate-minio tqgate-pg >/dev/null 2>&1 || true; docker network rm tqgate >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           docker network create tqgate
-          docker run -d --name tqgate-pg --network tqgate -e POSTGRES_USER=tranquil -e POSTGRES_DB=tranquil -e POSTGRES_HOST_AUTH_METHOD=trust postgres:15
-          docker run -d --name tqgate-minio --network tqgate -e MINIO_ROOT_USER=gate -e MINIO_ROOT_PASSWORD=gate-secret-12345 minio/minio server /data
+          docker run -d --name tqgate-pg --network tqgate -e POSTGRES_USER=tranquil -e POSTGRES_DB=tranquil -e POSTGRES_HOST_AUTH_METHOD=trust postgres:18-alpine
+          docker run -d --name tqgate-minio --network tqgate -e MINIO_ROOT_USER=gate -e MINIO_ROOT_PASSWORD=gate-secret-12345 cgr.dev/chainguard/minio:latest server /data
           sleep 5
-          docker run --rm --network tqgate --entrypoint sh minio/mc -c "mc alias set m http://tqgate-minio:9000 gate gate-secret-12345 >/dev/null && mc mb m/tenant"
+          docker run --rm --network tqgate -e AWS_ACCESS_KEY_ID=gate -e AWS_SECRET_ACCESS_KEY=gate-secret-12345 \
+            public.ecr.aws/aws-cli/aws-cli:latest --endpoint-url http://tqgate-minio:9000 \
+            s3api create-bucket --bucket tenant --region us-east-1
           docker run -d --name tqgate-pds --network tqgate -p 13000:3000 \
             -e DATABASE_URL=postgres://tranquil@tqgate-pg:5432/tranquil \
             -e PDS_HOSTNAME=gate.test -e MASTER_KEY=gate-master-key-0123456789abcdef01 \
