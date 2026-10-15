@@ -1,9 +1,19 @@
+import { contentValue } from "./content-value";
+
 /** Pure reconciliation policy. Transport IDs and last successful values survive disconnects. */
 export type Direction = "inbound" | "outbound" | "both";
 export type MediaType = "movie" | "show" | "season" | "episode" | "list";
 export type SyncRecord = {
 	key: string;
-	kind: "watch" | "rating" | "list" | "watchlist" | "favorites";
+	kind:
+		| "watch"
+		| "rating"
+		| "list"
+		| "watchlist"
+		| "favorites"
+		| "note"
+		| "library"
+		| "review";
 	mediaType: MediaType;
 	mediaId: string | null;
 	season: number;
@@ -16,6 +26,7 @@ export type SyncRecord = {
 	cid?: string;
 	problem?: string;
 	visibility?: "public" | "private";
+	createdAt?: string;
 };
 export type Baseline = {
 	linked: boolean;
@@ -34,6 +45,8 @@ export function isListRecord(record: { kind: string }): boolean {
 }
 
 export function mediaKey(record: SyncRecord): string {
+	if (record.kind === "library")
+		return `library:${record.mediaType}:${record.mediaId}:${record.season}:${record.episode}:${contentValue(record).format}`;
 	if (isListRecord(record)) return record.kind;
 	return `${record.kind}:${record.mediaType}:${record.mediaId}:${record.season}:${record.episode}`;
 }
@@ -99,6 +112,7 @@ export function candidates(
 			(!isListRecord(record) ||
 				record.kind !== "list" ||
 				record.title === other.title) &&
+			(record.kind !== "review" || record.value === other.value) &&
 			(record.kind !== "watch" ||
 				record.value === null ||
 				other.value === null ||
@@ -112,9 +126,16 @@ export function readRecord(value: unknown): SyncRecord | null {
 	const v = value as Partial<SyncRecord>;
 	if (
 		typeof v.key !== "string" ||
-		!["watch", "rating", "list", "watchlist", "favorites"].includes(
-			v.kind ?? "",
-		) ||
+		![
+			"watch",
+			"rating",
+			"list",
+			"watchlist",
+			"favorites",
+			"note",
+			"library",
+			"review",
+		].includes(v.kind ?? "") ||
 		!["movie", "show", "season", "episode", "list"].includes(
 			v.mediaType ?? "",
 		) ||

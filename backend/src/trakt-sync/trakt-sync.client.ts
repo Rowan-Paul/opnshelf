@@ -4,6 +4,8 @@ import { z } from "zod";
 import { BackendEnv } from "../config/env.schema";
 import { isListRecord, type MediaType, type SyncRecord } from "./reconcile";
 
+import { isContentRecord } from "./content-value";
+import { snapshotContent, writeContent } from "./remote-content";
 import { snapshotLists, writeList } from "./remote-lists";
 
 const ids = z.object({
@@ -166,9 +168,13 @@ export class TraktSyncClient {
 					? "Reconnect Trakt to continue syncing."
 					: response.status === 429
 						? "Trakt rate limit reached. Sync will retry."
-						: response.status === 420 && path.startsWith("/sync/favorites")
-							? "Your Trakt Favorites limit was reached. Free space and retry; no Favorites were truncated."
-							: "Trakt could not complete the request. Sync will retry.",
+						: response.status === 422 && path.startsWith("/comments")
+							? "Trakt rejected this Review. Check its English-language, word-count and formatting requirements before retrying."
+							: response.status === 420 && path.startsWith("/notes")
+								? "Your Trakt Notes limit was reached. Free space on Trakt and retry; your Note is preserved."
+								: response.status === 420 && path.startsWith("/sync/favorites")
+									? "Your Trakt Favorites limit was reached. Free space and retry; no Favorites were truncated."
+									: "Trakt could not complete the request. Sync will retry.",
 				response.status,
 				Number.isFinite(retry) && retry > 0 ? retry : 60,
 				{
@@ -236,7 +242,14 @@ export class TraktSyncClient {
 	}
 	async snapshot(
 		token: string,
-		options: { lists?: boolean; watchlist?: boolean; favorites?: boolean } = {},
+		options: {
+			lists?: boolean;
+			watchlist?: boolean;
+			favorites?: boolean;
+			notes?: boolean;
+			library?: boolean;
+			reviews?: boolean;
+		} = {},
 	): Promise<SyncRecord[]> {
 		const before = (await this.request("/sync/last_activities", token)).data;
 		const watches = await this.pages("/sync/history", token, "watch");
@@ -249,12 +262,16 @@ export class TraktSyncClient {
 			options.lists || options.watchlist || options.favorites
 				? await snapshotLists(this, token, options)
 				: [];
+		const content =
+			options.notes || options.library || options.reviews
+				? await snapshotContent(this, token, options)
+				: [];
 		const after = (await this.request("/sync/last_activities", token)).data;
 		if (JSON.stringify(before) !== JSON.stringify(after))
 			throw new TraktSyncError(
 				"Trakt changed during the read. Sync will read a fresh snapshot.",
 			);
-		return [...watches, ...ratings, ...lists];
+		return [...watches, ...ratings, ...lists, ...content];
 	}
 	/** Confirm only the affected title's Watches, or the affected Rating category.
 	 * Ratings have no item-ID filter: the final path segment filters rating value. */
@@ -262,6 +279,12 @@ export class TraktSyncClient {
 		token: string,
 		record: SyncRecord,
 	): Promise<SyncRecord[]> {
+		if (isContentRecord(record))
+			return snapshotContent(this, token, {
+				notes: record.kind === "note",
+				library: record.kind === "library",
+				reviews: record.kind === "review",
+			});
 		if (isListRecord(record))
 			return snapshotLists(this, token, {
 				lists: record.kind === "list",
@@ -366,6 +389,8 @@ export class TraktSyncClient {
 		previous?: SyncRecord | null,
 		onCreated?: (record: SyncRecord) => Promise<void>,
 	) {
+		if (isContentRecord(record))
+			return writeContent(this, token, record, remove, previous, onCreated);
 		if (isListRecord(record))
 			return writeList(this, token, record, remove, previous, onCreated);
 		if (record.kind === "watch" && remove) {

@@ -11579,6 +11579,18 @@
           "favorites": {
             "type": "boolean"
           },
+          "notes": {
+            "type": "boolean"
+          },
+          "library": {
+            "type": "boolean"
+          },
+          "reviews": {
+            "type": "boolean"
+          },
+          "contentPublicationConsent": {
+            "type": "boolean"
+          },
           "listPublicationConsent": {
             "type": "boolean"
           },
@@ -11692,6 +11704,22 @@
             "default": false
           },
           "listPublicationConsent": {
+            "type": "boolean",
+            "default": false
+          },
+          "notes": {
+            "type": "boolean",
+            "default": false
+          },
+          "library": {
+            "type": "boolean",
+            "default": false
+          },
+          "reviews": {
+            "type": "boolean",
+            "default": false
+          },
+          "contentPublicationConsent": {
             "type": "boolean",
             "default": false
           },

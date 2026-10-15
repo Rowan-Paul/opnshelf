@@ -142,3 +142,36 @@ that would temporarily exceed capacity while adding before removing needs space
 freed on Trakt first. Private outbound Favorites is held until Trakt privacy is
 verified; inbound sync preserves the Opnshelf destination's List privacy setting.
 Mobile version is unchanged: release through an approved OTA update.
+
+
+## Notes, Library and Reviews
+
+Apply migration `20261015230000_trakt_content_sync` before backend rollout. These
+three scopes start disabled. Select them on either client, review the direction,
+and accept the one publication acknowledgement. Old Watch/List consent does not
+silently acknowledge these content scopes. The original one-time Watch Import is
+unchanged. Mobile version is unchanged, so release uses an approved OTA update.
+
+Notes are standalone media Notes, separate from List member notes. Notes over
+5,000 characters, spoiler-flagged Notes and unsupported attachments stay in Needs
+attention. Existing Note conflicts require a source choice in two-way sync.
+
+Library transfers ownership with a known supported Format. Box Sets and local
+item notes remain local. Items missing Format metadata, unsupported audio/video
+metadata, multiple owned Formats and conflicting destination Formats stay visible
+without guessing or destructive replacement. Private outbound Library Items are
+held until Trakt collection privacy is verified. The current official API guide
+and response contracts disagree about collection metadata; live-account payload
+verification remains a rollout prerequisite for format fidelity.
+
+Only authored top-level Reviews transfer. Replies are excluded. Short comments
+are unsupported, and outgoing Reviews must meet Trakt's 200-word and English
+rules. No translation, text padding or truncation is performed. Review titles
+remain local; imports use the media title. Imported Reviews disable Blog Mirrors
+and never create Bluesky Cross-posts. Incoming edits/deletion of an existing Review
+with a Blog Mirror are held: manage that Review in Opnshelf or use its version.
+
+All writes are confirmed against authoritative repository/API reads. Failed pages
+never imply deletions, and interrupted remote creation retains the returned ID.
+If creation may have succeeded but no ID was received, check Trakt and explicitly
+link or choose a source before retrying; do not blindly create another item.

@@ -252,6 +252,7 @@ export class NotesService {
 					seasonNumber: record.seasonNumber ?? 0,
 					episodeNumber: record.episodeNumber ?? 0,
 					content: record.content,
+					createdAt: new Date(record.createdAt),
 				},
 				update: {
 					cid,

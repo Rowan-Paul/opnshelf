@@ -256,6 +256,7 @@ export class LibraryService {
 					showId: mediaType === "movie" ? null : mediaId,
 					boxSet: record.boxSet,
 					notes: record.notes,
+					createdAt: new Date(record.createdAt),
 				},
 				update: {
 					cid,

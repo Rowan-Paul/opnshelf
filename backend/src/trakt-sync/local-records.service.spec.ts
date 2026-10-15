@@ -34,6 +34,7 @@ const local = new LocalSyncRecords(
 		"restore"
 	>,
 	{} as LocalSyncLists,
+	{} as unknown as import("./local-content.service").LocalSyncContent,
 );
 const record: SyncRecord = {
 	key: "movie:original",

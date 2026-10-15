@@ -212,13 +212,24 @@ describe("Trakt Sync setup and conflict choices", () => {
 it.each([
 	"lists",
 	"favorites",
-])("uses one publication checkbox for %s-only sync", async (scope) => {
+	"notes",
+	"library",
+	"reviews",
+] as const)("uses one publication checkbox for %s-only sync", async (scope) => {
 	mocks.importStatus = "completed";
 	mount();
 	fireEvent.click(await screen.findByLabelText("Watch history"));
 	fireEvent.click(screen.getByLabelText("Ratings"));
 	fireEvent.click(
-		screen.getByLabelText(scope === "favorites" ? "Favorites" : "Custom Lists"),
+		screen.getByLabelText(
+			{
+				lists: "Custom Lists",
+				favorites: "Favorites",
+				notes: "Notes",
+				library: "Library",
+				reviews: "Reviews",
+			}[scope],
+		),
 	);
 	if (scope === "lists") fireEvent.click(screen.getByLabelText("Watchlist"));
 	fireEvent.click(screen.getByRole("button", { name: "Enable sync" }));
@@ -241,6 +252,10 @@ it.each([
 					lists: scope === "lists",
 					watchlist: scope === "lists",
 					favorites: scope === "favorites",
+					notes: scope === "notes",
+					library: scope === "library",
+					reviews: scope === "reviews",
+					contentPublicationConsent: true,
 					publicationConsent: true,
 					listPublicationConsent: true,
 				}),

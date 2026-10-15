@@ -201,7 +201,7 @@ export async function snapshotLists(
 	}
 	return result;
 }
-async function payload(
+export async function listMemberPayload(
 	api: Api,
 	token: string,
 	item: ListMember,
@@ -315,7 +315,9 @@ export async function writeList(
 	// Resolve every membership before any destructive operation.
 	const bodies = [];
 	for (const item of value.items)
-		bodies.push(await payload(api, token, item, desired.kind !== "favorites"));
+		bodies.push(
+			await listMemberPayload(api, token, item, desired.kind !== "favorites"),
+		);
 	let id = desired.traktId;
 	if (desired.kind === "list" && !id) {
 		const created = metadataSchema.parse(

@@ -1,3 +1,6 @@
+import { NotesModule } from "../notes/notes.module";
+import { LibraryModule } from "../library/library.module";
+import { LocalSyncContent } from "./local-content.service";
 import { ListsModule } from "../lists/lists.module";
 import { LocalSyncLists } from "./local-lists.service";
 import { forwardRef, Module } from "@nestjs/common";
@@ -15,6 +18,8 @@ import { TraktSyncService } from "./trakt-sync.service";
 	imports: [
 		PrismaModule,
 		ListsModule,
+		NotesModule,
+		LibraryModule,
 		MoviesModule,
 		ShowsModule,
 		RatingsModule,
@@ -23,6 +28,7 @@ import { TraktSyncService } from "./trakt-sync.service";
 	controllers: [TraktSyncController],
 	providers: [
 		LocalSyncLists,
+		LocalSyncContent,
 		TraktSyncClient,
 		LocalSyncRecords,
 		TraktSyncService,

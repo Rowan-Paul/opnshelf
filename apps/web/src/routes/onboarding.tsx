@@ -934,7 +934,7 @@ function TraktStep({
 				</div>
 				<ul className="mb-5 space-y-1.5 text-(--foreground-muted) text-sm">
 					{[
-						"Bring over your Watch history, Ratings, Lists, watchlist and Favorites",
+						"Bring over your Watch history, Ratings, Lists, Favorites, Notes, Library and Reviews",
 						"New Watches keep flowing, in the direction you choose",
 						"Review every transfer before sync starts",
 					].map((line) => (

@@ -159,7 +159,10 @@ it("closes the confirmation sheet when navigating to finish an Import", () => {
 it.each([
 	"lists",
 	"favorites",
-])("uses one publication acknowledgement for %s-only sync", (scope) => {
+	"notes",
+	"library",
+	"reviews",
+] as const)("uses one publication acknowledgement for %s-only sync", (scope) => {
 	mount();
 	const toggle = (label: string, value: boolean) => {
 		const control = renderer.root.find(
@@ -170,7 +173,16 @@ it.each([
 	};
 	toggle("Watch history", false);
 	toggle("Ratings", false);
-	toggle(scope === "favorites" ? "Favorites" : "Custom Lists", true);
+	toggle(
+		{
+			lists: "Custom Lists",
+			favorites: "Favorites",
+			notes: "Notes",
+			library: "Library",
+			reviews: "Reviews",
+		}[scope],
+		true,
+	);
 	if (scope === "lists") toggle("Watchlist", true);
 	press("Enable sync");
 	const confirm = () =>
@@ -208,6 +220,10 @@ it.each([
 			lists: scope === "lists",
 			watchlist: scope === "lists",
 			favorites: scope === "favorites",
+			notes: scope === "notes",
+			library: scope === "library",
+			reviews: scope === "reviews",
+			contentPublicationConsent: true,
 			listPublicationConsent: true,
 		}),
 	});

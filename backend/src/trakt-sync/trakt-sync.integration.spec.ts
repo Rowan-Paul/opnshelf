@@ -1,3 +1,4 @@
+import { encodeContent, isContentRecord } from "./content-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -75,7 +76,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 					return;
 				}
 				const previous =
-					isListRecord(r) && r.traktId
+					(isListRecord(r) || isContentRecord(r)) && r.traktId
 						? remoteRecords.find(
 								(v) => v.kind === r.kind && v.traktId === r.traktId,
 							)
@@ -91,7 +92,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 					remoteRecords.push({
 						...r,
 						key: `${r.kind}:${++serial}`,
-						traktId: isListRecord(r) ? serial : r.traktId,
+						traktId: isListRecord(r) || isContentRecord(r) ? serial : r.traktId,
 						rkey: undefined,
 						cid: undefined,
 						value:
@@ -102,7 +103,8 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 								: r.value,
 					});
 				const created = remoteRecords.at(-1);
-				if (isListRecord(r) && !previous && created) await onCreated?.(created);
+				if ((isListRecord(r) || isContentRecord(r)) && !previous && created)
+					await onCreated?.(created);
 			},
 		),
 	};
@@ -126,12 +128,14 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 					...desired,
 					key:
 						previous?.key ??
-						(isListRecord(desired)
+						(isListRecord(desired) || isContentRecord(desired)
 							? `${desired.kind}:${reservedRkey}`
 							: `movie:local-${desired.key}`),
 					rkey:
 						previous?.rkey ??
-						(isListRecord(desired) ? reservedRkey : `local-${desired.key}`),
+						(isListRecord(desired) || isContentRecord(desired)
+							? reservedRkey
+							: `local-${desired.key}`),
 				};
 				localRecords = [
 					...localRecords.filter((r) => r.key !== record.key),
@@ -303,6 +307,108 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(listValue(localRecords[0]).items.map((i) => i.mediaId)).toEqual([
 			"12",
 		]);
+		expect((await service.status(userDid)).needsAttention).toBe(1);
+	});
+	const content = (
+		kind: "note" | "library" | "review",
+		key: string,
+		text = "Source words",
+	): SyncRecord => ({
+		key,
+		kind,
+		mediaType: "movie",
+		mediaId: "12",
+		season: 0,
+		episode: 0,
+		title: "Fixture",
+		visibility: kind === "review" ? "public" : "private",
+		value: encodeContent(
+			kind === "library"
+				? { format: "dvd" }
+				: { content: text, spoiler: false },
+		),
+		traktId: 22,
+	});
+	async function configureContent(
+		direction: "inbound" | "outbound" | "both",
+		kind: "note" | "library" | "review",
+		consent = true,
+	) {
+		await service.configure(userDid, {
+			direction,
+			watches: false,
+			ratings: false,
+			notes: kind === "note",
+			library: kind === "library",
+			reviews: kind === "review",
+			contentPublicationConsent: consent,
+			publicationConsent: false,
+			historyScope: "all",
+		});
+		await tick();
+	}
+	it.each(["note", "library", "review"] as const)(
+		"imports %s with a durable local identity and propagates linked deletions",
+		async (kind) => {
+			remoteRecords = [content(kind, `${kind}:22`)];
+			await configureContent("inbound", kind);
+			await tick();
+			expect(localRecords).toHaveLength(1);
+			expect(localRecords[0].key).toMatch(new RegExp(`^${kind}:`));
+			remoteRecords = [];
+			await tick();
+			expect(localRecords).toEqual([]);
+		},
+	);
+	it("requires new content consent even when Watch and List consent exist", async () => {
+		await configureLists("inbound");
+		await expect(configureContent("inbound", "note", false)).rejects.toThrow(
+			"Notes, Library Items and Reviews may become public",
+		);
+	});
+	it("keeps initial conflicting Notes for an explicit source choice", async () => {
+		localRecords = [content("note", "note:local", "Local words")];
+		remoteRecords = [content("note", "note:22", "Remote words")];
+		await configureContent("both", "note");
+		await tick();
+		expect(localApi.write).not.toHaveBeenCalled();
+		expect((await service.status(userDid)).needsAttention).toBe(1);
+		const issues = await service.issues(userDid, { view: "attention" });
+		expect(issues.items[0].opnshelf?.displayValue).toBe("Local words");
+		expect(issues.items[0].trakt?.displayValue).toBe("Remote words");
+	});
+	it("does not reuse a show's Note mapping for a movie with the same Trakt numeric ID", async () => {
+		remoteRecords = [
+			{
+				...content("note", "note:22"),
+				mediaType: "show",
+				mediaId: "34",
+				traktParentId: 22,
+			},
+		];
+		await configureContent("inbound", "note");
+		await tick();
+		remoteRecords.push({
+			...content("note", "note:23"),
+			mediaId: null,
+			traktId: 23,
+			traktParentId: 22,
+		});
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		expect((await service.status(userDid)).needsAttention).toBe(1);
+	});
+	it("keeps ownership with a missing format visible without inventing a Library Item", async () => {
+		remoteRecords = [
+			{
+				...content("library", "library:movie:22"),
+				value: encodeContent({}),
+				problem: "Trakt did not supply a supported ownership format.",
+			},
+		];
+		await configureContent("inbound", "library");
+		await tick();
+		expect(localRecords).toEqual([]);
 		expect((await service.status(userDid)).needsAttention).toBe(1);
 	});
 	it("requires fresh List publication consent even after Watch consent", async () => {

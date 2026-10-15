@@ -1868,6 +1868,10 @@ export type SyncStatusDto = {
     lists?: boolean;
     watchlist?: boolean;
     favorites?: boolean;
+    notes?: boolean;
+    library?: boolean;
+    reviews?: boolean;
+    contentPublicationConsent?: boolean;
     listPublicationConsent?: boolean;
     historyScope: 'all' | 'future';
     publicationConsent: boolean;
@@ -1906,6 +1910,10 @@ export type SyncSettingsDto = {
     watchlist?: boolean;
     favorites?: boolean;
     listPublicationConsent?: boolean;
+    notes?: boolean;
+    library?: boolean;
+    reviews?: boolean;
+    contentPublicationConsent?: boolean;
     historyScope: 'all' | 'future';
     publicationConsent: boolean;
     handoffImport?: boolean;

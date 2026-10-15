@@ -3,6 +3,7 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
+	TRAKT_CONTENT_COPY,
 	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
 	TRAKT_LIST_COPY,
@@ -163,6 +164,7 @@ export function TraktSyncManager({
 		data.direction !== "outbound" &&
 		!data.publicationConsent &&
 		!data.listPublicationConsent &&
+		!data.contentPublicationConsent &&
 		!data.lastSuccessAt;
 	return (
 		<View className="gap-5">
@@ -224,6 +226,9 @@ export function TraktSyncManager({
 									data.lists && "Custom Lists",
 									data.watchlist && "Watchlist",
 									data.favorites && "Favorites",
+									data.notes && "Notes",
+									data.library && "Library",
+									data.reviews && "Reviews",
 								]
 									.filter(Boolean)
 									.join(", ")}
@@ -314,7 +319,7 @@ export function TraktSyncManager({
 			</View>
 			{connected && (editing || needsSetup) && (
 				<SyncSettings
-					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.listPublicationConsent}:${data.historyScope}`}
+					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.notes}:${data.library}:${data.reviews}:${data.contentPublicationConsent}:${data.listPublicationConsent}:${data.historyScope}`}
 					status={data}
 					className={embedded ? "gap-4 border-border border-t pt-4" : card}
 					onSaved={() => {
@@ -371,7 +376,8 @@ export function SyncSettings({
 		Boolean(
 			status.lastSuccessAt ||
 				status.publicationConsent ||
-				status.listPublicationConsent,
+				status.listPublicationConsent ||
+				status.contentPublicationConsent,
 		);
 	const save = useMutation({
 		...traktSyncControllerConfigureMutation(),
@@ -388,14 +394,20 @@ export function SyncSettings({
 	const requiresListConsent = Boolean(
 		settings.lists || settings.watchlist || settings.favorites,
 	);
-	const requiresConsent = requiresHistoryConsent || requiresListConsent;
+	const requiresContentConsent = Boolean(
+		settings.notes || settings.library || settings.reviews,
+	);
+	const requiresConsent =
+		requiresHistoryConsent || requiresListConsent || requiresContentConsent;
 	const hasConsent = Boolean(
 		(!requiresHistoryConsent || settings.publicationConsent) &&
-			(!requiresListConsent || settings.listPublicationConsent),
+			(!requiresListConsent || settings.listPublicationConsent) &&
+			(!requiresContentConsent || settings.contentPublicationConsent),
 	);
 	const hadConsent = Boolean(
 		(!requiresHistoryConsent || status.publicationConsent) &&
-			(!requiresListConsent || status.listPublicationConsent),
+			(!requiresListConsent || status.listPublicationConsent) &&
+			(!requiresContentConsent || status.contentPublicationConsent),
 	);
 	const canSave = hasConsent && (!unfinished || settings.handoffImport);
 	const dismiss = () => {
@@ -438,6 +450,24 @@ export function SyncSettings({
 			)}
 			{settings.favorites && (
 				<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
+			)}
+			<Toggle
+				label="Notes"
+				value={settings.notes ?? false}
+				onChange={(notes) => setSettings({ ...settings, notes })}
+			/>
+			<Toggle
+				label="Library"
+				value={settings.library ?? false}
+				onChange={(library) => setSettings({ ...settings, library })}
+			/>
+			<Toggle
+				label="Reviews"
+				value={settings.reviews ?? false}
+				onChange={(reviews) => setSettings({ ...settings, reviews })}
+			/>
+			{requiresContentConsent && (
+				<Text className={copy}>{TRAKT_CONTENT_COPY}</Text>
 			)}
 			<Text className="font-medium text-foreground text-sm">Direction</Text>
 			<View
@@ -541,7 +571,10 @@ export function SyncSettings({
 					!settings.ratings &&
 					!settings.lists &&
 					!settings.watchlist &&
-					!settings.favorites
+					!settings.favorites &&
+					!settings.notes &&
+					!settings.library &&
+					!settings.reviews
 				}
 				onPress={() => setReviewing(true)}
 			/>
@@ -603,6 +636,9 @@ export function SyncSettings({
 											settings.lists && "Custom Lists",
 											settings.watchlist && "Watchlist",
 											settings.favorites && "Favorites",
+											settings.notes && "Notes",
+											settings.library && "Library",
+											settings.reviews && "Reviews",
 										]
 											.filter(Boolean)
 											.join(", "),
@@ -650,6 +686,7 @@ export function SyncSettings({
 												...settings,
 												publicationConsent: consent,
 												listPublicationConsent: consent,
+												contentPublicationConsent: consent,
 											})
 										}
 									/>
@@ -871,7 +908,11 @@ function SyncIssue({
 				))}
 			{connected && !item.ignored && item.candidates.length > 0 && (
 				<Action
-					label="These are different Watches"
+					label={
+						item.kind === "watch"
+							? "These are different Watches"
+							: "These are separate records"
+					}
 					disabled={mutation.isPending}
 					onPress={() => resolve({ action: "separate" })}
 				/>
@@ -880,7 +921,8 @@ function SyncIssue({
 				item.kind !== "list" &&
 				item.kind !== "watchlist" &&
 				item.kind !== "favorites" &&
-				item.trakt?.mediaId === null && (
+				item.trakt?.mediaId === null &&
+				item.trakt?.mediaType !== "list" && (
 					<View className="gap-2">
 						<Text className="text-foreground text-sm">
 							Find the matching title
@@ -917,9 +959,13 @@ function SyncIssue({
 				<View className="gap-3 rounded-xl border border-primary p-3">
 					<Text className={copy}>
 						{choice.action === "link"
-							? "Confirm these represent the same viewing?"
+							? item.kind === "watch"
+								? "Confirm these represent the same viewing?"
+								: "Link these records?"
 							: choice.action === "match"
-								? "Use this title for this Trakt media identity and its Watch dates?"
+								? item.kind === "watch"
+									? "Use this title for this Trakt media identity and its Watch dates?"
+									: "Use this title for this Trakt item?"
 								: traktResolutionLabel(
 										choice.action,
 										Boolean(item[choice.action as "trakt" | "opnshelf"]),
