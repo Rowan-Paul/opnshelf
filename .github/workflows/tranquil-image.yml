@@ -1,4 +1,4 @@
-# Builds the Tranquil PDS upstream image and publishes it directly to Docker Hub.
+# Builds the Tranquil PDS fork image and publishes it directly to Docker Hub.
 # Railway follows `latest`; do not add a repository pin-bump or promotion step here.
 name: tranquil-image
 
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Upstream git ref to build (default: upstream HEAD)"
+        description: "Fork git ref to build (default: fork HEAD)"
         required: false
         default: ""
       baseline_image:
@@ -32,7 +32,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  UPSTREAM_URL: https://tangled.org/tranquil.farm/tranquil-pds
+  UPSTREAM_URL: https://tangled.org/rowanpaulflynn.dev/tranquil-pds
   HUB_REPO: rowanpaul/tranquil-pds
 
 jobs:
@@ -100,7 +100,7 @@ jobs:
         if: steps.dedupe.outputs.skip != 'true'
         run: |
           set -euo pipefail
-          docker build --platform linux/amd64 -f .upstream/Dockerfile -t tranquil-candidate:ci \
+          docker build --platform linux/amd64 --build-arg CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 -f .upstream/Dockerfile -t tranquil-candidate:ci \
             --label "org.opencontainers.image.source=$UPSTREAM_URL" \
             --label "org.opencontainers.image.revision=$(git -C .upstream rev-parse HEAD)" \
             --label "xyz.opnshelf.pds.migrations=$(cat candidate-migrations.json)" \
