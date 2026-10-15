@@ -203,10 +203,23 @@ export default function MediaActionsBar({
 							? "Could not load your reviews. Click to retry."
 							: undefined
 					}
-					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${hasReviewed ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
-					aria-label="Rate and review"
+					className={`inline-flex h-10 items-center justify-center gap-1 rounded-md border transition-all duration-150 lg:gap-2 ${rating > 0 ? "px-1.5 lg:px-3" : "w-10"} ${hasReviewed || rating > 0 ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
+					aria-label={
+						rating > 0
+							? `Your rating: ${rating} out of 10. Rate and review`
+							: "Rate and review"
+					}
 				>
-					<MessageSquarePlus className="size-5" />
+					{rating > 0 ? (
+						<>
+							<Star className="size-4 fill-current lg:size-5" />
+							<span className="font-medium text-xs tabular-nums lg:text-sm">
+								{rating}/10
+							</span>
+						</>
+					) : (
+						<MessageSquarePlus className="size-5" />
+					)}
 				</button>
 				{/* Below lg, Share lives in the More menu so the action row fits one line */}
 				<button
