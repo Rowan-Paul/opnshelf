@@ -35,6 +35,7 @@ vi.mock("@opnshelf/api", async (original) => ({
 			ratings: true,
 			historyScope: "all",
 			publicationConsent: mocks.consent,
+			remaining: 0,
 			needsAttention: 0,
 			ignored: 0,
 			importStatus: mocks.importStatus,
@@ -170,6 +171,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 						ratings: true,
 						historyScope: "all",
 						publicationConsent: false,
+						remaining: 0,
 						needsAttention: 0,
 						ignored: 0,
 					}}

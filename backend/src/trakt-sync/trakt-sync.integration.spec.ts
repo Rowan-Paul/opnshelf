@@ -388,6 +388,27 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(localRecords).toHaveLength(0);
 	});
+	it("reports catch-up progress while a large inbound history transfers", async () => {
+		remoteRecords = Array.from({ length: 25 }, (_, i) =>
+			watch(`watch:${i}`, new Date(Date.UTC(2020, 0, i + 1)).toISOString()),
+		);
+		await configure("all", "inbound");
+		await tick();
+		expect(await service.status(userDid)).toMatchObject({
+			remaining: 15,
+			progress: 40,
+		});
+		await tick();
+		expect(await service.status(userDid)).toMatchObject({
+			remaining: 5,
+			progress: 80,
+		});
+		await tick();
+		const done = await service.status(userDid);
+		expect(localRecords).toHaveLength(25);
+		expect(done.remaining).toBe(0);
+		expect(done.progress).toBeUndefined();
+	});
 	it("exports historical future additions and leaves the initial history excluded", async () => {
 		localRecords = [watch("movie:old")];
 		await configure("future");

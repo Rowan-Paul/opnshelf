@@ -178,6 +178,8 @@ export const TraktSyncConnectionScalarFieldEnum = {
   leaseUntil: 'leaseUntil',
   remoteSnapshot: 'remoteSnapshot',
   remoteReadAt: 'remoteReadAt',
+  remaining: 'remaining',
+  remainingTotal: 'remainingTotal',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

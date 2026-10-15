@@ -33,6 +33,7 @@ vi.mock("@tanstack/react-query", () => ({
 			historyScope: "all",
 			publicationConsent: false,
 			importStatus: "paused",
+			remaining: 0,
 			needsAttention: 0,
 			ignored: 0,
 		},

@@ -1869,6 +1869,14 @@ export type SyncStatusDto = {
     publicationConsent: boolean;
     lastSuccessAt?: string;
     lastError?: string;
+    /**
+     * Records still waiting to transfer while sync catches up
+     */
+    remaining: number;
+    /**
+     * Catch-up progress (0–100) while records remain
+     */
+    progress?: number;
     needsAttention: number;
     ignored: number;
     importStatus?: string;
