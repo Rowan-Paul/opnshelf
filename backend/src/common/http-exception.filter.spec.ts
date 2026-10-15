@@ -5,6 +5,7 @@ import {
 	type ArgumentsHost,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { TmdbNotFoundError, TmdbServiceError } from "../tmdb/tmdb-http";
 import { AllExceptionsFilter } from "./http-exception.filter";
 
 describe("AllExceptionsFilter", () => {
@@ -128,3 +129,51 @@ describe("AllExceptionsFilter", () => {
 		log.mockRestore();
 	});
 });
+
+it.each([
+	[new TmdbNotFoundError("Episode not found", 404), 404, "Episode not found"],
+	[new TmdbNotFoundError("Season not found", 404), 404, "Season not found"],
+	[
+		new TmdbServiceError("upstream private details", 503),
+		500,
+		"Internal server error",
+	],
+	[new Error("private details"), 500, "Internal server error"],
+])(
+	"maps catalogue errors at the HTTP boundary: %s",
+	(error, status, message) => {
+		const warn = vi
+			.spyOn(Logger.prototype, "warn")
+			.mockImplementation(() => {});
+		const logError = vi
+			.spyOn(Logger.prototype, "error")
+			.mockImplementation(() => {});
+		const response = {
+			setHeader: vi.fn(),
+			status: vi.fn().mockReturnThis(),
+			json: vi.fn(),
+		};
+		const host = {
+			switchToHttp: () => ({
+				getResponse: () => response,
+				getRequest: () => ({
+					method: "GET",
+					url: "/shows/tmdb/252608/season/2/episode/1",
+				}),
+			}),
+		} as ArgumentsHost;
+		new AllExceptionsFilter().catch(error, host);
+		expect(response.status).toHaveBeenCalledWith(status);
+		expect(response.json).toHaveBeenCalledWith({
+			statusCode: status,
+			message,
+			error: status === 404 ? "Not Found" : "Internal Server Error",
+		});
+		expect(response.setHeader).toHaveBeenCalledWith(
+			"Cache-Control",
+			"private, no-store",
+		);
+		warn.mockRestore();
+		logError.mockRestore();
+	},
+);
