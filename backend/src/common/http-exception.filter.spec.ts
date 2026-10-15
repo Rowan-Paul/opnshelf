@@ -5,7 +5,7 @@ import {
 	type ArgumentsHost,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
-import { TmdbNotFoundError, TmdbServiceError } from "../tmdb/tmdb-http";
+import { TmdbServiceError, tmdbErrorForResponse } from "../tmdb/tmdb-http";
 import { AllExceptionsFilter } from "./http-exception.filter";
 
 describe("AllExceptionsFilter", () => {
@@ -130,16 +130,36 @@ describe("AllExceptionsFilter", () => {
 	});
 });
 
-it.each([
-	[new TmdbNotFoundError("Episode not found", 404), 404, "Episode not found"],
-	[new TmdbNotFoundError("Season not found", 404), 404, "Season not found"],
+const catalogueErrorCases: [Error, number, string][] = [
+	...[401, 403, 422, 429, 503].map<[Error, number, string]>((status) => [
+		tmdbErrorForResponse(new Response(null, { status }), "Episode not found"),
+		500,
+		"Internal server error",
+	]),
+	[
+		tmdbErrorForResponse(
+			new Response(null, { status: 404 }),
+			"Episode not found",
+		),
+		404,
+		"Episode not found",
+	],
+	[
+		tmdbErrorForResponse(
+			new Response(null, { status: 404 }),
+			"Season not found",
+		),
+		404,
+		"Season not found",
+	],
 	[
 		new TmdbServiceError("upstream private details", 503),
 		500,
 		"Internal server error",
 	],
 	[new Error("private details"), 500, "Internal server error"],
-])(
+];
+it.each(catalogueErrorCases)(
 	"maps catalogue errors at the HTTP boundary: %s",
 	(error, status, message) => {
 		const warn = vi
