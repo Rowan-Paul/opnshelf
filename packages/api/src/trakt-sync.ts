@@ -69,3 +69,20 @@ export function traktError(error: unknown): string {
 		return error.message;
 	return "Could not complete this action. Try again.";
 }
+/**
+ * Whether the User's Watch history is already coming over from Trakt — an
+ * Import that has not stopped, or Trakt Sync bringing Watches in — so
+ * onboarding can skip asking which titles they have watched.
+ */
+export function bringsTraktWatches(
+	importJob: { status: string } | null | undefined,
+	sync: Pick<SyncStatusDto, "status" | "direction" | "watches"> | undefined,
+): boolean {
+	if (importJob && importJob.status !== "failed") return true;
+	return Boolean(
+		sync &&
+			(sync.status === "active" || sync.status === "preparing") &&
+			sync.watches &&
+			sync.direction !== "outbound",
+	);
+}

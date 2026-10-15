@@ -1,10 +1,12 @@
 import {
 	authControllerMeQueryKey,
+	bringsTraktWatches,
 	traktError,
 	traktSyncControllerConnectMutation,
 	traktSyncControllerStatus,
 	type UserDto,
 	usersControllerCompleteOnboarding,
+	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
@@ -170,6 +172,20 @@ export default function OnboardingScreen() {
 	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
+	const { data: currentImport } = useQuery({
+		...usersControllerGetMyCurrentTraktImportOptions(),
+		enabled: isAuthenticated,
+	});
+	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
+	const { data: traktSync } = useQuery({
+		queryKey: traktStatusKey,
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		enabled: isAuthenticated,
+	});
+	// Watch history already coming from Trakt makes the watches step redundant.
+	const skipWatches =
+		importStarted || bringsTraktWatches(currentImport, traktSync);
 
 	const goBack = useCallback(() => {
 		if (notificationsBusy) return;
@@ -284,7 +300,7 @@ export default function OnboardingScreen() {
 						footer={
 							<PrimaryButton
 								label="Continue"
-								onPress={() => setStep("watches")}
+								onPress={() => setStep(skipWatches ? "done" : "watches")}
 							/>
 						}
 					>
