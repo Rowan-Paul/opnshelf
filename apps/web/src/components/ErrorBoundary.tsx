@@ -1,3 +1,4 @@
+import { getHttpStatus } from "@opnshelf/api";
 import { Link, useRouter } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, Home, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
@@ -15,12 +16,18 @@ export function DefaultErrorComponent({
 }: ErrorComponentProps) {
 	const router = useRouter();
 	const error = thrown instanceof Error ? thrown : undefined;
+	// Route IDs are static templates; never send the visitor's actual pathname.
+	const routeId = router.state.matches.at(-1)?.routeId ?? "__root__";
+	const status = getHttpStatus(thrown);
 
 	useEffect(() => {
 		if (thrown) {
-			posthog.captureException(thrown, { error_boundary: "tanstack_router" });
+			posthog.captureException(thrown, {
+				error_boundary: "tanstack_router",
+				$issue_name: `Page failed: ${routeId}${status === undefined ? "" : ` (HTTP ${status})`}`,
+			});
 		}
-	}, [thrown]);
+	}, [thrown, routeId, status]);
 
 	const handleRetry = () => {
 		if (reset) {

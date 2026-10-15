@@ -1,8 +1,9 @@
 import {
+	getHttpStatus,
 	showsControllerGetEpisodeDetailsOptions,
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	ChevronLeft,
@@ -70,7 +71,10 @@ export const Route = createFileRoute(
 					},
 				}),
 			),
-		]);
+		]).catch((error: unknown) => {
+			if (getHttpStatus(error) === 404) throw notFound();
+			throw error;
+		});
 
 		return { show, episode };
 	},
