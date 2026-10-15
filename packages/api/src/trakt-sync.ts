@@ -7,10 +7,27 @@ import type {
 export const TRAKT_SYNC_DIRECTIONS: {
 	value: SyncSettingsDto["direction"];
 	label: string;
+	title: string;
+	description: string;
 }[] = [
-	{ value: "both", label: "Both directions" },
-	{ value: "inbound", label: "Trakt → Opnshelf" },
-	{ value: "outbound", label: "Opnshelf → Trakt" },
+	{
+		value: "inbound",
+		label: "Trakt → Opnshelf",
+		title: "From Trakt",
+		description: "Bring changes into Opnshelf",
+	},
+	{
+		value: "outbound",
+		label: "Opnshelf → Trakt",
+		title: "To Trakt",
+		description: "Send changes to Trakt",
+	},
+	{
+		value: "both",
+		label: "Both directions",
+		title: "Both ways",
+		description: "Keep both services up to date",
+	},
 ];
 export const TRAKT_SYNC_SCOPES: {
 	value: SyncSettingsDto["historyScope"];

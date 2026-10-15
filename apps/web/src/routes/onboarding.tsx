@@ -870,7 +870,11 @@ function TraktStep({
 					<SyncSettings
 						key={data.username}
 						status={data}
-						onSaved={refresh}
+						onSaved={() => {
+							void refresh();
+							onNext();
+						}}
+						onboarding
 						className=""
 						showHeading={false}
 					/>

@@ -7,13 +7,16 @@ import {
 	waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TraktSyncManager } from "./TraktSyncManager";
+import { SyncSettings, TraktSyncManager } from "./TraktSyncManager";
 
 const mocks = vi.hoisted(() => ({
 	configure: vi.fn(async () => ({})),
+	action: vi.fn(async () => ({})),
 	resolve: vi.fn(async () => ({})),
 	importStatus: "paused",
 	issue: false,
+	status: "paused",
+	consent: false,
 }));
 vi.mock("@tanstack/react-router", () => ({
 	Link: ({ children }: { children: React.ReactNode }) => (
@@ -25,13 +28,13 @@ vi.mock("@opnshelf/api", async (original) => ({
 	traktSyncControllerStatus: async () => ({
 		data: {
 			configured: true,
-			status: "paused",
+			status: mocks.status,
 			username: "fixture",
 			direction: "both",
 			watches: true,
 			ratings: true,
 			historyScope: "all",
-			publicationConsent: false,
+			publicationConsent: mocks.consent,
 			needsAttention: 0,
 			ignored: 0,
 			importStatus: mocks.importStatus,
@@ -56,15 +59,19 @@ vi.mock("@opnshelf/api", async (original) => ({
 		},
 	}),
 	traktSyncControllerConfigureMutation: () => ({ mutationFn: mocks.configure }),
+	traktSyncControllerActionMutation: () => ({ mutationFn: mocks.action }),
 	traktSyncControllerResolveMutation: () => ({ mutationFn: mocks.resolve }),
 }));
-function mount(connectionFailed = false) {
+function mount(connectionFailed = false, embedded = false) {
 	const client = new QueryClient({
 		defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 	});
 	render(
 		<QueryClientProvider client={client}>
-			<TraktSyncManager connectionFailed={connectionFailed} />
+			<TraktSyncManager
+				connectionFailed={connectionFailed}
+				embedded={embedded}
+			/>
 		</QueryClientProvider>,
 	);
 }
@@ -73,8 +80,24 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mocks.importStatus = "paused";
 	mocks.issue = false;
+	mocks.status = "paused";
+	mocks.consent = false;
 });
 describe("Trakt Sync setup and conflict choices", () => {
+	it("allows disconnecting before setup without enabling sync or consenting", async () => {
+		mount(false, true);
+		fireEvent.click(await screen.findByRole("button", { name: "Disconnect" }));
+		fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+		await waitFor(() =>
+			expect(mocks.action).toHaveBeenCalledWith(
+				{ body: { action: "disconnect" } },
+				expect.anything(),
+			),
+		);
+		expect(mocks.configure).not.toHaveBeenCalled();
+		expect(screen.queryByLabelText(/I understand that Watches/)).toBeNull();
+	});
+
 	it("shows an OAuth callback failure after returning to the app", async () => {
 		mount(true);
 		expect(
@@ -84,19 +107,20 @@ describe("Trakt Sync setup and conflict choices", () => {
 
 	it("requires publication consent, Import handoff, and a concrete review before enabling", async () => {
 		mount();
-		const review = (await screen.findByRole("button", {
-			name: "Review sync settings",
-		})) as HTMLButtonElement;
-		expect(review.disabled).toBe(true);
-		fireEvent.click(screen.getByLabelText(/I understand that Watches/));
-		expect(review.disabled).toBe(true);
-		fireEvent.click(screen.getByLabelText(/Continue my unfinished Import/));
-		expect(review.disabled).toBe(false);
+		const review = await screen.findByRole("button", { name: "Enable sync" });
+		expect(screen.queryByLabelText(/I understand that Watches/)).toBeNull();
 		fireEvent.click(review);
+		const confirm = screen.getByRole("button", {
+			name: "Confirm and enable sync",
+		}) as HTMLButtonElement;
+		expect(screen.getByRole("dialog")).toBeTruthy();
+		expect(confirm.disabled).toBe(true);
 		expect(mocks.configure).not.toHaveBeenCalled();
-		fireEvent.click(
-			screen.getByRole("button", { name: "Confirm and enable sync" }),
-		);
+		fireEvent.click(screen.getByLabelText(/I understand that Watches/));
+		expect(confirm.disabled).toBe(true);
+		fireEvent.click(screen.getByLabelText(/Continue my unfinished Import/));
+		expect(confirm.disabled).toBe(false);
+		fireEvent.click(confirm);
 		await waitFor(() =>
 			expect(mocks.configure).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -109,6 +133,60 @@ describe("Trakt Sync setup and conflict choices", () => {
 			),
 		);
 	});
+	it("shows an existing connection inline without repeating setup or offering another Import", async () => {
+		mocks.status = "active";
+		mocks.consent = true;
+		mocks.importStatus = "";
+		mount(false, true);
+		expect(await screen.findByText("Sync is on")).toBeTruthy();
+		expect(screen.queryByRole("heading", { name: "Trakt Sync" })).toBeNull();
+		expect(screen.queryByText(/Import public history/)).toBeNull();
+		expect(screen.queryByLabelText(/I understand that Watches/)).toBeNull();
+		expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
+		fireEvent.click(screen.getByRole("button", { name: "Sync settings" }));
+		fireEvent.click(screen.getByRole("radio", { name: "Opnshelf → Trakt" }));
+		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+		expect(screen.getByRole("dialog")).toBeTruthy();
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		expect(mocks.configure).not.toHaveBeenCalled();
+		expect(screen.queryByRole("dialog")).toBeNull();
+	});
+
+	it("uses Continue in onboarding and saves only after the modal's consent", async () => {
+		const saved = vi.fn();
+		const client = new QueryClient({
+			defaultOptions: { mutations: { retry: false } },
+		});
+		render(
+			<QueryClientProvider client={client}>
+				<SyncSettings
+					onboarding
+					onSaved={saved}
+					status={{
+						configured: true,
+						status: "paused",
+						direction: "both",
+						watches: true,
+						ratings: true,
+						historyScope: "all",
+						publicationConsent: false,
+						needsAttention: 0,
+						ignored: 0,
+					}}
+				/>
+			</QueryClientProvider>,
+		);
+		fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+		expect(saved).not.toHaveBeenCalled();
+		const confirm = screen.getByRole("button", {
+			name: "Enable sync and continue",
+		}) as HTMLButtonElement;
+		expect(confirm.disabled).toBe(true);
+		fireEvent.click(screen.getByLabelText(/I understand that Watches/));
+		fireEvent.click(confirm);
+		await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+	});
+
 	it("states deletion explicitly and requires a second confirmation", async () => {
 		mocks.importStatus = "completed";
 		mocks.issue = true;
