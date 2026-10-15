@@ -380,11 +380,17 @@ export async function writeList(
 				}),
 			})
 			.parse((await api.request("/users/settings", token)).data);
-		const count = new Set([
-			...existing.flatMap((e) => (e.item ? [memberKey(e.item)] : [])),
-			...value.items.map(memberKey),
-		]).size;
-		if (count > settings.limits.favorites.item_count)
+		const existingKeys = new Set(
+			existing.flatMap((e) => (e.item ? [memberKey(e.item)] : [])),
+		);
+		const additions = value.items.filter(
+			(item) => !existingKeys.has(memberKey(item)),
+		);
+		if (
+			additions.length > 0 &&
+			existingKeys.size + additions.length >
+				settings.limits.favorites.item_count
+		)
 			throw new Error(
 				"This transfer would exceed your Trakt Favorites limit. Free space on Trakt and retry; no Favorites were removed or truncated.",
 			);

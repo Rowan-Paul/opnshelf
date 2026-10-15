@@ -289,6 +289,43 @@ describe("Trakt Favorites transport", () => {
 		).rejects.toThrow("Favorites limit");
 		expect(request.mock.calls.every((call) => call.length === 2)).toBe(true);
 	});
+	it.each([0, 1])(
+		"allows removal-only sync when the existing count exceeds a limit of %s",
+		async (limit) => {
+			let rows = [
+				movie,
+				{ ...movie, id: 8, rank: 2, movie: { ids: { trakt: 10, tmdb: 13 } } },
+			];
+			const request = vi.fn(
+				async (path: string, _token?: string, body?: unknown) => {
+					if (path === "/users/settings")
+						return response({
+							user: { private: false },
+							limits: { favorites: { item_count: limit } },
+						});
+					if (path.startsWith("/search/"))
+						return response([{ type: "movie", movie: movie.movie }]);
+					if (path.includes("?page=")) return response(rows, rows.length);
+					if (path === "/sync/favorites/remove") {
+						rows = rows.filter((row) => row.id !== 8);
+						return response({ deleted: { movies: 1 }, not_found: {} });
+					}
+					if (path === "/sync/favorites/reorder")
+						return response({ updated: 1, skipped_ids: [] });
+					throw new Error(
+						`Unexpected request ${path}: ${JSON.stringify(body)}`,
+					);
+				},
+			);
+			await writeList({ request }, "fixture", favorite(), false);
+			expect(request).toHaveBeenCalledWith(
+				"/sync/favorites/remove",
+				"fixture",
+				{ movies: [{ ids: { trakt: 10 } }] },
+			);
+			expect(rows).toEqual([movie]);
+		},
+	);
 	it("adds, updates notes and reorders Favorites through their dedicated endpoints", async () => {
 		let rows: (typeof movie)[] = [];
 		const request = vi.fn(
