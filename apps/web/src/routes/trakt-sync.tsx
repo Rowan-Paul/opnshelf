@@ -1,9 +1,11 @@
-import { authControllerMeOptions, isUnauthorizedError } from "@opnshelf/api";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { TraktSyncManager } from "#/components/trakt/TraktSyncManager";
 import { ssrAuthOptions } from "#/lib/api";
+import { currentUserQueryOptions } from "#/lib/auth-query";
 
 export const Route = createFileRoute("/trakt-sync")({
+	// Only the browser receives the API's host-only session cookie.
+	ssr: false,
 	validateSearch: (
 		search: Record<string, unknown>,
 	): { connection?: string } => ({
@@ -11,18 +13,16 @@ export const Route = createFileRoute("/trakt-sync")({
 			typeof search.connection === "string" ? search.connection : undefined,
 	}),
 	beforeLoad: async ({ context }) => {
-		try {
-			await context.queryClient.fetchQuery(
-				authControllerMeOptions(ssrAuthOptions()),
-			);
-		} catch (error) {
-			if (isUnauthorizedError(error))
-				throw redirect({
-					to: "/login",
-					search: { message: "Please log in to manage Trakt Sync" },
-				});
-			throw error;
-		}
+		const user = await context.queryClient.fetchQuery({
+			...currentUserQueryOptions(ssrAuthOptions()),
+			// Recheck the signed-out placeholder hydrated from the root's SSR.
+			staleTime: 0,
+		});
+		if (!user)
+			throw redirect({
+				to: "/login",
+				search: { message: "Please log in to manage Trakt Sync" },
+			});
 	},
 	head: () => ({ meta: [{ title: "Trakt Sync | Opnshelf" }] }),
 	component: TraktSyncPage,
