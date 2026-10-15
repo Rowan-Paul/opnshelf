@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { Modal } from "react-native";
+import { Modal, Pressable } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterAll, afterEach, expect, it, vi } from "vitest";
 import { TraktSyncManager } from "./TraktSyncManager";
@@ -48,6 +48,7 @@ vi.mock("react-native", () => ({
 	Switch: "switch",
 	TextInput: "input",
 	Modal: "modal",
+	useWindowDimensions: () => ({ width: 390, height: 844, fontScale: 1 }),
 }));
 vi.mock("expo-router", () => ({ Link: "link" }));
 vi.mock("expo-image", () => ({ Image: "image" }));
@@ -88,6 +89,56 @@ it("allows disconnecting before setup without enabling sync", () => {
 		{ body: { action: "disconnect" } },
 		expect.anything(),
 	);
+});
+
+it("selects one History option and includes it in the confirmation", () => {
+	mount();
+	const option = (label: string) =>
+		renderer.root.find(
+			(node) =>
+				node.type === Pressable && node.props.accessibilityLabel === label,
+		);
+	const all = "All existing history and future changes";
+	const future = "Future changes only";
+	expect(option(all).props.accessibilityState.checked).toBe(true);
+	expect(option(future).props.accessibilityState.checked).toBe(false);
+	act(() => option(future).props.onPress());
+	expect(option(all).props.accessibilityState.checked).toBe(false);
+	expect(option(future).props.accessibilityState.checked).toBe(true);
+	press("Enable sync");
+	expect(
+		renderer.root
+			.findByType(Modal)
+			.findAll(
+				(node) => node.type === "text" && node.props.children === future,
+			),
+	).toHaveLength(1);
+});
+
+it("changes direction from a compact row before confirming", () => {
+	mount();
+	const option = (label: string) =>
+		renderer.root.find(
+			(node) =>
+				node.type === Pressable && node.props.accessibilityLabel === label,
+		);
+	act(() => option("Opnshelf → Trakt").props.onPress());
+	expect(option("Opnshelf → Trakt").props.accessibilityState.checked).toBe(
+		true,
+	);
+	expect(option("Both directions").props.accessibilityState.checked).toBe(
+		false,
+	);
+	press("Enable sync");
+	expect(
+		renderer.root
+			.findByType(Modal)
+			.findAll(
+				(node) =>
+					node.type === "text" && node.props.children === "Opnshelf → Trakt",
+			),
+	).toHaveLength(1);
+	expect(mocks.mutate).not.toHaveBeenCalled();
 });
 
 it("closes the confirmation sheet when navigating to finish an Import", () => {

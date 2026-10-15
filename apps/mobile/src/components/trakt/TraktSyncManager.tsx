@@ -37,6 +37,7 @@ import {
 	Switch,
 	Text,
 	TextInput,
+	useWindowDimensions,
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -351,6 +352,8 @@ export function SyncSettings({
 		traktSettings(status),
 	);
 	const [reviewing, setReviewing] = useState(false);
+	const { width, fontScale } = useWindowDimensions();
+	const compactDirections = width / fontScale < 480;
 	const insets = useSafeAreaInsets();
 	const managed =
 		status.status === "active" ||
@@ -392,7 +395,11 @@ export function SyncSettings({
 				onChange={(ratings) => setSettings({ ...settings, ratings })}
 			/>
 			<Text className="font-medium text-foreground text-sm">Direction</Text>
-			<View accessibilityRole="radiogroup" className="flex-row gap-2">
+			<View
+				accessibilityRole="radiogroup"
+				accessibilityLabel="Direction"
+				className={compactDirections ? "gap-2" : "flex-row gap-2"}
+			>
 				{TRAKT_SYNC_DIRECTIONS.map((choice) => {
 					const Arrow =
 						choice.value === "inbound"
@@ -411,7 +418,7 @@ export function SyncSettings({
 							onPress={() =>
 								setSettings({ ...settings, direction: choice.value })
 							}
-							className={`flex-1 items-center gap-2 rounded-xl border px-2 py-4 ${settings.direction === choice.value ? "border-primary bg-primary/10" : "border-border"}`}
+							className={`items-center rounded-xl border ${compactDirections ? "min-h-16 flex-row gap-4 p-4" : "flex-1 gap-2 px-2 py-4"} ${settings.direction === choice.value ? "border-primary bg-primary/10" : "border-border"}`}
 						>
 							<View
 								importantForAccessibility="no-hide-descendants"
@@ -424,35 +431,60 @@ export function SyncSettings({
 									style={{ width: 20, height: 20, borderRadius: 5 }}
 								/>
 							</View>
-							<Text className="text-center font-semibold text-foreground text-sm">
-								{choice.title}
-							</Text>
-							<Text className="text-center text-muted-foreground text-xs leading-4">
-								{choice.description}
-							</Text>
+							<View
+								className={
+									compactDirections ? "flex-1 gap-1" : "items-center gap-2"
+								}
+							>
+								<Text
+									className={`${compactDirections ? "" : "text-center"} font-semibold text-foreground text-sm`}
+								>
+									{choice.title}
+								</Text>
+								<Text
+									className={`${compactDirections ? "" : "text-center"} text-muted-foreground text-xs leading-4`}
+								>
+									{choice.description}
+								</Text>
+							</View>
 						</Pressable>
 					);
 				})}
 			</View>
 			<Text className="font-medium text-foreground text-sm">History</Text>
-			{TRAKT_SYNC_SCOPES.map((choice) => (
-				<Pressable
-					key={choice.value}
-					accessibilityRole="radio"
-					accessibilityState={{
-						checked: settings.historyScope === choice.value,
-					}}
-					onPress={() =>
-						setSettings({ ...settings, historyScope: choice.value })
-					}
-					className="py-2"
-				>
-					<Text className="text-foreground text-sm">
-						{settings.historyScope === choice.value ? "● " : "○ "}
-						{choice.label}
-					</Text>
-				</Pressable>
-			))}
+			<View
+				accessibilityRole="radiogroup"
+				accessibilityLabel="History"
+				className="gap-2"
+			>
+				{TRAKT_SYNC_SCOPES.map((choice) => {
+					const selected = settings.historyScope === choice.value;
+					return (
+						<Pressable
+							key={choice.value}
+							accessibilityRole="radio"
+							accessibilityLabel={choice.label}
+							accessibilityState={{ checked: selected }}
+							onPress={() =>
+								setSettings({ ...settings, historyScope: choice.value })
+							}
+							className={`min-h-11 flex-row items-center gap-3 rounded-xl border px-3 py-3 ${selected ? "border-primary bg-primary/10" : "border-border bg-background-subtle"}`}
+						>
+							<View
+								accessible={false}
+								className={`size-5 items-center justify-center rounded-full border-2 ${selected ? "border-primary" : "border-muted-foreground"}`}
+							>
+								{selected && (
+									<View className="size-2.5 rounded-full bg-primary" />
+								)}
+							</View>
+							<Text className="flex-1 text-foreground text-sm">
+								{choice.label}
+							</Text>
+						</Pressable>
+					);
+				})}
+			</View>
 			<Text className={copy}>{TRAKT_SCOPE_COPY}</Text>
 			<Action
 				primary
