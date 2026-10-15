@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationEmailSection } from "./NotificationEmailSection";
 
@@ -25,38 +25,34 @@ beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-describe("onboarding email disclosure", () => {
-	it("starts collapsed for verified email and lets users open and close options", () => {
-		const { container } = render(<NotificationEmailSection onboarding />);
-		const details = container.querySelector("details");
-		expect(details?.open).toBe(false);
-		// jsdom does not perform the browser's native summary activation.
-		if (!details) throw new Error("Missing email disclosure");
-		details.open = true;
-		fireEvent(details, new Event("toggle"));
+describe("email setup", () => {
+	it("shows verified email options directly during onboarding", () => {
+		render(<NotificationEmailSection onboarding />);
+		expect(screen.getByText("Sending to viewer@example.com")).toBeDefined();
 		expect(
 			screen.getByRole("button", { name: "Send test email" }),
 		).toBeDefined();
-		details.open = false;
-		fireEvent(details, new Event("toggle"));
-		expect(details.open).toBe(false);
+		expect(
+			screen.getByRole("button", { name: "Use a different email" }),
+		).toBeDefined();
 	});
-	it("keeps setup open until verification, then collapses it without hiding categories", () => {
+	it("shows setup before verification and keeps options visible after verification", () => {
 		mocks.settings.emailVerified = false;
-		const { container, rerender } = render(
-			<NotificationEmailSection onboarding />,
-		);
-		expect(container.querySelector("details")?.open).toBe(true);
+		const { rerender } = render(<NotificationEmailSection onboarding />);
 		expect(
 			screen.getByRole("textbox", { name: "Notification email address" }),
 		).toBeDefined();
 		mocks.settings = { ...mocks.settings, emailVerified: true };
 		rerender(<NotificationEmailSection onboarding />);
-		expect(container.querySelector("details")?.open).toBe(false);
+		expect(
+			screen.getByRole("button", { name: "Send test email" }),
+		).toBeDefined();
 		expect(screen.getAllByRole("switch")).toHaveLength(4);
 	});
-	it("keeps maintenance options open in Settings", () => {
-		const { container } = render(<NotificationEmailSection />);
-		expect(container.querySelector("details")?.open).toBe(true);
+	it("keeps maintenance options visible in Settings", () => {
+		render(<NotificationEmailSection />);
+		expect(
+			screen.getByRole("button", { name: "Send test email" }),
+		).toBeDefined();
 	});
 });

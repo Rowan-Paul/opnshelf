@@ -162,123 +162,103 @@ export function NotificationEmailSection({
 				</button>
 			) : (
 				<div className="max-w-lg space-y-6">
-					<details
-						open={onboarding && settings.emailVerified ? undefined : true}
-						className="group"
-					>
-						<summary
-							className={
-								onboarding
-									? "cursor-pointer text-(--foreground-muted) text-sm"
-									: "hidden"
-							}
-						>
-							{settings.emailVerified && settings.email
-								? `Sending to ${settings.email}`
-								: "Set up your email address"}
-						</summary>
-						<div className={onboarding ? "mt-4" : ""}>
-							<div className="space-y-3">
-								{settings.emailVerified && settings.email ? (
-									<p className="text-(--foreground-muted) text-sm">
-										Sending to {settings.email}
-									</p>
-								) : (
-									<p className="text-(--foreground-muted) text-sm">
-										Confirm an email address to receive notifications.
-									</p>
-								)}
-								<div className="flex flex-wrap gap-3">
-									{settings.emailVerified && (
-										<button
-											type="button"
-											className="btn btn-secondary"
-											disabled={testNotification.isPending}
-											onClick={() => void sendTest("email")}
-										>
-											Send test email
-										</button>
-									)}
-									{settings.emailVerified && !emailInput && !awaitingCode && (
-										<button
-											type="button"
-											className="btn btn-secondary"
-											onClick={() => setEmailInput(settings.email ?? "")}
-										>
-											Use a different email
-										</button>
-									)}
-								</div>
-								{!awaitingCode ? (
-									<div className="space-y-2">
-										{(!settings.emailVerified ||
-											!settings.email ||
-											emailInput) && (
-											<input
-												type="email"
-												aria-label="Notification email address"
-												value={emailInput}
-												onChange={(event) => setEmailInput(event.target.value)}
-												className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
-												placeholder="you@example.com"
-											/>
-										)}
-										{emailInput ? (
-											<button
-												type="button"
-												className="btn btn-secondary"
-												disabled={requestEmail.isPending}
-												onClick={() => void sendCode()}
-											>
-												Send confirmation code
-											</button>
-										) : null}
-									</div>
-								) : (
-									<div className="space-y-2">
-										<input
-											type="text"
-											inputMode="numeric"
-											aria-label="Six-digit confirmation code"
-											maxLength={6}
-											value={code}
-											onChange={(event) => setCode(event.target.value)}
-											className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
-											placeholder="Six-digit code"
-										/>
-										<button
-											type="button"
-											className="btn btn-secondary"
-											disabled={code.length !== 6 || confirmEmail.isPending}
-											onClick={() => void verifyCode()}
-										>
-											Confirm email
-										</button>
-										<div className="flex flex-wrap gap-2">
-											<button
-												type="button"
-												className="btn btn-secondary"
-												disabled={requestEmail.isPending}
-												onClick={() => void sendCode()}
-											>
-												Resend code
-											</button>
-											<button
-												type="button"
-												className="btn btn-secondary"
-												onClick={() => {
-													setCode("");
-													setAwaitingCode(false);
-												}}
-											>
-												Change email address
-											</button>
-										</div>
-									</div>
-								)}
-							</div>
+					<div className="space-y-3">
+						{settings.emailVerified && settings.email ? (
+							<p className="text-(--foreground-muted) text-sm">
+								Sending to {settings.email}
+							</p>
+						) : (
+							<p className="text-(--foreground-muted) text-sm">
+								Confirm an email address to receive notifications.
+							</p>
+						)}
+						<div className="flex flex-wrap gap-3">
+							{settings.emailVerified && (
+								<button
+									type="button"
+									className="btn btn-secondary"
+									disabled={testNotification.isPending}
+									onClick={() => void sendTest("email")}
+								>
+									Send test email
+								</button>
+							)}
+							{settings.emailVerified && !emailInput && !awaitingCode && (
+								<button
+									type="button"
+									className="btn btn-secondary"
+									onClick={() => setEmailInput(settings.email ?? "")}
+								>
+									Use a different email
+								</button>
+							)}
 						</div>
-					</details>
+						{!awaitingCode ? (
+							<div className="space-y-2">
+								{(!settings.emailVerified || !settings.email || emailInput) && (
+									<input
+										type="email"
+										aria-label="Notification email address"
+										value={emailInput}
+										onChange={(event) => setEmailInput(event.target.value)}
+										className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
+										placeholder="you@example.com"
+									/>
+								)}
+								{emailInput ? (
+									<button
+										type="button"
+										className="btn btn-secondary"
+										disabled={requestEmail.isPending}
+										onClick={() => void sendCode()}
+									>
+										Send confirmation code
+									</button>
+								) : null}
+							</div>
+						) : (
+							<div className="space-y-2">
+								<input
+									type="text"
+									inputMode="numeric"
+									aria-label="Six-digit confirmation code"
+									maxLength={6}
+									value={code}
+									onChange={(event) => setCode(event.target.value)}
+									className="w-full rounded-lg border border-(--border) bg-(--background) px-3 py-2"
+									placeholder="Six-digit code"
+								/>
+								<button
+									type="button"
+									className="btn btn-secondary"
+									disabled={code.length !== 6 || confirmEmail.isPending}
+									onClick={() => void verifyCode()}
+								>
+									Confirm email
+								</button>
+								<div className="flex flex-wrap gap-2">
+									<button
+										type="button"
+										className="btn btn-secondary"
+										disabled={requestEmail.isPending}
+										onClick={() => void sendCode()}
+									>
+										Resend code
+									</button>
+									<button
+										type="button"
+										className="btn btn-secondary"
+										onClick={() => {
+											setCode("");
+											setAwaitingCode(false);
+										}}
+									>
+										Change email address
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
 					<div className="space-y-4">
 						{CATEGORIES.map((category) => (
 							<div
