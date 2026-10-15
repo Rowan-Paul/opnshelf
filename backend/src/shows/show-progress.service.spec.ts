@@ -575,6 +575,38 @@ describe("ShowProgressService", () => {
 	});
 
 	describe("getUserReleaseCalendar", () => {
+		it("omits a watchlist series premiere already represented by episode releases", async () => {
+			const show = {
+				showId: "visionquest",
+				title: "VisionQuest",
+				firstAirDate: new Date("2026-10-13"),
+			};
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([
+				{ showId: show.showId },
+			]);
+			mockPrismaService.episode.findMany.mockResolvedValue(
+				[1, 2].map((episodeNumber) => ({
+					showId: show.showId,
+					seasonNumber: 1,
+					episodeNumber,
+					name: `Episode ${episodeNumber}`,
+					airDate: new Date("2026-10-13"),
+					season: { show },
+				})),
+			);
+			mockPrismaService.list.findFirst.mockResolvedValue({
+				items: [{ mediaType: "show", show }],
+			});
+
+			const result = await service.getUserReleaseCalendar("did:plc:viewer", {
+				startDate: "2026-10-12",
+				endDate: "2026-10-18",
+			});
+
+			expect(result.items.map((item) => item.episodeNumber)).toEqual([1, 2]);
+			expect(result.total).toBe(2);
+		});
+
 		it("should return upcoming tracked-show airings and future watchlist releases", async () => {
 			// Mock tracked episodes to get the shows the user is watching
 			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([

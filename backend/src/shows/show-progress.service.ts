@@ -592,8 +592,19 @@ export class ShowProgressService {
 			return [];
 		});
 
+		const episodeReleaseDates = new Set(
+			watchingItems.map((item) => `${item.showId}:${item.releaseDate}`),
+		);
 		const items: ReleaseCalendarItem[] = [...watchingItems, ...watchlistItems]
-			.filter((item) => item.releaseDate)
+			.filter(
+				(item) =>
+					item.releaseDate &&
+					// Episode airings already represent this show's premiere that day.
+					!(
+						item.releaseKind === "show" &&
+						episodeReleaseDates.has(`${item.showId}:${item.releaseDate}`)
+					),
+			)
 			.sort((left, right) => {
 				const releaseDateCompare =
 					parseReleaseDate(left.releaseDate).getTime() -
