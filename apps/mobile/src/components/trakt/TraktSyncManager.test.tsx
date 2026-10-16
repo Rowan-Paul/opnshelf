@@ -156,7 +156,13 @@ it("closes the confirmation sheet when navigating to finish an Import", () => {
 	expect(mocks.mutate).not.toHaveBeenCalled();
 });
 
-it("uses one publication acknowledgement for List-only sync", () => {
+it.each([
+	"lists",
+	"favorites",
+	"notes",
+	"library",
+	"reviews",
+] as const)("uses one publication acknowledgement for %s-only sync", (scope) => {
 	mount();
 	const toggle = (label: string, value: boolean) => {
 		const control = renderer.root.find(
@@ -165,10 +171,20 @@ it("uses one publication acknowledgement for List-only sync", () => {
 		);
 		act(() => control.props.onValueChange(value));
 	};
+	press("Choose records");
 	toggle("Watch history", false);
 	toggle("Ratings", false);
-	toggle("Custom Lists", true);
-	toggle("Watchlist", true);
+	toggle(
+		{
+			lists: "Custom Lists",
+			favorites: "Favorites",
+			notes: "Notes",
+			library: "Library",
+			reviews: "Reviews",
+		}[scope],
+		true,
+	);
+	if (scope === "lists") toggle("Watchlist", true);
 	press("Enable sync");
 	const confirm = () =>
 		renderer.root.find(
@@ -202,9 +218,38 @@ it("uses one publication acknowledgement for List-only sync", () => {
 		body: expect.objectContaining({
 			watches: false,
 			ratings: false,
-			lists: true,
-			watchlist: true,
+			lists: scope === "lists",
+			watchlist: scope === "lists",
+			favorites: scope === "favorites",
+			notes: scope === "notes",
+			library: scope === "library",
+			reviews: scope === "reviews",
+			contentPublicationConsent: true,
 			listPublicationConsent: true,
 		}),
 	});
+});
+
+it("keeps record choices collapsed and retains changes when closed", () => {
+	mount();
+	const notes = () =>
+		renderer.root.findAll(
+			(node) =>
+				node.type === "switch" && node.props.accessibilityLabel === "Notes",
+		);
+	expect(notes()).toHaveLength(0);
+	press("Choose records");
+	act(() => notes()[0].props.onValueChange(true));
+	press("Done");
+	expect(notes()).toHaveLength(0);
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "text" &&
+				node.props.children === "Watch history, Ratings, Notes",
+		),
+	).not.toHaveLength(0);
+	press("Choose records");
+	expect(notes()[0].props.value).toBe(true);
+	expect(mocks.mutate).not.toHaveBeenCalled();
 });

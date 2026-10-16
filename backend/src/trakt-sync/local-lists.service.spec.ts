@@ -227,6 +227,60 @@ describe("List PDS transfers", () => {
 			expect(f.records.size).toBe(3);
 		},
 	);
+	it.each(["public", "private"] as const)(
+		"pairs %s default Favorites without treating them as custom Lists",
+		async (visibility) => {
+			const f = fixture(visibility);
+			const favorite = {
+				...desired,
+				kind: "favorites" as const,
+				key: "favorites:trakt",
+				title: "Favorites",
+				value: encodeList({ name: "Favorites", description: "", items: [] }),
+			};
+			const created = await f.local.write(did, favorite, null, rkey);
+			expect(created?.kind).toBe("favorites");
+			const parent = f.records.get(`${LIST}/${rkey}`);
+			if (!parent || !created) throw new Error("Missing Favorites fixture");
+			expect(parent.value).toMatchObject({
+				isDefault: true,
+				slug: "favorites",
+			});
+			parent.value.name = "My favorites";
+			parent.value.description = "Local description";
+			expect(
+				await f.local.snapshot(did, { lists: true, watchlist: true }),
+			).toEqual([]);
+			expect(await f.local.snapshot(did, { favorites: true })).toEqual([
+				expect.objectContaining({ kind: "favorites", value: favorite.value }),
+			]);
+			await f.local.write(
+				did,
+				{
+					...favorite,
+					value: encodeList({
+						name: "Favorites",
+						description: "",
+						items: [
+							{
+								mediaType: "movie",
+								mediaId: "12",
+								season: 0,
+								episode: 0,
+								notes: "",
+							},
+						],
+					}),
+				},
+				created,
+				rkey,
+			);
+			expect(f.records.get(`${LIST}/${rkey}`)?.value).toMatchObject({
+				name: "My favorites",
+				description: "Local description",
+			});
+		},
+	);
 	it("detects changed destination contents before mutating them", async () => {
 		const f = fixture("public");
 		const original = await f.local.write(did, desired, null, rkey);

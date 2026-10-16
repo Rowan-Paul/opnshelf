@@ -1,3 +1,4 @@
+import { contentValue, isContentRecord } from "./content-value";
 import { TID } from "@atproto/common";
 import { encodeList, listValue, memberKey } from "./list-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
@@ -69,20 +70,40 @@ const display = (r: SyncRecord | null) =>
 				title: r.title,
 				season: r.season,
 				episode: r.episode,
-				displayValue: isListRecord(r)
-					? `${r.title} · ${listValue(r).items.length} items · ${r.visibility ?? "private"} · ${listValue(r).description} · ${listValue(
-							r,
-						)
-							.items.map(
-								(i) =>
-									`${i.mediaType} ${i.mediaId ?? "unmatched"}${i.season ? ` S${i.season}` : ""}${i.episode ? ` E${i.episode}` : ""}${i.notes ? ` (${i.notes})` : ""}`,
+				displayValue: isContentRecord(r)
+					? r.kind === "library"
+						? `${({ digital: "Digital", bluray: "Blu-ray", bluray4k: "4K Blu-ray", dvd: "DVD" } as Record<string, string>)[contentValue(r).format] ?? "Unknown format"}${contentValue(r).boxSet ? ` · ${contentValue(r).boxSet}` : ""}${contentValue(r).notes ? ` · ${contentValue(r).notes}` : ""}`
+						: `${contentValue(r).spoiler ? "Contains spoilers · " : ""}${contentValue(r).content}`
+					: isListRecord(r)
+						? `${r.title} · ${listValue(r).items.length} items · ${r.visibility ?? "private"} · ${listValue(r).description} · ${listValue(
+								r,
 							)
-							.join(", ")}`
-					: r.value === null
-						? "No date"
-						: String(r.value),
+								.items.map(
+									(i) =>
+										`${i.mediaType} ${i.mediaId ?? "unmatched"}${i.season ? ` S${i.season}` : ""}${i.episode ? ` E${i.episode}` : ""}${i.notes ? ` (${i.notes})` : ""}`,
+								)
+								.join(", ")}`
+						: r.value === null
+							? "No date"
+							: String(r.value),
 			}
 		: undefined;
+const sameTraktTitle = (record: SyncRecord, peer: SyncRecord): boolean => {
+	if (isContentRecord(record) || isContentRecord(peer))
+		return Boolean(
+			record.kind === peer.kind &&
+				record.traktParentId &&
+				peer.traktParentId === record.traktParentId &&
+				(record.mediaType === "movie") === (peer.mediaType === "movie"),
+		);
+	return record.mediaType === "movie"
+		? peer.mediaType === "movie" && peer.traktId === record.traktId
+		: Boolean(
+				peer.mediaType !== "movie" &&
+					record.traktParentId &&
+					peer.traktParentId === record.traktParentId,
+			);
+};
 const applyMappings = (
 	remote: SyncRecord[],
 	entries: Pick<TraktSyncEntry, "remoteBase">[],
@@ -91,15 +112,7 @@ const applyMappings = (
 		if (isListRecord(r) || r.mediaId) return r;
 		const mapped = entries
 			.map((e) => readRecord(e.remoteBase))
-			.find(
-				(p) =>
-					p?.mediaId &&
-					(r.mediaType === "movie"
-						? p.mediaType === "movie" && p.traktId === r.traktId
-						: p.mediaType !== "movie" &&
-							r.traktParentId &&
-							p.traktParentId === r.traktParentId),
-			);
+			.find((p) => p?.mediaId && p.kind === r.kind && sameTraktTitle(r, p));
 		return mapped ? { ...r, mediaId: mapped.mediaId } : r;
 	});
 const enabled = (c: TraktSyncConnection, r: Pick<SyncRecord, "kind">) =>
@@ -109,7 +122,15 @@ const enabled = (c: TraktSyncConnection, r: Pick<SyncRecord, "kind">) =>
 			? c.ratings
 			: r.kind === "list"
 				? c.lists
-				: c.watchlist;
+				: r.kind === "note"
+					? c.notes
+					: r.kind === "library"
+						? c.library
+						: r.kind === "review"
+							? c.reviews
+							: r.kind === "favorites"
+								? c.favorites
+								: c.watchlist;
 
 @Injectable()
 export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
@@ -193,6 +214,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			ratings: c?.ratings ?? true,
 			lists: c?.lists ?? false,
 			watchlist: c?.watchlist ?? false,
+			favorites: c?.favorites ?? false,
+			notes: c?.notes ?? false,
+			library: c?.library ?? false,
+			reviews: c?.reviews ?? false,
+			contentPublicationConsent: c?.contentPublicationConsent ?? false,
 			listPublicationConsent: c?.listPublicationConsent ?? false,
 			historyScope: c?.historyScope ?? "all",
 			publicationConsent: c?.publicationConsent ?? false,
@@ -424,7 +450,16 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		return this.crypt(c.accessToken, true);
 	}
 	async configure(userDid: string, dto: SyncSettingsDto) {
-		if (!dto.watches && !dto.ratings && !dto.lists && !dto.watchlist)
+		if (
+			!dto.watches &&
+			!dto.ratings &&
+			!dto.lists &&
+			!dto.watchlist &&
+			!dto.favorites &&
+			!dto.notes &&
+			!dto.library &&
+			!dto.reviews
+		)
 			throw new BadRequestException("Choose at least one record type.");
 		if (
 			dto.direction !== "outbound" &&
@@ -434,9 +469,19 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			throw new BadRequestException(
 				"Acknowledge that incoming Watches and Ratings become public.",
 			);
-		if ((dto.lists || dto.watchlist) && !dto.listPublicationConsent)
+		if (
+			(dto.lists || dto.watchlist || dto.favorites) &&
+			!dto.listPublicationConsent
+		)
 			throw new BadRequestException(
 				"Acknowledge that private List contents may become public on the destination.",
+			);
+		if (
+			(dto.notes || dto.library || dto.reviews) &&
+			!dto.contentPublicationConsent
+		)
+			throw new BadRequestException(
+				"Acknowledge that Notes, Library Items and Reviews may become public on the destination.",
 			);
 		const c = await this.requireConnection(userDid);
 		await this.locked(c, async (lease) => {
@@ -458,6 +503,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const { handoffImport: _handoff, ...settings } = dto;
 			settings.lists ??= false;
 			settings.watchlist ??= false;
+			settings.favorites ??= false;
+			settings.notes ??= false;
+			settings.library ??= false;
+			settings.reviews ??= false;
+			settings.contentPublicationConsent ??= false;
 			settings.listPublicationConsent ??= false;
 			if (job && !["completed", "continued_in_sync"].includes(job.status)) {
 				if (activeTraktImports.has(userDid))
@@ -735,7 +785,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const match =
 				matches.length === 1 &&
 				((r.kind !== "watch" &&
-					(!isListRecord(r) ||
+					((!isListRecord(r) && !isContentRecord(r)) ||
 						candidates(matches[0], newRemote).length === 1)) ||
 					(r.value !== null &&
 						matches[0].value !== null &&
@@ -762,7 +812,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 							: possibleReplacement || (!match && matches.length)
 								? isListRecord(r)
 									? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
-									: "Confirm whether these Watches are the same viewing."
+									: isContentRecord(r)
+										? "Content pairing is ambiguous. Choose a matching record before retrying."
+										: "Confirm whether these Watches are the same viewing."
 								: null),
 				},
 			});
@@ -792,10 +844,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					eligible:
 						enabled(c, l) && (c.initialised || c.historyScope === "all"),
 					issue:
-						near.length && (l.kind === "watch" || isListRecord(l))
+						near.length &&
+						(l.kind === "watch" || isListRecord(l) || isContentRecord(l))
 							? isListRecord(l)
 								? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
-								: "Confirm whether these Watches are the same viewing."
+								: isContentRecord(l)
+									? "Content pairing is ambiguous. Choose a matching record before retrying."
+									: "Confirm whether these Watches are the same viewing."
 							: null,
 				},
 			});
@@ -877,14 +932,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				});
 				for (const peer of peers) {
 					const p = readRecord(peer.remoteBase);
-					if (
-						p &&
-						(r.mediaType === "movie"
-							? p.traktId === r.traktId && p.mediaType === "movie"
-							: p.mediaType !== "movie" &&
-								r.traktParentId &&
-								p.traktParentId === r.traktParentId)
-					)
+					if (p && sameTraktTitle(r, p))
 						await this.prisma.traktSyncEntry.update({
 							where: { id: peer.id },
 							data: {
@@ -934,7 +982,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 							eligible: true,
 							issue: equivalent(l, r)
 								? null
-								: "Choose which watch date to keep.",
+								: isContentRecord(l)
+									? "Choose which version to keep."
+									: "Choose which watch date to keep.",
 							resolution: null,
 							pending: Prisma.DbNull,
 						},
@@ -1203,10 +1253,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				continue;
 			}
 			if (entry.issue && !entry.resolution && !entry.pending) continue;
-			if (r?.problem || (r && !r.mediaId && !isListRecord(r))) {
+			if (l?.problem || r?.problem || (r && !r.mediaId && !isListRecord(r))) {
 				await this.issue(
 					entry.id,
-					r.problem ?? "Choose a TMDB match for this title.",
+					l?.problem ?? r?.problem ?? "Choose a TMDB match for this title.",
 				);
 				continue;
 			}
@@ -1420,14 +1470,21 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			});
 		if (direction === "pull") {
 			if (
-				!(isListRecord(desired ?? previous ?? { kind: "watch" })
-					? c.listPublicationConsent
-					: c.publicationConsent)
+				!(isContentRecord(desired ?? previous ?? { kind: "watch" })
+					? c.contentPublicationConsent
+					: isListRecord(desired ?? previous ?? { kind: "watch" })
+						? c.listPublicationConsent
+						: c.publicationConsent)
 			)
 				throw new Error(
 					"Acknowledge public publication in sync settings first.",
 				);
-			if (desired && isListRecord(desired) && !previous && !entry.localKey) {
+			if (
+				desired &&
+				(isListRecord(desired) || isContentRecord(desired)) &&
+				!previous &&
+				!entry.localKey
+			) {
 				entry.localKey = `${desired.kind}:${TID.nextStr()}`;
 				await this.prisma.traktSyncEntry.update({
 					where: { id: entry.id },
@@ -1472,9 +1529,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				);
 			}
 		}
-		if (pending && desired?.kind === "list" && !remote && !entry.remoteKey)
+		if (
+			pending &&
+			desired &&
+			["list", "note", "review"].includes(desired.kind) &&
+			!remote &&
+			!entry.remoteKey
+		)
 			throw new Error(
-				"The outcome of creating this Trakt List is unknown. Check Trakt, then choose a version before retrying.",
+				`The outcome of creating this Trakt ${desired.kind === "list" ? "List" : desired.kind === "note" ? "Note" : "Review"} is unknown. Check Trakt, then choose a version before retrying.`,
 			);
 		if (previous && (desired === null || desired.kind === "watch"))
 			await this.api.write(token, previous, true);
@@ -1483,7 +1546,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				token,
 				{
 					...desired,
-					...(isListRecord(desired)
+					...(isListRecord(desired) || isContentRecord(desired)
 						? { traktId: remote?.traktId }
 						: remote?.traktId
 							? { traktId: remote.traktId }
@@ -1520,7 +1583,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		// A scoped read must never replace the full snapshot or advance its freshness.
 		const refreshed = [
 			...snapshot.filter((r) =>
-				isListRecord(target)
+				isListRecord(target) || isContentRecord(target)
 					? r.kind !== target.kind
 					: target.kind === "rating"
 						? !(r.kind === "rating" && r.mediaType === target.mediaType)

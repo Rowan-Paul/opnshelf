@@ -3,11 +3,14 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
+	TRAKT_CONTENT_COPY,
+	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
 	TRAKT_LIST_COPY,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
+	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
 	traktError,
 	traktResolutionLabel,
@@ -162,6 +165,7 @@ export function TraktSyncManager({
 		data.direction !== "outbound" &&
 		!data.publicationConsent &&
 		!data.listPublicationConsent &&
+		!data.contentPublicationConsent &&
 		!data.lastSuccessAt;
 	return (
 		<View className="gap-5">
@@ -222,6 +226,10 @@ export function TraktSyncManager({
 									data.ratings && "Ratings",
 									data.lists && "Custom Lists",
 									data.watchlist && "Watchlist",
+									data.favorites && "Favorites",
+									data.notes && "Notes",
+									data.library && "Library",
+									data.reviews && "Reviews",
 								]
 									.filter(Boolean)
 									.join(", ")}
@@ -312,7 +320,7 @@ export function TraktSyncManager({
 			</View>
 			{connected && (editing || needsSetup) && (
 				<SyncSettings
-					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.listPublicationConsent}:${data.historyScope}`}
+					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.notes}:${data.library}:${data.reviews}:${data.contentPublicationConsent}:${data.listPublicationConsent}:${data.historyScope}`}
 					status={data}
 					className={embedded ? "gap-4 border-border border-t pt-4" : card}
 					onSaved={() => {
@@ -359,6 +367,8 @@ export function SyncSettings({
 		traktSettings(status),
 	);
 	const [reviewing, setReviewing] = useState(false);
+	const [choosingRecords, setChoosingRecords] = useState(false);
+	const [showRecordDetails, setShowRecordDetails] = useState(false);
 	const { width, fontScale } = useWindowDimensions();
 	const compactDirections = width / fontScale < 480;
 	const insets = useSafeAreaInsets();
@@ -369,7 +379,8 @@ export function SyncSettings({
 		Boolean(
 			status.lastSuccessAt ||
 				status.publicationConsent ||
-				status.listPublicationConsent,
+				status.listPublicationConsent ||
+				status.contentPublicationConsent,
 		);
 	const save = useMutation({
 		...traktSyncControllerConfigureMutation(),
@@ -383,15 +394,23 @@ export function SyncSettings({
 		!["completed", "continued_in_sync"].includes(status.importStatus);
 	const requiresHistoryConsent =
 		settings.direction !== "outbound" && (settings.watches || settings.ratings);
-	const requiresListConsent = Boolean(settings.lists || settings.watchlist);
-	const requiresConsent = requiresHistoryConsent || requiresListConsent;
+	const requiresListConsent = Boolean(
+		settings.lists || settings.watchlist || settings.favorites,
+	);
+	const requiresContentConsent = Boolean(
+		settings.notes || settings.library || settings.reviews,
+	);
+	const requiresConsent =
+		requiresHistoryConsent || requiresListConsent || requiresContentConsent;
 	const hasConsent = Boolean(
 		(!requiresHistoryConsent || settings.publicationConsent) &&
-			(!requiresListConsent || settings.listPublicationConsent),
+			(!requiresListConsent || settings.listPublicationConsent) &&
+			(!requiresContentConsent || settings.contentPublicationConsent),
 	);
 	const hadConsent = Boolean(
 		(!requiresHistoryConsent || status.publicationConsent) &&
-			(!requiresListConsent || status.listPublicationConsent),
+			(!requiresListConsent || status.listPublicationConsent) &&
+			(!requiresContentConsent || status.contentPublicationConsent),
 	);
 	const canSave = hasConsent && (!unfinished || settings.handoffImport);
 	const dismiss = () => {
@@ -404,27 +423,71 @@ export function SyncSettings({
 					Sync settings
 				</Text>
 			)}
-			<Toggle
-				label="Watch history"
-				value={settings.watches}
-				onChange={(watches) => setSettings({ ...settings, watches })}
-			/>
-			<Toggle
-				label="Ratings"
-				value={settings.ratings}
-				onChange={(ratings) => setSettings({ ...settings, ratings })}
-			/>
-			<Toggle
-				label="Custom Lists"
-				value={settings.lists ?? false}
-				onChange={(lists) => setSettings({ ...settings, lists })}
-			/>
-			<Toggle
-				label="Watchlist"
-				value={settings.watchlist ?? false}
-				onChange={(watchlist) => setSettings({ ...settings, watchlist })}
-			/>
-			{requiresListConsent && <Text className={copy}>{TRAKT_LIST_COPY}</Text>}
+			<View className="gap-3">
+				<View className="flex-row items-start justify-between gap-4">
+					<View className="flex-1 gap-1">
+						<Text className="font-medium text-foreground text-sm">Records</Text>
+						<Text className={copy}>
+							{TRAKT_SYNC_RECORDS.filter(({ value }) => settings[value])
+								.map(({ label }) => label)
+								.join(", ") || "Choose at least one record type"}
+						</Text>
+					</View>
+					<Pressable
+						accessibilityRole="button"
+						accessibilityState={{ expanded: choosingRecords }}
+						className="min-h-11 justify-center"
+						onPress={() => setChoosingRecords(!choosingRecords)}
+					>
+						<Text className="font-medium text-primary text-sm">
+							{choosingRecords ? "Done" : "Choose records"}
+						</Text>
+					</Pressable>
+				</View>
+				{choosingRecords && (
+					<View className="gap-3 rounded-xl border border-border p-3">
+						{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
+							<Toggle
+								key={value}
+								label={label}
+								value={settings[value] ?? false}
+								onChange={(selected) =>
+									setSettings({ ...settings, [value]: selected })
+								}
+							/>
+						))}
+					</View>
+				)}
+				{(requiresListConsent || requiresContentConsent) && (
+					<View className="gap-2">
+						<Pressable
+							accessibilityRole="button"
+							accessibilityState={{ expanded: showRecordDetails }}
+							className="min-h-11 justify-center"
+							onPress={() => setShowRecordDetails(!showRecordDetails)}
+						>
+							<Text className={copy}>
+								{showRecordDetails
+									? "Hide record details"
+									: "About these records"}
+							</Text>
+						</Pressable>
+						{showRecordDetails && (
+							<View className="gap-2">
+								{(settings.lists || settings.watchlist) && (
+									<Text className={copy}>{TRAKT_LIST_COPY}</Text>
+								)}
+								{settings.favorites && (
+									<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
+								)}
+								{requiresContentConsent && (
+									<Text className={copy}>{TRAKT_CONTENT_COPY}</Text>
+								)}
+							</View>
+						)}
+					</View>
+				)}
+			</View>
 			<Text className="font-medium text-foreground text-sm">Direction</Text>
 			<View
 				accessibilityRole="radiogroup"
@@ -526,7 +589,11 @@ export function SyncSettings({
 					!settings.watches &&
 					!settings.ratings &&
 					!settings.lists &&
-					!settings.watchlist
+					!settings.watchlist &&
+					!settings.favorites &&
+					!settings.notes &&
+					!settings.library &&
+					!settings.reviews
 				}
 				onPress={() => setReviewing(true)}
 			/>
@@ -587,6 +654,10 @@ export function SyncSettings({
 											settings.ratings && "Ratings",
 											settings.lists && "Custom Lists",
 											settings.watchlist && "Watchlist",
+											settings.favorites && "Favorites",
+											settings.notes && "Notes",
+											settings.library && "Library",
+											settings.reviews && "Reviews",
 										]
 											.filter(Boolean)
 											.join(", "),
@@ -634,6 +705,7 @@ export function SyncSettings({
 												...settings,
 												publicationConsent: consent,
 												listPublicationConsent: consent,
+												contentPublicationConsent: consent,
 											})
 										}
 									/>
@@ -855,7 +927,11 @@ function SyncIssue({
 				))}
 			{connected && !item.ignored && item.candidates.length > 0 && (
 				<Action
-					label="These are different Watches"
+					label={
+						item.kind === "watch"
+							? "These are different Watches"
+							: "These are separate records"
+					}
 					disabled={mutation.isPending}
 					onPress={() => resolve({ action: "separate" })}
 				/>
@@ -863,7 +939,9 @@ function SyncIssue({
 			{connected &&
 				item.kind !== "list" &&
 				item.kind !== "watchlist" &&
-				item.trakt?.mediaId === null && (
+				item.kind !== "favorites" &&
+				item.trakt?.mediaId === null &&
+				item.trakt?.mediaType !== "list" && (
 					<View className="gap-2">
 						<Text className="text-foreground text-sm">
 							Find the matching title
@@ -900,9 +978,13 @@ function SyncIssue({
 				<View className="gap-3 rounded-xl border border-primary p-3">
 					<Text className={copy}>
 						{choice.action === "link"
-							? "Confirm these represent the same viewing?"
+							? item.kind === "watch"
+								? "Confirm these represent the same viewing?"
+								: "Link these records?"
 							: choice.action === "match"
-								? "Use this title for this Trakt media identity and its Watch dates?"
+								? item.kind === "watch"
+									? "Use this title for this Trakt media identity and its Watch dates?"
+									: "Use this title for this Trakt item?"
 								: traktResolutionLabel(
 										choice.action,
 										Boolean(item[choice.action as "trakt" | "opnshelf"]),

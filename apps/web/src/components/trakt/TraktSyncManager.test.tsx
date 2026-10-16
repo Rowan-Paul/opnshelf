@@ -209,13 +209,32 @@ describe("Trakt Sync setup and conflict choices", () => {
 	});
 });
 
-it("uses one publication checkbox for List-only sync", async () => {
+it.each([
+	"lists",
+	"favorites",
+	"notes",
+	"library",
+	"reviews",
+] as const)("uses one publication checkbox for %s-only sync", async (scope) => {
 	mocks.importStatus = "completed";
 	mount();
-	fireEvent.click(await screen.findByLabelText("Watch history"));
+	fireEvent.click(
+		await screen.findByRole("button", { name: "Choose records" }),
+	);
+	fireEvent.click(screen.getByLabelText("Watch history"));
 	fireEvent.click(screen.getByLabelText("Ratings"));
-	fireEvent.click(screen.getByLabelText("Custom Lists"));
-	fireEvent.click(screen.getByLabelText("Watchlist"));
+	fireEvent.click(
+		screen.getByLabelText(
+			{
+				lists: "Custom Lists",
+				favorites: "Favorites",
+				notes: "Notes",
+				library: "Library",
+				reviews: "Reviews",
+			}[scope],
+		),
+	);
+	if (scope === "lists") fireEvent.click(screen.getByLabelText("Watchlist"));
 	fireEvent.click(screen.getByRole("button", { name: "Enable sync" }));
 	const confirm = screen.getByRole("button", {
 		name: "Confirm and enable sync",
@@ -233,8 +252,13 @@ it("uses one publication checkbox for List-only sync", async () => {
 				body: expect.objectContaining({
 					watches: false,
 					ratings: false,
-					lists: true,
-					watchlist: true,
+					lists: scope === "lists",
+					watchlist: scope === "lists",
+					favorites: scope === "favorites",
+					notes: scope === "notes",
+					library: scope === "library",
+					reviews: scope === "reviews",
+					contentPublicationConsent: true,
 					publicationConsent: true,
 					listPublicationConsent: true,
 				}),
@@ -242,4 +266,23 @@ it("uses one publication checkbox for List-only sync", async () => {
 			expect.anything(),
 		),
 	);
+});
+
+it("keeps record choices collapsed and retains changes when closed", async () => {
+	mocks.importStatus = "completed";
+	mount();
+	const choose = await screen.findByRole("button", { name: "Choose records" });
+	expect(choose.getAttribute("aria-expanded")).toBe("false");
+	expect(screen.queryByRole("checkbox", { name: "Notes" })).toBeNull();
+	fireEvent.click(choose);
+	fireEvent.click(screen.getByLabelText("Notes", { exact: true }));
+	fireEvent.click(screen.getByRole("button", { name: "Done" }));
+	expect(screen.getByText("Watch history, Ratings, Notes")).toBeTruthy();
+	expect(screen.queryByRole("checkbox", { name: "Notes" })).toBeNull();
+	fireEvent.click(screen.getByRole("button", { name: "Choose records" }));
+	expect(
+		(screen.getByLabelText("Notes", { exact: true }) as HTMLInputElement)
+			.checked,
+	).toBe(true);
+	expect(mocks.configure).not.toHaveBeenCalled();
 });

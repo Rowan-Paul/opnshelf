@@ -125,7 +125,9 @@ export class LocalSyncLists {
 			};
 		});
 		const kind =
-			list.isDefault && list.slug === "watchlist" ? "watchlist" : "list";
+			list.isDefault && (list.slug === "watchlist" || list.slug === "favorites")
+				? list.slug
+				: "list";
 		return {
 			key: `${kind}:${parent.rkey}`,
 			rkey: parent.rkey,
@@ -138,17 +140,23 @@ export class LocalSyncLists {
 			episode: 0,
 			visibility,
 			value: encodeList({
-				name: kind === "watchlist" ? "Watchlist" : list.name,
-				description: kind === "watchlist" ? "" : (list.description ?? ""),
+				name:
+					kind === "watchlist"
+						? "Watchlist"
+						: kind === "favorites"
+							? "Favorites"
+							: list.name,
+				description: kind !== "list" ? "" : (list.description ?? ""),
 				items: members,
 			}),
 		};
 	}
 	async snapshot(
 		did: string,
-		options: { lists?: boolean; watchlist?: boolean } = {
+		options: { lists?: boolean; watchlist?: boolean; favorites?: boolean } = {
 			lists: true,
 			watchlist: true,
+			favorites: true,
 		},
 	): Promise<SyncRecord[]> {
 		const scopes = await this.prisma.privacyScope.findMany({
@@ -160,7 +168,8 @@ export class LocalSyncLists {
 			);
 		const selected = (parent: Stored) =>
 			parent.value.isDefault
-				? parent.value.slug === "watchlist" && options.watchlist
+				? (parent.value.slug === "watchlist" && options.watchlist) ||
+					(parent.value.slug === "favorites" && options.favorites)
 				: options.lists;
 		const indexed = await this.prisma.list.findMany({
 			where: { userDid: did },
@@ -187,7 +196,10 @@ export class LocalSyncLists {
 				);
 			if (
 				projection.isDefault
-					? projection.slug !== "watchlist" || !options.watchlist
+					? !(
+							(projection.slug === "watchlist" && options.watchlist) ||
+							(projection.slug === "favorites" && options.favorites)
+						)
 					: !options.lists
 			)
 				continue;
@@ -209,6 +221,7 @@ export class LocalSyncLists {
 				await this.snapshot(did, {
 					lists: previous.kind === "list",
 					watchlist: previous.kind === "watchlist",
+					favorites: previous.kind === "favorites",
 				})
 			).some((r) => r.key === previous.key)
 		)
@@ -334,27 +347,27 @@ export class LocalSyncLists {
 					...(parent?.value ?? {}),
 					...listSchema.build({
 						name:
-							desired.kind === "watchlist" && parent
+							desired.kind !== "list" && parent
 								? listSchema.parse(parent.value).name
 								: value.name,
 						description:
-							desired.kind === "watchlist" && parent
+							desired.kind !== "list" && parent
 								? listSchema.parse(parent.value).description
 								: value.description || undefined,
 						slug: parent
 							? listSchema.parse(parent.value).slug
-							: desired.kind === "watchlist"
-								? "watchlist"
+							: desired.kind !== "list"
+								? desired.kind
 								: `trakt-${rkey}`,
 						isDefault:
-							desired.kind === "watchlist" ||
+							desired.kind !== "list" ||
 							(parent ? listSchema.parse(parent.value).isDefault : false),
 						createdAt: parent
 							? listSchema.parse(parent.value).createdAt
 							: new Date().toISOString(),
 					}),
 				};
-				if (desired.kind !== "watchlist" && !value.description)
+				if (desired.kind === "list" && !value.description)
 					delete record.description;
 				const response = await put(LIST, rkey, record, parent);
 				await this.privacy.activateNewList(did, rkey);

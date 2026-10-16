@@ -1,3 +1,5 @@
+import { LocalSyncContent } from "./local-content.service";
+import { isContentRecord } from "./content-value";
 import { LocalSyncLists } from "./local-lists.service";
 import { createHash } from "node:crypto";
 import { Agent } from "@atproto/api";
@@ -40,6 +42,7 @@ export class LocalSyncRecords {
 		private readonly ratings: RatingsService,
 		@Inject(AUTH_SERVICE) private readonly auth: Pick<AuthService, "restore">,
 		private readonly lists: LocalSyncLists,
+		private readonly content: LocalSyncContent,
 	) {}
 	async matches(record: SyncRecord, query: string) {
 		if (record.mediaType === "movie")
@@ -61,7 +64,14 @@ export class LocalSyncRecords {
 	}
 	async snapshot(
 		userDid: string,
-		options: { lists?: boolean; watchlist?: boolean } = {},
+		options: {
+			lists?: boolean;
+			watchlist?: boolean;
+			favorites?: boolean;
+			notes?: boolean;
+			library?: boolean;
+			reviews?: boolean;
+		} = {},
 	): Promise<SyncRecord[]> {
 		const [movies, episodes, ratings] = await this.prisma.$transaction([
 			this.prisma.trackedMovie.findMany({
@@ -97,10 +107,15 @@ export class LocalSyncRecords {
 			}),
 		]);
 		const lists =
-			options.lists || options.watchlist
+			options.lists || options.watchlist || options.favorites
 				? await this.lists.snapshot(userDid, options)
 				: [];
+		const content =
+			options.notes || options.library || options.reviews
+				? await this.content.snapshot(userDid, options)
+				: [];
 		return [
+			...content,
 			...lists,
 			...movies.map(
 				(r): SyncRecord => ({
@@ -158,6 +173,8 @@ export class LocalSyncRecords {
 	}
 	/** Confirm absence in the source of truth, not merely a temporarily incomplete index. */
 	async confirmDeleted(userDid: string, previous: SyncRecord) {
+		if (isContentRecord(previous))
+			return this.content.confirmDeleted(userDid, previous);
 		if (isListRecord(previous))
 			return this.lists.confirmDeleted(userDid, previous);
 		const agent = await this.agent(userDid);
@@ -183,6 +200,12 @@ export class LocalSyncRecords {
 	): Promise<SyncRecord | null> {
 		const source = desired ?? previous;
 		if (!source) return null;
+		if (isContentRecord(source)) {
+			const rkey =
+				previous?.rkey ?? reservedRkey ?? syncRkey(connectionId, source.key);
+			if (desired) await this.validateMatch(desired, desired.mediaId ?? "");
+			return this.content.write(userDid, desired, previous, rkey);
+		}
 		if (isListRecord(source)) {
 			const listRkey = previous?.rkey ?? reservedRkey;
 			if (!listRkey) throw new Error("Missing reserved List identity.");

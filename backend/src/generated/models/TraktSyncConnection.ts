@@ -50,6 +50,11 @@ export type TraktSyncConnectionMinAggregateOutputType = {
   ratings: boolean | null
   lists: boolean | null
   watchlist: boolean | null
+  favorites: boolean | null
+  notes: boolean | null
+  library: boolean | null
+  reviews: boolean | null
+  contentPublicationConsent: boolean | null
   listPublicationConsent: boolean | null
   historyScope: string | null
   publicationConsent: boolean | null
@@ -80,6 +85,11 @@ export type TraktSyncConnectionMaxAggregateOutputType = {
   ratings: boolean | null
   lists: boolean | null
   watchlist: boolean | null
+  favorites: boolean | null
+  notes: boolean | null
+  library: boolean | null
+  reviews: boolean | null
+  contentPublicationConsent: boolean | null
   listPublicationConsent: boolean | null
   historyScope: string | null
   publicationConsent: boolean | null
@@ -110,6 +120,11 @@ export type TraktSyncConnectionCountAggregateOutputType = {
   ratings: number
   lists: number
   watchlist: number
+  favorites: number
+  notes: number
+  library: number
+  reviews: number
+  contentPublicationConsent: number
   listPublicationConsent: number
   historyScope: number
   publicationConsent: number
@@ -153,6 +168,11 @@ export type TraktSyncConnectionMinAggregateInputType = {
   ratings?: true
   lists?: true
   watchlist?: true
+  favorites?: true
+  notes?: true
+  library?: true
+  reviews?: true
+  contentPublicationConsent?: true
   listPublicationConsent?: true
   historyScope?: true
   publicationConsent?: true
@@ -183,6 +203,11 @@ export type TraktSyncConnectionMaxAggregateInputType = {
   ratings?: true
   lists?: true
   watchlist?: true
+  favorites?: true
+  notes?: true
+  library?: true
+  reviews?: true
+  contentPublicationConsent?: true
   listPublicationConsent?: true
   historyScope?: true
   publicationConsent?: true
@@ -213,6 +238,11 @@ export type TraktSyncConnectionCountAggregateInputType = {
   ratings?: true
   lists?: true
   watchlist?: true
+  favorites?: true
+  notes?: true
+  library?: true
+  reviews?: true
+  contentPublicationConsent?: true
   listPublicationConsent?: true
   historyScope?: true
   publicationConsent?: true
@@ -331,6 +361,11 @@ export type TraktSyncConnectionGroupByOutputType = {
   ratings: boolean
   lists: boolean
   watchlist: boolean
+  favorites: boolean
+  notes: boolean
+  library: boolean
+  reviews: boolean
+  contentPublicationConsent: boolean
   listPublicationConsent: boolean
   historyScope: string
   publicationConsent: boolean
@@ -385,6 +420,11 @@ export type TraktSyncConnectionWhereInput = {
   ratings?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   lists?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   watchlist?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  favorites?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  notes?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  library?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  reviews?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  contentPublicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   listPublicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   historyScope?: Prisma.StringFilter<"TraktSyncConnection"> | string
   publicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
@@ -418,6 +458,11 @@ export type TraktSyncConnectionOrderByWithRelationInput = {
   ratings?: Prisma.SortOrder
   lists?: Prisma.SortOrder
   watchlist?: Prisma.SortOrder
+  favorites?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  library?: Prisma.SortOrder
+  reviews?: Prisma.SortOrder
+  contentPublicationConsent?: Prisma.SortOrder
   listPublicationConsent?: Prisma.SortOrder
   historyScope?: Prisma.SortOrder
   publicationConsent?: Prisma.SortOrder
@@ -455,6 +500,11 @@ export type TraktSyncConnectionWhereUniqueInput = Prisma.AtLeast<{
   ratings?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   lists?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   watchlist?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  favorites?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  notes?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  library?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  reviews?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  contentPublicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   listPublicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   historyScope?: Prisma.StringFilter<"TraktSyncConnection"> | string
   publicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
@@ -488,6 +538,11 @@ export type TraktSyncConnectionOrderByWithAggregationInput = {
   ratings?: Prisma.SortOrder
   lists?: Prisma.SortOrder
   watchlist?: Prisma.SortOrder
+  favorites?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  library?: Prisma.SortOrder
+  reviews?: Prisma.SortOrder
+  contentPublicationConsent?: Prisma.SortOrder
   listPublicationConsent?: Prisma.SortOrder
   historyScope?: Prisma.SortOrder
   publicationConsent?: Prisma.SortOrder
@@ -527,6 +582,11 @@ export type TraktSyncConnectionScalarWhereWithAggregatesInput = {
   ratings?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
   lists?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
   watchlist?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
+  favorites?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
+  notes?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
+  library?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
+  reviews?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
+  contentPublicationConsent?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
   listPublicationConsent?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
   historyScope?: Prisma.StringWithAggregatesFilter<"TraktSyncConnection"> | string
   publicationConsent?: Prisma.BoolWithAggregatesFilter<"TraktSyncConnection"> | boolean
@@ -557,6 +617,11 @@ export type TraktSyncConnectionCreateInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -590,6 +655,11 @@ export type TraktSyncConnectionUncheckedCreateInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -621,6 +691,11 @@ export type TraktSyncConnectionUpdateInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -654,6 +729,11 @@ export type TraktSyncConnectionUncheckedUpdateInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -686,6 +766,11 @@ export type TraktSyncConnectionCreateManyInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -716,6 +801,11 @@ export type TraktSyncConnectionUpdateManyMutationInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -747,6 +837,11 @@ export type TraktSyncConnectionUncheckedUpdateManyInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -793,6 +888,11 @@ export type TraktSyncConnectionCountOrderByAggregateInput = {
   ratings?: Prisma.SortOrder
   lists?: Prisma.SortOrder
   watchlist?: Prisma.SortOrder
+  favorites?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  library?: Prisma.SortOrder
+  reviews?: Prisma.SortOrder
+  contentPublicationConsent?: Prisma.SortOrder
   listPublicationConsent?: Prisma.SortOrder
   historyScope?: Prisma.SortOrder
   publicationConsent?: Prisma.SortOrder
@@ -829,6 +929,11 @@ export type TraktSyncConnectionMaxOrderByAggregateInput = {
   ratings?: Prisma.SortOrder
   lists?: Prisma.SortOrder
   watchlist?: Prisma.SortOrder
+  favorites?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  library?: Prisma.SortOrder
+  reviews?: Prisma.SortOrder
+  contentPublicationConsent?: Prisma.SortOrder
   listPublicationConsent?: Prisma.SortOrder
   historyScope?: Prisma.SortOrder
   publicationConsent?: Prisma.SortOrder
@@ -859,6 +964,11 @@ export type TraktSyncConnectionMinOrderByAggregateInput = {
   ratings?: Prisma.SortOrder
   lists?: Prisma.SortOrder
   watchlist?: Prisma.SortOrder
+  favorites?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  library?: Prisma.SortOrder
+  reviews?: Prisma.SortOrder
+  contentPublicationConsent?: Prisma.SortOrder
   listPublicationConsent?: Prisma.SortOrder
   historyScope?: Prisma.SortOrder
   publicationConsent?: Prisma.SortOrder
@@ -954,6 +1064,11 @@ export type TraktSyncConnectionCreateWithoutUserInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -985,6 +1100,11 @@ export type TraktSyncConnectionUncheckedCreateWithoutUserInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -1046,6 +1166,11 @@ export type TraktSyncConnectionScalarWhereInput = {
   ratings?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   lists?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   watchlist?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  favorites?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  notes?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  library?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  reviews?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
+  contentPublicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   listPublicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
   historyScope?: Prisma.StringFilter<"TraktSyncConnection"> | string
   publicationConsent?: Prisma.BoolFilter<"TraktSyncConnection"> | boolean
@@ -1076,6 +1201,11 @@ export type TraktSyncConnectionCreateWithoutEntriesInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -1108,6 +1238,11 @@ export type TraktSyncConnectionUncheckedCreateWithoutEntriesInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -1154,6 +1289,11 @@ export type TraktSyncConnectionUpdateWithoutEntriesInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1186,6 +1326,11 @@ export type TraktSyncConnectionUncheckedUpdateWithoutEntriesInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1216,6 +1361,11 @@ export type TraktSyncConnectionCreateManyUserInput = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: string
   publicationConsent?: boolean
@@ -1246,6 +1396,11 @@ export type TraktSyncConnectionUpdateWithoutUserInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1277,6 +1432,11 @@ export type TraktSyncConnectionUncheckedUpdateWithoutUserInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1308,6 +1468,11 @@ export type TraktSyncConnectionUncheckedUpdateManyWithoutUserInput = {
   ratings?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lists?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchlist?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favorites?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  library?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviews?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  contentPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listPublicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   historyScope?: Prisma.StringFieldUpdateOperationsInput | string
   publicationConsent?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1370,6 +1535,11 @@ export type TraktSyncConnectionSelect<ExtArgs extends runtime.Types.Extensions.I
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: boolean
   publicationConsent?: boolean
@@ -1404,6 +1574,11 @@ export type TraktSyncConnectionSelectCreateManyAndReturn<ExtArgs extends runtime
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: boolean
   publicationConsent?: boolean
@@ -1436,6 +1611,11 @@ export type TraktSyncConnectionSelectUpdateManyAndReturn<ExtArgs extends runtime
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: boolean
   publicationConsent?: boolean
@@ -1468,6 +1648,11 @@ export type TraktSyncConnectionSelectScalar = {
   ratings?: boolean
   lists?: boolean
   watchlist?: boolean
+  favorites?: boolean
+  notes?: boolean
+  library?: boolean
+  reviews?: boolean
+  contentPublicationConsent?: boolean
   listPublicationConsent?: boolean
   historyScope?: boolean
   publicationConsent?: boolean
@@ -1485,7 +1670,7 @@ export type TraktSyncConnectionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TraktSyncConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "traktUserId" | "username" | "accessToken" | "refreshToken" | "expiresAt" | "status" | "direction" | "watches" | "ratings" | "lists" | "watchlist" | "listPublicationConsent" | "historyScope" | "publicationConsent" | "initialised" | "nextRunAt" | "lastSuccessAt" | "lastError" | "leaseId" | "leaseUntil" | "remoteSnapshot" | "remoteReadAt" | "remaining" | "remainingTotal" | "createdAt" | "updatedAt", ExtArgs["result"]["traktSyncConnection"]>
+export type TraktSyncConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "traktUserId" | "username" | "accessToken" | "refreshToken" | "expiresAt" | "status" | "direction" | "watches" | "ratings" | "lists" | "watchlist" | "favorites" | "notes" | "library" | "reviews" | "contentPublicationConsent" | "listPublicationConsent" | "historyScope" | "publicationConsent" | "initialised" | "nextRunAt" | "lastSuccessAt" | "lastError" | "leaseId" | "leaseUntil" | "remoteSnapshot" | "remoteReadAt" | "remaining" | "remainingTotal" | "createdAt" | "updatedAt", ExtArgs["result"]["traktSyncConnection"]>
 export type TraktSyncConnectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   entries?: boolean | Prisma.TraktSyncConnection$entriesArgs<ExtArgs>
@@ -1518,6 +1703,11 @@ export type $TraktSyncConnectionPayload<ExtArgs extends runtime.Types.Extensions
     ratings: boolean
     lists: boolean
     watchlist: boolean
+    favorites: boolean
+    notes: boolean
+    library: boolean
+    reviews: boolean
+    contentPublicationConsent: boolean
     listPublicationConsent: boolean
     historyScope: string
     publicationConsent: boolean
@@ -1971,6 +2161,11 @@ export interface TraktSyncConnectionFieldRefs {
   readonly ratings: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
   readonly lists: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
   readonly watchlist: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
+  readonly favorites: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
+  readonly notes: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
+  readonly library: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
+  readonly reviews: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
+  readonly contentPublicationConsent: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
   readonly listPublicationConsent: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>
   readonly historyScope: Prisma.FieldRef<"TraktSyncConnection", 'String'>
   readonly publicationConsent: Prisma.FieldRef<"TraktSyncConnection", 'Boolean'>

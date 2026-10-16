@@ -1,0 +1,5 @@
+ALTER TABLE "TraktSyncConnection"
+ADD COLUMN "notes" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN "library" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN "reviews" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN "contentPublicationConsent" BOOLEAN NOT NULL DEFAULT false;

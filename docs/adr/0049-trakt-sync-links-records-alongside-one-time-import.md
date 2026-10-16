@@ -20,7 +20,7 @@ The operator requested custom List and watchlist sync, including private Trakt
 data with an explicit publication warning. Both are independent opt-in types,
 off for existing connections. The shared direction and history scope apply.
 Watchlist sync is separate from custom Lists; Trakt's automatic watchlist
-removals are ordinary source membership removals. Favorites remain separate.
+removals are ordinary source membership removals. Favorites use a separate scope, as defined below.
 
 Retain each destination's visibility. New Opnshelf Lists follow the User's List
 default; new Trakt Lists inherit the source visibility. One publication acknowledgement covers all selected types. It includes List
@@ -46,3 +46,64 @@ Partial state that differs from both expected versions requires a source choice
 rather than overwriting intervening edits. Complete authoritative reads precede
 removal decisions. Local manual order remains a database projection, as in the
 existing Lists feature.
+
+
+## Favorites extension (2026-10-15)
+
+The operator requested Favorites after the List extension merged. Pair the
+Opnshelf default Favorites List with Trakt's dedicated Favorites feature by role,
+independently of custom Lists and watchlist. Favorites is opt-in and disabled for
+existing connections. Reuse List reconciliation, history scope, direction,
+conflict recovery, and the single shared publication acknowledgement.
+
+Trakt Favorites supports movies and shows only. Preserve unsupported seasons and
+episodes in Needs attention without converting them to parent shows. Read the
+account's `limits.favorites.item_count`; capacity failures never truncate data.
+Transfers add before removing, so a replacement at capacity needs space freed on
+Trakt before retrying. Names and descriptions stay local to default Lists; notes
+and order are synchronized. Favorites cannot be deleted as a List.
+
+Private Opnshelf Favorites remain available for inbound sync. Hold private
+outbound Favorites in Needs attention until Trakt's effective privacy behavior
+is verified; do not assume the public/private account flag proves preservation.
+No separate one-time Import is added. See [the investigation](../research/trakt-favorites.md).
+
+
+## Notes, Library and Reviews extension (2026-10-15)
+
+The operator requested Notes, Library and Reviews as ongoing scopes in the
+selected direction. All start disabled for existing connections. Each reuses
+stable account-scoped links, history scope, conflict choices, ignore/retry,
+pending intents and authoritative readback. These scopes require fresh content
+publication consent; the clients retain one shared acknowledgement checkbox.
+Saved Watch or List consent alone does not authorize these new transfers.
+
+Standalone media Notes are distinct from List item notes. Pair only an
+unambiguous media tuple, preserve destination visibility, and use source privacy
+for new Trakt Notes. Multiple Notes for one media tuple, person/List attachments,
+Notes with a spoiler flag, and text beyond Opnshelf's limit need attention rather
+than merging, dropping flags, or truncating text.
+
+Library sync transfers ownership and supported Format only. Pair by media tuple
+and Format. Local Library item notes and Box Sets stay local and survive inbound
+updates. Multiple owned Formats cannot be collapsed into Trakt's single
+collection entry. Missing/unsupported collection metadata and unrepresentable
+video/audio details need attention; never default an unknown Format to Digital.
+A different destination Format is not overwritten as an unrelated membership.
+Private outbound Library Items are held pending verified Trakt collection privacy.
+
+Sync authored top-level Reviews; short comments and replies are not imported as
+Reviews. Short comments remain visible as unsupported source records so a Review
+reclassified as a comment cannot look deleted. Match existing unlinked Reviews
+only by identical content and spoiler state, with an unambiguous pair. Separate
+pieces about the same title remain separate Reviews. Preserve local Review titles;
+new imports use the media title as a neutral title. Inline Trakt spoiler markup
+sets the whole-Review Spoiler Flag without rewriting the original text.
+
+Trakt classifies text of at least 200 words as a Review and requires English.
+Hold shorter outbound Reviews instead of padding or publishing a short comment;
+Trakt validation failures remain actionable. Imported Reviews disable blog
+mirroring and never create Bluesky Cross-posts. Inbound edits/deletion of existing
+Reviews with a Blog Mirror are held to avoid bypassing the managed mirror lifecycle.
+Privacy Alpha's accepted reference-Spaces concurrency limit still applies to
+private Notes and Library writes; no new atomicity claim is made.

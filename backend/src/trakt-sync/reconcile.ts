@@ -1,9 +1,19 @@
+import { contentValue } from "./content-value";
+
 /** Pure reconciliation policy. Transport IDs and last successful values survive disconnects. */
 export type Direction = "inbound" | "outbound" | "both";
 export type MediaType = "movie" | "show" | "season" | "episode" | "list";
 export type SyncRecord = {
 	key: string;
-	kind: "watch" | "rating" | "list" | "watchlist";
+	kind:
+		| "watch"
+		| "rating"
+		| "list"
+		| "watchlist"
+		| "favorites"
+		| "note"
+		| "library"
+		| "review";
 	mediaType: MediaType;
 	mediaId: string | null;
 	season: number;
@@ -16,6 +26,7 @@ export type SyncRecord = {
 	cid?: string;
 	problem?: string;
 	visibility?: "public" | "private";
+	createdAt?: string;
 };
 export type Baseline = {
 	linked: boolean;
@@ -26,10 +37,16 @@ export type Baseline = {
 export type Decision = "none" | "push" | "pull" | "conflict";
 
 export function isListRecord(record: { kind: string }): boolean {
-	return record.kind === "list" || record.kind === "watchlist";
+	return (
+		record.kind === "list" ||
+		record.kind === "watchlist" ||
+		record.kind === "favorites"
+	);
 }
 
 export function mediaKey(record: SyncRecord): string {
+	if (record.kind === "library")
+		return `library:${record.mediaType}:${record.mediaId}:${record.season}:${record.episode}:${contentValue(record).format}`;
 	if (isListRecord(record)) return record.kind;
 	return `${record.kind}:${record.mediaType}:${record.mediaId}:${record.season}:${record.episode}`;
 }
@@ -93,8 +110,9 @@ export function candidates(
 		(other) =>
 			mediaKey(record) === mediaKey(other) &&
 			(!isListRecord(record) ||
-				record.kind === "watchlist" ||
+				record.kind !== "list" ||
 				record.title === other.title) &&
+			(record.kind !== "review" || record.value === other.value) &&
 			(record.kind !== "watch" ||
 				record.value === null ||
 				other.value === null ||
@@ -108,7 +126,16 @@ export function readRecord(value: unknown): SyncRecord | null {
 	const v = value as Partial<SyncRecord>;
 	if (
 		typeof v.key !== "string" ||
-		!["watch", "rating", "list", "watchlist"].includes(v.kind ?? "") ||
+		![
+			"watch",
+			"rating",
+			"list",
+			"watchlist",
+			"favorites",
+			"note",
+			"library",
+			"review",
+		].includes(v.kind ?? "") ||
 		!["movie", "show", "season", "episode", "list"].includes(
 			v.mediaType ?? "",
 		) ||
