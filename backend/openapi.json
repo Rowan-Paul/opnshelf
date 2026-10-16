@@ -11937,6 +11937,10 @@
           },
           "allRatings": {
             "type": "boolean"
+          },
+          "confirmedTraktMissing": {
+            "type": "boolean",
+            "description": "The User checked Trakt and confirmed the unacknowledged creation is missing before choosing a version."
           }
         },
         "required": [

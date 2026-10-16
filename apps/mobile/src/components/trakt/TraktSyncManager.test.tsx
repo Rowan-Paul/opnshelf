@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 	mutate: vi.fn(),
 	active: false,
 	issues: false,
+	uncertain: false,
 	syncState: "idle",
 }));
 vi.mock("@opnshelf/api", async (original) => ({
@@ -63,7 +64,19 @@ vi.mock("@tanstack/react-query", () => ({
 										candidates: [],
 									},
 								]
-							: [],
+							: mocks.uncertain
+								? [
+										{
+											id: "one",
+											kind: "review",
+											recovery: "verify",
+											ignored: false,
+											issue: "Unconfirmed creation",
+											opnshelf: { title: "Fixture", displayValue: "Review" },
+											candidates: [],
+										},
+									]
+								: [],
 					total: queryKey.at(-1) === "ignored" ? 1 : 0,
 				},
 			],
@@ -99,6 +112,7 @@ vi.mock("@/components/marks/TraktMark", () => ({ TraktMark: "icon" }));
 
 beforeEach(() => {
 	mocks.active = false;
+	mocks.uncertain = false;
 	mocks.issues = false;
 	mocks.syncState = "idle";
 });
@@ -330,4 +344,38 @@ it("opens ignored items in a sheet and restores without replacing attention", ()
 				node.type === "text" && node.props.children === "Needs attention",
 		),
 	).toHaveLength(1);
+});
+
+it.each([
+	"Send after checking Trakt…",
+	"Remove from Opnshelf…",
+])("requires a Trakt check before %s", (label) => {
+	mocks.active = true;
+	mocks.issues = true;
+	mocks.uncertain = true;
+	mount();
+	press(label);
+	const confirm = () =>
+		renderer.root.find(
+			(node) =>
+				node.type === "text" && node.props.children === "Confirm choice",
+		).parent;
+	expect(confirm()?.props.disabled).toBe(true);
+	expect(mocks.mutate).not.toHaveBeenCalled();
+	const toggle = renderer.root.find(
+		(node) =>
+			node.type === "switch" &&
+			node.props.accessibilityLabel ===
+				"I checked Trakt and confirmed this item is missing.",
+	);
+	act(() => toggle.props.onValueChange(true));
+	expect(confirm()?.props.disabled).toBe(false);
+	press("Confirm choice");
+	expect(mocks.mutate).toHaveBeenCalledWith({
+		path: { id: "one" },
+		body: {
+			action: label.startsWith("Send") ? "opnshelf" : "trakt",
+			confirmedTraktMissing: true,
+		},
+	});
 });

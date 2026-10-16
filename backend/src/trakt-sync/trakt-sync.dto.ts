@@ -119,6 +119,13 @@ export class SyncResolveDto {
 	@Matches(/^[1-9]\d{0,9}$/)
 	mediaId?: string;
 	@ApiPropertyOptional() @IsOptional() @IsBoolean() allRatings?: boolean;
+	@ApiPropertyOptional({
+		description:
+			"The User checked Trakt and confirmed the unacknowledged creation is missing before choosing a version.",
+	})
+	@IsOptional()
+	@IsBoolean()
+	confirmedTraktMissing?: boolean;
 }
 export class SyncStatusDto {
 	@ApiPropertyOptional({ enum: ["idle", "queued", "running", "waiting"] })

@@ -1077,6 +1077,136 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		).rejects.toThrow("unconfirmed transfer");
 		expect(localRecords).toHaveLength(1);
 	});
+	it.each(["list", "note", "review"] as const)(
+		"resends a missing %s only after an explicit Trakt check, including after edits and a direction change",
+		async (kind) => {
+			localRecords = [
+				kind === "list"
+					? curated("list:local", ["12"])
+					: content(kind, `${kind}:local`),
+			];
+			if (kind === "list") await configureLists("outbound");
+			else await configureContent("outbound", kind);
+			remoteApi.write.mockRejectedValueOnce(
+				new Error("Request never reached Trakt"),
+			);
+			await tick();
+			const entry = await db.traktSyncEntry.findFirstOrThrow({
+				where: { connection: { userDid }, kind },
+			});
+			for (let attempt = 0; attempt < 3; attempt++) {
+				await service.resolve(userDid, entry.id, { action: "retry" });
+				await tick();
+			}
+			expect(remoteApi.write).toHaveBeenCalledTimes(1);
+			localRecords[0] = { ...localRecords[0], title: "Edited locally" };
+			await tick();
+			expect((await service.issues(userDid, {})).items[0].recovery).toBe(
+				"verify",
+			);
+			expect(
+				(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+					.pending,
+			).not.toBeNull();
+			await db.traktSyncConnection.updateMany({
+				where: { userDid },
+				data: { direction: "inbound" },
+			});
+			await tick();
+			await expect(
+				service.resolve(userDid, entry.id, { action: "opnshelf" }),
+			).rejects.toThrow("unconfirmed transfer");
+			await service.resolve(userDid, entry.id, {
+				action: "opnshelf",
+				confirmedTraktMissing: true,
+			});
+			await tick();
+			expect(remoteRecords).toHaveLength(1);
+			expect(remoteRecords[0].title).toBe("Edited locally");
+			expect(localRecords).toHaveLength(1);
+			expect((await service.issues(userDid, {})).total).toBe(0);
+		},
+	);
+	it.each(["note", "review"] as const)(
+		"adopts the original %s before sending a local edit after an acknowledgement was lost",
+		async (kind) => {
+			localRecords = [content(kind, `${kind}:local`)];
+			await configureContent("outbound", kind);
+			remoteApi.write.mockImplementationOnce(async (_token, desired) => {
+				remoteRecords = [{ ...desired, key: `${kind}:77`, traktId: 77 }];
+				throw new Error("Acknowledgement lost");
+			});
+			await tick();
+			localRecords[0] = {
+				...localRecords[0],
+				value: encodeContent({
+					content: "edited ".repeat(200).trim(),
+					spoiler: false,
+				}),
+			};
+			await tick();
+			expect(remoteRecords).toHaveLength(1);
+			expect(remoteRecords[0].value).toBe(localRecords[0].value);
+			expect(remoteApi.write).toHaveBeenCalledTimes(2);
+			expect((await service.issues(userDid, {})).total).toBe(0);
+		},
+	);
+	it.each(["trakt", "opnshelf"] as const)(
+		"keeps an uncertain intent when a remote copy appears before confirming %s",
+		async (action) => {
+			localRecords = [content("review", "review:local")];
+			await configureContent("outbound", "review");
+			remoteApi.write.mockRejectedValueOnce(new Error("Acknowledgement lost"));
+			await tick();
+			const entry = await db.traktSyncEntry.findFirstOrThrow({
+				where: { connection: { userDid }, kind: "review" },
+			});
+			remoteRecords = [{ ...localRecords[0], key: "review:77", traktId: 77 }];
+			await expect(
+				service.resolve(userDid, entry.id, {
+					action,
+					confirmedTraktMissing: true,
+				}),
+			).rejects.toThrow("possible copy");
+			expect(
+				(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+					.pending,
+			).not.toBeNull();
+			expect(localRecords).toHaveLength(1);
+			await tick();
+			expect(remoteRecords).toHaveLength(1);
+			expect(remoteApi.write).toHaveBeenCalledTimes(1);
+			expect((await service.issues(userDid, {})).total).toBe(0);
+		},
+	);
+	it("removes a local unconfirmed creation only after explicitly confirming the Trakt version is missing", async () => {
+		localRecords = [curated("list:local", ["12"])];
+		await configureLists("outbound");
+		remoteApi.write.mockRejectedValueOnce(
+			new Error("Request never reached Trakt"),
+		);
+		await tick();
+		const entry = await db.traktSyncEntry.findFirstOrThrow({
+			where: { connection: { userDid }, kind: "list" },
+		});
+		await service.resolve(userDid, entry.id, {
+			action: "trakt",
+			confirmedTraktMissing: true,
+		});
+		await tick();
+		expect(localRecords).toEqual([]);
+		expect(remoteRecords).toEqual([]);
+	});
+	it("reports an overdue provider retry as queued instead of waiting", async () => {
+		await configure();
+		await db.traktSyncConnection.updateMany({
+			where: { userDid },
+			data: { nextRunAt: new Date(0), lastError: "Trakt rate limit" },
+		});
+		expect(await service.status(userDid)).toMatchObject({
+			syncState: "queued",
+		});
+	});
 	it("keeps the scheduled retry when Sync now is pressed during a provider delay", async () => {
 		await configure();
 		const nextRunAt = new Date(Date.now() + 60_000);

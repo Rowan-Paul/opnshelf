@@ -7,11 +7,13 @@ import {
 	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
 	TRAKT_LIST_COPY,
+	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
 	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
+	TRAKT_UNCONFIRMED_CHOICE_COPY,
 	traktError,
 	traktIssueRecovery,
 	traktResolutionLabel,
@@ -909,7 +911,7 @@ function SyncIssue({
 			</h3>
 			<p className="mt-2 text-(--foreground-muted) text-sm">
 				{traktIssueRecovery(item) === "verify"
-					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again before sending another copy."
+					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again, or check your Trakt account before choosing a version."
 					: item.issue}
 			</p>
 			<dl className="my-4 grid grid-cols-2 gap-3">
@@ -939,16 +941,27 @@ function SyncIssue({
 			) : (
 				<div className="flex flex-wrap gap-2">
 					{connected &&
-						traktIssueRecovery(item) === "choose" &&
+						traktIssueRecovery(item) !== "retry" &&
 						(["trakt", "opnshelf"] as const).map((action) => (
 							<button
 								key={action}
 								type="button"
 								className="btn btn-secondary max-w-full whitespace-normal"
 								disabled={mutation.isPending}
-								onClick={() => setChoice({ action })}
+								onClick={() =>
+									setChoice({
+										action,
+										...(traktIssueRecovery(item) === "verify"
+											? { confirmedTraktMissing: false }
+											: {}),
+									})
+								}
 							>
-								{traktResolutionLabel(action, Boolean(item[action]))}
+								{traktIssueRecovery(item) === "verify"
+									? action === "opnshelf"
+										? "Send after checking Trakt…"
+										: "Remove from Opnshelf…"
+									: traktResolutionLabel(action, Boolean(item[action]))}
 							</button>
 						))}
 					{connected && (
@@ -1077,6 +1090,24 @@ function SyncIssue({
 											Boolean(item[choice.action as "trakt" | "opnshelf"]),
 										)}
 						</p>
+						{choice.confirmedTraktMissing !== undefined && (
+							<div className="space-y-3">
+								<p>{TRAKT_UNCONFIRMED_CHOICE_COPY}</p>
+								<label className="flex gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={choice.confirmedTraktMissing}
+										onChange={(event) =>
+											setChoice({
+												...choice,
+												confirmedTraktMissing: event.target.checked,
+											})
+										}
+									/>
+									{TRAKT_MISSING_CONFIRMATION}
+								</label>
+							</div>
+						)}
 						{item.kind === "rating" && (
 							<label className="flex gap-2 text-sm">
 								<input
@@ -1089,6 +1120,7 @@ function SyncIssue({
 								Apply to all Rating conflicts
 							</label>
 						)}
+						{mutation.error && <p role="alert">{traktError(mutation.error)}</p>}
 						<div className="flex flex-wrap gap-2">
 							<button
 								type="button"
@@ -1100,7 +1132,9 @@ function SyncIssue({
 							<button
 								type="button"
 								className="btn btn-primary max-w-full whitespace-normal"
-								disabled={mutation.isPending}
+								disabled={
+									mutation.isPending || choice.confirmedTraktMissing === false
+								}
 								onClick={() => resolve(choice)}
 							>
 								{mutation.isPending ? "Saving…" : "Confirm choice"}

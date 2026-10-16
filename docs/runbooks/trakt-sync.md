@@ -190,8 +190,23 @@ Reviews below Trakt's 200-word minimum remain in Opnshelf with an actionable
 validation message. Existing invalid pending intents are cleared when validation
 proves that export cannot be attempted. Known rejected creations can retry;
 network failures retain their uncertain intent. A uniquely matching complete
-remote List, Note or Review is adopted after a lost acknowledgement only while
-the local source still matches. Ambiguous results remain unresolved.
+remote List, Note or Review is adopted after a lost acknowledgement. For Notes
+and Reviews, a local edit retains the original intent so the original remote
+copy can be linked before applying the edit. Ambiguous results remain unresolved.
+
+Check again never resends an unconfirmed creation. The User can choose a version
+after checking Trakt and explicitly confirming the item is missing. The server
+rechecks Trakt before accepting that confirmation and rejects it if a possible
+copy has appeared. Choosing Opnshelf sends the current version once, even after
+a direction change; choosing the missing Trakt version explicitly deletes the
+Opnshelf copy. Both clients explain the duplicate risk from a delayed original
+request and require a separate confirmation. Local edits preserve uncertain
+intents rather than turning Retry into a duplicate creation.
+
+Provider delays show a date and time. Once the delay expires, status is queued;
+a stale provider error no longer leaves the connection shown as waiting.
+Repeated Sync requests join the running operation rather than requesting an
+additional remote read.
 
 | Flow | Web | Mobile |
 | --- | --- | --- |

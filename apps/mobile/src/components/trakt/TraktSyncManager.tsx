@@ -7,11 +7,13 @@ import {
 	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
 	TRAKT_LIST_COPY,
+	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
 	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
+	TRAKT_UNCONFIRMED_CHOICE_COPY,
 	traktError,
 	traktIssueRecovery,
 	traktResolutionLabel,
@@ -302,7 +304,10 @@ export function TraktSyncManager({
 								paddingBottom: insets.bottom + 32,
 							}}
 						>
-							<Text className="font-semibold text-foreground text-xl">
+							<Text
+								accessibilityRole="header"
+								className="font-semibold text-foreground text-xl"
+							>
 								Disconnect Trakt?
 							</Text>
 							<Text className={copy}>
@@ -480,7 +485,10 @@ export function SyncSettings({
 	return (
 		<View className={className}>
 			{showHeading && (
-				<Text className="font-semibold text-foreground text-lg">
+				<Text
+					accessibilityRole="header"
+					className="font-semibold text-foreground text-lg"
+				>
 					Sync settings
 				</Text>
 			)}
@@ -865,7 +873,10 @@ function SyncIssues({
 		<View className="gap-4">
 			{view === "attention" && (
 				<>
-					<Text className="font-display font-semibold text-2xl text-foreground">
+					<Text
+						accessibilityRole="header"
+						className="font-display font-semibold text-2xl text-foreground"
+					>
 						Needs attention
 					</Text>
 					<Action label="View ignored" onPress={() => setIgnoredOpen(true)} />
@@ -971,7 +982,7 @@ function SyncIssue({
 			</Text>
 			<Text selectable className={copy}>
 				{traktIssueRecovery(item) === "verify"
-					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again before sending another copy."
+					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again, or check your Trakt account before choosing a version."
 					: item.issue}
 			</Text>
 			<View className="flex-row gap-3">
@@ -1001,13 +1012,26 @@ function SyncIssue({
 			) : (
 				<View className="gap-2">
 					{connected &&
-						traktIssueRecovery(item) === "choose" &&
+						traktIssueRecovery(item) !== "retry" &&
 						(["trakt", "opnshelf"] as const).map((action) => (
 							<Action
 								key={action}
-								label={traktResolutionLabel(action, Boolean(item[action]))}
+								label={
+									traktIssueRecovery(item) === "verify"
+										? action === "opnshelf"
+											? "Send after checking Trakt…"
+											: "Remove from Opnshelf…"
+										: traktResolutionLabel(action, Boolean(item[action]))
+								}
 								disabled={mutation.isPending}
-								onPress={() => setChoice({ action })}
+								onPress={() =>
+									setChoice({
+										action,
+										...(traktIssueRecovery(item) === "verify"
+											? { confirmedTraktMissing: false }
+											: {}),
+									})
+								}
 							/>
 						))}
 					{connected && (
@@ -1104,7 +1128,10 @@ function SyncIssue({
 							paddingBottom: insets.bottom + 32,
 						}}
 					>
-						<Text className="font-semibold text-foreground text-xl">
+						<Text
+							accessibilityRole="header"
+							className="font-semibold text-foreground text-xl"
+						>
 							Confirm sync choice
 						</Text>
 						<Text className={copy}>
@@ -1121,6 +1148,18 @@ function SyncIssue({
 											Boolean(item[choice.action as "trakt" | "opnshelf"]),
 										)}
 						</Text>
+						{choice.confirmedTraktMissing !== undefined && (
+							<View className="gap-3">
+								<Text className={copy}>{TRAKT_UNCONFIRMED_CHOICE_COPY}</Text>
+								<Toggle
+									label={TRAKT_MISSING_CONFIRMATION}
+									value={choice.confirmedTraktMissing}
+									onChange={(confirmedTraktMissing) =>
+										setChoice({ ...choice, confirmedTraktMissing })
+									}
+								/>
+							</View>
+						)}
 						{item.kind === "rating" && (
 							<Toggle
 								label="Apply to all Rating conflicts"
@@ -1128,11 +1167,18 @@ function SyncIssue({
 								onChange={(allRatings) => setChoice({ ...choice, allRatings })}
 							/>
 						)}
+						{mutation.error && (
+							<Text accessibilityRole="alert" className={copy}>
+								{traktError(mutation.error)}
+							</Text>
+						)}
 						<Action label="Cancel" onPress={() => setChoice(null)} />
 						<Action
 							primary
 							label={mutation.isPending ? "Saving…" : "Confirm choice"}
-							disabled={mutation.isPending}
+							disabled={
+								mutation.isPending || choice.confirmedTraktMissing === false
+							}
 							onPress={() => resolve(choice)}
 						/>
 					</ScrollView>

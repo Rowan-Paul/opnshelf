@@ -1987,6 +1987,10 @@ export type SyncResolveDto = {
      */
     mediaId?: string;
     allRatings?: boolean;
+    /**
+     * The User checked Trakt and confirmed the unacknowledged creation is missing before choosing a version.
+     */
+    confirmedTraktMissing?: boolean;
 };
 
 export type RatingResponseDto = {

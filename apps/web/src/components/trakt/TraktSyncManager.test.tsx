@@ -363,3 +363,35 @@ it("opens ignored items in a dialog, restores an item and keeps attention in pla
 		screen.getByRole("heading", { name: "Needs attention", hidden: true }),
 	).toBeTruthy();
 });
+
+it.each([
+	"Send after checking Trakt…",
+	"Remove from Opnshelf…",
+])("requires a Trakt check before %s", async (label) => {
+	mocks.issue = true;
+	mocks.uncertain = true;
+	mount();
+	fireEvent.click(await screen.findByRole("button", { name: label }));
+	const confirm = screen.getByRole("button", { name: "Confirm choice" });
+	expect(confirm).toHaveProperty("disabled", true);
+	fireEvent.click(confirm);
+	expect(mocks.resolve).not.toHaveBeenCalled();
+	fireEvent.click(
+		screen.getByRole("checkbox", {
+			name: "I checked Trakt and confirmed this item is missing.",
+		}),
+	);
+	fireEvent.click(confirm);
+	await waitFor(() =>
+		expect(mocks.resolve).toHaveBeenCalledWith(
+			{
+				path: { id: "one" },
+				body: {
+					action: label.startsWith("Send") ? "opnshelf" : "trakt",
+					confirmedTraktMissing: true,
+				},
+			},
+			expect.anything(),
+		),
+	);
+});
