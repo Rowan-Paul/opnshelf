@@ -25,8 +25,7 @@ export function buildSeasonUrl(
 	showName: string,
 	seasonNumber: number,
 ): string {
-	const slug = slugifyName(showName);
-	return `/shows/${showId}/${slug}/seasons/${seasonNumber}`;
+	return `${buildShowUrl(showId, showName)}/seasons/${seasonNumber}`;
 }
 
 /**
@@ -39,8 +38,7 @@ export function buildEpisodeUrl(
 	seasonNumber: number,
 	episodeNumber: number,
 ): string {
-	const slug = slugifyName(showName);
-	return `/shows/${showId}/${slug}/seasons/${seasonNumber}/episodes/${episodeNumber}`;
+	return `${buildSeasonUrl(showId, showName, seasonNumber)}/episodes/${episodeNumber}`;
 }
 
 /**
