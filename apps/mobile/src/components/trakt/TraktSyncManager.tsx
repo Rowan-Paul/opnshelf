@@ -258,29 +258,32 @@ export function TraktSyncManager({
 										? "pause"
 										: "resume",
 								] as const
-							).map((name) => (
-								<Action
-									key={name}
-									disabled={
-										(action.isPending &&
-											action.variables?.body.action === name) ||
-										(name === "sync" &&
-											["running", "queued", "waiting"].includes(
-												data.syncState ?? "",
-											))
-									}
-									label={
-										action.isPending && action.variables?.body.action === name
-											? "Saving…"
-											: name === "sync"
-												? traktSyncActionLabel(data)
-												: name === "pause"
-													? "Pause"
-													: "Resume"
-									}
-									onPress={() => action.mutate({ body: { action: name } })}
-								/>
-							))}
+							)
+								.filter(
+									(name) =>
+										name !== "sync" ||
+										!["running", "queued", "waiting"].includes(
+											data.syncState ?? "",
+										),
+								)
+								.map((name) => (
+									<Action
+										key={name}
+										disabled={
+											action.isPending && action.variables?.body.action === name
+										}
+										label={
+											action.isPending && action.variables?.body.action === name
+												? "Saving…"
+												: name === "sync"
+													? traktSyncActionLabel(data)
+													: name === "pause"
+														? "Pause"
+														: "Resume"
+										}
+										onPress={() => action.mutate({ body: { action: name } })}
+									/>
+								))}
 							<Action label="Disconnect" onPress={() => setDisconnect(true)} />
 						</View>
 					</>

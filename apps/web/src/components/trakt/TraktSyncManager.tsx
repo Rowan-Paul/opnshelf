@@ -233,30 +233,33 @@ export function TraktSyncManager({
 										? "pause"
 										: "resume",
 								] as const
-							).map((name) => (
-								<button
-									key={name}
-									type="button"
-									className="btn btn-secondary max-w-full whitespace-normal"
-									disabled={
-										(action.isPending &&
-											action.variables?.body.action === name) ||
-										(name === "sync" &&
-											["running", "queued", "waiting"].includes(
-												data.syncState ?? "",
-											))
-									}
-									onClick={() => action.mutate({ body: { action: name } })}
-								>
-									{action.isPending && action.variables?.body.action === name
-										? "Saving…"
-										: name === "sync"
-											? traktSyncActionLabel(data)
-											: name === "pause"
-												? "Pause"
-												: "Resume"}
-								</button>
-							))}
+							)
+								.filter(
+									(name) =>
+										name !== "sync" ||
+										!["running", "queued", "waiting"].includes(
+											data.syncState ?? "",
+										),
+								)
+								.map((name) => (
+									<button
+										key={name}
+										type="button"
+										className="btn btn-secondary max-w-full whitespace-normal"
+										disabled={
+											action.isPending && action.variables?.body.action === name
+										}
+										onClick={() => action.mutate({ body: { action: name } })}
+									>
+										{action.isPending && action.variables?.body.action === name
+											? "Saving…"
+											: name === "sync"
+												? traktSyncActionLabel(data)
+												: name === "pause"
+													? "Pause"
+													: "Resume"}
+									</button>
+								))}
 							<button
 								type="button"
 								className="btn btn-secondary max-w-full whitespace-normal"

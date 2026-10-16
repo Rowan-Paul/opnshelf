@@ -308,8 +308,11 @@ it("does not offer another Sync now request while the worker is running", async 
 	mocks.syncState = "running";
 	mount();
 	expect(
-		await screen.findByRole("button", { name: "Syncing with Trakt…" }),
-	).toHaveProperty("disabled", true);
+		await screen.findByText("Syncing with Trakt. You can keep using Opnshelf."),
+	).toBeTruthy();
+	expect(
+		screen.queryByRole("button", { name: "Syncing with Trakt…" }),
+	).toBeNull();
 	expect(screen.queryByRole("button", { name: "Sync now" })).toBeNull();
 });
 

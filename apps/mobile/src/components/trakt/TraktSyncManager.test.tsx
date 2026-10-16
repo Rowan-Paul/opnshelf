@@ -309,11 +309,20 @@ it("shows the running worker instead of offering another Sync now request", () =
 	mocks.active = true;
 	mocks.syncState = "running";
 	mount();
-	const button = renderer.root.find(
+	const status = renderer.root.find(
 		(node) =>
-			node.type === "text" && node.props.children === "Syncing with Trakt…",
-	).parent;
-	expect(button?.props.disabled).toBe(true);
+			node.type === "text" &&
+			node.props.children ===
+				"Syncing with Trakt. You can keep using Opnshelf.",
+	);
+	expect(status.props.accessibilityLiveRegion).toBe("polite");
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "text" &&
+				["Syncing with Trakt…", "Sync now"].includes(node.props.children),
+		),
+	).toHaveLength(0);
 });
 
 it("opens ignored items in a sheet and restores without replacing attention", () => {
