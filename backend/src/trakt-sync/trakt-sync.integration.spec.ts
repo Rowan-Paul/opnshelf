@@ -321,11 +321,17 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		season: 0,
 		episode: 0,
 		title: "Fixture",
-		visibility: kind === "review" ? "public" : "private",
+		visibility: kind === "note" ? "private" : "public",
 		value: encodeContent(
 			kind === "library"
 				? { format: "dvd" }
-				: { content: text, spoiler: false },
+				: {
+						content:
+							kind === "review" && text === "Source words"
+								? "word ".repeat(200).trim()
+								: text,
+						spoiler: false,
+					},
 		),
 		traktId: 22,
 	});
@@ -396,9 +402,70 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			await tick();
 			const issues = await service.issues(userDid, { view: "attention" });
 			expect(JSON.stringify(issues.items)).toContain(
-				`creating this Trakt ${kind === "note" ? "Note" : "Review"} is unknown`,
+				`whether Trakt created this ${kind === "note" ? "Note" : "Review"}`,
 			);
 			expect(remoteRecords).toEqual([]);
+		},
+	);
+	it("keeps short Reviews actionable without an uncertain creation intent", async () => {
+		localRecords = [content("review", "review:short", "A short review")];
+		await configureContent("outbound", "review");
+		await tick();
+		await tick();
+		expect(remoteApi.write).not.toHaveBeenCalled();
+		const issue = (await service.issues(userDid, { view: "attention" }))
+			.items[0];
+		expect(issue.issue).toContain("200 words");
+		expect(issue.recovery).toBe("retry");
+		expect(
+			(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: issue.id } }))
+				.pending,
+		).toBeNull();
+	});
+	it("repairs legacy short-Review intents instead of asking for a missing version", async () => {
+		localRecords = [content("review", "review:short", "A short review")];
+		await configureContent("outbound", "review");
+		const entry = await db.traktSyncEntry.findFirstOrThrow({
+			where: { kind: "review" },
+		});
+		await db.traktSyncEntry.update({
+			where: { id: entry.id },
+			data: {
+				pending: {
+					direction: "push",
+					desired: localRecords[0],
+					previous: null,
+					source: localRecords[0],
+				},
+			},
+		});
+		await tick();
+		expect(
+			(await service.issues(userDid, { view: "attention" })).items[0],
+		).toMatchObject({ recovery: "retry", traktState: "missing" });
+		expect(
+			(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+				.pending,
+		).toBeNull();
+		expect(remoteApi.write).not.toHaveBeenCalled();
+	});
+	it.each(["note", "review"] as const)(
+		"adopts a uniquely confirmed %s after losing the creation acknowledgement",
+		async (kind) => {
+			localRecords = [content(kind, `${kind}:local`)];
+			remoteApi.write.mockImplementationOnce(async (_token, desired) => {
+				remoteRecords = [{ ...desired, key: `${kind}:77`, traktId: 77 }];
+				throw new Error("Acknowledgement lost");
+			});
+			await configureContent("outbound", kind);
+			await tick();
+			await tick();
+			expect(remoteApi.write).toHaveBeenCalledTimes(1);
+			expect(remoteRecords).toHaveLength(1);
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+			expect(
+				await db.traktSyncEntry.findFirstOrThrow({ where: { kind } }),
+			).toMatchObject({ remoteKey: `${kind}:77`, linked: true, pending: null });
 		},
 	);
 	it("matches only same-kind content peers with the same parent and media family", async () => {
@@ -954,6 +1021,119 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			(await db.backgroundJob.findUniqueOrThrow({ where: { id: job.id } }))
 				.status,
 		).toBe("continued_in_sync");
+	});
+	it.each([408, 499])(
+		"keeps creation uncertain after HTTP %s interrupts the request",
+		async (status) => {
+			localRecords = [curated("list:local", ["12"])];
+			await configureLists("outbound");
+			remoteApi.write.mockRejectedValueOnce(
+				new TraktSyncError("Request interrupted", status),
+			);
+			await tick();
+			expect((await service.issues(userDid, {})).items[0]).toMatchObject({
+				recovery: "verify",
+				traktState: "unknown",
+			});
+		},
+	);
+	it("retries a rejected List creation without turning it into an uncertain write", async () => {
+		localRecords = [curated("list:local", ["12"])];
+		await configureLists("outbound");
+		remoteApi.write.mockRejectedValueOnce(
+			new TraktSyncError("Trakt rejected this List.", 422),
+		);
+		await tick();
+		const issue = (await service.issues(userDid, {})).items[0];
+		expect(issue.recovery).toBe("retry");
+		await service.resolve(userDid, issue.id, { action: "retry" });
+		await tick();
+		expect(remoteRecords).toHaveLength(1);
+		expect((await service.issues(userDid, {})).total).toBe(0);
+	});
+	it("does not allow choosing a missing remote version while creation is unconfirmed", async () => {
+		localRecords = [curated("list:local", ["12"])];
+		await configureLists("outbound");
+		const entry = await db.traktSyncEntry.findFirstOrThrow({
+			where: { connection: { userDid } },
+		});
+		await db.traktSyncEntry.update({
+			where: { id: entry.id },
+			data: {
+				pending: {
+					direction: "push",
+					desired: localRecords[0],
+					previous: null,
+				},
+				issue: "Unconfirmed creation",
+			},
+		});
+		expect((await service.issues(userDid, {})).items[0]).toMatchObject({
+			recovery: "verify",
+			traktState: "unknown",
+		});
+		await expect(
+			service.resolve(userDid, entry.id, { action: "trakt" }),
+		).rejects.toThrow("unconfirmed transfer");
+		expect(localRecords).toHaveLength(1);
+	});
+	it("keeps the scheduled retry when Sync now is pressed during a provider delay", async () => {
+		await configure();
+		const nextRunAt = new Date(Date.now() + 60_000);
+		await db.traktSyncConnection.updateMany({
+			where: { userDid },
+			data: {
+				nextRunAt,
+				lastError: "Trakt rate limit reached. Sync will retry.",
+			},
+		});
+		await expect(service.action(userDid, "sync")).resolves.toMatchObject({
+			syncState: "waiting",
+			nextCheckAt: nextRunAt.toISOString(),
+		});
+	});
+	it("returns the running sync when Sync now is pressed repeatedly", async () => {
+		await configure();
+		await db.traktSyncConnection.updateMany({
+			where: { userDid },
+			data: {
+				leaseId: "worker",
+				leaseUntil: new Date(Date.now() + 60_000),
+			},
+		});
+		await expect(service.action(userDid, "sync")).resolves.toMatchObject({
+			syncState: "running",
+		});
+		await expect(service.action(userDid, "sync")).resolves.toMatchObject({
+			syncState: "running",
+		});
+	});
+	it("automatically adopts a fully confirmed interrupted List creation", async () => {
+		localRecords = [curated("list:local", ["12"])];
+		await configureLists("outbound");
+		const connection = await db.traktSyncConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		const entry = await db.traktSyncEntry.findFirstOrThrow({
+			where: { connectionId: connection.id },
+		});
+		await db.traktSyncEntry.update({
+			where: { id: entry.id },
+			data: {
+				pending: {
+					direction: "push",
+					desired: localRecords[0],
+					previous: null,
+				},
+			},
+		});
+		remoteRecords = [{ ...localRecords[0], key: "list:22", traktId: 22 }];
+		await tick();
+		expect((await service.issues(userDid, {})).total).toBe(0);
+		expect(remoteApi.write).not.toHaveBeenCalled();
+		expect(
+			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
+		).toMatchObject({ remoteKey: "list:22", linked: true, pending: null });
 	});
 	it("serializes controls against a worker lease and does not erase history on disconnect", async () => {
 		await configure();

@@ -1859,6 +1859,8 @@ export type UpsertNoteDto = {
 };
 
 export type SyncStatusDto = {
+    syncState?: 'idle' | 'queued' | 'running' | 'waiting';
+    nextCheckAt?: string;
     configured: boolean;
     status: 'disconnected' | 'paused' | 'preparing' | 'active' | 'reconnect';
     username?: string;
@@ -1938,6 +1940,8 @@ export type SyncRecordDto = {
 };
 
 export type SyncIssueDto = {
+    recovery?: 'verify' | 'choose' | 'retry';
+    traktState?: 'unknown' | 'missing' | 'present';
     id: string;
     kind: string;
     issue: string;

@@ -121,6 +121,9 @@ export class SyncResolveDto {
 	@ApiPropertyOptional() @IsOptional() @IsBoolean() allRatings?: boolean;
 }
 export class SyncStatusDto {
+	@ApiPropertyOptional({ enum: ["idle", "queued", "running", "waiting"] })
+	syncState?: "idle" | "queued" | "running" | "waiting";
+	@ApiPropertyOptional() nextCheckAt?: string;
 	@ApiProperty() configured: boolean;
 	@ApiProperty({
 		enum: ["disconnected", "paused", "preparing", "active", "reconnect"],
@@ -167,6 +170,10 @@ export class SyncRecordDto {
 	displayValue: string;
 }
 export class SyncIssueDto {
+	@ApiPropertyOptional({ enum: ["verify", "choose", "retry"] })
+	recovery?: "verify" | "choose" | "retry";
+	@ApiPropertyOptional({ enum: ["unknown", "missing", "present"] })
+	traktState?: "unknown" | "missing" | "present";
 	@ApiProperty() id: string;
 	@ApiProperty() kind: string;
 	@ApiProperty() issue: string;

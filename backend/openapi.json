@@ -11540,6 +11540,18 @@
       "SyncStatusDto": {
         "type": "object",
         "properties": {
+          "syncState": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "queued",
+              "running",
+              "waiting"
+            ]
+          },
+          "nextCheckAt": {
+            "type": "string"
+          },
           "configured": {
             "type": "boolean"
           },
@@ -11807,6 +11819,22 @@
       "SyncIssueDto": {
         "type": "object",
         "properties": {
+          "recovery": {
+            "type": "string",
+            "enum": [
+              "verify",
+              "choose",
+              "retry"
+            ]
+          },
+          "traktState": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "missing",
+              "present"
+            ]
+          },
           "id": {
             "type": "string"
           },

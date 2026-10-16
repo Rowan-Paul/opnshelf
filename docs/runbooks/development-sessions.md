@@ -29,6 +29,36 @@ hash after Metro is ready. `dev:doctor` rejects a changed or missing snapshot.
 After using an unmanaged Metro, regenerate types and run
 `node scripts/dev-session.mjs record-routes` in that worktree.
 
+### iOS ExpoModulesJSI cache after changing Xcode
+
+With Expo SDK 57, an iOS build can fail in `ExpoModulesJSI.swiftinterface` with
+`cannot find type '__ObjC::expo' in scope` after an Xcode/Apple SDK change. The
+installed JSI build script hashes the Swift compiler version but not the Xcode
+build or SDK. Two Xcode versions can share that compiler version and incorrectly
+reuse a binary module. See [Expo's matching report](https://github.com/expo/expo/issues/50365).
+
+If this exact failure occurs, invalidate only the generated simulator slice's
+stamp, then rebuild with the currently selected Xcode. From the repository root:
+
+```sh
+node <<'JS'
+const { createRequire } = require('node:module');
+const { dirname, join } = require('node:path');
+const { rmSync } = require('node:fs');
+const expo = createRequire(require.resolve('expo/package.json', { paths: ['./apps/mobile'] }));
+const core = createRequire(expo.resolve('expo-modules-core/package.json'));
+const jsi = dirname(core.resolve('expo-modules-jsi/package.json'));
+rmSync(join(jsi, 'apple/Products/ExpoModulesJSI.xcframework/ios-arm64_x86_64-simulator/.build-hash'), { force: true });
+JS
+```
+
+Use the normal local iOS build command afterwards. This preserves application
+data and installed dependency versions; it does not require disabling precompiled
+Expo modules. Repeat the invalidation if switching back to an older Xcode causes
+the same failure. A successful build still needs launch and feature verification
+on the target simulator.
+
+
 ## Real local PDS
 
 For privacy and real OAuth checks use [the isolated Spaces stack](spaces-local-trial.md).

@@ -5,6 +5,7 @@ import {
 	render,
 	screen,
 	waitFor,
+	within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SyncSettings, TraktSyncManager } from "./TraktSyncManager";
@@ -15,8 +16,11 @@ const mocks = vi.hoisted(() => ({
 	resolve: vi.fn(async () => ({})),
 	importStatus: "paused",
 	issue: false,
+	ignored: false,
+	uncertain: false,
 	status: "paused",
 	consent: false,
+	syncState: "idle",
 }));
 vi.mock("@tanstack/react-router", () => ({
 	Link: ({ children }: { children: React.ReactNode }) => (
@@ -29,6 +33,7 @@ vi.mock("@opnshelf/api", async (original) => ({
 		data: {
 			configured: true,
 			status: mocks.status,
+			syncState: mocks.syncState,
 			username: "fixture",
 			direction: "both",
 			watches: true,
@@ -41,22 +46,28 @@ vi.mock("@opnshelf/api", async (original) => ({
 			importStatus: mocks.importStatus,
 		},
 	}),
-	traktSyncControllerIssues: async () => ({
+	traktSyncControllerIssues: async ({
+		query,
+	}: {
+		query: { view?: string };
+	}) => ({
 		data: {
-			items: mocks.issue
+			items: (query.view === "ignored" ? mocks.ignored : mocks.issue)
 				? [
 						{
 							id: "one",
+							recovery: mocks.uncertain ? "verify" : "choose",
 							kind: "watch",
-							ignored: false,
-							issue:
-								"Both services changed this Watch. Choose which version to keep.",
+							ignored: query.view === "ignored",
+							issue: mocks.uncertain
+								? "The outcome of creating this Trakt Review is unknown. Check Trakt, then choose a version before retrying."
+								: "Both services changed this Watch. Choose which version to keep.",
 							opnshelf: { title: "Fixture", displayValue: "2020-01-01" },
 							candidates: [],
 						},
 					]
 				: [],
-			total: mocks.issue ? 1 : 0,
+			total: (query.view === "ignored" ? mocks.ignored : mocks.issue) ? 1 : 0,
 		},
 	}),
 	traktSyncControllerConfigureMutation: () => ({ mutationFn: mocks.configure }),
@@ -81,8 +92,11 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mocks.importStatus = "paused";
 	mocks.issue = false;
+	mocks.ignored = false;
+	mocks.uncertain = false;
 	mocks.status = "paused";
 	mocks.consent = false;
+	mocks.syncState = "idle";
 });
 describe("Trakt Sync setup and conflict choices", () => {
 	it("allows disconnecting before setup without enabling sync or consenting", async () => {
@@ -150,7 +164,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		expect(screen.getByRole("dialog")).toBeTruthy();
 		fireEvent.click(screen.getByRole("button", { name: "Back" }));
 		expect(mocks.configure).not.toHaveBeenCalled();
-		expect(screen.queryByRole("dialog")).toBeNull();
+		expect(screen.getByRole("dialog")).toBeTruthy();
 	});
 
 	it("uses Continue in onboarding and saves only after the modal's consent", async () => {
@@ -235,6 +249,7 @@ it.each([
 		),
 	);
 	if (scope === "lists") fireEvent.click(screen.getByLabelText("Watchlist"));
+	fireEvent.click(screen.getByRole("button", { name: "Done" }));
 	fireEvent.click(screen.getByRole("button", { name: "Enable sync" }));
 	const confirm = screen.getByRole("button", {
 		name: "Confirm and enable sync",
@@ -268,11 +283,11 @@ it.each([
 	);
 });
 
-it("keeps record choices collapsed and retains changes when closed", async () => {
+it("opens record choices separately and retains changes when closed", async () => {
 	mocks.importStatus = "completed";
 	mount();
 	const choose = await screen.findByRole("button", { name: "Choose records" });
-	expect(choose.getAttribute("aria-expanded")).toBe("false");
+	expect(screen.queryByRole("dialog", { name: "Choose records" })).toBeNull();
 	expect(screen.queryByRole("checkbox", { name: "Notes" })).toBeNull();
 	fireEvent.click(choose);
 	fireEvent.click(screen.getByLabelText("Notes", { exact: true }));
@@ -285,4 +300,66 @@ it("keeps record choices collapsed and retains changes when closed", async () =>
 			.checked,
 	).toBe(true);
 	expect(mocks.configure).not.toHaveBeenCalled();
+});
+
+it("does not offer another Sync now request while the worker is running", async () => {
+	mocks.status = "active";
+	mocks.consent = true;
+	mocks.syncState = "running";
+	mount();
+	expect(
+		await screen.findByRole("button", { name: "Syncing with Trakt…" }),
+	).toHaveProperty("disabled", true);
+	expect(screen.queryByRole("button", { name: "Sync now" })).toBeNull();
+});
+
+it("checks an uncertain transfer without offering a deletion choice", async () => {
+	mocks.issue = true;
+	mocks.uncertain = true;
+	mount();
+	expect(await screen.findByText("Not confirmed yet")).toBeTruthy();
+	expect(
+		screen.queryByRole("button", { name: /delete the other version/ }),
+	).toBeNull();
+	fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+	await waitFor(() =>
+		expect(mocks.resolve).toHaveBeenCalledWith(
+			{ path: { id: "one" }, body: { action: "retry" } },
+			expect.anything(),
+		),
+	);
+});
+
+it("opens ignored items in a dialog, restores an item and keeps attention in place", async () => {
+	mocks.ignored = true;
+	mocks.resolve.mockImplementationOnce(async () => {
+		mocks.ignored = false;
+		return {};
+	});
+	mount();
+	fireEvent.click(await screen.findByRole("button", { name: "View ignored" }));
+	const dialog = await screen.findByRole("dialog", { name: "Ignored items" });
+	expect(
+		screen.getByRole("heading", { name: "Needs attention", hidden: true }),
+	).toBeTruthy();
+	fireEvent.click(
+		await within(dialog).findByRole("button", { name: "Restore item" }),
+	);
+	await waitFor(() =>
+		expect(mocks.resolve).toHaveBeenCalledWith(
+			{ path: { id: "one" }, body: { action: "undo" } },
+			expect.anything(),
+		),
+	);
+	expect(await within(dialog).findByText("No ignored items.")).toBeTruthy();
+	fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+	expect(screen.queryByRole("dialog")).toBeNull();
+	await waitFor(() =>
+		expect(document.activeElement).toBe(
+			screen.getByRole("button", { name: "View ignored" }),
+		),
+	);
+	expect(
+		screen.getByRole("heading", { name: "Needs attention", hidden: true }),
+	).toBeTruthy();
 });

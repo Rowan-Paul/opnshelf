@@ -1,4 +1,4 @@
-import { TraktSyncManager } from "#/components/trakt/TraktSyncManager";
+import { Link } from "@tanstack/react-router";
 
 export function ImportHistorySection() {
 	return (
@@ -11,7 +11,9 @@ export function ImportHistorySection() {
 				Keep your Watch history, Ratings, Lists, Favorites, Notes, Library and
 				Reviews in sync with Trakt.
 			</p>
-			<TraktSyncManager embedded />
+			<Link to="/trakt-sync" className="btn btn-secondary">
+				Manage Trakt Sync
+			</Link>
 		</section>
 	);
 }

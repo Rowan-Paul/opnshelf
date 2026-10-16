@@ -41,7 +41,6 @@ import { NotificationPreferences } from "@/components/settings/NotificationPrefe
 import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
-import { TraktSyncManager } from "@/components/trakt/TraktSyncManager";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { useDialog } from "@/components/ui/dialog";
@@ -872,7 +871,12 @@ export function SettingsCategoryScreen({
 									Keep your Watch history, Ratings, Lists, Favorites, Notes,
 									Library and Reviews in sync with Trakt.
 								</Text>
-								<TraktSyncManager embedded />
+								<Link
+									href="/trakt-sync"
+									className="py-3 font-medium text-primary"
+								>
+									Manage Trakt Sync
+								</Link>
 							</View>
 						</>
 					)}
