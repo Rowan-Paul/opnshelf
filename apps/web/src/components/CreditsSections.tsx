@@ -44,14 +44,14 @@ export function CreditsSummary({
 	const castTotal = credits?.cast_total ?? credits?.cast?.length ?? 0;
 	const crewTotal = credits?.crew_total ?? credits?.crew?.length ?? 0;
 	const hasMore =
-		castTotal > (credits?.cast?.length ?? 0) ||
-		crewTotal > (credits?.crew?.length ?? 0);
+		castTotal > Math.min(6, credits?.cast?.length ?? 0) ||
+		crewTotal > Math.min(6, credits?.crew?.length ?? 0);
 
 	return (
 		<div className="space-y-8">
-			<PersonGrid people={castToPeople(credits?.cast)} />
+			<PersonGrid people={castToPeople(credits?.cast).slice(0, 6)} />
 			<PersonGrid
-				people={crewToPeople(credits?.crew)}
+				people={crewToPeople(credits?.crew).slice(0, 6)}
 				title="Crew"
 				emptyMessage="No crew information available."
 			/>

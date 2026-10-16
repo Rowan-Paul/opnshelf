@@ -83,9 +83,6 @@ export function ShelfTab({
 	const [showDividers, setShowDividers] = useState(true);
 	const [sort, setSort] = useState<SortOrder>("newest");
 	const [viewSheetVisible, setViewSheetVisible] = useState(false);
-	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
-		new Set(),
-	);
 	const debounced = useDebounce(search.trim(), 350);
 	const columns = useMediaCardColumns();
 
@@ -113,14 +110,6 @@ export function ShelfTab({
 
 	const changeFilter = (next: Filter) => setFilter(next);
 	const changeSort = (next: SortOrder) => setSort(next);
-	const toggleSection = (label: string) => {
-		setCollapsedSections((current) => {
-			const next = new Set(current);
-			if (next.has(label)) next.delete(label);
-			else next.add(label);
-			return next;
-		});
-	};
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -207,43 +196,26 @@ export function ShelfTab({
 				/>
 			) : showDividers ? (
 				<View className="gap-6">
-					{sections.map((section) => {
-						const collapsed = collapsedSections.has(section.label);
-						return (
-							<View key={section.label} className="gap-3">
-								<Pressable
-									onPress={() => toggleSection(section.label)}
-									accessibilityRole="button"
-									accessibilityState={{ expanded: !collapsed }}
-									accessibilityLabel={`${collapsed ? "Expand" : "Collapse"} ${section.label}`}
-									className="flex-row items-center justify-between border-border border-b pb-2"
-								>
-									<Text className="font-display font-semibold text-foreground text-lg">
-										{section.label}
-									</Text>
-									<ChevronDown
-										color="#94a3b8"
-										size={18}
-										style={{
-											transform: [{ rotate: collapsed ? "-90deg" : "0deg" }],
-										}}
+					{sections.map((section) => (
+						<View key={section.label} className="gap-3">
+							<Text
+								accessibilityRole="header"
+								className="border-border border-b pb-2 font-display font-semibold text-foreground text-lg"
+							>
+								{section.label}
+							</Text>
+							<View className="flex-row flex-wrap">
+								{section.items.map((item) => (
+									<ShelfWatchCard
+										key={item.id}
+										item={item}
+										isOwner={isOwner}
+										columns={columns}
 									/>
-								</Pressable>
-								{collapsed ? null : (
-									<View className="flex-row flex-wrap">
-										{section.items.map((item) => (
-											<ShelfWatchCard
-												key={item.id}
-												item={item}
-												isOwner={isOwner}
-												columns={columns}
-											/>
-										))}
-									</View>
-								)}
+								))}
 							</View>
-						);
-					})}
+						</View>
+					))}
 				</View>
 			) : (
 				<View className="flex-row flex-wrap">

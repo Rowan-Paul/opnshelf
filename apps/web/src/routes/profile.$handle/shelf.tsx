@@ -107,9 +107,6 @@ function ProfileShelfPage() {
 
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showDividers, setShowDividers] = useState(true);
-	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
-		new Set(),
-	);
 
 	// Server-side pagination with filtering
 	const { data, isLoading } = useQuery({
@@ -170,14 +167,6 @@ function ProfileShelfPage() {
 		if (page !== 1) {
 			navigateToPage(1);
 		}
-	};
-	const toggleSection = (label: string) => {
-		setCollapsedSections((current) => {
-			const next = new Set(current);
-			if (next.has(label)) next.delete(label);
-			else next.add(label);
-			return next;
-		});
 	};
 
 	const items = data?.items ?? [];
@@ -290,37 +279,18 @@ function ProfileShelfPage() {
 				</div>
 			) : showDividers ? (
 				<div className="space-y-8">
-					{sections.map((section) => {
-						const collapsed = collapsedSections.has(section.label);
-						return (
-							<section key={section.label} className="space-y-3">
-								<h2>
-									<button
-										type="button"
-										onClick={() => toggleSection(section.label)}
-										aria-expanded={!collapsed}
-										className="flex w-full items-center justify-between border-(--border) border-b pb-2 text-left font-display font-semibold text-xl"
-									>
-										{section.label}
-										<ChevronDown
-											className={`size-5 text-(--foreground-muted) transition-transform ${collapsed ? "-rotate-90" : "rotate-0"}`}
-										/>
-									</button>
-								</h2>
-								{collapsed ? null : (
-									<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
-										{section.items.map((item) => (
-											<ShelfWatchCard
-												key={item.id}
-												item={item}
-												isOwner={isOwner}
-											/>
-										))}
-									</div>
-								)}
-							</section>
-						);
-					})}
+					{sections.map((section) => (
+						<section key={section.label} className="space-y-3">
+							<h2 className="border-(--border) border-b pb-2 font-display font-semibold text-xl">
+								{section.label}
+							</h2>
+							<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
+								{section.items.map((item) => (
+									<ShelfWatchCard key={item.id} item={item} isOwner={isOwner} />
+								))}
+							</div>
+						</section>
+					))}
 				</div>
 			) : (
 				<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
