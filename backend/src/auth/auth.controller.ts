@@ -443,13 +443,17 @@ export class AuthController {
 			const permissionQuery =
 				statePayload.permissionChange === "atstore"
 					? "?permission=atstore"
-					: "";
+					: statePayload.permissionChange === "watches"
+						? "?permission=privacy"
+						: "";
 			const completeUrl =
 				platform === "mobile"
 					? this.buildMobileCompleteUrl(
 							sessionId,
 							statePayload.codeChallenge,
-							permissionQuery ? "atstore" : undefined,
+							statePayload.permissionChange === "atstore"
+								? "atstore"
+								: undefined,
 						)
 					: new URL(`/auth/complete${permissionQuery}`, frontendUrl).toString();
 
@@ -479,9 +483,16 @@ export class AuthController {
 							? statePayload.requestedPreferences?.blogEnabled
 							: statePayload.permissionChange === "bluesky"
 								? statePayload.requestedPreferences?.blueskyEnabled
-								: false;
+								: statePayload.permissionChange === "watches"
+									? statePayload.requestedPreferences?.watchPrivacyEnabled
+									: statePayload.permissionChange === "spaces"
+										? statePayload.requestedPreferences?.privateSettingsEnabled
+										: false;
 				if (statePayload.permissionChange) {
-					if (declinedConnection) {
+					if (
+						declinedConnection &&
+						statePayload.permissionChange !== "watches"
+					) {
 						await this.authService.disableIntegration(
 							statePayload.accountDid,
 							statePayload.permissionChange,
@@ -490,6 +501,14 @@ export class AuthController {
 				} else if (statePayload.requestedPreferences) {
 					// A returning user declined saved optional access. Downscope the
 					// account and restart Core-only without touching prior sessions.
+					// Declining this session must not revoke private access held by other sessions.
+
+					if (statePayload.requestedPreferences.privateSettingsEnabled) {
+						await this.authService.disableIntegration(
+							statePayload.accountDid,
+							"spaces",
+						);
+					}
 					if (statePayload.requestedPreferences.blogEnabled) {
 						await this.authService.disableIntegration(
 							statePayload.accountDid,
@@ -504,7 +523,16 @@ export class AuthController {
 					}
 					if (statePayload.accountHandle) {
 						return res.redirect(
-							await this.authService.authorize(statePayload.accountHandle),
+							await this.authService.authorize(
+								statePayload.accountHandle,
+								{ platform: statePayload.platform },
+								{
+									watchPrivacyEnabled: false,
+									privateSettingsEnabled: false,
+									blogEnabled: false,
+									blueskyEnabled: false,
+								},
+							),
 						);
 					}
 				}
@@ -524,6 +552,17 @@ export class AuthController {
 					declined ? "permission-declined" : "permission-failed",
 				);
 				return res.redirect(dashboardUrl.toString());
+			}
+			if (
+				statePayload.permissionChange === "watches" &&
+				platform !== "mobile"
+			) {
+				return res.redirect(
+					new URL(
+						"/settings/privacy?privacyAuthorization=declined",
+						frontendUrl,
+					).toString(),
+				);
 			}
 			if (platform === "mobile") {
 				return res.redirect(

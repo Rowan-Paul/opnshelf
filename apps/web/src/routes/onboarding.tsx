@@ -2,6 +2,10 @@ import {
 	authControllerMeOptions,
 	authControllerResendVerificationMutation,
 	authControllerVerifyEmailMutation,
+	bringsTraktWatches,
+	traktError,
+	traktSyncControllerConnectMutation,
+	traktSyncControllerStatus,
 	type UserDto,
 	type UserProfileDto,
 	usersControllerCompleteOnboarding,
@@ -14,8 +18,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+	ArrowLeftRight,
 	ArrowRight,
 	Camera,
+	Check,
 	CheckCircle,
 	Loader2,
 	MailCheck,
@@ -29,11 +35,22 @@ import { FollowSuggestionsStep } from "#/components/onboarding/FollowSuggestions
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
 import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
 import StreamingServicePicker, {
+	sameServices,
 	toggleService,
 } from "#/components/StreamingServicePicker";
 import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
+import { PrivacySection } from "#/components/settings/PrivacySection";
 import TimezoneSelector from "#/components/TimezoneSelector";
+import { TraktMark } from "#/components/TraktMark";
 import { TraktImport } from "#/components/trakt/TraktImport";
+import { SyncSettings } from "#/components/trakt/TraktSyncManager";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -60,7 +77,16 @@ export const Route = createFileRoute("/onboarding")({
 function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
-	const [step, setStep] = useState<OnboardingStep>("welcome");
+	const [step, setStep] = useState<OnboardingStep>(() => {
+		if (typeof window === "undefined") return "welcome";
+		const search = new URLSearchParams(window.location.search);
+		// Trakt authorization returns to the Trakt step.
+		if (search.has("connection")) return "trakt";
+		return sessionStorage.getItem("opnshelf-privacy-choice") ||
+			search.has("privacyAuthorization")
+			? "privacy"
+			: "welcome";
+	});
 	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
@@ -105,9 +131,26 @@ function OnboardingPage() {
 		}
 	}, [authLoading, currentImport]);
 
+	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
+	const { data: traktSync } = useQuery({
+		queryKey: traktStatusKey,
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		enabled: isAuthenticated && !authLoading,
+	});
+	// Watch history already coming from Trakt makes the watched step redundant.
+	const skipWatched =
+		importStarted || bringsTraktWatches(currentImport, traktSync);
+
 	// Every step hands off to its linear successor; the Trakt step's skip and
 	// complete paths both land on suggestions.
-	const goToNextStep = () => setStep((current) => nextOnboardingStep(current));
+	const goToNextStep = () =>
+		setStep((current) => {
+			const next = nextOnboardingStep(current);
+			return next === "watched" && skipWatched
+				? nextOnboardingStep(next)
+				: next;
+		});
 
 	if (authLoading) {
 		return (
@@ -130,19 +173,19 @@ function OnboardingPage() {
 					<>
 						{step === "welcome" && <WelcomeStep onNext={goToNextStep} />}
 						{step === "profile" && <ProfileStep onNext={goToNextStep} />}
+						{step === "privacy" && (
+							<PrivacySection onboarding onContinue={goToNextStep} />
+						)}
 						{step === "preferences" && (
 							<PreferencesStep onNext={goToNextStep} />
 						)}
-						{step === "services" && (
-							<ServicesStep onNext={goToNextStep} onSkip={goToNextStep} />
-						)}
+						{step === "services" && <ServicesStep onNext={goToNextStep} />}
 						{step === "notifications" && (
-							<div className="space-y-6">
-								<h1 className="font-semibold text-2xl">Stay up to date</h1>
-								<NotificationEmailSection />
+							<div className="card space-y-6 p-5 sm:p-7">
+								<NotificationEmailSection onboarding />
 								<button
 									type="button"
-									className="btn btn-primary"
+									className="btn btn-primary w-full"
 									onClick={goToNextStep}
 								>
 									Continue
@@ -151,6 +194,7 @@ function OnboardingPage() {
 						)}
 						{step === "trakt" && (
 							<TraktStep
+								importExists={Boolean(currentImport?.id)}
 								onImportStarted={() => setImportStarted(true)}
 								onNext={goToNextStep}
 								onSkip={goToNextStep}
@@ -566,7 +610,9 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	useEffect(() => {
 		if (!settings) return;
 		setCountry(
-			resolveOnboardingCountry(settings.watchCountry, guessWatchCountry),
+			resolveOnboardingCountry(settings.watchCountry, () =>
+				guessWatchCountry(settings.timezone),
+			),
 		);
 		setTimezone(settings.timezone);
 	}, [settings]);
@@ -660,13 +706,7 @@ const SERVICE_SKELETON_KEYS = Array.from(
 	(_, i) => `service-skeleton-${i + 1}`,
 );
 
-function ServicesStep({
-	onNext,
-	onSkip,
-}: {
-	onNext: () => void;
-	onSkip: () => void;
-}) {
+function ServicesStep({ onNext }: { onNext: () => void }) {
 	const queryClient = useQueryClient();
 	const { data: settings, isLoading: settingsLoading } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -694,6 +734,12 @@ function ServicesStep({
 	});
 
 	function handleSave() {
+		// Nothing to save when the selection is untouched, and never save over
+		// services that failed to load: that would replace them with an empty list.
+		if (!settings || sameServices(selected, settings.streamingServiceIds)) {
+			onNext();
+			return;
+		}
 		updateSettingsMutation.mutate(
 			{ body: { streamingServiceIds: selected } },
 			{ onSuccess: onNext },
@@ -750,40 +796,215 @@ function ServicesStep({
 						</>
 					)}
 				</button>
-				<button
-					type="button"
-					onClick={onSkip}
-					disabled={updateSettingsMutation.isPending}
-					className="btn btn-ghost w-full"
-				>
-					Skip for now
-				</button>
 			</div>
 		</div>
 	);
 }
 
 /* ------------------------------------------------------------------
-   Step 4: Trakt.tv Import
+   Step 4: Trakt — Trakt Sync first, Trakt Import as the fallback
    ------------------------------------------------------------------ */
+const traktStatusKey = ["trakt-sync", "status"];
+
 function TraktStep({
 	onNext,
 	onSkip,
 	onImportStarted,
+	importExists,
 }: {
 	onNext: () => void;
 	onSkip: () => void;
 	onImportStarted: () => void;
+	importExists: boolean;
 }) {
+	const [importOpen, setImportOpen] = useState(importExists);
+	const queryClient = useQueryClient();
+	// Trakt authorization returns here with ?connection=connected|cancelled|failed.
+	const [connection] = useState(() =>
+		typeof window === "undefined"
+			? null
+			: new URLSearchParams(window.location.search).get("connection"),
+	);
+	useEffect(() => {
+		if (connection) window.history.replaceState(null, "", "/onboarding");
+	}, [connection]);
+	const status = useQuery({
+		queryKey: traktStatusKey,
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+	});
+	const connect = useMutation({
+		...traktSyncControllerConnectMutation(),
+		onSuccess: (data) => window.location.assign(data.url),
+	});
+	const refresh = () =>
+		queryClient.invalidateQueries({ queryKey: traktStatusKey });
+
+	const importPanel = (
+		<TraktImport
+			title="Import once"
+			titleClassName="font-semibold text-base"
+			description="Copy your public Trakt history by username. Nothing changes on Trakt."
+			onComplete={onNext}
+			onImportStarted={onImportStarted}
+		/>
+	);
+
+	if (status.isPending) {
+		return (
+			<output
+				aria-label="Loading Trakt"
+				className="card block h-96 animate-pulse"
+			/>
+		);
+	}
+
+	const data = status.data;
+	// Trakt Sync is unavailable (not set up, or its status failed to load):
+	// offer the Import on its own.
+	if (!data?.configured) {
+		return (
+			<div className="card p-6">
+				<TraktImport
+					title="Import from Trakt"
+					description="Copy your public Trakt history by username."
+					onSkip={onSkip}
+					onComplete={onNext}
+					onImportStarted={onImportStarted}
+				/>
+			</div>
+		);
+	}
+
+	const connected =
+		data.status !== "disconnected" && data.status !== "reconnect";
+
+	if (connected) {
+		const enabled = data.status === "active" || data.status === "preparing";
+		return (
+			<div className="card space-y-5 p-6">
+				<div>
+					<h2 className="text-display-3">
+						{enabled ? "Trakt Sync is on" : "Choose what to sync"}
+					</h2>
+					<p className="mt-1 text-(--foreground-muted) text-sm">
+						Connected as @{data.username}.{" "}
+						{enabled
+							? "We're comparing your history in the background. You can keep going."
+							: "Pick what moves and in which direction, then confirm."}
+					</p>
+				</div>
+				{!enabled && (
+					<SyncSettings
+						key={data.username}
+						status={data}
+						onSaved={() => {
+							void refresh();
+							onNext();
+						}}
+						onboarding
+						className=""
+						showHeading={false}
+					/>
+				)}
+				<div className="flex items-center justify-between gap-3">
+					<p className="text-(--foreground-subtle) text-xs">
+						You can change this later in Settings.
+					</p>
+					{enabled ? (
+						<button type="button" onClick={onNext} className="btn btn-primary">
+							Continue
+							<ArrowRight className="size-4" />
+						</button>
+					) : (
+						<button
+							type="button"
+							onClick={onSkip}
+							className="shrink-0 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+						>
+							Skip
+						</button>
+					)}
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="card p-6">
-			<TraktImport
-				title="Import from Trakt"
-				description="Import your public watch history from Trakt.tv"
-				onSkip={onSkip}
-				onComplete={onNext}
-				onImportStarted={onImportStarted}
-			/>
+			<h2 className="text-display-3">Already on Trakt?</h2>
+			<p className="mt-1 mb-5 text-(--foreground-muted) text-sm">
+				Connect once and Opnshelf keeps your history in step with Trakt.
+			</p>
+			<div className="rounded-xl border border-(--accent)/30 bg-linear-to-br from-(--accent)/15 to-transparent p-5">
+				<div className="mb-4 flex items-center justify-center gap-3">
+					<img src="/icon.png" alt="" className="size-11 rounded-xl" />
+					<ArrowLeftRight className="size-5 text-(--accent)" />
+					<TraktMark className="size-11" />
+				</div>
+				<ul className="mb-5 space-y-1.5 text-(--foreground-muted) text-sm">
+					{[
+						"Bring over your Watch history, Ratings, Lists, Favorites, Notes, Library and Reviews",
+						"New Watches keep flowing, in the direction you choose",
+						"Review every transfer before sync starts",
+					].map((line) => (
+						<li key={line} className="flex gap-2">
+							<Check className="mt-0.5 size-4 shrink-0 text-(--accent)" />
+							{line}
+						</li>
+					))}
+				</ul>
+				<button
+					type="button"
+					className="btn btn-primary w-full"
+					disabled={connect.isPending}
+					onClick={() =>
+						connect.mutate({
+							body: { platform: "web", returnTo: "onboarding" },
+						})
+					}
+				>
+					{connect.isPending
+						? "Opening Trakt…"
+						: data.status === "reconnect"
+							? "Reconnect Trakt"
+							: "Connect Trakt"}
+				</button>
+				{(connect.error || connection === "failed") && (
+					<p role="alert" className="mt-3 text-(--destructive) text-sm">
+						{connect.error
+							? traktError(connect.error)
+							: "Trakt could not connect. Try connecting again."}
+					</p>
+				)}
+			</div>
+			<button
+				type="button"
+				className="mt-5 text-sm underline underline-offset-4"
+				onClick={() => setImportOpen(true)}
+			>
+				Import your public history once
+			</button>
+			<Dialog open={importOpen} onOpenChange={setImportOpen}>
+				<DialogContent className="max-h-[85dvh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>Import once</DialogTitle>
+						<DialogDescription>
+							Copy your public Trakt history by username.
+						</DialogDescription>
+					</DialogHeader>
+					{importPanel}
+				</DialogContent>
+			</Dialog>
+			<div className="mt-5 flex justify-end">
+				<button
+					type="button"
+					onClick={onSkip}
+					className="text-(--foreground-muted) text-sm hover:text-(--foreground)"
+				>
+					Skip
+				</button>
+			</div>
 		</div>
 	);
 }

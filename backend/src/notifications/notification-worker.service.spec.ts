@@ -332,6 +332,37 @@ describe("NotificationWorkerService", () => {
 		);
 	});
 
+	it("keeps the first Watchlist release for each path in selection order", async () => {
+		prisma.notificationSettings.findMany.mockResolvedValue([
+			{ ...settings, emailNewReleases: false, emailWatchlistReleases: true },
+		]);
+		const show = { showId: "42", title: "A Show", posterPath: null };
+		prisma.listItem.findMany.mockResolvedValue([
+			{ movie: null, show: { ...show, overview: "First season" } },
+			{
+				movie: { movieId: "42", title: "A Movie", posterPath: null },
+				show: null,
+			},
+			{ movie: null, show: { ...show, overview: "Later episode" } },
+		]);
+		await worker.queueDueEvents(new Date("2026-09-29T08:00:00Z"));
+		const saved = prisma.notificationCollection.upsert.mock.calls[0][0].create;
+		expect(saved.items).toEqual([
+			expect.objectContaining({
+				path: "/shows/42/a-show",
+				overview: "First season",
+			}),
+			expect.objectContaining({ path: "/movies/42/a-movie", overview: "" }),
+		]);
+		expect(
+			prisma.notificationDelivery.upsert.mock.calls[0][0].create,
+		).toMatchObject({
+			title: "2 from your Watchlist release today",
+			body: "A Show and A Movie. Take a look.",
+			url: "/discover/collections/collection-1",
+		});
+	});
+
 	it("links notification emails to their settings section", async () => {
 		prisma.notificationDelivery.findMany.mockResolvedValue([
 			{

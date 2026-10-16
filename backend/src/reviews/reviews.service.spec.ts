@@ -9,18 +9,20 @@ const mockDeleteRecord = vi.fn();
 const mockListRecords = vi.fn();
 const mockUploadBlob = vi.fn();
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn().mockImplementation(() => ({
-		uploadBlob: mockUploadBlob,
-		com: {
-			atproto: {
-				repo: {
-					putRecord: mockPutRecord,
-					deleteRecord: mockDeleteRecord,
-					listRecords: mockListRecords,
+	Agent: vi.fn().mockImplementation(function () {
+		return {
+			uploadBlob: mockUploadBlob,
+			com: {
+				atproto: {
+					repo: {
+						putRecord: mockPutRecord,
+						deleteRecord: mockDeleteRecord,
+						listRecords: mockListRecords,
+					},
 				},
 			},
-		},
-	})),
+		};
+	}),
 }));
 
 vi.mock("@atproto/common", () => ({

@@ -1,3 +1,5 @@
+import { mockWatchCoordinator } from "../../test/watch-privacy";
+import { PrivateSettingsService } from "../pds/private-settings.service";
 import { mockEnvironment } from "../../test/env";
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import type { BackendEnv } from "../config/env.schema";
@@ -7,22 +9,26 @@ const mockListRecords = vi.fn();
 const mockRemoveRepos = vi.fn();
 
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn().mockImplementation(() => ({
-		com: {
-			atproto: {
-				repo: {
-					listRecords: mockListRecords,
-					deleteRecord: mockDeleteRecord,
+	Agent: vi.fn().mockImplementation(function () {
+		return {
+			com: {
+				atproto: {
+					repo: {
+						listRecords: mockListRecords,
+						deleteRecord: mockDeleteRecord,
+					},
 				},
 			},
-		},
-	})),
+		};
+	}),
 }));
 
 vi.mock("@atproto/tap", () => ({
-	Tap: vi.fn().mockImplementation(() => ({
-		removeRepos: mockRemoveRepos,
-	})),
+	Tap: vi.fn().mockImplementation(function () {
+		return {
+			removeRepos: mockRemoveRepos,
+		};
+	}),
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -33,6 +39,7 @@ describe("UserDeletionService", () => {
 	let service: UserDeletionService;
 
 	const prisma = {
+		privacyScope: { findMany: vi.fn().mockResolvedValue([]) },
 		$transaction: vi.fn(),
 		user: {
 			findUnique: vi.fn(),
@@ -91,8 +98,15 @@ describe("UserDeletionService", () => {
 		vi.clearAllMocks();
 		prisma.$transaction = vi
 			.fn()
-			.mockImplementation((operations: Promise<unknown>[]) =>
-				Promise.all(operations),
+			.mockImplementation(
+				(
+					operations:
+						| Promise<unknown>[]
+						| ((tx: PrismaService) => Promise<unknown>),
+				) =>
+					Array.isArray(operations)
+						? Promise.all(operations)
+						: operations(prisma),
 			);
 		authService.restore = vi.fn();
 		authService.revoke = vi.fn().mockResolvedValue(undefined);
@@ -127,7 +141,13 @@ describe("UserDeletionService", () => {
 		mockDeleteRecord.mockResolvedValue(undefined);
 		mockRemoveRepos.mockResolvedValue(undefined);
 
-		service = new UserDeletionService(prisma, authService, config);
+		service = new UserDeletionService(
+			prisma,
+			authService,
+			config,
+			new PrivateSettingsService(),
+			mockWatchCoordinator(prisma),
+		);
 	});
 
 	describe("deleteUserSync", () => {

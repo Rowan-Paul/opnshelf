@@ -432,9 +432,24 @@ export class ShowsTmdbService {
 			currentSeason.episodes || [],
 		);
 
-		const prevInCurrentSeason = [...currentEpisodes]
-			.filter((episode) => episode.episode_number < episodeNumber)
-			.sort((a, b) => b.episode_number - a.episode_number)[0];
+		let prevInCurrentSeason: TMDBEpisode | undefined;
+		let nextInCurrentSeason: TMDBEpisode | undefined;
+		for (const episode of currentEpisodes) {
+			if (
+				episode.episode_number < episodeNumber &&
+				(!prevInCurrentSeason ||
+					episode.episode_number > prevInCurrentSeason.episode_number)
+			) {
+				prevInCurrentSeason = episode;
+			}
+			if (
+				episode.episode_number > episodeNumber &&
+				(!nextInCurrentSeason ||
+					episode.episode_number < nextInCurrentSeason.episode_number)
+			) {
+				nextInCurrentSeason = episode;
+			}
+		}
 		if (prevInCurrentSeason) {
 			previous = {
 				seasonNumber,
@@ -461,9 +476,6 @@ export class ShowsTmdbService {
 			}
 		}
 
-		const nextInCurrentSeason = currentEpisodes
-			.filter((episode) => episode.episode_number > episodeNumber)
-			.sort((a, b) => a.episode_number - b.episode_number)[0];
 		if (nextInCurrentSeason) {
 			next = {
 				seasonNumber,

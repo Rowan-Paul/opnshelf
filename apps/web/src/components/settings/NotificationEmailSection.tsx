@@ -35,7 +35,11 @@ const CATEGORIES = [
 	},
 ] as const;
 
-export function NotificationEmailSection() {
+export function NotificationEmailSection({
+	onboarding = false,
+}: {
+	onboarding?: boolean;
+}) {
 	const queryClient = useQueryClient();
 	const [emailInput, setEmailInput] = useState("");
 	const [code, setCode] = useState("");
@@ -128,10 +132,20 @@ export function NotificationEmailSection() {
 	};
 
 	return (
-		<section className="p-5 sm:p-7">
-			<h2 className="mb-1 font-semibold text-lg">Email delivery</h2>
+		<section className={onboarding ? "" : "p-5 sm:p-7"}>
+			<h2
+				className={
+					onboarding
+						? "mb-2 font-semibold text-2xl"
+						: "mb-1 font-semibold text-lg"
+				}
+			>
+				{onboarding ? "Stay up to date" : "Email delivery"}
+			</h2>
 			<p className="mb-6 text-(--foreground-muted) text-sm">
-				Choose which updates Opnshelf emails you.
+				{onboarding
+					? "Choose the emails you’d like to receive. You can change these in Settings anytime."
+					: "Choose which updates Opnshelf emails you."}
 			</p>
 			{isLoading ? (
 				<div className="max-w-lg space-y-3" aria-hidden="true">
@@ -158,16 +172,30 @@ export function NotificationEmailSection() {
 								Confirm an email address to receive notifications.
 							</p>
 						)}
-						{settings.emailVerified && (
-							<button
-								type="button"
-								className="btn btn-secondary"
-								disabled={testNotification.isPending}
-								onClick={() => void sendTest("email")}
-							>
-								Send test email
-							</button>
-						)}
+						{settings.emailVerified &&
+							(!onboarding || (!emailInput && !awaitingCode)) && (
+								<div className="flex flex-wrap gap-3">
+									{!onboarding && (
+										<button
+											type="button"
+											className="btn btn-secondary"
+											disabled={testNotification.isPending}
+											onClick={() => void sendTest("email")}
+										>
+											Send test email
+										</button>
+									)}
+									{settings.emailVerified && !emailInput && !awaitingCode && (
+										<button
+											type="button"
+											className="btn btn-secondary"
+											onClick={() => setEmailInput(settings.email ?? "")}
+										>
+											Use a different email
+										</button>
+									)}
+								</div>
+							)}
 						{!awaitingCode ? (
 							<div className="space-y-2">
 								{(!settings.emailVerified || !settings.email || emailInput) && (
@@ -188,14 +216,6 @@ export function NotificationEmailSection() {
 										onClick={() => void sendCode()}
 									>
 										Send confirmation code
-									</button>
-								) : settings.emailVerified ? (
-									<button
-										type="button"
-										className="btn btn-secondary"
-										onClick={() => setEmailInput(settings.email ?? "")}
-									>
-										Use a different email
 									</button>
 								) : null}
 							</div>
@@ -258,7 +278,7 @@ export function NotificationEmailSection() {
 								</div>
 								<Switch
 									id={category.key}
-									checked={settings[category.key]}
+									checked={settings.emailVerified && settings[category.key]}
 									onCheckedChange={(checked) =>
 										void change(category.key, checked)
 									}
@@ -271,14 +291,16 @@ export function NotificationEmailSection() {
 					</div>
 				</div>
 			)}
-			<div className="mt-8 space-y-3 border-(--border) border-t pt-6">
-				<h3 className="font-semibold">Mobile notifications</h3>
-				<p className="text-(--foreground-muted) text-sm">
-					Open Settings → Notifications in the Mobile App to enable alerts on
-					your phone and send a test notification.
-				</p>
-				<StoreBadges className="justify-start" />
-			</div>
+			{!onboarding && (
+				<div className="mt-8 space-y-3 border-(--border) border-t pt-6">
+					<h3 className="font-semibold">Mobile notifications</h3>
+					<p className="text-(--foreground-muted) text-sm">
+						Open Settings → Notifications in the Mobile App to enable alerts on
+						your phone and send a test notification.
+					</p>
+					<StoreBadges className="justify-start" />
+				</div>
+			)}
 		</section>
 	);
 }

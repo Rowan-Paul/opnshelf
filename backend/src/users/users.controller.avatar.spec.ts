@@ -1,3 +1,6 @@
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
+import { WatchReadGuard } from "../privacy/watch-access";
 import type { ExecutionContext, INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
@@ -44,7 +47,17 @@ describe("POST /users/me/profile/avatar multipart parsing", () => {
 				{ provide: UsersService, useValue: usersService },
 				{ provide: SocialService, useValue: {} },
 			],
-		}).compile();
+		})
+			.overrideGuard(WatchReadGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(OptionalAuthGuard)
+			.useValue({ canActivate: () => true })
+			.overrideInterceptor(WatchWriteInterceptor)
+			.useValue({
+				intercept: (_context: unknown, next: { handle: () => unknown }) =>
+					next.handle(),
+			})
+			.compile();
 		app = module.createNestApplication();
 		await app.init();
 	});

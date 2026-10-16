@@ -2,6 +2,10 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { ListInfoCard } from "./ListInfoCard";
 
+vi.mock("@/components/settings/privacy-section", () => ({
+	PrivacySection: () => null,
+}));
+
 vi.mock("react-native", async () => {
 	const React = await import("react");
 	return {

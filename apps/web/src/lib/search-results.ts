@@ -35,7 +35,7 @@ export const SEARCH_TABS = [
 export type SearchTab = (typeof SEARCH_TABS)[number];
 
 export function isSearchTab(value: unknown): value is SearchTab {
-	return SEARCH_TABS.includes(value as SearchTab);
+	return SEARCH_TABS.some((tab) => tab === value);
 }
 
 /** The tab a `?type=` value selects; unknown or missing values fall back to All. */
@@ -144,7 +144,13 @@ export function dedupeResults<T extends MediaRef>(items: T[]): T[] {
 
 /** Keys of every title already shown by earlier discovery rows. */
 export function collectShownKeys(rows: MediaRef[][]): Set<string> {
-	return new Set(rows.flat().map(mediaKey));
+	const keys = new Set<string>();
+	rows.forEach((row) => {
+		row.forEach((item) => {
+			keys.add(mediaKey(item));
+		});
+	});
+	return keys;
 }
 
 /**

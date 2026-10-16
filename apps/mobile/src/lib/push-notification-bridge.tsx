@@ -1,3 +1,5 @@
+import { notificationsControllerSettingsOptions } from "@opnshelf/api";
+import { useQueryClient } from "@tanstack/react-query";
 import * as Notifications from "expo-notifications";
 import { useEffect, useRef } from "react";
 import { useAuth } from "./auth-context";
@@ -14,17 +16,23 @@ export function PushNotificationBridge() {
 	const needsOnboarding = user?.needsOnboarding;
 	const needsEmailVerification = user?.needsEmailVerification;
 	const openedResponse = useRef<string | null>(null);
+	const queryClient = useQueryClient();
 	useEffect(() => {
 		setPushUser(did ?? null);
 		if (isLoading || !did || needsOnboarding || needsEmailVerification) return;
 		let active = true;
-		void syncAuthorizedPush().catch((error) =>
-			console.warn("Could not sync push token", error),
-		);
+		// Settings shows the test button only once a device is registered.
+		const refreshSettings = () =>
+			queryClient.invalidateQueries({
+				queryKey: notificationsControllerSettingsOptions().queryKey,
+			});
+		void syncAuthorizedPush()
+			.then(refreshSettings)
+			.catch((error) => console.warn("Could not sync push token", error));
 		const tokenListener = Notifications.addPushTokenListener((token) => {
-			void syncAuthorizedPush(token).catch((error) =>
-				console.warn("Could not refresh push token", error),
-			);
+			void syncAuthorizedPush(token)
+				.then(refreshSettings)
+				.catch((error) => console.warn("Could not refresh push token", error));
 		});
 		const openOnce = (response: Notifications.NotificationResponse) => {
 			if (!active) return;
@@ -44,6 +52,6 @@ export function PushNotificationBridge() {
 			tokenListener.remove();
 			responseListener.remove();
 		};
-	}, [isLoading, did, needsOnboarding, needsEmailVerification]);
+	}, [isLoading, did, needsOnboarding, needsEmailVerification, queryClient]);
 	return null;
 }

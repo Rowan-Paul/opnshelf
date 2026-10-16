@@ -10,7 +10,7 @@ import {
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
 import { PrismaService } from "../prisma/prisma.service";
-import { DECLARED_OAUTH_SCOPE } from "./oauth-scopes";
+import { declaredOAuthScope } from "./oauth-scopes";
 
 interface OAuthClientConfig {
 	redirectUri: string;
@@ -117,6 +117,12 @@ export class OAuthClientFactory implements OnModuleInit {
 			sessionStore,
 			requestLock: requestLocalLock,
 			allowHttp: oauthClientConfig.allowHttp,
+			...(this.configService.HANDLE_RESOLVER_URL && {
+				handleResolver: this.configService.HANDLE_RESOLVER_URL,
+			}),
+			...(this.configService.PLC_DIRECTORY_URL && {
+				plcDirectoryUrl: this.configService.PLC_DIRECTORY_URL,
+			}),
 		});
 	}
 
@@ -170,7 +176,7 @@ export class OAuthClientFactory implements OnModuleInit {
 		const redirectUri = `${clientUri}/auth/callback`;
 		const metadataClientId = `${backendUrl}/.well-known/oauth-client-metadata.json`;
 		const runtimeClientId = isLocalhost
-			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(DECLARED_OAUTH_SCOPE)}`
+			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(declaredOAuthScope())}`
 			: metadataClientId;
 
 		return {
@@ -192,7 +198,7 @@ export class OAuthClientFactory implements OnModuleInit {
 			client_name: "Opnshelf",
 			client_uri: oauthClientConfig.clientUri,
 			redirect_uris: [oauthClientConfig.redirectUri],
-			scope: DECLARED_OAUTH_SCOPE,
+			scope: declaredOAuthScope(),
 			grant_types: ["authorization_code", "refresh_token"],
 			response_types: ["code"],
 			application_type: oauthClientConfig.applicationType,

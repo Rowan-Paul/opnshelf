@@ -1,3 +1,4 @@
+import { mockWatchCoordinator } from "../../test/watch-privacy";
 import { mockEnvironment } from "../../test/env";
 import type { Mock } from "vitest";
 import { Agent } from "@atproto/api";
@@ -139,6 +140,7 @@ describe("ImportHistoryService", () => {
 			moviesService,
 			showsService,
 			authService,
+			mockWatchCoordinator(),
 		);
 		worker = new TraktImportWorker(prisma, traktApi, jobStore, writer);
 		service = new ImportHistoryService(
@@ -170,15 +172,17 @@ describe("ImportHistoryService", () => {
 			record: {},
 			collection: "xyz.opnshelf.episode",
 		});
-		(Agent as unknown as Mock).mockImplementation(() => ({
-			com: {
-				atproto: {
-					repo: {
-						applyWrites: vi.fn().mockResolvedValue({ data: {} }),
+		(Agent as unknown as Mock).mockImplementation(function () {
+			return {
+				com: {
+					atproto: {
+						repo: {
+							applyWrites: vi.fn().mockResolvedValue({ data: {} }),
+						},
 					},
 				},
-			},
-		}));
+			};
+		});
 	});
 
 	afterEach(() => {

@@ -8,7 +8,7 @@ const disableInviteCodesMock = vi.fn();
 // Mock AtpAgent: login() marks the agent authenticated; the XRPC namespaces
 // delegate to our jest mocks.
 vi.mock("@atproto/api", () => ({
-	AtpAgent: vi.fn().mockImplementation(() => {
+	AtpAgent: vi.fn().mockImplementation(function () {
 		const agent: Record<string, unknown> = {
 			session: undefined,
 			com: {

@@ -1,3 +1,6 @@
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
+import { WatchReadGuard } from "../privacy/watch-access";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ShelfController } from "./shelf.controller";
 import { ShelfService } from "./shelf.service";
@@ -16,7 +19,17 @@ describe("ShelfController", () => {
 		const module: TestingModule = await Test.createTestingModule({
 			controllers: [ShelfController],
 			providers: [{ provide: ShelfService, useValue: mockShelfService }],
-		}).compile();
+		})
+			.overrideGuard(WatchReadGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(OptionalAuthGuard)
+			.useValue({ canActivate: () => true })
+			.overrideInterceptor(WatchWriteInterceptor)
+			.useValue({
+				intercept: (_context: unknown, next: { handle: () => unknown }) =>
+					next.handle(),
+			})
+			.compile();
 
 		controller = module.get<ShelfController>(ShelfController);
 	});

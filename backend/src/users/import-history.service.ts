@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Injectable,
 	NotFoundException,
+	Optional,
 } from "@nestjs/common";
 import {
 	deterministicEpisodeWatchRkey,
@@ -47,6 +48,8 @@ import {
 	isUniqueConstraintError,
 } from "./import/trakt-import-job.store";
 import { TraktImportWorker } from "./import/trakt-import-worker.service";
+import { activeTraktImports } from "./import/import-activity";
+import { TraktSyncService } from "../trakt-sync/trakt-sync.service";
 import {
 	type ATSession,
 	WatchImportWriter,
@@ -81,6 +84,7 @@ export class ImportHistoryService {
 		private readonly jobStore: TraktImportJobStore,
 		private readonly writer: WatchImportWriter,
 		private readonly worker: TraktImportWorker,
+		@Optional() private readonly traktSync?: TraktSyncService,
 	) {}
 
 	async fetchTraktPublicHistory(
@@ -339,6 +343,38 @@ export class ImportHistoryService {
 		matchKey: string,
 		tmdbId: string,
 	): Promise<TraktImportJobDto> {
+		return this.recover(userDid, () =>
+			this.confirmTraktMatchInternal(userDid, matchKey, tmdbId),
+		);
+	}
+
+	private async recover<T>(
+		userDid: string,
+		operation: () => Promise<T>,
+	): Promise<T> {
+		if (activeTraktImports.has(userDid))
+			throw new BadRequestException(
+				"The Import is finishing a page. Try again shortly.",
+			);
+		activeTraktImports.add(userDid);
+		try {
+			const job = await this.jobStore.requireJob(userDid);
+			if (job.status === "continued_in_sync") {
+				if (!this.traktSync)
+					throw new BadRequestException("Trakt Sync is unavailable.");
+				return await this.traktSync.recoverImport(userDid, operation);
+			}
+			return await operation();
+		} finally {
+			activeTraktImports.delete(userDid);
+		}
+	}
+
+	private async confirmTraktMatchInternal(
+		userDid: string,
+		matchKey: string,
+		tmdbId: string,
+	): Promise<TraktImportJobDto> {
 		const job = await this.jobStore.requireJob(userDid);
 		const sourceRows = await this.prisma.traktImportItem.findMany({
 			where: { jobId: job.id, traktMediaKey: matchKey },
@@ -421,6 +457,15 @@ export class ImportHistoryService {
 	}
 
 	async retryTraktImportItem(
+		userDid: string,
+		itemId: string,
+	): Promise<TraktImportJobDto> {
+		return this.recover(userDid, () =>
+			this.retryTraktImportItemInternal(userDid, itemId),
+		);
+	}
+
+	private async retryTraktImportItemInternal(
 		userDid: string,
 		itemId: string,
 	): Promise<TraktImportJobDto> {

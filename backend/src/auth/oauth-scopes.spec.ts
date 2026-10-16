@@ -4,6 +4,8 @@ import {
 	buildOAuthScopes,
 	includesOAuthCapabilities,
 	includesRequestedScopes,
+	includesWatchSpaceGrant,
+	WATCH_SPACE_SCOPE,
 } from "./oauth-scopes";
 
 describe("progressive OAuth scopes", () => {
@@ -75,5 +77,81 @@ describe("progressive OAuth scopes", () => {
 		];
 
 		expect(includesOAuthCapabilities(granted)).toBe(false);
+	});
+});
+
+it("requests retired Settings cleanup only for a saved experiment and rejects a partial grant", () => {
+	const preferences = { privateSettingsEnabled: true };
+	const scopes = buildOAuthScopes(preferences);
+	expect(buildOAuthScopes().some((scope) => scope.startsWith("space:"))).toBe(
+		false,
+	);
+	expect(scopes).toContain(
+		"space:xyz.opnshelf.settings?collection=xyz.opnshelf.privateSettings&manage=delete",
+	);
+	expect(includesOAuthCapabilities(scopes, preferences)).toBe(true);
+	expect(includesOAuthCapabilities(buildOAuthScopes(), preferences)).toBe(
+		false,
+	);
+});
+
+describe("Watch Spaces grant equivalence", () => {
+	it("accepts equivalent ordering without adding access to Core", () => {
+		expect(includesWatchSpaceGrant(WATCH_SPACE_SCOPE)).toBe(true);
+		expect(
+			includesWatchSpaceGrant(
+				"atproto space:xyz.opnshelf.watches?manage=create&collection=xyz.opnshelf.episode&collection=xyz.opnshelf.movie",
+			),
+		).toBe(true);
+		expect(buildOAuthScopes()).not.toContain(WATCH_SPACE_SCOPE);
+	});
+	it.each([
+		"space:xyz.opnshelf.watches?collection=xyz.opnshelf.movie&manage=create",
+		`${WATCH_SPACE_SCOPE}&action=read`,
+		`${WATCH_SPACE_SCOPE}&authority=did:plc:other`,
+		"space:xyz.opnshelf.settings?collection=xyz.opnshelf.movie&collection=xyz.opnshelf.episode&manage=create",
+	])(
+		"fails closed for incomplete or differently constrained scopes",
+		(scope) => {
+			expect(includesWatchSpaceGrant(scope)).toBe(false);
+		},
+	);
+});
+
+describe("reference Spaces resolved owner authority", () => {
+	const did = "did:plc:owner";
+	it("accepts the signed-in owner and rejects foreign, wildcard, duplicate or unknown authority", () => {
+		expect(
+			includesWatchSpaceGrant(
+				`${WATCH_SPACE_SCOPE}&authority=${did}`,
+				WATCH_SPACE_SCOPE,
+				did,
+			),
+		).toBe(true);
+		for (const authority of ["did:plc:other", "*", `${did}&authority=${did}`]) {
+			expect(
+				includesWatchSpaceGrant(
+					`${WATCH_SPACE_SCOPE}&authority=${authority}`,
+					WATCH_SPACE_SCOPE,
+					did,
+				),
+			).toBe(false);
+		}
+		expect(
+			includesWatchSpaceGrant(`${WATCH_SPACE_SCOPE}&authority=${did}`),
+		).toBe(false);
+	});
+	it("accepts expanded owner scopes throughout callback capability validation", () => {
+		const preferences = {
+			watchPrivacyEnabled: true,
+			privateSettingsEnabled: true,
+		};
+		const granted = buildOAuthScopes(preferences).map((scope) =>
+			scope.startsWith("space:") ? `${scope}&authority=${did}` : scope,
+		);
+		expect(includesOAuthCapabilities(granted, preferences, did)).toBe(true);
+		expect(
+			includesOAuthCapabilities(granted, preferences, "did:plc:other"),
+		).toBe(false);
 	});
 });

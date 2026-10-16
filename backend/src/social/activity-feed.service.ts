@@ -1,3 +1,4 @@
+import { publicWatchOwner } from "../privacy/watch-access";
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import type {
@@ -65,12 +66,14 @@ export class ActivityFeedService {
 			this.prisma.trackedMovie.count({
 				where: {
 					userDid: { in: followedDids },
+					user: publicWatchOwner,
 					watchedDate: { not: null },
 				},
 			}),
 			this.prisma.trackedEpisode.count({
 				where: {
 					userDid: { in: followedDids },
+					user: publicWatchOwner,
 					watchedDate: { not: null },
 				},
 			}),

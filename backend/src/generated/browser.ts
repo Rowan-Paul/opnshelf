@@ -23,6 +23,16 @@ export * from './enums.js';
  */
 export type User = Prisma.UserModel
 /**
+ * Model TraktSyncConnection
+ * 
+ */
+export type TraktSyncConnection = Prisma.TraktSyncConnectionModel
+/**
+ * Model TraktSyncEntry
+ * 
+ */
+export type TraktSyncEntry = Prisma.TraktSyncEntryModel
+/**
  * Model NotificationSettings
  * 
  */
@@ -157,3 +167,28 @@ export type ReviewLike = Prisma.ReviewLikeModel
  * 
  */
 export type Feedback = Prisma.FeedbackModel
+/**
+ * Model FeaturedContent
+ * Service-owned editorial picks, never personal PDS records (ADR 0043).
+ */
+export type FeaturedContent = Prisma.FeaturedContentModel
+/**
+ * Model WatchPrivacyCopy
+ * 
+ */
+export type WatchPrivacyCopy = Prisma.WatchPrivacyCopyModel
+/**
+ * Model WatchPrivacyMigration
+ * 
+ */
+export type WatchPrivacyMigration = Prisma.WatchPrivacyMigrationModel
+/**
+ * Model PrivacyScope
+ * 
+ */
+export type PrivacyScope = Prisma.PrivacyScopeModel
+/**
+ * Model PrivacyCopy
+ * 
+ */
+export type PrivacyCopy = Prisma.PrivacyCopyModel

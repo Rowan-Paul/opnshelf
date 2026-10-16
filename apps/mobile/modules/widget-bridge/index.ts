@@ -2,7 +2,7 @@ import { requireNativeModule } from "expo";
 import { Platform } from "react-native";
 
 /**
- * JS side of the Home-Screen Widget bridge (see CONTEXT.md and ADR 0017),
+ * JS side of the Home-Screen Widget bridge (see GLOSSARY.md and ADR 0017),
  * shared by the Android AppWidget and the iOS WidgetKit extension. Every
  * export is a safe no-op on web, in Expo Go, and in tests — the native module
  * is looked up lazily and failures are swallowed, since the widget must never

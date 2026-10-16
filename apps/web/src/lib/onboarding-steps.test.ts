@@ -1,4 +1,4 @@
-import type { UserDto } from "@opnshelf/api";
+import { bringsTraktWatches, type UserDto } from "@opnshelf/api";
 import { describe, expect, it, vi } from "vitest";
 import {
 	buildDisplayNameUpdate,
@@ -18,6 +18,7 @@ describe("onboarding steps", () => {
 		expect(ONBOARDING_STEPS).toEqual([
 			"welcome",
 			"profile",
+			"privacy",
 			"preferences",
 			"services",
 			"notifications",
@@ -30,7 +31,8 @@ describe("onboarding steps", () => {
 
 	it("advances to the linear successor", () => {
 		expect(nextOnboardingStep("welcome")).toBe("profile");
-		expect(nextOnboardingStep("profile")).toBe("preferences");
+		expect(nextOnboardingStep("profile")).toBe("privacy");
+		expect(nextOnboardingStep("privacy")).toBe("preferences");
 		expect(nextOnboardingStep("preferences")).toBe("services");
 		expect(nextOnboardingStep("services")).toBe("notifications");
 		expect(nextOnboardingStep("notifications")).toBe("trakt");
@@ -191,5 +193,35 @@ describe("markOnboardingCompleted", () => {
 			needsOnboarding: false,
 		});
 		expect(user.needsOnboarding).toBe(true);
+	});
+});
+
+describe("bringsTraktWatches", () => {
+	const sync = {
+		status: "active",
+		direction: "both",
+		watches: true,
+	} as const;
+
+	it("is true for an Import that has not stopped", () => {
+		expect(bringsTraktWatches({ status: "running" }, undefined)).toBe(true);
+		expect(bringsTraktWatches({ status: "completed" }, undefined)).toBe(true);
+		expect(bringsTraktWatches({ status: "failed" }, undefined)).toBe(false);
+	});
+
+	it("is true only when Trakt Sync brings Watches in", () => {
+		expect(bringsTraktWatches(null, sync)).toBe(true);
+		expect(bringsTraktWatches(null, { ...sync, status: "preparing" })).toBe(
+			true,
+		);
+		expect(bringsTraktWatches(null, { ...sync, direction: "inbound" })).toBe(
+			true,
+		);
+		expect(bringsTraktWatches(null, { ...sync, direction: "outbound" })).toBe(
+			false,
+		);
+		expect(bringsTraktWatches(null, { ...sync, watches: false })).toBe(false);
+		expect(bringsTraktWatches(null, { ...sync, status: "paused" })).toBe(false);
+		expect(bringsTraktWatches(null, undefined)).toBe(false);
 	});
 });

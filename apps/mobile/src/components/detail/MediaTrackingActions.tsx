@@ -1,3 +1,5 @@
+import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { Calendar, Check, ChevronRight, Plus, X } from "lucide-react-native";
 import { useState } from "react";
@@ -59,6 +61,13 @@ type MediaTrackingActionsProps =
  */
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const { isAuthenticated } = useAuth();
+	const { data: settings } = useQuery({
+		...usersControllerGetMySettingsOptions(),
+		enabled: isAuthenticated,
+	});
+	const [editingEntry, setEditingEntry] = useState<WatchHistoryEntry | null>(
+		null,
+	);
 	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const [datePickerVisible, setDatePickerVisible] = useState(false);
 	const [historyVisible, setHistoryVisible] = useState(false);
@@ -244,6 +253,25 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 		}
 	};
 
+	const dismissDatePicker = () => {
+		setDatePickerVisible(false);
+		if (editingEntry) {
+			setEditingEntry(null);
+			setHistoryVisible(true);
+		}
+	};
+	const handleEditConfirm = async (watchedAt: string | null) => {
+		if (!editingEntry) return;
+		try {
+			if (isMovie)
+				await actions.updateMovieWatchDate(editingEntry.id, watchedAt);
+			else await actions.updateEpisodeWatchDate(editingEntry.id, watchedAt);
+			dismissDatePicker();
+		} catch {
+			// Mutation reports the error. Keep the draft open for retry.
+		}
+	};
+
 	const handleDateConfirm = (iso: string | null) => {
 		setDatePickerVisible(false);
 		addToShelf(iso);
@@ -325,9 +353,17 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 			<WatchDatePickerModal
 				visible={datePickerVisible}
-				onDismiss={() => setDatePickerVisible(false)}
-				onConfirm={handleDateConfirm}
-				isLoading={isMarkPending}
+				onDismiss={dismissDatePicker}
+				initialWatchedAt={
+					editingEntry ? (editingEntry.watchedDate ?? null) : undefined
+				}
+				timeZone={settings?.timezone}
+				onConfirm={editingEntry ? handleEditConfirm : handleDateConfirm}
+				isLoading={
+					editingEntry
+						? !!(actions.updatingMovieWatchId || actions.updatingEpisodeWatchId)
+						: isMarkPending
+				}
 			/>
 
 			{canManageHistory ? (
@@ -336,6 +372,13 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 					onDismiss={() => setHistoryVisible(false)}
 					title={historySubtitle}
 					entries={historyEntries}
+					timeZone={settings?.timezone}
+					hour12={settings?.timeFormat === "12h"}
+					onEdit={(entry) => {
+						setHistoryVisible(false);
+						setEditingEntry(entry);
+						setDatePickerVisible(true);
+					}}
 					onDelete={deleteHistoryEntry}
 					isDeleting={isDeletingHistoryEntry}
 					onAddWatch={() => {

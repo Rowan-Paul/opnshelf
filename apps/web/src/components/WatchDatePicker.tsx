@@ -1,15 +1,18 @@
-import { Loader2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "#/components/ui/popover";
 import { useAuth } from "#/lib/auth-context";
-import { datetimeLocalToISO, nowAsDatetimeLocal } from "#/lib/date-utils";
+import {
+	dateAsDatetimeLocal,
+	datetimeLocalToISO,
+	nowAsDatetimeLocal,
+} from "#/lib/date-utils";
 
 /**
- * Picks the date for a new Watch, or declines to give one.
+ * Picks a date for a new Watch or corrects an existing Watch in place.
  *
  * A Watch's date is optional: `undefined` means "use the current time",
  * a string means "this instant", and `null` means an undated Watch — a
@@ -22,15 +25,22 @@ export function WatchDatePicker({
 	onConfirm,
 	trigger,
 	align,
+	initialWatchedAt,
 }: {
 	isPending: boolean;
 	/** `null` creates an undated Watch; a string is a UTC ISO instant. */
-	onConfirm: (watchedAt: string | null) => void;
+	onConfirm: (watchedAt: string | null) => unknown;
+	/** Providing a value (including null) edits an existing Watch. */
+	initialWatchedAt?: string | null;
 	trigger: ReactNode;
 	align?: "start" | "center" | "end";
 }) {
 	const { userSettings } = useAuth();
 	const userTimezone = userSettings?.timezone;
+	const isEditing = initialWatchedAt !== undefined;
+	const inputId = useId();
+	const [noDate, setNoDate] = useState(false);
+	const [original, setOriginal] = useState(initialWatchedAt);
 	const [open, setOpen] = useState(false);
 	const [watchedAt, setWatchedAt] = useState(() =>
 		nowAsDatetimeLocal(userTimezone),
@@ -44,18 +54,40 @@ export function WatchDatePicker({
 
 	// Re-seed on every open so a picker left mounted never offers a stale "now".
 	const handleOpenChange = (isOpen: boolean) => {
-		if (isOpen) setWatchedAt(nowAsDatetimeLocal(userTimezone));
+		if (isPending) return;
+		if (isOpen) {
+			setOriginal(initialWatchedAt);
+			setNoDate(initialWatchedAt === null);
+			setWatchedAt(
+				initialWatchedAt
+					? dateAsDatetimeLocal(new Date(initialWatchedAt), userTimezone)
+					: nowAsDatetimeLocal(userTimezone),
+			);
+		}
 		setOpen(isOpen);
 	};
 
-	const handleConfirm = () => {
-		onConfirm(datetimeLocalToISO(watchedAt, userTimezone));
-		setOpen(false);
+	const submit = (value: string | null) => {
+		const result = onConfirm(value);
+		if (result instanceof Promise) {
+			// Mutation owns the error toast; retain the draft so the User can retry.
+			void result.then(
+				() => setOpen(false),
+				() => {},
+			);
+		} else setOpen(false);
 	};
-
+	const handleConfirm = () => {
+		if (isPending || (!noDate && (!watchedAt || isFuture))) return;
+		if (noDate) return submit(null);
+		const unchanged =
+			original &&
+			watchedAt === dateAsDatetimeLocal(new Date(original), userTimezone);
+		submit(unchanged ? original : datetimeLocalToISO(watchedAt, userTimezone));
+	};
 	const handleNoDate = () => {
-		onConfirm(null);
-		setOpen(false);
+		if (isEditing) setNoDate(!noDate);
+		else submit(null);
 	};
 
 	return (
@@ -69,23 +101,30 @@ export function WatchDatePicker({
 				className="w-80 space-y-3"
 			>
 				<div className="space-y-2">
-					<label htmlFor="watched-at" className="block font-medium text-sm">
+					<label htmlFor={inputId} className="block font-medium text-sm">
 						When did you watch this?
 					</label>
 					<input
-						id="watched-at"
+						id={inputId}
 						type="datetime-local"
 						value={watchedAt}
+						disabled={isPending || noDate}
 						// You cannot have watched something you have not watched yet.
 						max={latestAllowed}
 						onChange={(e) => setWatchedAt(e.target.value)}
 						className="w-full rounded-md border bg-(--background) px-3 py-2 text-sm outline-hidden focus:ring-(--accent) focus:ring-2"
 					/>
 				</div>
+				{isEditing && (
+					<p className="text-(--muted-foreground) text-xs">
+						{userTimezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone}
+					</p>
+				)}
 				<div className="flex gap-2">
 					<button
 						type="button"
 						onClick={() => setOpen(false)}
+						disabled={isPending}
 						className="btn btn-secondary flex-1"
 					>
 						Cancel
@@ -94,23 +133,20 @@ export function WatchDatePicker({
 						type="button"
 						onClick={handleConfirm}
 						// An empty field is not a way to say "undated": "No date" is.
-						disabled={isPending || watchedAt === "" || isFuture}
+						disabled={isPending || (!noDate && (watchedAt === "" || isFuture))}
 						className="btn btn-primary flex-1"
 					>
-						{isPending ? (
-							<Loader2 className="size-4 animate-spin" />
-						) : (
-							"Confirm"
-						)}
+						{isPending ? "Saving…" : isEditing ? "Save" : "Confirm"}
 					</button>
 				</div>
 				<button
 					type="button"
 					onClick={handleNoDate}
+					aria-pressed={isEditing ? noDate : undefined}
 					disabled={isPending}
 					className="w-full text-center text-(--muted-foreground) text-sm underline-offset-4 hover:underline disabled:opacity-50"
 				>
-					No date
+					{noDate ? "No date selected · Choose a date" : "No date"}
 				</button>
 			</PopoverContent>
 		</Popover>

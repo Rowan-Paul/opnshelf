@@ -1,4 +1,6 @@
+import { PrivacyModule } from "../privacy/privacy.module";
 import { forwardRef, Module } from "@nestjs/common";
+import { PdsModule } from "../pds/pds.module";
 import { AuthModule } from "../auth/auth.module";
 import { ListsModule } from "../lists/lists.module";
 import { MoviesModule } from "../movies/movies.module";
@@ -13,14 +15,19 @@ import { TraktImportJobStore } from "./import/trakt-import-job.store";
 import { TraktImportWorker } from "./import/trakt-import-worker.service";
 import { WatchImportWriter } from "./import/watch-import-writer.service";
 import { ProfileService } from "./profile.service";
+import { ReleaseNotesController } from "./release-notes.controller";
 import { TraktApiClient } from "./trakt-api.client";
 import { UserDeletionService } from "./user-deletion.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
+import { TraktSyncModule } from "../trakt-sync/trakt-sync.module";
 
 @Module({
 	imports: [
+		forwardRef(() => PrivacyModule),
+		PdsModule,
 		PrismaModule,
+		TraktSyncModule,
 		ListsModule,
 		MoviesModule,
 		ShowsModule,
@@ -29,7 +36,7 @@ import { UsersService } from "./users.service";
 		ShelfModule,
 		forwardRef(() => AuthModule),
 	],
-	controllers: [UsersController],
+	controllers: [UsersController, ReleaseNotesController],
 	providers: [
 		UsersService,
 		ImportHistoryService,

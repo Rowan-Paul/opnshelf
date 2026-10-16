@@ -1,5 +1,35 @@
 import { slugifyName } from "@opnshelf/api";
 import { describe, expect, it } from "vitest";
+import { buildEpisodeUrl, buildSeasonUrl, buildShowUrl } from "./url-utils";
+
+describe("show detail URLs", () => {
+	it.each([
+		{ id: 1, name: "Pokémon", slug: "pokemon", season: 2, episode: 3 },
+		{
+			id: "001",
+			name: "Marvel's Agents of S.H.I.E.L.D.",
+			slug: "marvels-agents-of-shield",
+			season: 0,
+			episode: 1,
+		},
+		{ id: 2, name: "", slug: "-", season: 1, episode: 0 },
+	])("preserves nested paths for $name ($id)", ({
+		id,
+		name,
+		slug,
+		season,
+		episode,
+	}) => {
+		const showPath = `/shows/${id}/${slug}`;
+		expect(buildShowUrl(id, name)).toBe(showPath);
+		expect(buildSeasonUrl(id, name, season)).toBe(
+			`${showPath}/seasons/${season}`,
+		);
+		expect(buildEpisodeUrl(id, name, season, episode)).toBe(
+			`${showPath}/seasons/${season}/episodes/${episode}`,
+		);
+	});
+});
 
 /**
  * The Web App and the Mobile App must build byte-identical media URLs, so the

@@ -6,6 +6,7 @@ import {
 	Film,
 	List,
 	type LucideIcon,
+	Megaphone,
 	Pencil,
 	Settings,
 	Star,
@@ -17,6 +18,7 @@ import { SectionHeader } from "@/components/home/SectionHeader";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import {
 	PosterRowSkeleton,
 	ProfileHeaderSkeleton,
@@ -26,6 +28,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useProfileShelf, usePublicProfile } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { useReleaseNotes } from "@/lib/use-release-notes";
 
 const POSTER_W = 110;
 
@@ -33,6 +36,7 @@ const POSTER_W = 110;
 export default function ProfileTab() {
 	const insets = useSafeAreaInsets();
 	const { user, isAuthenticated } = useAuth();
+	const { unread } = useReleaseNotes({ enabled: Boolean(user) });
 	const handle = user?.handle ?? "";
 	const { data: profile, isPending, refetch } = usePublicProfile(handle);
 	const userDid = profile?.did ?? "";
@@ -60,15 +64,33 @@ export default function ProfileTab() {
 					<Text className="font-bold font-display text-2xl text-foreground">
 						Your profile
 					</Text>
-					<Link href="/settings" asChild>
-						<Pressable
-							accessibilityRole="button"
-							accessibilityLabel="Settings"
-							className="size-11 items-center justify-center"
-						>
-							<Settings color="#94a3b8" size={22} />
-						</Pressable>
-					</Link>
+					<View className="flex-row items-center gap-1">
+						<Link href="/whats-new" asChild>
+							<Pressable
+								accessibilityRole="link"
+								accessibilityLabel={
+									unread ? "What’s new, unread release notes" : "What’s new"
+								}
+								className="size-11 items-center justify-center"
+							>
+								<Megaphone color="#94a3b8" size={22} />
+								{unread && (
+									<View className="absolute top-1 right-1">
+										<UnreadDot />
+									</View>
+								)}
+							</Pressable>
+						</Link>
+						<Link href="/settings" asChild>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel="Settings"
+								className="size-11 items-center justify-center"
+							>
+								<Settings color="#94a3b8" size={22} />
+							</Pressable>
+						</Link>
+					</View>
 				</View>
 				{isPending ? (
 					<>

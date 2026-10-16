@@ -1,3 +1,6 @@
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
+import { WatchReadGuard } from "../privacy/watch-access";
 import { BadRequestException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { AuthenticatedRequest } from "../auth/types";
@@ -71,7 +74,17 @@ describe("UsersController", () => {
 				{ provide: UsersService, useValue: usersService },
 				{ provide: SocialService, useValue: {} },
 			],
-		}).compile();
+		})
+			.overrideGuard(WatchReadGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(OptionalAuthGuard)
+			.useValue({ canActivate: () => true })
+			.overrideInterceptor(WatchWriteInterceptor)
+			.useValue({
+				intercept: (_context: unknown, next: { handle: () => unknown }) =>
+					next.handle(),
+			})
+			.compile();
 
 		controller = module.get<UsersController>(UsersController);
 	});

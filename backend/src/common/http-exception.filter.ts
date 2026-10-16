@@ -7,12 +7,28 @@ import {
 	Logger,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { TmdbNotFoundError } from "../tmdb/tmdb-http";
 
 interface ErrorBody {
 	statusCode: number;
 	message: string | string[];
 	error: string;
 }
+
+// Only these application-owned conflict reasons are safe to log. Arbitrary
+// exception messages can contain upstream credentials or user-provided data.
+const privacyConflictCodes: Record<string, string> = {
+	"Another Watch operation is in progress. Try again.": "privacy_account_busy",
+	"Account deletion is in progress.": "privacy_account_deleting",
+	"This category is changing privacy. Try again when it finishes.":
+		"privacy_category_migrating",
+	"Confirm publication before making this data Public.":
+		"privacy_publication_unconfirmed",
+	"Finish this privacy change before reversing it.":
+		"privacy_migration_conflict",
+	"Privacy change in progress": "privacy_migration_in_progress",
+	"Privacy change is not ready to run.": "privacy_migration_not_ready",
+};
 
 /**
  * Global exception filter. Catches every thrown error, logs it, and returns a
@@ -37,7 +53,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
 			error: "Internal Server Error",
 		};
 
-		if (exception instanceof HttpException) {
+		if (exception instanceof TmdbNotFoundError) {
+			status = HttpStatus.NOT_FOUND;
+			body = {
+				statusCode: status,
+				message: exception.message,
+				error: "Not Found",
+			};
+		} else if (exception instanceof HttpException) {
 			status = exception.getStatus();
 			const res = exception.getResponse();
 			if (typeof res === "string") {
@@ -54,14 +77,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
 		}
 
 		// Log full detail server-side (stack included) but never ship it out.
-		const logContext = `${request.method} ${request.url} request_id=${response.locals?.requestId ?? "unknown"}`;
+		// Prefer the route template, which excludes account identifiers, and never
+		// log query parameters (OAuth callbacks carry codes there).
+		const route = request.route?.path ?? request.url.split("?")[0];
+		const logContext = `${request.method} ${route} request_id=${response.locals?.requestId ?? "unknown"}`;
 		if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
 			this.logger.error(
 				`${logContext} -> ${status}`,
 				exception instanceof Error ? exception.stack : String(exception),
 			);
 		} else {
-			this.logger.warn(`${logContext} -> ${status}`);
+			const code =
+				status === HttpStatus.CONFLICT &&
+				typeof body.message === "string" &&
+				Object.hasOwn(privacyConflictCodes, body.message)
+					? privacyConflictCodes[body.message]
+					: undefined;
+			this.logger.warn(
+				`${logContext} -> ${status}${code ? ` reason=${code}` : ""}`,
+			);
 		}
 
 		// A controller may mark its successful response as publicly cacheable.

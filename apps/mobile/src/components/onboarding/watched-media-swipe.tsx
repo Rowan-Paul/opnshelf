@@ -31,7 +31,7 @@ import { useToast } from "@/components/ui/toast";
 import {
 	isSwipeAccepted,
 	type OnboardingMediaItem,
-	onboardingCardWidth,
+	onboardingCardLayout,
 	toOnboardingMediaItem,
 } from "@/lib/onboarding-media";
 import { posterUrl } from "@/lib/tmdb";
@@ -43,10 +43,12 @@ export function WatchedMediaSwipe({
 	onNext: () => void;
 	onWatched: () => void;
 }) {
-	const { height, width } = useWindowDimensions();
+	const { fontScale, height, width } = useWindowDimensions();
 	const insets = useSafeAreaInsets();
 	const compact = height < 720;
-	const cardWidth = onboardingCardWidth(width, height);
+	const [stackHeight, setStackHeight] = useState(0);
+	const ready = stackHeight > 0;
+	const card = onboardingCardLayout(width, stackHeight, compact, fontScale);
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const [index, setIndex] = useState(0);
@@ -129,7 +131,7 @@ export function WatchedMediaSwipe({
 
 	const gesture = Gesture.Pan()
 		.runOnJS(true)
-		.enabled(!moving && !!current)
+		.enabled(!moving && !!current && ready)
 		.onUpdate((event) => {
 			x.value = event.translationX;
 			y.value = event.translationY * 0.2;
@@ -208,7 +210,10 @@ export function WatchedMediaSwipe({
 				</Text>
 			</View>
 
-			<View className="relative min-h-0 flex-1 items-center justify-center">
+			<View
+				className="relative min-h-0 flex-1 items-center justify-center"
+				onLayout={(event) => setStackHeight(event.nativeEvent.layout.height)}
+			>
 				{discovery.isLoading ? <ActivityIndicator color="#f3bc00" /> : null}
 				{discovery.isError ? (
 					<View className="items-center gap-3">
@@ -233,43 +238,50 @@ export function WatchedMediaSwipe({
 						</Pressable>
 					</View>
 				) : null}
-				{next ? (
+				{next && ready ? (
 					<View className="absolute inset-0 items-center justify-center">
 						<MediaSwipeCard
 							item={next}
 							compact={compact}
+							showPoster={card.showPoster}
 							style={{
 								opacity: 0.6,
 								transform: [{ translateY: 8 }, { scale: 0.96 }],
-								width: cardWidth,
+								width: card.width,
 							}}
 						/>
 					</View>
 				) : null}
 				{current ? (
-					<GestureDetector gesture={gesture}>
-						<Animated.View style={[{ width: cardWidth }, animatedStyle]}>
-							<MediaSwipeCard item={current} compact={compact} />
-							<Animated.View
-								pointerEvents="none"
-								className="absolute top-5 right-4 flex-row items-center gap-1 rounded-lg border-4 border-red-400 px-3 py-1.5"
-								style={skipFeedbackStyle}
-							>
-								<X color="#f87171" size={20} strokeWidth={3} />
-								<Text className="font-bold text-lg text-red-400">SKIP</Text>
+					ready ? (
+						<GestureDetector gesture={gesture}>
+							<Animated.View style={[{ width: card.width }, animatedStyle]}>
+								<MediaSwipeCard
+									item={current}
+									compact={compact}
+									showPoster={card.showPoster}
+								/>
+								<Animated.View
+									pointerEvents="none"
+									className="absolute top-5 right-4 flex-row items-center gap-1 rounded-lg border-4 border-red-400 px-3 py-1.5"
+									style={skipFeedbackStyle}
+								>
+									<X color="#f87171" size={20} strokeWidth={3} />
+									<Text className="font-bold text-lg text-red-400">SKIP</Text>
+								</Animated.View>
+								<Animated.View
+									pointerEvents="none"
+									className="absolute top-5 left-4 flex-row items-center gap-1 rounded-lg border-4 border-green-400 px-3 py-1.5"
+									style={watchedFeedbackStyle}
+								>
+									<Check color="#4ade80" size={20} strokeWidth={3} />
+									<Text className="font-bold text-green-400 text-lg">
+										WATCHED
+									</Text>
+								</Animated.View>
 							</Animated.View>
-							<Animated.View
-								pointerEvents="none"
-								className="absolute top-5 left-4 flex-row items-center gap-1 rounded-lg border-4 border-green-400 px-3 py-1.5"
-								style={watchedFeedbackStyle}
-							>
-								<Check color="#4ade80" size={20} strokeWidth={3} />
-								<Text className="font-bold text-green-400 text-lg">
-									WATCHED
-								</Text>
-							</Animated.View>
-						</Animated.View>
-					</GestureDetector>
+						</GestureDetector>
+					) : null
 				) : !discovery.isLoading && !discovery.isError ? (
 					<View className="items-center gap-3 px-6">
 						<View className="size-16 items-center justify-center rounded-full bg-green-500/10">
@@ -290,14 +302,14 @@ export function WatchedMediaSwipe({
 					<ActionButton
 						label="Skip"
 						compact={compact}
-						disabled={moving}
+						disabled={moving || !ready}
 						onPress={() => void swipe("left")}
 						icon={<X color="#94a3b8" size={25} />}
 					/>
 					<ActionButton
 						label="Watched"
 						compact={compact}
-						disabled={moving}
+						disabled={moving || !ready}
 						onPress={() => void swipe("right")}
 						icon={<Check color="#3f2e00" size={25} />}
 						primary
@@ -327,11 +339,13 @@ function MediaSwipeCard({
 	item,
 	className,
 	compact,
+	showPoster = true,
 	style,
 }: {
 	item: OnboardingMediaItem;
 	className?: string;
 	compact?: boolean;
+	showPoster?: boolean;
 	style?: ViewStyle;
 }) {
 	return (
@@ -343,10 +357,12 @@ function MediaSwipeCard({
 				...style,
 			}}
 		>
-			<PosterImage
-				url={posterUrl(item.posterPath, "w500")}
-				className="aspect-2/3 w-full"
-			/>
+			{showPoster ? (
+				<PosterImage
+					url={posterUrl(item.posterPath, "w500")}
+					className="aspect-2/3 w-full"
+				/>
+			) : null}
 			<View className={compact ? "gap-1 p-3" : "gap-2 p-4"}>
 				<View className="flex-row items-start justify-between gap-3">
 					<Text
@@ -366,6 +382,7 @@ function MediaSwipeCard({
 				</View>
 				<Text
 					className={`text-muted-foreground ${compact ? "text-xs" : "text-sm"}`}
+					numberOfLines={1}
 				>
 					{item.type === "movie" ? "Movie" : "Show"}
 					{item.year ? ` · ${item.year}` : ""}

@@ -14,6 +14,12 @@ describe("datetimeLocalToISO", () => {
 		);
 	});
 
+	it("preserves explicit seconds when converting a wall clock", () => {
+		expect(datetimeLocalToISO("2026-07-04T20:15:37", "Europe/Amsterdam")).toBe(
+			"2026-07-04T18:15:37.000Z",
+		);
+	});
+
 	it("handles a wall clock just after the spring-forward transition", () => {
 		// DST starts 2026-03-29 02:00 CET -> 03:00 CEST
 		expect(datetimeLocalToISO("2026-03-29T03:30", "Europe/Amsterdam")).toBe(

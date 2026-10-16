@@ -9,6 +9,7 @@ This file is the root guide for automated coding work in Opnshelf. Keep changes 
 - `apps/mobile/`: Expo/React Native Mobile App for iOS and Android.
 - `packages/api/`: shared OpenAPI-generated client and types used by the clients. It has no package scripts, so root gates skip it.
 - `lexicons/`: source JSON definitions for the `xyz.opnshelf.*` AT Protocol records.
+- `spaces/lexicons/`: alpha Space declarations for publication, separate from record validators. Read `spaces/README.md` before changing or publishing them.
 - `services/mail-relay/`: standalone mail relay for the PDS. It sits outside the pnpm workspace, so root commands never touch it.
 - `docs/`: `adr/` for decisions, `prd/` for product briefs, `runbooks/` for operational procedures.
 - `plans/`: numbered implementation plans with a status table in `plans/README.md`. When the task names a plan, read it in full, honor its STOP conditions, and update its status row when you finish that plan.
@@ -17,7 +18,7 @@ Use Node.js 24 and run workspace commands with the repository's pnpm version fro
 
 ## Source-of-truth documents
 
-- `CONTEXT.md` controls exact product vocabulary. Use its canonical terms and respect its avoid lists. When a change adds, renames, or retires a product concept, update `CONTEXT.md` in the same change.
+- `GLOSSARY.md` controls exact product vocabulary. Use its canonical terms and respect its avoid lists. When a change adds, renames, or retires a product concept, update `GLOSSARY.md` in the same change.
 - `docs/adr/**` records architectural decisions. Read the relevant accepted and superseding ADRs before changing behavior or boundaries.
 - `.github/workflows/ci.yml` is the source of truth for workspace verification gates; package scripts provide their implementations. The standalone mail relay has local gates below because CI does not cover it.
 - Deployed configuration lives in Railway, not in the checked-in examples. For environment-shaped work, inspect variable names and only named values that the operator or checked-in docs classify as non-secret. Never run a command that prints all deployed values.
@@ -55,6 +56,10 @@ The root has no test script. Select gates by affected workspace, including downs
 
 CI regenerates the API artifacts on a clean checkout, then runs `git diff --exit-code -- backend/openapi.json packages/api/src/generated`. That clean-checkout drift gate is not a local handoff gate because intended generated changes can still be unstaged.
 
+For repository scripts and workflow changes, also run `pnpm test:scripts`.
+For local servers or device verification, read [development sessions](docs/runbooks/development-sessions.md).
+For Spaces protocol changes, read [reference verification](docs/runbooks/privacy-reference-smoke.md).
+
 ## Generated files
 
 Never hand-edit generated output. Change its source, run the owning command, and review the resulting diff.
@@ -85,21 +90,8 @@ Never hand-edit generated output. Change its source, run the owning command, and
 - Stage the paths you changed. Never `git add -A` or `git add .`: sessions share this tree and a blanket add swallows another one's unstaged work.
 - Commit subjects are plain imperative sentences, no `feat:` or `fix:` prefix. The body says why the old behavior was wrong and what changed, ends with `Closes #<number>` where an issue exists, and carries the `Co-Authored-By` trailer.
 - Keep commits focused on the requested change. Do not amend, rebase, force-push, merge, deploy, or publish unless the operator explicitly requests it.
-- When the operator requests publication, push the issue branch and open a ready pull request into `develop`. The pull request explains the problem and solution, links its issue, and includes before/after images for visual UI changes or a short recording for motion and timing changes. End the body with the model and harness that performed the work.
-- When asked to babysit a pull request, poll checks and comments newer than the latest push. Verify automated findings against the source, fix confirmed problems, and explain dismissed false positives. Continue until required checks are terminal and report the pull request URL and final state.
-- Squash-merge only when the operator requests it. Merge authorization includes the post-merge cleanup below unless the operator asks to retain something.
-- Move releases from `develop` to `main` through a separate pull request. Never open an issue-branch pull request into `main`.
+- Before publishing, reviewing, monitoring, or merging a PR, read [publication and cleanup](docs/agents/publication.md). Follow its completion criteria, including cleanup after merge.
 - Report changed files and the verification commands actually run, including any skipped or failing checks.
-
-### Post-merge cleanup
-
-After confirming the pull request is merged, finish these steps before handoff:
-
-1. Close linked issues fully resolved by the merged change, even if GitHub did not auto-close them because the target was `develop`. Keep partially resolved or broader tracking issues open and update their remaining work with the merged PR link.
-2. Stop development servers, Metro instances, fixture servers, and other temporary processes started for this task. Preserve anything another active task uses or the operator asked to keep running.
-3. Inspect the task's worktrees for modified, staged, and untracked files and commits beyond the merged PR head. Remove only completed task worktrees with no remaining work, then delete their local and remote issue branches. Preserve unrelated worktrees and branches; never force-remove a dirty worktree or discard unpublished work to complete cleanup.
-4. Fetch the latest remote refs and prune stale tracking refs. Fast-forward the local `develop` checkout to `origin/develop` when it is clean and not in use by another task. Preserve a dirty, divergent, or busy checkout and report why its update was deferred.
-5. Report the merged PRs, issue closures or remaining work, cleanup performed, and anything deliberately retained or blocked. A merged PR alone is not a completed handoff.
 
 ## Agent skills
 
@@ -113,4 +105,15 @@ The five default triage labels, unchanged: `needs-triage`, `needs-info`, `ready-
 
 ### Domain docs
 
-Single-context: one root `CONTEXT.md` and one `docs/adr/` index. See `docs/agents/domain.md`.
+Single-context: one root `GLOSSARY.md` and one `docs/adr/` index. See `docs/agents/domain.md`.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->

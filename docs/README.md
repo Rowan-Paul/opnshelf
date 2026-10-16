@@ -1,7 +1,7 @@
 # Documentation index
 
 Working rules live in [`AGENTS.md`](../AGENTS.md); product vocabulary lives in
-[`CONTEXT.md`](../CONTEXT.md). Setup, environment variables, test data,
+[`GLOSSARY.md`](../GLOSSARY.md). Setup, environment variables, test data,
 external dependencies and how to test a change are in the
 [root README](../README.md), with per-workspace notes in
 [`backend/README.md`](../backend/README.md) and
@@ -9,13 +9,13 @@ external dependencies and how to test a change are in the
 
 | Where | What |
 | --- | --- |
-| [`agents/`](agents/) | Configuration the engineering skills read: [issue tracker](agents/issue-tracker.md), [triage labels](agents/triage-labels.md), [domain docs](agents/domain.md). |
+| [`agents/`](agents/) | Configuration the engineering skills read: [issue tracker](agents/issue-tracker.md), [triage labels](agents/triage-labels.md), [domain docs](agents/domain.md), [publication/review/cleanup](agents/publication.md). |
 | [`adr/`](adr/README.md) | Architectural decision records. The index lists every ADR with its number, title and status. |
-| [`prd/`](prd/) | Product briefs: [community reviews with likes](prd/community-reviews-with-likes.md), [renaming the list-item lexicon](prd/rename-listitem-lexicon.md), [Review Bluesky Cross-post](prd/review-bluesky-cross-post.md). |
-| [`runbooks/`](runbooks/) | Operational procedures. The [PDS Railway cutover](runbooks/pds-railway-cutover.md) for ADR 0019 and [SSR rate limiting](runbooks/ssr-rate-limiting.md) for ADR 0025. |
+| [`prd/`](prd/) | Product briefs: [community reviews with likes](prd/community-reviews-with-likes.md), [renaming the list-item lexicon](prd/rename-listitem-lexicon.md), [Review Bluesky Cross-post](prd/review-bluesky-cross-post.md), [Release Notes](prd/release-notes.md), [user-controlled data privacy](prd/data-privacy.md), [Watch privacy implementation](prd/watch-privacy-implementation.md). |
+| [`runbooks/`](runbooks/) | Operational procedures. The [PDS Railway cutover](runbooks/pds-railway-cutover.md) for ADR 0019 and [SSR rate limiting](runbooks/ssr-rate-limiting.md) for ADR 0025, and [publishing Release Notes](runbooks/release-notes.md), [development sessions](runbooks/development-sessions.md), [local Privacy trial](runbooks/spaces-local-trial.md), [reference Privacy verification](runbooks/privacy-reference-smoke.md), and [PDS image provenance](runbooks/pds-image-provenance.md). |
 | [`cloudflare-email-migration-playbook.md`](cloudflare-email-migration-playbook.md) | Reusable playbook behind ADR 0007 for moving a project's email to Cloudflare Email Sending. |
 | [`../plans/`](../plans/README.md) | Numbered implementation plans with a status table. Read a plan in full before executing it and update its status row when done. |
 
 Documentation changes ship in the same branch as the code they describe. A new
 architectural or business decision gets an ADR; a new product term gets a
-`CONTEXT.md` entry.
+`GLOSSARY.md` entry.

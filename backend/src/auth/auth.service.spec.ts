@@ -5,27 +5,29 @@ import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing AuthService
 vi.mock("../prisma/prisma.service", () => ({
-	PrismaService: vi.fn().mockImplementation(() => ({
-		$transaction: vi.fn(),
-		$queryRaw: vi.fn(),
-		authSession: {
-			findUnique: vi.fn(),
-			upsert: vi.fn(),
-			update: vi.fn(),
-			deleteMany: vi.fn(),
-		},
-		authState: {
-			findUnique: vi.fn(),
-			upsert: vi.fn(),
-			delete: vi.fn(),
-			deleteMany: vi.fn(),
-		},
-		user: {
-			findUnique: vi.fn(),
-			update: vi.fn(),
-			upsert: vi.fn(),
-		},
-	})),
+	PrismaService: vi.fn().mockImplementation(function () {
+		return {
+			$transaction: vi.fn(),
+			$queryRaw: vi.fn(),
+			authSession: {
+				findUnique: vi.fn(),
+				upsert: vi.fn(),
+				update: vi.fn(),
+				deleteMany: vi.fn(),
+			},
+			authState: {
+				findUnique: vi.fn(),
+				upsert: vi.fn(),
+				delete: vi.fn(),
+				deleteMany: vi.fn(),
+			},
+			user: {
+				findUnique: vi.fn(),
+				update: vi.fn(),
+				upsert: vi.fn(),
+			},
+		};
+	}),
 }));
 
 // Mock the @atproto/oauth-client-node module. The service now builds one client
@@ -37,7 +39,9 @@ const sharedOAuthClient = vi.hoisted(() => ({
 	restore: vi.fn(),
 }));
 vi.mock("@atproto/oauth-client-node", () => ({
-	NodeOAuthClient: vi.fn().mockImplementation(() => sharedOAuthClient),
+	NodeOAuthClient: vi.fn().mockImplementation(function () {
+		return sharedOAuthClient;
+	}),
 	// Vitest throws on undefined named exports (Jest returned undefined);
 	// auth.service imports this at module load.
 	requestLocalLock: vi.fn(),
@@ -53,7 +57,7 @@ const credentialSessionHarness = vi.hoisted(() => ({
 
 // Mock the @atproto/api module
 vi.mock("@atproto/api", () => ({
-	Agent: vi.fn().mockImplementation(() => {
+	Agent: vi.fn().mockImplementation(function () {
 		const getProfile = vi.fn();
 		return {
 			com: {
@@ -68,39 +72,32 @@ vi.mock("@atproto/api", () => ({
 			withProxy: vi.fn().mockReturnValue({ getProfile }),
 		};
 	}),
-	CredentialSession: vi
-		.fn()
-		.mockImplementation(
-			(
-				_serviceUrl: URL,
-				_fetch: unknown,
-				persistSession: (
-					event: string,
-					session?: Record<string, unknown>,
-				) => void,
-			) => {
-				const instance: {
-					did?: string;
-					resumeSession: Mock;
-					persistSession: (
-						event: string,
-						session?: Record<string, unknown>,
-					) => void;
-				} = {
-					persistSession,
-					resumeSession: vi.fn(async (session: Record<string, unknown>) => {
-						instance.did = session.did as string;
-						persistSession("update", {
-							...session,
-							accessJwt: "rotated-access",
-							refreshJwt: "rotated-refresh",
-						});
-					}),
-				};
-				credentialSessionHarness.instances.push(instance);
-				return instance;
-			},
-		),
+	CredentialSession: vi.fn().mockImplementation(function (
+		_serviceUrl: URL,
+		_fetch: unknown,
+		persistSession: (event: string, session?: Record<string, unknown>) => void,
+	) {
+		const instance: {
+			did?: string;
+			resumeSession: Mock;
+			persistSession: (
+				event: string,
+				session?: Record<string, unknown>,
+			) => void;
+		} = {
+			persistSession,
+			resumeSession: vi.fn(async (session: Record<string, unknown>) => {
+				instance.did = session.did as string;
+				persistSession("update", {
+					...session,
+					accessJwt: "rotated-access",
+					refreshJwt: "rotated-refresh",
+				});
+			}),
+		};
+		credentialSessionHarness.instances.push(instance);
+		return instance;
+	}),
 }));
 
 import { PrismaService } from "../prisma/prisma.service";
@@ -213,6 +210,8 @@ describe("AuthService", () => {
 					scope: OAUTH_SCOPE,
 					state: JSON.stringify({
 						requestedPreferences: {
+							watchPrivacyEnabled: false,
+							privateSettingsEnabled: false,
 							blogEnabled: false,
 							blueskyEnabled: false,
 						},
@@ -243,6 +242,9 @@ describe("AuthService", () => {
 					handle: true,
 					blogIntegrationEnabled: true,
 					blueskyCrossPostEnabled: true,
+					privateSettingsEnabled: true,
+					privateSettingsHasCopy: true,
+					watchPrivacyEnabled: true,
 					reviewsMirrorFormat: true,
 				},
 			});
@@ -262,6 +264,8 @@ describe("AuthService", () => {
 			);
 			expect(JSON.parse(authorizeOptions.state)).toEqual({
 				requestedPreferences: {
+					watchPrivacyEnabled: false,
+					privateSettingsEnabled: false,
 					blogEnabled: true,
 					blueskyEnabled: true,
 					reviewsMirrorFormat: "offprint",
@@ -401,6 +405,77 @@ describe("AuthService", () => {
 	});
 
 	describe("completePermissionChange", () => {
+		it.each([
+			{ locked: false, visibility: "public", migration: null },
+			{ locked: true, visibility: "private", migration: null },
+			{ locked: true, visibility: "public", migration: { jobId: "moving" } },
+			{
+				locked: true,
+				visibility: "public",
+				migration: null,
+				listsDefaultVisibility: "private",
+			},
+			{
+				locked: true,
+				visibility: "public",
+				migration: null,
+				privacyScopes: [{ id: "private-notes" }],
+			},
+		])(
+			"rejects disconnect when the account changed during authorization: %j",
+			async ({ locked, visibility, migration, ...content }) => {
+				const tx = {
+					$queryRaw: vi.fn().mockResolvedValue([{ locked }]),
+					user: {
+						findUnique: vi.fn().mockResolvedValue({
+							watchPrivacyEnabled: true,
+							watchVisibility: visibility,
+							watchPrivacyMigration: migration,
+							...content,
+						}),
+						update: vi.fn(),
+					},
+					authSession: { deleteMany: vi.fn() },
+				};
+				mockPrismaService.$transaction.mockImplementation(
+					async (fn: (tx: unknown) => Promise<void>) => fn(tx),
+				);
+				await expect(
+					service.completePermissionChange("did:plc:abc123", "retained", {
+						watchPrivacyEnabled: false,
+					}),
+				).rejects.toThrow();
+				expect(tx.user.update).not.toHaveBeenCalled();
+				expect(tx.authSession.deleteMany).not.toHaveBeenCalled();
+			},
+		);
+		it("disconnects Watch access after Watches are Public", async () => {
+			const tx = {
+				$queryRaw: vi.fn().mockResolvedValue([{ locked: true }]),
+				user: {
+					findUnique: vi.fn().mockResolvedValue({
+						watchPrivacyEnabled: true,
+						watchVisibility: "public",
+						watchPrivacyMigration: null,
+					}),
+					update: vi.fn(),
+				},
+				authSession: { deleteMany: vi.fn() },
+			};
+			mockPrismaService.$transaction.mockImplementation(
+				async (fn: (tx: unknown) => Promise<void>) => fn(tx),
+			);
+			await service.completePermissionChange("did:plc:abc123", "retained", {
+				watchPrivacyEnabled: false,
+			});
+			expect(tx.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ watchPrivacyEnabled: false }),
+				}),
+			);
+			expect(tx.authSession.deleteMany).toHaveBeenCalled();
+		});
+
 		it("saves the account-wide preferences and drops every other session", async () => {
 			const tx = {
 				user: { update: vi.fn() },
@@ -423,7 +498,12 @@ describe("AuthService", () => {
 
 			expect(tx.user.update).toHaveBeenCalledWith({
 				where: { did: "did:plc:abc123" },
-				data: { blogIntegrationEnabled: true, blueskyCrossPostEnabled: false },
+				data: {
+					blogIntegrationEnabled: true,
+					blueskyCrossPostEnabled: false,
+					privateSettingsEnabled: false,
+					watchPrivacyEnabled: false,
+				},
 			});
 			expect(tx.authSession.deleteMany).toHaveBeenCalledWith({
 				where: { userDid: "did:plc:abc123", id: { not: "retained" } },
@@ -459,14 +539,16 @@ describe("AuthService", () => {
 				data: { uri: "at://did:plc:abc123/app.bsky.actor.profile/self" },
 			});
 
-			Agent.mockImplementation(() => ({
-				com: {
-					atproto: {
-						repo: { describeRepo: vi.fn(), getRecord: mockGetRecord },
+			Agent.mockImplementation(function () {
+				return {
+					com: {
+						atproto: {
+							repo: { describeRepo: vi.fn(), getRecord: mockGetRecord },
+						},
 					},
-				},
-				getProfile: vi.fn(),
-			}));
+					getProfile: vi.fn(),
+				};
+			});
 
 			await expect(
 				service.hasBlueskyProfile({ did: "did:plc:abc123" }),
@@ -486,14 +568,16 @@ describe("AuthService", () => {
 				.fn()
 				.mockRejectedValue(new Error("RecordNotFound"));
 
-			Agent.mockImplementation(() => ({
-				com: {
-					atproto: {
-						repo: { describeRepo: vi.fn(), getRecord: mockGetRecord },
+			Agent.mockImplementation(function () {
+				return {
+					com: {
+						atproto: {
+							repo: { describeRepo: vi.fn(), getRecord: mockGetRecord },
+						},
 					},
-				},
-				getProfile: vi.fn(),
-			}));
+					getProfile: vi.fn(),
+				};
+			});
 
 			await expect(
 				service.hasBlueskyProfile({ did: "did:plc:abc123" }),
@@ -519,17 +603,19 @@ describe("AuthService", () => {
 			const mockWithProxy = vi
 				.fn()
 				.mockReturnValue({ getProfile: mockGetProfile });
-			Agent.mockImplementation(() => ({
-				com: {
-					atproto: {
-						repo: {
-							describeRepo: mockDescribeRepo,
+			Agent.mockImplementation(function () {
+				return {
+					com: {
+						atproto: {
+							repo: {
+								describeRepo: mockDescribeRepo,
+							},
 						},
 					},
-				},
-				getProfile: mockGetProfile,
-				withProxy: mockWithProxy,
-			}));
+					getProfile: mockGetProfile,
+					withProxy: mockWithProxy,
+				};
+			});
 			const mockFetch = vi.fn().mockResolvedValue({
 				ok: true,
 				json: async () => ({
@@ -571,17 +657,19 @@ describe("AuthService", () => {
 				},
 			});
 			const mockGetProfile = vi.fn();
-			Agent.mockImplementation(() => ({
-				com: {
-					atproto: {
-						repo: {
-							describeRepo: mockDescribeRepo,
+			Agent.mockImplementation(function () {
+				return {
+					com: {
+						atproto: {
+							repo: {
+								describeRepo: mockDescribeRepo,
+							},
 						},
 					},
-				},
-				getProfile: mockGetProfile,
-				withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
-			}));
+					getProfile: mockGetProfile,
+					withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
+				};
+			});
 			vi.stubGlobal(
 				"fetch",
 				vi.fn().mockResolvedValue({
@@ -612,17 +700,19 @@ describe("AuthService", () => {
 				},
 			});
 			const mockGetProfile = vi.fn();
-			Agent.mockImplementation(() => ({
-				com: {
-					atproto: {
-						repo: {
-							describeRepo: mockDescribeRepo,
+			Agent.mockImplementation(function () {
+				return {
+					com: {
+						atproto: {
+							repo: {
+								describeRepo: mockDescribeRepo,
+							},
 						},
 					},
-				},
-				getProfile: mockGetProfile,
-				withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
-			}));
+					getProfile: mockGetProfile,
+					withProxy: vi.fn().mockReturnValue({ getProfile: mockGetProfile }),
+				};
+			});
 			vi.stubGlobal(
 				"fetch",
 				vi.fn().mockResolvedValue({ ok: false, status: 401 }),

@@ -22,6 +22,11 @@ export {
 	setSessionToken,
 } from "./client";
 export { nameExceptionIssue } from "./exception-issue-name";
+export {
+	activeFeaturedItems,
+	featuredTitle,
+	scheduleFeaturedExpiry,
+} from "./featured-content";
 // Export TanStack Query hooks
 export * from "./generated/@tanstack/react-query.gen";
 export type {
@@ -40,6 +45,7 @@ export {
 	parseGenreDiscovery,
 } from "./genre-discovery";
 export {
+	getErrorMessage,
 	getHttpStatus,
 	isUnauthorizedError,
 	retryTransientFailures,
@@ -63,6 +69,15 @@ export {
 export { onboardingDiscoveryOptions } from "./onboarding-discovery";
 export { preparePostHogEvent } from "./posthog-event";
 export {
+	type PrivacyAction,
+	privacyActionKey,
+	privacyErrorMessage,
+	privacyProgressTitle,
+	usePrivacy,
+	usePrivacyProgress,
+} from "./privacy";
+export * from "./release-notes";
+export {
 	getYouTubeEmbedUrl,
 	getYouTubeThumbnailUrl,
 	resolveDetailTrailer,
@@ -77,6 +92,7 @@ export {
 	isKnownTraktImportStatus,
 	isTerminalTraktImportStatus,
 } from "./trakt-import-status";
+export * from "./trakt-sync";
 export {
 	invalidateWatchActivityQueries,
 	isWatchActivityQueryKey,

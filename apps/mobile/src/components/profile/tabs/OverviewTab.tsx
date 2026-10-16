@@ -111,18 +111,26 @@ function PosterRow({
  */
 export function OverviewTab({
 	profile,
+	canReadWatches,
 	userDid,
 	onNavigate,
 }: {
 	profile: PublicUserProfileDto | undefined;
+	canReadWatches: boolean;
 	userDid: string;
 	onNavigate: (tab: ProfileTab, shelfType?: "movie" | "episode") => void;
 }) {
 	// Both rows read the shelf endpoint rather than the dedicated recent-movies /
 	// recent-episodes ones: its DTO carries the episode title and the profile
 	// owner's Watch counts, so these posters badge like the Shelf tab does.
-	const movies = useProfileShelf(userDid, { type: "movie", pageSize: 10 });
-	const episodes = useProfileShelf(userDid, { type: "episode", pageSize: 10 });
+	const movies = useProfileShelf(canReadWatches ? userDid : "", {
+		type: "movie",
+		pageSize: 10,
+	});
+	const episodes = useProfileShelf(canReadWatches ? userDid : "", {
+		type: "episode",
+		pageSize: 10,
+	});
 	const lists = useProfileLists(userDid);
 	const reviews = useProfileReviews(userDid, undefined, 4);
 
@@ -147,32 +155,40 @@ export function OverviewTab({
 
 	return (
 		<View className="gap-8 px-4 pt-4 pb-12">
-			<StatsStrip
-				activity={profile?.activityLast30Days}
-				mostWatchedShow={profile?.mostWatchedShow ?? null}
-				watchedThisYear={profile?.watchedThisYear ?? 0}
-				reviewsCount={profile?.reviewsCount ?? 0}
-				isLoading={!profile}
-			/>
+			{canReadWatches ? (
+				<>
+					<StatsStrip
+						activity={profile?.activityLast30Days}
+						mostWatchedShow={profile?.mostWatchedShow ?? null}
+						watchedThisYear={profile?.watchedThisYear ?? 0}
+						reviewsCount={profile?.reviewsCount ?? 0}
+						isLoading={!profile}
+					/>
 
-			<View>
-				<SectionHeader
-					icon={<Film color="#f3bc00" size={18} />}
-					title="Recent Movies"
-					onPressAll={() => onNavigate("shelf", "movie")}
-				/>
-				<PosterRow items={movieItems} emptyText="No movies watched yet." />
-			</View>
+					<View>
+						<SectionHeader
+							icon={<Film color="#f3bc00" size={18} />}
+							title="Recent Movies"
+							onPressAll={() => onNavigate("shelf", "movie")}
+						/>
+						<PosterRow items={movieItems} emptyText="No movies watched yet." />
+					</View>
 
-			<View>
-				<SectionHeader
-					icon={<Tv color="#f3bc00" size={18} />}
-					title="Recent Episodes"
-					onPressAll={() => onNavigate("shelf", "episode")}
-				/>
-				<PosterRow items={episodeItems} emptyText="No episodes watched yet." />
-			</View>
-
+					<View>
+						<SectionHeader
+							icon={<Tv color="#f3bc00" size={18} />}
+							title="Recent Episodes"
+							onPressAll={() => onNavigate("shelf", "episode")}
+						/>
+						<PosterRow
+							items={episodeItems}
+							emptyText="No episodes watched yet."
+						/>
+					</View>
+				</>
+			) : (
+				<Text className="text-muted-foreground">Watches are private.</Text>
+			)}
 			<ListPreview
 				title="Watchlist"
 				icon={<Clock color="#f3bc00" size={18} />}

@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { WatchReadGuard } from "../privacy/watch-access";
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import {
+	Controller,
+	Get,
+	Param,
+	Query,
+	UseGuards,
+	Header,
+} from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import {
 	ShelfActivitySummaryDto,
@@ -10,10 +19,12 @@ import { ShelfService } from "./shelf.service";
 
 @ApiTags("shelf")
 @Controller("users/:userDid/shelf")
+@UseGuards(OptionalAuthGuard, WatchReadGuard)
 export class ShelfController {
 	constructor(private readonly shelfService: ShelfService) {}
 
 	@Get()
+	@Header("Cache-Control", "private, no-store")
 	@ApiOperation({
 		summary: "Get paginated shelf items for a user (movies and episodes)",
 	})
@@ -127,6 +138,7 @@ export class ShelfController {
 	}
 
 	@Get("activity-summary")
+	@Header("Cache-Control", "private, no-store")
 	@ApiOperation({
 		summary: "Get timezone-aware activity summary for a user's dashboard",
 	})
@@ -138,6 +150,7 @@ export class ShelfController {
 	}
 
 	@Get("sync-status")
+	@Header("Cache-Control", "private, no-store")
 	@ApiOperation({
 		summary:
 			"Whether the user's historical watch records are still backfilling from their PDS",

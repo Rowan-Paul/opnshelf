@@ -230,11 +230,15 @@ function ProfileNotesPage() {
 			initialPageParam: 1,
 			getNextPageParam: (lastPage) =>
 				lastPage.hasNextPage ? lastPage.page + 1 : undefined,
-			enabled: !!userDid,
+			enabled: !!userDid && (isOwner || profile?.notesPublic !== false),
 		});
 
 	const notes = data?.pages.flatMap((page) => page.items) ?? [];
 
+	if (profile?.notesPublic === false && !isOwner)
+		return (
+			<p className="py-8 text-(--foreground-muted)">These Notes are Private.</p>
+		);
 	return (
 		<div className="space-y-6">
 			<h1 className="text-display-2">Notes</h1>

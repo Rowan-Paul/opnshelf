@@ -3,6 +3,8 @@ import {
 	getRetryReason,
 	getTraktImportStatusProgress,
 	isActiveTraktImportStatus,
+	traktSyncCatchUpMessage,
+	traktSyncControllerStatus,
 	usersControllerAcknowledgeMyTraktImportMutation,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMyCurrentTraktImportQueryKey,
@@ -42,7 +44,7 @@ function PauseCountdown({ nextRunAt }: { nextRunAt: string }) {
 /**
  * Wraps the authenticated app surface with a slim, site-wide background-sync
  * banner — the mobile mirror of the web TraktSyncBanner. While a Trakt import
- * job is active it pins a bar below the status bar (consuming the top safe-area
+ * job is active (or, with no Import to report, Trakt Sync is catching up) it pins a bar below the status bar (consuming the top safe-area
  * inset) and drops that inset for the wrapped subtree, so screen content sits
  * flush under the banner instead of leaving a double gap. When no import is
  * active it renders children untouched with the normal inset.
@@ -63,6 +65,15 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 			return status && isActiveTraktImportStatus(status) ? 5000 : false;
 		},
 	});
+	// Shares Trakt Sync's status cache, so Settings changes show up here at once.
+	const { data: sync } = useQuery({
+		queryKey: ["trakt-sync", "status"],
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		enabled: isAuthenticated,
+		refetchInterval: (query) =>
+			traktSyncCatchUpMessage(query.state.data) ? 5000 : false,
+	});
 	const acknowledge = useMutation({
 		mutationKey: ["trakt", "import", "acknowledge"],
 		...usersControllerAcknowledgeMyTraktImportMutation(),
@@ -72,14 +83,35 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 			}),
 	});
 
-	if (!job) {
-		return <>{children}</>;
-	}
-	const active = isActiveTraktImportStatus(job.status);
+	const active = job ? isActiveTraktImportStatus(job.status) : false;
 	const terminal =
+		!!job &&
 		!job.acknowledgedAt &&
 		(job.status === "completed" || job.status === "failed");
-	if (!active && !terminal) return <>{children}</>;
+	if (!job || (!active && !terminal)) {
+		const syncMessage = isAuthenticated ? traktSyncCatchUpMessage(sync) : null;
+		if (!syncMessage) return <>{children}</>;
+		return (
+			<View className="flex-1 bg-background">
+				<Link href="/trakt-sync" asChild>
+					<Pressable
+						className="border-border border-b bg-background-subtle px-4 pb-2"
+						style={{ paddingTop: insets.top }}
+					>
+						<View className="flex-row items-center gap-2">
+							<ActivityIndicator size="small" color="#f3bc00" />
+							<Text className="flex-1 text-muted-foreground text-sm leading-5">
+								{syncMessage}. You can keep using the app as usual.
+							</Text>
+						</View>
+					</Pressable>
+				</Link>
+				<SafeAreaInsetsContext.Provider value={{ ...insets, top: 0 }}>
+					{children}
+				</SafeAreaInsetsContext.Provider>
+			</View>
+		);
+	}
 
 	if (!active) {
 		const hasUnmatched = job.unmatchedGroups.length > 0;

@@ -111,6 +111,10 @@ function escapeHtml(value: string): string {
 	);
 }
 
+function formatWatchCount(count: number, mediaType: "movie" | "show"): string {
+	return `${count} ${mediaType === "show" ? "episode " : ""}${count === 1 ? "Watch" : "Watches"}`;
+}
+
 export function notificationEmail(input: {
 	title: string;
 	body: string;
@@ -159,7 +163,7 @@ export function notificationEmail(input: {
 			const title = `${item.title}${item.seasonNumber ? ` · Season ${item.seasonNumber}` : ""}`;
 			const date =
 				item.watchCount !== undefined
-					? `${item.watchCount} ${item.mediaType === "show" ? "episode " : ""}${item.watchCount === 1 ? "Watch" : "Watches"}`
+					? formatWatchCount(item.watchCount, item.mediaType)
 					: item.releaseDate
 						? `${item.mediaType === "movie" ? "Release" : "Premiere"}: ${item.releaseDate}`
 						: "Release date unavailable";
@@ -174,7 +178,7 @@ export function notificationEmail(input: {
 			...highlightText,
 			...items.map(
 				(item) =>
-					`${item.title}${item.seasonNumber ? ` · Season ${item.seasonNumber}` : ""}\n${item.watchCount !== undefined ? `${item.watchCount} ${item.mediaType === "show" ? "episode " : ""}${item.watchCount === 1 ? "Watch" : "Watches"}` : (item.releaseDate ?? "Release date unavailable")}\n${item.overview}\n${absolute(item.path)}`,
+					`${item.title}${item.seasonNumber ? ` · Season ${item.seasonNumber}` : ""}\n${item.watchCount !== undefined ? formatWatchCount(item.watchCount, item.mediaType) : (item.releaseDate ?? "Release date unavailable")}\n${item.overview}\n${absolute(item.path)}`,
 			),
 			link ? `${label}: ${link}` : "",
 			`Manage notifications: ${settings}`,

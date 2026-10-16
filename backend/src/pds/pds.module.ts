@@ -1,3 +1,4 @@
+import { PrivateSettingsService } from "./private-settings.service";
 import { Module } from "@nestjs/common";
 import { CaptchaService } from "./captcha.service";
 import { AppleOAuthService } from "./apple-oauth.service";
@@ -11,12 +12,14 @@ import { TranquilAdminService } from "./tranquil-admin.service";
  */
 @Module({
 	providers: [
+		PrivateSettingsService,
 		TranquilAdminService,
 		CaptchaService,
 		GoogleOAuthService,
 		AppleOAuthService,
 	],
 	exports: [
+		PrivateSettingsService,
 		TranquilAdminService,
 		CaptchaService,
 		GoogleOAuthService,

@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  TraktSyncConnection: 'TraktSyncConnection',
+  TraktSyncEntry: 'TraktSyncEntry',
   NotificationSettings: 'NotificationSettings',
   PushDevice: 'PushDevice',
   NotificationCollection: 'NotificationCollection',
@@ -78,7 +80,12 @@ export const ModelName = {
   Publication: 'Publication',
   Rating: 'Rating',
   ReviewLike: 'ReviewLike',
-  Feedback: 'Feedback'
+  Feedback: 'Feedback',
+  FeaturedContent: 'FeaturedContent',
+  WatchPrivacyCopy: 'WatchPrivacyCopy',
+  WatchPrivacyMigration: 'WatchPrivacyMigration',
+  PrivacyScope: 'PrivacyScope',
+  PrivacyCopy: 'PrivacyCopy'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -119,6 +126,7 @@ export const UserScalarFieldEnum = {
   atStoreReviewRkey: 'atStoreReviewRkey',
   welcomeTourWebVersion: 'welcomeTourWebVersion',
   welcomeTourMobileVersion: 'welcomeTourMobileVersion',
+  releaseNotesReadAt: 'releaseNotesReadAt',
   emailVerifiedAt: 'emailVerifiedAt',
   backfillStartedAt: 'backfillStartedAt',
   lastIngestAt: 'lastIngestAt',
@@ -129,6 +137,15 @@ export const UserScalarFieldEnum = {
   showTangledOnProfile: 'showTangledOnProfile',
   reviewsPublicationUri: 'reviewsPublicationUri',
   reviewsPublicationName: 'reviewsPublicationName',
+  watchSyncAttemptedAt: 'watchSyncAttemptedAt',
+  watchSyncedAt: 'watchSyncedAt',
+  watchSyncError: 'watchSyncError',
+  listsDefaultVisibility: 'listsDefaultVisibility',
+  watchPrivacyManaged: 'watchPrivacyManaged',
+  watchPrivacyEnabled: 'watchPrivacyEnabled',
+  watchVisibility: 'watchVisibility',
+  privateSettingsEnabled: 'privateSettingsEnabled',
+  privateSettingsHasCopy: 'privateSettingsHasCopy',
   blogIntegrationEnabled: 'blogIntegrationEnabled',
   blueskyCrossPostEnabled: 'blueskyCrossPostEnabled',
   reviewsMirrorFormat: 'reviewsMirrorFormat',
@@ -137,6 +154,66 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const TraktSyncConnectionScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  traktUserId: 'traktUserId',
+  username: 'username',
+  accessToken: 'accessToken',
+  refreshToken: 'refreshToken',
+  expiresAt: 'expiresAt',
+  status: 'status',
+  direction: 'direction',
+  watches: 'watches',
+  ratings: 'ratings',
+  lists: 'lists',
+  watchlist: 'watchlist',
+  favorites: 'favorites',
+  notes: 'notes',
+  library: 'library',
+  reviews: 'reviews',
+  contentPublicationConsent: 'contentPublicationConsent',
+  listPublicationConsent: 'listPublicationConsent',
+  historyScope: 'historyScope',
+  publicationConsent: 'publicationConsent',
+  initialised: 'initialised',
+  nextRunAt: 'nextRunAt',
+  lastSuccessAt: 'lastSuccessAt',
+  lastError: 'lastError',
+  leaseId: 'leaseId',
+  leaseUntil: 'leaseUntil',
+  remoteSnapshot: 'remoteSnapshot',
+  remoteReadAt: 'remoteReadAt',
+  remaining: 'remaining',
+  remainingTotal: 'remainingTotal',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraktSyncConnectionScalarFieldEnum = (typeof TraktSyncConnectionScalarFieldEnum)[keyof typeof TraktSyncConnectionScalarFieldEnum]
+
+
+export const TraktSyncEntryScalarFieldEnum = {
+  id: 'id',
+  connectionId: 'connectionId',
+  kind: 'kind',
+  localKey: 'localKey',
+  remoteKey: 'remoteKey',
+  localBase: 'localBase',
+  remoteBase: 'remoteBase',
+  linked: 'linked',
+  eligible: 'eligible',
+  ignored: 'ignored',
+  issue: 'issue',
+  resolution: 'resolution',
+  pending: 'pending',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraktSyncEntryScalarFieldEnum = (typeof TraktSyncEntryScalarFieldEnum)[keyof typeof TraktSyncEntryScalarFieldEnum]
 
 
 export const NotificationSettingsScalarFieldEnum = {
@@ -585,6 +662,84 @@ export const FeedbackScalarFieldEnum = {
 } as const
 
 export type FeedbackScalarFieldEnum = (typeof FeedbackScalarFieldEnum)[keyof typeof FeedbackScalarFieldEnum]
+
+
+export const FeaturedContentScalarFieldEnum = {
+  id: 'id',
+  mediaType: 'mediaType',
+  mediaId: 'mediaId',
+  seasonNumber: 'seasonNumber',
+  title: 'title',
+  posterPath: 'posterPath',
+  message: 'message',
+  sourceUrl: 'sourceUrl',
+  sourceLabel: 'sourceLabel',
+  published: 'published',
+  expiresAt: 'expiresAt',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FeaturedContentScalarFieldEnum = (typeof FeaturedContentScalarFieldEnum)[keyof typeof FeaturedContentScalarFieldEnum]
+
+
+export const WatchPrivacyCopyScalarFieldEnum = {
+  jobId: 'jobId',
+  collection: 'collection',
+  rkey: 'rkey',
+  cid: 'cid',
+  value: 'value',
+  createdAt: 'createdAt'
+} as const
+
+export type WatchPrivacyCopyScalarFieldEnum = (typeof WatchPrivacyCopyScalarFieldEnum)[keyof typeof WatchPrivacyCopyScalarFieldEnum]
+
+
+export const WatchPrivacyMigrationScalarFieldEnum = {
+  jobId: 'jobId',
+  userDid: 'userDid',
+  sourceVisibility: 'sourceVisibility',
+  targetVisibility: 'targetVisibility',
+  createdAt: 'createdAt'
+} as const
+
+export type WatchPrivacyMigrationScalarFieldEnum = (typeof WatchPrivacyMigrationScalarFieldEnum)[keyof typeof WatchPrivacyMigrationScalarFieldEnum]
+
+
+export const PrivacyScopeScalarFieldEnum = {
+  id: 'id',
+  userDid: 'userDid',
+  key: 'key',
+  category: 'category',
+  listRkey: 'listRkey',
+  visibility: 'visibility',
+  managed: 'managed',
+  migrationId: 'migrationId',
+  targetVisibility: 'targetVisibility',
+  totalRecords: 'totalRecords',
+  status: 'status',
+  error: 'error',
+  syncAttemptedAt: 'syncAttemptedAt',
+  syncedAt: 'syncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PrivacyScopeScalarFieldEnum = (typeof PrivacyScopeScalarFieldEnum)[keyof typeof PrivacyScopeScalarFieldEnum]
+
+
+export const PrivacyCopyScalarFieldEnum = {
+  scopeId: 'scopeId',
+  migrationId: 'migrationId',
+  collection: 'collection',
+  rkey: 'rkey',
+  cid: 'cid',
+  value: 'value',
+  createdAt: 'createdAt'
+} as const
+
+export type PrivacyCopyScalarFieldEnum = (typeof PrivacyCopyScalarFieldEnum)[keyof typeof PrivacyCopyScalarFieldEnum]
 
 
 export const SortOrder = {

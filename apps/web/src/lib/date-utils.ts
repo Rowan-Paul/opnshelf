@@ -89,6 +89,11 @@ function normalizeDatetimeLocal(value: string): string {
  * formatted for a `datetime-local` input.
  */
 export function nowAsDatetimeLocal(timezone?: string): string {
+	return dateAsDatetimeLocal(new Date(), timezone);
+}
+
+/** Format an existing instant in the same timezone as the Watch editor. */
+export function dateAsDatetimeLocal(date: Date, timezone?: string): string {
 	const parts = new Intl.DateTimeFormat("en-US", {
 		year: "numeric",
 		month: "2-digit",
@@ -99,7 +104,7 @@ export function nowAsDatetimeLocal(timezone?: string): string {
 		// latter, which is not a value a datetime-local input accepts.
 		hourCycle: "h23",
 		timeZone: timezone,
-	}).formatToParts(new Date());
+	}).formatToParts(date);
 	const part = (type: string) =>
 		parts.find((p) => p.type === type)?.value ?? "00";
 	return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
@@ -112,15 +117,15 @@ export function nowAsDatetimeLocal(timezone?: string): string {
  * server parse it as UTC, shifting the stored time by the zone offset.
  */
 export function datetimeLocalToISO(value: string, timezone?: string): string {
+	const withSeconds = normalizeDatetimeLocal(value);
 	// An empty or unparseable field is a caller bug, not a way to express an
 	// undated Watch — that is `watchedAt: null`, chosen via "No date". Throwing
 	// a typed error keeps a cleared input from taking down a click handler with
 	// a bare RangeError from deep inside the conversion.
-	if (!value || Number.isNaN(Date.parse(normalizeDatetimeLocal(value)))) {
+	if (!value || Number.isNaN(Date.parse(withSeconds))) {
 		throw new InvalidDatetimeLocalError(value);
 	}
 	if (!timezone) return new Date(value).toISOString();
-	const withSeconds = value.length === 16 ? `${value}:00` : value;
 	const wallAsUTC = Date.parse(`${withSeconds}Z`);
 	// Guess the instant by treating the wall clock as UTC, then correct by the
 	// zone offset at that instant; recompute once in case the guess lands on

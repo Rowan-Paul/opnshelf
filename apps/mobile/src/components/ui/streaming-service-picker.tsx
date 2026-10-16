@@ -49,6 +49,12 @@ export function toggleService(selected: number[], id: number): number[] {
 		: [...selected, id];
 }
 
+/** Whether two selections hold the same services, in any order. */
+export function sameServices(a: number[], b: number[]): boolean {
+	const set = new Set(a);
+	return set.size === new Set(b).size && b.every((id) => set.has(id));
+}
+
 function ServiceTile({
 	service,
 	selected,

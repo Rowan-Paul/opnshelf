@@ -64,7 +64,18 @@ export class PermissionsController {
 				);
 			}
 		}
+		if (enable && integration === "spaces")
+			throw new BadRequestException(
+				"Private Settings has been retired. Use Privacy settings for your content.",
+			);
+		if (integration === "watches" && !enable)
+			await this.authService.assertCanDisconnectWatches(did);
 		const preferences: OAuthScopePreferences = {
+			watchPrivacyEnabled:
+				integration === "watches" ? enable : user.watchPrivacyEnabled,
+			privateSettingsEnabled: Boolean(
+				user.privateSettingsHasCopy || user.privateSettingsEnabled,
+			),
 			...(integration === "atstore" ? { atStoreReviewEnabled: enable } : {}),
 			blogEnabled:
 				integration === "blog" ? enable : user.blogIntegrationEnabled,

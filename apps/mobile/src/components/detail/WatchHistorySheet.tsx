@@ -1,4 +1,4 @@
-import { Plus, X } from "lucide-react-native";
+import { Pencil, Plus, X } from "lucide-react-native";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { WatchCountBadge } from "@/components/media/WatchCountBadge";
 import { Text } from "@/components/ui/text";
@@ -24,6 +24,9 @@ export function WatchHistorySheet({
 	onDelete,
 	isDeleting,
 	onAddWatch,
+	onEdit,
+	timeZone,
+	hour12,
 }: {
 	visible: boolean;
 	onDismiss: () => void;
@@ -32,6 +35,9 @@ export function WatchHistorySheet({
 	onDelete: (id: string) => void;
 	isDeleting?: boolean;
 	onAddWatch: () => void;
+	onEdit?: (entry: WatchHistoryEntry) => void;
+	timeZone?: string;
+	hour12?: boolean;
 }) {
 	return (
 		<Modal
@@ -88,8 +94,22 @@ export function WatchHistorySheet({
 										className="flex-row items-center gap-2 rounded-lg p-2"
 									>
 										<Text className="flex-1 font-medium text-foreground text-sm">
-											{formatWatchDateTime(entry.watchedDate) ?? "No date"}
+											{formatWatchDateTime(entry.watchedDate, {
+												timeZone,
+												hour12,
+											}) ?? "No date"}
 										</Text>
+										{onEdit && (
+											<Pressable
+												accessibilityRole="button"
+												accessibilityLabel="Edit watch date"
+												hitSlop={8}
+												onPress={() => onEdit(entry)}
+												className="size-8 items-center justify-center rounded-md"
+											>
+												<Pencil color="#94a3b8" size={18} />
+											</Pressable>
+										)}
 										<Pressable
 											hitSlop={8}
 											onPress={() => onDelete(entry.id)}

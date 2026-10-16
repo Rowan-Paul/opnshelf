@@ -6,14 +6,16 @@ import { Test, type TestingModule } from "@nestjs/testing";
 
 // Mock PrismaService before importing OAuthClientFactory
 vi.mock("../prisma/prisma.service", () => ({
-	PrismaService: vi.fn().mockImplementation(() => ({
-		authState: {
-			findUnique: vi.fn(),
-			upsert: vi.fn(),
-			delete: vi.fn(),
-			deleteMany: vi.fn(),
-		},
-	})),
+	PrismaService: vi.fn().mockImplementation(function () {
+		return {
+			authState: {
+				findUnique: vi.fn(),
+				upsert: vi.fn(),
+				delete: vi.fn(),
+				deleteMany: vi.fn(),
+			},
+		};
+	}),
 }));
 
 // Every `new NodeOAuthClient()` returns the same shared mock so the tests can
@@ -24,7 +26,9 @@ const sharedOAuthClient = vi.hoisted(() => ({
 	restore: vi.fn(),
 }));
 vi.mock("@atproto/oauth-client-node", () => ({
-	NodeOAuthClient: vi.fn().mockImplementation(() => sharedOAuthClient),
+	NodeOAuthClient: vi.fn().mockImplementation(function () {
+		return sharedOAuthClient;
+	}),
 	// Vitest throws on undefined named exports (Jest returned undefined);
 	// oauth-client.factory imports this at module load.
 	requestLocalLock: vi.fn(),
@@ -104,6 +108,30 @@ describe("OAuthClientFactory", () => {
 				allowHttp: true,
 			});
 		});
+	});
+
+	it("uses a configured local PLC directory for login and device clients", () => {
+		mockBackendEnv.get.mockImplementation((key: string) =>
+			key === "PLC_DIRECTORY_URL" ? "http://127.0.0.1:2582" : baseConfig[key],
+		);
+		service.onModuleInit();
+		service.buildClient({ set: vi.fn(), get: vi.fn(), del: vi.fn() });
+		expect(NodeOAuthClient).toHaveBeenLastCalledWith(
+			expect.objectContaining({ plcDirectoryUrl: "http://127.0.0.1:2582" }),
+		);
+	});
+
+	it("uses a configured XRPC handle resolver without changing default resolution", () => {
+		mockBackendEnv.get.mockImplementation((key: string) =>
+			key === "HANDLE_RESOLVER_URL"
+				? "https://pds.example.test"
+				: baseConfig[key],
+		);
+		service.onModuleInit();
+		service.buildClient({ set: vi.fn(), get: vi.fn(), del: vi.fn() });
+		expect(NodeOAuthClient).toHaveBeenLastCalledWith(
+			expect.objectContaining({ handleResolver: "https://pds.example.test" }),
+		);
 	});
 
 	describe("getClientMetadata", () => {

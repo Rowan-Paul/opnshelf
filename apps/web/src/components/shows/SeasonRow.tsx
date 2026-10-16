@@ -1,5 +1,5 @@
-import { Check, ChevronDown, Eye, Loader2 } from "lucide-react";
-import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import { Check, ChevronRight, Eye } from "lucide-react";
 
 interface Season {
 	id: number;
@@ -8,41 +8,43 @@ interface Season {
 	episode_count?: number;
 }
 
-interface SeasonAccordionProps {
+interface SeasonRowProps {
 	season: Season;
-	isExpanded: boolean;
-	onToggle: () => void;
+	showId: string;
+	showName: string;
 	isFullyWatched: boolean;
 	progress?: { episodesWatched: number; episodesTotal: number };
 	onMarkSeasonWatched: () => void;
 	onUnmarkSeasonWatched: () => void;
 	isProcessingSeason: boolean;
 	isAuthenticated: boolean;
-	children: ReactNode;
 }
 
-export default function SeasonAccordion({
+export default function SeasonRow({
 	season,
-	isExpanded,
-	onToggle,
+	showId,
+	showName,
 	isFullyWatched,
 	progress,
 	onMarkSeasonWatched,
 	onUnmarkSeasonWatched,
 	isProcessingSeason,
 	isAuthenticated,
-	children,
-}: SeasonAccordionProps) {
+}: SeasonRowProps) {
 	const episodeCount = season.episode_count || 0;
 
 	return (
 		<div className="card overflow-hidden">
 			<div className="flex items-center">
-				{/* Toggle header */}
-				<button
-					type="button"
+				{/* Season details */}
+				<Link
+					to="/shows/$showId/$showName/seasons/$seasonNumber"
+					params={{
+						showId,
+						showName,
+						seasonNumber: String(season.season_number),
+					}}
 					className="flex flex-1 items-center text-left"
-					onClick={onToggle}
 				>
 					<div className="flex flex-1 items-center justify-between p-4">
 						<div>
@@ -56,7 +58,8 @@ export default function SeasonAccordion({
 							</p>
 						</div>
 					</div>
-				</button>
+					<ChevronRight className="mr-4 size-5 shrink-0" />
+				</Link>
 
 				{/* Season Actions */}
 				{isAuthenticated && episodeCount > 0 && (
@@ -74,7 +77,7 @@ export default function SeasonAccordion({
 							>
 								{isProcessingSeason ? (
 									<>
-										<Loader2 className="size-3.5 animate-spin" />
+										<span className="h-3.5 w-3.5 animate-pulse rounded bg-current opacity-30" />
 										Loading
 									</>
 								) : (
@@ -97,7 +100,7 @@ export default function SeasonAccordion({
 							>
 								{isProcessingSeason ? (
 									<>
-										<Loader2 className="size-3.5 animate-spin" />
+										<span className="h-3.5 w-3.5 animate-pulse rounded bg-current opacity-30" />
 										Loading
 									</>
 								) : (
@@ -112,30 +115,6 @@ export default function SeasonAccordion({
 						)}
 					</span>
 				)}
-
-				{/* Expand/Chevron */}
-				<button
-					type="button"
-					onClick={onToggle}
-					className="flex items-center justify-center self-stretch px-4 text-(--foreground-muted) transition-colors hover:text-(--foreground)"
-				>
-					<ChevronDown
-						className={`h-5 w-5 transition-transform ${
-							isExpanded ? "rotate-180" : ""
-						}`}
-					/>
-				</button>
-			</div>
-
-			{/* Episode List */}
-			<div
-				className="grid border-(--border) border-t transition-all duration-300 ease-in-out"
-				style={{
-					gridTemplateRows: isExpanded ? "1fr" : "0fr",
-					opacity: isExpanded ? 1 : 0,
-				}}
-			>
-				<div className="overflow-hidden">{children}</div>
 			</div>
 		</div>
 	);

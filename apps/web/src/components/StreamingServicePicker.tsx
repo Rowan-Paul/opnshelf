@@ -53,6 +53,12 @@ export function toggleService(selected: number[], id: number): number[] {
 		: [...selected, id];
 }
 
+/** Whether two selections hold the same services, in any order. */
+export function sameServices(a: number[], b: number[]): boolean {
+	const set = new Set(a);
+	return set.size === new Set(b).size && b.every((id) => set.has(id));
+}
+
 /**
  * Multi-select grid of Streaming Services for a watch country. Controlled:
  * the caller owns the chosen ids, folds each toggle into its latest state

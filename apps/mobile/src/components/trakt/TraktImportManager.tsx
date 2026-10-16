@@ -200,12 +200,18 @@ function Result({ job }: { job: TraktImportJobDto }) {
 				)}
 				<View className="gap-1">
 					<Text className="font-display font-semibold text-2xl text-foreground">
-						{hasIssues ? "Completed with issues" : "Import complete"}
+						{job.status === "continued_in_sync"
+							? "Continued in Trakt Sync"
+							: hasIssues
+								? "Completed with issues"
+								: "Import complete"}
 					</Text>
 					<Text className="text-muted-foreground text-sm leading-5">
-						{hasIssues
-							? "Your full Trakt snapshot was examined. Some titles still need attention."
-							: "Your full Trakt snapshot is now on your Shelf."}
+						{job.status === "continued_in_sync"
+							? "Your Import progress and results remain available. The original Import cannot resume, even if sync is disconnected."
+							: hasIssues
+								? "Your full Trakt snapshot was examined. Some titles still need attention."
+								: "Your full Trakt snapshot is now on your Shelf."}
 					</Text>
 				</View>
 				<View className="flex-row flex-wrap gap-2">

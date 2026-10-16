@@ -4,6 +4,22 @@ A social media tracking and review platform where users log, rate, and review mo
 
 ## Language
 
+**Data Visibility**:
+A User's choice of Public or Private for their content: by category for the Shelf,
+Library Items and Notes, and per List with a default for Lists. Settings remain ordinary account preferences; they are not synchronized to Spaces.
+_Avoid_: Sync (visibility controls who can read, not whether data is synchronized)
+
+**Private Settings** (retired):
+The former experiment that synchronized the 12/24-hour preference to a Space.
+Retired by ADR 0048; ordinary timezone and time-format preferences remain.
+
+**Space**:
+An AT Protocol access-control and synchronization boundary. Each author has a separate repository inside it. Privacy Alpha uses owner-only Spaces: one for each category and a separate Space for each private List. A Space is a protocol boundary, not an Opnshelf Circle or List.
+
+**Release Notes**:
+Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
+_Avoid_: Notification (reserved for media and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
+
 **Rating**:
 A user's numeric 1–10 score for a specific media item, with no text. Its own first-class entity. Each user has at most one Rating per media item. A Rating can exist with no Review and a Review with no Rating — the two are independent.
 _Avoid_: Review (a Review is the long-form text, not the score)
@@ -83,14 +99,14 @@ Yesterday, or with a full calendar date in the viewer's timezone; every Watch
 card repeats its full date and time without a timezone abbreviation.
 
 **Watch**:
-A single logged instance of a user watching a media item — a tracked record with watched status and an optional watch date. Only a **movie** or an **episode** is Watched: a show or season is tracked through its episodes, so it has an **episode Watch count** but never a Watch count of its own, and no surface states one for it. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. An undated Watch belongs on the Shelf but not in date-based Activity or statistics; **No date** is the canonical user-facing wording for one, on every surface and in every picker. Counts of dated "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
+A single logged instance of a user watching a media item — a tracked record with watched status and an optional watch date and time. Correcting or clearing that date preserves the same Watch. Only a **movie** or an **episode** is Watched: a show or season is tracked through its episodes, so it has an **episode Watch count** but never a Watch count of its own, and no surface states one for it. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. An undated Watch belongs on the Shelf but not in date-based Activity or statistics; **No date** is the canonical user-facing wording for one, on every surface and in every picker. Counts of dated "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
 _Avoid_: View, log entry (a watchlist add is a separate, un-watched state), play, watch entry (both were user-facing wording for a Watch; "Remove all watches?" is the copy), Undated (as user-facing copy), Unknown date, Sometime
 
 **Most-Watched Show**:
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
 
 **Onboarding**:
-The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → **My Services** → optional mobile and email notification preferences → optional Trakt history import → follow suggestions → add watched Media Items → done. The watched-Media-Items step presents the same mixed deck on both clients: 14 all-time recognizable movies and shows, ranked by TMDB vote count, plus 6 titles trending that week. Skipping a card makes no change. Marking a movie watched adds one undated Watch. Marking a show watched adds an undated Watch for each aired episode. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
+The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → **My Services** → optional mobile and email notification preferences → optional **Trakt Import** or **Trakt Sync** → follow suggestions → add watched Media Items → done. The watched-Media-Items step presents the same mixed deck on both clients: 14 all-time recognizable movies and shows, ranked by TMDB vote count, plus 6 titles trending that week. Skipping a card makes no change. Marking a movie watched adds one undated Watch. Marking a show watched adds an undated Watch for each aired episode. The step is skipped when Watch history is already coming from Trakt: a Trakt Import that has not stopped, or Trakt Sync bringing Watches into Opnshelf. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
 _Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup), Welcome Tour (that comes after, over the live UI)
 
 **Welcome Tour**:
@@ -101,9 +117,17 @@ _Avoid_: Onboarding (that's the account-setup wizard that precedes it), tutorial
 One stop on the **Welcome Tour**: navigate to a surface, then explain one thing there. A Step anchors to a structurally stable element — a page header, a tab entry, a section header — never to content, so it behaves the same on an empty account as on a full one. A Step with nothing to anchor to (shake, which is a gesture rather than a control) shows its card unanchored, as does a Step whose target has not appeared before its timeout.
 _Avoid_: Spotlight (the dimmed cutout is one part of a Step, and bare "Spotlight" collides with **Discover** and with the macOS feature), coach mark, tooltip (that's the Radix hover component), slide, page
 
+**Trakt Sync**:
+An optional ongoing transfer of a User's chosen Watch history, Ratings, custom Lists, watchlist, Favorites, Notes, Library Items and Reviews from Trakt to Opnshelf, from Opnshelf to Trakt, or in both directions, as selected by the User. Distinct from **Trakt Import**, which transfers a fixed snapshot once.
+_Avoid_: Trakt Import (for an ongoing connection), backup (does not describe synchronization)
+
+**Continued in Trakt Sync**:
+The permanent status of an unfinished **Trakt Import** whose remaining work has been handed to **Trakt Sync**. Its progress and results remain available, but the original Import cannot resume even if sync is later disconnected.
+_Avoid_: Completed (the Import did not finish examining its snapshot), Paused (the original Import cannot resume)
+
 **Trakt Import**:
 The single optional transfer of a fixed snapshot of a User's public Trakt watch history into opnshelf **Watches**. The snapshot is taken when the User starts the Import; Watches added to Trakt afterward are outside it. A User may start only one Trakt Import; automatic retries, recovery from an error, and resuming after the User **Pauses** it all continue that same Import from its saved position rather than starting over. Every source item has one of four outcomes: **Imported**, **Already on your Shelf**, **Unmatched**, or **Couldn't import**. An Unmatched item is a valid Trakt Watch without an authoritative TMDB mapping; the User may explicitly match its Trakt media identity to a suggested or searched TMDB **Media Item**, applying that choice to all grouped watch dates. The resulting Watches belong to the chosen Media Item, so any Trakt-only edition distinction is intentionally lost. Item-level issues are an expected outcome. **Completed with issues** means the entire available history was examined but one or more items remain Unmatched or couldn't be imported; **Import stopped** means an error ended processing before the entire history was examined. A User-paused Import is **Paused**, not stopped. The Import and its item outcomes remain available until the User deletes their account.
-_Avoid_: Trakt sync (implies an ongoing two-way relationship), skipped (ambiguous between an existing Watch and an item that could not be imported), failed import (ambiguous between item-level issues and a stopped import), stop (for a User action; a resumable User action is Pause)
+_Avoid_: Trakt Sync (a separate ongoing transfer), skipped (ambiguous between an existing Watch and an item that could not be imported), failed import (ambiguous between item-level issues and a stopped import), stop (for a User action; a resumable User action is Pause)
 
 **Activity**:
 A single item in the followed-users feed — a followed user's **Watch** (movie or episode) or **Review**, surfaced to the people who follow them. Not a separately stored entity; it is a projection over Watches and Reviews, ordered by when the action happened.
@@ -184,7 +208,7 @@ A dismissible card in the reserved slot on **Home** that asks for one optional a
 _Avoid_: CTA (names a button, and every button on the site is one), Banner (that is the site-wide strip), notification, nag
 
 **Banner**:
-The slim full-width strip directly below the header, carrying one site-wide message on every page. Today there is one: **Trakt Import** progress. Distinct from a **Prompt**, which appears only on **Home** and asks for an action.
+The slim full-width strip directly below the header, carrying one site-wide message on every page. Today it carries **Trakt Import** progress or, with no Import to report, **Trakt Sync** catch-up progress while the first comparison runs or more than one batch of records is still waiting to transfer. Distinct from a **Prompt**, which appears only on **Home** and asks for an action.
 _Avoid_: Prompt (that is the Home card), toast, notification, alert
 
 **Home-Screen Widget**:
@@ -212,8 +236,12 @@ A private, personal, named grouping of Users you follow — used to filter your 
 _Avoid_: Category (retired — overloaded), List (reserved for media curation), Friend Group, Group (too generic), Friend (opnshelf has no friend/mutual-follow concept — you group Users you **follow**)
 
 **Discover**:
-The surface for finding media the user hasn't tracked yet. Subsumes the old Search surface (web route, mobile tab): it still does keyword search, but adds discovery sections (e.g. trending, similar, surfaced from the people you follow). "Search" is now one capability of Discover, not a separate destination.
+The surface for finding Media Items and rediscovering tracked titles through Featured Content. It includes keyword search and discovery sections such as trending, similar titles, and titles surfaced from the people you follow; Search is one capability of Discover, not a separate destination.
 _Avoid_: Search (now a sub-capability of Discover, not its own surface), Explore
+
+**Featured Content**:
+An Opnshelf-owned editorial selection of movies, shows, or seasons, each highlighted by an admin with a message explaining why it matters now and an optional source link. Each selected Media Item and its editorial message is a featured entry. A show and one of its seasons are distinct Media Items and may both be featured. The selection appears in Discover for all visitors, including those who have already tracked the Media Item.
+_Avoid_: Pick (reserved for Pick for me), Announcement (suggests a separate news entry), Notification Collection (reserved for saved selections from release Notifications)
 
 **Library**:
 The umbrella term for everything a user **owns** — physical or digital copies of films. Not a stored entity (mirrors _Shelf_, which is the umbrella over Watches). Distinct from a _List_: a List is curation ("want to watch", "favorites"); the Library is ownership ("I own this, in this format"). Replaces the issue-era word "Collection."
@@ -270,6 +298,47 @@ _Avoid_: Percentage rollout (that's a feature flag), promotion (that's moving be
 
 **Staging Account**:
 The separate opnshelf account used only on **Staging**, kept apart from the production account because Staging writes real records to the shared PDS. It is the only user in Staging's Postgres, which is why Staging's Tab tracks a single repo.
+
+**Shelf privacy**:
+The account-wide choice between Public and Private for movie and episode
+**Watches**. Changing it moves existing Watches as well as changing where new
+Watches are stored. Other data categories retain their own visibility.
+_Avoid_: private account (other categories can remain Public).
+
+**Privacy Alpha**:
+The evolving Public/Private controls for **Shelf**, **Library**, **Notes** and
+**Lists**, available in Privacy settings and onboarding. Public is the initial
+choice. Private uses owner-only **Spaces** on compatible PDSs, including the
+reference Spaces alpha. Reviews and Ratings retain their existing visibility.
+_Avoid_: private account (visibility is chosen by category).
+
+**Private data access**:
+The OAuth permission requested as part of choosing Private. Permission alone
+does not change visibility, and declining it preserves the previous choice.
+_Avoid_: Watch access, Connect privacy, privacy enabled.
+
+**List default visibility**:
+The Public/Private choice applied only to newly created Lists. Existing Lists
+keep their individual choice unless the User selects **All Lists** when changing
+the default. **Manage individual Lists** opens the per-List visibility controls.
+
+**Sync Watches**:
+Refresh the User's Watches from their selected public repository or private
+Space, including edits made by other authorized apps. This does not change
+Shelf privacy and is separate from a **Trakt Import**.
+_Avoid_: Trakt sync.
+
+**Watch Privacy Migration**:
+An account-wide move of movie and episode **Watches** between Public records and
+an owner-only **Space**. Its direction is fixed for the lifetime of the migration;
+a failed move resumes that migration rather than starting one in the opposite
+direction. Interactive Watch changes pause until it finishes.
+
+**Recovery Snapshot**:
+A temporary, complete record copy retained during a Privacy Alpha visibility change
+so interrupted copy-and-delete operations can be recovered. It is removed when
+verified migration and local reconciliation finish, or the account is deleted.
+It is not a permanent backup of private content after publication.
 
 ## Flagged ambiguities
 

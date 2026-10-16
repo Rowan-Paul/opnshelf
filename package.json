@@ -13,7 +13,19 @@
     "check": "turbo run check",
     "check:write": "turbo run check -- --write --unsafe",
     "typecheck": "turbo run typecheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev:spaces": "node scripts/local-spaces.mjs start",
+    "dev:spaces:setup": "node scripts/local-spaces.mjs setup",
+    "dev:spaces:stop": "node scripts/local-spaces.mjs stop",
+    "test:scripts": "node --test scripts/*.test.cjs scripts/*.test.mjs",
+    "dev:status": "node scripts/dev-session.mjs status",
+    "dev:doctor": "node scripts/dev-session.mjs doctor",
+    "dev:device:claim": "node scripts/dev-session.mjs claim-device",
+    "dev:device:release": "node scripts/dev-session.mjs release-device",
+    "dev:device:record": "node scripts/dev-session.mjs record-build",
+    "dev:scenarios": "node scripts/ui-scenarios.mjs",
+    "test:privacy-reference": "node scripts/privacy-reference.mjs",
+    "review:status": "node scripts/review-readiness.mjs"
   },
   "workspaces": [
     "apps/*",
@@ -23,7 +35,7 @@
   "devDependencies": {
     "@posthog/cli": "^0.18.1",
     "husky": "^9.1.7",
-    "turbo": "^2.10.12"
+    "turbo": "^2.11.7"
   },
   "packageManager": "pnpm@11.1.2+sha512.415a1cc25974731e75455c1468371be74c5aa5fb7621b50d4056d222451609f11412f23fd602e6169f1e060466641f798597e1be961a10688836a67b16569499",
   "pnpm": {

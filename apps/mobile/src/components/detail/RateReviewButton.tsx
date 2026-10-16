@@ -1,5 +1,5 @@
 import type { MediaReviewItemDto } from "@opnshelf/api";
-import { MessageSquare } from "lucide-react-native";
+import { MessageSquare, Star } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
@@ -55,6 +55,12 @@ export function RateReviewButton({
 	return (
 		<View className="flex-1">
 			<Pressable
+				accessibilityRole="button"
+				accessibilityLabel={
+					rating > 0
+						? `Your rating: ${rating} out of 10. Rate and review`
+						: "Rate and review"
+				}
 				disabled={isLoading}
 				onPress={() => {
 					if (isReviewError) {
@@ -66,13 +72,21 @@ export function RateReviewButton({
 				}}
 				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
-				<MessageSquare
-					color={hasActivity ? "#f3bc00" : "#94a3b8"}
-					fill={hasActivity ? "#f3bc00" : "transparent"}
-					size={18}
-				/>
-				<Text className="text-center font-medium text-foreground text-xs">
-					{isReviewError ? "Retry reviews" : "Rate & review"}
+				{rating > 0 ? (
+					<Star color="#f3bc00" fill="#f3bc00" size={18} />
+				) : (
+					<MessageSquare
+						color={hasActivity ? "#f3bc00" : "#94a3b8"}
+						fill={hasActivity ? "#f3bc00" : "transparent"}
+						size={18}
+					/>
+				)}
+				<Text className="text-center font-medium text-foreground text-xs tabular-nums">
+					{isReviewError
+						? "Retry reviews"
+						: rating > 0
+							? `${rating}/10`
+							: "Rate & review"}
 				</Text>
 			</Pressable>
 

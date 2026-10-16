@@ -252,6 +252,7 @@ export class ShowsService {
 		seasonNumber: number,
 		episodeNumber: number,
 		watchedAt: string | undefined,
+		preserveExisting = false,
 	) {
 		return this.watches.indexTrackedEpisode(
 			uri,
@@ -262,7 +263,17 @@ export class ShowsService {
 			seasonNumber,
 			episodeNumber,
 			watchedAt,
+			preserveExisting,
 		);
+	}
+
+	async updateEpisodeWatchDate(
+		userDid: string,
+		session: ATSession,
+		id: string,
+		watchedAt: string | null,
+	) {
+		return this.watches.updateEpisodeWatchDate(userDid, session, id, watchedAt);
 	}
 
 	async unmarkEpisodeWatched(

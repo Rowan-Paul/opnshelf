@@ -17,14 +17,17 @@
  *
  * Run: pnpm --filter backend exec ts-node scripts/publish-lexicons.ts
  *      add --dry to preview without writing.
+ *      add --include-spaces only when alpha declaration publication is approved.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { AtpAgent } from "@atproto/api";
 
 const LEXICON_DIR = resolve(__dirname, "../../lexicons");
+const SPACE_LEXICON_DIR = resolve(__dirname, "../../spaces/lexicons");
 const AUTHORITY = "xyz.opnshelf"; // only publish what we control
 const COLLECTION = "com.atproto.lexicon.schema";
+const INCLUDE_SPACES = process.argv.includes("--include-spaces");
 const DRY = process.argv.includes("--dry");
 
 // Tiny .env loader — backend/.env, no dep on dotenv being a direct dependency.
@@ -61,7 +64,10 @@ async function main() {
 		);
 	}
 
-	const docs = findLexicons(LEXICON_DIR)
+	const docs = [
+		...findLexicons(LEXICON_DIR),
+		...(INCLUDE_SPACES ? findLexicons(SPACE_LEXICON_DIR) : []),
+	]
 		.map((f) => JSON.parse(readFileSync(f, "utf8")))
 		.filter((d) => typeof d.id === "string" && d.id.startsWith(AUTHORITY));
 

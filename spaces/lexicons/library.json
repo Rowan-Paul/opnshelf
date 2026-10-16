@@ -1,0 +1,14 @@
+{
+  "lexicon": 1,
+  "id": "xyz.opnshelf.library",
+  "defs": {
+    "main": {
+      "type": "space",
+      "name": "Opnshelf Library",
+      "collections": [
+        "xyz.opnshelf.library.item"
+      ],
+      "key": "literal:self"
+    }
+  }
+}

@@ -110,7 +110,19 @@ export default function RootLayout() {
 					<Stack.Screen name="signup" />
 					<Stack.Screen name="verify-email" />
 					<Stack.Screen name="onboarding" />
+					<Stack.Screen
+						name="whats-new/index"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="whats-new/[slug]"
+						options={{ headerShown: true }}
+					/>
 					<Stack.Screen name="settings" options={{ headerShown: true }} />
+					<Stack.Screen
+						name="settings/privacy"
+						options={{ headerShown: true }}
+					/>
 					<Stack.Screen
 						name="settings/preferences"
 						options={{ headerShown: true }}
@@ -141,6 +153,7 @@ export default function RootLayout() {
 						options={{ headerShown: true, title: "Pick for me" }}
 					/>
 					<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
+					<Stack.Screen name="trakt-sync" options={{ headerShown: true }} />
 					<Stack.Screen
 						name="atstore-review"
 						options={{

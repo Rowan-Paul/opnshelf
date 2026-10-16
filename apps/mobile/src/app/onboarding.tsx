@@ -1,14 +1,26 @@
 import {
 	authControllerMeQueryKey,
+	bringsTraktWatches,
+	traktError,
+	traktSyncControllerConnectMutation,
+	traktSyncControllerStatus,
 	type UserDto,
 	usersControllerCompleteOnboarding,
+	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { Redirect, router } from "expo-router";
-import { ArrowRight, CheckCircle2, ChevronLeft } from "lucide-react-native";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import {
+	ArrowLeftRight,
+	ArrowRight,
+	Check,
+	CheckCircle2,
+	ChevronLeft,
+} from "lucide-react-native";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import {
 	ActivityIndicator,
@@ -18,17 +30,24 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TraktMark } from "@/components/marks/TraktMark";
+import {
+	type NotificationStage,
+	NotificationStep,
+} from "@/components/onboarding/notification-step";
 import { SuggestionsStep } from "@/components/onboarding/SuggestionsStep";
 import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
-import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
+import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
+import { SyncSettings } from "@/components/trakt/TraktSyncManager";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
 import {
 	StreamingServicePicker,
+	sameServices,
 	toggleService,
 } from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
@@ -40,10 +59,12 @@ import { posthog } from "@/lib/posthog";
 import { useProfileSetup } from "@/lib/use-profile";
 
 const logo = require("../../assets/images/icon.png");
+const traktStatusKey = ["trakt-sync", "status"];
 
 type OnboardingStep =
 	| "welcome"
 	| "profile"
+	| "privacy"
 	| "preferences"
 	| "services"
 	| "notifications"
@@ -55,6 +76,7 @@ type OnboardingStep =
 const STEP_SEQUENCE: OnboardingStep[] = [
 	"welcome",
 	"profile",
+	"privacy",
 	"preferences",
 	"services",
 	"notifications",
@@ -133,17 +155,51 @@ function StepScaffold({
 
 export default function OnboardingScreen() {
 	const { user, isLoading, isAuthenticated } = useAuth();
-	const [step, setStep] = useState<OnboardingStep>("welcome");
+	// Trakt authorization can land here as a fresh deep link on Android.
+	const { connection } = useLocalSearchParams<{ connection?: string }>();
+	const [step, setStep] = useState<OnboardingStep>(
+		connection ? "trakt" : "welcome",
+	);
+	const queryClient = useQueryClient();
+	useEffect(() => {
+		if (!connection) return;
+		setStep("trakt");
+		queryClient.invalidateQueries({ queryKey: traktStatusKey });
+	}, [connection, queryClient]);
+	const [notificationStage, setNotificationStage] =
+		useState<NotificationStage>("topics");
+	const [notificationsBusy, setNotificationsBusy] = useState(false);
 	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
+	const { data: currentImport } = useQuery({
+		...usersControllerGetMyCurrentTraktImportOptions(),
+		enabled: isAuthenticated,
+	});
+	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
+	const { data: traktSync } = useQuery({
+		queryKey: traktStatusKey,
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		enabled: isAuthenticated,
+	});
+	// Watch history already coming from Trakt makes the watches step redundant.
+	const skipWatches =
+		importStarted || bringsTraktWatches(currentImport, traktSync);
 
 	const goBack = useCallback(() => {
+		if (notificationsBusy) return;
+		if (step === "notifications" && notificationStage !== "topics") {
+			setNotificationStage(
+				notificationStage === "confirmation" ? "delivery" : "topics",
+			);
+			return;
+		}
 		setStep((current) => {
 			const idx = STEP_SEQUENCE.indexOf(current);
 			return idx > 0 ? STEP_SEQUENCE[idx - 1] : current;
 		});
-	}, []);
+	}, [step, notificationStage, notificationsBusy]);
 
 	// Android hardware back steps the wizard backwards; at the first/last step we
 	// let the OS handle it.
@@ -189,6 +245,10 @@ export default function OnboardingScreen() {
 					<Pressable
 						hitSlop={8}
 						onPress={goBack}
+						disabled={notificationsBusy}
+						accessibilityRole="button"
+						accessibilityLabel="Back"
+						accessibilityState={{ disabled: notificationsBusy }}
 						className="flex-row items-center"
 					>
 						<ChevronLeft color="#94a3b8" size={26} />
@@ -201,7 +261,19 @@ export default function OnboardingScreen() {
 					<WelcomeStep onNext={() => setStep("profile")} />
 				)}
 				{step === "profile" && (
-					<ProfileStep onNext={() => setStep("preferences")} />
+					<ProfileStep onNext={() => setStep("privacy")} />
+				)}
+				{step === "privacy" && (
+					<ScrollView
+						contentInsetAdjustmentBehavior="automatic"
+						contentContainerClassName="pt-1 pb-4"
+						showsVerticalScrollIndicator={false}
+					>
+						<PrivacySection
+							onboarding
+							onContinue={() => setStep("preferences")}
+						/>
+					</ScrollView>
 				)}
 				{step === "preferences" && (
 					<PreferencesStep onNext={() => setStep("services")} />
@@ -210,23 +282,12 @@ export default function OnboardingScreen() {
 					<ServicesStep onNext={() => setStep("notifications")} />
 				)}
 				{step === "notifications" && (
-					<StepScaffold
-						footer={
-							<PrimaryButton
-								label="Continue"
-								onPress={() => setStep("trakt")}
-							/>
-						}
-					>
-						<Text className="font-display font-semibold text-2xl text-foreground">
-							Stay up to date
-						</Text>
-						<Text className="text-muted-foreground text-sm">
-							Choose mobile and email notifications. You can change these in
-							Settings anytime.
-						</Text>
-						<NotificationPreferences />
-					</StepScaffold>
+					<NotificationStep
+						stage={notificationStage}
+						onStageChange={setNotificationStage}
+						onBusyChange={setNotificationsBusy}
+						onNext={() => setStep("trakt")}
+					/>
 				)}
 				{step === "trakt" && (
 					<TraktStep
@@ -239,7 +300,7 @@ export default function OnboardingScreen() {
 						footer={
 							<PrimaryButton
 								label="Continue"
-								onPress={() => setStep("watches")}
+								onPress={() => setStep(skipWatches ? "done" : "watches")}
 							/>
 						}
 					>
@@ -385,9 +446,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 
 	useEffect(() => {
 		if (!settings) return;
-		// "US" is the column default, so during onboarding it means "never
-		// picked" far more often than "picked the US" — keep the device guess.
-		if (settings.watchCountry !== "US") setCountry(settings.watchCountry);
+		// "US" is the column default, so treat it as unset during onboarding.
+		setCountry(
+			settings.watchCountry === "US"
+				? guessWatchCountry(settings.timezone)
+				: settings.watchCountry,
+		);
 		setTimezone(settings.timezone);
 	}, [settings]);
 
@@ -497,6 +561,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	});
 
 	const handleContinue = () => {
+		// Nothing to save when the selection is untouched, and never save over
+		// services that failed to load: that would replace them with an empty list.
+		if (!settings || sameServices(selected, settings.streamingServiceIds)) {
+			onNext();
+			return;
+		}
 		updateSettings.mutate(
 			{ body: { streamingServiceIds: selected } },
 			{ onSuccess: onNext },
@@ -506,20 +576,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	return (
 		<StepScaffold
 			footer={
-				<>
-					<PrimaryButton
-						label="Continue"
-						onPress={handleContinue}
-						loading={updateSettings.isPending}
-						disabled={settingsLoading}
-					/>
-					<Button
-						label="Skip for now"
-						variant="secondary"
-						onPress={onNext}
-						disabled={updateSettings.isPending}
-					/>
-				</>
+				<PrimaryButton
+					label="Continue"
+					onPress={handleContinue}
+					loading={updateSettings.isPending}
+					disabled={settingsLoading}
+				/>
 			}
 		>
 			<View className="gap-1">
@@ -566,25 +628,178 @@ function TraktStep({
 	onNext: () => void;
 	onImportStarted: () => void;
 }) {
-	// The panel fills the remaining height and pins its own footer (skip /
-	// continue), so the heading stays fixed above it.
+	const queryClient = useQueryClient();
+	const [importing, setImporting] = useState(false);
+	const status = useQuery({
+		queryKey: traktStatusKey,
+		queryFn: async ({ signal }) =>
+			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+	});
+	const refresh = () =>
+		queryClient.invalidateQueries({ queryKey: traktStatusKey });
+	const connect = useMutation({
+		...traktSyncControllerConnectMutation(),
+		onSuccess: async (data) => {
+			const result = await WebBrowser.openAuthSessionAsync(
+				data.url,
+				"opnshelf://onboarding",
+			);
+			if (
+				result.type === "success" &&
+				new URL(result.url).searchParams.get("connection") === "failed"
+			)
+				throw new Error("Trakt could not connect. Try connecting again.");
+			await refresh();
+		},
+	});
+	const skip = (
+		<Pressable onPress={onNext} className="items-center py-3">
+			<Text className="font-medium text-base text-muted-foreground">
+				Skip for now
+			</Text>
+		</Pressable>
+	);
+
+	if (status.isPending) {
+		return (
+			<View
+				accessibilityLabel="Loading Trakt"
+				className="h-96 animate-pulse rounded-2xl bg-card"
+			/>
+		);
+	}
+
+	const data = status.data;
+	// Trakt Import stands alone when Trakt Sync is unavailable, or on request.
+	if (importing || !data?.configured) {
+		return (
+			<View className="flex-1">
+				<View className="gap-1 pt-1 pb-4">
+					<Text className="font-bold font-display text-3xl text-foreground">
+						Import from Trakt
+					</Text>
+					<Text className="text-muted-foreground text-sm">
+						Copy your public Trakt history once. Nothing changes on Trakt.
+					</Text>
+					{importing ? (
+						<Pressable
+							accessibilityRole="button"
+							onPress={() => setImporting(false)}
+							className="self-start pt-2"
+						>
+							<Text className="font-medium text-primary text-sm">
+								Connect Trakt instead
+							</Text>
+						</Pressable>
+					) : null}
+				</View>
+				<TraktImportPanel
+					showExistingJob={false}
+					onImportStarted={onImportStarted}
+					onSkip={onNext}
+					onDone={onNext}
+				/>
+			</View>
+		);
+	}
+
+	const connected =
+		data.status !== "disconnected" && data.status !== "reconnect";
+	if (connected) {
+		const enabled = data.status === "active" || data.status === "preparing";
+		return (
+			<StepScaffold
+				footer={
+					enabled ? <PrimaryButton label="Continue" onPress={onNext} /> : skip
+				}
+			>
+				<View className="gap-1">
+					<Text className="font-bold font-display text-3xl text-foreground">
+						{enabled ? "Trakt Sync is on" : "Choose what to sync"}
+					</Text>
+					<Text className="text-muted-foreground text-sm">
+						Connected as @{data.username}.{" "}
+						{enabled
+							? "We’re comparing your history in the background. You can keep going."
+							: "Pick what moves and in which direction, then confirm."}
+					</Text>
+				</View>
+				{enabled ? null : (
+					<SyncSettings
+						key={data.username}
+						status={data}
+						onSaved={() => {
+							void refresh();
+							onNext();
+						}}
+						onboarding
+						showHeading={false}
+					/>
+				)}
+			</StepScaffold>
+		);
+	}
+
 	return (
-		<View className="flex-1">
-			<View className="gap-1 pt-1 pb-4">
+		<StepScaffold footer={skip}>
+			<View className="gap-1">
 				<Text className="font-bold font-display text-3xl text-foreground">
-					Import from Trakt
+					Already on Trakt?
 				</Text>
 				<Text className="text-muted-foreground text-sm">
-					Bring your watch history over from Trakt.tv — or skip and do it later.
+					Connect once and Opnshelf keeps your history in step with Trakt.
 				</Text>
 			</View>
-			<TraktImportPanel
-				showExistingJob={false}
-				onImportStarted={onImportStarted}
-				onSkip={onNext}
-				onDone={onNext}
-			/>
-		</View>
+			<View className="gap-4 rounded-2xl border border-primary/30 bg-primary/10 p-4">
+				<View className="flex-row items-center justify-center gap-3">
+					<Image
+						source={logo}
+						style={{ width: 44, height: 44, borderRadius: 12 }}
+					/>
+					<ArrowLeftRight color="#f3bc00" size={20} />
+					<TraktMark size={44} />
+				</View>
+				<View className="gap-1.5">
+					{[
+						"Bring over your Watch history, Ratings, Lists, Favorites, Notes, Library and Reviews",
+						"New Watches keep flowing, in the direction you choose",
+						"Review every transfer before sync starts",
+					].map((line) => (
+						<View key={line} className="flex-row gap-2">
+							<Check color="#f3bc00" size={16} />
+							<Text className="flex-1 text-muted-foreground text-sm leading-5">
+								{line}
+							</Text>
+						</View>
+					))}
+				</View>
+				<Button
+					label={
+						data.status === "reconnect" ? "Reconnect Trakt" : "Connect Trakt"
+					}
+					loadingLabel="Opening Trakt…"
+					loading={connect.isPending}
+					onPress={() =>
+						connect.mutate({
+							body: { platform: "mobile", returnTo: "onboarding" },
+						})
+					}
+				/>
+				{connect.error ? (
+					<Text accessibilityRole="alert" className="text-destructive text-sm">
+						{traktError(connect.error)}
+					</Text>
+				) : null}
+			</View>
+			<Pressable accessibilityRole="button" onPress={() => setImporting(true)}>
+				<Text className="text-muted-foreground text-sm">
+					Rather not log in?{" "}
+					<Text className="text-foreground text-sm underline">
+						Import your public history once
+					</Text>
+				</Text>
+			</Pressable>
+		</StepScaffold>
 	);
 }
 

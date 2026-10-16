@@ -385,7 +385,7 @@ describe("SignupController", () => {
 			);
 		});
 
-		it("retains the bootstrap when Core authorization cannot be created", async () => {
+		it("retains the verification gate and bootstrap when Core authorization fails", async () => {
 			mockAuthService.getUser.mockResolvedValue({
 				did: "did:plc:abc123",
 				handle: "jane.opnshelf.social",
@@ -402,6 +402,7 @@ describe("SignupController", () => {
 			await expect(
 				controller.verifyEmail(req, { code: "abc" }),
 			).rejects.toThrow("authorization unavailable");
+			expect(mockNativeAccounts.markEmailVerified).not.toHaveBeenCalled();
 			expect(mockAuthService.revokeBySessionId).not.toHaveBeenCalled();
 		});
 	});

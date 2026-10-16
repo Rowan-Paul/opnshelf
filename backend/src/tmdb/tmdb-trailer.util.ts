@@ -14,14 +14,7 @@ export type TMDBVideo = {
 	published_at?: string;
 };
 
-export type TMDBTrailer = {
-	id: string;
-	key: string;
-	name: string;
-	site: string;
-	type: string;
-	official?: boolean;
-	published_at?: string;
+export type TMDBTrailer = TMDBVideo & {
 	sourceMediaType: TMDBTrailerSourceMediaType;
 };
 

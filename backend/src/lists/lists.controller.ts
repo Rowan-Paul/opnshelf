@@ -1,8 +1,16 @@
+import { UseFilters } from "@nestjs/common";
+import { WatchPrivacyPdsFilter } from "../privacy/privacy-pds.filter";
+import { UseInterceptors } from "@nestjs/common";
+import {
+	ContentPrivacyCategory,
+	ContentPrivacyInterceptor,
+} from "../privacy/content-privacy.interceptor";
 import {
 	Body,
 	Controller,
 	Delete,
 	Get,
+	Header,
 	NotFoundException,
 	Param,
 	Post,
@@ -42,6 +50,7 @@ import {
 
 @ApiTags("lists")
 @Controller("lists")
+@UseFilters(WatchPrivacyPdsFilter)
 export class ListsController {
 	constructor(private readonly listsService: ListsService) {}
 
@@ -61,6 +70,8 @@ export class ListsController {
 	}
 
 	@Post()
+	@ContentPrivacyCategory("lists")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Create a new list" })
@@ -78,6 +89,8 @@ export class ListsController {
 	}
 
 	@Get("user/:userDid")
+	@UseGuards(OptionalAuthGuard)
+	@Header("Cache-Control", "private, no-store")
 	@ApiOperation({ summary: "Get public list summaries for a user" })
 	@ApiParam({ name: "userDid", description: "User DID" })
 	@ApiOkResponse({
@@ -86,11 +99,15 @@ export class ListsController {
 	})
 	async getPublicUserLists(
 		@Param("userDid") userDid: string,
+		@Req() req: Request,
 	): Promise<ListSummaryDto[]> {
-		return this.listsService.getPublicUserLists(userDid);
+		return (req as AuthenticatedRequest).user?.did === userDid
+			? this.listsService.getUserLists(userDid)
+			: this.listsService.getPublicUserLists(userDid);
 	}
 
 	@Get("user/:userDid/:slug")
+	@Header("Cache-Control", "private, no-store")
 	@UseGuards(OptionalAuthGuard)
 	@ApiOperation({ summary: "Get a public list with its items for a user" })
 	@ApiParam({ name: "userDid", description: "User DID" })
@@ -167,6 +184,8 @@ export class ListsController {
 	}
 
 	@Put(":slug")
+	@ContentPrivacyCategory("lists")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Update a list" })
@@ -188,6 +207,8 @@ export class ListsController {
 	}
 
 	@Delete(":slug")
+	@ContentPrivacyCategory("lists")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Delete a list (not allowed for default lists)" })
@@ -207,6 +228,8 @@ export class ListsController {
 	}
 
 	@Post(":slug/items")
+	@ContentPrivacyCategory("lists")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Add an item to a list" })
@@ -229,6 +252,8 @@ export class ListsController {
 	}
 
 	@Put(":slug/items/order")
+	@ContentPrivacyCategory("lists")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Reorder the items in a list (owner only)" })
@@ -246,6 +271,8 @@ export class ListsController {
 	}
 
 	@Delete(":slug/items/:mediaType/:mediaId")
+	@ContentPrivacyCategory("lists")
+	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Remove an item from a list" })

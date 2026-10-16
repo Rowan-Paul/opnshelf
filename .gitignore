@@ -49,3 +49,7 @@ telemetry-id
 
 # Store screenshots stay local (uploaded to ASC/Play directly)
 apps/mobile/store/screenshots/
+
+# Local PDS build provenance
+candidate-migrations.json
+candidate-provenance.json

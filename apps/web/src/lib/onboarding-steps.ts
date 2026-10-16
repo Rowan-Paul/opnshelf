@@ -12,6 +12,7 @@ import {
 export const ONBOARDING_STEPS = [
 	"welcome",
 	"profile",
+	"privacy",
 	"preferences",
 	"services",
 	"notifications",
@@ -24,7 +25,7 @@ export const ONBOARDING_STEPS = [
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 
 export function isOnboardingStep(value: unknown): value is OnboardingStep {
-	return ONBOARDING_STEPS.includes(value as OnboardingStep);
+	return ONBOARDING_STEPS.some((step) => step === value);
 }
 
 /** The step after `step`; the final step stays put. */

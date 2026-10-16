@@ -26,7 +26,14 @@ function SettingsPage() {
 							<Icon className="size-5" />
 						</div>
 						<div className="min-w-0 flex-1">
-							<h2 className="font-semibold">{label}</h2>
+							<div className="flex items-center gap-2">
+								<h2 className="font-semibold">{label}</h2>
+								{section === "privacy" && (
+									<span className="rounded-md bg-(--accent-subtle) px-2 py-1 font-medium text-xs">
+										Alpha
+									</span>
+								)}
+							</div>
 							<p className="mt-0.5 text-(--foreground-muted) text-sm">
 								{description}
 							</p>

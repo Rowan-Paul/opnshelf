@@ -1,3 +1,6 @@
+import { OptionalAuthGuard } from "../auth/optional-auth.guard";
+import { WatchWriteInterceptor } from "../privacy/watch-operation";
+import { WatchReadGuard } from "../privacy/watch-access";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { AuthGuard } from "../auth/auth.guard";
 import { AuthService } from "../auth/auth.service";
@@ -56,7 +59,17 @@ describe("ShowsController", () => {
 				{ provide: AuthService, useValue: mockAuthService },
 				AuthGuard,
 			],
-		}).compile();
+		})
+			.overrideGuard(WatchReadGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(OptionalAuthGuard)
+			.useValue({ canActivate: () => true })
+			.overrideInterceptor(WatchWriteInterceptor)
+			.useValue({
+				intercept: (_context: unknown, next: { handle: () => unknown }) =>
+					next.handle(),
+			})
+			.compile();
 
 		controller = module.get<ShowsController>(ShowsController);
 	});
@@ -314,7 +327,7 @@ describe("ShowsController", () => {
 				"123",
 				createMockRequest(mockUser),
 			),
-		).rejects.toThrow("Unauthorized");
+		).rejects.toThrow("Watch history is only available to its owner");
 		expect(mockShowsService.getEpisodeWatchHistory).not.toHaveBeenCalled();
 	});
 });

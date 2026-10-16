@@ -1,6 +1,6 @@
 # ADR 0017: Android Home-Screen Widget is hand-written Kotlin fed by the public profile endpoint
 
-The **Home-Screen Widget** (see CONTEXT.md) renders the signed-in user's 30-day activity graph plus total on the Android home screen. Two load-bearing decisions were made.
+The **Home-Screen Widget** (see GLOSSARY.md) renders the signed-in user's 30-day activity graph plus total on the Android home screen. Two load-bearing decisions were made.
 
 First, the widget is implemented as a hand-written Kotlin `AppWidgetProvider` (bars drawn to a `Bitmap` via `Canvas`, delivered through RemoteViews), injected into the generated `android/` project by an Expo config plugin, with a tiny local Expo module bridging JS to the widget (handle/theme writes, update triggers). The alternative — `react-native-android-widget`, which renders TSX in a headless JS runtime — was rejected: every widget update would cold-start a JS runtime (battery and latency), and the library must keep pace with RN/Expo upgrades, a recurring compat risk for a component that should be maintenance-free. The honest cost is maintaining a small amount of Kotlin; the widget is deliberately simple enough (one bitmap, one count label, one placeholder state) to keep that cost bounded.
 

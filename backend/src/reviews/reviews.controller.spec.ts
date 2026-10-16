@@ -4,15 +4,19 @@ import { ReviewsController } from "./reviews.controller";
 import { ReviewsService } from "./reviews.service";
 
 vi.mock("../auth/auth.guard", () => ({
-	AuthGuard: vi.fn().mockImplementation(() => ({
-		canActivate: vi.fn(() => true),
-	})),
+	AuthGuard: vi.fn().mockImplementation(function () {
+		return {
+			canActivate: vi.fn(() => true),
+		};
+	}),
 }));
 
 vi.mock("../auth/optional-auth.guard", () => ({
-	OptionalAuthGuard: vi.fn().mockImplementation(() => ({
-		canActivate: vi.fn(() => true),
-	})),
+	OptionalAuthGuard: vi.fn().mockImplementation(function () {
+		return {
+			canActivate: vi.fn(() => true),
+		};
+	}),
 }));
 
 // The like/unlike/getReviewLikes handlers are thin passthroughs (guards are

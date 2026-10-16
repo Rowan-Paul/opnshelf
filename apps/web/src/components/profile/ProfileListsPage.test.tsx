@@ -2,12 +2,21 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ProfileListsPage } from "./ProfileListsPage";
 
-const { mutate } = vi.hoisted(() => ({ mutate: vi.fn() }));
+vi.mock("#/components/settings/PrivacySection", () => ({
+	PrivacySection: () => null,
+}));
+
+const mocks = vi.hoisted(() => ({
+	mutate: vi.fn(),
+	uri: undefined as string | undefined,
+}));
+const { mutate } = mocks;
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@tanstack/react-query")>()),
 	useQuery: () => ({
 		data: {
 			name: "Test list",
+			uri: mocks.uri,
 			updatedAt: "2026-09-01",
 			total: 4,
 			items: [
@@ -53,6 +62,7 @@ afterEach(() => {
 	cleanup();
 	vi.restoreAllMocks();
 	mutate.mockClear();
+	mocks.uri = undefined;
 });
 
 it.each([
@@ -120,4 +130,23 @@ it("keeps the episode scope on reorder cards", () => {
 	screen.getByRole("button", {
 		name: "Move Stranger Things S1E2 — Chapter Two earlier",
 	});
+});
+
+it.each([
+	["at://did:test/xyz.opnshelf.list/favorites", "Public"],
+	["at://did:test/space/private/xyz.opnshelf.list/favorites", "Private"],
+])("shows a visitor the visibility of %s", (uri, visibility) => {
+	mocks.uri = uri;
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner={false}
+		/>,
+	);
+	expect(screen.getByText(visibility)).toBeTruthy();
+	expect(
+		screen.queryByText(visibility === "Public" ? "Private" : "Public"),
+	).toBeNull();
 });

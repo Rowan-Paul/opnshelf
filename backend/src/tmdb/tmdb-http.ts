@@ -71,9 +71,9 @@ export class TmdbNotFoundError extends Error {
 
 /**
  * TMDB is unreachable or failing in a way that is not the record's fault: a
- * 5xx after the retry budget is exhausted, a request timeout, or a network
- * error. TRANSIENT: the same request may succeed later, so callers on the
- * firehose path should NOT ack (so Tab redelivers) instead of dropping.
+ * non-404 response after the retry budget is exhausted, a request timeout,
+ * or a network error. TRANSIENT: the same request may succeed later, so callers
+ * on the firehose path should NOT ack (so Tab redelivers) instead of dropping.
  */
 export class TmdbServiceError extends Error {
 	constructor(
@@ -89,11 +89,10 @@ export class TmdbServiceError extends Error {
 /**
  * Translate a non-ok {@link TmdbResponse} into a typed error a caller can throw.
  *
- * A 404 (and any other non-5xx 4xx, e.g. 422 invalid id) is a genuine
- * not-found → {@link TmdbNotFoundError} (permanent). A 5xx that survived the
- * client's retries is an upstream outage → {@link TmdbServiceError}
- * (transient). `message` is the caller's existing not-found message so logs
- * and the import-history classifier are unchanged.
+ * Only HTTP 404 means the requested resource is missing. Authentication,
+ * rate limits and other upstream failures are service errors, so HTTP callers
+ * never mistake them for missing catalogue records and ingestion can retry.
+ * `message` preserves the caller's existing diagnostic text.
  */
 export function tmdbErrorForResponse(
 	response: TmdbResponse,
@@ -101,10 +100,10 @@ export function tmdbErrorForResponse(
 ): TmdbNotFoundError | TmdbServiceError {
 	const status =
 		typeof response.status === "number" ? response.status : undefined;
-	if (status !== undefined && status >= 500) {
-		return new TmdbServiceError(message, status);
+	if (status === 404) {
+		return new TmdbNotFoundError(message, status);
 	}
-	return new TmdbNotFoundError(message, status);
+	return new TmdbServiceError(message, status);
 }
 
 /**

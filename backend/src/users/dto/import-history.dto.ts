@@ -325,6 +325,7 @@ export class TraktImportJobDto {
 			"waiting_retry",
 			"paused",
 			"completed",
+			"continued_in_sync",
 			"failed",
 		],
 	})
@@ -334,6 +335,7 @@ export class TraktImportJobDto {
 		| "waiting_retry"
 		| "paused"
 		| "completed"
+		| "continued_in_sync"
 		| "failed";
 
 	@ApiProperty()

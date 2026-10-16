@@ -227,10 +227,8 @@ export function getWeekReleases(
 		}
 	}
 
-	// Sort by date
-	return weekReleases.sort(
-		(a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-	);
+	// Days are visited chronologically; retain arrival order within each day.
+	return weekReleases;
 }
 
 /** The seven days of the selected week with their releases (Mobile list view). */

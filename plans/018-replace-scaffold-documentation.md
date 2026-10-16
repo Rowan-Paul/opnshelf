@@ -25,7 +25,7 @@ The root README names a mobile UI library that is not installed, while the web a
 - `apps/web/README.md:32-39` describes deleting nonexistent `src/routes/demo/` pages as a Tailwind removal procedure.
 - `backend/README.md:24-27` calls this a Nest starter; lines 47-58 advertise `test:e2e`, but `backend/package.json:8-24` has no such script.
 - Root commands are authoritative in `package.json:5-16`: `dev:*`, `generate:api`, Prisma commands, `check`, and `typecheck`. Workspace commands are authoritative in each package manifest.
-- Preserve domain vocabulary from `CONTEXT.md`, including **Shelf**, **Watch**, **Activity Feed**, and **Discover**; do not reintroduce retired product names.
+- Preserve domain vocabulary from `GLOSSARY.md`, including **Shelf**, **Watch**, **Activity Feed**, and **Discover**; do not reintroduce retired product names.
 - The documented Tab administrator value was separately reviewed and accepted as an internal-service development default. This plan must not recast it as a vulnerability, remove it, or alter deployment/security policy.
 
 ## Commands you will need

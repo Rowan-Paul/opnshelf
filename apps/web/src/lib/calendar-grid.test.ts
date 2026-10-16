@@ -385,6 +385,26 @@ describe("getWeekReleases", () => {
 		]);
 	});
 
+	it("keeps day and arrival order across a year boundary", () => {
+		const monday = release({ releaseDate: "2026-12-28", title: "Mon" });
+		const fridayA = release({ releaseDate: "2027-01-01", title: "Fri A" });
+		const fridayB = release({ releaseDate: "2027-01-01", title: "Fri B" });
+		const sunday = release({ releaseDate: "2027-01-03", title: "Sun" });
+		const releases = transformReleasesToDateMap([
+			sunday,
+			fridayA,
+			monday,
+			fridayB,
+		]);
+
+		expect(getWeekReleases(new Date(2026, 11, 28), releases)).toEqual([
+			{ ...monday, date: "2026-12-28" },
+			{ ...fridayA, date: "2027-01-01" },
+			{ ...fridayB, date: "2027-01-01" },
+			{ ...sunday, date: "2027-01-03" },
+		]);
+	});
+
 	it("covers all seven days when the week spans a month and a DST change", () => {
 		// Week of Mon 2026-03-23 ends on the spring-forward Sunday 03-29
 		const releases = transformReleasesToDateMap(

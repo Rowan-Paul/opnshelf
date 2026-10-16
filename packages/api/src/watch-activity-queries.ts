@@ -25,6 +25,8 @@ export const WATCH_ACTIVITY_QUERY_IDS = [
 	"moviesControllerGetUserMovieWatchCounts",
 	"moviesControllerGetUserMovies",
 	"moviesControllerGetUserMoviesPaginated",
+	// Social Activity can move or disappear after a date correction.
+	"socialControllerGetFeed",
 	// Shelf + the activity summary behind the stats strip
 	"shelfControllerGetUserActivitySummary",
 	"shelfControllerGetUserShelf",

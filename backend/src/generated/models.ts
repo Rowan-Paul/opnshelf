@@ -9,6 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User.js'
+export type * from './models/TraktSyncConnection.js'
+export type * from './models/TraktSyncEntry.js'
 export type * from './models/NotificationSettings.js'
 export type * from './models/PushDevice.js'
 export type * from './models/NotificationCollection.js'
@@ -36,4 +38,9 @@ export type * from './models/Publication.js'
 export type * from './models/Rating.js'
 export type * from './models/ReviewLike.js'
 export type * from './models/Feedback.js'
+export type * from './models/FeaturedContent.js'
+export type * from './models/WatchPrivacyCopy.js'
+export type * from './models/WatchPrivacyMigration.js'
+export type * from './models/PrivacyScope.js'
+export type * from './models/PrivacyCopy.js'
 export type * from './commonInputTypes.js'

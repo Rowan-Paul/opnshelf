@@ -1,19 +1,19 @@
 import {
+	authControllerMeQueryKey,
 	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
-	isActiveTraktImportStatus,
 	reviewsControllerListMyPublicationsOptions,
-	type TraktImportJobDto,
+	type UserDto,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
-	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
+	usersControllerResetOnboardingMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nativeApplicationVersion } from "expo-application";
-import { Link, Stack } from "expo-router";
+import { Link, router, Stack, useFocusEffect } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
@@ -22,6 +22,7 @@ import {
 	Compass,
 	Download,
 	MessageSquare,
+	RotateCcw,
 	Smartphone,
 	Trash2,
 	UserPen,
@@ -29,6 +30,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
+	AppState,
 	Pressable,
 	ScrollView,
 	Switch,
@@ -36,6 +38,7 @@ import {
 } from "react-native";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
+import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
 import { replayWelcomeTour } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
@@ -159,6 +162,7 @@ function AppearanceSetting() {
 export type SettingsCategory =
 	| "profile"
 	| "preferences"
+	| "privacy"
 	| "notifications"
 	| "connections"
 	| "account"
@@ -167,6 +171,7 @@ export type SettingsCategory =
 const SETTINGS_TITLES: Record<SettingsCategory, string> = {
 	profile: "Profile",
 	preferences: "Preferences",
+	privacy: "Privacy",
 	notifications: "Notifications",
 	connections: "Connections",
 	account: "Account",
@@ -184,6 +189,19 @@ export function SettingsCategoryScreen({
 	const { open: openFeedback } = useFeedback();
 	const toast = useToast();
 	const queryClient = useQueryClient();
+	const resetOnboarding = useMutation({
+		...usersControllerResetOnboardingMutation(),
+		onSuccess: async () => {
+			await queryClient.cancelQueries({ queryKey: authControllerMeQueryKey() });
+			queryClient.setQueryData<UserDto>(authControllerMeQueryKey(), (old) =>
+				old
+					? { ...old, onboardingCompletedAt: null, needsOnboarding: true }
+					: old,
+			);
+			router.replace("/onboarding");
+		},
+		onError: () => toast.error("Could not reset onboarding. Please try again."),
+	});
 	const [isSigningOut, setIsSigningOut] = useState(false);
 
 	const handleSignOut = async () => {
@@ -207,10 +225,6 @@ export function SettingsCategoryScreen({
 	} = useQuery({
 		...usersControllerGetMySettingsOptions(),
 		enabled: !!user && (section === "preferences" || section === "connections"),
-	});
-	const { data: traktJob } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: !!user && section === "connections",
 	});
 
 	const updateSettingsMutation = useMutation({
@@ -243,7 +257,7 @@ export function SettingsCategoryScreen({
 	});
 
 	const requestPermissionChange = async (
-		integration: "blog" | "bluesky",
+		integration: "blog" | "bluesky" | "spaces" | "watches",
 		action: "connect" | "disconnect",
 	) => {
 		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
@@ -262,10 +276,26 @@ export function SettingsCategoryScreen({
 		data: myPublications,
 		isLoading: publicationsLoading,
 		isError: publicationsError,
+		isFetching: publicationsChecking,
+		refetch: checkPublications,
 	} = useQuery({
 		...reviewsControllerListMyPublicationsOptions(),
 		enabled: !!user && section === "connections",
 	});
+	useFocusEffect(
+		useCallback(() => {
+			if (!user || section !== "connections") return;
+			void checkPublications({ cancelRefetch: false });
+			let previousState = AppState.currentState;
+			const subscription = AppState.addEventListener("change", (state) => {
+				if (state === "active" && previousState !== "active") {
+					void checkPublications({ cancelRefetch: false });
+				}
+				previousState = state;
+			});
+			return () => subscription.remove();
+		}, [user, section, checkPublications]),
+	);
 
 	const storedPublicationUri = settings?.reviewsPublicationUri ?? null;
 
@@ -406,7 +436,7 @@ export function SettingsCategoryScreen({
 		showDialog({
 			title: "Delete your account?",
 			description:
-				"This action cannot be undone. All your data will be permanently removed.",
+				"This action cannot be undone. All your data will be permanently removed. Trakt Sync stops; records already transferred to Trakt remain there.",
 			actions: [
 				{ label: "Cancel" },
 				{
@@ -504,6 +534,7 @@ export function SettingsCategoryScreen({
 							</Text>
 							<Pressable
 								onPress={replayWelcomeTour}
+								accessibilityRole="button"
 								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
 							>
 								<Compass color="#94a3b8" size={20} />
@@ -515,6 +546,33 @@ export function SettingsCategoryScreen({
 						</View>
 					)}
 
+					{section === "help" && (
+						<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<Text className="font-display font-semibold text-foreground text-lg">
+								Onboarding
+							</Text>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityState={{
+									disabled: resetOnboarding.isPending,
+									busy: resetOnboarding.isPending,
+								}}
+								disabled={resetOnboarding.isPending}
+								onPress={() => resetOnboarding.mutate({})}
+								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+							>
+								<RotateCcw color="#94a3b8" size={20} />
+								<Text className="flex-1 font-medium text-foreground">
+									{resetOnboarding.isPending
+										? "Resetting onboarding…"
+										: "Reset onboarding"}
+								</Text>
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+						</View>
+					)}
+
+					{section === "privacy" && <PrivacySection />}
 					{section === "preferences" && (
 						<>
 							<SettingsSection
@@ -584,7 +642,6 @@ export function SettingsCategoryScreen({
 									</View>
 								)}
 							</SettingsSection>
-
 							{/* Streaming country */}
 							<SettingsSection
 								title="Streaming"
@@ -684,23 +741,26 @@ export function SettingsCategoryScreen({
 								title="Blog mirror"
 								description="Your reviews always live on Opnshelf. Optionally also mirror new reviews to one of your own blogs."
 							>
-								<IntegrationPermissionRow
-									name="Blog mirroring"
-									description={
-										storedPublicationUri
-											? "Allow Opnshelf to publish and update Review mirrors in the selected publication."
-											: "Choose a publication below before connecting Blog mirroring."
-									}
-									connected={settings?.blogIntegrationEnabled ?? false}
-									disabled={
-										permissionChangeMutation.isPending ||
-										(!(settings?.blogIntegrationEnabled ?? false) &&
-											!storedPublicationUri)
-									}
-									onConfirm={(action) =>
-										requestPermissionChange("blog", action)
-									}
-								/>
+								{settings?.blogIntegrationEnabled ||
+								myPublications?.items.some(
+									(pub) => pub.uri === storedPublicationUri,
+								) ? (
+									<IntegrationPermissionRow
+										name="Blog mirroring"
+										description="Allow Opnshelf to publish and update Review mirrors in the selected publication."
+										connected={settings?.blogIntegrationEnabled ?? false}
+										disabled={permissionChangeMutation.isPending}
+										onConfirm={(action) =>
+											requestPermissionChange("blog", action)
+										}
+									/>
+								) : (
+									<Text className="text-muted-foreground text-sm leading-5">
+										{myPublications?.items.length === 0
+											? "Create a publication in a Standard.site-compatible app using this account, then return here to connect Blog mirroring."
+											: "Choose a publication to connect Blog mirroring."}
+									</Text>
+								)}
 
 								{storedTargetMissing && (
 									<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
@@ -763,12 +823,29 @@ export function SettingsCategoryScreen({
 												</Pressable>
 											);
 										})}
-										<Text className="pt-1 text-muted-foreground text-xs leading-5">
-											Disconnect above to stop mirroring. Your publication
-											choice stays saved for reconnection.
-										</Text>
+										{settings?.blogIntegrationEnabled && (
+											<Text className="pt-1 text-muted-foreground text-xs leading-5">
+												Disconnect above to stop mirroring. Your publication
+												choice stays saved for reconnection.
+											</Text>
+										)}
 									</View>
 								)}
+								<View className="self-start">
+									<Button
+										label={
+											publicationsChecking
+												? "Checking…"
+												: "Check for publications"
+										}
+										variant="secondary"
+										size="sm"
+										disabled={publicationsChecking}
+										onPress={() =>
+											void checkPublications({ cancelRefetch: false })
+										}
+									/>
+								</View>
 							</SettingsSection>
 
 							<SettingsSection
@@ -786,19 +863,19 @@ export function SettingsCategoryScreen({
 								/>
 							</SettingsSection>
 
-							{/* Import history */}
-							<View className="gap-3 rounded-xl border border-border bg-card p-4">
+							<View className="gap-4 rounded-xl border border-border bg-card p-4">
 								<Text className="font-display font-semibold text-foreground text-lg">
-									Import history
+									Trakt
 								</Text>
-								<Link href="/trakt-import" asChild>
-									<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
-										<Download color="#94a3b8" size={20} />
-										<Text className="flex-1 font-medium text-foreground">
-											{getTraktSettingsLabel(traktJob)}
-										</Text>
-										<ChevronRight color="#94a3b8" size={18} />
-									</Pressable>
+								<Text className="text-muted-foreground text-sm">
+									Keep your Watch history, Ratings, Lists, Favorites, Notes,
+									Library and Reviews in sync with Trakt.
+								</Text>
+								<Link
+									href="/trakt-sync"
+									className="py-3 font-medium text-primary"
+								>
+									Manage Trakt Sync
 								</Link>
 							</View>
 						</>
@@ -843,6 +920,8 @@ export function SettingsCategoryScreen({
 									</Text>
 									<Text className="text-destructive/80 text-sm leading-5">
 										Permanently delete your account and all associated data.
+										Trakt Sync stops; records already transferred to Trakt
+										remain there.
 									</Text>
 								</View>
 
@@ -915,23 +994,11 @@ export function SettingsCategoryScreen({
 	);
 }
 
-function getTraktSettingsLabel(job: TraktImportJobDto | null | undefined) {
-	if (!job) return "Import from Trakt";
-	if (isActiveTraktImportStatus(job.status)) {
-		return "Trakt import in progress";
-	}
-	if (job.status === "paused" || job.status === "failed")
-		return "Resume Trakt import";
-	if (job.unmatchedGroups.length > 0) {
-		return `Match ${job.unmatchedGroups.length} ${job.unmatchedGroups.length === 1 ? "title" : "titles"}`;
-	}
-	return "View Trakt import";
-}
-
 const SETTINGS_AREAS: {
 	href:
 		| "/edit-profile"
 		| "/settings/preferences"
+		| "/settings/privacy"
 		| "/settings/notifications"
 		| "/settings/connections"
 		| "/settings/account"
@@ -951,6 +1018,12 @@ const SETTINGS_AREAS: {
 		label: SETTINGS_TITLES.preferences,
 		description: "Appearance, time, streaming and reviews",
 		Icon: Compass,
+	},
+	{
+		href: "/settings/privacy",
+		label: SETTINGS_TITLES.privacy,
+		description: "Public and Private data",
+		Icon: Smartphone,
 	},
 	{
 		href: "/settings/notifications",
@@ -973,7 +1046,7 @@ const SETTINGS_AREAS: {
 	{
 		href: "/settings/help",
 		label: SETTINGS_TITLES.help,
-		description: "Welcome tour and feedback",
+		description: "Onboarding, welcome tour and feedback",
 		Icon: MessageSquare,
 	},
 ];
@@ -1002,7 +1075,18 @@ export default function SettingsScreen() {
 								>
 									<Icon color="#94a3b8" size={20} />
 									<View className="flex-1 gap-0.5">
-										<Text className="font-medium text-foreground">{label}</Text>
+										<View className="flex-row items-center gap-2">
+											<Text className="font-medium text-foreground">
+												{label}
+											</Text>
+											{href === "/settings/privacy" && (
+												<View className="rounded-md bg-primary/10 px-2 py-1">
+													<Text className="font-semibold text-foreground text-xs">
+														Alpha
+													</Text>
+												</View>
+											)}
+										</View>
 										<Text className="text-muted-foreground text-sm">
 											{description}
 										</Text>

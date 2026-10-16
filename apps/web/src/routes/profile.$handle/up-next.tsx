@@ -70,6 +70,7 @@ function ProfileUpNextPage() {
 	});
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
+	const canReadWatches = isOwner || profile?.watchesPublic === true;
 
 	const country = userSettings?.watchCountry ?? "US";
 	const services =
@@ -100,7 +101,7 @@ function ProfileUpNextPage() {
 			previousQuery?.queryKey[0].path?.userDid === userDid
 				? keepPreviousData(previous)
 				: undefined,
-		enabled: !!userDid,
+		enabled: !!userDid && canReadWatches,
 	});
 
 	const items = data?.items ?? [];
@@ -116,6 +117,8 @@ function ProfileUpNextPage() {
 		});
 	};
 
+	if (profile && !canReadWatches)
+		return <p className="text-(--foreground-muted)">Watches are private.</p>;
 	return (
 		<div className="space-y-6">
 			<header className="flex flex-wrap items-center justify-between gap-4">

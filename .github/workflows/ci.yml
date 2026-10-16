@@ -25,6 +25,8 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       mobile: ${{ steps.filter.outputs.mobile }}
       api: ${{ steps.filter.outputs.api }}
+      scripts: ${{ steps.filter.outputs.scripts }}
+      privacy_reference: ${{ steps.filter.outputs.privacy_reference }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,6 +35,20 @@ jobs:
         id: filter
         with:
           filters: |
+            scripts:
+              - 'scripts/**'
+              - 'package.json'
+              - '.github/workflows/**'
+            privacy_reference:
+              - 'backend/src/privacy/**'
+              - 'backend/src/auth/oauth-scopes*'
+              - 'backend/scripts/privacy-reference-smoke.ts'
+              - 'spaces/**'
+              - 'lexicons/xyz/opnshelf/core.json'
+              - 'scripts/privacy-reference.mjs'
+              - 'scripts/reference-plc.mjs'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
             web:
               - 'apps/web/**'
               - 'packages/**'
@@ -65,6 +81,46 @@ jobs:
               - 'turbo.json'
               - '.github/workflows/ci.yml'
 
+  scripts:
+    needs: changes
+    if: ${{ needs.changes.outputs.scripts == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: Check workflow syntax and expressions
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          "$(go env GOPATH)/bin/actionlint" -shellcheck= .github/workflows/ci.yml .github/workflows/tranquil-image.yml
+      - name: Check script syntax
+        run: |
+          for file in scripts/*.mjs scripts/*.cjs; do node --check "$file"; done
+      - name: Test repository scripts
+        run: node --test scripts/*.test.cjs scripts/*.test.mjs
+
+  privacy-reference:
+    needs: changes
+    if: ${{ needs.changes.outputs.privacy_reference == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - name: Reference Spaces OAuth and record round trips
+        run: pnpm test:privacy-reference
+
   web:
     needs: changes
     if: ${{ needs.changes.outputs.web == 'true' }}
@@ -79,7 +135,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: "pnpm"
@@ -100,6 +156,22 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: opnshelf_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d opnshelf_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres@127.0.0.1:5432/opnshelf_test
+      WATCH_PRIVACY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/opnshelf_test
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -110,7 +182,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: "pnpm"
@@ -126,6 +198,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm --filter backend exec tsc --noEmit
+
+      - name: Apply migrations to disposable test database
+        run: pnpm --filter backend exec prisma migrate deploy
 
       - name: Test
         run: pnpm --filter backend run test
@@ -147,7 +222,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: "pnpm"
@@ -178,7 +253,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: "pnpm"
@@ -200,7 +275,7 @@ jobs:
 
   ci:
     name: CI result
-    needs: [changes, web, backend, mobile, api]
+    needs: [changes, web, backend, mobile, api, scripts, privacy-reference]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
@@ -211,13 +286,15 @@ jobs:
           BACKEND_RESULT: ${{ needs.backend.result }}
           MOBILE_RESULT: ${{ needs.mobile.result }}
           API_RESULT: ${{ needs.api.result }}
+          SCRIPTS_RESULT: ${{ needs.scripts.result }}
+          REFERENCE_RESULT: ${{ needs.privacy-reference.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
             echo "Changes job result: $CHANGES_RESULT"
             exit 1
           fi
 
-          for result in "$WEB_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT"; do
+          for result in "$WEB_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT" "$SCRIPTS_RESULT" "$REFERENCE_RESULT"; do
             case "$result" in
               success|skipped) ;;
               *)

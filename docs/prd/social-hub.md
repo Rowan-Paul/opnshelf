@@ -8,7 +8,7 @@ Status: Implemented on Web and Mobile (issue #278).
 
 Activity and Connections are unclear as separate top-level destinations and each feels like a supporting page. Give social activity one recognizable home on both Web and Mobile: **Social**, opening directly onto the Activity Feed, with visible Find people and Circles entry points.
 
-[ADR 0032](../adr/0032-social-is-one-shared-hub.md) records the trade-off and supersedes the relevant parts of ADRs 0012 and 0024. CONTEXT.md defines the vocabulary.
+[ADR 0032](../adr/0032-social-is-one-shared-hub.md) records the trade-off and supersedes the relevant parts of ADRs 0012 and 0024. GLOSSARY.md defines the vocabulary.
 
 ## Agreed behavior
 

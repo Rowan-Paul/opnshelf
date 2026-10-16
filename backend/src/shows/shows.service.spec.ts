@@ -423,6 +423,7 @@ describe("ShowsService", () => {
 				1,
 				2,
 				"2024-01-10T00:00:00.000Z",
+				false,
 			);
 			await service.unmarkEpisodeWatched("did:plc:abc123", session, "123");
 			expect(spies.unmarkEpisodeWatched).toHaveBeenCalledWith(

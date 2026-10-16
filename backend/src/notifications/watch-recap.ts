@@ -55,7 +55,11 @@ export function buildWatchRecap(
 		string,
 		{ watch: Watch; count: number; latest: number }
 	>();
+	let movieWatches = 0;
+	let episodeWatches = 0;
 	for (const watch of dated) {
+		if (watch.mediaType === "movie") movieWatches++;
+		if (watch.mediaType === "show") episodeWatches++;
 		const key = `${watch.mediaType}:${watch.mediaId}`;
 		const previous = grouped.get(key);
 		grouped.set(key, {
@@ -88,8 +92,8 @@ export function buildWatchRecap(
 	);
 	return {
 		recap: {
-			movieWatches: dated.filter((w) => w.mediaType === "movie").length,
-			episodeWatches: dated.filter((w) => w.mediaType === "show").length,
+			movieWatches,
+			episodeWatches,
 			timezone,
 			firstWatch: highlight(dated[0]),
 			lastWatch: highlight(dated.at(-1)),

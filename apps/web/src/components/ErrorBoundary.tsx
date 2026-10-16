@@ -1,21 +1,33 @@
+import { getHttpStatus } from "@opnshelf/api";
 import { Link, useRouter } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, Home, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { posthog } from "#/integrations/posthog/provider";
 
 interface ErrorComponentProps {
-	error?: Error;
+	// The router types thrown values as unknown: anything can be thrown.
+	error?: unknown;
 	reset?: () => void;
 }
 
-export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
+export function DefaultErrorComponent({
+	error: thrown,
+	reset,
+}: ErrorComponentProps) {
 	const router = useRouter();
+	const error = thrown instanceof Error ? thrown : undefined;
+	// Route IDs are static templates; never send the visitor's actual pathname.
+	const routeId = router.state.matches.at(-1)?.routeId ?? "__root__";
+	const status = getHttpStatus(thrown);
 
 	useEffect(() => {
-		if (error) {
-			posthog.captureException(error, { error_boundary: "tanstack_router" });
+		if (thrown) {
+			posthog.captureException(thrown, {
+				error_boundary: "tanstack_router",
+				$issue_name: `Page failed: ${routeId}${status === undefined ? "" : ` (HTTP ${status})`}`,
+			});
 		}
-	}, [error]);
+	}, [thrown, routeId, status]);
 
 	const handleRetry = () => {
 		if (reset) {

@@ -108,6 +108,34 @@ describe("summarizeCrew", () => {
 			"Gaffer",
 		);
 	});
+
+	it("preserves priority, tie order and the cap among mixed credits", () => {
+		const director = { id: 1, name: "Director", job: "Director" };
+		const producers = Array.from({ length: 12 }, (_, index) => ({
+			id: index + 2,
+			name: `Producer ${index}`,
+			job: "Producer",
+		}));
+		const input = [
+			{ id: 99, name: "Gaffer", job: "Gaffer" },
+			{ ...director, job: "Producer" },
+			...producers,
+			{ id: 100, name: "Unknown job" },
+			director,
+		];
+		const original = [...input];
+
+		expect(summarizeCrew(input, KEY_JOBS)).toEqual([
+			director,
+			...producers.slice(0, SUMMARY_CREW_LIMIT - 1),
+		]);
+		expect(input).toEqual(original);
+	});
+
+	it("returns no summary without crew or key jobs", () => {
+		expect(summarizeCrew(undefined, KEY_JOBS)).toEqual([]);
+		expect(summarizeCrew(duneCrew, [])).toEqual([]);
+	});
 });
 
 describe("groupCrewByDepartment", () => {

@@ -3,6 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { RateReviewButton } from "./RateReviewButton";
 
 const state = vi.hoisted(() => ({
+	rating: 8,
 	reviews: [
 		{
 			id: "newest",
@@ -26,7 +27,7 @@ const state = vi.hoisted(() => ({
 	refetchReviews: vi.fn(),
 }));
 vi.mock("@/lib/use-review", () => ({
-	useReview: () => ({ ...state, rating: 8 }),
+	useReview: () => ({ ...state }),
 }));
 vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({ isAuthenticated: true }),
@@ -37,7 +38,10 @@ vi.mock("react-native", async () => {
 		createElement(name, props, props.children as never);
 	return { View: component("view"), Pressable: component("pressable") };
 });
-vi.mock("lucide-react-native", () => ({ MessageSquare: () => null }));
+vi.mock("lucide-react-native", () => ({
+	MessageSquare: () => null,
+	Star: () => null,
+}));
 vi.mock("@/components/ui/text", async () => {
 	const { createElement } = await import("react");
 	return {
@@ -54,7 +58,7 @@ vi.mock("@/components/detail/ReviewEditorSheet", async () => {
 });
 
 beforeEach(() => vi.clearAllMocks());
-function open() {
+function open(openEditor = true) {
 	let renderer!: ReactTestRenderer;
 	act(() => {
 		renderer = create(
@@ -66,7 +70,9 @@ function open() {
 			/>,
 		);
 	});
-	act(() => renderer.root.findByType("pressable" as never).props.onPress());
+	if (openEditor) {
+		act(() => renderer.root.findByType("pressable" as never).props.onPress());
+	}
 	return renderer;
 }
 it("loads the latest own Review and updates its id, preserving all fields", () => {
@@ -132,4 +138,27 @@ it("does not open a blank editor when reviews failed to load", () => {
 	expect(renderer.root.findByType("editor" as never).props.visible).toBe(false);
 	expect(state.refetchReviews).toHaveBeenCalledOnce();
 	state.isReviewError = false;
+});
+
+it("shows the saved rating before opening and removes it when cleared", () => {
+	const renderer = open(false);
+	expect(renderer.root.findByType("editor" as never).props.visible).toBe(false);
+	const button = renderer.root.findByType("pressable" as never);
+	expect(button.props.accessibilityLabel).toBe(
+		"Your rating: 8 out of 10. Rate and review",
+	);
+	expect(
+		button
+			.findAllByType("text" as never)
+			.map((text) => text.children.join(""))
+			.join(" "),
+	).toContain("8/10");
+	state.rating = 0;
+	act(() =>
+		renderer.update(<RateReviewButton mediaType="movie" mediaId="123" />),
+	);
+	expect(
+		renderer.root.findByType("pressable" as never).props.accessibilityLabel,
+	).toBe("Rate and review");
+	state.rating = 8;
 });

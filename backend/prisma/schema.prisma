@@ -38,6 +38,8 @@ model User {
   // are separate because only the mobile tour carries the gestures.
   welcomeTourWebVersion    Int             @default(0)
   welcomeTourMobileVersion Int             @default(0)
+  // Account-wide Release Notes watermark; null falls back to account creation.
+  releaseNotesReadAt      DateTime?
   emailVerifiedAt         DateTime?
   // Backfill/sync tracking for the "syncing your watch history…" indicator.
   // backfillStartedAt is stamped when the user's repo is (re-)registered with
@@ -58,6 +60,18 @@ model User {
   reviewsPublicationName  String?
   // Account-wide integrations. Configuration is retained when disabled so an
   // explicit reconnect can resume the same publication/pointers.
+  watchSyncAttemptedAt DateTime?
+  watchSyncedAt DateTime?
+  watchSyncError String?
+  privacyScopes PrivacyScope[]
+  listsDefaultVisibility String @default("public")
+  watchPrivacyManaged Boolean @default(false)
+  // Legacy storage name: saved authorization preference for all Privacy Alpha categories.
+  watchPrivacyEnabled Boolean @default(false)
+  watchVisibility String @default("public")
+  watchPrivacyMigration WatchPrivacyMigration?
+  privateSettingsEnabled Boolean @default(false)
+  privateSettingsHasCopy Boolean @default(false)
   blogIntegrationEnabled  Boolean          @default(false)
   blueskyCrossPostEnabled Boolean          @default(false)
   // The explicitly confirmed reader format for blog mirrors. This remains
@@ -83,9 +97,75 @@ model User {
   pushDevices PushDevice[]
   notificationDeliveries NotificationDelivery[]
   notificationCollections NotificationCollection[]
+  traktConnections TraktSyncConnection[]
 
   @@index([handle])
   @@index([profileAvatarCid])
+}
+
+// Private integration state; never published to a user's AT repository.
+model TraktSyncConnection {
+  id String @id @default(cuid())
+  userDid String
+  user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  traktUserId String
+  username String
+  accessToken String?
+  refreshToken String?
+  expiresAt DateTime?
+  status String @default("paused")
+  direction String @default("both")
+  watches Boolean @default(true)
+  ratings Boolean @default(true)
+  lists Boolean @default(false)
+  watchlist Boolean @default(false)
+  favorites Boolean @default(false)
+  notes Boolean @default(false)
+  library Boolean @default(false)
+  reviews Boolean @default(false)
+  contentPublicationConsent Boolean @default(false)
+  listPublicationConsent Boolean @default(false)
+  historyScope String @default("all")
+  publicationConsent Boolean @default(false)
+  initialised Boolean @default(false)
+  nextRunAt DateTime @default(now())
+  lastSuccessAt DateTime?
+  lastError String?
+  leaseId String?
+  leaseUntil DateTime?
+  remoteSnapshot Json @default("[]")
+  remoteReadAt DateTime?
+  remaining Int @default(0)
+  remainingTotal Int @default(0)
+  entries TraktSyncEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userDid, traktUserId])
+  @@index([status, nextRunAt])
+}
+
+model TraktSyncEntry {
+  id String @id @default(cuid())
+  connectionId String
+  connection TraktSyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  kind String
+  localKey String?
+  remoteKey String?
+  localBase Json?
+  remoteBase Json?
+  linked Boolean @default(false)
+  eligible Boolean @default(true)
+  ignored Boolean @default(false)
+  issue String?
+  resolution String?
+  pending Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([connectionId, localKey])
+  @@unique([connectionId, remoteKey])
+  @@index([connectionId, issue])
 }
 
 // Notification email is supplied and verified separately from PDS account mail.
@@ -301,6 +381,8 @@ model BackgroundJob {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  watchPrivacyCopies WatchPrivacyCopy[]
+  watchPrivacyMigration WatchPrivacyMigration?
   traktItems   TraktImportItem[]
   traktMatches TraktImportMatch[]
 
@@ -751,4 +833,86 @@ model Feedback {
 
   @@index([userDid])
   @@index([createdAt])
+}
+
+/// Service-owned editorial picks, never personal PDS records (ADR 0043).
+model FeaturedContent {
+  id           String   @id @default(uuid())
+  mediaType    String
+  mediaId      Int
+  seasonNumber Int?
+  title        String
+  posterPath   String?
+  message      String
+  sourceUrl    String?
+  sourceLabel  String?
+  published    Boolean  @default(true)
+  expiresAt    DateTime
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, expiresAt])
+}
+
+// Verified full-record snapshots scoped to one privacy migration. Retain until
+// the entire migration commits so an interrupted cross-repo move is recoverable.
+model WatchPrivacyCopy {
+  jobId String
+  job BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  collection String
+  rkey String
+  cid String
+  value Json
+  createdAt DateTime @default(now())
+
+  @@id([jobId, collection, rkey])
+}
+
+// Exists only while migrating (including recoverable failures). Its unique owner
+// prevents overlapping migrations; direction never changes after creation.
+model WatchPrivacyMigration {
+  jobId String @id
+  job BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  userDid String @unique
+  user User @relation(fields: [userDid], references: [did], onDelete: Restrict)
+  sourceVisibility String
+  targetVisibility String
+  createdAt DateTime @default(now())
+}
+
+// Privacy state for category repositories and individual Lists. A migration
+// generation binds its recovery copies; visibility changes only at completion.
+model PrivacyScope {
+ id String @id @default(cuid())
+ userDid String
+ user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
+ key String
+ category String
+ listRkey String?
+ visibility String @default("public")
+ managed Boolean @default(false)
+ migrationId String? @unique
+ targetVisibility String?
+ totalRecords Int?
+ status String?
+ error String?
+ syncAttemptedAt DateTime?
+ syncedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ copies PrivacyCopy[]
+ @@unique([userDid, key])
+ @@index([status, updatedAt])
+}
+model PrivacyCopy {
+ scopeId String
+ scope PrivacyScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+ migrationId String
+ collection String
+ rkey String
+ cid String
+ value Json
+ createdAt DateTime @default(now())
+ @@id([scopeId, collection, rkey])
 }
