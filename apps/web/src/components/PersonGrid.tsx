@@ -1,6 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 import { buildPersonUrl } from "#/lib/url-utils";
 
 interface Person {
@@ -42,11 +49,9 @@ export default function PersonGrid({
 	emptyMessage = "No information available.",
 	initialCount = 6,
 }: PersonGridProps) {
-	const [expanded, setExpanded] = useState(false);
+	const [open, setOpen] = useState(false);
 	const uniquePeople = deduplicatePeople(people);
-	const visiblePeople = expanded
-		? uniquePeople
-		: uniquePeople.slice(0, initialCount);
+	const visiblePeople = uniquePeople.slice(0, initialCount);
 
 	return (
 		<section>
@@ -81,12 +86,43 @@ export default function PersonGrid({
 			{uniquePeople.length > initialCount && (
 				<button
 					type="button"
-					onClick={() => setExpanded(!expanded)}
+					onClick={() => setOpen(true)}
 					className="mt-4 text-(--foreground-muted) text-sm hover:text-(--foreground)"
 				>
-					{expanded ? "Show less" : `Show all ${uniquePeople.length}`}
+					{`View all ${uniquePeople.length}`}
 				</button>
 			)}
+			<Dialog open={open} onOpenChange={setOpen}>
+				<DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
+					<DialogHeader>
+						<DialogTitle>{title}</DialogTitle>
+						<DialogDescription>
+							All {uniquePeople.length} people
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-3 sm:grid-cols-2">
+						{uniquePeople.map((person) => (
+							<Link
+								key={person.id}
+								to={buildPersonUrl(person.id, person.name)}
+								className="flex items-center gap-3 rounded-lg p-2 hover:bg-(--background-subtle)"
+							>
+								<UserAvatar
+									src={person.photo}
+									alt={person.name}
+									className="size-12 rounded-full"
+								/>
+								<div>
+									<p className="font-medium">{person.name}</p>
+									<p className="text-(--foreground-muted) text-sm">
+										{person.role}
+									</p>
+								</div>
+							</Link>
+						))}
+					</div>
+				</DialogContent>
+			</Dialog>
 		</section>
 	);
 }

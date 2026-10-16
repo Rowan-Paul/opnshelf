@@ -1,10 +1,6 @@
-import {
-	showsControllerGetSeasonDetailsOptions,
-	showsControllerGetShowDetailsOptions,
-} from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { showsControllerGetShowDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Play, Star } from "lucide-react";
+import { Play, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { GenreLinks } from "#/components/GenreLinks";
 import { env } from "#/env";
@@ -12,11 +8,9 @@ import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
 import {
-	useEpisodeWatchActions,
 	useShowDetails,
 	useShowProgress,
 	useShowRecommendations,
-	useShowWatchHistory,
 	useShowWatchProviders,
 	useUserUpNext,
 	useWatchActions,
@@ -39,8 +33,7 @@ import MediaHero, {
 import { ProgressShelfButton } from "../../../../components/ProgressShelfButton";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
-import EpisodeList from "../../../../components/shows/EpisodeList";
-import SeasonAccordion from "../../../../components/shows/SeasonAccordion";
+import SeasonRow from "../../../../components/shows/SeasonRow";
 import { DetailPageSkeleton } from "../../../../components/skeletons";
 import WatchProviders from "../../../../components/WatchProviders";
 export const Route = createFileRoute("/shows/$showId/$showName/")({
@@ -72,15 +65,6 @@ export const Route = createFileRoute("/shows/$showId/$showName/")({
 	component: ShowDetailPage,
 });
 
-function useSeasonDetails(showId: string, seasonNumber: number | null) {
-	return useQuery({
-		...showsControllerGetSeasonDetailsOptions({
-			path: { showId, seasonNumber: seasonNumber?.toString() || "1" },
-		}),
-		enabled: !!showId && !!seasonNumber,
-	});
-}
-
 function ShowDetailPage() {
 	const { showId, showName } = Route.useParams();
 	const {
@@ -92,8 +76,6 @@ function ShowDetailPage() {
 	const userDid = user?.did || "";
 	const userTimezone = userSettings?.timezone;
 
-	const [hasUserToggledSeason, setHasUserToggledSeason] = useState(false);
-	const [expandedSeason, setExpandedSeason] = useState<number | null>(null);
 	const [processingSeason, setProcessingSeason] = useState<number | null>(null);
 	const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 	const [watchProvidersCountry, setWatchProvidersCountry] = useState("US");
@@ -118,12 +100,6 @@ function ShowDetailPage() {
 
 	const { data: upNextData } = useUserUpNext(userDid, showId);
 	const { data: discoverShowsData } = useShowRecommendations(showId);
-	const { data: seasonDetails, isLoading: seasonLoading } = useSeasonDetails(
-		showId,
-		expandedSeason,
-	);
-
-	const { data: watchHistory } = useShowWatchHistory(showId);
 	const {
 		data: showProgressData,
 		isPending: isProgressPending,
@@ -132,23 +108,11 @@ function ShowDetailPage() {
 	const showProgress = showProgressData?.items.find(
 		(item) => item.showId === showId,
 	);
-	const {
-		processingEpisode,
-		unmarkingEpisode,
-		handleMarkEpisode,
-		handleUnmarkEpisode,
-	} = useEpisodeWatchActions(showId);
 
 	const upNextForShow = upNextData?.items?.find(
 		(item) => item.showId === showId,
 	);
 	const nextEpisode = upNextForShow?.nextEpisode;
-
-	useEffect(() => {
-		if (!hasUserToggledSeason && nextEpisode?.seasonNumber) {
-			setExpandedSeason(nextEpisode.seasonNumber);
-		}
-	}, [nextEpisode?.seasonNumber, hasUserToggledSeason]);
 
 	// Watch actions
 	const {
@@ -389,18 +353,11 @@ function ShowDetailPage() {
 									{show.seasons
 										.filter((season) => season.season_number > 0)
 										.map((season) => (
-											<SeasonAccordion
+											<SeasonRow
 												key={season.id}
 												season={season}
-												isExpanded={expandedSeason === season.season_number}
-												onToggle={() => {
-													setHasUserToggledSeason(true);
-													setExpandedSeason(
-														expandedSeason === season.season_number
-															? null
-															: season.season_number,
-													);
-												}}
+												showId={showId}
+												showName={slugifyName(show.name)}
 												isFullyWatched={isSeasonFullyWatched(
 													season.season_number,
 												)}
@@ -420,44 +377,7 @@ function ShowDetailPage() {
 													processingSeason === season.season_number
 												}
 												isAuthenticated={isAuthenticated}
-											>
-												<EpisodeList
-													episodes={seasonDetails?.episodes || []}
-													showId={showId}
-													showName={slugifyName(show.name)}
-													seasonNumber={season.season_number}
-													watchHistory={watchHistory}
-													nextEpisode={nextEpisode || null}
-													onMarkEpisode={handleMarkEpisode}
-													onUnmarkEpisode={handleUnmarkEpisode}
-													onUnmarkEpisodeAll={(sn, en) =>
-														handleUnmarkEpisode(sn, en, "all")
-													}
-													processingEpisode={processingEpisode}
-													unmarkingEpisode={unmarkingEpisode}
-													isLoading={
-														seasonLoading &&
-														expandedSeason === season.season_number
-													}
-												/>
-
-												{/* Season Detail Link */}
-												<Link
-													to="/shows/$showId/$showName/seasons/$seasonNumber"
-													params={{
-														showId,
-														showName: slugifyName(show.name),
-														seasonNumber: String(season.season_number),
-													}}
-													className="flex items-center justify-center border-(--border) border-t py-3 text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
-													title="Go to season details"
-												>
-													<span className="flex items-center gap-2">
-														View Season Details
-														<ChevronRight className="size-4" />
-													</span>
-												</Link>
-											</SeasonAccordion>
+											/>
 										))}
 								</div>
 							</section>
