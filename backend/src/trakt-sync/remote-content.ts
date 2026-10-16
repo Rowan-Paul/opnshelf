@@ -249,10 +249,11 @@ export async function writeContent(
 ) {
 	if (!remove) validateContent(desired);
 	const records = await snapshotContent(api, token, optionsFor(desired));
-	const current = previous
-		? (records.find((r) => r.key === previous.key) ?? null)
+	const expected = remove ? desired : previous;
+	const current = expected
+		? (records.find((r) => r.key === expected.key) ?? null)
 		: null;
-	if (previous && fingerprint(current) !== fingerprint(previous))
+	if (expected && fingerprint(current) !== fingerprint(expected))
 		throw new Error(
 			"Trakt content changed before transfer. Choose which version to keep.",
 		);
@@ -282,7 +283,7 @@ export async function writeContent(
 		throw new Error(
 			"Mark this Review as containing spoilers before sending it to Trakt.",
 		);
-	let id = previous?.traktId;
+	let id = remove ? desired.traktId : previous?.traktId;
 	if (remove) {
 		if (!id)
 			throw new Error("Missing linked Trakt identity. Nothing was deleted.");

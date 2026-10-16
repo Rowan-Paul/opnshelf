@@ -360,6 +360,135 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			expect(localRecords).toEqual([]);
 		},
 	);
+	it.each(["note", "library", "review"] as const)(
+		"exports %s and propagates a linked local deletion",
+		async (kind) => {
+			localRecords = [content(kind, `${kind}:local`)];
+			await configureContent("outbound", kind);
+			await tick();
+			expect(remoteRecords).toHaveLength(1);
+			const linked = structuredClone(remoteRecords[0]);
+			remoteApi.write.mockClear();
+			localRecords = [];
+			await tick();
+			expect(remoteApi.write).toHaveBeenCalledWith(
+				"fixture-access",
+				linked,
+				true,
+			);
+			expect(remoteRecords).toEqual([]);
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+		},
+	);
+	it.each(["note", "review"] as const)(
+		"names the %s when its outbound creation outcome is unknown",
+		async (kind) => {
+			localRecords = [content(kind, `${kind}:local`)];
+			remoteApi.write.mockRejectedValueOnce(
+				new Error("Connection interrupted"),
+			);
+			await configureContent("outbound", kind);
+			await tick();
+			const interrupted = await service.issues(userDid, { view: "attention" });
+			await service.resolve(userDid, interrupted.items[0].id, {
+				action: "retry",
+			});
+			await tick();
+			const issues = await service.issues(userDid, { view: "attention" });
+			expect(JSON.stringify(issues.items)).toContain(
+				`creating this Trakt ${kind === "note" ? "Note" : "Review"} is unknown`,
+			);
+			expect(remoteRecords).toEqual([]);
+		},
+	);
+	it("matches only same-kind content peers with the same parent and media family", async () => {
+		remoteRecords = [
+			{
+				...content("note", "note:7"),
+				traktId: 7,
+				traktParentId: 42,
+				mediaId: null,
+			},
+			{
+				...content("note", "note:8"),
+				traktId: 8,
+				traktParentId: 42,
+				mediaId: null,
+			},
+			{
+				...content("note", "note:show"),
+				traktId: 9,
+				traktParentId: 42,
+				mediaType: "show",
+				mediaId: null,
+			},
+			{
+				...content("note", "note:other"),
+				traktId: 10,
+				traktParentId: 99,
+				mediaId: null,
+			},
+			{ ...watch("watch:7"), traktId: 7, traktParentId: 7, mediaId: null },
+			{
+				...watch("rating:7"),
+				kind: "rating",
+				value: 7,
+				traktId: 7,
+				traktParentId: 7,
+				mediaId: null,
+			},
+			{
+				...content("library", "library:7"),
+				traktId: 7,
+				traktParentId: 7,
+				mediaId: null,
+			},
+			{
+				...content("review", "review:42"),
+				traktId: 42,
+				traktParentId: 42,
+				mediaId: null,
+			},
+		];
+		await service.configure(userDid, {
+			direction: "inbound",
+			historyScope: "future",
+			watches: true,
+			ratings: true,
+			notes: true,
+			library: true,
+			reviews: true,
+			publicationConsent: true,
+			contentPublicationConsent: true,
+		});
+		await tick();
+		const entries = await db.traktSyncEntry.findMany({
+			where: { connection: { userDid } },
+		});
+		const selected = entries.find((e) => e.remoteKey === "note:7");
+		if (!selected) throw new Error("Missing Note issue");
+		await service.resolve(userDid, selected.id, {
+			action: "match",
+			mediaId: "99",
+		});
+		for (const entry of entries) {
+			const actual = await db.traktSyncEntry.findUniqueOrThrow({
+				where: { id: entry.id },
+			});
+			if (["note:7", "note:8"].includes(entry.remoteKey ?? ""))
+				expect(actual).toMatchObject({
+					remoteBase: { mediaId: "99" },
+					eligible: true,
+					issue: null,
+				});
+			else
+				expect(actual).toMatchObject({
+					remoteBase: entry.remoteBase,
+					eligible: entry.eligible,
+					issue: entry.issue,
+				});
+		}
+	});
 	it("requires new content consent even when Watch and List consent exist", async () => {
 		await configureLists("inbound");
 		await expect(configureContent("inbound", "note", false)).rejects.toThrow(

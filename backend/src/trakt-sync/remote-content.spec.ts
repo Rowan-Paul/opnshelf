@@ -214,6 +214,114 @@ describe("Trakt content adapters", () => {
 		).rejects.toThrow("200 words");
 		expect(request.mock.calls.every((call) => call.length === 2)).toBe(true);
 	});
+	it.each(["note", "library", "review"] as const)(
+		"deletes a linked %s using the remote record supplied by the service",
+		async (kind) => {
+			const request = vi.fn(
+				async (
+					path: string,
+					_token?: string,
+					_body?: unknown,
+					_method?: string,
+				) => {
+					if (path === "/users/settings")
+						return response({ user: { private: false } });
+					if (path.startsWith("/search/"))
+						return response([{ type: "movie", movie }]);
+					if (path.startsWith("/users/me/notes"))
+						return response(
+							[
+								{
+									id: 7,
+									notes: "My words",
+									privacy: "private",
+									item: { type: "movie", movie },
+								},
+							],
+							1,
+						);
+					if (path.startsWith("/users/me/comments"))
+						return response(
+							[
+								{
+									type: "movie",
+									movie,
+									comment: {
+										id: 7,
+										comment: "My words",
+										spoiler: false,
+										review: true,
+									},
+								},
+							],
+							1,
+						);
+					if (path.startsWith("/sync/collection/media"))
+						return response(
+							[
+								{
+									type: "movie",
+									movie,
+									collected_at: "2026-01-01T12:00:00Z",
+									metadata: { media_type: "dvd" },
+								},
+							],
+							1,
+						);
+					return response({});
+				},
+			);
+			const [linked] = await snapshotContent({ request }, "fixture", {
+				notes: kind === "note",
+				library: kind === "library",
+				reviews: kind === "review",
+			});
+			await writeContent({ request }, "fixture", linked, true);
+			if (kind === "library")
+				expect(request).toHaveBeenCalledWith(
+					"/sync/collection/remove",
+					"fixture",
+					{ movies: [{ ids: { trakt: 9 } }] },
+				);
+			else
+				expect(request).toHaveBeenCalledWith(
+					`/${kind === "note" ? "notes" : "comments"}/7`,
+					"fixture",
+					undefined,
+					"DELETE",
+				);
+		},
+	);
+	it("holds deletion when the linked remote Note changed before the write", async () => {
+		let text = "Original words";
+		const request = vi.fn(
+			async (
+				_path: string,
+				_token?: string,
+				_body?: unknown,
+				_method?: string,
+			) =>
+				response(
+					[
+						{
+							id: 7,
+							notes: text,
+							privacy: "private",
+							item: { type: "movie", movie },
+						},
+					],
+					1,
+				),
+		);
+		const [linked] = await snapshotContent({ request }, "fixture", {
+			notes: true,
+		});
+		text = "Edited elsewhere";
+		await expect(
+			writeContent({ request }, "fixture", linked, true),
+		).rejects.toThrow("changed before transfer");
+		expect(request.mock.calls.every((call) => call.length === 2)).toBe(true);
+	});
 	it("remembers a created private Note identity before confirmation and preserves its text", async () => {
 		let notes: object[] = [];
 		const remember = vi.fn();

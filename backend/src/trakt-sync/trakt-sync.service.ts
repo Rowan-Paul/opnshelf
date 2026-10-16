@@ -88,6 +88,22 @@ const display = (r: SyncRecord | null) =>
 							: String(r.value),
 			}
 		: undefined;
+const sameTraktTitle = (record: SyncRecord, peer: SyncRecord): boolean => {
+	if (isContentRecord(record) || isContentRecord(peer))
+		return Boolean(
+			record.kind === peer.kind &&
+				record.traktParentId &&
+				peer.traktParentId === record.traktParentId &&
+				(record.mediaType === "movie") === (peer.mediaType === "movie"),
+		);
+	return record.mediaType === "movie"
+		? peer.mediaType === "movie" && peer.traktId === record.traktId
+		: Boolean(
+				peer.mediaType !== "movie" &&
+					record.traktParentId &&
+					peer.traktParentId === record.traktParentId,
+			);
+};
 const applyMappings = (
 	remote: SyncRecord[],
 	entries: Pick<TraktSyncEntry, "remoteBase">[],
@@ -96,24 +112,7 @@ const applyMappings = (
 		if (isListRecord(r) || r.mediaId) return r;
 		const mapped = entries
 			.map((e) => readRecord(e.remoteBase))
-			.find(
-				(p) =>
-					p?.mediaId &&
-					p.kind === r.kind &&
-					(isContentRecord(r)
-						? Boolean(
-								r.traktParentId &&
-									p.traktParentId === r.traktParentId &&
-									(r.mediaType === "movie"
-										? p.mediaType === "movie"
-										: p.mediaType !== "movie"),
-							)
-						: r.mediaType === "movie"
-							? p.mediaType === "movie" && p.traktId === r.traktId
-							: p.mediaType !== "movie" &&
-								r.traktParentId &&
-								p.traktParentId === r.traktParentId),
-			);
+			.find((p) => p?.mediaId && p.kind === r.kind && sameTraktTitle(r, p));
 		return mapped ? { ...r, mediaId: mapped.mediaId } : r;
 	});
 const enabled = (c: TraktSyncConnection, r: Pick<SyncRecord, "kind">) =>
@@ -933,14 +932,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				});
 				for (const peer of peers) {
 					const p = readRecord(peer.remoteBase);
-					if (
-						p &&
-						(r.mediaType === "movie"
-							? p.traktId === r.traktId && p.mediaType === "movie"
-							: p.mediaType !== "movie" &&
-								r.traktParentId &&
-								p.traktParentId === r.traktParentId)
-					)
+					if (p && sameTraktTitle(r, p))
 						await this.prisma.traktSyncEntry.update({
 							where: { id: peer.id },
 							data: {
@@ -1545,7 +1537,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			!entry.remoteKey
 		)
 			throw new Error(
-				"The outcome of creating this Trakt List is unknown. Check Trakt, then choose a version before retrying.",
+				`The outcome of creating this Trakt ${desired.kind === "list" ? "List" : desired.kind === "note" ? "Note" : "Review"} is unknown. Check Trakt, then choose a version before retrying.`,
 			);
 		if (previous && (desired === null || desired.kind === "watch"))
 			await this.api.write(token, previous, true);
