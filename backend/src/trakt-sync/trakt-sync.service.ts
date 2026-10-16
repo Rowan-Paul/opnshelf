@@ -68,14 +68,17 @@ const records = (v: unknown): SyncRecord[] =>
 		: [];
 // An absent remote record is not proof that a non-idempotent POST failed.
 const unconfirmedCreate = (
-	entry: Pick<TraktSyncEntry, "pending" | "remoteKey">,
+	entry: Pick<TraktSyncEntry, "kind" | "pending" | "remoteKey">,
 ) => {
 	const pending = entry.pending as {
 		direction?: string;
 		previous?: unknown;
 	} | null;
 	return Boolean(
-		pending?.direction === "push" && !entry.remoteKey && !pending.previous,
+		["list", "note", "review"].includes(entry.kind) &&
+			pending?.direction === "push" &&
+			!entry.remoteKey &&
+			!pending.previous,
 	);
 };
 const display = (r: SyncRecord | null) =>
@@ -1009,18 +1012,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				where: { id, connectionId: c.id },
 			});
 			if (!entry) throw new NotFoundException("Sync item not found.");
-			if (
-				unconfirmedCreate(entry) &&
-				["trakt", "opnshelf"].includes(dto.action) &&
-				!dto.confirmedTraktMissing
-			)
+			const resolvingUnconfirmed =
+				unconfirmedCreate(entry) && ["trakt", "opnshelf"].includes(dto.action);
+			if (resolvingUnconfirmed && !dto.confirmedTraktMissing)
 				throw new BadRequestException(
 					"Check Trakt before replacing an unconfirmed transfer.",
 				);
-			if (
-				unconfirmedCreate(entry) &&
-				["trakt", "opnshelf"].includes(dto.action)
-			) {
+			if (resolvingUnconfirmed) {
 				// Recheck before discarding the original intent: it may have completed
 				// since the User checked Trakt or opened the confirmation.
 				if (c.lastError && c.nextRunAt > new Date())
@@ -1031,14 +1029,23 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					(entry.pending as { desired?: unknown }).desired,
 				);
 				const remote = await this.api.snapshot(await this.token(c), c);
+				const peers = await this.prisma.traktSyncEntry.findMany({
+					where: {
+						connectionId: c.id,
+						id: { not: entry.id },
+						remoteKey: { not: null },
+					},
+					select: { remoteKey: true },
+				});
 				if (
 					desired &&
 					remote.some(
 						(record) =>
-							equivalent(desired, record) ||
-							(isListRecord(desired) &&
-								record.kind === desired.kind &&
-								record.title === desired.title),
+							!peers.some((peer) => peer.remoteKey === record.key) &&
+							(equivalent(desired, record) ||
+								(isListRecord(desired) &&
+									record.kind === desired.kind &&
+									record.title === desired.title)),
 					)
 				)
 					throw new BadRequestException(
@@ -1586,7 +1593,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					where: { id: entry.id },
 					data: { pending: Prisma.DbNull },
 				});
-			throw new Error(SOURCE_CHANGED);
+			throw new Error(
+				unconfirmedCreate(entry)
+					? "The source changed while Trakt creation was unconfirmed. Check Trakt before choosing a version."
+					: SOURCE_CHANGED,
+			);
 		}
 		if (
 			pending &&
@@ -1696,12 +1707,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				);
 			}
 		}
-		if (
-			unconfirmedCreate(entry) &&
-			desired &&
-			["list", "note", "review"].includes(desired.kind) &&
-			!remote
-		)
+		if (unconfirmedCreate(entry) && desired && !remote)
 			throw new Error(
 				`We couldn’t confirm whether Trakt created this ${desired.kind === "list" ? "List" : desired.kind === "note" ? "Note" : "Review"}. Sync will check again automatically.`,
 			);

@@ -1197,6 +1197,74 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(localRecords).toEqual([]);
 		expect(remoteRecords).toEqual([]);
 	});
+	it("recovers an uncertain List without treating an already-linked same-name List as its copy", async () => {
+		localRecords = [curated("list:first", ["12"])];
+		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		await configureLists("outbound");
+		await tick();
+		localRecords.push(curated("list:second", ["13"]));
+		remoteApi.write.mockRejectedValueOnce(
+			new Error("Request never reached Trakt"),
+		);
+		await tick();
+		let entry = await db.traktSyncEntry.findFirstOrThrow({
+			where: { connection: { userDid }, localKey: "list:second" },
+		});
+		// Initial same-name pairing needs an explicit source choice before export.
+		await service.resolve(userDid, entry.id, { action: "opnshelf" });
+		await tick();
+		entry = await db.traktSyncEntry.findUniqueOrThrow({
+			where: { id: entry.id },
+		});
+		expect(entry.pending).not.toBeNull();
+		await service.resolve(userDid, entry.id, { action: "retry" });
+		await tick();
+		await service.resolve(userDid, entry.id, {
+			action: "opnshelf",
+			confirmedTraktMissing: true,
+		});
+		await tick();
+		expect(remoteRecords).toHaveLength(2);
+		expect(listValue(remoteRecords[0]).items.map((r) => r.mediaId)).toEqual([
+			"12",
+		]);
+		expect((await service.issues(userDid, {})).total).toBe(0);
+	});
+	it.each(["watchlist", "rating"] as const)(
+		"retries an interrupted %s after a local edit without a missing-copy acknowledgement",
+		async (kind) => {
+			localRecords = [
+				kind === "watchlist"
+					? curated("watchlist:local", ["12"], "watchlist")
+					: { ...watch("rating:local"), kind: "rating", value: 7 },
+			];
+			if (kind === "watchlist") await configureLists("outbound", "watchlist");
+			else await configure("all", "outbound");
+			remoteApi.write.mockRejectedValueOnce(new Error("Request interrupted"));
+			await tick();
+			const entry = await db.traktSyncEntry.findFirstOrThrow({
+				where: { connection: { userDid }, kind },
+			});
+			expect(entry.pending).not.toBeNull();
+			localRecords[0] =
+				kind === "watchlist"
+					? curated("watchlist:local", ["13"], "watchlist")
+					: { ...localRecords[0], value: 9 };
+			await tick();
+			expect((await service.issues(userDid, {})).items[0].recovery).toBe(
+				"choose",
+			);
+			expect(
+				(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+					.pending,
+			).toBeNull();
+			await service.resolve(userDid, entry.id, { action: "retry" });
+			await tick();
+			expect(remoteRecords).toHaveLength(1);
+			expect(remoteRecords[0].value).toBe(localRecords[0].value);
+			expect((await service.issues(userDid, {})).total).toBe(0);
+		},
+	);
 	it("reports an overdue provider retry as queued instead of waiting", async () => {
 		await configure();
 		await db.traktSyncConnection.updateMany({

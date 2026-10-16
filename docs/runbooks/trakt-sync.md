@@ -206,7 +206,11 @@ intents rather than turning Retry into a duplicate creation.
 Provider delays show a date and time. Once the delay expires, status is queued;
 a stale provider error no longer leaves the connection shown as waiting.
 Repeated Sync requests join the running operation rather than requesting an
-additional remote read.
+additional remote read. The manual missing-copy confirmation applies only to
+new custom Lists, Notes and Reviews. Watchlist, Favorites, Watch and Rating
+updates retain their existing retry behavior. Recovery ignores remote copies
+already claimed by another sync entry, so a linked List with the same name
+does not block a separate unconfirmed List.
 
 | Flow | Web | Mobile |
 | --- | --- | --- |
