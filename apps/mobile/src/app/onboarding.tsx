@@ -446,9 +446,12 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 
 	useEffect(() => {
 		if (!settings) return;
-		// "US" is the column default, so during onboarding it means "never
-		// picked" far more often than "picked the US" — keep the device guess.
-		if (settings.watchCountry !== "US") setCountry(settings.watchCountry);
+		// "US" is the column default, so treat it as unset during onboarding.
+		setCountry(
+			settings.watchCountry === "US"
+				? guessWatchCountry(settings.timezone)
+				: settings.watchCountry,
+		);
 		setTimezone(settings.timezone);
 	}, [settings]);
 

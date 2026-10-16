@@ -603,7 +603,9 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 	useEffect(() => {
 		if (!settings) return;
 		setCountry(
-			resolveOnboardingCountry(settings.watchCountry, guessWatchCountry),
+			resolveOnboardingCountry(settings.watchCountry, () =>
+				guessWatchCountry(settings.timezone),
+			),
 		);
 		setTimezone(settings.timezone);
 	}, [settings]);
