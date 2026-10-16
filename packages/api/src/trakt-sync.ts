@@ -1,4 +1,5 @@
 import type {
+	SyncIssueDto,
 	SyncResolveDto,
 	SyncSettingsDto,
 	SyncStatusDto,
@@ -122,4 +123,39 @@ export function bringsTraktWatches(
 			sync.watches &&
 			sync.direction !== "outbound",
 	);
+}
+
+/** Older servers omit structured recovery fields; keep uncertain writes safe during rollout. */
+export function traktIssueRecovery(
+	item: SyncIssueDto,
+): "verify" | "choose" | "retry" {
+	if (item.recovery) return item.recovery;
+	if (/outcome of creating .* is unknown/i.test(item.issue)) return "verify";
+	return item.opnshelf && item.trakt ? "choose" : "retry";
+}
+export const TRAKT_UNCONFIRMED_CHOICE_COPY =
+	"Check your Trakt account first. If this item is missing, choosing Opnshelf sends the current version to Trakt once, even if sync is now inbound. Choosing Trakt deletes the Opnshelf version. An earlier request could still complete and create a duplicate.";
+export const TRAKT_MISSING_CONFIRMATION =
+	"I checked Trakt and confirmed this item is missing.";
+
+export function traktSyncActionLabel(status: SyncStatusDto): string {
+	return status.syncState === "running"
+		? "Syncing with Trakt…"
+		: status.syncState === "queued"
+			? "Sync queued"
+			: status.syncState === "waiting"
+				? "Waiting to retry"
+				: "Sync now";
+}
+
+export function traktSyncStateMessage(status: SyncStatusDto): string | null {
+	if (status.syncState === "running")
+		return "Syncing with Trakt. You can keep using Opnshelf.";
+	if (status.syncState === "queued")
+		return "Your sync is queued. You can leave this page.";
+	if (status.syncState === "waiting")
+		return status.nextCheckAt
+			? `Sync will retry automatically at ${new Date(status.nextCheckAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}.`
+			: "Sync will retry automatically.";
+	return null;
 }

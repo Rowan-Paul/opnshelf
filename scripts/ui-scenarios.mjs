@@ -25,6 +25,7 @@ export const scenarios = [
 	"large-text",
 	"trakt-sync-catch-up",
 	"trakt-sync-lists",
+ "trakt-sync-recovery",
 ];
 function sample(schema, seen = new Set()) {
 	if (!schema) return {};
@@ -51,7 +52,10 @@ export function createScenarioServer(initial = "normal") {
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = false;
+		completed = false,
+ fixtureSyncState = "idle",
+ fixtureIssue = true,
+ fixtureIgnored = false;
 	const settings = {
 		...sample(spec.components.schemas.UserSettingsDto),
 		timezone: "Europe/Amsterdam",
@@ -124,6 +128,9 @@ export function createScenarioServer(initial = "normal") {
 				return;
 			}
 			scenario = body.scenario;
+ fixtureSyncState = "idle";
+ fixtureIssue = true;
+ fixtureIgnored = false;
 			authorized = !["sheet-overlap", "delayed-auth"].includes(scenario);
 			completed = false;
 			json({ scenario });
@@ -281,21 +288,40 @@ export function createScenarioServer(initial = "normal") {
 			});
 			return;
 		}
+		if (url.pathname === "/trakt-sync/action" && req.method === "POST") {
+			fixtureSyncState = "running";
+			json({}); return;
+		}
+		if (url.pathname === "/trakt-sync/issues" && scenario === "trakt-sync-recovery") {
+			const visible = fixtureIssue && fixtureIgnored === (url.searchParams.get("view") === "ignored");
+			json({ page: 1, pageSize: 20, total: visible ? 1 : 0, totalPages: 1, items: visible ? [{ id: "uncertain", kind: "list", recovery: "verify", traktState: "unknown", ignored: fixtureIgnored, issue: "The outcome of creating this Trakt List is unknown.", opnshelf: { key: "list:fixture", kind: "list", title: "Weekend films", displayValue: "2 items", mediaType: "list", mediaId: null, season: 0, episode: 0 }, candidates: [] }] : [] }); return;
+		}
+		if (url.pathname === "/trakt-sync/issues/uncertain" && req.method === "POST" && scenario === "trakt-sync-recovery") {
+			if (body.action === "ignore") fixtureIgnored = true;
+ else if (body.action === "undo") fixtureIgnored = false;
+ else fixtureIssue = false;
+ json({}); return;
+		}
 		if (url.pathname === "/trakt-sync") {
 			json(
-				["trakt-sync-catch-up", "trakt-sync-lists"].includes(scenario)
+				["trakt-sync-catch-up", "trakt-sync-lists", "trakt-sync-recovery"].includes(scenario)
 					? {
 							...sample(spec.components.schemas.SyncStatusDto),
 							configured: true,
 							status: scenario === "trakt-sync-lists" ? "paused" : "active",
 							username: "fixture",
+ syncState: fixtureSyncState,
+ publicationConsent: true,
+ listPublicationConsent: true,
+ needsAttention: scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored ? 1 : 0,
+ ignored: scenario === "trakt-sync-recovery" && fixtureIssue && fixtureIgnored ? 1 : 0,
 							direction: "inbound",
 							watches: true,
 							ratings: true,
 							lists: scenario === "trakt-sync-lists",
 							watchlist: scenario === "trakt-sync-lists",
 							historyScope: "all",
-							remaining: scenario === "trakt-sync-lists" ? 0 : 15,
+							remaining: scenario === "trakt-sync-catch-up" ? 15 : 0,
 							progress: 40,
 						}
 					: { configured: false, connected: false },
@@ -319,7 +345,23 @@ export function createScenarioServer(initial = "normal") {
 			});
 			return;
 		}
-		const operation = spec.paths[url.pathname]?.[req.method.toLowerCase()];
+		if (url.pathname === "/shows/tmdb/1399") {
+			json({ ...sample(spec.components.schemas.TMDBShowDetailDto), id: 1399, name: "Local fixture show", overview: "A synthetic show for checking season navigation.", first_air_date: "2020-01-01", number_of_episodes: 2, number_of_seasons: 1, seasons: [{ id: 1, season_number: 1, name: "Season 1", episode_count: 2 }], credits: { cast: [], crew: [], cast_total: 0, crew_total: 0 } }); return;
+		}
+		if (url.pathname === "/shows/tmdb/1399/season/1") {
+			json({ ...sample(spec.components.schemas.TMDBSeasonDetailDto), id: 1, name: "Season 1", season_number: 1, overview: "Two fixture episodes", episodes: [1, 2].map(number => ({ id: number, name: `Episode ${number}`, episode_number: number, season_number: 1, air_date: "2020-01-01", overview: "Fixture episode", runtime: 30, vote_average: 7, vote_count: 1, crew: [], guest_stars: [] })) }); return;
+		}
+		if (url.pathname === "/shows/tmdb/1399/season/1/episode/1") {
+			json({ ...sample(spec.components.schemas.TMDBEpisodeDto), id: 1, name: "Episode 1", season_number: 1, episode_number: 1, air_date: "2020-01-01", runtime: 30, overview: "A fixture episode with a full guest cast.", crew: [], guest_stars: Array.from({ length: 8 }, (_, index) => ({ id: index + 1, name: `Guest ${index + 1}`, character: `Character ${index + 1}` })) }); return;
+		}
+		if (decodeURIComponent(url.pathname) === `/users/${user.did}/shelf`) {
+			json({ ...sample(spec.components.schemas.ShelfResponseDto), page: 1, pageSize: 20, total: 2, totalPages: 1, hasPreviousPage: false, hasNextPage: false, items: [1, 2].map(index => ({ id: `fixture-${index}`, type: "movie", movieId: String(index), title: `Fixture film ${index}`, watchCount: 1, watchedDate: `2026-10-${index === 1 ? "15" : "14"}T12:00:00.000Z`, createdAt: "2026-10-15T12:00:00.000Z" })) }); return;
+		}
+		if (url.pathname === "/users/synthetic.test/profile") {
+			json({ ...sample(spec.components.schemas.PublicUserProfileDto), ...user, watchesPublic: true }); return;
+		}
+		const route = Object.keys(spec.paths).find(path => path.split("/").length === url.pathname.split("/").length && path.split("/").every((part, index) => part.startsWith("{") || part === url.pathname.split("/")[index]));
+		const operation = spec.paths[route]?.[req.method.toLowerCase()];
 		if (operation) {
 			const response = operation.responses["200"] || operation.responses["201"];
 			json(sample(response?.content?.["application/json"]?.schema));

@@ -1,6 +1,10 @@
-import { contentValue, isContentRecord } from "./content-value";
+import {
+	contentValue,
+	isContentRecord,
+	validateOutboundContent,
+} from "./content-value";
 import { TID } from "@atproto/common";
-import { encodeList, listValue, memberKey } from "./list-value";
+import { encodeList, listValue, memberKey, validateList } from "./list-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
 import { watchOperation } from "../privacy/watch-operation";
 import {
@@ -54,12 +58,29 @@ import type {
 	SyncStatusDto,
 } from "./trakt-sync.dto";
 
+const SOURCE_CHANGED =
+	"The source changed during an interrupted transfer. Choose which version to keep.";
 const json = (v: SyncRecord | null) =>
 	v === null ? Prisma.DbNull : (v as unknown as Prisma.InputJsonValue);
 const records = (v: unknown): SyncRecord[] =>
 	Array.isArray(v)
 		? v.map(readRecord).filter((r): r is SyncRecord => r !== null)
 		: [];
+// An absent remote record is not proof that a non-idempotent POST failed.
+const unconfirmedCreate = (
+	entry: Pick<TraktSyncEntry, "kind" | "pending" | "remoteKey">,
+) => {
+	const pending = entry.pending as {
+		direction?: string;
+		previous?: unknown;
+	} | null;
+	return Boolean(
+		["list", "note", "review"].includes(entry.kind) &&
+			pending?.direction === "push" &&
+			!entry.remoteKey &&
+			!pending.previous,
+	);
+};
 const display = (r: SyncRecord | null) =>
 	r
 		? {
@@ -204,6 +225,17 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			: [];
 		return {
 			configured: this.configured,
+			syncState:
+				c?.leaseUntil && c.leaseUntil > new Date()
+					? "running"
+					: c?.status !== "active"
+						? "idle"
+						: c.lastError && c.nextRunAt > new Date()
+							? "waiting"
+							: c.nextRunAt <= new Date()
+								? "queued"
+								: "idle",
+			nextCheckAt: c?.nextRunAt.toISOString(),
 			status:
 				c?.status === "active" && !c.initialised
 					? "preparing"
@@ -549,6 +581,31 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		action: "pause" | "resume" | "sync" | "disconnect",
 	) {
 		let c = await this.requireConnection(userDid);
+		if (action === "sync") {
+			if (c.lastError && c.nextRunAt > new Date()) return this.status(userDid);
+			if (!c.accessToken || c.status === "reconnect")
+				throw new BadRequestException("Reconnect Trakt first.");
+			if (!c.initialised && !c.publicationConsent && c.direction !== "outbound")
+				throw new BadRequestException("Choose your sync settings first.");
+			// Repeated requests join the current run. The conditional update also
+			// covers a worker claiming the lease after this request read the row.
+			// This only schedules work; the worker still takes the shared account lock.
+			// Joining an active run deliberately does not enqueue another remote read.
+			await this.prisma.traktSyncConnection.updateMany({
+				where: {
+					id: c.id,
+					status: c.status,
+					OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }],
+				},
+				data: {
+					status: "active",
+					nextRunAt: new Date(),
+					remoteReadAt: null,
+					lastError: null,
+				},
+			});
+			return this.status(userDid);
+		}
 		await this.locked(c, async () => {
 			c = await this.prisma.traktSyncConnection.findUniqueOrThrow({
 				where: { id: c.id },
@@ -592,7 +649,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					data: {
 						status: action === "pause" ? "paused" : "active",
 						nextRunAt: new Date(),
-						...(action === "sync" ? { remoteReadAt: null } : {}),
 					},
 				});
 			}
@@ -722,6 +778,33 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			e.linked = e.eligible;
 		}
 		for (const e of entries) {
+			if (!e.pending || !isContentRecord(e) || e.remoteKey) continue;
+			const intent = e.pending as { direction?: string; desired?: unknown };
+			const desired = readRecord(intent.desired);
+			if (intent.direction !== "push" || !desired) continue;
+			const current = local.find((r) => r.key === e.localKey);
+			const possible = remote.filter(
+				(r) =>
+					!r.problem &&
+					equivalent(desired, r) &&
+					!entries.some((other) => other.remoteKey === r.key),
+			);
+			const intents = entries.filter(
+				(other) =>
+					other.pending &&
+					(other.pending as { direction?: string }).direction === "push" &&
+					equivalent(
+						desired,
+						readRecord((other.pending as { desired?: unknown }).desired),
+					),
+			);
+			if (!current || possible.length !== 1 || intents.length !== 1) continue;
+			await this.complete(e, desired, possible[0]);
+			e.remoteKey = possible[0].key;
+			e.pending = null;
+			e.linked = true;
+		}
+		for (const e of entries) {
 			if (!e.pending || !isListRecord(e)) continue;
 			const intent = e.pending as { direction: string; desired?: unknown };
 			const desired = readRecord(intent.desired);
@@ -732,6 +815,16 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					r.title === desired.title &&
 					!entries.some((other) => other.remoteKey === r.key),
 			);
+			if (possible.length === 1 && equivalent(desired, possible[0])) {
+				const current = local.find((r) => r.key === e.localKey) ?? null;
+				if (current && equivalent(current, desired)) {
+					await this.complete(e, current, possible[0]);
+					e.remoteKey = possible[0].key;
+					e.pending = null;
+					e.linked = true;
+					continue;
+				}
+			}
 			if (possible.length === 1) {
 				e.remoteKey = possible[0].key;
 				await this.prisma.traktSyncEntry.update({
@@ -878,7 +971,18 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				const r = mapped.get(e.remoteKey ?? "") ?? null;
 				const source =
 					l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
+				const uncertain = unconfirmedCreate(e);
 				return {
+					recovery: uncertain
+						? ("verify" as const)
+						: (l && r) || e.linked || e.issue === SOURCE_CHANGED
+							? ("choose" as const)
+							: ("retry" as const),
+					traktState: r
+						? ("present" as const)
+						: uncertain
+							? ("unknown" as const)
+							: ("missing" as const),
 					id: e.id,
 					kind: e.kind,
 					issue: e.issue ?? "",
@@ -908,6 +1012,46 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				where: { id, connectionId: c.id },
 			});
 			if (!entry) throw new NotFoundException("Sync item not found.");
+			const resolvingUnconfirmed =
+				unconfirmedCreate(entry) && ["trakt", "opnshelf"].includes(dto.action);
+			if (resolvingUnconfirmed && !dto.confirmedTraktMissing)
+				throw new BadRequestException(
+					"Check Trakt before replacing an unconfirmed transfer.",
+				);
+			if (resolvingUnconfirmed) {
+				// Recheck before discarding the original intent: it may have completed
+				// since the User checked Trakt or opened the confirmation.
+				if (c.lastError && c.nextRunAt > new Date())
+					throw new BadRequestException(
+						"Wait for the scheduled Trakt retry before resolving this transfer.",
+					);
+				const desired = readRecord(
+					(entry.pending as { desired?: unknown }).desired,
+				);
+				const remote = await this.api.snapshot(await this.token(c), c);
+				const peers = await this.prisma.traktSyncEntry.findMany({
+					where: {
+						connectionId: c.id,
+						id: { not: entry.id },
+						remoteKey: { not: null },
+					},
+					select: { remoteKey: true },
+				});
+				if (
+					desired &&
+					remote.some(
+						(record) =>
+							!peers.some((peer) => peer.remoteKey === record.key) &&
+							(equivalent(desired, record) ||
+								(isListRecord(desired) &&
+									record.kind === desired.kind &&
+									record.title === desired.title)),
+					)
+				)
+					throw new BadRequestException(
+						"Trakt has a possible copy. Check again to reconcile it before choosing a version.",
+					);
+			}
 			if (
 				dto.allRatings &&
 				(entry.kind !== "rating" || !["trakt", "opnshelf"].includes(dto.action))
@@ -1320,6 +1464,17 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			} catch (error) {
 				if (
 					error instanceof TraktSyncError &&
+					error.status >= 400 &&
+					error.status < 500 &&
+					![408, 499].includes(error.status) &&
+					!entry.remoteKey
+				)
+					await this.prisma.traktSyncEntry.update({
+						where: { id: entry.id },
+						data: { pending: Prisma.DbNull },
+					});
+				if (
+					error instanceof TraktSyncError &&
 					[401, 429].includes(error.status)
 				)
 					throw error;
@@ -1433,12 +1588,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			fingerprint(source) !==
 				fingerprint(pending.source === undefined ? desired : pending.source)
 		) {
-			await this.prisma.traktSyncEntry.update({
-				where: { id: entry.id },
-				data: { pending: Prisma.DbNull },
-			});
+			if (!unconfirmedCreate(entry))
+				await this.prisma.traktSyncEntry.update({
+					where: { id: entry.id },
+					data: { pending: Prisma.DbNull },
+				});
 			throw new Error(
-				"The source changed during an interrupted transfer. Choose which version to keep.",
+				unconfirmedCreate(entry)
+					? "The source changed while Trakt creation was unconfirmed. Check Trakt before choosing a version."
+					: SOURCE_CHANGED,
 			);
 		}
 		if (
@@ -1455,6 +1613,26 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			throw new Error(
 				"Trakt changed during an interrupted transfer. Choose which version to keep.",
 			);
+		}
+		if (direction === "push" && desired && isContentRecord(desired)) {
+			try {
+				validateOutboundContent(desired);
+			} catch (error) {
+				if (pending)
+					await this.prisma.traktSyncEntry.update({
+						where: { id: entry.id },
+						data: { pending: Prisma.DbNull },
+					});
+				throw error;
+			}
+		}
+		if (!pending && desired && isListRecord(desired)) {
+			const value = listValue(desired);
+			validateList(value);
+			if (value.items.some((item) => item.notes.length > 500))
+				throw new Error(
+					"A List note exceeds Trakt's 500-character limit. No text was truncated.",
+				);
 		}
 		if (!pending)
 			await this.prisma.traktSyncEntry.update({
@@ -1529,15 +1707,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				);
 			}
 		}
-		if (
-			pending &&
-			desired &&
-			["list", "note", "review"].includes(desired.kind) &&
-			!remote &&
-			!entry.remoteKey
-		)
+		if (unconfirmedCreate(entry) && desired && !remote)
 			throw new Error(
-				`The outcome of creating this Trakt ${desired.kind === "list" ? "List" : desired.kind === "note" ? "Note" : "Review"} is unknown. Check Trakt, then choose a version before retrying.`,
+				`We couldn’t confirm whether Trakt created this ${desired.kind === "list" ? "List" : desired.kind === "note" ? "Note" : "Review"}. Sync will check again automatically.`,
 			);
 		if (previous && (desired === null || desired.kind === "watch"))
 			await this.api.write(token, previous, true);

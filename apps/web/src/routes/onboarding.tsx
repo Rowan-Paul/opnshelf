@@ -44,6 +44,13 @@ import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktMark } from "#/components/TraktMark";
 import { TraktImport } from "#/components/trakt/TraktImport";
 import { SyncSettings } from "#/components/trakt/TraktSyncManager";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -810,6 +817,7 @@ function TraktStep({
 	onImportStarted: () => void;
 	importExists: boolean;
 }) {
+	const [importOpen, setImportOpen] = useState(importExists);
 	const queryClient = useQueryClient();
 	// Trakt authorization returns here with ?connection=connected|cancelled|failed.
 	const [connection] = useState(() =>
@@ -970,15 +978,24 @@ function TraktStep({
 					</p>
 				)}
 			</div>
-			<details className="group mt-5" open={importExists}>
-				<summary className="cursor-pointer list-none text-(--foreground-muted) text-sm hover:text-(--foreground)">
-					Rather not log in?{" "}
-					<span className="underline underline-offset-4">
-						Import your public history once
-					</span>
-				</summary>
-				<div className="mt-4">{importPanel}</div>
-			</details>
+			<button
+				type="button"
+				className="mt-5 text-sm underline underline-offset-4"
+				onClick={() => setImportOpen(true)}
+			>
+				Import your public history once
+			</button>
+			<Dialog open={importOpen} onOpenChange={setImportOpen}>
+				<DialogContent className="max-h-[85dvh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>Import once</DialogTitle>
+						<DialogDescription>
+							Copy your public Trakt history by username.
+						</DialogDescription>
+					</DialogHeader>
+					{importPanel}
+				</DialogContent>
+			</Dialog>
 			<div className="mt-5 flex justify-end">
 				<button
 					type="button"

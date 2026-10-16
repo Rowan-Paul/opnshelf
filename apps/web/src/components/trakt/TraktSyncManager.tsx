@@ -7,14 +7,18 @@ import {
 	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
 	TRAKT_LIST_COPY,
+	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
 	TRAKT_SYNC_DIRECTIONS,
 	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
+	TRAKT_UNCONFIRMED_CHOICE_COPY,
 	traktError,
+	traktIssueRecovery,
 	traktResolutionLabel,
 	traktSettings,
+	traktSyncActionLabel,
 	traktSyncControllerActionMutation,
 	traktSyncControllerConfigureMutation,
 	traktSyncControllerConnectMutation,
@@ -22,6 +26,7 @@ import {
 	traktSyncControllerMatchesOptions,
 	traktSyncControllerResolveMutation,
 	traktSyncControllerStatus,
+	traktSyncStateMessage,
 } from "@opnshelf/api";
 import {
 	keepPreviousData,
@@ -47,6 +52,7 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
+	DialogTrigger,
 } from "#/components/ui/dialog";
 
 const rootKey = ["trakt-sync"];
@@ -215,8 +221,7 @@ export function TraktSyncManager({
 							<button
 								type="button"
 								className="btn btn-secondary"
-								onClick={() => setEditing(!editing)}
-								aria-expanded={editing}
+								onClick={() => setEditing(true)}
 							>
 								<Settings2 className="size-4" />
 								Sync settings
@@ -234,14 +239,19 @@ export function TraktSyncManager({
 									type="button"
 									className="btn btn-secondary max-w-full whitespace-normal"
 									disabled={
-										action.isPending && action.variables?.body.action === name
+										(action.isPending &&
+											action.variables?.body.action === name) ||
+										(name === "sync" &&
+											["running", "queued", "waiting"].includes(
+												data.syncState ?? "",
+											))
 									}
 									onClick={() => action.mutate({ body: { action: name } })}
 								>
 									{action.isPending && action.variables?.body.action === name
 										? "Saving…"
 										: name === "sync"
-											? "Sync now"
+											? traktSyncActionLabel(data)
 											: name === "pause"
 												? "Pause"
 												: "Resume"}
@@ -266,35 +276,48 @@ export function TraktSyncManager({
 					</button>
 				)}
 				{disconnect && (
-					<div className="mt-4 space-y-3 rounded-xl border border-(--border) p-4">
-						<p>
-							Disconnecting stops sync and revokes access. Transferred records
-							remain on both services. Reconnecting this account catches up
-							previously linked records.
-						</p>
-						<div className="flex flex-wrap gap-2">
-							<button
-								type="button"
-								className="btn btn-secondary max-w-full whitespace-normal"
-								onClick={() => setDisconnect(false)}
-							>
-								Cancel
-							</button>
-							<button
-								type="button"
-								className="btn btn-primary max-w-full whitespace-normal"
-								disabled={action.isPending}
-								onClick={() =>
-									action.mutate(
-										{ body: { action: "disconnect" } },
-										{ onSuccess: () => setDisconnect(false) },
-									)
-								}
-							>
-								Confirm disconnect
-							</button>
-						</div>
-					</div>
+					<Dialog open onOpenChange={setDisconnect}>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>Disconnect Trakt?</DialogTitle>
+								<DialogDescription>
+									Disconnecting stops sync and revokes access. Transferred
+									records remain on both services. Reconnecting this account
+									catches up previously linked records.
+								</DialogDescription>
+							</DialogHeader>
+							<div className="flex flex-wrap gap-2">
+								<button
+									type="button"
+									className="btn btn-secondary max-w-full whitespace-normal"
+									onClick={() => setDisconnect(false)}
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									className="btn btn-primary max-w-full whitespace-normal"
+									disabled={action.isPending}
+									onClick={() =>
+										action.mutate(
+											{ body: { action: "disconnect" } },
+											{ onSuccess: () => setDisconnect(false) },
+										)
+									}
+								>
+									Confirm disconnect
+								</button>
+							</div>
+						</DialogContent>
+					</Dialog>
+				)}
+				{traktSyncStateMessage(data) && (
+					<output
+						aria-live="polite"
+						className="mt-4 block text-(--foreground-muted) text-sm"
+					>
+						{traktSyncStateMessage(data)}
+					</output>
 				)}
 				{(connectionFailed ||
 					connect.error ||
@@ -311,11 +334,11 @@ export function TraktSyncManager({
 					</p>
 				)}
 			</section>
-			{connected && (editing || needsSetup) && (
+			{connected && needsSetup && !editing && (
 				<SyncSettings
 					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.notes}:${data.library}:${data.reviews}:${data.contentPublicationConsent}:${data.listPublicationConsent}:${data.historyScope}`}
 					status={data}
-					className={embedded ? "border-(--border) border-t pt-5" : card}
+					className={card}
 					onSaved={() => {
 						setEditing(false);
 						return refresh();
@@ -323,6 +346,28 @@ export function TraktSyncManager({
 					onCancel={editing ? () => setEditing(false) : undefined}
 				/>
 			)}
+			<Dialog open={editing} onOpenChange={setEditing}>
+				<DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
+					<DialogHeader>
+						<DialogTitle>Sync settings</DialogTitle>
+						<DialogDescription>
+							Choose what moves between Trakt and Opnshelf.
+						</DialogDescription>
+					</DialogHeader>
+					{editing && (
+						<SyncSettings
+							status={data}
+							className="space-y-5"
+							showHeading={false}
+							onSaved={() => {
+								setEditing(false);
+								return refresh();
+							}}
+							onCancel={() => setEditing(false)}
+						/>
+					)}
+				</DialogContent>
+			</Dialog>
 			{embedded && (data.status === "disconnected" || data.importStatus) && (
 				<Link
 					to="/trakt-import"
@@ -427,39 +472,41 @@ export function SyncSettings({
 							type="button"
 							aria-expanded={choosingRecords}
 							className="shrink-0 rounded-md py-1 font-medium text-(--accent) text-sm underline-offset-4 hover:underline focus-visible:outline-2"
-							onClick={() => setChoosingRecords(!choosingRecords)}
+							onClick={() => setChoosingRecords(true)}
 						>
-							{choosingRecords ? "Done" : "Choose records"}
+							Choose records
 						</button>
 					</div>
-					{choosingRecords && (
-						<fieldset className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-(--border) p-3">
-							<legend className="sr-only">Records</legend>
-							{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
-								<label
-									key={value}
-									className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm hover:bg-(--background)"
-								>
-									<input
-										type="checkbox"
-										checked={settings[value] ?? false}
-										onChange={(event) =>
-											setSettings({
-												...settings,
-												[value]: event.target.checked,
-											})
-										}
-									/>
-									{label}
-								</label>
-							))}
-						</fieldset>
-					)}
-					{(requiresListConsent || requiresContentConsent) && (
-						<details className="text-(--foreground-muted) text-sm">
-							<summary className="cursor-pointer py-1">
-								About these records
-							</summary>
+					<Dialog open={choosingRecords} onOpenChange={setChoosingRecords}>
+						<DialogContent className="max-h-[85dvh] overflow-y-auto">
+							<DialogHeader>
+								<DialogTitle>Choose records</DialogTitle>
+								<DialogDescription>
+									Select what moves between Opnshelf and Trakt. Save your
+									settings to apply these choices.
+								</DialogDescription>
+							</DialogHeader>
+							<fieldset className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-(--border) p-3">
+								<legend className="sr-only">Records</legend>
+								{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
+									<label
+										key={value}
+										className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm hover:bg-(--background)"
+									>
+										<input
+											type="checkbox"
+											checked={settings[value] ?? false}
+											onChange={(event) =>
+												setSettings({
+													...settings,
+													[value]: event.target.checked,
+												})
+											}
+										/>
+										{label}
+									</label>
+								))}
+							</fieldset>
 							<div className="space-y-2 pt-2 leading-relaxed">
 								{(settings.lists || settings.watchlist) && (
 									<p>{TRAKT_LIST_COPY}</p>
@@ -467,8 +514,15 @@ export function SyncSettings({
 								{settings.favorites && <p>{TRAKT_FAVORITES_COPY}</p>}
 								{requiresContentConsent && <p>{TRAKT_CONTENT_COPY}</p>}
 							</div>
-						</details>
-					)}
+							<button
+								type="button"
+								className="btn btn-secondary"
+								onClick={() => setChoosingRecords(false)}
+							>
+								Done
+							</button>
+						</DialogContent>
+					</Dialog>
 				</div>
 				<fieldset>
 					<legend className="mb-2 font-medium text-sm">Direction</legend>
@@ -720,8 +774,14 @@ export function SyncSettings({
 	);
 }
 
-function SyncIssues({ connected }: { connected: boolean }) {
-	const [view, setView] = useState<"attention" | "ignored">("attention");
+function SyncIssues({
+	connected,
+	view = "attention",
+}: {
+	connected: boolean;
+	view?: "attention" | "ignored";
+}) {
+	const [ignoredOpen, setIgnoredOpen] = useState(false);
 	const [page, setPage] = useState(1);
 	const result = useQuery({
 		queryKey: [...rootKey, "issues", view, page],
@@ -737,67 +797,83 @@ function SyncIssues({ connected }: { connected: boolean }) {
 		refetchInterval: 10_000,
 	});
 	return (
-		<section className="space-y-4">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h2 className="font-display font-semibold text-2xl">
-					{view === "attention" ? "Needs attention" : "Ignored"}
-				</h2>
-				<button
-					type="button"
-					className="btn btn-secondary max-w-full whitespace-normal"
-					onClick={() => {
-						setPage(1);
-						setView(view === "attention" ? "ignored" : "attention");
-					}}
-				>
-					{view === "attention" ? "View ignored" : "Needs attention"}
-				</button>
-			</div>
-			<p className="text-(--foreground-muted) text-sm">
-				Other records keep syncing while you resolve these items. Ignored items
-				are not counted as synced.
-			</p>
-			{!result.data && result.isPending && (
-				<div className={`${card} h-40 animate-pulse`} />
-			)}
-			{result.error && <p role="alert">{traktError(result.error)}</p>}
-			{result.data?.items.map((item) => (
-				<SyncIssue key={item.id} item={item} connected={connected} />
-			))}
-			{result.data?.total === 0 && (
-				<p className={`${card} text-(--foreground-muted)`}>
+		<Dialog open={ignoredOpen} onOpenChange={setIgnoredOpen}>
+			<section className="space-y-4">
+				{view === "attention" && (
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<h2 className="font-display font-semibold text-2xl">
+							Needs attention
+						</h2>
+						<DialogTrigger asChild>
+							<button
+								type="button"
+								className="btn btn-secondary max-w-full whitespace-normal"
+							>
+								View ignored
+							</button>
+						</DialogTrigger>
+					</div>
+				)}
+				<p className="text-(--foreground-muted) text-sm">
 					{view === "ignored"
-						? "No ignored items."
-						: "Nothing needs your attention."}
+						? "Ignored items aren’t synced. Restore an item to move it back to Needs attention."
+						: "Other records keep syncing while you resolve these items. Ignored items are not counted as synced."}
 				</p>
-			)}
-			{result.data && result.data.totalPages > 1 && (
-				<nav
-					aria-label="Sync issues pages"
-					className="flex items-center justify-between"
-				>
-					<button
-						className="btn btn-secondary max-w-full whitespace-normal"
-						type="button"
-						disabled={!result.data.hasPreviousPage || result.isPlaceholderData}
-						onClick={() => setPage(page - 1)}
+				{!result.data && result.isPending && (
+					<div className={`${card} h-40 animate-pulse`} />
+				)}
+				{result.error && <p role="alert">{traktError(result.error)}</p>}
+				{result.data?.items.map((item) => (
+					<SyncIssue key={item.id} item={item} connected={connected} />
+				))}
+				{result.data?.total === 0 && (
+					<p className={`${card} text-(--foreground-muted)`}>
+						{view === "ignored"
+							? "No ignored items."
+							: "Nothing needs your attention."}
+					</p>
+				)}
+				{result.data && result.data.totalPages > 1 && (
+					<nav
+						aria-label="Sync issues pages"
+						className="flex items-center justify-between"
 					>
-						Previous
-					</button>
-					<span>
-						Page {result.data.page} of {result.data.totalPages}
-					</span>
-					<button
-						className="btn btn-secondary max-w-full whitespace-normal"
-						type="button"
-						disabled={!result.data.hasNextPage || result.isPlaceholderData}
-						onClick={() => setPage(page + 1)}
-					>
-						Next
-					</button>
-				</nav>
-			)}
-		</section>
+						<button
+							className="btn btn-secondary max-w-full whitespace-normal"
+							type="button"
+							disabled={
+								!result.data.hasPreviousPage || result.isPlaceholderData
+							}
+							onClick={() => setPage(page - 1)}
+						>
+							Previous
+						</button>
+						<span>
+							Page {result.data.page} of {result.data.totalPages}
+						</span>
+						<button
+							className="btn btn-secondary max-w-full whitespace-normal"
+							type="button"
+							disabled={!result.data.hasNextPage || result.isPlaceholderData}
+							onClick={() => setPage(page + 1)}
+						>
+							Next
+						</button>
+					</nav>
+				)}
+				{view === "attention" && (
+					<DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-3xl">
+						<DialogHeader>
+							<DialogTitle>Ignored items</DialogTitle>
+							<DialogDescription>
+								Items you’ve set aside from Trakt Sync.
+							</DialogDescription>
+						</DialogHeader>
+						{ignoredOpen && <SyncIssues connected={connected} view="ignored" />}
+					</DialogContent>
+				)}
+			</section>
+		</Dialog>
 	);
 }
 
@@ -833,7 +909,11 @@ function SyncIssue({
 			<h3 className="font-semibold text-lg">
 				{item.opnshelf?.title ?? item.trakt?.title ?? "Removed record"}
 			</h3>
-			<p className="mt-2 text-(--foreground-muted) text-sm">{item.issue}</p>
+			<p className="mt-2 text-(--foreground-muted) text-sm">
+				{traktIssueRecovery(item) === "verify"
+					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again, or check your Trakt account before choosing a version."
+					: item.issue}
+			</p>
 			<dl className="my-4 grid grid-cols-2 gap-3">
 				{(["opnshelf", "trakt"] as const).map((name) => (
 					<div key={name} className="rounded-lg bg-(--background-subtle) p-3">
@@ -841,7 +921,10 @@ function SyncIssue({
 							{name === "trakt" ? "Trakt" : "Opnshelf"}
 						</dt>
 						<dd className="mt-1 break-words text-sm">
-							{item[name]?.displayValue ?? "Not present"}
+							{item[name]?.displayValue ??
+								(name === "trakt" && traktIssueRecovery(item) === "verify"
+									? "Not confirmed yet"
+									: "Not present")}
 						</dd>
 					</div>
 				))}
@@ -853,23 +936,32 @@ function SyncIssue({
 					disabled={mutation.isPending}
 					onClick={() => resolve({ action: "undo" })}
 				>
-					Undo ignore
+					Restore item
 				</button>
 			) : (
 				<div className="flex flex-wrap gap-2">
 					{connected &&
-						((item.opnshelf && item.trakt) ||
-							item.issue.includes("changed") ||
-							item.issue.includes("version")) &&
+						traktIssueRecovery(item) !== "retry" &&
 						(["trakt", "opnshelf"] as const).map((action) => (
 							<button
 								key={action}
 								type="button"
 								className="btn btn-secondary max-w-full whitespace-normal"
 								disabled={mutation.isPending}
-								onClick={() => setChoice({ action })}
+								onClick={() =>
+									setChoice({
+										action,
+										...(traktIssueRecovery(item) === "verify"
+											? { confirmedTraktMissing: false }
+											: {}),
+									})
+								}
 							>
-								{traktResolutionLabel(action, Boolean(item[action]))}
+								{traktIssueRecovery(item) === "verify"
+									? action === "opnshelf"
+										? "Send after checking Trakt…"
+										: "Remove from Opnshelf…"
+									: traktResolutionLabel(action, Boolean(item[action]))}
 							</button>
 						))}
 					{connected && (
@@ -879,7 +971,7 @@ function SyncIssue({
 							disabled={mutation.isPending}
 							onClick={() => resolve({ action: "retry" })}
 						>
-							Retry
+							{traktIssueRecovery(item) === "verify" ? "Check again" : "Retry"}
 						</button>
 					)}
 					<button
@@ -970,51 +1062,86 @@ function SyncIssue({
 					</form>
 				)}
 			{choice && (
-				<div className="mt-4 space-y-3 rounded-xl border border-(--accent) p-4">
-					<p>
-						{choice.action === "link"
-							? item.kind === "watch"
-								? "Confirm these represent the same viewing?"
-								: "Link these records?"
-							: choice.action === "match"
+				<Dialog
+					open
+					onOpenChange={(open) => {
+						if (!open) setChoice(null);
+					}}
+				>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>Confirm sync choice</DialogTitle>
+							<DialogDescription>
+								This choice applies to{" "}
+								{item.opnshelf?.title ?? item.trakt?.title ?? "this item"}.
+							</DialogDescription>
+						</DialogHeader>
+						<p>
+							{choice.action === "link"
 								? item.kind === "watch"
-									? "Use this title for this Trakt media identity and its Watch dates?"
-									: "Use this title for this Trakt item?"
-								: traktResolutionLabel(
-										choice.action,
-										Boolean(item[choice.action as "trakt" | "opnshelf"]),
-									)}
-					</p>
-					{item.kind === "rating" && (
-						<label className="flex gap-2 text-sm">
-							<input
-								type="checkbox"
-								checked={choice.allRatings ?? false}
-								onChange={(e) =>
-									setChoice({ ...choice, allRatings: e.target.checked })
+									? "Confirm these represent the same viewing?"
+									: "Link these records?"
+								: choice.action === "match"
+									? item.kind === "watch"
+										? "Use this title for this Trakt media identity and its Watch dates?"
+										: "Use this title for this Trakt item?"
+									: traktResolutionLabel(
+											choice.action,
+											Boolean(item[choice.action as "trakt" | "opnshelf"]),
+										)}
+						</p>
+						{choice.confirmedTraktMissing !== undefined && (
+							<div className="space-y-3">
+								<p>{TRAKT_UNCONFIRMED_CHOICE_COPY}</p>
+								<label className="flex gap-2 text-sm">
+									<input
+										type="checkbox"
+										checked={choice.confirmedTraktMissing}
+										onChange={(event) =>
+											setChoice({
+												...choice,
+												confirmedTraktMissing: event.target.checked,
+											})
+										}
+									/>
+									{TRAKT_MISSING_CONFIRMATION}
+								</label>
+							</div>
+						)}
+						{item.kind === "rating" && (
+							<label className="flex gap-2 text-sm">
+								<input
+									type="checkbox"
+									checked={choice.allRatings ?? false}
+									onChange={(e) =>
+										setChoice({ ...choice, allRatings: e.target.checked })
+									}
+								/>
+								Apply to all Rating conflicts
+							</label>
+						)}
+						{mutation.error && <p role="alert">{traktError(mutation.error)}</p>}
+						<div className="flex flex-wrap gap-2">
+							<button
+								type="button"
+								className="btn btn-secondary max-w-full whitespace-normal"
+								onClick={() => setChoice(null)}
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								className="btn btn-primary max-w-full whitespace-normal"
+								disabled={
+									mutation.isPending || choice.confirmedTraktMissing === false
 								}
-							/>
-							Apply to all Rating conflicts
-						</label>
-					)}
-					<div className="flex flex-wrap gap-2">
-						<button
-							type="button"
-							className="btn btn-secondary max-w-full whitespace-normal"
-							onClick={() => setChoice(null)}
-						>
-							Cancel
-						</button>
-						<button
-							type="button"
-							className="btn btn-primary max-w-full whitespace-normal"
-							disabled={mutation.isPending}
-							onClick={() => resolve(choice)}
-						>
-							{mutation.isPending ? "Saving…" : "Confirm choice"}
-						</button>
-					</div>
-				</div>
+								onClick={() => resolve(choice)}
+							>
+								{mutation.isPending ? "Saving…" : "Confirm choice"}
+							</button>
+						</div>
+					</DialogContent>
+				</Dialog>
 			)}
 			{mutation.error && (
 				<p className="mt-3" role="alert">

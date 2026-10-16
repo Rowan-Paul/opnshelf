@@ -173,5 +173,73 @@ with a Blog Mirror are held: manage that Review in Opnshelf or use its version.
 
 All writes are confirmed against authoritative repository/API reads. Failed pages
 never imply deletions, and interrupted remote creation retains the returned ID.
-If creation may have succeeded but no ID was received, check Trakt and explicitly
-link or choose a source before retrying; do not blindly create another item.
+If creation may have succeeded but no ID was received, sync checks for a unique,
+unchanged matching result before adopting it. Unconfirmed creation offers Check
+again without a destructive version choice; it never blindly creates another item.
+
+
+## Recovery and management UX (October 16)
+
+Repeated Sync requests return the current queued/running/waiting state instead
+of rejecting a busy worker. The clients show the state and preserve scheduled
+provider backoff. Structured recovery and remote-presence fields distinguish
+unconfirmed writes from known missing versions.
+
+Export validation runs before saving a pending content intent. In particular,
+Reviews below Trakt's 200-word minimum remain in Opnshelf with an actionable
+validation message. Existing invalid pending intents are cleared when validation
+proves that export cannot be attempted. Known rejected creations can retry;
+network failures retain their uncertain intent. A uniquely matching complete
+remote List, Note or Review is adopted after a lost acknowledgement. For Notes
+and Reviews, a local edit retains the original intent so the original remote
+copy can be linked before applying the edit. Ambiguous results remain unresolved.
+
+Check again never resends an unconfirmed creation. The User can choose a version
+after checking Trakt and explicitly confirming the item is missing. The server
+rechecks Trakt before accepting that confirmation and rejects it if a possible
+copy has appeared. Choosing Opnshelf sends the current version once, even after
+a direction change; choosing the missing Trakt version explicitly deletes the
+Opnshelf copy. Both clients explain the duplicate risk from a delayed original
+request and require a separate confirmation. Local edits preserve uncertain
+intents rather than turning Retry into a duplicate creation.
+
+Provider delays show a date and time. Once the delay expires, status is queued;
+a stale provider error no longer leaves the connection shown as waiting.
+Repeated Sync requests join the running operation rather than requesting an
+additional remote read. The manual missing-copy confirmation applies only to
+new custom Lists, Notes and Reviews. Watchlist, Favorites, Library, Watch and Rating
+updates retain their existing retry behavior. Recovery ignores remote copies
+already claimed by another sync entry, so a linked List with the same name
+does not block a separate unconfirmed List.
+
+| Flow | Web | Mobile |
+| --- | --- | --- |
+| Manage sync | Dedicated Trakt Sync page with dialogs | Dedicated screen with native sheets |
+| Record choices | Dialog, retaining all eight scopes | Native sheet, retaining all eight scopes |
+| Confirm settings or conflict choice | Dialog | Native sheet |
+| Ignored items | Separate dialog; Restore item returns it to Needs attention | Separate sheet with Done and Restore item |
+| Initial Import | Onboarding dialog | Existing separate onboarding step |
+
+The new Review implementation from PR #494 is preserved. Local persisted tests
+cover short Reviews, repair of legacy invalid intents, rejected creation,
+interrupted acknowledgements and prevention of missing-version deletion.
+Authoritative live Trakt acceptance remains separate; no live provider writes
+were performed.
+
+Verification on the publication worktree: `pnpm typecheck`, `pnpm check`,
+`pnpm --filter web run test` (511 passed, 1 skipped),
+`pnpm --filter mobile run test` (439 passed, 1 skipped), and
+`TRAKT_SYNC_TEST_DATABASE_URL=<disposable-local-database> pnpm --filter backend run test --maxWorkers=2`
+(1,402 passed, 22 skipped). Also passed `pnpm --filter backend run build`,
+`pnpm generate:api`, `pnpm --filter @opnshelf/api exec tsc --noEmit`,
+`pnpm test:scripts` (13 passed), and `git diff --check`. Only the optional fixtures
+remain skipped; existing Backend lint warnings remain.
+
+Web `/trakt-sync` was inspected on the latest branch with synthetic data,
+including separate ignored items and record choices. The default iOS development build from this worktree passed with zero errors.
+iPhone 18 Pro / iOS 27.0 verified the eight-scope record-picker sheet and its
+Done/Cancel transitions; the installed native fingerprint matches this checkout.
+Prior Android and iOS checks covered sync state, safe recovery and modal dismissal. The local iOS cache repair
+is documented in [development sessions](development-sessions.md#ios-expomodulesjsi-cache-after-changing-xcode).
+Mobile's version is unchanged: publishing uses the OTA route, and no release or
+hosted migration was performed.

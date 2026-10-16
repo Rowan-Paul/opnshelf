@@ -54,3 +54,27 @@ test("local scenarios reset failures and never proxy unknown or cross-origin req
 		await new Promise((resolve) => server.close(resolve));
 	}
 });
+
+ test("Trakt recovery fixtures show verification and running state, and reset cleanly", async () => {
+ const server = createScenarioServer("trakt-sync-recovery");
+ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+ const base = `http://127.0.0.1:${server.address().port}`;
+ const read = async path => (await fetch(`${base}${path}`)).json();
+ try {
+  assert.equal((await read("/trakt-sync/issues")).items[0].traktState, "unknown");
+  await fetch(`${base}/trakt-sync/issues/uncertain`, { method: "POST", body: '{"action":"ignore"}' });
+  assert.equal((await read("/trakt-sync/issues?view=attention")).total, 0);
+  assert.equal((await read("/trakt-sync/issues?view=ignored")).items[0].ignored, true);
+  assert.equal((await read("/trakt-sync")).ignored, 1);
+  await fetch(`${base}/trakt-sync/issues/uncertain`, { method: "POST", body: '{"action":"undo"}' });
+  assert.equal((await read("/trakt-sync/issues?view=ignored")).total, 0);
+  assert.equal((await read("/trakt-sync/issues?view=attention")).total, 1);
+  await fetch(`${base}/trakt-sync/action`, { method: "POST", body: '{"action":"sync"}' });
+  assert.equal((await read("/trakt-sync")).syncState, "running");
+  await fetch(`${base}/trakt-sync/issues/uncertain`, { method: "POST", body: '{"action":"retry"}' });
+  assert.equal((await read("/trakt-sync/issues")).total, 0);
+  await fetch(`${base}/__scenario`, { method: "POST", body: '{"scenario":"trakt-sync-recovery"}' });
+  assert.equal((await read("/trakt-sync")).syncState, "idle");
+  assert.equal((await read("/trakt-sync/issues")).total, 1);
+ } finally { await new Promise(resolve => server.close(resolve)); }
+ });
