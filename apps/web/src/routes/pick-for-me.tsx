@@ -1,5 +1,4 @@
 import {
-	authControllerMeOptions,
 	choosePickerItem,
 	getWatchProviderLink,
 	initialPickerFilters,
@@ -27,7 +26,7 @@ import { useEffect, useState } from "react";
 import { UpNextServiceFilter } from "#/components/UpNextServiceFilter";
 import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
-import { currentUserQueryOptions } from "#/lib/auth-query";
+import { currentUserQueryOptions, fetchCurrentUser } from "#/lib/auth-query";
 
 export const Route = createFileRoute("/pick-for-me")({
 	validateSearch: (
@@ -44,8 +43,8 @@ export const Route = createFileRoute("/pick-for-me")({
 	beforeLoad: async ({ context }) => {
 		if (!ssrCanResolveSession()) return;
 		try {
-			const user = await context.queryClient.fetchQuery({
-				...authControllerMeOptions(ssrAuthOptions()),
+			const user = await fetchCurrentUser(context.queryClient, {
+				...currentUserQueryOptions(ssrAuthOptions()),
 				staleTime: 0,
 			});
 			if (!user) throw redirect({ to: "/login" });

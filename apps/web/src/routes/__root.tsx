@@ -19,7 +19,7 @@ import { Toaster } from "#/components/ui/sonner";
 import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { APP_BANNER_SCRIPT } from "#/lib/app-banner";
 import { AuthProvider } from "#/lib/auth-context";
-import { currentUserQueryOptions } from "#/lib/auth-query";
+import { currentUserQueryOptions, fetchCurrentUser } from "#/lib/auth-query";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
 import { mayBeSignedIn, SIGNED_IN_HINT_QUERY_KEY } from "#/lib/session-hint";
 import {
@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 		let user: UserDto | null;
 		try {
-			user = await context.queryClient.fetchQuery(sessionQuery);
+			user = await fetchCurrentUser(context.queryClient, sessionQuery);
 		} catch {
 			// SSR cannot establish the session; keep the page available and let
 			// AuthProvider check again in the browser.

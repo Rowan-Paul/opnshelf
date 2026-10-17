@@ -3,6 +3,27 @@ import {
 	authControllerMeOptions,
 	isUnauthorizedError,
 } from "@opnshelf/api";
+import { type QueryClient, QueryObserver } from "@tanstack/react-query";
+
+export async function fetchCurrentUser(
+	queryClient: QueryClient,
+	options = currentUserQueryOptions(),
+) {
+	// A suspended route can disconnect AuthProvider while its guard still
+	// awaits this shared query. Keep an observer until that caller is done so
+	// unmount cancellation cannot reject the guard. Explicit cancellation and
+	// the session deadline still apply; no extra request is started here.
+	const observer = new QueryObserver(queryClient, {
+		...options,
+		enabled: false,
+	});
+	const unsubscribe = observer.subscribe(() => {});
+	try {
+		return await queryClient.fetchQuery(options);
+	} finally {
+		unsubscribe();
+	}
+}
 
 /** Longest the session check may hang before it counts as unavailable. */
 export const SESSION_CHECK_DEADLINE_MS = 10_000;
