@@ -204,7 +204,7 @@ The personal landing surface (dashboard): your shelf summary, up-next, and a sho
 _Avoid_: Dashboard (retired as a label — the canonical word is Home)
 
 **Prompt**:
-A dismissible card in the reserved slot on **Home** that asks for one optional action and renders nothing when it does not apply. Today there are two: resume a stalled **Trakt Import**, and leave an **AT Store Review**. At most one shows at a time, and dismissing any of them silences the slot for a few days.
+A dismissible card on **Home** that asks for one optional action and renders nothing when it does not apply. Examples include reading new **Release Notes**, resuming a stalled **Trakt Import**, and leaving an **AT Store Review**.
 _Avoid_: CTA (names a button, and every button on the site is one), Banner (that is the site-wide strip), notification, nag
 
 **Banner**:
