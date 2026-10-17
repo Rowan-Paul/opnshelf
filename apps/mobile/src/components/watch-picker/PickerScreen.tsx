@@ -370,14 +370,12 @@ function Picker({
 					<Button
 						label="Change filters"
 						variant="secondary"
-						onPress={() => {
-							if (router.canGoBack()) router.back();
-							else
-								router.replace({
-									pathname: "/pick-for-me",
-									params: { minutes: time, filters: JSON.stringify(filters) },
-								});
-						}}
+						onPress={() =>
+							router.dismissTo({
+								pathname: "/pick-for-me",
+								params: { minutes: time, filters: JSON.stringify(filters) },
+							})
+						}
 					/>
 					{query.isError && (
 						<View accessibilityRole="alert" className="gap-3">

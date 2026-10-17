@@ -9,6 +9,7 @@ import PickerScreen from "@/components/watch-picker/PickerScreen";
 const mocks = vi.hoisted(() => ({
 	params: {} as { minutes?: string; filters?: string },
 	push: vi.fn(),
+	dismissTo: vi.fn(),
 	back: vi.fn(),
 	canGoBack: vi.fn(() => true),
 	replace: vi.fn(),
@@ -44,6 +45,7 @@ vi.mock("expo-router", () => ({
 	useLocalSearchParams: () => mocks.params,
 	useRouter: () => ({
 		push: mocks.push,
+		dismissTo: mocks.dismissTo,
 		back: mocks.back,
 		canGoBack: mocks.canGoBack,
 		replace: mocks.replace,
@@ -122,6 +124,7 @@ beforeEach(() => {
 	mocks.params = {};
 	mocks.canGoBack.mockReturnValue(true);
 	mocks.push.mockClear();
+	mocks.dismissTo.mockClear();
 	mocks.back.mockClear();
 	mocks.replace.mockClear();
 	mocks.loading = false;
@@ -172,23 +175,32 @@ describe("Mobile picker session", () => {
 		await act(async () => button(view, "Reset skips").props.onPress());
 		expect(JSON.stringify(view.toJSON())).toContain("Tonight’s movie");
 		await act(async () => button(view, "Change filters").props.onPress());
-		expect(mocks.back).toHaveBeenCalledOnce();
+		expect(mocks.dismissTo).toHaveBeenCalledWith({
+			pathname: "/pick-for-me",
+			params: mocks.params,
+		});
+		expect(mocks.back).not.toHaveBeenCalled();
 		await act(async () => view.unmount());
 	});
-	it("returns a directly opened result to its configured filters and time", async () => {
+	it.each([
+		true,
+		false,
+	])("returns a direct result to its configured filters even with unrelated back history (%s)", async (canGoBack) => {
 		const filters = JSON.stringify({
 			type: "movie",
 			progress: "both",
 			genre: "Drama",
 		});
 		mocks.params = { minutes: "150", filters };
-		mocks.canGoBack.mockReturnValue(false);
+		mocks.canGoBack.mockReturnValue(canGoBack);
 		const view = await renderPicker(true);
 		await act(async () => button(view, "Change filters").props.onPress());
-		expect(mocks.replace).toHaveBeenCalledWith({
+		expect(mocks.dismissTo).toHaveBeenCalledWith({
 			pathname: "/pick-for-me",
 			params: { minutes: "150", filters },
 		});
+		expect(mocks.back).not.toHaveBeenCalled();
+		expect(mocks.replace).not.toHaveBeenCalled();
 		await act(async () => view.unmount());
 	});
 	it("keeps loading and retry states on the result screen", async () => {
