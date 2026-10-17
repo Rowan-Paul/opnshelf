@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AtStoreReviewPrompt } from "@/components/home/atstore-review-prompt";
 import { FriendsActivity } from "@/components/home/FriendsActivity";
 import { NotificationPrompt } from "@/components/home/NotificationPrompt";
+import { ReleaseNotePrompt } from "@/components/home/release-note-prompt";
 import { ShelfPreviewRow } from "@/components/home/ShelfPreviewRow";
 import { UpcomingReleases } from "@/components/home/UpcomingReleases";
 import { UpNextPreview } from "@/components/home/UpNextPreview";
@@ -80,6 +81,7 @@ export default function HomeScreen() {
 			>
 				<View className="gap-8 px-4">
 					<WelcomeHeader user={user} />
+					<ReleaseNotePrompt />
 					<TraktHomePrompt />
 					<NotificationPrompt />
 

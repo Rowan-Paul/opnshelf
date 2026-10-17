@@ -11,6 +11,7 @@ import { useSyncExternalStore } from "react";
 export const DISMISSED_KEY = "opnshelf.mobile-app.dismissed";
 const COOLDOWN_KEY = "opnshelf.prompt-cooldown-until";
 const COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000;
+const COOLDOWN_EVENT = "opnshelf:prompt-cooldown";
 
 function read(key: string): string | null {
 	try {
@@ -44,11 +45,30 @@ export function dismissMobileApp(): void {
  *  saying no to one card does not immediately produce the next one. */
 export function startPromptCooldown(): void {
 	write(COOLDOWN_KEY, String(Date.now() + COOLDOWN_MS));
+	window.dispatchEvent(new Event(COOLDOWN_EVENT));
 }
 
 export function isPromptCooldownActive(): boolean {
 	const until = read(COOLDOWN_KEY);
 	return until ? Number(until) > Date.now() : false;
+}
+
+function subscribeCooldown(listener: () => void): () => void {
+	window.addEventListener(COOLDOWN_EVENT, listener);
+	window.addEventListener("storage", listener);
+	return () => {
+		window.removeEventListener(COOLDOWN_EVENT, listener);
+		window.removeEventListener("storage", listener);
+	};
+}
+
+/** Keep every Home slot in sync with dismissals in this tab and other tabs. */
+export function usePromptCooldownActive(): boolean {
+	return useSyncExternalStore(
+		subscribeCooldown,
+		isPromptCooldownActive,
+		isServer,
+	);
 }
 
 /**
