@@ -507,7 +507,7 @@ function EpisodeDetailPage() {
 					</div>
 
 					{/* Right Column - Sidebar */}
-					<div className="space-y-6">
+					<div className="min-w-0 space-y-6">
 						<FriendWatchers
 							mediaType="show"
 							mediaId={`${showId}:season:${seasonNum}:episode:${episodeNum}`}
