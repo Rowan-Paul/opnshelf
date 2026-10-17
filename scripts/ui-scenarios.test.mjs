@@ -2,6 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createScenarioServer } from "./ui-scenarios.mjs";
 
+test("issue fixtures exercise populated layouts and picker empty results without onboarding", async () => {
+ const server = createScenarioServer("issue-fixes");
+ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+ const base = `http://127.0.0.1:${server.address().port}`;
+ const read = async path => (await fetch(`${base}${path}`)).json();
+ try {
+  assert.equal((await read("/auth/me")).needsOnboarding, false);
+  assert.equal((await read("/watch-picker?minutes=120")).items.length, 2);
+  assert.equal((await read("/watch-picker?minutes=120&type=movie")).items.length, 1);
+  assert.equal((await read("/watch-picker?minutes=15")).items.length, 0);
+  assert.equal((await read("/shows/user/synthetic.test/up-next")).items.length, 6);
+  assert.equal((await read("/trakt-sync")).reviews, true);
+ } finally { await new Promise(resolve => server.close(resolve)); }
+});
+
 test("local scenarios reset failures and never proxy unknown or cross-origin requests", async () => {
 	const server = createScenarioServer("failed-settings");
 	await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
