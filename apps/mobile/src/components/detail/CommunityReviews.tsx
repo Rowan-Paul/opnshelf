@@ -18,11 +18,12 @@ import {
 	User,
 } from "lucide-react-native";
 import { type RefObject, useEffect, useRef, useState } from "react";
+import type { ViewInstance } from "react-native";
 import {
 	ActivityIndicator,
 	type LayoutChangeEvent,
 	Pressable,
-	type ScrollView,
+	type ScrollViewInstance,
 	Share,
 	View,
 } from "react-native";
@@ -328,9 +329,9 @@ export function CommunityReviews({
 	mediaWebUrl,
 }: CommunityReviewsProps & {
 	/** Parent ScrollView, so a deep-linked review can be scrolled into view. */
-	scrollRef?: RefObject<ScrollView | null>;
+	scrollRef?: RefObject<ScrollViewInstance | null>;
 	/** Virtualized parents own scrolling to their review footer. */
-	onFocusReview?: (section: View) => void;
+	onFocusReview?: (section: ViewInstance) => void;
 	/** Review to scroll to + highlight (from a `?reviewId=` deep link). */
 	focusReviewId?: string;
 	/**
@@ -397,7 +398,7 @@ export function CommunityReviews({
 		if (focusReviewId) pinUntil.current = Date.now() + 2500;
 	}, [focusReviewId]);
 
-	const sectionRef = useRef<View>(null);
+	const sectionRef = useRef<ViewInstance>(null);
 	const handleSectionLayout = (e: LayoutChangeEvent) => {
 		sectionY.current = e.nativeEvent.layout.y;
 		if (hasFocusReview && Date.now() < pinUntil.current) {

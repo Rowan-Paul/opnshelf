@@ -42,7 +42,7 @@ export function MilkdownWebView({
 	onFocus,
 }: MilkdownWebViewProps) {
 	const { scheme } = useTheme();
-	const webRef = useRef<WebView>(null);
+	const webRef = useRef<WebView<object>>(null);
 	const ready = useRef(false);
 	const pendingFocus = useRef(false);
 	const focus = () => {
@@ -90,7 +90,7 @@ export function MilkdownWebView({
 
 	return (
 		<View className="min-h-48 flex-1 overflow-hidden rounded-lg border border-border">
-			<WebView
+			<WebView<object>
 				ref={webRef}
 				originWhitelist={[editorOrigin]}
 				source={{ uri }}

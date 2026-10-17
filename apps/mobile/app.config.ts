@@ -59,7 +59,7 @@ const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.6.4",
+	version: "1.7.0",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -143,26 +143,17 @@ const config: ExpoConfig = {
 	plugins: [
 		"expo-router",
 		...(googleSignInPlugin ? [googleSignInPlugin] : []),
-		// Expo leaves R8 off, so a release bundle shipped 51 MB of unminified DEX
-		// and Play scored its App optimization "Low" (1% obfuscation, no shrink).
-		// Turning R8 and resource shrinking on is what lifts that score; each
-		// native library ships its own consumer keep rules, so no extra ProGuard
+		// Keep R8 and resource shrinking enabled. A previous release shipped
+		// 51 MB of unminified DEX and Play scored its App optimization "Low".
+		// Native libraries ship their own consumer keep rules, so no extra ProGuard
 		// rules are needed until a release build proves otherwise (RELEASING.md,
 		// "Gotchas"). Native config: needs a store build, not an OTA update.
-		// `enableSceneSupport` opts iOS into the UIScene life cycle: Xcode 27
-		// builds against the iOS 26 SDK, and UIKit refuses to launch an app built
-		// with that SDK unless it adopts scenes. Expo backported the opt-in to
-		// 57.0.23 (https://expo.fyi/ios-scene-lifecycle); SDK 58 makes it the
-		// default. Native config: needs a store build, not an OTA update.
 		[
 			"expo-build-properties",
 			{
 				android: {
 					enableMinifyInReleaseBuilds: true,
 					enableShrinkResourcesInReleaseBuilds: true,
-				},
-				ios: {
-					enableSceneSupport: true,
 				},
 			},
 		],
