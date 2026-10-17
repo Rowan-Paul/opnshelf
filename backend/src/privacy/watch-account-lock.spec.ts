@@ -102,3 +102,67 @@ it("lets background work yield immediately when the account is busy", async () =
 	expect(operation).not.toHaveBeenCalled();
 	expect(f.client.release).toHaveBeenCalledWith(false);
 });
+
+it("holds the privacy barrier while releasing the local write mutex before remote work", async () => {
+	const f = fixture();
+	f.client.query.mockResolvedValue({ rows: [{ acquired: true }] });
+	await f.lock.run(
+		"did:plc:owner",
+		async (_signal, withWrite) => {
+			await withWrite(async () => "snapshot");
+			expect(f.client.query.mock.calls.map(([query]) => query.text)).toEqual([
+				"SELECT pg_try_advisory_lock_shared(hashtextextended($1, 252)) AS acquired",
+				"SELECT pg_try_advisory_lock(hashtextextended($1, 253)) AS acquired",
+				"SELECT pg_advisory_unlock(hashtextextended($1, 253))",
+			]);
+		},
+		{ mode: "shared" },
+	);
+	expect(f.pool.connect).toHaveBeenCalledOnce();
+	expect(f.client.query.mock.calls.at(-1)?.[0].text).toBe(
+		"SELECT pg_advisory_unlock_shared(hashtextextended($1, 252))",
+	);
+});
+
+it("releases the shared barrier if another local write owns the mutex", async () => {
+	const f = fixture();
+	f.client.query
+		.mockResolvedValueOnce({ rows: [{ acquired: true }] })
+		.mockResolvedValueOnce({ rows: [{ acquired: false }] })
+		.mockResolvedValue({ rows: [{}] });
+	const operation = vi.fn();
+	await expect(
+		f.lock.run("did:plc:owner", operation, { mode: "write" }),
+	).rejects.toBeInstanceOf(WatchAccountBusyError);
+	expect(operation).not.toHaveBeenCalled();
+	expect(f.client.query.mock.calls.at(-1)?.[0].text).toBe(
+		"SELECT pg_advisory_unlock_shared(hashtextextended($1, 252))",
+	);
+	expect(f.client.release).toHaveBeenCalledWith(false);
+});
+
+it("aborts and discards the session if the scoped write mutex cannot be released", async () => {
+	const f = fixture();
+	f.client.query
+		.mockResolvedValueOnce({ rows: [{ acquired: true }] })
+		.mockResolvedValueOnce({ rows: [{ acquired: true }] })
+		.mockRejectedValueOnce(new Error("unlock timeout"));
+	const remote = vi.fn();
+	await expect(
+		f.lock.run(
+			"did:plc:owner",
+			async (signal, withWrite) => {
+				try {
+					await withWrite(async () => "snapshot");
+				} catch (error) {
+					expect(signal.aborted).toBe(true);
+					throw error;
+				}
+				await remote();
+			},
+			{ mode: "shared" },
+		),
+	).rejects.toThrow("unlock timeout");
+	expect(remote).not.toHaveBeenCalled();
+	expect(f.client.release).toHaveBeenCalledWith(true);
+});

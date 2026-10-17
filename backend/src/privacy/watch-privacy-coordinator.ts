@@ -91,7 +91,7 @@ export class WatchPrivacyCoordinator {
 				signal.throwIfAborted();
 				return result;
 			},
-			{ wait: true },
+			{ wait: true, mode: "write" },
 		);
 	}
 

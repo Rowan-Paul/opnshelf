@@ -8,6 +8,8 @@ import { encodeList, listValue, memberKey, validateList } from "./list-value";
 import {
 	WatchAccountBusyError,
 	WatchAccountLock,
+	type WithAccountWrite,
+	type AccountLockMode,
 } from "../privacy/watch-account-lock";
 import { watchOperation } from "../privacy/watch-operation";
 import {
@@ -1252,39 +1254,44 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	private async publicWatchOperation<T>(
 		c: TraktSyncConnection,
-		work: (signal: AbortSignal) => Promise<T>,
+		work: (signal: AbortSignal, withWrite: WithAccountWrite) => Promise<T>,
+		mode: AccountLockMode = "exclusive",
 	): Promise<T> {
-		return this.watchLocks.run(c.userDid, async (signal) => {
-			const deleting = await this.prisma.backgroundJob.findFirst({
-				where: {
-					userDid: c.userDid,
-					type: "account_deletion",
-					status: { in: ["queued", "running", "waiting_retry"] },
-				},
-			});
-			if (deleting)
-				throw new SyncAccountUnavailable("Account deletion is in progress.");
+		return this.watchLocks.run(
+			c.userDid,
+			async (signal, withWrite) => {
+				const deleting = await this.prisma.backgroundJob.findFirst({
+					where: {
+						userDid: c.userDid,
+						type: "account_deletion",
+						status: { in: ["queued", "running", "waiting_retry"] },
+					},
+				});
+				if (deleting)
+					throw new SyncAccountUnavailable("Account deletion is in progress.");
 
-			const owner = await this.prisma.user.findUniqueOrThrow({
-				where: { did: c.userDid },
-				select: {
-					watchVisibility: true,
-					watchPrivacyMigration: { select: { jobId: true } },
-				},
-			});
-			if (
-				c.watches &&
-				(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
-			)
-				throw new SyncAccountUnavailable(
-					"Watch sync requires a public Shelf with no privacy change in progress. Disable Watch sync to continue with Ratings.",
+				const owner = await this.prisma.user.findUniqueOrThrow({
+					where: { did: c.userDid },
+					select: {
+						watchVisibility: true,
+						watchPrivacyMigration: { select: { jobId: true } },
+					},
+				});
+				if (
+					c.watches &&
+					(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
+				)
+					throw new SyncAccountUnavailable(
+						"Watch sync requires a public Shelf with no privacy change in progress. Disable Watch sync to continue with Ratings.",
+					);
+				signal.throwIfAborted();
+				return watchOperation.run(
+					{ did: c.userDid, visibility: "public", signal },
+					() => work(signal, withWrite),
 				);
-			signal.throwIfAborted();
-			return watchOperation.run(
-				{ did: c.userDid, visibility: "public", signal },
-				() => work(signal),
-			);
-		});
+			},
+			{ mode },
+		);
 	}
 
 	private async process(c: TraktSyncConnection, lease: () => Promise<void>) {
@@ -1487,41 +1494,48 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			await lease();
 			try {
-				const transferred = await this.publicWatchOperation(c, async () => {
-					await lease();
-					const current = await this.local.snapshot(c.userDid, {
-						lists: entry.kind === "list",
-						watchlist: entry.kind === "watchlist",
-						favorites: entry.kind === "favorites",
-						notes: entry.kind === "note",
-						library: entry.kind === "library",
-						reviews: entry.kind === "review",
-					});
-					// A manual edit can land between transfers. Replan next tick rather
-					// than duplicate a new Watch or export/delete a stale local version.
-					if (
-						!sameLocalSnapshot(
-							local.filter((record) => record.kind === entry.kind),
-							current.filter((record) => record.kind === entry.kind),
-						)
-					)
-						return false;
-					await lease();
-					const result = await this.transfer(
-						c,
-						entry,
-						l,
-						r,
-						remote,
-						token,
-						decision,
-					);
-					if (decision === "pull") {
-						local = local.filter((record) => record.key !== l?.key);
-						if (result) local.push(result);
-					}
-					return true;
-				});
+				const transferred = await this.publicWatchOperation(
+					c,
+					async (_signal, withWrite) => {
+						const currentMatches = await withWrite(async () => {
+							await lease();
+							const current = await this.local.snapshot(c.userDid, {
+								lists: entry.kind === "list",
+								watchlist: entry.kind === "watchlist",
+								favorites: entry.kind === "favorites",
+								notes: entry.kind === "note",
+								library: entry.kind === "library",
+								reviews: entry.kind === "review",
+							});
+							// A manual edit can land between transfers. Replan next tick rather
+							// than duplicate a new Watch or export/delete a stale local version.
+							return sameLocalSnapshot(
+								local.filter((record) => record.kind === entry.kind),
+								current.filter((record) => record.kind === entry.kind),
+							);
+						});
+						if (!currentMatches) return false;
+						// Outbound Trakt I/O holds only the privacy/deletion barrier.
+						// Manual Watches can proceed; complete() records the pinned old
+						// source so a concurrent edit is reconciled on the next tick.
+						await lease();
+						const result = await this.transfer(
+							c,
+							entry,
+							l,
+							r,
+							remote,
+							token,
+							decision,
+						);
+						if (decision === "pull") {
+							local = local.filter((record) => record.key !== l?.key);
+							if (result) local.push(result);
+						}
+						return true;
+					},
+					decision === "push" ? "shared" : "exclusive",
+				);
 				if (!transferred) {
 					stopped = true;
 					remaining++;
