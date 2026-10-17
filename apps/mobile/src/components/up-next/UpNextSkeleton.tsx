@@ -1,4 +1,5 @@
 import { View } from "react-native";
+import { UpNextEpisodeGrid } from "./UpNextEpisodeGrid";
 
 /** Compact rows reused by review/activity placeholders. */
 export function UpNextRowSkeleton({
@@ -38,7 +39,7 @@ export function UpNextSkeleton({
 			</View>
 		);
 	return (
-		<View className="gap-3">
+		<UpNextEpisodeGrid>
 			{Array.from({ length: rows }, (_, i) => (
 				<View
 					// biome-ignore lint/suspicious/noArrayIndexKey: static placeholder rows never reorder
@@ -64,6 +65,6 @@ export function UpNextSkeleton({
 					</View>
 				</View>
 			))}
-		</View>
+		</UpNextEpisodeGrid>
 	);
 }

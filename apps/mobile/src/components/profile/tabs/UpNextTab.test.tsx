@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Button } from "@/components/ui/button";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextEpisodeCard } from "@/components/up-next/UpNextEpisodeCard";
+import { UpNextEpisodeGrid } from "@/components/up-next/UpNextEpisodeGrid";
 import { UpNextServiceFilter } from "@/components/up-next/UpNextServiceFilter";
 import { UpNextTab } from "./UpNextTab";
 
@@ -92,9 +93,11 @@ describe("Up Next filter navigation", () => {
 		const hub = renderTab("demo.test");
 		expect(hub.root.findAllByType(UpNextCard)).toHaveLength(1);
 		expect(hub.root.findAllByType(UpNextEpisodeCard)).toHaveLength(0);
+		expect(hub.root.findAllByType(UpNextEpisodeGrid)).toHaveLength(0);
 		act(() => hub.unmount());
 		const full = renderTab();
 		expect(full.root.findAllByType(UpNextEpisodeCard)).toHaveLength(1);
+		expect(full.root.findAllByType(UpNextEpisodeGrid)).toHaveLength(1);
 		expect(full.root.findAllByType(UpNextCard)).toHaveLength(0);
 		act(() => full.unmount());
 	});
