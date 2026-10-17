@@ -1,7 +1,7 @@
 import { authControllerMe } from "@opnshelf/api";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
-import { currentUserQueryOptions } from "./auth-query";
+import { currentUserQueryOptions, fetchCurrentUser } from "./auth-query";
 
 vi.mock("@opnshelf/api", () => ({
 	authControllerMe: vi.fn(),
@@ -9,6 +9,61 @@ vi.mock("@opnshelf/api", () => ({
 	isUnauthorizedError: (e: { status?: number }) => e.status === 401,
 }));
 describe("current user query", () => {
+	it("keeps a route's session check alive when the auth provider disconnects", async () => {
+		const me = vi.mocked(authControllerMe);
+		const user = { did: "benchmark" };
+		let finish!: () => void;
+		me.mockImplementationOnce(async () => {
+			await new Promise<void>((resolve) => {
+				finish = resolve;
+			});
+			return { data: user } as Awaited<
+				ReturnType<typeof authControllerMe<true>>
+			>;
+		});
+		const client = new QueryClient();
+		const options = currentUserQueryOptions();
+		const provider = new QueryObserver(client, options);
+		const unsubscribe = provider.subscribe(() => {});
+		const guarded = fetchCurrentUser(client, options);
+		// React disconnects provider subscriptions while a route is suspended.
+		unsubscribe();
+		finish();
+		await expect(guarded).resolves.toEqual(user);
+		expect(
+			client
+				.getQueryCache()
+				.find({ queryKey: options.queryKey })
+				?.getObserversCount(),
+		).toBe(0);
+		client.clear();
+		me.mockReset();
+	});
+	it.each([
+		"cancel",
+		"clear",
+	])("still aborts a guarded check on explicit %s", async (action) => {
+		const me = vi.mocked(authControllerMe);
+		let signal: AbortSignal | undefined;
+		me.mockImplementationOnce(
+			(options) =>
+				new Promise<never>((_, reject) => {
+					signal = options?.signal ?? undefined;
+					signal?.addEventListener("abort", () => reject(signal?.reason));
+				}),
+		);
+		const client = new QueryClient();
+		const options = currentUserQueryOptions();
+		const guarded = fetchCurrentUser(client, options);
+		const rejected = expect(guarded).rejects.toThrow("CancelledError");
+		if (action === "clear") client.clear();
+		else await client.cancelQueries({ queryKey: options.queryKey });
+		await rejected;
+		expect(signal?.aborted).toBe(true);
+		expect(client.getQueryData(options.queryKey)).toBeUndefined();
+		client.clear();
+		me.mockReset();
+	});
 	it("reuses auth for navigation and refreshes after invalidation", async () => {
 		const me = vi.mocked(authControllerMe);
 		me.mockResolvedValue({ data: { did: "benchmark" } } as Awaited<

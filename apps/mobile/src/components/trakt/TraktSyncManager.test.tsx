@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { TRAKT_CONTENT_COPY } from "@opnshelf/api";
 import { Modal, Pressable } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterAll, afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -291,6 +292,16 @@ it("opens record choices separately and retains changes when closed", () => {
 	expect(notes()).toHaveLength(0);
 	press("Choose records");
 	act(() => notes()[0].props.onValueChange(true));
+	const details = () =>
+		renderer.root.findAll(
+			(node) =>
+				node.type === "text" && node.props.children === TRAKT_CONTENT_COPY,
+		);
+	expect(details()).toHaveLength(0);
+	press("Sync details");
+	expect(details()).toHaveLength(1);
+	press("Hide sync details");
+	expect(details()).toHaveLength(0);
 	press("Done");
 	expect(notes()).toHaveLength(0);
 	expect(

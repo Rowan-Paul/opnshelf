@@ -2,6 +2,7 @@ import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
+import type { ScrollViewInstance } from "react-native";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
@@ -41,7 +42,7 @@ export default function MovieDetailScreen() {
 		name: string;
 		reviewId?: string;
 	}>();
-	const scrollRef = useRef<ScrollView>(null);
+	const scrollRef = useRef<ScrollViewInstance>(null);
 
 	const { data, isLoading, isError } = useQuery({
 		...moviesControllerGetMovieDetailsOptions({ path: { movieId: id } }),

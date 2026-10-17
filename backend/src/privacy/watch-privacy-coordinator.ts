@@ -60,35 +60,39 @@ export class WatchPrivacyCoordinator {
 		ownerDid: string,
 		operation: (visibility: WatchVisibility, signal: AbortSignal) => Promise<T>,
 	) {
-		return this.locks.run(ownerDid, async (lockSignal) => {
-			const signal = AbortSignal.any([
-				lockSignal,
-				AbortSignal.timeout(this.transactionTimeoutMs),
-			]);
-			const tx = this.prisma;
-			await this.requireNoDeletion(tx, ownerDid);
-			const user = await tx.user.findUnique({
-				where: { did: ownerDid },
-				select: {
-					watchVisibility: true,
-					watchPrivacyMigration: { select: { jobId: true } },
-				},
-			});
-			if (!user) throw new NotFoundException("Account not found");
-			if (user.watchPrivacyMigration)
-				throw new ConflictException(
-					"Watches are changing privacy. Resume or finish that change first.",
-				);
-			if (
-				user.watchVisibility !== "public" &&
-				user.watchVisibility !== "private"
-			)
-				throw new Error("Invalid Watch visibility");
-			signal.throwIfAborted();
-			const result = await operation(user.watchVisibility, signal);
-			signal.throwIfAborted();
-			return result;
-		});
+		return this.locks.run(
+			ownerDid,
+			async (lockSignal) => {
+				const signal = AbortSignal.any([
+					lockSignal,
+					AbortSignal.timeout(this.transactionTimeoutMs),
+				]);
+				const tx = this.prisma;
+				await this.requireNoDeletion(tx, ownerDid);
+				const user = await tx.user.findUnique({
+					where: { did: ownerDid },
+					select: {
+						watchVisibility: true,
+						watchPrivacyMigration: { select: { jobId: true } },
+					},
+				});
+				if (!user) throw new NotFoundException("Account not found");
+				if (user.watchPrivacyMigration)
+					throw new ConflictException(
+						"Watches are changing privacy. Resume or finish that change first.",
+					);
+				if (
+					user.watchVisibility !== "public" &&
+					user.watchVisibility !== "private"
+				)
+					throw new Error("Invalid Watch visibility");
+				signal.throwIfAborted();
+				const result = await operation(user.watchVisibility, signal);
+				signal.throwIfAborted();
+				return result;
+			},
+			{ wait: true, mode: "write" },
+		);
 	}
 
 	/** The caller must validate the OAuth grant, PDS support and publication

@@ -2,12 +2,13 @@ import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { StarOff, Trash2, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
+import type { ScrollViewInstance } from "react-native";
 import {
 	Modal,
 	Pressable,
 	ScrollView,
 	Switch,
-	type TextInput,
+	type TextInputInstance,
 	View,
 } from "react-native";
 import {
@@ -86,9 +87,9 @@ export function ReviewEditorSheet({
 	onClearRating,
 	isClearingRating = false,
 }: ReviewEditorSheetProps) {
-	const formRef = useRef<ScrollView>(null);
+	const formRef = useRef<ScrollViewInstance>(null);
 	const editorRef = useRef<MilkdownWebViewHandle>(null);
-	const titleRef = useRef<TextInput>(null);
+	const titleRef = useRef<TextInputInstance>(null);
 	const fieldOffsets = useRef({ title: 0, body: 0 });
 	const focusedField = useRef<"title" | "body" | null>(null);
 	const viewportHeight = useRef(0);

@@ -88,6 +88,13 @@ Privacy), migration-running (3/10 records), conflict (409), compact, large-text
 and trakt-sync-catch-up (Trakt Sync Banner at 40%).
 Open `/settings/privacy` to exercise scope dialogs, individual Lists and progress.
 
+The `issue-fixes` scenario starts with Onboarding complete, a configured Trakt
+connection with all record types selected, six Up Next shows and two picker
+choices. Use `/trakt-sync`, `/profile/synthetic.test/up-next` and `/pick-for-me`
+to verify the chooser and responsive layouts. Picker budgets below 45 minutes
+return no choices. Its synthetic titles use one public TMDB image for cache
+checks; only those image reads leave the local fixture stack.
+
 Web uses the synthetic account directly. On Mobile, connect the development
 client to this Metro first, then open the controller's `opnshelf://auth/complete?session=fixture-only`
 link. This development token works only on the local fixture. Never use that

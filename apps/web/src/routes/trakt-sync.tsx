@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { TraktSyncManager } from "#/components/trakt/TraktSyncManager";
 import { ssrAuthOptions } from "#/lib/api";
-import { currentUserQueryOptions } from "#/lib/auth-query";
+import { currentUserQueryOptions, fetchCurrentUser } from "#/lib/auth-query";
 
 export const Route = createFileRoute("/trakt-sync")({
 	// Only the browser receives the API's host-only session cookie.
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/trakt-sync")({
 			typeof search.connection === "string" ? search.connection : undefined,
 	}),
 	beforeLoad: async ({ context }) => {
-		const user = await context.queryClient.fetchQuery({
+		const user = await fetchCurrentUser(context.queryClient, {
 			...currentUserQueryOptions(ssrAuthOptions()),
 			// Recheck the signed-out placeholder hydrated from the root's SSR.
 			staleTime: 0,

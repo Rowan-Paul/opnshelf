@@ -4,9 +4,9 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
-import { router, useNavigation } from "expo-router";
+import { router, usePreventRemove } from "expo-router";
 import { Star } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
@@ -19,40 +19,36 @@ const PLATFORM = { platform: "mobile" } as const;
 
 export default function AtStoreReviewScreen() {
 	const queryClient = useQueryClient();
-	const navigation = useNavigation();
 	const toast = useToast();
 	const { showDialog } = useDialog();
 	const [rating, setRating] = useState<number | null>(null);
 	const [text, setText] = useState("");
 	const dirty = rating !== null || text.length > 0;
-	const allowClose = useRef(false);
+	const [allowClose, setAllowClose] = useState(false);
 
 	useEffect(() => {
 		posthog?.capture("atstore_review_composer_opened", PLATFORM);
 	}, []);
 
-	useEffect(
-		() =>
-			navigation.addListener("beforeRemove", (event) => {
-				if (!dirty || allowClose.current) return;
-				event.preventDefault();
-				showDialog({
-					title: "Discard this review?",
-					description: "Your rating and review text will not be saved.",
-					actions: [
-						{ label: "Keep editing" },
-						{
-							label: "Discard",
-							variant: "destructive",
-							onPress: () => {
-								allowClose.current = true;
-								navigation.dispatch(event.data.action);
-							},
+	const disablePrevention = usePreventRemove(
+		dirty && !allowClose,
+		({ repeat }) => {
+			showDialog({
+				title: "Discard this review?",
+				description: "Your rating and review text will not be saved.",
+				actions: [
+					{ label: "Keep editing" },
+					{
+						label: "Discard",
+						variant: "destructive",
+						onPress: () => {
+							setAllowClose(true);
+							repeat();
 						},
-					],
-				});
-			}),
-		[dirty, navigation, showDialog],
+					},
+				],
+			});
+		},
 	);
 
 	const publishMutation = useMutation({
@@ -70,33 +66,14 @@ export default function AtStoreReviewScreen() {
 				);
 			}
 			toast.success("Review published");
-			allowClose.current = true;
+			setAllowClose(true);
+			disablePrevention();
 			router.back();
 		},
 		onError: () => toast.error("Could not publish your review. Try again."),
 	});
 
-	const close = () => {
-		if (!dirty) {
-			router.back();
-			return;
-		}
-		showDialog({
-			title: "Discard this review?",
-			description: "Your rating and review text will not be saved.",
-			actions: [
-				{ label: "Keep editing" },
-				{
-					label: "Discard",
-					variant: "destructive",
-					onPress: () => {
-						allowClose.current = true;
-						router.back();
-					},
-				},
-			],
-		});
-	};
+	const close = () => router.back();
 
 	return (
 		<ScrollView

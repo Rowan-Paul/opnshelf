@@ -11,6 +11,14 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "http://127.0.0.1:3001",
         "POSTHOG_CLI_DRY_RUN": "true"
+      },
+      "node": "24.19.0",
+      "pnpm": "11.1.2",
+      "android": {
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-58"
+      },
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.1"
       }
     },
     "preview": {
@@ -26,13 +34,27 @@
         "POSTHOG_CLI_DRY_RUN": "true"
       },
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "image": "macos-tahoe-26.6-xcode-27.1"
+      },
+      "node": "24.19.0",
+      "pnpm": "11.1.2",
+      "android": {
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-58"
       }
     },
     "production": {
       "distribution": "store",
       "channel": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "node": "24.19.0",
+      "pnpm": "11.1.2",
+      "android": {
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-58"
+      },
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.1"
+      }
     }
   },
   "submit": {

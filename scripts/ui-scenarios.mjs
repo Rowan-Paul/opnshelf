@@ -25,6 +25,7 @@ export const scenarios = [
 	"large-text",
 	"trakt-sync-catch-up",
 	"trakt-sync-lists",
+ "issue-fixes",
  "trakt-sync-recovery",
 ];
 function sample(schema, seen = new Set()) {
@@ -52,7 +53,7 @@ export function createScenarioServer(initial = "normal") {
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = false,
+		completed = initial === "issue-fixes",
  fixtureSyncState = "idle",
  fixtureIssue = true,
  fixtureIgnored = false;
@@ -132,7 +133,7 @@ export function createScenarioServer(initial = "normal") {
  fixtureIssue = true;
  fixtureIgnored = false;
 			authorized = !["sheet-overlap", "delayed-auth"].includes(scenario);
-			completed = false;
+			completed = scenario === "issue-fixes";
 			json({ scenario });
 			return;
 		}
@@ -302,9 +303,19 @@ export function createScenarioServer(initial = "normal") {
  else fixtureIssue = false;
  json({}); return;
 		}
-		if (url.pathname === "/trakt-sync") {
+		if (scenario === "issue-fixes" && url.pathname === "/watch-picker") {
+   const minutes = Number(url.searchParams.get("minutes"));
+   json({ genres: ["Drama", "Comedy"], items: minutes < 45 ? [] : [
+    { id: "fixture-film", mediaType: "movie", mediaId: "1", title: "A night at the cinema", posterPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", minutes: 90, estimated: false, episodes: [], services: [] },
+    { id: "fixture-show", mediaType: "show", mediaId: "1399", title: "Local fixture show", posterPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", minutes: 60, estimated: false, episodes: [1, 2].map(episodeNumber => ({ serviceIds: [8], seasonNumber: 1, episodeNumber, name: `Episode ${episodeNumber}` })), services: [] },
+   ].filter(item => item.minutes <= minutes && (!url.searchParams.get("type") || url.searchParams.get("type") === "both" || item.mediaType === url.searchParams.get("type"))) }); return;
+  }
+  if (scenario === "issue-fixes" && /^\/shows\/user\/[^/]+\/up-next$/.test(url.pathname)) {
+   json({ page: 1, pageSize: 20, total: 6, totalPages: 1, hasNextPage: false, hasPreviousPage: false, items: Array.from({ length: 6 }, (_, index) => ({ showId: String(1399 + index), totalEpisodes: 20, episodesWatched: 5, latestWatchedDate: "2026-10-15T12:00:00.000Z", lastWatched: { seasonNumber: 1, episodeNumber: 5 }, nextEpisode: { seasonNumber: 1, episodeNumber: 6, name: `The next chapter ${index + 1}`, airDate: "2026-01-01", overview: "The story continues with a new discovery and an unexpected visitor." }, show: { showId: String(1399 + index), title: `Local fixture show ${index + 1}`, posterPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", backdropPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", overview: "A synthetic show for layout verification." } })) }); return;
+  }
+  if (url.pathname === "/trakt-sync") {
 			json(
-				["trakt-sync-catch-up", "trakt-sync-lists", "trakt-sync-recovery"].includes(scenario)
+				["trakt-sync-catch-up", "trakt-sync-lists", "trakt-sync-recovery", "issue-fixes"].includes(scenario)
 					? {
 							...sample(spec.components.schemas.SyncStatusDto),
 							configured: true,
@@ -318,8 +329,12 @@ export function createScenarioServer(initial = "normal") {
 							direction: "inbound",
 							watches: true,
 							ratings: true,
-							lists: scenario === "trakt-sync-lists",
-							watchlist: scenario === "trakt-sync-lists",
+							lists: ["trakt-sync-lists", "issue-fixes"].includes(scenario),
+							watchlist: ["trakt-sync-lists", "issue-fixes"].includes(scenario),
+       favorites: scenario === "issue-fixes",
+       notes: scenario === "issue-fixes",
+       library: scenario === "issue-fixes",
+       reviews: scenario === "issue-fixes",
 							historyScope: "all",
 							remaining: scenario === "trakt-sync-catch-up" ? 15 : 0,
 							progress: 40,

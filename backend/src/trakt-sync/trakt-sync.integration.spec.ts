@@ -1,5 +1,6 @@
 import { encodeContent, isContentRecord } from "./content-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
+import { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -777,6 +778,317 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(remoteApi.snapshot).toHaveBeenCalledTimes(1);
 	});
+
+	it("allows an interactive Watch while Trakt history is being fetched", async () => {
+		await service.configure(userDid, {
+			direction: "both",
+			historyScope: "all",
+			watches: true,
+			ratings: true,
+			publicationConsent: true,
+		});
+		let fetched!: () => void;
+		let resume!: () => void;
+		const fetching = new Promise<void>((resolve) => {
+			fetched = resolve;
+		});
+		const held = new Promise<void>((resolve) => {
+			resume = resolve;
+		});
+		remoteApi.snapshot.mockImplementationOnce(async () => {
+			fetched();
+			await held;
+			return [];
+		});
+		const running = tick();
+		await fetching;
+		try {
+			const coordinator = new WatchPrivacyCoordinator(
+				db as unknown as PrismaService,
+				locks,
+			);
+			await expect(
+				coordinator.write(userDid, async () => "Watch saved"),
+			).resolves.toBe("Watch saved");
+		} finally {
+			resume();
+			await running;
+		}
+	});
+
+	it("allows manual Watches during a stalled outbound transfer while blocking privacy and deletion", async () => {
+		localRecords = [watch("local")];
+		await configure("all", "outbound");
+		const interactivePool = new Pool({
+			connectionString: url,
+			max: 1,
+			query_timeout: 200,
+			connectionTimeoutMillis: 1000,
+		});
+		const interactiveLocks = new WatchAccountLock(interactivePool);
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			interactiveLocks,
+		);
+		let started!: () => void;
+		let resume!: () => void;
+		const transferring = new Promise<void>((resolve) => {
+			started = resolve;
+		});
+		const held = new Promise<void>((resolve) => {
+			resume = resolve;
+		});
+		const write = remoteApi.write.getMockImplementation();
+		if (!write) throw new Error("Missing fixture writer");
+		remoteApi.write.mockImplementationOnce(async (...args) => {
+			started();
+			await held;
+			return write(...args);
+		});
+		const running = tick();
+		await transferring;
+		try {
+			await expect(
+				coordinator.write(userDid, async () => {
+					localRecords.push({
+						...watch("manual-episode"),
+						mediaType: "episode",
+						mediaId: "110492",
+						season: 1,
+						episode: 1,
+					});
+					return "Watch saved";
+				}),
+			).resolves.toBe("Watch saved");
+			await expect(
+				coordinator.start(userDid, "private", false),
+			).rejects.toThrow("Another Watch operation");
+			const deleting = vi.fn(async () => undefined);
+			await expect(interactiveLocks.run(userDid, deleting)).rejects.toThrow(
+				"Another Watch operation",
+			);
+			expect(deleting).not.toHaveBeenCalled();
+		} finally {
+			resume();
+			await running;
+			await interactivePool.end();
+		}
+		await tick();
+		expect(localRecords.map((r) => r.key)).toEqual(["local", "manual-episode"]);
+		expect(remoteRecords).toHaveLength(2);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
+
+	it("serializes manual Watches on the local write mutex", async () => {
+		const interactivePool = new Pool({
+			connectionString: url,
+			max: 1,
+			query_timeout: 200,
+			connectionTimeoutMillis: 1000,
+		});
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			new WatchAccountLock(interactivePool),
+		);
+		const write = vi.fn(async () => "second Watch");
+		try {
+			await locks.run(
+				userDid,
+				async () => {
+					await expect(coordinator.write(userDid, write)).rejects.toThrow(
+						"Another Watch operation",
+					);
+					expect(write).not.toHaveBeenCalled();
+				},
+				{ mode: "write" },
+			);
+			await expect(coordinator.write(userDid, write)).resolves.toBe(
+				"second Watch",
+			);
+		} finally {
+			await interactivePool.end();
+		}
+	});
+
+	it("exports a manual edit on the next tick when it lands during outbound confirmation", async () => {
+		localRecords = [watch("local")];
+		await configure("all", "outbound");
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			locks,
+		);
+		const read = remoteApi.readForRecord.getMockImplementation();
+		if (!read) throw new Error("Missing fixture reader");
+		const edited = "2021-02-03T12:30:00.000Z";
+		remoteApi.readForRecord.mockImplementationOnce(async (...args) => {
+			await coordinator.write(userDid, async () => {
+				localRecords = [{ ...localRecords[0], value: edited }];
+			});
+			return read(...args);
+		});
+		await tick();
+		expect(localRecords[0].value).toBe(edited);
+		expect(remoteRecords[0].value).not.toBe(edited);
+		await tick();
+		expect(localRecords[0].value).toBe(edited);
+		expect(remoteRecords).toHaveLength(1);
+		expect(remoteRecords[0].value).toBe(edited);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
+
+	it("queues a manual Watch behind one transfer and replans without duplicating it", async () => {
+		remoteRecords = [
+			watch("watch:1"),
+			{
+				...watch("watch:2"),
+				mediaType: "episode",
+				mediaId: "110492",
+				season: 1,
+				episode: 1,
+			},
+		];
+		await configure("all", "inbound");
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			locks,
+		);
+		const write = localApi.write.getMockImplementation();
+		if (!write) throw new Error("Missing fixture writer");
+		let manual: Promise<unknown> | undefined;
+		localApi.write.mockImplementationOnce(async (...args) => {
+			const result = await write(...args);
+			manual = coordinator.write(userDid, async () => {
+				localRecords.push({
+					...remoteRecords[1],
+					key: "manual-episode",
+					rkey: "manual-episode",
+				});
+				return "Watch saved";
+			});
+			let queued = false;
+			for (let attempt = 0; attempt < 100; attempt++) {
+				const [row] = await db.$queryRaw<
+					{ count: number }[]
+				>`SELECT COUNT(*)::int AS count FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%pg_advisory_lock%'`;
+				if (row.count > 0) {
+					queued = true;
+					break;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+			expect(queued).toBe(true);
+			return result;
+		});
+		await tick();
+		await expect(manual).resolves.toBe("Watch saved");
+		expect(localApi.write).toHaveBeenCalledTimes(1);
+		expect(localRecords).toHaveLength(2);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+		await tick();
+		expect(localApi.write).toHaveBeenCalledTimes(1);
+		expect(localRecords).toHaveLength(2);
+	});
+
+	it("replans when a manual Watch lands after the local snapshot", async () => {
+		remoteRecords = [watch("watch:1")];
+		await configure("all", "inbound");
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			locks,
+		);
+		const run = locks.run.bind(locks);
+		let snapshots = 0;
+		let added = false;
+		localApi.snapshot.mockImplementation(async () => {
+			snapshots++;
+			return structuredClone(localRecords);
+		});
+		const spy = vi
+			.spyOn(locks, "run")
+			.mockImplementation(async (did, operation, options) => {
+				const result = await run(did, operation, options);
+				if (snapshots === 2 && !added) {
+					added = true;
+					await coordinator.write(userDid, async () => {
+						localRecords.push({
+							...remoteRecords[0],
+							key: "manual-watch",
+							rkey: "manual-watch",
+						});
+					});
+				}
+				return result;
+			});
+		try {
+			await tick();
+		} finally {
+			spy.mockRestore();
+			localApi.snapshot.mockImplementation(async () =>
+				structuredClone(localRecords),
+			);
+		}
+		expect(added).toBe(true);
+		expect(localApi.write).not.toHaveBeenCalled();
+		expect(remoteApi.write).not.toHaveBeenCalled();
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		expect(localApi.write).not.toHaveBeenCalled();
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
+
+	it.each(["privacy", "deletion"])(
+		"rechecks %s between transfers",
+		async (change) => {
+			remoteRecords = [
+				watch("watch:1"),
+				watch("watch:2", "2020-01-02T12:00:25.000Z"),
+			];
+			await configure("all", "inbound");
+			const coordinator = new WatchPrivacyCoordinator(
+				db as unknown as PrismaService,
+				locks,
+			);
+			const run = locks.run.bind(locks);
+			let transferred = false;
+			const write = localApi.write.getMockImplementation();
+			if (!write) throw new Error("Missing fixture writer");
+			localApi.write.mockImplementationOnce(async (...args) => {
+				const result = await write(...args);
+				transferred = true;
+				return result;
+			});
+			const spy = vi
+				.spyOn(locks, "run")
+				.mockImplementation(async (did, operation, options) => {
+					const result = await run(did, operation, options);
+					if (transferred) {
+						transferred = false;
+						if (change === "privacy")
+							await coordinator.start(userDid, "private", false);
+						else
+							await run(userDid, async () =>
+								db.backgroundJob.create({
+									data: { userDid, type: "account_deletion", status: "queued" },
+								}),
+							);
+					}
+					return result;
+				});
+			try {
+				await tick();
+			} finally {
+				spy.mockRestore();
+			}
+			expect(localApi.write).toHaveBeenCalledTimes(1);
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+			const c = await db.traktSyncConnection.findFirstOrThrow({
+				where: { userDid },
+			});
+			expect(c.lastError).toMatch(
+				change === "privacy" ? /privacy change/ : /deletion/,
+			);
+		},
+	);
 
 	it("encrypts credentials, consumes authorization state once, and starts paused", async () => {
 		const c = await db.traktSyncConnection.findFirstOrThrow({

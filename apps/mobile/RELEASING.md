@@ -16,6 +16,11 @@ Two release paths, and pushing to `main` picks one for you. `version` in
 So bump the version when the change needs a new binary — native code, a config
 plugin, a dependency with native parts — and leave it alone otherwise.
 
+The SDK 58 upgrade prepares version `1.7.0`, with React Native `0.88` and
+React `19.3`. It requires new iOS and Android binaries; SDK 57 binaries cannot
+receive it through OTA. The app-version runtime policy remains in place, and
+store builds and publication still need explicit operator approval.
+
 They are exclusive because they have to be. The runtime version policy is
 `appVersion` (see `app.config.ts`) and an update only loads on a binary whose
 runtime string matches exactly, so an OTA published right after a bump would

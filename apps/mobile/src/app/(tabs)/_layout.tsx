@@ -36,7 +36,6 @@ export default function TabLayout() {
 		<TraktSyncBanner>
 			<ShakeToFeedback />
 			<Tabs
-				initialRouteName={guest ? "search" : "index"}
 				screenOptions={{
 					headerShown: false,
 					tabBarActiveTintColor: theme.colors.primary,
@@ -47,17 +46,14 @@ export default function TabLayout() {
 					},
 				}}
 			>
-				<Tabs.Protected guard={!guest}>
-					<Tabs.Screen
-						name="index"
-						options={{
-							title: "Home",
-							tabBarIcon: ({ color, size }) => (
-								<Home color={color} size={size} />
-							),
-						}}
-					/>
-				</Tabs.Protected>
+				<Tabs.Screen
+					name="index"
+					options={{
+						title: "Home",
+						href: guest ? null : undefined,
+						tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+					}}
+				/>
 				<Tabs.Screen
 					name="search"
 					options={{

@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRef } from "react";
+import type { FlatListInstance } from "react-native";
 import {
 	FlatList,
 	findNodeHandle,
@@ -55,7 +56,7 @@ export default function SeasonDetailScreen() {
 	}>();
 	const showId = Number(id);
 	const seasonNum = Number(seasonNumber);
-	const listRef = useRef<FlatList>(null);
+	const listRef = useRef<FlatListInstance>(null);
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetSeasonDetailsOptions({

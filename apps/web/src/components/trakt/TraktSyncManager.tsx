@@ -484,10 +484,7 @@ export function SyncSettings({
 						<DialogContent className="max-h-[85dvh] overflow-y-auto">
 							<DialogHeader>
 								<DialogTitle>Choose records</DialogTitle>
-								<DialogDescription>
-									Select what moves between Opnshelf and Trakt. Save your
-									settings to apply these choices.
-								</DialogDescription>
+								<DialogDescription>Choose what to sync.</DialogDescription>
 							</DialogHeader>
 							<fieldset className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-(--border) p-3">
 								<legend className="sr-only">Records</legend>
@@ -510,13 +507,21 @@ export function SyncSettings({
 									</label>
 								))}
 							</fieldset>
-							<div className="space-y-2 pt-2 leading-relaxed">
-								{(settings.lists || settings.watchlist) && (
-									<p>{TRAKT_LIST_COPY}</p>
-								)}
-								{settings.favorites && <p>{TRAKT_FAVORITES_COPY}</p>}
-								{requiresContentConsent && <p>{TRAKT_CONTENT_COPY}</p>}
-							</div>
+							{(settings.lists ||
+								settings.watchlist ||
+								settings.favorites ||
+								requiresContentConsent) && (
+								<details className="space-y-3 text-(--foreground-muted) text-sm leading-relaxed">
+									<summary className="cursor-pointer font-medium text-(--accent)">
+										Sync details
+									</summary>
+									{(settings.lists || settings.watchlist) && (
+										<p>{TRAKT_LIST_COPY}</p>
+									)}
+									{settings.favorites && <p>{TRAKT_FAVORITES_COPY}</p>}
+									{requiresContentConsent && <p>{TRAKT_CONTENT_COPY}</p>}
+								</details>
+							)}
 							<button
 								type="button"
 								className="btn btn-secondary"

@@ -5,7 +5,12 @@ import {
 } from "./content-value";
 import { TID } from "@atproto/common";
 import { encodeList, listValue, memberKey, validateList } from "./list-value";
-import { WatchAccountLock } from "../privacy/watch-account-lock";
+import {
+	WatchAccountBusyError,
+	WatchAccountLock,
+	type WithAccountWrite,
+	type AccountLockMode,
+} from "../privacy/watch-account-lock";
 import { watchOperation } from "../privacy/watch-operation";
 import {
 	createCipheriv,
@@ -58,6 +63,8 @@ import type {
 	SyncStatusDto,
 } from "./trakt-sync.dto";
 
+class SyncAccountUnavailable extends TraktSyncError {}
+
 const SOURCE_CHANGED =
 	"The source changed during an interrupted transfer. Choose which version to keep.";
 const json = (v: SyncRecord | null) =>
@@ -66,6 +73,17 @@ const records = (v: unknown): SyncRecord[] =>
 	Array.isArray(v)
 		? v.map(readRecord).filter((r): r is SyncRecord => r !== null)
 		: [];
+const localVersion = (record: SyncRecord) =>
+	JSON.stringify([fingerprint(record), record.cid, record.problem]);
+const sameLocalSnapshot = (before: SyncRecord[], after: SyncRecord[]) => {
+	const expected = new Map(
+		before.map((record) => [record.key, localVersion(record)]),
+	);
+	return (
+		before.length === after.length &&
+		after.every((record) => expected.get(record.key) === localVersion(record))
+	);
+};
 // An absent remote record is not proof that a non-idempotent POST failed.
 const unconfirmedCreate = (
 	entry: Pick<TraktSyncEntry, "kind" | "pending" | "remoteKey">,
@@ -1199,13 +1217,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			if (!c) return;
 			await this.locked(c, async (lease) => {
 				try {
-					await this.publicWatchOperation(c, async (signal) =>
-						this.process(c, async () => {
-							signal.throwIfAborted();
-							await lease();
-						}),
-					);
+					await this.process(c, lease);
 				} catch (error) {
+					if (error instanceof WatchAccountBusyError) {
+						await this.prisma.traktSyncConnection.update({
+							where: { id: c.id },
+							data: { nextRunAt: new Date(Date.now() + 5000) },
+						});
+						return;
+					}
 					await this.prisma.traktSyncConnection.update({
 						where: { id: c.id },
 						data: {
@@ -1234,45 +1254,55 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	private async publicWatchOperation<T>(
 		c: TraktSyncConnection,
-		work: (signal: AbortSignal) => Promise<T>,
+		work: (signal: AbortSignal, withWrite: WithAccountWrite) => Promise<T>,
+		mode: AccountLockMode = "exclusive",
 	): Promise<T> {
-		return this.watchLocks.run(c.userDid, async (signal) => {
-			const deleting = await this.prisma.backgroundJob.findFirst({
-				where: {
-					userDid: c.userDid,
-					type: "account_deletion",
-					status: { in: ["queued", "running", "waiting_retry"] },
-				},
-			});
-			if (deleting)
-				throw new TraktSyncError("Account deletion is in progress.");
+		return this.watchLocks.run(
+			c.userDid,
+			async (signal, withWrite) => {
+				const deleting = await this.prisma.backgroundJob.findFirst({
+					where: {
+						userDid: c.userDid,
+						type: "account_deletion",
+						status: { in: ["queued", "running", "waiting_retry"] },
+					},
+				});
+				if (deleting)
+					throw new SyncAccountUnavailable("Account deletion is in progress.");
 
-			const owner = await this.prisma.user.findUniqueOrThrow({
-				where: { did: c.userDid },
-				select: {
-					watchVisibility: true,
-					watchPrivacyMigration: { select: { jobId: true } },
-				},
-			});
-			if (
-				c.watches &&
-				(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
-			)
-				throw new TraktSyncError(
-					"Watch sync requires a public Shelf with no privacy change in progress. Disable Watch sync to continue with Ratings.",
+				const owner = await this.prisma.user.findUniqueOrThrow({
+					where: { did: c.userDid },
+					select: {
+						watchVisibility: true,
+						watchPrivacyMigration: { select: { jobId: true } },
+					},
+				});
+				if (
+					c.watches &&
+					(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
+				)
+					throw new SyncAccountUnavailable(
+						"Watch sync requires a public Shelf with no privacy change in progress. Disable Watch sync to continue with Ratings.",
+					);
+				signal.throwIfAborted();
+				return watchOperation.run(
+					{ did: c.userDid, visibility: "public", signal },
+					() => work(signal, withWrite),
 				);
-			signal.throwIfAborted();
-			return watchOperation.run(
-				{ did: c.userDid, visibility: "public", signal },
-				() => work(signal),
-			);
-		});
+			},
+			{ mode },
+		);
 	}
 
 	private async process(c: TraktSyncConnection, lease: () => Promise<void>) {
-		const token = await this.token(c);
 		let remote = records(c.remoteSnapshot);
-		const local = await this.local.snapshot(c.userDid, c);
+		// Account reads and transfers share the privacy lock, but slow Trakt
+		// pagination must not prevent someone from adding a Watch to their Shelf.
+		let local = await this.publicWatchOperation(c, async () => {
+			await lease();
+			return this.local.snapshot(c.userDid, c);
+		});
+		const token = await this.token(c);
 		const known = await this.prisma.traktSyncEntry.findMany({
 			where: { connectionId: c.id },
 		});
@@ -1298,12 +1328,17 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			c.remoteReadAt.getTime() < Date.now() - 15 * 60_000
 		) {
 			remote = await this.api.snapshot(token, c);
+			await lease();
 			await this.prisma.traktSyncConnection.update({
 				where: { id: c.id },
 				data: {
 					remoteSnapshot: remote as unknown as Prisma.InputJsonValue,
 					remoteReadAt: new Date(),
 				},
+			});
+			local = await this.publicWatchOperation(c, async () => {
+				await lease();
+				return this.local.snapshot(c.userDid, c);
 			});
 		}
 		remote = applyMappings(remote, known);
@@ -1459,9 +1494,65 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			await lease();
 			try {
-				await this.transfer(c, entry, l, r, remote, token, decision);
+				const transferred = await this.publicWatchOperation(
+					c,
+					async (_signal, withWrite) => {
+						const currentMatches = await withWrite(async () => {
+							await lease();
+							const current = await this.local.snapshot(c.userDid, {
+								lists: entry.kind === "list",
+								watchlist: entry.kind === "watchlist",
+								favorites: entry.kind === "favorites",
+								notes: entry.kind === "note",
+								library: entry.kind === "library",
+								reviews: entry.kind === "review",
+							});
+							// A manual edit can land between transfers. Replan next tick rather
+							// than duplicate a new Watch or export/delete a stale local version.
+							return sameLocalSnapshot(
+								local.filter((record) => record.kind === entry.kind),
+								current.filter((record) => record.kind === entry.kind),
+							);
+						});
+						if (!currentMatches) return false;
+						// Outbound Trakt I/O holds only the privacy/deletion barrier.
+						// Manual Watches can proceed; complete() records the pinned old
+						// source so a concurrent edit is reconciled on the next tick.
+						await lease();
+						const result = await this.transfer(
+							c,
+							entry,
+							l,
+							r,
+							remote,
+							token,
+							decision,
+						);
+						if (decision === "pull") {
+							local = local.filter((record) => record.key !== l?.key);
+							if (result) local.push(result);
+						}
+						return true;
+					},
+					decision === "push" ? "shared" : "exclusive",
+				);
+				if (!transferred) {
+					stopped = true;
+					remaining++;
+					continue;
+				}
 				writes++;
 			} catch (error) {
+				if (error instanceof WatchAccountBusyError) {
+					stopped = true;
+					remaining++;
+					continue;
+				}
+				if (
+					error instanceof SyncAccountUnavailable ||
+					error instanceof ConflictException
+				)
+					throw error;
 				if (
 					error instanceof TraktSyncError &&
 					error.status >= 400 &&
@@ -1681,7 +1772,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				result,
 				desired && isListRecord(desired) ? remote : desired,
 			);
-			return;
+			return result;
 		}
 		const lastLocal = readRecord(entry.localBase);
 		if (!desired && lastLocal)
