@@ -1,6 +1,12 @@
 import { ConflictException, ServiceUnavailableException } from "@nestjs/common";
 import type { Pool } from "pg";
 
+export class WatchAccountBusyError extends ConflictException {
+	constructor() {
+		super("Another Watch operation is in progress. Try again.");
+	}
+}
+
 /** A checked-out connection owns the session lock until the callback settles.
  * Unlike a transaction advisory lock, a Prisma transaction timeout cannot release
  * it while a PDS request is still running. The application owns this small pool's
@@ -24,11 +30,8 @@ export class WatchAccountLock {
 	async run<T>(
 		ownerDid: string,
 		operation: (signal: AbortSignal) => Promise<T>,
+		{ wait = false }: { wait?: boolean } = {},
 	): Promise<T> {
-		const busy = () =>
-			new ConflictException(
-				"Another Watch operation is in progress. Try again.",
-			);
 		// Give other accounts a bounded chance to use a released connection.
 		// Pool connectionTimeoutMillis caps the wait; cap queue length as well.
 		if (this.pool.waitingCount >= 16)
@@ -51,17 +54,28 @@ export class WatchAccountLock {
 		try {
 			const { rows } = await client
 				.query<{ acquired: boolean }>({
-					text: "SELECT pg_try_advisory_lock(hashtextextended($1, 252)) AS acquired",
+					// Interactive writes queue behind one transfer; background work
+					// yields immediately. The pool's query timeout bounds this wait.
+					text: wait
+						? "SELECT pg_advisory_lock(hashtextextended($1, 252))"
+						: "SELECT pg_try_advisory_lock(hashtextextended($1, 252)) AS acquired",
 					values: [ownerDid],
 				})
 				.catch((error) => {
 					// A timed-out acquisition has an unknown result. Destroy this
 					// connection rather than return a possibly locked session to the pool.
 					broken = true;
+					if (
+						wait &&
+						error instanceof Error &&
+						error.message === "Query read timeout"
+					)
+						throw new WatchAccountBusyError();
 					throw error;
 				});
-			acquired = rows[0]?.acquired === true;
-			if (!acquired) throw busy();
+			acquired = wait || rows[0]?.acquired === true;
+			if (!acquired) throw new WatchAccountBusyError();
+			controller.signal.throwIfAborted();
 			const result = await operation(controller.signal);
 			if (broken) throw new Error("Watch operation lost its account lock");
 			return result;

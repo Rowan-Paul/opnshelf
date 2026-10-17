@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import type { Pool } from "pg";
-import { WatchAccountLock } from "./watch-account-lock";
+import { WatchAccountBusyError, WatchAccountLock } from "./watch-account-lock";
 
 function fixture() {
 	const client = Object.assign(new EventEmitter(), {
@@ -65,4 +65,40 @@ it("bounds the queue without attempting a connection", async () => {
 		"busy",
 	);
 	expect(f.pool.connect).not.toHaveBeenCalled();
+});
+
+it("queues interactive acquisition in PostgreSQL without retrying the operation", async () => {
+	const f = fixture();
+	f.client.query.mockResolvedValue({ rows: [{}] });
+	const operation = vi.fn(async () => "saved");
+	await expect(
+		f.lock.run("did:plc:owner", operation, { wait: true }),
+	).resolves.toBe("saved");
+	expect(f.client.query.mock.calls[0][0].text).toBe(
+		"SELECT pg_advisory_lock(hashtextextended($1, 252))",
+	);
+	expect(operation).toHaveBeenCalledOnce();
+	expect(f.client.release).toHaveBeenCalledWith(false);
+});
+
+it("discards timed-out interactive acquisition without running a write", async () => {
+	const f = fixture();
+	f.client.query.mockRejectedValue(new Error("Query read timeout"));
+	const operation = vi.fn();
+	await expect(
+		f.lock.run("did:plc:owner", operation, { wait: true }),
+	).rejects.toBeInstanceOf(WatchAccountBusyError);
+	expect(operation).not.toHaveBeenCalled();
+	expect(f.client.release).toHaveBeenCalledWith(true);
+});
+
+it("lets background work yield immediately when the account is busy", async () => {
+	const f = fixture();
+	f.client.query.mockResolvedValue({ rows: [{ acquired: false }] });
+	const operation = vi.fn();
+	await expect(f.lock.run("did:plc:owner", operation)).rejects.toBeInstanceOf(
+		WatchAccountBusyError,
+	);
+	expect(operation).not.toHaveBeenCalled();
+	expect(f.client.release).toHaveBeenCalledWith(false);
 });
