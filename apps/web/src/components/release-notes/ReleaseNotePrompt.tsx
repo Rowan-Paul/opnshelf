@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "#/lib/auth-context";
+import { startPromptCooldown } from "#/lib/prompt-state";
 import { useReleaseNotes } from "#/lib/use-release-notes";
 
 export function ReleaseNotePrompt() {
@@ -50,6 +51,7 @@ function Announcement({
 		} catch {
 			/* Keep dismissal for this visit when storage is unavailable. */
 		}
+		startPromptCooldown();
 	};
 	if (dismissed) return null;
 	return (

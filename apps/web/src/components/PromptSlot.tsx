@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { isPromptCooldownActive, useHydrated } from "#/lib/prompt-state";
+import { useHydrated, usePromptCooldownActive } from "#/lib/prompt-state";
 
 /**
  * The reserved Prompt slot on Home. Shows at most one Prompt, and goes quiet
@@ -19,8 +19,9 @@ import { isPromptCooldownActive, useHydrated } from "#/lib/prompt-state";
  */
 export function PromptSlot({ children }: { children: ReactNode }) {
 	const hydrated = useHydrated();
+	const cooldownActive = usePromptCooldownActive();
 
-	if (!hydrated || isPromptCooldownActive()) return null;
+	if (!hydrated || cooldownActive) return null;
 
 	return (
 		<div className="mb-8 empty:hidden [&>*:nth-child(n+2)]:hidden">

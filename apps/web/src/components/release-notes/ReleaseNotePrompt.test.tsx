@@ -1,6 +1,13 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { PromptSlot } from "#/components/PromptSlot";
 import { ReleaseNotePrompt } from "./ReleaseNotePrompt";
 
 const state = vi.hoisted(() => ({
@@ -54,6 +61,50 @@ beforeEach(() => {
 	state.notes.data[0].slug = "latest";
 });
 afterEach(cleanup);
+
+it("updates the slot when another tab changes the cooldown", () => {
+	const view = render(
+		<PromptSlot>
+			<p>Next optional prompt</p>
+		</PromptSlot>,
+	);
+	expect(screen.getByText("Next optional prompt")).toBeTruthy();
+	act(() => {
+		localStorage.setItem(
+			"opnshelf.prompt-cooldown-until",
+			String(Date.now() + 60_000),
+		);
+		window.dispatchEvent(new StorageEvent("storage"));
+	});
+	expect(view.container.childElementCount).toBe(0);
+	act(() => {
+		localStorage.removeItem("opnshelf.prompt-cooldown-until");
+		window.dispatchEvent(new StorageEvent("storage"));
+	});
+	expect(screen.getByText("Next optional prompt")).toBeTruthy();
+});
+
+it.each([
+	"button",
+	"link",
+])("silences the whole slot immediately and on remount after the %s action", (role) => {
+	const home = (
+		<PromptSlot>
+			<ReleaseNotePrompt />
+			<p>Next optional prompt</p>
+		</PromptSlot>
+	);
+	const view = render(home);
+	fireEvent.click(
+		screen.getByRole(role, {
+			name: role === "button" ? "Dismiss" : "Read what’s new",
+		}),
+	);
+	expect(view.container.childElementCount).toBe(0);
+	view.unmount();
+	const reopened = render(home);
+	expect(reopened.container.childElementCount).toBe(0);
+});
 
 it("links to the announcement and remembers opening it without clearing unread state", () => {
 	const view = render(<ReleaseNotePrompt />);
