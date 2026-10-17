@@ -149,8 +149,12 @@ export default function RootLayout() {
 						options={{ headerShown: true }}
 					/>
 					<Stack.Screen
-						name="pick-for-me"
+						name="pick-for-me/index"
 						options={{ headerShown: true, title: "Pick for me" }}
+					/>
+					<Stack.Screen
+						name="pick-for-me/result"
+						options={{ headerShown: true, title: "Your pick" }}
 					/>
 					<Stack.Screen name="trakt-import" options={{ headerShown: true }} />
 					<Stack.Screen name="trakt-sync" options={{ headerShown: true }} />
