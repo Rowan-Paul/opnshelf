@@ -291,6 +291,11 @@ it("opens record choices separately and retains changes when closed", async () =
 	expect(screen.queryByRole("checkbox", { name: "Notes" })).toBeNull();
 	fireEvent.click(choose);
 	fireEvent.click(screen.getByLabelText("Notes", { exact: true }));
+	const details = screen.getByText("Sync details").closest("details");
+	expect(details?.open).toBe(false);
+	expect(details?.textContent).toContain(
+		"Library item notes and Box Sets stay in Opnshelf",
+	);
 	fireEvent.click(screen.getByRole("button", { name: "Done" }));
 	expect(screen.getByText("Watch history, Ratings, Notes")).toBeTruthy();
 	expect(screen.queryByRole("checkbox", { name: "Notes" })).toBeNull();
