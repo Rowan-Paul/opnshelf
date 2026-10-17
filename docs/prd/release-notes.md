@@ -22,6 +22,10 @@ session. Not deployed.
 
 - Both clients expose a **What's new** link with an unread indicator, opening
   a browsable history. New notes do not automatically interrupt Users with a popup.
+- Home on both clients also shows the newest unread announcement as a dismissible
+  card linking directly to `/whats-new/<slug>`. Opening or dismissing the card
+  hides that announcement on the current device for that account, without
+  acknowledging the history. Newly published entries can appear again.
 - Full notes are publicly readable without signing in on the Web App, with
   matching Mobile App routes for in-app navigation. Bluesky HTTPS links open
   the Web App. Native capture of these links on both platforms is deferred to

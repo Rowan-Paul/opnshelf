@@ -66,6 +66,7 @@ export function useReleaseNotesState(
 	return {
 		...feed,
 		unread,
+		readPending: Boolean(userDid) && read.isPending,
 		markError: mark.isError,
 		retryMark: () => {
 			if (newest) mutate({ body: { readThrough: newest } });

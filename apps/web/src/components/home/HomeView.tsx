@@ -15,6 +15,7 @@ import LoadingState from "#/components/LoadingState";
 import { MobileAppPrompt } from "#/components/MobileAppPrompt";
 import { NotificationPrompt } from "#/components/NotificationPrompt";
 import { PromptSlot } from "#/components/PromptSlot";
+import { ReleaseNotePrompt } from "#/components/release-notes/ReleaseNotePrompt";
 import { StatsStrip } from "#/components/StatsStrip";
 import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
 import { useAuth } from "#/lib/auth-context";
@@ -316,9 +317,9 @@ export function HomeView() {
 				/>
 			</div>
 
-			{/* Priority order, highest first: Trakt blocks the user's own data, the
-			    Mobile App is new to them, AT Store is a favour to us. */}
+			{/* Announcements lead the optional Home prompts. */}
 			<PromptSlot>
+				<ReleaseNotePrompt />
 				<TraktHomePrompt />
 				<NotificationPrompt />
 				<MobileAppPrompt />
