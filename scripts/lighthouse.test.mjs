@@ -2,6 +2,7 @@ import { createServer } from "node:net";
 import { readFileSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { once } from "node:events";
@@ -13,6 +14,24 @@ import {
 	apiOrigin,
 	checkContent,
 } from "./lighthouse-pages.cjs";
+
+test("collector uses the dashboard's Lighthouse report version", () => {
+	const require = createRequire(import.meta.url);
+	const collectorRequire = createRequire(
+		require.resolve("@lhci/cli/package.json"),
+	);
+	const dashboard = JSON.parse(
+		readFileSync(
+			new URL("../services/lighthouse/package.json", import.meta.url),
+			"utf8",
+		),
+	);
+	assert.equal(
+		collectorRequire("lighthouse/package.json").version,
+		dashboard.overrides.lighthouse,
+		"Collector and dashboard must use the same Lighthouse report version",
+	);
+});
 
 test("Lighthouse fixture requires its synthetic session, provides populated data, and rejects unexpected traffic", async () => {
 	const { server, errors } = createLighthouseServer();

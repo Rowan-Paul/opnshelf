@@ -24,10 +24,14 @@ build context, and use the generated Railway HTTPS domain initially. Deployment
 requires explicit operator approval under the root agent guide.
 
 The Dockerfile builds only this service. No browser runs in its container. The
-server-only Lighthouse override removes vulnerable downloader dependencies pulled
-in by LHCI's old version range. The collector remains pinned to its existing
-Lighthouse version. Report upload/rendering must be smoke-tested when updating
-this override. At preparation time `npm audit --omit=dev --audit-level=high`
+Lighthouse override removes vulnerable downloader dependencies pulled
+in by LHCI's old version range. The collector and dashboard both pin Lighthouse
+13.5.0; update the root pnpm override and this service's npm override together.
+A script test checks that the installed collector matches the dashboard pin.
+Report upload/rendering must be smoke-tested when updating these overrides.
+Historical reports retain their original version and may show a version warning;
+compare scores against a baseline collected with the same Lighthouse version.
+At preparation time `npm audit --omit=dev --audit-level=high`
 passed; nine moderate transitive advisories remain in upstream CLI helpers and
 UUID dependencies. Authentication is mandatory; do not expose this service without
 it. Back up the independent volume before changing server/storage versions.
