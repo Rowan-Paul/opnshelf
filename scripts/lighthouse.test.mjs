@@ -1,3 +1,7 @@
+import { createServer } from "node:net";
+import { readFileSync } from "node:fs";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { once } from "node:events";
@@ -95,4 +99,40 @@ test("report validation requires authentication during measurement and populated
 	const blank = structuredClone(report);
 	blank.audits["authenticated-content"].score = 0;
 	assert.throws(() => validateReport(blank), /content audit/);
+});
+
+test("image readiness retries a connection reset while the server starts", async () => {
+	const workflow = readFileSync(
+		new URL("../.github/workflows/ci.yml", import.meta.url),
+		"utf8",
+	);
+	const command = workflow.match(
+		/^\s*(curl --fail --retry .*\/healthz)$/m,
+	)?.[1];
+	assert(command, "Workflow readiness command missing");
+	let requests = 0;
+	const server = createServer((socket) => {
+		socket.on("error", () => {});
+		socket.once("data", () => {
+			requests++;
+			if (requests === 1) socket.resetAndDestroy();
+			else
+				socket.end(
+					"HTTP/1.1 200 OK\r\nContent-Length: 7\r\nConnection: close\r\n\r\nhealthy",
+				);
+		});
+	});
+	server.listen(0, "127.0.0.1");
+	await once(server, "listening");
+	try {
+		const args = command.trim().split(/\s+/).slice(1);
+		args[args.length - 1] = `http://127.0.0.1:${server.address().port}/healthz`;
+		const { stdout } = await promisify(execFile)("curl", args, {
+			timeout: 10000,
+		});
+		assert.equal(stdout, "healthy");
+		assert.equal(requests, 2);
+	} finally {
+		await new Promise((resolve) => server.close(resolve));
+	}
 });

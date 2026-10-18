@@ -192,7 +192,7 @@ jobs:
         run: |
           container_id=$(docker run --detach --rm --publish 127.0.0.1:9001:9001 --tmpfs /data --env LHCI_BASIC_AUTH_PASSWORD=ci-integration-fixture-only-123456789 opnshelf-lighthouse:test)
           trap 'docker logs "$container_id"; docker stop "$container_id" >/dev/null' EXIT
-          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:9001/healthz
+          curl --fail --retry 20 --retry-all-errors --retry-connrefused --retry-delay 1 http://127.0.0.1:9001/healthz
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:9001/app/)" = 401
 
   lighthouse:
