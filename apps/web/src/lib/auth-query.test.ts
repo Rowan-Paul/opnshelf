@@ -1,7 +1,11 @@
 import { authControllerMe } from "@opnshelf/api";
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
-import { currentUserQueryOptions, fetchCurrentUser } from "./auth-query";
+import {
+	currentUserQueryOptions,
+	fetchCurrentUser,
+	SESSION_CHECK_DEADLINE_MS,
+} from "./auth-query";
 
 vi.mock("@opnshelf/api", () => ({
 	authControllerMe: vi.fn(),
@@ -9,6 +13,48 @@ vi.mock("@opnshelf/api", () => ({
 	isUnauthorizedError: (e: { status?: number }) => e.status === 401,
 }));
 describe("current user query", () => {
+	it("times out a guarded check after the auth provider disconnects", async () => {
+		vi.useFakeTimers();
+		const me = vi.mocked(authControllerMe);
+		let signal: AbortSignal | undefined;
+		me.mockImplementationOnce(
+			(options) =>
+				new Promise<never>((_, reject) => {
+					signal = options?.signal ?? undefined;
+					signal?.addEventListener("abort", () => reject(signal?.reason));
+				}),
+		);
+		const client = new QueryClient();
+		try {
+			const options = currentUserQueryOptions();
+			const provider = new QueryObserver(client, options);
+			const unsubscribe = provider.subscribe(() => {});
+			const outcome = fetchCurrentUser(client, options).catch(
+				(error: unknown) => error,
+			);
+			unsubscribe();
+			await vi.advanceTimersByTimeAsync(SESSION_CHECK_DEADLINE_MS - 1);
+			expect(signal?.aborted).toBe(false);
+			await vi.advanceTimersByTimeAsync(1);
+			expect(signal?.aborted).toBe(true);
+			expect(await outcome).toMatchObject({
+				name: "TimeoutError",
+				message: "Session check timed out",
+			});
+			expect(me).toHaveBeenCalledTimes(1);
+			expect(client.getQueryData(options.queryKey)).toBeUndefined();
+			expect(
+				client
+					.getQueryCache()
+					.find({ queryKey: options.queryKey })
+					?.getObserversCount(),
+			).toBe(0);
+		} finally {
+			client.clear();
+			me.mockReset();
+			vi.useRealTimers();
+		}
+	});
 	it("keeps a route's session check alive when the auth provider disconnects", async () => {
 		const me = vi.mocked(authControllerMe);
 		const user = { did: "benchmark" };
