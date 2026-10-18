@@ -3,6 +3,8 @@ packages:
   - packages/*
   - backend
 overrides:
+  # Keep the collector aligned with services/lighthouse's report renderer.
+  lighthouse: 13.5.0
   '@tanstack/query-core': 5.104.1
   '@tanstack/react-query': 5.104.1
   react: 19.3.0
@@ -43,6 +45,8 @@ overrides:
   'js-yaml@5': ^5.4.1
   'source-map-js@1': ^1.2.2
 allowBuilds:
+  # Installed explicitly with `puppeteer browsers install chrome` for Lighthouse.
+  puppeteer: false
   '@nestjs/core': true
   '@prisma/engines': true
   '@scarf/scarf': true

@@ -14,3 +14,7 @@
 **/.DS_Store
 **/.env
 **/.env*.local
+
+# Audit reports and local dashboard databases never enter image build contexts.
+.lighthouseci
+services/lighthouse/data

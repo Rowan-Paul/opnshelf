@@ -28,7 +28,7 @@ export const scenarios = [
  "issue-fixes",
  "trakt-sync-recovery",
 ];
-function sample(schema, seen = new Set()) {
+export function sample(schema, seen = new Set()) {
 	if (!schema) return {};
 	if (schema.$ref) {
 		const name = schema.$ref.split("/").at(-1);
@@ -49,7 +49,10 @@ function sample(schema, seen = new Set()) {
 			.map(([key, value]) => [key, sample(value, seen)]),
 	);
 }
-export function createScenarioServer(initial = "normal") {
+export function createScenarioServer(
+ initial = "normal",
+ { webOrigin = "http://127.0.0.1:3390", respond } = {},
+) {
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
@@ -78,7 +81,7 @@ export function createScenarioServer(initial = "normal") {
 		const origin = req.headers.origin;
 		if (
 			origin &&
-			origin !== "http://127.0.0.1:3390" &&
+			origin !== webOrigin &&
 			origin !== "http://127.0.0.1:3391"
 		) {
 			res.writeHead(403).end();
@@ -86,7 +89,7 @@ export function createScenarioServer(initial = "normal") {
 		}
 		res.setHeader(
 			"Access-Control-Allow-Origin",
-			origin || "http://127.0.0.1:3390",
+			origin || webOrigin,
 		);
 		res.setHeader("Access-Control-Allow-Credentials", "true");
 		res.setHeader(
@@ -107,6 +110,7 @@ export function createScenarioServer(initial = "normal") {
 			res.writeHead(204).end();
 			return;
 		}
+		if (respond?.({ req, res, url, json })) return;
 		let body = {};
 		if (req.method !== "GET") {
 			try {
