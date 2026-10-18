@@ -113,3 +113,33 @@ The fixture binds loopback, rejects unexpected browser origins and never proxies
 requests to another server. Unknown routes fail with an explicit 404. Data is
 in memory. Ctrl-C stops only the runner's child processes. After stopping Metro,
 reconnect a retained device to its usual server before handing it back.
+
+## Authenticated Lighthouse
+
+`pnpm test:lighthouse` builds the production Web App, starts Nitro on loopback
+port 3390 and a synthetic API on 3391, and audits Home, Shelf, Up Next, populated
+Search and a Show page three times each with mobile browser emulation. Install
+the pinned browser first with `pnpm exec puppeteer browsers install chrome`
+(on Linux CI, add `--install-deps`). `LHCI_RUNS=1 pnpm test:lighthouse` is a
+shorter local smoke check; CI always uses three runs.
+
+The browser uses sibling `web.opnshelf.localhost` and `api.opnshelf.localhost`
+hostnames, which Chrome resolves to loopback. The API session cookie is host-only
+on the API hostname; the Web hostname gets only the signed-in hint from ADR 0039.
+The session is synthetic and accepted only by the fixture. No real OAuth, account,
+PDS or database is involved. Data comes from explicit fixture responses and shared
+scenario account responses; unexpected requests and writes fail. Public TMDB
+image reads still leave this stack. Analytics is disabled for this build.
+
+A custom Lighthouse audit checks the actual measured page's route, profile link
+and populated content on every run. Report validation also requires a successful
+browser session check and the expected API reads. Those validity checks block CI;
+performance, accessibility, best-practices and SEO scores initially report only.
+This measures production frontend code with synthetic API latency, not deployed
+backend performance, OAuth correctness or native Mobile App performance.
+
+Reports stay in `.lighthouseci/` locally. GitHub Actions retains all HTML/JSON
+reports for seven days in `lighthouse-authenticated` and adds median scores to the
+job summary. Reports are not sent to temporary public storage. The runner owns a
+`stack:lighthouse` development lease and stops its own processes on completion or
+interruption. Do not run the UI scenario stack concurrently: it uses the same ports.

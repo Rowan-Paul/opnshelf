@@ -21,6 +21,7 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     outputs:
+      lighthouse: ${{ steps.filter.outputs.lighthouse }}
       web: ${{ steps.filter.outputs.web }}
       backend: ${{ steps.filter.outputs.backend }}
       mobile: ${{ steps.filter.outputs.mobile }}
@@ -48,6 +49,18 @@ jobs:
               - 'scripts/privacy-reference.mjs'
               - 'scripts/reference-plc.mjs'
               - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+            lighthouse:
+              - 'apps/web/**'
+              - 'packages/**'
+              - 'backend/openapi.json'
+              - 'scripts/lighthouse*'
+              - 'scripts/ui-scenarios.mjs'
+              - 'scripts/dev-session.mjs'
+              - 'lighthouserc.cjs'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+              - 'pnpm-workspace.yaml'
               - '.github/workflows/ci.yml'
             web:
               - 'apps/web/**'
@@ -151,6 +164,36 @@ jobs:
 
       - name: Test
         run: pnpm --filter "./apps/web" run test
+
+  lighthouse:
+    name: Authenticated Lighthouse
+    needs: changes
+    if: ${{ needs.changes.outputs.lighthouse == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - name: Install pinned Chrome and Linux dependencies
+        run: pnpm exec puppeteer browsers install chrome --install-deps
+      - name: Audit populated signed-in pages
+        run: pnpm test:lighthouse
+      - name: Retain Lighthouse HTML and JSON reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: lighthouse-authenticated
+          path: .lighthouseci/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: warn
 
   backend:
     needs: changes
@@ -276,13 +319,14 @@ jobs:
 
   ci:
     name: CI result
-    needs: [changes, web, backend, mobile, api, scripts, privacy-reference]
+    needs: [changes, web, backend, mobile, api, scripts, privacy-reference, lighthouse]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - name: Validate job results
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
+          LIGHTHOUSE_RESULT: ${{ needs.lighthouse.result }}
           WEB_RESULT: ${{ needs.web.result }}
           BACKEND_RESULT: ${{ needs.backend.result }}
           MOBILE_RESULT: ${{ needs.mobile.result }}
@@ -295,7 +339,7 @@ jobs:
             exit 1
           fi
 
-          for result in "$WEB_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT" "$SCRIPTS_RESULT" "$REFERENCE_RESULT"; do
+          for result in "$LIGHTHOUSE_RESULT" "$WEB_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT" "$SCRIPTS_RESULT" "$REFERENCE_RESULT"; do
             case "$result" in
               success|skipped) ;;
               *)

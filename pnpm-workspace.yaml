@@ -43,6 +43,8 @@ overrides:
   'js-yaml@5': ^5.4.1
   'source-map-js@1': ^1.2.2
 allowBuilds:
+  # Installed explicitly with `puppeteer browsers install chrome` for Lighthouse.
+  puppeteer: false
   '@nestjs/core': true
   '@prisma/engines': true
   '@scarf/scarf': true
