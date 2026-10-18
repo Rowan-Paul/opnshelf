@@ -146,3 +146,9 @@ reports for seven days in `lighthouse-authenticated` and adds median scores to t
 job summary. Reports are not sent to temporary public storage. The runner owns a
 `stack:lighthouse` development lease and stops its own processes on completion or
 interruption. Do not run the UI scenario stack concurrently: it uses the same ports.
+
+The optional [hosted LHCI dashboard](../../services/lighthouse/README.md) stores
+history and compares PR builds with `develop`. Its standalone service has its own
+storage and authentication. GitHub artifacts remain available when dashboard
+uploads are unconfigured or skipped for fork PRs. Production/staging account
+sessions and deployment-triggered audits are a separate follow-up.

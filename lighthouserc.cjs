@@ -21,6 +21,16 @@ module.exports = {
 				},
 			},
 		},
+		upload: {
+			target: "lhci",
+			serverBaseUrl: process.env.LHCI_SERVER_URL,
+			token: process.env.LHCI_BUILD_TOKEN,
+			basicAuth: {
+				username: process.env.LHCI_BASIC_AUTH_USERNAME || "opnshelf",
+				password: process.env.LHCI_BASIC_AUTH_PASSWORD,
+			},
+			ignoreDuplicateBuildFailure: true,
+		},
 		// Only audit validity blocks CI. Performance/a11y scores establish a baseline.
 		assert: {
 			assertions: {
