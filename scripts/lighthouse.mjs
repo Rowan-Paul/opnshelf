@@ -12,6 +12,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createLighthouseServer } from "./lighthouse-fixtures.mjs";
 import { pages, webOrigin, apiOrigin } from "./lighthouse-pages.cjs";
+import dashboard from "../services/lighthouse/package.json" with { type: "json" };
 import {
 	root,
 	owner,
@@ -22,6 +23,11 @@ import {
 
 export function validateReport(report) {
 	assert(!report.runtimeError, report.runtimeError?.message);
+	assert.equal(
+		report.lighthouseVersion,
+		dashboard.overrides.lighthouse,
+		"Report Lighthouse version must match the dashboard renderer",
+	);
 	const page = pages.find(
 		(page) => webOrigin + page.path === report.requestedUrl,
 	);

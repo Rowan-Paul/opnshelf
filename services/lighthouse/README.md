@@ -27,7 +27,7 @@ The Dockerfile builds only this service. No browser runs in its container. The
 Lighthouse override removes vulnerable downloader dependencies pulled
 in by LHCI's old version range. The collector and dashboard both pin Lighthouse
 13.5.0; update the root pnpm override and this service's npm override together.
-A script test checks that the installed collector matches the dashboard pin.
+Report validation checks each collected report against the dashboard pin.
 Report upload/rendering must be smoke-tested when updating these overrides.
 Historical reports retain their original version and may show a version warning;
 compare scores against a baseline collected with the same Lighthouse version.

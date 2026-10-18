@@ -2,7 +2,6 @@ import { createServer } from "node:net";
 import { readFileSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { once } from "node:events";
@@ -15,22 +14,13 @@ import {
 	checkContent,
 } from "./lighthouse-pages.cjs";
 
-test("collector uses the dashboard's Lighthouse report version", () => {
-	const require = createRequire(import.meta.url);
-	const collectorRequire = createRequire(
-		require.resolve("@lhci/cli/package.json"),
-	);
-	const dashboard = JSON.parse(
-		readFileSync(
-			new URL("../services/lighthouse/package.json", import.meta.url),
-			"utf8",
-		),
-	);
-	assert.equal(
-		collectorRequire("lighthouse/package.json").version,
-		dashboard.overrides.lighthouse,
-		"Collector and dashboard must use the same Lighthouse report version",
-	);
+test("report validation rejects a mismatched or missing Lighthouse version", () => {
+	for (const lighthouseVersion of ["12.6.1", undefined]) {
+		assert.throws(
+			() => validateReport({ lighthouseVersion }),
+			/Report Lighthouse version must match the dashboard renderer/,
+		);
+	}
 });
 
 test("Lighthouse fixture requires its synthetic session, provides populated data, and rejects unexpected traffic", async () => {
@@ -92,6 +82,7 @@ test("measured content audit rejects public, redirected and skeleton pages", () 
 test("report validation requires authentication during measurement and populated content", () => {
 	const url = webOrigin + pages[0].path;
 	const report = {
+		lighthouseVersion: "13.5.0",
 		requestedUrl: url,
 		finalDisplayedUrl: url,
 		audits: {
