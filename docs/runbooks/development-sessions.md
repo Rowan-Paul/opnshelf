@@ -119,9 +119,12 @@ reconnect a retained device to its usual server before handing it back.
 `pnpm test:lighthouse` builds the production Web App, starts Nitro on loopback
 port 3390 and a synthetic API on 3391, and audits Home, Shelf, Up Next, populated
 Search and a Show page three times each with mobile browser emulation. Install
-the pinned browser first with `pnpm exec puppeteer browsers install chrome`
-(on Linux CI, add `--install-deps`). `LHCI_RUNS=1 pnpm test:lighthouse` is a
-shorter local smoke check; CI always uses three runs.
+the pinned browser first with `pnpm exec puppeteer browsers install chrome`.
+On Debian/Ubuntu, `--install-deps` also installs system libraries and requires
+root. CI invokes the pinned Puppeteer CLI with `sudo` for installation only,
+preserving its explicit `PUPPETEER_CACHE_DIR` for the unprivileged audit step.
+`LHCI_RUNS=1 pnpm test:lighthouse` is a shorter local smoke check; CI always uses
+three runs.
 
 The browser uses sibling `web.opnshelf.localhost` and `api.opnshelf.localhost`
 hostnames, which Chrome resolves to loopback. The API session cookie is host-only

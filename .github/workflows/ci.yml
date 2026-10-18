@@ -182,8 +182,15 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - name: Install pinned Chrome and Linux dependencies
-        run: pnpm exec puppeteer browsers install chrome --install-deps
+        env:
+          PUPPETEER_CACHE_DIR: ${{ runner.temp }}/puppeteer
+        run: |
+          sudo env "PUPPETEER_CACHE_DIR=$PUPPETEER_CACHE_DIR" \
+            "$(command -v node)" node_modules/puppeteer/lib/cjs/puppeteer/node/cli.js \
+            browsers install chrome --install-deps
       - name: Audit populated signed-in pages
+        env:
+          PUPPETEER_CACHE_DIR: ${{ runner.temp }}/puppeteer
         run: pnpm test:lighthouse
       - name: Retain Lighthouse HTML and JSON reports
         if: ${{ always() }}
