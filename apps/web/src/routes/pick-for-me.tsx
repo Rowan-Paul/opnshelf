@@ -22,7 +22,7 @@ import {
 	useLocation,
 	useNavigate,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UpNextServiceFilter } from "#/components/UpNextServiceFilter";
 import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -153,6 +153,15 @@ export function Picker({
 	const submitted = result ? search.minutes : undefined;
 	const [selection, setSelection] = useState<WatchPickerItemDto>();
 	const [skipped, setSkipped] = useState<string[]>([]);
+	const resultAction = useRef<HTMLButtonElement>(null);
+	const restoreActionFocus = useRef(false);
+	useEffect(() => {
+		// Only restore focus after an action, never on initial/background loading.
+		if (restoreActionFocus.current) {
+			resultAction.current?.focus();
+			restoreActionFocus.current = false;
+		}
+	});
 	useEffect(() => {
 		try {
 			setFilters(
@@ -209,6 +218,16 @@ export function Picker({
 			? "Enter a whole number between 1 and 1440 minutes."
 			: "Enter how many minutes you have."
 		: undefined;
+	let resultStatus = "";
+	if (result && !query.isError) {
+		if (selection) {
+			resultStatus = `Your pick: ${selection.title}. ${selection.minutes} minutes.`;
+		} else if (query.data && !query.isFetching) {
+			resultStatus = skipped.length
+				? "You’ve tried every match. Reset your skips or change the filters."
+				: "No titles fit these filters. Try more time or clear filters.";
+		}
+	}
 	return (
 		<div className="mx-auto max-w-3xl space-y-6 px-4 pb-12 sm:px-0">
 			<header className="space-y-2">
@@ -470,10 +489,12 @@ export function Picker({
 										View details
 									</Link>
 									<button
+										ref={resultAction}
 										type="button"
 										className="btn btn-primary"
 										disabled={query.isFetching}
 										onClick={() => {
+											restoreActionFocus.current = true;
 											const next = [...skipped, selection.id];
 											setSkipped(next);
 											setSelection(
@@ -503,9 +524,11 @@ export function Picker({
 							</p>
 							{skipped.length > 0 && (
 								<button
+									ref={resultAction}
 									type="button"
 									className="btn btn-secondary"
 									onClick={() => {
+										restoreActionFocus.current = true;
 										setSkipped([]);
 										setSelection(choosePickerItem(query.data?.items ?? [], []));
 									}}
@@ -517,6 +540,9 @@ export function Picker({
 					) : null}
 				</>
 			)}
+			<output aria-live="polite" aria-atomic="true" className="sr-only">
+				{resultStatus}
+			</output>
 		</div>
 	);
 }

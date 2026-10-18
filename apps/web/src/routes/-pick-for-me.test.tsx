@@ -110,9 +110,23 @@ it("restores a direct result request and supports skip exhaustion and reset", as
 	expect(screen.queryByLabelText(/How much time do you have/)).toBeNull();
 	expect(screen.getByText("30 minutes left", { exact: false })).toBeTruthy();
 	expect(JSON.stringify(mocks.request)).toContain('"genre":"Drama"');
-	fireEvent.click(screen.getByRole("button", { name: "Pick again" }));
+	const status = screen.getByRole("status");
+	const pickAgain = screen.getByRole("button", { name: "Pick again" });
+	expect(document.activeElement).toBe(document.body);
+	pickAgain.focus();
+	fireEvent.click(pickAgain);
 	expect(screen.getByText("You’ve tried every match")).toBeTruthy();
-	fireEvent.click(screen.getByRole("button", { name: "Reset skips" }));
+	const reset = screen.getByRole("button", { name: "Reset skips" });
+	expect(document.activeElement).toBe(reset);
+	expect(screen.getByRole("status")).toBe(status);
+	expect(screen.getByRole("status").textContent).toContain(
+		"You’ve tried every match",
+	);
+	fireEvent.click(reset);
 	expect(screen.getByText("Tonight’s movie")).toBeTruthy();
+	expect(document.activeElement).toBe(
+		screen.getByRole("button", { name: "Pick again" }),
+	);
+	expect(screen.getByRole("status").textContent).toContain("Tonight’s movie");
 	expect(screen.getByRole("link", { name: "Change filters" })).toBeTruthy();
 });
