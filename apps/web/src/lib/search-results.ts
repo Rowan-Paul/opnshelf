@@ -171,10 +171,13 @@ export function splitByMediaType(results: UnifiedSearchResultDto[]): {
 	movies: UnifiedSearchResultDto[];
 	shows: UnifiedSearchResultDto[];
 } {
-	return {
-		movies: results.filter((r) => r.media_type === "movie"),
-		shows: results.filter((r) => r.media_type === "tv"),
-	};
+	const movies: UnifiedSearchResultDto[] = [];
+	const shows: UnifiedSearchResultDto[] = [];
+	results.forEach((result) => {
+		if (result.media_type === "movie") movies.push(result);
+		else if (result.media_type === "tv") shows.push(result);
+	});
+	return { movies, shows };
 }
 
 /** The id/type pairs the batch ratings query wants for a result set. */
