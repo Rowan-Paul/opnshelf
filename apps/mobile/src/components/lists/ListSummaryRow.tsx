@@ -48,7 +48,7 @@ export function ListSummaryRow({
 							style={fillStyle}
 							contentFit="cover"
 							blurRadius={28}
-							transition={200}
+							transition={{ duration: 200, skipOnCacheHit: "all" }}
 						/>
 						{/* Darkest where the text sits, so a pale poster still reads. */}
 						<LinearGradient
@@ -70,7 +70,7 @@ export function ListSummaryRow({
 							source={{ uri: cover }}
 							style={posterStyle}
 							contentFit="cover"
-							transition={200}
+							transition={{ duration: 200, skipOnCacheHit: "all" }}
 						/>
 					) : (
 						// An empty list has no first item to borrow art from.

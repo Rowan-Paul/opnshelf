@@ -68,7 +68,7 @@ export function UpNextEpisodeCard({
 								source={{ uri: backdropUrl(imagePath, "w780") }}
 								style={{ position: "absolute", inset: 0 }}
 								contentFit="cover"
-								transition={200}
+								transition={{ duration: 200, skipOnCacheHit: "all" }}
 								onError={() =>
 									setFailedImages((paths) => [...paths, imagePath])
 								}
