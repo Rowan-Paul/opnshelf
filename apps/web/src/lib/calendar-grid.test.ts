@@ -9,7 +9,6 @@ import {
 	getCalendarDateRange,
 	getDisplayTitle,
 	getMonthGrid,
-	getReleaseType,
 	getReleaseUrl,
 	getWeekDays,
 	getWeekReleases,
@@ -229,7 +228,7 @@ describe("isDateInWeek", () => {
 	});
 });
 
-describe("getDisplayTitle / getReleaseType / getReleaseUrl", () => {
+describe("getDisplayTitle / getReleaseUrl", () => {
 	it("prefixes episodes with SxE", () => {
 		expect(
 			getDisplayTitle(
@@ -281,15 +280,6 @@ describe("getDisplayTitle / getReleaseType / getReleaseUrl", () => {
 		expect(
 			getDisplayTitle(release({ releaseDate: "2026-09-10", title: "Loose" })),
 		).toBe("Loose");
-	});
-
-	it("reports the media type as the release type", () => {
-		expect(
-			getReleaseType(
-				release({ releaseDate: "2026-09-10", mediaType: "movie" }),
-			),
-		).toBe("movie");
-		expect(getReleaseType(release({ releaseDate: "2026-09-10" }))).toBe("show");
 	});
 
 	it("links movies, episodes, and shows to their detail pages", () => {

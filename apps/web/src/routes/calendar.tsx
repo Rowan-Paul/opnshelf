@@ -20,7 +20,6 @@ import {
 	getCalendarDateRange,
 	getDisplayTitle,
 	getMonthGrid,
-	getReleaseType,
 	getReleaseUrl,
 	getWeekDays,
 	getWeekReleases,
@@ -264,7 +263,7 @@ function CalendarPage() {
 											/>
 										) : (
 											<div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-(--background-subtle)">
-												{getReleaseType(release) === "movie" ? (
+												{release.mediaType === "movie" ? (
 													<Film className="size-10 text-(--foreground-muted)" />
 												) : (
 													<Tv className="size-10 text-(--foreground-muted)" />
@@ -280,7 +279,7 @@ function CalendarPage() {
 											</p>
 											<div className="mt-1 flex items-center gap-2 text-(--foreground-muted) text-sm">
 												<span className="flex items-center gap-1">
-													{getReleaseType(release) === "movie" ? (
+													{release.mediaType === "movie" ? (
 														<>
 															<Film className="size-4" />
 															Movie
@@ -381,7 +380,7 @@ function CalendarPage() {
 												>
 													<div
 														className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-															getReleaseType(release) === "movie"
+															release.mediaType === "movie"
 																? "bg-blue-500"
 																: "bg-purple-500"
 														}`}
@@ -461,7 +460,7 @@ function CalendarPage() {
 											/>
 										) : (
 											<div className="flex h-16 w-12 items-center justify-center rounded bg-(--background-subtle)">
-												{getReleaseType(release) === "movie" ? (
+												{release.mediaType === "movie" ? (
 													<Film className="size-6 text-(--foreground-muted)" />
 												) : (
 													<Tv className="size-6 text-(--foreground-muted)" />
@@ -477,7 +476,7 @@ function CalendarPage() {
 											</p>
 											<div className="mt-1 flex items-center gap-2 text-(--foreground-muted) text-xs">
 												<span className="flex items-center gap-1">
-													{getReleaseType(release) === "movie" ? (
+													{release.mediaType === "movie" ? (
 														<Film className="size-3" />
 													) : (
 														<Tv className="size-3" />
