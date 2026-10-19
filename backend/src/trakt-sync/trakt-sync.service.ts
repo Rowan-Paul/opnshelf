@@ -869,15 +869,24 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			// A write may have reached Trakt before its acknowledgement was lost.
 			// Let that durable intent claim the result before ordinary discovery.
 			if (
-				entries.some(
-					(e) =>
-						e.pending &&
-						(e.pending as { direction?: string }).direction === "push" &&
-						equivalent(
-							readRecord((e.pending as { desired?: unknown }).desired),
-							r,
-						),
-				)
+				entries.some((e) => {
+					if (
+						!e.pending ||
+						(e.pending as { direction?: string }).direction !== "push"
+					)
+						return false;
+					const desired = readRecord(
+						(e.pending as { desired?: unknown }).desired,
+					);
+					return (
+						equivalent(desired, r) ||
+						(r.unreadable &&
+							isListRecord(r) &&
+							!e.remoteKey &&
+							desired?.kind === r.kind &&
+							desired.title === r.title)
+					);
+				})
 			)
 				continue;
 			const possibleReplacement =
