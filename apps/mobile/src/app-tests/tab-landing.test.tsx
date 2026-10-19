@@ -29,11 +29,20 @@ function host(name: string) {
 vi.mock("expo-router", () => ({
 	Redirect: host("redirect"),
 	router: { push: mocks.push },
-	Tabs: Object.assign(host("tabs"), {
-		Screen: host("tab-screen"),
-		Protected: ({ guard, children }: PropsWithChildren<{ guard: boolean }>) =>
-			guard ? children : null,
+}));
+vi.mock("expo-router/native-tabs", () => ({
+	NativeTabs: Object.assign(host("tabs"), {
+		Trigger: Object.assign(host("tab-screen"), {
+			Label: host("label"),
+			Icon: host("icon"),
+		}),
 	}),
+}));
+vi.mock("@/components/navigation/native-tab-avatar", () => ({
+	NativeTabAvatar: host("avatar"),
+}));
+vi.mock("@/components/navigation/tab-icons", () => ({
+	tabIcons: { home: 1, discover: 2, social: 3, profile: 4, login: 5 },
 }));
 vi.mock("react-native", () => ({
 	ActivityIndicator: host("pending"),
@@ -104,16 +113,13 @@ describe("URL-based Mobile App landing", () => {
 		const root = render(<TabLayout />);
 		expect(hosts(root, "redirect")).toHaveLength(0);
 		const tabs = hosts(root, "tab-screen");
-		expect(tabs.map((tab) => tab.props.name)).toEqual([
-			"index",
-			"search",
-			"profile",
-		]);
-		expect(tabs[0].props.options.href).toBeNull();
-		expect(tabs[2].props.options.title).toBe("Sign in");
-		const event = { preventDefault: vi.fn() };
-		tabs[2].props.listeners.tabPress(event);
-		expect(event.preventDefault).toHaveBeenCalledOnce();
+		expect(
+			tabs.filter((tab) => !tab.props.hidden).map((tab) => tab.props.name),
+		).toEqual(["search", "profile"]);
+		const profile = tabs[3];
+		expect(profile?.props.disabled).toBe(true);
+		expect(hosts(profile, "label")[0].children).toEqual(["Sign in"]);
+		profile?.props.listeners.tabPress();
 		expect(mocks.push).toHaveBeenCalledWith("/login");
 	});
 
@@ -131,12 +137,21 @@ describe("URL-based Mobile App landing", () => {
 			"social",
 			"profile",
 		]);
-		const avatar = render(
-			tabs[3].props.options.tabBarIcon({ size: 24, focused: true }),
-		);
-		expect(hosts(avatar, "image")[0].props.source.uri).toBe(
+		expect(tabs[3].props.disabled).toBe(false);
+		expect(hosts(root, "avatar")[0].props.uri).toBe(
 			"https://example.test/avatar",
 		);
+		act(() =>
+			hosts(root, "avatar")[0].props.onReady({
+				default: { uri: "normal" },
+				selected: { uri: "selected" },
+			}),
+		);
+		const profile = hosts(rendered.root, "tab-screen")[3];
+		expect(profile.props.unstable_nativeProps.android.icon.tinting).toBe(
+			"original",
+		);
+		expect(hosts(profile, "icon")[0].props.renderingMode).toBe("original");
 	});
 
 	it.each([

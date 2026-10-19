@@ -11,6 +11,7 @@ import { ShelfPreviewRow } from "@/components/home/ShelfPreviewRow";
 import { UpcomingReleases } from "@/components/home/UpcomingReleases";
 import { UpNextPreview } from "@/components/home/UpNextPreview";
 import { WelcomeHeader } from "@/components/home/WelcomeHeader";
+import { NativeTabScreen } from "@/components/navigation/native-tab-screen";
 import { StatsStrip } from "@/components/profile/StatsStrip";
 import {
 	registerTourScroller,
@@ -55,7 +56,7 @@ export default function HomeScreen() {
 	};
 
 	return (
-		<View className="flex-1 bg-background">
+		<NativeTabScreen>
 			<ScrollView
 				// Handed to the Welcome Tour so it can scroll its own target into
 				// view: the Up Next and Shelf steps point below the fold.
@@ -110,6 +111,6 @@ export default function HomeScreen() {
 					<UpcomingReleases />
 				</View>
 			</ScrollView>
-		</View>
+		</NativeTabScreen>
 	);
 }

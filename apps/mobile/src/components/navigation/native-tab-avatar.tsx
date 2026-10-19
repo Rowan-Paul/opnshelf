@@ -1,0 +1,122 @@
+// Native tab icons accept image sources, so rasterize the circular crop and ring.
+import { useEffect, useRef, useState } from "react";
+import { type ColorValue, type ImageURISource, View } from "react-native";
+import Svg, { Circle, ClipPath, Defs, Image, Path } from "react-native-svg";
+
+type Images = { default: ImageURISource; selected: ImageURISource };
+export function NativeTabAvatar({
+	uri,
+	color,
+	onReady,
+}: {
+	uri?: string | null;
+	color: ColorValue;
+	onReady: (images: Images) => void;
+}) {
+	const [loaded, setLoaded] = useState({ normal: false, selected: false });
+	const ready = loaded.normal && loaded.selected;
+	const normal = useRef<Svg>(null);
+	const selected = useRef<Svg>(null);
+	useEffect(() => {
+		if (uri && !ready) return;
+		let active = true;
+		const frame = requestAnimationFrame(() => {
+			normal.current?.toDataURL(
+				(defaultImage) => {
+					if (!active) return;
+					selected.current?.toDataURL(
+						(selectedImage) => {
+							if (!active) return;
+							const source = (data: string): ImageURISource => ({
+								uri: `data:image/png;base64,${data}`,
+								width: 28,
+								height: 28,
+								scale: 3,
+							});
+							onReady({
+								default: source(defaultImage),
+								selected: source(selectedImage),
+							});
+						},
+						{ width: 84, height: 84 },
+					);
+				},
+				{ width: 84, height: 84 },
+			);
+		});
+		return () => {
+			active = false;
+			cancelAnimationFrame(frame);
+		};
+	}, [ready, uri, onReady]);
+
+	return (
+		<View
+			pointerEvents="none"
+			accessible={false}
+			accessibilityElementsHidden
+			importantForAccessibility="no-hide-descendants"
+			style={{ position: "absolute", left: -1000, top: -1000 }}
+		>
+			{[false, true].map((focused) => (
+				<Svg
+					key={String(focused)}
+					ref={focused ? selected : normal}
+					width={84}
+					height={84}
+					viewBox="0 0 28 28"
+				>
+					<Defs>
+						<ClipPath id="avatar">
+							<Circle cx={14} cy={14} r={focused ? 12 : 14} />
+						</ClipPath>
+					</Defs>
+					<Circle cx={14} cy={14} r={14} fill="#1e293b" />
+					{uri && (
+						<Image
+							href={{ uri }}
+							width={28}
+							height={28}
+							preserveAspectRatio="xMidYMid slice"
+							clipPath="url(#avatar)"
+							onLoad={() => {
+								setLoaded((current) => ({
+									...current,
+									[focused ? "selected" : "normal"]: true,
+								}));
+							}}
+						/>
+					)}
+					{!ready && (
+						<>
+							<Circle
+								cx={14}
+								cy={10}
+								r={4}
+								fill="none"
+								stroke="#94a3b8"
+								strokeWidth={2}
+							/>
+							<Path
+								d="M7 23v-3c0-6 14-6 14 0v3"
+								fill="none"
+								stroke="#94a3b8"
+								strokeWidth={2}
+							/>
+						</>
+					)}
+					{focused && (
+						<Circle
+							cx={14}
+							cy={14}
+							r={13}
+							fill="none"
+							stroke={color}
+							strokeWidth={2}
+						/>
+					)}
+				</Svg>
+			))}
+		</View>
+	);
+}

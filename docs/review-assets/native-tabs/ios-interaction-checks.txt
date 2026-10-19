@@ -1,0 +1,12 @@
+iPhone 18 Pro / iOS 27.0, Expo Router 58.0.23. Local synthetic scenario API.
+No LogBox warning suppression.
+NATIVE528: cold first tap passed 1
+NATIVE528: cold first tap passed 2
+NATIVE528: cold first tap passed 3
+NATIVE528-VO: Movies, shows, people… Text field Double-tap to edit.
+NATIVE528-VO: Tab Bar selected Discover Tab 1 of 2
+NATIVE528-VO: Sign in Tab 2 of 2
+** TEST SUCCEEDED **
+NATIVE528: query retained after Home
+NATIVE528: Profile bottom clears bar; edge Back restores Profile
+** TEST SUCCEEDED **
