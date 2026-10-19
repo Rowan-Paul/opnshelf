@@ -41,8 +41,8 @@ vi.mock("@opnshelf/api", async (original) => ({
 			historyScope: "all",
 			publicationConsent: mocks.consent,
 			remaining: 0,
-			needsAttention: 0,
-			ignored: 0,
+			needsAttention: mocks.issue ? 1 : 0,
+			ignored: mocks.ignored ? 1 : 0,
 			importStatus: mocks.importStatus,
 		},
 	}),
@@ -402,4 +402,22 @@ it.each([
 			expect.anything(),
 		),
 	);
+});
+
+it.each([
+	false,
+	true,
+])("hides empty attention when disconnected (embedded: %s)", async (embedded) => {
+	mocks.status = "disconnected";
+	mount(false, embedded);
+	await screen.findByRole("button", { name: "Connect Trakt" });
+	expect(screen.queryByRole("heading", { name: "Needs attention" })).toBeNull();
+});
+it("keeps retained attention visible after disconnecting", async () => {
+	mocks.status = "disconnected";
+	mocks.issue = true;
+	mount();
+	expect(
+		await screen.findByRole("heading", { name: "Needs attention" }),
+	).toBeTruthy();
 });

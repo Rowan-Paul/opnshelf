@@ -382,9 +382,9 @@ export function TraktSyncManager({
 				</Link>
 			)}
 			{data.username &&
-				(!embedded || data.needsAttention > 0 || data.ignored > 0) && (
-					<SyncIssues connected={connected} />
-				)}
+				((!embedded && connected) ||
+					data.needsAttention > 0 ||
+					data.ignored > 0) && <SyncIssues connected={connected} />}
 		</div>
 	);
 }
