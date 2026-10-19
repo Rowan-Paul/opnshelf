@@ -1,3 +1,4 @@
+import { Redirect } from "expo-router";
 import { createElement, type PropsWithChildren } from "react";
 import { TextInput } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
@@ -19,7 +20,14 @@ const mocks = vi.hoisted(() => ({
 	refetch: vi.fn(),
 	request: undefined as unknown,
 	dismissKeyboard: vi.fn(),
-	user: { did: "did:plc:picker-test", handle: "picker.test" },
+	user: { did: "did:plc:picker-test", handle: "picker.test" } as {
+		did: string;
+		handle: string;
+		needsEmailVerification?: boolean;
+		needsOnboarding?: boolean;
+	} | null,
+	authLoading: false,
+	queryEnabled: [] as boolean[],
 }));
 function host(name: string) {
 	return ({ children, ...props }: PropsWithChildren) =>
@@ -59,7 +67,7 @@ vi.mock("expo-secure-store", () => ({
 	setItemAsync: mocks.save,
 }));
 vi.mock("@/lib/auth-context", () => ({
-	useAuth: () => ({ user: mocks.user, isLoading: false }),
+	useAuth: () => ({ user: mocks.user, isLoading: mocks.authLoading }),
 }));
 vi.mock("@/components/ui/button", () => ({ Button: host("Button") }));
 vi.mock("@/components/ui/text", () => ({ Text: host("Text") }));
@@ -88,6 +96,7 @@ vi.mock("@tanstack/react-query", () => {
 	return {
 		queryOptions: (options: unknown) => options,
 		useQuery: (options: { queryKey: { _id: string }[]; enabled: boolean }) => {
+			mocks.queryEnabled.push(options.enabled);
 			const picker = options.queryKey[0]._id === "watchPickerControllerGet";
 			if (picker) mocks.request = options.queryKey;
 			return {
@@ -121,6 +130,9 @@ function button(view: ReactTestRenderer, label: string) {
 	)[0];
 }
 beforeEach(() => {
+	mocks.user = { did: "did:plc:picker-test", handle: "picker.test" };
+	mocks.authLoading = false;
+	mocks.queryEnabled = [];
 	mocks.params = {};
 	mocks.canGoBack.mockReturnValue(true);
 	mocks.push.mockClear();
@@ -135,6 +147,29 @@ beforeEach(() => {
 	mocks.save.mockResolvedValue(undefined);
 });
 describe("Mobile picker session", () => {
+	it.each([
+		[null, "/login"],
+		[{ needsEmailVerification: true, needsOnboarding: true }, "/verify-email"],
+		[{ needsOnboarding: true }, "/onboarding"],
+	] as const)("gates direct picker and result links for %j", async (flags, href) => {
+		mocks.user = flags
+			? { did: "did:plc:picker-test", handle: "picker.test", ...flags }
+			: null;
+		for (const result of [false, true]) {
+			const view = await renderPicker(result);
+			expect(view.root.findByType(Redirect).props.href).toBe(href);
+			expect(mocks.queryEnabled.every((enabled) => !enabled)).toBe(true);
+			await act(async () => view.unmount());
+		}
+	});
+	it("waits for session restoration before redirecting or fetching", async () => {
+		mocks.user = null;
+		mocks.authLoading = true;
+		const view = await renderPicker();
+		expect(view.root.findAllByType(Redirect)).toHaveLength(0);
+		expect(mocks.queryEnabled.every((enabled) => !enabled)).toBe(true);
+		await act(async () => view.unmount());
+	});
 	it("opens a separate result screen with the submitted time and filters", async () => {
 		const view = await renderPicker();
 		expect(view.root.findByType(TextInput).props.value).toBe("180");

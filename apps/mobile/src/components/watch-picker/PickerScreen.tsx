@@ -41,15 +41,25 @@ import { useAuth } from "@/lib/auth-context";
 
 export default function PickerScreen({ result = false }: { result?: boolean }) {
 	const { user, isLoading: authLoading } = useAuth();
+	const canUsePicker =
+		!!user &&
+		!authLoading &&
+		!user.needsEmailVerification &&
+		!user.needsOnboarding;
 	const settingsQuery = useQuery({
 		...usersControllerGetMySettingsOptions(),
-		enabled: !!user,
+		enabled: canUsePicker,
 	});
 	const country = settingsQuery.data?.watchCountry ?? "US";
 	const servicesQuery = useQuery({
 		...streamingServicesControllerListOptions({ query: { country } }),
-		enabled: !!user && !!settingsQuery.data,
+		enabled: canUsePicker && !!settingsQuery.data,
 	});
+	if (!authLoading) {
+		if (!user) return <Redirect href="/login" />;
+		if (user.needsEmailVerification) return <Redirect href="/verify-email" />;
+		if (user.needsOnboarding) return <Redirect href="/onboarding" />;
+	}
 	let content: ReactNode;
 	if (
 		authLoading ||
@@ -61,7 +71,6 @@ export default function PickerScreen({ result = false }: { result?: boolean }) {
 				<View className="h-80 rounded-xl bg-background-subtle" />
 			</View>
 		);
-	else if (!user) return <Redirect href="/login" />;
 	else if (settingsQuery.isError || servicesQuery.isError)
 		content = (
 			<View className="gap-3 py-5">
@@ -77,7 +86,7 @@ export default function PickerScreen({ result = false }: { result?: boolean }) {
 				/>
 			</View>
 		);
-	else if (settingsQuery.data && servicesQuery.data)
+	else if (user && settingsQuery.data && servicesQuery.data)
 		content = (
 			<Picker
 				result={result}
