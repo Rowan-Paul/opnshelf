@@ -24,6 +24,8 @@ export const scenarios = [
 	"compact",
 	"large-text",
 	"trakt-sync-catch-up",
+	"trakt-sync-error",
+	"trakt-sync-attention",
 	"trakt-sync-lists",
  "issue-fixes",
  "trakt-sync-recovery",
@@ -56,7 +58,7 @@ export function createScenarioServer(
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = initial === "issue-fixes",
+		completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention"].includes(initial),
  fixtureSyncState = "idle",
  fixtureIssue = true,
  fixtureIgnored = false;
@@ -137,7 +139,7 @@ export function createScenarioServer(
  fixtureIssue = true;
  fixtureIgnored = false;
 			authorized = !["sheet-overlap", "delayed-auth"].includes(scenario);
-			completed = scenario === "issue-fixes";
+			completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention"].includes(scenario);
 			json({ scenario });
 			return;
 		}
@@ -319,16 +321,17 @@ export function createScenarioServer(
   }
   if (url.pathname === "/trakt-sync") {
 			json(
-				["trakt-sync-catch-up", "trakt-sync-lists", "trakt-sync-recovery", "issue-fixes"].includes(scenario)
+				["trakt-sync-catch-up", "trakt-sync-error", "trakt-sync-attention", "trakt-sync-lists", "trakt-sync-recovery", "issue-fixes"].includes(scenario)
 					? {
 							...sample(spec.components.schemas.SyncStatusDto),
 							configured: true,
-							status: scenario === "trakt-sync-lists" ? "paused" : "active",
+							status: scenario === "trakt-sync-error" ? "preparing" : scenario === "trakt-sync-lists" ? "paused" : "active",
+							lastError: scenario === "trakt-sync-error" ? "Trakt could not finish the request. Your data is retained; sync will retry." : undefined,
 							username: "fixture",
  syncState: fixtureSyncState,
  publicationConsent: true,
  listPublicationConsent: true,
- needsAttention: scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored ? 1 : 0,
+ needsAttention: scenario === "trakt-sync-attention" || (scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored) ? 1 : 0,
  ignored: scenario === "trakt-sync-recovery" && fixtureIssue && fixtureIgnored ? 1 : 0,
 							direction: "inbound",
 							watches: true,

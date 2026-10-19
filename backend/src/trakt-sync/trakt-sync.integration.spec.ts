@@ -275,6 +275,112 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		});
 		await tick();
 	}
+	it.each(["inbound", "outbound", "both"] as const)(
+		"preserves an unreadable linked List and syncs a healthy List (%s)",
+		async (direction) => {
+			const broken = curated("list:22", ["12"]);
+			localRecords = [curated("list:local", ["12"])];
+			remoteRecords = [broken];
+			await configureLists(direction);
+			const before = await db.traktSyncEntry.findFirstOrThrow({
+				where: { connection: { userDid }, remoteKey: broken.key },
+			});
+			expect(before.linked).toBe(true);
+			remoteRecords = [
+				{
+					...broken,
+					value: null,
+					unreadable: true,
+					problem: "Trakt returned an incomplete List (12 of 13 items).",
+				},
+			];
+			const healthy = {
+				...curated("list:healthy", ["13"]),
+				title: "Healthy",
+				value: encodeList({
+					name: "Healthy",
+					description: "",
+					items: [membership("13")],
+				}),
+			};
+			if (direction === "inbound") remoteRecords.push(healthy);
+			else localRecords.push(healthy);
+			await tick();
+			const issues = await service.issues(userDid, {});
+			expect(
+				issues.items.find((issue) => issue.id === before.id),
+			).toMatchObject({
+				recovery: "retry",
+				issue: expect.stringContaining("incomplete"),
+			});
+			expect(localRecords.find((r) => r.key === "list:local")).toEqual(
+				curated("list:local", ["12"]),
+			);
+			expect(
+				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: before.id } }),
+			).toMatchObject({
+				localBase: before.localBase,
+				remoteBase: before.remoteBase,
+			});
+			expect(
+				(direction === "inbound" ? localRecords : remoteRecords).some(
+					(r) => r.title === "Healthy",
+				),
+			).toBe(true);
+			expect((await service.status(userDid)).needsAttention).toBe(1);
+			await expect(
+				service.resolve(userDid, before.id, { action: "trakt" }),
+			).rejects.toThrow("could not read this List");
+			remoteRecords = remoteRecords.map((r) =>
+				r.key === broken.key ? broken : r,
+			);
+			await service.resolve(userDid, before.id, { action: "retry" });
+			await tick();
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+		},
+	);
+	it("retains a pending List transfer while its destination is unreadable", async () => {
+		const previous = { ...curated("list:22", ["12"]), traktId: 22 };
+		localRecords = [curated("list:local", ["12"])];
+		remoteRecords = [previous];
+		await configureLists("outbound");
+		const entry = await db.traktSyncEntry.findFirstOrThrow({
+			where: { connection: { userDid }, remoteKey: previous.key },
+		});
+		localRecords = [curated("list:local", ["12", "13"])];
+		const pending = {
+			direction: "push",
+			desired: localRecords[0],
+			previous,
+			source: localRecords[0],
+		};
+		await db.traktSyncEntry.update({
+			where: { id: entry.id },
+			data: { pending },
+		});
+		remoteRecords = [
+			{
+				...previous,
+				value: null,
+				unreadable: true,
+				problem: "Trakt returned an incomplete List.",
+			},
+		];
+		await tick();
+		expect(remoteApi.write).not.toHaveBeenCalled();
+		expect(localApi.write).not.toHaveBeenCalled();
+		expect(
+			(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+				.pending,
+		).toEqual(pending);
+		remoteRecords = [previous];
+		await tick();
+		expect(listValue(remoteRecords[0]).items.map((i) => i.mediaId)).toEqual([
+			"12",
+			"13",
+		]);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
 	it("pairs default Favorites by role and keeps custom Lists separate", async () => {
 		localRecords = [
 			{
@@ -1618,33 +1724,72 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			syncState: "running",
 		});
 	});
-	it("automatically adopts a fully confirmed interrupted List creation", async () => {
-		localRecords = [curated("list:local", ["12"])];
-		await configureLists("outbound");
-		const connection = await db.traktSyncConnection.findFirstOrThrow({
-			where: { userDid },
-		});
-		const entry = await db.traktSyncEntry.findFirstOrThrow({
-			where: { connectionId: connection.id },
-		});
-		await db.traktSyncEntry.update({
-			where: { id: entry.id },
-			data: {
-				pending: {
-					direction: "push",
-					desired: localRecords[0],
-					previous: null,
+	it.each([false, true])(
+		"automatically adopts a fully confirmed interrupted List creation (initially unreadable: %s)",
+		async (initiallyUnreadable) => {
+			localRecords = [curated("list:local", ["12"])];
+			await configureLists("outbound");
+			const connection = await db.traktSyncConnection.findFirstOrThrow({
+				where: { userDid },
+			});
+			const entry = await db.traktSyncEntry.findFirstOrThrow({
+				where: { connectionId: connection.id },
+			});
+			await db.traktSyncEntry.update({
+				where: { id: entry.id },
+				data: {
+					pending: {
+						direction: "push",
+						desired: localRecords[0],
+						previous: null,
+					},
 				},
-			},
-		});
-		remoteRecords = [{ ...localRecords[0], key: "list:22", traktId: 22 }];
-		await tick();
-		expect((await service.issues(userDid, {})).total).toBe(0);
-		expect(remoteApi.write).not.toHaveBeenCalled();
-		expect(
-			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
-		).toMatchObject({ remoteKey: "list:22", linked: true, pending: null });
-	});
+			});
+			const created = { ...localRecords[0], key: "list:22", traktId: 22 };
+			if (initiallyUnreadable) {
+				remoteRecords = [
+					{
+						...created,
+						value: null,
+						unreadable: true,
+						problem: "Trakt returned an incomplete List.",
+					},
+				];
+				await tick();
+				await tick();
+				expect(
+					await db.traktSyncEntry.count({
+						where: { connectionId: connection.id },
+					}),
+				).toBe(1);
+				expect(
+					await db.traktSyncEntry.findUniqueOrThrow({
+						where: { id: entry.id },
+					}),
+				).toMatchObject({
+					remoteKey: null,
+					pending: {
+						direction: "push",
+						desired: localRecords[0],
+						previous: null,
+					},
+				});
+				expect(remoteApi.write).not.toHaveBeenCalled();
+			}
+			remoteRecords = [created];
+			await tick();
+			expect((await service.issues(userDid, {})).total).toBe(0);
+			expect(remoteApi.write).not.toHaveBeenCalled();
+			expect(
+				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
+			).toMatchObject({ remoteKey: "list:22", linked: true, pending: null });
+			expect(
+				await db.traktSyncEntry.count({
+					where: { connectionId: connection.id },
+				}),
+			).toBe(1);
+		},
+	);
 	it("serializes controls against a worker lease and does not erase history on disconnect", async () => {
 		await configure();
 		const c = await db.traktSyncConnection.findFirstOrThrow({

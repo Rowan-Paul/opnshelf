@@ -10,6 +10,7 @@ import {
 import { equivalent, fingerprint, type SyncRecord } from "./reconcile";
 
 type Api = Pick<TraktSyncClient, "request">;
+class ListReadError extends Error {}
 const metadataSchema = z.object({
 	name: z.string().min(1),
 	description: z.string().nullish(),
@@ -56,7 +57,7 @@ async function pages(api: Api, token: string, path: string) {
 			!Number.isInteger(Number(countPages)) ||
 			Number(countPages) < 0
 		)
-			throw new Error(
+			throw new ListReadError(
 				"Trakt List pagination was incomplete. No removals were applied.",
 			);
 		if (total === undefined) {
@@ -64,21 +65,22 @@ async function pages(api: Api, token: string, path: string) {
 			pageCount = Number(countPages);
 		}
 		if (total !== Number(count) || pageCount !== Number(countPages))
-			throw new Error(
+			throw new ListReadError(
 				"Trakt List changed during pagination. No removals were applied.",
 			);
 		const items = z.array(rowSchema).parse(data);
 		rows.push(...items);
 		if (page >= Number(countPages)) break;
 		if (!items.length)
-			throw new Error("Trakt returned an incomplete List page.");
+			throw new ListReadError("Trakt returned an incomplete List page.");
 	}
-	if (
-		rows.length !== total ||
-		new Set(rows.map((r) => r.id)).size !== rows.length
-	)
-		throw new Error(
-			"Trakt returned incomplete or duplicate List memberships. No removals were applied.",
+	if (rows.length !== total)
+		throw new ListReadError(
+			`Trakt returned an incomplete List (${rows.length} of ${total} items). No removals were applied.`,
+		);
+	if (new Set(rows.map((r) => r.id)).size !== rows.length)
+		throw new ListReadError(
+			"Trakt returned duplicate List memberships. No removals were applied.",
 		);
 	return rows.sort((a, b) => a.rank - b.rank);
 }
@@ -143,7 +145,9 @@ function record(
 					i.mediaType !== "show"),
 		)
 			? "This List contains unsupported media types. They remain on Trakt; remove them or keep this List out of sync."
-			: undefined,
+			: items.some((i) => !i?.mediaId)
+				? "This List contains a title without a TMDB match. Resolve it on Trakt before retrying; the List is preserved."
+				: undefined,
 		value: encodeList({
 			name: metadata?.name ?? defaultName,
 			description: metadata?.description ?? "",
@@ -156,6 +160,29 @@ async function customLists(api: Api, token: string) {
 		.array(metadataSchema)
 		.parse((await api.request("/users/me/lists", token)).data);
 }
+function unreadable(list: SyncRecord, problem: string): SyncRecord {
+	return { ...list, value: null, unreadable: true, problem };
+}
+async function readList(list: SyncRecord, read: () => Promise<SyncRecord>) {
+	try {
+		return await read();
+	} catch (error) {
+		// Authentication and provider-wide backoff still apply to the account.
+		if (
+			error &&
+			typeof error === "object" &&
+			"status" in error &&
+			[401, 429].includes(Number(error.status))
+		)
+			throw error;
+		return unreadable(
+			list,
+			error instanceof ListReadError
+				? error.message
+				: "Trakt could not read this List. Retry in Needs attention; the List is preserved.",
+		);
+	}
+}
 export async function snapshotLists(
 	api: Api,
 	token: string,
@@ -165,23 +192,44 @@ export async function snapshotLists(
 	if (options.lists) {
 		const before = await customLists(api, token);
 		for (const list of before) {
-			// No type filter: unsupported records must remain visible instead of appearing deleted.
-			const rows = await pages(
-				api,
-				token,
-				`/users/me/lists/${list.ids.trakt}/items`,
+			result.push(
+				await readList(record(list, []), async () => {
+					// No type filter: unsupported records must remain visible instead of appearing deleted.
+					const rows = await pages(
+						api,
+						token,
+						`/users/me/lists/${list.ids.trakt}/items`,
+					);
+					if (rows.length !== list.item_count)
+						throw new ListReadError(
+							"Trakt List changed during the read. No removals were applied.",
+						);
+					return record(list, rows);
+				}),
 			);
-			if (rows.length !== list.item_count)
-				throw new Error(
-					"Trakt List changed during the read. No removals were applied.",
-				);
-			result.push(record(list, rows));
 		}
 		const after = await customLists(api, token);
-		if (JSON.stringify(before) !== JSON.stringify(after))
-			throw new Error(
-				"Trakt Lists changed during the read. No removals were applied.",
-			);
+		for (let i = 0; i < before.length; i++) {
+			if (
+				JSON.stringify(before[i]) !==
+				JSON.stringify(
+					after.find((list) => list.ids.trakt === before[i].ids.trakt),
+				)
+			)
+				result[i] = unreadable(
+					result[i],
+					"Trakt List changed during the read. Retry in Needs attention; no removals were applied.",
+				);
+		}
+		for (const list of after) {
+			if (!before.some((previous) => previous.ids.trakt === list.ids.trakt))
+				result.push(
+					unreadable(
+						record(list, []),
+						"Trakt List changed during the read. Retry in Needs attention; no removals were applied.",
+					),
+				);
+		}
 	}
 	if (options.watchlist || options.favorites) {
 		const settings = z
@@ -190,11 +238,15 @@ export async function snapshotLists(
 		for (const kind of ["watchlist", "favorites"] as const) {
 			if (!options[kind]) continue;
 			result.push(
-				record(
-					null,
-					await pages(api, token, `/sync/${kind}/all/rank/asc`),
-					settings.user.private ? "private" : "public",
-					kind,
+				await readList(
+					record(null, [], settings.user.private ? "private" : "public", kind),
+					async () =>
+						record(
+							null,
+							await pages(api, token, `/sync/${kind}/all/rank/asc`),
+							settings.user.private ? "private" : "public",
+							kind,
+						),
 				),
 			);
 		}

@@ -95,16 +95,30 @@ export function traktError(error: unknown): string {
 	return "Could not complete this action. Try again.";
 }
 /**
- * The site-wide banner line while Trakt Sync is still comparing or catching up
- * on a backlog larger than one batch, or `null` when it has nothing to report.
+ * Errors and unresolved items take priority over background progress on both clients.
  */
-export function traktSyncCatchUpMessage(
-	sync: Pick<SyncStatusDto, "status" | "remaining" | "progress"> | undefined,
+export function traktSyncErrorMessage(
+	sync:
+		| (Pick<SyncStatusDto, "status"> &
+				Partial<Pick<SyncStatusDto, "lastError" | "needsAttention">>)
+		| undefined,
 ): string | null {
-	if (sync?.status === "preparing")
-		return "Comparing your Trakt history in the background";
+	if (!sync || sync.status === "disconnected") return null;
+	if (sync.lastError) return "Trakt sync error";
+	if (sync.needsAttention) return "Trakt sync needs attention";
+	return null;
+}
+export function traktSyncCatchUpMessage(
+	sync:
+		| (Pick<SyncStatusDto, "status" | "remaining" | "progress"> &
+				Partial<Pick<SyncStatusDto, "lastError" | "needsAttention">>)
+		| undefined,
+): string | null {
+	const error = traktSyncErrorMessage(sync);
+	if (error) return error;
+	if (sync?.status === "preparing") return "Comparing with Trakt";
 	if (sync?.status === "active" && sync.remaining > 0)
-		return `Syncing your Trakt history in the background${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
+		return `Syncing with Trakt${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
 	return null;
 }
 /**

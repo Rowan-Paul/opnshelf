@@ -5,6 +5,7 @@ import {
 	isActiveTraktImportStatus,
 	traktSyncCatchUpMessage,
 	traktSyncControllerStatus,
+	traktSyncErrorMessage,
 	usersControllerAcknowledgeMyTraktImportMutation,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMyCurrentTraktImportQueryKey,
@@ -72,7 +73,10 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
 		enabled: isAuthenticated,
 		refetchInterval: (query) =>
-			traktSyncCatchUpMessage(query.state.data) ? 5000 : false,
+			query.state.data?.status === "active" ||
+			traktSyncCatchUpMessage(query.state.data)
+				? 5000
+				: false,
 	});
 	const acknowledge = useMutation({
 		mutationKey: ["trakt", "import", "acknowledge"],
@@ -90,6 +94,7 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 		(job.status === "completed" || job.status === "failed");
 	if (!job || (!active && !terminal)) {
 		const syncMessage = isAuthenticated ? traktSyncCatchUpMessage(sync) : null;
+		const syncError = traktSyncErrorMessage(sync);
 		if (!syncMessage) return <>{children}</>;
 		return (
 			<View className="flex-1 bg-background">
@@ -99,9 +104,13 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 						style={{ paddingTop: insets.top }}
 					>
 						<View className="flex-row items-center gap-2">
-							<ActivityIndicator size="small" color="#f3bc00" />
+							{syncError ? (
+								<AlertTriangle color="#d97706" size={17} />
+							) : (
+								<ActivityIndicator size="small" color="#f3bc00" />
+							)}
 							<Text className="flex-1 text-muted-foreground text-sm leading-5">
-								{syncMessage}. You can keep using the app as usual.
+								{syncMessage}. View details.
 							</Text>
 						</View>
 					</Pressable>
