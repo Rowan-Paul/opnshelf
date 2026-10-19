@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
+import { NativeTabScreen } from "@/components/navigation/native-tab-screen";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import {
@@ -47,7 +48,7 @@ export default function ProfileTab() {
 	const shelfItems = shelf.data?.items ?? [];
 
 	return (
-		<View className="flex-1 bg-background">
+		<NativeTabScreen>
 			<ScrollView
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 32 }}
@@ -223,7 +224,7 @@ export default function ProfileTab() {
 					</>
 				)}
 			</ScrollView>
-		</View>
+		</NativeTabScreen>
 	);
 }
 

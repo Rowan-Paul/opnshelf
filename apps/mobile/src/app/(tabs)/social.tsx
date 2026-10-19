@@ -17,6 +17,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { NativeTabScreen } from "@/components/navigation/native-tab-screen";
 import { ActivityCard } from "@/components/social/ActivityCard";
 import { CircleFilterBar } from "@/components/social/CircleFilterBar";
 import { UserRow } from "@/components/social/UserRow";
@@ -107,7 +108,7 @@ export default function SocialScreen() {
 	);
 
 	return (
-		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+		<NativeTabScreen style={{ paddingTop: insets.top }}>
 			<TourAnchor id="social" className="px-4 pt-3 pb-3">
 				<Text className="font-bold font-display text-2xl text-foreground">
 					Social
@@ -171,7 +172,7 @@ export default function SocialScreen() {
 					}
 				/>
 			)}
-		</View>
+		</NativeTabScreen>
 	);
 }
 

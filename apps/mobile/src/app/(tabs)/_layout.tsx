@@ -1,130 +1,134 @@
-import { Image } from "expo-image";
-import { Redirect, router, Tabs } from "expo-router";
-import { Compass, Home, LogIn, User, Users } from "lucide-react-native";
-import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { Redirect, router } from "expo-router";
+import { NativeTabs } from "expo-router/native-tabs";
+import { useCallback, useState } from "react";
+import {
+	ActivityIndicator,
+	type ImageURISource,
+	useColorScheme,
+	View,
+} from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
+import { NativeTabAvatar } from "@/components/navigation/native-tab-avatar";
+import { tabIcons } from "@/components/navigation/tab-icons";
 import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
 import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
 export default function TabLayout() {
-	const colorScheme = useColorScheme();
-	const theme = colorScheme === "dark" ? darkNavTheme : lightNavTheme;
+	const dark = useColorScheme() === "dark";
+	const theme = dark ? darkNavTheme : lightNavTheme;
+	// The brand yellow needs a darker shade for tab-label contrast on white.
+	const tintColor = dark ? theme.colors.primary : "#806000";
 	const { user, isLoading, isAuthenticated } = useAuth();
-
-	// Wait for auth to resolve. Guests are allowed in (search + media details
-	// work logged out); authenticated users must finish verification/onboarding.
-	if (isLoading) {
+	const uri = user?.avatar ?? null;
+	const [avatar, setAvatar] = useState<{
+		uri: string | null;
+		default: ImageURISource;
+		selected: ImageURISource;
+	}>();
+	const onAvatarReady = useCallback(
+		(images: { default: ImageURISource; selected: ImageURISource }) =>
+			setAvatar({ uri, ...images }),
+		[uri],
+	);
+	if (isLoading)
 		return (
 			<View className="flex-1 items-center justify-center bg-background">
-				<ActivityIndicator size="large" color={theme.colors.primary} />
+				<ActivityIndicator size="large" color={tintColor} />
 			</View>
 		);
-	}
-	if (user?.needsEmailVerification) {
-		return <Redirect href="/verify-email" />;
-	}
-	if (user?.needsOnboarding) {
-		return <Redirect href="/onboarding" />;
-	}
-
-	// Guests get a trimmed tab bar: Discover (landing) + a Sign in tab. The
-	// account-based tabs are hidden rather than given placeholder screens.
+	if (user?.needsEmailVerification) return <Redirect href="/verify-email" />;
+	if (user?.needsOnboarding) return <Redirect href="/onboarding" />;
 	const guest = !isAuthenticated || !user;
-
 	return (
 		<TraktSyncBanner>
 			<ShakeToFeedback />
-			<Tabs
-				screenOptions={{
-					headerShown: false,
-					tabBarActiveTintColor: theme.colors.primary,
-					tabBarInactiveTintColor: theme.colors.text,
-					tabBarStyle: {
-						backgroundColor: theme.colors.card,
-						borderTopColor: theme.colors.border,
-					},
-				}}
+			{!guest && (
+				<NativeTabAvatar
+					key={`${uri ?? "fallback"}:${String(tintColor)}`}
+					uri={uri}
+					color={tintColor}
+					onReady={onAvatarReady}
+				/>
+			)}
+			<NativeTabs
+				key={guest ? "guest" : "authenticated"}
+				labelVisibilityMode="labeled"
+				tintColor={tintColor}
+				backgroundColor={theme.colors.card}
+				backBehavior="history"
 			>
-				<Tabs.Screen
+				<NativeTabs.Trigger
 					name="index"
-					options={{
-						title: "Home",
-						href: guest ? null : undefined,
-						tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
-					}}
-				/>
-				<Tabs.Screen
+					hidden={guest}
+					disableAutomaticContentInsets={process.env.EXPO_OS === "ios"}
+				>
+					<NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+					<NativeTabs.Trigger.Icon sf="house" src={tabIcons.home} />
+				</NativeTabs.Trigger>
+				<NativeTabs.Trigger
 					name="search"
-					options={{
-						title: "Discover",
-						tabBarIcon: ({ color, size }) => (
-							<Compass color={color} size={size} />
-						),
-					}}
-				/>
-				<Tabs.Protected guard={!guest}>
-					<Tabs.Screen
-						name="social"
-						options={{
-							title: "Social",
-							tabBarIcon: ({ color, size }) => (
-								<Users color={color} size={size} />
-							),
-						}}
-					/>
-				</Tabs.Protected>
-				<Tabs.Screen
+					disableAutomaticContentInsets={process.env.EXPO_OS === "ios"}
+				>
+					<NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
+					<NativeTabs.Trigger.Icon sf="safari" src={tabIcons.discover} />
+				</NativeTabs.Trigger>
+				<NativeTabs.Trigger
+					name="social"
+					hidden={guest}
+					disableAutomaticContentInsets={process.env.EXPO_OS === "ios"}
+				>
+					<NativeTabs.Trigger.Label>Social</NativeTabs.Trigger.Label>
+					<NativeTabs.Trigger.Icon sf="person.2" src={tabIcons.social} />
+				</NativeTabs.Trigger>
+				<NativeTabs.Trigger
 					name="profile"
-					// For guests this tab is a Sign in entry point: tapping it opens the
-					// login screen instead of the (account-based) profile screen.
-					listeners={
-						guest
+					disableAutomaticContentInsets={process.env.EXPO_OS === "ios"}
+					unstable_nativeProps={
+						// SDK 58 omits Android original-color image tinting; keep the override here.
+						!guest && avatar?.uri === uri
 							? {
-									tabPress: (e) => {
-										e.preventDefault();
-										router.push("/login");
+									android: {
+										icon: {
+											type: "imageSource",
+											imageSource: avatar.default,
+											tinting: "original",
+										},
+										selectedIcon: {
+											type: "imageSource",
+											imageSource: avatar.selected,
+											tinting: "original",
+										},
 									},
 								}
 							: undefined
 					}
-					options={
-						guest
-							? {
-									title: "Sign in",
-									tabBarIcon: ({ color, size }) => (
-										<LogIn color={color} size={size} />
-									),
-								}
-							: {
-									title: "Profile",
-									// The viewer's own avatar (or the circular avatar placeholder
-									// used elsewhere for missing pictures) disambiguates Profile from
-									// the Connections (Users) tab.
-									tabBarIcon: ({ size, focused }) => (
-										<View
-											className="items-center justify-center overflow-hidden rounded-full bg-background-subtle"
-											style={{
-												width: size,
-												height: size,
-												borderWidth: focused ? 2 : 0,
-												borderColor: theme.colors.primary,
-											}}
-										>
-											{user?.avatar ? (
-												<Image
-													source={{ uri: user.avatar }}
-													style={{ width: size, height: size }}
-												/>
-											) : (
-												<User color="#94a3b8" size={Math.round(size * 0.6)} />
-											)}
-										</View>
-									),
-								}
+					disabled={guest}
+					listeners={
+						guest ? { tabPress: () => router.push("/login") } : undefined
 					}
-				/>
-			</Tabs>
+				>
+					<NativeTabs.Trigger.Label>
+						{guest ? "Sign in" : "Profile"}
+					</NativeTabs.Trigger.Label>
+					{guest ? (
+						<NativeTabs.Trigger.Icon
+							sf="rectangle.portrait.and.arrow.right"
+							src={tabIcons.login}
+						/>
+					) : avatar?.uri === uri ? (
+						<NativeTabs.Trigger.Icon
+							src={{ default: avatar.default, selected: avatar.selected }}
+							renderingMode="original"
+						/>
+					) : (
+						<NativeTabs.Trigger.Icon
+							sf="person.crop.circle"
+							src={tabIcons.profile}
+						/>
+					)}
+				</NativeTabs.Trigger>
+			</NativeTabs>
 		</TraktSyncBanner>
 	);
 }

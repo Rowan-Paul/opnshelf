@@ -16,6 +16,9 @@ import {
 const spec = JSON.parse(readFileSync(join(root, "backend/openapi.json")));
 export const scenarios = [
 	"normal",
+	"native-tabs-guest",
+	"native-tabs-verify",
+	"native-tabs-avatar",
 	"failed-settings",
 	"delayed-auth",
 	"sheet-overlap",
@@ -186,7 +189,25 @@ export function createScenarioServer(
 			json(null);
 			return;
 		}
+		if (url.pathname === "/__avatar") {
+			res.writeHead(200, { "content-type": "image/png" }).end(
+				readFileSync(join(root, "apps/mobile/assets/images/icon.png")),
+			);
+			return;
+		}
 		if (url.pathname === "/auth/me") {
+			if (scenario === "native-tabs-guest") {
+				json({ message: "Synthetic signed-out session" }, 401);
+				return;
+			}
+			if (scenario === "native-tabs-verify") {
+				json({ ...user, needsEmailVerification: true, needsOnboarding: true });
+				return;
+			}
+			if (scenario === "native-tabs-avatar") {
+				json({ ...user, avatar: "http://127.0.0.1:3391/__avatar", needsOnboarding: false, onboardingCompletedAt: "2026-01-01T00:00:00.000Z" });
+				return;
+			}
 			json({
 				...user,
 				needsOnboarding: !completed,

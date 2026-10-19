@@ -93,3 +93,24 @@ test("local scenarios reset failures and never proxy unknown or cross-origin req
   assert.equal((await read("/trakt-sync/issues")).total, 1);
  } finally { await new Promise(resolve => server.close(resolve)); }
  });
+
+test("native tab fixtures cover signed-out, gated and avatar sessions", async () => {
+ const server = createScenarioServer("native-tabs-guest");
+ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+ const base = `http://127.0.0.1:${server.address().port}`;
+ const change = scenario => fetch(`${base}/__scenario`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenario }) });
+ try {
+  assert.equal((await fetch(`${base}/auth/me`)).status, 401);
+  await change("native-tabs-verify");
+  const gated = await (await fetch(`${base}/auth/me`)).json();
+  assert.equal(gated.needsEmailVerification, true);
+  assert.equal(gated.needsOnboarding, true);
+  await change("native-tabs-avatar");
+  const member = await (await fetch(`${base}/auth/me`)).json();
+  assert.equal(member.needsOnboarding, false);
+  assert.equal(member.avatar, "http://127.0.0.1:3391/__avatar");
+  const image = await fetch(`${base}/__avatar`);
+  assert.equal(image.headers.get("content-type"), "image/png");
+  assert.deepEqual([...new Uint8Array(await image.arrayBuffer()).slice(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+ } finally { await new Promise(resolve => server.close(resolve)); }
+});
