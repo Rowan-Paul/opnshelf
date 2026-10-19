@@ -16,6 +16,23 @@ Web and Mobile expose `/trakt-sync` from Settings and optional Onboarding. Mobil
 
 ## Worker behavior
 
+Incomplete, malformed or failed membership reads hold only the affected custom
+List, watchlist or Favorites in Needs attention. The snapshot retains its known
+identity with an unreadable marker, rather than treating it as empty or deleted.
+Other Lists and record types continue. Saved baselines and pending transfers are
+retained; an unreadable List offers Retry instead of choosing a destructive
+version. Authentication failures and rate limits still apply to the account.
+Returned titles without a TMDB match also appear in Needs attention; they are
+never silently dropped from a List. The Web and Mobile site-wide Banners show
+errors and unresolved-item notices ahead of comparison/catch-up progress.
+
+On 2026-10-19 a production read found one custom List reporting 13 items in both
+metadata and pagination headers, but returning 12 unique items, with rank 6
+absent. Filtered and extended reads and Trakt's own Web page exposed the same
+12 items; every returned item had a TMDB ID. This confirms an upstream count/read
+inconsistency, not a missing-TMDB item dropped by Opnshelf. The absent item's
+identity and why Trakt omits it cannot be determined from these responses.
+
 Saving settings queues an initial comparison. The UI reports that comparison is in progress and can be closed. Future changes only begins after that comparison finishes, based on record additions/changes rather than watch dates. Previously linked records remain linked across scope changes, pauses, and reconnection.
 
 A database lease serializes each account's operations, with a two-minute expiry and a thirty-second heartbeat. The worker checks due accounts every five seconds, ordinarily refreshes Trakt at fifteen-minute intervals, and reads fresh remote state before potential outbound changes. Complete pagination and unchanged activity markers are required before using a remote snapshot. An incomplete read never proves deletion. Trakt request pacing and rate-limit responses can delay work.

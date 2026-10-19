@@ -5,6 +5,7 @@ import {
 	isActiveTraktImportStatus,
 	traktSyncCatchUpMessage,
 	traktSyncControllerStatus,
+	traktSyncErrorMessage,
 	usersControllerAcknowledgeMyTraktImportMutation,
 	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMyCurrentTraktImportQueryKey,
@@ -62,7 +63,10 @@ export function TraktSyncBanner() {
 			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
 		enabled: isAuthenticated,
 		refetchInterval: (query) =>
-			traktSyncCatchUpMessage(query.state.data) ? 5000 : false,
+			query.state.data?.status === "active" ||
+			traktSyncCatchUpMessage(query.state.data)
+				? 5000
+				: false,
 	});
 	const acknowledge = useMutation({
 		mutationKey: ["trakt", "import", "acknowledge"],
@@ -81,6 +85,7 @@ export function TraktSyncBanner() {
 		(job.status === "completed" || job.status === "failed");
 	if (!job || (!active && !terminalNotice)) {
 		const syncMessage = traktSyncCatchUpMessage(sync);
+		const syncError = traktSyncErrorMessage(sync);
 		if (!syncMessage) return null;
 		return (
 			<Link
@@ -89,9 +94,18 @@ export function TraktSyncBanner() {
 				className="block border-(--border) border-b bg-(--background-subtle) hover:bg-(--background-elevated)"
 			>
 				<div className="container-app flex items-center gap-2 py-2 text-(--foreground-muted) text-sm">
-					<Loader2 className="size-4 shrink-0 animate-spin" />
+					{syncError ? (
+						<AlertTriangle className="size-4 shrink-0 text-amber-600" />
+					) : (
+						<Loader2 className="size-4 shrink-0 animate-spin" />
+					)}
 					<span className="min-w-0 flex-1">
-						{syncMessage}. You can keep using the site as usual.
+						{syncMessage}
+						{syncError
+							? sync?.lastError
+								? " View Trakt sync."
+								: " View Needs attention."
+							: ". You can keep using the site as usual."}
 					</span>
 				</div>
 			</Link>

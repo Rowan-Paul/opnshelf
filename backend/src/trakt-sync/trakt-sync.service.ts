@@ -109,22 +109,24 @@ const display = (r: SyncRecord | null) =>
 				title: r.title,
 				season: r.season,
 				episode: r.episode,
-				displayValue: isContentRecord(r)
-					? r.kind === "library"
-						? `${({ digital: "Digital", bluray: "Blu-ray", bluray4k: "4K Blu-ray", dvd: "DVD" } as Record<string, string>)[contentValue(r).format] ?? "Unknown format"}${contentValue(r).boxSet ? ` · ${contentValue(r).boxSet}` : ""}${contentValue(r).notes ? ` · ${contentValue(r).notes}` : ""}`
-						: `${contentValue(r).spoiler ? "Contains spoilers · " : ""}${contentValue(r).content}`
-					: isListRecord(r)
-						? `${r.title} · ${listValue(r).items.length} items · ${r.visibility ?? "private"} · ${listValue(r).description} · ${listValue(
-								r,
-							)
-								.items.map(
-									(i) =>
-										`${i.mediaType} ${i.mediaId ?? "unmatched"}${i.season ? ` S${i.season}` : ""}${i.episode ? ` E${i.episode}` : ""}${i.notes ? ` (${i.notes})` : ""}`,
+				displayValue: r.unreadable
+					? "Trakt could not return the complete List. Its contents are preserved."
+					: isContentRecord(r)
+						? r.kind === "library"
+							? `${({ digital: "Digital", bluray: "Blu-ray", bluray4k: "4K Blu-ray", dvd: "DVD" } as Record<string, string>)[contentValue(r).format] ?? "Unknown format"}${contentValue(r).boxSet ? ` · ${contentValue(r).boxSet}` : ""}${contentValue(r).notes ? ` · ${contentValue(r).notes}` : ""}`
+							: `${contentValue(r).spoiler ? "Contains spoilers · " : ""}${contentValue(r).content}`
+						: isListRecord(r)
+							? `${r.title} · ${listValue(r).items.length} items · ${r.visibility ?? "private"} · ${listValue(r).description} · ${listValue(
+									r,
 								)
-								.join(", ")}`
-						: r.value === null
-							? "No date"
-							: String(r.value),
+									.items.map(
+										(i) =>
+											`${i.mediaType} ${i.mediaId ?? "unmatched"}${i.season ? ` S${i.season}` : ""}${i.episode ? ` E${i.episode}` : ""}${i.notes ? ` (${i.notes})` : ""}`,
+									)
+									.join(", ")}`
+							: r.value === null
+								? "No date"
+								: String(r.value),
 			}
 		: undefined;
 const sameTraktTitle = (record: SyncRecord, peer: SyncRecord): boolean => {
@@ -833,6 +835,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					r.title === desired.title &&
 					!entries.some((other) => other.remoteKey === r.key),
 			);
+			if (possible.some((r) => r.unreadable)) continue;
 			if (possible.length === 1 && equivalent(desired, possible[0])) {
 				const current = local.find((r) => r.key === e.localKey) ?? null;
 				if (current && equivalent(current, desired)) {
@@ -991,11 +994,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
 				const uncertain = unconfirmedCreate(e);
 				return {
-					recovery: uncertain
-						? ("verify" as const)
-						: (l && r) || e.linked || e.issue === SOURCE_CHANGED
-							? ("choose" as const)
-							: ("retry" as const),
+					recovery: r?.unreadable
+						? ("retry" as const)
+						: uncertain
+							? ("verify" as const)
+							: (l && r) || e.linked || e.issue === SOURCE_CHANGED
+								? ("choose" as const)
+								: ("retry" as const),
 					traktState: r
 						? ("present" as const)
 						: uncertain
@@ -1030,6 +1035,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				where: { id, connectionId: c.id },
 			});
 			if (!entry) throw new NotFoundException("Sync item not found.");
+			if (
+				["opnshelf", "trakt"].includes(dto.action) &&
+				records(c.remoteSnapshot).some(
+					(r) => r.key === entry.remoteKey && r.unreadable,
+				)
+			)
+				throw new BadRequestException(
+					"Trakt could not read this List. Retry in Needs attention before choosing a version.",
+				);
 			const resolvingUnconfirmed =
 				unconfirmedCreate(entry) && ["trakt", "opnshelf"].includes(dto.action);
 			if (resolvingUnconfirmed && !dto.confirmedTraktMissing)
@@ -1391,6 +1405,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const mapped = readRecord(entry.remoteBase);
 			if (r && !r.mediaId && mapped?.mediaId)
 				r = { ...r, mediaId: mapped.mediaId };
+			// Never turn a failed read into an empty destination, even with a
+			// pending transfer or an explicit version choice from an older screen.
+			if (r?.unreadable) {
+				await this.issue(
+					entry.id,
+					r.problem ?? "Trakt could not read this List. Retry when ready.",
+				);
+				continue;
+			}
 			if (stopped) {
 				if (
 					(!entry.issue || entry.resolution || entry.pending) &&

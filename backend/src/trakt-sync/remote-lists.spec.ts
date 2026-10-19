@@ -66,13 +66,31 @@ describe("Trakt Lists transport", () => {
 			request.mock.calls.every(([path]) => !path.includes("privacy=")),
 		).toBe(true);
 	});
-	it("rejects incomplete pagination before inferring removals", async () => {
+	it("holds an incomplete List without blocking another List or watchlist", async () => {
 		const request = vi.fn(async (path: string, _token?: string) =>
-			path === "/users/me/lists" ? response([metadata]) : response([], 1),
+			path === "/users/me/lists"
+				? response([
+						metadata,
+						{ ...metadata, name: "Healthy", ids: { trakt: 23 } },
+					])
+				: path === "/users/settings"
+					? response({ user: { private: false } })
+					: path.includes("/22/")
+						? response([], 1)
+						: response([movie], 1),
 		);
-		await expect(
-			snapshotLists({ request }, "fixture", { lists: true }),
-		).rejects.toThrow("incomplete");
+		const result = await snapshotLists({ request }, "fixture", {
+			lists: true,
+			watchlist: true,
+		});
+		expect(result).toHaveLength(3);
+		expect(result[0]).toMatchObject({
+			key: "list:22",
+			unreadable: true,
+			problem: expect.stringContaining("incomplete"),
+		});
+		expect(result[1]).toMatchObject({ key: "list:23", problem: undefined });
+		expect(result[2]).toMatchObject({ kind: "watchlist", problem: undefined });
 	});
 	it("rejects a List that changes while reading", async () => {
 		let reads = 0;
@@ -81,9 +99,57 @@ describe("Trakt Lists transport", () => {
 				? response([{ ...metadata, updated_at: String(reads++) }])
 				: response([movie], 1),
 		);
-		await expect(
-			snapshotLists({ request }, "fixture", { lists: true }),
-		).rejects.toThrow("changed");
+		const [result] = await snapshotLists({ request }, "fixture", {
+			lists: true,
+		});
+		expect(result).toMatchObject({
+			unreadable: true,
+			problem: expect.stringContaining("changed"),
+		});
+	});
+	it("puts a returned title without TMDB IDs in Needs attention", async () => {
+		const request = vi.fn(async (path: string) =>
+			path === "/users/me/lists"
+				? response([metadata])
+				: response([{ ...movie, movie: { ids: { trakt: 9, tmdb: null } } }], 1),
+		);
+		const [result] = await snapshotLists({ request }, "fixture", {
+			lists: true,
+		});
+		expect(result.problem).toContain("without a TMDB match");
+		expect(listValue(result).items[0].mediaId).toBeNull();
+	});
+	it.each([401, 429])(
+		"propagates account-wide status %s instead of hiding it as a List issue",
+		async (status) => {
+			const failure = Object.assign(new Error("provider failure"), { status });
+			const request = vi.fn(async (path: string) => {
+				if (path === "/users/me/lists") return response([metadata]);
+				throw failure;
+			});
+			await expect(
+				snapshotLists({ request }, "fixture", { lists: true }),
+			).rejects.toBe(failure);
+		},
+	);
+	it("isolates a watchlist read failure from Favorites", async () => {
+		const request = vi.fn(async (path: string) =>
+			path === "/users/settings"
+				? response({ user: { private: false } })
+				: path.includes("watchlist")
+					? response([], 1)
+					: response([movie], 1),
+		);
+		const result = await snapshotLists({ request }, "fixture", {
+			watchlist: true,
+			favorites: true,
+		});
+		expect(result[0]).toMatchObject({
+			key: "watchlist:trakt",
+			unreadable: true,
+			value: null,
+		});
+		expect(result[1]).toMatchObject({ kind: "favorites", problem: undefined });
 	});
 	it("keeps unsupported Trakt media visible as an unresolved List", async () => {
 		const request = vi.fn(async (path: string, _token?: string) =>

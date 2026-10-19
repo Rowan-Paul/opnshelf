@@ -121,6 +121,30 @@ describe("TraktSyncBanner", () => {
 		const sync = (overrides: Record<string, unknown>) => ({
 			data: { status: "active", remaining: 0, ...overrides },
 		});
+		it("shows a sync error instead of comparison progress", () => {
+			mockUseQuery.mockReturnValue({ data: undefined });
+			mockUseSyncQuery.mockReturnValue(
+				sync({
+					status: "preparing",
+					lastError: "Trakt could not finish the request.",
+				}),
+			);
+			render(<TraktSyncBanner />);
+			expect(
+				screen.getByText(/Trakt could not finish the request/),
+			).toBeTruthy();
+			expect(screen.queryByText(/Comparing your Trakt history/)).toBeNull();
+			expect(document.querySelector(".animate-spin")).toBeNull();
+		});
+		it("shows Needs attention while other records catch up", () => {
+			mockUseQuery.mockReturnValue({ data: undefined });
+			mockUseSyncQuery.mockReturnValue(
+				sync({ remaining: 15, needsAttention: 1 }),
+			);
+			render(<TraktSyncBanner />);
+			expect(screen.getByText(/1 item needs attention/)).toBeTruthy();
+			expect(screen.queryByText(/Syncing your Trakt history/)).toBeNull();
+		});
 
 		it("shows progress while sync works through a backlog", () => {
 			mockUseQuery.mockReturnValue({ data: undefined });
