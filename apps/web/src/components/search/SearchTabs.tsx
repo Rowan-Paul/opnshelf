@@ -43,7 +43,7 @@ export function SearchTabs({
 							aria-pressed={isActive}
 							className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 font-medium text-sm transition-colors ${
 								isActive
-									? "border-(--accent) text-(--accent)"
+									? "border-(--accent-800) text-(--accent-800) dark:border-(--accent) dark:text-(--accent)"
 									: "border-transparent text-(--foreground-muted) hover:border-(--border-strong) hover:text-(--foreground)"
 							}`}
 						>
