@@ -19,6 +19,7 @@ afterAll(() => {
 const mocks = vi.hoisted(() => ({
 	mutate: vi.fn(),
 	active: false,
+	disconnected: false,
 	issues: false,
 	uncertain: false,
 	syncState: "idle",
@@ -35,8 +36,12 @@ vi.mock("@tanstack/react-query", () => ({
 	useQuery: () => ({
 		data: {
 			configured: true,
-			username: mocks.issues ? "fixture" : undefined,
-			status: mocks.active ? "active" : "paused",
+			username: "fixture",
+			status: mocks.disconnected
+				? "disconnected"
+				: mocks.active
+					? "active"
+					: "paused",
 			syncState: mocks.syncState,
 			direction: "both",
 			watches: true,
@@ -113,6 +118,7 @@ vi.mock("@/components/marks/TraktMark", () => ({ TraktMark: "icon" }));
 
 beforeEach(() => {
 	mocks.active = false;
+	mocks.disconnected = false;
 	mocks.uncertain = false;
 	mocks.issues = false;
 	mocks.syncState = "idle";
@@ -122,9 +128,9 @@ afterEach(() => {
 	act(() => renderer.unmount());
 	vi.clearAllMocks();
 });
-function mount() {
+function mount(embedded = true) {
 	act(() => {
-		renderer = create(<TraktSyncManager embedded />);
+		renderer = create(<TraktSyncManager embedded={embedded} />);
 	});
 }
 function press(label: string) {
@@ -398,4 +404,29 @@ it.each([
 			confirmedTraktMissing: true,
 		},
 	});
+});
+
+it.each([
+	false,
+	true,
+])("hides empty attention when disconnected (embedded: %s)", (embedded) => {
+	mocks.disconnected = true;
+	mount(embedded);
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "text" && node.props.children === "Needs attention",
+		),
+	).toHaveLength(0);
+});
+it("keeps retained attention visible after disconnecting", () => {
+	mocks.disconnected = true;
+	mocks.issues = true;
+	mount(false);
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "text" && node.props.children === "Needs attention",
+		),
+	).toHaveLength(1);
 });
