@@ -110,12 +110,7 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 								<ActivityIndicator size="small" color="#f3bc00" />
 							)}
 							<Text className="flex-1 text-muted-foreground text-sm leading-5">
-								{syncMessage}
-								{syncError
-									? sync?.lastError
-										? " View Trakt sync."
-										: " View Needs attention."
-									: ". You can keep using the app as usual."}
+								{syncMessage}. View details.
 							</Text>
 						</View>
 					</Pressable>

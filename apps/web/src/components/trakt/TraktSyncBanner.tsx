@@ -99,14 +99,7 @@ export function TraktSyncBanner() {
 					) : (
 						<Loader2 className="size-4 shrink-0 animate-spin" />
 					)}
-					<span className="min-w-0 flex-1">
-						{syncMessage}
-						{syncError
-							? sync?.lastError
-								? " View Trakt sync."
-								: " View Needs attention."
-							: ". You can keep using the site as usual."}
-					</span>
+					<span className="min-w-0 flex-1">{syncMessage}. View details.</span>
 				</div>
 			</Link>
 		);

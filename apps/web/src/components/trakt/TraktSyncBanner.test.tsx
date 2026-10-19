@@ -130,11 +130,12 @@ describe("TraktSyncBanner", () => {
 				}),
 			);
 			render(<TraktSyncBanner />);
-			expect(
-				screen.getByText(/Trakt could not finish the request/),
-			).toBeTruthy();
-			expect(screen.queryByText(/Comparing your Trakt history/)).toBeNull();
+			expect(screen.getByText("Trakt sync error. View details.")).toBeTruthy();
+			expect(screen.queryByText(/Comparing with Trakt/)).toBeNull();
 			expect(document.querySelector(".animate-spin")).toBeNull();
+			expect(
+				screen.queryByText(/Trakt could not finish the request/),
+			).toBeNull();
 		});
 		it("shows Needs attention while other records catch up", () => {
 			mockUseQuery.mockReturnValue({ data: undefined });
@@ -142,24 +143,24 @@ describe("TraktSyncBanner", () => {
 				sync({ remaining: 15, needsAttention: 1 }),
 			);
 			render(<TraktSyncBanner />);
-			expect(screen.getByText(/1 item needs attention/)).toBeTruthy();
-			expect(screen.queryByText(/Syncing your Trakt history/)).toBeNull();
+			expect(
+				screen.getByText("Trakt sync needs attention. View details."),
+			).toBeTruthy();
+			expect(screen.queryByText(/Syncing with Trakt/)).toBeNull();
 		});
 
 		it("shows progress while sync works through a backlog", () => {
 			mockUseQuery.mockReturnValue({ data: undefined });
 			mockUseSyncQuery.mockReturnValue(sync({ remaining: 15, progress: 40 }));
 			render(<TraktSyncBanner />);
-			expect(
-				screen.getByText(/Syncing your Trakt history in the background — 40%/),
-			).toBeTruthy();
+			expect(screen.getByText(/Syncing with Trakt — 40%/)).toBeTruthy();
 		});
 
 		it("shows the first comparison", () => {
 			mockUseQuery.mockReturnValue({ data: undefined });
 			mockUseSyncQuery.mockReturnValue(sync({ status: "preparing" }));
 			render(<TraktSyncBanner />);
-			expect(screen.getByText(/Comparing your Trakt history/)).toBeTruthy();
+			expect(screen.getByText(/Comparing with Trakt/)).toBeTruthy();
 		});
 
 		it("renders nothing once sync has caught up", () => {
@@ -174,7 +175,7 @@ describe("TraktSyncBanner", () => {
 			mockUseSyncQuery.mockReturnValue(sync({ remaining: 15, progress: 40 }));
 			render(<TraktSyncBanner />);
 			expect(screen.getByText(/Importing your Trakt history/)).toBeTruthy();
-			expect(screen.queryByText(/Syncing your Trakt history/)).toBeNull();
+			expect(screen.queryByText(/Syncing with Trakt/)).toBeNull();
 		});
 	});
 });

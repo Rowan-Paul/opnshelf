@@ -104,9 +104,8 @@ export function traktSyncErrorMessage(
 		| undefined,
 ): string | null {
 	if (!sync || sync.status === "disconnected") return null;
-	if (sync.lastError) return `Trakt sync needs attention. ${sync.lastError}`;
-	if (sync.needsAttention)
-		return `Trakt sync: ${sync.needsAttention} ${sync.needsAttention === 1 ? "item needs" : "items need"} attention. Other records can continue syncing.`;
+	if (sync.lastError) return "Trakt sync error";
+	if (sync.needsAttention) return "Trakt sync needs attention";
 	return null;
 }
 export function traktSyncCatchUpMessage(
@@ -117,10 +116,9 @@ export function traktSyncCatchUpMessage(
 ): string | null {
 	const error = traktSyncErrorMessage(sync);
 	if (error) return error;
-	if (sync?.status === "preparing")
-		return "Comparing your Trakt history in the background";
+	if (sync?.status === "preparing") return "Comparing with Trakt";
 	if (sync?.status === "active" && sync.remaining > 0)
-		return `Syncing your Trakt history in the background${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
+		return `Syncing with Trakt${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
 	return null;
 }
 /**
