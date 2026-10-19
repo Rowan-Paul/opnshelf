@@ -1,0 +1,47 @@
+iPhone 18 Pro / iOS 27.0; Expo Router 58.0.23
+Synthetic local fixture only.
+
+VoiceOver XCTest (XCUIDevice.shared.voiceOverService):
+VO528: What’s new, unread release notes Link
+VO528: Settings Link
+VO528: Local scenario
+VO528: You
+VO528: @synthetic.test
+VO528: 0, Followers
+VO528: 0, Following
+VO528: Edit profile Link
+VO528: View public profile Link
+VO528: Shelf, Your Watches Link
+VO528: Lists, Your curated picks Link
+VO528: Library, Films you own Link
+VO528: Reviews, Your writing Link
+VO528: Up Next, Continue your shows Link
+VO528: Recently watched
+VO528: View all Link
+VO528: 15 Oct 2026 · 14:00, Fixture film 1 Link
+VO528: 14 Oct 2026 · 14:00, Fixture film 2 Link
+VO528: Find people, Find people to follow in Social Link
+VO528: Tab Bar Home Tab 1 of 4
+VO528: Discover Tab 2 of 4
+VO528: Social Tab 3 of 4
+VO528: selected Profile Tab 4 of 4
+** TEST SUCCEEDED **
+
+Initial guest first-tap XCTest:
+VoiceOverTests.swift:22: error: -[VoiceOverTests.VoiceOverTests testGuestSignInFirstTap] : XCTAssertTrue failed - First Sign in tap failed round 1
+Observed afterward: LogBox Console Error overlay, unhandled PRELOAD for profile.
+
+Diagnostic repeat: suppressed only unhandled PRELOAD / ROUTE_NAMES_CHANGED LogBox messages; listener unchanged.
+SIGNIN528: first tap passed 1 (warm)
+SIGNIN528: first tap passed 2 (warm)
+SIGNIN528: first tap passed 3 (warm)
+SIGNIN528: first tap passed 4 (warm)
+SIGNIN528: first tap passed 5 (warm)
+SIGNIN528: first tap passed 6 (cold)
+SIGNIN528: first tap passed 7 (cold)
+SIGNIN528: first tap passed 8 (cold)
+SIGNIN528: first tap passed 9 (cold)
+SIGNIN528: first tap passed 10 (cold)
+** TEST SUCCEEDED **
+Rounds 1 and 6–10 were cold launches; rounds 2–5 were warm login return loops.
+Warning suppression and debug logs removed after the experiment.
