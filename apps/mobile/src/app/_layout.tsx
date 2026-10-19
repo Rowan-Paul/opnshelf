@@ -22,6 +22,7 @@ import { WelcomeTour } from "@/components/tour/WelcomeTour";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
+import { PickForMeIntentBridge } from "@/lib/pick-for-me-intent-bridge";
 import { posthog } from "@/lib/posthog";
 import { PushNotificationBridge } from "@/lib/push-notification-bridge";
 import { useTheme } from "@/lib/theme-context";
@@ -83,6 +84,7 @@ export default function RootLayout() {
 	return (
 		<Providers>
 			<PushNotificationBridge />
+			<PickForMeIntentBridge />
 			<ScreenTracker />
 			{/* Above the navigator so a downloaded OTA update is announced on every
 			    screen, not just the tabs; hidden on the auth/onboarding routes. */}
