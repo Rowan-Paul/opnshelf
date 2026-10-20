@@ -184,3 +184,116 @@ it.each([
 			);
 	},
 );
+
+it("limits remote ambiguity comparisons to the matching media", async () => {
+	let mediaReads = 0;
+	const local = Array.from({ length: 200 }, (_, i) => ({
+		key: `local:${i}`,
+		kind: "watch" as const,
+		mediaType: "movie" as const,
+		mediaId: String(i),
+		season: 0,
+		episode: 0,
+		title: "Fixture",
+		value: "2026-01-01T00:00:00Z",
+	}));
+	const remote = local.map((r) => ({
+		...r,
+		key: `remote:${r.mediaId}`,
+		get mediaId() {
+			mediaReads++;
+			return r.mediaId;
+		},
+	}));
+	const prisma = {
+		traktSyncEntry: { findMany: vi.fn(async () => []), create: vi.fn() },
+	};
+	const service = new TraktSyncService(
+		prisma as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{} as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	await service["discover"](
+		{ id: "fixture", initialised: true, watches: true } as Parameters<
+			(typeof service)["discover"]
+		>[0],
+		local,
+		remote,
+	);
+	expect(prisma.traktSyncEntry.create).toHaveBeenCalledTimes(200);
+	expect(
+		prisma.traktSyncEntry.create.mock.calls.every(
+			([input]) => input.data.linked,
+		),
+	).toBe(true);
+	expect(mediaReads).toBeLessThan(remote.length * 15);
+});
+
+it.each([false, true])(
+	"uses indexed processing snapshots (refresh: %s)",
+	async (refresh) => {
+		let keyReads = 0;
+		const local = Array.from({ length: 200 }, (_, i) => ({
+			get key() {
+				keyReads++;
+				return `local:${i}`;
+			},
+			kind: "watch" as const,
+			mediaType: "movie" as const,
+			mediaId: String(i),
+			season: 0,
+			episode: 0,
+			title: "Fixture",
+			value: "2026-01-01T00:00:00Z",
+		}));
+		const remote = local.map((r) => ({ ...r, key: `remote:${r.mediaId}` }));
+		const entries = local.map((r, i) => ({
+			id: String(i),
+			kind: "watch",
+			localKey: r.key,
+			remoteKey: remote[i].key,
+			localBase: r,
+			remoteBase: remote[i],
+			eligible: true,
+			linked: true,
+		}));
+		const snapshot = vi
+			.fn()
+			.mockResolvedValueOnce(refresh ? [] : local)
+			.mockResolvedValue(local);
+		const prisma = {
+			traktSyncEntry: { findMany: vi.fn(async () => entries) },
+			traktSyncConnection: { update: vi.fn() },
+		};
+		const service = new TraktSyncService(
+			prisma as unknown as PrismaService,
+			{ snapshot: vi.fn(async () => remote) } as unknown as TraktSyncClient,
+			{ snapshot } as unknown as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
+		);
+		service["token"] = vi.fn(async () => "fixture");
+		service["discover"] = vi.fn(async () => undefined);
+		service["publicWatchOperation"] = async (_c, operation) =>
+			operation(new AbortController().signal, async (write) => write());
+		const transfer = vi.fn();
+		service["transfer"] = transfer;
+		keyReads = 0;
+		await service["process"](
+			{
+				id: "fixture",
+				direction: "inbound",
+				watches: true,
+				initialised: true,
+				remoteSnapshot: remote,
+				remoteReadAt: refresh ? null : new Date(),
+			} as unknown as Parameters<(typeof service)["process"]>[0],
+			async () => undefined,
+		);
+		expect(transfer).not.toHaveBeenCalled();
+		expect(snapshot).toHaveBeenCalledTimes(refresh ? 2 : 1);
+		expect(keyReads).toBeLessThan(local.length * 10);
+	},
+);

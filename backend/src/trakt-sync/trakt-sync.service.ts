@@ -884,6 +884,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		}
 		const newLocal = local.filter((r) => !usedLocal.has(r.key));
 		const newRemote = remote.filter((r) => !usedRemote.has(r.key));
+		const newRemoteByMedia = groupByMedia(newRemote);
 		for (const r of newRemote) {
 			// A write may have reached Trakt before its acknowledgement was lost.
 			// Let that durable intent claim the result before ordinary discovery.
@@ -930,11 +931,17 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				matches.length === 1 &&
 				((r.kind !== "watch" &&
 					((!isListRecord(r) && !isContentRecord(r)) ||
-						candidates(matches[0], newRemote).length === 1)) ||
+						candidates(
+							matches[0],
+							newRemoteByMedia.get(mediaKey(matches[0])) ?? [],
+						).length === 1)) ||
 					(r.value !== null &&
 						matches[0].value !== null &&
 						equivalent(matches[0], r) &&
-						candidates(matches[0], newRemote).length === 1))
+						candidates(
+							matches[0],
+							newRemoteByMedia.get(mediaKey(matches[0])) ?? [],
+						).length === 1))
 					? matches[0]
 					: null;
 			const eligible =
@@ -1351,7 +1358,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			where: { connectionId: c.id },
 		});
 		const knownLocalKeys = new Set(known.map((e) => e.localKey));
-		const localByKey = new Map(local.map((r) => [r.key, r]));
+		let localByKey = new Map(local.map((r) => [r.key, r]));
 		const mayPush =
 			c.direction !== "inbound" &&
 			(local.some((l) => enabled(c, l) && !knownLocalKeys.has(l.key)) ||
@@ -1384,8 +1391,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				await lease();
 				return this.local.snapshot(c.userDid, c);
 			});
+			localByKey = new Map(local.map((r) => [r.key, r]));
 		}
 		remote = applyMappings(remote, known);
+		const remoteByKey = new Map(remote.map((r) => [r.key, r]));
 		await lease();
 		await this.discover(c, local, remote);
 		if (!c.initialised) {
@@ -1399,10 +1408,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					where: { id: e.id },
 					data: {
 						eligible: c.historyScope === "all",
-						localBase: json(local.find((r) => r.key === e.localKey) ?? null),
+						localBase: json(localByKey.get(e.localKey ?? "") ?? null),
 						remoteBase: json(
-							remote.find((r) => r.key === e.remoteKey) ??
-								readRecord(e.remoteBase),
+							remoteByKey.get(e.remoteKey ?? "") ?? readRecord(e.remoteBase),
 						),
 					},
 				});
@@ -1430,8 +1438,8 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		let remaining = 0;
 		for (const entry of entries) {
 			if (!enabled(c, { kind: entry.kind as SyncRecord["kind"] })) continue;
-			const l = local.find((r) => r.key === entry.localKey) ?? null;
-			let r = remote.find((r) => r.key === entry.remoteKey) ?? null;
+			const l = localByKey.get(entry.localKey ?? "") ?? null;
+			let r = remoteByKey.get(entry.remoteKey ?? "") ?? null;
 			const mapped = readRecord(entry.remoteBase);
 			if (r && !r.mediaId && mapped?.mediaId)
 				r = { ...r, mediaId: mapped.mediaId };
@@ -1583,7 +1591,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						);
 						if (decision === "pull") {
 							local = local.filter((record) => record.key !== l?.key);
-							if (result) local.push(result);
+							if (l) localByKey.delete(l.key);
+							if (result) {
+								local.push(result);
+								localByKey.set(result.key, result);
+							}
 						}
 						return true;
 					},
