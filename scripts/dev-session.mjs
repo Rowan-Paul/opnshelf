@@ -155,6 +155,7 @@ export function nativeFingerprint(workspace = root) {
 	}
 	add(modules);
 	add(join(workspace, "apps/mobile/plugins"));
+	add(join(workspace, "apps/mobile/app-intents"));
 	// Resolved versions catch updates within a semver range, not just package edits.
 	const dependencies = JSON.parse(
 		readFileSync(join(workspace, "apps/mobile/package.json")),

@@ -117,7 +117,7 @@ test("stale claims can be released only by their owner and cannot release a live
 	}
 });
 
-test("route snapshots notice renamed routes and native fingerprints notice resolved dependency updates", async () => {
+test("route snapshots notice renamed routes and native fingerprints notice dependencies and App Intents", async () => {
 	const { mkdirSync, writeFileSync, renameSync } = await import("node:fs");
 	const { routeInputs, nativeFingerprint } = await import("./dev-session.mjs");
 	const path = mkdtempSync(join(tmpdir(), "opnshelf-doctor-"));
@@ -157,6 +157,17 @@ test("route snapshots notice renamed routes and native fingerprints notice resol
 			'{"version":"57.0.25"}',
 		);
 		assert.notEqual(nativeFingerprint(path), native);
+		const resolved = nativeFingerprint(path);
+		mkdirSync(join(path, "apps/mobile/app-intents"), { recursive: true });
+		const intent = join(path, "apps/mobile/app-intents/PickForMeIntent.swift");
+		writeFileSync(intent, "struct PickForMeIntent {}");
+		assert.notEqual(nativeFingerprint(path), resolved);
+		const declared = nativeFingerprint(path);
+		writeFileSync(
+			intent,
+			"struct PickForMeIntent { static let openAppWhenRun = true }",
+		);
+		assert.notEqual(nativeFingerprint(path), declared);
 	} finally {
 		rmSync(path, { recursive: true, force: true });
 	}

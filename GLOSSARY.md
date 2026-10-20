@@ -215,6 +215,10 @@ _Avoid_: Prompt (that is the Home card), toast, notification, alert
 A home-screen widget on Android and iOS, placed by the user from the system widget picker, that renders the signed-in user's 30-day profile activity graph plus its total Watch count. It shows the signed-in user's own graph only — never another user's — and deep-links to that user's **Profile** on tap. When signed out it shows a sign-in placeholder that opens the login screen. It is the only thing called a "widget": the in-app profile/dashboard component it mirrors is just the *activity graph*, never a widget, despite the historical slang.
 _Avoid_: Home widget (collides with **Home**), activity widget (collides with **Activity**), shelf widget (it renders the activity graph, not **Shelf** contents)
 
+**App Shortcut**:
+An action provided by the iOS **Mobile App**, available in Apple Shortcuts and through Siri. Actions open **Up Next**, Search, the **Watchlist**, or the **Pick for me** chooser, optionally with a time budget and media type. Adding to the Watchlist resolves a title or supported link and requires confirmation in the app. Private actions respect sign-in, email verification and **Onboarding**; no action creates a Watch or silently adds a Media Item.
+_Avoid_: Voice Watch (the action does not log a Watch), Recommendation (the action only opens Pick for me)
+
 **Social**:
 The shared social hub on the **Web App** and **Mobile App**, bringing together the **Activity Feed**, finding Users to follow, and **Circles**. Its primary content is the Activity Feed; finding people is the primary content for a User who follows nobody.
 _Avoid_: Activity or Connections (as names for the whole hub), Network

@@ -31,7 +31,11 @@ import { currentUserQueryOptions, fetchCurrentUser } from "#/lib/auth-query";
 export const Route = createFileRoute("/pick-for-me")({
 	validateSearch: (
 		search: Record<string, unknown>,
-	): { minutes?: number; filters?: string } => ({
+	): {
+		minutes?: number;
+		filters?: string;
+		type?: "both" | "movie" | "show";
+	} => ({
 		minutes:
 			Number.isInteger(Number(search.minutes)) &&
 			Number(search.minutes) >= 1 &&
@@ -39,6 +43,12 @@ export const Route = createFileRoute("/pick-for-me")({
 				? Number(search.minutes)
 				: undefined,
 		filters: typeof search.filters === "string" ? search.filters : undefined,
+		type:
+			search.type === "movie" ||
+			search.type === "show" ||
+			search.type === "both"
+				? search.type
+				: undefined,
 	}),
 	beforeLoad: async ({ context }) => {
 		if (!ssrCanResolveSession()) return;
@@ -150,6 +160,10 @@ export function Picker({
 	);
 	const [ready, setReady] = useState(false);
 	const [time, setTime] = useState(String(search.minutes ?? 180));
+	useEffect(() => {
+		if (!result && search.minutes !== undefined)
+			setTime(String(search.minutes));
+	}, [result, search.minutes]);
 	const submitted = result ? search.minutes : undefined;
 	const [selection, setSelection] = useState<WatchPickerItemDto>();
 	const [skipped, setSkipped] = useState<string[]>([]);
@@ -175,8 +189,13 @@ export function Picker({
 		} catch {
 			/* Storage can be disabled. */
 		}
+		if (search.type)
+			setFilters((current) => ({
+				...current,
+				type: search.type ?? current.type,
+			}));
 		setReady(true);
-	}, [storageKey, savedIdsKey, search.filters]);
+	}, [storageKey, savedIdsKey, search.filters, search.type]);
 	useEffect(() => {
 		if (result && !submitted)
 			void navigate({ to: "/pick-for-me", replace: true });

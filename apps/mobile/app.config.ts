@@ -142,6 +142,7 @@ const config: ExpoConfig = {
 	},
 	plugins: [
 		"expo-router",
+		"expo-app-intents",
 		...(googleSignInPlugin ? [googleSignInPlugin] : []),
 		// Keep R8 and resource shrinking enabled. A previous release shipped
 		// 51 MB of unminified DEX and Play scored its App optimization "Low".
@@ -192,6 +193,7 @@ const config: ExpoConfig = {
 	],
 	experiments: {
 		typedRoutes: true,
+		inlineModules: { watchedDirectories: ["app-intents"] },
 	},
 	extra: {
 		commit: sourceCommit(),

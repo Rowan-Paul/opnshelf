@@ -11,7 +11,11 @@ import { Picker, Route } from "./pick-for-me";
 const mocks = vi.hoisted(() => ({
 	navigate: vi.fn(),
 	result: false,
-	search: {} as { minutes?: number; filters?: string },
+	search: {} as {
+		minutes?: number;
+		filters?: string;
+		type?: "both" | "movie" | "show";
+	},
 	data: {
 		genres: [],
 		items: [
@@ -129,4 +133,26 @@ it("restores a direct result request and supports skip exhaustion and reset", as
 	);
 	expect(screen.getByRole("status").textContent).toContain("Tonight’s movie");
 	expect(screen.getByRole("link", { name: "Change filters" })).toBeTruthy();
+});
+
+it("prefills a variable budget and media type from the same picker URL", async () => {
+	mocks.search = { minutes: 45, type: "show" };
+	render(<Picker userDid="did:plc:picker-test" country="NL" savedIds={[8]} />);
+	await waitFor(() =>
+		expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe(
+			"45",
+		),
+	);
+	await waitFor(() =>
+		expect(
+			screen
+				.getByRole("button", { name: "Pick for me" })
+				.hasAttribute("disabled"),
+		).toBe(false),
+	);
+	fireEvent.click(screen.getByRole("button", { name: "Pick for me" }));
+	await waitFor(() => expect(mocks.navigate).toHaveBeenCalled());
+	expect(
+		JSON.parse(mocks.navigate.mock.calls.at(-1)?.[0].search.filters),
+	).toMatchObject({ type: "show", services: "8" });
 });

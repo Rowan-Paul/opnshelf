@@ -41,15 +41,28 @@ import { useAuth } from "@/lib/auth-context";
 
 export default function PickerScreen({ result = false }: { result?: boolean }) {
 	const { user, isLoading: authLoading } = useAuth();
+	const { shortcutRequest } = useLocalSearchParams<{
+		shortcutRequest?: string;
+	}>();
+	const canUsePicker =
+		!!user &&
+		!authLoading &&
+		!user.needsEmailVerification &&
+		!user.needsOnboarding;
 	const settingsQuery = useQuery({
 		...usersControllerGetMySettingsOptions(),
-		enabled: !!user,
+		enabled: canUsePicker,
 	});
 	const country = settingsQuery.data?.watchCountry ?? "US";
 	const servicesQuery = useQuery({
 		...streamingServicesControllerListOptions({ query: { country } }),
-		enabled: !!user && !!settingsQuery.data,
+		enabled: canUsePicker && !!settingsQuery.data,
 	});
+	if (!authLoading) {
+		if (!user) return <Redirect href="/login" />;
+		if (user.needsEmailVerification) return <Redirect href="/verify-email" />;
+		if (user.needsOnboarding) return <Redirect href="/onboarding" />;
+	}
 	let content: ReactNode;
 	if (
 		authLoading ||
@@ -61,7 +74,6 @@ export default function PickerScreen({ result = false }: { result?: boolean }) {
 				<View className="h-80 rounded-xl bg-background-subtle" />
 			</View>
 		);
-	else if (!user) return <Redirect href="/login" />;
 	else if (settingsQuery.isError || servicesQuery.isError)
 		content = (
 			<View className="gap-3 py-5">
@@ -77,11 +89,11 @@ export default function PickerScreen({ result = false }: { result?: boolean }) {
 				/>
 			</View>
 		);
-	else if (settingsQuery.data && servicesQuery.data)
+	else if (user && settingsQuery.data && servicesQuery.data)
 		content = (
 			<Picker
 				result={result}
-				key={`${user.did}:${country}`}
+				key={`${user.did}:${country}:${shortcutRequest ?? ""}`}
 				userDid={user.did}
 				country={country}
 				savedIds={settingsQuery.data.streamingServiceIds.filter((id) =>
@@ -155,7 +167,12 @@ function Picker({
 	savedIds: number[];
 }) {
 	const router = useRouter();
-	const params = useLocalSearchParams<{ minutes?: string; filters?: string }>();
+	const params = useLocalSearchParams<{
+		minutes?: string;
+		filters?: string;
+		type?: string;
+		shortcutRequest?: string;
+	}>();
 	const requestMinutes = Number(params.minutes);
 	const validRequest =
 		Number.isInteger(requestMinutes) &&
@@ -175,6 +192,9 @@ function Picker({
 	const [time, setTime] = useState(
 		validRequest ? String(requestMinutes) : "180",
 	);
+	useEffect(() => {
+		if (!result && validRequest) setTime(String(requestMinutes));
+	}, [result, validRequest, requestMinutes]);
 	const submitted = result && validRequest ? requestMinutes : undefined;
 	const [selection, setSelection] = useState<WatchPickerItemDto>();
 	const [skipped, setSkipped] = useState<string[]>([]);
@@ -193,6 +213,12 @@ function Picker({
 							),
 						),
 					);
+					if (["both", "movie", "show"].includes(params.type ?? "")) {
+						setFilters((current) => ({
+							...current,
+							type: params.type as PickerFilters["type"],
+						}));
+					}
 					setReady(true);
 				}
 			})
@@ -202,7 +228,7 @@ function Picker({
 		return () => {
 			active = false;
 		};
-	}, [storageKey, savedIdsKey, params.filters]);
+	}, [storageKey, savedIdsKey, params.filters, params.type]);
 	const options = watchPickerControllerGetOptions({
 		query: {
 			minutes: submitted ?? 1,
