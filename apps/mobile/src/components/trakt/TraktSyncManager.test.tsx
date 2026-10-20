@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
 	disconnected: false,
 	issues: false,
 	uncertain: false,
+	candidate: false,
 	syncState: "idle",
 }));
 vi.mock("@opnshelf/api", async (original) => ({
@@ -55,19 +56,49 @@ vi.mock("@tanstack/react-query", () => ({
 											candidates: [],
 										},
 									]
-								: mocks.uncertain
+								: mocks.candidate
 									? [
 											{
 												id: "one",
-												kind: "review",
-												recovery: "verify",
+												kind: "watch",
 												ignored: false,
-												issue: "Unconfirmed creation",
-												opnshelf: { title: "Fixture", displayValue: "Review" },
-												candidates: [],
+												recovery: "retry",
+												issue: "Possible duplicate",
+												trakt: {
+													title: "Fixture",
+													mediaType: "episode",
+													season: 2,
+													episode: 3,
+													displayValue: "2026-10-18T19:55:00Z",
+												},
+												candidates: [
+													{
+														key: "existing",
+														title: "Fixture",
+														mediaType: "episode",
+														season: 2,
+														episode: 3,
+														displayValue: "2026-10-18T19:53:00Z",
+													},
+												],
 											},
 										]
-									: [],
+									: mocks.uncertain
+										? [
+												{
+													id: "one",
+													kind: "review",
+													recovery: "verify",
+													ignored: false,
+													issue: "Unconfirmed creation",
+													opnshelf: {
+														title: "Fixture",
+														displayValue: "Review",
+													},
+													candidates: [],
+												},
+											]
+										: [],
 						total: queryKey.at(-2) === "ignored" || mocks.uncertain ? 1 : 0,
 						page: 1,
 						totalPages: 1,
@@ -128,6 +159,7 @@ beforeEach(() => {
 	mocks.active = false;
 	mocks.disconnected = false;
 	mocks.uncertain = false;
+	mocks.candidate = false;
 	mocks.issues = false;
 	mocks.syncState = "idle";
 });
@@ -440,4 +472,24 @@ it("keeps retained attention visible after disconnecting", () => {
 				node.type === "text" && node.props.children === "Needs attention",
 		),
 	).toHaveLength(1);
+});
+
+it("shows candidate details above a short link action", () => {
+	mocks.candidate = true;
+	mocks.issues = true;
+	mount(true, true);
+	const link = renderer.root.find(
+		(node) => node.type === "text" && node.props.children === "Link this Watch",
+	);
+	expect(link.parent?.props.accessibilityHint).toContain("Fixture · S2E3");
+	const text = JSON.stringify(renderer.toJSON());
+	expect(text).toContain("Opnshelf");
+	expect(text).toContain("Fixture · S2E3");
+	press("Link this Watch");
+	expect(mocks.mutate).not.toHaveBeenCalled();
+	press("Confirm choice");
+	expect(mocks.mutate).toHaveBeenCalledWith({
+		path: { id: "one" },
+		body: { action: "link", candidateKey: "existing" },
+	});
 });

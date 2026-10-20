@@ -456,7 +456,7 @@ it("explains linking before resolving a possible duplicate Watch", async () => {
 	mocks.candidate = true;
 	mount(false, false, true);
 	const link = await screen.findByRole("button", {
-		name: /Link to existing Watch/,
+		name: "Link this Watch",
 	});
 	expect(mocks.issueRead).toHaveBeenCalledWith({
 		view: "attention",
@@ -465,7 +465,9 @@ it("explains linking before resolving a possible duplicate Watch", async () => {
 	});
 	expect(screen.queryByText("Review item")).toBeNull();
 	expect(await screen.findByText("Item 1 of 1")).toBeTruthy();
-	expect(link.textContent).toContain("Fixture · S0E2");
+	expect(link.textContent).toBe("Link this Watch");
+	expect(screen.getByText("Existing Watch in Trakt")).toBeTruthy();
+	expect(link.getAttribute("aria-describedby")).toBeTruthy();
 	expect(screen.getAllByText("Fixture · S0E2").length).toBeGreaterThan(0);
 	expect(link.textContent).not.toContain("2026-10-18T");
 	fireEvent.click(link);

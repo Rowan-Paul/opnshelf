@@ -70,15 +70,18 @@ function Action({
 	onPress,
 	disabled = false,
 	primary = false,
+	hint,
 }: {
 	label: string;
 	onPress: () => void;
 	disabled?: boolean;
 	primary?: boolean;
+	hint?: string;
 }) {
 	return (
 		<Pressable
 			accessibilityRole="button"
+			accessibilityHint={hint}
 			accessibilityState={{ disabled }}
 			disabled={disabled}
 			onPress={onPress}
@@ -1082,15 +1085,32 @@ function SyncIssue({
 			{connected &&
 				!item.ignored &&
 				item.candidates.map((candidate) => (
-					<Action
-						key={candidate.key}
-						primary
-						label={`Link to existing ${item.kind === "watch" ? "Watch" : "record"}: ${traktRecordTitle(candidate)} · ${displayValue(candidate.displayValue)}`}
-						disabled={mutation.isPending}
-						onPress={() =>
-							setChoice({ action: "link", candidateKey: candidate.key })
-						}
-					/>
+					<View key={candidate.key} className="gap-3">
+						<View className="gap-1">
+							<Text className="text-muted-foreground text-xs">
+								Existing {item.kind === "watch" ? "Watch" : "record"} in{" "}
+								{item.opnshelf ? "Trakt" : "Opnshelf"}
+							</Text>
+							<Text
+								selectable
+								className="font-semibold text-foreground text-sm"
+							>
+								{traktRecordTitle(candidate)}
+							</Text>
+							<Text selectable className={copy}>
+								{displayValue(candidate.displayValue)}
+							</Text>
+						</View>
+						<Action
+							primary
+							label={`Link this ${item.kind === "watch" ? "Watch" : "record"}`}
+							hint={`${traktRecordTitle(candidate)} · ${displayValue(candidate.displayValue)}`}
+							disabled={mutation.isPending}
+							onPress={() =>
+								setChoice({ action: "link", candidateKey: candidate.key })
+							}
+						/>
+					</View>
 				))}
 			{connected && !item.ignored && item.candidates.length > 0 && (
 				<Action

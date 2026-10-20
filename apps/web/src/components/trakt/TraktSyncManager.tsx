@@ -1037,20 +1037,35 @@ function SyncIssue({
 			)}
 			{connected &&
 				!item.ignored &&
-				item.candidates.map((candidate) => (
-					<button
-						type="button"
-						key={candidate.key}
-						className="btn btn-primary mt-3 w-full justify-start whitespace-normal text-left text-sm"
-						disabled={mutation.isPending}
-						onClick={() =>
-							setChoice({ action: "link", candidateKey: candidate.key })
-						}
-					>
-						Link to existing {item.kind === "watch" ? "Watch" : "record"}:{" "}
-						{traktRecordTitle(candidate)} ·{" "}
-						{displayValue(candidate.displayValue)}
-					</button>
+				item.candidates.map((candidate, index) => (
+					<div key={candidate.key} className="mt-4 space-y-3">
+						<div
+							id={`sync-candidate-${item.id}-${index}`}
+							className="space-y-1"
+						>
+							<p className="text-(--foreground-muted) text-xs">
+								Existing {item.kind === "watch" ? "Watch" : "record"} in{" "}
+								{item.opnshelf ? "Trakt" : "Opnshelf"}
+							</p>
+							<p className="font-semibold text-sm">
+								{traktRecordTitle(candidate)}
+							</p>
+							<p className="text-(--foreground-muted) text-sm">
+								{displayValue(candidate.displayValue)}
+							</p>
+						</div>
+						<button
+							type="button"
+							className="btn btn-primary w-full"
+							aria-describedby={`sync-candidate-${item.id}-${index}`}
+							disabled={mutation.isPending}
+							onClick={() =>
+								setChoice({ action: "link", candidateKey: candidate.key })
+							}
+						>
+							Link this {item.kind === "watch" ? "Watch" : "record"}
+						</button>
+					</div>
 				))}
 			{connected && !item.ignored && item.candidates.length > 0 && (
 				<button
