@@ -22,8 +22,14 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-	Link: ({ children, ...props }: React.ComponentProps<"a">) => (
-		<a {...props}>{children}</a>
+	Link: ({
+		children,
+		to,
+		...props
+	}: React.ComponentProps<"a"> & { to: string }) => (
+		<a href={to} {...props}>
+			{children}
+		</a>
 	),
 }));
 
@@ -130,7 +136,9 @@ describe("TraktSyncBanner", () => {
 				}),
 			);
 			render(<TraktSyncBanner />);
-			expect(screen.getByText("Trakt sync error. View details.")).toBeTruthy();
+			expect(
+				screen.getByRole("link", { name: /Trakt sync error.*View details/ }),
+			).toBeTruthy();
 			expect(screen.queryByText(/Comparing with Trakt/)).toBeNull();
 			expect(document.querySelector(".animate-spin")).toBeNull();
 			expect(
@@ -144,7 +152,9 @@ describe("TraktSyncBanner", () => {
 			);
 			render(<TraktSyncBanner />);
 			expect(
-				screen.getByText("Trakt sync needs attention. View details."),
+				screen.getByRole("link", {
+					name: /Trakt sync needs attention.*View details/,
+				}),
 			).toBeTruthy();
 			expect(screen.queryByText(/Syncing with Trakt/)).toBeNull();
 		});
