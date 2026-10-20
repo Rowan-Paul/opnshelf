@@ -106,12 +106,12 @@ export class LocalSyncLists {
 			where: { userDid: did, list: { rkey: parent.rkey } },
 			select: { rkey: true, position: true },
 		});
+		const positionByKey = new Map(positions.map((p) => [p.rkey, p.position]));
 		const ordered = items
 			.filter((r) => r.value.listRkey === parent.rkey)
 			.sort((a, b) => {
 				const pos = (r: Stored) =>
-					positions.find((p) => p.rkey === r.rkey)?.position ??
-					Number.MAX_SAFE_INTEGER;
+					positionByKey.get(r.rkey) ?? Number.MAX_SAFE_INTEGER;
 				return pos(a) - pos(b) || a.rkey.localeCompare(b.rkey);
 			});
 		const members = ordered.map((r): ListMember => {
