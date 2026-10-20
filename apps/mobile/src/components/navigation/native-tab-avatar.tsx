@@ -14,11 +14,17 @@ export function NativeTabAvatar({
 	onReady: (images: Images) => void;
 }) {
 	const [loaded, setLoaded] = useState({ normal: false, selected: false });
-	const ready = loaded.normal && loaded.selected;
 	const normal = useRef<Svg>(null);
 	const selected = useRef<Svg>(null);
 	useEffect(() => {
-		if (uri && !ready) return;
+		// Android skips image load events on memory-cache hits. Export after drawing,
+		// then refresh when either uncached image finishes loading.
+		if (
+			process.env.EXPO_OS !== "android" &&
+			uri &&
+			(!loaded.normal || !loaded.selected)
+		)
+			return;
 		let active = true;
 		const frame = requestAnimationFrame(() => {
 			normal.current?.toDataURL(
@@ -48,7 +54,7 @@ export function NativeTabAvatar({
 			active = false;
 			cancelAnimationFrame(frame);
 		};
-	}, [ready, uri, onReady]);
+	}, [loaded.normal, loaded.selected, uri, onReady]);
 
 	return (
 		<View
@@ -72,6 +78,25 @@ export function NativeTabAvatar({
 						</ClipPath>
 					</Defs>
 					<Circle cx={14} cy={14} r={14} fill="#1e293b" />
+					{(!loaded.normal || !loaded.selected) &&
+						(process.env.EXPO_OS !== "android" || !uri) && (
+							<>
+								<Circle
+									cx={14}
+									cy={10}
+									r={4}
+									fill="none"
+									stroke="#94a3b8"
+									strokeWidth={2}
+								/>
+								<Path
+									d="M7 23v-3c0-6 14-6 14 0v3"
+									fill="none"
+									stroke="#94a3b8"
+									strokeWidth={2}
+								/>
+							</>
+						)}
 					{uri && (
 						<Image
 							href={{ uri }}
@@ -86,24 +111,6 @@ export function NativeTabAvatar({
 								}));
 							}}
 						/>
-					)}
-					{!ready && (
-						<>
-							<Circle
-								cx={14}
-								cy={10}
-								r={4}
-								fill="none"
-								stroke="#94a3b8"
-								strokeWidth={2}
-							/>
-							<Path
-								d="M7 23v-3c0-6 14-6 14 0v3"
-								fill="none"
-								stroke="#94a3b8"
-								strokeWidth={2}
-							/>
-						</>
 					)}
 					{focused && (
 						<Circle

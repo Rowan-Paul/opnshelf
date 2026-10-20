@@ -3,10 +3,7 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
-	TRAKT_CONTENT_COPY,
-	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
-	TRAKT_LIST_COPY,
 	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
@@ -16,6 +13,7 @@ import {
 	TRAKT_UNCONFIRMED_CHOICE_COPY,
 	traktError,
 	traktIssueRecovery,
+	traktRecordTitle,
 	traktResolutionLabel,
 	traktSettings,
 	traktSyncActionLabel,
@@ -29,7 +27,7 @@ import {
 	traktSyncStateMessage,
 } from "@opnshelf/api";
 import {
-	useInfiniteQuery,
+	keepPreviousData,
 	useMutation,
 	useQuery,
 	useQueryClient,
@@ -52,7 +50,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TraktMark } from "@/components/marks/TraktMark";
-import { EndReachedScrollView, useEndReached } from "@/lib/use-end-reached";
+import { EndReachedScrollView } from "@/lib/use-end-reached";
 
 function displayValue(value: string) {
 	return /^\d{4}-\d{2}-\d{2}T/.test(value) && !Number.isNaN(Date.parse(value))
@@ -72,15 +70,18 @@ function Action({
 	onPress,
 	disabled = false,
 	primary = false,
+	hint,
 }: {
 	label: string;
 	onPress: () => void;
 	disabled?: boolean;
 	primary?: boolean;
+	hint?: string;
 }) {
 	return (
 		<Pressable
 			accessibilityRole="button"
+			accessibilityHint={hint}
 			accessibilityState={{ disabled }}
 			disabled={disabled}
 			onPress={onPress}
@@ -459,7 +460,6 @@ export function SyncSettings({
 	);
 	const [reviewing, setReviewing] = useState(false);
 	const [choosingRecords, setChoosingRecords] = useState(false);
-	const [showRecordDetails, setShowRecordDetails] = useState(false);
 	const { width, fontScale } = useWindowDimensions();
 	const compactDirections = width / fontScale < 480;
 	const insets = useSafeAreaInsets();
@@ -572,36 +572,6 @@ export function SyncSettings({
 									}
 								/>
 							))}
-							{(settings.lists ||
-								settings.watchlist ||
-								settings.favorites ||
-								requiresContentConsent) && (
-								<View className="gap-3">
-									<Pressable
-										accessibilityRole="button"
-										accessibilityState={{ expanded: showRecordDetails }}
-										className="min-h-11 justify-center"
-										onPress={() => setShowRecordDetails(!showRecordDetails)}
-									>
-										<Text className="font-medium text-primary text-sm">
-											{showRecordDetails ? "Hide sync details" : "Sync details"}
-										</Text>
-									</Pressable>
-									{showRecordDetails && (
-										<View className="gap-3">
-											{(settings.lists || settings.watchlist) && (
-												<Text className={copy}>{TRAKT_LIST_COPY}</Text>
-											)}
-											{settings.favorites && (
-												<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
-											)}
-											{requiresContentConsent && (
-												<Text className={copy}>{TRAKT_CONTENT_COPY}</Text>
-											)}
-										</View>
-									)}
-								</View>
-							)}
 							<Action label="Done" onPress={() => setChoosingRecords(false)} />
 						</ScrollView>
 					</Modal>
@@ -894,24 +864,21 @@ function SyncIssues({
 }) {
 	const [ignoredOpen, setIgnoredOpen] = useState(false);
 	const insets = useSafeAreaInsets();
-	const result = useInfiniteQuery({
-		queryKey: [...rootKey, "issues", view],
-		initialPageParam: 1,
-		queryFn: async ({ pageParam }) =>
+	const [page, setPage] = useState(1);
+	const result = useQuery({
+		queryKey: [...rootKey, "issues", view, page],
+		queryFn: async ({ signal }) =>
 			(
 				await traktSyncControllerIssues({
-					query: { view, page: pageParam },
+					query: { view, page, pageSize: 1 },
+					signal,
 					throwOnError: true,
 				})
 			).data,
-		getNextPageParam: (page) => (page.hasNextPage ? page.page + 1 : undefined),
+		placeholderData: keepPreviousData,
 		refetchInterval: 10_000,
 	});
-	useEndReached(() => {
-		if (result.hasNextPage && !result.isFetchingNextPage)
-			void result.fetchNextPage();
-	});
-	const items = result.data?.pages.flatMap((page) => page.items) ?? [];
+	const items = result.data?.items ?? [];
 	return (
 		<View className="gap-4">
 			{view === "attention" && (
@@ -931,19 +898,38 @@ function SyncIssues({
 					: "Other records keep syncing while you resolve these items. Ignored items are not counted as synced."}
 			</Text>
 			{!result.data && result.isPending && (
-				<View accessibilityLabel="Loading sync items" className="gap-3">
-					{[0, 1, 2].map((n) => (
-						<View key={n} className={card}>
-							<View className="h-5 w-40 rounded bg-background-subtle" />
-							<View className="h-4 w-64 rounded bg-background-subtle" />
-						</View>
-					))}
+				<View accessibilityLabel="Loading sync items" className={card}>
+					<View className="h-5 w-40 rounded bg-background-subtle" />
+					<View className="h-4 w-full rounded bg-background-subtle" />
+					<View className="flex-row gap-3">
+						<View className="h-16 flex-1 rounded-xl bg-background-subtle" />
+						<View className="h-16 flex-1 rounded-xl bg-background-subtle" />
+					</View>
+					<View className="h-12 rounded-full bg-background-subtle" />
+					<View className="h-12 rounded-full bg-background-subtle" />
 				</View>
 			)}
 			{result.error && (
 				<Text selectable accessibilityRole="alert" className={copy}>
 					{traktError(result.error)}
 				</Text>
+			)}
+			{result.data && result.data.total > 0 && (
+				<View className="flex-row items-center justify-between gap-3">
+					<Action
+						label="Previous"
+						disabled={!result.data.hasPreviousPage || result.isPlaceholderData}
+						onPress={() => setPage(result.data.page - 1)}
+					/>
+					<Text accessibilityLiveRegion="polite" className={copy}>
+						Item {result.data.page} of {result.data.total}
+					</Text>
+					<Action
+						label="Next"
+						disabled={!result.data.hasNextPage || result.isPlaceholderData}
+						onPress={() => setPage(result.data.page + 1)}
+					/>
+				</View>
 			)}
 			{items.map((item) => (
 				<SyncIssue key={item.id} item={item} connected={connected} />
@@ -953,21 +939,6 @@ function SyncIssues({
 					{view === "ignored"
 						? "No ignored items."
 						: "Nothing needs your attention."}
-				</Text>
-			)}
-			{result.isFetchingNextPage && (
-				<View accessibilityLabel="Loading sync items" className="gap-3">
-					{[0, 1, 2].map((n) => (
-						<View key={n} className={card}>
-							<View className="h-5 w-40 rounded bg-background-subtle" />
-							<View className="h-4 w-64 rounded bg-background-subtle" />
-						</View>
-					))}
-				</View>
-			)}
-			{result.data && (
-				<Text className={copy}>
-					Showing {items.length} of {result.data.pages[0].total}
 				</Text>
 			)}
 			{view === "attention" && ignoredOpen && (
@@ -1013,7 +984,6 @@ function SyncIssue({
 }) {
 	const insets = useSafeAreaInsets();
 	const client = useQueryClient();
-	const [expanded, setExpanded] = useState(false);
 	const [choice, setChoice] = useState<SyncResolveDto | null>(null);
 	const [search, setSearch] = useState("");
 	const [query, setQuery] = useState<string | null>(null);
@@ -1036,233 +1006,238 @@ function SyncIssue({
 	return (
 		<View className={card}>
 			<Text selectable className="font-semibold text-foreground text-lg">
-				{item.opnshelf?.title ?? item.trakt?.title ?? "Removed record"}
+				{traktRecordTitle(item.opnshelf) ??
+					traktRecordTitle(item.trakt) ??
+					"Removed record"}
 			</Text>
 			<Text selectable className={copy}>
 				{traktIssueRecovery(item) === "verify"
 					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again, or check your Trakt account before choosing a version."
 					: item.issue}
 			</Text>
-			<Action
-				label={expanded ? "Close item" : "Review item"}
-				onPress={() => setExpanded(!expanded)}
-			/>
-			{expanded && (
-				<>
-					<View className="flex-row gap-3">
-						{(["opnshelf", "trakt"] as const).map((name) => (
-							<View
-								key={name}
-								className="flex-1 gap-1 rounded-xl bg-background-subtle p-3"
-							>
-								<Text className="text-muted-foreground text-xs">
-									{name === "trakt" ? "Trakt" : "Opnshelf"}
-								</Text>
-								<Text selectable className="text-foreground text-sm">
-									{(item[name]?.displayValue
-										? displayValue(item[name].displayValue)
-										: undefined) ??
-										(name === "trakt" && traktIssueRecovery(item) === "verify"
-											? "Not confirmed yet"
-											: "Not present")}
-								</Text>
-							</View>
-						))}
+			<View className="flex-row gap-3">
+				{(["opnshelf", "trakt"] as const).map((name) => (
+					<View
+						key={name}
+						className="flex-1 gap-1 rounded-xl bg-background-subtle p-3"
+					>
+						<Text className="text-muted-foreground text-xs">
+							{name === "trakt" ? "Trakt" : "Opnshelf"}
+						</Text>
+						<Text selectable className="text-foreground text-sm">
+							{(item[name]?.displayValue
+								? displayValue(item[name].displayValue)
+								: undefined) ??
+								(name === "trakt" && traktIssueRecovery(item) === "verify"
+									? "Not confirmed yet"
+									: "Not present")}
+						</Text>
 					</View>
-					{item.ignored ? (
-						<Action
-							label="Restore item"
-							disabled={mutation.isPending}
-							onPress={() => resolve({ action: "undo" })}
-						/>
-					) : (
-						<View className="gap-2">
-							{connected &&
-								traktIssueRecovery(item) !== "retry" &&
-								(["trakt", "opnshelf"] as const).map((action) => (
-									<Action
-										key={action}
-										label={
-											traktIssueRecovery(item) === "verify"
-												? action === "opnshelf"
-													? "Send after checking Trakt"
-													: "Remove from Opnshelf"
-												: traktResolutionLabel(action, Boolean(item[action]))
-										}
-										disabled={mutation.isPending}
-										onPress={() =>
-											setChoice({
-												action,
-												...(traktIssueRecovery(item) === "verify"
-													? { confirmedTraktMissing: false }
-													: {}),
-											})
-										}
-									/>
-								))}
-							{connected && (
-								<Action
-									label={
-										traktIssueRecovery(item) === "verify"
-											? "Check again"
-											: "Retry"
-									}
-									disabled={mutation.isPending}
-									onPress={() => resolve({ action: "retry" })}
-								/>
-							)}
-							<Action
-								label="Ignore this item"
-								disabled={mutation.isPending}
-								onPress={() => resolve({ action: "ignore" })}
-							/>
-						</View>
-					)}
+				))}
+			</View>
+			{item.ignored ? (
+				<Action
+					label="Restore item"
+					disabled={mutation.isPending}
+					onPress={() => resolve({ action: "undo" })}
+				/>
+			) : (
+				<View className="gap-2">
 					{connected &&
-						!item.ignored &&
-						item.candidates.map((candidate) => (
+						traktIssueRecovery(item) !== "retry" &&
+						(["trakt", "opnshelf"] as const).map((action) => (
 							<Action
-								key={candidate.key}
-								primary
-								label={`Link to existing ${item.kind === "watch" ? "Watch" : "record"}: ${candidate.title} · ${displayValue(candidate.displayValue)}`}
+								key={action}
+								label={
+									traktIssueRecovery(item) === "verify"
+										? action === "opnshelf"
+											? "Send after checking Trakt"
+											: "Remove from Opnshelf"
+										: traktResolutionLabel(action, Boolean(item[action]))
+								}
 								disabled={mutation.isPending}
 								onPress={() =>
-									setChoice({ action: "link", candidateKey: candidate.key })
+									setChoice({
+										action,
+										...(traktIssueRecovery(item) === "verify"
+											? { confirmedTraktMissing: false }
+											: {}),
+									})
 								}
 							/>
 						))}
-					{connected && !item.ignored && item.candidates.length > 0 && (
+					{connected && (
 						<Action
 							label={
-								item.kind === "watch"
-									? "These are different Watches"
-									: "These are separate records"
+								traktIssueRecovery(item) === "verify" ? "Check again" : "Retry"
 							}
 							disabled={mutation.isPending}
-							onPress={() => resolve({ action: "separate" })}
+							onPress={() => resolve({ action: "retry" })}
 						/>
 					)}
-					{connected &&
-						item.kind !== "list" &&
-						item.kind !== "watchlist" &&
-						item.kind !== "favorites" &&
-						item.trakt?.mediaId === null &&
-						item.trakt?.mediaType !== "list" && (
-							<View className="gap-2">
-								<Text className="text-foreground text-sm">
-									Find the matching title
-								</Text>
-								<TextInput
-									accessibilityLabel="Find the matching title"
-									className="rounded-xl border border-border bg-background px-3 py-3 text-foreground"
-									value={search}
-									onChangeText={setSearch}
-									placeholder={item.trakt.title}
-									onSubmitEditing={() => setQuery(search)}
+					<Action
+						label="Ignore this item"
+						disabled={mutation.isPending}
+						onPress={() => resolve({ action: "ignore" })}
+					/>
+				</View>
+			)}
+			{connected &&
+				!item.ignored &&
+				item.candidates.map((candidate) => (
+					<View key={candidate.key} className="gap-3">
+						<View className="gap-1">
+							<Text className="text-muted-foreground text-xs">
+								Existing {item.kind === "watch" ? "Watch" : "record"} in{" "}
+								{item.opnshelf ? "Trakt" : "Opnshelf"}
+							</Text>
+							<Text
+								selectable
+								className="font-semibold text-foreground text-sm"
+							>
+								{traktRecordTitle(candidate)}
+							</Text>
+							<Text selectable className={copy}>
+								{displayValue(candidate.displayValue)}
+							</Text>
+						</View>
+						<Action
+							primary
+							label={`Link this ${item.kind === "watch" ? "Watch" : "record"}`}
+							hint={`${traktRecordTitle(candidate)} · ${displayValue(candidate.displayValue)}`}
+							disabled={mutation.isPending}
+							onPress={() =>
+								setChoice({ action: "link", candidateKey: candidate.key })
+							}
+						/>
+					</View>
+				))}
+			{connected && !item.ignored && item.candidates.length > 0 && (
+				<Action
+					label={
+						item.kind === "watch"
+							? "These are different Watches"
+							: "These are separate records"
+					}
+					disabled={mutation.isPending}
+					onPress={() => resolve({ action: "separate" })}
+				/>
+			)}
+			{connected &&
+				item.kind !== "list" &&
+				item.kind !== "watchlist" &&
+				item.kind !== "favorites" &&
+				item.trakt?.mediaId === null &&
+				item.trakt?.mediaType !== "list" && (
+					<View className="gap-2">
+						<Text className="text-foreground text-sm">
+							Find the matching title
+						</Text>
+						<TextInput
+							accessibilityLabel="Find the matching title"
+							className="rounded-xl border border-border bg-background px-3 py-3 text-foreground"
+							value={search}
+							onChangeText={setSearch}
+							placeholder={item.trakt.title}
+							onSubmitEditing={() => setQuery(search)}
+						/>
+						<Action label="Search" onPress={() => setQuery(search)} />
+						{matches.isFetching && (
+							<View className="h-14 animate-pulse rounded-xl bg-background-subtle" />
+						)}
+						{matches.error && (
+							<Text selectable accessibilityRole="alert" className={copy}>
+								{traktError(matches.error)}
+							</Text>
+						)}
+						{matches.data?.map((m) => (
+							<Action
+								key={m.tmdbId}
+								label={`${m.title}${m.year ? ` (${m.year})` : ""}`}
+								onPress={() =>
+									setChoice({ action: "match", mediaId: m.tmdbId })
+								}
+							/>
+						))}
+					</View>
+				)}
+			{choice && (
+				<Modal
+					visible
+					presentationStyle="pageSheet"
+					animationType="slide"
+					onRequestClose={() => setChoice(null)}
+				>
+					<ScrollView
+						contentInsetAdjustmentBehavior="automatic"
+						className="bg-background"
+						contentContainerClassName="gap-4 px-5"
+						contentContainerStyle={{
+							paddingTop:
+								Math.max(insets.top, StatusBar.currentHeight ?? 0) + 24,
+							paddingBottom: insets.bottom + 32,
+						}}
+					>
+						<Text
+							accessibilityRole="header"
+							className="font-semibold text-foreground text-xl"
+						>
+							Confirm sync choice
+						</Text>
+						<Text className={copy}>
+							{choice.action === "link"
+								? item.kind === "watch"
+									? "Link the existing Opnshelf and Trakt Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings."
+									: "Link these records?"
+								: choice.action === "match"
+									? item.kind === "watch"
+										? "Use this title for this Trakt media identity and its Watch dates?"
+										: "Use this title for this Trakt item?"
+									: traktResolutionLabel(
+											choice.action,
+											Boolean(item[choice.action as "trakt" | "opnshelf"]),
+										)}
+						</Text>
+						{choice.confirmedTraktMissing !== undefined && (
+							<View className="gap-3">
+								<Text className={copy}>{TRAKT_UNCONFIRMED_CHOICE_COPY}</Text>
+								<Toggle
+									label={TRAKT_MISSING_CONFIRMATION}
+									value={choice.confirmedTraktMissing}
+									onChange={(confirmedTraktMissing) =>
+										setChoice({ ...choice, confirmedTraktMissing })
+									}
 								/>
-								<Action label="Search" onPress={() => setQuery(search)} />
-								{matches.isFetching && (
-									<View className="h-14 animate-pulse rounded-xl bg-background-subtle" />
-								)}
-								{matches.error && (
-									<Text selectable accessibilityRole="alert" className={copy}>
-										{traktError(matches.error)}
-									</Text>
-								)}
-								{matches.data?.map((m) => (
-									<Action
-										key={m.tmdbId}
-										label={`${m.title}${m.year ? ` (${m.year})` : ""}`}
-										onPress={() =>
-											setChoice({ action: "match", mediaId: m.tmdbId })
-										}
-									/>
-								))}
 							</View>
 						)}
-					{choice && (
-						<Modal
-							visible
-							presentationStyle="pageSheet"
-							animationType="slide"
-							onRequestClose={() => setChoice(null)}
-						>
-							<ScrollView
-								contentInsetAdjustmentBehavior="automatic"
-								className="bg-background"
-								contentContainerClassName="gap-4 px-5"
-								contentContainerStyle={{
-									paddingTop:
-										Math.max(insets.top, StatusBar.currentHeight ?? 0) + 24,
-									paddingBottom: insets.bottom + 32,
-								}}
-							>
-								<Text
-									accessibilityRole="header"
-									className="font-semibold text-foreground text-xl"
-								>
-									Confirm sync choice
-								</Text>
-								<Text className={copy}>
-									{choice.action === "link"
-										? item.kind === "watch"
-											? "Link the existing Opnshelf and Trakt Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings."
-											: "Link these records?"
-										: choice.action === "match"
-											? item.kind === "watch"
-												? "Use this title for this Trakt media identity and its Watch dates?"
-												: "Use this title for this Trakt item?"
-											: traktResolutionLabel(
-													choice.action,
-													Boolean(item[choice.action as "trakt" | "opnshelf"]),
-												)}
-								</Text>
-								{choice.confirmedTraktMissing !== undefined && (
-									<View className="gap-3">
-										<Text className={copy}>
-											{TRAKT_UNCONFIRMED_CHOICE_COPY}
-										</Text>
-										<Toggle
-											label={TRAKT_MISSING_CONFIRMATION}
-											value={choice.confirmedTraktMissing}
-											onChange={(confirmedTraktMissing) =>
-												setChoice({ ...choice, confirmedTraktMissing })
-											}
-										/>
-									</View>
-								)}
-								{item.kind === "rating" && (
-									<Toggle
-										label="Apply to all Rating conflicts"
-										value={choice.allRatings ?? false}
-										onChange={(allRatings) =>
-											setChoice({ ...choice, allRatings })
-										}
-									/>
-								)}
-								{mutation.error && (
-									<Text accessibilityRole="alert" className={copy}>
-										{traktError(mutation.error)}
-									</Text>
-								)}
-								<Action label="Cancel" onPress={() => setChoice(null)} />
-								<Action
-									primary
-									label={mutation.isPending ? "Saving…" : "Confirm choice"}
-									disabled={
-										mutation.isPending || choice.confirmedTraktMissing === false
-									}
-									onPress={() => resolve(choice)}
-								/>
-							</ScrollView>
-						</Modal>
-					)}
-					{mutation.error && (
-						<Text selectable accessibilityRole="alert" className={copy}>
-							{traktError(mutation.error)}
-						</Text>
-					)}
-				</>
+						{item.kind === "rating" && (
+							<Toggle
+								label="Apply to all Rating conflicts"
+								value={choice.allRatings ?? false}
+								onChange={(allRatings) => setChoice({ ...choice, allRatings })}
+							/>
+						)}
+						{mutation.error && (
+							<Text accessibilityRole="alert" className={copy}>
+								{traktError(mutation.error)}
+							</Text>
+						)}
+						<Action label="Cancel" onPress={() => setChoice(null)} />
+						<Action
+							primary
+							label={mutation.isPending ? "Saving…" : "Confirm choice"}
+							disabled={
+								mutation.isPending || choice.confirmedTraktMissing === false
+							}
+							onPress={() => resolve(choice)}
+						/>
+					</ScrollView>
+				</Modal>
+			)}
+			{mutation.error && (
+				<Text selectable accessibilityRole="alert" className={copy}>
+					{traktError(mutation.error)}
+				</Text>
 			)}
 		</View>
 	);

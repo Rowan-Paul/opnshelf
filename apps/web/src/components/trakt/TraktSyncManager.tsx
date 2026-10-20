@@ -3,10 +3,7 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
-	TRAKT_CONTENT_COPY,
-	TRAKT_FAVORITES_COPY,
 	TRAKT_HANDOFF_COPY,
-	TRAKT_LIST_COPY,
 	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
@@ -16,6 +13,7 @@ import {
 	TRAKT_UNCONFIRMED_CHOICE_COPY,
 	traktError,
 	traktIssueRecovery,
+	traktRecordTitle,
 	traktResolutionLabel,
 	traktSettings,
 	traktSyncActionLabel,
@@ -540,21 +538,6 @@ export function SyncSettings({
 									</label>
 								))}
 							</fieldset>
-							{(settings.lists ||
-								settings.watchlist ||
-								settings.favorites ||
-								requiresContentConsent) && (
-								<details className="space-y-3 text-(--foreground-muted) text-sm leading-relaxed">
-									<summary className="cursor-pointer font-medium text-(--accent)">
-										Sync details
-									</summary>
-									{(settings.lists || settings.watchlist) && (
-										<p>{TRAKT_LIST_COPY}</p>
-									)}
-									{settings.favorites && <p>{TRAKT_FAVORITES_COPY}</p>}
-									{requiresContentConsent && <p>{TRAKT_CONTENT_COPY}</p>}
-								</details>
-							)}
 							<button
 								type="button"
 								className="btn btn-secondary"
@@ -829,7 +812,7 @@ function SyncIssues({
 		queryFn: async ({ signal }) =>
 			(
 				await traktSyncControllerIssues({
-					query: { view, page },
+					query: { view, page, pageSize: 1 },
 					signal,
 					throwOnError: true,
 				})
@@ -861,88 +844,61 @@ function SyncIssues({
 						: "Other records keep syncing while you resolve these items. Ignored items are not counted as synced."}
 				</p>
 				{!result.data && result.isPending && (
-					<output aria-label="Loading sync items" className="block space-y-3">
-						{[0, 1, 2, 3].map((n) => (
-							<div
-								key={n}
-								className={`${card} space-y-3 motion-safe:animate-pulse`}
-							>
-								<div className="h-5 w-40 rounded bg-(--background-subtle)" />
-								<div className="h-4 w-3/4 rounded bg-(--background-subtle)" />
-							</div>
-						))}
+					<output
+						aria-label="Loading sync items"
+						className={`${card} block space-y-3 motion-safe:animate-pulse`}
+					>
+						<div className="h-5 w-40 rounded bg-(--background-subtle)" />
+						<div className="h-4 w-3/4 rounded bg-(--background-subtle)" />
+						<div className="grid grid-cols-2 gap-3">
+							<div className="h-16 rounded-lg bg-(--background-subtle)" />
+							<div className="h-16 rounded-lg bg-(--background-subtle)" />
+						</div>
+						<div className="h-10 rounded-lg bg-(--background-subtle)" />
+						<div className="h-10 rounded-lg bg-(--background-subtle)" />
 					</output>
 				)}
 				{result.error && <p role="alert">{traktError(result.error)}</p>}
 				{result.isPlaceholderData && (
 					<output className="text-(--foreground-muted) text-sm">
-						Loading page {page}…
+						Loading item {page}…
 					</output>
 				)}
-				{result.data && (
-					<p className="text-(--foreground-muted) text-sm">
-						{result.data.total} {result.data.total === 1 ? "item" : "items"} ·
-						Expand an item to compare and resolve it.
-					</p>
-				)}
-				{result.data && result.data.totalPages > 1 && (
+				{result.data && result.data.total > 0 && (
 					<nav
-						aria-label="Sync issues pages"
-						className="flex items-center justify-between"
+						aria-label="Sync review items"
+						className="flex items-center justify-between gap-3"
 					>
 						<button
-							className="btn btn-secondary max-w-full whitespace-normal"
 							type="button"
+							className="btn btn-secondary"
 							disabled={
 								!result.data.hasPreviousPage || result.isPlaceholderData
 							}
-							onClick={() => setPage(page - 1)}
+							onClick={() => setPage(result.data.page - 1)}
 						>
 							Previous
 						</button>
-						<label className="flex items-center gap-2 text-sm">
-							Page
-							<select
-								aria-label="Go to sync issues page"
-								className="input"
-								value={result.data.page}
-								disabled={result.isPlaceholderData}
-								onChange={(event) => setPage(Number(event.target.value))}
-							>
-								{Array.from(
-									{ length: result.data.totalPages },
-									(_, i) => i + 1,
-								).map((pageNumber) => (
-									<option key={pageNumber} value={pageNumber}>
-										{pageNumber}
-									</option>
-								))}
-							</select>
-							of {result.data.totalPages}
-						</label>
+						<p className="text-(--foreground-muted) text-sm" aria-live="polite">
+							Item {result.data.page} of {result.data.total}
+						</p>
 						<button
-							className="btn btn-secondary max-w-full whitespace-normal"
 							type="button"
+							className="btn btn-secondary"
 							disabled={!result.data.hasNextPage || result.isPlaceholderData}
-							onClick={() => setPage(page + 1)}
+							onClick={() => setPage(result.data.page + 1)}
 						>
 							Next
 						</button>
 					</nav>
 				)}
 				{result.data?.items.map((item) => (
-					<details
+					<div
 						key={item.id}
-						className="rounded-2xl border border-(--border) bg-(--background-elevated)"
+						className="rounded-2xl border border-(--border) bg-(--background-elevated) pt-5"
 					>
-						<summary className="cursor-pointer p-5 font-medium focus-visible:outline-2">
-							{item.opnshelf?.title ?? item.trakt?.title ?? "Removed record"}
-							<span className="mt-1 block text-(--foreground-muted) text-sm">
-								{item.issue} · Review item
-							</span>
-						</summary>
 						<SyncIssue item={item} connected={connected} />
-					</details>
+					</div>
 				))}
 				{result.data?.total === 0 && (
 					<p className={`${card} text-(--foreground-muted)`}>
@@ -998,7 +954,9 @@ function SyncIssue({
 	return (
 		<article className="px-5 pb-5" aria-busy={mutation.isPending}>
 			<h3 className="font-semibold text-lg">
-				{item.opnshelf?.title ?? item.trakt?.title ?? "Removed record"}
+				{traktRecordTitle(item.opnshelf) ??
+					traktRecordTitle(item.trakt) ??
+					"Removed record"}
 			</h3>
 			<p className="mt-2 text-(--foreground-muted) text-sm">
 				{traktIssueRecovery(item) === "verify"
@@ -1079,19 +1037,35 @@ function SyncIssue({
 			)}
 			{connected &&
 				!item.ignored &&
-				item.candidates.map((candidate) => (
-					<button
-						type="button"
-						key={candidate.key}
-						className="btn btn-primary mt-3 w-full justify-start whitespace-normal text-left text-sm"
-						disabled={mutation.isPending}
-						onClick={() =>
-							setChoice({ action: "link", candidateKey: candidate.key })
-						}
-					>
-						Link to existing {item.kind === "watch" ? "Watch" : "record"}:{" "}
-						{candidate.title} · {displayValue(candidate.displayValue)}
-					</button>
+				item.candidates.map((candidate, index) => (
+					<div key={candidate.key} className="mt-4 space-y-3">
+						<div
+							id={`sync-candidate-${item.id}-${index}`}
+							className="space-y-1"
+						>
+							<p className="text-(--foreground-muted) text-xs">
+								Existing {item.kind === "watch" ? "Watch" : "record"} in{" "}
+								{item.opnshelf ? "Trakt" : "Opnshelf"}
+							</p>
+							<p className="font-semibold text-sm">
+								{traktRecordTitle(candidate)}
+							</p>
+							<p className="text-(--foreground-muted) text-sm">
+								{displayValue(candidate.displayValue)}
+							</p>
+						</div>
+						<button
+							type="button"
+							className="btn btn-primary w-full"
+							aria-describedby={`sync-candidate-${item.id}-${index}`}
+							disabled={mutation.isPending}
+							onClick={() =>
+								setChoice({ action: "link", candidateKey: candidate.key })
+							}
+						>
+							Link this {item.kind === "watch" ? "Watch" : "record"}
+						</button>
+					</div>
 				))}
 			{connected && !item.ignored && item.candidates.length > 0 && (
 				<button
@@ -1167,7 +1141,10 @@ function SyncIssue({
 							<DialogTitle>Confirm sync choice</DialogTitle>
 							<DialogDescription>
 								This choice applies to{" "}
-								{item.opnshelf?.title ?? item.trakt?.title ?? "this item"}.
+								{traktRecordTitle(item.opnshelf) ??
+									traktRecordTitle(item.trakt) ??
+									"this item"}
+								.
 							</DialogDescription>
 						</DialogHeader>
 						<p>

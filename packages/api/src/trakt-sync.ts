@@ -1,5 +1,6 @@
 import type {
 	SyncIssueDto,
+	SyncRecordDto,
 	SyncResolveDto,
 	SyncSettingsDto,
 	SyncStatusDto,
@@ -172,4 +173,15 @@ export function traktSyncStateMessage(status: SyncStatusDto): string | null {
 			? `Sync will retry automatically at ${new Date(status.nextCheckAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}.`
 			: "Sync will retry automatically.";
 	return null;
+}
+
+export function traktRecordTitle(
+	record: SyncRecordDto | null | undefined,
+): string | undefined {
+	if (!record) return undefined;
+	if (record.mediaType === "episode")
+		return `${record.title} · S${record.season}E${record.episode}`;
+	if (record.mediaType === "season")
+		return `${record.title} · Season ${record.season}`;
+	return record.title;
 }
