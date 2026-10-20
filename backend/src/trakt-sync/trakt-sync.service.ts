@@ -145,17 +145,37 @@ const sameTraktTitle = (record: SyncRecord, peer: SyncRecord): boolean => {
 					peer.traktParentId === record.traktParentId,
 			);
 };
+// Content IDs identify individual records; their parent identifies the title.
+const traktMappingKey = (record: SyncRecord): string | null => {
+	const parent = isContentRecord(record) || record.mediaType !== "movie";
+	const id = parent ? record.traktParentId : record.traktId;
+	if (parent && !id) return null;
+	return `${record.kind}:${record.mediaType === "movie"}:${typeof id}:${id}`;
+};
 const applyMappings = (
 	remote: SyncRecord[],
 	entries: Pick<TraktSyncEntry, "remoteBase">[],
-) =>
-	remote.map((r) => {
+) => {
+	let saved: Map<string, string> | undefined;
+	return remote.map((r) => {
 		if (isListRecord(r) || r.mediaId) return r;
-		const mapped = entries
-			.map((e) => readRecord(e.remoteBase))
-			.find((p) => p?.mediaId && p.kind === r.kind && sameTraktTitle(r, p));
-		return mapped ? { ...r, mediaId: mapped.mediaId } : r;
+		const key = traktMappingKey(r);
+		if (key === null) return r;
+		if (!saved) {
+			saved = new Map();
+			for (const entry of entries) {
+				const record = readRecord(entry.remoteBase);
+				if (!record?.mediaId || isListRecord(record)) continue;
+				const mappedKey = traktMappingKey(record);
+				// Preserve the first saved mapping when several records share a title.
+				if (mappedKey !== null && !saved.has(mappedKey))
+					saved.set(mappedKey, record.mediaId);
+			}
+		}
+		const mediaId = saved.get(key);
+		return mediaId ? { ...r, mediaId } : r;
 	});
+};
 const enabled = (c: TraktSyncConnection, r: Pick<SyncRecord, "kind">) =>
 	r.kind === "watch"
 		? c.watches
@@ -1013,8 +1033,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	async issues(userDid: string, query: SyncIssuesQueryDto) {
 		const c = await this.requireConnection(userDid);
-		const local = await this.local.snapshot(userDid, c);
-		const remote = records(c.remoteSnapshot);
 		const entries = await this.prisma.traktSyncEntry.findMany({
 			where: {
 				connectionId: c.id,
@@ -1024,12 +1042,32 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			},
 			orderBy: { createdAt: "asc" },
 		});
+		// Paginate before reading repositories or building candidate comparisons.
+		const page = paginateItems(entries, query.page ?? 1, query.pageSize ?? 20);
+		if (page.items.length === 0) return { ...page, items: [] };
+		const kinds = new Set(
+			page.items.map((entry) => entry.kind as SyncRecord["kind"]),
+		);
+		const local = await this.local.snapshot(
+			userDid,
+			{
+				lists: c.lists && kinds.has("list"),
+				watchlist: c.watchlist && kinds.has("watchlist"),
+				favorites: c.favorites && kinds.has("favorites"),
+				notes: c.notes && kinds.has("note"),
+				library: c.library && kinds.has("library"),
+				reviews: c.reviews && kinds.has("review"),
+			},
+			kinds,
+		);
+		const remote = records(c.remoteSnapshot);
 		const mapped = new Map(
 			applyMappings(remote, entries).map((r) => [r.key, r]),
 		);
 		const localByKey = new Map(local.map((r) => [r.key, r]));
-		return paginateItems(
-			entries.map((e) => {
+		return {
+			...page,
+			items: page.items.map((e) => {
 				const l = localByKey.get(e.localKey ?? "") ?? null;
 				const r = mapped.get(e.remoteKey ?? "") ?? null;
 				const source =
@@ -1066,9 +1104,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 							: [],
 				};
 			}),
-			query.page ?? 1,
-			query.pageSize ?? 20,
-		);
+		};
 	}
 	async resolve(userDid: string, id: string, dto: SyncResolveDto) {
 		const c = await this.requireConnection(userDid);

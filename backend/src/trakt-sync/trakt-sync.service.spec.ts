@@ -429,3 +429,300 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 		);
 	},
 );
+
+it("builds candidate comparisons only for the requested sync issue page", async () => {
+	let comparisons = 0;
+	const watch = {
+		key: "local",
+		kind: "watch",
+		mediaType: "movie",
+		get mediaId() {
+			comparisons++;
+			return "1";
+		},
+		season: 0,
+		episode: 0,
+		title: "Fixture",
+		value: null,
+	};
+	const entries = Array.from({ length: 200 }, (_, i) => ({
+		id: `issue:${i}`,
+		kind: "watch",
+		remoteKey: "remote",
+		linked: false,
+		issue: "Choose a match",
+		ignored: false,
+	}));
+	const service = new TraktSyncService(
+		{
+			traktSyncEntry: { findMany: vi.fn(async () => entries) },
+		} as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{ snapshot: vi.fn(async () => [watch]) } as unknown as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	const connection = {
+		id: "fixture",
+		remoteSnapshot: [{ ...watch, key: "remote" }],
+	} as unknown as NonNullable<Awaited<ReturnType<(typeof service)["current"]>>>;
+	service["requireConnection"] = vi.fn(async () => connection);
+	comparisons = 0;
+	const result = await service.issues("fixture", { page: 2, pageSize: 1 });
+	expect(result).toMatchObject({ page: 2, total: 200, hasNextPage: true });
+	expect(result.items.map((item) => item.id)).toEqual(["issue:1"]);
+	expect(result.items[0].candidates).toHaveLength(1);
+	expect(comparisons).toBeLessThan(10);
+});
+
+it("parses saved title mappings once when paging unmatched Trakt records", async () => {
+	let reads = 0;
+	let titleComparisons = 0;
+	const remote = Array.from({ length: 100 }, (_, i) => ({
+		key: `remote:${i}`,
+		kind: "watch",
+		mediaType: "movie",
+		mediaId: null,
+		traktId: i,
+		season: 0,
+		episode: 0,
+		title: "Fixture",
+		value: null,
+	}));
+	const entries = remote.map((r, i) => ({
+		id: `issue:${i}`,
+		kind: "watch",
+		remoteKey: r.key,
+		linked: false,
+		issue: "Choose a match",
+		ignored: false,
+		get remoteBase() {
+			reads++;
+			return {
+				...r,
+				mediaId: String(i),
+				get traktId() {
+					titleComparisons++;
+					return i;
+				},
+			};
+		},
+	}));
+	const service = new TraktSyncService(
+		{
+			traktSyncEntry: { findMany: vi.fn(async () => entries) },
+		} as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	service["requireConnection"] = vi.fn(
+		async () =>
+			({
+				id: "fixture",
+				remoteSnapshot: remote,
+			}) as unknown as NonNullable<
+				Awaited<ReturnType<(typeof service)["current"]>>
+			>,
+	);
+	const result = await service.issues("fixture", { page: 2, pageSize: 1 });
+	expect(result.items[0].trakt?.mediaId).toBe("1");
+	expect(reads).toBeLessThanOrEqual(entries.length);
+	expect(titleComparisons).toBeLessThanOrEqual(entries.length * 2);
+});
+
+it("does not read local repositories when the issue queue is empty", async () => {
+	const snapshot = vi.fn(async () => []);
+	const service = new TraktSyncService(
+		{
+			traktSyncEntry: { findMany: vi.fn(async () => []) },
+		} as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{ snapshot } as unknown as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	service["requireConnection"] = vi.fn(
+		async () =>
+			({ id: "fixture", remoteSnapshot: [] }) as unknown as NonNullable<
+				Awaited<ReturnType<(typeof service)["current"]>>
+			>,
+	);
+	expect(
+		await service.issues("fixture", { page: 3, pageSize: 1 }),
+	).toMatchObject({
+		items: [],
+		total: 0,
+		page: 1,
+		totalPages: 0,
+	});
+	expect(snapshot).not.toHaveBeenCalled();
+});
+
+it("reads only the enabled content repositories needed for the visible issue page", async () => {
+	const snapshot = vi.fn(async () => []);
+	const service = new TraktSyncService(
+		{
+			traktSyncEntry: {
+				findMany: vi.fn(async () => [
+					{ id: "watch", kind: "watch", issue: "Choose a match" },
+					{ id: "note", kind: "note", issue: "Choose a version" },
+				]),
+			},
+		} as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{ snapshot } as unknown as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	service["requireConnection"] = vi.fn(
+		async () =>
+			({
+				id: "fixture",
+				remoteSnapshot: [],
+				lists: true,
+				watchlist: true,
+				favorites: true,
+				notes: true,
+				library: true,
+				reviews: true,
+			}) as unknown as NonNullable<
+				Awaited<ReturnType<(typeof service)["current"]>>
+			>,
+	);
+	await service.issues("fixture", { page: 1, pageSize: 1 });
+	expect(snapshot.mock.calls[0]).toEqual([
+		"fixture",
+		expect.objectContaining({
+			lists: false,
+			watchlist: false,
+			favorites: false,
+			notes: false,
+			library: false,
+			reviews: false,
+		}),
+		new Set(["watch"]),
+	]);
+	await service.issues("fixture", { page: 2, pageSize: 1 });
+	expect(snapshot.mock.calls[1]).toEqual([
+		"fixture",
+		expect.objectContaining({
+			lists: false,
+			watchlist: false,
+			favorites: false,
+			notes: true,
+			library: false,
+			reviews: false,
+		}),
+		new Set(["note"]),
+	]);
+});
+
+it.each([
+	{
+		name: "movie Watches",
+		source: { kind: "watch", mediaType: "movie", traktId: 7 },
+		saved: { kind: "watch", mediaType: "movie", traktId: 7 },
+		expected: "99",
+	},
+	{
+		name: "different record types",
+		source: { kind: "watch", mediaType: "movie", traktId: 7 },
+		saved: { kind: "rating", mediaType: "movie", traktId: 7 },
+		expected: null,
+	},
+	{
+		name: "movie and show IDs",
+		source: { kind: "watch", mediaType: "movie", traktId: 7 },
+		saved: { kind: "watch", mediaType: "episode", traktParentId: 7 },
+		expected: null,
+	},
+	{
+		name: "episodes of the same show",
+		source: {
+			kind: "watch",
+			mediaType: "episode",
+			traktId: 8,
+			traktParentId: 7,
+		},
+		saved: {
+			kind: "watch",
+			mediaType: "episode",
+			traktId: 9,
+			traktParentId: 7,
+		},
+		expected: "99",
+	},
+	{
+		name: "shows without parent IDs",
+		source: { kind: "watch", mediaType: "episode" },
+		saved: { kind: "watch", mediaType: "episode" },
+		expected: null,
+	},
+	{
+		name: "Reviews of the same movie",
+		source: {
+			kind: "review",
+			mediaType: "movie",
+			traktId: 8,
+			traktParentId: 7,
+		},
+		saved: { kind: "review", mediaType: "movie", traktId: 9, traktParentId: 7 },
+		expected: "99",
+	},
+	{
+		name: "Reviews without parent IDs",
+		source: { kind: "review", mediaType: "movie", traktId: 7 },
+		saved: { kind: "review", mediaType: "movie", traktId: 7 },
+		expected: null,
+	},
+])(
+	"preserves saved title mapping rules for $name",
+	async ({ source, saved, expected }) => {
+		const base = {
+			key: "remote",
+			season: 0,
+			episode: 0,
+			title: "Fixture",
+			value:
+				source.kind === "review"
+					? JSON.stringify({ content: "Fixture review" })
+					: null,
+		};
+		const service = new TraktSyncService(
+			{
+				traktSyncEntry: {
+					findMany: vi.fn(async () => [
+						{
+							id: "first",
+							kind: source.kind,
+							remoteKey: "remote",
+							remoteBase: { ...base, ...saved, mediaId: "99" },
+						},
+						{
+							id: "second",
+							kind: source.kind,
+							remoteBase: { ...base, ...saved, mediaId: "100" },
+						},
+					]),
+				},
+			} as unknown as PrismaService,
+			{} as TraktSyncClient,
+			{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
+		);
+		service["requireConnection"] = vi.fn(
+			async () =>
+				({
+					id: "fixture",
+					remoteSnapshot: [{ ...base, ...source, mediaId: null }],
+				}) as unknown as NonNullable<
+					Awaited<ReturnType<(typeof service)["current"]>>
+				>,
+		);
+		const result = await service.issues("fixture", { pageSize: 1 });
+		expect(result.items[0].trakt?.mediaId).toBe(expected);
+	},
+);
