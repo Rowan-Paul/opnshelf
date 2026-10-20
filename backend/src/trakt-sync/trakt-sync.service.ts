@@ -1164,8 +1164,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 							where: { id: peer.id },
 							data: {
 								remoteBase: json({ ...p, mediaId: dto.mediaId }),
-								issue: null,
-								eligible: true,
+								...(peer.eligible || peer.linked
+									? { issue: null, eligible: true }
+									: {}),
 							},
 						});
 				}
@@ -1478,6 +1479,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			// Excluded history stays inert, including issues saved before this guard.
 			// A later record edit enters scope even when its Watch date is historical.
 			if (!entry.eligible && !entry.linked && !entry.pending) {
+				// These records have never synced: absence cannot authorize restoring
+				// one side or deleting the other. Only edits to present records enter scope.
+				if (
+					(!l && readRecord(entry.localBase)) ||
+					(!r && readRecord(entry.remoteBase))
+				)
+					continue;
 				if (
 					fingerprint(l) === fingerprint(readRecord(entry.localBase)) &&
 					fingerprint(r) === fingerprint(readRecord(entry.remoteBase))

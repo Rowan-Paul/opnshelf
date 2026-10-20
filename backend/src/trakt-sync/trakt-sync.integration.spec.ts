@@ -1385,6 +1385,68 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect((await service.status(userDid)).needsAttention).toBe(1);
 		expect(remoteApi.write).not.toHaveBeenCalled();
 	});
+	it.each([
+		["local", "inbound"],
+		["local", "both"],
+		["remote", "outbound"],
+		["remote", "both"],
+	] as const)(
+		"keeps excluded paired history inert after a %s deletion in %s sync",
+		async (side, direction) => {
+			localRecords = [watch("local:excluded")];
+			remoteRecords = [watch("watch:excluded")];
+			await configure("future", direction);
+			const entry = await db.traktSyncEntry.findFirstOrThrow();
+			expect(entry).toMatchObject({
+				eligible: false,
+				linked: false,
+				localKey: "local:excluded",
+				remoteKey: "watch:excluded",
+			});
+			if (side === "local") localRecords = [];
+			else remoteRecords = [];
+			await tick();
+			await tick();
+			expect(localRecords).toHaveLength(side === "local" ? 0 : 1);
+			expect(remoteRecords).toHaveLength(side === "remote" ? 0 : 1);
+			expect(localApi.write).not.toHaveBeenCalled();
+			expect(remoteApi.write).not.toHaveBeenCalled();
+			expect(
+				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
+			).toMatchObject({ eligible: false, linked: false });
+		},
+	);
+	it("maps an excluded title peer without importing its historical Watch", async () => {
+		remoteRecords = [
+			{ ...watch("watch:old"), mediaId: null, traktId: 42, traktParentId: 42 },
+		];
+		await configure("future");
+		const old = await db.traktSyncEntry.findFirstOrThrow();
+		remoteRecords.push({
+			...remoteRecords[0],
+			key: "watch:new",
+			value: "2026-10-20T00:00:00Z",
+		});
+		await tick();
+		const issues = await service.issues(userDid, {});
+		expect(issues.total).toBe(1);
+		await service.resolve(userDid, issues.items[0].id, {
+			action: "match",
+			mediaId: "12",
+		});
+		expect(
+			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: old.id } }),
+		).toMatchObject({
+			remoteBase: { mediaId: "12" },
+			eligible: false,
+			issue: old.issue,
+		});
+		await tick();
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		expect(localRecords[0].value).toBe("2026-10-20T00:00:00Z");
+		expect(remoteApi.write).not.toHaveBeenCalled();
+	});
 	it("preserves both dates for a legacy manually linked future-only Watch", async () => {
 		localRecords = [watch("local:old", "2026-10-17T21:36:00Z")];
 		remoteRecords = [watch("watch:old", "2026-10-17T21:37:00Z")];
