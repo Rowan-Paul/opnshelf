@@ -189,46 +189,60 @@ export class LocalSyncContent {
 				),
 			);
 		}
+		const titled = result.filter((r) => r.kind !== "review");
+		const movieIds = [
+			...new Set(
+				titled
+					.filter((r) => r.mediaType === "movie")
+					.flatMap((r) => (r.mediaId ? [r.mediaId] : [])),
+			),
+		];
+		const showIds = [
+			...new Set(
+				titled
+					.filter((r) => r.mediaType !== "movie")
+					.flatMap((r) => (r.mediaId ? [r.mediaId] : [])),
+			),
+		];
 		const [movies, shows] = await Promise.all([
-			this.prisma.movie.findMany({
-				where: {
-					movieId: {
-						in: result
-							.filter((r) => r.mediaType === "movie")
-							.flatMap((r) => (r.mediaId ? [r.mediaId] : [])),
-					},
-				},
-				select: { movieId: true, title: true },
-			}),
-			this.prisma.show.findMany({
-				where: {
-					showId: {
-						in: result
-							.filter((r) => r.mediaType !== "movie")
-							.flatMap((r) => (r.mediaId ? [r.mediaId] : [])),
-					},
-				},
-				select: { showId: true, title: true },
-			}),
+			movieIds.length
+				? this.prisma.movie.findMany({
+						where: { movieId: { in: movieIds } },
+						select: { movieId: true, title: true },
+					})
+				: [],
+			showIds.length
+				? this.prisma.show.findMany({
+						where: { showId: { in: showIds } },
+						select: { showId: true, title: true },
+					})
+				: [],
 		]);
+		const movieTitles = new Map(movies.map((m) => [m.movieId, m.title]));
+		const showTitles = new Map(shows.map((s) => [s.showId, s.title]));
+		// Count media tuples without Format: Trakt has one collection entry per title.
+		const libraryKey = (record: SyncRecord) =>
+			JSON.stringify([
+				record.mediaType,
+				record.mediaId,
+				record.season,
+				record.episode,
+			]);
+		const libraryCounts = new Map<string, number>();
+		for (const record of result) {
+			if (record.kind !== "library") continue;
+			const key = libraryKey(record);
+			libraryCounts.set(key, (libraryCounts.get(key) ?? 0) + 1);
+		}
 		for (const record of result) {
 			if (record.kind === "review") continue;
-			const title =
-				record.mediaType === "movie"
-					? movies.find((m) => m.movieId === record.mediaId)?.title
-					: shows.find((s) => s.showId === record.mediaId)?.title;
+			const title = (
+				record.mediaType === "movie" ? movieTitles : showTitles
+			).get(record.mediaId ?? "");
 			if (title) record.title = title;
-		}
-		for (const record of result.filter((r) => r.kind === "library")) {
 			if (
-				result.filter(
-					(r) =>
-						r.kind === "library" &&
-						r.mediaType === record.mediaType &&
-						r.mediaId === record.mediaId &&
-						r.season === record.season &&
-						r.episode === record.episode,
-				).length > 1
+				record.kind === "library" &&
+				(libraryCounts.get(libraryKey(record)) ?? 0) > 1
 			)
 				record.problem =
 					"Trakt cannot represent multiple owned formats for the same title. Your Library Items are preserved.";

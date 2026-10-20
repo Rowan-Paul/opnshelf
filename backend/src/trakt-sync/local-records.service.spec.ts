@@ -118,3 +118,98 @@ describe("Trakt PDS write recovery", () => {
 		);
 	});
 });
+
+it("looks up Rating titles without repeatedly scanning the media catalog", async () => {
+	let reads = 0;
+	const movies = Array.from({ length: 100 }, (_, i) => ({
+		get movieId() {
+			reads++;
+			return String(i);
+		},
+		title: `Movie ${i}`,
+	}));
+	const ratings = movies.map((_, i) => ({
+		rkey: String(i),
+		mediaType: "movie",
+		mediaId: String(i),
+		seasonNumber: 0,
+		episodeNumber: 0,
+		rating: 8,
+	}));
+	const snapshot = new LocalSyncRecords(
+		{
+			$transaction: async (queries: unknown[]) => Promise.all(queries),
+			trackedMovie: { findMany: async () => [] },
+			trackedEpisode: { findMany: async () => [] },
+			rating: { findMany: async () => ratings },
+			movie: { findMany: async () => movies },
+			show: { findMany: async () => [] },
+		} as unknown as PrismaService,
+		{} as MoviesService,
+		{} as ShowsService,
+		{} as RatingsService,
+		{} as Pick<AuthService, "restore">,
+		{} as LocalSyncLists,
+		{} as unknown as import("./local-content.service").LocalSyncContent,
+	);
+	const result = await snapshot.snapshot("fixture");
+	expect(result.map((r) => r.title)).toEqual(movies.map((m) => m.title));
+	expect(reads).toBeLessThanOrEqual(movies.length);
+});
+
+it.each(["watch", "rating", "note"] as const)(
+	"does not load unrelated indexed history for a %s issue page",
+	async (kind) => {
+		const watchedMovies = vi.fn(async () => [
+			{
+				rkey: "one",
+				movieId: "12",
+				movie: { title: "Fixture" },
+				watchedDate: null,
+			},
+		]);
+		const watchedEpisodes = vi.fn(async () => []);
+		const ratings = vi.fn(async () => [
+			{
+				rkey: "one",
+				mediaType: "movie",
+				mediaId: "12",
+				rating: 8,
+				seasonNumber: 0,
+				episodeNumber: 0,
+			},
+		]);
+		const titles = vi.fn(async () => [{ movieId: "12", title: "Fixture" }]);
+		const content = vi.fn(async () => [
+			{ ...record, key: "note:one", kind: "note" as const },
+		]);
+		const snapshot = new LocalSyncRecords(
+			{
+				$transaction: async (queries: unknown[]) => Promise.all(queries),
+				trackedMovie: { findMany: watchedMovies },
+				trackedEpisode: { findMany: watchedEpisodes },
+				rating: { findMany: ratings },
+				movie: { findMany: titles },
+				show: { findMany: vi.fn(async () => []) },
+			} as unknown as PrismaService,
+			{} as MoviesService,
+			{} as ShowsService,
+			{} as RatingsService,
+			{} as Pick<AuthService, "restore">,
+			{} as LocalSyncLists,
+			{
+				snapshot: content,
+			} as unknown as import("./local-content.service").LocalSyncContent,
+		);
+		const result = await snapshot.snapshot(
+			"fixture",
+			{ notes: kind === "note" },
+			new Set([kind]),
+		);
+		expect(result.map((r) => r.kind)).toEqual([kind]);
+		expect(watchedMovies).toHaveBeenCalledTimes(kind === "watch" ? 1 : 0);
+		expect(watchedEpisodes).toHaveBeenCalledTimes(kind === "watch" ? 1 : 0);
+		expect(ratings).toHaveBeenCalledTimes(kind === "rating" ? 1 : 0);
+		expect(titles).toHaveBeenCalledTimes(kind === "rating" ? 1 : 0);
+	},
+);

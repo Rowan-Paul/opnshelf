@@ -72,40 +72,51 @@ export class LocalSyncRecords {
 			library?: boolean;
 			reviews?: boolean;
 		} = {},
+		kinds?: ReadonlySet<SyncRecord["kind"]>,
 	): Promise<SyncRecord[]> {
-		const [movies, episodes, ratings] = await this.prisma.$transaction([
-			this.prisma.trackedMovie.findMany({
-				where: { userDid, status: "watched" },
-				include: { movie: true },
-			}),
-			this.prisma.trackedEpisode.findMany({
-				where: { userDid, status: "watched" },
-				include: { show: true },
-			}),
-			this.prisma.rating.findMany({ where: { userDid } }),
+		const [[movies, episodes], ratings] = await Promise.all([
+			kinds && !kinds.has("watch")
+				? [[], []]
+				: this.prisma.$transaction([
+						this.prisma.trackedMovie.findMany({
+							where: { userDid, status: "watched" },
+							include: { movie: true },
+						}),
+						this.prisma.trackedEpisode.findMany({
+							where: { userDid, status: "watched" },
+							include: { show: true },
+						}),
+					]),
+			kinds && !kinds.has("rating")
+				? []
+				: this.prisma.rating.findMany({ where: { userDid } }),
 		]);
-		const [ratedMovies, ratedShows] = await this.prisma.$transaction([
-			this.prisma.movie.findMany({
-				where: {
-					movieId: {
-						in: ratings
-							.filter((r) => r.mediaType === "movie")
-							.map((r) => r.mediaId),
-					},
-				},
-				select: { movieId: true, title: true },
-			}),
-			this.prisma.show.findMany({
-				where: {
-					showId: {
-						in: ratings
-							.filter((r) => r.mediaType !== "movie")
-							.map((r) => r.mediaId),
-					},
-				},
-				select: { showId: true, title: true },
-			}),
+		const movieIds = [
+			...new Set(
+				ratings.filter((r) => r.mediaType === "movie").map((r) => r.mediaId),
+			),
+		];
+		const showIds = [
+			...new Set(
+				ratings.filter((r) => r.mediaType !== "movie").map((r) => r.mediaId),
+			),
+		];
+		const [ratedMovies, ratedShows] = await Promise.all([
+			movieIds.length
+				? this.prisma.movie.findMany({
+						where: { movieId: { in: movieIds } },
+						select: { movieId: true, title: true },
+					})
+				: [],
+			showIds.length
+				? this.prisma.show.findMany({
+						where: { showId: { in: showIds } },
+						select: { showId: true, title: true },
+					})
+				: [],
 		]);
+		const movieTitles = new Map(ratedMovies.map((m) => [m.movieId, m.title]));
+		const showTitles = new Map(ratedShows.map((s) => [s.showId, s.title]));
 		const lists =
 			options.lists || options.watchlist || options.favorites
 				? await this.lists.snapshot(userDid, options)
@@ -156,10 +167,9 @@ export class LocalSyncRecords {
 					season: r.seasonNumber,
 					episode: r.episodeNumber,
 					title:
-						(r.mediaType === "movie"
-							? ratedMovies.find((m) => m.movieId === r.mediaId)
-							: ratedShows.find((m) => m.showId === r.mediaId)
-						)?.title ?? `${r.mediaType} ${r.mediaId}`,
+						(r.mediaType === "movie" ? movieTitles : showTitles).get(
+							r.mediaId,
+						) ?? `${r.mediaType} ${r.mediaId}`,
 					value: r.rating,
 				}),
 			),

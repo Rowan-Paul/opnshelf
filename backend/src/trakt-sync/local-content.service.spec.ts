@@ -94,7 +94,11 @@ function fixture(kind: ContentKind, visibility: "public" | "private") {
 		},
 	};
 	const prisma = {
-		movie: { findMany: vi.fn(async () => []) },
+		movie: {
+			findMany: vi.fn(
+				async (): Promise<{ movieId: string; title: string }[]> => [],
+			),
+		},
 		show: { findMany: vi.fn(async () => []) },
 		review: {
 			upsert: vi.fn(),
@@ -226,4 +230,53 @@ describe("Local content transfers", () => {
 			desired("note").value,
 		);
 	});
+});
+
+it("resolves Library titles in one catalog pass and preserves duplicate-format warnings", async () => {
+	const f = fixture("library", "public");
+	let titleReads = 0;
+	const movies = Array.from({ length: 100 }, (_, i) => ({
+		get movieId() {
+			titleReads++;
+			return String(i);
+		},
+		title: `Movie ${i}`,
+	}));
+	f.prisma.movie.findMany.mockResolvedValue(movies);
+	const records = Array.from({ length: 101 }, (_, i) => ({
+		rkey: `item:${i}`,
+		uri: `at://${did}/xyz.opnshelf.library.item/item:${i}`,
+		cid: "fixture",
+		value: {
+			$type: "xyz.opnshelf.library.item",
+			mediaType: "movie",
+			mediaId: String(i % 100),
+			format: i === 100 ? "bluray" : "dvd",
+			createdAt: "2020-01-01T12:00:00Z",
+		},
+	}));
+	f.local["repository"] = vi.fn(async () => ({
+		records,
+		visibility: "public" as const,
+	}));
+	const result = await f.local.snapshot(did, { library: true });
+	expect(result.map((r) => r.title)).toEqual(
+		records.map((r) => `Movie ${r.value.mediaId}`),
+	);
+	expect(result.filter((r) => r.problem).map((r) => r.rkey)).toEqual([
+		"item:0",
+		"item:100",
+	]);
+	expect(titleReads).toBeLessThanOrEqual(movies.length);
+});
+
+it("does not query the media catalog for Reviews that already have their own titles", async () => {
+	const f = fixture("review", "public");
+	await f.run(() => f.local.write(did, desired("review"), null, rkey));
+	f.prisma.movie.findMany.mockClear();
+	f.prisma.show.findMany.mockClear();
+	const result = await f.local.snapshot(did, { reviews: true });
+	expect(result[0].title).toBe("A film");
+	expect(f.prisma.movie.findMany).not.toHaveBeenCalled();
+	expect(f.prisma.show.findMany).not.toHaveBeenCalled();
 });

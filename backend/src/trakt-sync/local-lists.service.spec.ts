@@ -6,7 +6,7 @@ import type { PrismaService } from "../prisma/prisma.service";
 import type { ContentPrivacyCoordinator } from "../privacy/content-privacy-coordinator";
 import { privacyRepositoryConfig } from "../privacy/privacy-category";
 import { watchOperation } from "../privacy/watch-operation";
-import { encodeList } from "./list-value";
+import { listValue, encodeList } from "./list-value";
 import { LocalSyncLists } from "./local-lists.service";
 import type { SyncRecord } from "./reconcile";
 
@@ -341,4 +341,44 @@ describe("List PDS transfers", () => {
 		await expect(f.local.snapshot(did)).rejects.toThrow("unavailable");
 		expect(f.calls).toEqual([]);
 	});
+});
+
+it("orders a large List without scanning all saved positions for every comparison", async () => {
+	const f = fixture("public");
+	await f.local.write(did, desired, null, rkey);
+	const parent = f.records.get(`${LIST}/${rkey}`);
+	const template = [...f.records.entries()].find(([key]) =>
+		key.startsWith(`${ITEM}/`),
+	)?.[1];
+	if (!parent || !template) throw new Error("Missing List fixture");
+	const items: Parameters<(typeof f.local)["record"]>[2] = Array.from(
+		{ length: 100 },
+		(_, i) => ({
+			...template,
+			collection: ITEM,
+			uri: `at://${did}/${ITEM}/member:${i}`,
+			rkey: `member:${i}`,
+			value: { ...template.value, mediaId: String(i + 1) },
+		}),
+	);
+	let positionReads = 0;
+	f.prisma.listItem.findMany.mockResolvedValue(
+		items.map((item, i) => ({
+			get rkey() {
+				positionReads++;
+				return item.rkey;
+			},
+			position: 100 - i,
+		})),
+	);
+	const result = await f.local["record"](
+		did,
+		{ ...parent, collection: LIST, uri: `at://${did}/${LIST}/${rkey}` },
+		items,
+		"public",
+	);
+	expect(listValue(result).items.map((item) => item.mediaId)).toEqual(
+		items.map((item) => item.value.mediaId).reverse(),
+	);
+	expect(positionReads).toBeLessThanOrEqual(items.length);
 });
