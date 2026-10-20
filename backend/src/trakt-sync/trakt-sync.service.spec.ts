@@ -78,3 +78,109 @@ it.each([
 		],
 	]);
 });
+
+it("does not repeatedly scan every link while discovering a large account", async () => {
+	let keyReads = 0;
+	const local = Array.from({ length: 200 }, (_, i) => ({
+		key: `local:${i}`,
+		kind: "watch" as const,
+		mediaType: "movie" as const,
+		mediaId: String(i),
+		season: 0,
+		episode: 0,
+		title: "Fixture",
+		value: "2026-01-01T00:00:00Z",
+	}));
+	const remote = local.map((r) => ({ ...r, key: `remote:${r.mediaId}` }));
+	const entries = [
+		...remote.map((r) => ({ localKey: null, remoteKey: r.key })),
+		...local.map((r) => ({ localKey: r.key, remoteKey: null })),
+	].map((entry) => ({
+		...entry,
+		get localKey() {
+			keyReads++;
+			return entry.localKey;
+		},
+	}));
+	const prisma = {
+		traktSyncEntry: {
+			findMany: vi.fn(async () => entries),
+			update: vi.fn(),
+			create: vi.fn(),
+		},
+	};
+	const service = new TraktSyncService(
+		prisma as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{} as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	await service["discover"](
+		{ id: "fixture" } as Parameters<(typeof service)["discover"]>[0],
+		local,
+		remote,
+	);
+	expect(prisma.traktSyncEntry.update).not.toHaveBeenCalled();
+	expect(prisma.traktSyncEntry.create).not.toHaveBeenCalled();
+	expect(keyReads).toBeLessThan(entries.length * 10);
+});
+
+it.each([
+	{ localCount: 1, remoteCount: 1, updates: 1 },
+	{ localCount: 2, remoteCount: 1, updates: 0 },
+	{ localCount: 1, remoteCount: 2, updates: 0 },
+])(
+	"preserves unambiguous recovery pairing: %j",
+	async ({ localCount, remoteCount, updates }) => {
+		const record = {
+			kind: "watch" as const,
+			mediaType: "movie" as const,
+			mediaId: "12",
+			season: 0,
+			episode: 0,
+			title: "Fixture",
+			value: "2026-01-01T00:00:00Z",
+		};
+		const local = Array.from({ length: localCount }, (_, i) => ({
+			...record,
+			key: `local:${i}`,
+		}));
+		const remote = Array.from({ length: remoteCount }, (_, i) => ({
+			...record,
+			key: `remote:${i}`,
+		}));
+		const entries = remote.map((r) => ({
+			id: r.key,
+			localKey: null,
+			remoteKey: r.key,
+			eligible: true,
+		}));
+		const prisma = {
+			traktSyncEntry: {
+				findMany: vi.fn(async () => entries),
+				update: vi.fn(),
+				create: vi.fn(),
+			},
+		};
+		const service = new TraktSyncService(
+			prisma as unknown as PrismaService,
+			{} as TraktSyncClient,
+			{} as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
+		);
+		await service["discover"](
+			{ id: "fixture" } as Parameters<(typeof service)["discover"]>[0],
+			local,
+			remote,
+		);
+		expect(prisma.traktSyncEntry.update).toHaveBeenCalledTimes(updates);
+		if (updates)
+			expect(prisma.traktSyncEntry.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ localKey: "local:0", linked: true }),
+				}),
+			);
+	},
+);

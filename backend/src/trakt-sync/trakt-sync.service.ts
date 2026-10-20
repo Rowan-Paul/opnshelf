@@ -770,18 +770,38 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		const entries = await this.prisma.traktSyncEntry.findMany({
 			where: { connectionId: c.id },
 		});
+		const usedLocal = new Set(entries.map((e) => e.localKey));
+		const usedRemote = new Set(entries.map((e) => e.remoteKey));
+		const localByKey = new Map(local.map((r) => [r.key, r]));
+		const remoteByKey = new Map(remote.map((r) => [r.key, r]));
+		// Compare only the same media; scanning every link for every Watch
+		// blocks the API event loop for large Trakt histories.
+		const groupByMedia = (items: SyncRecord[]) => {
+			const groups = new Map<string, SyncRecord[]>();
+			for (const item of items) {
+				const key = mediaKey(item);
+				const group = groups.get(key);
+				if (group) group.push(item);
+				else groups.set(key, [item]);
+			}
+			return groups;
+		};
+		const localByMedia = groupByMedia(local);
+		const remoteByMedia = groupByMedia(remote);
 		// Adopt a completed legacy recovery even if the process died before saving
 		// its link. Never create a second PDS Watch over the recovered viewing.
 		for (const e of entries) {
 			if (e.localKey || e.linked || e.pending) continue;
-			const r = remote.find((v) => v.key === e.remoteKey);
+			const r = remoteByKey.get(e.remoteKey ?? "");
 			if (!r || r.value === null) continue;
-			const matches = local.filter(
-				(l) => !entries.some((v) => v.localKey === l.key) && equivalent(l, r),
+			const matches = (localByMedia.get(mediaKey(r)) ?? []).filter(
+				(l) => !usedLocal.has(l.key) && equivalent(l, r),
 			);
 			if (
 				matches.length !== 1 ||
-				remote.filter((v) => equivalent(v, matches[0])).length !== 1
+				(remoteByMedia.get(mediaKey(matches[0])) ?? []).filter((v) =>
+					equivalent(v, matches[0]),
+				).length !== 1
 			)
 				continue;
 			const l = matches[0];
@@ -795,6 +815,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				},
 			});
 			e.localKey = l.key;
+			usedLocal.add(l.key);
 			e.linked = e.eligible;
 		}
 		for (const e of entries) {
@@ -802,12 +823,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const intent = e.pending as { direction?: string; desired?: unknown };
 			const desired = readRecord(intent.desired);
 			if (intent.direction !== "push" || !desired) continue;
-			const current = local.find((r) => r.key === e.localKey);
+			const current = localByKey.get(e.localKey ?? "");
 			const possible = remote.filter(
-				(r) =>
-					!r.problem &&
-					equivalent(desired, r) &&
-					!entries.some((other) => other.remoteKey === r.key),
+				(r) => !r.problem && equivalent(desired, r) && !usedRemote.has(r.key),
 			);
 			const intents = entries.filter(
 				(other) =>
@@ -821,6 +839,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			if (!current || possible.length !== 1 || intents.length !== 1) continue;
 			await this.complete(e, desired, possible[0]);
 			e.remoteKey = possible[0].key;
+			usedRemote.add(possible[0].key);
 			e.pending = null;
 			e.linked = true;
 		}
@@ -833,14 +852,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				(r) =>
 					r.kind === desired.kind &&
 					r.title === desired.title &&
-					!entries.some((other) => other.remoteKey === r.key),
+					!usedRemote.has(r.key),
 			);
 			if (possible.some((r) => r.unreadable)) continue;
 			if (possible.length === 1 && equivalent(desired, possible[0])) {
-				const current = local.find((r) => r.key === e.localKey) ?? null;
+				const current = localByKey.get(e.localKey ?? "") ?? null;
 				if (current && equivalent(current, desired)) {
 					await this.complete(e, current, possible[0]);
 					e.remoteKey = possible[0].key;
+					usedRemote.add(possible[0].key);
 					e.pending = null;
 					e.linked = true;
 					continue;
@@ -848,6 +868,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			if (possible.length === 1) {
 				e.remoteKey = possible[0].key;
+				usedRemote.add(possible[0].key);
 				await this.prisma.traktSyncEntry.update({
 					where: { id: e.id },
 					data: {
@@ -861,8 +882,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				});
 			}
 		}
-		const usedLocal = new Set(entries.map((e) => e.localKey));
-		const usedRemote = new Set(entries.map((e) => e.remoteKey));
 		const newLocal = local.filter((r) => !usedLocal.has(r.key));
 		const newRemote = remote.filter((r) => !usedRemote.has(r.key));
 		for (const r of newRemote) {
@@ -895,14 +914,16 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					(e) =>
 						e.linked &&
 						e.remoteKey &&
-						!remote.some((v) => v.key === e.remoteKey) &&
+						!remoteByKey.has(e.remoteKey) &&
 						mediaKey(readRecord(e.remoteBase) ?? r) === mediaKey(r),
 				);
 			const matches =
 				r.mediaId || isListRecord(r)
 					? candidates(
 							r,
-							newLocal.filter((l) => !usedLocal.has(l.key)),
+							(localByMedia.get(mediaKey(r)) ?? []).filter(
+								(l) => !usedLocal.has(l.key),
+							),
 						)
 					: [];
 			const match =
@@ -957,7 +978,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				)
 			)
 				continue;
-			const near = candidates(l, remote);
+			const near = candidates(l, remoteByMedia.get(mediaKey(l)) ?? []);
 			await this.prisma.traktSyncEntry.create({
 				data: {
 					connectionId: c.id,
@@ -1329,11 +1350,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		const known = await this.prisma.traktSyncEntry.findMany({
 			where: { connectionId: c.id },
 		});
+		const knownLocalKeys = new Set(known.map((e) => e.localKey));
+		const localByKey = new Map(local.map((r) => [r.key, r]));
 		const mayPush =
 			c.direction !== "inbound" &&
-			(local.some(
-				(l) => enabled(c, l) && !known.some((e) => e.localKey === l.key),
-			) ||
+			(local.some((l) => enabled(c, l) && !knownLocalKeys.has(l.key)) ||
 				known.some(
 					(e) =>
 						!e.ignored &&
@@ -1341,7 +1362,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						enabled(c, { kind: e.kind as SyncRecord["kind"] }) &&
 						(e.resolution === "opnshelf" ||
 							e.pending ||
-							fingerprint(local.find((l) => l.key === e.localKey) ?? null) !==
+							fingerprint(localByKey.get(e.localKey ?? "") ?? null) !==
 								fingerprint(readRecord(e.localBase)) ||
 							(c.direction === "outbound" && e.eligible && !e.linked)),
 				));
