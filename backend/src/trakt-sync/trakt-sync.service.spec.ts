@@ -297,3 +297,135 @@ it.each([false, true])(
 		expect(keyReads).toBeLessThan(local.length * 10);
 	},
 );
+
+it.each([false, true])(
+	"only surfaces excluded history after a future edit (changed: %s)",
+	async (changed) => {
+		const original = {
+			key: "local:old",
+			kind: "watch" as const,
+			mediaType: "episode" as const,
+			mediaId: "12",
+			season: 2,
+			episode: 2,
+			title: "Fixture",
+			value: "2026-10-17T21:36:00Z",
+		};
+		const local = [
+			{ ...original, value: changed ? "2026-10-17T21:38:00Z" : original.value },
+		];
+		const entries = [
+			{
+				id: "old",
+				kind: "watch",
+				localKey: original.key,
+				localBase: original,
+				remoteBase: null,
+				eligible: false,
+				linked: false,
+				issue: "Confirm whether these Watches are the same viewing.",
+				pending: null,
+			},
+		];
+		const update = vi.fn();
+		const prisma = {
+			traktSyncEntry: { findMany: vi.fn(async () => entries), update },
+			traktSyncConnection: { update: vi.fn() },
+		};
+		const service = new TraktSyncService(
+			prisma as unknown as PrismaService,
+			{} as TraktSyncClient,
+			{ snapshot: vi.fn(async () => local) } as unknown as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
+		);
+		service["token"] = vi.fn(async () => "fixture");
+		service["discover"] = vi.fn(async () => undefined);
+		service["publicWatchOperation"] = async (_c, operation) =>
+			operation(new AbortController().signal, async (write) => write());
+		const transfer = vi.fn();
+		service["transfer"] = transfer;
+		await service["process"](
+			{
+				id: "fixture",
+				direction: "inbound",
+				watches: true,
+				initialised: true,
+				historyScope: "future",
+				remoteSnapshot: [],
+				remoteReadAt: new Date(),
+			} as unknown as Parameters<(typeof service)["process"]>[0],
+			async () => undefined,
+		);
+		expect(transfer).not.toHaveBeenCalled();
+		if (changed)
+			expect(update).toHaveBeenCalledWith({
+				where: { id: "old" },
+				data: { eligible: true },
+			});
+		else expect(update).not.toHaveBeenCalled();
+	},
+);
+
+it("excludes historical issues from both the review list and its count", async () => {
+	const findMany = vi.fn(async () => []);
+	const groupBy = vi.fn(async () => []);
+	const service = new TraktSyncService(
+		{
+			traktSyncEntry: { findMany, groupBy },
+			backgroundJob: { findFirst: vi.fn(async () => null) },
+		} as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	const connection = {
+		id: "fixture",
+		remoteSnapshot: [],
+		nextRunAt: new Date(),
+	} as unknown as NonNullable<Awaited<ReturnType<(typeof service)["current"]>>>;
+	service["current"] = vi.fn(
+		() =>
+			Promise.resolve(connection) as ReturnType<(typeof service)["current"]>,
+	);
+	service["requireConnection"] = vi.fn(async () => connection);
+	await service.issues("fixture", {});
+	await service.status("fixture");
+	for (const query of [findMany.mock.calls[0], groupBy.mock.calls[0]])
+		expect(query).toEqual([
+			expect.objectContaining({
+				where: expect.objectContaining({
+					OR: [{ eligible: true }, { linked: true }],
+				}),
+			}),
+		]);
+});
+
+it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
+	"rejects %s from a stale screen for excluded history",
+	async (action) => {
+		const service = new TraktSyncService(
+			{
+				traktSyncEntry: {
+					findFirst: vi.fn(async () => ({ eligible: false, linked: false })),
+				},
+			} as unknown as PrismaService,
+			{} as TraktSyncClient,
+			{} as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
+		);
+		service["requireConnection"] = vi.fn(
+			async () =>
+				({ id: "fixture" }) as Awaited<
+					ReturnType<(typeof service)["requireConnection"]>
+				>,
+		);
+		service["locked"] = async (_connection, operation) =>
+			operation(async () => undefined);
+		await expect(service.resolve("fixture", "old", { action })).rejects.toThrow(
+			"outside your sync scope",
+		);
+	},
+);
