@@ -33,7 +33,7 @@ vi.mock("react-native-svg", () => ({
 	ClipPath: host("ClipPath"),
 	Defs: host("Defs"),
 	Image: host("image"),
-	Path: host("Path"),
+	Path: host("path"),
 }));
 let view: ReactTestRenderer;
 beforeEach(() => {
@@ -43,11 +43,17 @@ beforeEach(() => {
 		state.frames.push(cb);
 		return state.frames.length;
 	});
-	vi.stubGlobal("cancelAnimationFrame", vi.fn());
+	vi.stubGlobal(
+		"cancelAnimationFrame",
+		vi.fn((id: number) => {
+			delete state.frames[id - 1];
+		}),
+	);
 });
 afterEach(() => {
 	act(() => view?.unmount());
 	vi.unstubAllGlobals();
+	vi.unstubAllEnvs();
 });
 const flushFrame = () =>
 	act(() =>
@@ -57,6 +63,7 @@ const flushFrame = () =>
 	);
 
 it("exports bounded sources only after both image variants have loaded", () => {
+	vi.stubEnv("EXPO_OS", "ios");
 	const onReady = vi.fn();
 	act(() => {
 		view = create(
@@ -67,6 +74,11 @@ it("exports bounded sources only after both image variants have loaded", () => {
 			/>,
 		);
 	});
+	expect(
+		view.root.findAll(
+			(node) => typeof node.type === "string" && node.type === "path",
+		),
+	).toHaveLength(2);
 	expect(state.frames).toHaveLength(0);
 	const images = view.root.findAll(
 		(node) => typeof node.type === "string" && node.type === "image",
@@ -93,7 +105,11 @@ it("exports bounded sources only after both image variants have loaded", () => {
 	});
 });
 
-it("does not publish an export that finishes after the avatar is unmounted", () => {
+it.each([
+	"ios",
+	"android",
+])("keeps the fallback and ignores exports after unmount on %s", (platform) => {
+	vi.stubEnv("EXPO_OS", platform);
 	const onReady = vi.fn();
 	act(() => {
 		view = create(
@@ -102,8 +118,44 @@ it("does not publish an export that finishes after the avatar is unmounted", () 
 	});
 	flushFrame();
 	act(() => state.exports.shift()?.("normal"));
+	expect(
+		view.root.findAll(
+			(node) => typeof node.type === "string" && node.type === "path",
+		),
+	).toHaveLength(2);
 	const finish = state.exports.shift();
 	act(() => view.unmount());
 	act(() => finish?.("old-avatar"));
 	expect(onReady).not.toHaveBeenCalled();
+});
+
+it("exports a cached avatar even when Android sends no image load events", () => {
+	vi.stubEnv("EXPO_OS", "android");
+	const onReady = vi.fn();
+	act(() => {
+		view = create(
+			<NativeTabAvatar
+				uri="https://example.test/cached-avatar.png"
+				color="gold"
+				onReady={onReady}
+			/>,
+		);
+	});
+	flushFrame();
+	expect(
+		view.root.findAll(
+			(node) => typeof node.type === "string" && node.type === "path",
+		),
+	).toHaveLength(0);
+	expect(state.exports).toHaveLength(1);
+	act(() => state.exports.shift()?.("cached-normal"));
+	act(() => state.exports.shift()?.("cached-selected"));
+	expect(onReady).toHaveBeenCalledWith({
+		default: expect.objectContaining({
+			uri: "data:image/png;base64,cached-normal",
+		}),
+		selected: expect.objectContaining({
+			uri: "data:image/png;base64,cached-selected",
+		}),
+	});
 });

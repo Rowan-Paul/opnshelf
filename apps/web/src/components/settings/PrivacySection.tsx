@@ -382,6 +382,10 @@ export function PrivacySection({
 							aria-label="Loading List visibility"
 						/>
 					)
+				) : data.availability !== "available" ? (
+					<span className="text-(--foreground-muted) text-xs">
+						{scopes?.[0]?.visibility === "private" ? "Private" : "Public"}
+					</span>
 				) : (
 					<button
 						type="button"
@@ -425,6 +429,25 @@ export function PrivacySection({
 						))}
 					</div>
 				)
+			) : data.availability !== "available" ? (
+				<div className="space-y-4">
+					<p className="text-(--foreground-muted) text-sm">
+						{data.availability === "unsupported"
+							? "Your PDS does not support Spaces yet. You can keep using Public."
+							: "We could not check Spaces support. Try again to load privacy choices."}
+					</p>
+					<Button
+						disabled={query.isFetching}
+						onClick={() => void query.refetch()}
+					>
+						Try again
+					</Button>
+					{onboarding && (
+						<Button onClick={onContinue}>
+							Continue without changing privacy
+						</Button>
+					)}
+				</div>
 			) : (
 				<>
 					{!data.authorized &&
@@ -437,13 +460,6 @@ export function PrivacySection({
 								unchanged.
 							</output>
 						)}
-					{data.availability !== "available" && (
-						<p className="mb-5 text-sm">
-							{data.availability === "unsupported"
-								? "Your PDS does not support Spaces yet. You can keep using Public."
-								: "We could not check Spaces support. Try again before choosing Private."}
-						</p>
-					)}
 
 					{listRkey
 						? scopes?.map(scopeRow)
@@ -593,7 +609,10 @@ export function PrivacySection({
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-			<Dialog open={manageLists} onOpenChange={setManageLists}>
+			<Dialog
+				open={manageLists && data?.availability === "available"}
+				onOpenChange={setManageLists}
+			>
 				<DialogContent className="max-h-[85dvh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>

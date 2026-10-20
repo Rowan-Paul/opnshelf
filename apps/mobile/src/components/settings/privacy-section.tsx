@@ -456,6 +456,10 @@ export function PrivacySection({
 							<View className="h-4 w-20 rounded bg-background-subtle" />
 						)}
 					</Pressable>
+				) : data.availability !== "available" ? (
+					<Text className="text-muted-foreground text-xs">
+						{scopes?.[0]?.visibility === "private" ? "Private" : "Public"}
+					</Text>
 				) : (
 					<Pressable
 						accessibilityRole="button"
@@ -500,6 +504,25 @@ export function PrivacySection({
 						))}
 					</View>
 				)
+			) : data.availability !== "available" ? (
+				<View className="gap-4">
+					<Text className="text-muted-foreground text-sm">
+						{data.availability === "unsupported"
+							? "Your PDS does not support Spaces yet. You can keep using Public."
+							: "We could not check Spaces support. Try again to load privacy choices."}
+					</Text>
+					<Button
+						disabled={query.isFetching}
+						onPress={() => void query.refetch()}
+						label="Try again"
+					/>
+					{onboarding && (
+						<Button
+							onPress={onContinue}
+							label="Continue without changing privacy"
+						/>
+					)}
+				</View>
 			) : (
 				<>
 					{!data.authorized &&
@@ -512,13 +535,6 @@ export function PrivacySection({
 								unchanged.
 							</Text>
 						)}
-					{data.availability !== "available" && (
-						<Text className="text-muted-foreground text-sm">
-							{data.availability === "unsupported"
-								? "Your PDS does not support Spaces yet. You can keep using Public."
-								: "We could not check Spaces support. Try again before choosing Private."}
-						</Text>
-					)}
 
 					{listRkey
 						? scopes?.map(row)
@@ -594,7 +610,7 @@ export function PrivacySection({
 			)}
 
 			<Modal
-				visible={sheet === "lists"}
+				visible={sheet === "lists" && data?.availability === "available"}
 				animationType="slide"
 				presentationStyle="pageSheet"
 				onRequestClose={() => setManageLists(false)}

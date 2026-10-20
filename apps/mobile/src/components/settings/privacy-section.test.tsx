@@ -15,6 +15,7 @@ vi.mock("lucide-react-native", () => ({
 const mocks = vi.hoisted(() => ({
 	data: undefined as PrivacyStatusDto | undefined,
 	mutate: vi.fn(),
+	refetch: vi.fn(),
 	showDialog: vi.fn(),
 	runAuthorizationUrl: vi.fn(),
 	authorize: undefined as (() => Promise<boolean>) | undefined,
@@ -31,7 +32,11 @@ vi.mock("@opnshelf/api", async (importOriginal) => ({
 	usePrivacy: (authorize: () => Promise<boolean>) => {
 		mocks.authorize = authorize;
 		return {
-			query: { data: mocks.data, isError: mocks.isError },
+			query: {
+				data: mocks.data,
+				isError: mocks.isError,
+				refetch: mocks.refetch,
+			},
 			mutation: {
 				mutate: mocks.mutate,
 				isPending: false,
@@ -633,4 +638,30 @@ it("opens choices only for the List shown in its metadata control", () => {
 		kind: "change",
 		body: { category: "lists", listRkey: "favorites", visibility: "private" },
 	});
+});
+
+it.each([
+	"unsupported",
+	"unavailable",
+] as const)("hides privacy choices when Spaces is %s", (availability) => {
+	if (!mocks.data) throw new Error("Missing Privacy fixture");
+	mocks.data.availability = availability;
+	const next = vi.fn();
+	const renderer = render(true, next);
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "button" &&
+				["Public", "Private", "Manage individual Lists"].includes(
+					node.props.label,
+				),
+		),
+	).toHaveLength(0);
+	act(() => button(renderer, "Try again").props.onPress());
+	expect(mocks.refetch).toHaveBeenCalled();
+	act(() =>
+		button(renderer, "Continue without changing privacy").props.onPress(),
+	);
+	expect(next).toHaveBeenCalled();
+	expect(mocks.mutate).not.toHaveBeenCalled();
 });

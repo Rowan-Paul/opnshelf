@@ -20,6 +20,8 @@ export const scenarios = [
 	"native-tabs-verify",
 	"native-tabs-avatar",
 	"failed-settings",
+ "privacy-unsupported",
+ "privacy-unavailable",
 	"delayed-auth",
 	"sheet-overlap",
 	"migration-running",
@@ -61,10 +63,11 @@ export function createScenarioServer(
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention"].includes(initial),
+		completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
  fixtureSyncState = "idle",
  fixtureIssue = true,
  fixtureIgnored = false;
+ const reviewQueue = [1, 2, 3].map((episode) => ({ id: `episode-${episode}`, ignored: false, resolved: false, episode }));
 	const settings = {
 		...sample(spec.components.schemas.UserSettingsDto),
 		timezone: "Europe/Amsterdam",
@@ -140,9 +143,10 @@ export function createScenarioServer(
 			scenario = body.scenario;
  fixtureSyncState = "idle";
  fixtureIssue = true;
+ reviewQueue.forEach((item) => { item.ignored = false; item.resolved = false; });
  fixtureIgnored = false;
 			authorized = !["sheet-overlap", "delayed-auth"].includes(scenario);
-			completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention"].includes(scenario);
+			completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(scenario);
 			json({ scenario });
 			return;
 		}
@@ -268,7 +272,7 @@ export function createScenarioServer(
 						}
 					: null;
 			json({
-				availability: "available",
+				availability: scenario === "privacy-unsupported" ? "unsupported" : scenario === "privacy-unavailable" ? "unavailable" : "available",
 				authorized,
 				listsDefaultVisibility: "public",
 				alphaDetails: "Local scenario only",
@@ -320,6 +324,75 @@ export function createScenarioServer(
 			fixtureSyncState = "running";
 			json({}); return;
 		}
+		if (
+			scenario === "trakt-sync-attention" &&
+			url.pathname === "/trakt-sync/issues"
+		) {
+			const items = reviewQueue.filter(
+				(item) =>
+					!item.resolved &&
+					item.ignored === (url.searchParams.get("view") === "ignored"),
+			);
+			const pageSize = Math.max(
+				1,
+				Number(url.searchParams.get("pageSize")) || 20,
+			);
+			const totalPages = Math.ceil(items.length / pageSize);
+			const page = Math.max(
+				1,
+				Math.min(Number(url.searchParams.get("page")) || 1, totalPages),
+			);
+			const record = (episode, key, date) => ({
+				key,
+				kind: "watch",
+				mediaType: "episode",
+				mediaId: "110492",
+				title: "Peacemaker",
+				season: 2,
+				episode,
+				displayValue: date,
+			});
+			json({
+				page,
+				pageSize,
+				total: items.length,
+				totalPages,
+				hasPreviousPage: page > 1,
+				hasNextPage: page < totalPages,
+				items: items
+					.slice((page - 1) * pageSize, page * pageSize)
+					.map((item) => ({
+						id: item.id,
+						kind: "watch",
+						ignored: item.ignored,
+						recovery: "retry",
+						issue: "Confirm whether these Watches are the same viewing.",
+						trakt: record(item.episode, item.id, "2026-10-18T19:55:00Z"),
+						candidates: [
+							record(item.episode, `local-${item.id}`, "2026-10-18T19:53:00Z"),
+						],
+					})),
+			});
+			return;
+		}
+		if (
+			scenario === "trakt-sync-attention" &&
+			url.pathname.startsWith("/trakt-sync/issues/") &&
+			req.method === "POST"
+		) {
+			const item = reviewQueue.find(
+				(item) => item.id === url.pathname.split("/").at(-1),
+			);
+			if (!item) {
+				json({ message: "Unknown fixture item" }, 404);
+				return;
+			}
+			if (body.action === "ignore") item.ignored = true;
+			else if (body.action === "undo") item.ignored = false;
+			else item.resolved = true;
+			json({});
+			return;
+		}
 		if (url.pathname === "/trakt-sync/issues" && scenario === "trakt-sync-recovery") {
 			const visible = fixtureIssue && fixtureIgnored === (url.searchParams.get("view") === "ignored");
 			json({ page: 1, pageSize: 20, total: visible ? 1 : 0, totalPages: 1, items: visible ? [{ id: "uncertain", kind: "list", recovery: "verify", traktState: "unknown", ignored: fixtureIgnored, issue: "The outcome of creating this Trakt List is unknown.", opnshelf: { key: "list:fixture", kind: "list", title: "Weekend films", displayValue: "2 items", mediaType: "list", mediaId: null, season: 0, episode: 0 }, candidates: [] }] : [] }); return;
@@ -352,8 +425,12 @@ export function createScenarioServer(
  syncState: fixtureSyncState,
  publicationConsent: true,
  listPublicationConsent: true,
- needsAttention: scenario === "trakt-sync-attention" || (scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored) ? 1 : 0,
- ignored: scenario === "trakt-sync-recovery" && fixtureIssue && fixtureIgnored ? 1 : 0,
+ needsAttention: scenario === "trakt-sync-attention"
+ ? reviewQueue.filter((item) => !item.resolved && !item.ignored).length
+ : scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored ? 1 : 0,
+ ignored: scenario === "trakt-sync-attention"
+ ? reviewQueue.filter((item) => !item.resolved && item.ignored).length
+ : scenario === "trakt-sync-recovery" && fixtureIssue && fixtureIgnored ? 1 : 0,
 							direction: "inbound",
 							watches: true,
 							ratings: true,
