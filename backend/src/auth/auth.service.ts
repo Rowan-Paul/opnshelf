@@ -86,7 +86,7 @@ export class AuthService {
 					reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
 				};
 
-		const url = await client.authorize(handle, {
+		const url = await client.authorize(normalizedHandle, {
 			scope: buildOAuthScope(resolvedPreferences),
 			state: serializeOAuthAppState({
 				...appState,
