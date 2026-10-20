@@ -17,6 +17,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
+import {
+	NativeTabScreen,
+	useNativeTabContentPadding,
+} from "@/components/navigation/native-tab-screen";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { UnreadDot } from "@/components/release-notes/UnreadDot";
 import {
@@ -35,6 +39,7 @@ const POSTER_W = 110;
 /** Personal hub; public profiles keep their separate browsing layout. */
 export default function ProfileTab() {
 	const insets = useSafeAreaInsets();
+	const paddingBottom = useNativeTabContentPadding();
 	const { user, isAuthenticated } = useAuth();
 	const { unread } = useReleaseNotes({ enabled: Boolean(user) });
 	const handle = user?.handle ?? "";
@@ -47,10 +52,10 @@ export default function ProfileTab() {
 	const shelfItems = shelf.data?.items ?? [];
 
 	return (
-		<View className="flex-1 bg-background">
+		<NativeTabScreen>
 			<ScrollView
 				showsVerticalScrollIndicator={false}
-				contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 32 }}
+				contentContainerStyle={{ paddingTop: insets.top, paddingBottom }}
 				refreshControl={
 					<RefreshControl
 						refreshing={refreshing}
@@ -223,7 +228,7 @@ export default function ProfileTab() {
 					</>
 				)}
 			</ScrollView>
-		</View>
+		</NativeTabScreen>
 	);
 }
 

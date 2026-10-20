@@ -2,6 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createScenarioServer } from "./ui-scenarios.mjs";
 
+test("issue fixtures exercise populated layouts and picker empty results without onboarding", async () => {
+ const server = createScenarioServer("issue-fixes");
+ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+ const base = `http://127.0.0.1:${server.address().port}`;
+ const read = async path => (await fetch(`${base}${path}`)).json();
+ try {
+  assert.equal((await read("/auth/me")).needsOnboarding, false);
+  assert.equal((await read("/watch-picker?minutes=120")).items.length, 2);
+  assert.equal((await read("/watch-picker?minutes=120&type=movie")).items.length, 1);
+  assert.equal((await read("/watch-picker?minutes=15")).items.length, 0);
+  assert.equal((await read("/shows/user/synthetic.test/up-next")).items.length, 6);
+  assert.equal((await read("/trakt-sync")).reviews, true);
+ } finally { await new Promise(resolve => server.close(resolve)); }
+});
+
 test("local scenarios reset failures and never proxy unknown or cross-origin requests", async () => {
 	const server = createScenarioServer("failed-settings");
 	await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -78,3 +93,24 @@ test("local scenarios reset failures and never proxy unknown or cross-origin req
   assert.equal((await read("/trakt-sync/issues")).total, 1);
  } finally { await new Promise(resolve => server.close(resolve)); }
  });
+
+test("native tab fixtures cover signed-out, gated and avatar sessions", async () => {
+ const server = createScenarioServer("native-tabs-guest");
+ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+ const base = `http://127.0.0.1:${server.address().port}`;
+ const change = scenario => fetch(`${base}/__scenario`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenario }) });
+ try {
+  assert.equal((await fetch(`${base}/auth/me`)).status, 401);
+  await change("native-tabs-verify");
+  const gated = await (await fetch(`${base}/auth/me`)).json();
+  assert.equal(gated.needsEmailVerification, true);
+  assert.equal(gated.needsOnboarding, true);
+  await change("native-tabs-avatar");
+  const member = await (await fetch(`${base}/auth/me`)).json();
+  assert.equal(member.needsOnboarding, false);
+  assert.equal(member.avatar, "http://127.0.0.1:3391/__avatar");
+  const image = await fetch(`${base}/__avatar`);
+  assert.equal(image.headers.get("content-type"), "image/png");
+  assert.deepEqual([...new Uint8Array(await image.arrayBuffer()).slice(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+ } finally { await new Promise(resolve => server.close(resolve)); }
+});

@@ -5,7 +5,12 @@ import {
 } from "./content-value";
 import { TID } from "@atproto/common";
 import { encodeList, listValue, memberKey, validateList } from "./list-value";
-import { WatchAccountLock } from "../privacy/watch-account-lock";
+import {
+	WatchAccountBusyError,
+	WatchAccountLock,
+	type WithAccountWrite,
+	type AccountLockMode,
+} from "../privacy/watch-account-lock";
 import { watchOperation } from "../privacy/watch-operation";
 import {
 	createCipheriv,
@@ -58,6 +63,8 @@ import type {
 	SyncStatusDto,
 } from "./trakt-sync.dto";
 
+class SyncAccountUnavailable extends TraktSyncError {}
+
 const SOURCE_CHANGED =
 	"The source changed during an interrupted transfer. Choose which version to keep.";
 const json = (v: SyncRecord | null) =>
@@ -66,6 +73,17 @@ const records = (v: unknown): SyncRecord[] =>
 	Array.isArray(v)
 		? v.map(readRecord).filter((r): r is SyncRecord => r !== null)
 		: [];
+const localVersion = (record: SyncRecord) =>
+	JSON.stringify([fingerprint(record), record.cid, record.problem]);
+const sameLocalSnapshot = (before: SyncRecord[], after: SyncRecord[]) => {
+	const expected = new Map(
+		before.map((record) => [record.key, localVersion(record)]),
+	);
+	return (
+		before.length === after.length &&
+		after.every((record) => expected.get(record.key) === localVersion(record))
+	);
+};
 // An absent remote record is not proof that a non-idempotent POST failed.
 const unconfirmedCreate = (
 	entry: Pick<TraktSyncEntry, "kind" | "pending" | "remoteKey">,
@@ -91,22 +109,24 @@ const display = (r: SyncRecord | null) =>
 				title: r.title,
 				season: r.season,
 				episode: r.episode,
-				displayValue: isContentRecord(r)
-					? r.kind === "library"
-						? `${({ digital: "Digital", bluray: "Blu-ray", bluray4k: "4K Blu-ray", dvd: "DVD" } as Record<string, string>)[contentValue(r).format] ?? "Unknown format"}${contentValue(r).boxSet ? ` · ${contentValue(r).boxSet}` : ""}${contentValue(r).notes ? ` · ${contentValue(r).notes}` : ""}`
-						: `${contentValue(r).spoiler ? "Contains spoilers · " : ""}${contentValue(r).content}`
-					: isListRecord(r)
-						? `${r.title} · ${listValue(r).items.length} items · ${r.visibility ?? "private"} · ${listValue(r).description} · ${listValue(
-								r,
-							)
-								.items.map(
-									(i) =>
-										`${i.mediaType} ${i.mediaId ?? "unmatched"}${i.season ? ` S${i.season}` : ""}${i.episode ? ` E${i.episode}` : ""}${i.notes ? ` (${i.notes})` : ""}`,
+				displayValue: r.unreadable
+					? "Trakt could not return the complete List. Its contents are preserved."
+					: isContentRecord(r)
+						? r.kind === "library"
+							? `${({ digital: "Digital", bluray: "Blu-ray", bluray4k: "4K Blu-ray", dvd: "DVD" } as Record<string, string>)[contentValue(r).format] ?? "Unknown format"}${contentValue(r).boxSet ? ` · ${contentValue(r).boxSet}` : ""}${contentValue(r).notes ? ` · ${contentValue(r).notes}` : ""}`
+							: `${contentValue(r).spoiler ? "Contains spoilers · " : ""}${contentValue(r).content}`
+						: isListRecord(r)
+							? `${r.title} · ${listValue(r).items.length} items · ${r.visibility ?? "private"} · ${listValue(r).description} · ${listValue(
+									r,
 								)
-								.join(", ")}`
-						: r.value === null
-							? "No date"
-							: String(r.value),
+									.items.map(
+										(i) =>
+											`${i.mediaType} ${i.mediaId ?? "unmatched"}${i.season ? ` S${i.season}` : ""}${i.episode ? ` E${i.episode}` : ""}${i.notes ? ` (${i.notes})` : ""}`,
+									)
+									.join(", ")}`
+							: r.value === null
+								? "No date"
+								: String(r.value),
 			}
 		: undefined;
 const sameTraktTitle = (record: SyncRecord, peer: SyncRecord): boolean => {
@@ -815,6 +835,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					r.title === desired.title &&
 					!entries.some((other) => other.remoteKey === r.key),
 			);
+			if (possible.some((r) => r.unreadable)) continue;
 			if (possible.length === 1 && equivalent(desired, possible[0])) {
 				const current = local.find((r) => r.key === e.localKey) ?? null;
 				if (current && equivalent(current, desired)) {
@@ -848,15 +869,24 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			// A write may have reached Trakt before its acknowledgement was lost.
 			// Let that durable intent claim the result before ordinary discovery.
 			if (
-				entries.some(
-					(e) =>
-						e.pending &&
-						(e.pending as { direction?: string }).direction === "push" &&
-						equivalent(
-							readRecord((e.pending as { desired?: unknown }).desired),
-							r,
-						),
-				)
+				entries.some((e) => {
+					if (
+						!e.pending ||
+						(e.pending as { direction?: string }).direction !== "push"
+					)
+						return false;
+					const desired = readRecord(
+						(e.pending as { desired?: unknown }).desired,
+					);
+					return (
+						equivalent(desired, r) ||
+						(r.unreadable &&
+							isListRecord(r) &&
+							!e.remoteKey &&
+							desired?.kind === r.kind &&
+							desired.title === r.title)
+					);
+				})
 			)
 				continue;
 			const possibleReplacement =
@@ -973,11 +1003,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
 				const uncertain = unconfirmedCreate(e);
 				return {
-					recovery: uncertain
-						? ("verify" as const)
-						: (l && r) || e.linked || e.issue === SOURCE_CHANGED
-							? ("choose" as const)
-							: ("retry" as const),
+					recovery: r?.unreadable
+						? ("retry" as const)
+						: uncertain
+							? ("verify" as const)
+							: (l && r) || e.linked || e.issue === SOURCE_CHANGED
+								? ("choose" as const)
+								: ("retry" as const),
 					traktState: r
 						? ("present" as const)
 						: uncertain
@@ -1012,6 +1044,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				where: { id, connectionId: c.id },
 			});
 			if (!entry) throw new NotFoundException("Sync item not found.");
+			if (
+				["opnshelf", "trakt"].includes(dto.action) &&
+				records(c.remoteSnapshot).some(
+					(r) => r.key === entry.remoteKey && r.unreadable,
+				)
+			)
+				throw new BadRequestException(
+					"Trakt could not read this List. Retry in Needs attention before choosing a version.",
+				);
 			const resolvingUnconfirmed =
 				unconfirmedCreate(entry) && ["trakt", "opnshelf"].includes(dto.action);
 			if (resolvingUnconfirmed && !dto.confirmedTraktMissing)
@@ -1199,13 +1240,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			if (!c) return;
 			await this.locked(c, async (lease) => {
 				try {
-					await this.publicWatchOperation(c, async (signal) =>
-						this.process(c, async () => {
-							signal.throwIfAborted();
-							await lease();
-						}),
-					);
+					await this.process(c, lease);
 				} catch (error) {
+					if (error instanceof WatchAccountBusyError) {
+						await this.prisma.traktSyncConnection.update({
+							where: { id: c.id },
+							data: { nextRunAt: new Date(Date.now() + 5000) },
+						});
+						return;
+					}
 					await this.prisma.traktSyncConnection.update({
 						where: { id: c.id },
 						data: {
@@ -1234,45 +1277,55 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	private async publicWatchOperation<T>(
 		c: TraktSyncConnection,
-		work: (signal: AbortSignal) => Promise<T>,
+		work: (signal: AbortSignal, withWrite: WithAccountWrite) => Promise<T>,
+		mode: AccountLockMode = "exclusive",
 	): Promise<T> {
-		return this.watchLocks.run(c.userDid, async (signal) => {
-			const deleting = await this.prisma.backgroundJob.findFirst({
-				where: {
-					userDid: c.userDid,
-					type: "account_deletion",
-					status: { in: ["queued", "running", "waiting_retry"] },
-				},
-			});
-			if (deleting)
-				throw new TraktSyncError("Account deletion is in progress.");
+		return this.watchLocks.run(
+			c.userDid,
+			async (signal, withWrite) => {
+				const deleting = await this.prisma.backgroundJob.findFirst({
+					where: {
+						userDid: c.userDid,
+						type: "account_deletion",
+						status: { in: ["queued", "running", "waiting_retry"] },
+					},
+				});
+				if (deleting)
+					throw new SyncAccountUnavailable("Account deletion is in progress.");
 
-			const owner = await this.prisma.user.findUniqueOrThrow({
-				where: { did: c.userDid },
-				select: {
-					watchVisibility: true,
-					watchPrivacyMigration: { select: { jobId: true } },
-				},
-			});
-			if (
-				c.watches &&
-				(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
-			)
-				throw new TraktSyncError(
-					"Watch sync requires a public Shelf with no privacy change in progress. Disable Watch sync to continue with Ratings.",
+				const owner = await this.prisma.user.findUniqueOrThrow({
+					where: { did: c.userDid },
+					select: {
+						watchVisibility: true,
+						watchPrivacyMigration: { select: { jobId: true } },
+					},
+				});
+				if (
+					c.watches &&
+					(owner.watchVisibility !== "public" || owner.watchPrivacyMigration)
+				)
+					throw new SyncAccountUnavailable(
+						"Watch sync requires a public Shelf with no privacy change in progress. Disable Watch sync to continue with Ratings.",
+					);
+				signal.throwIfAborted();
+				return watchOperation.run(
+					{ did: c.userDid, visibility: "public", signal },
+					() => work(signal, withWrite),
 				);
-			signal.throwIfAborted();
-			return watchOperation.run(
-				{ did: c.userDid, visibility: "public", signal },
-				() => work(signal),
-			);
-		});
+			},
+			{ mode },
+		);
 	}
 
 	private async process(c: TraktSyncConnection, lease: () => Promise<void>) {
-		const token = await this.token(c);
 		let remote = records(c.remoteSnapshot);
-		const local = await this.local.snapshot(c.userDid, c);
+		// Account reads and transfers share the privacy lock, but slow Trakt
+		// pagination must not prevent someone from adding a Watch to their Shelf.
+		let local = await this.publicWatchOperation(c, async () => {
+			await lease();
+			return this.local.snapshot(c.userDid, c);
+		});
+		const token = await this.token(c);
 		const known = await this.prisma.traktSyncEntry.findMany({
 			where: { connectionId: c.id },
 		});
@@ -1298,12 +1351,17 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			c.remoteReadAt.getTime() < Date.now() - 15 * 60_000
 		) {
 			remote = await this.api.snapshot(token, c);
+			await lease();
 			await this.prisma.traktSyncConnection.update({
 				where: { id: c.id },
 				data: {
 					remoteSnapshot: remote as unknown as Prisma.InputJsonValue,
 					remoteReadAt: new Date(),
 				},
+			});
+			local = await this.publicWatchOperation(c, async () => {
+				await lease();
+				return this.local.snapshot(c.userDid, c);
 			});
 		}
 		remote = applyMappings(remote, known);
@@ -1356,6 +1414,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const mapped = readRecord(entry.remoteBase);
 			if (r && !r.mediaId && mapped?.mediaId)
 				r = { ...r, mediaId: mapped.mediaId };
+			// Never turn a failed read into an empty destination, even with a
+			// pending transfer or an explicit version choice from an older screen.
+			if (r?.unreadable) {
+				await this.issue(
+					entry.id,
+					r.problem ?? "Trakt could not read this List. Retry when ready.",
+				);
+				continue;
+			}
 			if (stopped) {
 				if (
 					(!entry.issue || entry.resolution || entry.pending) &&
@@ -1459,9 +1526,65 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			await lease();
 			try {
-				await this.transfer(c, entry, l, r, remote, token, decision);
+				const transferred = await this.publicWatchOperation(
+					c,
+					async (_signal, withWrite) => {
+						const currentMatches = await withWrite(async () => {
+							await lease();
+							const current = await this.local.snapshot(c.userDid, {
+								lists: entry.kind === "list",
+								watchlist: entry.kind === "watchlist",
+								favorites: entry.kind === "favorites",
+								notes: entry.kind === "note",
+								library: entry.kind === "library",
+								reviews: entry.kind === "review",
+							});
+							// A manual edit can land between transfers. Replan next tick rather
+							// than duplicate a new Watch or export/delete a stale local version.
+							return sameLocalSnapshot(
+								local.filter((record) => record.kind === entry.kind),
+								current.filter((record) => record.kind === entry.kind),
+							);
+						});
+						if (!currentMatches) return false;
+						// Outbound Trakt I/O holds only the privacy/deletion barrier.
+						// Manual Watches can proceed; complete() records the pinned old
+						// source so a concurrent edit is reconciled on the next tick.
+						await lease();
+						const result = await this.transfer(
+							c,
+							entry,
+							l,
+							r,
+							remote,
+							token,
+							decision,
+						);
+						if (decision === "pull") {
+							local = local.filter((record) => record.key !== l?.key);
+							if (result) local.push(result);
+						}
+						return true;
+					},
+					decision === "push" ? "shared" : "exclusive",
+				);
+				if (!transferred) {
+					stopped = true;
+					remaining++;
+					continue;
+				}
 				writes++;
 			} catch (error) {
+				if (error instanceof WatchAccountBusyError) {
+					stopped = true;
+					remaining++;
+					continue;
+				}
+				if (
+					error instanceof SyncAccountUnavailable ||
+					error instanceof ConflictException
+				)
+					throw error;
 				if (
 					error instanceof TraktSyncError &&
 					error.status >= 400 &&
@@ -1681,7 +1804,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				result,
 				desired && isListRecord(desired) ? remote : desired,
 			);
-			return;
+			return result;
 		}
 		const lastLocal = readRecord(entry.localBase);
 		if (!desired && lastLocal)

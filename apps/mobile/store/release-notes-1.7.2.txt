@@ -1,0 +1,7 @@
+- Keep your Watches, ratings, Lists, Watchlist, Favorites, Notes, Library and Reviews in sync with Trakt, with clearer progress and recovery when something needs attention.
+- Try Privacy Alpha to control visibility for your Shelf, Library, Notes and Lists.
+- Explore featured collections in Discover and see more of what friends are watching.
+- Find something to watch with a dedicated Pick for me result screen and filters that stay in place.
+- Navigate with native tabs and a refreshed Up Next layout, with smoother poster loading.
+- Open Pick for me, search for a title, or add to Watchlist using iOS App Shortcuts.
+- Improved onboarding, notifications, calendar, Review editing and reliability.

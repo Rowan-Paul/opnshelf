@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRef } from "react";
+import type { ScrollViewInstance } from "react-native";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
@@ -54,7 +55,7 @@ export default function EpisodeDetailScreen() {
 		}>();
 	const seasonNum = Number(seasonNumber);
 	const episodeNum = Number(episodeNumber);
-	const scrollRef = useRef<ScrollView>(null);
+	const scrollRef = useRef<ScrollViewInstance>(null);
 
 	const { data, isLoading, isError } = useQuery({
 		...showsControllerGetEpisodeDetailsOptions({

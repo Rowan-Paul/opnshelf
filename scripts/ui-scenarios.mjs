@@ -16,6 +16,9 @@ import {
 const spec = JSON.parse(readFileSync(join(root, "backend/openapi.json")));
 export const scenarios = [
 	"normal",
+	"native-tabs-guest",
+	"native-tabs-verify",
+	"native-tabs-avatar",
 	"failed-settings",
 	"delayed-auth",
 	"sheet-overlap",
@@ -24,10 +27,13 @@ export const scenarios = [
 	"compact",
 	"large-text",
 	"trakt-sync-catch-up",
+	"trakt-sync-error",
+	"trakt-sync-attention",
 	"trakt-sync-lists",
+ "issue-fixes",
  "trakt-sync-recovery",
 ];
-function sample(schema, seen = new Set()) {
+export function sample(schema, seen = new Set()) {
 	if (!schema) return {};
 	if (schema.$ref) {
 		const name = schema.$ref.split("/").at(-1);
@@ -48,11 +54,14 @@ function sample(schema, seen = new Set()) {
 			.map(([key, value]) => [key, sample(value, seen)]),
 	);
 }
-export function createScenarioServer(initial = "normal") {
+export function createScenarioServer(
+ initial = "normal",
+ { webOrigin = "http://127.0.0.1:3390", respond } = {},
+) {
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = false,
+		completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention"].includes(initial),
  fixtureSyncState = "idle",
  fixtureIssue = true,
  fixtureIgnored = false;
@@ -77,7 +86,7 @@ export function createScenarioServer(initial = "normal") {
 		const origin = req.headers.origin;
 		if (
 			origin &&
-			origin !== "http://127.0.0.1:3390" &&
+			origin !== webOrigin &&
 			origin !== "http://127.0.0.1:3391"
 		) {
 			res.writeHead(403).end();
@@ -85,7 +94,7 @@ export function createScenarioServer(initial = "normal") {
 		}
 		res.setHeader(
 			"Access-Control-Allow-Origin",
-			origin || "http://127.0.0.1:3390",
+			origin || webOrigin,
 		);
 		res.setHeader("Access-Control-Allow-Credentials", "true");
 		res.setHeader(
@@ -106,6 +115,7 @@ export function createScenarioServer(initial = "normal") {
 			res.writeHead(204).end();
 			return;
 		}
+		if (respond?.({ req, res, url, json })) return;
 		let body = {};
 		if (req.method !== "GET") {
 			try {
@@ -132,7 +142,7 @@ export function createScenarioServer(initial = "normal") {
  fixtureIssue = true;
  fixtureIgnored = false;
 			authorized = !["sheet-overlap", "delayed-auth"].includes(scenario);
-			completed = false;
+			completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention"].includes(scenario);
 			json({ scenario });
 			return;
 		}
@@ -179,7 +189,25 @@ export function createScenarioServer(initial = "normal") {
 			json(null);
 			return;
 		}
+		if (url.pathname === "/__avatar") {
+			res.writeHead(200, { "content-type": "image/png" }).end(
+				readFileSync(join(root, "apps/mobile/assets/images/icon.png")),
+			);
+			return;
+		}
 		if (url.pathname === "/auth/me") {
+			if (scenario === "native-tabs-guest") {
+				json({ message: "Synthetic signed-out session" }, 401);
+				return;
+			}
+			if (scenario === "native-tabs-verify") {
+				json({ ...user, needsEmailVerification: true, needsOnboarding: true });
+				return;
+			}
+			if (scenario === "native-tabs-avatar") {
+				json({ ...user, avatar: "http://127.0.0.1:3391/__avatar", needsOnboarding: false, onboardingCompletedAt: "2026-01-01T00:00:00.000Z" });
+				return;
+			}
 			json({
 				...user,
 				needsOnboarding: !completed,
@@ -302,24 +330,39 @@ export function createScenarioServer(initial = "normal") {
  else fixtureIssue = false;
  json({}); return;
 		}
-		if (url.pathname === "/trakt-sync") {
+		if (scenario === "issue-fixes" && url.pathname === "/watch-picker") {
+   const minutes = Number(url.searchParams.get("minutes"));
+   json({ genres: ["Drama", "Comedy"], items: minutes < 45 ? [] : [
+    { id: "fixture-film", mediaType: "movie", mediaId: "1", title: "A night at the cinema", posterPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", minutes: 90, estimated: false, episodes: [], services: [] },
+    { id: "fixture-show", mediaType: "show", mediaId: "1399", title: "Local fixture show", posterPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", minutes: 60, estimated: false, episodes: [1, 2].map(episodeNumber => ({ serviceIds: [8], seasonNumber: 1, episodeNumber, name: `Episode ${episodeNumber}` })), services: [] },
+   ].filter(item => item.minutes <= minutes && (!url.searchParams.get("type") || url.searchParams.get("type") === "both" || item.mediaType === url.searchParams.get("type"))) }); return;
+  }
+  if (scenario === "issue-fixes" && /^\/shows\/user\/[^/]+\/up-next$/.test(url.pathname)) {
+   json({ page: 1, pageSize: 20, total: 6, totalPages: 1, hasNextPage: false, hasPreviousPage: false, items: Array.from({ length: 6 }, (_, index) => ({ showId: String(1399 + index), totalEpisodes: 20, episodesWatched: 5, latestWatchedDate: "2026-10-15T12:00:00.000Z", lastWatched: { seasonNumber: 1, episodeNumber: 5 }, nextEpisode: { seasonNumber: 1, episodeNumber: 6, name: `The next chapter ${index + 1}`, airDate: "2026-01-01", overview: "The story continues with a new discovery and an unexpected visitor." }, show: { showId: String(1399 + index), title: `Local fixture show ${index + 1}`, posterPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", backdropPath: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", overview: "A synthetic show for layout verification." } })) }); return;
+  }
+  if (url.pathname === "/trakt-sync") {
 			json(
-				["trakt-sync-catch-up", "trakt-sync-lists", "trakt-sync-recovery"].includes(scenario)
+				["trakt-sync-catch-up", "trakt-sync-error", "trakt-sync-attention", "trakt-sync-lists", "trakt-sync-recovery", "issue-fixes"].includes(scenario)
 					? {
 							...sample(spec.components.schemas.SyncStatusDto),
 							configured: true,
-							status: scenario === "trakt-sync-lists" ? "paused" : "active",
+							status: scenario === "trakt-sync-error" ? "preparing" : scenario === "trakt-sync-lists" ? "paused" : "active",
+							lastError: scenario === "trakt-sync-error" ? "Trakt could not finish the request. Your data is retained; sync will retry." : undefined,
 							username: "fixture",
  syncState: fixtureSyncState,
  publicationConsent: true,
  listPublicationConsent: true,
- needsAttention: scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored ? 1 : 0,
+ needsAttention: scenario === "trakt-sync-attention" || (scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored) ? 1 : 0,
  ignored: scenario === "trakt-sync-recovery" && fixtureIssue && fixtureIgnored ? 1 : 0,
 							direction: "inbound",
 							watches: true,
 							ratings: true,
-							lists: scenario === "trakt-sync-lists",
-							watchlist: scenario === "trakt-sync-lists",
+							lists: ["trakt-sync-lists", "issue-fixes"].includes(scenario),
+							watchlist: ["trakt-sync-lists", "issue-fixes"].includes(scenario),
+       favorites: scenario === "issue-fixes",
+       notes: scenario === "issue-fixes",
+       library: scenario === "issue-fixes",
+       reviews: scenario === "issue-fixes",
 							historyScope: "all",
 							remaining: scenario === "trakt-sync-catch-up" ? 15 : 0,
 							progress: 40,

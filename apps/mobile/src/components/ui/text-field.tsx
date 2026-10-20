@@ -1,4 +1,5 @@
 import { forwardRef, type ReactNode } from "react";
+import type { TextInputInstance } from "react-native";
 import { TextInput, type TextInputProps, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
@@ -33,7 +34,7 @@ export interface TextFieldProps extends TextInputProps {
  * `text-base` also sets a `lineHeight`, which clips descenders in a single-line
  * iOS TextInput. Keep it font-size-only — do not "canonicalise" to `text-base`.
  */
-export const TextField = forwardRef<TextInput, TextFieldProps>(
+export const TextField = forwardRef<TextInputInstance, TextFieldProps>(
 	function TextField(
 		{
 			label,

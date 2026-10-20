@@ -6,8 +6,8 @@ import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
  * Poster/still image with a graceful placeholder when no URL is available.
- * `expo-image` handles caching + fade-in. The aspect ratio is controlled by
- * the caller via `className` (e.g. `aspect-2/3 w-full`).
+ * `expo-image` skips the initial fade for cache hits. The aspect ratio is
+ * controlled by the caller via `className` (e.g. `aspect-2/3 w-full`).
  *
  * `expo-image` is not a react-native-core component, so Uniwind's `className`
  * prop is a no-op at runtime — we resolve the classes to a `style` object
@@ -42,7 +42,7 @@ export function PosterImage({
 			source={{ uri: url }}
 			style={style}
 			contentFit={contentFit}
-			transition={200}
+			transition={{ duration: 200, skipOnCacheHit: "all" }}
 		/>
 	);
 }

@@ -17,6 +17,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+	NativeTabScreen,
+	useNativeTabContentPadding,
+} from "@/components/navigation/native-tab-screen";
 import { ActivityCard } from "@/components/social/ActivityCard";
 import { CircleFilterBar } from "@/components/social/CircleFilterBar";
 import { UserRow } from "@/components/social/UserRow";
@@ -45,6 +49,7 @@ const PAGE_SIZE = 20;
  */
 export default function SocialScreen() {
 	const insets = useSafeAreaInsets();
+	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
 	const [refreshing, setRefreshing] = useState(false);
 	const listStyle = useTwStyle("px-4 pb-8");
@@ -107,7 +112,7 @@ export default function SocialScreen() {
 	);
 
 	return (
-		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+		<NativeTabScreen style={{ paddingTop: insets.top }}>
 			<TourAnchor id="social" className="px-4 pt-3 pb-3">
 				<Text className="font-bold font-display text-2xl text-foreground">
 					Social
@@ -156,7 +161,7 @@ export default function SocialScreen() {
 					keyExtractor={(item) => item.id}
 					renderItem={({ item }) => <ActivityCard activity={item} />}
 					ItemSeparatorComponent={() => <View className="h-5" />}
-					contentContainerStyle={listStyle}
+					contentContainerStyle={{ ...listStyle, paddingBottom }}
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
 					onEndReached={() => {
@@ -171,11 +176,12 @@ export default function SocialScreen() {
 					}
 				/>
 			)}
-		</View>
+		</NativeTabScreen>
 	);
 }
 
 function NoFollowsContent() {
+	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
 	const [query, setQuery] = useState("");
 	const debouncedQuery = useDebounce(query.trim(), 350);
@@ -199,7 +205,8 @@ function NoFollowsContent() {
 	return (
 		<ScrollView
 			keyboardShouldPersistTaps="handled"
-			contentContainerClassName="gap-4 px-4 pb-8 pt-2"
+			contentContainerClassName="gap-4 px-4 pt-2"
+			contentContainerStyle={{ paddingBottom }}
 		>
 			<View className="gap-1">
 				<Text className="font-display font-semibold text-foreground text-lg">

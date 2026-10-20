@@ -26,6 +26,7 @@ import { Route as AdminFeaturedRouteImport } from './routes/admin.featured'
 import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
+import { Route as PickForMeResultRouteImport } from './routes/pick-for-me.result'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SettingsSectionRouteImport } from './routes/settings.$section'
@@ -143,6 +144,11 @@ const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
   id: '/embed/review-editor',
   path: '/embed/review-editor',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PickForMeResultRoute = PickForMeResultRouteImport.update({
+  id: '/result',
+  path: '/result',
+  getParentRoute: () => PickForMeRoute,
 } as any)
 const ProfileHandleRoute = ProfileHandleRouteImport.update({
   id: '/profile/$handle',
@@ -322,7 +328,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/pick-for-me': typeof PickForMeRoute
+  '/pick-for-me': typeof PickForMeRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -335,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/pick-for-me/result': typeof PickForMeResultRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/apple': typeof SignupAppleRoute
@@ -373,7 +380,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/pick-for-me': typeof PickForMeRoute
+  '/pick-for-me': typeof PickForMeRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/pick-for-me/result': typeof PickForMeResultRoute
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/apple': typeof SignupAppleRoute
   '/signup/google': typeof SignupGoogleRoute
@@ -419,7 +427,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/pick-for-me': typeof PickForMeRoute
+  '/pick-for-me': typeof PickForMeRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -432,6 +440,7 @@ export interface FileRoutesById {
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/pick-for-me/result': typeof PickForMeResultRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
   '/signup_/apple': typeof SignupAppleRoute
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
+    | '/pick-for-me/result'
     | '/profile/$handle'
     | '/settings/$section'
     | '/signup/apple'
@@ -534,6 +544,7 @@ export interface FileRouteTypes {
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
+    | '/pick-for-me/result'
     | '/settings/$section'
     | '/signup/apple'
     | '/signup/google'
@@ -581,6 +592,7 @@ export interface FileRouteTypes {
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
+    | '/pick-for-me/result'
     | '/profile/$handle'
     | '/settings/$section'
     | '/signup_/apple'
@@ -620,7 +632,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
-  PickForMeRoute: typeof PickForMeRoute
+  PickForMeRoute: typeof PickForMeRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRouteWithChildren
@@ -766,6 +778,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/embed/review-editor'
       preLoaderRoute: typeof EmbedReviewEditorRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/pick-for-me/result': {
+      id: '/pick-for-me/result'
+      path: '/result'
+      fullPath: '/pick-for-me/result'
+      preLoaderRoute: typeof PickForMeResultRouteImport
+      parentRoute: typeof PickForMeRoute
     }
     '/profile/$handle': {
       id: '/profile/$handle'
@@ -994,6 +1013,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PickForMeRouteChildren {
+  PickForMeResultRoute: typeof PickForMeResultRoute
+}
+
+const PickForMeRouteChildren: PickForMeRouteChildren = {
+  PickForMeResultRoute: PickForMeResultRoute,
+}
+
+const PickForMeRouteWithChildren = PickForMeRoute._addFileChildren(
+  PickForMeRouteChildren,
+)
+
 interface SettingsRouteChildren {
   SettingsSectionRoute: typeof SettingsSectionRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -1103,7 +1134,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
-  PickForMeRoute: PickForMeRoute,
+  PickForMeRoute: PickForMeRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRouteWithChildren,

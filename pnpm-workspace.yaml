@@ -3,10 +3,12 @@ packages:
   - packages/*
   - backend
 overrides:
+  # Keep the collector aligned with services/lighthouse's report renderer.
+  lighthouse: 13.5.0
   '@tanstack/query-core': 5.104.1
   '@tanstack/react-query': 5.104.1
-  react: 19.2.3
-  react-dom: 19.2.3
+  react: 19.3.0
+  react-dom: 19.3.0
   multer: ^2.2.0
   # Security patches for transitive dependencies (pnpm audit, 2026-09-05; refreshed 2026-10-09).
   # Each selector stays inside the major line the dependent already declares,
@@ -43,6 +45,8 @@ overrides:
   'js-yaml@5': ^5.4.1
   'source-map-js@1': ^1.2.2
 allowBuilds:
+  # Installed explicitly with `puppeteer browsers install chrome` for Lighthouse.
+  puppeteer: false
   '@nestjs/core': true
   '@prisma/engines': true
   '@scarf/scarf': true
@@ -56,3 +60,8 @@ allowBuilds:
   msgpackr-extract: false
   '@swc/core': true
   '@posthog/cli': true
+packageExtensions:
+  '@bacons/apple-targets':
+    dependencies:
+      '@expo/image-utils': ~0.11.5
+      '@expo/plist': ^0.8.1

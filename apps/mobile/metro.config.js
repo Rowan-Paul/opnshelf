@@ -18,7 +18,26 @@ config.resolver.nodeModulesPaths = [
 	path.resolve(workspaceRoot, "node_modules"),
 ];
 
-module.exports = withUniwindConfig(config, {
+const baseResolveRequest = config.resolver.resolveRequest;
+const uniwindConfig = withUniwindConfig(config, {
 	cssEntryFile: "./src/global.css",
 	dtsFile: "./src/uniwind-env.d.ts",
 });
+const uniwindResolveRequest = uniwindConfig.resolver.resolveRequest;
+uniwindConfig.resolver.resolveRequest = (context, moduleName, platform) => {
+	// Expo Asset 58 needs RN's new AssetRegistry export, which Uniwind 1.7's
+	// component facade does not forward. Asset imports need no style wrapping.
+	if (
+		(platform === "android" || platform === "ios") &&
+		moduleName === "react-native" &&
+		context.originModulePath.includes(`${path.sep}expo-asset${path.sep}`)
+	) {
+		return (baseResolveRequest ?? context.resolveRequest)(
+			context,
+			moduleName,
+			platform,
+		);
+	}
+	return uniwindResolveRequest(context, moduleName, platform);
+};
+module.exports = uniwindConfig;

@@ -25,6 +25,8 @@ export type SyncRecord = {
 	rkey?: string;
 	cid?: string;
 	problem?: string;
+	// The identity is known, but membership could not be read authoritatively.
+	unreadable?: boolean;
 	visibility?: "public" | "private";
 	createdAt?: string;
 };
@@ -68,6 +70,7 @@ export function equivalent(
 	b: SyncRecord | null,
 ): boolean {
 	if (!a || !b) return a === b;
+	if (a.unreadable || b.unreadable) return false;
 	if (mediaKey(a) !== mediaKey(b)) return false;
 	return a.kind === "watch"
 		? minute(a.value) === minute(b.value)

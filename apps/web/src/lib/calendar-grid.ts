@@ -171,10 +171,6 @@ export function getDisplayTitle(item: ReleaseCalendarItemDto): string {
 	return item.title;
 }
 
-export function getReleaseType(item: ReleaseCalendarItemDto): "movie" | "show" {
-	return item.mediaType;
-}
-
 export function getReleaseUrl(item: ReleaseCalendarItemDto): string {
 	if (item.mediaType === "movie" && item.movieId) {
 		return buildMovieUrl(item.movieId, item.title);

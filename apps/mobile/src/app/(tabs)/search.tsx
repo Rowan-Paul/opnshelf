@@ -40,6 +40,10 @@ import { GenreDiscover } from "@/components/discover/GenreDiscover";
 import { FeaturedContent } from "@/components/featured/FeaturedContent";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
+import {
+	NativeTabScreen,
+	useNativeTabContentPadding,
+} from "@/components/navigation/native-tab-screen";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { Screen } from "@/components/ui/screen";
@@ -212,6 +216,7 @@ function DiscoverSections({
 	isAuthenticated: boolean;
 	isFocused: boolean;
 }) {
+	const paddingBottom = useNativeTabContentPadding();
 	const { user, isLoading: authLoading } = useAuth();
 	const queryClient = useQueryClient();
 	const { data: serviceSettings, isLoading: settingsLoading } = useQuery({
@@ -335,7 +340,7 @@ function DiscoverSections({
 	return (
 		<ShowProgressScope showIds={showIds}>
 			<ScrollView
-				contentContainerClassName="pb-8"
+				contentContainerStyle={{ paddingBottom }}
 				showsVerticalScrollIndicator={false}
 				keyboardShouldPersistTaps="handled"
 				refreshControl={
@@ -362,15 +367,37 @@ function DiscoverSections({
 
 export default function SearchScreen() {
 	const params = useLocalSearchParams();
-	const filter = parseGenreDiscovery(params);
-	return filter ? <GenreDiscover filter={filter} /> : <KeywordSearchScreen />;
+	const filter =
+		params.shortcutRequest && typeof params.q === "string"
+			? null
+			: parseGenreDiscovery(params);
+	return filter ? (
+		<GenreDiscover filter={filter} />
+	) : (
+		<KeywordSearchScreen
+			key={
+				typeof params.shortcutRequest === "string"
+					? params.shortcutRequest
+					: "search"
+			}
+		/>
+	);
 }
 
 function KeywordSearchScreen() {
+	const paddingBottom = useNativeTabContentPadding();
 	const { isAuthenticated } = useAuth();
 	const isFocused = useIsFocused();
-	const [query, setQuery] = useState("");
+	const { q } = useLocalSearchParams<{
+		q?: string;
+		shortcutRequest?: string;
+	}>();
+	const [query, setQuery] = useState(typeof q === "string" ? q : "");
 	const [activeTab, setActiveTab] = useState<Tab>("all");
+	useEffect(() => {
+		setQuery(typeof q === "string" ? q : "");
+		setActiveTab("all");
+	}, [q]);
 	const debouncedQuery = useDebounce(query.trim(), 350);
 	const hasQuery = debouncedQuery.length > 0;
 
@@ -518,7 +545,7 @@ function KeywordSearchScreen() {
 							<PersonRow person={item} />
 						</View>
 					)}
-					contentContainerStyle={peopleListStyle}
+					contentContainerStyle={{ ...peopleListStyle, paddingBottom }}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
@@ -547,7 +574,7 @@ function KeywordSearchScreen() {
 							<CastCrewRow person={item} />
 						</View>
 					)}
-					contentContainerStyle={peopleListStyle}
+					contentContainerStyle={{ ...peopleListStyle, paddingBottom }}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
@@ -583,7 +610,7 @@ function KeywordSearchScreen() {
 							<MediaCard item={item} actions />
 						</View>
 					)}
-					contentContainerStyle={gridListStyle}
+					contentContainerStyle={{ ...gridListStyle, paddingBottom }}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
@@ -597,61 +624,63 @@ function KeywordSearchScreen() {
 	}
 
 	return (
-		<Screen className="px-0">
-			<TourAnchor id="discover" className="px-4 pt-3 pb-3">
-				<Text className="mb-3 font-bold font-display text-2xl text-foreground">
-					Search
-				</Text>
-				<TextField
-					leading={<Search color="#94a3b8" size={18} />}
-					trailing={
-						query.length > 0 ? (
-							<Pressable hitSlop={8} onPress={() => setQuery("")}>
-								<X color="#94a3b8" size={18} />
-							</Pressable>
-						) : null
-					}
-					value={query}
-					onChangeText={setQuery}
-					placeholder="Movies, shows, people…"
-					autoCapitalize="none"
-					autoCorrect={false}
-					returnKeyType="search"
-				/>
+		<NativeTabScreen>
+			<Screen className="px-0">
+				<TourAnchor id="discover" className="px-4 pt-3 pb-3">
+					<Text className="mb-3 font-bold font-display text-2xl text-foreground">
+						Search
+					</Text>
+					<TextField
+						leading={<Search color="#94a3b8" size={18} />}
+						trailing={
+							query.length > 0 ? (
+								<Pressable hitSlop={8} onPress={() => setQuery("")}>
+									<X color="#94a3b8" size={18} />
+								</Pressable>
+							) : null
+						}
+						value={query}
+						onChangeText={setQuery}
+						placeholder="Movies, shows, people…"
+						autoCapitalize="none"
+						autoCorrect={false}
+						returnKeyType="search"
+					/>
 
-				{/* ponytail: pills only filter search results, so they stay hidden
+					{/* ponytail: pills only filter search results, so they stay hidden
 				    on the discover state instead of filtering the rails too. */}
-				{query.length > 0 ? (
-					<View className="mt-3 flex-row gap-2">
-						{TABS.map((tab) => {
-							const isActive = activeTab === tab.key;
-							return (
-								<Pressable
-									key={tab.key}
-									onPress={() => setActiveTab(tab.key)}
-									className={cn(
-										"rounded-full px-3 py-1.5",
-										isActive ? "bg-primary" : "bg-background-subtle",
-									)}
-								>
-									<Text
+					{query.length > 0 ? (
+						<View className="mt-3 flex-row gap-2">
+							{TABS.map((tab) => {
+								const isActive = activeTab === tab.key;
+								return (
+									<Pressable
+										key={tab.key}
+										onPress={() => setActiveTab(tab.key)}
 										className={cn(
-											"font-medium text-sm",
-											isActive
-												? "text-primary-foreground"
-												: "text-muted-foreground",
+											"rounded-full px-3 py-1.5",
+											isActive ? "bg-primary" : "bg-background-subtle",
 										)}
 									>
-										{tab.label}
-									</Text>
-								</Pressable>
-							);
-						})}
-					</View>
-				) : null}
-			</TourAnchor>
+										<Text
+											className={cn(
+												"font-medium text-sm",
+												isActive
+													? "text-primary-foreground"
+													: "text-muted-foreground",
+											)}
+										>
+											{tab.label}
+										</Text>
+									</Pressable>
+								);
+							})}
+						</View>
+					) : null}
+				</TourAnchor>
 
-			<View className="flex-1">{renderBody()}</View>
-		</Screen>
+				<View className="flex-1">{renderBody()}</View>
+			</Screen>
+		</NativeTabScreen>
 	);
 }

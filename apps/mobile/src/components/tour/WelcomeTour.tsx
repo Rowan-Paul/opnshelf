@@ -6,11 +6,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, usePathname } from "expo-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ViewInstance } from "react-native";
 import {
 	BackHandler,
 	Dimensions,
 	Pressable,
-	type ScrollView,
+	type ScrollViewInstance,
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -80,12 +81,12 @@ export function TourAnchor({
  * The Home sections sit below the fold, so Home hands its ScrollView over and
  * the tour scrolls a step's anchor into view itself.
  */
-let homeScroll: { view: ScrollView | null; offsetY: number } = {
+let homeScroll: { view: ScrollViewInstance | null; offsetY: number } = {
 	view: null,
 	offsetY: 0,
 };
 
-export function registerTourScroller(view: ScrollView | null) {
+export function registerTourScroller(view: ScrollViewInstance | null) {
 	homeScroll = { view, offsetY: view ? homeScroll.offsetY : 0 };
 }
 
@@ -207,7 +208,7 @@ export function WelcomeTour() {
 	// inside this overlay. The two origins differ by the system bars, which put
 	// every ring a status bar too high, so measure this view and work in its own
 	// coordinate space instead of assuming the offset is zero.
-	const overlayRef = useRef<View>(null);
+	const overlayRef = useRef<ViewInstance>(null);
 	const [frame, setFrame] = useState<AnchorRect | null>(null);
 	const measureOverlay = useCallback(() => {
 		overlayRef.current?.measureInWindow((x, y, width, height) => {

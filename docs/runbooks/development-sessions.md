@@ -88,6 +88,13 @@ Privacy), migration-running (3/10 records), conflict (409), compact, large-text
 and trakt-sync-catch-up (Trakt Sync Banner at 40%).
 Open `/settings/privacy` to exercise scope dialogs, individual Lists and progress.
 
+The `issue-fixes` scenario starts with Onboarding complete, a configured Trakt
+connection with all record types selected, six Up Next shows and two picker
+choices. Use `/trakt-sync`, `/profile/synthetic.test/up-next` and `/pick-for-me`
+to verify the chooser and responsive layouts. Picker budgets below 45 minutes
+return no choices. Its synthetic titles use one public TMDB image for cache
+checks; only those image reads leave the local fixture stack.
+
 Web uses the synthetic account directly. On Mobile, connect the development
 client to this Metro first, then open the controller's `opnshelf://auth/complete?session=fixture-only`
 link. This development token works only on the local fixture. Never use that
@@ -106,3 +113,42 @@ The fixture binds loopback, rejects unexpected browser origins and never proxies
 requests to another server. Unknown routes fail with an explicit 404. Data is
 in memory. Ctrl-C stops only the runner's child processes. After stopping Metro,
 reconnect a retained device to its usual server before handing it back.
+
+## Authenticated Lighthouse
+
+`pnpm test:lighthouse` builds the production Web App, starts Nitro on loopback
+port 3390 and a synthetic API on 3391, and audits Home, Shelf, Up Next, populated
+Search and a Show page three times each with mobile browser emulation. Install
+the pinned browser first with `pnpm exec puppeteer browsers install chrome`.
+On Debian/Ubuntu, `--install-deps` also installs system libraries and requires
+root. CI invokes the pinned Puppeteer CLI with `sudo` for installation only,
+preserving its explicit `PUPPETEER_CACHE_DIR` for the unprivileged audit step.
+`LHCI_RUNS=1 pnpm test:lighthouse` is a shorter local smoke check; CI always uses
+three runs.
+
+The browser uses sibling `web.opnshelf.localhost` and `api.opnshelf.localhost`
+hostnames, which Chrome resolves to loopback. The API session cookie is host-only
+on the API hostname; the Web hostname gets only the signed-in hint from ADR 0039.
+The session is synthetic and accepted only by the fixture. No real OAuth, account,
+PDS or database is involved. Data comes from explicit fixture responses and shared
+scenario account responses; unexpected requests and writes fail. Public TMDB
+image reads still leave this stack. Analytics is disabled for this build.
+
+A custom Lighthouse audit checks the actual measured page's route, profile link
+and populated content on every run. Report validation also requires a successful
+browser session check and the expected API reads. Those validity checks block CI;
+performance, accessibility, best-practices and SEO scores initially report only.
+This measures production frontend code with synthetic API latency, not deployed
+backend performance, OAuth correctness or native Mobile App performance.
+
+Reports stay in `.lighthouseci/` locally. GitHub Actions retains all HTML/JSON
+reports for seven days in `lighthouse-authenticated` and adds median scores to the
+job summary. Reports are not sent to temporary public storage. The runner owns a
+`stack:lighthouse` development lease and stops its own processes on completion or
+interruption. Do not run the UI scenario stack concurrently: it uses the same ports.
+
+The optional [hosted LHCI dashboard](../../services/lighthouse/README.md) stores
+history and compares PR builds with `develop`. Its standalone service has its own
+storage and authentication. GitHub artifacts remain available when dashboard
+uploads are unconfigured or skipped for fork PRs. Production/staging account
+sessions and deployment-triggered audits are a separate follow-up.

@@ -3,9 +3,9 @@ import {
 	ActivityIndicator,
 	Pressable,
 	type PressableProps,
-	type View as RNView,
 	useColorScheme,
 	View,
+	type ViewInstance,
 } from "react-native";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
@@ -84,7 +84,7 @@ export interface ButtonProps
  * A spinner replaces the visible label without changing its layout width, so
  * compact buttons cannot put a spinner on top of their text.
  */
-export const Button = forwardRef<RNView, ButtonProps>(function Button(
+export const Button = forwardRef<ViewInstance, ButtonProps>(function Button(
 	{
 		label,
 		variant = "primary",

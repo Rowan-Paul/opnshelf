@@ -286,7 +286,7 @@ function MovieDetailPage() {
 					</div>
 
 					{/* Right Column - Sidebar */}
-					<div className="space-y-6 lg:row-span-2">
+					<div className="min-w-0 space-y-6 lg:row-span-2">
 						<FriendWatchers mediaType="movie" mediaId={movieId} />
 
 						<DetailsCard

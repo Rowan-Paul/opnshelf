@@ -74,6 +74,10 @@ describe("Up Next episode tiles", () => {
 		const view = renderCards();
 		const image = () => view.root.findAllByType(Image)[0];
 		expect(image().props.source.uri).toContain("/still.jpg");
+		expect(image().props.transition).toEqual({
+			duration: 200,
+			skipOnCacheHit: "all",
+		});
 		act(() => image().props.onError());
 		expect(image().props.source.uri).toContain("/backdrop.jpg");
 		act(() => image().props.onError());

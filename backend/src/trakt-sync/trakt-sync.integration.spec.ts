@@ -1,5 +1,6 @@
 import { encodeContent, isContentRecord } from "./content-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
+import { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -274,6 +275,112 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		});
 		await tick();
 	}
+	it.each(["inbound", "outbound", "both"] as const)(
+		"preserves an unreadable linked List and syncs a healthy List (%s)",
+		async (direction) => {
+			const broken = curated("list:22", ["12"]);
+			localRecords = [curated("list:local", ["12"])];
+			remoteRecords = [broken];
+			await configureLists(direction);
+			const before = await db.traktSyncEntry.findFirstOrThrow({
+				where: { connection: { userDid }, remoteKey: broken.key },
+			});
+			expect(before.linked).toBe(true);
+			remoteRecords = [
+				{
+					...broken,
+					value: null,
+					unreadable: true,
+					problem: "Trakt returned an incomplete List (12 of 13 items).",
+				},
+			];
+			const healthy = {
+				...curated("list:healthy", ["13"]),
+				title: "Healthy",
+				value: encodeList({
+					name: "Healthy",
+					description: "",
+					items: [membership("13")],
+				}),
+			};
+			if (direction === "inbound") remoteRecords.push(healthy);
+			else localRecords.push(healthy);
+			await tick();
+			const issues = await service.issues(userDid, {});
+			expect(
+				issues.items.find((issue) => issue.id === before.id),
+			).toMatchObject({
+				recovery: "retry",
+				issue: expect.stringContaining("incomplete"),
+			});
+			expect(localRecords.find((r) => r.key === "list:local")).toEqual(
+				curated("list:local", ["12"]),
+			);
+			expect(
+				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: before.id } }),
+			).toMatchObject({
+				localBase: before.localBase,
+				remoteBase: before.remoteBase,
+			});
+			expect(
+				(direction === "inbound" ? localRecords : remoteRecords).some(
+					(r) => r.title === "Healthy",
+				),
+			).toBe(true);
+			expect((await service.status(userDid)).needsAttention).toBe(1);
+			await expect(
+				service.resolve(userDid, before.id, { action: "trakt" }),
+			).rejects.toThrow("could not read this List");
+			remoteRecords = remoteRecords.map((r) =>
+				r.key === broken.key ? broken : r,
+			);
+			await service.resolve(userDid, before.id, { action: "retry" });
+			await tick();
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+		},
+	);
+	it("retains a pending List transfer while its destination is unreadable", async () => {
+		const previous = { ...curated("list:22", ["12"]), traktId: 22 };
+		localRecords = [curated("list:local", ["12"])];
+		remoteRecords = [previous];
+		await configureLists("outbound");
+		const entry = await db.traktSyncEntry.findFirstOrThrow({
+			where: { connection: { userDid }, remoteKey: previous.key },
+		});
+		localRecords = [curated("list:local", ["12", "13"])];
+		const pending = {
+			direction: "push",
+			desired: localRecords[0],
+			previous,
+			source: localRecords[0],
+		};
+		await db.traktSyncEntry.update({
+			where: { id: entry.id },
+			data: { pending },
+		});
+		remoteRecords = [
+			{
+				...previous,
+				value: null,
+				unreadable: true,
+				problem: "Trakt returned an incomplete List.",
+			},
+		];
+		await tick();
+		expect(remoteApi.write).not.toHaveBeenCalled();
+		expect(localApi.write).not.toHaveBeenCalled();
+		expect(
+			(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+				.pending,
+		).toEqual(pending);
+		remoteRecords = [previous];
+		await tick();
+		expect(listValue(remoteRecords[0]).items.map((i) => i.mediaId)).toEqual([
+			"12",
+			"13",
+		]);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
 	it("pairs default Favorites by role and keeps custom Lists separate", async () => {
 		localRecords = [
 			{
@@ -777,6 +884,317 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(remoteApi.snapshot).toHaveBeenCalledTimes(1);
 	});
+
+	it("allows an interactive Watch while Trakt history is being fetched", async () => {
+		await service.configure(userDid, {
+			direction: "both",
+			historyScope: "all",
+			watches: true,
+			ratings: true,
+			publicationConsent: true,
+		});
+		let fetched!: () => void;
+		let resume!: () => void;
+		const fetching = new Promise<void>((resolve) => {
+			fetched = resolve;
+		});
+		const held = new Promise<void>((resolve) => {
+			resume = resolve;
+		});
+		remoteApi.snapshot.mockImplementationOnce(async () => {
+			fetched();
+			await held;
+			return [];
+		});
+		const running = tick();
+		await fetching;
+		try {
+			const coordinator = new WatchPrivacyCoordinator(
+				db as unknown as PrismaService,
+				locks,
+			);
+			await expect(
+				coordinator.write(userDid, async () => "Watch saved"),
+			).resolves.toBe("Watch saved");
+		} finally {
+			resume();
+			await running;
+		}
+	});
+
+	it("allows manual Watches during a stalled outbound transfer while blocking privacy and deletion", async () => {
+		localRecords = [watch("local")];
+		await configure("all", "outbound");
+		const interactivePool = new Pool({
+			connectionString: url,
+			max: 1,
+			query_timeout: 200,
+			connectionTimeoutMillis: 1000,
+		});
+		const interactiveLocks = new WatchAccountLock(interactivePool);
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			interactiveLocks,
+		);
+		let started!: () => void;
+		let resume!: () => void;
+		const transferring = new Promise<void>((resolve) => {
+			started = resolve;
+		});
+		const held = new Promise<void>((resolve) => {
+			resume = resolve;
+		});
+		const write = remoteApi.write.getMockImplementation();
+		if (!write) throw new Error("Missing fixture writer");
+		remoteApi.write.mockImplementationOnce(async (...args) => {
+			started();
+			await held;
+			return write(...args);
+		});
+		const running = tick();
+		await transferring;
+		try {
+			await expect(
+				coordinator.write(userDid, async () => {
+					localRecords.push({
+						...watch("manual-episode"),
+						mediaType: "episode",
+						mediaId: "110492",
+						season: 1,
+						episode: 1,
+					});
+					return "Watch saved";
+				}),
+			).resolves.toBe("Watch saved");
+			await expect(
+				coordinator.start(userDid, "private", false),
+			).rejects.toThrow("Another Watch operation");
+			const deleting = vi.fn(async () => undefined);
+			await expect(interactiveLocks.run(userDid, deleting)).rejects.toThrow(
+				"Another Watch operation",
+			);
+			expect(deleting).not.toHaveBeenCalled();
+		} finally {
+			resume();
+			await running;
+			await interactivePool.end();
+		}
+		await tick();
+		expect(localRecords.map((r) => r.key)).toEqual(["local", "manual-episode"]);
+		expect(remoteRecords).toHaveLength(2);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
+
+	it("serializes manual Watches on the local write mutex", async () => {
+		const interactivePool = new Pool({
+			connectionString: url,
+			max: 1,
+			query_timeout: 200,
+			connectionTimeoutMillis: 1000,
+		});
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			new WatchAccountLock(interactivePool),
+		);
+		const write = vi.fn(async () => "second Watch");
+		try {
+			await locks.run(
+				userDid,
+				async () => {
+					await expect(coordinator.write(userDid, write)).rejects.toThrow(
+						"Another Watch operation",
+					);
+					expect(write).not.toHaveBeenCalled();
+				},
+				{ mode: "write" },
+			);
+			await expect(coordinator.write(userDid, write)).resolves.toBe(
+				"second Watch",
+			);
+		} finally {
+			await interactivePool.end();
+		}
+	});
+
+	it("exports a manual edit on the next tick when it lands during outbound confirmation", async () => {
+		localRecords = [watch("local")];
+		await configure("all", "outbound");
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			locks,
+		);
+		const read = remoteApi.readForRecord.getMockImplementation();
+		if (!read) throw new Error("Missing fixture reader");
+		const edited = "2021-02-03T12:30:00.000Z";
+		remoteApi.readForRecord.mockImplementationOnce(async (...args) => {
+			await coordinator.write(userDid, async () => {
+				localRecords = [{ ...localRecords[0], value: edited }];
+			});
+			return read(...args);
+		});
+		await tick();
+		expect(localRecords[0].value).toBe(edited);
+		expect(remoteRecords[0].value).not.toBe(edited);
+		await tick();
+		expect(localRecords[0].value).toBe(edited);
+		expect(remoteRecords).toHaveLength(1);
+		expect(remoteRecords[0].value).toBe(edited);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
+
+	it("queues a manual Watch behind one transfer and replans without duplicating it", async () => {
+		remoteRecords = [
+			watch("watch:1"),
+			{
+				...watch("watch:2"),
+				mediaType: "episode",
+				mediaId: "110492",
+				season: 1,
+				episode: 1,
+			},
+		];
+		await configure("all", "inbound");
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			locks,
+		);
+		const write = localApi.write.getMockImplementation();
+		if (!write) throw new Error("Missing fixture writer");
+		let manual: Promise<unknown> | undefined;
+		localApi.write.mockImplementationOnce(async (...args) => {
+			const result = await write(...args);
+			manual = coordinator.write(userDid, async () => {
+				localRecords.push({
+					...remoteRecords[1],
+					key: "manual-episode",
+					rkey: "manual-episode",
+				});
+				return "Watch saved";
+			});
+			let queued = false;
+			for (let attempt = 0; attempt < 100; attempt++) {
+				const [row] = await db.$queryRaw<
+					{ count: number }[]
+				>`SELECT COUNT(*)::int AS count FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%pg_advisory_lock%'`;
+				if (row.count > 0) {
+					queued = true;
+					break;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+			expect(queued).toBe(true);
+			return result;
+		});
+		await tick();
+		await expect(manual).resolves.toBe("Watch saved");
+		expect(localApi.write).toHaveBeenCalledTimes(1);
+		expect(localRecords).toHaveLength(2);
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+		await tick();
+		expect(localApi.write).toHaveBeenCalledTimes(1);
+		expect(localRecords).toHaveLength(2);
+	});
+
+	it("replans when a manual Watch lands after the local snapshot", async () => {
+		remoteRecords = [watch("watch:1")];
+		await configure("all", "inbound");
+		const coordinator = new WatchPrivacyCoordinator(
+			db as unknown as PrismaService,
+			locks,
+		);
+		const run = locks.run.bind(locks);
+		let snapshots = 0;
+		let added = false;
+		localApi.snapshot.mockImplementation(async () => {
+			snapshots++;
+			return structuredClone(localRecords);
+		});
+		const spy = vi
+			.spyOn(locks, "run")
+			.mockImplementation(async (did, operation, options) => {
+				const result = await run(did, operation, options);
+				if (snapshots === 2 && !added) {
+					added = true;
+					await coordinator.write(userDid, async () => {
+						localRecords.push({
+							...remoteRecords[0],
+							key: "manual-watch",
+							rkey: "manual-watch",
+						});
+					});
+				}
+				return result;
+			});
+		try {
+			await tick();
+		} finally {
+			spy.mockRestore();
+			localApi.snapshot.mockImplementation(async () =>
+				structuredClone(localRecords),
+			);
+		}
+		expect(added).toBe(true);
+		expect(localApi.write).not.toHaveBeenCalled();
+		expect(remoteApi.write).not.toHaveBeenCalled();
+		await tick();
+		expect(localRecords).toHaveLength(1);
+		expect(localApi.write).not.toHaveBeenCalled();
+		expect((await service.status(userDid)).needsAttention).toBe(0);
+	});
+
+	it.each(["privacy", "deletion"])(
+		"rechecks %s between transfers",
+		async (change) => {
+			remoteRecords = [
+				watch("watch:1"),
+				watch("watch:2", "2020-01-02T12:00:25.000Z"),
+			];
+			await configure("all", "inbound");
+			const coordinator = new WatchPrivacyCoordinator(
+				db as unknown as PrismaService,
+				locks,
+			);
+			const run = locks.run.bind(locks);
+			let transferred = false;
+			const write = localApi.write.getMockImplementation();
+			if (!write) throw new Error("Missing fixture writer");
+			localApi.write.mockImplementationOnce(async (...args) => {
+				const result = await write(...args);
+				transferred = true;
+				return result;
+			});
+			const spy = vi
+				.spyOn(locks, "run")
+				.mockImplementation(async (did, operation, options) => {
+					const result = await run(did, operation, options);
+					if (transferred) {
+						transferred = false;
+						if (change === "privacy")
+							await coordinator.start(userDid, "private", false);
+						else
+							await run(userDid, async () =>
+								db.backgroundJob.create({
+									data: { userDid, type: "account_deletion", status: "queued" },
+								}),
+							);
+					}
+					return result;
+				});
+			try {
+				await tick();
+			} finally {
+				spy.mockRestore();
+			}
+			expect(localApi.write).toHaveBeenCalledTimes(1);
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+			const c = await db.traktSyncConnection.findFirstOrThrow({
+				where: { userDid },
+			});
+			expect(c.lastError).toMatch(
+				change === "privacy" ? /privacy change/ : /deletion/,
+			);
+		},
+	);
 
 	it("encrypts credentials, consumes authorization state once, and starts paused", async () => {
 		const c = await db.traktSyncConnection.findFirstOrThrow({
@@ -1306,33 +1724,72 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			syncState: "running",
 		});
 	});
-	it("automatically adopts a fully confirmed interrupted List creation", async () => {
-		localRecords = [curated("list:local", ["12"])];
-		await configureLists("outbound");
-		const connection = await db.traktSyncConnection.findFirstOrThrow({
-			where: { userDid },
-		});
-		const entry = await db.traktSyncEntry.findFirstOrThrow({
-			where: { connectionId: connection.id },
-		});
-		await db.traktSyncEntry.update({
-			where: { id: entry.id },
-			data: {
-				pending: {
-					direction: "push",
-					desired: localRecords[0],
-					previous: null,
+	it.each([false, true])(
+		"automatically adopts a fully confirmed interrupted List creation (initially unreadable: %s)",
+		async (initiallyUnreadable) => {
+			localRecords = [curated("list:local", ["12"])];
+			await configureLists("outbound");
+			const connection = await db.traktSyncConnection.findFirstOrThrow({
+				where: { userDid },
+			});
+			const entry = await db.traktSyncEntry.findFirstOrThrow({
+				where: { connectionId: connection.id },
+			});
+			await db.traktSyncEntry.update({
+				where: { id: entry.id },
+				data: {
+					pending: {
+						direction: "push",
+						desired: localRecords[0],
+						previous: null,
+					},
 				},
-			},
-		});
-		remoteRecords = [{ ...localRecords[0], key: "list:22", traktId: 22 }];
-		await tick();
-		expect((await service.issues(userDid, {})).total).toBe(0);
-		expect(remoteApi.write).not.toHaveBeenCalled();
-		expect(
-			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
-		).toMatchObject({ remoteKey: "list:22", linked: true, pending: null });
-	});
+			});
+			const created = { ...localRecords[0], key: "list:22", traktId: 22 };
+			if (initiallyUnreadable) {
+				remoteRecords = [
+					{
+						...created,
+						value: null,
+						unreadable: true,
+						problem: "Trakt returned an incomplete List.",
+					},
+				];
+				await tick();
+				await tick();
+				expect(
+					await db.traktSyncEntry.count({
+						where: { connectionId: connection.id },
+					}),
+				).toBe(1);
+				expect(
+					await db.traktSyncEntry.findUniqueOrThrow({
+						where: { id: entry.id },
+					}),
+				).toMatchObject({
+					remoteKey: null,
+					pending: {
+						direction: "push",
+						desired: localRecords[0],
+						previous: null,
+					},
+				});
+				expect(remoteApi.write).not.toHaveBeenCalled();
+			}
+			remoteRecords = [created];
+			await tick();
+			expect((await service.issues(userDid, {})).total).toBe(0);
+			expect(remoteApi.write).not.toHaveBeenCalled();
+			expect(
+				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
+			).toMatchObject({ remoteKey: "list:22", linked: true, pending: null });
+			expect(
+				await db.traktSyncEntry.count({
+					where: { connectionId: connection.id },
+				}),
+			).toBe(1);
+		},
+	);
 	it("serializes controls against a worker lease and does not erase history on disconnect", async () => {
 		await configure();
 		const c = await db.traktSyncConnection.findFirstOrThrow({

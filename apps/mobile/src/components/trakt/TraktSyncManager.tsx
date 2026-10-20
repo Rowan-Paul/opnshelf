@@ -176,12 +176,6 @@ export function TraktSyncManager({
 		!data.lastSuccessAt;
 	return (
 		<View className="gap-5">
-			{!embedded && (
-				<Link href="/settings/connections" className="text-primary text-sm">
-					‹ Back to Settings
-				</Link>
-			)}
-
 			<View className={embedded ? "gap-4" : card}>
 				<Text selectable className="font-semibold text-foreground text-lg">
 					{data.username ? `@${data.username}` : "Connect your Trakt account"}
@@ -411,9 +405,9 @@ export function TraktSyncManager({
 				</Link>
 			)}
 			{data.username &&
-				(!embedded || data.needsAttention > 0 || data.ignored > 0) && (
-					<SyncIssues connected={connected} />
-				)}
+				((!embedded && connected) ||
+					data.needsAttention > 0 ||
+					data.ignored > 0) && <SyncIssues connected={connected} />}
 		</View>
 	);
 }
@@ -438,6 +432,7 @@ export function SyncSettings({
 	);
 	const [reviewing, setReviewing] = useState(false);
 	const [choosingRecords, setChoosingRecords] = useState(false);
+	const [showRecordDetails, setShowRecordDetails] = useState(false);
 	const { width, fontScale } = useWindowDimensions();
 	const compactDirections = width / fontScale < 480;
 	const insets = useSafeAreaInsets();
@@ -539,10 +534,7 @@ export function SyncSettings({
 							>
 								Choose records
 							</Text>
-							<Text className={copy}>
-								Select what moves between Opnshelf and Trakt. Save your settings
-								to apply these choices.
-							</Text>
+							<Text className={copy}>Choose what to sync.</Text>
 							{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
 								<Toggle
 									key={value}
@@ -553,14 +545,35 @@ export function SyncSettings({
 									}
 								/>
 							))}
-							{(settings.lists || settings.watchlist) && (
-								<Text className={copy}>{TRAKT_LIST_COPY}</Text>
-							)}
-							{settings.favorites && (
-								<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
-							)}
-							{requiresContentConsent && (
-								<Text className={copy}>{TRAKT_CONTENT_COPY}</Text>
+							{(settings.lists ||
+								settings.watchlist ||
+								settings.favorites ||
+								requiresContentConsent) && (
+								<View className="gap-3">
+									<Pressable
+										accessibilityRole="button"
+										accessibilityState={{ expanded: showRecordDetails }}
+										className="min-h-11 justify-center"
+										onPress={() => setShowRecordDetails(!showRecordDetails)}
+									>
+										<Text className="font-medium text-primary text-sm">
+											{showRecordDetails ? "Hide sync details" : "Sync details"}
+										</Text>
+									</Pressable>
+									{showRecordDetails && (
+										<View className="gap-3">
+											{(settings.lists || settings.watchlist) && (
+												<Text className={copy}>{TRAKT_LIST_COPY}</Text>
+											)}
+											{settings.favorites && (
+												<Text className={copy}>{TRAKT_FAVORITES_COPY}</Text>
+											)}
+											{requiresContentConsent && (
+												<Text className={copy}>{TRAKT_CONTENT_COPY}</Text>
+											)}
+										</View>
+									)}
+								</View>
 							)}
 							<Action label="Done" onPress={() => setChoosingRecords(false)} />
 						</ScrollView>

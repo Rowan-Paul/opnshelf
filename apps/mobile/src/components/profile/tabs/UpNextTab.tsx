@@ -9,6 +9,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { UpNextCard } from "@/components/up-next/UpNextCard";
 import { UpNextEpisodeCard } from "@/components/up-next/UpNextEpisodeCard";
+import { UpNextEpisodeGrid } from "@/components/up-next/UpNextEpisodeGrid";
 import { UpNextServiceFilter } from "@/components/up-next/UpNextServiceFilter";
 import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
 import { useEndReached } from "@/lib/use-end-reached";
@@ -66,6 +67,7 @@ export function UpNextTab({
 
 	const Card = filterHandle ? UpNextCard : UpNextEpisodeCard;
 	const skeletonVariant = filterHandle ? "compact" : "tile";
+	const Grid = filterHandle ? View : UpNextEpisodeGrid;
 	const items = data?.pages.flatMap((page) => page.items) ?? [];
 	const loadMore = { hasNextPage, isFetchingNextPage, isFetchNextPageError };
 	useEndReached(() => {
@@ -140,7 +142,7 @@ export function UpNextTab({
 						}
 					/>
 				) : (
-					<View className="gap-3">
+					<Grid className="gap-3">
 						{items.map((item) => (
 							<Card
 								key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
@@ -148,7 +150,7 @@ export function UpNextTab({
 								isOwner={isOwner}
 							/>
 						))}
-					</View>
+					</Grid>
 				)}
 			</View>
 			<LoadMoreFooter

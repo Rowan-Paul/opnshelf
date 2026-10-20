@@ -1,6 +1,11 @@
 import type { MediaInListDto } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import {
+	Stack,
+	useFocusEffect,
+	useLocalSearchParams,
+	useRouter,
+} from "expo-router";
 import {
 	ArrowUpDown,
 	List as ListIcon,
@@ -12,7 +17,7 @@ import {
 	Trash2,
 	X,
 } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -99,7 +104,11 @@ function ListItemCard({
 
 export default function ListDetailScreen() {
 	const { showDialog } = useDialog();
-	const { slug } = useLocalSearchParams<{ slug: string }>();
+	const { slug, addInput, shortcutRequest } = useLocalSearchParams<{
+		slug: string;
+		addInput?: string;
+		shortcutRequest?: string;
+	}>();
 	const router = useRouter();
 	const gridStyle = useTwStyle("px-3 pt-3 pb-12");
 	// Matches the read-only grid: the cells carry their own px-1 on top.
@@ -130,6 +139,11 @@ export default function ListDetailScreen() {
 
 	const [editorVisible, setEditorVisible] = useState(false);
 	const [addVisible, setAddVisible] = useState(false);
+	useFocusEffect(useCallback(() => () => setAddVisible(false), []));
+	useEffect(() => {
+		if (slug === "watchlist" && shortcutRequest)
+			setAddVisible(Boolean(addInput));
+	}, [slug, addInput, shortcutRequest]);
 	const [sortVisible, setSortVisible] = useState(false);
 	const [filter, setFilter] = useState<MediaFilter>("all");
 	const [search, setSearch] = useState("");
@@ -535,8 +549,14 @@ export default function ListDetailScreen() {
 			/>
 
 			<AddItemsToListSheet
+				key={shortcutRequest ?? "manual"}
+				initialInput={slug === "watchlist" ? addInput : undefined}
+				confirmBeforeAdd={slug === "watchlist" && !!addInput}
 				visible={addVisible}
-				onDismiss={() => setAddVisible(false)}
+				onDismiss={() => {
+					setAddVisible(false);
+					router.setParams({ addInput: undefined, shortcutRequest: undefined });
+				}}
 				slug={slug}
 				existingKeys={existingKeys}
 			/>

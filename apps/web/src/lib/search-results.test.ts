@@ -302,6 +302,19 @@ describe("result shaping", () => {
 		expect(splitByMediaType([])).toEqual({ movies: [], shows: [] });
 	});
 
+	it("retains repeated entries and their identities without changing input", () => {
+		const movie = Object.freeze(result({ id: 1, media_type: "movie" }));
+		const show = Object.freeze(result({ id: 1, media_type: "tv" }));
+		const mixed = [show, movie, show, movie];
+		Object.freeze(mixed);
+
+		const { movies, shows } = splitByMediaType(mixed);
+		expect(movies).toEqual([movie, movie]);
+		expect(shows).toEqual([show, show]);
+		expect(movies[0]).toBe(movie);
+		expect(shows[0]).toBe(show);
+	});
+
 	it("maps results to the ratings query shape", () => {
 		expect(toRatingItems(results)).toEqual([
 			{ id: 1, type: "movie" },

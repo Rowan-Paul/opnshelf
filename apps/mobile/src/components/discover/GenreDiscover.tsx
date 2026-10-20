@@ -8,6 +8,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { router, useIsFocused } from "expo-router";
 import { Pressable, RefreshControl, View } from "react-native";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
+import { useNativeTabContentPadding } from "@/components/navigation/native-tab-screen";
 import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { Screen } from "@/components/ui/screen";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
@@ -22,6 +23,7 @@ const nextPage = (page: { page: number; hasNextPage: boolean }) =>
 
 export function GenreDiscover({ filter }: { filter: GenreDiscovery }) {
 	const isFocused = useIsFocused();
+	const paddingBottom = useNativeTabContentPadding();
 	const columns = useMediaCardColumns();
 	const gridStyle = useTwStyle("px-3 pb-8");
 	const movies = useInfiniteQuery({
@@ -109,7 +111,7 @@ export function GenreDiscover({ filter }: { filter: GenreDiscovery }) {
 								<MediaCard item={item} actions />
 							</View>
 						)}
-						contentContainerStyle={gridStyle}
+						contentContainerStyle={{ ...gridStyle, paddingBottom }}
 						onEndReachedThreshold={0.5}
 						onEndReached={() => {
 							if (canLoadMore(query)) void query.fetchNextPage();

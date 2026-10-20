@@ -25,7 +25,8 @@
     "dev:device:record": "node scripts/dev-session.mjs record-build",
     "dev:scenarios": "node scripts/ui-scenarios.mjs",
     "test:privacy-reference": "node scripts/privacy-reference.mjs",
-    "review:status": "node scripts/review-readiness.mjs"
+    "review:status": "node scripts/review-readiness.mjs",
+    "test:lighthouse": "node scripts/lighthouse.mjs"
   },
   "workspaces": [
     "apps/*",
@@ -33,19 +34,11 @@
     "backend"
   ],
   "devDependencies": {
+    "@lhci/cli": "0.15.1",
     "@posthog/cli": "^0.18.1",
     "husky": "^9.1.7",
+    "puppeteer": "24.43.1",
     "turbo": "^2.11.7"
   },
-  "packageManager": "pnpm@11.1.2+sha512.415a1cc25974731e75455c1468371be74c5aa5fb7621b50d4056d222451609f11412f23fd602e6169f1e060466641f798597e1be961a10688836a67b16569499",
-  "pnpm": {
-    "packageExtensions": {
-      "@bacons/apple-targets": {
-        "dependencies": {
-          "@expo/image-utils": "~0.11.5",
-          "@expo/plist": "^0.8.1"
-        }
-      }
-    }
-  }
+  "packageManager": "pnpm@11.1.2+sha512.415a1cc25974731e75455c1468371be74c5aa5fb7621b50d4056d222451609f11412f23fd602e6169f1e060466641f798597e1be961a10688836a67b16569499"
 }
