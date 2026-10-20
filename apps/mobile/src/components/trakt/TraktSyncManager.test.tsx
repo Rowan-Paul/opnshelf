@@ -1,5 +1,4 @@
 import { createRequire } from "node:module";
-import { TRAKT_CONTENT_COPY } from "@opnshelf/api";
 import { Modal, Pressable } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterAll, afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -33,61 +32,70 @@ vi.mock("@opnshelf/api", async (original) => ({
 	traktSyncControllerConfigureMutation: () => ({}),
 }));
 vi.mock("@tanstack/react-query", () => ({
-	useQuery: () => ({
-		data: {
-			configured: true,
-			username: "fixture",
-			status: mocks.disconnected
-				? "disconnected"
-				: mocks.active
-					? "active"
-					: "paused",
-			syncState: mocks.syncState,
-			direction: "both",
-			watches: true,
-			ratings: true,
-			historyScope: "all",
-			publicationConsent: mocks.active,
-			importStatus: "paused",
-			remaining: 0,
-			needsAttention: mocks.issues ? 1 : 0,
-			ignored: 0,
-		},
-	}),
-	useInfiniteQuery: ({ queryKey }: { queryKey: string[] }) => ({
-		data: {
-			pages: [
-				{
-					items:
-						queryKey.at(-1) === "ignored"
-							? [
-									{
-										id: "one",
-										kind: "watch",
-										ignored: true,
-										issue: "Ignored fixture",
-										opnshelf: { title: "Fixture", displayValue: "2020-01-01" },
-										candidates: [],
-									},
-								]
-							: mocks.uncertain
+	keepPreviousData: (data: unknown) => data,
+	useQuery: ({ queryKey }: { queryKey: string[] }) =>
+		queryKey?.includes("issues")
+			? {
+					data: {
+						items:
+							queryKey.at(-2) === "ignored"
 								? [
 										{
 											id: "one",
-											kind: "review",
-											recovery: "verify",
-											ignored: false,
-											issue: "Unconfirmed creation",
-											opnshelf: { title: "Fixture", displayValue: "Review" },
+											kind: "watch",
+											ignored: true,
+											issue: "Ignored fixture",
+											opnshelf: {
+												title: "Fixture",
+												mediaType: "episode",
+												season: 2,
+												episode: 3,
+												displayValue: "2020-01-01",
+											},
 											candidates: [],
 										},
 									]
-								: [],
-					total: queryKey.at(-1) === "ignored" ? 1 : 0,
+								: mocks.uncertain
+									? [
+											{
+												id: "one",
+												kind: "review",
+												recovery: "verify",
+												ignored: false,
+												issue: "Unconfirmed creation",
+												opnshelf: { title: "Fixture", displayValue: "Review" },
+												candidates: [],
+											},
+										]
+									: [],
+						total: queryKey.at(-2) === "ignored" || mocks.uncertain ? 1 : 0,
+						page: 1,
+						totalPages: 1,
+						hasPreviousPage: false,
+						hasNextPage: false,
+					},
+				}
+			: {
+					data: {
+						configured: true,
+						username: "fixture",
+						status: mocks.disconnected
+							? "disconnected"
+							: mocks.active
+								? "active"
+								: "paused",
+						syncState: mocks.syncState,
+						direction: "both",
+						watches: true,
+						ratings: true,
+						historyScope: "all",
+						publicationConsent: mocks.active,
+						importStatus: "paused",
+						remaining: 0,
+						needsAttention: mocks.issues ? 1 : 0,
+						ignored: 0,
+					},
 				},
-			],
-		},
-	}),
 	useMutation: () => ({ mutate: mocks.mutate, isPending: false }),
 	useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
@@ -300,16 +308,6 @@ it("opens record choices separately and retains changes when closed", () => {
 	expect(notes()).toHaveLength(0);
 	press("Choose records");
 	act(() => notes()[0].props.onValueChange(true));
-	const details = () =>
-		renderer.root.findAll(
-			(node) =>
-				node.type === "text" && node.props.children === TRAKT_CONTENT_COPY,
-		);
-	expect(details()).toHaveLength(0);
-	press("Sync details");
-	expect(details()).toHaveLength(1);
-	press("Hide sync details");
-	expect(details()).toHaveLength(0);
 	press("Done");
 	expect(notes()).toHaveLength(0);
 	expect(
@@ -349,6 +347,17 @@ it("opens ignored items in a sheet and restores without replacing attention", ()
 	mount(true, true);
 	press("View ignored");
 	expect(
+		renderer.root.findAll(
+			(node) => node.type === "text" && node.props.children === "Review item",
+		),
+	).toHaveLength(0);
+	expect(
+		renderer.root.findAll(
+			(node) =>
+				node.type === "text" && node.props.children === "Fixture · S2E3",
+		),
+	).toHaveLength(1);
+	expect(
 		renderer.root.findAllByType(Modal).filter((node) => node.props.visible),
 	).toHaveLength(1);
 	expect(
@@ -357,7 +366,6 @@ it("opens ignored items in a sheet and restores without replacing attention", ()
 				node.type === "text" && node.props.children === "Needs attention",
 		),
 	).toHaveLength(1);
-	press("Review item");
 	press("Restore item");
 	expect(mocks.mutate).toHaveBeenCalledWith({
 		path: { id: "one" },
@@ -383,7 +391,6 @@ it.each([
 	mocks.issues = true;
 	mocks.uncertain = true;
 	mount(true, true);
-	press("Review item");
 	press(label);
 	const confirm = () =>
 		renderer.root.find(

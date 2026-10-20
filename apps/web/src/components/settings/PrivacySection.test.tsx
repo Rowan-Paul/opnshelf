@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 	data: {} as PrivacyStatusDto,
 	error: null as unknown,
 	toastError: vi.fn(),
+	refetch: vi.fn(),
 }));
 vi.mock("@opnshelf/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@opnshelf/api")>()),
@@ -19,7 +20,7 @@ vi.mock("@opnshelf/api", async (importOriginal) => ({
 		.getErrorMessage,
 	authControllerPermissions: vi.fn(),
 	usePrivacy: () => ({
-		query: { data: mocks.data },
+		query: { data: mocks.data, refetch: mocks.refetch },
 		mutation: {
 			mutate: mocks.mutate,
 			isPending: mocks.isPending,
@@ -337,19 +338,23 @@ describe("Privacy settings", () => {
 		expect(screen.getByText("Finishing…")).toBeDefined();
 	});
 
-	it("leaves Public usable on unsupported PDSs", () => {
-		mocks.data.availability = "unsupported";
+	it.each([
+		"unsupported",
+		"unavailable",
+	] as const)("hides privacy choices when Spaces is %s", (availability) => {
+		mocks.data.availability = availability;
 		render(<PrivacySection />);
-		expect(screen.getByText(/does not support Spaces yet/)).toBeDefined();
-		const group = within(
-			screen.getByRole("group", { name: "Shelf visibility" }),
-		);
 		expect(
-			group.getByRole("button", { name: "Private" }).hasAttribute("disabled"),
-		).toBe(true);
+			screen.queryByRole("group", { name: "Shelf visibility" }),
+		).toBeNull();
 		expect(
-			group.getByRole("button", { name: "Public" }).hasAttribute("disabled"),
-		).toBe(false);
+			screen.queryByRole("group", { name: "Lists visibility" }),
+		).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: "Manage individual Lists" }),
+		).toBeNull();
+		fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+		expect(mocks.refetch).toHaveBeenCalled();
 	});
 	it("starts onboarding with Public selected without writing a privacy change", () => {
 		mocks.data.scopes = mocks.data.scopes.map((scope) => ({

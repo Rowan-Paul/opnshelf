@@ -43,11 +43,17 @@ beforeEach(() => {
 		state.frames.push(cb);
 		return state.frames.length;
 	});
-	vi.stubGlobal("cancelAnimationFrame", vi.fn());
+	vi.stubGlobal(
+		"cancelAnimationFrame",
+		vi.fn((id: number) => {
+			delete state.frames[id - 1];
+		}),
+	);
 });
 afterEach(() => {
 	act(() => view?.unmount());
 	vi.unstubAllGlobals();
+	vi.unstubAllEnvs();
 });
 const flushFrame = () =>
 	act(() =>
@@ -106,4 +112,30 @@ it("does not publish an export that finishes after the avatar is unmounted", () 
 	act(() => view.unmount());
 	act(() => finish?.("old-avatar"));
 	expect(onReady).not.toHaveBeenCalled();
+});
+
+it("exports a cached avatar even when Android sends no image load events", () => {
+	vi.stubEnv("EXPO_OS", "android");
+	const onReady = vi.fn();
+	act(() => {
+		view = create(
+			<NativeTabAvatar
+				uri="https://example.test/cached-avatar.png"
+				color="gold"
+				onReady={onReady}
+			/>,
+		);
+	});
+	flushFrame();
+	expect(state.exports).toHaveLength(1);
+	act(() => state.exports.shift()?.("cached-normal"));
+	act(() => state.exports.shift()?.("cached-selected"));
+	expect(onReady).toHaveBeenCalledWith({
+		default: expect.objectContaining({
+			uri: "data:image/png;base64,cached-normal",
+		}),
+		selected: expect.objectContaining({
+			uri: "data:image/png;base64,cached-selected",
+		}),
+	});
 });

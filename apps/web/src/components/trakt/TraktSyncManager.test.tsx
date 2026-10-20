@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 	importStatus: "paused",
 	issue: false,
 	candidate: false,
+	issueRead: vi.fn(),
 	ignored: false,
 	uncertain: false,
 	status: "paused",
@@ -51,34 +52,50 @@ vi.mock("@opnshelf/api", async (original) => ({
 		query,
 	}: {
 		query: { view?: string };
-	}) => ({
-		data: {
-			items: (query.view === "ignored" ? mocks.ignored : mocks.issue)
-				? [
-						{
-							id: "one",
-							recovery: mocks.uncertain ? "verify" : "choose",
-							kind: "watch",
-							ignored: query.view === "ignored",
-							issue: mocks.uncertain
-								? "The outcome of creating this Trakt Review is unknown. Check Trakt, then choose a version before retrying."
-								: "Both services changed this Watch. Choose which version to keep.",
-							opnshelf: { title: "Fixture", displayValue: "2020-01-01" },
-							candidates: mocks.candidate
-								? [
-										{
-											key: "existing",
-											title: "Fixture",
-											displayValue: "2026-10-18T19:53:55.311Z",
-										},
-									]
-								: [],
-						},
-					]
-				: [],
-			total: (query.view === "ignored" ? mocks.ignored : mocks.issue) ? 1 : 0,
-		},
-	}),
+	}) => {
+		mocks.issueRead(query);
+		return {
+			data: {
+				items: (query.view === "ignored" ? mocks.ignored : mocks.issue)
+					? [
+							{
+								id: "one",
+								recovery: mocks.uncertain ? "verify" : "choose",
+								kind: "watch",
+								ignored: query.view === "ignored",
+								issue: mocks.uncertain
+									? "The outcome of creating this Trakt Review is unknown. Check Trakt, then choose a version before retrying."
+									: "Both services changed this Watch. Choose which version to keep.",
+								opnshelf: {
+									title: "Fixture",
+									mediaType: "episode",
+									season: 0,
+									episode: 2,
+									displayValue: "2020-01-01",
+								},
+								candidates: mocks.candidate
+									? [
+											{
+												key: "existing",
+												mediaType: "episode",
+												season: 0,
+												episode: 2,
+												title: "Fixture",
+												displayValue: "2026-10-18T19:53:55.311Z",
+											},
+										]
+									: [],
+							},
+						]
+					: [],
+				total: (query.view === "ignored" ? mocks.ignored : mocks.issue) ? 1 : 0,
+				page: 1,
+				totalPages: 1,
+				hasPreviousPage: false,
+				hasNextPage: false,
+			},
+		};
+	},
 	traktSyncControllerConfigureMutation: () => ({ mutationFn: mocks.configure }),
 	traktSyncControllerActionMutation: () => ({ mutationFn: mocks.action }),
 	traktSyncControllerResolveMutation: () => ({ mutationFn: mocks.resolve }),
@@ -218,7 +235,6 @@ describe("Trakt Sync setup and conflict choices", () => {
 		mocks.importStatus = "completed";
 		mocks.issue = true;
 		mount(false, false, true);
-		fireEvent.click(await screen.findByText(/Review item/));
 		fireEvent.click(
 			await screen.findByRole("button", {
 				name: "Use Trakt (delete the other version)",
@@ -303,11 +319,6 @@ it("opens record choices separately and retains changes when closed", async () =
 	expect(screen.queryByRole("checkbox", { name: "Notes" })).toBeNull();
 	fireEvent.click(choose);
 	fireEvent.click(screen.getByLabelText("Notes", { exact: true }));
-	const details = screen.getByText("Sync details").closest("details");
-	expect(details?.open).toBe(false);
-	expect(details?.textContent).toContain(
-		"Library item notes and Box Sets stay in Opnshelf",
-	);
 	fireEvent.click(screen.getByRole("button", { name: "Done" }));
 	expect(screen.getByText("Watch history, Ratings, Notes")).toBeTruthy();
 	expect(screen.queryByRole("checkbox", { name: "Notes" })).toBeNull();
@@ -337,7 +348,6 @@ it("checks an uncertain transfer without offering a deletion choice", async () =
 	mocks.issue = true;
 	mocks.uncertain = true;
 	mount(false, false, true);
-	fireEvent.click(await screen.findByText(/Review item/));
 	expect(await screen.findByText("Not confirmed yet")).toBeTruthy();
 	expect(
 		screen.queryByRole("button", { name: /delete the other version/ }),
@@ -363,7 +373,6 @@ it("opens ignored items in a dialog, restores an item and keeps attention in pla
 	expect(
 		screen.getByRole("heading", { name: "Needs attention", hidden: true }),
 	).toBeTruthy();
-	fireEvent.click(await within(dialog).findByText(/Review item/));
 	fireEvent.click(
 		await within(dialog).findByRole("button", { name: "Restore item" }),
 	);
@@ -393,7 +402,6 @@ it.each([
 	mocks.issue = true;
 	mocks.uncertain = true;
 	mount(false, false, true);
-	fireEvent.click(await screen.findByText(/Review item/));
 	fireEvent.click(await screen.findByRole("button", { name: label }));
 	const confirm = screen.getByRole("button", { name: "Confirm choice" });
 	expect(confirm).toHaveProperty("disabled", true);
@@ -432,7 +440,6 @@ it("keeps retained attention visible after disconnecting", async () => {
 	mocks.status = "disconnected";
 	mocks.issue = true;
 	mount(false, false, true);
-	fireEvent.click(await screen.findByText(/Review item/));
 	expect(
 		await screen.findByRole("heading", { name: "Needs attention" }),
 	).toBeTruthy();
@@ -448,8 +455,18 @@ it("explains linking before resolving a possible duplicate Watch", async () => {
 	mocks.issue = true;
 	mocks.candidate = true;
 	mount(false, false, true);
-	fireEvent.click(await screen.findByText(/Review item/));
-	const link = screen.getByRole("button", { name: /Link to existing Watch/ });
+	const link = await screen.findByRole("button", {
+		name: /Link to existing Watch/,
+	});
+	expect(mocks.issueRead).toHaveBeenCalledWith({
+		view: "attention",
+		page: 1,
+		pageSize: 1,
+	});
+	expect(screen.queryByText("Review item")).toBeNull();
+	expect(await screen.findByText("Item 1 of 1")).toBeTruthy();
+	expect(link.textContent).toContain("Fixture · S0E2");
+	expect(screen.getAllByText("Fixture · S0E2").length).toBeGreaterThan(0);
 	expect(link.textContent).not.toContain("2026-10-18T");
 	fireEvent.click(link);
 	expect(screen.getByText(/This step keeps both dates/)).toBeTruthy();
