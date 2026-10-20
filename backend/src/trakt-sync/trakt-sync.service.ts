@@ -239,7 +239,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		const counts = c
 			? await this.prisma.traktSyncEntry.groupBy({
 					by: ["ignored"],
-					where: { connectionId: c.id, issue: { not: null } },
+					where: {
+						connectionId: c.id,
+						issue: { not: null },
+						OR: [{ eligible: true }, { linked: true }],
+					},
 					_count: true,
 				})
 			: [];
@@ -1015,6 +1019,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			where: {
 				connectionId: c.id,
 				issue: { not: null },
+				OR: [{ eligible: true }, { linked: true }],
 				ignored: query.view === "ignored",
 			},
 			orderBy: { createdAt: "asc" },
@@ -1072,6 +1077,15 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				where: { id, connectionId: c.id },
 			});
 			if (!entry) throw new NotFoundException("Sync item not found.");
+			if (
+				(!entry.eligible && !entry.linked) ||
+				(c.historyScope === "future" &&
+					entry.kind === "watch" &&
+					entry.issue === "Choose which watch date to keep.")
+			)
+				throw new BadRequestException(
+					"This existing item is outside your sync scope.",
+				);
 			if (
 				["opnshelf", "trakt"].includes(dto.action) &&
 				records(c.remoteSnapshot).some(
@@ -1193,11 +1207,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 							remoteBase: json(r),
 							linked: true,
 							eligible: true,
-							issue: equivalent(l, r)
-								? null
-								: isContentRecord(l)
-									? "Choose which version to keep."
-									: "Choose which watch date to keep.",
+							issue:
+								equivalent(l, r) ||
+								(l.kind === "watch" && c.historyScope === "future")
+									? null
+									: isContentRecord(l)
+										? "Choose which version to keep."
+										: "Choose which watch date to keep.",
 							resolution: null,
 							pending: Prisma.DbNull,
 						},
@@ -1443,6 +1459,36 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const mapped = readRecord(entry.remoteBase);
 			if (r && !r.mediaId && mapped?.mediaId)
 				r = { ...r, mediaId: mapped.mediaId };
+			// Older clients could link excluded Watches and create an initial date
+			// choice. Keep both baselines; linking alone must not rewrite history.
+			if (
+				c.historyScope === "future" &&
+				entry.kind === "watch" &&
+				entry.linked &&
+				entry.issue === "Choose which watch date to keep." &&
+				!entry.resolution &&
+				!entry.pending
+			) {
+				await this.prisma.traktSyncEntry.update({
+					where: { id: entry.id },
+					data: { issue: null },
+				});
+				entry.issue = null;
+			}
+			// Excluded history stays inert, including issues saved before this guard.
+			// A later record edit enters scope even when its Watch date is historical.
+			if (!entry.eligible && !entry.linked && !entry.pending) {
+				if (
+					fingerprint(l) === fingerprint(readRecord(entry.localBase)) &&
+					fingerprint(r) === fingerprint(readRecord(entry.remoteBase))
+				)
+					continue;
+				await this.prisma.traktSyncEntry.update({
+					where: { id: entry.id },
+					data: { eligible: true },
+				});
+				entry.eligible = true;
+			}
 			// Never turn a failed read into an empty destination, even with a
 			// pending transfer or an explicit version choice from an older screen.
 			if (r?.unreadable) {
