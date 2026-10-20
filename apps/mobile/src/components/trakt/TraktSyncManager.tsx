@@ -423,8 +423,9 @@ export function TraktSyncManager({
 							Needs attention
 						</Text>
 						<Text className={copy}>
-							{data.needsAttention} items to review · {data.ignored} ignored.
-							Other records keep syncing.
+							{data.needsAttention}{" "}
+							{data.needsAttention === 1 ? "item" : "items"} to review ·{" "}
+							{data.ignored} ignored. Other records keep syncing.
 						</Text>
 						<Link
 							href="/trakt-sync/attention"

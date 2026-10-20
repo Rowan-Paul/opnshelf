@@ -91,7 +91,7 @@ export function TraktSyncBanner() {
 			<Link
 				to="/trakt-sync"
 				search={{}}
-				className={`block border-b ${syncError ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100" : "border-(--border) bg-(--background-subtle)"}`}
+				className={`block border-b ${syncError ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100" : "border-(--border) bg-(--background-subtle) text-(--foreground-muted)"}`}
 			>
 				<div className="container-app flex items-center gap-2 py-2 text-sm">
 					{syncError ? (

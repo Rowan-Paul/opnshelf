@@ -409,8 +409,9 @@ export function TraktSyncManager({
 					<section className={card}>
 						<h2 className="font-semibold text-lg">Needs attention</h2>
 						<p className="my-3 text-(--foreground-muted) text-sm">
-							{data.needsAttention} items to review · {data.ignored} ignored.
-							Other records keep syncing.
+							{data.needsAttention}{" "}
+							{data.needsAttention === 1 ? "item" : "items"} to review ·{" "}
+							{data.ignored} ignored. Other records keep syncing.
 						</p>
 						<Link to="/trakt-sync/attention" className="btn btn-primary">
 							Review items <ArrowRight className="size-4" />
