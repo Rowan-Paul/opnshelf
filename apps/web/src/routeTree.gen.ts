@@ -34,6 +34,7 @@ import { Route as SignupAppleRouteImport } from './routes/signup_.apple'
 import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 import { Route as SocialIndexRouteImport } from './routes/social/index'
 import { Route as SocialFindRouteImport } from './routes/social/find'
+import { Route as TraktSyncAttentionRouteImport } from './routes/trakt-sync_.attention'
 import { Route as WhatsNewIndexRouteImport } from './routes/whats-new.index'
 import { Route as WhatsNewSlugRouteImport } from './routes/whats-new.$slug'
 import { Route as DiscoverCollectionsIdRouteImport } from './routes/discover/collections/$id'
@@ -184,6 +185,11 @@ const SocialFindRoute = SocialFindRouteImport.update({
   id: '/find',
   path: '/find',
   getParentRoute: () => SocialRoute,
+} as any)
+const TraktSyncAttentionRoute = TraktSyncAttentionRouteImport.update({
+  id: '/trakt-sync_/attention',
+  path: '/trakt-sync/attention',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const WhatsNewIndexRoute = WhatsNewIndexRouteImport.update({
   id: '/whats-new/',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/signup/apple': typeof SignupAppleRoute
   '/signup/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
+  '/trakt-sync/attention': typeof TraktSyncAttentionRoute
   '/whats-new/$slug': typeof WhatsNewSlugRoute
   '/settings/': typeof SettingsIndexRoute
   '/social/': typeof SocialIndexRoute
@@ -396,6 +403,7 @@ export interface FileRoutesByTo {
   '/signup/apple': typeof SignupAppleRoute
   '/signup/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
+  '/trakt-sync/attention': typeof TraktSyncAttentionRoute
   '/whats-new/$slug': typeof WhatsNewSlugRoute
   '/settings': typeof SettingsIndexRoute
   '/social': typeof SocialIndexRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/signup_/apple': typeof SignupAppleRoute
   '/signup_/google': typeof SignupGoogleRoute
   '/social/find': typeof SocialFindRoute
+  '/trakt-sync_/attention': typeof TraktSyncAttentionRoute
   '/whats-new/$slug': typeof WhatsNewSlugRoute
   '/settings/': typeof SettingsIndexRoute
   '/social/': typeof SocialIndexRoute
@@ -500,6 +509,7 @@ export interface FileRouteTypes {
     | '/signup/apple'
     | '/signup/google'
     | '/social/find'
+    | '/trakt-sync/attention'
     | '/whats-new/$slug'
     | '/settings/'
     | '/social/'
@@ -549,6 +559,7 @@ export interface FileRouteTypes {
     | '/signup/apple'
     | '/signup/google'
     | '/social/find'
+    | '/trakt-sync/attention'
     | '/whats-new/$slug'
     | '/settings'
     | '/social'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/signup_/apple'
     | '/signup_/google'
     | '/social/find'
+    | '/trakt-sync_/attention'
     | '/whats-new/$slug'
     | '/settings/'
     | '/social/'
@@ -648,6 +660,7 @@ export interface RootRouteChildren {
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   SignupAppleRoute: typeof SignupAppleRoute
   SignupGoogleRoute: typeof SignupGoogleRoute
+  TraktSyncAttentionRoute: typeof TraktSyncAttentionRoute
   WhatsNewSlugRoute: typeof WhatsNewSlugRoute
   WhatsNewIndexRoute: typeof WhatsNewIndexRoute
   DiscoverCollectionsIdRoute: typeof DiscoverCollectionsIdRoute
@@ -834,6 +847,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/social/find'
       preLoaderRoute: typeof SocialFindRouteImport
       parentRoute: typeof SocialRoute
+    }
+    '/trakt-sync_/attention': {
+      id: '/trakt-sync_/attention'
+      path: '/trakt-sync/attention'
+      fullPath: '/trakt-sync/attention'
+      preLoaderRoute: typeof TraktSyncAttentionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/whats-new/': {
       id: '/whats-new/'
@@ -1150,6 +1170,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   SignupAppleRoute: SignupAppleRoute,
   SignupGoogleRoute: SignupGoogleRoute,
+  TraktSyncAttentionRoute: TraktSyncAttentionRoute,
   WhatsNewSlugRoute: WhatsNewSlugRoute,
   WhatsNewIndexRoute: WhatsNewIndexRoute,
   DiscoverCollectionsIdRoute: DiscoverCollectionsIdRoute,

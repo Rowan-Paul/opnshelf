@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 	resolve: vi.fn(async () => ({})),
 	importStatus: "paused",
 	issue: false,
+	candidate: false,
 	ignored: false,
 	uncertain: false,
 	status: "paused",
@@ -63,7 +64,15 @@ vi.mock("@opnshelf/api", async (original) => ({
 								? "The outcome of creating this Trakt Review is unknown. Check Trakt, then choose a version before retrying."
 								: "Both services changed this Watch. Choose which version to keep.",
 							opnshelf: { title: "Fixture", displayValue: "2020-01-01" },
-							candidates: [],
+							candidates: mocks.candidate
+								? [
+										{
+											key: "existing",
+											title: "Fixture",
+											displayValue: "2026-10-18T19:53:55.311Z",
+										},
+									]
+								: [],
 						},
 					]
 				: [],
@@ -74,7 +83,7 @@ vi.mock("@opnshelf/api", async (original) => ({
 	traktSyncControllerActionMutation: () => ({ mutationFn: mocks.action }),
 	traktSyncControllerResolveMutation: () => ({ mutationFn: mocks.resolve }),
 }));
-function mount(connectionFailed = false, embedded = false) {
+function mount(connectionFailed = false, embedded = false, issuesOnly = false) {
 	const client = new QueryClient({
 		defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 	});
@@ -83,6 +92,7 @@ function mount(connectionFailed = false, embedded = false) {
 			<TraktSyncManager
 				connectionFailed={connectionFailed}
 				embedded={embedded}
+				issuesOnly={issuesOnly}
 			/>
 		</QueryClientProvider>,
 	);
@@ -92,6 +102,7 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mocks.importStatus = "paused";
 	mocks.issue = false;
+	mocks.candidate = false;
 	mocks.ignored = false;
 	mocks.uncertain = false;
 	mocks.status = "paused";
@@ -206,7 +217,8 @@ describe("Trakt Sync setup and conflict choices", () => {
 	it("states deletion explicitly and requires a second confirmation", async () => {
 		mocks.importStatus = "completed";
 		mocks.issue = true;
-		mount();
+		mount(false, false, true);
+		fireEvent.click(await screen.findByText(/Review item/));
 		fireEvent.click(
 			await screen.findByRole("button", {
 				name: "Use Trakt (delete the other version)",
@@ -324,7 +336,8 @@ it("does not offer another Sync now request while the worker is running", async 
 it("checks an uncertain transfer without offering a deletion choice", async () => {
 	mocks.issue = true;
 	mocks.uncertain = true;
-	mount();
+	mount(false, false, true);
+	fireEvent.click(await screen.findByText(/Review item/));
 	expect(await screen.findByText("Not confirmed yet")).toBeTruthy();
 	expect(
 		screen.queryByRole("button", { name: /delete the other version/ }),
@@ -344,12 +357,13 @@ it("opens ignored items in a dialog, restores an item and keeps attention in pla
 		mocks.ignored = false;
 		return {};
 	});
-	mount();
+	mount(false, false, true);
 	fireEvent.click(await screen.findByRole("button", { name: "View ignored" }));
 	const dialog = await screen.findByRole("dialog", { name: "Ignored items" });
 	expect(
 		screen.getByRole("heading", { name: "Needs attention", hidden: true }),
 	).toBeTruthy();
+	fireEvent.click(await within(dialog).findByText(/Review item/));
 	fireEvent.click(
 		await within(dialog).findByRole("button", { name: "Restore item" }),
 	);
@@ -373,12 +387,13 @@ it("opens ignored items in a dialog, restores an item and keeps attention in pla
 });
 
 it.each([
-	"Send after checking Trakt…",
-	"Remove from Opnshelf…",
+	"Send after checking Trakt",
+	"Remove from Opnshelf",
 ])("requires a Trakt check before %s", async (label) => {
 	mocks.issue = true;
 	mocks.uncertain = true;
-	mount();
+	mount(false, false, true);
+	fireEvent.click(await screen.findByText(/Review item/));
 	fireEvent.click(await screen.findByRole("button", { name: label }));
 	const confirm = screen.getByRole("button", { name: "Confirm choice" });
 	expect(confirm).toHaveProperty("disabled", true);
@@ -416,8 +431,37 @@ it.each([
 it("keeps retained attention visible after disconnecting", async () => {
 	mocks.status = "disconnected";
 	mocks.issue = true;
-	mount();
+	mount(false, false, true);
+	fireEvent.click(await screen.findByText(/Review item/));
 	expect(
 		await screen.findByRole("heading", { name: "Needs attention" }),
 	).toBeTruthy();
+});
+
+it("keeps the queue off the settings page", async () => {
+	mocks.issue = true;
+	mount();
+	expect(await screen.findByText("Review items")).toBeTruthy();
+	expect(screen.queryByText(/Both services changed/)).toBeNull();
+});
+it("explains linking before resolving a possible duplicate Watch", async () => {
+	mocks.issue = true;
+	mocks.candidate = true;
+	mount(false, false, true);
+	fireEvent.click(await screen.findByText(/Review item/));
+	const link = screen.getByRole("button", { name: /Link to existing Watch/ });
+	expect(link.textContent).not.toContain("2026-10-18T");
+	fireEvent.click(link);
+	expect(screen.getByText(/This step keeps both dates/)).toBeTruthy();
+	expect(mocks.resolve).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+	await waitFor(() =>
+		expect(mocks.resolve).toHaveBeenCalledWith(
+			{
+				path: { id: "one" },
+				body: { action: "link", candidateKey: "existing" },
+			},
+			expect.anything(),
+		),
+	);
 });

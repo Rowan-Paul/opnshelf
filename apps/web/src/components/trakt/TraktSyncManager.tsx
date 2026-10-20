@@ -55,6 +55,15 @@ import {
 	DialogTrigger,
 } from "#/components/ui/dialog";
 
+function displayValue(value: string) {
+	return /^\d{4}-\d{2}-\d{2}T/.test(value) && !Number.isNaN(Date.parse(value))
+		? new Date(value).toLocaleString([], {
+				dateStyle: "medium",
+				timeStyle: "short",
+			})
+		: value;
+}
+
 const rootKey = ["trakt-sync"];
 const card =
 	"rounded-2xl border border-(--border) bg-(--background-elevated) p-5 sm:p-7";
@@ -62,9 +71,11 @@ const card =
 export function TraktSyncManager({
 	connectionFailed = false,
 	embedded = false,
+	issuesOnly = false,
 }: {
 	connectionFailed?: boolean;
 	embedded?: boolean;
+	issuesOnly?: boolean;
 }) {
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
@@ -113,6 +124,18 @@ export function TraktSyncManager({
 	const data = status.data;
 	const connected =
 		data.status !== "disconnected" && data.status !== "reconnect";
+	if (issuesOnly)
+		return (
+			<div className="mx-auto max-w-3xl space-y-6">
+				<Link to="/trakt-sync" className="text-sm underline">
+					Back to Trakt Sync
+				</Link>
+				<h1 className="font-display font-semibold text-3xl">
+					Review sync items
+				</h1>
+				<SyncIssues connected={connected} />
+			</div>
+		);
 	const needsSetup =
 		connected &&
 		data.status === "paused" &&
@@ -382,9 +405,19 @@ export function TraktSyncManager({
 				</Link>
 			)}
 			{data.username &&
-				((!embedded && connected) ||
-					data.needsAttention > 0 ||
-					data.ignored > 0) && <SyncIssues connected={connected} />}
+				(connected || data.needsAttention > 0 || data.ignored > 0) && (
+					<section className={card}>
+						<h2 className="font-semibold text-lg">Needs attention</h2>
+						<p className="my-3 text-(--foreground-muted) text-sm">
+							{data.needsAttention}{" "}
+							{data.needsAttention === 1 ? "item" : "items"} to review ·{" "}
+							{data.ignored} ignored. Other records keep syncing.
+						</p>
+						<Link to="/trakt-sync/attention" className="btn btn-primary">
+							Review items <ArrowRight className="size-4" />
+						</Link>
+					</section>
+				)}
 		</div>
 	);
 }
@@ -828,17 +861,28 @@ function SyncIssues({
 						: "Other records keep syncing while you resolve these items. Ignored items are not counted as synced."}
 				</p>
 				{!result.data && result.isPending && (
-					<div className={`${card} h-40 animate-pulse`} />
+					<output aria-label="Loading sync items" className="block space-y-3">
+						{[0, 1, 2, 3].map((n) => (
+							<div
+								key={n}
+								className={`${card} space-y-3 motion-safe:animate-pulse`}
+							>
+								<div className="h-5 w-40 rounded bg-(--background-subtle)" />
+								<div className="h-4 w-3/4 rounded bg-(--background-subtle)" />
+							</div>
+						))}
+					</output>
 				)}
 				{result.error && <p role="alert">{traktError(result.error)}</p>}
-				{result.data?.items.map((item) => (
-					<SyncIssue key={item.id} item={item} connected={connected} />
-				))}
-				{result.data?.total === 0 && (
-					<p className={`${card} text-(--foreground-muted)`}>
-						{view === "ignored"
-							? "No ignored items."
-							: "Nothing needs your attention."}
+				{result.isPlaceholderData && (
+					<output className="text-(--foreground-muted) text-sm">
+						Loading page {page}…
+					</output>
+				)}
+				{result.data && (
+					<p className="text-(--foreground-muted) text-sm">
+						{result.data.total} {result.data.total === 1 ? "item" : "items"} ·
+						Expand an item to compare and resolve it.
 					</p>
 				)}
 				{result.data && result.data.totalPages > 1 && (
@@ -856,9 +900,26 @@ function SyncIssues({
 						>
 							Previous
 						</button>
-						<span>
-							Page {result.data.page} of {result.data.totalPages}
-						</span>
+						<label className="flex items-center gap-2 text-sm">
+							Page
+							<select
+								aria-label="Go to sync issues page"
+								className="input"
+								value={result.data.page}
+								disabled={result.isPlaceholderData}
+								onChange={(event) => setPage(Number(event.target.value))}
+							>
+								{Array.from(
+									{ length: result.data.totalPages },
+									(_, i) => i + 1,
+								).map((pageNumber) => (
+									<option key={pageNumber} value={pageNumber}>
+										{pageNumber}
+									</option>
+								))}
+							</select>
+							of {result.data.totalPages}
+						</label>
 						<button
 							className="btn btn-secondary max-w-full whitespace-normal"
 							type="button"
@@ -869,6 +930,28 @@ function SyncIssues({
 						</button>
 					</nav>
 				)}
+				{result.data?.items.map((item) => (
+					<details
+						key={item.id}
+						className="rounded-2xl border border-(--border) bg-(--background-elevated)"
+					>
+						<summary className="cursor-pointer p-5 font-medium focus-visible:outline-2">
+							{item.opnshelf?.title ?? item.trakt?.title ?? "Removed record"}
+							<span className="mt-1 block text-(--foreground-muted) text-sm">
+								{item.issue} · Review item
+							</span>
+						</summary>
+						<SyncIssue item={item} connected={connected} />
+					</details>
+				))}
+				{result.data?.total === 0 && (
+					<p className={`${card} text-(--foreground-muted)`}>
+						{view === "ignored"
+							? "No ignored items."
+							: "Nothing needs your attention."}
+					</p>
+				)}
+
 				{view === "attention" && (
 					<DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-3xl">
 						<DialogHeader>
@@ -913,7 +996,7 @@ function SyncIssue({
 	const resolve = (body: SyncResolveDto) =>
 		mutation.mutate({ path: { id: item.id }, body });
 	return (
-		<article className={card} aria-busy={mutation.isPending}>
+		<article className="px-5 pb-5" aria-busy={mutation.isPending}>
 			<h3 className="font-semibold text-lg">
 				{item.opnshelf?.title ?? item.trakt?.title ?? "Removed record"}
 			</h3>
@@ -929,7 +1012,9 @@ function SyncIssue({
 							{name === "trakt" ? "Trakt" : "Opnshelf"}
 						</dt>
 						<dd className="mt-1 break-words text-sm">
-							{item[name]?.displayValue ??
+							{(item[name]?.displayValue
+								? displayValue(item[name].displayValue)
+								: undefined) ??
 								(name === "trakt" && traktIssueRecovery(item) === "verify"
 									? "Not confirmed yet"
 									: "Not present")}
@@ -967,8 +1052,8 @@ function SyncIssue({
 							>
 								{traktIssueRecovery(item) === "verify"
 									? action === "opnshelf"
-										? "Send after checking Trakt…"
-										: "Remove from Opnshelf…"
+										? "Send after checking Trakt"
+										: "Remove from Opnshelf"
 									: traktResolutionLabel(action, Boolean(item[action]))}
 							</button>
 						))}
@@ -998,13 +1083,14 @@ function SyncIssue({
 					<button
 						type="button"
 						key={candidate.key}
-						className="mt-3 block w-full rounded-xl border border-(--border) p-3 text-left text-sm"
+						className="btn btn-primary mt-3 w-full justify-start whitespace-normal text-left text-sm"
 						disabled={mutation.isPending}
 						onClick={() =>
 							setChoice({ action: "link", candidateKey: candidate.key })
 						}
 					>
-						Same viewing as {candidate.title} · {candidate.displayValue}
+						Link to existing {item.kind === "watch" ? "Watch" : "record"}:{" "}
+						{candidate.title} · {displayValue(candidate.displayValue)}
 					</button>
 				))}
 			{connected && !item.ignored && item.candidates.length > 0 && (
@@ -1087,7 +1173,7 @@ function SyncIssue({
 						<p>
 							{choice.action === "link"
 								? item.kind === "watch"
-									? "Confirm these represent the same viewing?"
+									? "Link the existing Opnshelf and Trakt Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings."
 									: "Link these records?"
 								: choice.action === "match"
 									? item.kind === "watch"
