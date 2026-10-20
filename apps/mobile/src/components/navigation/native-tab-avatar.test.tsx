@@ -33,7 +33,7 @@ vi.mock("react-native-svg", () => ({
 	ClipPath: host("ClipPath"),
 	Defs: host("Defs"),
 	Image: host("image"),
-	Path: host("Path"),
+	Path: host("path"),
 }));
 let view: ReactTestRenderer;
 beforeEach(() => {
@@ -63,6 +63,7 @@ const flushFrame = () =>
 	);
 
 it("exports bounded sources only after both image variants have loaded", () => {
+	vi.stubEnv("EXPO_OS", "ios");
 	const onReady = vi.fn();
 	act(() => {
 		view = create(
@@ -73,6 +74,11 @@ it("exports bounded sources only after both image variants have loaded", () => {
 			/>,
 		);
 	});
+	expect(
+		view.root.findAll(
+			(node) => typeof node.type === "string" && node.type === "path",
+		),
+	).toHaveLength(2);
 	expect(state.frames).toHaveLength(0);
 	const images = view.root.findAll(
 		(node) => typeof node.type === "string" && node.type === "image",
@@ -99,7 +105,11 @@ it("exports bounded sources only after both image variants have loaded", () => {
 	});
 });
 
-it("does not publish an export that finishes after the avatar is unmounted", () => {
+it.each([
+	"ios",
+	"android",
+])("keeps the fallback and ignores exports after unmount on %s", (platform) => {
+	vi.stubEnv("EXPO_OS", platform);
 	const onReady = vi.fn();
 	act(() => {
 		view = create(
@@ -108,6 +118,11 @@ it("does not publish an export that finishes after the avatar is unmounted", () 
 	});
 	flushFrame();
 	act(() => state.exports.shift()?.("normal"));
+	expect(
+		view.root.findAll(
+			(node) => typeof node.type === "string" && node.type === "path",
+		),
+	).toHaveLength(2);
 	const finish = state.exports.shift();
 	act(() => view.unmount());
 	act(() => finish?.("old-avatar"));
@@ -127,6 +142,11 @@ it("exports a cached avatar even when Android sends no image load events", () =>
 		);
 	});
 	flushFrame();
+	expect(
+		view.root.findAll(
+			(node) => typeof node.type === "string" && node.type === "path",
+		),
+	).toHaveLength(0);
 	expect(state.exports).toHaveLength(1);
 	act(() => state.exports.shift()?.("cached-normal"));
 	act(() => state.exports.shift()?.("cached-selected"));

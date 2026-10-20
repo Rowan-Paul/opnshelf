@@ -78,24 +78,25 @@ export function NativeTabAvatar({
 						</ClipPath>
 					</Defs>
 					<Circle cx={14} cy={14} r={14} fill="#1e293b" />
-					{(!loaded.normal || !loaded.selected) && (
-						<>
-							<Circle
-								cx={14}
-								cy={10}
-								r={4}
-								fill="none"
-								stroke="#94a3b8"
-								strokeWidth={2}
-							/>
-							<Path
-								d="M7 23v-3c0-6 14-6 14 0v3"
-								fill="none"
-								stroke="#94a3b8"
-								strokeWidth={2}
-							/>
-						</>
-					)}
+					{(!loaded.normal || !loaded.selected) &&
+						(process.env.EXPO_OS !== "android" || !uri) && (
+							<>
+								<Circle
+									cx={14}
+									cy={10}
+									r={4}
+									fill="none"
+									stroke="#94a3b8"
+									strokeWidth={2}
+								/>
+								<Path
+									d="M7 23v-3c0-6 14-6 14 0v3"
+									fill="none"
+									stroke="#94a3b8"
+									strokeWidth={2}
+								/>
+							</>
+						)}
 					{uri && (
 						<Image
 							href={{ uri }}

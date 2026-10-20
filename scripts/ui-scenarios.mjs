@@ -425,8 +425,12 @@ export function createScenarioServer(
  syncState: fixtureSyncState,
  publicationConsent: true,
  listPublicationConsent: true,
- needsAttention: scenario === "trakt-sync-attention" || (scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored) ? 1 : 0,
- ignored: scenario === "trakt-sync-recovery" && fixtureIssue && fixtureIgnored ? 1 : 0,
+ needsAttention: scenario === "trakt-sync-attention"
+ ? reviewQueue.filter((item) => !item.resolved && !item.ignored).length
+ : scenario === "trakt-sync-recovery" && fixtureIssue && !fixtureIgnored ? 1 : 0,
+ ignored: scenario === "trakt-sync-attention"
+ ? reviewQueue.filter((item) => !item.resolved && item.ignored).length
+ : scenario === "trakt-sync-recovery" && fixtureIssue && fixtureIgnored ? 1 : 0,
 							direction: "inbound",
 							watches: true,
 							ratings: true,

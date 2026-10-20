@@ -125,7 +125,15 @@ test("sync review queue pages single episodes and advances after resolution", as
 				`${base}/trakt-sync/issues?view=attention&page=${page}&pageSize=1`,
 			)
 		).json();
+    const counts = async () => {
+        const status = await (await fetch(`${base}/trakt-sync`)).json();
+        return [status.needsAttention, status.ignored];
+    };
+    const resolve = (episode, action) => fetch(`${base}/trakt-sync/issues/episode-${episode}`, {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({action}),
+    });
 	try {
+        assert.deepEqual(await counts(), [3, 0]);
 		const first = await read(1);
 		assert.equal(first.items.length, 1);
 		assert.equal(first.total, 3);
@@ -137,6 +145,7 @@ test("sync review queue pages single episodes and advances after resolution", as
 			body: JSON.stringify({ action: "link", candidateKey: "local-episode-1" }),
 		});
 		assert.equal((await read(1)).items[0].trakt.episode, 2);
+        assert.deepEqual(await counts(), [2, 0]);
 		await fetch(`${base}/trakt-sync/issues/episode-3`, {
 			method: "POST",
 			headers: { "content-type": "application/json" },
@@ -146,6 +155,13 @@ test("sync review queue pages single episodes and advances after resolution", as
 		assert.equal(last.page, 1);
 		assert.equal(last.total, 1);
 		assert.equal(last.items[0].trakt.episode, 2);
+        assert.deepEqual(await counts(), [1, 1]);
+        await resolve(3, "undo");
+        assert.deepEqual(await counts(), [2, 0]);
+        await resolve(2, "separate");
+        await resolve(3, "separate");
+        assert.deepEqual(await counts(), [0, 0]);
+        assert.equal((await read(1)).total, 0);
 	} finally {
 		await new Promise((resolve) => server.close(resolve));
 	}
