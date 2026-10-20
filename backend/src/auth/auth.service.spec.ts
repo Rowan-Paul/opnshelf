@@ -233,7 +233,7 @@ describe("AuthService", () => {
 			});
 			sharedOAuthClient.authorize.mockResolvedValue(mockUrl);
 
-			await service.authorize("@Reader.Example");
+			await service.authorize("  @Reader.Example  ");
 
 			expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
 				where: { handle: "reader.example" },
@@ -249,7 +249,7 @@ describe("AuthService", () => {
 				},
 			});
 			expect(sharedOAuthClient.authorize).toHaveBeenCalledWith(
-				"@Reader.Example",
+				"reader.example",
 				expect.objectContaining({
 					scope: expect.stringContaining("repo:site.standard.document"),
 				}),
