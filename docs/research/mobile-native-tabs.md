@@ -15,7 +15,8 @@ URL shapes remain shared contracts.
   clearing account-only scene state; ordinary tab switches retain their state.
 - Root Stack details keep their existing URLs and presentation. Email
   Verification still precedes Onboarding; neither gate displays the tab bar.
-- iOS scenes reserve their native provider's bottom safe-area inset. Existing
+- iOS scroll content reserves the native provider's bottom safe-area inset,
+  while scene viewports extend behind the floating glass bar. Existing
   manual top padding stays, and automatic scroll insets are disabled on iOS to
   avoid adding it twice. Android retains native automatic bottom insets. This
   clears final actions on both platforms without a hard-coded bar height.
@@ -80,3 +81,19 @@ local synthetic auth callback to check live transitions.
 No native dependency, application version, Backend or Web change is included.
 This is eligible for an OTA update on a compatible installed SDK 58 runtime;
 no update or store release is published by this PR.
+
+### Glass background follow-up (20 October 2026)
+
+Move iOS bottom clearance from the scene wrapper into each vertical scroll
+content container, including Search results, genre discovery and suggested
+people. This lets content pass behind the glass without trapping the final
+action underneath it. Android keeps native automatic inset handling; Web has
+no corresponding native tab bar.
+
+Verified on iPhone 17e / iOS 27.0 with a freshly built development client and
+local fixtures: Home content is visible behind the bar, and Profile’s final
+Find people link scrolls completely above it. `pnpm typecheck`, Mobile lint
+and Mobile tests (509 passed, one existing skip) pass. `pnpm check` fails on
+existing generated Web `.output/public/privacy/index.html` and
+`.output/public/tos/index.html` lint errors. No release was published; this
+JavaScript-only change is eligible for an OTA update on the compatible runtime.

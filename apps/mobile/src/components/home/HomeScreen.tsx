@@ -11,7 +11,10 @@ import { ShelfPreviewRow } from "@/components/home/ShelfPreviewRow";
 import { UpcomingReleases } from "@/components/home/UpcomingReleases";
 import { UpNextPreview } from "@/components/home/UpNextPreview";
 import { WelcomeHeader } from "@/components/home/WelcomeHeader";
-import { NativeTabScreen } from "@/components/navigation/native-tab-screen";
+import {
+	NativeTabScreen,
+	useNativeTabContentPadding,
+} from "@/components/navigation/native-tab-screen";
 import { StatsStrip } from "@/components/profile/StatsStrip";
 import {
 	registerTourScroller,
@@ -33,6 +36,7 @@ import { usePublicProfile } from "@/lib/use-public-profile";
  */
 export default function HomeScreen() {
 	const insets = useSafeAreaInsets();
+	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
 	const queryClient = useQueryClient();
@@ -69,7 +73,7 @@ export default function HomeScreen() {
 				contentContainerStyle={{
 					// + 12 = the pt-3 the other tabs give their title row.
 					paddingTop: insets.top + 12,
-					paddingBottom: 32,
+					paddingBottom,
 				}}
 				refreshControl={
 					<RefreshControl

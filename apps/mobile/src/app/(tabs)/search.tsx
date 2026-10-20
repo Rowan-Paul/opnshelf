@@ -40,7 +40,10 @@ import { GenreDiscover } from "@/components/discover/GenreDiscover";
 import { FeaturedContent } from "@/components/featured/FeaturedContent";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
 import { PersonRow } from "@/components/media/PersonRow";
-import { NativeTabScreen } from "@/components/navigation/native-tab-screen";
+import {
+	NativeTabScreen,
+	useNativeTabContentPadding,
+} from "@/components/navigation/native-tab-screen";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { Screen } from "@/components/ui/screen";
@@ -213,6 +216,7 @@ function DiscoverSections({
 	isAuthenticated: boolean;
 	isFocused: boolean;
 }) {
+	const paddingBottom = useNativeTabContentPadding();
 	const { user, isLoading: authLoading } = useAuth();
 	const queryClient = useQueryClient();
 	const { data: serviceSettings, isLoading: settingsLoading } = useQuery({
@@ -336,7 +340,7 @@ function DiscoverSections({
 	return (
 		<ShowProgressScope showIds={showIds}>
 			<ScrollView
-				contentContainerClassName="pb-8"
+				contentContainerStyle={{ paddingBottom }}
 				showsVerticalScrollIndicator={false}
 				keyboardShouldPersistTaps="handled"
 				refreshControl={
@@ -381,6 +385,7 @@ export default function SearchScreen() {
 }
 
 function KeywordSearchScreen() {
+	const paddingBottom = useNativeTabContentPadding();
 	const { isAuthenticated } = useAuth();
 	const isFocused = useIsFocused();
 	const { q } = useLocalSearchParams<{
@@ -540,7 +545,7 @@ function KeywordSearchScreen() {
 							<PersonRow person={item} />
 						</View>
 					)}
-					contentContainerStyle={peopleListStyle}
+					contentContainerStyle={{ ...peopleListStyle, paddingBottom }}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
@@ -569,7 +574,7 @@ function KeywordSearchScreen() {
 							<CastCrewRow person={item} />
 						</View>
 					)}
-					contentContainerStyle={peopleListStyle}
+					contentContainerStyle={{ ...peopleListStyle, paddingBottom }}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}
@@ -605,7 +610,7 @@ function KeywordSearchScreen() {
 							<MediaCard item={item} actions />
 						</View>
 					)}
-					contentContainerStyle={gridListStyle}
+					contentContainerStyle={{ ...gridListStyle, paddingBottom }}
 					keyboardShouldPersistTaps="handled"
 					refreshControl={refreshControl}
 					onEndReachedThreshold={0.5}

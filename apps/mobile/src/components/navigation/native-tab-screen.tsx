@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { View, type ViewProps } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-/** Native iOS tabs overlay their scenes; their nested provider includes the bar. */
+/** Keep scenes full-height so scrolling content can pass behind the glass bar. */
 export function NativeTabScreen({
 	children,
 	style,
@@ -10,16 +10,15 @@ export function NativeTabScreen({
 	children: ReactNode;
 	style?: ViewProps["style"];
 }) {
-	const { bottom } = useSafeAreaInsets();
 	return (
-		<View
-			className="flex-1 bg-background"
-			style={[
-				{ paddingBottom: process.env.EXPO_OS === "ios" ? bottom : 0 },
-				style,
-			]}
-		>
+		<View className="flex-1 bg-background" style={style}>
 			{children}
 		</View>
 	);
+}
+
+/** Apply clearance to scroll content, never to the scene viewport. */
+export function useNativeTabContentPadding() {
+	const { bottom } = useSafeAreaInsets();
+	return 32 + (process.env.EXPO_OS === "ios" ? bottom : 0);
 }
