@@ -91,15 +91,20 @@ export function TraktSyncBanner() {
 			<Link
 				to="/trakt-sync"
 				search={{}}
-				className="block border-(--border) border-b bg-(--background-subtle) hover:bg-(--background-elevated)"
+				className={`block border-b ${syncError ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100" : "border-(--border) bg-(--background-subtle)"}`}
 			>
-				<div className="container-app flex items-center gap-2 py-2 text-(--foreground-muted) text-sm">
+				<div className="container-app flex items-center gap-2 py-2 text-sm">
 					{syncError ? (
 						<AlertTriangle className="size-4 shrink-0 text-amber-600" />
 					) : (
 						<Loader2 className="size-4 shrink-0 animate-spin" />
 					)}
-					<span className="min-w-0 flex-1">{syncMessage}. View details.</span>
+					<span className="min-w-0 flex-1">
+						{syncMessage}.{" "}
+						<span className="font-semibold underline underline-offset-4">
+							View details
+						</span>
+					</span>
 				</div>
 			</Link>
 		);

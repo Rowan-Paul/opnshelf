@@ -128,9 +128,11 @@ afterEach(() => {
 	act(() => renderer.unmount());
 	vi.clearAllMocks();
 });
-function mount(embedded = true) {
+function mount(embedded = true, issuesOnly = false) {
 	act(() => {
-		renderer = create(<TraktSyncManager embedded={embedded} />);
+		renderer = create(
+			<TraktSyncManager embedded={embedded} issuesOnly={issuesOnly} />,
+		);
 	});
 }
 function press(label: string) {
@@ -344,7 +346,7 @@ it("shows the running worker instead of offering another Sync now request", () =
 
 it("opens ignored items in a sheet and restores without replacing attention", () => {
 	mocks.issues = true;
-	mount();
+	mount(true, true);
 	press("View ignored");
 	expect(
 		renderer.root.findAllByType(Modal).filter((node) => node.props.visible),
@@ -355,6 +357,7 @@ it("opens ignored items in a sheet and restores without replacing attention", ()
 				node.type === "text" && node.props.children === "Needs attention",
 		),
 	).toHaveLength(1);
+	press("Review item");
 	press("Restore item");
 	expect(mocks.mutate).toHaveBeenCalledWith({
 		path: { id: "one" },
@@ -373,13 +376,14 @@ it("opens ignored items in a sheet and restores without replacing attention", ()
 });
 
 it.each([
-	"Send after checking Trakt…",
-	"Remove from Opnshelf…",
+	"Send after checking Trakt",
+	"Remove from Opnshelf",
 ])("requires a Trakt check before %s", (label) => {
 	mocks.active = true;
 	mocks.issues = true;
 	mocks.uncertain = true;
-	mount();
+	mount(true, true);
+	press("Review item");
 	press(label);
 	const confirm = () =>
 		renderer.root.find(

@@ -100,7 +100,7 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 			<View className="flex-1 bg-background">
 				<Link href="/trakt-sync" asChild>
 					<Pressable
-						className="border-border border-b bg-background-subtle px-4 pb-2"
+						className={`border-b px-4 pb-2 ${syncError ? "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950" : "border-border bg-background-subtle"}`}
 						style={{ paddingTop: insets.top }}
 					>
 						<View className="flex-row items-center gap-2">
@@ -109,7 +109,9 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 							) : (
 								<ActivityIndicator size="small" color="#f3bc00" />
 							)}
-							<Text className="flex-1 text-muted-foreground text-sm leading-5">
+							<Text
+								className={`flex-1 text-sm leading-5 ${syncError ? "text-amber-950 dark:text-amber-100" : "text-muted-foreground"}`}
+							>
 								{syncMessage}. View details.
 							</Text>
 						</View>
