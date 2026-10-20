@@ -1,0 +1,6 @@
+- Ongoing Trakt Sync for watch history, ratings, Lists, Watchlist, Favorites, Notes, Library and Reviews.
+- Privacy Alpha visibility controls.
+- Refreshed native tabs and responsive Up Next.
+- A dedicated Pick for me result screen with retained filters.
+- Featured collections in Discover and improved onboarding.
+- Smoother posters and fixes for sync errors, notifications and everyday tracking.
