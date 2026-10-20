@@ -362,15 +362,36 @@ function DiscoverSections({
 
 export default function SearchScreen() {
 	const params = useLocalSearchParams();
-	const filter = parseGenreDiscovery(params);
-	return filter ? <GenreDiscover filter={filter} /> : <KeywordSearchScreen />;
+	const filter =
+		params.shortcutRequest && typeof params.q === "string"
+			? null
+			: parseGenreDiscovery(params);
+	return filter ? (
+		<GenreDiscover filter={filter} />
+	) : (
+		<KeywordSearchScreen
+			key={
+				typeof params.shortcutRequest === "string"
+					? params.shortcutRequest
+					: "search"
+			}
+		/>
+	);
 }
 
 function KeywordSearchScreen() {
 	const { isAuthenticated } = useAuth();
 	const isFocused = useIsFocused();
-	const [query, setQuery] = useState("");
+	const { q } = useLocalSearchParams<{
+		q?: string;
+		shortcutRequest?: string;
+	}>();
+	const [query, setQuery] = useState(typeof q === "string" ? q : "");
 	const [activeTab, setActiveTab] = useState<Tab>("all");
+	useEffect(() => {
+		setQuery(typeof q === "string" ? q : "");
+		setActiveTab("all");
+	}, [q]);
 	const debouncedQuery = useDebounce(query.trim(), 350);
 	const hasQuery = debouncedQuery.length > 0;
 

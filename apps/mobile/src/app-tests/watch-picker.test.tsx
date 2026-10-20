@@ -8,7 +8,12 @@ import { UpNextServiceFilter } from "@/components/up-next/UpNextServiceFilter";
 import PickerScreen from "@/components/watch-picker/PickerScreen";
 
 const mocks = vi.hoisted(() => ({
-	params: {} as { minutes?: string; filters?: string },
+	params: {} as {
+		minutes?: string;
+		filters?: string;
+		type?: string;
+		shortcutRequest?: string;
+	},
 	push: vi.fn(),
 	dismissTo: vi.fn(),
 	back: vi.fn(),
@@ -168,6 +173,23 @@ describe("Mobile picker session", () => {
 		const view = await renderPicker();
 		expect(view.root.findAllByType(Redirect)).toHaveLength(0);
 		expect(mocks.queryEnabled.every((enabled) => !enabled)).toBe(true);
+		await act(async () => view.unmount());
+	});
+	it("prefills variable Shortcut budgets and types while retaining saved services", async () => {
+		mocks.params = { minutes: "90", type: "show", shortcutRequest: "first" };
+		const view = await renderPicker();
+		expect(view.root.findByType(TextInput).props.value).toBe("90");
+		await act(async () => button(view, "Pick for me").props.onPress());
+		expect(
+			JSON.parse(mocks.push.mock.calls.at(-1)?.[0].params.filters),
+		).toMatchObject({ type: "show", services: "8" });
+		mocks.params = { minutes: "45", type: "movie", shortcutRequest: "second" };
+		await act(async () => view.update(<PickerScreen />));
+		expect(view.root.findByType(TextInput).props.value).toBe("45");
+		await act(async () => button(view, "Pick for me").props.onPress());
+		expect(
+			JSON.parse(mocks.push.mock.calls.at(-1)?.[0].params.filters),
+		).toMatchObject({ type: "movie", services: "8" });
 		await act(async () => view.unmount());
 	});
 	it("opens a separate result screen with the submitted time and filters", async () => {

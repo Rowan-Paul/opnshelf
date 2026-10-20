@@ -31,7 +31,10 @@ vi.mock("react-native", () => ({
 	},
 }));
 vi.mock("./auth-context", () => ({
-	useAuth: () => ({ isLoading: mocks.loading }),
+	useAuth: () => ({
+		isLoading: mocks.loading,
+		user: { handle: "synthetic.test" },
+	}),
 }));
 
 function invocation(id: string, name = "openPickForMe"): AppIntentInvocation {
@@ -120,6 +123,27 @@ describe("Pick for me App Intent delivery", () => {
 		await deliver([invocation("a")]);
 		expect(mocks.navigate).toHaveBeenCalledOnce();
 		expect(mocks.remove.mock.calls.map(([id]) => id)).toEqual(["a", "b", "a"]);
+	});
+	it("uses the latest valid action in a mixed cold batch", async () => {
+		await renderReady();
+		await deliver([
+			invocation("up", "openUpNext"),
+			{ ...invocation("search", "searchTitles"), params: { query: "Alien" } },
+			{
+				...invocation("invalid", "openTimedPickForMe"),
+				params: { minutes: 0 },
+			},
+			invocation("unknown", "unknown"),
+		]);
+		expect(mocks.navigate).toHaveBeenCalledExactlyOnceWith({
+			pathname: "/search",
+			params: { q: "Alien", shortcutRequest: "search" },
+		});
+		expect(mocks.remove.mock.calls.map(([id]) => id)).toEqual([
+			"up",
+			"search",
+			"invalid",
+		]);
 	});
 	it("does not mount an Apple consumer on Android", async () => {
 		mocks.platform = "android";

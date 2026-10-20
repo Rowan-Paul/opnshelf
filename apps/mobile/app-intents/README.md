@@ -1,4 +1,4 @@
-# Pick for me App Shortcut
+# Opnshelf App Shortcuts
 
 After installing a build containing these native declarations, open Opnshelf once.
 In Apple's Shortcuts app, find Opnshelf's **Pick for me** action. It opens the
@@ -29,6 +29,34 @@ only on iOS. The original user-created URL Shortcut is preserved as a
 [prototype primary source](https://github.com/Rowan-Paul/opnshelf/tree/877cecc3/apps/mobile/prototypes/pick-for-me-shortcut)
 and on the local `prototype/526-pick-for-me-url-shortcut` branch.
 
+## Additional actions
+
+| Action | Input | Opens |
+| --- | --- | --- |
+| Open Up Next | None | Signed-in User’s Up Next |
+| Search for a title | Title, 1–200 characters | Search with the title prefilled |
+| Pick for my available time | Minutes, 1–1440; Movies, Shows or both | Chooser with that budget and type |
+| Open my watchlist | None | Watchlist |
+| Add to watchlist | Title or supported link | Existing add sheet, followed by explicit confirmation |
+
+Minutes are a parameter, never a hardcoded 45-minute preset. The default media
+type is both; saved streaming-service filters remain in effect. Required values
+are prompted by Shortcuts/Siri and can be supplied by variables in a custom
+Shortcut. Use Shortcut Input for a shared title or link. Supported links are
+Opnshelf movie/show URLs and TMDB movie/TV URLs; their IDs are resolved through
+the existing API, never by fetching arbitrary input URLs. Unsupported links are
+rejected. Search is public; existing account gates apply to signed-in Users.
+The other actions require sign-in. Completing a gate does not automatically
+resume the request; rerun the action. A cold batch uses its latest valid action.
+Additions happen only after tapping **Add to Watchlist** in the app; cancelling
+confirmation performs no write. Existing Watchlist entries cannot be removed by
+this action. Failed additions retain confirmation for retry.
+
+Android and Web do not register Apple actions. Mobile Search now supports `q`,
+matching Web, and both clients accept the picker `minutes` and `type` URL inputs.
+The Watchlist confirmation flow is an iOS action entry point; ordinary manual
+list editing on either client keeps its existing behavior.
+
 ## Build and release
 
 Changes to native declarations, phrases, inline-module config or the dependency
@@ -40,10 +68,37 @@ For local verification use Node 24, the repository pnpm version and the
 Build with an embedded bundle to test cold launch; the Expo development launcher
 can otherwise intercept a cold start before the action's JavaScript runs.
 
-## Verification
+## Verification of the additional actions
+
+On iPhone 18 Pro / iOS 27.0 Simulator, using an ad-hoc signed Release build
+with embedded JavaScript and the loopback `issue-fixes` fixture API:
+
+- All six actions appear under Shortcuts → Apps → Opnshelf.
+- Up Next opens the synthetic signed-in User’s episode queue.
+- The time action prompts for Minutes; entering 30 opens the chooser at 30
+  minutes with both media types. Unit tests exercise 90 → 45 minutes and Shows
+  → Movies on repeated requests, preserving saved streaming services.
+- Search prompts for a title and prefills the Search screen.
+- Open my watchlist opens the Watchlist from a terminated app without Metro.
+- Add to watchlist accepts an Opnshelf show link and resolves the exact show ID.
+  Selecting it displays title, type and year for explicit confirmation. Cancelling
+  produced zero fixture writes; confirming produced exactly one. The row then
+  became disabled as Already added. The native pending queue contained `[]`.
+- Confirmation layout was inspected on-device. Duplicate submission, title
+  resolution, ID resolution and existing-entry behavior are covered by tests.
+- Root typecheck/check, 503 Mobile tests and 528 Web tests pass. The native
+  Release build and App Intents metadata extraction succeed.
+
+Screenshots are attached to [PR #533](https://github.com/Rowan-Paul/opnshelf/pull/533).
+Siri voice recognition, a physical-device Share Sheet, locked-device behavior,
+network-error timing and changing the optional media type in Apple’s editor
+were not exercised on hardware. Required dialogs are system UI; Simulator
+observations do not establish voice recognition quality.
+
+## Original chooser verification
 
 - `pnpm typecheck` and `pnpm check` passed (existing Backend lint warnings).
-- Mobile tests: 468 passed, one existing skipped file/test. Six bridge tests cover
+- Mobile tests: 503 passed, one existing skipped file/test. Seven bridge tests cover
   readiness, cold queued snapshots, duplicates, result navigation, navigation
   failure, acknowledgement retry and unsupported platforms. Picker tests cover
   the three account gates and waiting for session restoration.

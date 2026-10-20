@@ -23,5 +23,10 @@ struct OpnshelfShortcuts: AppShortcutsProvider {
       shortTitle: "Pick for me",
       systemImageName: "shuffle"
     )
+    AppShortcut(intent: OpenUpNextIntent(), phrases: ["Show my Up Next in \(.applicationName)"], shortTitle: "Up Next", systemImageName: "play.rectangle")
+    AppShortcut(intent: SearchTitlesIntent(), phrases: ["Find a title in \(.applicationName)"], shortTitle: "Search for a title", systemImageName: "magnifyingglass")
+    AppShortcut(intent: PickForAvailableTimeIntent(), phrases: ["Pick for my available time in \(.applicationName)"], shortTitle: "Pick for my time", systemImageName: "clock")
+    AppShortcut(intent: OpenWatchlistIntent(), phrases: ["Open my watchlist in \(.applicationName)"], shortTitle: "My watchlist", systemImageName: "bookmark")
+    AppShortcut(intent: AddToWatchlistIntent(), phrases: ["Add to my watchlist in \(.applicationName)"], shortTitle: "Add to watchlist", systemImageName: "bookmark.fill")
   }
 }

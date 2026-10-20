@@ -216,7 +216,7 @@ A home-screen widget on Android and iOS, placed by the user from the system widg
 _Avoid_: Home widget (collides with **Home**), activity widget (collides with **Activity**), shelf widget (it renders the activity graph, not **Shelf** contents)
 
 **App Shortcut**:
-An action provided by the iOS **Mobile App**, available in Apple Shortcuts and through Siri. The **Pick for me** App Shortcut opens the chooser and respects sign-in, email verification and **Onboarding**; it does not choose a Media Item or create a Watch on the User’s behalf.
+An action provided by the iOS **Mobile App**, available in Apple Shortcuts and through Siri. Actions open **Up Next**, Search, the **Watchlist**, or the **Pick for me** chooser, optionally with a time budget and media type. Adding to the Watchlist resolves a title or supported link and requires confirmation in the app. Private actions respect sign-in, email verification and **Onboarding**; no action creates a Watch or silently adds a Media Item.
 _Avoid_: Voice Watch (the action does not log a Watch), Recommendation (the action only opens Pick for me)
 
 **Social**:
