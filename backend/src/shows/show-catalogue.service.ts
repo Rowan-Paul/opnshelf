@@ -39,35 +39,24 @@ export class ShowCatalogueService {
 			showData.poster_path ?? null,
 		);
 
+		const data = {
+			title: showData.name,
+			posterPath: showData.poster_path ?? null,
+			backdropPath: showData.backdrop_path ?? null,
+			firstAirYear: showData.first_air_date
+				? new Date(showData.first_air_date).getFullYear()
+				: null,
+			firstAirDate: showData.first_air_date
+				? new Date(showData.first_air_date)
+				: null,
+			overview: showData.overview ?? null,
+			colors: colors ?? undefined,
+		};
+
 		return this.prisma.show.upsert({
 			where: { showId: showData.id.toString() },
-			create: {
-				showId: showData.id.toString(),
-				title: showData.name,
-				posterPath: showData.poster_path ?? null,
-				backdropPath: showData.backdrop_path ?? null,
-				firstAirYear: showData.first_air_date
-					? new Date(showData.first_air_date).getFullYear()
-					: null,
-				firstAirDate: showData.first_air_date
-					? new Date(showData.first_air_date)
-					: null,
-				overview: showData.overview ?? null,
-				colors: colors ?? undefined,
-			},
-			update: {
-				title: showData.name,
-				posterPath: showData.poster_path ?? null,
-				backdropPath: showData.backdrop_path ?? null,
-				firstAirYear: showData.first_air_date
-					? new Date(showData.first_air_date).getFullYear()
-					: null,
-				firstAirDate: showData.first_air_date
-					? new Date(showData.first_air_date)
-					: null,
-				overview: showData.overview ?? null,
-				colors: colors ?? undefined,
-			},
+			create: { showId: showData.id.toString(), ...data },
+			update: data,
 		});
 	}
 
