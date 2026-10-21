@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import type { ScrollViewInstance } from "react-native";
-import { RefreshControl, ScrollView, View } from "react-native";
+import { RefreshControl, View } from "react-native";
 import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CreditsSummary } from "@/components/detail/CreditsSection";
+import { DetailColumns } from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -22,6 +23,7 @@ import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
+import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -66,7 +68,7 @@ export default function ShowDetailScreen() {
 	);
 
 	return (
-		<View className="flex-1 bg-background">
+		<ScreenFrame>
 			<Stack.Screen
 				options={{ headerShown: true, title: data?.name ?? "Show" }}
 			/>
@@ -75,11 +77,137 @@ export default function ShowDetailScreen() {
 			) : isError || !data ? (
 				<ErrorState message="Couldn't load this show." />
 			) : (
-				<ScrollView
-					ref={scrollRef}
-					className="flex-1"
-					contentContainerClassName="gap-6 pb-12"
-					showsVerticalScrollIndicator={false}
+				<DetailColumns
+					primary={
+						<>
+							<DetailHero
+								title={data.name}
+								backdropUrl={backdropUrl(data.backdrop_path)}
+								posterUrl={posterUrl(data.poster_path)}
+								rating={rating}
+								progress={
+									progress?.state !== "unavailable" ? progress : undefined
+								}
+								progressLabel="Show progress"
+								isProgressLoading={progressQuery.isLoading}
+							>
+								<MetadataPills
+									items={[
+										yearFromDate(data.first_air_date),
+										data.number_of_seasons
+											? `${data.number_of_seasons} season${data.number_of_seasons === 1 ? "" : "s"}`
+											: undefined,
+										data.number_of_episodes
+											? `${data.number_of_episodes} episodes`
+											: undefined,
+									]}
+								/>
+								<GenreLinks genres={data.genres} mediaType="show" />
+							</DetailHero>
+
+							{/* Shelf, watchlist and secondary tiles form one action cluster,
+					    kept tight (gap-2) like the season/episode screens. */}
+							<View className="gap-2">
+								<MediaTrackingActions
+									mediaType="show"
+									showId={id}
+									episodeCount={data.number_of_episodes}
+									progress={progress}
+								/>
+								<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
+								{/* Secondary actions as one row of compact tiles. */}
+								<View className="flex-row gap-2 px-4">
+									<RateReviewButton mediaType="show" mediaId={id} />
+									<AddToListButton mediaType="show" mediaId={id} />
+									<AddToLibraryButton mediaType="show" mediaId={id} />
+									<NoteButton mediaType="show" mediaId={id} />
+									<ShareButton
+										url={webMediaUrl({ type: "show", id, name: data.name })}
+										title={data.name}
+									/>
+								</View>
+							</View>
+						</>
+					}
+					secondary={
+						<>
+							<OverviewSection text={data.overview} />
+							<DetailsCard
+								items={[
+									{
+										label: "Creator",
+										value:
+											data.credits?.crew
+												?.filter((p) => p.job === "Creator")
+												.map((p) => p.name)
+												.join(", ") || "Unknown",
+									},
+									{ label: "Seasons", value: data.number_of_seasons || 0 },
+									{ label: "Episodes", value: data.number_of_episodes || 0 },
+									{
+										label: "First Aired",
+										value: formatLongDate(data.first_air_date) ?? "Unknown",
+									},
+									{
+										label: "Genres",
+										value: data.genres?.length ? (
+											<GenreLinks
+												genres={data.genres}
+												mediaType="show"
+												compact
+											/>
+										) : (
+											"N/A"
+										),
+									},
+								]}
+							/>
+
+							<FriendWatchers mediaType="show" mediaId={id} />
+
+							<WatchProviders mediaType="show" mediaId={id} />
+
+							{seasons.length > 0 ? (
+								<View className="gap-2 px-4">
+									<Text className="font-display font-semibold text-base text-foreground">
+										Seasons
+									</Text>
+									{seasons.map((s) => (
+										<SeasonCard
+											key={s.id}
+											actions
+											season={{
+												showId,
+												showSlug: name,
+												seasonNumber: s.season_number,
+												name: s.name,
+												posterPath: s.poster_path,
+												episodeCount: s.episode_count,
+												year: yearFromDate(s.air_date),
+												progress: progress?.seasons.find(
+													(season) => season.seasonNumber === s.season_number,
+												),
+											}}
+										/>
+									))}
+								</View>
+							) : null}
+
+							<CreditsSummary
+								credits={data.credits}
+								creditsHref={`/shows/${id}/${name}/credits`}
+							/>
+							<CommunityReviews
+								mediaType="show"
+								mediaId={id}
+								scrollRef={scrollRef}
+								focusReviewId={reviewId}
+								mediaWebUrl={webMediaUrl({ type: "show", id, name: data.name })}
+							/>
+							<SimilarMedia mediaType="show" mediaId={id} />
+						</>
+					}
+					scrollRef={scrollRef}
 					refreshControl={
 						<RefreshControl
 							refreshing={refreshing}
@@ -88,125 +216,8 @@ export default function ShowDetailScreen() {
 							colors={["#f3bc00"]}
 						/>
 					}
-				>
-					<DetailHero
-						title={data.name}
-						backdropUrl={backdropUrl(data.backdrop_path)}
-						posterUrl={posterUrl(data.poster_path)}
-						rating={rating}
-						progress={progress?.state !== "unavailable" ? progress : undefined}
-						progressLabel="Show progress"
-						isProgressLoading={progressQuery.isLoading}
-					>
-						<MetadataPills
-							items={[
-								yearFromDate(data.first_air_date),
-								data.number_of_seasons
-									? `${data.number_of_seasons} season${data.number_of_seasons === 1 ? "" : "s"}`
-									: undefined,
-								data.number_of_episodes
-									? `${data.number_of_episodes} episodes`
-									: undefined,
-							]}
-						/>
-						<GenreLinks genres={data.genres} mediaType="show" />
-					</DetailHero>
-
-					{/* Shelf, watchlist and secondary tiles form one action cluster,
-					    kept tight (gap-2) like the season/episode screens. */}
-					<View className="gap-2">
-						<MediaTrackingActions
-							mediaType="show"
-							showId={id}
-							episodeCount={data.number_of_episodes}
-							progress={progress}
-						/>
-						<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
-						{/* Secondary actions as one row of compact tiles. */}
-						<View className="flex-row gap-2 px-4">
-							<RateReviewButton mediaType="show" mediaId={id} />
-							<AddToListButton mediaType="show" mediaId={id} />
-							<AddToLibraryButton mediaType="show" mediaId={id} />
-							<NoteButton mediaType="show" mediaId={id} />
-							<ShareButton
-								url={webMediaUrl({ type: "show", id, name: data.name })}
-								title={data.name}
-							/>
-						</View>
-					</View>
-
-					<OverviewSection text={data.overview} />
-					<DetailsCard
-						items={[
-							{
-								label: "Creator",
-								value:
-									data.credits?.crew
-										?.filter((p) => p.job === "Creator")
-										.map((p) => p.name)
-										.join(", ") || "Unknown",
-							},
-							{ label: "Seasons", value: data.number_of_seasons || 0 },
-							{ label: "Episodes", value: data.number_of_episodes || 0 },
-							{
-								label: "First Aired",
-								value: formatLongDate(data.first_air_date) ?? "Unknown",
-							},
-							{
-								label: "Genres",
-								value: data.genres?.length ? (
-									<GenreLinks genres={data.genres} mediaType="show" compact />
-								) : (
-									"N/A"
-								),
-							},
-						]}
-					/>
-
-					<FriendWatchers mediaType="show" mediaId={id} />
-
-					<WatchProviders mediaType="show" mediaId={id} />
-
-					{seasons.length > 0 ? (
-						<View className="gap-2 px-4">
-							<Text className="font-display font-semibold text-base text-foreground">
-								Seasons
-							</Text>
-							{seasons.map((s) => (
-								<SeasonCard
-									key={s.id}
-									actions
-									season={{
-										showId,
-										showSlug: name,
-										seasonNumber: s.season_number,
-										name: s.name,
-										posterPath: s.poster_path,
-										episodeCount: s.episode_count,
-										year: yearFromDate(s.air_date),
-										progress: progress?.seasons.find(
-											(season) => season.seasonNumber === s.season_number,
-										),
-									}}
-								/>
-							))}
-						</View>
-					) : null}
-
-					<CreditsSummary
-						credits={data.credits}
-						creditsHref={`/shows/${id}/${name}/credits`}
-					/>
-					<CommunityReviews
-						mediaType="show"
-						mediaId={id}
-						scrollRef={scrollRef}
-						focusReviewId={reviewId}
-						mediaWebUrl={webMediaUrl({ type: "show", id, name: data.name })}
-					/>
-					<SimilarMedia mediaType="show" mediaId={id} />
-				</ScrollView>
+				/>
 			)}
-		</View>
+		</ScreenFrame>
 	);
 }

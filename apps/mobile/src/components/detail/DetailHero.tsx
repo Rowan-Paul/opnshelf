@@ -12,6 +12,7 @@ import {
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/lib/theme-context";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useWideLayout } from "@/lib/use-wide-layout";
 
 /**
  * Hero header for media detail screens, matching the web `MediaHero`: a
@@ -45,6 +46,7 @@ export function DetailHero({
 	children?: ReactNode;
 }) {
 	const { scheme } = useTheme();
+	const wide = useWideLayout();
 	// The page background as an "r,g,b" triple so the scrims can fade it to
 	// varying alpha, exactly like web's from/via-(--background) overlays.
 	const bg = scheme === "dark" ? "2,6,23" : "248,250,252";
@@ -83,7 +85,7 @@ export function DetailHero({
 			</View>
 
 			{/* Content, bottom-anchored over the backdrop. */}
-			<View className="px-4 pt-28">
+			<View className="px-4" style={{ paddingTop: wide ? 24 : 112 }}>
 				<View className="flex-row gap-4">
 					{posterHref ? (
 						<Link href={posterHref} asChild>

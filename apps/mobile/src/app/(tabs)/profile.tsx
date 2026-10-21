@@ -33,6 +33,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useProfileShelf, usePublicProfile } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { useReleaseNotes } from "@/lib/use-release-notes";
+import { useWideLayout } from "@/lib/use-wide-layout";
 
 const POSTER_W = 110;
 
@@ -261,14 +262,16 @@ function Destination({
 	detail: string;
 	href: Href;
 }) {
+	const wide = useWideLayout();
 	return (
 		<Link href={href} asChild>
 			<Pressable
 				accessibilityRole="link"
-				className="grow basis-2/5 gap-2 rounded-xl border border-border bg-card p-4"
+				style={{ width: wide ? "22%" : "46%", flexGrow: 1, minWidth: 0 }}
+				className="min-h-16 flex-row items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5"
 			>
 				<Icon color="#f3bc00" size={20} />
-				<View>
+				<View className="min-w-0 flex-1">
 					<Text className="font-display font-semibold text-base text-foreground">
 						{title}
 					</Text>

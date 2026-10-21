@@ -2,6 +2,7 @@ import { Pencil, Plus, X } from "lucide-react-native";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { WatchCountBadge } from "@/components/media/WatchCountBadge";
 import { Text } from "@/components/ui/text";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { formatWatchDateTime } from "@/lib/watch-date";
 
 export interface WatchHistoryEntry {
@@ -39,6 +40,7 @@ export function WatchHistorySheet({
 	timeZone?: string;
 	hour12?: boolean;
 }) {
+	useDetailLayoutLock(visible);
 	return (
 		<Modal
 			visible={visible}

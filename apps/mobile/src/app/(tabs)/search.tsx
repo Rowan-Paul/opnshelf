@@ -64,6 +64,7 @@ import { useDebounce } from "@/lib/use-debounce";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useWideLayout } from "@/lib/use-wide-layout";
 
 type Tab = "all" | "movies" | "shows" | "cast" | "people";
 
@@ -174,6 +175,8 @@ function DiscoverRail({
 	/** Marks the first poster as the Welcome Tour's long-press target. */
 	anchorFirstCard?: boolean;
 }) {
+	const wide = useWideLayout();
+	const cardWidth = wide ? 148 : 124;
 	if (items.length === 0) return null;
 	return (
 		<View className="pt-2 pb-4">
@@ -189,16 +192,16 @@ function DiscoverRail({
 			<ScrollView
 				horizontal
 				showsHorizontalScrollIndicator={false}
-				contentContainerClassName="items-start gap-3 px-4"
+				contentContainerClassName="items-start gap-4 px-4"
 			>
 				{items.map((item, cardIndex) => {
 					const key = `${item.type}-${item.id}`;
 					return anchorFirstCard && cardIndex === 0 ? (
-						<TourAnchor key={key} id="media-card" className="w-28">
+						<TourAnchor key={key} id="media-card" style={{ width: cardWidth }}>
 							<MediaCard item={item} actions />
 						</TourAnchor>
 					) : (
-						<View key={key} className="w-28">
+						<View key={key} style={{ width: cardWidth }}>
 							<MediaCard item={item} actions />
 						</View>
 					);

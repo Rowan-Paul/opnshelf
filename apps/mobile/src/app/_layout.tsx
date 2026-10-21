@@ -20,6 +20,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
 import { WelcomeTour } from "@/components/tour/WelcomeTour";
 import { UpdateBanner } from "@/components/UpdateBanner";
+import { ScreenFrame } from "@/components/ui/screen-frame";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
 import { PickForMeIntentBridge } from "@/lib/pick-for-me-intent-bridge";
@@ -92,6 +93,13 @@ export default function RootLayout() {
 				{/* Custom `header` replaces the platform-native header on every screen
 				    with headerShown: true, so iOS and Android render the same bar. */}
 				<Stack
+					screenLayout={({ children, route }) =>
+						route.name === "(tabs)" ? (
+							children
+						) : (
+							<ScreenFrame>{children}</ScreenFrame>
+						)
+					}
 					screenOptions={{
 						headerShown: false,
 						header: (props) => <AppHeader {...props} />,

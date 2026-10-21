@@ -27,7 +27,14 @@ import {
 	Trash2,
 	UserPen,
 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import {
 	ActivityIndicator,
 	AppState,
@@ -63,6 +70,7 @@ import {
 	isAccountDeletionRunning,
 	useAccountDeletionJob,
 } from "@/lib/use-account-deletion";
+import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
 
 /** Amber primary used for active switches + selected radios. */
 const PRIMARY = "#f3bc00";
@@ -483,7 +491,7 @@ export function SettingsCategoryScreen({
 	);
 
 	return (
-		<>
+		<SettingsColumns section={section} locked={isDeleting}>
 			<Stack.Screen
 				options={{
 					title: SETTINGS_TITLES[section],
@@ -612,7 +620,9 @@ export function SettingsCategoryScreen({
 											<TimezonePicker
 												value={settings?.timezone}
 												onChange={(timezone) =>
-													updateSettingsMutation.mutate({ body: { timezone } })
+													updateSettingsMutation.mutate({
+														body: { timezone },
+													})
 												}
 												disabled={settingsBusy}
 											/>
@@ -990,7 +1000,7 @@ export function SettingsCategoryScreen({
 			</Screen>
 			{/* The blocking overlay during PDS deletion lives at the app root
 			    (AccountDeletionGate), so it also shows after an app restart. */}
-		</>
+		</SettingsColumns>
 	);
 }
 
@@ -1051,59 +1061,89 @@ const SETTINGS_AREAS: {
 	},
 ];
 
+function SettingsColumns({
+	children,
+	section,
+	locked,
+}: {
+	children: ReactNode;
+	section: SettingsCategory;
+	locked: boolean;
+}) {
+	const wide = useWideLayout();
+	const primaryWidth = usePaneWidth();
+	if (!wide || locked) return children;
+	return (
+		<View style={{ flex: 1, flexDirection: "row", gap: 24 }}>
+			<View style={{ width: primaryWidth }}>
+				<SettingsNavigation active={SETTINGS_TITLES[section]} />
+			</View>
+			<View style={{ flex: 1, minWidth: 0 }}>{children}</View>
+		</View>
+	);
+}
+
+function SettingsNavigation({ active }: { active?: string }) {
+	return (
+		<Screen topInset={false}>
+			<ScrollView
+				className="flex-1"
+				contentContainerClassName="gap-1 py-6"
+				showsVerticalScrollIndicator={false}
+			>
+				<Text className="pb-3 text-muted-foreground text-sm">
+					Choose an area to manage.
+				</Text>
+				<View className="overflow-hidden rounded-xl border border-border bg-card">
+					{SETTINGS_AREAS.map(({ href, label, description, Icon }, index) => (
+						<Link key={href} href={href} replace={!!active} asChild>
+							<Pressable
+								accessibilityState={{ selected: label === active }}
+								style={{
+									backgroundColor: label === active ? "#f3bc001a" : undefined,
+								}}
+								className={`flex-row items-center gap-3 p-4 ${
+									index > 0 ? "border-border border-t" : ""
+								}`}
+							>
+								<Icon color="#94a3b8" size={20} />
+								<View className="flex-1 gap-0.5">
+									<View className="flex-row items-center gap-2">
+										<Text className="font-medium text-foreground">{label}</Text>
+										{href === "/settings/privacy" && (
+											<View className="rounded-md bg-primary/10 px-2 py-1">
+												<Text className="font-semibold text-foreground text-xs">
+													Alpha
+												</Text>
+											</View>
+										)}
+									</View>
+									<Text className="text-muted-foreground text-sm">
+										{description}
+									</Text>
+								</View>
+								<ChevronRight color="#94a3b8" size={18} />
+							</Pressable>
+						</Link>
+					))}
+				</View>
+				<Text
+					selectable
+					className="pt-6 text-center text-muted-foreground text-xs"
+				>
+					{formatVersionLine()}
+				</Text>
+			</ScrollView>
+		</Screen>
+	);
+}
+
 /** The settings index is deliberately a short catalogue, not a control panel. */
 export default function SettingsScreen() {
 	return (
 		<>
 			<Stack.Screen options={{ title: "Settings" }} />
-			<Screen topInset={false}>
-				<ScrollView
-					className="flex-1"
-					contentContainerClassName="gap-1 py-6"
-					showsVerticalScrollIndicator={false}
-				>
-					<Text className="pb-3 text-muted-foreground text-sm">
-						Choose an area to manage.
-					</Text>
-					<View className="overflow-hidden rounded-xl border border-border bg-card">
-						{SETTINGS_AREAS.map(({ href, label, description, Icon }, index) => (
-							<Link key={href} href={href} asChild>
-								<Pressable
-									className={`flex-row items-center gap-3 p-4 ${
-										index > 0 ? "border-border border-t" : ""
-									}`}
-								>
-									<Icon color="#94a3b8" size={20} />
-									<View className="flex-1 gap-0.5">
-										<View className="flex-row items-center gap-2">
-											<Text className="font-medium text-foreground">
-												{label}
-											</Text>
-											{href === "/settings/privacy" && (
-												<View className="rounded-md bg-primary/10 px-2 py-1">
-													<Text className="font-semibold text-foreground text-xs">
-														Alpha
-													</Text>
-												</View>
-											)}
-										</View>
-										<Text className="text-muted-foreground text-sm">
-											{description}
-										</Text>
-									</View>
-									<ChevronRight color="#94a3b8" size={18} />
-								</Pressable>
-							</Link>
-						))}
-					</View>
-					<Text
-						selectable
-						className="pt-6 text-center text-muted-foreground text-xs"
-					>
-						{formatVersionLine()}
-					</Text>
-				</ScrollView>
-			</Screen>
+			<SettingsNavigation />
 		</>
 	);
 }

@@ -38,6 +38,7 @@ import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { UpNextServiceFilter } from "@/components/up-next/UpNextServiceFilter";
 import { useAuth } from "@/lib/auth-context";
+import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
 
 export default function PickerScreen({ result = false }: { result?: boolean }) {
 	const { user, isLoading: authLoading } = useAuth();
@@ -167,6 +168,8 @@ function Picker({
 	savedIds: number[];
 }) {
 	const router = useRouter();
+	const wide = useWideLayout();
+	const primaryWidth = usePaneWidth(16);
 	const params = useLocalSearchParams<{
 		minutes?: string;
 		filters?: string;
@@ -266,282 +269,313 @@ function Picker({
 			: "Enter how many minutes you have."
 		: undefined;
 	if (result && !validRequest) return <Redirect href="/pick-for-me" />;
+	const controls = (
+		<>
+			<Text className="text-muted-foreground">
+				Something from your Up Next or watchlist, for the time you have.
+			</Text>
+			<View className="gap-4 rounded-xl border border-border bg-card p-4">
+				<Text className="font-semibold">How much time do you have?</Text>
+				<View className="flex-row items-center gap-3">
+					<TextInput
+						accessibilityLabel="Available minutes"
+						keyboardType="number-pad"
+						placeholder="180"
+						placeholderTextColor="#94a3b8"
+						className="h-12 w-28 rounded-lg border border-border px-3 text-foreground"
+						value={time}
+						onChangeText={(value) => {
+							setTime(value);
+							setSkipped([]);
+						}}
+					/>
+					<Text>minutes</Text>
+				</View>
+				{timeError && (
+					<Text accessibilityRole="alert" className="text-sm">
+						{timeError}
+					</Text>
+				)}
+				<Choices
+					label="Type"
+					value={filters.type}
+					options={[
+						{ value: "both", label: "Both" },
+						{ value: "movie", label: "Movies" },
+						{ value: "show", label: "Shows" },
+					]}
+					onChange={(type) => change({ ...filters, type })}
+				/>
+				<Choices
+					label="Progress"
+					value={filters.progress}
+					options={[
+						{ value: "both", label: "Both" },
+						{ value: "start", label: "Start" },
+						{ value: "continue", label: "Continue" },
+					]}
+					onChange={(progress) => change({ ...filters, progress })}
+				/>
+				<View className="gap-2">
+					<Text className="font-semibold">Genre</Text>
+					<Button
+						label={filters.genre || "Any genre"}
+						variant="secondary"
+						onPress={() => setGenreOpen(true)}
+					/>
+				</View>
+				<Modal
+					visible={genreOpen}
+					animationType="slide"
+					presentationStyle="pageSheet"
+					onRequestClose={() => setGenreOpen(false)}
+				>
+					<View className="flex-1 bg-background p-5">
+						<View className="mb-4 flex-row items-center justify-between">
+							<Text className="font-bold text-xl">Genre</Text>
+							<Button
+								label="Done"
+								variant="secondary"
+								onPress={() => setGenreOpen(false)}
+							/>
+						</View>
+						<ScrollView>
+							<Choices
+								label="Choose a genre"
+								value={filters.genre}
+								options={[
+									{ value: "", label: "Any genre" },
+									...[
+										...new Set([
+											...PICKER_GENRES,
+											...(query.data?.genres ?? []),
+										]),
+									]
+										.sort()
+										.map((genre) => ({ value: genre, label: genre })),
+								]}
+								onChange={(genre) => {
+									change({ ...filters, genre });
+									setGenreOpen(false);
+								}}
+							/>
+						</ScrollView>
+					</View>
+				</Modal>
+				<UpNextServiceFilter
+					showClear={false}
+					country={country}
+					savedIds={savedIds}
+					value={filters.services}
+					onChange={(services) => change({ ...filters, services })}
+				/>
+				<Button
+					label="Pick for me"
+					disabled={!valid || query.isFetching || !ready}
+					onPress={() => {
+						Keyboard.dismiss();
+						router.replace({
+							pathname: "/pick-for-me/result",
+							params: { minutes: time, filters: JSON.stringify(filters) },
+						});
+					}}
+				/>
+				<Button
+					label="Clear all filters"
+					variant="secondary"
+					onPress={() => change(initialPickerFilters([]))}
+				/>
+			</View>
+		</>
+	);
+	const outcome = (
+		<View className="gap-5">
+			{!wide && (
+				<Button
+					label="Change filters"
+					variant="secondary"
+					onPress={() =>
+						router.replace({
+							pathname: "/pick-for-me",
+							params: { minutes: time, filters: JSON.stringify(filters) },
+						})
+					}
+				/>
+			)}
+			{query.isError && (
+				<View accessibilityRole="alert" className="gap-3">
+					<Text>Couldn't find suggestions. Try again.</Text>
+					<Button
+						label="Try again"
+						variant="secondary"
+						onPress={() => void query.refetch()}
+					/>
+				</View>
+			)}
+			{query.isFetching && !selection ? (
+				<View
+					accessibilityLabel="Finding something to watch"
+					className="gap-4 rounded-xl border border-border p-4"
+				>
+					<View className="h-56 w-36 self-center rounded-xl bg-background-subtle" />
+					<View className="h-7 w-2/3 rounded bg-background-subtle" />
+					<View className="h-4 rounded bg-background-subtle" />
+					<View className="h-12 rounded bg-background-subtle" />
+				</View>
+			) : selection ? (
+				<View
+					className="gap-4 rounded-xl border border-border bg-card p-4"
+					style={{ opacity: query.isFetching ? 0.5 : 1 }}
+				>
+					{selection.posterPath && (
+						<Image
+							accessibilityLabel={`${selection.title} poster`}
+							source={{
+								uri: `https://image.tmdb.org/t/p/w342${selection.posterPath}`,
+							}}
+							className="h-56 w-36 self-center rounded-xl"
+						/>
+					)}
+					<Text className="font-bold font-display text-2xl">
+						{selection.title}
+					</Text>
+					<Text className="text-muted-foreground">
+						{pickerEpisodeLabel(selection)}
+					</Text>
+					<Text>
+						{selection.estimated ? "About " : ""}
+						{selection.minutes} minutes ·{" "}
+						{Math.max(0, (submitted ?? 0) - selection.minutes)} minutes left
+					</Text>
+					{selection.services.map((service) => {
+						const href = getWatchProviderLink(
+							service.provider_id,
+							selection.watchLink,
+						);
+						return href ? (
+							<Button
+								key={service.provider_id}
+								label={`Watch on ${pickerServiceLabel(selection, service.provider_id, service.provider_name)}`}
+								variant="secondary"
+								onPress={() => {
+									setLinkError(false);
+									void Linking.openURL(href).catch(() => setLinkError(true));
+								}}
+							/>
+						) : (
+							<Text key={service.provider_id}>{service.provider_name}</Text>
+						);
+					})}
+					{linkError && (
+						<Text accessibilityRole="alert">
+							Couldn't open the service. Try its website or app.
+						</Text>
+					)}
+					{!selection.services.length && (
+						<Text className="text-muted-foreground">
+							Streaming availability is unknown or unavailable in your watch
+							country.
+						</Text>
+					)}
+					<Link
+						href={
+							selection.mediaType === "movie"
+								? {
+										pathname: "/movies/[id]/[name]",
+										params: {
+											id: selection.mediaId,
+											name: slugifyName(selection.title),
+										},
+									}
+								: {
+										pathname: "/shows/[id]/[name]",
+										params: {
+											id: selection.mediaId,
+											name: slugifyName(selection.title),
+										},
+									}
+						}
+						asChild
+					>
+						<Button label="View details" variant="secondary" />
+					</Link>
+					<Button
+						label="Pick again"
+						disabled={query.isFetching}
+						onPress={() => {
+							const next = [...skipped, selection.id];
+							setSkipped(next);
+							setSelection(choosePickerItem(query.data?.items ?? [], next));
+							setLinkError(false);
+						}}
+					/>
+				</View>
+			) : submitted !== undefined &&
+				query.data &&
+				!query.isFetching &&
+				!query.isError ? (
+				<View className="gap-3 rounded-xl border border-border p-4">
+					<Text className="font-semibold text-xl">
+						{skipped.length
+							? "You’ve tried every match"
+							: "No titles fit these filters"}
+					</Text>
+					<Text className="text-muted-foreground">
+						{skipped.length
+							? "Reset your skips or change the filters to try something else."
+							: "Try more time or clear filters. Add titles to your watchlist if you need more choices. Titles without a usable runtime cannot fit a time budget."}
+					</Text>
+					{skipped.length > 0 && (
+						<Button
+							label="Reset skips"
+							variant="secondary"
+							onPress={() => {
+								setSkipped([]);
+								setSelection(choosePickerItem(query.data?.items ?? [], []));
+							}}
+						/>
+					)}
+				</View>
+			) : null}
+		</View>
+	);
+	if (wide)
+		return (
+			<View style={{ flex: 1, flexDirection: "row", gap: 24 }}>
+				<View style={{ width: primaryWidth }}>
+					<ScrollView
+						keyboardShouldPersistTaps="handled"
+						contentContainerClassName="gap-5 py-5 pb-12"
+					>
+						{controls}
+					</ScrollView>
+				</View>
+				<ScrollView
+					style={{ flex: 1 }}
+					contentContainerClassName="gap-5 py-5 pb-12"
+				>
+					{result ? (
+						outcome
+					) : (
+						<View className="gap-3 rounded-xl border border-border bg-card p-5">
+							<Text className="font-display font-semibold text-xl">
+								Your pick
+							</Text>
+							<Text className="text-muted-foreground">
+								Choose your time and filters, then tap Pick for me. Your
+								suggestion will appear here.
+							</Text>
+						</View>
+					)}
+				</ScrollView>
+			</View>
+		);
 	return (
 		<ScrollView
 			keyboardShouldPersistTaps="handled"
 			contentContainerClassName="gap-5 py-5 pb-12"
 		>
-			{!result && (
-				<>
-					<Text className="text-muted-foreground">
-						Something from your Up Next or watchlist, for the time you have.
-					</Text>
-					<View className="gap-4 rounded-xl border border-border bg-card p-4">
-						<Text className="font-semibold">How much time do you have?</Text>
-						<View className="flex-row items-center gap-3">
-							<TextInput
-								accessibilityLabel="Available minutes"
-								keyboardType="number-pad"
-								placeholder="180"
-								placeholderTextColor="#94a3b8"
-								className="h-12 w-28 rounded-lg border border-border px-3 text-foreground"
-								value={time}
-								onChangeText={(value) => {
-									setTime(value);
-									setSkipped([]);
-									setSelection(undefined);
-								}}
-							/>
-							<Text>minutes</Text>
-						</View>
-						{timeError && (
-							<Text accessibilityRole="alert" className="text-sm">
-								{timeError}
-							</Text>
-						)}
-						<Choices
-							label="Type"
-							value={filters.type}
-							options={[
-								{ value: "both", label: "Both" },
-								{ value: "movie", label: "Movies" },
-								{ value: "show", label: "Shows" },
-							]}
-							onChange={(type) => change({ ...filters, type })}
-						/>
-						<Choices
-							label="Progress"
-							value={filters.progress}
-							options={[
-								{ value: "both", label: "Both" },
-								{ value: "start", label: "Start" },
-								{ value: "continue", label: "Continue" },
-							]}
-							onChange={(progress) => change({ ...filters, progress })}
-						/>
-						<View className="gap-2">
-							<Text className="font-semibold">Genre</Text>
-							<Button
-								label={filters.genre || "Any genre"}
-								variant="secondary"
-								onPress={() => setGenreOpen(true)}
-							/>
-						</View>
-						<Modal
-							visible={genreOpen}
-							animationType="slide"
-							presentationStyle="pageSheet"
-							onRequestClose={() => setGenreOpen(false)}
-						>
-							<View className="flex-1 bg-background p-5">
-								<View className="mb-4 flex-row items-center justify-between">
-									<Text className="font-bold text-xl">Genre</Text>
-									<Button
-										label="Done"
-										variant="secondary"
-										onPress={() => setGenreOpen(false)}
-									/>
-								</View>
-								<ScrollView>
-									<Choices
-										label="Choose a genre"
-										value={filters.genre}
-										options={[
-											{ value: "", label: "Any genre" },
-											...[
-												...new Set([
-													...PICKER_GENRES,
-													...(query.data?.genres ?? []),
-												]),
-											]
-												.sort()
-												.map((genre) => ({ value: genre, label: genre })),
-										]}
-										onChange={(genre) => {
-											change({ ...filters, genre });
-											setGenreOpen(false);
-										}}
-									/>
-								</ScrollView>
-							</View>
-						</Modal>
-						<UpNextServiceFilter
-							showClear={false}
-							country={country}
-							savedIds={savedIds}
-							value={filters.services}
-							onChange={(services) => change({ ...filters, services })}
-						/>
-						<Button
-							label="Pick for me"
-							disabled={!valid || query.isFetching || !ready}
-							onPress={() => {
-								Keyboard.dismiss();
-								router.push({
-									pathname: "/pick-for-me/result",
-									params: { minutes: time, filters: JSON.stringify(filters) },
-								});
-							}}
-						/>
-						<Button
-							label="Clear all filters"
-							variant="secondary"
-							onPress={() => change(initialPickerFilters([]))}
-						/>
-					</View>
-				</>
-			)}
-			{result && (
-				<View className="gap-5">
-					<Button
-						label="Change filters"
-						variant="secondary"
-						onPress={() =>
-							router.dismissTo({
-								pathname: "/pick-for-me",
-								params: { minutes: time, filters: JSON.stringify(filters) },
-							})
-						}
-					/>
-					{query.isError && (
-						<View accessibilityRole="alert" className="gap-3">
-							<Text>Couldn't find suggestions. Try again.</Text>
-							<Button
-								label="Try again"
-								variant="secondary"
-								onPress={() => void query.refetch()}
-							/>
-						</View>
-					)}
-					{query.isFetching && !selection ? (
-						<View
-							accessibilityLabel="Finding something to watch"
-							className="gap-4 rounded-xl border border-border p-4"
-						>
-							<View className="h-56 w-36 self-center rounded-xl bg-background-subtle" />
-							<View className="h-7 w-2/3 rounded bg-background-subtle" />
-							<View className="h-4 rounded bg-background-subtle" />
-							<View className="h-12 rounded bg-background-subtle" />
-						</View>
-					) : selection ? (
-						<View
-							className="gap-4 rounded-xl border border-border bg-card p-4"
-							style={{ opacity: query.isFetching ? 0.5 : 1 }}
-						>
-							{selection.posterPath && (
-								<Image
-									accessibilityLabel={`${selection.title} poster`}
-									source={{
-										uri: `https://image.tmdb.org/t/p/w342${selection.posterPath}`,
-									}}
-									className="h-56 w-36 self-center rounded-xl"
-								/>
-							)}
-							<Text className="font-bold font-display text-2xl">
-								{selection.title}
-							</Text>
-							<Text className="text-muted-foreground">
-								{pickerEpisodeLabel(selection)}
-							</Text>
-							<Text>
-								{selection.estimated ? "About " : ""}
-								{selection.minutes} minutes ·{" "}
-								{Math.max(0, (submitted ?? 0) - selection.minutes)} minutes left
-							</Text>
-							{selection.services.map((service) => {
-								const href = getWatchProviderLink(
-									service.provider_id,
-									selection.watchLink,
-								);
-								return href ? (
-									<Button
-										key={service.provider_id}
-										label={`Watch on ${pickerServiceLabel(selection, service.provider_id, service.provider_name)}`}
-										variant="secondary"
-										onPress={() => {
-											setLinkError(false);
-											void Linking.openURL(href).catch(() =>
-												setLinkError(true),
-											);
-										}}
-									/>
-								) : (
-									<Text key={service.provider_id}>{service.provider_name}</Text>
-								);
-							})}
-							{linkError && (
-								<Text accessibilityRole="alert">
-									Couldn't open the service. Try its website or app.
-								</Text>
-							)}
-							{!selection.services.length && (
-								<Text className="text-muted-foreground">
-									Streaming availability is unknown or unavailable in your watch
-									country.
-								</Text>
-							)}
-							<Link
-								href={
-									selection.mediaType === "movie"
-										? {
-												pathname: "/movies/[id]/[name]",
-												params: {
-													id: selection.mediaId,
-													name: slugifyName(selection.title),
-												},
-											}
-										: {
-												pathname: "/shows/[id]/[name]",
-												params: {
-													id: selection.mediaId,
-													name: slugifyName(selection.title),
-												},
-											}
-								}
-								asChild
-							>
-								<Button label="View details" variant="secondary" />
-							</Link>
-							<Button
-								label="Pick again"
-								disabled={query.isFetching}
-								onPress={() => {
-									const next = [...skipped, selection.id];
-									setSkipped(next);
-									setSelection(choosePickerItem(query.data?.items ?? [], next));
-									setLinkError(false);
-								}}
-							/>
-						</View>
-					) : submitted !== undefined &&
-						query.data &&
-						!query.isFetching &&
-						!query.isError ? (
-						<View className="gap-3 rounded-xl border border-border p-4">
-							<Text className="font-semibold text-xl">
-								{skipped.length
-									? "You’ve tried every match"
-									: "No titles fit these filters"}
-							</Text>
-							<Text className="text-muted-foreground">
-								{skipped.length
-									? "Reset your skips or change the filters to try something else."
-									: "Try more time or clear filters. Add titles to your watchlist if you need more choices. Titles without a usable runtime cannot fit a time budget."}
-							</Text>
-							{skipped.length > 0 && (
-								<Button
-									label="Reset skips"
-									variant="secondary"
-									onPress={() => {
-										setSkipped([]);
-										setSelection(choosePickerItem(query.data?.items ?? [], []));
-									}}
-								/>
-							)}
-						</View>
-					) : null}
-				</View>
-			)}
+			{result ? outcome : controls}
 		</ScrollView>
 	);
 }
