@@ -19,9 +19,6 @@ export const MEASURE_MS = 200;
 /** Padding around the spotlighted element, in px. */
 export const HOLE_PAD = 8;
 
-/** Where a scrolled-to anchor lands from the top of the window, in px. */
-export const SCROLL_TARGET_Y = 24;
-
 /** Prefer space beside the anchor, but never place the card outside its viewport. */
 export function tourCardTop({
 	hole,
@@ -107,4 +104,22 @@ export function shouldRunTour(input: {
 	if (input.seenVersion === undefined) return false;
 	if (isTourBlockedPath(input.pathname)) return false;
 	return input.seenVersion < TOUR_VERSION;
+}
+
+/** Preserve visible anchors; otherwise place the heading below the top safe area. */
+export function tourScrollOffset({
+	y,
+	height,
+	viewportHeight,
+	offsetY,
+	safeTop,
+}: {
+	y: number;
+	height: number;
+	viewportHeight: number;
+	offsetY: number;
+	safeTop: number;
+}): number | null {
+	if (y >= safeTop && y + height <= viewportHeight) return null;
+	return Math.max(0, offsetY + y - safeTop);
 }

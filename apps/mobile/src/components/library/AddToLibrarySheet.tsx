@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { LIBRARY_FORMATS, type LibraryFormat } from "@/lib/use-library";
 
 /**
@@ -24,6 +25,7 @@ export function AddToLibrarySheet({
 	isLoading?: boolean;
 	onToggle: (format: LibraryFormat, boxSet?: string) => void;
 }) {
+	useDetailLayoutLock(visible);
 	const [boxSet, setBoxSet] = useState("");
 
 	return (

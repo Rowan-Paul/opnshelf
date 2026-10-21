@@ -23,7 +23,7 @@ import {
 import { TraktHomePrompt } from "@/components/trakt/TraktHomePrompt";
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
-import { useWideLayout } from "@/lib/use-wide-layout";
+import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
 
 /**
  * Home. Mirrors the Web App's landing route: a welcome greeting, a stats
@@ -38,6 +38,7 @@ import { useWideLayout } from "@/lib/use-wide-layout";
 export default function HomeScreen() {
 	const insets = useSafeAreaInsets();
 	const wide = useWideLayout();
+	const primaryWidth = usePaneWidth(16);
 	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
@@ -110,11 +111,11 @@ export default function HomeScreen() {
 
 					{wide ? (
 						<View className="flex-row items-start gap-6">
-							<View className="min-w-0 flex-[3] gap-8">
+							<View className="min-w-0 gap-8" style={{ width: primaryWidth }}>
 								<UpNextPreview handle={user?.handle} />
 								<ShelfPreviewRow userDid={userDid} />
 							</View>
-							<View className="min-w-0 flex-[2] gap-8">
+							<View className="min-w-0 flex-1 gap-8">
 								<FriendsActivity />
 								<UpcomingReleases />
 							</View>

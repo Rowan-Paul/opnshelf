@@ -1,9 +1,10 @@
-import { createElement, type ReactNode } from "react";
+import { createElement, type ReactNode, useState } from "react";
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ScreenFrame } from "@/components/ui/screen-frame";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { DetailColumns } from "./DetailColumns";
 
 const layout = vi.hoisted(() => ({ wide: false }));
@@ -93,4 +94,43 @@ describe("detail panes", () => {
 			wide ? 0 : 1,
 		);
 	});
+});
+
+function DraftEditor() {
+	const [open, setOpen] = useState(false);
+	const [draft, setDraft] = useState("");
+	useDetailLayoutLock(open);
+	return createElement("draft-editor", {
+		testID: "draft-editor",
+		open,
+		draft,
+		onOpen: () => setOpen(true),
+		onChange: setDraft,
+		onClose: () => setOpen(false),
+	});
+}
+
+it.each([
+	false,
+	true,
+])("preserves an edited open sheet across a fold from wide=%s", (wide) => {
+	layout.wide = wide;
+	const page = () => (
+		<DetailColumns primary={<DraftEditor />} secondary={null} />
+	);
+	act(() => {
+		renderer = create(page());
+	});
+	const editor = () => renderer.root.findByProps({ testID: "draft-editor" });
+	act(() => {
+		editor().props.onOpen();
+		editor().props.onChange("Unsaved review draft");
+	});
+	layout.wide = !wide;
+	act(() => renderer.update(page()));
+	expect(editor().props.open).toBe(true);
+	expect(editor().props.draft).toBe("Unsaved review draft");
+	expect(renderer.root.findAllByType(ScrollView)).toHaveLength(wide ? 2 : 1);
+	act(() => editor().props.onClose());
+	expect(renderer.root.findAllByType(ScrollView)).toHaveLength(wide ? 1 : 2);
 });

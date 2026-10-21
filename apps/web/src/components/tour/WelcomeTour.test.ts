@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { shouldRunTour, TOUR_STEPS, TOUR_VERSION } from "./WelcomeTour";
+import { describe, expect, it, vi } from "vitest";
+import {
+	scrollTourTarget,
+	shouldRunTour,
+	TOUR_STEPS,
+	TOUR_VERSION,
+} from "./WelcomeTour";
 
 const base = {
 	isAuthenticated: true,
@@ -52,5 +57,23 @@ describe("TOUR_STEPS", () => {
 			false,
 		);
 		expect(TOUR_STEPS.some((step) => step.anchor === "activity")).toBe(false);
+	});
+});
+
+describe("tour section scrolling", () => {
+	it.each([
+		false,
+		true,
+	])("keeps section headings visible for oversized=%s", (oversized) => {
+		const section = document.createElement("section");
+		vi.spyOn(section, "getBoundingClientRect").mockReturnValue(
+			new DOMRect(0, 0, 400, window.innerHeight + (oversized ? 200 : -200)),
+		);
+		section.scrollIntoView = vi.fn();
+		scrollTourTarget(section);
+		expect(section.scrollIntoView).toHaveBeenCalledWith({
+			block: oversized ? "start" : "center",
+			behavior: "smooth",
+		});
 	});
 });

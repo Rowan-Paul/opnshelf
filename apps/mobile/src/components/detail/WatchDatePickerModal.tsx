@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Modal, Platform, Pressable, useColorScheme, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 
 interface WatchDatePickerModalProps {
 	visible: boolean;
@@ -40,6 +41,7 @@ export function WatchDatePickerModal({
 }: WatchDatePickerModalProps) {
 	// The picker paints its own text: hardcoding a variant renders dark-mode
 	// text on the light card, which leaves the whole calendar unreadable.
+	useDetailLayoutLock(visible);
 	const themeVariant = useColorScheme() === "dark" ? "dark" : "light";
 	const isEditing = initialWatchedAt !== undefined;
 	const [noDate, setNoDate] = useState(initialWatchedAt === null);

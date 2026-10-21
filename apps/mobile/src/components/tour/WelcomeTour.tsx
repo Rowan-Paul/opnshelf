@@ -23,11 +23,11 @@ import {
 	ANCHOR_TIMEOUT_MS,
 	HOLE_PAD,
 	MEASURE_MS,
-	SCROLL_TARGET_Y,
 	shouldRunTour,
 	TOUR_STEPS,
 	TOUR_VERSION,
 	tourCardTop,
+	tourScrollOffset,
 } from "@/lib/welcome-tour";
 
 /**
@@ -211,7 +211,7 @@ export function WelcomeTour() {
 		return () => subscription.remove();
 	}, [index, end]);
 
-	const rect = useAnchorRect(step?.anchor, index);
+	const rect = useAnchorRect(step?.anchor, index, insets.top + 12);
 	// Anchors are measured in window coordinates, but the hole is positioned
 	// inside this overlay. The two origins differ by the system bars, which put
 	// every ring a status bar too high, so measure this view and work in its own
@@ -395,6 +395,7 @@ interface AnchorRect {
 function useAnchorRect(
 	anchor: string | undefined,
 	stepIndex: number | null,
+	scrollTargetY: number,
 ): AnchorRect | null {
 	const [rect, setRect] = useState<AnchorRect | null>(null);
 	const scrolledFor = useRef<string | null>(null);
@@ -419,15 +420,21 @@ function useAnchorRect(
 				if (cancelled) return;
 				if (width === 0 && height === 0) return;
 				const window = Dimensions.get("window");
-				const offscreen = y < 0 || y + height > window.height;
+				const scrollOffset = tourScrollOffset({
+					y,
+					height,
+					viewportHeight: window.height,
+					offsetY: homeScroll.offsetY,
+					safeTop: scrollTargetY,
+				});
 				if (
-					(offscreen || anchor === "up-next" || anchor === "shelf") &&
+					scrollOffset !== null &&
 					homeScroll.view &&
 					scrolledFor.current !== key
 				) {
 					scrolledFor.current = key;
 					homeScroll.view.scrollTo({
-						y: Math.max(0, homeScroll.offsetY + y - SCROLL_TARGET_Y),
+						y: scrollOffset,
 						animated: true,
 					});
 					return;
@@ -442,7 +449,7 @@ function useAnchorRect(
 			cancelled = true;
 			clearInterval(timer);
 		};
-	}, [anchor, stepIndex]);
+	}, [anchor, stepIndex, scrollTargetY]);
 
 	return rect;
 }

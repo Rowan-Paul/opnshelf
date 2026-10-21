@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, View } from "react-native";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 
 /**
  * Bottom sheet listing the user's lists with membership checkmarks for one
@@ -23,6 +24,7 @@ export function AddToListSheet({
 	isLoading?: boolean;
 	onToggle: (slug: string, isInList: boolean) => void;
 }) {
+	useDetailLayoutLock(visible);
 	return (
 		<Modal
 			visible={visible}

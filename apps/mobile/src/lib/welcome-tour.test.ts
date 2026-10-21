@@ -4,6 +4,7 @@ import {
 	TOUR_STEPS,
 	TOUR_VERSION,
 	tourCardTop,
+	tourScrollOffset,
 } from "./welcome-tour";
 
 describe("tourCardTop", () => {
@@ -94,5 +95,41 @@ describe("TOUR_STEPS", () => {
 			false,
 		);
 		expect(TOUR_STEPS.some((step) => step.anchor === "activity")).toBe(false);
+	});
+});
+
+describe("Home tour scrolling", () => {
+	it("does not move an already visible section", () => {
+		expect(
+			tourScrollOffset({
+				y: 100,
+				height: 200,
+				viewportHeight: 678,
+				offsetY: 0,
+				safeTop: 72,
+			}),
+		).toBeNull();
+	});
+	it("places an offscreen heading below the safe area", () => {
+		expect(
+			tourScrollOffset({
+				y: 600,
+				height: 200,
+				viewportHeight: 678,
+				offsetY: 0,
+				safeTop: 72,
+			}),
+		).toBe(528);
+	});
+	it("moves a heading out of the top inset", () => {
+		expect(
+			tourScrollOffset({
+				y: 24,
+				height: 200,
+				viewportHeight: 678,
+				offsetY: 500,
+				safeTop: 72,
+			}),
+		).toBe(452);
 	});
 });

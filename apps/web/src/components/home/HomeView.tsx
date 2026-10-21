@@ -330,7 +330,7 @@ export function HomeView() {
 				{/* Main Content - Continue Watching */}
 				<div className="space-y-8 lg:col-span-2">
 					{/* Up Next - Shows the next episodes to watch */}
-					<section data-tour="up-next">
+					<section data-tour="up-next" className="scroll-mt-24">
 						<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 							<h2 className="text-display-3">Up Next</h2>
 							<div className="flex shrink-0 items-center gap-4">
@@ -405,7 +405,7 @@ export function HomeView() {
 					</section>
 
 					{/* Continue Watching */}
-					<section data-tour="shelf">
+					<section data-tour="shelf" className="scroll-mt-24">
 						<div className="mb-4 flex items-center justify-between">
 							<h2 className="text-display-3">Your Shelf</h2>
 							{user && (

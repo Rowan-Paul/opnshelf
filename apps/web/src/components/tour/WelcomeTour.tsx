@@ -295,7 +295,7 @@ function useAnchorRect(
 			}
 			if (scrolledFor.current !== key) {
 				scrolledFor.current = key;
-				element.scrollIntoView({ block: "center", behavior: "smooth" });
+				scrollTourTarget(element);
 			}
 			setRect(element.getBoundingClientRect());
 		};
@@ -329,4 +329,15 @@ function cardStyle(
 		Math.max(12, window.innerWidth - CARD_WIDTH - 12),
 	);
 	return { width: CARD_WIDTH, left, top: Math.max(12, Math.min(lastTop, top)) };
+}
+
+/** Oversized sections must keep their heading visible instead of centring the body. */
+export function scrollTourTarget(element: Element) {
+	element.scrollIntoView({
+		block:
+			element.getBoundingClientRect().height > window.innerHeight
+				? "start"
+				: "center",
+		behavior: "smooth",
+	});
 }
