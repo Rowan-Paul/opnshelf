@@ -6,12 +6,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, usePathname } from "expo-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ViewInstance } from "react-native";
+import type { ViewInstance, ViewProps } from "react-native";
 import {
 	BackHandler,
 	Dimensions,
 	Pressable,
+	ScrollView,
 	type ScrollViewInstance,
+	useWindowDimensions,
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,6 +27,7 @@ import {
 	shouldRunTour,
 	TOUR_STEPS,
 	TOUR_VERSION,
+	tourCardTop,
 } from "@/lib/welcome-tour";
 
 /**
@@ -56,9 +59,11 @@ export function TourAnchor({
 	id,
 	className,
 	children,
+	style,
 }: {
 	id: string;
 	className?: string;
+	style?: ViewProps["style"];
 	children: ReactNode;
 }) {
 	return (
@@ -67,6 +72,7 @@ export function TourAnchor({
 			// measured.
 			collapsable={false}
 			className={className}
+			style={style}
 			ref={(node) => {
 				if (node) anchors.set(id, node as unknown as Measurable);
 				else anchors.delete(id);
@@ -117,6 +123,8 @@ export function WelcomeTour() {
 	const { user, isAuthenticated } = useAuth();
 	const pathname = usePathname();
 	const insets = useSafeAreaInsets();
+	const window = useWindowDimensions();
+	const [cardHeight, setCardHeight] = useState(320);
 	const queryClient = useQueryClient();
 
 	const [index, setIndex] = useState<number | null>(null);
@@ -219,7 +227,6 @@ export function WelcomeTour() {
 	if (!step || index === null) return null;
 
 	const isLast = index === TOUR_STEPS.length - 1;
-	const window = Dimensions.get("window");
 	const height = frame?.height || window.height;
 	const width = frame?.width || window.width;
 	// Clamped to the overlay: a page header is full width, so the padding would
@@ -227,17 +234,14 @@ export function WelcomeTour() {
 	// corners off. Clamped, the ring hugs the edge and still reads as closed.
 	const hole = rect ? clampToBox(rect, frame, width, height) : null;
 
-	// Card below the hole when it fits, above it when it does not, and centred
-	// when the step has nothing to point at.
-	const cardTop = !hole
-		? undefined
-		: hole.top + hole.height + 320 < height
-			? hole.top + hole.height + 12
-			: undefined;
-	const cardBottom =
-		hole && cardTop === undefined
-			? Math.max(insets.bottom + 12, height - hole.top + 12)
-			: undefined;
+	const safeTop = Math.max(0, insets.top - (frame?.y ?? 0)) + 12;
+	const safeBottom = height - insets.bottom - 12;
+	const cardTop = tourCardTop({
+		hole,
+		cardHeight,
+		top: safeTop,
+		bottom: safeBottom,
+	});
 
 	return (
 		<View
@@ -289,50 +293,53 @@ export function WelcomeTour() {
 			)}
 
 			<View
-				className="absolute gap-2 rounded-2xl border border-border bg-card p-4"
+				className="absolute overflow-hidden rounded-2xl border border-border bg-card"
+				onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)}
 				style={{
 					left: 16,
 					right: 16,
-					top: cardTop ?? (hole ? undefined : height / 2 - 140),
-					bottom: cardBottom,
+					top: cardTop,
+					maxHeight: Math.max(0, safeBottom - safeTop),
 				}}
 			>
-				<Text className="text-muted-foreground text-xs">
-					Step {index + 1} of {TOUR_STEPS.length}
-				</Text>
-				<Text className="font-bold font-display text-foreground text-lg">
-					{step.title}
-				</Text>
-				<Text className="text-muted-foreground text-sm leading-5">
-					{step.body}
-				</Text>
-				<View className="mt-2 flex-row items-center justify-between">
-					<Pressable hitSlop={8} onPress={end}>
-						<Text className="font-medium text-muted-foreground text-sm">
-							Skip
-						</Text>
-					</Pressable>
-					<View className="flex-row items-center gap-2">
-						{index > 0 ? (
-							<Pressable
-								className="rounded-full border border-border px-4 py-2"
-								onPress={() => setIndex(index - 1)}
-							>
-								<Text className="font-semibold text-foreground text-sm">
-									Back
-								</Text>
-							</Pressable>
-						) : null}
-						<Pressable
-							className="rounded-full bg-primary px-4 py-2"
-							onPress={() => (isLast ? end() : setIndex(index + 1))}
-						>
-							<Text className="font-semibold text-primary-foreground text-sm">
-								{isLast ? "Done" : "Next"}
+				<ScrollView contentContainerStyle={{ padding: 16, gap: 8 }}>
+					<Text className="text-muted-foreground text-xs">
+						Step {index + 1} of {TOUR_STEPS.length}
+					</Text>
+					<Text className="font-bold font-display text-foreground text-lg">
+						{step.title}
+					</Text>
+					<Text className="text-muted-foreground text-sm leading-5">
+						{step.body}
+					</Text>
+					<View className="mt-2 flex-row items-center justify-between">
+						<Pressable hitSlop={8} onPress={end}>
+							<Text className="font-medium text-muted-foreground text-sm">
+								Skip
 							</Text>
 						</Pressable>
+						<View className="flex-row items-center gap-2">
+							{index > 0 ? (
+								<Pressable
+									className="rounded-full border border-border px-4 py-2"
+									onPress={() => setIndex(index - 1)}
+								>
+									<Text className="font-semibold text-foreground text-sm">
+										Back
+									</Text>
+								</Pressable>
+							) : null}
+							<Pressable
+								className="rounded-full bg-primary px-4 py-2"
+								onPress={() => (isLast ? end() : setIndex(index + 1))}
+							>
+								<Text className="font-semibold text-primary-foreground text-sm">
+									{isLast ? "Done" : "Next"}
+								</Text>
+							</Pressable>
+						</View>
 					</View>
-				</View>
+				</ScrollView>
 			</View>
 		</View>
 	);
@@ -413,7 +420,11 @@ function useAnchorRect(
 				if (width === 0 && height === 0) return;
 				const window = Dimensions.get("window");
 				const offscreen = y < 0 || y + height > window.height;
-				if (offscreen && homeScroll.view && scrolledFor.current !== key) {
+				if (
+					(offscreen || anchor === "up-next" || anchor === "shelf") &&
+					homeScroll.view &&
+					scrolledFor.current !== key
+				) {
 					scrolledFor.current = key;
 					homeScroll.view.scrollTo({
 						y: Math.max(0, homeScroll.offsetY + y - SCROLL_TARGET_Y),

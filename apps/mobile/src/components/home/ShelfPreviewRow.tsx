@@ -36,10 +36,8 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 		: undefined;
 
 	return (
-		<View>
-			<TourAnchor id="shelf">
-				<SectionHeader icon={Film} title="Your Shelf" href={shelfHref} />
-			</TourAnchor>
+		<TourAnchor id="shelf">
+			<SectionHeader icon={Film} title="Your Shelf" href={shelfHref} />
 			{isLoading ? (
 				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-3">
@@ -80,7 +78,7 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 					</View>
 				</ScrollView>
 			)}
-		</View>
+		</TourAnchor>
 	);
 }
 

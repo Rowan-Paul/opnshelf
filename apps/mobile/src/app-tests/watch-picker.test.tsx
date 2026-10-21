@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 	canGoBack: vi.fn(() => true),
 	replace: vi.fn(),
 	save: vi.fn(),
+	wide: false,
 	loading: false,
 	error: false,
 	refetch: vi.fn(),
@@ -38,6 +39,10 @@ function host(name: string) {
 	return ({ children, ...props }: PropsWithChildren) =>
 		createElement(name, props, children);
 }
+vi.mock("@/lib/use-wide-layout", () => ({
+	useWideLayout: () => mocks.wide,
+	usePaneWidth: () => 447.5,
+}));
 vi.mock("react-native", () => ({
 	View: host("View"),
 	ScrollView: host("ScrollView"),
@@ -144,6 +149,7 @@ beforeEach(() => {
 	mocks.dismissTo.mockClear();
 	mocks.back.mockClear();
 	mocks.replace.mockClear();
+	mocks.wide = false;
 	mocks.loading = false;
 	mocks.error = false;
 	mocks.refetch.mockClear();
@@ -152,6 +158,26 @@ beforeEach(() => {
 	mocks.save.mockResolvedValue(undefined);
 });
 describe("Mobile picker session", () => {
+	it("keeps filters beside the result on wide screens and replaces repeat submissions", async () => {
+		mocks.wide = true;
+		mocks.params = { minutes: "180" };
+		const view = await renderPicker(true);
+		expect(view.root.findAllByType(TextInput)).toHaveLength(1);
+		expect(button(view, "Pick again")).toBeDefined();
+		expect(button(view, "Change filters")).toBeUndefined();
+		await act(async () =>
+			view.root.findByType(TextInput).props.onChangeText("90"),
+		);
+		expect(button(view, "Pick again")).toBeDefined();
+		await act(async () => button(view, "Pick for me").props.onPress());
+		expect(mocks.replace).toHaveBeenCalledWith({
+			pathname: "/pick-for-me/result",
+			params: { minutes: "90", filters: expect.any(String) },
+		});
+		expect(mocks.push).not.toHaveBeenCalled();
+		await act(async () => view.unmount());
+	});
+
 	it.each([
 		[null, "/login"],
 		[{ needsEmailVerification: true, needsOnboarding: true }, "/verify-email"],
@@ -181,23 +207,23 @@ describe("Mobile picker session", () => {
 		expect(view.root.findByType(TextInput).props.value).toBe("90");
 		await act(async () => button(view, "Pick for me").props.onPress());
 		expect(
-			JSON.parse(mocks.push.mock.calls.at(-1)?.[0].params.filters),
+			JSON.parse(mocks.replace.mock.calls.at(-1)?.[0].params.filters),
 		).toMatchObject({ type: "show", services: "8" });
 		mocks.params = { minutes: "45", type: "movie", shortcutRequest: "second" };
 		await act(async () => view.update(<PickerScreen />));
 		expect(view.root.findByType(TextInput).props.value).toBe("45");
 		await act(async () => button(view, "Pick for me").props.onPress());
 		expect(
-			JSON.parse(mocks.push.mock.calls.at(-1)?.[0].params.filters),
+			JSON.parse(mocks.replace.mock.calls.at(-1)?.[0].params.filters),
 		).toMatchObject({ type: "movie", services: "8" });
 		await act(async () => view.unmount());
 	});
-	it("opens a separate result screen with the submitted time and filters", async () => {
+	it("replaces the picker with its result so Back skips the filter screen", async () => {
 		const view = await renderPicker();
 		expect(view.root.findByType(TextInput).props.value).toBe("180");
 		await act(async () => button(view, "Pick for me").props.onPress());
 		expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
-		expect(mocks.push).toHaveBeenCalledWith({
+		expect(mocks.replace).toHaveBeenCalledWith({
 			pathname: "/pick-for-me/result",
 			params: {
 				minutes: "180",
@@ -209,6 +235,7 @@ describe("Mobile picker session", () => {
 				}),
 			},
 		});
+		expect(mocks.push).not.toHaveBeenCalled();
 		expect(JSON.stringify(view.toJSON())).not.toContain("Tonight’s movie");
 		await act(async () => view.unmount());
 	});
@@ -232,7 +259,7 @@ describe("Mobile picker session", () => {
 		await act(async () => button(view, "Reset skips").props.onPress());
 		expect(JSON.stringify(view.toJSON())).toContain("Tonight’s movie");
 		await act(async () => button(view, "Change filters").props.onPress());
-		expect(mocks.dismissTo).toHaveBeenCalledWith({
+		expect(mocks.replace).toHaveBeenCalledWith({
 			pathname: "/pick-for-me",
 			params: mocks.params,
 		});
@@ -252,12 +279,12 @@ describe("Mobile picker session", () => {
 		mocks.canGoBack.mockReturnValue(canGoBack);
 		const view = await renderPicker(true);
 		await act(async () => button(view, "Change filters").props.onPress());
-		expect(mocks.dismissTo).toHaveBeenCalledWith({
+		expect(mocks.replace).toHaveBeenCalledWith({
 			pathname: "/pick-for-me",
 			params: { minutes: "150", filters },
 		});
 		expect(mocks.back).not.toHaveBeenCalled();
-		expect(mocks.replace).not.toHaveBeenCalled();
+		expect(mocks.push).not.toHaveBeenCalled();
 		await act(async () => view.unmount());
 	});
 	it("keeps loading and retry states on the result screen", async () => {

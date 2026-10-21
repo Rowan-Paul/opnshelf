@@ -17,6 +17,7 @@ import {
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
+import { DetailColumns } from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { EpisodeCard } from "@/components/detail/EpisodeCard";
@@ -30,6 +31,7 @@ import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
+import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton, ListRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -113,7 +115,7 @@ export default function SeasonDetailScreen() {
 	};
 
 	return (
-		<View className="flex-1 bg-background">
+		<ScreenFrame>
 			<Stack.Screen
 				options={{ headerShown: true, title: data?.name ?? "Season" }}
 			/>
@@ -129,53 +131,9 @@ export default function SeasonDetailScreen() {
 			) : isError || !data ? (
 				<ErrorState message="Couldn't load this season." />
 			) : (
-				<FlatList
-					key={`${id}:${seasonNumber}`}
-					ref={listRef}
-					className="flex-1"
-					contentContainerStyle={{ paddingBottom: 48 }}
-					data={data.episodes}
-					keyExtractor={(episode) => String(episode.id)}
-					initialNumToRender={6}
-					maxToRenderPerBatch={6}
-					windowSize={5}
-					renderItem={({ item: ep }) => (
-						<View className="px-4 pb-2">
-							<EpisodeCard
-								actions
-								upNext={ep.episode_number === upNextEpisodeNumber}
-								episode={{
-									showId,
-									showSlug: name,
-									seasonNumber: ep.season_number,
-									episodeNumber: ep.episode_number,
-									name: ep.name,
-									overview: ep.overview,
-									stillPath: ep.still_path,
-									airDate: yearFromDate(ep.air_date),
-									rating: ep.vote_average,
-									runtime: ep.runtime,
-								}}
-							/>
-						</View>
-					)}
-					ListEmptyComponent={
-						<EmptyState
-							title="No episodes"
-							message="This season has no episodes yet."
-						/>
-					}
-					showsVerticalScrollIndicator={false}
-					refreshControl={
-						<RefreshControl
-							refreshing={refreshing}
-							onRefresh={onRefresh}
-							tintColor="#f3bc00"
-							colors={["#f3bc00"]}
-						/>
-					}
-					ListHeaderComponent={
-						<View className="gap-6 pb-6">
+				<DetailColumns
+					primary={
+						<>
 							<DetailHero
 								title={data.name}
 								backdropUrl={backdropUrl(showData?.backdrop_path)}
@@ -292,72 +250,124 @@ export default function SeasonDetailScreen() {
 									</Pressable>
 								</View>
 							) : null}
-
+						</>
+					}
+					secondary={
+						<>
 							<OverviewSection text={data.overview} />
-
 							<FriendWatchers
 								mediaType="show"
 								mediaId={`${id}:season:${seasonNum}`}
 							/>
-						</View>
+						</>
 					}
-					ListFooterComponent={
-						<View className="gap-6 pt-6">
-							<DetailsCard
-								title="Season Details"
-								items={[
-									{ label: "Season", value: data.season_number },
-									{ label: "Episodes", value: data.episodes.length },
-									{
-										label: "Air Date",
-										value: formatLongDate(data.air_date) ?? "Unknown",
-									},
-									{
-										label: "Rating",
-										value:
-											rating && rating > 0
-												? `${rating.toFixed(1)}/10`
-												: undefined,
-									},
-								]}
-							/>
+					renderContent={(header) => (
+						<FlatList
+							key={`${id}:${seasonNumber}`}
+							ref={listRef}
+							className="flex-1"
+							contentContainerStyle={{ paddingBottom: 48 }}
+							data={data.episodes}
+							keyExtractor={(episode) => String(episode.id)}
+							initialNumToRender={6}
+							maxToRenderPerBatch={6}
+							windowSize={5}
+							renderItem={({ item: ep }) => (
+								<View className="px-4 pb-2">
+									<EpisodeCard
+										actions
+										upNext={ep.episode_number === upNextEpisodeNumber}
+										episode={{
+											showId,
+											showSlug: name,
+											seasonNumber: ep.season_number,
+											episodeNumber: ep.episode_number,
+											name: ep.name,
+											overview: ep.overview,
+											stillPath: ep.still_path,
+											airDate: yearFromDate(ep.air_date),
+											rating: ep.vote_average,
+											runtime: ep.runtime,
+										}}
+									/>
+								</View>
+							)}
+							ListEmptyComponent={
+								<EmptyState
+									title="No episodes"
+									message="This season has no episodes yet."
+								/>
+							}
+							showsVerticalScrollIndicator={false}
+							refreshControl={
+								<RefreshControl
+									refreshing={refreshing}
+									onRefresh={onRefresh}
+									tintColor="#f3bc00"
+									colors={["#f3bc00"]}
+								/>
+							}
+							ListHeaderComponent={<View className="gap-6 pb-6">{header}</View>}
+							ListFooterComponent={
+								<View className="gap-6 pt-6">
+									<DetailsCard
+										title="Season Details"
+										items={[
+											{ label: "Season", value: data.season_number },
+											{ label: "Episodes", value: data.episodes.length },
+											{
+												label: "Air Date",
+												value: formatLongDate(data.air_date) ?? "Unknown",
+											},
+											{
+												label: "Rating",
+												value:
+													rating && rating > 0
+														? `${rating.toFixed(1)}/10`
+														: undefined,
+											},
+										]}
+									/>
 
-							<WatchProviders mediaType="show" mediaId={id} />
+									<WatchProviders mediaType="show" mediaId={id} />
 
-							<CastSection cast={showData?.credits?.cast} />
-							<CrewSection crew={showData?.credits?.crew} />
-							<CommunityReviews
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={Number(seasonNumber)}
-								onFocusReview={(section) => {
-									const scrollView = listRef.current?.getNativeScrollRef();
-									const scrollNode = scrollView && findNodeHandle(scrollView);
-									if (scrollNode == null) return;
-									section.measureLayout(scrollNode, (_x, y) => {
-										listRef.current?.scrollToOffset({
-											offset: Math.max(0, y - 12),
-											animated: true,
-										});
-									});
-								}}
-								focusReviewId={reviewId}
-								mediaWebUrl={
-									showData?.name
-										? webMediaUrl({
-												type: "season",
-												showId: id,
-												showName: showData.name,
-												seasonNumber: seasonNum,
-											})
-										: undefined
-								}
-							/>
-							<SimilarMedia mediaType="show" mediaId={id} />
-						</View>
-					}
+									<CastSection cast={showData?.credits?.cast} />
+									<CrewSection crew={showData?.credits?.crew} />
+									<CommunityReviews
+										mediaType="show"
+										mediaId={id}
+										seasonNumber={Number(seasonNumber)}
+										onFocusReview={(section) => {
+											const scrollView = listRef.current?.getNativeScrollRef();
+											const scrollNode =
+												scrollView && findNodeHandle(scrollView);
+											if (scrollNode == null) return;
+											section.measureLayout(scrollNode, (_x, y) => {
+												listRef.current?.scrollToOffset({
+													offset: Math.max(0, y - 12),
+													animated: true,
+												});
+											});
+										}}
+										focusReviewId={reviewId}
+										mediaWebUrl={
+											showData?.name
+												? webMediaUrl({
+														type: "season",
+														showId: id,
+														showName: showData.name,
+														seasonNumber: seasonNum,
+													})
+												: undefined
+										}
+									/>
+									<SimilarMedia mediaType="show" mediaId={id} />
+								</View>
+							}
+						/>
+					)}
 				/>
 			)}
-		</View>
+		</ScreenFrame>
 	);
 }

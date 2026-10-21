@@ -6,6 +6,15 @@ import ShowPage from "@/app/shows/[id]/[name]/index";
 import EpisodePage from "@/app/shows/[id]/[name]/seasons/[seasonNumber]/episodes/[episodeNumber]/index";
 import SeasonPage from "@/app/shows/[id]/[name]/seasons/[seasonNumber]/index";
 
+vi.mock("react-native-safe-area-context", () => ({
+	SafeAreaView: ({ children }: { children: ReactNode }) => children,
+}));
+
+vi.mock("@/lib/use-wide-layout", () => ({
+	useWideLayout: () => false,
+	usePaneWidth: () => 463.5,
+}));
+
 const state = vi.hoisted(() => ({
 	averageRating: undefined as number | undefined,
 	query: vi.fn(),

@@ -242,7 +242,8 @@ function MediaCardBase({
 					</Text>
 				) : null}
 				<Text
-					className={`${item.timestamp ? "mt-0.5" : "mt-2"} font-medium text-foreground text-sm`}
+					className={`${item.timestamp ? "mt-0.5" : "mt-2"} font-medium text-foreground text-sm leading-5`}
+					style={{ minHeight: 40 }}
 					numberOfLines={2}
 				>
 					{item.title}
