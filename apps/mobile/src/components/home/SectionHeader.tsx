@@ -26,9 +26,9 @@ export function SectionHeader({
 	const linkStyle = useTwStyle("text-primary");
 	return (
 		<View className="mb-3 flex-row items-center justify-between">
-			<View className="flex-row items-center gap-2">
+			<View className="min-w-0 flex-1 flex-row items-center gap-2">
 				{Icon ? <Icon color="#94a3b8" size={18} /> : null}
-				<Text className="font-bold font-display text-foreground text-xl">
+				<Text className="flex-1 font-bold font-display text-foreground text-xl">
 					{title}
 				</Text>
 			</View>
