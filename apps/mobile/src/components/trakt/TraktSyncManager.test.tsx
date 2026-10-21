@@ -185,6 +185,24 @@ function press(label: string) {
 it("allows disconnecting before setup without enabling sync", () => {
 	mount();
 	press("Disconnect");
+	expect(
+		renderer.root.findAllByType(Modal).find((node) => node.props.visible)?.props
+			.transparent,
+	).toBe(true);
+	const backdrop = renderer.root
+		.findAllByType(Modal)
+		.find((node) => node.props.visible)
+		?.find(
+			(node) =>
+				node.type === Pressable &&
+				node.props.accessibilityLabel === "Close confirmation",
+		);
+	act(() => backdrop?.props.onPress());
+	expect(
+		renderer.root.findAllByType(Modal).filter((node) => node.props.visible),
+	).toHaveLength(0);
+	expect(mocks.mutate).not.toHaveBeenCalled();
+	press("Disconnect");
 	press("Confirm disconnect");
 	expect(mocks.mutate).toHaveBeenCalledExactlyOnceWith(
 		{ body: { action: "disconnect" } },
@@ -423,6 +441,17 @@ it.each([
 	mocks.issues = true;
 	mocks.uncertain = true;
 	mount(true, true);
+	press(label);
+	const modal = renderer.root.findByType(Modal);
+	expect(modal.props.transparent).toBe(true);
+	expect(modal.props.presentationStyle).toBeUndefined();
+	const backdrop = renderer.root.find(
+		(node) =>
+			node.type === Pressable &&
+			node.props.accessibilityLabel === "Close confirmation",
+	);
+	act(() => backdrop.props.onPress());
+	expect(renderer.root.findAllByType(Modal)).toHaveLength(0);
 	press(label);
 	const confirm = () =>
 		renderer.root.find(
