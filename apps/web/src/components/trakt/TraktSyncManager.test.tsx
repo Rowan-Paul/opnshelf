@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
 	issue: false,
 	candidate: false,
 	issueRead: vi.fn(),
+	issuePages: 1,
+	nextPage: undefined as Promise<void> | undefined,
 	ignored: false,
 	uncertain: false,
 	status: "paused",
@@ -51,15 +53,17 @@ vi.mock("@opnshelf/api", async (original) => ({
 	traktSyncControllerIssues: async ({
 		query,
 	}: {
-		query: { view?: string };
+		query: { view?: string; page?: number };
 	}) => {
 		mocks.issueRead(query);
+		const page = query.page ?? 1;
+		if (page > 1) await mocks.nextPage;
 		return {
 			data: {
 				items: (query.view === "ignored" ? mocks.ignored : mocks.issue)
 					? [
 							{
-								id: "one",
+								id: page === 1 ? "one" : "two",
 								recovery: mocks.uncertain ? "verify" : "choose",
 								kind: "watch",
 								ignored: query.view === "ignored",
@@ -67,7 +71,7 @@ vi.mock("@opnshelf/api", async (original) => ({
 									? "The outcome of creating this Trakt Review is unknown. Check Trakt, then choose a version before retrying."
 									: "Both services changed this Watch. Choose which version to keep.",
 								opnshelf: {
-									title: "Fixture",
+									title: page === 1 ? "Fixture" : "Second fixture",
 									mediaType: "episode",
 									season: 0,
 									episode: 2,
@@ -88,11 +92,13 @@ vi.mock("@opnshelf/api", async (original) => ({
 							},
 						]
 					: [],
-				total: (query.view === "ignored" ? mocks.ignored : mocks.issue) ? 1 : 0,
-				page: 1,
-				totalPages: 1,
-				hasPreviousPage: false,
-				hasNextPage: false,
+				total: (query.view === "ignored" ? mocks.ignored : mocks.issue)
+					? mocks.issuePages
+					: 0,
+				page,
+				totalPages: mocks.issuePages,
+				hasPreviousPage: page > 1,
+				hasNextPage: page < mocks.issuePages,
 			},
 		};
 	},
@@ -119,6 +125,8 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mocks.importStatus = "paused";
 	mocks.issue = false;
+	mocks.issuePages = 1;
+	mocks.nextPage = undefined;
 	mocks.candidate = false;
 	mocks.ignored = false;
 	mocks.uncertain = false;
@@ -483,4 +491,56 @@ it("explains linking before resolving a possible duplicate Watch", async () => {
 			expect.anything(),
 		),
 	);
+});
+
+it("keeps the current review item visible while the next page loads", async () => {
+	mocks.issue = true;
+	mocks.issuePages = 2;
+	let finishPage = () => {};
+	mocks.nextPage = new Promise<void>((resolve) => {
+		finishPage = resolve;
+	});
+	mount(false, false, true);
+	await screen.findByText("Item 1 of 2");
+	const navigation = within(
+		screen.getByRole("navigation", { name: "Sync review items" }),
+	);
+	expect(
+		navigation
+			.getByRole("button", { name: "Previous" })
+			.hasAttribute("disabled"),
+	).toBe(true);
+	fireEvent.click(navigation.getByRole("button", { name: "Next" }));
+	await screen.findByText("Loading item 2…");
+	expect(mocks.issueRead).toHaveBeenCalledWith({
+		view: "attention",
+		page: 2,
+		pageSize: 1,
+	});
+	expect(screen.getByText("Item 1 of 2")).toBeTruthy();
+	expect(screen.getAllByText("Fixture · S0E2").length).toBeGreaterThan(0);
+	expect(screen.queryByLabelText("Loading sync items")).toBeNull();
+	for (const name of ["Previous", "Next"]) {
+		expect(
+			navigation.getByRole("button", { name }).hasAttribute("disabled"),
+		).toBe(true);
+	}
+	finishPage();
+	await screen.findByText("Item 2 of 2");
+	expect(screen.getAllByText("Second fixture · S0E2").length).toBeGreaterThan(
+		0,
+	);
+	expect(screen.queryByText("Fixture · S0E2")).toBeNull();
+	expect(screen.queryByText("Loading item 2…")).toBeNull();
+	expect(
+		navigation
+			.getByRole("button", { name: "Previous" })
+			.hasAttribute("disabled"),
+	).toBe(false);
+	expect(
+		navigation.getByRole("button", { name: "Next" }).hasAttribute("disabled"),
+	).toBe(true);
+	fireEvent.click(navigation.getByRole("button", { name: "Previous" }));
+	await screen.findByText("Item 1 of 2");
+	expect(screen.getAllByText("Fixture · S0E2").length).toBeGreaterThan(0);
 });
