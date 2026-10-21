@@ -69,6 +69,53 @@ describe("ShowCatalogueService", () => {
 		service = module.get<ShowCatalogueService>(ShowCatalogueService);
 	});
 
+	describe("upsertShow", () => {
+		it.each([true, false])(
+			"preserves create and update metadata with optional fields present: %s",
+			async (hasMetadata) => {
+				const colors = hasMetadata ? { primary: "#123456" } : null;
+				mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+					colors,
+				);
+				const show = {
+					id: 123,
+					name: "Test Show",
+					popularity: 1,
+					vote_average: 7,
+					vote_count: 10,
+					...(hasMetadata
+						? {
+								poster_path: "/poster.jpg",
+								backdrop_path: "/backdrop.jpg",
+								first_air_date: "2024-06-15",
+								overview: "A test show",
+							}
+						: {}),
+				};
+
+				await service.upsertShow(show);
+
+				const expected = {
+					title: "Test Show",
+					posterPath: hasMetadata ? "/poster.jpg" : null,
+					backdropPath: hasMetadata ? "/backdrop.jpg" : null,
+					firstAirYear: hasMetadata ? 2024 : null,
+					firstAirDate: hasMetadata ? new Date("2024-06-15") : null,
+					overview: hasMetadata ? "A test show" : null,
+					colors: colors ?? undefined,
+				};
+				expect(
+					mockColorExtractionService.extractColorsFromPoster,
+				).toHaveBeenCalledWith(expected.posterPath);
+				expect(mockPrismaService.show.upsert).toHaveBeenCalledWith({
+					where: { showId: "123" },
+					create: { showId: "123", ...expected },
+					update: expected,
+				});
+			},
+		);
+	});
+
 	describe("syncShowMetadata", () => {
 		it("should upsert the show before upserting seasons", async () => {
 			mockPrismaService.season.findFirst.mockResolvedValue(null);
