@@ -76,6 +76,7 @@ export {
 	usePrivacy,
 	usePrivacyProgress,
 } from "./privacy";
+export { formatRelativeTime } from "./relative-time";
 export * from "./release-notes";
 export {
 	getYouTubeEmbedUrl,
