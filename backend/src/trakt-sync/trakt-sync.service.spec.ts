@@ -808,3 +808,73 @@ it("inserts a large initial comparison in bounded batches instead of one round t
 	]);
 	expect(linkReads).toBeLessThan(entries.length * 5);
 });
+
+it.each([
+	{ page: 1, expectedMediaId: "1", mappingReads: 0 },
+	{ page: 2, expectedMediaId: "2", mappingReads: 1 },
+])(
+	"loads cross-page mappings only when the visible issue needs one (page $page)",
+	async ({ page, expectedMediaId, mappingReads }) => {
+		const known = {
+			key: "remote:known",
+			kind: "watch" as const,
+			mediaType: "movie" as const,
+			mediaId: "1",
+			traktId: 1,
+			season: 0,
+			episode: 0,
+			title: "Known",
+			value: null,
+		};
+		const unmatched = {
+			...known,
+			key: "remote:unmatched",
+			mediaId: null,
+			traktId: 2,
+			title: "Unmatched",
+		};
+		const entries = [
+			{ id: "known", kind: "watch", remoteKey: known.key, remoteBase: known },
+			{
+				id: "unmatched",
+				kind: "watch",
+				remoteKey: unmatched.key,
+				remoteBase: unmatched,
+			},
+			{
+				id: "mapping-on-another-page",
+				kind: "watch",
+				remoteKey: "remote:other",
+				remoteBase: { ...unmatched, key: "remote:other", mediaId: "2" },
+			},
+		];
+		const findMany = vi.fn(async (query) =>
+			query.select
+				? entries
+				: entries.slice(query.skip, query.skip + query.take),
+		);
+		const service = new TraktSyncService(
+			{
+				traktSyncEntry: { count: vi.fn(async () => entries.length), findMany },
+			} as unknown as PrismaService,
+			{} as TraktSyncClient,
+			{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
+		);
+		service["requireConnection"] = vi.fn(
+			async () =>
+				({
+					id: "fixture",
+					remoteSnapshot: [known, unmatched],
+				}) as unknown as Awaited<
+					ReturnType<(typeof service)["requireConnection"]>
+				>,
+		);
+		const result = await service.issues("fixture", { page, pageSize: 1 });
+		expect(result.items[0].trakt?.mediaId).toBe(expectedMediaId);
+		expect(findMany.mock.calls.filter(([query]) => query.select)).toHaveLength(
+			mappingReads,
+		);
+	},
+);

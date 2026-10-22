@@ -1130,7 +1130,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		const remote = records(c.remoteSnapshot);
 		// Most pages need no title mappings. If needed, read only mapping payloads,
 		// rather than materializing every issue and both of its full baselines.
-		const mappings = remote.some((r) => !isListRecord(r) && !r.mediaId)
+		const pageRemoteKeys = new Set(entries.map((e) => e.remoteKey));
+		const mappings = remote.some(
+			(r) => pageRemoteKeys.has(r.key) && !isListRecord(r) && !r.mediaId,
+		)
 			? await this.prisma.traktSyncEntry.findMany({
 					where,
 					orderBy: { createdAt: "asc" },
