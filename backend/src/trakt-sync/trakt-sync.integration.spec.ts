@@ -111,7 +111,13 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	};
 	const localApi = {
 		validateMatch: vi.fn(async () => undefined),
-		snapshot: vi.fn(async () => structuredClone(localRecords)),
+		snapshot: vi.fn(
+			async (
+				_did?: string,
+				_options?: unknown,
+				_kinds?: ReadonlySet<SyncRecord["kind"]>,
+			) => structuredClone(localRecords),
+		),
 		confirmDeleted: vi.fn(async () => undefined),
 		write: vi.fn(
 			async (
@@ -818,6 +824,30 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(localRecords.map((r) => r.key)).toEqual(["list:unrelated"]);
 	});
+	it("reads Watch history for explicit Import recovery even when ongoing Watch sync is disabled", async () => {
+		remoteRecords = [watch("watch:recovered")];
+		await service.configure(userDid, {
+			direction: "inbound",
+			historyScope: "all",
+			watches: false,
+			ratings: true,
+			publicationConsent: true,
+		});
+		await tick();
+		remoteApi.snapshot.mockClear();
+		await service.recoverImport(userDid, async () => {
+			localRecords.push(watch("local:recovered"));
+		});
+		expect(remoteApi.snapshot).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({ watches: true }),
+		);
+		expect(
+			await db.traktSyncEntry.findFirst({
+				where: { localKey: "local:recovered", remoteKey: "watch:recovered" },
+			}),
+		).toMatchObject({ linked: true });
+	});
 	it("holds Watch sync and recovery when the Shelf is private", async () => {
 		remoteRecords = [watch("remote-private")];
 		await db.user.update({
@@ -1317,6 +1347,115 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				expect.objectContaining({ mediaId: "12" }),
 			]),
 		);
+	});
+
+	it("exports ten Watches per full read and retains the confirmed cache between transfers", async () => {
+		localRecords = Array.from({ length: 25 }, (_, i) =>
+			watch(`local:${i}`, new Date(Date.UTC(2020, 0, i + 1)).toISOString()),
+		);
+		await configure("all", "outbound");
+		remoteApi.snapshot.mockClear();
+		await tick();
+		expect(remoteApi.snapshot).toHaveBeenCalledTimes(1);
+		expect(remoteRecords).toHaveLength(10);
+		expect(await service.status(userDid)).toMatchObject({
+			remaining: 15,
+			progress: 40,
+		});
+		const connection = await db.traktSyncConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		expect(connection.remoteSnapshot).toHaveLength(10);
+		expect(
+			localApi.snapshot.mock.calls
+				.slice(2)
+				.every((args) => args[2]?.has("watch")),
+		).toBe(true);
+		await tick();
+		expect(remoteRecords).toHaveLength(20);
+		await tick();
+		expect(remoteRecords).toHaveLength(25);
+		expect(await service.status(userDid)).toMatchObject({ remaining: 0 });
+		expect(
+			await db.traktSyncEntry.count({
+				where: { connectionId: connection.id, linked: true },
+			}),
+		).toBe(25);
+	});
+
+	it("preserves same-minute duplicates when batching outbound Watches", async () => {
+		localRecords = [watch("local:first"), watch("local:duplicate")];
+		await configure("all", "outbound");
+		await tick();
+		expect(remoteRecords).toHaveLength(1);
+		expect(localRecords).toHaveLength(2);
+		expect(
+			await db.traktSyncEntry.count({
+				where: { issue: { contains: "cannot represent another Watch" } },
+			}),
+		).toBe(1);
+	});
+
+	it("replans without overwriting a destination changed between outbound transfers", async () => {
+		localRecords = [
+			watch("local:first"),
+			{ ...watch("local:second"), mediaId: "13" },
+		];
+		remoteRecords = localRecords.map((r, i) => ({ ...r, key: `watch:${i}` }));
+		await configure("all", "both");
+		localRecords = localRecords.map((r) => ({
+			...r,
+			value: "2022-01-01T00:00:00Z",
+		}));
+		const write = remoteApi.write.getMockImplementation();
+		if (!write) throw new Error("Missing fixture write");
+		remoteApi.write.mockImplementationOnce(async (...args) => {
+			await write(...args);
+			const second = remoteRecords.find((r) => r.mediaId === "13");
+			if (second) second.value = "2023-01-01T00:00:00Z";
+		});
+		await tick();
+		expect(remoteRecords.find((r) => r.mediaId === "13")?.value).toBe(
+			"2023-01-01T00:00:00Z",
+		);
+		const c = await db.traktSyncConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		expect(c.lastError).toContain("changed during transfer");
+		expect(c.remoteReadAt).toBeNull();
+		await tick();
+		expect(
+			await db.traktSyncEntry.count({
+				where: { issue: { contains: "Both services changed" } },
+			}),
+		).toBe(1);
+	});
+
+	it("paginates persisted conflicts without loading the entire issue queue", async () => {
+		localRecords = Array.from({ length: 25 }, (_, i) => ({
+			...watch(`local:${i}`),
+			kind: "rating" as const,
+			mediaId: String(i + 1),
+			value: 8,
+		}));
+		remoteRecords = localRecords.map((r, i) => ({
+			...r,
+			key: `rating:${i}`,
+			value: 9,
+		}));
+		await configure("all", "both");
+		await tick();
+		const page = await service.issues(userDid, { page: 2, pageSize: 10 });
+		expect(page).toMatchObject({
+			page: 2,
+			total: 25,
+			totalPages: 3,
+			hasNextPage: true,
+		});
+		expect(page.items).toHaveLength(10);
+		const last = await service.issues(userDid, { page: 99, pageSize: 10 });
+		expect(last).toMatchObject({ page: 3, total: 25, hasNextPage: false });
+		expect(last.items).toHaveLength(5);
 	});
 
 	it("imports a Watch once and follows a linked remote deletion without echo writes", async () => {

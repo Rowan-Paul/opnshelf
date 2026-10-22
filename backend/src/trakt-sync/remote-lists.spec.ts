@@ -430,8 +430,143 @@ describe("Trakt Favorites transport", () => {
 			{ notes: "A note" },
 			"PUT",
 		);
-		expect(request).toHaveBeenCalledWith("/sync/favorites/reorder", "fixture", {
-			rank: [7],
-		});
+		expect(request).not.toHaveBeenCalledWith(
+			"/sync/favorites/reorder",
+			"fixture",
+			expect.anything(),
+		);
 	});
+});
+
+it("reads only the requested custom List memberships while confirming metadata", async () => {
+	const request = vi.fn(async (path: string) => {
+		if (path === "/users/me/lists")
+			return response([metadata, { ...metadata, ids: { trakt: 23 } }]);
+		if (path.includes("/22/items")) return response([movie], 1);
+		throw new Error("Unrelated List must not be read");
+	});
+	expect(
+		await snapshotLists({ request }, "fixture", { lists: true, listId: 22 }),
+	).toHaveLength(1);
+	expect(request).toHaveBeenCalledTimes(3);
+});
+
+it("updates metadata without resolving or rewriting existing memberships and order", async () => {
+	const request = vi.fn(
+		async (path: string, _token?: string, _body?: unknown, method?: string) => {
+			if (path === "/users/me/lists") return response([metadata]);
+			if (path.includes("?page=")) return response([movie], 1);
+			if (path === "/users/me/lists/22" && method === "PUT")
+				return response(null);
+			throw new Error(`Unnecessary request: ${path}`);
+		},
+	);
+	await writeList({ request }, "fixture", { ...record, traktId: 22 }, false);
+	expect(
+		request.mock.calls.filter(([, , , method]) => method === "PUT"),
+	).toHaveLength(1);
+});
+
+it("reads newly added Favorite IDs once for all their notes", async () => {
+	const rows: (typeof movie)[] = [];
+	let membershipReads = 0;
+	const items = [12, 13, 14].map((id) => ({
+		mediaType: "movie" as const,
+		mediaId: String(id),
+		season: 0,
+		episode: 0,
+		notes: `Note ${id}`,
+	}));
+	const request = vi.fn(
+		async (path: string, _token?: string, body?: unknown, method?: string) => {
+			if (path === "/users/settings")
+				return response({
+					user: { private: false },
+					limits: { favorites: { item_count: 100 } },
+				});
+			if (path.startsWith("/search/")) {
+				const id = Number(path.split("/").at(-1)?.split("?")[0]);
+				return response([
+					{ type: "movie", movie: { ids: { trakt: id, tmdb: id } } },
+				]);
+			}
+			if (path.includes("?page=")) {
+				membershipReads++;
+				return response(rows, rows.length);
+			}
+			if (path === "/sync/favorites") {
+				const id = (body as { movies: { ids: { trakt: number } }[] }).movies[0]
+					.ids.trakt;
+				rows.push({
+					...movie,
+					id,
+					rank: rows.length + 1,
+					notes: "",
+					movie: { ids: { trakt: id, tmdb: id } },
+				});
+				return response({ not_found: {} });
+			}
+			if (method === "PUT") {
+				const row = rows.find((r) => r.id === Number(path.split("/").at(-1)));
+				if (!row) throw new Error("Missing added Favorite");
+				row.notes = (body as { notes: string }).notes;
+				return response(null);
+			}
+			throw new Error(`Unexpected request: ${path}`);
+		},
+	);
+	await writeList(
+		{ request },
+		"fixture",
+		{
+			...record,
+			kind: "favorites",
+			visibility: "public",
+			value: encodeList({ name: "Favorites", description: "", items }),
+		},
+		false,
+	);
+	expect(rows.map((r) => r.notes)).toEqual(items.map((i) => i.notes));
+	// Initial destination, one ID lookup, order check, final authoritative read.
+	expect(membershipReads).toBe(4);
+});
+
+it("writes manual order when the desired membership order differs", async () => {
+	let rows = [
+		movie,
+		{ ...movie, id: 8, rank: 2, movie: { ids: { trakt: 10, tmdb: 13 } } },
+	];
+	const desired = {
+		...record,
+		traktId: 22,
+		value: encodeList({
+			...listValue(record),
+			items: [
+				{ ...listValue(record).items[0], mediaId: "13" },
+				listValue(record).items[0],
+			],
+		}),
+	};
+	const request = vi.fn(
+		async (path: string, _token?: string, body?: unknown, method?: string) => {
+			if (path === "/users/me/lists")
+				return response([{ ...metadata, item_count: 2 }]);
+			if (path.includes("?page=")) return response(rows, rows.length);
+			if (path.endsWith("/reorder")) {
+				expect(body).toEqual({ rank: [8, 7] });
+				rows = rows
+					.reverse()
+					.map((row, index) => ({ ...row, rank: index + 1 }));
+				return response({ skipped_ids: [], updated: 2 });
+			}
+			if (method === "PUT") return response(null);
+			throw new Error(`Unexpected request: ${path}`);
+		},
+	);
+	await writeList({ request }, "fixture", desired, false);
+	expect(request).toHaveBeenCalledWith(
+		"/users/me/lists/22/items/reorder",
+		"fixture",
+		{ rank: [8, 7] },
+	);
 });
