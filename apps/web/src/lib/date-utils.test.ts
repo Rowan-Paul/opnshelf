@@ -43,8 +43,7 @@ describe("datetimeLocalToISO", () => {
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 const DAY = 24 * 60 * 60_000;
 
-// Keep these cases in step with apps/mobile/src/lib/relative-time.test.ts —
-// the two helpers must render the same instant identically on both clients.
+// Exercise the shared formatter through this client’s existing import path.
 describe("formatRelativeTime", () => {
 	it("uses the largest fitting unit and pluralises", () => {
 		expect(formatRelativeTime(ago(5 * 60_000))).toBe("5 minutes ago");
