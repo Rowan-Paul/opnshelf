@@ -87,7 +87,6 @@ function isTourBlockedPath(pathname: string): boolean {
 		pathname === "/signup" ||
 		pathname === "/onboarding" ||
 		pathname === "/verify-email" ||
-		pathname === "/trakt-import" ||
 		pathname === "/atstore-review" ||
 		pathname.startsWith("/auth")
 	);

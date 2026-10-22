@@ -25,7 +25,7 @@ import {
 	SyncStatusDto,
 } from "./trakt-sync.dto";
 import { TraktSyncService } from "./trakt-sync.service";
-import { TraktMatchCandidateDto } from "../users/dto/import-history.dto";
+import { TraktMatchCandidateDto } from "./trakt-sync.dto";
 
 @ApiTags("trakt-sync")
 @Controller("trakt-sync")

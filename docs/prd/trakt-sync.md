@@ -7,8 +7,8 @@ Status: agreed design implemented in the #260 working branch. Verified with loca
 
 - The first version covers Watch history, including rewatches, and Ratings.
 - Users choose Trakt → Opnshelf, Opnshelf → Trakt, or both directions.
-- Sync is optional. Offer Import once alongside Keep in sync.
-- Preserve existing Trakt Import results and Unmatched-item reconciliation.
+- Sync is optional and is the sole Trakt connection.
+- One-time Import and all retained Import results are removed by ADR 0050.
 - Offer setup during Onboarding and connection management in Settings on both Web and Mobile.
 - The original version excluded Lists and watchlist. The operator requested both on 2026-10-15; the extension in ADR 0049 defines their opt-in, pairing, privacy and reconciliation rules. Favorites was requested afterward and uses its own opt-in scope under ADR 0049. The operator subsequently requested Notes, Library ownership and Reviews as ongoing scopes; ADR 0049 records their representability, privacy and publication boundaries.
 
@@ -31,7 +31,7 @@ Status: agreed design implemented in the #260 working branch. Verified with loca
 - Retain account-scoped links and the last synchronized state until Opnshelf account deletion, including through disconnection. Reconcile changes on reconnect using the same conflict rules. Failed or incomplete fetches never establish deletion.
 - Before changing direction, enabling a record type, or expanding history scope, show the proposed scope and offer existing data or future changes only. Keep existing links. Disabling a type stops its transfers without deleting records.
 - Do not let an existing Import and sync concurrently process the same history. Offer to finish the Import first or explicitly transition to sync, retaining Import outcomes and unresolved items.
-- Trakt Import retains its current meaning: one-time inbound Watch history. It does not gain Ratings or outbound transfer in this version.
+- Trakt Sync has its own title matching and reconciliation.
 - Needs attention offers Ignore this item, an Ignored view, and undo. Remember the choice across sync runs; ignored items are never reported as successfully synced.
 - Opnshelf account deletion stops sync, revokes access, and removes local connection and reconciliation data. Previously exported Trakt records remain; explain this in the deletion flow.
 - Initial No date Watches on both services require confirmation before linking, even for one Watch on each side. Preserve the confirmed link afterward.
@@ -43,7 +43,7 @@ Status: agreed design implemented in the #260 working branch. Verified with loca
 
 | Capability | Web | Mobile |
 | --- | --- | --- |
-| Optional Onboarding setup; Import once or Keep in sync | Included | Included |
+| Optional Onboarding setup for Trakt Sync | Included | Included |
 | Settings connection, direction, types, and history scope | Included | Included |
 | Sync now, last success, errors, pause, disconnect, reconnect | Included | Included |
 | Needs attention, matching, conflict resolution, ignore and undo | Included | Included |
@@ -81,6 +81,6 @@ The implementation includes automated reconciliation, transport, PDS recovery, d
 
 ## Architecture constraints
 
-ADR 0049 allows ongoing Trakt Sync alongside the lifetime Trakt Import defined by ADR 0020. It preserves existing Import outcomes and reconciliation, including an explicit permanent handoff for unfinished Imports.
+ADR 0049 defines ongoing Trakt Sync. ADR 0050 removes one-time Import, its retained outcomes and its handoff workflow.
 
 ADR 0042 preserves Watch identity through watch-date corrections. Existing import identity derives from media coordinates and the original date rather than a Trakt history-event ID. Ongoing sync therefore needs deliberate event linkage and cannot safely be implemented by repeatedly restarting the existing importer.

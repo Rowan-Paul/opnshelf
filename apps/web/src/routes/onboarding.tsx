@@ -10,7 +10,6 @@ import {
 	type UserProfileDto,
 	usersControllerCompleteOnboarding,
 	usersControllerDeleteMyAvatarMutation,
-	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
@@ -42,15 +41,7 @@ import { NotificationEmailSection } from "#/components/settings/NotificationEmai
 import { PrivacySection } from "#/components/settings/PrivacySection";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktMark } from "#/components/TraktMark";
-import { TraktImport } from "#/components/trakt/TraktImport";
 import { SyncSettings } from "#/components/trakt/TraktSyncManager";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "#/components/ui/dialog";
 import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -64,7 +55,6 @@ import {
 	type OnboardingStep,
 	RESEND_COOLDOWN_SECONDS,
 	resolveOnboardingCountry,
-	shouldResumeTraktImport,
 } from "#/lib/onboarding-steps";
 
 export const Route = createFileRoute("/onboarding")({
@@ -87,16 +77,9 @@ function OnboardingPage() {
 			? "privacy"
 			: "welcome";
 	});
-	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
 	const initialCheckDone = useRef(false);
-
-	// Check for an ongoing Trakt import so we can resume at the trakt step
-	const { data: currentImport } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: isAuthenticated && !authLoading,
-	});
 
 	// Redirect unauthenticated users to login
 	useEffect(() => {
@@ -115,22 +98,6 @@ function OnboardingPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	// Resume at the trakt step when there is an active import — but only once, on
-	// initial load. Otherwise a background refetch (e.g. on window focus) would
-	// keep yanking the user back here after they chose to continue while the
-	// import runs in the background.
-	const resumeChecked = useRef(false);
-	useEffect(() => {
-		if (authLoading) return;
-		if (resumeChecked.current) return;
-		// Wait for the query to resolve (undefined while loading; null = no job).
-		if (currentImport === undefined) return;
-		resumeChecked.current = true;
-		if (shouldResumeTraktImport(currentImport)) {
-			setStep("trakt");
-		}
-	}, [authLoading, currentImport]);
-
 	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
 	const { data: traktSync } = useQuery({
 		queryKey: traktStatusKey,
@@ -139,8 +106,7 @@ function OnboardingPage() {
 		enabled: isAuthenticated && !authLoading,
 	});
 	// Watch history already coming from Trakt makes the watched step redundant.
-	const skipWatched =
-		importStarted || bringsTraktWatches(currentImport, traktSync);
+	const skipWatched = bringsTraktWatches(traktSync);
 
 	// Every step hands off to its linear successor; the Trakt step's skip and
 	// complete paths both land on suggestions.
@@ -193,12 +159,7 @@ function OnboardingPage() {
 							</div>
 						)}
 						{step === "trakt" && (
-							<TraktStep
-								importExists={Boolean(currentImport?.id)}
-								onImportStarted={() => setImportStarted(true)}
-								onNext={goToNextStep}
-								onSkip={goToNextStep}
-							/>
+							<TraktStep onNext={goToNextStep} onSkip={goToNextStep} />
 						)}
 						{step === "suggestions" && (
 							<FollowSuggestionsStep
@@ -215,7 +176,6 @@ function OnboardingPage() {
 						{step === "done" && (
 							<DoneStep
 								followedAnyone={followedAnyone}
-								importStarted={importStarted}
 								watchesAdded={watchesAdded}
 							/>
 						)}
@@ -802,22 +762,17 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 }
 
 /* ------------------------------------------------------------------
-   Step 4: Trakt — Trakt Sync first, Trakt Import as the fallback
+   Step 4: Trakt Sync
    ------------------------------------------------------------------ */
 const traktStatusKey = ["trakt-sync", "status"];
 
 function TraktStep({
 	onNext,
 	onSkip,
-	onImportStarted,
-	importExists,
 }: {
 	onNext: () => void;
 	onSkip: () => void;
-	onImportStarted: () => void;
-	importExists: boolean;
 }) {
-	const [importOpen, setImportOpen] = useState(importExists);
 	const queryClient = useQueryClient();
 	// Trakt authorization returns here with ?connection=connected|cancelled|failed.
 	const [connection] = useState(() =>
@@ -840,16 +795,6 @@ function TraktStep({
 	const refresh = () =>
 		queryClient.invalidateQueries({ queryKey: traktStatusKey });
 
-	const importPanel = (
-		<TraktImport
-			title="Import once"
-			titleClassName="font-semibold text-base"
-			description="Copy your public Trakt history by username. Nothing changes on Trakt."
-			onComplete={onNext}
-			onImportStarted={onImportStarted}
-		/>
-	);
-
 	if (status.isPending) {
 		return (
 			<output
@@ -860,22 +805,22 @@ function TraktStep({
 	}
 
 	const data = status.data;
-	// Trakt Sync is unavailable (not set up, or its status failed to load):
-	// offer the Import on its own.
-	if (!data?.configured) {
+	if (!data?.configured)
 		return (
 			<div className="card p-6">
-				<TraktImport
-					title="Import from Trakt"
-					description="Copy your public Trakt history by username."
-					onSkip={onSkip}
-					onComplete={onNext}
-					onImportStarted={onImportStarted}
-				/>
+				<h2 className="text-display-3">Trakt Sync</h2>
+				<p className="mt-2 text-(--foreground-muted) text-sm">
+					Trakt Sync is unavailable. You can connect later in Settings.
+				</p>
+				<button
+					className="btn btn-primary mt-5 w-full"
+					type="button"
+					onClick={onSkip}
+				>
+					Skip
+				</button>
 			</div>
 		);
-	}
-
 	const connected =
 		data.status !== "disconnected" && data.status !== "reconnect";
 
@@ -978,24 +923,6 @@ function TraktStep({
 					</p>
 				)}
 			</div>
-			<button
-				type="button"
-				className="mt-5 text-sm underline underline-offset-4"
-				onClick={() => setImportOpen(true)}
-			>
-				Import your public history once
-			</button>
-			<Dialog open={importOpen} onOpenChange={setImportOpen}>
-				<DialogContent className="max-h-[85dvh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>Import once</DialogTitle>
-						<DialogDescription>
-							Copy your public Trakt history by username.
-						</DialogDescription>
-					</DialogHeader>
-					{importPanel}
-				</DialogContent>
-			</Dialog>
 			<div className="mt-5 flex justify-end">
 				<button
 					type="button"
@@ -1013,11 +940,9 @@ function TraktStep({
    Step 7: Done
    ------------------------------------------------------------------ */
 function DoneStep({
-	importStarted,
 	followedAnyone,
 	watchesAdded,
 }: {
-	importStarted: boolean;
 	followedAnyone: boolean;
 	watchesAdded: number;
 }) {
@@ -1035,7 +960,6 @@ function DoneStep({
 		},
 		onSuccess: (data) => {
 			posthog.capture("onboarding_completed", {
-				import_started: importStarted,
 				followed_anyone: followedAnyone,
 				watches_added: watchesAdded,
 				platform: "web",

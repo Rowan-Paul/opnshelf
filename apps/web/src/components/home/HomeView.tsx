@@ -17,7 +17,6 @@ import { NotificationPrompt } from "#/components/NotificationPrompt";
 import { PromptSlot } from "#/components/PromptSlot";
 import { ReleaseNotePrompt } from "#/components/release-notes/ReleaseNotePrompt";
 import { StatsStrip } from "#/components/StatsStrip";
-import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
 import { useAuth } from "#/lib/auth-context";
 import { formatLocalDateKey } from "#/lib/calendar-grid";
 import { withUserLocale } from "#/lib/date-utils";
@@ -320,7 +319,6 @@ export function HomeView() {
 			{/* Announcements lead the optional Home prompts. */}
 			<PromptSlot>
 				<ReleaseNotePrompt />
-				<TraktHomePrompt />
 				<NotificationPrompt />
 				<MobileAppPrompt />
 				<AtStoreReviewPrompt />

@@ -24,7 +24,7 @@ const EndReachedContext = createContext<{
 /**
  * `FlatList.onEndReached` for content that lives inside a plain ScrollView.
  *
- * Profile tabs, the circle editor and the Trakt import list all render inside
+ * Profile tabs and the circle editor all render inside
  * a parent ScrollView they do not own, so they cannot use a list's own
  * end-reached callback. This container watches its scroll offset and content
  * size and notifies every `useEndReached` subscriber when the viewport comes

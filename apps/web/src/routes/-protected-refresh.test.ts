@@ -9,14 +9,12 @@ import {
 } from "@tanstack/react-router";
 import { expect, it, vi } from "vitest";
 import { Route as SettingsRoute } from "./settings";
-import { Route as ImportRoute } from "./trakt-import";
 import { Route as SyncRoute } from "./trakt-sync";
 
 vi.mock("#/lib/api", () => ({ ssrAuthOptions: () => ({}) }));
 
 const routes: [string, AnyRoute][] = [
 	["/trakt-sync", SyncRoute],
-	["/trakt-import", ImportRoute],
 	["/settings", SettingsRoute],
 ];
 

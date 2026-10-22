@@ -85,7 +85,6 @@ function isTourBlockedPath(pathname: string): boolean {
 		pathname === "/onboarding" ||
 		pathname === "/login" ||
 		pathname === "/signup" ||
-		pathname === "/trakt-import" ||
 		pathname.startsWith("/auth") ||
 		pathname.startsWith("/embed")
 	);

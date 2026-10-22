@@ -1204,215 +1204,6 @@ export type CompleteOnboardingResponseDto = {
     needsOnboarding: boolean;
 };
 
-export type FetchTraktPublicHistoryDto = {
-    /**
-     * Trakt username or slug
-     */
-    username: string;
-};
-
-export type TraktPublicProfileDto = {
-    /**
-     * Trakt username
-     */
-    username: string;
-    /**
-     * Trakt profile slug
-     */
-    slug: string;
-    /**
-     * Trakt display name
-     */
-    name?: string;
-    /**
-     * Whether the profile is private
-     */
-    isPrivate: boolean;
-    /**
-     * Whether the profile has Trakt VIP
-     */
-    isVip: boolean;
-    /**
-     * Profile avatar URL
-     */
-    avatarUrl?: string;
-};
-
-export type TraktHistoryPreviewItemDto = {
-    type: 'movie' | 'episode';
-    /**
-     * Primary display title for this watch item
-     */
-    title: string;
-    /**
-     * Secondary context for this watch item
-     */
-    subtitle?: string;
-    /**
-     * UTC datetime in ISO-8601 format
-     */
-    watchedAt: string;
-};
-
-export type NormalizedImportItemDto = {
-    type: 'movie' | 'episode';
-    /**
-     * UTC datetime in ISO-8601 format
-     */
-    watchedAt: string;
-    /**
-     * TMDB movie id
-     */
-    movieTmdbId?: number;
-    /**
-     * TMDB show id
-     */
-    showTmdbId?: number;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    action?: 'watch' | 'scrobble' | 'checkin';
-};
-
-export type ImportSkipDto = {
-    /**
-     * 1-based item index from source payload
-     */
-    index: number;
-    reason: 'unsupported_type' | 'unsupported_action' | 'missing_tmdb_id' | 'missing_episode_ref' | 'invalid_watched_at';
-    message?: string;
-};
-
-export type FetchTraktPublicHistoryResponseDto = {
-    profile: TraktPublicProfileDto;
-    /**
-     * Count of importable rows after normalization (from the recent preview window)
-     */
-    importableCount: number;
-    previewItems: Array<TraktHistoryPreviewItemDto>;
-    items: Array<NormalizedImportItemDto>;
-    skipped: Array<ImportSkipDto>;
-};
-
-export type StartTraktImportDto = {
-    /**
-     * Trakt username or slug
-     */
-    username: string;
-};
-
-export type TraktImportIssueDto = {
-    id: string;
-    sourceIndex: number;
-    outcome: 'unmatched' | 'couldnt_import';
-    mediaType: 'movie' | 'episode' | 'unknown';
-    title?: string;
-    year?: number;
-    episodeTitle?: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    watchedAt?: string;
-    reason?: string;
-    message?: string;
-    recovery: 'match' | 'retry' | 'none';
-    /**
-     * Identity group used for title matching
-     */
-    matchKey?: string;
-};
-
-export type TraktUnmatchedGroupDto = {
-    matchKey: string;
-    mediaType: 'movie' | 'show';
-    title: string;
-    year?: number;
-    watchCount: number;
-    watchedAt: Array<string>;
-};
-
-export type TraktImportJobDto = {
-    id: string;
-    traktUsername: string;
-    status: 'queued' | 'running' | 'waiting_retry' | 'paused' | 'completed' | 'continued_in_sync' | 'failed';
-    currentPage: number;
-    totalPages?: number;
-    sourceCount: number;
-    normalizedCount: number;
-    importedCount: number;
-    skippedCount: number;
-    failedCount: number;
-    alreadyOnShelfCount: number;
-    unmatchedCount: number;
-    couldntImportCount: number;
-    issuesPreview: Array<TraktImportIssueDto>;
-    unmatchedGroups: Array<TraktUnmatchedGroupDto>;
-    acknowledgedAt?: string;
-    reminderSnoozedUntil?: string;
-    nextRunAt: string;
-    lastError?: string;
-    profileUsername?: string;
-    profileSlug?: string;
-    profileName?: string;
-    profileAvatarUrl?: string;
-    startedAt?: string;
-    completedAt?: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type StartTraktImportResponseDto = {
-    profile: TraktPublicProfileDto;
-    previewItems: Array<TraktHistoryPreviewItemDto>;
-    /**
-     * Count of rows returned by Trakt for the preview page
-     */
-    sourcePreviewCount: number;
-    job: TraktImportJobDto;
-};
-
-export type PaginatedTraktImportIssuesDto = {
-    /**
-     * Total count of items across all pages
-     */
-    total: number;
-    /**
-     * Current page number after server-side clamping
-     */
-    page: number;
-    /**
-     * Number of items per page
-     */
-    pageSize: number;
-    /**
-     * Total number of available pages
-     */
-    totalPages: number;
-    /**
-     * Whether a next page exists
-     */
-    hasNextPage: boolean;
-    /**
-     * Whether a previous page exists
-     */
-    hasPreviousPage: boolean;
-    items: Array<TraktImportIssueDto>;
-};
-
-export type TraktMatchCandidateDto = {
-    tmdbId: string;
-    mediaType: 'movie' | 'show';
-    title: string;
-    year?: number;
-    posterPath?: string;
-    overview?: string;
-};
-
-export type ConfirmTraktMatchDto = {
-    /**
-     * TMDB movie or show id
-     */
-    tmdbId: string;
-};
-
 export type ImportBlueskyFollowsResponseDto = {
     /**
      * Total Bluesky follows scanned from AppView
@@ -1430,27 +1221,6 @@ export type ImportBlueskyFollowsResponseDto = {
      * How many matched users were already followed
      */
     alreadyFollowingCount: number;
-};
-
-export type ImportHistoryDto = {
-    items: Array<NormalizedImportItemDto>;
-};
-
-export type ImportErrorDto = {
-    /**
-     * 1-based item index from request payload
-     */
-    index: number;
-    code: 'invalid_item' | 'already_exists' | 'write_failed' | 'duplicate_in_request';
-    reason?: 'duplicate_record' | 'metadata_unavailable' | 'upstream_write_failed' | 'unknown';
-    message: string;
-};
-
-export type ImportHistoryResponseDto = {
-    imported: number;
-    skipped: number;
-    failed: number;
-    errors: Array<ImportErrorDto>;
 };
 
 export type ReleaseNotesReadStateDto = {
@@ -1889,7 +1659,6 @@ export type SyncStatusDto = {
     progress?: number;
     needsAttention: number;
     ignored: number;
-    importStatus?: string;
 };
 
 export type SyncConnectDto = {
@@ -1918,7 +1687,6 @@ export type SyncSettingsDto = {
     contentPublicationConsent?: boolean;
     historyScope: 'all' | 'future';
     publicationConsent: boolean;
-    handoffImport?: boolean;
 };
 
 export type SyncActionDto = {
@@ -1991,6 +1759,15 @@ export type SyncResolveDto = {
      * The User checked Trakt and confirmed the unacknowledged creation is missing before choosing a version.
      */
     confirmedTraktMissing?: boolean;
+};
+
+export type TraktMatchCandidateDto = {
+    tmdbId: string;
+    mediaType: 'movie' | 'show';
+    title: string;
+    year?: number;
+    posterPath?: string;
+    overview?: string;
 };
 
 export type RatingResponseDto = {
@@ -4721,206 +4498,6 @@ export type UsersControllerCompleteOnboardingResponses = {
 
 export type UsersControllerCompleteOnboardingResponse = UsersControllerCompleteOnboardingResponses[keyof UsersControllerCompleteOnboardingResponses];
 
-export type UsersControllerFetchMyTraktPublicHistoryData = {
-    body: FetchTraktPublicHistoryDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/fetch';
-};
-
-export type UsersControllerFetchMyTraktPublicHistoryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerFetchMyTraktPublicHistoryResponses = {
-    200: FetchTraktPublicHistoryResponseDto;
-};
-
-export type UsersControllerFetchMyTraktPublicHistoryResponse = UsersControllerFetchMyTraktPublicHistoryResponses[keyof UsersControllerFetchMyTraktPublicHistoryResponses];
-
-export type UsersControllerStartMyTraktImportData = {
-    body: StartTraktImportDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/start';
-};
-
-export type UsersControllerStartMyTraktImportErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerStartMyTraktImportResponses = {
-    200: StartTraktImportResponseDto;
-};
-
-export type UsersControllerStartMyTraktImportResponse = UsersControllerStartMyTraktImportResponses[keyof UsersControllerStartMyTraktImportResponses];
-
-export type UsersControllerGetMyCurrentTraktImportData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/current';
-};
-
-export type UsersControllerGetMyCurrentTraktImportErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerGetMyCurrentTraktImportResponses = {
-    /**
-     * Current or recent Trakt import job, or null when none exists
-     */
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerGetMyCurrentTraktImportResponse = UsersControllerGetMyCurrentTraktImportResponses[keyof UsersControllerGetMyCurrentTraktImportResponses];
-
-export type UsersControllerPauseMyTraktImportData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/pause';
-};
-
-export type UsersControllerPauseMyTraktImportResponses = {
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerPauseMyTraktImportResponse = UsersControllerPauseMyTraktImportResponses[keyof UsersControllerPauseMyTraktImportResponses];
-
-export type UsersControllerResumeMyTraktImportData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/resume';
-};
-
-export type UsersControllerResumeMyTraktImportResponses = {
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerResumeMyTraktImportResponse = UsersControllerResumeMyTraktImportResponses[keyof UsersControllerResumeMyTraktImportResponses];
-
-export type UsersControllerAcknowledgeMyTraktImportData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/acknowledge';
-};
-
-export type UsersControllerAcknowledgeMyTraktImportResponses = {
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerAcknowledgeMyTraktImportResponse = UsersControllerAcknowledgeMyTraktImportResponses[keyof UsersControllerAcknowledgeMyTraktImportResponses];
-
-export type UsersControllerSnoozeMyTraktReminderData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/trakt/public/reminder/snooze';
-};
-
-export type UsersControllerSnoozeMyTraktReminderResponses = {
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerSnoozeMyTraktReminderResponse = UsersControllerSnoozeMyTraktReminderResponses[keyof UsersControllerSnoozeMyTraktReminderResponses];
-
-export type UsersControllerGetMyTraktImportIssuesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Page number to return (1-based)
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-        outcome?: 'unmatched' | 'couldnt_import';
-    };
-    url: '/users/me/import/trakt/public/issues';
-};
-
-export type UsersControllerGetMyTraktImportIssuesResponses = {
-    200: PaginatedTraktImportIssuesDto;
-};
-
-export type UsersControllerGetMyTraktImportIssuesResponse = UsersControllerGetMyTraktImportIssuesResponses[keyof UsersControllerGetMyTraktImportIssuesResponses];
-
-export type UsersControllerGetMyTraktMatchCandidatesData = {
-    body?: never;
-    path: {
-        matchKey: string;
-    };
-    query?: {
-        query?: string;
-    };
-    url: '/users/me/import/trakt/public/matches/{matchKey}/candidates';
-};
-
-export type UsersControllerGetMyTraktMatchCandidatesResponses = {
-    200: Array<TraktMatchCandidateDto>;
-};
-
-export type UsersControllerGetMyTraktMatchCandidatesResponse = UsersControllerGetMyTraktMatchCandidatesResponses[keyof UsersControllerGetMyTraktMatchCandidatesResponses];
-
-export type UsersControllerConfirmMyTraktMatchData = {
-    body: ConfirmTraktMatchDto;
-    path: {
-        matchKey: string;
-    };
-    query?: never;
-    url: '/users/me/import/trakt/public/matches/{matchKey}/confirm';
-};
-
-export type UsersControllerConfirmMyTraktMatchResponses = {
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerConfirmMyTraktMatchResponse = UsersControllerConfirmMyTraktMatchResponses[keyof UsersControllerConfirmMyTraktMatchResponses];
-
-export type UsersControllerRejectMyTraktMatchData = {
-    body?: never;
-    path: {
-        matchKey: string;
-    };
-    query?: never;
-    url: '/users/me/import/trakt/public/matches/{matchKey}/no-match';
-};
-
-export type UsersControllerRejectMyTraktMatchResponses = {
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerRejectMyTraktMatchResponse = UsersControllerRejectMyTraktMatchResponses[keyof UsersControllerRejectMyTraktMatchResponses];
-
-export type UsersControllerRetryMyTraktImportItemData = {
-    body?: never;
-    path: {
-        itemId: string;
-    };
-    query?: never;
-    url: '/users/me/import/trakt/public/issues/{itemId}/retry';
-};
-
-export type UsersControllerRetryMyTraktImportItemResponses = {
-    200: TraktImportJobDto;
-};
-
-export type UsersControllerRetryMyTraktImportItemResponse = UsersControllerRetryMyTraktImportItemResponses[keyof UsersControllerRetryMyTraktImportItemResponses];
-
 export type UsersControllerImportMyBlueskyFollowsData = {
     body?: never;
     path?: never;
@@ -4940,26 +4517,6 @@ export type UsersControllerImportMyBlueskyFollowsResponses = {
 };
 
 export type UsersControllerImportMyBlueskyFollowsResponse = UsersControllerImportMyBlueskyFollowsResponses[keyof UsersControllerImportMyBlueskyFollowsResponses];
-
-export type UsersControllerImportMyHistoryData = {
-    body: ImportHistoryDto;
-    path?: never;
-    query?: never;
-    url: '/users/me/import/history';
-};
-
-export type UsersControllerImportMyHistoryErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type UsersControllerImportMyHistoryResponses = {
-    200: ImportHistoryResponseDto;
-};
-
-export type UsersControllerImportMyHistoryResponse = UsersControllerImportMyHistoryResponses[keyof UsersControllerImportMyHistoryResponses];
 
 export type ReleaseNotesControllerGetReadStateData = {
     body?: never;

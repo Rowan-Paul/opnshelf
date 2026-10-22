@@ -20,7 +20,6 @@ import {
 	registerTourScroller,
 	setTourScrollOffset,
 } from "@/components/tour/WelcomeTour";
-import { TraktHomePrompt } from "@/components/trakt/TraktHomePrompt";
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
 import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
@@ -103,7 +102,6 @@ export default function HomeScreen() {
 				<View className="gap-8 px-4">
 					<WelcomeHeader user={user} />
 					<ReleaseNotePrompt />
-					<TraktHomePrompt />
 					<NotificationPrompt />
 
 					{stats}

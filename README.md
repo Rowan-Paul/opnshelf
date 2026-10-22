@@ -10,7 +10,7 @@ Logo masters, palette guidance, and the pre-launch clearance note live in [desig
 - **Custom Lists** - Create and manage lists (Want to Watch, Favorites, Custom collections)
 - **Social Discovery** - Follow friends and see what they're watching
 - **Release Calendar** - Track upcoming releases and never miss a premiere
-- **Trakt Import** - Import your watch history from Trakt.tv
+- **Trakt Sync** - Keep your history and collections in sync with Trakt.tv
 - **AT Protocol OAuth** - Secure authentication with Bluesky/AT Protocol accounts
 - **Cross-Platform** - Web app and mobile apps (iOS/Android) with synced data
 
@@ -173,7 +173,7 @@ Notes:
 | `TURNSTILE_SECRET_KEY` | Required in production | Cloudflare Turnstile server secret for signup captcha. |
 | `CLOUDFLARE_API_TOKEN` | Required in production | Cloudflare Email Sending API token for notifications. |
 | `CLOUDFLARE_ACCOUNT_ID` | Required in production | Cloudflare account ID for notification delivery. |
-| `TRAKT_API_KEY` | Required in production | Trakt API key for history imports. |
+| `TRAKT_API_KEY` | Required in production | Trakt client ID for ongoing sync. |
 | `FEEDBACK_GITHUB_TOKEN` | Optional | Optional GitHub token for feedback issues; absent configuration saves feedback only (ADR 0007). |
 | `FEEDBACK_GITHUB_REPOSITORY` | Optional | Optional owner/repository receiving feedback issues. |
 | `PDS_MAINTENANCE_MODE` | Defaulted | Pause PDS writes and authentication; true/false, 1/0, yes/no or on/off; defaults to false. |
@@ -255,7 +255,7 @@ Things to know before you do that:
 - **No dumps.** Do not copy Staging or production data locally; there is no
   sanctioned export, and none is needed for the flow above.
 - `TMDB_API_KEY` is required for any Media Item to resolve. Get a free key from
-  TMDB. `TRAKT_API_KEY` is only needed to exercise Trakt Import.
+  TMDB. Trakt Sync requires its configured client credentials.
 
 ## External dependencies
 
@@ -268,7 +268,7 @@ Locally they live in the `.env` files. Values themselves are never in the repo.
 | System | Purpose | Connection | Env vars |
 | --- | --- | --- | --- |
 | TMDB | Movie, show, season, episode and Person metadata; search; Discover sections | HTTPS to `api.themoviedb.org/3` from `backend/src/tmdb/tmdb-http.ts` and the `*-tmdb.service.ts` files | `TMDB_API_KEY` |
-| Trakt | Trakt Import source | HTTPS to `api.trakt.tv` from `backend/src/users/trakt-api.client.ts` | `TRAKT_API_KEY` |
+| Trakt | Trakt Sync service | HTTPS to `api.trakt.tv` from `backend/src/trakt-sync/trakt-sync.client.ts` | `TRAKT_API_KEY` |
 | Tranquil PDS | Hosts Opnshelf handles; OAuth sign-in; all `xyz.opnshelf.*` record writes; email verification. The backend signs in as a PDS admin to mint a single-use invite code per signup (`com.atproto.server.createInviteCode`) | AT Protocol OAuth and XRPC from `backend/src/auth/auth.service.ts` and `backend/src/pds/tranquil-admin.service.ts`. Runs in the separate `opnshelf-pds` Railway project (ADR 0019) | `PDS_URL`, `PDS_HANDLE_DOMAIN`, `PDS_ADMIN_IDENTIFIER`, `PDS_ADMIN_PASSWORD`, `BACKEND_PUBLIC_URL` |
 | Tab | Indexes `xyz.opnshelf.*` records from tracked repos and delivers them to the backend | WebSocket channel via `@atproto/tap` from `backend/src/ingester/ingester.service.ts`; repos are added on sign-in and signup, events are acked only after indexing. Local: docker-compose. Deployed: one `tap` service per environment, never shared (ADR 0021) | `TAB_URL`, `TAB_ADMIN_PASSWORD` |
 | Cloudflare Turnstile | Human check before an invite code is minted at signup | Server-side verify against `challenges.cloudflare.com` in `backend/src/pds/captcha.service.ts`; widget in `apps/web/src/components/TurnstileWidget.tsx` and the Mobile App signup WebView | `TURNSTILE_SECRET_KEY` (backend), `VITE_TURNSTILE_SITE_KEY` (web), `EXPO_PUBLIC_TURNSTILE_SITE_KEY` (mobile) |

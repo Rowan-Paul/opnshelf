@@ -16,7 +16,6 @@ import {
 	type SyncRecord,
 } from "./reconcile";
 import { type TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
-import { TraktImportJobStore } from "../users/import/trakt-import-job.store";
 import { TraktSyncService } from "./trakt-sync.service";
 
 const url = process.env.TRAKT_SYNC_TEST_DATABASE_URL;
@@ -818,7 +817,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(localRecords.map((r) => r.key)).toEqual(["list:unrelated"]);
 	});
-	it("holds Watch sync and recovery when the Shelf is private", async () => {
+	it("holds Watch sync when the Shelf is private", async () => {
 		remoteRecords = [watch("remote-private")];
 		await db.user.update({
 			where: { did: userDid },
@@ -827,12 +826,8 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await configure();
 		expect(remoteApi.snapshot).not.toHaveBeenCalled();
 		expect(localApi.write).not.toHaveBeenCalled();
-		const recovery = vi.fn(async () => undefined);
-		await expect(service.recoverImport(userDid, recovery)).rejects.toThrow(
-			"public Shelf",
-		);
-		expect(recovery).not.toHaveBeenCalled();
 	});
+
 	it("holds Watch sync while a privacy migration is pending", async () => {
 		const job = await db.backgroundJob.create({
 			data: { userDid, type: "watch_privacy" },
@@ -1543,7 +1538,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(remoteRecords).toHaveLength(1);
 		expect(remoteRecords[0].value).toBe("2021-01-01T00:00:00.000Z");
 	});
-	it("requires explicit publication consent and an explicit unfinished Import handoff", async () => {
+	it("requires explicit publication consent", async () => {
 		await expect(
 			service.configure(userDid, {
 				direction: "inbound",
@@ -1553,22 +1548,6 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				publicationConsent: false,
 			}),
 		).rejects.toThrow("public");
-		const job = await db.backgroundJob.create({
-			data: { type: "trakt_import", userDid, status: "paused" },
-		});
-		await expect(configure()).rejects.toThrow("Finish your Import");
-		await service.configure(userDid, {
-			direction: "both",
-			historyScope: "all",
-			watches: true,
-			ratings: true,
-			publicationConsent: true,
-			handoffImport: true,
-		});
-		expect(
-			(await db.backgroundJob.findUniqueOrThrow({ where: { id: job.id } }))
-				.status,
-		).toBe("continued_in_sync");
 	});
 	it.each([408, 499])(
 		"keeps creation uncertain after HTTP %s interrupts the request",
@@ -2042,23 +2021,6 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				data: { userDid, traktUserId: "another", username: "another" },
 			}),
 		).resolves.toBeDefined();
-	});
-	it("keeps a handed-off Import permanently retired even after a stale worker or Resume", async () => {
-		const job = await db.backgroundJob.create({
-			data: { userDid, type: "trakt_import", status: "continued_in_sync" },
-		});
-		const store = new TraktImportJobStore(db as unknown as PrismaService);
-		await store.persistStatusControl(job.id, "resume");
-		await store.persistWorkerState(job.id, undefined, {
-			status: "completed",
-			nextRunAt: new Date(),
-			completedAt: new Date(),
-			lastError: null,
-		});
-		expect(
-			(await db.backgroundJob.findUniqueOrThrow({ where: { id: job.id } }))
-				.status,
-		).toBe("continued_in_sync");
 	});
 	it("adopts a legacy recovery that reached the PDS before its link was saved", async () => {
 		remoteRecords = [watch("watch:1")];

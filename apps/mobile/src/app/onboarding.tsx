@@ -6,7 +6,6 @@ import {
 	traktSyncControllerStatus,
 	type UserDto,
 	usersControllerCompleteOnboarding,
-	usersControllerGetMyCurrentTraktImportOptions,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
@@ -40,7 +39,6 @@ import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
-import { TraktImportPanel } from "@/components/trakt/TraktImportPanel";
 import { SyncSettings } from "@/components/trakt/TraktSyncManager";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
@@ -169,13 +167,8 @@ export default function OnboardingScreen() {
 	const [notificationStage, setNotificationStage] =
 		useState<NotificationStage>("topics");
 	const [notificationsBusy, setNotificationsBusy] = useState(false);
-	const [importStarted, setImportStarted] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
-	const { data: currentImport } = useQuery({
-		...usersControllerGetMyCurrentTraktImportOptions(),
-		enabled: isAuthenticated,
-	});
 	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
 	const { data: traktSync } = useQuery({
 		queryKey: traktStatusKey,
@@ -184,8 +177,7 @@ export default function OnboardingScreen() {
 		enabled: isAuthenticated,
 	});
 	// Watch history already coming from Trakt makes the watches step redundant.
-	const skipWatches =
-		importStarted || bringsTraktWatches(currentImport, traktSync);
+	const skipWatches = bringsTraktWatches(traktSync);
 
 	const goBack = useCallback(() => {
 		if (notificationsBusy) return;
@@ -290,10 +282,7 @@ export default function OnboardingScreen() {
 					/>
 				)}
 				{step === "trakt" && (
-					<TraktStep
-						onImportStarted={() => setImportStarted(true)}
-						onNext={() => setStep("suggestions")}
-					/>
+					<TraktStep onNext={() => setStep("suggestions")} />
 				)}
 				{step === "suggestions" && (
 					<StepScaffold
@@ -316,7 +305,6 @@ export default function OnboardingScreen() {
 				{step === "done" && (
 					<DoneStep
 						followedAnyone={followedAnyone}
-						importStarted={importStarted}
 						watchesAdded={watchesAdded}
 					/>
 				)}
@@ -621,15 +609,8 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 }
 
 /* -------------------------------------------------------------------- Trakt */
-function TraktStep({
-	onNext,
-	onImportStarted,
-}: {
-	onNext: () => void;
-	onImportStarted: () => void;
-}) {
+function TraktStep({ onNext }: { onNext: () => void }) {
 	const queryClient = useQueryClient();
-	const [importing, setImporting] = useState(false);
 	const status = useQuery({
 		queryKey: traktStatusKey,
 		queryFn: async ({ signal }) =>
@@ -670,39 +651,17 @@ function TraktStep({
 	}
 
 	const data = status.data;
-	// Trakt Import stands alone when Trakt Sync is unavailable, or on request.
-	if (importing || !data?.configured) {
+	if (!data?.configured)
 		return (
-			<View className="flex-1">
-				<View className="gap-1 pt-1 pb-4">
-					<Text className="font-bold font-display text-3xl text-foreground">
-						Import from Trakt
-					</Text>
-					<Text className="text-muted-foreground text-sm">
-						Copy your public Trakt history once. Nothing changes on Trakt.
-					</Text>
-					{importing ? (
-						<Pressable
-							accessibilityRole="button"
-							onPress={() => setImporting(false)}
-							className="self-start pt-2"
-						>
-							<Text className="font-medium text-primary text-sm">
-								Connect Trakt instead
-							</Text>
-						</Pressable>
-					) : null}
-				</View>
-				<TraktImportPanel
-					showExistingJob={false}
-					onImportStarted={onImportStarted}
-					onSkip={onNext}
-					onDone={onNext}
-				/>
-			</View>
+			<StepScaffold footer={skip}>
+				<Text className="font-bold font-display text-3xl text-foreground">
+					Trakt Sync
+				</Text>
+				<Text className="text-muted-foreground text-sm">
+					Trakt Sync is unavailable. You can connect later in Settings.
+				</Text>
+			</StepScaffold>
 		);
-	}
-
 	const connected =
 		data.status !== "disconnected" && data.status !== "reconnect";
 	if (connected) {
@@ -791,25 +750,15 @@ function TraktStep({
 					</Text>
 				) : null}
 			</View>
-			<Pressable accessibilityRole="button" onPress={() => setImporting(true)}>
-				<Text className="text-muted-foreground text-sm">
-					Rather not log in?{" "}
-					<Text className="text-foreground text-sm underline">
-						Import your public history once
-					</Text>
-				</Text>
-			</Pressable>
 		</StepScaffold>
 	);
 }
 
 /* --------------------------------------------------------------------- Done */
 function DoneStep({
-	importStarted,
 	followedAnyone,
 	watchesAdded,
 }: {
-	importStarted: boolean;
 	followedAnyone: boolean;
 	watchesAdded: number;
 }) {
@@ -827,7 +776,6 @@ function DoneStep({
 		},
 		onSuccess: (data) => {
 			posthog?.capture("onboarding_completed", {
-				import_started: importStarted,
 				followed_anyone: followedAnyone,
 				watches_added: watchesAdded,
 				platform: "mobile",

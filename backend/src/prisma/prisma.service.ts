@@ -17,7 +17,7 @@ export class PrismaService
 			adapter: new PrismaPg({
 				connectionString: env.DATABASE_URL,
 				// Railway's Postgres connection budget is shared with the PDS and
-				// deployment overlap. A large Trakt import plus the dashboard's
+				// deployment overlap. A large Trakt sync plus the dashboard's
 				// parallel queries could otherwise exhaust it for every request.
 				max: 3,
 				idleTimeoutMillis: 10_000,

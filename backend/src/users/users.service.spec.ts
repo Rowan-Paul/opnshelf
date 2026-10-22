@@ -1,18 +1,11 @@
 import { mockEnvironment } from "../../test/env";
-import type { Mock, MockedFunction } from "vitest";
+import type { Mock } from "vitest";
 import {
 	BadGatewayException,
 	BadRequestException,
 	NotFoundException,
 } from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
-import type {
-	FetchTraktPublicHistoryResponseDto,
-	ImportHistoryResponseDto,
-	NormalizedImportItemDto,
-	StartTraktImportResponseDto,
-	TraktImportJobDto,
-} from "./dto/import-history.dto";
 import type { ListsService } from "../lists/lists.service";
 import type { MoviesService } from "../movies/movies.service";
 import type { PrismaService } from "../prisma/prisma.service";
@@ -24,37 +17,13 @@ vi.mock("./profile.service", () => ({
 }));
 
 import type { ReviewsService } from "../reviews/reviews.service";
-import type { ImportHistoryService } from "./import-history.service";
 import type { ProfileService } from "./profile.service";
 import type { UserDeletionService } from "./user-deletion.service";
 import { PrivateSettingsService } from "../pds/private-settings.service";
 import { UsersService } from "./users.service";
 
-type MockImportHistoryService = {
-	fetchTraktPublicHistory: MockedFunction<
-		(
-			username: string,
-			maxItems?: number,
-		) => Promise<FetchTraktPublicHistoryResponseDto>
-	>;
-	startTraktImport: MockedFunction<
-		(userDid: string, username: string) => Promise<StartTraktImportResponseDto>
-	>;
-	getCurrentTraktImport: MockedFunction<
-		(userDid: string) => Promise<TraktImportJobDto | null>
-	>;
-	importNormalizedItems: MockedFunction<
-		(
-			userDid: string,
-			session: { did: string },
-			items: NormalizedImportItemDto[],
-		) => Promise<ImportHistoryResponseDto>
-	>;
-};
-
 describe("UsersService", () => {
 	let service: UsersService;
-	let importHistoryService: MockImportHistoryService;
 	let reviewsService: ReviewsService;
 	let privateSettings: PrivateSettingsService;
 
@@ -136,12 +105,6 @@ describe("UsersService", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		importHistoryService = {
-			fetchTraktPublicHistory: vi.fn(),
-			startTraktImport: vi.fn(),
-			getCurrentTraktImport: vi.fn(),
-			importNormalizedItems: vi.fn(),
-		};
 		(listsService.hasAllDefaultLists as Mock).mockResolvedValue(true);
 		reviewsService = {
 			listMyPublications: vi.fn(),
@@ -149,7 +112,6 @@ describe("UsersService", () => {
 		privateSettings = new PrivateSettingsService();
 		service = new UsersService(
 			prisma,
-			importHistoryService as unknown as ImportHistoryService,
 			userDeletionService,
 			profileService,
 			listsService,
@@ -720,62 +682,5 @@ describe("UsersService", () => {
 		await expect(
 			service.getPublicProfileByHandle("nobody.bsky.social"),
 		).rejects.toThrow(NotFoundException);
-	});
-
-	it("starts a background Trakt import for an existing user", async () => {
-		prisma.user.findUnique = vi.fn().mockResolvedValue({ did: "did:plc:abc" });
-		importHistoryService.startTraktImport.mockResolvedValue({
-			profile: {
-				username: "alice",
-				slug: "alice",
-				name: "Alice Example",
-				isPrivate: false,
-				isVip: false,
-				avatarUrl: "https://example.com/avatar.jpg",
-			},
-			previewItems: [],
-			sourcePreviewCount: 25,
-			job: {
-				id: "job-1",
-				traktUsername: "alice",
-				status: "queued",
-				currentPage: 1,
-				sourceCount: 0,
-				normalizedCount: 0,
-				importedCount: 0,
-				skippedCount: 0,
-				failedCount: 0,
-				alreadyOnShelfCount: 0,
-				unmatchedCount: 0,
-				couldntImportCount: 0,
-				issuesPreview: [],
-				unmatchedGroups: [],
-				nextRunAt: "2026-03-23T18:00:00.000Z",
-				createdAt: "2026-03-23T18:00:00.000Z",
-				updatedAt: "2026-03-23T18:00:00.000Z",
-			},
-		});
-
-		await expect(
-			service.startTraktImport("did:plc:abc", "alice"),
-		).resolves.toMatchObject({
-			job: {
-				id: "job-1",
-				status: "queued",
-			},
-		});
-		expect(importHistoryService.startTraktImport).toHaveBeenCalledWith(
-			"did:plc:abc",
-			"alice",
-		);
-	});
-
-	it("propagates normalized history import failures", async () => {
-		const error = new BadRequestException("Too many items");
-		importHistoryService.importNormalizedItems.mockRejectedValue(error);
-
-		await expect(
-			service.importNormalizedItems("did:plc:abc", { did: "did:plc:abc" }, []),
-		).rejects.toThrow(error);
 	});
 });

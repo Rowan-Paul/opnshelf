@@ -121,7 +121,6 @@ vi.mock("@tanstack/react-query", () => ({
 						ratings: true,
 						historyScope: "all",
 						publicationConsent: mocks.active,
-						importStatus: "paused",
 						remaining: 0,
 						needsAttention: mocks.issues ? 1 : 0,
 						ignored: 0,
@@ -260,20 +259,6 @@ it("changes direction from a compact row before confirming", () => {
 	expect(mocks.mutate).not.toHaveBeenCalled();
 });
 
-it("closes the confirmation sheet when navigating to finish an Import", () => {
-	mount();
-	press("Enable sync");
-	expect(renderer.root.findByType(Modal).props.visible).toBe(true);
-	const link = renderer.root.find(
-		(node) =>
-			node.type === "link" && node.props.children === "Finish Import first",
-	);
-	expect(link.props.href).toBe("/trakt-import");
-	act(() => link.props.onPress?.());
-	expect(renderer.root.findByType(Modal).props.visible).toBe(false);
-	expect(mocks.mutate).not.toHaveBeenCalled();
-});
-
 it.each([
 	"lists",
 	"favorites",
@@ -324,12 +309,6 @@ it.each([
 			node.props.accessibilityLabel.startsWith("I understand that sync"),
 	);
 	act(() => consent.props.onValueChange(true));
-	const handoff = renderer.root.find(
-		(node) =>
-			node.type === "switch" &&
-			node.props.accessibilityLabel.startsWith("Continue my unfinished Import"),
-	);
-	act(() => handoff.props.onValueChange(true));
 	expect(confirm()?.props.disabled).toBe(false);
 	press("Confirm and enable sync");
 	expect(mocks.mutate).toHaveBeenCalledWith({

@@ -37,8 +37,6 @@ import { TraktSyncService } from "../trakt-sync/trakt-sync.service";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
-	TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE,
-	TRAKT_IMPORT_JOB_TYPE,
 	buildAccountDeletionData,
 	parseAccountDeletionData,
 	type AccountDeletionJobData,
@@ -58,7 +56,7 @@ const STALE_RUNNING_MS = 5 * 60 * 1000;
 // every single record) to avoid thousands of DB writes in one run.
 const PROGRESS_FLUSH_EVERY = 50;
 // Delete at most this many records per worker tick, then yield so other jobs
-// (Trakt imports + other deletions) get a turn instead of being starved.
+// (privacy changes + other deletions) get a turn instead of being starved.
 const DELETION_BATCH_SIZE = 200;
 
 // Ordered PDS deletion steps. Resume picks up at the persisted currentStep and
@@ -118,21 +116,7 @@ export class UserDeletionService {
 	}
 
 	private async deleteLocalAccount(did: string): Promise<void> {
-		// Revocation happens before entering this helper. Keep Trakt history and the
-		// user in one transaction so a failed User delete cannot strand a live
-		// account after its durable import ledger was removed.
 		await this.watchPrivacy.deleteLocalAccount(did, async (tx) => {
-			await tx.backgroundJob.deleteMany({
-				where: {
-					userDid: did,
-					type: {
-						in: [
-							TRAKT_IMPORT_JOB_TYPE,
-							TRAKT_IMPORT_ARCHIVED_DUPLICATE_JOB_TYPE,
-						],
-					},
-				},
-			});
 			await tx.user.delete({ where: { did } });
 		});
 

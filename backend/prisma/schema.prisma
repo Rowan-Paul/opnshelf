@@ -383,61 +383,9 @@ model BackgroundJob {
 
   watchPrivacyCopies WatchPrivacyCopy[]
   watchPrivacyMigration WatchPrivacyMigration?
-  traktItems   TraktImportItem[]
-  traktMatches TraktImportMatch[]
 
   @@index([type, status, nextRunAt])
-  // One trakt_import per User is enforced by the PostgreSQL partial index
-  // BackgroundJob_one_trakt_import_per_user_key in migration 20260816120000.
-  // Do not replace it with @@unique([userDid, type]); other job types may repeat.
   @@index([userDid, type])
-}
-
-// Durable, complete outcome for one source row in a User's single Trakt
-// Import. Rows remain for the account lifetime so the result and reconciliation
-// queue never imply that an omitted source item was imported.
-model TraktImportItem {
-  id               String        @id @default(cuid())
-  jobId            String
-  job              BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  sourceIndex      Int
-  outcome          String
-  mediaType        String
-  watchedAt        DateTime?
-  title            String?
-  year             Int?
-  episodeTitle     String?
-  seasonNumber     Int?
-  episodeNumber    Int?
-  traktMediaKey    String?
-  traktId          String?
-  traktSlug        String?
-  tmdbId           String?
-  reason           String?
-  message          String?
-  createdWatchRkey String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-
-  @@unique([jobId, sourceIndex])
-  @@index([jobId, outcome, sourceIndex])
-  @@index([jobId, traktMediaKey])
-}
-
-// A User's explicit acceptance that one Trakt media identity should map to a
-// TMDB Media Item. It is evidence local to this Import, never an authoritative
-// mapping for another User.
-model TraktImportMatch {
-  id          String        @id @default(cuid())
-  jobId       String
-  job         BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  matchKey    String
-  mediaType   String
-  tmdbId      String
-  confirmedAt DateTime      @default(now())
-
-  @@unique([jobId, matchKey])
-  @@index([jobId])
 }
 
 model Movie {

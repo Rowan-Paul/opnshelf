@@ -1,8 +1,4 @@
-import {
-	isKnownTraktImportStatus,
-	isTerminalTraktImportStatus,
-	type UserDto,
-} from "@opnshelf/api";
+import type { UserDto } from "@opnshelf/api";
 
 /**
  * Pure step ordering and derived-state helpers for the onboarding route. The
@@ -32,20 +28,6 @@ export function isOnboardingStep(value: unknown): value is OnboardingStep {
 export function nextOnboardingStep(step: OnboardingStep): OnboardingStep {
 	const index = ONBOARDING_STEPS.indexOf(step);
 	return ONBOARDING_STEPS[Math.min(index + 1, ONBOARDING_STEPS.length - 1)];
-}
-
-/**
- * Whether a returning user should land on the Trakt step: only when the
- * server reports a job that is known and still in flight. `null` means no job.
- */
-export function shouldResumeTraktImport(
-	job: { id?: string; status: string } | null | undefined,
-): boolean {
-	return Boolean(
-		job?.id &&
-			isKnownTraktImportStatus(job.status) &&
-			!isTerminalTraktImportStatus(job.status),
-	);
 }
 
 export const RESEND_COOLDOWN_SECONDS = 60;

@@ -7,7 +7,6 @@ import {
 	type OnModuleDestroy,
 	type OnModuleInit,
 } from "@nestjs/common";
-import { ImportHistoryService } from "./import-history.service";
 import { UserDeletionService } from "./user-deletion.service";
 
 const WORKER_POLL_INTERVAL_MS = 2_000;
@@ -21,7 +20,6 @@ export class BackgroundJobWorkerService
 	private isProcessing = false;
 
 	constructor(
-		private readonly importHistoryService: ImportHistoryService,
 		private readonly userDeletionService: UserDeletionService,
 		private readonly watchPrivacy: WatchPrivacyService,
 		private readonly contentPrivacy: ContentPrivacyService,
@@ -49,9 +47,7 @@ export class BackgroundJobWorkerService
 		this.isProcessing = true;
 		try {
 			// Recover jobs wedged in "running" by a crash before a terminal state.
-			await this.importHistoryService.reapStaleRunningJobs();
 			await this.userDeletionService.reapStaleRunningJobs();
-			await this.importHistoryService.processNextTraktImportJob();
 			await this.userDeletionService.processNextDeletionJob();
 			await this.watchPrivacy.tick();
 			await this.contentPrivacy.tick();
