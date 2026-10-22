@@ -129,7 +129,7 @@ boundary are required before any migration can be started by a user.
 | Surface | Code boundary | Required behavior |
 | --- | --- | --- |
 | Movie and episode logging, bulk logging, correction, deletion | `movies.service`, `episode-watch.service`, `update-watch-date` | Route to selected repository; preserve identities; block during migration |
-| Trakt imports and account deletion | `watch-import-writer.service`, `user-deletion.service` | Coordinate with the same migration lock and repository choice |
+| Trakt Sync and account deletion | `trakt-sync.service`, `user-deletion.service` | Coordinate with the same migration lock and repository choice |
 | Tab indexing | `ingester.service` | Ignore stale public events for private/migrating Watches; retain private index |
 | Shelf, activity graph, sync counts | `shelf.service` and controller | Owner-only while private or migrating, including raw SQL |
 | Profile totals and statistics | `users.service` | Hide private derived values from other viewers |

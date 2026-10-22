@@ -38,7 +38,6 @@ import {
 } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { getPaginationMeta } from "../common/pagination";
-import { activeTraktImports } from "../users/import/import-activity";
 import { LocalSyncRecords } from "./local-records.service";
 import {
 	candidates,
@@ -272,10 +271,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			orderBy: [{ updatedAt: "desc" }],
 			omit: { remoteSnapshot: true },
 		});
-		const job = await this.prisma.backgroundJob.findFirst({
-			where: { userDid, type: "trakt_import" },
-			select: { status: true },
-		});
 		const counts = c
 			? await this.prisma.traktSyncEntry.groupBy({
 					by: ["ignored"],
@@ -329,7 +324,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					: undefined,
 			needsAttention: counts.find((g) => !g.ignored)?._count ?? 0,
 			ignored: counts.find((g) => g.ignored)?._count ?? 0,
-			importStatus: job?.status,
 		};
 	}
 	async authorize(
@@ -595,22 +589,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			);
 		const c = await this.requireConnection(userDid);
 		await this.locked(c, async (lease) => {
-			const job = await this.prisma.backgroundJob.findFirst({
-				where: { userDid, type: "trakt_import" },
-			});
-			if (job && !["completed", "continued_in_sync"].includes(job.status)) {
-				if (!dto.handoffImport)
-					throw new ConflictException(
-						"Finish your Import first, or explicitly continue it in Trakt Sync.",
-					);
-				if (activeTraktImports.has(userDid) || job.status === "running")
-					throw new ConflictException(
-						"Your Import is finishing a page. Try again shortly.",
-					);
-			}
 			await this.token(c);
 			await lease();
-			const { handoffImport: _handoff, ...settings } = dto;
+			const settings = { ...dto };
 			settings.lists ??= false;
 			settings.watchlist ??= false;
 			settings.favorites ??= false;
@@ -619,22 +600,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			settings.reviews ??= false;
 			settings.contentPublicationConsent ??= false;
 			settings.listPublicationConsent ??= false;
-			if (job && !["completed", "continued_in_sync"].includes(job.status)) {
-				if (activeTraktImports.has(userDid))
-					throw new ConflictException(
-						"Your Import is finishing a page. Try again shortly.",
-					);
-				const retired = await this.prisma.backgroundJob.updateMany({
-					where: {
-						id: job.id,
-						updatedAt: job.updatedAt,
-						status: { not: "running" },
-					},
-					data: { status: "continued_in_sync" },
-				});
-				if (!retired.count)
-					throw new ConflictException("Your Import changed. Try again.");
-			}
 			await this.prisma.traktSyncConnection.update({
 				select: { id: true },
 				where: { id: c.id },
@@ -741,88 +706,6 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		const current = await this.current(userDid);
 		if (current && current.status !== "disconnected")
 			await this.action(userDid, "disconnect");
-	}
-	async recoverImport<T>(
-		userDid: string,
-		operation: () => Promise<T>,
-	): Promise<T> {
-		const c = await this.requireConnection(userDid);
-		return this.publicWatchOperation({ ...c, watches: true }, () =>
-			this.recoverImportLocked(c, operation),
-		);
-	}
-	private async recoverImportLocked<T>(
-		c: TraktSyncConnection,
-		operation: () => Promise<T>,
-	): Promise<T> {
-		const userDid = c.userDid;
-		return this.locked(c, async (lease) => {
-			if (!c.publicationConsent)
-				throw new BadRequestException(
-					"Confirm publication in Trakt Sync settings first.",
-				);
-			const token = await this.token(c);
-			const remote = await this.api.snapshot(token, { ...c, watches: true });
-			const before = await this.local.snapshot(userDid, c);
-			const result = await operation();
-			await lease();
-			const after = await this.local.snapshot(userDid, c);
-			const job = await this.prisma.backgroundJob.findFirst({
-				where: { userDid, type: "trakt_import" },
-				include: { traktMatches: true },
-			});
-			for (const r of remote) {
-				const mapping = job?.traktMatches.find(
-					(m) =>
-						m.matchKey ===
-						`${r.mediaType === "movie" ? "movie" : "show"}:${r.traktParentId}`,
-				);
-				if (mapping && !r.mediaId) r.mediaId = mapping.tmdbId;
-			}
-			for (const l of after.filter(
-				(r) => !before.some((b) => b.key === r.key),
-			)) {
-				const matches = remote.filter((r) => equivalent(l, r));
-				const r = matches.length === 1 ? matches[0] : null;
-				const entry = r
-					? await this.prisma.traktSyncEntry.findUnique({
-							where: {
-								connectionId_remoteKey: {
-									connectionId: c.id,
-									remoteKey: r.key,
-								},
-							},
-						})
-					: null;
-				if (entry && !entry.localKey) await this.complete(entry, l, r);
-				else
-					await this.prisma.traktSyncEntry.create({
-						data: {
-							connectionId: c.id,
-							kind: l.kind,
-							localKey: l.key,
-							remoteKey: entry ? null : r?.key,
-							localBase: json(l),
-							remoteBase: json(r),
-							eligible: true,
-							linked: Boolean(r && !entry),
-							issue:
-								!r || entry
-									? "Confirm whether this recovered Watch matches Trakt history."
-									: null,
-						},
-					});
-			}
-			await this.prisma.traktSyncConnection.update({
-				where: { id: c.id },
-				data: {
-					remoteSnapshot: remote as unknown as Prisma.InputJsonValue,
-					nextRunAt: new Date(),
-					remoteReadAt: new Date(),
-				},
-			});
-			return result;
-		});
 	}
 	private async discover(
 		c: TraktSyncConnection,

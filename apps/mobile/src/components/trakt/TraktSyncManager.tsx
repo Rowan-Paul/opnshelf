@@ -3,7 +3,6 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
-	TRAKT_HANDOFF_COPY,
 	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
@@ -208,8 +207,7 @@ export function TraktSyncManager({
 				</Text>
 				{!data.configured ? (
 					<Text className={copy}>
-						Trakt Sync is not configured on this server yet. Import once is
-						still available.
+						Trakt Sync is not configured on this server yet.
 					</Text>
 				) : !connected ? (
 					<Action
@@ -412,16 +410,6 @@ export function TraktSyncManager({
 					</ScrollView>
 				</Modal>
 			)}
-			{embedded && (data.status === "disconnected" || data.importStatus) && (
-				<Link
-					href="/trakt-import"
-					className="text-muted-foreground text-sm underline"
-				>
-					{data.importStatus
-						? "View previous Import results"
-						: "Import public history once instead"}
-				</Link>
-			)}
 			{data.username &&
 				(connected || data.needsAttention > 0 || data.ignored > 0) && (
 					<View className={card}>
@@ -485,9 +473,6 @@ export function SyncSettings({
 			onSaved();
 		},
 	});
-	const unfinished =
-		status.importStatus &&
-		!["completed", "continued_in_sync"].includes(status.importStatus);
 	const requiresHistoryConsent =
 		settings.direction !== "outbound" && (settings.watches || settings.ratings);
 	const requiresListConsent = Boolean(
@@ -508,7 +493,7 @@ export function SyncSettings({
 			(!requiresListConsent || status.listPublicationConsent) &&
 			(!requiresContentConsent || status.contentPublicationConsent),
 	);
-	const canSave = hasConsent && (!unfinished || settings.handoffImport);
+	const canSave = hasConsent;
 	const dismiss = () => {
 		if (!save.isPending) setReviewing(false);
 	};
@@ -804,24 +789,7 @@ export function SyncSettings({
 										}
 									/>
 								))}
-							{unfinished && (
-								<View className="gap-3 rounded-xl border border-border p-3">
-									<Toggle
-										label={TRAKT_HANDOFF_COPY}
-										value={settings.handoffImport ?? false}
-										onChange={(handoffImport) =>
-											setSettings({ ...settings, handoffImport })
-										}
-									/>
-									<Link
-										href="/trakt-import"
-										onPress={() => setReviewing(false)}
-										className="text-primary text-sm underline"
-									>
-										Finish Import first
-									</Link>
-								</View>
-							)}
+
 							{save.error && (
 								<Text
 									selectable

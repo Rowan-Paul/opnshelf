@@ -17,7 +17,7 @@ import { isListRecord, type SyncRecord } from "./reconcile";
 import {
 	rankMovieMatchCandidates,
 	rankShowMatchCandidates,
-} from "../users/import/trakt-import-ledger";
+} from "./match-candidates";
 
 export function collection(record: SyncRecord) {
 	return record.kind === "rating"

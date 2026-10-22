@@ -82,16 +82,6 @@ export {
 	getYouTubeThumbnailUrl,
 	resolveDetailTrailer,
 } from "./trailer";
-export type { TraktImportStatusJob } from "./trakt-import-status";
-export {
-	formatRetryCountdown,
-	getRetryReason,
-	getTraktImportStatusMessage,
-	getTraktImportStatusProgress,
-	isActiveTraktImportStatus,
-	isKnownTraktImportStatus,
-	isTerminalTraktImportStatus,
-} from "./trakt-import-status";
 export * from "./trakt-sync";
 export {
 	invalidateWatchActivityQueries,

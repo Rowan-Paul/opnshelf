@@ -49,11 +49,7 @@ describe("UsersController", () => {
 
 	const usersService = {
 		completeOnboarding: vi.fn(),
-		fetchTraktPublicHistory: vi.fn(),
-		startTraktImport: vi.fn(),
-		getCurrentTraktImport: vi.fn(),
 		importBlueskyFollows: vi.fn(),
-		importNormalizedItems: vi.fn(),
 		getPublicProfileByHandle: vi.fn(),
 		getUserSettings: vi.fn(),
 		updateUserSettings: vi.fn(),
@@ -130,28 +126,6 @@ describe("UsersController", () => {
 			BadRequestException,
 		);
 		expect(usersService.uploadUserAvatar).not.toHaveBeenCalled();
-	});
-
-	it("rejects import when session is missing", async () => {
-		const req = {
-			user: { did: "did:plc:abc", session: undefined },
-		} as unknown as AuthenticatedRequest;
-
-		await expect(
-			controller.importMyHistory(
-				{
-					items: [
-						{
-							type: "movie",
-							movieTmdbId: 10,
-							watchedAt: "2026-01-01T00:00:00.000Z",
-						},
-					],
-				},
-				req,
-			),
-		).rejects.toThrow(BadRequestException);
-		expect(usersService.importNormalizedItems).not.toHaveBeenCalled();
 	});
 
 	it("deletes the current account synchronously when PDS deletion is not requested", async () => {

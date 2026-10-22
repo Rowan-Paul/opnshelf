@@ -10,7 +10,6 @@ import {
 	ONBOARDING_STEPS,
 	RESEND_COOLDOWN_SECONDS,
 	resolveOnboardingCountry,
-	shouldResumeTraktImport,
 } from "./onboarding-steps";
 
 describe("onboarding steps", () => {
@@ -51,41 +50,6 @@ describe("onboarding steps", () => {
 		expect(isOnboardingStep("verify")).toBe(false);
 		expect(isOnboardingStep(undefined)).toBe(false);
 		expect(isOnboardingStep(3)).toBe(false);
-	});
-});
-
-describe("shouldResumeTraktImport", () => {
-	it("is false while loading or when there is no job", () => {
-		expect(shouldResumeTraktImport(undefined)).toBe(false);
-		expect(shouldResumeTraktImport(null)).toBe(false);
-	});
-
-	it("resumes for known in-flight statuses", () => {
-		for (const status of ["queued", "running", "waiting_retry"]) {
-			expect(shouldResumeTraktImport({ id: "job", status })).toBe(true);
-		}
-	});
-
-	it("does not resume for terminal or unknown statuses", () => {
-		expect(shouldResumeTraktImport({ id: "job", status: "completed" })).toBe(
-			false,
-		);
-		expect(shouldResumeTraktImport({ id: "job", status: "failed" })).toBe(
-			false,
-		);
-		expect(shouldResumeTraktImport({ id: "job", status: "exploded" })).toBe(
-			false,
-		);
-		// "paused" is in the DTO status union but not in the shared known list,
-		// so a paused job is treated like an unknown one and does not resume.
-		expect(shouldResumeTraktImport({ id: "job", status: "paused" })).toBe(
-			false,
-		);
-	});
-
-	it("requires a job id", () => {
-		expect(shouldResumeTraktImport({ status: "running" })).toBe(false);
-		expect(shouldResumeTraktImport({ id: "", status: "running" })).toBe(false);
 	});
 });
 
@@ -203,25 +167,13 @@ describe("bringsTraktWatches", () => {
 		watches: true,
 	} as const;
 
-	it("is true for an Import that has not stopped", () => {
-		expect(bringsTraktWatches({ status: "running" }, undefined)).toBe(true);
-		expect(bringsTraktWatches({ status: "completed" }, undefined)).toBe(true);
-		expect(bringsTraktWatches({ status: "failed" }, undefined)).toBe(false);
-	});
-
 	it("is true only when Trakt Sync brings Watches in", () => {
-		expect(bringsTraktWatches(null, sync)).toBe(true);
-		expect(bringsTraktWatches(null, { ...sync, status: "preparing" })).toBe(
-			true,
-		);
-		expect(bringsTraktWatches(null, { ...sync, direction: "inbound" })).toBe(
-			true,
-		);
-		expect(bringsTraktWatches(null, { ...sync, direction: "outbound" })).toBe(
-			false,
-		);
-		expect(bringsTraktWatches(null, { ...sync, watches: false })).toBe(false);
-		expect(bringsTraktWatches(null, { ...sync, status: "paused" })).toBe(false);
-		expect(bringsTraktWatches(null, undefined)).toBe(false);
+		expect(bringsTraktWatches(sync)).toBe(true);
+		expect(bringsTraktWatches({ ...sync, status: "preparing" })).toBe(true);
+		expect(bringsTraktWatches({ ...sync, direction: "inbound" })).toBe(true);
+		expect(bringsTraktWatches({ ...sync, direction: "outbound" })).toBe(false);
+		expect(bringsTraktWatches({ ...sync, watches: false })).toBe(false);
+		expect(bringsTraktWatches({ ...sync, status: "paused" })).toBe(false);
+		expect(bringsTraktWatches(undefined)).toBe(false);
 	});
 });

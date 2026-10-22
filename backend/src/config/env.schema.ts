@@ -151,7 +151,7 @@ export const envSchema = z.object({
 		text,
 		"Cloudflare account ID for notification delivery.",
 	),
-	TRAKT_API_KEY: production(text, "Trakt API key for history imports."),
+	TRAKT_API_KEY: production(text, "Trakt client ID for ongoing sync."),
 	FEEDBACK_GITHUB_TOKEN: text
 		.optional()
 		.describe(

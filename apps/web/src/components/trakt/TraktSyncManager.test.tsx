@@ -14,7 +14,6 @@ const mocks = vi.hoisted(() => ({
 	configure: vi.fn(async () => ({})),
 	action: vi.fn(async () => ({})),
 	resolve: vi.fn(async () => ({})),
-	importStatus: "paused",
 	issue: false,
 	candidate: false,
 	issueRead: vi.fn(),
@@ -47,7 +46,6 @@ vi.mock("@opnshelf/api", async (original) => ({
 			remaining: 0,
 			needsAttention: mocks.issue ? 1 : 0,
 			ignored: mocks.ignored ? 1 : 0,
-			importStatus: mocks.importStatus,
 		},
 	}),
 	traktSyncControllerIssues: async ({
@@ -123,7 +121,6 @@ function mount(connectionFailed = false, embedded = false, issuesOnly = false) {
 afterEach(cleanup);
 beforeEach(() => {
 	vi.clearAllMocks();
-	mocks.importStatus = "paused";
 	mocks.issue = false;
 	mocks.issuePages = 1;
 	mocks.nextPage = undefined;
@@ -156,7 +153,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		).toBeTruthy();
 	});
 
-	it("requires publication consent, Import handoff, and a concrete review before enabling", async () => {
+	it("requires publication consent and a concrete review before enabling", async () => {
 		mount();
 		const review = await screen.findByRole("button", { name: "Enable sync" });
 		expect(screen.queryByLabelText(/I understand that sync/)).toBeNull();
@@ -168,8 +165,6 @@ describe("Trakt Sync setup and conflict choices", () => {
 		expect(confirm.disabled).toBe(true);
 		expect(mocks.configure).not.toHaveBeenCalled();
 		fireEvent.click(screen.getByLabelText(/I understand that sync/));
-		expect(confirm.disabled).toBe(true);
-		fireEvent.click(screen.getByLabelText(/Continue my unfinished Import/));
 		expect(confirm.disabled).toBe(false);
 		fireEvent.click(confirm);
 		await waitFor(() =>
@@ -177,7 +172,6 @@ describe("Trakt Sync setup and conflict choices", () => {
 				expect.objectContaining({
 					body: expect.objectContaining({
 						publicationConsent: true,
-						handoffImport: true,
 					}),
 				}),
 				expect.anything(),
@@ -187,7 +181,6 @@ describe("Trakt Sync setup and conflict choices", () => {
 	it("shows an existing connection inline without repeating setup or offering another Import", async () => {
 		mocks.status = "active";
 		mocks.consent = true;
-		mocks.importStatus = "";
 		mount(false, true);
 		expect(await screen.findByText("Sync is on")).toBeTruthy();
 		expect(screen.queryByRole("heading", { name: "Trakt Sync" })).toBeNull();
@@ -240,7 +233,6 @@ describe("Trakt Sync setup and conflict choices", () => {
 	});
 
 	it("states deletion explicitly and requires a second confirmation", async () => {
-		mocks.importStatus = "completed";
 		mocks.issue = true;
 		mount(false, false, true);
 		fireEvent.click(
@@ -266,7 +258,6 @@ it.each([
 	"library",
 	"reviews",
 ] as const)("uses one publication checkbox for %s-only sync", async (scope) => {
-	mocks.importStatus = "completed";
 	mount();
 	fireEvent.click(
 		await screen.findByRole("button", { name: "Choose records" }),
@@ -320,7 +311,6 @@ it.each([
 });
 
 it("opens record choices separately and retains changes when closed", async () => {
-	mocks.importStatus = "completed";
 	mount();
 	const choose = await screen.findByRole("button", { name: "Choose records" });
 	expect(screen.queryByRole("dialog", { name: "Choose records" })).toBeNull();

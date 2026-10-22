@@ -58,8 +58,6 @@ export const TRAKT_CONTENT_COPY =
 	"Sync standalone Notes, Library ownership and your Reviews. Library item notes and Box Sets stay in Opnshelf. Unsupported formats, attachments and text need your attention. Imported Reviews do not create blog mirrors or Bluesky posts. Trakt Reviews must meet its English and 200-word requirements.";
 export const TRAKT_SCOPE_COPY =
 	"Previously linked records catch up when re-enabled. Future changes start when the initial comparison finishes and refer to when a record is added or changed, not when you watched it.";
-export const TRAKT_HANDOFF_COPY =
-	"Continue my unfinished Import in Trakt Sync. Its progress and results stay available, but the original Import cannot resume—even if I disconnect sync.";
 export function traktSettings(status: SyncStatusDto): SyncSettingsDto {
 	return {
 		direction: status.direction,
@@ -123,15 +121,12 @@ export function traktSyncCatchUpMessage(
 	return null;
 }
 /**
- * Whether the User's Watch history is already coming over from Trakt — an
- * Import that has not stopped, or Trakt Sync bringing Watches in — so
+ * Whether Trakt Sync is bringing the User's Watches into Opnshelf, so
  * onboarding can skip asking which titles they have watched.
  */
 export function bringsTraktWatches(
-	importJob: { status: string } | null | undefined,
 	sync: Pick<SyncStatusDto, "status" | "direction" | "watches"> | undefined,
 ): boolean {
-	if (importJob && importJob.status !== "failed") return true;
 	return Boolean(
 		sync &&
 			(sync.status === "active" || sync.status === "preparing") &&

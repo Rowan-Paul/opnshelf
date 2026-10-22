@@ -14,12 +14,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ShelfService } from "../shelf/shelf.service";
 import type {
 	CompleteOnboardingResponseDto,
-	FetchTraktPublicHistoryResponseDto,
 	ImportBlueskyFollowsResponseDto,
-	ImportHistoryResponseDto,
-	NormalizedImportItemDto,
-	StartTraktImportResponseDto,
-	TraktImportJobDto,
 } from "./dto/import-history.dto";
 import type {
 	PublicUserProfileDto,
@@ -28,7 +23,6 @@ import type {
 	UpdateUserProfileDto,
 	UserSettingsDto,
 } from "./dto/user-settings.dto";
-import { ImportHistoryService } from "./import-history.service";
 import { ProfileService } from "./profile.service";
 import { UserDeletionService } from "./user-deletion.service";
 
@@ -45,7 +39,6 @@ export class UsersService {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly importHistoryService: ImportHistoryService,
 		private readonly userDeletionService: UserDeletionService,
 		private readonly profileService: ProfileService,
 		private readonly listsService: ListsService,
@@ -615,99 +608,6 @@ export class UsersService {
 		};
 	}
 
-	async fetchTraktPublicHistory(
-		username: string,
-	): Promise<FetchTraktPublicHistoryResponseDto> {
-		return this.importHistoryService.fetchTraktPublicHistory(username);
-	}
-
-	async startTraktImport(
-		userDid: string,
-		username: string,
-	): Promise<StartTraktImportResponseDto> {
-		const user = await this.prisma.user.findUnique({
-			where: { did: userDid },
-			select: { did: true },
-		});
-		if (!user) {
-			throw new NotFoundException("User not found");
-		}
-
-		return this.importHistoryService.startTraktImport(userDid, username);
-	}
-
-	async getCurrentTraktImport(
-		userDid: string,
-	): Promise<TraktImportJobDto | null> {
-		const user = await this.prisma.user.findUnique({
-			where: { did: userDid },
-			select: { did: true },
-		});
-		if (!user) {
-			throw new NotFoundException("User not found");
-		}
-
-		return this.importHistoryService.getCurrentTraktImport(userDid);
-	}
-
-	async pauseTraktImport(userDid: string) {
-		return this.importHistoryService.pauseTraktImport(userDid);
-	}
-
-	async resumeTraktImport(userDid: string) {
-		return this.importHistoryService.resumeTraktImport(userDid);
-	}
-
-	async acknowledgeTraktImport(userDid: string) {
-		return this.importHistoryService.acknowledgeTraktImport(userDid);
-	}
-
-	async snoozeTraktReminder(userDid: string) {
-		return this.importHistoryService.snoozeTraktReminder(userDid);
-	}
-
-	async getTraktImportIssues(
-		userDid: string,
-		page?: number,
-		pageSize?: number,
-		outcome?: "unmatched" | "couldnt_import",
-	) {
-		return this.importHistoryService.getTraktImportIssues(
-			userDid,
-			page,
-			pageSize,
-			outcome,
-		);
-	}
-
-	async getTraktMatchCandidates(
-		userDid: string,
-		matchKey: string,
-		query?: string,
-	) {
-		return this.importHistoryService.getTraktMatchCandidates(
-			userDid,
-			matchKey,
-			query,
-		);
-	}
-
-	async confirmTraktMatch(userDid: string, matchKey: string, tmdbId: string) {
-		return this.importHistoryService.confirmTraktMatch(
-			userDid,
-			matchKey,
-			tmdbId,
-		);
-	}
-
-	async rejectTraktMatch(userDid: string, matchKey: string) {
-		return this.importHistoryService.rejectTraktMatch(userDid, matchKey);
-	}
-
-	async retryTraktImportItem(userDid: string, itemId: string) {
-		return this.importHistoryService.retryTraktImportItem(userDid, itemId);
-	}
-
 	async importBlueskyFollows(
 		userDid: string,
 	): Promise<ImportBlueskyFollowsResponseDto> {
@@ -786,18 +686,6 @@ export class UsersService {
 			createdCount: followsToCreate.length,
 			alreadyFollowingCount: existingFollowDids.size,
 		};
-	}
-
-	async importNormalizedItems(
-		userDid: string,
-		session: ATSession,
-		items: NormalizedImportItemDto[],
-	): Promise<ImportHistoryResponseDto> {
-		return this.importHistoryService.importNormalizedItems(
-			userDid,
-			session,
-			items,
-		);
 	}
 
 	async deleteUserSync(did: string): Promise<void> {

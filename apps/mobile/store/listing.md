@@ -24,7 +24,7 @@ Track the movies and TV shows you watch, find your next episode, and keep your W
 - Use Pick for me to find a movie or episodes that fit the time you have.
 - Discover featured collections, browse by genre, and see what friends are watching.
 - Find Where to Watch on your streaming services.
-- Import your Trakt history or connect ongoing Trakt Sync for Watches, ratings, Lists and more.
+- Connect ongoing Trakt Sync for Watches, ratings, Lists and more.
 - Revisit your watching with weekly, monthly and yearly Watch Recaps.
 
 Choose what you share. Privacy Alpha offers visibility controls for your Shelf, Library, Notes and Lists.

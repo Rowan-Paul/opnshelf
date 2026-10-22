@@ -51,10 +51,6 @@ export class SyncSettingsDto {
 	@IsIn(["all", "future"])
 	historyScope: "all" | "future";
 	@ApiProperty() @IsBoolean() publicationConsent: boolean;
-	@ApiPropertyOptional({ default: false })
-	@IsOptional()
-	@IsBoolean()
-	handoffImport?: boolean;
 }
 export class SyncConnectDto {
 	@ApiProperty({ enum: ["web", "mobile"] }) @IsIn(["web", "mobile"]) platform:
@@ -163,7 +159,6 @@ export class SyncStatusDto {
 	progress?: number;
 	@ApiProperty() needsAttention: number;
 	@ApiProperty() ignored: number;
-	@ApiPropertyOptional() importStatus?: string;
 }
 export class SyncRecordDto {
 	@ApiProperty() key: string;
@@ -197,4 +192,24 @@ export class SyncIssuesQueryDto extends PageQueryDto {
 }
 export class SyncIssuesDto extends PaginationMetaDto {
 	@ApiProperty({ type: [SyncIssueDto] }) items: SyncIssueDto[];
+}
+
+export class TraktMatchCandidateDto {
+	@ApiProperty()
+	tmdbId: string;
+
+	@ApiProperty({ enum: ["movie", "show"] })
+	mediaType: "movie" | "show";
+
+	@ApiProperty()
+	title: string;
+
+	@ApiPropertyOptional()
+	year?: number;
+
+	@ApiPropertyOptional()
+	posterPath?: string;
+
+	@ApiPropertyOptional()
+	overview?: string;
 }

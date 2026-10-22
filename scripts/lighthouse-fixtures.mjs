@@ -241,7 +241,6 @@ export function createLighthouseServer() {
 		"/auth/me",
 		"/users/me/settings",
 		"/users/me/account-deletion",
-		"/users/me/import/trakt/public/current",
 		"/trakt-sync",
 		"/notifications/settings",
 	]);

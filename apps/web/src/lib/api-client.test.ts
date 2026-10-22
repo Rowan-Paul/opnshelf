@@ -1,10 +1,9 @@
-import { usersControllerGetMyCurrentTraktImport } from "@opnshelf/api";
+import { traktSyncControllerStatus } from "@opnshelf/api";
 import { describe, expect, it, vi } from "vitest";
 
 describe("api client", () => {
 	it("reads a bodiless 200 as null, not an empty object", async () => {
-		// What Nest sends when a controller returns `null`. Left as `{}`, every
-		// `if (job)` in the app passes and the next field read throws.
+		// An empty JSON response must remain null.
 		vi.stubGlobal(
 			"fetch",
 			async () =>
@@ -17,7 +16,7 @@ describe("api client", () => {
 				}),
 		);
 
-		const { data } = await usersControllerGetMyCurrentTraktImport();
+		const { data } = await traktSyncControllerStatus();
 
 		expect(data).toBeNull();
 	});
