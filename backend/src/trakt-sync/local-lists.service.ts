@@ -100,13 +100,19 @@ export class LocalSyncLists {
 		parent: Stored,
 		items: Stored[],
 		visibility: "public" | "private",
+		positionsByKey?: ReadonlyMap<string, number>,
 	): Promise<SyncRecord> {
 		const list = listSchema.parse(parent.value);
-		const positions = await this.prisma.listItem.findMany({
-			where: { userDid: did, list: { rkey: parent.rkey } },
-			select: { rkey: true, position: true },
-		});
-		const positionByKey = new Map(positions.map((p) => [p.rkey, p.position]));
+		const positionByKey =
+			positionsByKey ??
+			new Map(
+				(
+					await this.prisma.listItem.findMany({
+						where: { userDid: did, list: { rkey: parent.rkey } },
+						select: { rkey: true, position: true },
+					})
+				).map((p) => [p.rkey, p.position]),
+			);
 		const ordered = items
 			.filter((r) => r.value.listRkey === parent.rkey)
 			.sort((a, b) => {
@@ -175,21 +181,58 @@ export class LocalSyncLists {
 			where: { userDid: did },
 			select: { rkey: true, isDefault: true, slug: true },
 		});
+		// Manual order is a local projection; load it once for all selected Lists.
+		let positions: Map<string, number> | undefined;
+		const readRecords = async (
+			repo: { parents: Stored[]; items: Stored[] },
+			parents: Stored[],
+			visibility: "public" | "private",
+		) => {
+			if (!parents.length) return [];
+			positions ??= new Map(
+				(
+					await this.prisma.listItem.findMany({
+						where: { userDid: did },
+						select: { rkey: true, position: true },
+					})
+				).map((p) => [p.rkey, p.position]),
+			);
+			const byList = new Map<unknown, Stored[]>();
+			for (const item of repo.items) {
+				const group = byList.get(item.value.listRkey);
+				if (group) group.push(item);
+				else byList.set(item.value.listRkey, [item]);
+			}
+			return Promise.all(
+				parents.map((parent) =>
+					this.record(
+						did,
+						parent,
+						byList.get(parent.rkey) ?? [],
+						visibility,
+						positions,
+					),
+				),
+			);
+		};
+		const privateKeys = new Set(
+			scopes.filter((s) => s.visibility === "private").map((s) => s.listRkey),
+		);
+		const indexedByKey = new Map(indexed.map((list) => [list.rkey, list]));
 		const publicRepo = await this.repository(did, "public", false);
 		const result: SyncRecord[] = [];
-		for (const parent of publicRepo.parents) {
-			if (
-				scopes.some(
-					(s) => s.listRkey === parent.rkey && s.visibility === "private",
-				)
-			)
-				continue;
-			if (!selected(parent)) continue;
-			result.push(await this.record(did, parent, publicRepo.items, "public"));
-		}
+		result.push(
+			...(await readRecords(
+				publicRepo,
+				publicRepo.parents.filter(
+					(parent) => !privateKeys.has(parent.rkey) && selected(parent),
+				),
+				"public",
+			)),
+		);
 		for (const scope of scopes) {
 			if (scope.visibility !== "private" || !scope.listRkey) continue;
-			const projection = indexed.find((list) => list.rkey === scope.listRkey);
+			const projection = indexedByKey.get(scope.listRkey);
 			if (!projection)
 				throw new Error(
 					"A private List is waiting for indexing. Retry after Privacy finishes refreshing.",
@@ -210,7 +253,7 @@ export class LocalSyncLists {
 						"Private List repository contains an unexpected List.",
 					);
 				if (!selected(parent)) continue;
-				result.push(await this.record(did, parent, repo.items, "private"));
+				result.push(...(await readRecords(repo, [parent], "private")));
 			}
 		}
 		return result;
@@ -389,8 +432,12 @@ export class LocalSyncLists {
 						notes: i.notes ?? "",
 					});
 				};
+				const desiredKeys = new Set(value.items.map(memberKey));
+				const existingByKey = new Map<string, Stored>();
 				for (const item of existing) {
-					if (value.items.some((v) => memberKey(v) === key(item))) continue;
+					const itemKey = key(item);
+					if (!existingByKey.has(itemKey)) existingByKey.set(itemKey, item);
+					if (desiredKeys.has(itemKey)) continue;
 					await remove(item);
 					await this.lists.deleteListItemRecord(did, item.rkey);
 				}
@@ -398,7 +445,7 @@ export class LocalSyncLists {
 				for (const member of value.items) {
 					if (!member.mediaId)
 						throw new Error("Resolve this List membership before retrying.");
-					const old = existing.find((i) => key(i) === memberKey(member));
+					const old = existingByKey.get(memberKey(member));
 					const itemRkey = old?.rkey ?? TID.nextStr();
 					const item = {
 						...(old?.value ?? {}),
@@ -415,7 +462,10 @@ export class LocalSyncLists {
 						}),
 					};
 					if (!member.notes) delete item.notes;
-					const added = await put(ITEM, itemRkey, item, old);
+					const added =
+						old && JSON.stringify(old.value) === JSON.stringify(item)
+							? { data: { uri: old.uri, cid: old.cid } }
+							: await put(ITEM, itemRkey, item, old);
 					await this.indexItem(did, {
 						collection: ITEM,
 						rkey: itemRkey,

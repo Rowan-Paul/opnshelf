@@ -243,6 +243,8 @@ export class TraktSyncClient {
 	async snapshot(
 		token: string,
 		options: {
+			watches?: boolean;
+			ratings?: boolean;
 			lists?: boolean;
 			watchlist?: boolean;
 			favorites?: boolean;
@@ -252,9 +254,14 @@ export class TraktSyncClient {
 		} = {},
 	): Promise<SyncRecord[]> {
 		const before = (await this.request("/sync/last_activities", token)).data;
-		const watches = await this.pages("/sync/history", token, "watch");
+		const watches =
+			options.watches === false
+				? []
+				: await this.pages("/sync/history", token, "watch");
 		const ratings: SyncRecord[] = [];
-		for (const type of ["movies", "shows", "seasons", "episodes"])
+		for (const type of options.ratings === false
+			? []
+			: ["movies", "shows", "seasons", "episodes"])
 			ratings.push(
 				...(await this.pages(`/sync/ratings/${type}`, token, "rating")),
 			);
@@ -288,6 +295,7 @@ export class TraktSyncClient {
 		if (isListRecord(record))
 			return snapshotLists(this, token, {
 				lists: record.kind === "list",
+				listId: record.traktId,
 				watchlist: record.kind === "watchlist",
 				favorites: record.kind === "favorites",
 			});

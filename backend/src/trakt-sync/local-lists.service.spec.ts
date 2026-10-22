@@ -382,3 +382,39 @@ it("orders a large List without scanning all saved positions for every compariso
 	);
 	expect(positionReads).toBeLessThanOrEqual(items.length);
 });
+
+it("loads positions once across multiple public Lists", async () => {
+	const f = fixture("public");
+	await f.local.write(did, desired, null, rkey);
+	await f.local.write(did, desired, null, "3m5esn73w2s2k");
+	f.prisma.listItem.findMany.mockClear();
+	const result = await f.local.snapshot(did);
+	expect(result).toHaveLength(2);
+	expect(result.every((r) => listValue(r).items.length === 2)).toBe(true);
+	expect(f.prisma.listItem.findMany).toHaveBeenCalledTimes(1);
+});
+
+it("preserves unchanged PDS memberships during a metadata edit", async () => {
+	const f = fixture("public");
+	const original = await f.local.write(did, desired, null, rkey);
+	f.calls.length = 0;
+	await f.local.write(
+		did,
+		{
+			...desired,
+			value: encodeList({ ...listValue(desired), description: "Updated" }),
+		},
+		original,
+		rkey,
+	);
+	expect(
+		f.calls.filter(
+			(c) => c.method.endsWith("putRecord") && c.body.collection === ITEM,
+		),
+	).toHaveLength(0);
+	expect(
+		f.calls.filter(
+			(c) => c.method.endsWith("putRecord") && c.body.collection === LIST,
+		),
+	).toHaveLength(1);
+});

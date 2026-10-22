@@ -186,11 +186,18 @@ async function readList(list: SyncRecord, read: () => Promise<SyncRecord>) {
 export async function snapshotLists(
 	api: Api,
 	token: string,
-	options: { lists?: boolean; watchlist?: boolean; favorites?: boolean },
+	options: {
+		lists?: boolean;
+		watchlist?: boolean;
+		favorites?: boolean;
+		listId?: number;
+	},
 ): Promise<SyncRecord[]> {
 	const result: SyncRecord[] = [];
 	if (options.lists) {
-		const before = await customLists(api, token);
+		const selected = (list: z.infer<typeof metadataSchema>) =>
+			options.listId === undefined || list.ids.trakt === options.listId;
+		const before = (await customLists(api, token)).filter(selected);
 		for (const list of before) {
 			result.push(
 				await readList(record(list, []), async () => {
@@ -208,13 +215,13 @@ export async function snapshotLists(
 				}),
 			);
 		}
-		const after = await customLists(api, token);
+		const after = (await customLists(api, token)).filter(selected);
+		const afterById = new Map(after.map((list) => [list.ids.trakt, list]));
+		const beforeIds = new Set(before.map((list) => list.ids.trakt));
 		for (let i = 0; i < before.length; i++) {
 			if (
 				JSON.stringify(before[i]) !==
-				JSON.stringify(
-					after.find((list) => list.ids.trakt === before[i].ids.trakt),
-				)
+				JSON.stringify(afterById.get(before[i].ids.trakt))
 			)
 				result[i] = unreadable(
 					result[i],
@@ -222,7 +229,7 @@ export async function snapshotLists(
 				);
 		}
 		for (const list of after) {
-			if (!before.some((previous) => previous.ids.trakt === list.ids.trakt))
+			if (!beforeIds.has(list.ids.trakt))
 				result.push(
 					unreadable(
 						record(list, []),
@@ -364,12 +371,30 @@ export async function writeList(
 				"Trakt Favorites supports movies and shows only. Seasons and episodes were preserved; no parent shows were substituted.",
 			);
 	}
-	// Resolve every membership before any destructive operation.
-	const bodies = [];
-	for (const item of value.items)
-		bodies.push(
-			await listMemberPayload(api, token, item, desired.kind !== "favorites"),
-		);
+	const identityReads = new Map<
+		string,
+		Promise<Awaited<ReturnType<Api["request"]>>>
+	>();
+	const identities: Api = {
+		request: (path, requestToken) => {
+			let pending = identityReads.get(path);
+			if (!pending) {
+				pending = api.request(path, requestToken);
+				identityReads.set(path, pending);
+			}
+			return pending;
+		},
+	};
+	const bodies = new Map<
+		string,
+		Awaited<ReturnType<typeof listMemberPayload>>
+	>();
+	if (desired.kind === "list" && !desired.traktId)
+		for (const item of value.items)
+			bodies.set(
+				memberKey(item),
+				await listMemberPayload(identities, token, item),
+			);
 	let id = desired.traktId;
 	if (desired.kind === "list" && !id) {
 		const created = metadataSchema.parse(
@@ -426,6 +451,27 @@ export async function writeList(
 		throw new Error(
 			"The destination List contains unsupported media. Nothing was removed.",
 		);
+	const existingByKey = new Map<string, (typeof existing)[number]>();
+	for (const old of existing) {
+		if (old.item && !existingByKey.has(memberKey(old.item)))
+			existingByKey.set(memberKey(old.item), old);
+	}
+	const desiredKeys = new Set(value.items.map(memberKey));
+	// Existing memberships already carry Trakt IDs. Only additions need a lookup.
+	// Resolve all additions before changing metadata or removing memberships.
+	for (const item of value.items) {
+		const key = memberKey(item);
+		if (!existingByKey.has(key) && !bodies.has(key))
+			bodies.set(
+				key,
+				await listMemberPayload(
+					identities,
+					token,
+					item,
+					desired.kind !== "favorites",
+				),
+			);
+	}
 	if (desired.kind === "favorites") {
 		const settings = z
 			.object({
@@ -458,29 +504,11 @@ export async function writeList(
 		);
 	for (let index = 0; index < value.items.length; index++) {
 		const item = value.items[index];
-		const old = existing.find(
-			(i) => i.item && memberKey(i.item) === memberKey(item),
-		);
+		const old = existingByKey.get(memberKey(item));
 		if (!old) {
-			assertOutcome((await api.request(base, token, bodies[index])).data);
-			if (desired.kind === "favorites" && item.notes) {
-				const added = (await pages(api, token, `${base}/all/rank/asc`)).find(
-					(row) => {
-						const found = member(row);
-						return found && memberKey(found) === memberKey(item);
-					},
-				);
-				if (!added)
-					throw new Error(
-						"Trakt has not confirmed the new Favorite. Retry to reconcile.",
-					);
-				await api.request(
-					`${base}/${added.id}`,
-					token,
-					{ notes: item.notes },
-					"PUT",
-				);
-			}
+			assertOutcome(
+				(await api.request(base, token, bodies.get(memberKey(item)))).data,
+			);
 		} else if (old.item?.notes !== item.notes)
 			await api.request(
 				`${base}/${old.row.id}`,
@@ -489,10 +517,37 @@ export async function writeList(
 				"PUT",
 			);
 	}
+	const notedAdditions =
+		desired.kind === "favorites"
+			? value.items.filter(
+					(item) => item.notes && !existingByKey.has(memberKey(item)),
+				)
+			: [];
+	if (notedAdditions.length) {
+		// Favorites needs membership IDs for notes. Read all newly added IDs once.
+		const addedByKey = new Map<string, number>();
+		for (const row of await pages(api, token, `${base}/all/rank/asc`)) {
+			const item = member(row);
+			if (item) addedByKey.set(memberKey(item), row.id);
+		}
+		for (const item of notedAdditions) {
+			const addedId = addedByKey.get(memberKey(item));
+			if (!addedId)
+				throw new Error(
+					"Trakt has not confirmed the new Favorite. Retry to reconcile.",
+				);
+			await api.request(
+				`${base}/${addedId}`,
+				token,
+				{ notes: item.notes },
+				"PUT",
+			);
+		}
+	}
 	for (const old of existing) {
 		const oldItem = old.item;
 		if (!oldItem) throw new Error("Unsupported destination List membership.");
-		if (value.items.some((i) => memberKey(i) === memberKey(oldItem))) continue;
+		if (desiredKeys.has(memberKey(oldItem))) continue;
 		const item = old.row[oldItem.mediaType];
 		if (!item) throw new Error("Missing destination membership identity.");
 		assertOutcome(
@@ -508,18 +563,18 @@ export async function writeList(
 		token,
 		`${base}${desired.kind !== "list" ? "/all/rank/asc" : ""}`,
 	);
-	const rank = value.items.map(
-		(i) =>
-			current.find((r) => {
-				const m = member(r);
-				return m && memberKey(m) === memberKey(i);
-			})?.id,
-	);
+	const currentByKey = new Map<string, number>();
+	for (const row of current) {
+		const item = member(row);
+		if (item && !currentByKey.has(memberKey(item)))
+			currentByKey.set(memberKey(item), row.id);
+	}
+	const rank = value.items.map((item) => currentByKey.get(memberKey(item)));
 	if (rank.some((v) => !v) || current.length !== rank.length)
 		throw new Error(
 			"Trakt List changed during transfer. Choose which version to keep.",
 		);
-	if (rank.length) {
+	if (rank.length && rank.some((id, index) => id !== current[index].id)) {
 		const path =
 			desired.kind !== "list"
 				? `/sync/${desired.kind}/reorder`
@@ -534,6 +589,7 @@ export async function writeList(
 	}
 	const confirmation = await snapshotLists(api, token, {
 		lists: desired.kind === "list",
+		listId: id,
 		watchlist: desired.kind === "watchlist",
 		favorites: desired.kind === "favorites",
 	});

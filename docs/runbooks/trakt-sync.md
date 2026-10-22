@@ -37,7 +37,7 @@ Saving settings queues an initial comparison. The UI reports that comparison is 
 
 A database lease serializes each account's operations, with a two-minute expiry and a thirty-second heartbeat. The worker checks due accounts every five seconds, ordinarily refreshes Trakt at fifteen-minute intervals, and reads fresh remote state before potential outbound changes. Complete pagination and unchanged activity markers are required before using a remote snapshot. An incomplete read never proves deletion. Trakt request pacing and rate-limit responses can delay work.
 
-The first version uses complete snapshots rather than an incremental feed. Large histories can therefore take time to compare. Inbound transfers run in bounded batches of ten; outbound work yields after a write and scoped readback. Watch confirmation pages only the affected movie or episode history; Rating confirmation pages only its media category. The full pre-write snapshot is retained, so large outbound backlogs still scale with total history size. Scoped reads preserve unrelated cached records and do not advance the full-snapshot freshness timestamp. Request pacing is separated by access-token identity (hashed in memory). A durable pending intent recovers uncertain acknowledgements. Item errors appear in Needs attention, while other eligible records continue. When a run yields with records still waiting, it stores that count and the largest backlog since sync last caught up; the status endpoint reports them as `remaining` and `progress`, which drive the site-wide Banner on both clients. Last successful check describes a completed reconciliation pass, not a claim that every unresolved item transferred.
+The first version uses complete snapshots rather than an incremental feed. Large histories can therefore take time to compare. Inbound transfers run in bounded batches of ten; Watch/Rating outbound work shares one full remote read across up to ten transfers and yields after 30 seconds between items. List/content outbound work yields after one item and scoped readback. Watch confirmation pages only the affected movie or episode history; Rating confirmation pages only its media category. The full pre-write snapshot is retained, so large outbound backlogs still scale with total history size. Scoped reads preserve unrelated cached records and do not advance the full-snapshot freshness timestamp. Request pacing is separated by access-token identity (hashed in memory). A durable pending intent recovers uncertain acknowledgements. Item errors appear in Needs attention, while other eligible records continue. When a run yields with records still waiting, it stores that count and the largest backlog since sync last caught up; the status endpoint reports them as `remaining` and `progress`, which drive the site-wide Banner on both clients. Last successful check describes a completed reconciliation pass, not a claim that every unresolved item transferred.
 
 A Trakt Watch date edit can replace its event ID. A missing linked event accompanied by a new Watch of the same title is held for confirmation, allowing the User to preserve the original Opnshelf Watch identity. Exact-minute deduplication limits, ambiguous and No date pairs are surfaced rather than changing dates or collapsing rewatches.
 
@@ -260,3 +260,47 @@ Prior Android and iOS checks covered sync state, safe recovery and modal dismiss
 is documented in [development sessions](development-sessions.md#ios-expomodulesjsi-cache-after-changing-xcode).
 Mobile's version is unchanged: publishing uses the OTA route, and no release or
 hosted migration was performed.
+
+## Performance pass (October 21)
+
+The worker skips disabled Watch/Rating scopes, selects only the indexed fields
+needed for reconciliation, and restricts its pre-transfer local check to the
+record kind being transferred. Initial discovery indexes pending intents and
+missing linked titles, reuses the already-read entries, and inserts new links in
+batches of at most 500. It retains the same pairing and ambiguity rules.
+
+Outbound Watches and Ratings now share one full remote read across at most ten
+transfers. Every transfer after the first checks its destination scope again;
+a changed scope stops the run and forces a fresh full comparison. Each confirmed
+write updates both the persisted snapshot and the current run's collision index.
+An uncertain outbound failure stops further transfers in that batch. A batch
+also yields after 30 seconds between items; an individual provider operation can
+run longer. List/content outbound transfers still yield after one item because a
+single item may contain many records. Provider request pacing is unchanged.
+
+List reconciliation indexes memberships and ordering, loads local positions once
+per snapshot, and preserves unchanged PDS memberships during metadata edits.
+Remote writes resolve only newly added members, share identity lookups within a
+transfer, read new Favorite IDs once for all their notes, and skip redundant
+reordering. Confirmation of a known custom List reads only that List's
+memberships while retaining the before/after metadata checks. Scoped readback
+preserves unrelated cached Lists and does not advance full-snapshot freshness.
+
+Status polling omits the saved remote snapshot. Needs attention counts and pages
+issues in PostgreSQL before loading repositories; saved mapping payloads are
+read separately only when remote records need a title mapping. Update operations
+whose result is unused return only the ID rather than complete JSON baselines.
+
+Verification used fake Trakt/PDS transports and a disposable local PostgreSQL 18
+database, including ten-item outbound batches, same-minute duplicates,
+intervening remote edits, bounded discovery inserts, issue-page clamping, scoped
+List reads, unchanged memberships, Favorite notes and required/skipped reorder.
+The isolated PR branch retains the existing one-time Import and its tests.
+Explicit Import recovery still reads Watch history when ongoing Watch sync is
+disabled. The full Backend suite passed: 1,494 tests, 22 optional-fixture tests
+skipped.
+`pnpm typecheck`, `pnpm check` and `pnpm --filter backend run build` passed;
+existing lint warnings remain. No live provider calls or deployment were used.
+These are verified reductions in reads/writes, not production timing benchmarks.
+Further changes to full-snapshot storage, idle polling or cross-account worker
+concurrency need workload measurements and a separate design for consistency.
