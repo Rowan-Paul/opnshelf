@@ -37,7 +37,7 @@ import {
 	type TraktSyncEntry,
 } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { paginateItems } from "../common/pagination";
+import { getPaginationMeta } from "../common/pagination";
 import { LocalSyncRecords } from "./local-records.service";
 import {
 	candidates,
@@ -63,6 +63,7 @@ import type {
 } from "./trakt-sync.dto";
 
 class SyncAccountUnavailable extends TraktSyncError {}
+class SyncSnapshotChanged extends TraktSyncError {}
 
 const SOURCE_CHANGED =
 	"The source changed during an interrupted transfer. Choose which version to keep.";
@@ -83,6 +84,21 @@ const sameLocalSnapshot = (before: SyncRecord[], after: SyncRecord[]) => {
 		after.every((record) => expected.get(record.key) === localVersion(record))
 	);
 };
+// The readback endpoints cover a Watch title, a Rating category, or an entire
+// List/content kind. Use the same scope for pre-write checks and cache updates.
+const inRemoteScope = (
+	record: SyncRecord,
+	target: SyncRecord,
+	previous?: SyncRecord | null,
+) =>
+	target.kind === "list" && target.traktId
+		? record.kind === "list" &&
+			(record.traktId === target.traktId || record.key === previous?.key)
+		: isListRecord(target) || isContentRecord(target)
+			? record.kind === target.kind
+			: target.kind === "rating"
+				? record.kind === "rating" && record.mediaType === target.mediaType
+				: record.key === previous?.key || mediaKey(record) === mediaKey(target);
 // An absent remote record is not proof that a non-idempotent POST failed.
 const unconfirmedCreate = (
 	entry: Pick<TraktSyncEntry, "kind" | "pending" | "remoteKey">,
@@ -250,7 +266,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		});
 	}
 	async status(userDid: string): Promise<SyncStatusDto> {
-		const c = await this.current(userDid);
+		const c = await this.prisma.traktSyncConnection.findFirst({
+			where: { userDid },
+			orderBy: [{ updatedAt: "desc" }],
+			omit: { remoteSnapshot: true },
+		});
 		const counts = c
 			? await this.prisma.traktSyncEntry.groupBy({
 					by: ["ignored"],
@@ -394,6 +414,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				if (existing)
 					await this.locked(existing, async () => {
 						await this.prisma.traktSyncConnection.update({
+							select: { id: true },
 							where: { id: existing.id },
 							data: {
 								...this.tokenData(token),
@@ -488,16 +509,28 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 	private async token(c: TraktSyncConnection) {
-		c = await this.prisma.traktSyncConnection.findUniqueOrThrow({
+		const current = await this.prisma.traktSyncConnection.findUniqueOrThrow({
 			where: { id: c.id },
+			select: {
+				id: true,
+				accessToken: true,
+				refreshToken: true,
+				expiresAt: true,
+			},
 		});
-		if (!c.accessToken || !c.refreshToken)
+		if (!current.accessToken || !current.refreshToken)
 			throw new BadRequestException("Connect Trakt first.");
-		if (!c.expiresAt || c.expiresAt.getTime() < Date.now() + 60_000) {
+		if (
+			!current.expiresAt ||
+			current.expiresAt.getTime() < Date.now() + 60_000
+		) {
 			try {
-				const fresh = await this.api.refresh(this.crypt(c.refreshToken, true));
+				const fresh = await this.api.refresh(
+					this.crypt(current.refreshToken, true),
+				);
 				await this.prisma.traktSyncConnection.update({
-					where: { id: c.id },
+					select: { id: true },
+					where: { id: current.id },
 					data: this.tokenData(fresh),
 				});
 				return fresh.access_token;
@@ -508,7 +541,8 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				)
 					throw error;
 				await this.prisma.traktSyncConnection.update({
-					where: { id: c.id },
+					select: { id: true },
+					where: { id: current.id },
 					data: {
 						status: "reconnect",
 						lastError: "Reconnect Trakt to continue syncing.",
@@ -517,7 +551,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				throw new TraktSyncError("Reconnect Trakt to continue syncing.", 401);
 			}
 		}
-		return this.crypt(c.accessToken, true);
+		return this.crypt(current.accessToken, true);
 	}
 	async configure(userDid: string, dto: SyncSettingsDto) {
 		if (
@@ -567,6 +601,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			settings.contentPublicationConsent ??= false;
 			settings.listPublicationConsent ??= false;
 			await this.prisma.traktSyncConnection.update({
+				select: { id: true },
 				where: { id: c.id },
 				data: {
 					...settings,
@@ -622,6 +657,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			if (action === "disconnect") {
 				// Freeze first, even if remote revocation is temporarily unavailable.
 				await this.prisma.traktSyncConnection.update({
+					select: { id: true },
 					where: { id: c.id },
 					data: { status: "paused" },
 				});
@@ -634,6 +670,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					);
 				}
 				await this.prisma.traktSyncConnection.update({
+					select: { id: true },
 					where: { id: c.id },
 					data: {
 						status: "disconnected",
@@ -654,6 +691,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				)
 					throw new BadRequestException("Choose your sync settings first.");
 				await this.prisma.traktSyncConnection.update({
+					select: { id: true },
 					where: { id: c.id },
 					data: {
 						status: action === "pause" ? "paused" : "active",
@@ -673,10 +711,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		c: TraktSyncConnection,
 		local: SyncRecord[],
 		remote: SyncRecord[],
+		known?: TraktSyncEntry[],
 	) {
-		const entries = await this.prisma.traktSyncEntry.findMany({
-			where: { connectionId: c.id },
-		});
+		const entries =
+			known ??
+			(await this.prisma.traktSyncEntry.findMany({
+				where: { connectionId: c.id },
+			}));
 		const usedLocal = new Set(entries.map((e) => e.localKey));
 		const usedRemote = new Set(entries.map((e) => e.remoteKey));
 		const localByKey = new Map(local.map((r) => [r.key, r]));
@@ -693,6 +734,16 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			return groups;
 		};
+		const pendingByMedia = new Map<string, TraktSyncEntry[]>();
+		for (const e of entries) {
+			if (!e.pending) continue;
+			const desired = readRecord((e.pending as { desired?: unknown }).desired);
+			if (!desired) continue;
+			const key = mediaKey(desired);
+			const group = pendingByMedia.get(key);
+			if (group) group.push(e);
+			else pendingByMedia.set(key, [e]);
+		}
 		const localByMedia = groupByMedia(local);
 		const remoteByMedia = groupByMedia(remote);
 		// Adopt a completed legacy recovery even if the process died before saving
@@ -713,6 +764,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				continue;
 			const l = matches[0];
 			await this.prisma.traktSyncEntry.update({
+				select: { id: true },
 				where: { id: e.id },
 				data: {
 					localKey: l.key,
@@ -731,10 +783,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const desired = readRecord(intent.desired);
 			if (intent.direction !== "push" || !desired) continue;
 			const current = localByKey.get(e.localKey ?? "");
-			const possible = remote.filter(
+			const possible = (remoteByMedia.get(mediaKey(desired)) ?? []).filter(
 				(r) => !r.problem && equivalent(desired, r) && !usedRemote.has(r.key),
 			);
-			const intents = entries.filter(
+			const intents = (pendingByMedia.get(mediaKey(desired)) ?? []).filter(
 				(other) =>
 					other.pending &&
 					(other.pending as { direction?: string }).direction === "push" &&
@@ -755,7 +807,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			const intent = e.pending as { direction: string; desired?: unknown };
 			const desired = readRecord(intent.desired);
 			if (intent.direction !== "push" || e.remoteKey || !desired) continue;
-			const possible = remote.filter(
+			const possible = (remoteByMedia.get(mediaKey(desired)) ?? []).filter(
 				(r) =>
 					r.kind === desired.kind &&
 					r.title === desired.title &&
@@ -777,6 +829,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				e.remoteKey = possible[0].key;
 				usedRemote.add(possible[0].key);
 				await this.prisma.traktSyncEntry.update({
+					select: { id: true },
 					where: { id: e.id },
 					data: {
 						remoteKey: e.remoteKey,
@@ -789,14 +842,28 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				});
 			}
 		}
+		const missingWatchMedia = new Set<string>();
+		let missingWatchWithoutBase = false;
+		for (const e of entries) {
+			if (!e.linked || !e.remoteKey || remoteByKey.has(e.remoteKey)) continue;
+			const base = readRecord(e.remoteBase);
+			if (base) missingWatchMedia.add(mediaKey(base));
+			else missingWatchWithoutBase = true;
+		}
 		const newLocal = local.filter((r) => !usedLocal.has(r.key));
 		const newRemote = remote.filter((r) => !usedRemote.has(r.key));
 		const newRemoteByMedia = groupByMedia(newRemote);
+		const creations: Prisma.TraktSyncEntryCreateManyInput[] = [];
+		const flush = async () => {
+			if (!creations.length) return;
+			await this.prisma.traktSyncEntry.createMany({ data: [...creations] });
+			creations.length = 0;
+		};
 		for (const r of newRemote) {
 			// A write may have reached Trakt before its acknowledgement was lost.
 			// Let that durable intent claim the result before ordinary discovery.
 			if (
-				entries.some((e) => {
+				(pendingByMedia.get(mediaKey(r)) ?? []).some((e) => {
 					if (
 						!e.pending ||
 						(e.pending as { direction?: string }).direction !== "push"
@@ -818,13 +885,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				continue;
 			const possibleReplacement =
 				r.kind === "watch" &&
-				entries.some(
-					(e) =>
-						e.linked &&
-						e.remoteKey &&
-						!remoteByKey.has(e.remoteKey) &&
-						mediaKey(readRecord(e.remoteBase) ?? r) === mediaKey(r),
-				);
+				(missingWatchWithoutBase || missingWatchMedia.has(mediaKey(r)));
 			const matches =
 				r.mediaId || isListRecord(r)
 					? candidates(
@@ -853,35 +914,34 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					: null;
 			const eligible =
 				enabled(c, r) && (c.initialised || c.historyScope === "all");
-			await this.prisma.traktSyncEntry.create({
-				data: {
-					connectionId: c.id,
-					kind: r.kind,
-					remoteKey: r.key,
-					localKey: match?.key,
-					localBase: json(match),
-					remoteBase: json(r),
-					linked: Boolean(eligible && match && equivalent(match, r)),
-					eligible,
-					issue:
-						r.problem ??
-						(!r.mediaId && !isListRecord(r)
-							? "Choose a TMDB match for this title."
-							: possibleReplacement || (!match && matches.length)
-								? isListRecord(r)
-									? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
-									: isContentRecord(r)
-										? "Content pairing is ambiguous. Choose a matching record before retrying."
-										: "Confirm whether these Watches are the same viewing."
-								: null),
-				},
+			creations.push({
+				connectionId: c.id,
+				kind: r.kind,
+				remoteKey: r.key,
+				localKey: match?.key,
+				localBase: json(match),
+				remoteBase: json(r),
+				linked: Boolean(eligible && match && equivalent(match, r)),
+				eligible,
+				issue:
+					r.problem ??
+					(!r.mediaId && !isListRecord(r)
+						? "Choose a TMDB match for this title."
+						: possibleReplacement || (!match && matches.length)
+							? isListRecord(r)
+								? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
+								: isContentRecord(r)
+									? "Content pairing is ambiguous. Choose a matching record before retrying."
+									: "Confirm whether these Watches are the same viewing."
+							: null),
 			});
+			if (creations.length >= 500) await flush();
 			if (match) usedLocal.add(match.key);
 		}
 		for (const l of newLocal) {
 			if (usedLocal.has(l.key)) continue;
 			if (
-				entries.some(
+				(pendingByMedia.get(mediaKey(l)) ?? []).some(
 					(e) =>
 						e.pending &&
 						(e.pending as { direction?: string }).direction === "pull" &&
@@ -893,41 +953,48 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			)
 				continue;
 			const near = candidates(l, remoteByMedia.get(mediaKey(l)) ?? []);
-			await this.prisma.traktSyncEntry.create({
-				data: {
-					connectionId: c.id,
-					kind: l.kind,
-					localKey: l.key,
-					localBase: json(l),
-					eligible:
-						enabled(c, l) && (c.initialised || c.historyScope === "all"),
-					issue:
-						near.length &&
-						(l.kind === "watch" || isListRecord(l) || isContentRecord(l))
-							? isListRecord(l)
-								? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
-								: isContentRecord(l)
-									? "Content pairing is ambiguous. Choose a matching record before retrying."
-									: "Confirm whether these Watches are the same viewing."
-							: null,
-				},
+			creations.push({
+				connectionId: c.id,
+				kind: l.kind,
+				localKey: l.key,
+				localBase: json(l),
+				eligible: enabled(c, l) && (c.initialised || c.historyScope === "all"),
+				issue:
+					near.length &&
+					(l.kind === "watch" || isListRecord(l) || isContentRecord(l))
+						? isListRecord(l)
+							? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
+							: isContentRecord(l)
+								? "Content pairing is ambiguous. Choose a matching record before retrying."
+								: "Confirm whether these Watches are the same viewing."
+						: null,
 			});
+			if (creations.length >= 500) await flush();
 		}
+		await flush();
 	}
 	async issues(userDid: string, query: SyncIssuesQueryDto) {
 		const c = await this.requireConnection(userDid);
+		const where: Prisma.TraktSyncEntryWhereInput = {
+			connectionId: c.id,
+			issue: { not: null },
+			OR: [{ eligible: true }, { linked: true }],
+			ignored: query.view === "ignored",
+		};
+		const total = await this.prisma.traktSyncEntry.count({ where });
+		const pagination = getPaginationMeta(
+			total,
+			query.page ?? 1,
+			query.pageSize ?? 20,
+		);
+		if (!total) return { ...pagination, items: [] };
 		const entries = await this.prisma.traktSyncEntry.findMany({
-			where: {
-				connectionId: c.id,
-				issue: { not: null },
-				OR: [{ eligible: true }, { linked: true }],
-				ignored: query.view === "ignored",
-			},
-			orderBy: { createdAt: "asc" },
+			where,
+			orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+			skip: (pagination.page - 1) * pagination.pageSize,
+			take: pagination.pageSize,
 		});
-		// Paginate before reading repositories or building candidate comparisons.
-		const page = paginateItems(entries, query.page ?? 1, query.pageSize ?? 20);
-		if (page.items.length === 0) return { ...page, items: [] };
+		const page = { ...pagination, items: entries };
 		const kinds = new Set(
 			page.items.map((entry) => entry.kind as SyncRecord["kind"]),
 		);
@@ -944,8 +1011,20 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			kinds,
 		);
 		const remote = records(c.remoteSnapshot);
+		// Most pages need no title mappings. If needed, read only mapping payloads,
+		// rather than materializing every issue and both of its full baselines.
+		const pageRemoteKeys = new Set(entries.map((e) => e.remoteKey));
+		const mappings = remote.some(
+			(r) => pageRemoteKeys.has(r.key) && !isListRecord(r) && !r.mediaId,
+		)
+			? await this.prisma.traktSyncEntry.findMany({
+					where,
+					orderBy: { createdAt: "asc" },
+					select: { remoteBase: true },
+				})
+			: entries;
 		const mapped = new Map(
-			applyMappings(remote, entries).map((r) => [r.key, r]),
+			applyMappings(remote, mappings).map((r) => [r.key, r]),
 		);
 		const localByKey = new Map(local.map((r) => [r.key, r]));
 		return {
@@ -1080,6 +1159,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					const p = readRecord(peer.remoteBase);
 					if (p && sameTraktTitle(r, p))
 						await this.prisma.traktSyncEntry.update({
+							select: { id: true },
 							where: { id: peer.id },
 							data: {
 								remoteBase: json({ ...p, mediaId: dto.mediaId }),
@@ -1171,6 +1251,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				});
 			}
 			await this.prisma.traktSyncConnection.update({
+				select: { id: true },
 				where: { id: c.id },
 				data: { nextRunAt: new Date(), remoteReadAt: null },
 			});
@@ -1208,12 +1289,14 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				} catch (error) {
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.traktSyncConnection.update({
+							select: { id: true },
 							where: { id: c.id },
 							data: { nextRunAt: new Date(Date.now() + 5000) },
 						});
 						return;
 					}
 					await this.prisma.traktSyncConnection.update({
+						select: { id: true },
 						where: { id: c.id },
 						data: {
 							lastError:
@@ -1287,7 +1370,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		// pagination must not prevent someone from adding a Watch to their Shelf.
 		let local = await this.publicWatchOperation(c, async () => {
 			await lease();
-			return this.local.snapshot(c.userDid, c);
+			return this.local.snapshot(
+				c.userDid,
+				c,
+				new Set(
+					(["watch", "rating"] as const).filter((kind) => enabled(c, { kind })),
+				),
+			);
 		});
 		const token = await this.token(c);
 		const known = await this.prisma.traktSyncEntry.findMany({
@@ -1317,6 +1406,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			remote = await this.api.snapshot(token, c);
 			await lease();
 			await this.prisma.traktSyncConnection.update({
+				select: { id: true },
 				where: { id: c.id },
 				data: {
 					remoteSnapshot: remote as unknown as Prisma.InputJsonValue,
@@ -1325,14 +1415,22 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			});
 			local = await this.publicWatchOperation(c, async () => {
 				await lease();
-				return this.local.snapshot(c.userDid, c);
+				return this.local.snapshot(
+					c.userDid,
+					c,
+					new Set(
+						(["watch", "rating"] as const).filter((kind) =>
+							enabled(c, { kind }),
+						),
+					),
+				);
 			});
 			localByKey = new Map(local.map((r) => [r.key, r]));
 		}
 		remote = applyMappings(remote, known);
 		const remoteByKey = new Map(remote.map((r) => [r.key, r]));
 		await lease();
-		await this.discover(c, local, remote);
+		await this.discover(c, local, remote, known);
 		if (!c.initialised) {
 			// Initial comparison runs in the worker: large accounts never hold an HTTP request open.
 			const unlinked = await this.prisma.traktSyncEntry.findMany({
@@ -1341,6 +1439,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			for (const e of unlinked) {
 				if (!enabled(c, { kind: e.kind as SyncRecord["kind"] })) continue;
 				await this.prisma.traktSyncEntry.update({
+					select: { id: true },
 					where: { id: e.id },
 					data: {
 						eligible: c.historyScope === "all",
@@ -1352,6 +1451,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				});
 			}
 			await this.prisma.traktSyncConnection.update({
+				select: { id: true },
 				where: { id: c.id },
 				data: {
 					initialised: true,
@@ -1367,7 +1467,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			where: { connectionId: c.id, ignored: false },
 			orderBy: { updatedAt: "asc" },
 		});
+		const linkedRemoteKeys = new Set(
+			entries.filter((e) => e.linked).map((e) => e.remoteKey),
+		);
 		let writes = 0;
+		const startedAt = Date.now();
 		// Once this run yields, the rest of the loop only counts what is left,
 		// so clients can show how far a large catch-up has come.
 		let stopped = false;
@@ -1390,6 +1494,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				!entry.pending
 			) {
 				await this.prisma.traktSyncEntry.update({
+					select: { id: true },
 					where: { id: entry.id },
 					data: { issue: null },
 				});
@@ -1411,6 +1516,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				)
 					continue;
 				await this.prisma.traktSyncEntry.update({
+					select: { id: true },
 					where: { id: entry.id },
 					data: { eligible: true },
 				});
@@ -1454,9 +1560,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				!entry.resolution &&
 				!entry.pending &&
 				remote.some(
-					(v) =>
-						mediaKey(v) === mediaKey(l) &&
-						!entries.some((e) => e.remoteKey === v.key && e.linked),
+					(v) => mediaKey(v) === mediaKey(l) && !linkedRemoteKeys.has(v.key),
 				)
 			) {
 				await this.issue(
@@ -1528,19 +1632,49 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			await lease();
 			try {
+				if (decision === "push" && writes > 0) {
+					const sourceTarget = l ?? r ?? base.localBase ?? base.remoteBase;
+					const target = sourceTarget && {
+						...sourceTarget,
+						traktId: r?.traktId ?? sourceTarget.traktId,
+					};
+					if (!target) throw new Error("Missing transfer target.");
+					const current = applyMappings(
+						await this.api.readForRecord(token, {
+							...target,
+							traktId: r?.traktId ?? target.traktId,
+						}),
+						entries,
+					);
+					if (
+						!sameLocalSnapshot(
+							remote.filter((record) => inRemoteScope(record, target, r)),
+							current,
+						)
+					)
+						throw new SyncSnapshotChanged(
+							"Trakt changed during transfer. Sync will read a fresh snapshot.",
+							0,
+							5,
+						);
+				}
 				const transferred = await this.publicWatchOperation(
 					c,
 					async (_signal, withWrite) => {
 						const currentMatches = await withWrite(async () => {
 							await lease();
-							const current = await this.local.snapshot(c.userDid, {
-								lists: entry.kind === "list",
-								watchlist: entry.kind === "watchlist",
-								favorites: entry.kind === "favorites",
-								notes: entry.kind === "note",
-								library: entry.kind === "library",
-								reviews: entry.kind === "review",
-							});
+							const current = await this.local.snapshot(
+								c.userDid,
+								{
+									lists: entry.kind === "list",
+									watchlist: entry.kind === "watchlist",
+									favorites: entry.kind === "favorites",
+									notes: entry.kind === "note",
+									library: entry.kind === "library",
+									reviews: entry.kind === "review",
+								},
+								new Set([entry.kind as SyncRecord["kind"]]),
+							);
 							// A manual edit can land between transfers. Replan next tick rather
 							// than duplicate a new Watch or export/delete a stale local version.
 							return sameLocalSnapshot(
@@ -1562,6 +1696,12 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 							token,
 							decision,
 						);
+						if (decision === "push") {
+							remoteByKey.clear();
+							for (const record of remote) remoteByKey.set(record.key, record);
+							entry.remoteKey = result?.key ?? entry.remoteKey;
+							if (entry.remoteKey) linkedRemoteKeys.add(entry.remoteKey);
+						}
 						if (decision === "pull") {
 							local = local.filter((record) => record.key !== l?.key);
 							if (l) localByKey.delete(l.key);
@@ -1588,6 +1728,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				}
 				if (
 					error instanceof SyncAccountUnavailable ||
+					error instanceof SyncSnapshotChanged ||
 					error instanceof ConflictException
 				)
 					throw error;
@@ -1599,6 +1740,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					!entry.remoteKey
 				)
 					await this.prisma.traktSyncEntry.update({
+						select: { id: true },
 						where: { id: entry.id },
 						data: { pending: Prisma.DbNull },
 					});
@@ -1614,12 +1756,21 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						? error.message
 						: "This item could not sync. Retry when ready.",
 				);
+				// A failed outbound write may have changed Trakt without confirmation.
+				if (decision === "push") stopped = true;
 			}
-			// Inbound items have independent stable keys. Yield after outbound work,
-			// whose readback can affect collision checks for another viewing.
-			if (decision === "push" || writes >= 10) stopped = true;
+			// Bound each catch-up batch; List/content writes can themselves span many
+			// records. Watches/Ratings share one full read, with scoped freshness checks.
+			if (
+				(decision === "push" &&
+					(isListRecord(entry) || isContentRecord(entry))) ||
+				writes >= 10 ||
+				Date.now() - startedAt >= 30_000
+			)
+				stopped = true;
 		}
 		await this.prisma.traktSyncConnection.update({
+			select: { id: true },
 			where: { id: c.id },
 			data: {
 				lastSuccessAt: new Date(),
@@ -1636,6 +1787,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	private issue(id: string, issue: string) {
 		return this.prisma.traktSyncEntry.update({
+			select: { id: true },
 			where: { id },
 			data: { issue, resolution: null },
 		});
@@ -1646,6 +1798,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		r: SyncRecord | null,
 	) {
 		return this.prisma.traktSyncEntry.update({
+			select: { id: true },
 			where: { id: entry.id },
 			data: {
 				localKey: l?.key ?? entry.localKey,
@@ -1719,6 +1872,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		) {
 			if (!unconfirmedCreate(entry))
 				await this.prisma.traktSyncEntry.update({
+					select: { id: true },
 					where: { id: entry.id },
 					data: { pending: Prisma.DbNull },
 				});
@@ -1736,6 +1890,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			!equivalent(remote, desired)
 		) {
 			await this.prisma.traktSyncEntry.update({
+				select: { id: true },
 				where: { id: entry.id },
 				data: { pending: Prisma.DbNull },
 			});
@@ -1749,6 +1904,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			} catch (error) {
 				if (pending)
 					await this.prisma.traktSyncEntry.update({
+						select: { id: true },
 						where: { id: entry.id },
 						data: { pending: Prisma.DbNull },
 					});
@@ -1765,6 +1921,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		}
 		if (!pending)
 			await this.prisma.traktSyncEntry.update({
+				select: { id: true },
 				where: { id: entry.id },
 				data: {
 					pending: {
@@ -1794,6 +1951,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			) {
 				entry.localKey = `${desired.kind}:${TID.nextStr()}`;
 				await this.prisma.traktSyncEntry.update({
+					select: { id: true },
 					where: { id: entry.id },
 					data: { localKey: entry.localKey },
 				});
@@ -1829,7 +1987,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				});
 				if (pending && collisions.length === 1 && !used) {
 					await this.complete(entry, desired, collisions[0]);
-					return;
+					return collisions[0];
 				}
 				throw new Error(
 					"Trakt cannot represent another Watch at this time. Your Opnshelf Watch is preserved.",
@@ -1842,6 +2000,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			);
 		if (previous && (desired === null || desired.kind === "watch"))
 			await this.api.write(token, previous, true);
+		let createdRecord: SyncRecord | undefined;
 		if (desired)
 			await this.api.write(
 				token,
@@ -1856,8 +2015,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				false,
 				remote,
 				async (created) => {
+					createdRecord = created;
 					entry.remoteKey = created.key;
 					await this.prisma.traktSyncEntry.update({
+						select: { id: true },
 						where: { id: entry.id },
 						data: {
 							remoteKey: created.key,
@@ -1872,24 +2033,23 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					});
 				},
 			);
-		const target = desired ?? previous;
-		if (!target) throw new Error("Missing transfer target.");
+		const sourceTarget = desired ?? previous;
+		if (!sourceTarget) throw new Error("Missing transfer target.");
+		const target = {
+			...sourceTarget,
+			traktId:
+				remote?.traktId ??
+				previous?.traktId ??
+				createdRecord?.traktId ??
+				sourceTarget.traktId,
+		};
 		const confirmation = applyMappings(
-			await this.api.readForRecord(token, {
-				...target,
-				traktId: remote?.traktId ?? previous?.traktId ?? target.traktId,
-			}),
+			await this.api.readForRecord(token, target),
 			[entry],
 		);
 		// A scoped read must never replace the full snapshot or advance its freshness.
 		const refreshed = [
-			...snapshot.filter((r) =>
-				isListRecord(target) || isContentRecord(target)
-					? r.kind !== target.kind
-					: target.kind === "rating"
-						? !(r.kind === "rating" && r.mediaType === target.mediaType)
-						: r.key !== previous?.key && mediaKey(r) !== mediaKey(target),
-			),
+			...snapshot.filter((r) => !inRemoteScope(r, target, previous)),
 			...confirmation,
 		];
 		const matches = desired
@@ -1902,6 +2062,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		if (!desired && previous && refreshed.some((r) => r.key === previous.key))
 			throw new Error("Trakt has not confirmed this removal yet.");
 		await this.prisma.traktSyncConnection.update({
+			select: { id: true },
 			where: { id: c.id },
 			data: {
 				remoteSnapshot: refreshed as unknown as Prisma.InputJsonValue,
@@ -1912,5 +2073,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			desired && isListRecord(desired) ? local : desired,
 			matches[0] ?? null,
 		);
+		// Keep subsequent transfers' collision checks aligned with confirmed writes.
+		snapshot.length = 0;
+		for (const record of refreshed) snapshot.push(record);
+		return matches[0] ?? null;
 	}
 }
