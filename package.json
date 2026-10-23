@@ -1,6 +1,9 @@
 {
   "name": "opnshelf",
   "private": true,
+  "engines": {
+    "node": ">=24.22.1 <25"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "dev:web": "pnpm --filter web dev",
