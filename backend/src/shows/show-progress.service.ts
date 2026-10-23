@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowCatalogueService } from "./show-catalogue.service";
+import { clampPage, clampPageSize, paginateItems } from "../common/pagination";
 import { watchDateOrderBy } from "../common/watch-ordering";
 import { ShowsTmdbService } from "./shows-tmdb.service";
 
@@ -159,16 +160,14 @@ export class ShowProgressService {
 			}
 		});
 
-		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
-		const total = matchingItems.length;
-		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
-		const requestedPage = Math.max(page, 1);
-		const currentPage =
-			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
-		const start = (currentPage - 1) * safePageSize;
-		const pagedItems = (
-			totalPages > 0 ? matchingItems.slice(start, start + safePageSize) : []
-		).map(({ isUndated: _isUndated, ...item }) => item);
+		const pagination = paginateItems(
+			matchingItems,
+			clampPage(page),
+			clampPageSize(pageSize, 50),
+		);
+		const pagedItems = pagination.items.map(
+			({ isUndated: _isUndated, ...item }) => item,
+		);
 		await Promise.all(
 			pagedItems.map(async (item) => {
 				item.show.colors =
@@ -176,15 +175,7 @@ export class ShowProgressService {
 			}),
 		);
 
-		return {
-			items: pagedItems,
-			total,
-			page: currentPage,
-			pageSize: safePageSize,
-			totalPages,
-			hasPreviousPage: totalPages > 0 && currentPage > 1,
-			hasNextPage: totalPages > 0 && currentPage < totalPages,
-		};
+		return { ...pagination, items: pagedItems };
 	}
 
 	/** Complete next-episode positions for internal consumers, without page decoration. */
