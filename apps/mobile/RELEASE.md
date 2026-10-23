@@ -63,9 +63,11 @@ step logs a warning and skips, so a release is never blocked on telemetry.
   will create the App Store Connect app and manage signing. Fill the
   `submit.production.ios` env vars (`EXPO_APPLE_ID`, `EXPO_ASC_APP_ID`,
   `EXPO_APPLE_TEAM_ID`) — locally via shell env, in CI via secrets.
-- **Android:** a Google Play Developer account ($25 once). Create the app in the
-  Play Console, then download a service-account JSON with release permissions to
-  `apps/mobile/google-service-account.json` (git-ignored — never commit it).
+- **Android:** create the app in Google Play Console, then assign a service-account
+  key with app-specific publishing permissions in EAS → Credentials → Android →
+  `com.rowanpaul.opnshelf` → Google service account key for EAS Submit. Local and
+  GitHub submissions use that stored assignment; no local JSON file or GitHub
+  Google service-account secret is required. See [Expo Android submission](https://docs.expo.dev/submit/android/).
 
 ## Cutting a build
 
