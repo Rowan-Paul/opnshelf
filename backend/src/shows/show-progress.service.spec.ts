@@ -225,6 +225,26 @@ describe("ShowProgressService", () => {
 			const unfiltered = await service.getUserUpNext("did:plc:abc123", 1, 1);
 			expect(unfiltered.total).toBe(4);
 			expect(tmdb.getUpNextAvailability).toHaveBeenCalledTimes(4);
+			await expect(
+				service.getUserUpNext("did:plc:abc123", 99, 2, "title", "asc"),
+			).resolves.toMatchObject({
+				items: [{ showId: "3" }, { showId: "4" }],
+				page: 2,
+				pageSize: 2,
+				total: 4,
+				totalPages: 2,
+				hasPreviousPage: true,
+				hasNextPage: false,
+			});
+			await expect(
+				service.getUserUpNext("did:plc:abc123", 0, 0, "title", "asc"),
+			).resolves.toMatchObject({
+				items: [{ showId: "1" }],
+				page: 1,
+				pageSize: 1,
+				hasPreviousPage: false,
+				hasNextPage: true,
+			});
 			mockPrismaService.user.findUniqueOrThrow.mockResolvedValue({
 				watchCountry: "NL",
 				streamingServiceIds: [],
