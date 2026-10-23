@@ -81,7 +81,7 @@ describe.skipIf(!url)("durable Watch privacy coordinator", () => {
 		).rejects.toThrow();
 	});
 
-	it("requires explicit publication consent and blocks an active import", async () => {
+	it("requires explicit publication consent and blocks an active account deletion", async () => {
 		await db.user.update({
 			where: { did: owner },
 			data: { watchVisibility: "private" },
@@ -90,10 +90,10 @@ describe.skipIf(!url)("durable Watch privacy coordinator", () => {
 			"Confirm publication",
 		);
 		await db.backgroundJob.create({
-			data: { type: "trakt_import", userDid: owner },
+			data: { type: "account_deletion", userDid: owner },
 		});
 		await expect(coordinator.start(owner, "public", true)).rejects.toThrow(
-			"import",
+			"account deletion",
 		);
 		expect(
 			await db.watchPrivacyMigration.count({ where: { userDid: owner } }),
@@ -336,20 +336,6 @@ describe.skipIf(!url)("durable Watch privacy coordinator", () => {
 		expect(await write).toBe("expired");
 		expect(await coordinator.start(owner, "private", false)).not.toBeNull();
 	});
-	it.each(["paused", "failed"])(
-		"handles a %s Trakt import according to its resumability",
-		async (status) => {
-			await db.backgroundJob.create({
-				data: { type: "trakt_import", userDid: owner, status },
-			});
-			if (status === "paused")
-				await expect(
-					coordinator.start(owner, "private", false),
-				).rejects.toThrow("import");
-			else
-				expect(await coordinator.start(owner, "private", false)).not.toBeNull();
-		},
-	);
 	it("stops work before account deletion while retaining recovery state", async () => {
 		const job = await coordinator.start(owner, "private", false);
 		if (!job) throw new Error("Expected migration");

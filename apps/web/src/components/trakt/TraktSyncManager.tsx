@@ -3,7 +3,6 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
-	TRAKT_HANDOFF_COPY,
 	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
@@ -190,8 +189,7 @@ export function TraktSyncManager({
 				</div>
 				{!data.configured ? (
 					<p className="mt-4 text-(--foreground-muted)">
-						Trakt Sync is not configured on this server yet. Import once is
-						still available.
+						Trakt Sync is not configured on this server yet.
 					</p>
 				) : !connected ? (
 					<button
@@ -392,16 +390,6 @@ export function TraktSyncManager({
 					)}
 				</DialogContent>
 			</Dialog>
-			{embedded && (data.status === "disconnected" || data.importStatus) && (
-				<Link
-					to="/trakt-import"
-					className="inline-block text-(--foreground-muted) text-sm underline underline-offset-4"
-				>
-					{data.importStatus
-						? "View previous Import results"
-						: "Import public history once instead"}
-				</Link>
-			)}
 			{data.username &&
 				(connected || data.needsAttention > 0 || data.ignored > 0) && (
 					<section className={card}>
@@ -458,9 +446,6 @@ export function SyncSettings({
 			onSaved();
 		},
 	});
-	const unfinished =
-		status.importStatus &&
-		!["completed", "continued_in_sync"].includes(status.importStatus);
 	const requiresHistoryConsent =
 		settings.direction !== "outbound" && (settings.watches || settings.ratings);
 	const requiresListConsent = Boolean(
@@ -481,7 +466,7 @@ export function SyncSettings({
 			(!requiresListConsent || status.listPublicationConsent) &&
 			(!requiresContentConsent || status.contentPublicationConsent),
 	);
-	const canSave = hasConsent && (!unfinished || settings.handoffImport);
+	const canSave = hasConsent;
 	return (
 		<section className={className}>
 			{showHeading && <h2 className="font-semibold text-lg">Sync settings</h2>}
@@ -737,30 +722,7 @@ export function SyncSettings({
 								<span>{TRAKT_PUBLICATION_COPY}</span>
 							</label>
 						))}
-					{unfinished && (
-						<div className="space-y-2 rounded-xl border border-(--border) p-4">
-							<label className="flex items-start gap-3 text-sm">
-								<input
-									className="mt-1"
-									type="checkbox"
-									checked={settings.handoffImport ?? false}
-									onChange={(event) =>
-										setSettings({
-											...settings,
-											handoffImport: event.target.checked,
-										})
-									}
-								/>
-								<span>{TRAKT_HANDOFF_COPY}</span>
-							</label>
-							<Link
-								to="/trakt-import"
-								className="text-(--accent) text-sm underline"
-							>
-								Finish Import first
-							</Link>
-						</div>
-					)}
+
 					{save.error && (
 						<p role="alert" className="text-(--destructive) text-sm">
 							{traktError(save.error)}

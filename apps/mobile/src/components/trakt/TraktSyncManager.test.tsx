@@ -121,7 +121,6 @@ vi.mock("@tanstack/react-query", () => ({
 						ratings: true,
 						historyScope: "all",
 						publicationConsent: mocks.active,
-						importStatus: "paused",
 						remaining: 0,
 						needsAttention: mocks.issues ? 1 : 0,
 						ignored: 0,
@@ -185,6 +184,24 @@ function press(label: string) {
 it("allows disconnecting before setup without enabling sync", () => {
 	mount();
 	press("Disconnect");
+	expect(
+		renderer.root.findAllByType(Modal).find((node) => node.props.visible)?.props
+			.transparent,
+	).toBe(true);
+	const backdrop = renderer.root
+		.findAllByType(Modal)
+		.find((node) => node.props.visible)
+		?.find(
+			(node) =>
+				node.type === Pressable &&
+				node.props.accessibilityLabel === "Close confirmation",
+		);
+	act(() => backdrop?.props.onPress());
+	expect(
+		renderer.root.findAllByType(Modal).filter((node) => node.props.visible),
+	).toHaveLength(0);
+	expect(mocks.mutate).not.toHaveBeenCalled();
+	press("Disconnect");
 	press("Confirm disconnect");
 	expect(mocks.mutate).toHaveBeenCalledExactlyOnceWith(
 		{ body: { action: "disconnect" } },
@@ -242,20 +259,6 @@ it("changes direction from a compact row before confirming", () => {
 	expect(mocks.mutate).not.toHaveBeenCalled();
 });
 
-it("closes the confirmation sheet when navigating to finish an Import", () => {
-	mount();
-	press("Enable sync");
-	expect(renderer.root.findByType(Modal).props.visible).toBe(true);
-	const link = renderer.root.find(
-		(node) =>
-			node.type === "link" && node.props.children === "Finish Import first",
-	);
-	expect(link.props.href).toBe("/trakt-import");
-	act(() => link.props.onPress?.());
-	expect(renderer.root.findByType(Modal).props.visible).toBe(false);
-	expect(mocks.mutate).not.toHaveBeenCalled();
-});
-
 it.each([
 	"lists",
 	"favorites",
@@ -306,12 +309,6 @@ it.each([
 			node.props.accessibilityLabel.startsWith("I understand that sync"),
 	);
 	act(() => consent.props.onValueChange(true));
-	const handoff = renderer.root.find(
-		(node) =>
-			node.type === "switch" &&
-			node.props.accessibilityLabel.startsWith("Continue my unfinished Import"),
-	);
-	act(() => handoff.props.onValueChange(true));
 	expect(confirm()?.props.disabled).toBe(false);
 	press("Confirm and enable sync");
 	expect(mocks.mutate).toHaveBeenCalledWith({
@@ -423,6 +420,17 @@ it.each([
 	mocks.issues = true;
 	mocks.uncertain = true;
 	mount(true, true);
+	press(label);
+	const modal = renderer.root.findByType(Modal);
+	expect(modal.props.transparent).toBe(true);
+	expect(modal.props.presentationStyle).toBeUndefined();
+	const backdrop = renderer.root.find(
+		(node) =>
+			node.type === Pressable &&
+			node.props.accessibilityLabel === "Close confirmation",
+	);
+	act(() => backdrop.props.onPress());
+	expect(renderer.root.findAllByType(Modal)).toHaveLength(0);
 	press(label);
 	const confirm = () =>
 		renderer.root.find(

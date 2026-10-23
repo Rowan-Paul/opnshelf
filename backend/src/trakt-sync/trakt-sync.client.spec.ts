@@ -185,6 +185,34 @@ describe("Trakt transport boundaries", () => {
 			value: 8,
 		});
 	});
+	it.each([
+		{
+			watches: false,
+			ratings: true,
+			expected: [
+				"/sync/ratings/movies",
+				"/sync/ratings/shows",
+				"/sync/ratings/seasons",
+				"/sync/ratings/episodes",
+			],
+		},
+		{ watches: true, ratings: false, expected: ["/sync/history"] },
+		{ watches: false, ratings: false, expected: [] },
+	])(
+		"skips disabled history scopes: %j",
+		async ({ watches, ratings, expected }) => {
+			const client = new TraktSyncClient(config);
+			const request = vi
+				.spyOn(client, "request")
+				.mockResolvedValue(page([], 0, 0));
+			await client.snapshot("fixture", { watches, ratings });
+			expect(request.mock.calls.map(([path]) => path.split("?")[0])).toEqual([
+				"/sync/last_activities",
+				...expected,
+				"/sync/last_activities",
+			]);
+		},
+	);
 	it("rejects missing, changing, or truncated pagination instead of treating it as deletions", async () => {
 		const client = new TraktSyncClient(config);
 		const request = vi.spyOn(client, "request");

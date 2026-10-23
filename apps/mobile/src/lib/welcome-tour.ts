@@ -19,8 +19,26 @@ export const MEASURE_MS = 200;
 /** Padding around the spotlighted element, in px. */
 export const HOLE_PAD = 8;
 
-/** Where a scrolled-to anchor lands from the top of the window, in px. */
-export const SCROLL_TARGET_Y = 160;
+/** Prefer space beside the anchor, but never place the card outside its viewport. */
+export function tourCardTop({
+	hole,
+	cardHeight,
+	top,
+	bottom,
+}: {
+	hole: { top: number; height: number } | null;
+	cardHeight: number;
+	top: number;
+	bottom: number;
+}): number {
+	const lastTop = Math.max(top, bottom - cardHeight);
+	if (!hole) return Math.max(top, (top + bottom - cardHeight) / 2);
+	const below = hole.top + hole.height + 12;
+	if (below <= lastTop) return Math.max(top, below);
+	const above = hole.top - cardHeight - 12;
+	if (above >= top) return Math.min(lastTop, above);
+	return Math.max(top, Math.min(lastTop, below));
+}
 
 interface TourStep {
 	route: Href;
@@ -69,7 +87,6 @@ function isTourBlockedPath(pathname: string): boolean {
 		pathname === "/signup" ||
 		pathname === "/onboarding" ||
 		pathname === "/verify-email" ||
-		pathname === "/trakt-import" ||
 		pathname === "/atstore-review" ||
 		pathname.startsWith("/auth")
 	);
@@ -86,4 +103,22 @@ export function shouldRunTour(input: {
 	if (input.seenVersion === undefined) return false;
 	if (isTourBlockedPath(input.pathname)) return false;
 	return input.seenVersion < TOUR_VERSION;
+}
+
+/** Preserve visible anchors; otherwise place the heading below the top safe area. */
+export function tourScrollOffset({
+	y,
+	height,
+	viewportHeight,
+	offsetY,
+	safeTop,
+}: {
+	y: number;
+	height: number;
+	viewportHeight: number;
+	offsetY: number;
+	safeTop: number;
+}): number | null {
+	if (y >= safeTop && y + height <= viewportHeight) return null;
+	return Math.max(0, offsetY + y - safeTop);
 }

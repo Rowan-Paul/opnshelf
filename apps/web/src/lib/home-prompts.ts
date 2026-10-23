@@ -1,7 +1,4 @@
-import {
-	atStoreReviewsControllerGetPromptOptions,
-	usersControllerGetMyCurrentTraktImportOptions,
-} from "@opnshelf/api";
+import { atStoreReviewsControllerGetPromptOptions } from "@opnshelf/api";
 import {
 	type QueryClient,
 	type QueryKey,
@@ -10,8 +7,6 @@ import {
 import { useState } from "react";
 
 /** The Home prompts that need the API to decide whether they show. */
-export const traktHomePromptQuery = () =>
-	usersControllerGetMyCurrentTraktImportOptions();
 
 export const atStoreHomePromptQuery = () => ({
 	...atStoreReviewsControllerGetPromptOptions(),
@@ -24,7 +19,6 @@ export const atStoreHomePromptQuery = () => ({
  * their answers are usually cached by the time Home first renders.
  */
 export function prefetchHomePrompts(queryClient: QueryClient): void {
-	void queryClient.prefetchQuery(traktHomePromptQuery());
 	void queryClient.prefetchQuery(atStoreHomePromptQuery());
 }
 

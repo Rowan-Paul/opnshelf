@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 interface NoteEditorSheetProps {
@@ -40,6 +41,7 @@ export function NoteEditorSheet({
 	isSaving = false,
 	isDeleting = false,
 }: NoteEditorSheetProps) {
+	useDetailLayoutLock(visible);
 	const [content, setContent] = useState(initialContent);
 	// The keyboard controller's KeyboardAvoidingView is third-party, so resolve
 	// its layout classes to a style object (Uniwind className only works on

@@ -20,9 +20,9 @@ import {
 	registerTourScroller,
 	setTourScrollOffset,
 } from "@/components/tour/WelcomeTour";
-import { TraktHomePrompt } from "@/components/trakt/TraktHomePrompt";
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
+import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
 
 /**
  * Home. Mirrors the Web App's landing route: a welcome greeting, a stats
@@ -36,6 +36,8 @@ import { usePublicProfile } from "@/lib/use-public-profile";
  */
 export default function HomeScreen() {
 	const insets = useSafeAreaInsets();
+	const wide = useWideLayout();
+	const primaryWidth = usePaneWidth(16);
 	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
 	const userDid = user?.did ?? "";
@@ -58,6 +60,19 @@ export default function HomeScreen() {
 			setRefreshing(false);
 		}
 	};
+
+	const stats = (
+		<StatsStrip
+			activity={profile?.activityLast30Days}
+			mostWatchedShow={profile?.mostWatchedShow ?? null}
+			watchedThisYear={profile?.watchedThisYear ?? 0}
+			reviewsCount={profile?.reviewsCount ?? 0}
+			reviewsHref={
+				user?.handle ? (`/profile/${user.handle}/reviews` as Href) : undefined
+			}
+			isLoading={profileLoading || (!profile && !!user?.handle)}
+		/>
+	);
 
 	return (
 		<NativeTabScreen>
@@ -87,32 +102,30 @@ export default function HomeScreen() {
 				<View className="gap-8 px-4">
 					<WelcomeHeader user={user} />
 					<ReleaseNotePrompt />
-					<TraktHomePrompt />
 					<NotificationPrompt />
 
-					<StatsStrip
-						activity={profile?.activityLast30Days}
-						mostWatchedShow={profile?.mostWatchedShow ?? null}
-						watchedThisYear={profile?.watchedThisYear ?? 0}
-						reviewsCount={profile?.reviewsCount ?? 0}
-						reviewsHref={
-							user?.handle
-								? (`/profile/${user.handle}/reviews` as Href)
-								: undefined
-						}
-						isLoading={profileLoading || (!profile && !!user?.handle)}
-					/>
-
+					{stats}
 					<AtStoreReviewPrompt />
 
-					<UpNextPreview handle={user?.handle} />
-
-					{/* Friends Activity (issue #144) slots in here. */}
-					<FriendsActivity />
-
-					<ShelfPreviewRow userDid={userDid} />
-
-					<UpcomingReleases />
+					{wide ? (
+						<View className="flex-row items-start gap-6">
+							<View className="min-w-0 gap-8" style={{ width: primaryWidth }}>
+								<UpNextPreview handle={user?.handle} />
+								<ShelfPreviewRow userDid={userDid} />
+							</View>
+							<View className="min-w-0 flex-1 gap-8">
+								<FriendsActivity />
+								<UpcomingReleases />
+							</View>
+						</View>
+					) : (
+						<>
+							<UpNextPreview handle={user?.handle} />
+							<FriendsActivity />
+							<ShelfPreviewRow userDid={userDid} />
+							<UpcomingReleases />
+						</>
+					)}
 				</View>
 			</ScrollView>
 		</NativeTabScreen>

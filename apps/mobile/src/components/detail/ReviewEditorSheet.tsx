@@ -25,6 +25,7 @@ import { DialogProvider, useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 const MAX_LENGTH = 20000;
@@ -87,6 +88,7 @@ export function ReviewEditorSheet({
 	onClearRating,
 	isClearingRating = false,
 }: ReviewEditorSheetProps) {
+	useDetailLayoutLock(visible);
 	const formRef = useRef<ScrollViewInstance>(null);
 	const editorRef = useRef<MilkdownWebViewHandle>(null);
 	const titleRef = useRef<TextInputInstance>(null);

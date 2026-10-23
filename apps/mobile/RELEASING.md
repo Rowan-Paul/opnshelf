@@ -232,9 +232,11 @@ capability synced through `eas credentials` instead.
   a 4 GB heap) by `plugins/with-gradle-jvm-args.js`. If it comes back after a
   dependency bump, raise the values there, never in the generated
   `android/gradle.properties`.
-- **Android credentials:** the Play service-account key must live at
-  `apps/mobile/google-service-account.json` — exactly that name, referenced
-  from `eas.json`. Not committed.
+- **Android credentials:** submissions use the Google service-account key assigned
+  to `com.rowanpaul.opnshelf` in EAS Credentials. Keep `serviceAccountKeyPath`
+  omitted from `eas.json`; a local file would override the reviewed EAS assignment.
+  If non-interactive submission reports a missing key, check the app assignment
+  in EAS rather than adding a JSON file or GitHub secret.
 - **iOS submit:** `$EXPO_APPLE_ID` etc. in the `submit` profile are NOT
   interpolated by EAS — inline the real values temporarily and revert after
   submitting.

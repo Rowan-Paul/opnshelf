@@ -106,7 +106,7 @@ it("does not repeatedly scan every link while discovering a large account", asyn
 		traktSyncEntry: {
 			findMany: vi.fn(async () => entries),
 			update: vi.fn(),
-			create: vi.fn(),
+			createMany: vi.fn(),
 		},
 	};
 	const service = new TraktSyncService(
@@ -122,7 +122,7 @@ it("does not repeatedly scan every link while discovering a large account", asyn
 		remote,
 	);
 	expect(prisma.traktSyncEntry.update).not.toHaveBeenCalled();
-	expect(prisma.traktSyncEntry.create).not.toHaveBeenCalled();
+	expect(prisma.traktSyncEntry.createMany).not.toHaveBeenCalled();
 	expect(keyReads).toBeLessThan(entries.length * 10);
 });
 
@@ -160,7 +160,7 @@ it.each([
 			traktSyncEntry: {
 				findMany: vi.fn(async () => entries),
 				update: vi.fn(),
-				create: vi.fn(),
+				createMany: vi.fn(),
 			},
 		};
 		const service = new TraktSyncService(
@@ -206,7 +206,7 @@ it("limits remote ambiguity comparisons to the matching media", async () => {
 		},
 	}));
 	const prisma = {
-		traktSyncEntry: { findMany: vi.fn(async () => []), create: vi.fn() },
+		traktSyncEntry: { findMany: vi.fn(async () => []), createMany: vi.fn() },
 	};
 	const service = new TraktSyncService(
 		prisma as unknown as PrismaService,
@@ -222,10 +222,13 @@ it("limits remote ambiguity comparisons to the matching media", async () => {
 		local,
 		remote,
 	);
-	expect(prisma.traktSyncEntry.create).toHaveBeenCalledTimes(200);
+	expect(prisma.traktSyncEntry.createMany).toHaveBeenCalledTimes(1);
+	expect(prisma.traktSyncEntry.createMany.mock.calls[0][0].data).toHaveLength(
+		200,
+	);
 	expect(
-		prisma.traktSyncEntry.create.mock.calls.every(
-			([input]) => input.data.linked,
+		prisma.traktSyncEntry.createMany.mock.calls[0][0].data.every(
+			(input: { linked: boolean }) => input.linked,
 		),
 	).toBe(true);
 	expect(mediaReads).toBeLessThan(remote.length * 15);
@@ -360,6 +363,7 @@ it.each([false, true])(
 		expect(transfer).not.toHaveBeenCalled();
 		if (changed)
 			expect(update).toHaveBeenCalledWith({
+				select: { id: true },
 				where: { id: "old" },
 				data: { eligible: true },
 			});
@@ -372,7 +376,13 @@ it("excludes historical issues from both the review list and its count", async (
 	const groupBy = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany, groupBy },
+			traktSyncEntry: { findMany, groupBy, count: vi.fn(async () => 0) },
+			traktSyncConnection: {
+				findFirst: vi.fn(async () => ({
+					id: "fixture",
+					nextRunAt: new Date(),
+				})),
+			},
 			backgroundJob: { findFirst: vi.fn(async () => null) },
 		} as unknown as PrismaService,
 		{} as TraktSyncClient,
@@ -392,7 +402,7 @@ it("excludes historical issues from both the review list and its count", async (
 	service["requireConnection"] = vi.fn(async () => connection);
 	await service.issues("fixture", {});
 	await service.status("fixture");
-	for (const query of [findMany.mock.calls[0], groupBy.mock.calls[0]])
+	for (const query of [groupBy.mock.calls[0]])
 		expect(query).toEqual([
 			expect.objectContaining({
 				where: expect.objectContaining({
@@ -455,7 +465,14 @@ it("builds candidate comparisons only for the requested sync issue page", async 
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany: vi.fn(async () => entries) },
+			traktSyncEntry: {
+				count: vi.fn(async () => entries.length),
+				findMany: vi.fn(async (input) =>
+					input.select
+						? entries
+						: entries.slice(input.skip, input.skip + input.take),
+				),
+			},
 		} as unknown as PrismaService,
 		{} as TraktSyncClient,
 		{ snapshot: vi.fn(async () => [watch]) } as unknown as LocalSyncRecords,
@@ -510,7 +527,14 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany: vi.fn(async () => entries) },
+			traktSyncEntry: {
+				count: vi.fn(async () => entries.length),
+				findMany: vi.fn(async (input) =>
+					input.select
+						? entries
+						: entries.slice(input.skip, input.skip + input.take),
+				),
+			},
 		} as unknown as PrismaService,
 		{} as TraktSyncClient,
 		{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,
@@ -536,7 +560,10 @@ it("does not read local repositories when the issue queue is empty", async () =>
 	const snapshot = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany: vi.fn(async () => []) },
+			traktSyncEntry: {
+				count: vi.fn(async () => 0),
+				findMany: vi.fn(async () => []),
+			},
 		} as unknown as PrismaService,
 		{} as TraktSyncClient,
 		{ snapshot } as unknown as LocalSyncRecords,
@@ -565,10 +592,13 @@ it("reads only the enabled content repositories needed for the visible issue pag
 	const service = new TraktSyncService(
 		{
 			traktSyncEntry: {
-				findMany: vi.fn(async () => [
-					{ id: "watch", kind: "watch", issue: "Choose a match" },
-					{ id: "note", kind: "note", issue: "Choose a version" },
-				]),
+				count: vi.fn(async () => 2),
+				findMany: vi.fn(async (input) =>
+					[
+						{ id: "watch", kind: "watch", issue: "Choose a match" },
+						{ id: "note", kind: "note", issue: "Choose a version" },
+					].slice(input.skip, input.skip + input.take),
+				),
 			},
 		} as unknown as PrismaService,
 		{} as TraktSyncClient,
@@ -693,19 +723,25 @@ it.each([
 		const service = new TraktSyncService(
 			{
 				traktSyncEntry: {
-					findMany: vi.fn(async () => [
-						{
-							id: "first",
-							kind: source.kind,
-							remoteKey: "remote",
-							remoteBase: { ...base, ...saved, mediaId: "99" },
-						},
-						{
-							id: "second",
-							kind: source.kind,
-							remoteBase: { ...base, ...saved, mediaId: "100" },
-						},
-					]),
+					count: vi.fn(async () => 2),
+					findMany: vi.fn(async (input) =>
+						[
+							{
+								id: "first",
+								kind: source.kind,
+								remoteKey: "remote",
+								remoteBase: { ...base, ...saved, mediaId: "99" },
+							},
+							{
+								id: "second",
+								kind: source.kind,
+								remoteBase: { ...base, ...saved, mediaId: "100" },
+							},
+						].slice(
+							input.select ? 0 : input.skip,
+							input.select ? undefined : input.skip + input.take,
+						),
+					),
 				},
 			} as unknown as PrismaService,
 			{} as TraktSyncClient,
@@ -724,5 +760,121 @@ it.each([
 		);
 		const result = await service.issues("fixture", { pageSize: 1 });
 		expect(result.items[0].trakt?.mediaId).toBe(expected);
+	},
+);
+
+it("inserts a large initial comparison in bounded batches instead of one round trip per Watch", async () => {
+	const remote = Array.from({ length: 1201 }, (_, i) => ({
+		key: `remote:${i}`,
+		kind: "watch" as const,
+		mediaType: "movie" as const,
+		mediaId: String(i + 1),
+		season: 0,
+		episode: 0,
+		title: "Fixture",
+		value: null,
+	}));
+	let linkReads = 0;
+	const entries = remote.map((r) => ({
+		get linked() {
+			linkReads++;
+			return true;
+		},
+		localKey: `old:${r.key}`,
+		remoteKey: `old:${r.key}`,
+		remoteBase: r,
+	}));
+	const createMany = vi.fn(async (_input: { data: unknown[] }) => ({
+		count: 0,
+	}));
+	const service = new TraktSyncService(
+		{
+			traktSyncEntry: { findMany: vi.fn(async () => entries), createMany },
+		} as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{} as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	await service["discover"](
+		{ id: "fixture", watches: true, initialised: true } as Parameters<
+			(typeof service)["discover"]
+		>[0],
+		[],
+		remote,
+	);
+	expect(createMany.mock.calls.map(([input]) => input.data.length)).toEqual([
+		500, 500, 201,
+	]);
+	expect(linkReads).toBeLessThan(entries.length * 5);
+});
+
+it.each([
+	{ page: 1, expectedMediaId: "1", mappingReads: 0 },
+	{ page: 2, expectedMediaId: "2", mappingReads: 1 },
+])(
+	"loads cross-page mappings only when the visible issue needs one (page $page)",
+	async ({ page, expectedMediaId, mappingReads }) => {
+		const known = {
+			key: "remote:known",
+			kind: "watch" as const,
+			mediaType: "movie" as const,
+			mediaId: "1",
+			traktId: 1,
+			season: 0,
+			episode: 0,
+			title: "Known",
+			value: null,
+		};
+		const unmatched = {
+			...known,
+			key: "remote:unmatched",
+			mediaId: null,
+			traktId: 2,
+			title: "Unmatched",
+		};
+		const entries = [
+			{ id: "known", kind: "watch", remoteKey: known.key, remoteBase: known },
+			{
+				id: "unmatched",
+				kind: "watch",
+				remoteKey: unmatched.key,
+				remoteBase: unmatched,
+			},
+			{
+				id: "mapping-on-another-page",
+				kind: "watch",
+				remoteKey: "remote:other",
+				remoteBase: { ...unmatched, key: "remote:other", mediaId: "2" },
+			},
+		];
+		const findMany = vi.fn(async (query) =>
+			query.select
+				? entries
+				: entries.slice(query.skip, query.skip + query.take),
+		);
+		const service = new TraktSyncService(
+			{
+				traktSyncEntry: { count: vi.fn(async () => entries.length), findMany },
+			} as unknown as PrismaService,
+			{} as TraktSyncClient,
+			{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
+		);
+		service["requireConnection"] = vi.fn(
+			async () =>
+				({
+					id: "fixture",
+					remoteSnapshot: [known, unmatched],
+				}) as unknown as Awaited<
+					ReturnType<(typeof service)["requireConnection"]>
+				>,
+		);
+		const result = await service.issues("fixture", { page, pageSize: 1 });
+		expect(result.items[0].trakt?.mediaId).toBe(expectedMediaId);
+		expect(findMany.mock.calls.filter(([query]) => query.select)).toHaveLength(
+			mappingReads,
+		);
 	},
 );

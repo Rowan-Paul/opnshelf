@@ -157,22 +157,9 @@ describe("UserDeletionService", () => {
 			expect(prisma.user.delete).toHaveBeenCalledWith({
 				where: { did: "did:plc:test" },
 			});
-			expect(prisma.backgroundJob.deleteMany).toHaveBeenCalledWith({
-				where: {
-					userDid: "did:plc:test",
-					type: {
-						in: ["trakt_import", "trakt_import_archived_duplicate"],
-					},
-				},
-			});
 			// The OAuth session must be revoked too — it's a standalone table with
 			// no FK cascade, so a deleted account would otherwise keep a live session.
 			expect(authService.revoke).toHaveBeenCalledWith("did:plc:test");
-			expect(
-				vi.mocked(authService.revoke).mock.invocationCallOrder[0],
-			).toBeLessThan(
-				vi.mocked(prisma.backgroundJob.deleteMany).mock.invocationCallOrder[0],
-			);
 			expect(
 				vi.mocked(authService.revoke).mock.invocationCallOrder[0],
 			).toBeLessThan(vi.mocked(prisma.user.delete).mock.invocationCallOrder[0]);
@@ -192,7 +179,7 @@ describe("UserDeletionService", () => {
 			});
 		});
 
-		it("preserves the user and Trakt history when session revocation fails", async () => {
+		it("preserves the user when session revocation fails", async () => {
 			authService.revoke = vi.fn().mockRejectedValue(new Error("DB error"));
 
 			await expect(service.deleteUserSync("did:plc:test")).rejects.toThrow(
@@ -408,11 +395,6 @@ describe("UserDeletionService", () => {
 			expect(authService.revoke).toHaveBeenCalledWith("did:plc:test");
 			expect(
 				vi.mocked(authService.revoke).mock.invocationCallOrder[0],
-			).toBeLessThan(
-				vi.mocked(prisma.backgroundJob.deleteMany).mock.invocationCallOrder[0],
-			);
-			expect(
-				vi.mocked(authService.revoke).mock.invocationCallOrder[0],
 			).toBeLessThan(vi.mocked(prisma.user.delete).mock.invocationCallOrder[0]);
 			expect(prisma.$transaction).toHaveBeenCalledOnce();
 			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
@@ -422,7 +404,7 @@ describe("UserDeletionService", () => {
 			);
 		});
 
-		it("fails the job and preserves the user and Trakt history when session revocation fails", async () => {
+		it("fails the job and preserves the user when session revocation fails", async () => {
 			queueJob({ deletePdsData: false, totalRecords: 0, deletedRecords: 0 });
 			authService.revoke = vi.fn().mockRejectedValue(new Error("DB error"));
 

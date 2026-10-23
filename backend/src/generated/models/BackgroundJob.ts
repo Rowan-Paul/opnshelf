@@ -228,8 +228,6 @@ export type BackgroundJobWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"BackgroundJob"> | Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyListRelationFilter
   watchPrivacyMigration?: Prisma.XOR<Prisma.WatchPrivacyMigrationNullableScalarRelationFilter, Prisma.WatchPrivacyMigrationWhereInput> | null
-  traktItems?: Prisma.TraktImportItemListRelationFilter
-  traktMatches?: Prisma.TraktImportMatchListRelationFilter
 }
 
 export type BackgroundJobOrderByWithRelationInput = {
@@ -246,8 +244,6 @@ export type BackgroundJobOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyOrderByRelationAggregateInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationOrderByWithRelationInput
-  traktItems?: Prisma.TraktImportItemOrderByRelationAggregateInput
-  traktMatches?: Prisma.TraktImportMatchOrderByRelationAggregateInput
 }
 
 export type BackgroundJobWhereUniqueInput = Prisma.AtLeast<{
@@ -267,8 +263,6 @@ export type BackgroundJobWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"BackgroundJob"> | Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyListRelationFilter
   watchPrivacyMigration?: Prisma.XOR<Prisma.WatchPrivacyMigrationNullableScalarRelationFilter, Prisma.WatchPrivacyMigrationWhereInput> | null
-  traktItems?: Prisma.TraktImportItemListRelationFilter
-  traktMatches?: Prisma.TraktImportMatchListRelationFilter
 }, "id">
 
 export type BackgroundJobOrderByWithAggregationInput = {
@@ -319,8 +313,6 @@ export type BackgroundJobCreateInput = {
   updatedAt?: Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyCreateNestedManyWithoutJobInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutJobInput
-  traktItems?: Prisma.TraktImportItemCreateNestedManyWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchCreateNestedManyWithoutJobInput
 }
 
 export type BackgroundJobUncheckedCreateInput = {
@@ -337,8 +329,6 @@ export type BackgroundJobUncheckedCreateInput = {
   updatedAt?: Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedCreateNestedManyWithoutJobInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutJobInput
-  traktItems?: Prisma.TraktImportItemUncheckedCreateNestedManyWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedCreateNestedManyWithoutJobInput
 }
 
 export type BackgroundJobUpdateInput = {
@@ -355,8 +345,6 @@ export type BackgroundJobUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyUpdateManyWithoutJobNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUpdateManyWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUpdateManyWithoutJobNestedInput
 }
 
 export type BackgroundJobUncheckedUpdateInput = {
@@ -373,8 +361,6 @@ export type BackgroundJobUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedUpdateManyWithoutJobNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUncheckedUpdateManyWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedUpdateManyWithoutJobNestedInput
 }
 
 export type BackgroundJobCreateManyInput = {
@@ -464,34 +450,6 @@ export type BackgroundJobScalarRelationFilter = {
   isNot?: Prisma.BackgroundJobWhereInput
 }
 
-export type BackgroundJobCreateNestedOneWithoutTraktItemsInput = {
-  create?: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktItemsInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktItemsInput>
-  connectOrCreate?: Prisma.BackgroundJobCreateOrConnectWithoutTraktItemsInput
-  connect?: Prisma.BackgroundJobWhereUniqueInput
-}
-
-export type BackgroundJobUpdateOneRequiredWithoutTraktItemsNestedInput = {
-  create?: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktItemsInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktItemsInput>
-  connectOrCreate?: Prisma.BackgroundJobCreateOrConnectWithoutTraktItemsInput
-  upsert?: Prisma.BackgroundJobUpsertWithoutTraktItemsInput
-  connect?: Prisma.BackgroundJobWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.BackgroundJobUpdateToOneWithWhereWithoutTraktItemsInput, Prisma.BackgroundJobUpdateWithoutTraktItemsInput>, Prisma.BackgroundJobUncheckedUpdateWithoutTraktItemsInput>
-}
-
-export type BackgroundJobCreateNestedOneWithoutTraktMatchesInput = {
-  create?: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktMatchesInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktMatchesInput>
-  connectOrCreate?: Prisma.BackgroundJobCreateOrConnectWithoutTraktMatchesInput
-  connect?: Prisma.BackgroundJobWhereUniqueInput
-}
-
-export type BackgroundJobUpdateOneRequiredWithoutTraktMatchesNestedInput = {
-  create?: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktMatchesInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktMatchesInput>
-  connectOrCreate?: Prisma.BackgroundJobCreateOrConnectWithoutTraktMatchesInput
-  upsert?: Prisma.BackgroundJobUpsertWithoutTraktMatchesInput
-  connect?: Prisma.BackgroundJobWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.BackgroundJobUpdateToOneWithWhereWithoutTraktMatchesInput, Prisma.BackgroundJobUpdateWithoutTraktMatchesInput>, Prisma.BackgroundJobUncheckedUpdateWithoutTraktMatchesInput>
-}
-
 export type BackgroundJobCreateNestedOneWithoutWatchPrivacyCopiesInput = {
   create?: Prisma.XOR<Prisma.BackgroundJobCreateWithoutWatchPrivacyCopiesInput, Prisma.BackgroundJobUncheckedCreateWithoutWatchPrivacyCopiesInput>
   connectOrCreate?: Prisma.BackgroundJobCreateOrConnectWithoutWatchPrivacyCopiesInput
@@ -520,174 +478,6 @@ export type BackgroundJobUpdateOneRequiredWithoutWatchPrivacyMigrationNestedInpu
   update?: Prisma.XOR<Prisma.XOR<Prisma.BackgroundJobUpdateToOneWithWhereWithoutWatchPrivacyMigrationInput, Prisma.BackgroundJobUpdateWithoutWatchPrivacyMigrationInput>, Prisma.BackgroundJobUncheckedUpdateWithoutWatchPrivacyMigrationInput>
 }
 
-export type BackgroundJobCreateWithoutTraktItemsInput = {
-  id?: string
-  type: string
-  userDid: string
-  status?: string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Date | string
-  lastError?: string | null
-  startedAt?: Date | string | null
-  completedAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyCreateNestedManyWithoutJobInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchCreateNestedManyWithoutJobInput
-}
-
-export type BackgroundJobUncheckedCreateWithoutTraktItemsInput = {
-  id?: string
-  type: string
-  userDid: string
-  status?: string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Date | string
-  lastError?: string | null
-  startedAt?: Date | string | null
-  completedAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedCreateNestedManyWithoutJobInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedCreateNestedManyWithoutJobInput
-}
-
-export type BackgroundJobCreateOrConnectWithoutTraktItemsInput = {
-  where: Prisma.BackgroundJobWhereUniqueInput
-  create: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktItemsInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktItemsInput>
-}
-
-export type BackgroundJobUpsertWithoutTraktItemsInput = {
-  update: Prisma.XOR<Prisma.BackgroundJobUpdateWithoutTraktItemsInput, Prisma.BackgroundJobUncheckedUpdateWithoutTraktItemsInput>
-  create: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktItemsInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktItemsInput>
-  where?: Prisma.BackgroundJobWhereInput
-}
-
-export type BackgroundJobUpdateToOneWithWhereWithoutTraktItemsInput = {
-  where?: Prisma.BackgroundJobWhereInput
-  data: Prisma.XOR<Prisma.BackgroundJobUpdateWithoutTraktItemsInput, Prisma.BackgroundJobUncheckedUpdateWithoutTraktItemsInput>
-}
-
-export type BackgroundJobUpdateWithoutTraktItemsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyUpdateManyWithoutJobNestedInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUpdateManyWithoutJobNestedInput
-}
-
-export type BackgroundJobUncheckedUpdateWithoutTraktItemsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedUpdateManyWithoutJobNestedInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedUpdateManyWithoutJobNestedInput
-}
-
-export type BackgroundJobCreateWithoutTraktMatchesInput = {
-  id?: string
-  type: string
-  userDid: string
-  status?: string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Date | string
-  lastError?: string | null
-  startedAt?: Date | string | null
-  completedAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyCreateNestedManyWithoutJobInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutJobInput
-  traktItems?: Prisma.TraktImportItemCreateNestedManyWithoutJobInput
-}
-
-export type BackgroundJobUncheckedCreateWithoutTraktMatchesInput = {
-  id?: string
-  type: string
-  userDid: string
-  status?: string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Date | string
-  lastError?: string | null
-  startedAt?: Date | string | null
-  completedAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedCreateNestedManyWithoutJobInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutJobInput
-  traktItems?: Prisma.TraktImportItemUncheckedCreateNestedManyWithoutJobInput
-}
-
-export type BackgroundJobCreateOrConnectWithoutTraktMatchesInput = {
-  where: Prisma.BackgroundJobWhereUniqueInput
-  create: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktMatchesInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktMatchesInput>
-}
-
-export type BackgroundJobUpsertWithoutTraktMatchesInput = {
-  update: Prisma.XOR<Prisma.BackgroundJobUpdateWithoutTraktMatchesInput, Prisma.BackgroundJobUncheckedUpdateWithoutTraktMatchesInput>
-  create: Prisma.XOR<Prisma.BackgroundJobCreateWithoutTraktMatchesInput, Prisma.BackgroundJobUncheckedCreateWithoutTraktMatchesInput>
-  where?: Prisma.BackgroundJobWhereInput
-}
-
-export type BackgroundJobUpdateToOneWithWhereWithoutTraktMatchesInput = {
-  where?: Prisma.BackgroundJobWhereInput
-  data: Prisma.XOR<Prisma.BackgroundJobUpdateWithoutTraktMatchesInput, Prisma.BackgroundJobUncheckedUpdateWithoutTraktMatchesInput>
-}
-
-export type BackgroundJobUpdateWithoutTraktMatchesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyUpdateManyWithoutJobNestedInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUpdateManyWithoutJobNestedInput
-}
-
-export type BackgroundJobUncheckedUpdateWithoutTraktMatchesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
-  userDid?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  nextRunAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedUpdateManyWithoutJobNestedInput
-  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUncheckedUpdateManyWithoutJobNestedInput
-}
-
 export type BackgroundJobCreateWithoutWatchPrivacyCopiesInput = {
   id?: string
   type: string
@@ -701,8 +491,6 @@ export type BackgroundJobCreateWithoutWatchPrivacyCopiesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutJobInput
-  traktItems?: Prisma.TraktImportItemCreateNestedManyWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchCreateNestedManyWithoutJobInput
 }
 
 export type BackgroundJobUncheckedCreateWithoutWatchPrivacyCopiesInput = {
@@ -718,8 +506,6 @@ export type BackgroundJobUncheckedCreateWithoutWatchPrivacyCopiesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutJobInput
-  traktItems?: Prisma.TraktImportItemUncheckedCreateNestedManyWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedCreateNestedManyWithoutJobInput
 }
 
 export type BackgroundJobCreateOrConnectWithoutWatchPrivacyCopiesInput = {
@@ -751,8 +537,6 @@ export type BackgroundJobUpdateWithoutWatchPrivacyCopiesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUpdateManyWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUpdateManyWithoutJobNestedInput
 }
 
 export type BackgroundJobUncheckedUpdateWithoutWatchPrivacyCopiesInput = {
@@ -768,8 +552,6 @@ export type BackgroundJobUncheckedUpdateWithoutWatchPrivacyCopiesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUncheckedUpdateManyWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedUpdateManyWithoutJobNestedInput
 }
 
 export type BackgroundJobCreateWithoutWatchPrivacyMigrationInput = {
@@ -785,8 +567,6 @@ export type BackgroundJobCreateWithoutWatchPrivacyMigrationInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyCreateNestedManyWithoutJobInput
-  traktItems?: Prisma.TraktImportItemCreateNestedManyWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchCreateNestedManyWithoutJobInput
 }
 
 export type BackgroundJobUncheckedCreateWithoutWatchPrivacyMigrationInput = {
@@ -802,8 +582,6 @@ export type BackgroundJobUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedCreateNestedManyWithoutJobInput
-  traktItems?: Prisma.TraktImportItemUncheckedCreateNestedManyWithoutJobInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedCreateNestedManyWithoutJobInput
 }
 
 export type BackgroundJobCreateOrConnectWithoutWatchPrivacyMigrationInput = {
@@ -835,8 +613,6 @@ export type BackgroundJobUpdateWithoutWatchPrivacyMigrationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyUpdateManyWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUpdateManyWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUpdateManyWithoutJobNestedInput
 }
 
 export type BackgroundJobUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
@@ -852,8 +628,6 @@ export type BackgroundJobUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   watchPrivacyCopies?: Prisma.WatchPrivacyCopyUncheckedUpdateManyWithoutJobNestedInput
-  traktItems?: Prisma.TraktImportItemUncheckedUpdateManyWithoutJobNestedInput
-  traktMatches?: Prisma.TraktImportMatchUncheckedUpdateManyWithoutJobNestedInput
 }
 
 
@@ -863,14 +637,10 @@ export type BackgroundJobUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
 
 export type BackgroundJobCountOutputType = {
   watchPrivacyCopies: number
-  traktItems: number
-  traktMatches: number
 }
 
 export type BackgroundJobCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   watchPrivacyCopies?: boolean | BackgroundJobCountOutputTypeCountWatchPrivacyCopiesArgs
-  traktItems?: boolean | BackgroundJobCountOutputTypeCountTraktItemsArgs
-  traktMatches?: boolean | BackgroundJobCountOutputTypeCountTraktMatchesArgs
 }
 
 /**
@@ -890,20 +660,6 @@ export type BackgroundJobCountOutputTypeCountWatchPrivacyCopiesArgs<ExtArgs exte
   where?: Prisma.WatchPrivacyCopyWhereInput
 }
 
-/**
- * BackgroundJobCountOutputType without action
- */
-export type BackgroundJobCountOutputTypeCountTraktItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.TraktImportItemWhereInput
-}
-
-/**
- * BackgroundJobCountOutputType without action
- */
-export type BackgroundJobCountOutputTypeCountTraktMatchesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.TraktImportMatchWhereInput
-}
-
 
 export type BackgroundJobSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -919,8 +675,6 @@ export type BackgroundJobSelect<ExtArgs extends runtime.Types.Extensions.Interna
   updatedAt?: boolean
   watchPrivacyCopies?: boolean | Prisma.BackgroundJob$watchPrivacyCopiesArgs<ExtArgs>
   watchPrivacyMigration?: boolean | Prisma.BackgroundJob$watchPrivacyMigrationArgs<ExtArgs>
-  traktItems?: boolean | Prisma.BackgroundJob$traktItemsArgs<ExtArgs>
-  traktMatches?: boolean | Prisma.BackgroundJob$traktMatchesArgs<ExtArgs>
   _count?: boolean | Prisma.BackgroundJobCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["backgroundJob"]>
 
@@ -970,8 +724,6 @@ export type BackgroundJobOmit<ExtArgs extends runtime.Types.Extensions.InternalA
 export type BackgroundJobInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   watchPrivacyCopies?: boolean | Prisma.BackgroundJob$watchPrivacyCopiesArgs<ExtArgs>
   watchPrivacyMigration?: boolean | Prisma.BackgroundJob$watchPrivacyMigrationArgs<ExtArgs>
-  traktItems?: boolean | Prisma.BackgroundJob$traktItemsArgs<ExtArgs>
-  traktMatches?: boolean | Prisma.BackgroundJob$traktMatchesArgs<ExtArgs>
   _count?: boolean | Prisma.BackgroundJobCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type BackgroundJobIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -982,8 +734,6 @@ export type $BackgroundJobPayload<ExtArgs extends runtime.Types.Extensions.Inter
   objects: {
     watchPrivacyCopies: Prisma.$WatchPrivacyCopyPayload<ExtArgs>[]
     watchPrivacyMigration: Prisma.$WatchPrivacyMigrationPayload<ExtArgs> | null
-    traktItems: Prisma.$TraktImportItemPayload<ExtArgs>[]
-    traktMatches: Prisma.$TraktImportMatchPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1393,8 +1143,6 @@ export interface Prisma__BackgroundJobClient<T, Null = never, ExtArgs extends ru
   readonly [Symbol.toStringTag]: "PrismaPromise"
   watchPrivacyCopies<T extends Prisma.BackgroundJob$watchPrivacyCopiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BackgroundJob$watchPrivacyCopiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WatchPrivacyCopyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   watchPrivacyMigration<T extends Prisma.BackgroundJob$watchPrivacyMigrationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BackgroundJob$watchPrivacyMigrationArgs<ExtArgs>>): Prisma.Prisma__WatchPrivacyMigrationClient<runtime.Types.Result.GetResult<Prisma.$WatchPrivacyMigrationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  traktItems<T extends Prisma.BackgroundJob$traktItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BackgroundJob$traktItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TraktImportItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  traktMatches<T extends Prisma.BackgroundJob$traktMatchesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BackgroundJob$traktMatchesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TraktImportMatchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1868,54 +1616,6 @@ export type BackgroundJob$watchPrivacyMigrationArgs<ExtArgs extends runtime.Type
    */
   include?: Prisma.WatchPrivacyMigrationInclude<ExtArgs> | null
   where?: Prisma.WatchPrivacyMigrationWhereInput
-}
-
-/**
- * BackgroundJob.traktItems
- */
-export type BackgroundJob$traktItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the TraktImportItem
-   */
-  select?: Prisma.TraktImportItemSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the TraktImportItem
-   */
-  omit?: Prisma.TraktImportItemOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TraktImportItemInclude<ExtArgs> | null
-  where?: Prisma.TraktImportItemWhereInput
-  orderBy?: Prisma.TraktImportItemOrderByWithRelationInput | Prisma.TraktImportItemOrderByWithRelationInput[]
-  cursor?: Prisma.TraktImportItemWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.TraktImportItemScalarFieldEnum | Prisma.TraktImportItemScalarFieldEnum[]
-}
-
-/**
- * BackgroundJob.traktMatches
- */
-export type BackgroundJob$traktMatchesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the TraktImportMatch
-   */
-  select?: Prisma.TraktImportMatchSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the TraktImportMatch
-   */
-  omit?: Prisma.TraktImportMatchOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TraktImportMatchInclude<ExtArgs> | null
-  where?: Prisma.TraktImportMatchWhereInput
-  orderBy?: Prisma.TraktImportMatchOrderByWithRelationInput | Prisma.TraktImportMatchOrderByWithRelationInput[]
-  cursor?: Prisma.TraktImportMatchWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.TraktImportMatchScalarFieldEnum | Prisma.TraktImportMatchScalarFieldEnum[]
 }
 
 /**

@@ -41,7 +41,11 @@ export function AppHeader({
 	return (
 		<View
 			className="border-border border-b bg-background"
-			style={{ paddingTop: insets.top }}
+			style={{
+				paddingTop: insets.top,
+				paddingLeft: insets.left,
+				paddingRight: insets.right,
+			}}
 		>
 			<View className="h-14 flex-row items-center gap-3 px-4">
 				{(left ?? canGoBack)

@@ -2,6 +2,10 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { PosterRowSkeleton } from "./skeletons";
 
+vi.mock("@/lib/use-wide-layout", () => ({
+	useWideLayout: () => false,
+	usePaneWidth: () => 0,
+}));
 vi.mock("react-native", () => ({ View: "View" }));
 
 describe("PosterRowSkeleton", () => {

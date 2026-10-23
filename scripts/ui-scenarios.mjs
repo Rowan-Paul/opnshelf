@@ -184,12 +184,7 @@ export function createScenarioServer(
 				.end();
 			return;
 		}
-		if (
-			[
-				"/users/me/account-deletion",
-				"/users/me/import/trakt/public/current",
-			].includes(url.pathname)
-		) {
+		if (url.pathname === "/users/me/account-deletion") {
 			json(null);
 			return;
 		}

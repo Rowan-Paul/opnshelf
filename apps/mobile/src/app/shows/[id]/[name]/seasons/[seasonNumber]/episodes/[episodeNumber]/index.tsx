@@ -7,7 +7,7 @@ import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRef } from "react";
 import type { ScrollViewInstance } from "react-native";
-import { Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { Pressable, RefreshControl, View } from "react-native";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import {
@@ -15,6 +15,7 @@ import {
 	CreditsSection,
 	CrewSection,
 } from "@/components/detail/CreditsSection";
+import { DetailColumns } from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -27,6 +28,7 @@ import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
+import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -131,7 +133,7 @@ export default function EpisodeDetailScreen() {
 	};
 
 	return (
-		<View className="flex-1 bg-background">
+		<ScreenFrame>
 			<Stack.Screen
 				options={{ headerShown: true, title: data?.name ?? "Episode" }}
 			/>
@@ -140,11 +142,210 @@ export default function EpisodeDetailScreen() {
 			) : isError || !data ? (
 				<ErrorState message="Couldn't load this episode." />
 			) : (
-				<ScrollView
-					ref={scrollRef}
-					className="flex-1"
-					contentContainerClassName="gap-6 pb-12"
-					showsVerticalScrollIndicator={false}
+				<DetailColumns
+					primary={
+						<>
+							<DetailHero
+								title={data.name}
+								backdropUrl={stillUrl(data.still_path, "w780")}
+								posterUrl={posterUrl(
+									currentSeasonPosterPath ?? showData?.poster_path,
+								)}
+								posterHref={`/shows/${id}/${name}/seasons/${seasonNum}`}
+								rating={rating}
+								progress={
+									seasonProgress?.state !== "unavailable"
+										? seasonProgress
+										: undefined
+								}
+								progressLabel="Season progress"
+								isProgressLoading={progressQuery.isLoading}
+							>
+								<View className="gap-3">
+									<View className="flex-row flex-wrap items-center gap-x-1">
+										{showData?.name ? (
+											<>
+												<Link href={`/shows/${id}/${name}`} asChild>
+													<Pressable>
+														<Text className="font-medium text-foreground/80 text-xs">
+															{showData.name}
+														</Text>
+													</Pressable>
+												</Link>
+												<Text className="text-muted-foreground text-xs">·</Text>
+											</>
+										) : null}
+										<Link
+											href={`/shows/${id}/${name}/seasons/${seasonNum}`}
+											asChild
+										>
+											<Pressable>
+												<Text className="font-medium text-foreground/80 text-xs">
+													Season {data.season_number}
+												</Text>
+											</Pressable>
+										</Link>
+										<Text className="text-muted-foreground text-xs">·</Text>
+										<Text className="font-medium text-foreground text-xs">
+											Episode {data.episode_number}
+										</Text>
+									</View>
+
+									<MetadataPills
+										items={[
+											`S${data.season_number}E${data.episode_number}`,
+											yearFromDate(data.air_date),
+											formatRuntime(data.runtime),
+										]}
+									/>
+								</View>
+							</DetailHero>
+
+							<View className="gap-2">
+								<MediaTrackingActions
+									mediaType="episode"
+									showId={id}
+									seasonNumber={seasonNum}
+									episodeNumber={episodeNum}
+									title={data.name}
+								/>
+								<WatchlistFavoritesButtons
+									mediaType="show"
+									mediaId={id}
+									seasonNumber={seasonNum}
+									episodeNumber={episodeNum}
+								/>
+								{/* Secondary actions as one row of compact tiles. */}
+								<View className="flex-row gap-2 px-4">
+									<RateReviewButton
+										mediaType="show"
+										mediaId={id}
+										seasonNumber={seasonNum}
+										episodeNumber={episodeNum}
+									/>
+									<AddToListButton
+										mediaType="show"
+										mediaId={id}
+										seasonNumber={seasonNum}
+										episodeNumber={episodeNum}
+									/>
+									<NoteButton
+										mediaType="show"
+										mediaId={id}
+										seasonNumber={seasonNum}
+										episodeNumber={episodeNum}
+									/>
+									{showData?.name ? (
+										<ShareButton
+											url={webMediaUrl({
+												type: "episode",
+												showId: id,
+												showName: showData.name,
+												seasonNumber: seasonNum,
+												episodeNumber: episodeNum,
+											})}
+											title={`${showData.name} — ${data.name}`}
+										/>
+									) : null}
+								</View>
+							</View>
+
+							<View className="flex-row gap-2 px-4">
+								<Pressable
+									onPress={() => prevEpisode && goToEpisode(prevEpisode)}
+									disabled={!prevEpisode}
+									className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
+									style={{ opacity: prevEpisode ? 1 : 0.4 }}
+								>
+									<ChevronLeft color="#94a3b8" size={18} />
+									<Text className="font-semibold text-foreground">
+										{prevEpisode
+											? `Prev (S${prevEpisode.season}E${prevEpisode.episode})`
+											: "Previous"}
+									</Text>
+								</Pressable>
+								<Pressable
+									onPress={() => nextEpisode && goToEpisode(nextEpisode)}
+									disabled={!nextEpisode}
+									className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
+									style={{ opacity: nextEpisode ? 1 : 0.4 }}
+								>
+									<Text className="font-semibold text-foreground">
+										{nextEpisode
+											? `Next (S${nextEpisode.season}E${nextEpisode.episode})`
+											: "Next"}
+									</Text>
+									<ChevronRight color="#94a3b8" size={18} />
+								</Pressable>
+							</View>
+						</>
+					}
+					secondary={
+						<>
+							<OverviewSection text={data.overview} />
+							<DetailsCard
+								title="Episode Details"
+								items={[
+									{
+										label: "Director",
+										value:
+											data.crew?.find((p) => p.job === "Director")?.name ||
+											"Unknown",
+									},
+									{
+										label: "Air Date",
+										value: formatLongDate(data.air_date) ?? "Unknown",
+									},
+									{ label: "Runtime", value: formatRuntime(data.runtime) },
+									{
+										label: "Rating",
+										value:
+											rating && rating > 0
+												? `${rating.toFixed(1)}/10`
+												: undefined,
+									},
+								]}
+							/>
+
+							<FriendWatchers
+								mediaType="show"
+								mediaId={`${id}:season:${seasonNum}:episode:${episodeNum}`}
+							/>
+							<WatchProviders mediaType="show" mediaId={id} />
+							<CastSection cast={showData?.credits?.cast} />
+							<CreditsSection
+								title="Guest Stars"
+								people={(data.guest_stars ?? []).slice(0, 20).map((g) => ({
+									id: g.id,
+									name: g.name,
+									role: g.character,
+									profile_path: g.profile_path,
+								}))}
+							/>
+							<CrewSection crew={data.crew} />
+							<CommunityReviews
+								mediaType="show"
+								mediaId={id}
+								seasonNumber={seasonNum}
+								episodeNumber={episodeNum}
+								scrollRef={scrollRef}
+								focusReviewId={reviewId}
+								mediaWebUrl={
+									showData?.name
+										? webMediaUrl({
+												type: "episode",
+												showId: id,
+												showName: showData.name,
+												seasonNumber: seasonNum,
+												episodeNumber: episodeNum,
+											})
+										: undefined
+								}
+							/>
+							<SimilarMedia mediaType="show" mediaId={id} />
+						</>
+					}
+					scrollRef={scrollRef}
 					refreshControl={
 						<RefreshControl
 							refreshing={refreshing}
@@ -153,201 +354,8 @@ export default function EpisodeDetailScreen() {
 							colors={["#f3bc00"]}
 						/>
 					}
-				>
-					<DetailHero
-						title={data.name}
-						backdropUrl={stillUrl(data.still_path, "w780")}
-						posterUrl={posterUrl(
-							currentSeasonPosterPath ?? showData?.poster_path,
-						)}
-						posterHref={`/shows/${id}/${name}/seasons/${seasonNum}`}
-						rating={rating}
-						progress={
-							seasonProgress?.state !== "unavailable"
-								? seasonProgress
-								: undefined
-						}
-						progressLabel="Season progress"
-						isProgressLoading={progressQuery.isLoading}
-					>
-						<View className="gap-3">
-							<View className="flex-row flex-wrap items-center gap-x-1">
-								{showData?.name ? (
-									<>
-										<Link href={`/shows/${id}/${name}`} asChild>
-											<Pressable>
-												<Text className="font-medium text-foreground/80 text-xs">
-													{showData.name}
-												</Text>
-											</Pressable>
-										</Link>
-										<Text className="text-muted-foreground text-xs">·</Text>
-									</>
-								) : null}
-								<Link
-									href={`/shows/${id}/${name}/seasons/${seasonNum}`}
-									asChild
-								>
-									<Pressable>
-										<Text className="font-medium text-foreground/80 text-xs">
-											Season {data.season_number}
-										</Text>
-									</Pressable>
-								</Link>
-								<Text className="text-muted-foreground text-xs">·</Text>
-								<Text className="font-medium text-foreground text-xs">
-									Episode {data.episode_number}
-								</Text>
-							</View>
-
-							<MetadataPills
-								items={[
-									`S${data.season_number}E${data.episode_number}`,
-									yearFromDate(data.air_date),
-									formatRuntime(data.runtime),
-								]}
-							/>
-						</View>
-					</DetailHero>
-
-					<View className="gap-2">
-						<MediaTrackingActions
-							mediaType="episode"
-							showId={id}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-							title={data.name}
-						/>
-						<WatchlistFavoritesButtons
-							mediaType="show"
-							mediaId={id}
-							seasonNumber={seasonNum}
-							episodeNumber={episodeNum}
-						/>
-						{/* Secondary actions as one row of compact tiles. */}
-						<View className="flex-row gap-2 px-4">
-							<RateReviewButton
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={seasonNum}
-								episodeNumber={episodeNum}
-							/>
-							<AddToListButton
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={seasonNum}
-								episodeNumber={episodeNum}
-							/>
-							<NoteButton
-								mediaType="show"
-								mediaId={id}
-								seasonNumber={seasonNum}
-								episodeNumber={episodeNum}
-							/>
-							{showData?.name ? (
-								<ShareButton
-									url={webMediaUrl({
-										type: "episode",
-										showId: id,
-										showName: showData.name,
-										seasonNumber: seasonNum,
-										episodeNumber: episodeNum,
-									})}
-									title={`${showData.name} — ${data.name}`}
-								/>
-							) : null}
-						</View>
-					</View>
-
-					<View className="flex-row gap-2 px-4">
-						<Pressable
-							onPress={() => prevEpisode && goToEpisode(prevEpisode)}
-							disabled={!prevEpisode}
-							className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-							style={{ opacity: prevEpisode ? 1 : 0.4 }}
-						>
-							<ChevronLeft color="#94a3b8" size={18} />
-							<Text className="font-semibold text-foreground">
-								{prevEpisode
-									? `Prev (S${prevEpisode.season}E${prevEpisode.episode})`
-									: "Previous"}
-							</Text>
-						</Pressable>
-						<Pressable
-							onPress={() => nextEpisode && goToEpisode(nextEpisode)}
-							disabled={!nextEpisode}
-							className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-							style={{ opacity: nextEpisode ? 1 : 0.4 }}
-						>
-							<Text className="font-semibold text-foreground">
-								{nextEpisode
-									? `Next (S${nextEpisode.season}E${nextEpisode.episode})`
-									: "Next"}
-							</Text>
-							<ChevronRight color="#94a3b8" size={18} />
-						</Pressable>
-					</View>
-
-					<OverviewSection text={data.overview} />
-					<DetailsCard
-						title="Episode Details"
-						items={[
-							{
-								label: "Director",
-								value:
-									data.crew?.find((p) => p.job === "Director")?.name ||
-									"Unknown",
-							},
-							{
-								label: "Air Date",
-								value: formatLongDate(data.air_date) ?? "Unknown",
-							},
-							{ label: "Runtime", value: formatRuntime(data.runtime) },
-							{
-								label: "Rating",
-								value:
-									rating && rating > 0 ? `${rating.toFixed(1)}/10` : undefined,
-							},
-						]}
-					/>
-					<FriendWatchers
-						mediaType="show"
-						mediaId={`${id}:season:${seasonNum}:episode:${episodeNum}`}
-					/>
-					<WatchProviders mediaType="show" mediaId={id} />
-					<CastSection cast={showData?.credits?.cast} />
-					<CreditsSection
-						title="Guest Stars"
-						people={(data.guest_stars ?? []).slice(0, 20).map((g) => ({
-							id: g.id,
-							name: g.name,
-							role: g.character,
-							profile_path: g.profile_path,
-						}))}
-					/>
-					<CrewSection crew={data.crew} />
-					<CommunityReviews
-						mediaType="show"
-						mediaId={id}
-						seasonNumber={seasonNum}
-						episodeNumber={episodeNum}
-						scrollRef={scrollRef}
-						focusReviewId={reviewId}
-						mediaWebUrl={
-							showData?.name
-								? webMediaUrl({
-										type: "episode",
-										showId: id,
-										showName: showData.name,
-										seasonNumber: seasonNum,
-										episodeNumber: episodeNum,
-									})
-								: undefined
-						}
-					/>
-					<SimilarMedia mediaType="show" mediaId={id} />
-				</ScrollView>
+				/>
 			)}
-		</View>
+		</ScreenFrame>
 	);
 }

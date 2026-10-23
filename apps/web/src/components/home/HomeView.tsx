@@ -17,7 +17,6 @@ import { NotificationPrompt } from "#/components/NotificationPrompt";
 import { PromptSlot } from "#/components/PromptSlot";
 import { ReleaseNotePrompt } from "#/components/release-notes/ReleaseNotePrompt";
 import { StatsStrip } from "#/components/StatsStrip";
-import { TraktHomePrompt } from "#/components/trakt/TraktHomePrompt";
 import { useAuth } from "#/lib/auth-context";
 import { formatLocalDateKey } from "#/lib/calendar-grid";
 import { withUserLocale } from "#/lib/date-utils";
@@ -320,7 +319,6 @@ export function HomeView() {
 			{/* Announcements lead the optional Home prompts. */}
 			<PromptSlot>
 				<ReleaseNotePrompt />
-				<TraktHomePrompt />
 				<NotificationPrompt />
 				<MobileAppPrompt />
 				<AtStoreReviewPrompt />
@@ -330,11 +328,9 @@ export function HomeView() {
 				{/* Main Content - Continue Watching */}
 				<div className="space-y-8 lg:col-span-2">
 					{/* Up Next - Shows the next episodes to watch */}
-					<section>
+					<section data-tour="up-next" className="scroll-mt-24">
 						<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-							<h2 className="text-display-3" data-tour="up-next">
-								Up Next
-							</h2>
+							<h2 className="text-display-3">Up Next</h2>
 							<div className="flex shrink-0 items-center gap-4">
 								<Link
 									to="/pick-for-me"
@@ -407,11 +403,9 @@ export function HomeView() {
 					</section>
 
 					{/* Continue Watching */}
-					<section>
+					<section data-tour="shelf" className="scroll-mt-24">
 						<div className="mb-4 flex items-center justify-between">
-							<h2 className="text-display-3" data-tour="shelf">
-								Your Shelf
-							</h2>
+							<h2 className="text-display-3">Your Shelf</h2>
 							{user && (
 								<Link
 									to="/profile/$handle/shelf"

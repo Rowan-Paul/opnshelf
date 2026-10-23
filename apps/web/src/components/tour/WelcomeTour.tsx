@@ -4,7 +4,13 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import { useAuth } from "#/lib/auth-context";
 
 /**
@@ -79,7 +85,6 @@ function isTourBlockedPath(pathname: string): boolean {
 		pathname === "/onboarding" ||
 		pathname === "/login" ||
 		pathname === "/signup" ||
-		pathname === "/trakt-import" ||
 		pathname.startsWith("/auth") ||
 		pathname.startsWith("/embed")
 	);
@@ -178,6 +183,18 @@ export function WelcomeTour() {
 
 	const rect = useAnchorRect(step?.anchor, index);
 
+	const cardRef = useRef<HTMLDivElement>(null);
+	const [cardHeight, setCardHeight] = useState(220);
+	useLayoutEffect(() => {
+		const card = cardRef.current;
+		if (!step || !card) return;
+		const measure = () => setCardHeight(card.getBoundingClientRect().height);
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(card);
+		return () => observer.disconnect();
+	}, [step]);
+
 	if (!step || index === null) return null;
 
 	const isLast = index === TOUR_STEPS.length - 1;
@@ -201,7 +218,11 @@ export function WelcomeTour() {
 				/>
 			)}
 
-			<div className="card absolute p-4 shadow-xl" style={cardStyle(rect)}>
+			<div
+				ref={cardRef}
+				className="card absolute max-h-[calc(100dvh-24px)] max-w-[calc(100vw-24px)] overflow-y-auto p-4 shadow-xl"
+				style={cardStyle(rect, cardHeight)}
+			>
 				<p className="mb-1 text-(--foreground-muted) text-xs">
 					Step {index + 1} of {TOUR_STEPS.length}
 				</p>
@@ -273,7 +294,7 @@ function useAnchorRect(
 			}
 			if (scrolledFor.current !== key) {
 				scrolledFor.current = key;
-				element.scrollIntoView({ block: "center", behavior: "smooth" });
+				scrollTourTarget(element);
 			}
 			setRect(element.getBoundingClientRect());
 		};
@@ -285,7 +306,10 @@ function useAnchorRect(
 }
 
 /** Below the anchor when it fits, above it when it does not, centred with none. */
-function cardStyle(rect: DOMRect | null): React.CSSProperties {
+function cardStyle(
+	rect: DOMRect | null,
+	cardHeight: number,
+): React.CSSProperties {
 	if (!rect) {
 		return {
 			width: CARD_WIDTH,
@@ -296,16 +320,23 @@ function cardStyle(rect: DOMRect | null): React.CSSProperties {
 	}
 	const gap = HOLE_PAD + 12;
 	const below = rect.bottom + gap;
-	const fitsBelow = below + 220 < window.innerHeight;
+	const lastTop = Math.max(12, window.innerHeight - cardHeight - 12);
+	const above = rect.top - gap - cardHeight;
+	const top = below <= lastTop ? below : above >= 12 ? above : lastTop;
 	const left = Math.min(
 		Math.max(12, rect.left + rect.width / 2 - CARD_WIDTH / 2),
 		Math.max(12, window.innerWidth - CARD_WIDTH - 12),
 	);
-	return fitsBelow
-		? { width: CARD_WIDTH, left, top: below }
-		: {
-				width: CARD_WIDTH,
-				left,
-				bottom: Math.max(12, window.innerHeight - rect.top + gap),
-			};
+	return { width: CARD_WIDTH, left, top: Math.max(12, Math.min(lastTop, top)) };
+}
+
+/** Oversized sections must keep their heading visible instead of centring the body. */
+export function scrollTourTarget(element: Element) {
+	element.scrollIntoView({
+		block:
+			element.getBoundingClientRect().height > window.innerHeight
+				? "start"
+				: "center",
+		behavior: "smooth",
+	});
 }

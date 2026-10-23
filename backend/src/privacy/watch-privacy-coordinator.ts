@@ -130,14 +130,14 @@ export class WatchPrivacyCoordinator {
 			const otherJob = await tx.backgroundJob.findFirst({
 				where: {
 					userDid: ownerDid,
-					type: { in: ["trakt_import", "account_deletion"] },
+					type: "account_deletion",
 					status: { in: ACTIVE_JOB_STATUSES },
 				},
 				select: { id: true },
 			});
 			if (otherJob)
 				throw new ConflictException(
-					"Finish the import or account deletion before changing Watch privacy.",
+					"Finish account deletion before changing Watch privacy.",
 				);
 			await tx.user.update({
 				where: { did: ownerDid },

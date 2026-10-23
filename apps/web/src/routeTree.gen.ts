@@ -20,7 +20,6 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SocialRouteImport } from './routes/social'
 import { Route as TosRouteImport } from './routes/tos'
-import { Route as TraktImportRouteImport } from './routes/trakt-import'
 import { Route as TraktSyncRouteImport } from './routes/trakt-sync'
 import { Route as AdminFeaturedRouteImport } from './routes/admin.featured'
 import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
@@ -114,11 +113,6 @@ const SocialRoute = SocialRouteImport.update({
 const TosRoute = TosRouteImport.update({
   id: '/tos',
   path: '/tos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TraktImportRoute = TraktImportRouteImport.update({
-  id: '/trakt-import',
-  path: '/trakt-import',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TraktSyncRoute = TraktSyncRouteImport.update({
@@ -341,7 +335,6 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
-  '/trakt-import': typeof TraktImportRoute
   '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
@@ -392,7 +385,6 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/tos': typeof TosRoute
-  '/trakt-import': typeof TraktImportRoute
   '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
@@ -442,7 +434,6 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/social': typeof SocialRouteWithChildren
   '/tos': typeof TosRoute
-  '/trakt-import': typeof TraktImportRoute
   '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
@@ -497,7 +488,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/social'
     | '/tos'
-    | '/trakt-import'
     | '/trakt-sync'
     | '/admin/featured'
     | '/api/release-notes'
@@ -548,7 +538,6 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/tos'
-    | '/trakt-import'
     | '/trakt-sync'
     | '/admin/featured'
     | '/api/release-notes'
@@ -597,7 +586,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/social'
     | '/tos'
-    | '/trakt-import'
     | '/trakt-sync'
     | '/admin/featured'
     | '/api/release-notes'
@@ -651,7 +639,6 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SocialRoute: typeof SocialRouteWithChildren
   TosRoute: typeof TosRoute
-  TraktImportRoute: typeof TraktImportRoute
   TraktSyncRoute: typeof TraktSyncRoute
   AdminFeaturedRoute: typeof AdminFeaturedRoute
   ApiReleaseNotesRoute: typeof ApiReleaseNotesRoute
@@ -748,13 +735,6 @@ declare module '@tanstack/react-router' {
       path: '/tos'
       fullPath: '/tos'
       preLoaderRoute: typeof TosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trakt-import': {
-      id: '/trakt-import'
-      path: '/trakt-import'
-      fullPath: '/trakt-import'
-      preLoaderRoute: typeof TraktImportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trakt-sync': {
@@ -1161,7 +1141,6 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SocialRoute: SocialRouteWithChildren,
   TosRoute: TosRoute,
-  TraktImportRoute: TraktImportRoute,
   TraktSyncRoute: TraktSyncRoute,
   AdminFeaturedRoute: AdminFeaturedRoute,
   ApiReleaseNotesRoute: ApiReleaseNotesRoute,

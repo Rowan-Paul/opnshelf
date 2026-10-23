@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View } from "react-native";
+import { DetailColumns } from "@/components/detail/DetailColumns";
 import { UpNextRowSkeleton } from "@/components/up-next/UpNextSkeleton";
 
 /** Shape-matched loading placeholders (preferred over spinners for content
@@ -129,26 +130,37 @@ export function ReviewsSkeleton({ rows = 2 }: { rows?: number }) {
  * pills + overview lines. */
 export function DetailSkeleton() {
 	return (
-		<View className="gap-6 px-4 pt-4">
-			<View className="flex-row gap-4">
-				<View className="h-40 w-28 rounded-lg bg-background-subtle" />
-				<View className="flex-1 justify-center gap-2">
-					<View className="h-5 w-4/5 rounded bg-background-subtle" />
-					<View className="h-3 w-1/2 rounded bg-background-subtle" />
-					<View className="h-3 w-2/5 rounded bg-background-subtle" />
+		<DetailColumns
+			primary={
+				<View className="gap-6 px-4 pt-6">
+					<View className="flex-row gap-4">
+						<View className="h-40 w-28 rounded-lg bg-background-subtle" />
+						<View className="flex-1 justify-center gap-2">
+							<View className="h-5 w-4/5 rounded bg-background-subtle" />
+							<View className="h-3 w-1/2 rounded bg-background-subtle" />
+							<View className="h-3 w-2/5 rounded bg-background-subtle" />
+						</View>
+					</View>
+					<View className="flex-row gap-2">
+						<View className="h-10 flex-1 rounded-lg bg-background-subtle" />
+						<View className="h-10 w-10 rounded-lg bg-background-subtle" />
+						<View className="h-10 w-10 rounded-lg bg-background-subtle" />
+					</View>
 				</View>
-			</View>
-			<View className="flex-row gap-2">
-				<View className="h-10 flex-1 rounded-lg bg-background-subtle" />
-				<View className="h-10 w-10 rounded-lg bg-background-subtle" />
-				<View className="h-10 w-10 rounded-lg bg-background-subtle" />
-			</View>
-			<View className="gap-2">
-				<View className="h-3 w-full rounded bg-background-subtle" />
-				<View className="h-3 w-full rounded bg-background-subtle" />
-				<View className="h-3 w-2/3 rounded bg-background-subtle" />
-			</View>
-		</View>
+			}
+			secondary={
+				<View className="gap-6 px-4">
+					{IDX(3).map((i) => (
+						<View key={i} className="gap-2">
+							<View className="mb-2 h-5 w-1/3 rounded bg-background-subtle" />
+							<View className="h-3 w-full rounded bg-background-subtle" />
+							<View className="h-3 w-full rounded bg-background-subtle" />
+							<View className="h-3 w-2/3 rounded bg-background-subtle" />
+						</View>
+					))}
+				</View>
+			}
+		/>
 	);
 }
 

@@ -17,7 +17,7 @@ import { isListRecord, type SyncRecord } from "./reconcile";
 import {
 	rankMovieMatchCandidates,
 	rankShowMatchCandidates,
-} from "../users/import/trakt-import-ledger";
+} from "./match-candidates";
 
 export function collection(record: SyncRecord) {
 	return record.kind === "rating"
@@ -80,16 +80,41 @@ export class LocalSyncRecords {
 				: this.prisma.$transaction([
 						this.prisma.trackedMovie.findMany({
 							where: { userDid, status: "watched" },
-							include: { movie: true },
+							select: {
+								rkey: true,
+								cid: true,
+								movieId: true,
+								watchedDate: true,
+								movie: { select: { title: true } },
+							},
 						}),
 						this.prisma.trackedEpisode.findMany({
 							where: { userDid, status: "watched" },
-							include: { show: true },
+							select: {
+								rkey: true,
+								cid: true,
+								showId: true,
+								seasonNumber: true,
+								episodeNumber: true,
+								watchedDate: true,
+								show: { select: { title: true } },
+							},
 						}),
 					]),
 			kinds && !kinds.has("rating")
 				? []
-				: this.prisma.rating.findMany({ where: { userDid } }),
+				: this.prisma.rating.findMany({
+						where: { userDid },
+						select: {
+							rkey: true,
+							cid: true,
+							mediaType: true,
+							mediaId: true,
+							seasonNumber: true,
+							episodeNumber: true,
+							rating: true,
+						},
+					}),
 		]);
 		const movieIds = [
 			...new Set(

@@ -410,8 +410,6 @@ export const ModelName = {
   AuthSession: 'AuthSession',
   AuthState: 'AuthState',
   BackgroundJob: 'BackgroundJob',
-  TraktImportItem: 'TraktImportItem',
-  TraktImportMatch: 'TraktImportMatch',
   Movie: 'Movie',
   Show: 'Show',
   Season: 'Season',
@@ -447,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "traktSyncConnection" | "traktSyncEntry" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "traktImportItem" | "traktImportMatch" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration" | "privacyScope" | "privacyCopy"
+    modelProps: "user" | "traktSyncConnection" | "traktSyncEntry" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration" | "privacyScope" | "privacyCopy"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1410,154 +1408,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.BackgroundJobCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.BackgroundJobCountAggregateOutputType> | number
-        }
-      }
-    }
-    TraktImportItem: {
-      payload: Prisma.$TraktImportItemPayload<ExtArgs>
-      fields: Prisma.TraktImportItemFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.TraktImportItemFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.TraktImportItemFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>
-        }
-        findFirst: {
-          args: Prisma.TraktImportItemFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.TraktImportItemFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>
-        }
-        findMany: {
-          args: Prisma.TraktImportItemFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>[]
-        }
-        create: {
-          args: Prisma.TraktImportItemCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>
-        }
-        createMany: {
-          args: Prisma.TraktImportItemCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.TraktImportItemCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>[]
-        }
-        delete: {
-          args: Prisma.TraktImportItemDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>
-        }
-        update: {
-          args: Prisma.TraktImportItemUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>
-        }
-        deleteMany: {
-          args: Prisma.TraktImportItemDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.TraktImportItemUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.TraktImportItemUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>[]
-        }
-        upsert: {
-          args: Prisma.TraktImportItemUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportItemPayload>
-        }
-        aggregate: {
-          args: Prisma.TraktImportItemAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTraktImportItem>
-        }
-        groupBy: {
-          args: Prisma.TraktImportItemGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktImportItemGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.TraktImportItemCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktImportItemCountAggregateOutputType> | number
-        }
-      }
-    }
-    TraktImportMatch: {
-      payload: Prisma.$TraktImportMatchPayload<ExtArgs>
-      fields: Prisma.TraktImportMatchFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.TraktImportMatchFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.TraktImportMatchFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>
-        }
-        findFirst: {
-          args: Prisma.TraktImportMatchFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.TraktImportMatchFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>
-        }
-        findMany: {
-          args: Prisma.TraktImportMatchFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>[]
-        }
-        create: {
-          args: Prisma.TraktImportMatchCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>
-        }
-        createMany: {
-          args: Prisma.TraktImportMatchCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.TraktImportMatchCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>[]
-        }
-        delete: {
-          args: Prisma.TraktImportMatchDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>
-        }
-        update: {
-          args: Prisma.TraktImportMatchUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>
-        }
-        deleteMany: {
-          args: Prisma.TraktImportMatchDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.TraktImportMatchUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.TraktImportMatchUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>[]
-        }
-        upsert: {
-          args: Prisma.TraktImportMatchUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktImportMatchPayload>
-        }
-        aggregate: {
-          args: Prisma.TraktImportMatchAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTraktImportMatch>
-        }
-        groupBy: {
-          args: Prisma.TraktImportMatchGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktImportMatchGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.TraktImportMatchCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktImportMatchCountAggregateOutputType> | number
         }
       }
     }
@@ -3341,44 +3191,6 @@ export const BackgroundJobScalarFieldEnum = {
 export type BackgroundJobScalarFieldEnum = (typeof BackgroundJobScalarFieldEnum)[keyof typeof BackgroundJobScalarFieldEnum]
 
 
-export const TraktImportItemScalarFieldEnum = {
-  id: 'id',
-  jobId: 'jobId',
-  sourceIndex: 'sourceIndex',
-  outcome: 'outcome',
-  mediaType: 'mediaType',
-  watchedAt: 'watchedAt',
-  title: 'title',
-  year: 'year',
-  episodeTitle: 'episodeTitle',
-  seasonNumber: 'seasonNumber',
-  episodeNumber: 'episodeNumber',
-  traktMediaKey: 'traktMediaKey',
-  traktId: 'traktId',
-  traktSlug: 'traktSlug',
-  tmdbId: 'tmdbId',
-  reason: 'reason',
-  message: 'message',
-  createdWatchRkey: 'createdWatchRkey',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type TraktImportItemScalarFieldEnum = (typeof TraktImportItemScalarFieldEnum)[keyof typeof TraktImportItemScalarFieldEnum]
-
-
-export const TraktImportMatchScalarFieldEnum = {
-  id: 'id',
-  jobId: 'jobId',
-  matchKey: 'matchKey',
-  mediaType: 'mediaType',
-  tmdbId: 'tmdbId',
-  confirmedAt: 'confirmedAt'
-} as const
-
-export type TraktImportMatchScalarFieldEnum = (typeof TraktImportMatchScalarFieldEnum)[keyof typeof TraktImportMatchScalarFieldEnum]
-
-
 export const MovieScalarFieldEnum = {
   movieId: 'movieId',
   title: 'title',
@@ -4054,8 +3866,6 @@ export type GlobalOmitConfig = {
   authSession?: Prisma.AuthSessionOmit
   authState?: Prisma.AuthStateOmit
   backgroundJob?: Prisma.BackgroundJobOmit
-  traktImportItem?: Prisma.TraktImportItemOmit
-  traktImportMatch?: Prisma.TraktImportMatchOmit
   movie?: Prisma.MovieOmit
   show?: Prisma.ShowOmit
   season?: Prisma.SeasonOmit

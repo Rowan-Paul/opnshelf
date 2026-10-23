@@ -16,7 +16,6 @@ import {
 	type SyncRecord,
 } from "./reconcile";
 import { type TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
-import { TraktImportJobStore } from "../users/import/trakt-import-job.store";
 import { TraktSyncService } from "./trakt-sync.service";
 
 const url = process.env.TRAKT_SYNC_TEST_DATABASE_URL;
@@ -111,7 +110,13 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	};
 	const localApi = {
 		validateMatch: vi.fn(async () => undefined),
-		snapshot: vi.fn(async () => structuredClone(localRecords)),
+		snapshot: vi.fn(
+			async (
+				_did?: string,
+				_options?: unknown,
+				_kinds?: ReadonlySet<SyncRecord["kind"]>,
+			) => structuredClone(localRecords),
+		),
 		confirmDeleted: vi.fn(async () => undefined),
 		write: vi.fn(
 			async (
@@ -818,7 +823,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(localRecords.map((r) => r.key)).toEqual(["list:unrelated"]);
 	});
-	it("holds Watch sync and recovery when the Shelf is private", async () => {
+	it("holds Watch sync when the Shelf is private", async () => {
 		remoteRecords = [watch("remote-private")];
 		await db.user.update({
 			where: { did: userDid },
@@ -827,12 +832,8 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await configure();
 		expect(remoteApi.snapshot).not.toHaveBeenCalled();
 		expect(localApi.write).not.toHaveBeenCalled();
-		const recovery = vi.fn(async () => undefined);
-		await expect(service.recoverImport(userDid, recovery)).rejects.toThrow(
-			"public Shelf",
-		);
-		expect(recovery).not.toHaveBeenCalled();
 	});
+
 	it("holds Watch sync while a privacy migration is pending", async () => {
 		const job = await db.backgroundJob.create({
 			data: { userDid, type: "watch_privacy" },
@@ -1319,6 +1320,115 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		);
 	});
 
+	it("exports ten Watches per full read and retains the confirmed cache between transfers", async () => {
+		localRecords = Array.from({ length: 25 }, (_, i) =>
+			watch(`local:${i}`, new Date(Date.UTC(2020, 0, i + 1)).toISOString()),
+		);
+		await configure("all", "outbound");
+		remoteApi.snapshot.mockClear();
+		await tick();
+		expect(remoteApi.snapshot).toHaveBeenCalledTimes(1);
+		expect(remoteRecords).toHaveLength(10);
+		expect(await service.status(userDid)).toMatchObject({
+			remaining: 15,
+			progress: 40,
+		});
+		const connection = await db.traktSyncConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		expect(connection.remoteSnapshot).toHaveLength(10);
+		expect(
+			localApi.snapshot.mock.calls
+				.slice(2)
+				.every((args) => args[2]?.has("watch")),
+		).toBe(true);
+		await tick();
+		expect(remoteRecords).toHaveLength(20);
+		await tick();
+		expect(remoteRecords).toHaveLength(25);
+		expect(await service.status(userDid)).toMatchObject({ remaining: 0 });
+		expect(
+			await db.traktSyncEntry.count({
+				where: { connectionId: connection.id, linked: true },
+			}),
+		).toBe(25);
+	});
+
+	it("preserves same-minute duplicates when batching outbound Watches", async () => {
+		localRecords = [watch("local:first"), watch("local:duplicate")];
+		await configure("all", "outbound");
+		await tick();
+		expect(remoteRecords).toHaveLength(1);
+		expect(localRecords).toHaveLength(2);
+		expect(
+			await db.traktSyncEntry.count({
+				where: { issue: { contains: "cannot represent another Watch" } },
+			}),
+		).toBe(1);
+	});
+
+	it("replans without overwriting a destination changed between outbound transfers", async () => {
+		localRecords = [
+			watch("local:first"),
+			{ ...watch("local:second"), mediaId: "13" },
+		];
+		remoteRecords = localRecords.map((r, i) => ({ ...r, key: `watch:${i}` }));
+		await configure("all", "both");
+		localRecords = localRecords.map((r) => ({
+			...r,
+			value: "2022-01-01T00:00:00Z",
+		}));
+		const write = remoteApi.write.getMockImplementation();
+		if (!write) throw new Error("Missing fixture write");
+		remoteApi.write.mockImplementationOnce(async (...args) => {
+			await write(...args);
+			const second = remoteRecords.find((r) => r.mediaId === "13");
+			if (second) second.value = "2023-01-01T00:00:00Z";
+		});
+		await tick();
+		expect(remoteRecords.find((r) => r.mediaId === "13")?.value).toBe(
+			"2023-01-01T00:00:00Z",
+		);
+		const c = await db.traktSyncConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		expect(c.lastError).toContain("changed during transfer");
+		expect(c.remoteReadAt).toBeNull();
+		await tick();
+		expect(
+			await db.traktSyncEntry.count({
+				where: { issue: { contains: "Both services changed" } },
+			}),
+		).toBe(1);
+	});
+
+	it("paginates persisted conflicts without loading the entire issue queue", async () => {
+		localRecords = Array.from({ length: 25 }, (_, i) => ({
+			...watch(`local:${i}`),
+			kind: "rating" as const,
+			mediaId: String(i + 1),
+			value: 8,
+		}));
+		remoteRecords = localRecords.map((r, i) => ({
+			...r,
+			key: `rating:${i}`,
+			value: 9,
+		}));
+		await configure("all", "both");
+		await tick();
+		const page = await service.issues(userDid, { page: 2, pageSize: 10 });
+		expect(page).toMatchObject({
+			page: 2,
+			total: 25,
+			totalPages: 3,
+			hasNextPage: true,
+		});
+		expect(page.items).toHaveLength(10);
+		const last = await service.issues(userDid, { page: 99, pageSize: 10 });
+		expect(last).toMatchObject({ page: 3, total: 25, hasNextPage: false });
+		expect(last.items).toHaveLength(5);
+	});
+
 	it("imports a Watch once and follows a linked remote deletion without echo writes", async () => {
 		remoteRecords = [watch("watch:1")];
 		await configure();
@@ -1543,7 +1653,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(remoteRecords).toHaveLength(1);
 		expect(remoteRecords[0].value).toBe("2021-01-01T00:00:00.000Z");
 	});
-	it("requires explicit publication consent and an explicit unfinished Import handoff", async () => {
+	it("requires explicit publication consent", async () => {
 		await expect(
 			service.configure(userDid, {
 				direction: "inbound",
@@ -1553,22 +1663,6 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				publicationConsent: false,
 			}),
 		).rejects.toThrow("public");
-		const job = await db.backgroundJob.create({
-			data: { type: "trakt_import", userDid, status: "paused" },
-		});
-		await expect(configure()).rejects.toThrow("Finish your Import");
-		await service.configure(userDid, {
-			direction: "both",
-			historyScope: "all",
-			watches: true,
-			ratings: true,
-			publicationConsent: true,
-			handoffImport: true,
-		});
-		expect(
-			(await db.backgroundJob.findUniqueOrThrow({ where: { id: job.id } }))
-				.status,
-		).toBe("continued_in_sync");
 	});
 	it.each([408, 499])(
 		"keeps creation uncertain after HTTP %s interrupts the request",
@@ -2042,23 +2136,6 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				data: { userDid, traktUserId: "another", username: "another" },
 			}),
 		).resolves.toBeDefined();
-	});
-	it("keeps a handed-off Import permanently retired even after a stale worker or Resume", async () => {
-		const job = await db.backgroundJob.create({
-			data: { userDid, type: "trakt_import", status: "continued_in_sync" },
-		});
-		const store = new TraktImportJobStore(db as unknown as PrismaService);
-		await store.persistStatusControl(job.id, "resume");
-		await store.persistWorkerState(job.id, undefined, {
-			status: "completed",
-			nextRunAt: new Date(),
-			completedAt: new Date(),
-			lastError: null,
-		});
-		expect(
-			(await db.backgroundJob.findUniqueOrThrow({ where: { id: job.id } }))
-				.status,
-		).toBe("continued_in_sync");
 	});
 	it("adopts a legacy recovery that reached the PDS before its link was saved", async () => {
 		remoteRecords = [watch("watch:1")];

@@ -3,7 +3,6 @@ import {
 	type SyncResolveDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
-	TRAKT_HANDOFF_COPY,
 	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
@@ -208,8 +207,7 @@ export function TraktSyncManager({
 				</Text>
 				{!data.configured ? (
 					<Text className={copy}>
-						Trakt Sync is not configured on this server yet. Import once is
-						still available.
+						Trakt Sync is not configured on this server yet.
 					</Text>
 				) : !connected ? (
 					<Action
@@ -300,44 +298,49 @@ export function TraktSyncManager({
 				{disconnect && (
 					<Modal
 						visible
-						presentationStyle="pageSheet"
+						transparent
 						animationType="slide"
 						onRequestClose={() => setDisconnect(false)}
 					>
-						<ScrollView
-							contentInsetAdjustmentBehavior="automatic"
-							className="bg-background"
-							contentContainerClassName="gap-4 px-5"
-							contentContainerStyle={{
-								paddingTop:
-									Math.max(insets.top, StatusBar.currentHeight ?? 0) + 24,
-								paddingBottom: insets.bottom + 32,
-							}}
-						>
-							<Text
-								accessibilityRole="header"
-								className="font-semibold text-foreground text-xl"
-							>
-								Disconnect Trakt?
-							</Text>
-							<Text className={copy}>
-								Disconnecting stops sync and revokes access. Transferred records
-								remain on both services. Reconnecting this account catches up
-								previously linked records.
-							</Text>
-							<Action label="Cancel" onPress={() => setDisconnect(false)} />
-							<Action
-								primary
-								label="Confirm disconnect"
+						<View className="flex-1 justify-end bg-black/40">
+							<Pressable
+								accessibilityLabel="Close confirmation"
+								className="flex-1"
+								onPress={() => setDisconnect(false)}
 								disabled={action.isPending}
-								onPress={() =>
-									action.mutate(
-										{ body: { action: "disconnect" } },
-										{ onSuccess: () => setDisconnect(false) },
-									)
-								}
 							/>
-						</ScrollView>
+							<View
+								accessibilityViewIsModal
+								className="max-h-[85%] rounded-t-2xl border border-border bg-card"
+								style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+							>
+								<ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+									<Text
+										accessibilityRole="header"
+										className="font-semibold text-foreground text-xl"
+									>
+										Disconnect Trakt?
+									</Text>
+									<Text className={copy}>
+										Disconnecting stops sync and revokes access. Transferred
+										records remain on both services. Reconnecting this account
+										catches up previously linked records.
+									</Text>
+									<Action label="Cancel" onPress={() => setDisconnect(false)} />
+									<Action
+										primary
+										label="Confirm disconnect"
+										disabled={action.isPending}
+										onPress={() =>
+											action.mutate(
+												{ body: { action: "disconnect" } },
+												{ onSuccess: () => setDisconnect(false) },
+											)
+										}
+									/>
+								</ScrollView>
+							</View>
+						</View>
 					</Modal>
 				)}
 				{traktSyncStateMessage(data) && (
@@ -407,16 +410,6 @@ export function TraktSyncManager({
 					</ScrollView>
 				</Modal>
 			)}
-			{embedded && (data.status === "disconnected" || data.importStatus) && (
-				<Link
-					href="/trakt-import"
-					className="text-muted-foreground text-sm underline"
-				>
-					{data.importStatus
-						? "View previous Import results"
-						: "Import public history once instead"}
-				</Link>
-			)}
 			{data.username &&
 				(connected || data.needsAttention > 0 || data.ignored > 0) && (
 					<View className={card}>
@@ -480,9 +473,6 @@ export function SyncSettings({
 			onSaved();
 		},
 	});
-	const unfinished =
-		status.importStatus &&
-		!["completed", "continued_in_sync"].includes(status.importStatus);
 	const requiresHistoryConsent =
 		settings.direction !== "outbound" && (settings.watches || settings.ratings);
 	const requiresListConsent = Boolean(
@@ -503,7 +493,7 @@ export function SyncSettings({
 			(!requiresListConsent || status.listPublicationConsent) &&
 			(!requiresContentConsent || status.contentPublicationConsent),
 	);
-	const canSave = hasConsent && (!unfinished || settings.handoffImport);
+	const canSave = hasConsent;
 	const dismiss = () => {
 		if (!save.isPending) setReviewing(false);
 	};
@@ -799,24 +789,7 @@ export function SyncSettings({
 										}
 									/>
 								))}
-							{unfinished && (
-								<View className="gap-3 rounded-xl border border-border p-3">
-									<Toggle
-										label={TRAKT_HANDOFF_COPY}
-										value={settings.handoffImport ?? false}
-										onChange={(handoffImport) =>
-											setSettings({ ...settings, handoffImport })
-										}
-									/>
-									<Link
-										href="/trakt-import"
-										onPress={() => setReviewing(false)}
-										className="text-primary text-sm underline"
-									>
-										Finish Import first
-									</Link>
-								</View>
-							)}
+
 							{save.error && (
 								<Text
 									selectable
@@ -1164,74 +1137,83 @@ function SyncIssue({
 			{choice && (
 				<Modal
 					visible
-					presentationStyle="pageSheet"
+					transparent
 					animationType="slide"
 					onRequestClose={() => setChoice(null)}
 				>
-					<ScrollView
-						contentInsetAdjustmentBehavior="automatic"
-						className="bg-background"
-						contentContainerClassName="gap-4 px-5"
-						contentContainerStyle={{
-							paddingTop:
-								Math.max(insets.top, StatusBar.currentHeight ?? 0) + 24,
-							paddingBottom: insets.bottom + 32,
-						}}
-					>
-						<Text
-							accessibilityRole="header"
-							className="font-semibold text-foreground text-xl"
-						>
-							Confirm sync choice
-						</Text>
-						<Text className={copy}>
-							{choice.action === "link"
-								? item.kind === "watch"
-									? "Link the existing Opnshelf and Trakt Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings."
-									: "Link these records?"
-								: choice.action === "match"
-									? item.kind === "watch"
-										? "Use this title for this Trakt media identity and its Watch dates?"
-										: "Use this title for this Trakt item?"
-									: traktResolutionLabel(
-											choice.action,
-											Boolean(item[choice.action as "trakt" | "opnshelf"]),
-										)}
-						</Text>
-						{choice.confirmedTraktMissing !== undefined && (
-							<View className="gap-3">
-								<Text className={copy}>{TRAKT_UNCONFIRMED_CHOICE_COPY}</Text>
-								<Toggle
-									label={TRAKT_MISSING_CONFIRMATION}
-									value={choice.confirmedTraktMissing}
-									onChange={(confirmedTraktMissing) =>
-										setChoice({ ...choice, confirmedTraktMissing })
-									}
-								/>
-							</View>
-						)}
-						{item.kind === "rating" && (
-							<Toggle
-								label="Apply to all Rating conflicts"
-								value={choice.allRatings ?? false}
-								onChange={(allRatings) => setChoice({ ...choice, allRatings })}
-							/>
-						)}
-						{mutation.error && (
-							<Text accessibilityRole="alert" className={copy}>
-								{traktError(mutation.error)}
-							</Text>
-						)}
-						<Action label="Cancel" onPress={() => setChoice(null)} />
-						<Action
-							primary
-							label={mutation.isPending ? "Saving…" : "Confirm choice"}
-							disabled={
-								mutation.isPending || choice.confirmedTraktMissing === false
-							}
-							onPress={() => resolve(choice)}
+					<View className="flex-1 justify-end bg-black/40">
+						<Pressable
+							accessibilityLabel="Close confirmation"
+							className="flex-1"
+							onPress={() => setChoice(null)}
+							disabled={mutation.isPending}
 						/>
-					</ScrollView>
+						<View
+							accessibilityViewIsModal
+							className="max-h-[85%] rounded-t-2xl border border-border bg-card"
+							style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+						>
+							<ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+								<Text
+									accessibilityRole="header"
+									className="font-semibold text-foreground text-xl"
+								>
+									Confirm sync choice
+								</Text>
+								<Text className={copy}>
+									{choice.action === "link"
+										? item.kind === "watch"
+											? "Link the existing Opnshelf and Trakt Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings."
+											: "Link these records?"
+										: choice.action === "match"
+											? item.kind === "watch"
+												? "Use this title for this Trakt media identity and its Watch dates?"
+												: "Use this title for this Trakt item?"
+											: traktResolutionLabel(
+													choice.action,
+													Boolean(item[choice.action as "trakt" | "opnshelf"]),
+												)}
+								</Text>
+								{choice.confirmedTraktMissing !== undefined && (
+									<View className="gap-3">
+										<Text className={copy}>
+											{TRAKT_UNCONFIRMED_CHOICE_COPY}
+										</Text>
+										<Toggle
+											label={TRAKT_MISSING_CONFIRMATION}
+											value={choice.confirmedTraktMissing}
+											onChange={(confirmedTraktMissing) =>
+												setChoice({ ...choice, confirmedTraktMissing })
+											}
+										/>
+									</View>
+								)}
+								{item.kind === "rating" && (
+									<Toggle
+										label="Apply to all Rating conflicts"
+										value={choice.allRatings ?? false}
+										onChange={(allRatings) =>
+											setChoice({ ...choice, allRatings })
+										}
+									/>
+								)}
+								{mutation.error && (
+									<Text accessibilityRole="alert" className={copy}>
+										{traktError(mutation.error)}
+									</Text>
+								)}
+								<Action label="Cancel" onPress={() => setChoice(null)} />
+								<Action
+									primary
+									label={mutation.isPending ? "Saving…" : "Confirm choice"}
+									disabled={
+										mutation.isPending || choice.confirmedTraktMissing === false
+									}
+									onPress={() => resolve(choice)}
+								/>
+							</ScrollView>
+						</View>
+					</View>
 				</Modal>
 			)}
 			{mutation.error && (
