@@ -28,6 +28,7 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { useAuth } from "#/lib/auth-context";
 import { useWatchActions } from "#/lib/hooks/useWatchActions";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 import { groupShelfItemsByDate } from "#/lib/shelf-sections";
 
 const searchSchema = z.object({
@@ -49,11 +50,23 @@ export const Route = createFileRoute("/profile/$handle/shelf")({
 			return { profile: null };
 		}
 	},
-	head: ({ loaderData }) => {
+	head: ({ loaderData, match }) => {
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Shelf | Opnshelf` }],
+			meta: getPageMeta(
+				{
+					title: `${name}'s Shelf | Opnshelf`,
+					description: `View ${name}'s shelf on Opnshelf.`,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "shelf",
+							})
+						: undefined,
+				},
+				match.pathname,
+			),
 		};
 	},
 	component: ProfileShelfPage,

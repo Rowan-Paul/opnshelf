@@ -18,6 +18,7 @@ import { StatsStrip } from "#/components/StatsStrip";
 import { useAuth } from "#/lib/auth-context";
 import { useUserReviews } from "#/lib/hooks/useReviews";
 import { ShowProgressScope } from "#/lib/hooks/useShowProgress";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 // Horizontally-scrolling preview row (Recent Movies/Episodes, list previews).
 const SCROLL_ROW =
@@ -38,11 +39,23 @@ export const Route = createFileRoute("/profile/$handle/")({
 			return { profile: null };
 		}
 	},
-	head: ({ loaderData }) => {
+	head: ({ loaderData, match }) => {
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Profile | Opnshelf` }],
+			meta: getPageMeta(
+				{
+					title: `${name}'s Profile | Opnshelf`,
+					description: `View ${name}'s profile on Opnshelf.`,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
+				},
+				match.pathname,
+			),
 		};
 	},
 	component: ProfileOverviewPage,
