@@ -1,11 +1,5 @@
 import type { PersonFilmographyItemDto } from "@opnshelf/api";
-import { Link } from "expo-router";
-import { Check, Plus } from "lucide-react-native";
-import { Pressable, View } from "react-native";
-import { PosterImage } from "@/components/media/PosterImage";
-import { Text } from "@/components/ui/text";
-import { movieHref, showHref } from "@/lib/media-href";
-import { posterUrl } from "@/lib/tmdb";
+import { MediaCard } from "@/components/media/MediaCard";
 
 /** Best human-readable role label for a (possibly merged) filmography credit. */
 export function getRoleText(
@@ -28,81 +22,20 @@ export function getYear(item: PersonFilmographyItemDto): string | undefined {
 	return Number.isNaN(year) ? undefined : String(year);
 }
 
-/**
- * Poster card for a person's filmography. Links to the matching movie/show
- * detail and, for movies, overlays a quick watched toggle (powered by the
- * page-level `useMovieWatchToggle`). Shows have no single watched state, so
- * they just navigate.
- */
-export function FilmographyCard({
-	item,
-	watched,
-	canToggle,
-	onToggleWatched,
-}: {
-	item: PersonFilmographyItemDto;
-	watched?: boolean;
-	canToggle?: boolean;
-	onToggleWatched?: (item: PersonFilmographyItemDto) => void;
-}) {
-	const isMovie = item.media_type === "movie";
-	const href = isMovie
-		? movieHref(item.id, item.title)
-		: showHref(item.id, item.title);
-	const role = getRoleText(item);
+/** Filmography metadata on the shared movie/show card and shelf actions. */
+export function FilmographyCard({ item }: { item: PersonFilmographyItemDto }) {
 	const year = getYear(item);
-	const showToggle = isMovie && canToggle;
-
+	const role = getRoleText(item);
 	return (
-		<View className="flex-1">
-			<Link href={href} asChild>
-				<Pressable>
-					<View className="overflow-hidden rounded-lg border border-border bg-card">
-						<PosterImage
-							url={posterUrl(item.poster_path)}
-							className="aspect-2/3 w-full"
-						/>
-					</View>
-					<Text
-						className="mt-2 font-medium text-foreground text-sm"
-						numberOfLines={2}
-						style={{ lineHeight: 20, minHeight: 40 }}
-					>
-						{item.title}
-					</Text>
-					<View className="mt-0.5 flex-row items-center gap-1.5">
-						{year ? (
-							<Text className="text-muted-foreground text-xs">{year}</Text>
-						) : null}
-						{role ? (
-							<Text
-								className="flex-1 text-muted-foreground text-xs"
-								numberOfLines={1}
-							>
-								{role}
-							</Text>
-						) : null}
-					</View>
-				</Pressable>
-			</Link>
-
-			{showToggle ? (
-				<Pressable
-					hitSlop={8}
-					onPress={() => onToggleWatched?.(item)}
-					className={
-						watched
-							? "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-primary"
-							: "absolute top-1.5 right-1.5 size-7 items-center justify-center rounded-full bg-black/55"
-					}
-				>
-					{watched ? (
-						<Check color="#3f2e00" size={16} strokeWidth={3} />
-					) : (
-						<Plus color="#ffffff" size={16} strokeWidth={2.5} />
-					)}
-				</Pressable>
-			) : null}
-		</View>
+		<MediaCard
+			actions
+			item={{
+				id: item.id,
+				type: item.media_type === "movie" ? "movie" : "show",
+				title: item.title,
+				posterPath: item.poster_path,
+				label: [year, role].filter(Boolean).join(" · "),
+			}}
+		/>
 	);
 }
