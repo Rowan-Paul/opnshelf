@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { invalidateWatchActivityQueries } from "../../../../packages/api/src/watch-activity-queries";
 import {
 	ShowProgressScope,
 	useShowProgress,
@@ -100,6 +101,43 @@ describe("show progress scopes", () => {
 			query: { showIds: ["one", "two"] },
 			throwOnError: true,
 		});
+		client.clear();
+	});
+
+	it("refreshes the displayed episode count after a Shelf Watch changes", async () => {
+		let episodesWatched = 1;
+		api.getProgress.mockImplementation(async () => ({
+			data: {
+				items: [
+					{ showId: "one", episodesWatched, episodesTotal: 3, seasons: [] },
+				],
+			},
+		}));
+		const client = new QueryClient({
+			defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+		});
+		let renderer: ReactTestRenderer | undefined;
+		await act(async () => {
+			renderer = create(
+				<QueryClientProvider client={client}>
+					<ShowCard showId="one" />
+				</QueryClientProvider>,
+			);
+		});
+		if (!renderer) throw new Error("The progress card did not render");
+		const root = renderer.root;
+		const count = () =>
+			root.findByType("progress-card" as never).children.join("");
+		await act(async () => {
+			await vi.waitFor(() => expect(count()).toBe("1"));
+		});
+		// The shared onSuccess/onSettled callback used by Watch mutations.
+		episodesWatched = 2;
+		await act(async () => {
+			await invalidateWatchActivityQueries(client);
+			await vi.waitFor(() => expect(count()).toBe("2"));
+		});
+		act(() => renderer?.unmount());
 		client.clear();
 	});
 
