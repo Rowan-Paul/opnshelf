@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
+import {
+	clampPage,
+	clampPageSize,
+	getPaginationMeta,
+	type PaginatedResult,
+} from "../common/pagination";
 
 interface ShelfItem {
 	id: string;
@@ -92,17 +98,9 @@ export class ShelfService {
 		type?: "movie" | "episode",
 		search?: string,
 		sortOrder: "asc" | "desc" = "desc",
-	): Promise<{
-		items: ShelfItem[];
-		total: number;
-		page: number;
-		pageSize: number;
-		totalPages: number;
-		hasPreviousPage: boolean;
-		hasNextPage: boolean;
-	}> {
-		const safePageSize = Math.min(Math.max(pageSize, 1), 50);
-		const requestedPage = Math.max(page, 1);
+	): Promise<PaginatedResult<ShelfItem>> {
+		const safePageSize = clampPageSize(pageSize, 50);
+		const requestedPage = clampPage(page);
 		const searchTerm = search?.trim();
 		const sortDirection =
 			sortOrder === "asc" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
@@ -152,9 +150,8 @@ export class ShelfService {
 			await Promise.all(countPromises);
 
 		const total = trackedMovieCount + trackedEpisodeCount;
-		const totalPages = total > 0 ? Math.ceil(total / safePageSize) : 0;
-		const currentPage =
-			totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+		const pagination = getPaginationMeta(total, requestedPage, safePageSize);
+		const currentPage = pagination.page;
 		const offset = (currentPage - 1) * safePageSize;
 
 		// Build search conditions for raw SQL
@@ -366,15 +363,7 @@ export class ShelfService {
 			throw new Error(`Invalid shelf row for user ${userDid}`);
 		});
 
-		return {
-			items,
-			total,
-			page: currentPage,
-			pageSize: safePageSize,
-			totalPages,
-			hasPreviousPage: totalPages > 0 && currentPage > 1,
-			hasNextPage: totalPages > 0 && currentPage < totalPages,
-		};
+		return { ...pagination, items };
 	}
 
 	async getUserActivitySummary(userDid: string): Promise<ShelfActivitySummary> {
