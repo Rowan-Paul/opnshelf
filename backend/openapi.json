@@ -4912,6 +4912,18 @@
             }
           },
           {
+            "name": "groupEpisodes",
+            "required": false,
+            "in": "query",
+            "description": "Bundle episode Watches per User, show and day in the viewer's timezone before pagination",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day"
+              ]
+            }
+          },
+          {
             "name": "circleId",
             "required": false,
             "in": "query",
@@ -11148,6 +11160,13 @@
       "FollowedActivityItemDto": {
         "type": "object",
         "properties": {
+          "episodeWatches": {
+            "description": "All episode Watches in this daily bundle, newest first; absent on unbundled activity",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowedActivityItemDto"
+            }
+          },
           "actor": {
             "$ref": "#/components/schemas/SocialActorDto"
           },

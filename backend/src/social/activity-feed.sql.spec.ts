@@ -1,5 +1,6 @@
 import {
 	followedActivityFeedQuery,
+	followedActivityGroupCountQuery,
 	movieWatchersQuery,
 	showWatchersQuery,
 } from "./activity-feed.sql";
@@ -25,6 +26,27 @@ describe("activity feed SQL", () => {
 		expect(text).toContain('te."watchedDate" IS NOT NULL');
 		expect(text).toContain('r.markdown AS "reviewContent"');
 		expect(text).toContain("UNION ALL");
+	});
+
+	it("paginates whole daily bundles and binds the viewer timezone", () => {
+		const query = followedActivityFeedQuery(
+			["did:plc:a"],
+			1,
+			1,
+			"America/New_York",
+		);
+		const sql = query.strings.join(" ");
+		expect(query.values).toContain("America/New_York");
+		expect(sql).toContain(`AT TIME ZONE 'UTC' AT TIME ZONE`);
+		expect(sql).toContain(`activity.type = 'episode'`);
+		expect(sql).toContain('INNER JOIN page USING ("groupId")');
+		expect(sql.indexOf("OFFSET")).toBeLessThan(sql.indexOf("SELECT keyed.*"));
+		const count = followedActivityGroupCountQuery(
+			["did:plc:a"],
+			"America/New_York",
+		);
+		expect(count.strings.join(" ")).toContain("COUNT(DISTINCT");
+		expect(count.values).toContain("America/New_York");
 	});
 
 	it("binds the movie id for movie watchers", () => {

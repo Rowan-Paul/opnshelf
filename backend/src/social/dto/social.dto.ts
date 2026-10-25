@@ -205,6 +205,15 @@ export class UpsertCircleDto {
 
 export class CircleFeedPaginationQueryDto extends SocialFeedPaginationQueryDto {
 	@ApiPropertyOptional({
+		enum: ["day"],
+		description:
+			"Bundle episode Watches per User, show and day in the viewer's timezone before pagination",
+	})
+	@IsOptional()
+	@IsIn(["day"])
+	groupEpisodes?: "day";
+
+	@ApiPropertyOptional({
 		description: "Restrict the feed to a single circle of followed users",
 	})
 	@IsOptional()
@@ -213,6 +222,13 @@ export class CircleFeedPaginationQueryDto extends SocialFeedPaginationQueryDto {
 }
 
 export class FollowedActivityItemDto {
+	@ApiPropertyOptional({
+		type: () => [FollowedActivityItemDto],
+		description:
+			"All episode Watches in this daily bundle, newest first; absent on unbundled activity",
+	})
+	episodeWatches?: FollowedActivityItemDto[];
+
 	@ApiProperty({ type: SocialActorDto })
 	actor: SocialActorDto;
 

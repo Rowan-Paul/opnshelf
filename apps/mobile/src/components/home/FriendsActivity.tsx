@@ -1,4 +1,7 @@
-import { socialControllerGetFeedOptions } from "@opnshelf/api";
+import {
+	socialControllerGetFeedOptions,
+	usersControllerGetMySettingsOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { MessageCircle, Users } from "lucide-react-native";
 import { View } from "react-native";
@@ -47,8 +50,11 @@ function FriendsActivitySkeleton() {
  * tab.
  */
 export function FriendsActivity() {
+	const { data: settings } = useQuery(usersControllerGetMySettingsOptions());
 	const { data, isLoading } = useQuery({
-		...socialControllerGetFeedOptions({ query: { pageSize: PREVIEW_COUNT } }),
+		...socialControllerGetFeedOptions({
+			query: { groupEpisodes: "day", pageSize: PREVIEW_COUNT },
+		}),
 	});
 
 	const cutoff = Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
@@ -73,6 +79,8 @@ export function FriendsActivity() {
 						<ActivityRow
 							key={item.id}
 							activity={item}
+							userTimezone={settings?.timezone}
+							userTimeFormat={settings?.timeFormat}
 							containerClassName={`flex-row items-start gap-3 p-4 ${index === recentItems.length - 1 ? "" : "border-border border-b"}`}
 						/>
 					))}

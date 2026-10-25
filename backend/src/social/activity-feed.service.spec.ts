@@ -156,6 +156,60 @@ describe("ActivityFeedService", () => {
 		expect(sql).not.toContain('r."textContent"');
 	});
 
+	it("returns full episode bundles with group pagination and newest timestamps", async () => {
+		prisma.follow.findMany = vi
+			.fn()
+			.mockResolvedValue([{ followingDid: "friend" }]);
+		prisma.user.findUnique = vi
+			.fn()
+			.mockResolvedValue({ timezone: "Europe/Amsterdam" });
+		prisma.user.findMany = vi.fn().mockResolvedValue([]);
+		prisma.movie.findMany = vi.fn().mockResolvedValue([]);
+		prisma.show.findMany = vi.fn().mockResolvedValue([]);
+		const rows = Array.from({ length: 8 }, (_, index) => ({
+			actorDid: "friend",
+			groupId: "daily-bundle",
+			id: `episode:${index}`,
+			type: "episode",
+			showId: "show-1",
+			showTitle: "Severance",
+			seasonNumber: 1,
+			episodeNumber: 8 - index,
+			activityAt: new Date(`2026-10-25T10:0${7 - index}:00.000Z`),
+			watchedDate: new Date(`2026-10-25T10:0${7 - index}:00.000Z`),
+			createdAt: new Date("2026-10-25T10:00:00.000Z"),
+		}));
+		prisma.$queryRaw = vi
+			.fn()
+			.mockResolvedValueOnce([{ total: 3 }])
+			.mockResolvedValueOnce(rows);
+		const result = await service.getFollowedActivityFeed(
+			"viewer",
+			1,
+			1,
+			undefined,
+			"day",
+		);
+		expect(result).toMatchObject({
+			total: 3,
+			pageSize: 1,
+			totalPages: 3,
+			hasNextPage: true,
+		});
+		expect(result.items).toHaveLength(1);
+		expect(result.items[0]).toMatchObject({
+			id: "daily-bundle",
+			activityAt: "2026-10-25T10:07:00.000Z",
+		});
+		expect(result.items[0].episodeWatches?.map((item) => item.id)).toEqual(
+			rows.map((row) => row.id),
+		);
+		expect(result.items[0].episodeWatches?.[0].episodeWatches).toBeUndefined();
+		expect(getQueryRawMock(prisma).mock.calls[1][0].values).toContain(
+			"Europe/Amsterdam",
+		);
+	});
+
 	it("returns an empty feed without querying when the viewer follows nobody", async () => {
 		prisma.follow.findMany = vi.fn().mockResolvedValue([]);
 

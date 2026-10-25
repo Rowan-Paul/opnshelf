@@ -152,7 +152,7 @@ export function HomeView() {
 	// Fetch social activity feed
 	const { data: feedData, isLoading: feedLoading } = useQuery({
 		...socialControllerGetFeedOptions({
-			query: { pageSize: 6 },
+			query: { groupEpisodes: "day", pageSize: 6 },
 		}),
 	});
 

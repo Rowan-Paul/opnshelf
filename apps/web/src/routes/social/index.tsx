@@ -78,7 +78,7 @@ function SocialPage() {
 
 	const feed = useInfiniteQuery({
 		...socialControllerGetFeedInfiniteOptions({
-			query: { pageSize: 20, circleId: activeCircleId },
+			query: { groupEpisodes: "day", pageSize: 20, circleId: activeCircleId },
 		}),
 		enabled: !!user?.handle,
 		initialPageParam: 1,

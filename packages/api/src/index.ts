@@ -1,3 +1,4 @@
+export { type ActivityGroup, groupActivities } from "./activity-groups";
 // Export generated SDK
 
 export type { AccountDeletionStatusJob } from "./account-deletion-status";

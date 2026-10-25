@@ -1,7 +1,11 @@
-import type { FollowedActivityItemDto } from "@opnshelf/api";
+import {
+	type FollowedActivityItemDto,
+	formatRelativeTime,
+} from "@opnshelf/api";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Clock, User } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { StarRating } from "@/components/detail/StarRating";
 import { PosterImage } from "@/components/media/PosterImage";
@@ -24,9 +28,17 @@ import { useTwStyle } from "@/lib/use-tw-style";
  */
 export function ActivityCard({
 	activity,
+	episodes = [],
+	userTimezone,
+	userTimeFormat,
 }: {
 	activity: FollowedActivityItemDto;
+	episodes?: FollowedActivityItemDto[];
+	userTimezone?: string;
+	userTimeFormat?: "12h" | "24h";
 }) {
+	const [expanded, setExpanded] = useState(false);
+	const bundled = episodes.length > 1;
 	const avatarStyle = useTwStyle("size-9");
 
 	const displayName =
@@ -41,13 +53,19 @@ export function ActivityCard({
 
 	const isMovieish = !!activity.movieId;
 	const isReview = activity.type === "review";
-	const mediaHref = activityMediaHref(activity);
+	const mediaHref = activityMediaHref(
+		bundled
+			? { ...activity, seasonNumber: undefined, episodeNumber: undefined }
+			: activity,
+	);
 
 	const verb = isReview
 		? "reviewed"
 		: activity.type === "movie"
 			? "watched"
-			: "watched episode";
+			: bundled
+				? `watched ${episodes.length} episodes of`
+				: "watched episode";
 	const mediaTitle =
 		activity.type === "episode" ? activity.showTitle : activity.title;
 
@@ -55,7 +73,7 @@ export function ActivityCard({
 		posterUrl(activity.posterPath) ?? backdropUrl(activity.backdropPath);
 
 	const episodeLabel =
-		activity.type === "episode"
+		!bundled && activity.type === "episode"
 			? [
 					activity.seasonNumber && activity.episodeNumber
 						? `S${activity.seasonNumber}E${activity.episodeNumber}`
@@ -66,126 +84,175 @@ export function ActivityCard({
 					.join(" - ")
 			: undefined;
 
-	const excerpt = isReview
-		? activity.reviewContent
-		: activity.type === "episode"
-			? activity.episodeOverview
-			: activity.overview;
+	const excerpt = bundled
+		? activity.overview
+		: isReview
+			? activity.reviewContent
+			: activity.type === "episode"
+				? activity.episodeOverview
+				: activity.overview;
 
 	return (
-		// Whole card taps through to the media page. Nested pressables (the
+		<View className="gap-3 overflow-hidden rounded-xl border border-border bg-card p-4">
+			{/* Whole card taps through to the media page. Nested pressables (the
 		// actor avatar/name → profile, and the action bar buttons) win their own
-		// touch region via RN's responder system, so they don't trigger this.
-		<Link href={mediaHref} asChild>
-			<Pressable className="gap-3 overflow-hidden rounded-xl border border-border bg-card p-4">
-				{/* Actor + action header — full width on top so the poster doesn't leave
+		// touch region via RN's responder system, so they don't trigger this. */}
+			<Link href={mediaHref} asChild>
+				<Pressable accessible={!bundled} className="gap-3">
+					{/* Actor + action header — full width on top so the poster doesn't leave
 			    a gap beside a short content column. */}
-				<View className="flex-row items-start gap-2">
-					<Link href={`/profile/${activity.actor.handle}` as const} asChild>
-						<Pressable className="size-9 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
-							{avatar ? (
-								<Image
-									source={{ uri: avatar }}
-									style={avatarStyle}
-									contentFit="cover"
-								/>
-							) : (
-								<User color="#94a3b8" size={16} />
-							)}
-						</Pressable>
-					</Link>
-					<View className="min-w-0 flex-1">
-						<Text className="text-foreground text-sm">
-							<Link href={`/profile/${activity.actor.handle}` as const}>
-								<Text className="font-semibold text-foreground text-sm">
-									{name}
-								</Text>
-							</Link>
-							<Text className="text-muted-foreground text-sm"> {verb} </Text>
-							<Text className="font-medium text-foreground text-sm">
-								{mediaTitle}
+					<View className="flex-row items-start gap-2">
+						<Link href={`/profile/${activity.actor.handle}` as const} asChild>
+							<Pressable className="size-9 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+								{avatar ? (
+									<Image
+										source={{ uri: avatar }}
+										style={avatarStyle}
+										contentFit="cover"
+									/>
+								) : (
+									<User color="#94a3b8" size={16} />
+								)}
+							</Pressable>
+						</Link>
+						<View className="min-w-0 flex-1">
+							<Text className="text-foreground text-sm">
+								<Link href={`/profile/${activity.actor.handle}` as const}>
+									<Text className="font-semibold text-foreground text-sm">
+										{name}
+									</Text>
+								</Link>
+								<Text className="text-muted-foreground text-sm"> {verb} </Text>
+								<Link href={mediaHref}>
+									<Text className="font-medium text-foreground text-sm">
+										{mediaTitle}
+									</Text>
+								</Link>
 							</Text>
-						</Text>
-						<View className="mt-0.5 flex-row items-center gap-1.5">
-							<Clock color="#94a3b8" size={12} />
-							<Text className="text-muted-foreground text-xs">
-								{formatActivityDate(activity.activityAt)}
+							<View className="mt-0.5 flex-row items-center gap-1.5">
+								<Clock color="#94a3b8" size={12} />
+								<Text className="text-muted-foreground text-xs">
+									{bundled
+										? `Latest · ${formatRelativeTime(activity.activityAt)} · `
+										: ""}
+									{formatActivityDate(
+										activity.activityAt,
+										userTimezone,
+										userTimeFormat,
+									)}
+								</Text>
+							</View>
+						</View>
+						<View className="shrink-0 rounded-full bg-background-subtle px-2 py-0.5">
+							<Text className="font-medium text-muted-foreground text-xs">
+								{isMovieish ? "Movie" : "TV"}
 							</Text>
 						</View>
 					</View>
-					<View className="shrink-0 rounded-full bg-background-subtle px-2 py-0.5">
-						<Text className="font-medium text-muted-foreground text-xs">
-							{isMovieish ? "Movie" : "TV"}
-						</Text>
-					</View>
-				</View>
 
-				{/* Poster + media details */}
-				<View className="flex-row gap-3">
-					<View className="overflow-hidden rounded-lg border border-border bg-background-subtle">
-						<PosterImage url={poster} className="h-32 w-20" />
-					</View>
+					{/* Poster + media details */}
+					<View className="flex-row gap-3">
+						<View className="overflow-hidden rounded-lg border border-border bg-background-subtle">
+							<PosterImage url={poster} className="h-32 w-20" />
+						</View>
 
-					<View className="min-w-0 flex-1 gap-1.5">
-						{/* Episode identifier */}
-						{episodeLabel ? (
-							<Text
-								className="font-semibold text-foreground text-sm"
-								numberOfLines={1}
-							>
-								{episodeLabel}
-							</Text>
-						) : null}
+						<View className="min-w-0 flex-1 gap-1.5">
+							{bundled && (
+								<Pressable
+									accessibilityRole="button"
+									accessibilityState={{ expanded }}
+									onPress={(event) => {
+										event.stopPropagation();
+										setExpanded(!expanded);
+									}}
+									className="self-start rounded-lg border border-border px-3 py-2.5"
+								>
+									<Text className="font-semibold text-primary text-sm">
+										{expanded ? "Hide episodes" : "Show episodes"}
+									</Text>
+								</Pressable>
+							)}
+							{/* Episode identifier */}
+							{episodeLabel ? (
+								<Text
+									className="font-semibold text-foreground text-sm"
+									numberOfLines={1}
+								>
+									{episodeLabel}
+								</Text>
+							) : null}
 
-						{/* Review rating */}
-						{isReview && activity.rating ? (
-							<StarRating rating={activity.rating} size={14} />
-						) : null}
+							{/* Review rating */}
+							{isReview && activity.rating ? (
+								<StarRating rating={activity.rating} size={14} />
+							) : null}
 
-						{/* Excerpt: review content or synopsis. Review excerpts carry the
+							{/* Excerpt: review content or synopsis. Review excerpts carry the
 						author's Spoiler Flag, so they're wrapped in a Shield; synopses
 						never have `reviewSpoiler` set and pass straight through. */}
-						{excerpt ? (
-							<SpoilerShield
-								spoiler={!!activity.reviewSpoiler}
-								authorDid={activity.actor.did}
-							>
-								<Text
-									className="text-muted-foreground text-sm"
-									numberOfLines={3}
+							{excerpt ? (
+								<SpoilerShield
+									spoiler={!!activity.reviewSpoiler}
+									authorDid={activity.actor.did}
 								>
-									{excerpt}
-								</Text>
-							</SpoilerShield>
-						) : null}
+									<Text
+										className="text-muted-foreground text-sm"
+										numberOfLines={3}
+									>
+										{excerpt}
+									</Text>
+								</SpoilerShield>
+							) : null}
 
-						{/* Inline actions for watch items (reviews stay read-only, as on web) */}
-						{!isReview ? (
-							isMovieish ? (
-								<MediaActionBar
-									type="movie"
-									id={String(activity.movieId)}
-									title={activity.title || ""}
-								/>
-							) : activity.showId ? (
-								<MediaActionBar
-									type="show"
-									id={String(activity.showId)}
-									title={activity.showTitle || ""}
-									episode={
-										activity.seasonNumber && activity.episodeNumber
-											? {
-													seasonNumber: activity.seasonNumber,
-													episodeNumber: activity.episodeNumber,
-												}
-											: undefined
-									}
-								/>
-							) : null
-						) : null}
+							{/* Inline actions for watch items (reviews stay read-only, as on web) */}
+							{!bundled && !isReview ? (
+								isMovieish ? (
+									<MediaActionBar
+										type="movie"
+										id={String(activity.movieId)}
+										title={activity.title || ""}
+									/>
+								) : activity.showId ? (
+									<MediaActionBar
+										type="show"
+										id={String(activity.showId)}
+										title={activity.showTitle || ""}
+										episode={
+											activity.seasonNumber && activity.episodeNumber
+												? {
+														seasonNumber: activity.seasonNumber,
+														episodeNumber: activity.episodeNumber,
+													}
+												: undefined
+										}
+									/>
+								) : null
+							) : null}
+						</View>
 					</View>
+				</Pressable>
+			</Link>
+			{bundled && expanded && (
+				<View className="gap-3">
+					{episodes.map((episode) => (
+						<Link key={episode.id} href={activityMediaHref(episode)} asChild>
+							<Pressable className="gap-1 border-border border-t py-3">
+								<Text className="font-semibold text-foreground text-sm">
+									S{episode.seasonNumber}E{episode.episodeNumber}
+									{episode.episodeName ? ` · ${episode.episodeName}` : ""}
+								</Text>
+								<Text className="text-muted-foreground text-xs">
+									{formatActivityDate(
+										episode.activityAt,
+										userTimezone,
+										userTimeFormat,
+									)}
+								</Text>
+							</Pressable>
+						</Link>
+					))}
 				</View>
-			</Pressable>
-		</Link>
+			)}
+		</View>
 	);
 }
