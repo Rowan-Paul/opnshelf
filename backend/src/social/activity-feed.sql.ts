@@ -14,11 +14,7 @@ function joinDids(followedDids: string[]) {
 	return Prisma.join(followedDids.map((did) => Prisma.sql`${did}`));
 }
 
-export function followedActivityFeedQuery(
-	followedDids: string[],
-	offset: number,
-	limit: number,
-): Prisma.Sql {
+function activityRowsQuery(followedDids: string[]): Prisma.Sql {
 	const followedDidValues = joinDids(followedDids);
 	return Prisma.sql`
 			SELECT
@@ -149,14 +145,52 @@ export function followedActivityFeedQuery(
 					AND rt."episodeNumber" = r."episodeNumber"
 				WHERE r."userDid" IN (${followedDidValues})
 			) activity
-			ORDER BY
-				activity."activityAt" DESC,
-				activity."createdAt" DESC,
-				activity.type DESC,
-				activity.id DESC
-			OFFSET ${offset}
-			LIMIT ${limit}
 		`;
+}
+
+function activityGroupKey(timezone: string): Prisma.Sql {
+	return Prisma.sql`CASE WHEN activity.type = 'episode' THEN
+		jsonb_build_array(activity."actorDid", activity."showId",
+			(activity."activityAt" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date)::text
+		ELSE activity.id END`;
+}
+
+export function followedActivityGroupCountQuery(
+	followedDids: string[],
+	timezone: string,
+): Prisma.Sql {
+	return Prisma.sql`SELECT COUNT(DISTINCT ${activityGroupKey(timezone)})::integer AS total
+		FROM (${activityRowsQuery(followedDids)}) activity`;
+}
+
+export function followedActivityFeedQuery(
+	followedDids: string[],
+	offset: number,
+	limit: number,
+	timezone?: string,
+): Prisma.Sql {
+	const rows = activityRowsQuery(followedDids);
+	if (timezone === undefined)
+		return Prisma.sql`
+		SELECT * FROM (${rows}) activity
+		ORDER BY activity."activityAt" DESC, activity."createdAt" DESC, activity.type DESC, activity.id DESC
+		OFFSET ${offset} LIMIT ${limit}`;
+
+	// Choose whole bundles before pagination, then return every Watch in them.
+	return Prisma.sql`
+		WITH keyed AS (
+			SELECT activity.*, ${activityGroupKey(timezone)} AS "groupId"
+			FROM (${rows}) activity
+		), heads AS (
+			SELECT DISTINCT ON ("groupId") * FROM keyed
+			ORDER BY "groupId", "activityAt" DESC, "createdAt" DESC, type DESC, id DESC
+		), page AS (
+			SELECT "groupId" FROM heads
+			ORDER BY "activityAt" DESC, "createdAt" DESC, type DESC, id DESC
+			OFFSET ${offset} LIMIT ${limit}
+		)
+		SELECT keyed.* FROM keyed INNER JOIN page USING ("groupId")
+		ORDER BY "activityAt" DESC, "createdAt" DESC, type DESC, id DESC`;
 }
 
 export function movieWatchersQuery(

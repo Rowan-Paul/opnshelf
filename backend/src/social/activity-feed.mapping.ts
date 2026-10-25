@@ -9,6 +9,7 @@ import type { ShowWatcherScope } from "./activity-feed.sql";
 /** One row of the Activity Feed union query (see `activity-feed.sql.ts`). */
 export type FollowedActivityRow = {
 	actorDid: string;
+	groupId?: string;
 	id: string;
 	type: "movie" | "episode" | "review";
 	activityAt: Date;

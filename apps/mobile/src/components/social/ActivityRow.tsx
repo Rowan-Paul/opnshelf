@@ -11,10 +11,16 @@ import { backdropUrl, posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /** Absolute date + time, mirroring web ("Jun 18, 3:42 PM"). */
-export function formatActivityDate(iso: string): string {
+export function formatActivityDate(
+	iso: string,
+	timeZone?: string,
+	timeFormat?: "12h" | "24h",
+): string {
 	const d = new Date(iso);
 	if (Number.isNaN(d.getTime())) return "";
 	return d.toLocaleString(undefined, {
+		timeZone,
+		...(timeFormat ? { hour12: timeFormat === "12h" } : {}),
 		month: "short",
 		day: "numeric",
 		hour: "numeric",
@@ -69,9 +75,13 @@ export function activityMediaHref(activity: FollowedActivityItemDto): Href {
  */
 export function ActivityRow({
 	activity,
+	userTimezone,
+	userTimeFormat,
 	containerClassName = "flex-row items-start gap-3 p-4",
 }: {
 	activity: FollowedActivityItemDto;
+	userTimezone?: string;
+	userTimeFormat?: "12h" | "24h";
 	containerClassName?: string;
 }) {
 	const avatarStyle = useTwStyle("size-7");
@@ -85,22 +95,29 @@ export function ActivityRow({
 			: undefined;
 	const name = displayName || activity.actor.handle;
 
+	const count = activity.episodeWatches?.length ?? 1;
 	const verb =
 		activity.type === "movie"
 			? "watched"
 			: activity.type === "review"
 				? "reviewed"
-				: "watched episode";
+				: count > 1
+					? `watched ${count} episodes of`
+					: "watched episode";
 	const mediaTitle =
 		activity.type === "episode" ? activity.showTitle : activity.title;
 	const isMovieish = !!activity.movieId;
 	const poster =
 		posterUrl(activity.posterPath, "w185") ??
 		backdropUrl(activity.backdropPath, "w780");
-	const href = activityMediaHref(activity);
+	const href = activityMediaHref(
+		count > 1
+			? { ...activity, seasonNumber: undefined, episodeNumber: undefined }
+			: activity,
+	);
 
 	const episodeLabel =
-		activity.type === "episode"
+		count === 1 && activity.type === "episode"
 			? [
 					activity.seasonNumber && activity.episodeNumber
 						? `S${activity.seasonNumber}E${activity.episodeNumber}`
@@ -170,7 +187,11 @@ export function ActivityRow({
 					<View className="mt-1 flex-row items-center gap-1.5">
 						<Clock color="#94a3b8" size={12} />
 						<Text className="text-muted-foreground text-xs">
-							{formatActivityDate(activity.activityAt)}
+							{formatActivityDate(
+								activity.activityAt,
+								userTimezone,
+								userTimeFormat,
+							)}
 						</Text>
 					</View>
 				</View>

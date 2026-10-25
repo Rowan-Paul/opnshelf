@@ -149,6 +149,7 @@ export class SocialController {
 			query.page ?? 1,
 			query.pageSize ?? 10,
 			query.circleId,
+			query.groupEpisodes,
 		);
 	}
 

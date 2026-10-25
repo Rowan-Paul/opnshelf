@@ -1,7 +1,8 @@
 import type { FollowedActivityItemDto } from "@opnshelf/api";
-import { slugifyName } from "@opnshelf/api";
+import { formatRelativeTime, slugifyName } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Clock, Film } from "lucide-react";
+import { useState } from "react";
 import FeedItemActions from "#/components/FeedItemActions";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import StarRating from "#/components/StarRating";
@@ -9,15 +10,19 @@ import { UserAvatar } from "./UserAvatar";
 
 interface ActivityCardProps {
 	activity: FollowedActivityItemDto;
+	episodes?: FollowedActivityItemDto[];
 	userTimezone?: string;
 	userTimeFormat?: "12h" | "24h";
 }
 
 export function ActivityCard({
 	activity,
+	episodes = [],
 	userTimezone,
 	userTimeFormat,
 }: ActivityCardProps) {
+	const [expanded, setExpanded] = useState(false);
+	const bundled = episodes.length > 1;
 	const posterSrc = activity.posterPath
 		? `https://image.tmdb.org/t/p/w300${activity.posterPath}`
 		: activity.backdropPath
@@ -79,7 +84,9 @@ export function ActivityCard({
 										? "watched"
 										: activity.type === "review"
 											? "reviewed"
-											: "watched episode"}
+											: bundled
+												? `watched ${episodes.length} episodes of`
+												: "watched episode"}
 								</span>
 								{activity.movieId ? (
 									<Link
@@ -117,6 +124,9 @@ export function ActivityCard({
 							</div>
 							<div className="mt-0.5 flex items-center gap-1.5 text-(--foreground-muted) text-xs">
 								<Clock className="size-3" />
+								{bundled
+									? `Latest · ${formatRelativeTime(activity.activityAt)} · `
+									: ""}
 								{new Date(activity.activityAt).toLocaleString("en-US", {
 									month: "short",
 									day: "numeric",
@@ -129,8 +139,49 @@ export function ActivityCard({
 						</div>
 					</div>
 
+					{bundled && (
+						<div className="relative z-10">
+							<button
+								type="button"
+								className="btn btn-secondary"
+								aria-expanded={expanded}
+								onClick={() => setExpanded(!expanded)}
+							>
+								{expanded ? "Hide episodes" : "Show episodes"}
+							</button>
+							{expanded && (
+								<div className="mt-3 space-y-3">
+									{episodes.map((episode) => (
+										<Link
+											key={episode.id}
+											to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+											params={{
+												showId: String(episode.showId),
+												showName: slugifyName(episode.showTitle || ""),
+												seasonNumber: String(episode.seasonNumber),
+												episodeNumber: String(episode.episodeNumber),
+											}}
+											className="block border-(--border) border-t py-2 text-sm hover:text-(--accent)"
+										>
+											<span className="font-semibold">
+												S{episode.seasonNumber}E{episode.episodeNumber}
+												{episode.episodeName ? ` · ${episode.episodeName}` : ""}
+											</span>
+											<span className="mt-1 block text-(--foreground-muted) text-xs">
+												{new Date(episode.activityAt).toLocaleString("en-US", {
+													timeZone: userTimezone,
+													hour12: userTimeFormat === "12h",
+												})}
+											</span>
+										</Link>
+									))}
+								</div>
+							)}
+						</div>
+					)}
 					{/* Episode identifier */}
-					{activity.type === "episode" &&
+					{!bundled &&
+						activity.type === "episode" &&
 						(activity.seasonNumber ||
 							activity.episodeNumber ||
 							activity.episodeName) && (
@@ -178,7 +229,8 @@ export function ActivityCard({
 					)}
 
 					{/* Description */}
-					{activity.type !== "review" &&
+					{!bundled &&
+						activity.type !== "review" &&
 						(activity.type === "episode"
 							? activity.episodeOverview
 							: activity.overview) && (
@@ -190,7 +242,7 @@ export function ActivityCard({
 						)}
 
 					{/* Actions */}
-					{activity.type !== "review" && (
+					{!bundled && activity.type !== "review" && (
 						<div className="relative z-10 flex flex-wrap items-center gap-4 pt-1">
 							{activity.type === "movie" ? (
 								<FeedItemActions
