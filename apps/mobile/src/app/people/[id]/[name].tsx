@@ -10,8 +10,8 @@ import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
-import { useMovieWatchToggle } from "@/lib/use-movie-watch-toggle";
 import { usePersonDetails, usePersonFilmography } from "@/lib/use-person";
+import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useWideLayout } from "@/lib/use-wide-layout";
 
@@ -38,8 +38,6 @@ export default function PersonDetailScreen() {
 		isFetchingNextPage,
 	} = usePersonFilmography(id);
 
-	const { isAuthenticated, isWatched, toggle } = useMovieWatchToggle();
-
 	const filmography = useMemo(() => {
 		const items = filmographyData?.pages.flatMap((page) => page.items) ?? [];
 		return sortByDateDesc(items);
@@ -55,132 +53,125 @@ export default function PersonDetailScreen() {
 	);
 
 	return (
-		<View className="flex-1 bg-background">
-			<Stack.Screen
-				options={{ headerShown: true, title: person?.name ?? "Person" }}
-			/>
-			{isLoading ? (
-				<DetailColumns
-					primary={
-						<View className="gap-6 px-4 pt-4">
-							{/* Mirrors PersonHero: portrait + name/department lines. */}
-							<View className="flex-row gap-4">
-								<View className="h-40 w-28 rounded-lg bg-background-subtle" />
-								<View className="flex-1 justify-end gap-2 pb-1">
-									<View className="h-6 w-3/4 rounded bg-background-subtle" />
-									<View className="h-5 w-1/3 rounded-full bg-background-subtle" />
-								</View>
-							</View>
-							{/* Biography lines. */}
-							<View className="gap-2">
-								<View className="h-3 w-full rounded bg-background-subtle" />
-								<View className="h-3 w-full rounded bg-background-subtle" />
-								<View className="h-3 w-2/3 rounded bg-background-subtle" />
-							</View>
-						</View>
-					}
-					secondary={
-						<View className="px-4">
-							<PosterGridSkeleton columns={numColumns} />
-						</View>
-					}
+		<ShowProgressScope
+			showIds={filmography
+				.filter((item) => item.media_type !== "movie")
+				.map((item) => item.id)}
+		>
+			<View className="flex-1 bg-background">
+				<Stack.Screen
+					options={{ headerShown: true, title: person?.name ?? "Person" }}
 				/>
-			) : isError || !person ? (
-				<ErrorState message="Couldn't load this person." />
-			) : (
-				<DetailColumns
-					primary={
-						<View className="gap-6 pt-2">
-							<PersonHero person={person} />
-							{person.biography ? (
-								<View className="px-4">
-									<Text className="mb-2 font-display font-semibold text-base text-foreground">
-										Biography
-									</Text>
-									<Text className="text-muted-foreground text-sm leading-5">
-										{person.biography}
-									</Text>
-								</View>
-							) : null}
-						</View>
-					}
-					secondary={null}
-					renderContent={(header) => (
-						<FlashList
-							key={`grid-${numColumns}`}
-							data={filmography}
-							numColumns={numColumns}
-							keyExtractor={(item, index) =>
-								`${item.media_type}-${item.id}-${index}`
-							}
-							renderItem={({ item }) => (
-								<View className="flex-1 px-1 pb-3">
-									<FilmographyCard
-										item={item}
-										canToggle={isAuthenticated}
-										watched={item.media_type === "movie" && isWatched(item.id)}
-										onToggleWatched={(it) => toggle(it.id)}
-									/>
-								</View>
-							)}
-							contentContainerStyle={gridStyle}
-							showsVerticalScrollIndicator={false}
-							onEndReachedThreshold={0.5}
-							onEndReached={() => {
-								if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-							}}
-							ListHeaderComponent={
-								<View className="gap-6 pb-2">
-									{header}
-
-									{knownFor.length > 0 ? (
-										<View>
-											<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
-												Known for
-											</Text>
-											{/* items-start: horizontal ScrollView content defaults to
-									    cross-axis stretch, collapsing aspect-ratio cards */}
-											<ScrollView
-												horizontal
-												showsHorizontalScrollIndicator={false}
-												contentContainerClassName="items-start gap-3 px-4"
-											>
-												{knownFor.map((item) => (
-													<View
-														key={`known-${item.media_type}-${item.id}`}
-														className="w-28"
-													>
-														<FilmographyCard
-															item={item}
-															canToggle={isAuthenticated}
-															watched={
-																item.media_type === "movie" &&
-																isWatched(item.id)
-															}
-															onToggleWatched={(it) => toggle(it.id)}
-														/>
-													</View>
-												))}
-											</ScrollView>
-										</View>
-									) : null}
-
-									<Text className="px-4 font-display font-semibold text-base text-foreground">
-										Filmography
-									</Text>
-								</View>
-							}
-							ListFooterComponent={
-								isFetchingNextPage ? (
-									<View className="py-6">
-										<ActivityIndicator color="#94a3b8" />
+				{isLoading ? (
+					<DetailColumns
+						primary={
+							<View className="gap-6 px-4 pt-4">
+								{/* Mirrors PersonHero: portrait + name/department lines. */}
+								<View className="flex-row gap-4">
+									<View className="h-40 w-28 rounded-lg bg-background-subtle" />
+									<View className="flex-1 justify-end gap-2 pb-1">
+										<View className="h-6 w-3/4 rounded bg-background-subtle" />
+										<View className="h-5 w-1/3 rounded-full bg-background-subtle" />
 									</View>
-								) : null
-							}
-						/>
-					)}
-				/>
-			)}
-		</View>
+								</View>
+								{/* Biography lines. */}
+								<View className="gap-2">
+									<View className="h-3 w-full rounded bg-background-subtle" />
+									<View className="h-3 w-full rounded bg-background-subtle" />
+									<View className="h-3 w-2/3 rounded bg-background-subtle" />
+								</View>
+							</View>
+						}
+						secondary={
+							<View className="px-4">
+								<PosterGridSkeleton columns={numColumns} />
+							</View>
+						}
+					/>
+				) : isError || !person ? (
+					<ErrorState message="Couldn't load this person." />
+				) : (
+					<DetailColumns
+						primary={
+							<View className="gap-6 pt-2">
+								<PersonHero person={person} />
+								{person.biography ? (
+									<View className="px-4">
+										<Text className="mb-2 font-display font-semibold text-base text-foreground">
+											Biography
+										</Text>
+										<Text className="text-muted-foreground text-sm leading-5">
+											{person.biography}
+										</Text>
+									</View>
+								) : null}
+							</View>
+						}
+						secondary={null}
+						renderContent={(header) => (
+							<FlashList
+								key={`grid-${numColumns}`}
+								data={filmography}
+								numColumns={numColumns}
+								keyExtractor={(item, index) =>
+									`${item.media_type}-${item.id}-${index}`
+								}
+								renderItem={({ item }) => (
+									<View className="flex-1 px-1 pb-3">
+										<FilmographyCard item={item} />
+									</View>
+								)}
+								contentContainerStyle={gridStyle}
+								showsVerticalScrollIndicator={false}
+								onEndReachedThreshold={0.5}
+								onEndReached={() => {
+									if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+								}}
+								ListHeaderComponent={
+									<View className="gap-6 pb-2">
+										{header}
+
+										{knownFor.length > 0 ? (
+											<View>
+												<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
+													Known for
+												</Text>
+												{/* items-start: horizontal ScrollView content defaults to
+									    cross-axis stretch, collapsing aspect-ratio cards */}
+												<ScrollView
+													horizontal
+													showsHorizontalScrollIndicator={false}
+													contentContainerClassName="items-start gap-3 px-4"
+												>
+													{knownFor.map((item) => (
+														<View
+															key={`known-${item.media_type}-${item.id}`}
+															className="w-28"
+														>
+															<FilmographyCard item={item} />
+														</View>
+													))}
+												</ScrollView>
+											</View>
+										) : null}
+
+										<Text className="px-4 font-display font-semibold text-base text-foreground">
+											Filmography
+										</Text>
+									</View>
+								}
+								ListFooterComponent={
+									isFetchingNextPage ? (
+										<View className="py-6">
+											<ActivityIndicator color="#94a3b8" />
+										</View>
+									) : null
+								}
+							/>
+						)}
+					/>
+				)}
+			</View>
+		</ShowProgressScope>
 	);
 }
