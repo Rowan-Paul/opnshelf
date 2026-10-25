@@ -24,26 +24,37 @@ function formatDayLabel(date: string): string {
 export function StatsStrip({
 	activity,
 	mostWatchedShow,
-	watchedThisYear,
+	watchedThisMonth,
+	watchStreak,
 	reviewsCount,
 	isLoading,
 }: {
 	activity?: ProfileActivityDayDto[];
 	mostWatchedShow: MostWatchedShowDto | null;
-	watchedThisYear: number;
+	watchedThisMonth: number;
+	watchStreak: number;
 	reviewsCount: number;
 	isLoading: boolean;
 }) {
 	if (isLoading) {
-		// The loaded card's heights, stacked below lg and in a row from lg, so
-		// Home's feed does not drop when the profile arrives. The key makes the
-		// loaded card a new element: reusing the pulsing one made Chrome report
-		// it as moving from its compositing layer's origin, a 0.17 layout shift.
+		// Match the graph and wrapped stats below it while the profile loads.
 		return (
 			<div
 				key="loading"
-				className="card h-[236px] animate-pulse lg:h-[156px]"
-			/>
+				className="card flex flex-col gap-6 p-5"
+				aria-busy="true"
+			>
+				<div className="animate-pulse">
+					<div className="mb-3 h-5 w-32 rounded bg-(--background-subtle)" />
+					<div className="h-20 rounded bg-(--background-subtle)" />
+				</div>
+				<div className="flex flex-wrap items-center gap-6 border-(--border) border-t pt-4">
+					<div className="h-14 w-64 animate-pulse rounded bg-(--background-subtle)" />
+					<div className="h-12 w-24 animate-pulse rounded bg-(--background-subtle)" />
+					<div className="h-12 w-24 animate-pulse rounded bg-(--background-subtle)" />
+					<div className="h-12 w-12 animate-pulse rounded bg-(--background-subtle)" />
+				</div>
+			</div>
 		);
 	}
 
@@ -51,9 +62,9 @@ export function StatsStrip({
 	const last30Total = days.reduce((sum, d) => sum + d.count, 0);
 
 	return (
-		<div key="loaded" className="card flex flex-col gap-6 p-5 lg:flex-row">
+		<div key="loaded" className="card flex flex-col gap-6 p-5">
 			{/* Activity graph */}
-			<div className="min-w-0 flex-1">
+			<div className="min-w-0">
 				<div className="mb-3 flex items-baseline justify-between">
 					<h2 className="flex items-center gap-2 font-medium text-(--foreground-muted) text-sm">
 						<Clock className="size-4 text-(--accent)" />
@@ -67,9 +78,13 @@ export function StatsStrip({
 			</div>
 
 			{/* Headline stats */}
-			<div className="flex items-center gap-6 lg:gap-8 lg:border-(--border) lg:border-l lg:pl-8">
+			<div className="flex flex-wrap items-center gap-6 border-(--border) border-t pt-4">
 				{mostWatchedShow && <MostWatchedShowStat show={mostWatchedShow} />}
-				<NumberStat label="This year" value={watchedThisYear} />
+				<NumberStat label="Added this month" value={watchedThisMonth} />
+				<NumberStat
+					label="Watch streak"
+					value={`${watchStreak} ${watchStreak === 1 ? "day" : "days"}`}
+				/>
 				<NumberStat label="Reviews" value={reviewsCount} />
 			</div>
 		</div>
@@ -131,7 +146,13 @@ function ActivityGraph({ data }: { data: ProfileActivityDayDto[] }) {
 	);
 }
 
-function NumberStat({ label, value }: { label: string; value: number }) {
+function NumberStat({
+	label,
+	value,
+}: {
+	label: string;
+	value: number | string;
+}) {
 	return (
 		<div className="flex flex-col justify-center">
 			<p className="font-semibold text-2xl tabular-nums">{value}</p>

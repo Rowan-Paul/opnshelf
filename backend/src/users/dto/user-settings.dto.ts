@@ -379,7 +379,7 @@ export class PublicUserProfileDto {
 
 	@ApiProperty({
 		description:
-			"Daily watch activity for the last 30 UTC days, oldest first (always 30 entries)",
+			"Daily watch activity for the last 30 days in the watcher’s timezone, oldest first (always 30 entries)",
 		type: [ProfileActivityDayDto],
 	})
 	activityLast30Days!: ProfileActivityDayDto[];
@@ -394,9 +394,21 @@ export class PublicUserProfileDto {
 
 	@ApiProperty({
 		description:
-			"Items watched (movies + episodes) so far this calendar year, UTC",
+			"Items watched (movies + episodes) so far this calendar year in the watcher’s timezone",
 	})
 	watchedThisYear!: number;
+
+	@ApiProperty({
+		description:
+			"Dated movie and episode Watches this calendar month in the watcher’s timezone, including rewatches",
+	})
+	watchedThisMonth!: number;
+
+	@ApiProperty({
+		description:
+			"Consecutive calendar days with a dated movie or episode Watch in the watcher’s timezone, ending today or yesterday",
+	})
+	watchStreak!: number;
 
 	@ApiProperty({
 		description: "Total number of reviews the user has written",
