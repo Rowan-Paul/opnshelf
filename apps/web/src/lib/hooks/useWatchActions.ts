@@ -95,7 +95,6 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	// all in sync instead of each mutation listing its own subset.
 	const invalidateActivity = () => {
 		invalidateWatchActivityQueries(queryClient);
-		queryClient.invalidateQueries({ queryKey: ["shows", "progress"] });
 	};
 
 	const updateMovieDate = useMutation({
