@@ -65,7 +65,8 @@ export default function HomeScreen() {
 		<StatsStrip
 			activity={profile?.activityLast30Days}
 			mostWatchedShow={profile?.mostWatchedShow ?? null}
-			watchedThisYear={profile?.watchedThisYear ?? 0}
+			watchedThisMonth={profile?.watchedThisMonth ?? 0}
+			watchStreak={profile?.watchStreak ?? 0}
 			reviewsCount={profile?.reviewsCount ?? 0}
 			reviewsHref={
 				user?.handle ? (`/profile/${user.handle}/reviews` as Href) : undefined

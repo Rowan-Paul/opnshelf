@@ -478,6 +478,8 @@ describe("UsersService", () => {
 			followingCount: 7,
 			reviewsCount: 2,
 			watchedThisYear: 0,
+			watchedThisMonth: 0,
+			watchStreak: 0,
 			mostWatchedShow: null,
 		});
 		// 30-day activity graph always has one bucket per day.
@@ -519,6 +521,37 @@ describe("UsersService", () => {
 		expect(yearQueryText).toContain(
 			"(te.\"watchedDate\" AT TIME ZONE 'UTC' AT TIME ZONE",
 		);
+	});
+
+	it("returns monthly and streak stats without exposing private Watches", async () => {
+		prisma.user.findUnique = vi.fn().mockResolvedValue({
+			did: "did:plc:123",
+			handle: "alice.bsky.social",
+			timezone: "Europe/Amsterdam",
+			watchVisibility: "private",
+			watchPrivacyMigration: null,
+			_count: { followers: 0, following: 0, reviews: 0 },
+		});
+		(prisma.$queryRaw as Mock).mockResolvedValueOnce([
+			{ count: 100, monthCount: 42, streak: 35 },
+		]);
+		const owner = await service.getPublicProfileByHandle(
+			"alice.bsky.social",
+			"did:plc:123",
+		);
+		expect(owner).toMatchObject({ watchedThisMonth: 42, watchStreak: 35 });
+		const query = (prisma.$queryRaw as Mock).mock.calls.at(-1)?.[0];
+		expect(query.values).toContain("Europe/Amsterdam");
+		expect(query.strings.join(" ")).toContain("date_trunc('month', today)");
+		expect(query.strings.join(" ")).toContain("day <= today");
+		(prisma.$queryRaw as Mock).mockClear();
+		const visitor = await service.getPublicProfileByHandle("alice.bsky.social");
+		expect(visitor).toMatchObject({
+			watchedThisMonth: 0,
+			watchStreak: 0,
+			activityLast30Days: [],
+		});
+		expect(prisma.$queryRaw).not.toHaveBeenCalled();
 	});
 
 	it("returns public profile counts from follow aggregates", async () => {

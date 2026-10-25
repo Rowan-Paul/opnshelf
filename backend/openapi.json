@@ -9082,7 +9082,7 @@
             "description": "Public following count"
           },
           "activityLast30Days": {
-            "description": "Daily watch activity for the last 30 UTC days, oldest first (always 30 entries)",
+            "description": "Daily watch activity for the last 30 days in the watcher’s timezone, oldest first (always 30 entries)",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProfileActivityDayDto"
@@ -9100,7 +9100,15 @@
           },
           "watchedThisYear": {
             "type": "number",
-            "description": "Items watched (movies + episodes) so far this calendar year, UTC"
+            "description": "Items watched (movies + episodes) so far this calendar year in the watcher’s timezone"
+          },
+          "watchedThisMonth": {
+            "type": "number",
+            "description": "Dated movie and episode Watches this calendar month in the watcher’s timezone, including rewatches"
+          },
+          "watchStreak": {
+            "type": "number",
+            "description": "Consecutive calendar days with a dated movie or episode Watch in the watcher’s timezone, ending today or yesterday"
           },
           "reviewsCount": {
             "type": "number",
@@ -9124,6 +9132,8 @@
           "activityLast30Days",
           "mostWatchedShow",
           "watchedThisYear",
+          "watchedThisMonth",
+          "watchStreak",
           "reviewsCount"
         ]
       },

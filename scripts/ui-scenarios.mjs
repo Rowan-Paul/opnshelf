@@ -473,7 +473,7 @@ export function createScenarioServer(
 			json({ ...sample(spec.components.schemas.ShelfResponseDto), page: 1, pageSize: 20, total: 2, totalPages: 1, hasPreviousPage: false, hasNextPage: false, items: [1, 2].map(index => ({ id: `fixture-${index}`, type: "movie", movieId: String(index), title: `Fixture film ${index}`, watchCount: 1, watchedDate: `2026-10-${index === 1 ? "15" : "14"}T12:00:00.000Z`, createdAt: "2026-10-15T12:00:00.000Z" })) }); return;
 		}
 		if (url.pathname === "/users/synthetic.test/profile") {
-			json({ ...sample(spec.components.schemas.PublicUserProfileDto), ...user, watchesPublic: true }); return;
+			json({ ...sample(spec.components.schemas.PublicUserProfileDto), ...user, watchesPublic: true, watchedThisMonth: 42, watchStreak: 35, mostWatchedShow: { showId: "1399", title: "Local fixture show with a long title", posterPath: null, episodeWatchCount: 12 }, activityLast30Days: Array.from({ length: 30 }, (_, index) => ({ date: new Date(Date.now() - (29 - index) * 86400000).toISOString().slice(0, 10), count: index % 4 })) }); return;
 		}
 		const route = Object.keys(spec.paths).find(path => path.split("/").length === url.pathname.split("/").length && path.split("/").every((part, index) => part.startsWith("{") || part === url.pathname.split("/")[index]));
 		const operation = spec.paths[route]?.[req.method.toLowerCase()];

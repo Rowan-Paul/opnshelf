@@ -1007,7 +1007,7 @@ export type PublicUserProfileDto = {
      */
     followingCount: number;
     /**
-     * Daily watch activity for the last 30 UTC days, oldest first (always 30 entries)
+     * Daily watch activity for the last 30 days in the watcher’s timezone, oldest first (always 30 entries)
      */
     activityLast30Days: Array<ProfileActivityDayDto>;
     /**
@@ -1015,9 +1015,17 @@ export type PublicUserProfileDto = {
      */
     mostWatchedShow: MostWatchedShowDto | null;
     /**
-     * Items watched (movies + episodes) so far this calendar year, UTC
+     * Items watched (movies + episodes) so far this calendar year in the watcher’s timezone
      */
     watchedThisYear: number;
+    /**
+     * Dated movie and episode Watches this calendar month in the watcher’s timezone, including rewatches
+     */
+    watchedThisMonth: number;
+    /**
+     * Consecutive calendar days with a dated movie or episode Watch in the watcher’s timezone, ending today or yesterday
+     */
+    watchStreak: number;
     /**
      * Total number of reviews the user has written
      */
