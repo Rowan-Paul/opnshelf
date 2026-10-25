@@ -90,7 +90,7 @@ Never hand-edit generated output. Change its source, run the owning command, and
 - Stage the paths you changed. Never `git add -A` or `git add .`: sessions share this tree and a blanket add swallows another one's unstaged work.
 - Commit subjects are plain imperative sentences, no `feat:` or `fix:` prefix. The body says why the old behavior was wrong and what changed, ends with `Closes #<number>` where an issue exists, and carries the `Co-Authored-By` trailer.
 - Keep commits focused on the requested change. Do not amend, rebase, force-push, merge, deploy, or publish unless the operator explicitly requests it.
-- Before publishing, reviewing, monitoring, or merging a PR, read [publication and cleanup](docs/agents/publication.md). Follow its completion criteria, including cleanup after merge.
+- Before preparing a release or publishing, reviewing, monitoring, or merging a PR, read [publication and cleanup](docs/agents/publication.md). Follow its completion criteria, including Release Notes for releases and cleanup after merge.
 - Report changed files and the verification commands actually run, including any skipped or failing checks.
 
 ## Agent skills
