@@ -12,12 +12,12 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-
 import ConfirmDialog from "#/components/ConfirmDialog";
 import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote } from "#/lib/hooks/useNotes";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 export const Route = createFileRoute("/profile/$handle/notes")({
 	loader: async ({ context, params }) => {
 		try {
@@ -31,11 +31,23 @@ export const Route = createFileRoute("/profile/$handle/notes")({
 			return { profile: null };
 		}
 	},
-	head: ({ loaderData }) => {
+	head: ({ loaderData, match }) => {
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Notes | Opnshelf` }],
+			meta: getPageMeta(
+				{
+					title: `${name}'s Notes | Opnshelf`,
+					description: `View ${name}'s notes on Opnshelf.`,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
+				},
+				match.pathname,
+			),
 		};
 	},
 	component: ProfileNotesPage,

@@ -5,6 +5,7 @@ import type {
 	TmdbSeasonDetailDto,
 	TmdbShowDetailDto,
 } from "@opnshelf/api";
+import { env } from "#/env";
 
 export type PageMeta = {
 	title: string;
@@ -31,21 +32,54 @@ function getTmdbOriginalImageUrl(path?: string): string | undefined {
 }
 
 export function getOpenGraphMetaDescriptors(meta: PageMeta, pageUrl?: string) {
+	const source = meta.imageUrl
+		? new URL(meta.imageUrl, env.VITE_SITE_URL || "https://opnshelf.xyz")
+		: undefined;
+	const poster =
+		source?.hostname === "image.tmdb.org"
+			? /^\/t\/p\/[^/]+(\/[A-Za-z0-9_-]+\.(?:jpg|png|webp))$/.exec(
+					source.pathname,
+				)?.[1]
+			: undefined;
+	const imageUrl =
+		!source || poster
+			? getSharingImageUrl({
+					title: meta.title.split(" | ")[0],
+					subtitle: meta.description,
+					...(poster ? { poster } : {}),
+				})
+			: source.href;
+
 	const descriptors: Array<
 		{ property: string; content: string } | { name: string; content: string }
 	> = [
+		{ property: "og:type", content: "website" },
+		{ property: "og:site_name", content: "Opnshelf" },
+		{ name: "twitter:card", content: "summary_large_image" },
+		{ name: "twitter:title", content: meta.title },
+		{ name: "twitter:description", content: meta.description },
+		{ name: "twitter:image:alt", content: meta.title },
+		{ property: "og:image:alt", content: meta.title },
 		{ property: "og:title", content: meta.title },
 		{ property: "og:description", content: meta.description },
 	];
+
+	if (new URL(imageUrl).pathname === "/api/og") {
+		descriptors.push(
+			{ property: "og:image:width", content: "1200" },
+			{ property: "og:image:height", content: "630" },
+			{ property: "og:image:type", content: "image/png" },
+		);
+	}
 
 	if (pageUrl) {
 		descriptors.push({ property: "og:url", content: pageUrl });
 	}
 
-	if (meta.imageUrl) {
+	if (imageUrl) {
 		descriptors.push(
-			{ property: "og:image", content: meta.imageUrl },
-			{ name: "twitter:image", content: meta.imageUrl },
+			{ property: "og:image", content: imageUrl },
+			{ name: "twitter:image", content: imageUrl },
 		);
 	}
 
@@ -188,4 +222,29 @@ export function buildPersonPageMeta(
 		),
 		imageUrl: getTmdbOriginalImageUrl(person.profile_path),
 	};
+}
+
+export function getPageMeta(meta: PageMeta, pathname: string) {
+	return [
+		{ title: meta.title },
+		{ name: "description", content: meta.description },
+		...getOpenGraphMetaDescriptors(
+			meta,
+			new URL(pathname, env.VITE_SITE_URL || "https://opnshelf.xyz").href,
+		),
+	];
+}
+
+export function getListImageUrl(handle: string, slug: string) {
+	const url = new URL("/api/og", env.VITE_SITE_URL || "https://opnshelf.xyz");
+	url.searchParams.set("handle", handle);
+	url.searchParams.set("list", slug);
+	return url.href;
+}
+
+export function getSharingImageUrl(params: Record<string, string>) {
+	const url = new URL("/api/og", env.VITE_SITE_URL || "https://opnshelf.xyz");
+	for (const [key, value] of Object.entries(params))
+		url.searchParams.set(key, value.slice(0, 500));
+	return url.href;
 }

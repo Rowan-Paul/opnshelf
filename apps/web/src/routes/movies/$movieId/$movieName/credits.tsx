@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { useMovieDetails } from "#/lib/hooks";
+import { buildMoviePageMeta, getPageMeta } from "#/lib/media-meta";
 import { FullCredits } from "../../../../components/CreditsSections";
 
 export const Route = createFileRoute("/movies/$movieId/$movieName/credits")({
@@ -13,11 +14,19 @@ export const Route = createFileRoute("/movies/$movieId/$movieName/credits")({
 			}),
 		),
 	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ title: `Cast & crew — ${loaderData?.title ?? "Movie"} | Opnshelf` },
-		],
-	}),
+	head: ({ loaderData, match }) => {
+		const meta = buildMoviePageMeta(loaderData);
+		return {
+			meta: getPageMeta(
+				{
+					...meta,
+					title: `Cast & crew — ${loaderData?.title ?? "Media"} | Opnshelf`,
+					description: `Explore the cast and crew of ${loaderData?.title ?? "this title"} on Opnshelf.`,
+				},
+				match.pathname,
+			),
+		};
+	},
 	component: MovieCreditsPage,
 });
 

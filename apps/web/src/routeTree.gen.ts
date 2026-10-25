@@ -22,6 +22,7 @@ import { Route as SocialRouteImport } from './routes/social'
 import { Route as TosRouteImport } from './routes/tos'
 import { Route as TraktSyncRouteImport } from './routes/trakt-sync'
 import { Route as AdminFeaturedRouteImport } from './routes/admin.featured'
+import { Route as ApiOgRouteImport } from './routes/api.og'
 import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
@@ -123,6 +124,11 @@ const TraktSyncRoute = TraktSyncRouteImport.update({
 const AdminFeaturedRoute = AdminFeaturedRouteImport.update({
   id: '/admin/featured',
   path: '/admin/featured',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOgRoute = ApiOgRouteImport.update({
+  id: '/api/og',
+  path: '/api/og',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiReleaseNotesRoute = ApiReleaseNotesRouteImport.update({
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/tos': typeof TosRoute
   '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
+  '/api/og': typeof ApiOgRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/tos': typeof TosRoute
   '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
+  '/api/og': typeof ApiOgRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -436,6 +444,7 @@ export interface FileRoutesById {
   '/tos': typeof TosRoute
   '/trakt-sync': typeof TraktSyncRoute
   '/admin/featured': typeof AdminFeaturedRoute
+  '/api/og': typeof ApiOgRoute
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/trakt-sync'
     | '/admin/featured'
+    | '/api/og'
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
@@ -540,6 +550,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/trakt-sync'
     | '/admin/featured'
+    | '/api/og'
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
@@ -588,6 +599,7 @@ export interface FileRouteTypes {
     | '/tos'
     | '/trakt-sync'
     | '/admin/featured'
+    | '/api/og'
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
@@ -641,6 +653,7 @@ export interface RootRouteChildren {
   TosRoute: typeof TosRoute
   TraktSyncRoute: typeof TraktSyncRoute
   AdminFeaturedRoute: typeof AdminFeaturedRoute
+  ApiOgRoute: typeof ApiOgRoute
   ApiReleaseNotesRoute: typeof ApiReleaseNotesRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
@@ -749,6 +762,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/featured'
       fullPath: '/admin/featured'
       preLoaderRoute: typeof AdminFeaturedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/og': {
+      id: '/api/og'
+      path: '/api/og'
+      fullPath: '/api/og'
+      preLoaderRoute: typeof ApiOgRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/release-notes': {
@@ -1143,6 +1163,7 @@ const rootRouteChildren: RootRouteChildren = {
   TosRoute: TosRoute,
   TraktSyncRoute: TraktSyncRoute,
   AdminFeaturedRoute: AdminFeaturedRoute,
+  ApiOgRoute: ApiOgRoute,
   ApiReleaseNotesRoute: ApiReleaseNotesRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,

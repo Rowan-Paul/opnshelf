@@ -9,7 +9,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-
 import ConfirmDialog from "#/components/ConfirmDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewAuthorRating } from "#/components/ReviewAuthorRating";
@@ -18,6 +17,7 @@ import { ReviewDialog } from "#/components/ReviewDialog";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { useAuth } from "#/lib/auth-context";
 import { useInfiniteUserReviews } from "#/lib/hooks/useReviews";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 export const Route = createFileRoute("/profile/$handle/reviews")({
 	loader: async ({ context, params }) => {
@@ -32,11 +32,23 @@ export const Route = createFileRoute("/profile/$handle/reviews")({
 			return { profile: null };
 		}
 	},
-	head: ({ loaderData }) => {
+	head: ({ loaderData, match }) => {
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Reviews | Opnshelf` }],
+			meta: getPageMeta(
+				{
+					title: `${name}'s Reviews | Opnshelf`,
+					description: `View ${name}'s reviews on Opnshelf.`,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
+				},
+				match.pathname,
+			),
 		};
 	},
 	component: ProfileReviewsPage,
