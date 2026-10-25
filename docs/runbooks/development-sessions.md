@@ -121,10 +121,7 @@ port 3390 and a synthetic API on 3391, and audits Home, Shelf, Up Next, populate
 Search and a Show page three times each with mobile browser emulation. Install
 the pinned browser first with `pnpm exec puppeteer browsers install chrome`.
 On Debian/Ubuntu, `--install-deps` also installs system libraries and requires
-root. CI invokes the pinned Puppeteer CLI with `sudo` for installation only,
-preserving its explicit `PUPPETEER_CACHE_DIR` for the unprivileged audit step.
-`LHCI_RUNS=1 pnpm test:lighthouse` is a shorter local smoke check; CI always uses
-three runs.
+root. `LHCI_RUNS=1 pnpm test:lighthouse` is a shorter local smoke check.
 
 The browser uses sibling `web.opnshelf.localhost` and `api.opnshelf.localhost`
 hostnames, which Chrome resolves to loopback. The API session cookie is host-only
@@ -136,19 +133,12 @@ image reads still leave this stack. Analytics is disabled for this build.
 
 A custom Lighthouse audit checks the actual measured page's route, profile link
 and populated content on every run. Report validation also requires a successful
-browser session check and the expected API reads. Those validity checks block CI;
-performance, accessibility, best-practices and SEO scores initially report only.
+browser session check and the expected API reads. Those validity checks fail the
+local command; performance, accessibility, best-practices and SEO scores report only.
 This measures production frontend code with synthetic API latency, not deployed
 backend performance, OAuth correctness or native Mobile App performance.
 
-Reports stay in `.lighthouseci/` locally. GitHub Actions retains all HTML/JSON
-reports for seven days in `lighthouse-authenticated` and adds median scores to the
-job summary. Reports are not sent to temporary public storage. The runner owns a
-`stack:lighthouse` development lease and stops its own processes on completion or
-interruption. Do not run the UI scenario stack concurrently: it uses the same ports.
-
-The optional [hosted LHCI dashboard](../../services/lighthouse/README.md) stores
-history and compares PR builds with `develop`. Its standalone service has its own
-storage and authentication. GitHub artifacts remain available when dashboard
-uploads are unconfigured or skipped for fork PRs. Production/staging account
-sessions and deployment-triggered audits are a separate follow-up.
+Reports stay in `.lighthouseci/` locally. Lighthouse does not run in GitHub Actions
+and has no hosted Railway dashboard. The runner owns a `stack:lighthouse`
+development lease and stops its own processes on completion or interruption.
+Do not run the UI scenario stack concurrently: it uses the same ports.
