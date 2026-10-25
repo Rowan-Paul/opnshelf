@@ -20,6 +20,7 @@ import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { APP_BANNER_SCRIPT } from "#/lib/app-banner";
 import { AuthProvider } from "#/lib/auth-context";
 import { currentUserQueryOptions, fetchCurrentUser } from "#/lib/auth-query";
+import { getOpenGraphMetaDescriptors } from "#/lib/media-meta";
 import { SearchDialogProvider } from "#/lib/search-dialog-context";
 import { mayBeSignedIn, SIGNED_IN_HINT_QUERY_KEY } from "#/lib/session-hint";
 import {
@@ -91,6 +92,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	},
 	head: () => ({
 		meta: [
+			...getOpenGraphMetaDescriptors({
+				title: "Opnshelf - Track What You Watch",
+				description:
+					"Track what you watch and discover what others are watching. Log movies and shows, and share your taste with friends.",
+			}),
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
 			{ title: "Opnshelf - Track What You Watch" },

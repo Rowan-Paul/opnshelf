@@ -7,6 +7,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ListCardSkeleton } from "#/components/profile/list-skeletons";
 import { ProfileListsOverview } from "#/components/profile/ProfileListsOverview";
 import { useAuth } from "#/lib/auth-context";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 export const Route = createFileRoute("/profile/$handle/lists/")({
 	loader: async ({ context, params }) => {
@@ -32,11 +33,23 @@ export const Route = createFileRoute("/profile/$handle/lists/")({
 			return { profile: null };
 		}
 	},
-	head: ({ loaderData }) => {
+	head: ({ loaderData, match }) => {
 		const name =
 			loaderData?.profile?.displayName || loaderData?.profile?.handle || "User";
 		return {
-			meta: [{ title: `${name}'s Lists | Opnshelf` }],
+			meta: getPageMeta(
+				{
+					title: `${name}'s Lists | Opnshelf`,
+					description: `View ${name}'s lists on Opnshelf.`,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
+				},
+				match.pathname,
+			),
 		};
 	},
 	component: ListsIndexPage,

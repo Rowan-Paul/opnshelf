@@ -55,6 +55,7 @@ import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { useBatchRatingsQuery } from "#/lib/hooks/useRatings";
 import { ShowProgressScope } from "#/lib/hooks/useShowProgress";
+import { getPageMeta } from "#/lib/media-meta";
 import {
 	buildSearchLocation,
 	collectShownKeys,
@@ -89,17 +90,25 @@ export const Route = createFileRoute("/search")({
 	},
 	validateSearch: searchRouteSchema,
 	head: ({ match }) => {
-		const q = match.search.q;
+		const q = match.search.q?.trim();
+		const genre = match.search.genreName?.trim();
+		const title = q
+			? `${q} — Search | Opnshelf`
+			: genre
+				? `${genre} — Discover | Opnshelf`
+				: "Discover | Opnshelf";
+		const description = q
+			? `Find movies, shows, and people matching “${q}” on Opnshelf.`
+			: genre
+				? `Discover ${genre} movies and shows on Opnshelf.`
+				: "Discover movies and shows, explore what’s trending, and find your next watch on Opnshelf.";
+		const search = new URLSearchParams(
+			Object.entries(match.search)
+				.filter(([, value]) => value !== undefined)
+				.map(([key, value]) => [key, String(value)]),
+		);
 		return {
-			meta: [
-				{
-					title: q ? `${q} — Search | Opnshelf` : "Search | Opnshelf",
-				},
-				{
-					name: "description",
-					content: "Search for movies, TV shows, and people on Opnshelf.",
-				},
-			],
+			meta: getPageMeta({ title, description }, `${match.pathname}?${search}`),
 		};
 	},
 });

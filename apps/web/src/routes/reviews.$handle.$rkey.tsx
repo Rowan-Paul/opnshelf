@@ -10,6 +10,7 @@ import { MarkdownContent } from "#/components/MarkdownContent";
 import { ShareButton } from "#/components/ShareButton";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { formatDate } from "#/lib/date-utils";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 import { useHydrated } from "#/lib/prompt-state";
 
 export const Route = createFileRoute("/reviews/$handle/$rkey")({
@@ -34,22 +35,29 @@ export const Route = createFileRoute("/reviews/$handle/$rkey")({
 			throw error;
 		}
 	},
-	head: ({ loaderData }) => {
+	head: ({ loaderData, match }) => {
 		const title = loaderData?.review.reviewTitle ?? "Review";
 		const author =
 			loaderData?.review.author.displayName ||
 			loaderData?.review.author.handle ||
 			"";
 		return {
-			meta: [
-				{ title: `${title} | Opnshelf` },
+			meta: getPageMeta(
 				{
-					name: "description",
-					content:
-						loaderData?.review.description ??
-						`A review by ${author} on Opnshelf.`,
+					title: `${title} | Opnshelf`,
+					description: loaderData?.review.spoiler
+						? `A Review by ${author}. Contains spoilers.`
+						: (loaderData?.review.description ??
+							`A Review by ${author} on Opnshelf.`),
+					imageUrl: loaderData?.review
+						? getSharingImageUrl({
+								handle: loaderData.review.author.handle,
+								review: loaderData.review.rkey,
+							})
+						: undefined,
 				},
-			],
+				match.pathname,
+			),
 		};
 	},
 	component: CanonicalReviewPage,

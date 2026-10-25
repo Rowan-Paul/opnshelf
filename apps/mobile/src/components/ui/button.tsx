@@ -132,7 +132,9 @@ export const Button = forwardRef<ViewInstance, ButtonProps>(function Button(
 			{...props}
 		>
 			{leading}
+			{/* Android can wrap the last word below this fixed-height button. */}
 			<Text
+				numberOfLines={1}
 				className={cn(
 					"font-semibold",
 					muted ? DISABLED_PRIMARY.label : VARIANT[variant].label,

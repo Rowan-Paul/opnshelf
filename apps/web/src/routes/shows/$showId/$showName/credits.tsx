@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { useShowDetails } from "#/lib/hooks";
+import { buildShowPageMeta, getPageMeta } from "#/lib/media-meta";
 import { FullCredits } from "../../../../components/CreditsSections";
 
 export const Route = createFileRoute("/shows/$showId/$showName/credits")({
@@ -11,9 +12,19 @@ export const Route = createFileRoute("/shows/$showId/$showName/credits")({
 			showsControllerGetShowDetailsOptions({ path: { showId: params.showId } }),
 		),
 	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
-	head: ({ loaderData }) => ({
-		meta: [{ title: `Cast & crew — ${loaderData?.name ?? "Show"} | Opnshelf` }],
-	}),
+	head: ({ loaderData, match }) => {
+		const meta = buildShowPageMeta(loaderData);
+		return {
+			meta: getPageMeta(
+				{
+					...meta,
+					title: `Cast & crew — ${loaderData?.name ?? "Media"} | Opnshelf`,
+					description: `Explore the cast and crew of ${loaderData?.name ?? "this title"} on Opnshelf.`,
+				},
+				match.pathname,
+			),
+		};
+	},
 	component: ShowCreditsPage,
 });
 

@@ -53,6 +53,15 @@ beforeEach(() => {
 });
 
 describe("Button", () => {
+	it("keeps Android labels on one line instead of wrapping away the last word", () => {
+		const renderer = render(<Button label="Add to shelf" />);
+		expect(
+			renderer.root.find((node) => hostType(node) === "text").props
+				.numberOfLines,
+		).toBe(1);
+		expect(label(renderer)).toBe("Add to shelf");
+	});
+
 	it("presses", () => {
 		const onPress = vi.fn();
 		const renderer = render(<Button label="Save" onPress={onPress} />);

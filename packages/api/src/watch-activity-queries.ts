@@ -31,6 +31,7 @@ export const WATCH_ACTIVITY_QUERY_IDS = [
 	"shelfControllerGetUserActivitySummary",
 	"shelfControllerGetUserShelf",
 	// Shows the user tracks, their plays, and what comes next
+	"showsControllerGetShowProgress",
 	"showsControllerGetShowWatchHistory",
 	"showsControllerGetUserEpisodesPaginated",
 	"showsControllerGetUserReleaseCalendar",

@@ -1,13 +1,29 @@
+import { createRequire } from "node:module";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
+import { traceNodeModules } from "nf3";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const config = defineConfig({
+	ssr: { external: ["sharp"] },
+	environments: { nitro: { resolve: { external: ["sharp"] } } },
 	nitro: {
+		// The Vite builder leaves Sharp external but does not trace its native files.
+		hooks: {
+			compiled: async (nitro) => {
+				await traceNodeModules(
+					[createRequire(import.meta.url).resolve("sharp")],
+					{
+						outDir: nitro.options.output.serverDir,
+						fullTraceInclude: ["sharp"],
+					},
+				);
+			},
+		},
 		// Serve prebuilt .br/.gz variants of the hashed assets instead of raw
 		// bytes, so the origin never ships the entry bundle uncompressed.
 		compressPublicAssets: { gzip: true, brotli: true },

@@ -3,6 +3,7 @@ import {
 	ReleaseNotesPage,
 	ReleaseNotesSkeleton,
 } from "#/components/release-notes/ReleaseNotes";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 import { releaseNotesOptions } from "#/lib/release-notes-query";
 export const Route = createFileRoute("/whats-new/$slug")({
 	loader: async ({ context, params }) => {
@@ -13,14 +14,17 @@ export const Route = createFileRoute("/whats-new/$slug")({
 		if (!entry) throw notFound();
 		return entry;
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ title: `${loaderData?.title ?? "Release note"} | Opnshelf` },
+	head: ({ loaderData, match }) => ({
+		meta: getPageMeta(
 			{
-				name: "description",
-				content: loaderData?.summary ?? "Opnshelf Release Notes",
+				title: `${loaderData?.title ?? "Release Notes"} | Opnshelf`,
+				description: loaderData?.summary ?? "Opnshelf Release Notes",
+				imageUrl: loaderData
+					? getSharingImageUrl({ release: loaderData.slug })
+					: undefined,
 			},
-		],
+			match.pathname,
+		),
 	}),
 	pendingComponent: ReleaseNotesSkeleton,
 	notFoundComponent: Detail,

@@ -56,7 +56,7 @@ export function UpNextEpisodeCard({
 	);
 
 	return (
-		<View className="overflow-hidden rounded-xl border border-border bg-card">
+		<View className="flex-1 overflow-hidden rounded-xl border border-border bg-card">
 			<Link href={href} asChild>
 				<Pressable
 					accessibilityRole="link"
@@ -101,7 +101,7 @@ export function UpNextEpisodeCard({
 					</View>
 				</Pressable>
 			</Link>
-			<View className="gap-3 p-4">
+			<View className="flex-1 gap-3 p-4">
 				<Link href={href} asChild>
 					<Pressable accessibilityRole="link">
 						<Text
@@ -120,7 +120,7 @@ export function UpNextEpisodeCard({
 						{ep.overview}
 					</Text>
 				) : null}
-				<View className="flex-row flex-wrap items-center justify-between gap-2">
+				<View className="mt-auto flex-row flex-wrap items-center justify-between gap-2">
 					{!isOwner && viewerProgressQuery.isLoading ? (
 						<View className="h-3 w-28 animate-pulse rounded bg-background-subtle" />
 					) : progressData && progressData.episodesTotal > 0 ? (

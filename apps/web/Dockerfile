@@ -39,8 +39,11 @@ RUN pnpm --filter @opnshelf/web build
 
 # ---- runtime: self-contained Nitro node-server ----
 # The node-server preset traces its own node_modules into .output, so the runtime
-# image needs nothing but Node and the build output.
+# image needs Node, the build output, and the image renderer's font.
 FROM node:24.22.1-slim AS runtime
+# Font used by the server-rendered Open Graph PNGs.
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/apps/web/.output ./.output

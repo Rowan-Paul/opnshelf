@@ -156,6 +156,22 @@ describe("ShelfService", () => {
 		});
 	});
 
+	it("returns empty Shelf metadata with a clamped page size without reading rows", async () => {
+		mockPrismaService.trackedMovie.count.mockResolvedValue(0);
+		mockPrismaService.trackedEpisode.count.mockResolvedValue(0);
+
+		expect(await service.getUserShelf("did:plc:test", 99, 100)).toEqual({
+			items: [],
+			total: 0,
+			page: 1,
+			pageSize: 50,
+			totalPages: 0,
+			hasPreviousPage: false,
+			hasNextPage: false,
+		});
+		expect(mockPrismaService.$queryRaw).not.toHaveBeenCalled();
+	});
+
 	it.each(["asc", "desc"] as const)(
 		"should use deterministic %s ordering and the page window in the raw query",
 		async (sortOrder) => {
