@@ -17,7 +17,7 @@ import { ReviewDialog } from "#/components/ReviewDialog";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { useAuth } from "#/lib/auth-context";
 import { useInfiniteUserReviews } from "#/lib/hooks/useReviews";
-import { getPageMeta } from "#/lib/media-meta";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 export const Route = createFileRoute("/profile/$handle/reviews")({
 	loader: async ({ context, params }) => {
@@ -40,7 +40,12 @@ export const Route = createFileRoute("/profile/$handle/reviews")({
 				{
 					title: `${name}'s Reviews | Opnshelf`,
 					description: `View ${name}'s reviews on Opnshelf.`,
-					imageUrl: loaderData?.profile?.avatar || undefined,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
 				},
 				match.pathname,
 			),

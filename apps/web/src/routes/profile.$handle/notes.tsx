@@ -17,7 +17,7 @@ import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote } from "#/lib/hooks/useNotes";
-import { getPageMeta } from "#/lib/media-meta";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 export const Route = createFileRoute("/profile/$handle/notes")({
 	loader: async ({ context, params }) => {
 		try {
@@ -39,7 +39,12 @@ export const Route = createFileRoute("/profile/$handle/notes")({
 				{
 					title: `${name}'s Notes | Opnshelf`,
 					description: `View ${name}'s notes on Opnshelf.`,
-					imageUrl: loaderData?.profile?.avatar || undefined,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
 				},
 				match.pathname,
 			),

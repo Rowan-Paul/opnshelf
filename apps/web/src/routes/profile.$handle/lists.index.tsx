@@ -7,7 +7,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ListCardSkeleton } from "#/components/profile/list-skeletons";
 import { ProfileListsOverview } from "#/components/profile/ProfileListsOverview";
 import { useAuth } from "#/lib/auth-context";
-import { getPageMeta } from "#/lib/media-meta";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 export const Route = createFileRoute("/profile/$handle/lists/")({
 	loader: async ({ context, params }) => {
@@ -41,7 +41,12 @@ export const Route = createFileRoute("/profile/$handle/lists/")({
 				{
 					title: `${name}'s Lists | Opnshelf`,
 					description: `View ${name}'s lists on Opnshelf.`,
-					imageUrl: loaderData?.profile?.avatar || undefined,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
 				},
 				match.pathname,
 			),

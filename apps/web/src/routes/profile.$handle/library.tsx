@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ProfileLibraryPage } from "#/components/profile/ProfileLibraryPage";
 import { useAuth } from "#/lib/auth-context";
-import { getPageMeta } from "#/lib/media-meta";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 export const Route = createFileRoute("/profile/$handle/library")({
 	loader: async ({ context, params }) => {
@@ -26,7 +26,12 @@ export const Route = createFileRoute("/profile/$handle/library")({
 				{
 					title: `${name}'s Library | Opnshelf`,
 					description: `View ${name}'s library on Opnshelf.`,
-					imageUrl: loaderData?.profile?.avatar || undefined,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
 				},
 				match.pathname,
 			),

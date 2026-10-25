@@ -177,6 +177,10 @@ export async function openGraphImageResponse(request: Request) {
 	const slug = params.get("list");
 	const reviewKey = params.get("review");
 	const release = params.get("release");
+	if (
+		[handle, slug, reviewKey].some((value) => value === "." || value === "..")
+	)
+		return new Response("Invalid image parameters", { status: 400 });
 	let card: SharingCard | undefined;
 	let status = 200;
 	try {

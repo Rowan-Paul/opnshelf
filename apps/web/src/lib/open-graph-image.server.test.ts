@@ -244,6 +244,29 @@ describe("Open Graph image endpoint", () => {
 		expect([...data.subarray(bottom, bottom + 3)]).toEqual([0, 0, 255]);
 	});
 
+	it.each([
+		["handle", "."],
+		["handle", ".."],
+		["list", "."],
+		["list", ".."],
+		["review", "."],
+		["review", ".."],
+	])("rejects the %s dot segment %s before requesting public content", async (key, value) => {
+		const fetch = vi.fn();
+		vi.stubGlobal("fetch", fetch);
+		const params = new URLSearchParams({
+			handle: "test.example",
+			list: "favorites",
+			review: "fixture",
+		});
+		params.set(key, value);
+		const response = await openGraphImageResponse(
+			new Request(`https://opnshelf.xyz/api/og?${params}`),
+		);
+		expect(response.status).toBe(400);
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
 	it("rejects arbitrary image URLs instead of fetching them", async () => {
 		const fetch = vi.fn();
 		vi.stubGlobal("fetch", fetch);

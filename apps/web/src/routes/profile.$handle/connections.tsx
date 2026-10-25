@@ -17,7 +17,7 @@ import {
 	usePublicFollowers,
 	usePublicFollowing,
 } from "#/lib/hooks/usePublicProfile";
-import { getPageMeta } from "#/lib/media-meta";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 const connectionsSearchSchema = z.object({
 	tab: z._default(z.optional(z.enum(["followers", "following"])), "followers"),
@@ -44,7 +44,12 @@ export const Route = createFileRoute("/profile/$handle/connections")({
 				{
 					title: `${name}'s Connections | Opnshelf`,
 					description: `View ${name}'s connections on Opnshelf.`,
-					imageUrl: loaderData?.profile?.avatar || undefined,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
 				},
 				match.pathname,
 			),

@@ -16,7 +16,7 @@ import { UpNextEpisodeCard } from "#/components/UpNextEpisodeCard";
 import { UpNextServiceFilter } from "#/components/UpNextServiceFilter";
 import { useAuth } from "#/lib/auth-context";
 import { findShowProgress, useShowProgress } from "#/lib/hooks";
-import { getPageMeta } from "#/lib/media-meta";
+import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 const searchSchema = z.object({
 	services: z.optional(
@@ -51,7 +51,12 @@ export const Route = createFileRoute("/profile/$handle/up-next")({
 				{
 					title: `${name}'s Up Next | Opnshelf`,
 					description: `View ${name}'s up next on Opnshelf.`,
-					imageUrl: loaderData?.profile?.avatar || undefined,
+					imageUrl: loaderData?.profile
+						? getSharingImageUrl({
+								handle: loaderData.profile.handle,
+								view: "profile",
+							})
+						: undefined,
 				},
 				match.pathname,
 			),
