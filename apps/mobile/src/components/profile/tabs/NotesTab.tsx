@@ -193,10 +193,7 @@ function NoteCard({
 								hitSlop={8}
 								accessibilityRole="button"
 								accessibilityLabel="Edit note"
-								onPress={(e) => {
-									e.stopPropagation();
-									setEditorVisible(true);
-								}}
+								onPress={() => setEditorVisible(true)}
 								className="size-8 items-center justify-center rounded-md"
 							>
 								<Pencil color={colors.mutedForeground} size={16} />
@@ -206,10 +203,7 @@ function NoteCard({
 								accessibilityRole="button"
 								accessibilityLabel="Delete note"
 								disabled={deleteMutation.isPending}
-								onPress={(e) => {
-									e.stopPropagation();
-									confirmDelete();
-								}}
+								onPress={confirmDelete}
 								className="size-8 items-center justify-center rounded-md"
 							>
 								{deleteMutation.isPending ? (
