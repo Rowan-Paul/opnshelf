@@ -56,7 +56,10 @@ export function KeyboardSheetModal({
 		void Promise.race([
 			KeyboardController.dismiss(),
 			new Promise((resolve) => {
-				fallback = setTimeout(resolve, KEYBOARD_HIDE_FALLBACK_MS);
+				fallback = setTimeout(
+					() => resolve(undefined),
+					KEYBOARD_HIDE_FALLBACK_MS,
+				);
 			}),
 		]).finally(() => {
 			clearTimeout(fallback);
