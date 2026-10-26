@@ -133,6 +133,7 @@ vi.mock("@/components/detail/NoteButton", () => ({ NoteButton: () => null }));
 vi.mock("@/components/detail/OverviewSection", () => ({
 	OverviewSection: () => null,
 }));
+vi.mock("@/components/detail/PrevNextNav", () => ({ PrevNextNav: () => null }));
 vi.mock("@/components/detail/RateReviewButton", () => ({
 	RateReviewButton: () => null,
 }));

@@ -4,15 +4,7 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import {
-	AlertTriangle,
-	ChevronLeft,
-	ChevronRight,
-	Loader2,
-	Plus,
-	Star,
-	X,
-} from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	Dialog,
@@ -40,7 +32,7 @@ import {
 	buildEpisodePageMeta,
 	getOpenGraphMetaDescriptors,
 } from "#/lib/media-meta";
-import { buildSeasonUrl, buildShowUrl, slugifyName } from "#/lib/url-utils";
+import { buildEpisodeUrl, buildSeasonUrl, buildShowUrl } from "#/lib/url-utils";
 import CommunityReviews from "../../../../components/CommunityReviews";
 import DetailsCard from "../../../../components/DetailsCard";
 import ErrorState from "../../../../components/ErrorState";
@@ -48,6 +40,7 @@ import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
 import PersonGrid from "../../../../components/PersonGrid";
+import { PrevNextNav } from "../../../../components/PrevNextNav";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import { DetailPageSkeleton } from "../../../../components/skeletons";
@@ -269,16 +262,6 @@ function EpisodeDetailPage() {
 	const currentSeason = seasons.find((s) => s.season_number === seasonNum);
 	const currentSeasonEpisodeCount = currentSeason?.episode_count || 0;
 
-	const overallEpisodeNumber =
-		seasons
-			.filter((s) => s.season_number < seasonNum)
-			.reduce((sum, s) => sum + (s.episode_count || 0), 0) + episodeNum;
-
-	const totalEpisodesFromSeasons = seasons.reduce(
-		(sum, s) => sum + (s.episode_count || 0),
-		0,
-	);
-
 	let prevEpisode: { seasonNumber: number; episodeNumber: number } | null =
 		null;
 	if (episodeNum > 1) {
@@ -431,43 +414,36 @@ function EpisodeDetailPage() {
 				}
 				breadcrumbs={breadcrumbs}
 				currentProgress={
-					<div className="flex items-center gap-4 text-sm">
-						{prevEpisode && (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(prevEpisode.seasonNumber),
-									episodeNumber: String(prevEpisode.episodeNumber),
-								}}
-								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
-							>
-								<ChevronLeft className="size-4" />
-								Prev (S{prevEpisode.seasonNumber}E{prevEpisode.episodeNumber})
-							</Link>
-						)}
-						<span className="text-(--foreground-muted)">
-							Episode {overallEpisodeNumber} of{" "}
-							{totalEpisodesFromSeasons || "?"}
-						</span>
-						{nextEpisodeCtx && (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(nextEpisodeCtx.seasonNumber),
-									episodeNumber: String(nextEpisodeCtx.episodeNumber),
-								}}
-								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
-							>
-								Next (S{nextEpisodeCtx.seasonNumber}E
-								{nextEpisodeCtx.episodeNumber})
-								<ChevronRight className="size-4" />
-							</Link>
-						)}
-					</div>
+					<PrevNextNav
+						previous={
+							prevEpisode
+								? {
+										label: "Previous episode",
+										code: `S${prevEpisode.seasonNumber}E${prevEpisode.episodeNumber}`,
+										href: buildEpisodeUrl(
+											showId,
+											show.name,
+											prevEpisode.seasonNumber,
+											prevEpisode.episodeNumber,
+										),
+									}
+								: undefined
+						}
+						next={
+							nextEpisodeCtx
+								? {
+										label: "Next episode",
+										code: `S${nextEpisodeCtx.seasonNumber}E${nextEpisodeCtx.episodeNumber}`,
+										href: buildEpisodeUrl(
+											showId,
+											show.name,
+											nextEpisodeCtx.seasonNumber,
+											nextEpisodeCtx.episodeNumber,
+										),
+									}
+								: undefined
+						}
+					/>
 				}
 			/>
 
