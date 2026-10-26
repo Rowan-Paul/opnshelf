@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useReleaseNotes } from "@/lib/use-release-notes";
 
+// Updated with each Mobile release that has a corresponding Release Note.
+const INSTALLED_RELEASE_NOTE = "celebrate-your-watching";
+
 /** Holds the slot (and its height) while we learn whether there is news. */
 function Placeholder() {
 	return (
@@ -35,7 +38,8 @@ export function ReleaseNotePrompt() {
 	if (!user) return null;
 	if (notes.isPending || notes.readPending) return <Placeholder />;
 	const entry = notes.data?.[0];
-	if (!notes.unread || !entry) return null;
+	if (!notes.unread || !entry || entry.slug !== INSTALLED_RELEASE_NOTE)
+		return null;
 	const storageKey = `release-note-prompt-${user.did.replaceAll(":", "-")}-${entry.slug}`;
 	return (
 		<Announcement key={storageKey} storageKey={storageKey} entry={entry} />

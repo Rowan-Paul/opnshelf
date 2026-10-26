@@ -21,6 +21,11 @@ Use absolute HTTPS links and image URLs so they work on both clients.
    OTA availability needs explicit wording; a native version alone cannot prove
    an OTA has been installed. Do not announce a store feature as available while
    it is still awaiting review.
+   For a Mobile release with a dashboard announcement, set
+   `INSTALLED_RELEASE_NOTE` in `apps/mobile/src/components/home/release-note-prompt.tsx`
+   to the new slug in the Mobile update containing those changes. The card only
+   appears when the latest published note matches the installed bundle; update
+   the slug again for each subsequent Mobile announcement.
 4. Preview locally and run `pnpm --filter web run test`. The content tests validate
    drafts too. Temporarily change status locally to preview a draft, then restore
    it. Never commit a premature publication status to obtain a preview.
