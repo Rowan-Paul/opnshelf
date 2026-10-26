@@ -1,6 +1,6 @@
 import type { PublicUserProfileDto } from "@opnshelf/api";
 import { type Href, Link } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Lock } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
@@ -9,6 +9,7 @@ import { ProfileReviewRating } from "@/components/profile/ProfileReviewRating";
 import type { ProfileTab } from "@/components/profile/ProfileTabBar";
 import { StatsStrip } from "@/components/profile/StatsStrip";
 import { ReviewBody } from "@/components/ReviewBody";
+import { EmptyState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
 import {
@@ -183,7 +184,7 @@ export function OverviewTab({
 					</View>
 				</>
 			) : (
-				<Text className="text-muted-foreground">Watches are private.</Text>
+				<EmptyState variant="card" icon={Lock} message="Watches are private." />
 			)}
 			<ListPreview
 				title="Watchlist"

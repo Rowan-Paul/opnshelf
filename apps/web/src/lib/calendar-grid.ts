@@ -283,3 +283,46 @@ export function formatReleaseDate(dateKey: string, _timezone?: string): string {
 		day: "numeric",
 	});
 }
+
+/**
+ * Episode scope for a release row: "S1E5", "Season 2" or "Season Premiere".
+ * Same labels as the Mobile App's calendar rows and the Home Upcoming rows.
+ */
+export function getReleaseEpisodeInfo(
+	item: ReleaseCalendarItemDto,
+): string | undefined {
+	if (item.releaseKind === "episode" && item.seasonNumber !== undefined) {
+		if (item.episodeNumber !== undefined) {
+			return `S${item.seasonNumber}E${item.episodeNumber}`;
+		}
+		return `Season ${item.seasonNumber}`;
+	}
+	if (item.releaseKind === "show") return "Season Premiere";
+	return undefined;
+}
+
+/**
+ * "Today", "Tomorrow", "in N days" or "in N weeks" for a `YYYY-MM-DD` day key,
+ * and nothing for days already past, matching the Mobile App's calendar rows.
+ */
+export function formatRelativeReleaseDate(
+	dateKey: string,
+	today: Date = new Date(),
+): string | undefined {
+	const startOfToday = new Date(
+		today.getFullYear(),
+		today.getMonth(),
+		today.getDate(),
+	);
+	// Round, not floor: a DST transition makes one day 23 or 25 hours long.
+	const diffDays = Math.round(
+		(parseDateKey(dateKey).getTime() - startOfToday.getTime()) /
+			(1000 * 60 * 60 * 24),
+	);
+	if (diffDays < 0) return undefined;
+	if (diffDays === 0) return "Today";
+	if (diffDays === 1) return "Tomorrow";
+	if (diffDays < 7) return `in ${diffDays} days`;
+	const weeks = Math.ceil(diffDays / 7);
+	return weeks === 1 ? "in 1 week" : `in ${weeks} weeks`;
+}

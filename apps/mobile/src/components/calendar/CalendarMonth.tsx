@@ -71,10 +71,10 @@ function DayCellView({
 				{count > 0 ? (
 					<View className="flex-row items-center gap-1 pb-0.5">
 						{isMovie ? (
-							<View className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+							<View className="h-1.5 w-1.5 rounded-full bg-primary" />
 						) : null}
 						{isShow ? (
-							<View className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+							<View className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
 						) : null}
 						<Text className="text-[10px] text-muted-foreground">{count}</Text>
 					</View>

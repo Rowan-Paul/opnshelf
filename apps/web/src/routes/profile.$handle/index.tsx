@@ -11,6 +11,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { ReviewAuthorRating } from "#/components/ReviewAuthorRating";
 import { ReviewBody } from "#/components/ReviewBody";
 import { SpoilerShield } from "#/components/SpoilerShield";
@@ -260,7 +261,7 @@ function ProfileOverviewPage() {
 					</div>
 				</>
 			) : profile ? (
-				<p className="text-(--foreground-muted)">Watches are private.</p>
+				<PrivateNotice message="Watches are private." />
 			) : null}
 			{/* Lists Preview */}
 			<div className="grid gap-8 lg:grid-cols-2">

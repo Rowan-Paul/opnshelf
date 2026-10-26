@@ -14,6 +14,7 @@ import { useState } from "react";
 import { z } from "zod/mini";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { Button } from "#/components/ui/button";
 import {
 	DropdownMenu,
@@ -186,7 +187,7 @@ function ProfileShelfPage() {
 	const sections = groupShelfItemsByDate(items, sectionLabel);
 
 	if (profile && !canReadWatches)
-		return <p className="text-(--foreground-muted)">Watches are private.</p>;
+		return <PrivateNotice message="Watches are private." />;
 	return (
 		<div className="space-y-6">
 			{/* Title & Controls */}

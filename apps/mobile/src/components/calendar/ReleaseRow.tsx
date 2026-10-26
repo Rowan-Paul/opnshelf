@@ -41,7 +41,8 @@ function relativeDate(dateStr: string): string | undefined {
 	if (diffDays === 0) return "Today";
 	if (diffDays === 1) return "Tomorrow";
 	if (diffDays < 7) return `in ${diffDays} days`;
-	return `in ${Math.ceil(diffDays / 7)} weeks`;
+	const weeks = Math.ceil(diffDays / 7);
+	return weeks === 1 ? "in 1 week" : `in ${weeks} weeks`;
 }
 
 function hrefFor(item: ReleaseCalendarItemDto): Href | null {
@@ -65,6 +66,19 @@ function hrefFor(item: ReleaseCalendarItemDto): Href | null {
 	}
 	if (item.showId) return showHref(item.showId, item.title);
 	return null;
+}
+
+/** Loading placeholder with ReleaseRow's geometry: poster block + text lines. */
+export function ReleaseRowSkeleton() {
+	return (
+		<View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3">
+			<View className="h-20 w-14 rounded-lg bg-background-subtle" />
+			<View className="flex-1 gap-2">
+				<View className="h-3.5 w-3/5 rounded bg-background-subtle" />
+				<View className="h-2.5 w-2/5 rounded bg-background-subtle" />
+			</View>
+		</View>
+	);
 }
 
 /** A single upcoming release in the calendar week list. */

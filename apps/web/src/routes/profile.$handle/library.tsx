@@ -1,6 +1,7 @@
 import { usersControllerGetPublicProfileOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { ProfileLibraryPage } from "#/components/profile/ProfileLibraryPage";
 import { useAuth } from "#/lib/auth-context";
 import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
@@ -49,8 +50,6 @@ function LibraryPage() {
 	});
 
 	if (profile?.libraryPublic === false && user?.did !== profile.did)
-		return (
-			<p className="py-8 text-(--foreground-muted)">This Library is private.</p>
-		);
+		return <PrivateNotice message="This Library is private." />;
 	return <ProfileLibraryPage userDid={profile?.did || ""} />;
 }
