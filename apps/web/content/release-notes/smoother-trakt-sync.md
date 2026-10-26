@@ -1,9 +1,9 @@
 ---
 {
-  "status": "draft",
+  "status": "published",
   "slug": "smoother-trakt-sync",
   "title": "Smoother Trakt Sync and everyday navigation",
-  "publishedAt": "2026-10-25T20:00:00.000Z",
+  "publishedAt": "2026-10-26T09:13:28.009Z",
   "summary": "Improvements from Opnshelf 1.7.8 make Trakt Sync and Mobile navigation easier to use.",
   "platforms": {
     "web": {
