@@ -74,6 +74,7 @@ beforeEach(async () => {
 });
 afterEach(() => {
 	act(() => view.unmount());
+	vi.useRealTimers();
 });
 function modal() {
 	return view.root.findByType("modal" as never);
@@ -158,4 +159,31 @@ it("preserves the closing modal and ignores a send from an earlier opening", asy
 	expect(view.root.findByType("image" as never).props.source.uri).toBe(
 		"data:image/jpeg;base64,/9j/fresh",
 	);
+});
+
+it("opens text feedback after a capture timeout and ignores its late result", async () => {
+	vi.useFakeTimers();
+	let resolve!: (image: string) => void;
+	mocks.capture.mockReturnValue(
+		new Promise<string>((done) => {
+			resolve = done;
+		}),
+	);
+	await act(async () => open());
+	expect(modal().props.visible).toBe(false);
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(3000);
+	});
+	expect(modal().props.visible).toBe(true);
+	expect(mocks.error).toHaveBeenCalledOnce();
+	await submit();
+	expect(mocks.mutate.mock.calls[0][0].body.screenshot).toBeUndefined();
+	await act(async () => modal().props.onRequestClose());
+	mocks.capture.mockResolvedValue("/9j/fresh");
+	await act(async () => open());
+	await act(async () => resolve("/9j/stale"));
+	expect(view.root.findByType("image" as never).props.source.uri).toBe(
+		"data:image/jpeg;base64,/9j/fresh",
+	);
+	expect(vi.getTimerCount()).toBe(0);
 });

@@ -253,8 +253,9 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 		setScreenshot(undefined);
 		const screen = Dimensions.get("screen");
 		const width = Platform.OS === "ios" ? 540 / PixelRatio.get() : 540;
-		void Promise.resolve()
-			.then(() =>
+		let timeout: ReturnType<typeof setTimeout> | undefined;
+		void Promise.race([
+			Promise.resolve().then(() =>
 				captureScreen({
 					format: "jpg",
 					quality: 0.6,
@@ -262,7 +263,14 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 					height: Math.round((width * screen.height) / screen.width),
 					result: "base64",
 				}),
-			)
+			),
+			new Promise<string>((_, reject) => {
+				timeout = setTimeout(
+					() => reject(new Error("Screenshot timed out")),
+					3000,
+				);
+			}),
+		])
 			.then((image) => {
 				if (image.length > 80000) throw new Error("Screenshot too large");
 				setScreenshot(image);
@@ -272,7 +280,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 					"Couldn't attach a screenshot. You can still send feedback.",
 				),
 			)
-			.finally(() => setVisible(true));
+			.finally(() => {
+				clearTimeout(timeout);
+				setVisible(true);
+			});
 	}, [toast]);
 	const dismiss = () => {
 		// A finished send from an older opening must not close a new draft.
