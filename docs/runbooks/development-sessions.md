@@ -114,6 +114,11 @@ requests to another server. Unknown routes fail with an explicit 404. Data is
 in memory. Ctrl-C stops only the runner's child processes. After stopping Metro,
 reconnect a retained device to its usual server before handing it back.
 
+The `watch-completion` scenario starts Show 1399 with Episode 1 of its two-episode
+Season already watched. Open `/shows/1399/local-fixture-show/seasons/1` and log
+Episode 2 or mark the remaining Season watched to check completion confetti.
+Reset the scenario before repeating; rewatches must not replay the celebration.
+
 ## Authenticated Lighthouse
 
 `pnpm test:lighthouse` builds the production Web App, starts Nitro on loopback

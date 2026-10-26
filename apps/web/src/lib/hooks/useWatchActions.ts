@@ -26,6 +26,10 @@ import {
 import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
+import {
+	celebrateWatchCompletion,
+	readCompletionProgress,
+} from "#/lib/watch-completion";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
 // user's hourly PDS write budget and fail partway (see ADR-0009).
@@ -245,7 +249,14 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markEpisodeWatched = useMutation({
 		mutationKey: ["shows", showId, "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
-		onSuccess: (_data, variables) => {
+		onMutate: async () => ({
+			completionBefore: await readCompletionProgress(showId),
+		}),
+		onSuccess: (_data, variables, context) => {
+			void celebrateWatchCompletion(
+				context?.completionBefore,
+				variables.body.seasonNumber,
+			);
 			captureWatchLogged("show", "episode", variables.body.watchedAt);
 			toast.success("Episode added to shelf");
 			invalidateActivity();
@@ -299,7 +310,13 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markShowWatched = useMutation({
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
-		onSuccess: (data, variables) => {
+		onMutate: async () => ({
+			completionBefore: await readCompletionProgress(showId),
+		}),
+		onSuccess: (data, variables, context) => {
+			if (data.count > 0 && data.count === data.requested) {
+				void celebrateWatchCompletion(context?.completionBefore);
+			}
 			captureWatchLogged("show", "show", variables.body.watchedAt, data.count);
 			toastBulkResult(data, "Show added to shelf");
 			invalidateActivity();
@@ -330,7 +347,16 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markSeasonWatched = useMutation({
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
-		onSuccess: (data, variables) => {
+		onMutate: async () => ({
+			completionBefore: await readCompletionProgress(showId),
+		}),
+		onSuccess: (data, variables, context) => {
+			if (data.count > 0 && data.count === data.requested) {
+				void celebrateWatchCompletion(
+					context?.completionBefore,
+					variables.body.seasonNumber,
+				);
+			}
 			captureWatchLogged(
 				"show",
 				"season",

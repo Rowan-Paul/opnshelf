@@ -16,6 +16,7 @@ import {
 const spec = JSON.parse(readFileSync(join(root, "backend/openapi.json")));
 export const scenarios = [
 	"normal",
+ "watch-completion",
 	"native-tabs-guest",
 	"native-tabs-verify",
 	"native-tabs-avatar",
@@ -61,9 +62,10 @@ export function createScenarioServer(
  { webOrigin = "http://127.0.0.1:3390", respond } = {},
 ) {
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
+	const watchedEpisodes = new Set([1]);
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
+		completed = ["watch-completion", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
  fixtureSyncState = "idle",
  fixtureIssue = true,
  fixtureIgnored = false;
@@ -141,12 +143,13 @@ export function createScenarioServer(
 				return;
 			}
 			scenario = body.scenario;
+ watchedEpisodes.clear(); watchedEpisodes.add(1);
  fixtureSyncState = "idle";
  fixtureIssue = true;
  reviewQueue.forEach((item) => { item.ignored = false; item.resolved = false; });
  fixtureIgnored = false;
 			authorized = !["sheet-overlap", "delayed-auth"].includes(scenario);
-			completed = ["issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(scenario);
+			completed = ["watch-completion", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(scenario);
 			json({ scenario });
 			return;
 		}
@@ -460,6 +463,22 @@ export function createScenarioServer(
 			});
 			return;
 		}
+    if (scenario === "watch-completion") {
+      if (url.pathname === "/shows/progress") {
+        const count = watchedEpisodes.size;
+        const scope = { episodesWatched: count, episodesTotal: 2, remainingEpisodes: 2 - count, percentage: count * 50, state: count === 2 ? "complete" : "partial" };
+        json({ items: [{ showId: "1399", hasWatches: count > 0, ...scope, seasons: [{ seasonNumber: 1, ...scope }] }] }); return;
+      }
+      if (url.pathname === "/shows/watched" && req.method === "POST") {
+        watchedEpisodes.add(body.episodeNumber); json({}); return;
+      }
+      if (["/shows/season/watched", "/shows/show/watched"].includes(url.pathname) && req.method === "POST") {
+        watchedEpisodes.add(1); watchedEpisodes.add(2); json({ count: 2, requested: 2 }); return;
+      }
+      if (url.pathname.endsWith("/show/1399/history")) {
+        json([...watchedEpisodes].map(episodeNumber => ({ id: `watch-${episodeNumber}`, seasonNumber: 1, episodeNumber, watchedDate: "2026-01-01T12:00:00.000Z" }))); return;
+      }
+    }
 		if (url.pathname === "/shows/tmdb/1399") {
 			json({ ...sample(spec.components.schemas.TMDBShowDetailDto), id: 1399, name: "Local fixture show", overview: "A synthetic show for checking season navigation.", first_air_date: "2020-01-01", number_of_episodes: 2, number_of_seasons: 1, seasons: [{ id: 1, season_number: 1, name: "Season 1", episode_count: 2 }], credits: { cast: [], crew: [], cast_total: 0, crew_total: 0 } }); return;
 		}

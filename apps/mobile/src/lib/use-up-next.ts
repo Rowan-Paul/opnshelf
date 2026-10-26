@@ -11,6 +11,10 @@ import {
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import {
+	celebrateWatchCompletion,
+	readCompletionProgress,
+} from "@/lib/watch-completion";
 
 /**
  * The current user's "Up Next" queue — tracked shows with their next unwatched
@@ -60,7 +64,14 @@ export function useMarkUpNextEpisode() {
 	return useMutation({
 		mutationKey: ["shows", "upNext", "markEpisodeWatched"],
 		...showsControllerMarkWatchedMutation(),
-		onSuccess: () => {
+		onMutate: async (variables) => ({
+			completionBefore: await readCompletionProgress(variables.body.showId),
+		}),
+		onSuccess: (_data, variables, context) => {
+			void celebrateWatchCompletion(
+				context?.completionBefore,
+				variables.body.seasonNumber,
+			);
 			void Haptics.notificationAsync(
 				Haptics.NotificationFeedbackType.Success,
 			).catch(() => {});

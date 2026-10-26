@@ -23,6 +23,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "#/lib/auth-context";
+import {
+	celebrateWatchCompletion,
+	readCompletionProgress,
+} from "#/lib/watch-completion";
 
 // Movie detail hook
 export function useMovieDetails(movieId: string) {
@@ -160,14 +164,24 @@ export function useMarkEpisodeWatched() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
+		onMutate: async (variables) => ({
+			completionBefore: await readCompletionProgress(variables.body.showId),
+		}),
 		mutationKey: ["shows", "markEpisodeWatched"],
 		mutationFn: async (variables: {
 			body: { showId: string; seasonNumber: number; episodeNumber: number };
 		}) => {
-			const result = await showsControllerMarkWatched(variables);
+			const result = await showsControllerMarkWatched({
+				...variables,
+				throwOnError: true,
+			});
 			return result.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables, context) => {
+			void celebrateWatchCompletion(
+				context?.completionBefore,
+				variables.body.seasonNumber,
+			);
 			toast.success("Episode added to shelf");
 			invalidateWatchActivityQueries(queryClient);
 		},
