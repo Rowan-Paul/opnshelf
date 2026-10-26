@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { NotificationCollectionPage } from "./$id";
+import { Route } from "./$id";
 
 const mocks = vi.hoisted(() => ({
 	toggle: vi.fn(),
@@ -12,7 +12,10 @@ const mocks = vi.hoisted(() => ({
 	},
 }));
 vi.mock("@tanstack/react-router", () => ({
-	createFileRoute: () => () => ({ useParams: () => ({ id: "saved" }) }),
+	createFileRoute: () => (options: object) => ({
+		options,
+		useParams: () => ({ id: "saved" }),
+	}),
 	Link: ({
 		to,
 		children,
@@ -41,6 +44,10 @@ vi.mock("#/lib/hooks/useListActions", () => ({
 	useListActions: () => ({ toggleWatchlist: mocks.toggle, isPending: false }),
 }));
 afterEach(cleanup);
+
+// Not exported from the route file, so the router can split it into its own chunk.
+const NotificationCollectionPage = Route.options
+	.component as React.ComponentType;
 
 describe("notification collection", () => {
 	it("renders every title with its own link and Watchlist action", () => {

@@ -45,11 +45,11 @@ afterEach(() => {
 });
 
 describe("AccountDeletionGate", () => {
-	it("blocks the page for a job already running on the server (page reload)", () => {
+	it("blocks the page for a job already running on the server (page reload)", async () => {
 		mockUseQuery.mockReturnValue({ data: job({}), error: null });
 		render(<AccountDeletionGate />);
 
-		expect(screen.getByText("Deleting your account")).toBeTruthy();
+		expect(await screen.findByText("Deleting your account")).toBeTruthy();
 		expect(screen.getByText("Deleting movies…")).toBeTruthy();
 		expect(mockLogout).not.toHaveBeenCalled();
 	});
