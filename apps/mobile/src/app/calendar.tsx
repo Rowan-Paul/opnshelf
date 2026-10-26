@@ -170,7 +170,9 @@ export default function CalendarScreen() {
 
 	return (
 		<View className="flex-1 bg-background">
-			<Stack.Screen options={{ headerShown: true, title: "Calendar" }} />
+			<Stack.Screen
+				options={{ headerShown: true, title: "Release Calendar" }}
+			/>
 
 			<View className="flex-row items-center justify-center gap-2 border-border border-b px-4 py-3">
 				{(["week", "month"] as const).map((v) => {
@@ -216,7 +218,7 @@ export default function CalendarScreen() {
 						{headerTitle}
 					</Text>
 					<Text className="text-center text-muted-foreground text-xs">
-						Tap for today
+						Go to today
 					</Text>
 				</Pressable>
 				<Pressable
@@ -313,8 +315,8 @@ export default function CalendarScreen() {
 								<Text
 									className={
 										isToday
-											? "font-display-semibold text-base text-primary"
-											: "font-display-semibold text-base text-foreground"
+											? "text-display-3 text-primary"
+											: "text-display-3 text-foreground"
 									}
 								>
 									{formatDayLabel(day.date)}

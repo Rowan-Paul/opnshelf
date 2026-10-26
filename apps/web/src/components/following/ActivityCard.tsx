@@ -204,29 +204,33 @@ export function ActivityCard({
 							</Link>
 						)}
 
-					{/* Review rating and content */}
-					{activity.type === "review" && activity.rating && (
-						<div className="space-y-2">
-							<StarRating
-								value={activity.rating}
-								readOnly
-								size="md"
-								showValue
-							/>
-							{activity.reviewContent && (
-								<div className="relative z-10">
-									<SpoilerShield
-										spoiler={!!activity.reviewSpoiler}
-										authorDid={activity.actor.did}
-									>
-										<p className="line-clamp-3 text-(--foreground-muted) text-sm">
-											{activity.reviewContent}
-										</p>
-									</SpoilerShield>
-								</div>
-							)}
-						</div>
-					)}
+					{/* Review rating and content. A Review can exist without a
+					    Rating, so the text must not depend on one. */}
+					{activity.type === "review" &&
+						(activity.rating || activity.reviewContent) && (
+							<div className="space-y-2">
+								{activity.rating ? (
+									<StarRating
+										value={activity.rating}
+										readOnly
+										size="md"
+										showValue
+									/>
+								) : null}
+								{activity.reviewContent && (
+									<div className="relative z-10">
+										<SpoilerShield
+											spoiler={!!activity.reviewSpoiler}
+											authorDid={activity.actor.did}
+										>
+											<p className="line-clamp-3 text-(--foreground-muted) text-sm">
+												{activity.reviewContent}
+											</p>
+										</SpoilerShield>
+									</div>
+								)}
+							</div>
+						)}
 
 					{/* Description */}
 					{!bundled &&

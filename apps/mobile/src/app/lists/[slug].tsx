@@ -545,9 +545,10 @@ export default function ListDetailScreen() {
 							)
 						}
 						ListFooterComponent={
+							// Card-shaped placeholders, not a spinner, while more load.
 							isFetchingNextPage ? (
-								<View className="py-6">
-									<ActivityIndicator color={themeColors.mutedForeground} />
+								<View className="px-3 pt-2">
+									<PosterGridSkeleton rows={1} columns={numColumns} />
 								</View>
 							) : null
 						}

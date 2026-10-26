@@ -66,9 +66,11 @@ export function ActivityFeed({
 			return (
 				<div className="flex flex-col items-center justify-center py-12 text-center text-(--foreground-muted)">
 					<Activity className="mb-4 size-12 opacity-50" />
-					<p className="mb-2 font-medium text-lg">No activity in this circle</p>
+					<p className="mb-2 font-medium text-lg">
+						No activity from this Circle
+					</p>
 					<p className="text-sm">
-						Try another circle or add people to this one.
+						Try another Circle or add people to this one.
 					</p>
 					<div className="mt-4 flex flex-wrap justify-center gap-2">
 						<Link
@@ -77,7 +79,7 @@ export function ActivityFeed({
 							search={{ circleId: activeCircleId }}
 							className="btn btn-secondary"
 						>
-							Manage circle
+							Manage Circle
 						</Link>
 						<button
 							type="button"
@@ -96,7 +98,7 @@ export function ActivityFeed({
 				<Activity className="mb-4 size-12 opacity-50" />
 				<p className="mb-2 font-medium text-lg">No activity yet</p>
 				<p className="text-sm">
-					Follow people to see what they&apos;re watching
+					Follow people to see what they&apos;re watching.
 				</p>
 				<Link to="/social/find" className="btn btn-primary mt-4">
 					<UserPlus className="mr-2 size-4" />
