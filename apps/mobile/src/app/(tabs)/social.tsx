@@ -41,6 +41,7 @@ import {
 	useSuggestions,
 } from "@/lib/use-social";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 const PAGE_SIZE = 20;
 
@@ -50,6 +51,7 @@ const PAGE_SIZE = 20;
  * Circle and the feed's scroll position on return.
  */
 export default function SocialScreen() {
+	const themeColors = useThemeColors();
 	const insets = useSafeAreaInsets();
 	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
@@ -119,17 +121,15 @@ export default function SocialScreen() {
 		<RefreshControl
 			refreshing={refreshing}
 			onRefresh={onRefresh}
-			tintColor="#f3bc00"
-			colors={["#f3bc00"]}
+			tintColor={themeColors.accent}
+			colors={[themeColors.accent]}
 		/>
 	);
 
 	return (
 		<NativeTabScreen style={{ paddingTop: insets.top }}>
 			<TourAnchor id="social" className="px-4 pt-3 pb-3">
-				<Text className="font-bold font-display text-2xl text-foreground">
-					Social
-				</Text>
+				<Text className="text-display-2 text-foreground">Social</Text>
 				<Text className="text-muted-foreground text-sm">
 					Recent watches and reviews from people you follow
 				</Text>
@@ -212,6 +212,7 @@ export default function SocialScreen() {
 }
 
 function NoFollowsContent() {
+	const themeColors = useThemeColors();
 	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
 	const [query, setQuery] = useState("");
@@ -240,7 +241,7 @@ function NoFollowsContent() {
 			contentContainerStyle={{ paddingBottom }}
 		>
 			<View className="gap-1">
-				<Text className="font-display font-semibold text-foreground text-lg">
+				<Text className="font-display-semibold text-foreground text-lg">
 					Find people to follow
 				</Text>
 				<Text className="text-muted-foreground text-sm">
@@ -249,11 +250,11 @@ function NoFollowsContent() {
 				</Text>
 			</View>
 			<TextField
-				leading={<Search color="#94a3b8" size={18} />}
+				leading={<Search color={themeColors.mutedForeground} size={18} />}
 				trailing={
 					query.length > 0 ? (
 						<Pressable hitSlop={8} onPress={() => setQuery("")}>
-							<X color="#94a3b8" size={18} />
+							<X color={themeColors.mutedForeground} size={18} />
 						</Pressable>
 					) : null
 				}
@@ -264,7 +265,7 @@ function NoFollowsContent() {
 				autoCorrect={false}
 				returnKeyType="search"
 			/>
-			<Text className="font-display font-semibold text-base text-foreground">
+			<Text className="text-display-3 text-foreground">
 				{hasQuery ? "Search results" : "Suggested people"}
 			</Text>
 			{isLoading ? (
@@ -304,10 +305,11 @@ function SocialLink({
 	icon: LucideIcon;
 	label: string;
 }) {
+	const themeColors = useThemeColors();
 	return (
 		<Link href={href} asChild>
 			<Pressable className="flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5">
-				<Icon color="#94a3b8" size={16} />
+				<Icon color={themeColors.mutedForeground} size={16} />
 				<Text className="font-semibold text-foreground text-sm">{label}</Text>
 			</Pressable>
 		</Link>
@@ -332,10 +334,11 @@ function EmptyFeed({
 	activeCircleId?: string;
 	onShowAll: () => void;
 }) {
+	const themeColors = useThemeColors();
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
-			<MessageCircle color="#94a3b8" size={44} />
-			<Text className="text-center font-display font-semibold text-lg">
+			<MessageCircle color={themeColors.mutedForeground} size={44} />
+			<Text className="text-center font-display-semibold text-lg">
 				{activeCircleId ? "No activity from this Circle" : "No activity yet"}
 			</Text>
 			<Text className="text-center text-muted-foreground text-sm">
@@ -347,7 +350,7 @@ function EmptyFeed({
 				<View className="mt-2 flex-row gap-2">
 					<Link href={`/social/circles/${activeCircleId}` as const} asChild>
 						<Pressable className="flex-row items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5">
-							<Users color="#94a3b8" size={16} />
+							<Users color={themeColors.mutedForeground} size={16} />
 							<Text className="font-semibold text-foreground text-sm">
 								Manage Circle
 							</Text>

@@ -50,9 +50,42 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Fonts (theme-agnostic constants) */
+  /* Fonts (theme-agnostic constants). React Native cannot synthesize a weight
+   * for a registered custom font, so `font-bold` on `font-display` silently
+   * renders Medium. Each display weight is its own family, registered in
+   * src/app/_layout.tsx: use `font-display-semibold` / `font-display-bold`. */
   --font-sans: 'Inter';
   --font-display: 'PlusJakartaSans';
+  --font-display-semibold: 'PlusJakartaSans-SemiBold';
+  --font-display-bold: 'PlusJakartaSans-Bold';
+}
+
+/*
+ * Display headings, the mobile counterpart of the Web App's `text-display-*`
+ * (apps/web/src/styles.css). Sizes step down for phone widths; weights match.
+ *   1: hero / onboarding titles
+ *   2: screen titles
+ *   3: section headings
+ */
+@utility text-display-1 {
+  font-family: 'PlusJakartaSans-Bold';
+  font-size: 34px;
+  line-height: 40px;
+  letter-spacing: -0.6px;
+}
+
+@utility text-display-2 {
+  font-family: 'PlusJakartaSans-Bold';
+  font-size: 28px;
+  line-height: 34px;
+  letter-spacing: -0.4px;
+}
+
+@utility text-display-3 {
+  font-family: 'PlusJakartaSans-SemiBold';
+  font-size: 20px;
+  line-height: 26px;
+  letter-spacing: -0.2px;
 }
 
 @layer theme {
@@ -88,8 +121,10 @@
       --color-secondary-foreground: #0f172a;
       --color-muted: #f1f5f9;
       --color-muted-foreground: #64748b;
-      --color-destructive: #ef4444;
+      --color-destructive: #dc2626;
       --color-destructive-foreground: #ffffff;
+      --color-success: #16a34a;
+      --color-warning: #d97706;
       --color-input: #e2e8f0;
       --color-ring: #fcd34d;
 
@@ -133,6 +168,8 @@
       --color-muted-foreground: #94a3b8;
       --color-destructive: #ef4444;
       --color-destructive-foreground: #ffffff;
+      --color-success: #22c55e;
+      --color-warning: #f59e0b;
       --color-input: #1e293b;
       --color-ring: #d97706;
 

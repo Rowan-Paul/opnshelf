@@ -50,9 +50,7 @@ export function ListsTab({
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
 			<View className="gap-3">
-				<Text className="font-bold font-display text-2xl text-foreground">
-					Lists
-				</Text>
+				<Text className="text-display-2 text-foreground">Lists</Text>
 				{/* Nothing to sort with a single list. */}
 				{data && data.length > 1 ? (
 					<ListsSortButton

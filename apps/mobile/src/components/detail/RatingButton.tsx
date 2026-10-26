@@ -5,6 +5,7 @@ import { RatingSheet } from "@/components/detail/RatingSheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useReview } from "@/lib/use-review";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * "Rate" action for media detail screens: a compact tile (flex-1, so screens
@@ -22,6 +23,7 @@ export function RatingButton({
 	seasonNumber?: number;
 	episodeNumber?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const [sheetVisible, setSheetVisible] = useState(false);
 	const { rating, setRating, clearRating, isClearingRating } = useReview({
@@ -42,8 +44,8 @@ export function RatingButton({
 				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<Star
-					color={rated ? "#f3bc00" : "#94a3b8"}
-					fill={rated ? "#f3bc00" : "transparent"}
+					color={rated ? colors.accent : colors.mutedForeground}
+					fill={rated ? colors.accent : "transparent"}
 					size={18}
 				/>
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>

@@ -13,6 +13,7 @@ import { useNote } from "@/lib/use-note";
 import { useReview } from "@/lib/use-review";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Inline action layer for a feed card: a one-tap "Add to shelf" toggle plus a
@@ -34,6 +35,7 @@ export function MediaActionBar({
 	title: string;
 	episode?: { seasonNumber: number; episodeNumber: number };
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const isMovie = type === "movie" && !ep;
@@ -129,9 +131,9 @@ export function MediaActionBar({
 					style={{ opacity: isWatchPending ? 0.6 : 1 }}
 				>
 					{isWatchPending ? (
-						<ActivityIndicator size="small" color="#94a3b8" />
+						<ActivityIndicator size="small" color={colors.mutedForeground} />
 					) : watched ? (
-						<Check color="#94a3b8" size={15} strokeWidth={3} />
+						<Check color={colors.mutedForeground} size={15} strokeWidth={3} />
 					) : (
 						<Plus color="#3f2e00" size={15} strokeWidth={2.5} />
 					)}
@@ -152,7 +154,7 @@ export function MediaActionBar({
 					}}
 					className="size-8 items-center justify-center rounded-lg border border-border"
 				>
-					<MoreHorizontal color="#94a3b8" size={18} />
+					<MoreHorizontal color={colors.mutedForeground} size={18} />
 				</Pressable>
 			</View>
 

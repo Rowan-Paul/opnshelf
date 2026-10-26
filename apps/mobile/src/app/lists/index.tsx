@@ -15,8 +15,10 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { type ListsSort, sortLists } from "@/lib/lists-sort";
 import { useCreateList, useUserLists } from "@/lib/use-lists";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 export default function ListsScreen() {
+	const themeColors = useThemeColors();
 	const listStyle = useTwStyle("px-4 pb-8");
 	const {
 		data: lists,
@@ -75,8 +77,8 @@ export default function ListsScreen() {
 						onRefresh={() => {
 							void refetch();
 						}}
-						tintColor="#f3bc00"
-						colors={["#f3bc00"]}
+						tintColor={themeColors.accent}
+						colors={[themeColors.accent]}
 					/>
 				}
 			/>
@@ -91,7 +93,7 @@ export default function ListsScreen() {
 					title: "Lists",
 					headerRight: () => (
 						<Pressable hitSlop={8} onPress={() => setEditorVisible(true)}>
-							<Plus color="#94a3b8" size={22} />
+							<Plus color={themeColors.mutedForeground} size={22} />
 						</Pressable>
 					),
 				}}

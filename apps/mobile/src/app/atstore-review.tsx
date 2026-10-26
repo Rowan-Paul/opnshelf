@@ -14,10 +14,12 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog";
+import { useThemeColors } from "@/theme/colors";
 
 const PLATFORM = { platform: "mobile" } as const;
 
 export default function AtStoreReviewScreen() {
+	const colors = useThemeColors();
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const { showDialog } = useDialog();
@@ -82,9 +84,7 @@ export default function AtStoreReviewScreen() {
 			contentContainerStyle={{ padding: 20, paddingBottom: 36, gap: 24 }}
 		>
 			<View className="gap-2">
-				<Text className="font-bold font-display text-2xl text-foreground">
-					Review Opnshelf
-				</Text>
+				<Text className="text-display-2 text-foreground">Review Opnshelf</Text>
 				<Text className="text-muted-foreground text-sm leading-5">
 					Your review will appear on Opnshelf’s page at atstore.fyi.
 				</Text>
@@ -111,8 +111,8 @@ export default function AtStoreReviewScreen() {
 								className="rounded-lg p-1"
 							>
 								<Star
-									color={selected ? "#f3bc00" : "#94a3b8"}
-									fill={selected ? "#f3bc00" : "transparent"}
+									color={selected ? colors.accent : colors.mutedForeground}
+									fill={selected ? colors.accent : "transparent"}
 									size={34}
 								/>
 							</Pressable>

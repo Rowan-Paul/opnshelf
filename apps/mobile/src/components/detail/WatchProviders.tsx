@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth-context";
 import { COUNTRY_NAMES } from "@/lib/countries";
 import { posthog } from "@/lib/posthog";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 // Displayed at 40px; w92 keeps logos sharp on 2x screens without original files.
 const PROVIDER_LOGO_BASE = "https://image.tmdb.org/t/p/w92";
@@ -125,6 +126,7 @@ export function WatchProviders({
 	mediaType: "movie" | "show";
 	mediaId: string;
 }) {
+	const colors = useThemeColors();
 	const { user, isLoading: authLoading } = useAuth();
 	const { data: settings, isPending: settingsPending } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -176,7 +178,7 @@ export function WatchProviders({
 	return (
 		<View className="gap-4 px-4">
 			<View className="flex-row items-center justify-between">
-				<Text className="font-display font-semibold text-base text-foreground">
+				<Text className="font-display-semibold text-base text-foreground">
 					Where to Watch
 				</Text>
 				{availableCountries.length > 1 ? (
@@ -210,9 +212,9 @@ export function WatchProviders({
 								onPress={() => setShowRentBuy((v) => !v)}
 							>
 								{showRentBuy ? (
-									<ChevronDown color="#94a3b8" size={14} />
+									<ChevronDown color={colors.mutedForeground} size={14} />
 								) : (
-									<ChevronRight color="#94a3b8" size={14} />
+									<ChevronRight color={colors.mutedForeground} size={14} />
 								)}
 								<Text className="font-semibold text-[11px] text-foreground-subtle uppercase tracking-widest">
 									Rent & Buy

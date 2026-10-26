@@ -27,6 +27,7 @@ import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 const MAX_LENGTH = 20000;
 
@@ -88,6 +89,7 @@ export function ReviewEditorSheet({
 	onClearRating,
 	isClearingRating = false,
 }: ReviewEditorSheetProps) {
+	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	const formRef = useRef<ScrollViewInstance>(null);
 	const editorRef = useRef<MilkdownWebViewHandle>(null);
@@ -182,7 +184,7 @@ export function ReviewEditorSheet({
 						className="gap-4 rounded-t-2xl border border-border bg-card p-5"
 					>
 						<View className="flex-row items-center justify-between">
-							<Text className="font-bold font-display text-foreground text-lg">
+							<Text className="font-display-bold text-foreground text-lg">
 								{isEditing
 									? "Edit review"
 									: includesRating
@@ -191,7 +193,7 @@ export function ReviewEditorSheet({
 							</Text>
 
 							<Pressable hitSlop={8} onPress={onDismiss}>
-								<X color="#94a3b8" size={22} />
+								<X color={colors.mutedForeground} size={22} />
 							</Pressable>
 						</View>
 
@@ -226,7 +228,7 @@ export function ReviewEditorSheet({
 												className="flex-row items-center gap-1"
 												style={{ opacity: isClearingRating ? 0.6 : 1 }}
 											>
-												<StarOff color="#94a3b8" size={15} />
+												<StarOff color={colors.mutedForeground} size={15} />
 												<Text className="font-medium text-muted-foreground text-xs">
 													Clear
 												</Text>
@@ -328,7 +330,10 @@ export function ReviewEditorSheet({
 								<Switch
 									value={spoiler}
 									onValueChange={setSpoiler}
-									trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+									trackColor={{
+										false: colors.borderStrong,
+										true: colors.accent,
+									}}
 									thumbColor="#ffffff"
 								/>
 							</View>
@@ -351,7 +356,10 @@ export function ReviewEditorSheet({
 									<Switch
 										value={mirrorToBlog}
 										onValueChange={setMirrorToBlog}
-										trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+										trackColor={{
+											false: colors.borderStrong,
+											true: colors.accent,
+										}}
 										thumbColor="#ffffff"
 									/>
 								</View>
@@ -365,7 +373,10 @@ export function ReviewEditorSheet({
 									<Switch
 										value={postToBluesky}
 										onValueChange={setPostToBluesky}
-										trackColor={{ false: "#3f3f46", true: "#f3bc00" }}
+										trackColor={{
+											false: colors.borderStrong,
+											true: colors.accent,
+										}}
 										thumbColor="#ffffff"
 									/>
 								</View>
@@ -376,7 +387,7 @@ export function ReviewEditorSheet({
 									label="Delete review"
 									variant="destructive"
 									loading={isDeleting}
-									leading={<Trash2 color="#ef4444" size={18} />}
+									leading={<Trash2 color={colors.destructive} size={18} />}
 									onPress={onDelete}
 								/>
 							) : null}

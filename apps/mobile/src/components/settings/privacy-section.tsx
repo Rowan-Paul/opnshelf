@@ -27,6 +27,7 @@ import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
+import { useThemeColors } from "@/theme/colors";
 
 export function PrivacySection({
 	onboarding = false,
@@ -37,6 +38,7 @@ export function PrivacySection({
 	onContinue?: () => void;
 	listRkey?: string;
 }) {
+	const colors = useThemeColors();
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
 	const insets = useSafeAreaInsets();
@@ -359,7 +361,7 @@ export function PrivacySection({
 					{done ? (
 						<Check size={16} color="#16a34a" />
 					) : failed ? (
-						<CircleAlert size={16} color="#ef4444" />
+						<CircleAlert size={16} color={colors.destructive} />
 					) : (
 						<Text className="text-muted-foreground text-xs tabular-nums">
 							{moving.total != null && moving.copied >= moving.total
@@ -421,7 +423,7 @@ export function PrivacySection({
 						<Text
 							className={
 								onboarding
-									? "font-bold font-display text-3xl text-foreground"
+									? "font-display-bold text-3xl text-foreground"
 									: "font-semibold text-2xl text-foreground"
 							}
 						>
@@ -683,7 +685,7 @@ export function PrivacySection({
 								}`}
 							>
 								{progressState === "stopped" ? (
-									<CircleAlert size={20} color="#ef4444" />
+									<CircleAlert size={20} color={colors.destructive} />
 								) : progressState === "done" ? (
 									<Check size={20} color="#16a34a" />
 								) : target === "Public" ? (
@@ -695,7 +697,7 @@ export function PrivacySection({
 							<View className="flex-1 gap-0.5">
 								<Text
 									accessibilityRole="header"
-									className="font-bold font-display text-foreground text-lg"
+									className="font-display-bold text-foreground text-lg"
 								>
 									{progressTitle}
 								</Text>

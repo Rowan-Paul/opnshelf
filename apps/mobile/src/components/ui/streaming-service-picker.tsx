@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /** How many services show when nothing is typed. Three rows of four. */
 export const TOP_SERVICE_COUNT = 12;
@@ -125,6 +126,7 @@ export function StreamingServicePicker({
 	onToggle: (id: number) => void;
 	disabled?: boolean;
 }) {
+	const colors = useThemeColors();
 	const [query, setQuery] = useState("");
 	const { data, isLoading, isError, refetch } = useQuery({
 		...streamingServicesControllerListOptions({ query: { country } }),
@@ -178,11 +180,11 @@ export function StreamingServicePicker({
 	return (
 		<View className="gap-3">
 			<TextField
-				leading={<Search color="#94a3b8" size={18} />}
+				leading={<Search color={colors.mutedForeground} size={18} />}
 				trailing={
 					query.length > 0 ? (
 						<Pressable hitSlop={8} onPress={() => setQuery("")}>
-							<X color="#94a3b8" size={18} />
+							<X color={colors.mutedForeground} size={18} />
 						</Pressable>
 					) : null
 				}

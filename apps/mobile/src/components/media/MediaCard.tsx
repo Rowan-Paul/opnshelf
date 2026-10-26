@@ -15,7 +15,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { movieHref, showHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
-import { posterUrl } from "@/lib/tmdb";
+import { backdropUrl, posterUrl } from "@/lib/tmdb";
 import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useListMembership } from "@/lib/use-lists";
 import { useNote } from "@/lib/use-note";
@@ -26,6 +26,7 @@ import {
 } from "@/lib/use-show-progress";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
+import { useThemeColors } from "@/theme/colors";
 
 export type MediaCardItem = {
 	id: number;
@@ -59,6 +60,14 @@ export type MediaCardItem = {
 	label?: string;
 	/** Full watch timestamp shown by the dated Shelf timeline. */
 	timestamp?: string;
+	/**
+	 * `backdrop` renders a 16:9 image (the episode still, else the backdrop)
+	 * instead of the poster, matching the Web App's Your Shelf cards: rows of
+	 * episodes from one show otherwise repeat the same poster.
+	 */
+	layout?: "poster" | "backdrop";
+	/** Landscape image for `layout: "backdrop"`. Falls back to the poster. */
+	backdropPath?: string | null;
 };
 
 /**
@@ -188,6 +197,7 @@ function MediaCardBase({
 	onRemove?: () => void;
 	isRemoving?: boolean;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Link href={href(item)} asChild>
 			<Pressable
@@ -202,10 +212,20 @@ function MediaCardBase({
 				delayLongPress={300}
 			>
 				<View className="overflow-hidden rounded-lg border border-border bg-card">
-					<PosterImage
-						url={posterUrl(item.posterPath)}
-						className="aspect-2/3 w-full"
-					/>
+					{item.layout === "backdrop" ? (
+						<PosterImage
+							url={
+								backdropUrl(item.backdropPath, "w780") ??
+								posterUrl(item.posterPath)
+							}
+							className="aspect-video w-full"
+						/>
+					) : (
+						<PosterImage
+							url={posterUrl(item.posterPath)}
+							className="aspect-2/3 w-full"
+						/>
+					)}
 					{overlay}
 					<PosterProgress
 						progress={progress}
@@ -243,8 +263,10 @@ function MediaCardBase({
 				) : null}
 				<Text
 					className={`${item.timestamp ? "mt-0.5" : "mt-2"} font-medium text-foreground text-sm leading-5`}
-					style={{ minHeight: 40 }}
-					numberOfLines={2}
+					// Posters reserve two lines so a row's labels line up; wide
+					// backdrop cards fit the title on one.
+					style={item.layout === "backdrop" ? undefined : { minHeight: 40 }}
+					numberOfLines={item.layout === "backdrop" ? 1 : 2}
 				>
 					{item.title}
 				</Text>
@@ -274,7 +296,7 @@ function MediaCardBase({
 						) : null}
 						{item.rating && item.rating > 0 ? (
 							<View className="flex-row items-center gap-0.5">
-								<Star color="#f3bc00" fill="#f3bc00" size={11} />
+								<Star color={colors.accent} fill={colors.accent} size={11} />
 								<Text className="text-muted-foreground text-xs">
 									{item.rating.toFixed(1)}/10
 								</Text>

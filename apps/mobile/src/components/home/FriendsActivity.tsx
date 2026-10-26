@@ -3,7 +3,7 @@ import {
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, Users } from "lucide-react-native";
+import { MessageCircle } from "lucide-react-native";
 import { View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { ActivityRow } from "@/components/social/ActivityRow";
@@ -64,7 +64,7 @@ export function FriendsActivity() {
 
 	return (
 		<View>
-			<SectionHeader icon={Users} title="Social" href="/social" />
+			<SectionHeader title="Social" href="/social" />
 			{isLoading ? (
 				<FriendsActivitySkeleton />
 			) : recentItems.length === 0 ? (

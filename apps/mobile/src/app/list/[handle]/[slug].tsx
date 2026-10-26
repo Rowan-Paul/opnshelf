@@ -18,6 +18,7 @@ import { useProfileList, usePublicProfile } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Read-only public list screen, reachable for ANY user (own or someone else's).
@@ -31,6 +32,7 @@ import { useTwStyle } from "@/lib/use-tw-style";
  * handle), mirroring how the profile screen itself resolves a handle.
  */
 export default function PublicListScreen() {
+	const themeColors = useThemeColors();
 	const { handle: handleParam, slug } = useLocalSearchParams<{
 		handle: string;
 		slug: string;
@@ -128,8 +130,8 @@ export default function PublicListScreen() {
 							<RefreshControl
 								refreshing={refreshing}
 								onRefresh={onRefresh}
-								tintColor="#f3bc00"
-								colors={["#f3bc00"]}
+								tintColor={themeColors.accent}
+								colors={[themeColors.accent]}
 							/>
 						}
 						ListHeaderComponent={

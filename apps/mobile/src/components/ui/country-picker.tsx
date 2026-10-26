@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { COUNTRY_NAMES, SORTED_COUNTRIES } from "@/lib/countries";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Country selector: a tappable field that opens a modal with a search box and a
@@ -23,6 +24,7 @@ export function CountryPicker({
 	onChange: (code: string) => void;
 	disabled?: boolean;
 }) {
+	const colors = useThemeColors();
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
 	const insets = useSafeAreaInsets();
@@ -53,7 +55,7 @@ export function CountryPicker({
 				style={{ opacity: disabled ? 0.6 : 1 }}
 			>
 				<Text className="text-[16px] text-foreground">{selectedName}</Text>
-				<ChevronDown color="#94a3b8" size={18} />
+				<ChevronDown color={colors.mutedForeground} size={18} />
 			</Pressable>
 
 			<Modal
@@ -67,21 +69,21 @@ export function CountryPicker({
 					style={{ paddingTop: insets.top }}
 				>
 					<View className="flex-row items-center justify-between px-4 py-3">
-						<Text className="font-display font-semibold text-foreground text-lg">
+						<Text className="font-display-semibold text-foreground text-lg">
 							Streaming country
 						</Text>
 						<Pressable hitSlop={8} onPress={close}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
 					<View className="px-4 pb-3">
 						<TextField
-							leading={<Search color="#94a3b8" size={18} />}
+							leading={<Search color={colors.mutedForeground} size={18} />}
 							trailing={
 								query.length > 0 ? (
 									<Pressable hitSlop={8} onPress={() => setQuery("")}>
-										<X color="#94a3b8" size={18} />
+										<X color={colors.mutedForeground} size={18} />
 									</Pressable>
 								) : null
 							}
@@ -118,7 +120,9 @@ export function CountryPicker({
 									>
 										{name}
 									</Text>
-									{isSelected ? <Check color="#f3bc00" size={18} /> : null}
+									{isSelected ? (
+										<Check color={colors.accent} size={18} />
+									) : null}
 								</Pressable>
 							);
 						}}

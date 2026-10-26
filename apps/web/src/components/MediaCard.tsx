@@ -454,7 +454,7 @@ export default function MediaCard({
 										key: "globalRating",
 										node: (
 											<span className="flex items-center gap-1">
-												<Star className="size-3 fill-current text-yellow-500" />
+												<Star className="size-3 fill-current text-accent" />
 												{globalRating.toFixed(1)}/10
 											</span>
 										),
@@ -464,7 +464,7 @@ export default function MediaCard({
 										key: "tmdbRating",
 										node: (
 											<span className="flex items-center gap-1">
-												<Star className="size-3 fill-current text-yellow-500/60" />
+												<Star className="size-3 fill-current text-accent/60" />
 												{tmdbRating.toFixed(1)}/10
 											</span>
 										),

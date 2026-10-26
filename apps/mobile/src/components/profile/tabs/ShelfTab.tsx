@@ -24,6 +24,7 @@ import { useEndReached } from "@/lib/use-end-reached";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useInfiniteProfileShelf } from "@/lib/use-public-profile";
 import { useWatchActions } from "@/lib/use-watch-actions";
+import { useThemeColors } from "@/theme/colors";
 
 type Filter = "all" | "movie" | "episode";
 type SortOrder = "newest" | "oldest";
@@ -78,6 +79,7 @@ export function ShelfTab({
 	isOwner?: boolean;
 	initialFilter?: Filter;
 }) {
+	const colors = useThemeColors();
 	const [filter, setFilter] = useState<Filter>(initialFilter);
 	const [search, setSearch] = useState("");
 	const [showDividers, setShowDividers] = useState(true);
@@ -114,11 +116,11 @@ export function ShelfTab({
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
 			<TextField
-				leading={<Search color="#94a3b8" size={18} />}
+				leading={<Search color={colors.mutedForeground} size={18} />}
 				trailing={
 					search.length > 0 ? (
 						<Pressable hitSlop={8} onPress={() => setSearch("")}>
-							<X color="#94a3b8" size={18} />
+							<X color={colors.mutedForeground} size={18} />
 						</Pressable>
 					) : null
 				}
@@ -144,7 +146,10 @@ export function ShelfTab({
 								)}
 							>
 								{Icon ? (
-									<Icon color={isActive ? "#3f2e00" : "#94a3b8"} size={14} />
+									<Icon
+										color={isActive ? "#3f2e00" : colors.mutedForeground}
+										size={14}
+									/>
 								) : null}
 								<Text
 									className={cn(
@@ -167,11 +172,11 @@ export function ShelfTab({
 					accessibilityLabel="View options"
 					className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
 				>
-					<SlidersHorizontal color="#94a3b8" size={14} />
+					<SlidersHorizontal color={colors.mutedForeground} size={14} />
 					<Text className="font-medium text-muted-foreground text-sm">
 						View
 					</Text>
-					<ChevronDown color="#94a3b8" size={14} />
+					<ChevronDown color={colors.mutedForeground} size={14} />
 				</Pressable>
 			</View>
 
@@ -200,7 +205,7 @@ export function ShelfTab({
 						<View key={section.label} className="gap-3">
 							<Text
 								accessibilityRole="header"
-								className="border-border border-b pb-2 font-display font-semibold text-foreground text-lg"
+								className="border-border border-b pb-2 font-display-semibold text-foreground text-lg"
 							>
 								{section.label}
 							</Text>
@@ -301,6 +306,7 @@ function ShelfViewSheet({
 	sort: SortOrder;
 	onSortChange: (sort: SortOrder) => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Modal
 			visible={visible}
@@ -312,11 +318,11 @@ function ShelfViewSheet({
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							View
 						</Text>
 						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
@@ -335,7 +341,7 @@ function ShelfViewSheet({
 							Group by date
 						</Text>
 						{groupByDate ? (
-							<Check color="#f3bc00" size={18} strokeWidth={3} />
+							<Check color={colors.accent} size={18} strokeWidth={3} />
 						) : null}
 					</Pressable>
 
@@ -363,7 +369,7 @@ function ShelfViewSheet({
 										{option.label}
 									</Text>
 									{isActive ? (
-										<Check color="#f3bc00" size={18} strokeWidth={3} />
+										<Check color={colors.accent} size={18} strokeWidth={3} />
 									) : null}
 								</Pressable>
 							);

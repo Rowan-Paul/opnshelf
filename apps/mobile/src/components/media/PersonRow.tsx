@@ -5,6 +5,7 @@ import { ChevronRight, User } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Row for an app user (social) search result: avatar, display name, handle.
@@ -13,6 +14,7 @@ import { useTwStyle } from "@/lib/use-tw-style";
  * API, so they are coerced to strings defensively.
  */
 export function PersonRow({ person }: { person: SocialUserCardDto }) {
+	const colors = useThemeColors();
 	const avatarStyle = useTwStyle("size-11");
 	const displayName =
 		typeof person.displayName === "string" ? person.displayName : undefined;
@@ -30,7 +32,7 @@ export function PersonRow({ person }: { person: SocialUserCardDto }) {
 							contentFit="cover"
 						/>
 					) : (
-						<User color="#94a3b8" size={20} />
+						<User color={colors.mutedForeground} size={20} />
 					)}
 				</View>
 				<View className="min-w-0 flex-1">
@@ -44,7 +46,7 @@ export function PersonRow({ person }: { person: SocialUserCardDto }) {
 						@{person.handle}
 					</Text>
 				</View>
-				<ChevronRight color="#94a3b8" size={18} />
+				<ChevronRight color={colors.mutedForeground} size={18} />
 			</Pressable>
 		</Link>
 	);

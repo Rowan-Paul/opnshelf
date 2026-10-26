@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Pressable } from "react-native";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Optimistic follow/unfollow toggle. Holds local state so the tap feels
@@ -16,6 +17,7 @@ export function FollowButton({
 	following: boolean;
 	onToggle: (currentlyFollowing: boolean) => void;
 }) {
+	const colors = useThemeColors();
 	const [optimistic, setOptimistic] = useState(following);
 
 	useEffect(() => {
@@ -38,7 +40,7 @@ export function FollowButton({
 		>
 			{optimistic ? (
 				<>
-					<Check color="#94a3b8" size={14} strokeWidth={3} />
+					<Check color={colors.mutedForeground} size={14} strokeWidth={3} />
 					<Text className="font-medium text-muted-foreground text-xs">
 						Following
 					</Text>

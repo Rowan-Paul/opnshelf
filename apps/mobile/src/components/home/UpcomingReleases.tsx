@@ -5,6 +5,7 @@ import { ReleaseRow } from "@/components/calendar/ReleaseRow";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { Text } from "@/components/ui/text";
 import { useReleaseCalendar } from "@/lib/use-release-calendar";
+import { useThemeColors } from "@/theme/colors";
 
 /** Format a Date as a UTC `YYYY-MM-DD` calendar day for the calendar range. */
 function toIsoDay(date: Date): string {
@@ -19,6 +20,7 @@ function toIsoDay(date: Date): string {
  * full calendar screen.
  */
 export function UpcomingReleases() {
+	const colors = useThemeColors();
 	const today = new Date();
 	const twoWeeks = new Date(today);
 	twoWeeks.setDate(today.getDate() + 14);
@@ -39,7 +41,6 @@ export function UpcomingReleases() {
 	return (
 		<View>
 			<SectionHeader
-				icon={CalendarDays}
 				title="Upcoming"
 				right={
 					<Link href="/calendar" asChild>
@@ -47,7 +48,7 @@ export function UpcomingReleases() {
 							hitSlop={8}
 							className="flex-row items-center gap-1.5 rounded-lg border border-border px-3 py-1.5"
 						>
-							<CalendarDays color="#94a3b8" size={16} />
+							<CalendarDays color={colors.mutedForeground} size={16} />
 							<Text className="font-medium text-foreground text-sm">
 								Calendar
 							</Text>
@@ -87,9 +88,10 @@ export function UpcomingReleases() {
 }
 
 function EmptyCard({ text, icon }: { text: string; icon?: boolean }) {
+	const colors = useThemeColors();
 	return (
 		<View className="items-center gap-2 rounded-xl border border-border bg-card p-6">
-			{icon ? <Clock color="#94a3b8" size={28} /> : null}
+			{icon ? <Clock color={colors.mutedForeground} size={28} /> : null}
 			<Text className="text-center text-muted-foreground text-sm">{text}</Text>
 		</View>
 	);

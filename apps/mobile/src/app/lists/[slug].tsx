@@ -61,6 +61,7 @@ import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { webListUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 type MediaFilter = "all" | "movie" | "show" | "unwatched";
 
@@ -103,6 +104,7 @@ function ListItemCard({
 }
 
 export default function ListDetailScreen() {
+	const themeColors = useThemeColors();
 	const { showDialog } = useDialog();
 	const { slug, addInput, shortcutRequest } = useLocalSearchParams<{
 		slug: string;
@@ -312,22 +314,22 @@ export default function ListDetailScreen() {
 							? () => (
 									<View className="flex-row items-center gap-4">
 										<Pressable hitSlop={8} onPress={handleShare}>
-											<Share2 color="#94a3b8" size={20} />
+											<Share2 color={themeColors.mutedForeground} size={20} />
 										</Pressable>
 										<Pressable hitSlop={8} onPress={() => setAddVisible(true)}>
-											<Plus color="#94a3b8" size={22} />
+											<Plus color={themeColors.mutedForeground} size={22} />
 										</Pressable>
 										{canManage ? (
 											<Pressable
 												hitSlop={8}
 												onPress={() => setEditorVisible(true)}
 											>
-												<Pencil color="#94a3b8" size={20} />
+												<Pencil color={themeColors.mutedForeground} size={20} />
 											</Pressable>
 										) : null}
 										{canManage ? (
 											<Pressable hitSlop={8} onPress={confirmDelete}>
-												<Trash2 color="#ef4444" size={20} />
+												<Trash2 color={themeColors.destructive} size={20} />
 											</Pressable>
 										) : null}
 									</View>
@@ -340,7 +342,7 @@ export default function ListDetailScreen() {
 											disabled={reorder.isPending}
 										>
 											{reorder.isPending ? (
-												<ActivityIndicator color="#f3bc00" />
+												<ActivityIndicator color={themeColors.accent} />
 											) : (
 												<Text className="font-semibold text-base text-primary">
 													Done
@@ -422,8 +424,8 @@ export default function ListDetailScreen() {
 							<RefreshControl
 								refreshing={refreshing}
 								onRefresh={onRefresh}
-								tintColor="#f3bc00"
-								colors={["#f3bc00"]}
+								tintColor={themeColors.accent}
+								colors={[themeColors.accent]}
 							/>
 						}
 						onEndReachedThreshold={0.5}
@@ -435,11 +437,13 @@ export default function ListDetailScreen() {
 								<ListInfoCard {...list} showProgress={showProgress} isOwner />
 
 								<TextField
-									leading={<Search color="#94a3b8" size={18} />}
+									leading={
+										<Search color={themeColors.mutedForeground} size={18} />
+									}
 									trailing={
 										search.length > 0 ? (
 											<Pressable hitSlop={8} onPress={() => setSearch("")}>
-												<X color="#94a3b8" size={18} />
+												<X color={themeColors.mutedForeground} size={18} />
 											</Pressable>
 										) : null
 									}
@@ -455,7 +459,10 @@ export default function ListDetailScreen() {
 										onPress={() => setSortVisible(true)}
 										className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
 									>
-										<ArrowUpDown color="#94a3b8" size={14} />
+										<ArrowUpDown
+											color={themeColors.mutedForeground}
+											size={14}
+										/>
 										<Text className="font-medium text-muted-foreground text-sm">
 											{sortLabel(sort)}
 										</Text>
@@ -468,10 +475,17 @@ export default function ListDetailScreen() {
 											className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
 										>
 											{preparingReorder ? (
-												<ActivityIndicator color="#94a3b8" size="small" />
+												<ActivityIndicator
+													color={themeColors.mutedForeground}
+													size="small"
+												/>
 											) : (
 												<ListOrdered
-													color={sort === "position" ? "#94a3b8" : "#64748b"}
+													color={
+														sort === "position"
+															? themeColors.mutedForeground
+															: "#64748b"
+													}
 													size={14}
 												/>
 											)}
@@ -533,7 +547,7 @@ export default function ListDetailScreen() {
 						ListFooterComponent={
 							isFetchingNextPage ? (
 								<View className="py-6">
-									<ActivityIndicator color="#94a3b8" />
+									<ActivityIndicator color={themeColors.mutedForeground} />
 								</View>
 							) : null
 						}

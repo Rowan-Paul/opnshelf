@@ -8,6 +8,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { posterUrl } from "@/lib/tmdb";
 import { useWatchActions } from "@/lib/use-watch-actions";
+import { useThemeColors } from "@/theme/colors";
 
 export type SeasonCardData = {
 	showId: number;
@@ -51,6 +52,7 @@ function SeasonCardBase({
 	season: SeasonCardData;
 	toggle?: ReactNode;
 }) {
+	const colors = useThemeColors();
 	const meta = [
 		season.year,
 		season.progress
@@ -94,7 +96,7 @@ function SeasonCardBase({
 					) : null}
 				</View>
 				{toggle}
-				<ChevronRight color="#94a3b8" size={20} />
+				<ChevronRight color={colors.mutedForeground} size={20} />
 			</Pressable>
 		</Link>
 	);
@@ -102,6 +104,7 @@ function SeasonCardBase({
 
 /** Season row with an inline add/remove-to-shelf toggle for the whole season. */
 function SeasonCardWithActions({ season }: { season: SeasonCardData }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const showId = String(season.showId);
 	const episodeCount =
@@ -142,7 +145,7 @@ function SeasonCardWithActions({ season }: { season: SeasonCardData }) {
 						{season.progress?.episodesWatched}/{season.progress?.episodesTotal}
 					</Text>
 				) : (
-					<Plus color="#94a3b8" size={16} strokeWidth={2.5} />
+					<Plus color={colors.mutedForeground} size={16} strokeWidth={2.5} />
 				)}
 			</Pressable>
 		) : undefined;

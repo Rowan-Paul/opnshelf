@@ -3,6 +3,7 @@ import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useListMembership } from "@/lib/use-lists";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * First-class Watchlist + Favorites toggles for media detail screens. These are
@@ -23,6 +24,7 @@ export function WatchlistFavoritesButtons({
 	seasonNumber?: number;
 	episodeNumber?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const { memberships, toggle, isPending } = useListMembership({
 		mediaType,
@@ -47,8 +49,8 @@ export function WatchlistFavoritesButtons({
 				style={{ opacity: isPending ? 0.7 : 1 }}
 			>
 				<Bookmark
-					color={isInWatchlist ? "#f3bc00" : "#94a3b8"}
-					fill={isInWatchlist ? "#f3bc00" : "transparent"}
+					color={isInWatchlist ? colors.accent : colors.mutedForeground}
+					fill={isInWatchlist ? colors.accent : "transparent"}
 					size={18}
 				/>
 				<Text className="font-semibold text-foreground">
@@ -65,8 +67,8 @@ export function WatchlistFavoritesButtons({
 				}
 			>
 				<Heart
-					color={isInFavorites ? "#ef4444" : "#94a3b8"}
-					fill={isInFavorites ? "#ef4444" : "transparent"}
+					color={isInFavorites ? colors.destructive : colors.mutedForeground}
+					fill={isInFavorites ? colors.destructive : "transparent"}
 					size={20}
 				/>
 			</Pressable>

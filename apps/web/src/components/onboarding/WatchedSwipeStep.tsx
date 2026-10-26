@@ -152,8 +152,8 @@ export function WatchedSwipeStep({
 	if (!current) {
 		return (
 			<div className="card p-8 text-center">
-				<div className="mx-auto flex size-16 items-center justify-center rounded-full bg-green-500/10">
-					<Check className="size-8 text-green-500" />
+				<div className="mx-auto flex size-16 items-center justify-center rounded-full bg-success/10">
+					<Check className="size-8 text-success" />
 				</div>
 				<h2 className="mt-5 text-display-3">That is the stack</h2>
 				<p className="mt-2 text-(--foreground-muted) text-sm">
@@ -266,7 +266,7 @@ export function WatchedSwipeStep({
 					disabled={isPending}
 					aria-label="Skip this title"
 				>
-					<X className="size-5 text-red-500" /> Skip
+					<X className="size-5 text-destructive" /> Skip
 				</button>
 				<button
 					type="button"

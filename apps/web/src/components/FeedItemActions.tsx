@@ -134,7 +134,7 @@ export default function FeedItemActions(props: FeedItemActionsProps) {
 				disabled={isShelfPending}
 				className={`btn btn-sm gap-1.5 ${
 					isInShelf
-						? "border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
+						? "border-success/20 bg-success/10 text-success hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
 						: "btn-secondary"
 				}`}
 			>

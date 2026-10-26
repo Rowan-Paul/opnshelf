@@ -102,6 +102,9 @@ vi.mock("@/lib/use-show-progress", () => ({
 	findShowProgress: () => undefined,
 }));
 vi.mock("@/lib/use-up-next", () => ({ useUpNext: () => ({ items: [] }) }));
+vi.mock("@/lib/auth-context", () => ({
+	useAuth: () => ({ isAuthenticated: false }),
+}));
 vi.mock("@/components/detail/AddToLibraryButton", () => ({
 	AddToLibraryButton: () => null,
 }));

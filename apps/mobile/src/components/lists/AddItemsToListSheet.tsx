@@ -20,6 +20,7 @@ import { posthog } from "@/lib/posthog";
 import { posterUrl, yearFromDate } from "@/lib/tmdb";
 import { useDebounce } from "@/lib/use-debounce";
 import { useAddListItem, useRemoveListItem } from "@/lib/use-lists";
+import { useThemeColors } from "@/theme/colors";
 
 // Ponytail ceiling: v1 adds whole movies/shows only — no season/episode scoping.
 // The search endpoint only returns movie/tv results, and the add mutation is
@@ -70,6 +71,7 @@ export function AddItemsToListSheet({
 	initialInput?: string;
 	confirmBeforeAdd?: boolean;
 }) {
+	const colors = useThemeColors();
 	const input = initialInput ? parseWatchlistInput(initialInput) : null;
 	const [target, setTarget] = useState(
 		input && "mediaId" in input ? input : null,
@@ -191,20 +193,20 @@ export function AddItemsToListSheet({
 				<Pressable className="flex-1" onPress={handleDismiss} />
 				<View className="h-[80%] gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							Add items
 						</Text>
 						<Pressable hitSlop={8} onPress={handleDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
 					<TextField
-						leading={<Search color="#94a3b8" size={18} />}
+						leading={<Search color={colors.mutedForeground} size={18} />}
 						trailing={
 							query.length > 0 ? (
 								<Pressable hitSlop={8} onPress={() => setQuery("")}>
-									<X color="#94a3b8" size={18} />
+									<X color={colors.mutedForeground} size={18} />
 								</Pressable>
 							) : null
 						}
@@ -294,7 +296,7 @@ export function AddItemsToListSheet({
 							</View>
 						) : results.length === 0 ? (
 							<View className="items-center py-8">
-								<SearchX color="#94a3b8" size={28} />
+								<SearchX color={colors.mutedForeground} size={28} />
 								<Text className="mt-2 text-muted-foreground text-sm">
 									Nothing matched “{debouncedQuery}”.
 								</Text>
@@ -333,6 +335,7 @@ function SearchResultRow({
 	onToggle: () => void;
 	disabled?: boolean;
 }) {
+	const colors = useThemeColors();
 	const isMovie = result.media_type === "movie";
 	const title = result.title || result.name || "Untitled";
 	const year = yearFromDate(
@@ -368,7 +371,7 @@ function SearchResultRow({
 				{added ? (
 					<Check color="#3f2e00" size={18} strokeWidth={3} />
 				) : (
-					<Plus color="#94a3b8" size={18} strokeWidth={2.5} />
+					<Plus color={colors.mutedForeground} size={18} strokeWidth={2.5} />
 				)}
 			</Pressable>
 		</View>

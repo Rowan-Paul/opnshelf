@@ -135,7 +135,7 @@ function MovieDetailPage() {
 			<ErrorState
 				message="Failed to load movie"
 				backTo="/"
-				backLabel="Back to Dashboard"
+				backLabel="Back to Home"
 			/>
 		);
 	}
@@ -176,11 +176,11 @@ function MovieDetailPage() {
 				title={movie.title}
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
-				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
+				backLabel="Back to Home"
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
-							<Star className="size-4 fill-yellow-500 text-yellow-500" />
+							<Star className="size-4 fill-accent text-accent" />
 							<span className="font-semibold">
 								{(
 									mediaRating?.averageRating ?? Number(movie.vote_average)
@@ -220,7 +220,7 @@ function MovieDetailPage() {
 										}
 									}}
 									disabled={isUnmarkMoviePending}
-									className="btn gap-2 border-green-500/20 bg-green-500/10 text-green-600 hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-600"
+									className="btn gap-2 border-success/20 bg-success/10 text-success hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
 								>
 									{isUnmarkMoviePending ? (
 										<>
@@ -375,7 +375,7 @@ function MovieDetailPage() {
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
-							<AlertTriangle className="size-5 text-amber-500" />
+							<AlertTriangle className="size-5 text-warning" />
 							Remove all watches?
 						</DialogTitle>
 						<DialogDescription>
@@ -399,7 +399,7 @@ function MovieDetailPage() {
 								setConfirmRemoveOpen(false);
 							}}
 							disabled={isUnmarkMoviePending}
-							className="btn bg-red-600 text-white hover:bg-red-700"
+							className="btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
 						>
 							{isUnmarkMoviePending ? (
 								<>

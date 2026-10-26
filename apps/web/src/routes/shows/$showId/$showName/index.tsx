@@ -98,7 +98,12 @@ function ShowDetailPage() {
 		error: showError,
 	} = useShowDetails(showId);
 
-	const { data: upNextData } = useUserUpNext(userDid, showId);
+	// The Continue link's destination comes from Up Next, so the actions keep
+	// their skeleton until it loads instead of briefly offering episode 1.
+	const { data: upNextData, isLoading: isUpNextLoading } = useUserUpNext(
+		userDid,
+		showId,
+	);
 	const { data: discoverShowsData } = useShowRecommendations(showId);
 	const {
 		data: showProgressData,
@@ -147,7 +152,7 @@ function ShowDetailPage() {
 		if (isTracking && uniqueEpisodesWatched > 0) {
 			return "Rewatch from start";
 		}
-		return "Start Watching";
+		return "Start watching";
 	};
 
 	const firstSeasonNumber =
@@ -195,7 +200,7 @@ function ShowDetailPage() {
 			<ErrorState
 				message="Failed to load show"
 				backTo="/"
-				backLabel="Back to Dashboard"
+				backLabel="Back to Home"
 			/>
 		);
 	}
@@ -252,13 +257,14 @@ function ShowDetailPage() {
 					// A pending session check is probably a signed-in reader too
 					// (ADR 0039).
 					authLoading ||
-					(isAuthenticated && isProgressPending && !isProgressError)
+					(isAuthenticated &&
+						((isProgressPending && !isProgressError) || isUpNextLoading))
 				}
-				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
+				backLabel="Back to Home"
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
-							<Star className="size-4 fill-yellow-500 text-yellow-500" />
+							<Star className="size-4 fill-accent text-accent" />
 							<span className="font-semibold">
 								{(mediaRating?.averageRating ?? show.vote_average)?.toFixed(
 									1,
@@ -288,7 +294,8 @@ function ShowDetailPage() {
 				}
 				actions={
 					authLoading ||
-					(isAuthenticated && isProgressPending && !isProgressError) ? (
+					(isAuthenticated &&
+						((isProgressPending && !isProgressError) || isUpNextLoading)) ? (
 						<MediaHeroActionsSkeleton />
 					) : isAuthenticated ? (
 						<>

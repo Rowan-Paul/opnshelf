@@ -8,6 +8,7 @@ import { ReleaseRow } from "@/components/calendar/ReleaseRow";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useReleaseCalendar } from "@/lib/use-release-calendar";
+import { useThemeColors } from "@/theme/colors";
 
 type CalendarView = "week" | "month";
 
@@ -79,6 +80,7 @@ function releaseRowKey(release: ReleaseCalendarItemDto): string {
 }
 
 export default function CalendarScreen() {
+	const themeColors = useThemeColors();
 	const [view, setView] = useState<CalendarView>("week");
 	const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
 	const [monthStart, setMonthStart] = useState(() => getMonthStart(new Date()));
@@ -116,8 +118,8 @@ export default function CalendarScreen() {
 			onRefresh={() => {
 				void refetch();
 			}}
-			tintColor="#f3bc00"
-			colors={["#f3bc00"]}
+			tintColor={themeColors.accent}
+			colors={[themeColors.accent]}
 		/>
 	);
 
@@ -207,10 +209,10 @@ export default function CalendarScreen() {
 					}
 					className="h-10 w-10 items-center justify-center rounded-lg border border-border"
 				>
-					<ChevronLeft color="#94a3b8" size={20} />
+					<ChevronLeft color={themeColors.mutedForeground} size={20} />
 				</Pressable>
 				<Pressable onPress={goToToday}>
-					<Text className="text-center font-display font-semibold text-base text-foreground">
+					<Text className="text-center font-display-semibold text-base text-foreground">
 						{headerTitle}
 					</Text>
 					<Text className="text-center text-muted-foreground text-xs">
@@ -224,7 +226,7 @@ export default function CalendarScreen() {
 					}
 					className="h-10 w-10 items-center justify-center rounded-lg border border-border"
 				>
-					<ChevronRight color="#94a3b8" size={20} />
+					<ChevronRight color={themeColors.mutedForeground} size={20} />
 				</Pressable>
 			</View>
 
@@ -254,7 +256,7 @@ export default function CalendarScreen() {
 					/>
 
 					<View className="gap-2">
-						<Text className="font-display font-semibold text-base text-foreground">
+						<Text className="font-display-semibold text-base text-foreground">
 							{selectedDayKey
 								? formatDayLabel(new Date(`${selectedDayKey}T00:00:00`))
 								: "Releases"}
@@ -311,8 +313,8 @@ export default function CalendarScreen() {
 								<Text
 									className={
 										isToday
-											? "font-display font-semibold text-base text-primary"
-											: "font-display font-semibold text-base text-foreground"
+											? "font-display-semibold text-base text-primary"
+											: "font-display-semibold text-base text-foreground"
 									}
 								>
 									{formatDayLabel(day.date)}

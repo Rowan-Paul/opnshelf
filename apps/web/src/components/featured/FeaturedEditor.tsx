@@ -653,7 +653,7 @@ function EntryForm({
 				</div>
 			</fieldset>
 			{error && (
-				<p role="alert" className="mt-4 text-red-500">
+				<p role="alert" className="mt-4 text-destructive">
 					{error}
 				</p>
 			)}

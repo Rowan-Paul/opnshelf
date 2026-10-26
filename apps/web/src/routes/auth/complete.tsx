@@ -111,14 +111,14 @@ function AuthCompletePage() {
 
 				{status === "success" && (
 					<>
-						<CheckCircle className="mx-auto size-16 text-green-500" />
+						<CheckCircle className="mx-auto size-16 text-success" />
 						<p className="mt-6 text-(--foreground-muted)">Redirecting...</p>
 					</>
 				)}
 
 				{status === "error" && (
 					<>
-						<XCircle className="mx-auto size-16 text-red-500" />
+						<XCircle className="mx-auto size-16 text-destructive" />
 						<h1 className="mt-6 text-display-3">Sign In Failed</h1>
 						<p className="mt-2 text-(--foreground-muted)">{errorMessage}</p>
 						<a href="/login" className="btn btn-primary mt-6 inline-flex">

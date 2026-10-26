@@ -7,6 +7,7 @@ import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
+import { useThemeColors } from "@/theme/colors";
 
 /** Format a "YYYY-MM-DD" calendar day as e.g. "Thu, Jun 20" (UTC, no drift). */
 function formatDayLabel(date: string): string {
@@ -45,6 +46,7 @@ export function StatsStrip({
 	reviewsHref?: Href;
 	isLoading: boolean;
 }) {
+	const colors = useThemeColors();
 	if (isLoading) {
 		return <View className="h-32 rounded-xl border border-border bg-card" />;
 	}
@@ -58,7 +60,7 @@ export function StatsStrip({
 			<View>
 				<View className="mb-3 flex-row items-baseline justify-between">
 					<View className="flex-row items-center gap-1.5">
-						<Clock color="#f3bc00" size={15} />
+						<Clock color={colors.accent} size={15} />
 						<Text className="font-medium text-muted-foreground text-sm">
 							Last 30 days
 						</Text>
@@ -70,25 +72,29 @@ export function StatsStrip({
 				<ActivityGraph data={days} />
 			</View>
 
-			{/* Headline stats */}
-			<View className="flex-row flex-wrap items-center gap-6 border-border border-t pt-4">
+			{/* Headline stats: the most-watched show on its own line, then the
+			    three numbers in equal columns. Wrapping them all in one flex row
+			    left a lone number on the first line at phone widths. */}
+			<View className="gap-4 border-border border-t pt-4">
 				{mostWatchedShow ? (
 					<MostWatchedShowStat show={mostWatchedShow} />
 				) : null}
-				<NumberStat label="Added this month" value={watchedThisMonth} />
-				<NumberStat
-					label="Watch streak"
-					value={`${watchStreak} ${watchStreak === 1 ? "day" : "days"}`}
-				/>
-				{reviewsHref ? (
-					<Link href={reviewsHref} asChild>
-						<Pressable>
-							<NumberStat label="Reviews" value={reviewsCount} />
-						</Pressable>
-					</Link>
-				) : (
-					<NumberStat label="Reviews" value={reviewsCount} />
-				)}
+				<View className="flex-row gap-4">
+					<NumberStat label="Added this month" value={watchedThisMonth} />
+					<NumberStat
+						label="Watch streak"
+						value={`${watchStreak} ${watchStreak === 1 ? "day" : "days"}`}
+					/>
+					{reviewsHref ? (
+						<Link href={reviewsHref} asChild>
+							<Pressable className="flex-1">
+								<NumberStat label="Reviews" value={reviewsCount} />
+							</Pressable>
+						</Link>
+					) : (
+						<NumberStat label="Reviews" value={reviewsCount} />
+					)}
+				</View>
 			</View>
 		</View>
 	);
@@ -186,8 +192,8 @@ function NumberStat({
 	value: number | string;
 }) {
 	return (
-		<View>
-			<Text className="font-bold font-display text-2xl text-foreground">
+		<View className="flex-1">
+			<Text className="font-display-bold text-2xl text-foreground">
 				{value}
 			</Text>
 			<Text className="text-muted-foreground text-xs">{label}</Text>

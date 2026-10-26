@@ -11,7 +11,7 @@ export default function ErrorState({
 	message = "Failed to load",
 	subMessage = "Please check your connection and try again.",
 	backTo = "/",
-	backLabel = "Back to Dashboard",
+	backLabel = "Back to Home",
 }: ErrorStateProps) {
 	return (
 		<div className="container-app py-8">

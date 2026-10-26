@@ -8,7 +8,7 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewAuthorRating } from "#/components/ReviewAuthorRating";
@@ -134,10 +134,7 @@ function ProfileOverviewPage() {
 						{/* Last Movies */}
 						<section className="min-w-0">
 							<div className="mb-4 flex items-center justify-between">
-								<h2 className="flex items-center gap-2 text-display-3">
-									<Film className="size-5 text-(--accent)" />
-									Recent Movies
-								</h2>
+								<h2 className="text-display-3">Recent Movies</h2>
 								<Link
 									to="/profile/$handle/shelf"
 									params={{ handle }}
@@ -189,10 +186,7 @@ function ProfileOverviewPage() {
 						{/* Last Episodes */}
 						<section className="min-w-0">
 							<div className="mb-4 flex items-center justify-between">
-								<h2 className="flex items-center gap-2 text-display-3">
-									<Tv className="size-5 text-(--accent)" />
-									Recent Episodes
-								</h2>
+								<h2 className="text-display-3">Recent Episodes</h2>
 								<Link
 									to="/profile/$handle/shelf"
 									params={{ handle }}
@@ -206,14 +200,22 @@ function ProfileOverviewPage() {
 
 							{episodesLoading ? (
 								<div className={SCROLL_ROW}>
-									{[1, 2, 3, 4].map((i) => (
-										<div key={i} className={SCROLL_SKELETON} />
+									{[1, 2, 3].map((i) => (
+										<div
+											key={i}
+											className="aspect-video w-[260px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[300px]"
+										/>
 									))}
 								</div>
 							) : episodes.length > 0 ? (
 								<div className={SCROLL_ROW}>
 									{episodes.map((item) => (
-										<div key={item.id} className="shrink-0">
+										// Episode stills, like Home's Your Shelf: the show poster
+										// repeated once per episode read as one item duplicated.
+										<div
+											key={item.id}
+											className="w-[260px] shrink-0 sm:w-[300px]"
+										>
 											<ActionableMediaCard
 												id={item.showId}
 												title={item.showTitle}
@@ -222,6 +224,14 @@ function ProfileOverviewPage() {
 														? `https://image.tmdb.org/t/p/w500${item.posterPath}`
 														: ""
 												}
+												backdropUrl={
+													item.stillPath
+														? `https://image.tmdb.org/t/p/w780${item.stillPath}`
+														: item.backdropPath
+															? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
+															: undefined
+												}
+												layout="backdrop"
 												type="show"
 												seasonNumber={item.seasonNumber}
 												episodeNumber={item.episodeNumber}
@@ -260,7 +270,6 @@ function ProfileOverviewPage() {
 					handle={handle}
 					userDid={userDid}
 					isOwner={isOwner}
-					icon={Clock}
 					emptyText="Nothing on watchlist"
 				/>
 				<ListPreview
@@ -269,7 +278,6 @@ function ProfileOverviewPage() {
 					handle={handle}
 					userDid={userDid}
 					isOwner={isOwner}
-					icon={Heart}
 					emptyText="Nothing on favorites"
 				/>
 			</div>
@@ -277,10 +285,7 @@ function ProfileOverviewPage() {
 			{/* Recent Reviews */}
 			<section>
 				<div className="mb-4 flex items-center justify-between">
-					<h2 className="flex items-center gap-2 text-display-3">
-						<Star className="size-5 text-(--accent)" />
-						Recent Reviews
-					</h2>
+					<h2 className="text-display-3">Recent Reviews</h2>
 					<Link
 						to="/profile/$handle/reviews"
 						params={{ handle }}
@@ -378,7 +383,6 @@ function ListPreview({
 	handle,
 	userDid,
 	isOwner,
-	icon: Icon,
 	emptyText,
 }: {
 	title: string;
@@ -386,7 +390,6 @@ function ListPreview({
 	handle: string;
 	userDid: string;
 	isOwner: boolean;
-	icon: React.ComponentType<{ className?: string }>;
 	emptyText: string;
 }) {
 	const { data: listDetails, isLoading: itemsLoading } = useQuery({
@@ -401,10 +404,7 @@ function ListPreview({
 	return (
 		<section className="min-w-0">
 			<div className="mb-4 flex items-center justify-between">
-				<h2 className="flex items-center gap-2 text-display-3">
-					<Icon className="h-5 w-5 text-(--accent)" />
-					{title}
-				</h2>
+				<h2 className="text-display-3">{title}</h2>
 				{list && (
 					<Link
 						to="/profile/$handle/lists/$listSlug"

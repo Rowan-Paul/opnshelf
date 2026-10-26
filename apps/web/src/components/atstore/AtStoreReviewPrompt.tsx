@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Star, Store } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { PromptCard } from "#/components/PromptCard";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -139,21 +140,11 @@ export function AtStoreReviewPrompt() {
 
 	return (
 		<>
-			<section className="overflow-hidden rounded-xl border border-(--border) bg-(--background-subtle)">
-				<div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-					<div className="flex min-w-0 items-start gap-4">
-						<div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--accent-subtle) text-(--accent)">
-							<Store className="size-5" aria-hidden="true" />
-						</div>
-						<div>
-							<h2 className="font-semibold text-lg">Enjoying Opnshelf?</h2>
-							<p className="mt-1 max-w-xl text-(--foreground-muted) text-sm leading-6">
-								Share your experience on AT Store. It helps others discover
-								Opnshelf.
-							</p>
-						</div>
-					</div>
-					<div className="flex shrink-0 items-center gap-2 sm:justify-end">
+			<PromptCard
+				icon={Store}
+				title="Enjoying Opnshelf?"
+				actions={
+					<>
 						<Button
 							type="button"
 							variant="ghost"
@@ -169,9 +160,11 @@ export function AtStoreReviewPrompt() {
 						>
 							Leave a review
 						</Button>
-					</div>
-				</div>
-			</section>
+					</>
+				}
+			>
+				Share your experience on AT Store. It helps others discover Opnshelf.
+			</PromptCard>
 
 			<Dialog
 				open={composerOpen}

@@ -29,7 +29,7 @@ export function DetailsCard({
 	return (
 		<View className="px-4">
 			<View className="gap-3 rounded-xl border border-border bg-card p-4">
-				<Text className="font-display font-semibold text-base text-foreground">
+				<Text className="font-display-semibold text-base text-foreground">
 					{title}
 				</Text>
 				<View className="gap-2.5">

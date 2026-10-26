@@ -5,6 +5,7 @@ import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Bottom sheet listing the user's lists with membership checkmarks for one
@@ -24,6 +25,7 @@ export function AddToListSheet({
 	isLoading?: boolean;
 	onToggle: (slug: string, isInList: boolean) => void;
 }) {
+	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	return (
 		<Modal
@@ -36,11 +38,11 @@ export function AddToListSheet({
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="max-h-[70%] gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							Add to list
 						</Text>
 						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 

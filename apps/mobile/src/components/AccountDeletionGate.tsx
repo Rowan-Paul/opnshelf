@@ -9,6 +9,7 @@ import {
 	isAccountDeletionRunning,
 	useAccountDeletionJob,
 } from "@/lib/use-account-deletion";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * App-wide block while a PDS deletion job runs. Mounted at the root so the
@@ -17,6 +18,7 @@ import {
  * swallows the Android hardware back button.
  */
 export function AccountDeletionGate() {
+	const colors = useThemeColors();
 	const job = useAccountDeletionJob();
 	if (!isAccountDeletionRunning(job) || !job) return null;
 
@@ -27,8 +29,8 @@ export function AccountDeletionGate() {
 			<View className="flex-1 items-center justify-center bg-black/70 p-6">
 				<View className="w-full max-w-sm gap-4 rounded-2xl border border-destructive/40 bg-card p-6">
 					<View className="flex-row items-center gap-2">
-						<AlertTriangle color="#ef4444" size={20} />
-						<Text className="font-display font-semibold text-destructive text-lg">
+						<AlertTriangle color={colors.destructive} size={20} />
+						<Text className="font-display-semibold text-destructive text-lg">
 							Deleting your account
 						</Text>
 					</View>
@@ -37,7 +39,7 @@ export function AccountDeletionGate() {
 						signed out when it's done.
 					</Text>
 					<View className="flex-row items-center gap-2">
-						<ActivityIndicator size="small" color="#ef4444" />
+						<ActivityIndicator size="small" color={colors.destructive} />
 						<Text className="flex-1 font-medium text-destructive text-sm">
 							{getAccountDeletionStatusMessage(job)}
 						</Text>

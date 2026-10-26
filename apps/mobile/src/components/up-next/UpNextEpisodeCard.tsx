@@ -15,6 +15,7 @@ import {
 	useShowProgressForShow,
 } from "@/lib/use-show-progress";
 import { useMarkUpNextEpisode } from "@/lib/use-up-next";
+import { useThemeColors } from "@/theme/colors";
 
 /** Episode tile for the full Up Next screen.
  * Each card owns its pending action; other users' queues remain read-only. */
@@ -25,6 +26,7 @@ export function UpNextEpisodeCard({
 	item: UpNextShowDto;
 	isOwner?: boolean;
 }) {
+	const themeColors = useThemeColors();
 	const markEpisode = useMarkUpNextEpisode();
 	const { show, nextEpisode: ep } = item;
 	const viewerProgressQuery = useShowProgressForShow(show.showId, !isOwner);
@@ -75,7 +77,7 @@ export function UpNextEpisodeCard({
 							/>
 						) : (
 							<View className="absolute inset-0 items-center justify-center">
-								<Tv color="#94a3b8" size={40} />
+								<Tv color={themeColors.mutedForeground} size={40} />
 							</View>
 						)}
 						<LinearGradient

@@ -19,6 +19,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
 import { requestAndRegisterPush } from "@/lib/push-notifications";
+import { useThemeColors } from "@/theme/colors";
 
 const TOPICS = [
 	{
@@ -125,6 +126,7 @@ function Choice({
 	onPress: () => void;
 	icon?: LucideIcon;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Pressable
 			accessibilityRole="checkbox"
@@ -137,7 +139,7 @@ function Choice({
 		>
 			{Icon ? (
 				<View className="h-10 w-10 items-center justify-center rounded-lg border border-border bg-card">
-					<Icon color="#f3bc00" size={21} />
+					<Icon color={colors.accent} size={21} />
 				</View>
 			) : null}
 			{!Icon ? <SelectionMark selected={selected} /> : null}
@@ -315,7 +317,7 @@ function NotificationDraft({
 				<View className="gap-3">
 					<Text
 						accessibilityRole="header"
-						className="font-bold font-display text-3xl text-foreground"
+						className="font-display-bold text-3xl text-foreground"
 					>
 						{stage === "topics"
 							? "What should we keep you posted on?"

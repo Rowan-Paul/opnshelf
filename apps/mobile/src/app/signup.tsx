@@ -119,7 +119,7 @@ export default function SignupScreen() {
 				keyboardShouldPersistTaps="handled"
 			>
 				<View className="gap-2">
-					<Text className="font-bold font-display text-4xl text-foreground">
+					<Text className="font-display-bold text-4xl text-foreground">
 						Create your account
 					</Text>
 					<Text className="text-base text-muted-foreground">

@@ -43,8 +43,10 @@ import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { webMediaUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 export default function EpisodeDetailScreen() {
+	const themeColors = useThemeColors();
 	const { id, name, seasonNumber, episodeNumber, reviewId } =
 		useLocalSearchParams<{
 			id: string;
@@ -257,7 +259,7 @@ export default function EpisodeDetailScreen() {
 									className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
 									style={{ opacity: prevEpisode ? 1 : 0.4 }}
 								>
-									<ChevronLeft color="#94a3b8" size={18} />
+									<ChevronLeft color={themeColors.mutedForeground} size={18} />
 									<Text className="font-semibold text-foreground">
 										{prevEpisode
 											? `Prev (S${prevEpisode.season}E${prevEpisode.episode})`
@@ -275,7 +277,7 @@ export default function EpisodeDetailScreen() {
 											? `Next (S${nextEpisode.season}E${nextEpisode.episode})`
 											: "Next"}
 									</Text>
-									<ChevronRight color="#94a3b8" size={18} />
+									<ChevronRight color={themeColors.mutedForeground} size={18} />
 								</Pressable>
 							</View>
 						</>
@@ -350,8 +352,8 @@ export default function EpisodeDetailScreen() {
 						<RefreshControl
 							refreshing={refreshing}
 							onRefresh={onRefresh}
-							tintColor="#f3bc00"
-							colors={["#f3bc00"]}
+							tintColor={themeColors.accent}
+							colors={[themeColors.accent]}
 						/>
 					}
 				/>

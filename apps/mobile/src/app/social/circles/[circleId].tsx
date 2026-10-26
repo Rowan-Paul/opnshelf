@@ -20,6 +20,7 @@ import {
 } from "@/lib/use-circles";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useFollowing } from "@/lib/use-social";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Circle detail: see and edit who's in a circle. Members (removable), the people
@@ -27,6 +28,7 @@ import { useFollowing } from "@/lib/use-social";
  * the Circles list under Social.
  */
 export default function CircleDetailScreen() {
+	const colors = useThemeColors();
 	const { circleId } = useLocalSearchParams<{ circleId: string }>();
 	const router = useRouter();
 	const { user } = useAuth();
@@ -116,12 +118,12 @@ export default function CircleDetailScreen() {
 						onPress={confirmDelete}
 						className="size-11 items-center justify-center rounded-lg border border-border"
 					>
-						<Trash2 color="#ef4444" size={18} />
+						<Trash2 color={colors.destructive} size={18} />
 					</Pressable>
 				</View>
 
 				<View className="gap-2">
-					<Text className="font-display font-semibold text-foreground">
+					<Text className="font-display-semibold text-foreground">
 						Members ({members.length})
 					</Text>
 					{membersLoading ? (
@@ -166,7 +168,7 @@ export default function CircleDetailScreen() {
 				</View>
 
 				<View className="gap-2">
-					<Text className="font-display font-semibold text-foreground">
+					<Text className="font-display-semibold text-foreground">
 						Add people you follow
 					</Text>
 					{following.isLoading ? (

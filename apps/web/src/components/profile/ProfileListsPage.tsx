@@ -699,7 +699,7 @@ export function ProfileListsPage({
 							    and leaves the list alone. */}
 							{listError && !listLoading && (
 								<div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-subtle) px-4 py-2.5">
-									<AlertCircle className="size-4 shrink-0 text-red-500" />
+									<AlertCircle className="size-4 shrink-0 text-destructive" />
 									<p className="text-(--foreground-muted) text-sm">
 										Couldn't refresh this list. Showing what loaded last.
 									</p>
@@ -965,7 +965,7 @@ export function ProfileListsPage({
 						// telling the reader it is sends them off to look for a list
 						// that is still there. Only a 404 means gone.
 						<div className="flex h-96 flex-col items-center justify-center gap-4 rounded-xl border-(--border) border-2 border-dashed">
-							<AlertCircle className="size-12 text-red-500" />
+							<AlertCircle className="size-12 text-destructive" />
 							<div className="text-center">
 								<h3 className="font-display font-semibold text-lg">
 									Couldn't load this list
@@ -1041,7 +1041,7 @@ export function ProfileListsPage({
 								variant="outline"
 								onClick={confirmDeleteList}
 								disabled={deleteListMutation.isPending}
-								className="gap-1.5 text-red-600 hover:text-red-600"
+								className="gap-1.5 text-destructive hover:text-destructive"
 							>
 								<Trash2 className="size-4" />
 								{deleteListMutation.isPending ? "Deleting..." : "Delete"}

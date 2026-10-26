@@ -47,9 +47,7 @@ export default function NotificationCollectionScreen() {
 			<Stack.Screen options={{ headerShown: true, title: "Discover" }} />
 			{!authLoading && !isAuthenticated ? (
 				<View className="gap-4">
-					<Text className="font-bold font-display text-2xl">
-						Your notification collection
-					</Text>
+					<Text className="text-display-2">Your notification collection</Text>
 					<Text>
 						Sign in to the account that received this notification, then open
 						its link again.
@@ -66,7 +64,7 @@ export default function NotificationCollectionScreen() {
 								? formatDate(collection.periodStart)
 								: `${formatDate(collection.periodStart)} – ${formatDate(collection.periodEnd)}`}
 						</Text>
-						<Text selectable className="font-bold font-display text-3xl">
+						<Text selectable className="font-display-bold text-3xl">
 							{collection.heading}
 						</Text>
 						{collection.recap ? (
@@ -80,10 +78,7 @@ export default function NotificationCollectionScreen() {
 						)}
 					</View>
 					{collection.recap && collection.items.length > 0 && (
-						<Text
-							accessibilityRole="header"
-							className="font-bold font-display text-2xl"
-						>
+						<Text accessibilityRole="header" className="text-display-2">
 							Your most-watched titles
 						</Text>
 					)}
@@ -162,7 +157,7 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 								: " · Date unavailable"}
 					</Text>
 					<Link href={item.path as Href}>
-						<Text selectable className="font-bold font-display text-xl">
+						<Text selectable className="font-display-bold text-xl">
 							{item.title}
 						</Text>
 					</Link>
@@ -244,7 +239,7 @@ function RecapSummary({ recap }: { recap: WatchRecapDto }) {
 					["Episode Watches", recap.episodeWatches],
 				].map(([label, count]) => (
 					<View key={label} className="flex-1 gap-2">
-						<Text selectable className="font-bold font-display text-5xl">
+						<Text selectable className="font-display-bold text-5xl">
 							{count}
 						</Text>
 						<Text className="text-muted-foreground text-sm">{label}</Text>
@@ -264,7 +259,7 @@ function RecapSummary({ recap }: { recap: WatchRecapDto }) {
 								<View key={label} className="gap-2">
 									<Text className="text-muted-foreground text-sm">{label}</Text>
 									<Link href={watch.path as Href}>
-										<Text className="font-bold font-display text-lg underline">
+										<Text className="font-display-bold text-lg underline">
 											{watch.title}
 										</Text>
 									</Link>

@@ -17,11 +17,13 @@ import { Text } from "@/components/ui/text";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 const nextPage = (page: { page: number; hasNextPage: boolean }) =>
 	page.hasNextPage ? page.page + 1 : undefined;
 
 export function GenreDiscover({ filter }: { filter: GenreDiscovery }) {
+	const themeColors = useThemeColors();
 	const isFocused = useIsFocused();
 	const paddingBottom = useNativeTabContentPadding();
 	const columns = useMediaCardColumns();
@@ -68,7 +70,7 @@ export function GenreDiscover({ filter }: { filter: GenreDiscovery }) {
 		<Screen className="px-0">
 			<View className="gap-2 px-4 py-3">
 				<Text className="text-muted-foreground text-sm">Discover</Text>
-				<Text className="font-bold font-display text-2xl">
+				<Text className="text-display-2">
 					{filter.genreName
 						? `${filter.genreName} ${filter.type}`
 						: `${filter.type === "movies" ? "Movies" : "Shows"} by genre`}
@@ -120,8 +122,8 @@ export function GenreDiscover({ filter }: { filter: GenreDiscovery }) {
 							<RefreshControl
 								refreshing={query.isRefetching}
 								onRefresh={() => void query.refetch()}
-								tintColor="#f3bc00"
-								colors={["#f3bc00"]}
+								tintColor={themeColors.accent}
+								colors={[themeColors.accent]}
 							/>
 						}
 						ListEmptyComponent={

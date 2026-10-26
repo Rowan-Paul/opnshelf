@@ -65,6 +65,7 @@ import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useWideLayout } from "@/lib/use-wide-layout";
+import { useThemeColors } from "@/theme/colors";
 
 type Tab = "all" | "movies" | "shows" | "cast" | "people";
 
@@ -82,6 +83,7 @@ const TABS: { key: Tab; label: string }[] = [
  * `PersonRow`, which is for app users (social) and links to a profile.
  */
 function CastCrewRow({ person }: { person: PersonSearchResultDto }) {
+	const themeColors = useThemeColors();
 	const url = profileUrl(person.profile_path);
 	return (
 		<Link href={personHref(person.id, person.name)} asChild>
@@ -94,7 +96,7 @@ function CastCrewRow({ person }: { person: PersonSearchResultDto }) {
 							contentFit="cover"
 						/>
 					) : (
-						<User color="#94a3b8" size={20} />
+						<User color={themeColors.mutedForeground} size={20} />
 					)}
 				</View>
 				<View className="min-w-0 flex-1">
@@ -110,7 +112,7 @@ function CastCrewRow({ person }: { person: PersonSearchResultDto }) {
 						</Text>
 					) : null}
 				</View>
-				<ChevronRight color="#94a3b8" size={18} />
+				<ChevronRight color={themeColors.mutedForeground} size={18} />
 			</Pressable>
 		</Link>
 	);
@@ -180,9 +182,7 @@ function DiscoverRail({
 	if (items.length === 0) return null;
 	return (
 		<View className="pt-2 pb-4">
-			<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
-				{title}
-			</Text>
+			<Text className="mb-3 px-4 text-display-3 text-foreground">{title}</Text>
 			{/* Horizontal ScrollView, not FlatList: these rails live inside a
 			    vertical ScrollView, and nested VirtualizedLists mis-measure their
 			    height (later rails get clipped). Rails are short, so no
@@ -388,6 +388,7 @@ export default function SearchScreen() {
 }
 
 function KeywordSearchScreen() {
+	const themeColors = useThemeColors();
 	const paddingBottom = useNativeTabContentPadding();
 	const { isAuthenticated } = useAuth();
 	const isFocused = useIsFocused();
@@ -502,8 +503,8 @@ function KeywordSearchScreen() {
 			onRefresh={() => {
 				void activeQuery.refetch();
 			}}
-			tintColor="#f3bc00"
-			colors={["#f3bc00"]}
+			tintColor={themeColors.accent}
+			colors={[themeColors.accent]}
 		/>
 	);
 
@@ -630,15 +631,13 @@ function KeywordSearchScreen() {
 		<NativeTabScreen>
 			<Screen className="px-0">
 				<TourAnchor id="discover" className="px-4 pt-3 pb-3">
-					<Text className="mb-3 font-bold font-display text-2xl text-foreground">
-						Search
-					</Text>
+					<Text className="mb-3 text-display-2 text-foreground">Discover</Text>
 					<TextField
-						leading={<Search color="#94a3b8" size={18} />}
+						leading={<Search color={themeColors.mutedForeground} size={18} />}
 						trailing={
 							query.length > 0 ? (
 								<Pressable hitSlop={8} onPress={() => setQuery("")}>
-									<X color="#94a3b8" size={18} />
+									<X color={themeColors.mutedForeground} size={18} />
 								</Pressable>
 							) : null
 						}

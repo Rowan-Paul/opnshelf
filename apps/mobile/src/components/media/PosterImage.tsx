@@ -3,6 +3,7 @@ import { ImageOff } from "lucide-react-native";
 import { View } from "react-native";
 import { cn } from "@/lib/cn";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Poster/still image with a graceful placeholder when no URL is available.
@@ -22,6 +23,7 @@ export function PosterImage({
 	className?: string;
 	contentFit?: "cover" | "contain";
 }) {
+	const colors = useThemeColors();
 	const style = useTwStyle(className);
 
 	if (!url) {
@@ -32,7 +34,7 @@ export function PosterImage({
 					className,
 				)}
 			>
-				<ImageOff color="#94a3b8" size={28} />
+				<ImageOff color={colors.mutedForeground} size={28} />
 			</View>
 		);
 	}
