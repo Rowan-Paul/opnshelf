@@ -15,26 +15,29 @@ export function cachedCompletionProgress(
 	viewerDid: string | undefined,
 ): ShowProgressDto | undefined {
 	if (!viewerDid) return undefined;
-	const queries = queryClient
-		.getQueryCache()
-		.findAll({
-			predicate: (query) => {
-				const key = query.queryKey[0] as { _id?: string } | undefined;
-				return (
-					key?._id === "showsControllerGetShowProgress" &&
-					query.queryHash === hashKey([...query.queryKey, viewerDid]) &&
-					query.state.status === "success" &&
-					!query.state.isInvalidated
-				);
-			},
-		})
-		.sort((a, b) => b.state.dataUpdatedAt - a.state.dataUpdatedAt);
+	const queries = queryClient.getQueryCache().findAll({
+		predicate: (query) => {
+			const key = query.queryKey[0] as { _id?: string } | undefined;
+			return (
+				key?._id === "showsControllerGetShowProgress" &&
+				query.queryHash === hashKey([...query.queryKey, viewerDid]) &&
+				query.state.status === "success" &&
+				!query.state.isInvalidated
+			);
+		},
+	});
+	let latestProgress: ShowProgressDto | undefined;
+	let latestUpdatedAt = -Infinity;
 	for (const query of queries) {
+		if (query.state.dataUpdatedAt <= latestUpdatedAt) continue;
 		const data = query.state.data as ShowProgressBatchResponseDto;
 		const progress = data.items.find((item) => item.showId === showId);
-		if (progress) return progress;
+		if (progress) {
+			latestProgress = progress;
+			latestUpdatedAt = query.state.dataUpdatedAt;
+		}
 	}
-	return undefined;
+	return latestProgress;
 }
 
 // Celebration reads must never prevent a Watch from being saved.
