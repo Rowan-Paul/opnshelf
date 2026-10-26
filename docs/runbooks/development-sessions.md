@@ -118,6 +118,11 @@ requests to another server. Unknown routes fail with an explicit 404. Data is
 in memory. Ctrl-C stops only the runner's child processes. After stopping Metro,
 reconnect a retained device to its usual server before handing it back.
 
+The `watch-completion` scenario starts Show 1399 with Episode 1 of its two-episode
+Season already watched. Open `/shows/1399/local-fixture-show/seasons/1` and log
+Episode 2 or mark the remaining Season watched to check completion confetti.
+Reset the scenario before repeating; rewatches must not replay the celebration.
+
 ## Authenticated Lighthouse
 
 `pnpm test:lighthouse` builds the production Web App, starts Nitro on loopback
@@ -146,3 +151,24 @@ Reports stay in `.lighthouseci/` locally. Lighthouse does not run in GitHub Acti
 and has no hosted Railway dashboard. The runner owns a `stack:lighthouse`
 development lease and stops its own processes on completion or interruption.
 Do not run the UI scenario stack concurrently: it uses the same ports.
+
+## Completion confetti performance
+
+Run `node scripts/confetti-performance.mjs` from the root after installing the
+pinned Puppeteer Chrome above. It bundles the actual Web renderer in production
+mode and measures setup at 1280×800 with 4× CPU slowdown. It fails above a 50 ms
+setup budget, on overlapping bursts, or if the overlay survives cleanup. It also
+reports frame intervals when Chromium supplies them; zero frame callbacks means
+frame timing is unavailable, not smooth rendering. This isolated renderer test
+does not measure the full app, backend, or native performance, and its timing
+budget is machine-dependent. It runs locally rather than in CI.
+
+Both clients cap a burst at 64 particles with 25 trajectory samples each and
+ignore additional requests until cleanup after 3.7 seconds. Watch mutations take
+a synchronous snapshot of the viewer's progress cache; a missing
+or invalidated snapshot skips the cosmetic celebration rather than adding a
+pre-save request. The optional confirmation read runs only after a successful
+Watch and is skipped when confetti is disabled. Mobile uses the native animation
+driver; Web animates transform and opacity without a JavaScript frame loop.
+These bounds do not guarantee a frame rate on every device. Profile native
+release builds on physical target hardware before making an FPS claim.
