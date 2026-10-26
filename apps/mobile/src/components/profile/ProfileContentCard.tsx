@@ -8,8 +8,8 @@ import { Text } from "@/components/ui/text";
  * Horizontal card with a poster thumbnail and a content area, used by the
  * Notes and Reviews tabs. Mirrors the web `ProfileContentCard`: a title + meta
  * header (with an optional right-side actions slot) over arbitrary children.
- * The whole card links to the related media detail route — any action buttons
- * passed via `headerRight` should `stopPropagation` on press.
+ * Poster and title links leave header actions and body controls independently
+ * accessible to screen readers.
  */
 export function ProfileContentCard({
 	posterUrl,
@@ -27,14 +27,20 @@ export function ProfileContentCard({
 	children: ReactNode;
 }) {
 	return (
-		<Link href={href} asChild>
-			<Pressable className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
-				<View className="h-28 w-20 shrink-0 overflow-hidden rounded-lg">
+		<View className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
+			<Link href={href} asChild>
+				<Pressable
+					accessibilityLabel={title}
+					accessibilityRole="link"
+					className="h-28 w-20 shrink-0 overflow-hidden rounded-lg"
+				>
 					<PosterImage url={posterUrl} className="h-28 w-20" />
-				</View>
-				<View className="min-w-0 flex-1 gap-1.5">
-					<View className="flex-row items-start justify-between gap-2">
-						<View className="min-w-0 flex-1">
+				</Pressable>
+			</Link>
+			<View className="min-w-0 flex-1 gap-1.5">
+				<View className="flex-row items-start justify-between gap-2">
+					<Link href={href} asChild>
+						<Pressable accessibilityRole="link" className="min-w-0 flex-1">
 							<Text
 								className="font-display-semibold text-foreground text-sm"
 								numberOfLines={1}
@@ -44,12 +50,12 @@ export function ProfileContentCard({
 							{meta ? (
 								<Text className="text-muted-foreground text-xs">{meta}</Text>
 							) : null}
-						</View>
-						{headerRight}
-					</View>
-					{children}
+						</Pressable>
+					</Link>
+					{headerRight}
 				</View>
-			</Pressable>
-		</Link>
+				{children}
+			</View>
+		</View>
 	);
 }

@@ -240,6 +240,8 @@ function ReviewCard({
 							{isOwner ? (
 								<View className="flex-row gap-1">
 									<Pressable
+										accessibilityRole="button"
+										accessibilityLabel="Edit review"
 										hitSlop={8}
 										onPress={(e) => {
 											e.stopPropagation();
@@ -250,6 +252,8 @@ function ReviewCard({
 										<Pencil color={colors.mutedForeground} size={16} />
 									</Pressable>
 									<Pressable
+										accessibilityRole="button"
+										accessibilityLabel="Delete review"
 										hitSlop={8}
 										disabled={deleteMutation.isPending}
 										onPress={(e) => {
@@ -289,6 +293,11 @@ function ReviewCard({
 				{!isOwner ? (
 					<Pressable
 						hitSlop={8}
+						accessibilityRole="button"
+						accessibilityLabel={
+							review.hasLiked ? "Unlike review" : "Like review"
+						}
+						accessibilityState={{ selected: review.hasLiked }}
 						onPress={toggleLike}
 						disabled={
 							!isAuthenticated ||
