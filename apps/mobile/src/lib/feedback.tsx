@@ -24,6 +24,7 @@ import {
 } from "react-native";
 import {
 	KeyboardAvoidingView,
+	KeyboardController,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
 import { captureScreen } from "react-native-view-shot";
@@ -288,9 +289,17 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 	const dismiss = () => {
 		// A finished send from an older opening must not close a new draft.
 		if (openId !== sequence.current) return;
-		setVisible(false);
-		setScreenshot(undefined);
-		opening.current = false;
+		// A send finishing after the sheet closed must not dismiss the keyboard
+		// of whatever screen the user has moved on to.
+		if (!opening.current) return;
+		// Hide the keyboard before the Modal goes: closing it with the keyboard
+		// up leaves the root KeyboardProvider at keyboard height on Android, so
+		// every Screen behind it keeps a blank keyboard-sized gap (#595).
+		void KeyboardController.dismiss().finally(() => {
+			setVisible(false);
+			setScreenshot(undefined);
+			opening.current = false;
+		});
 	};
 	return (
 		<FeedbackContext.Provider value={{ open }}>
