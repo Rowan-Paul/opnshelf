@@ -76,7 +76,7 @@ export default function ManageListsDialog({
 						>
 							<span>Watchlist</span>
 							{isWatchlist ? (
-								<Check className="size-4 text-green-500" />
+								<Check className="size-4 text-success" />
 							) : (
 								<Plus className="size-4 text-(--foreground-muted)" />
 							)}
@@ -91,7 +91,7 @@ export default function ManageListsDialog({
 						>
 							<span>Favorites</span>
 							{isFavorites ? (
-								<Check className="size-4 text-green-500" />
+								<Check className="size-4 text-success" />
 							) : (
 								<Plus className="size-4 text-(--foreground-muted)" />
 							)}
@@ -112,7 +112,7 @@ export default function ManageListsDialog({
 							>
 								<span>{list.name}</span>
 								{list.isInList ? (
-									<Check className="size-4 text-green-500" />
+									<Check className="size-4 text-success" />
 								) : (
 									<Plus className="size-4 text-(--foreground-muted)" />
 								)}

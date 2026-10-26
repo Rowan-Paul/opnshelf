@@ -12,6 +12,7 @@ import { useTheme } from "@/lib/theme-context";
 
 export interface MilkdownWebViewHandle {
 	focus: () => void;
+	blur: () => void;
 }
 
 interface MilkdownWebViewProps {
@@ -55,7 +56,13 @@ export function MilkdownWebView({
 		webRef.current?.requestFocus();
 		webRef.current?.injectJavaScript("window.opnshelfFocusEditor?.(); true;");
 	};
-	useImperativeHandle(ref, () => ({ focus }));
+	// The keyboard controller only dismisses native inputs, so a keyboard raised
+	// by the editor is hidden by blurring it inside the page.
+	const blur = () => {
+		pendingFocus.current = false;
+		webRef.current?.injectJavaScript("document.activeElement?.blur(); true;");
+	};
+	useImperativeHandle(ref, () => ({ focus, blur }));
 	// Capture the initial body once; parent re-renders (on each change) must not
 	// re-seed the editor and clobber what the user is typing.
 	const initial = useRef(value);

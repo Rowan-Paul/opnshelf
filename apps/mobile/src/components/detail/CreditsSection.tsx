@@ -13,6 +13,7 @@ import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { personHref } from "@/lib/media-href";
 import { profileUrl } from "@/lib/tmdb";
+import { useThemeColors } from "@/theme/colors";
 
 type CreditPerson = {
 	id: number;
@@ -22,6 +23,7 @@ type CreditPerson = {
 };
 
 function CreditCard({ person }: { person: CreditPerson }) {
+	const colors = useThemeColors();
 	const url = profileUrl(person.profile_path);
 	return (
 		<Link href={personHref(person.id, person.name)} asChild>
@@ -30,7 +32,7 @@ function CreditCard({ person }: { person: CreditPerson }) {
 					{url ? (
 						<PosterImage url={url} className="aspect-2/3 w-20" />
 					) : (
-						<User color="#94a3b8" size={24} />
+						<User color={colors.mutedForeground} size={24} />
 					)}
 				</View>
 				<Text
@@ -63,9 +65,7 @@ export function CreditsSection({
 	if (people.length === 0) return null;
 	return (
 		<View>
-			<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
-				{title}
-			</Text>
+			<Text className="mb-3 px-4 text-display-3 text-foreground">{title}</Text>
 			<FlatList
 				horizontal
 				data={people}

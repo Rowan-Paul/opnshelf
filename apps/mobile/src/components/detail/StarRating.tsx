@@ -1,9 +1,7 @@
 import { Pressable, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { Text } from "@/components/ui/text";
-
-const STAR_COLOR = "#f3bc00";
-const EMPTY_COLOR = "#94a3b8";
+import { useThemeColors } from "@/theme/colors";
 
 // Sharp 5-point star (viewBox 0 0 24 24). Drawn as a solid fill — no stroke —
 // so it stays crisp at any size instead of the chunky stroked lucide icon.
@@ -17,10 +15,11 @@ const STAR_PATH =
  * per-instance clip-path ids.
  */
 function StarIcon({ size, fraction }: { size: number; fraction: number }) {
+	const colors = useThemeColors();
 	return (
 		<View style={{ width: size, height: size }}>
 			<Svg width={size} height={size} viewBox="0 0 24 24">
-				<Path d={STAR_PATH} fill={EMPTY_COLOR} />
+				<Path d={STAR_PATH} fill={colors.mutedForeground} />
 			</Svg>
 			{fraction > 0 ? (
 				<View
@@ -32,7 +31,7 @@ function StarIcon({ size, fraction }: { size: number; fraction: number }) {
 					}}
 				>
 					<Svg width={size} height={size} viewBox="0 0 24 24">
-						<Path d={STAR_PATH} fill={STAR_COLOR} />
+						<Path d={STAR_PATH} fill={colors.accent} />
 					</Svg>
 				</View>
 			) : null}

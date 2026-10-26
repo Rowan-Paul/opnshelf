@@ -1,14 +1,13 @@
 import { X } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Modal, Pressable, View } from "react-native";
-import {
-	KeyboardAvoidingView,
-	KeyboardProvider,
-} from "react-native-keyboard-controller";
+import { Pressable, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Button } from "@/components/ui/button";
+import { KeyboardSheetModal } from "@/components/ui/keyboard-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 interface ListEditorSheetProps {
 	visible: boolean;
@@ -33,6 +32,7 @@ export function ListEditorSheet({
 	onSave,
 	isSaving = false,
 }: ListEditorSheetProps) {
+	const colors = useThemeColors();
 	const [name, setName] = useState(initialName);
 	const [description, setDescription] = useState(initialDescription);
 	// KeyboardAvoidingView is third-party, so resolve its layout classes to a
@@ -49,63 +49,51 @@ export function ListEditorSheet({
 	const canSave = name.trim().length > 0 && !isSaving;
 
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
-			{/*
-				RN <Modal> renders in a separate window outside the root
-				KeyboardProvider (notably on Android), so it needs its own provider
-				to receive keyboard events and lift this bottom-anchored sheet.
-			*/}
-			<KeyboardProvider>
-				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
-					<Pressable className="flex-1" onPress={onDismiss} />
-					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
-						<View className="flex-row items-center justify-between">
-							<Text className="font-bold font-display text-foreground text-lg">
-								{isEditing ? "Edit list" : "New list"}
-							</Text>
-							<Pressable hitSlop={8} onPress={onDismiss}>
-								<X color="#94a3b8" size={22} />
-							</Pressable>
-						</View>
-
-						<TextField
-							variant="subtle"
-							value={name}
-							onChangeText={setName}
-							placeholder="List name"
-							maxLength={200}
-						/>
-
-						<TextField
-							variant="subtle"
-							multiline
-							className="min-h-24"
-							value={description}
-							onChangeText={setDescription}
-							placeholder="Description (optional)"
-							maxLength={2000}
-						/>
-
-						<Button
-							label={isEditing ? "Save changes" : "Create list"}
-							loadingLabel="Saving…"
-							loading={isSaving}
-							disabled={!canSave}
-							onPress={() =>
-								onSave({
-									name: name.trim(),
-									description: description.trim() || undefined,
-								})
-							}
-						/>
+		<KeyboardSheetModal visible={visible} onRequestClose={onDismiss}>
+			<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
+				<Pressable className="flex-1" onPress={onDismiss} />
+				<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+					<View className="flex-row items-center justify-between">
+						<Text className="font-display-bold text-foreground text-lg">
+							{isEditing ? "Edit list" : "New list"}
+						</Text>
+						<Pressable hitSlop={8} onPress={onDismiss}>
+							<X color={colors.mutedForeground} size={22} />
+						</Pressable>
 					</View>
-				</KeyboardAvoidingView>
-			</KeyboardProvider>
-		</Modal>
+
+					<TextField
+						variant="subtle"
+						value={name}
+						onChangeText={setName}
+						placeholder="List name"
+						maxLength={200}
+					/>
+
+					<TextField
+						variant="subtle"
+						multiline
+						className="min-h-24"
+						value={description}
+						onChangeText={setDescription}
+						placeholder="Description (optional)"
+						maxLength={2000}
+					/>
+
+					<Button
+						label={isEditing ? "Save changes" : "Create list"}
+						loadingLabel="Saving…"
+						loading={isSaving}
+						disabled={!canSave}
+						onPress={() =>
+							onSave({
+								name: name.trim(),
+								description: description.trim() || undefined,
+							})
+						}
+					/>
+				</View>
+			</KeyboardAvoidingView>
+		</KeyboardSheetModal>
 	);
 }

@@ -7,9 +7,11 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useCircles, useCreateCircle } from "@/lib/use-circles";
+import { useThemeColors } from "@/theme/colors";
 
 /** Owned Circles and their creation flow. Editing stays on the detail route. */
 export default function CirclesScreen() {
+	const colors = useThemeColors();
 	const router = useRouter();
 	const { data: circles = [], isLoading, isError } = useCircles();
 	const createCircle = useCreateCircle();
@@ -56,7 +58,7 @@ export default function CirclesScreen() {
 							opacity: !name.trim() || createCircle.isPending ? 0.5 : 1,
 						}}
 					>
-						<Plus color="#3f2e00" size={20} strokeWidth={3} />
+						<Plus color={colors.accentForeground} size={20} strokeWidth={3} />
 					</Pressable>
 				</View>
 
@@ -91,7 +93,7 @@ export default function CirclesScreen() {
 											{circle.memberCount === 1 ? "person" : "people"}
 										</Text>
 									</View>
-									<ChevronRight color="#94a3b8" size={18} />
+									<ChevronRight color={colors.mutedForeground} size={18} />
 								</Pressable>
 							</Link>
 						))}

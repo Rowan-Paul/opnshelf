@@ -28,6 +28,7 @@ import { mediaHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { useEndReached } from "@/lib/use-end-reached";
 import { useInfiniteProfileReviews } from "@/lib/use-public-profile";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Reviews tab: the user's reviews, loaded page by page as the reader scrolls
@@ -69,9 +70,7 @@ export function ReviewsTab({
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
 			{showHeading ? (
-				<Text className="font-bold font-display text-2xl text-foreground">
-					Reviews
-				</Text>
+				<Text className="text-display-2 text-foreground">Reviews</Text>
 			) : null}
 
 			{isLoading ? (
@@ -81,7 +80,9 @@ export function ReviewsTab({
 			) : reviews.length === 0 ? (
 				<EmptyState
 					icon={Star}
-					title={isOwner ? "No reviews yet" : "No reviews"}
+					message={
+						isOwner ? "You haven't reviewed anything yet." : "No reviews yet."
+					}
 				/>
 			) : (
 				<View className="gap-3">
@@ -117,6 +118,7 @@ function ReviewCard({
 	userDid: string;
 	handle: string;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const { showDialog } = useDialog();
 	const queryClient = useQueryClient();
@@ -238,28 +240,29 @@ function ReviewCard({
 							{isOwner ? (
 								<View className="flex-row gap-1">
 									<Pressable
+										accessibilityRole="button"
+										accessibilityLabel="Edit review"
 										hitSlop={8}
-										onPress={(e) => {
-											e.stopPropagation();
-											setEditorVisible(true);
-										}}
+										onPress={() => setEditorVisible(true)}
 										className="size-8 items-center justify-center rounded-md"
 									>
-										<Pencil color="#6b7280" size={16} />
+										<Pencil color={colors.mutedForeground} size={16} />
 									</Pressable>
 									<Pressable
+										accessibilityRole="button"
+										accessibilityLabel="Delete review"
 										hitSlop={8}
 										disabled={deleteMutation.isPending}
-										onPress={(e) => {
-											e.stopPropagation();
-											confirmDelete();
-										}}
+										onPress={confirmDelete}
 										className="size-8 items-center justify-center rounded-md"
 									>
 										{deleteMutation.isPending ? (
-											<ActivityIndicator size="small" color="#ef4444" />
+											<ActivityIndicator
+												size="small"
+												color={colors.destructive}
+											/>
 										) : (
-											<Trash2 color="#ef4444" size={16} />
+											<Trash2 color={colors.destructive} size={16} />
 										)}
 									</Pressable>
 								</View>
@@ -284,6 +287,10 @@ function ReviewCard({
 				{!isOwner ? (
 					<Pressable
 						hitSlop={8}
+						accessibilityRole="button"
+						accessibilityLabel={
+							review.hasLiked ? "Unlike review" : "Like review"
+						}
 						onPress={toggleLike}
 						disabled={
 							!isAuthenticated ||
@@ -301,17 +308,23 @@ function ReviewCard({
 						}}
 					>
 						{likeMutation.isPending || unlikeMutation.isPending ? (
-							<ActivityIndicator size="small" color="#ef4444" />
+							<ActivityIndicator size="small" color={colors.destructive} />
 						) : (
 							<Heart
-								color={review.hasLiked ? "#ef4444" : "#6b7280"}
-								fill={review.hasLiked ? "#ef4444" : "transparent"}
+								color={
+									review.hasLiked ? colors.destructive : colors.mutedForeground
+								}
+								fill={review.hasLiked ? colors.destructive : "transparent"}
 								size={16}
 							/>
 						)}
 						<Text
 							className="text-sm"
-							style={{ color: review.hasLiked ? "#ef4444" : "#6b7280" }}
+							style={{
+								color: review.hasLiked
+									? colors.destructive
+									: colors.mutedForeground,
+							}}
 						>
 							{review.likeCount}
 						</Text>

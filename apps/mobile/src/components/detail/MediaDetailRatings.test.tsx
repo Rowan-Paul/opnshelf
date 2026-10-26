@@ -102,6 +102,9 @@ vi.mock("@/lib/use-show-progress", () => ({
 	findShowProgress: () => undefined,
 }));
 vi.mock("@/lib/use-up-next", () => ({ useUpNext: () => ({ items: [] }) }));
+vi.mock("@/lib/auth-context", () => ({
+	useAuth: () => ({ isAuthenticated: false }),
+}));
 vi.mock("@/components/detail/AddToLibraryButton", () => ({
 	AddToLibraryButton: () => null,
 }));
@@ -130,6 +133,7 @@ vi.mock("@/components/detail/NoteButton", () => ({ NoteButton: () => null }));
 vi.mock("@/components/detail/OverviewSection", () => ({
 	OverviewSection: () => null,
 }));
+vi.mock("@/components/detail/PrevNextNav", () => ({ PrevNextNav: () => null }));
 vi.mock("@/components/detail/RateReviewButton", () => ({
 	RateReviewButton: () => null,
 }));

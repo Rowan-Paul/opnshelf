@@ -5,6 +5,7 @@ import { AddToListSheet } from "@/components/lists/AddToListSheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useListMembership } from "@/lib/use-lists";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * "Add to list" action for media detail screens: a compact tile (flex-1, laid
@@ -22,6 +23,7 @@ export function AddToListButton({
 	seasonNumber?: number;
 	episodeNumber?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const [sheetVisible, setSheetVisible] = useState(false);
 	const { memberships, isLoading, toggle } = useListMembership({
@@ -41,7 +43,10 @@ export function AddToListButton({
 				onPress={() => setSheetVisible(true)}
 				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
-				<ListPlus color={inCount > 0 ? "#f3bc00" : "#94a3b8"} size={18} />
+				<ListPlus
+					color={inCount > 0 ? colors.accent : colors.mutedForeground}
+					size={18}
+				/>
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
 					{inCount > 0
 						? `In ${inCount} list${inCount === 1 ? "" : "s"}`

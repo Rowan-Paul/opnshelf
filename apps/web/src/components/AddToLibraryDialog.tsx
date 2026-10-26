@@ -104,7 +104,7 @@ export default function AddToLibraryDialog({
 											) : null}
 										</span>
 										{isOwned ? (
-											<Check className="size-4 text-green-500" />
+											<Check className="size-4 text-success" />
 										) : (
 											<Plus className="size-4 text-(--foreground-muted)" />
 										)}

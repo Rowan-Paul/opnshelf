@@ -64,14 +64,19 @@ export function FriendsActivity() {
 
 	return (
 		<View>
-			<SectionHeader icon={Users} title="Social" href="/social" />
+			<SectionHeader title="Social" href="/social" />
 			{isLoading ? (
 				<FriendsActivitySkeleton />
 			) : recentItems.length === 0 ? (
 				<EmptyState
+					variant="card"
 					icon={MessageCircle}
-					title="No recent activity"
 					message="Activity from people you follow will appear here."
+					action={{
+						label: "Find people to follow",
+						href: "/social/find",
+						icon: Users,
+					}}
 				/>
 			) : (
 				<View className="overflow-hidden rounded-xl border border-border bg-card">

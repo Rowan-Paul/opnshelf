@@ -1,6 +1,6 @@
 import { showsControllerGetShowDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { type Href, Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import type { ScrollViewInstance } from "react-native";
 import { RefreshControl, View } from "react-native";
@@ -27,6 +27,7 @@ import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import {
 	backdropUrl,
 	formatLongDate,
@@ -36,9 +37,12 @@ import {
 import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
+import { useUpNext } from "@/lib/use-up-next";
 import { webMediaUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 export default function ShowDetailScreen() {
+	const themeColors = useThemeColors();
 	const { id, name, reviewId } = useLocalSearchParams<{
 		id: string;
 		// The slug segment, carried into child links so in-app navigation
@@ -62,10 +66,39 @@ export default function ShowDetailScreen() {
 	const progressQuery = useShowProgress([id]);
 	const progress = findShowProgress(progressQuery.data, id);
 
+	// TMDB returns the show's status ("Returning Series", "Ended", …) but the
+	// generated DTO does not type it; the Web App reads it the same way.
+	const status = (data as { status?: string } | undefined)?.status;
+
 	// Hide the placeholder "Season 0" specials when there are real seasons.
 	const seasons = (data?.seasons ?? []).filter(
 		(s) => s.season_number > 0 || (data?.seasons?.length ?? 0) === 1,
 	);
+
+	// Lead with the episode to watch next, worded like the Web App's show page.
+	// Its destination depends on Up Next, so hold the space with a skeleton
+	// until that query settles: guessing from progress alone pointed a
+	// half-watched show at episode 1 ("Rewatch from start") for a moment.
+	const { isAuthenticated } = useAuth();
+	const upNext = useUpNext(20, id);
+	const nextEpisode = upNext.items.find((i) => i.showId === id)?.nextEpisode;
+	const firstSeasonNumber = seasons.find(
+		(s) => s.season_number > 0,
+	)?.season_number;
+	const continueSeason = nextEpisode?.seasonNumber ?? firstSeasonNumber;
+	const continueTo =
+		!isAuthenticated || continueSeason === undefined || upNext.isError
+			? undefined
+			: upNext.isLoading || progressQuery.isLoading
+				? ("loading" as const)
+				: {
+						label: nextEpisode
+							? `Continue S${nextEpisode.seasonNumber}E${nextEpisode.episodeNumber}`
+							: (progress?.episodesWatched ?? 0) > 0
+								? "Rewatch from start"
+								: "Start watching",
+						href: `/shows/${id}/${name}/seasons/${continueSeason}/episodes/${nextEpisode?.episodeNumber ?? 1}` as Href,
+					};
 
 	return (
 		<ScreenFrame>
@@ -100,6 +133,7 @@ export default function ShowDetailScreen() {
 										data.number_of_episodes
 											? `${data.number_of_episodes} episodes`
 											: undefined,
+										status,
 									]}
 								/>
 								<GenreLinks genres={data.genres} mediaType="show" />
@@ -113,6 +147,7 @@ export default function ShowDetailScreen() {
 									showId={id}
 									episodeCount={data.number_of_episodes}
 									progress={progress}
+									continueTo={continueTo}
 								/>
 								<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
 								{/* Secondary actions as one row of compact tiles. */}
@@ -132,6 +167,32 @@ export default function ShowDetailScreen() {
 					secondary={
 						<>
 							<OverviewSection text={data.overview} />
+
+							{seasons.length > 0 ? (
+								<View className="gap-2 px-4">
+									<Text className="text-display-3 text-foreground">
+										Seasons
+									</Text>
+									{seasons.map((s) => (
+										<SeasonCard
+											key={s.id}
+											actions
+											season={{
+												showId,
+												showSlug: name,
+												seasonNumber: s.season_number,
+												name: s.name,
+												posterPath: s.poster_path,
+												episodeCount: s.episode_count,
+												year: yearFromDate(s.air_date),
+												progress: progress?.seasons.find(
+													(season) => season.seasonNumber === s.season_number,
+												),
+											}}
+										/>
+									))}
+								</View>
+							) : null}
 							<DetailsCard
 								items={[
 									{
@@ -144,6 +205,7 @@ export default function ShowDetailScreen() {
 									},
 									{ label: "Seasons", value: data.number_of_seasons || 0 },
 									{ label: "Episodes", value: data.number_of_episodes || 0 },
+									{ label: "Status", value: status ?? "Unknown" },
 									{
 										label: "First Aired",
 										value: formatLongDate(data.first_air_date) ?? "Unknown",
@@ -167,32 +229,6 @@ export default function ShowDetailScreen() {
 
 							<WatchProviders mediaType="show" mediaId={id} />
 
-							{seasons.length > 0 ? (
-								<View className="gap-2 px-4">
-									<Text className="font-display font-semibold text-base text-foreground">
-										Seasons
-									</Text>
-									{seasons.map((s) => (
-										<SeasonCard
-											key={s.id}
-											actions
-											season={{
-												showId,
-												showSlug: name,
-												seasonNumber: s.season_number,
-												name: s.name,
-												posterPath: s.poster_path,
-												episodeCount: s.episode_count,
-												year: yearFromDate(s.air_date),
-												progress: progress?.seasons.find(
-													(season) => season.seasonNumber === s.season_number,
-												),
-											}}
-										/>
-									))}
-								</View>
-							) : null}
-
 							<CreditsSummary
 								credits={data.credits}
 								creditsHref={`/shows/${id}/${name}/credits`}
@@ -212,8 +248,8 @@ export default function ShowDetailScreen() {
 						<RefreshControl
 							refreshing={refreshing}
 							onRefresh={onRefresh}
-							tintColor="#f3bc00"
-							colors={["#f3bc00"]}
+							tintColor={themeColors.accent}
+							colors={[themeColors.accent]}
 						/>
 					}
 				/>

@@ -40,7 +40,7 @@ export default function ConfirmDialog({
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<AlertTriangle className="size-5 text-amber-500" />
+						<AlertTriangle className="size-5 text-warning" />
 						{title}
 					</DialogTitle>
 					<DialogDescription>{description}</DialogDescription>
@@ -59,7 +59,7 @@ export default function ConfirmDialog({
 						disabled={isPending}
 						className={
 							variant === "destructive"
-								? "btn bg-red-600 text-white hover:bg-red-700"
+								? "btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
 								: "btn btn-primary"
 						}
 					>

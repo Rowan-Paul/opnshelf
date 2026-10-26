@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Custom stack header, set once as the root Stack's `header` option so every
@@ -20,9 +21,10 @@ import { Text } from "@/components/ui/text";
 /** The header's back chevron, exported so screens overriding `headerLeft`
  * (e.g. to confirm discarding edits) render the exact same button. */
 export function HeaderBackButton({ onPress }: { onPress: () => void }) {
+	const colors = useThemeColors();
 	return (
 		<Pressable hitSlop={12} onPress={onPress} className="-ml-2 p-1">
-			<ChevronLeft color="#94a3b8" size={30} />
+			<ChevronLeft color={colors.mutedForeground} size={30} />
 		</Pressable>
 	);
 }
@@ -53,7 +55,7 @@ export function AppHeader({
 					: null}
 				<Text
 					numberOfLines={1}
-					className="flex-1 font-display font-semibold text-foreground text-xl"
+					className="flex-1 font-display-semibold text-foreground text-xl"
 				>
 					{options.title ?? route.name}
 				</Text>

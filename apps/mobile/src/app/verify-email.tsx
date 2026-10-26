@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { posthog } from "@/lib/posthog";
+import { useThemeColors } from "@/theme/colors";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -31,6 +32,7 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function VerifyEmailScreen() {
+	const colors = useThemeColors();
 	const { user, isLoading, isAuthenticated, runAuthorizationUrl } = useAuth();
 	const queryClient = useQueryClient();
 	const toast = useToast();
@@ -122,9 +124,9 @@ export default function VerifyEmailScreen() {
 			<View className="flex-1 justify-center gap-6">
 				<View className="items-center gap-4">
 					<View className="h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-						<MailCheck color="#3f2e00" size={32} />
+						<MailCheck color={colors.accentForeground} size={32} />
 					</View>
-					<Text className="text-center font-bold font-display text-3xl text-foreground">
+					<Text className="text-center font-display-bold text-3xl text-foreground">
 						Verify your email
 					</Text>
 					<Text className="text-center text-base text-muted-foreground">

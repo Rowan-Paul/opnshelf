@@ -6,19 +6,18 @@ import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { movieHref, showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
+import { useThemeColors } from "@/theme/colors";
 
-function displayTitle(item: ReleaseCalendarItemDto): string {
-	if (
-		item.mediaType === "show" &&
-		item.releaseKind === "episode" &&
-		item.seasonNumber !== undefined
-	) {
+/** Same labels as the Web App's Home Upcoming rows ("S1E5", not "1x5"). */
+function episodeInfo(item: ReleaseCalendarItemDto): string | undefined {
+	if (item.releaseKind === "episode" && item.seasonNumber !== undefined) {
 		if (item.episodeNumber !== undefined) {
-			return `${item.seasonNumber}x${item.episodeNumber} ${item.title}`;
+			return `S${item.seasonNumber}E${item.episodeNumber}`;
 		}
-		return `S${item.seasonNumber} ${item.title}`;
+		return `Season ${item.seasonNumber}`;
 	}
-	return item.title;
+	if (item.releaseKind === "show") return "Season Premiere";
+	return undefined;
 }
 
 /** Short absolute day, e.g. `Jun 25`. */
@@ -42,7 +41,8 @@ function relativeDate(dateStr: string): string | undefined {
 	if (diffDays === 0) return "Today";
 	if (diffDays === 1) return "Tomorrow";
 	if (diffDays < 7) return `in ${diffDays} days`;
-	return `in ${Math.ceil(diffDays / 7)} weeks`;
+	const weeks = Math.ceil(diffDays / 7);
+	return weeks === 1 ? "in 1 week" : `in ${weeks} weeks`;
 }
 
 function hrefFor(item: ReleaseCalendarItemDto): Href | null {
@@ -68,8 +68,22 @@ function hrefFor(item: ReleaseCalendarItemDto): Href | null {
 	return null;
 }
 
+/** Loading placeholder with ReleaseRow's geometry: poster block + text lines. */
+export function ReleaseRowSkeleton() {
+	return (
+		<View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3">
+			<View className="h-20 w-14 rounded-lg bg-background-subtle" />
+			<View className="flex-1 gap-2">
+				<View className="h-3.5 w-3/5 rounded bg-background-subtle" />
+				<View className="h-2.5 w-2/5 rounded bg-background-subtle" />
+			</View>
+		</View>
+	);
+}
+
 /** A single upcoming release in the calendar week list. */
 export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
+	const colors = useThemeColors();
 	const href = hrefFor(item);
 	const isMovie = item.mediaType === "movie";
 
@@ -82,20 +96,20 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 						className="h-20 w-14"
 					/>
 				) : isMovie ? (
-					<Film color="#94a3b8" size={22} />
+					<Film color={colors.mutedForeground} size={22} />
 				) : (
-					<Tv color="#94a3b8" size={22} />
+					<Tv color={colors.mutedForeground} size={22} />
 				)}
 			</View>
 			<View className="min-w-0 flex-1">
 				<Text className="font-medium text-foreground text-sm" numberOfLines={2}>
-					{displayTitle(item)}
+					{item.title}
 				</Text>
 				<View className="mt-1 flex-row items-center gap-1.5">
 					{isMovie ? (
-						<Film color="#94a3b8" size={13} />
+						<Film color={colors.mutedForeground} size={13} />
 					) : (
-						<Tv color="#94a3b8" size={13} />
+						<Tv color={colors.mutedForeground} size={13} />
 					)}
 					<Text className="text-muted-foreground text-xs">
 						{shortDate(item.releaseDate)}
@@ -106,8 +120,13 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 						</Text>
 					) : null}
 				</View>
+				{episodeInfo(item) ? (
+					<Text className="mt-0.5 text-muted-foreground text-xs">
+						{episodeInfo(item)}
+					</Text>
+				) : null}
 			</View>
-			<ChevronRight color="#94a3b8" size={18} />
+			<ChevronRight color={colors.mutedForeground} size={18} />
 		</View>
 	);
 

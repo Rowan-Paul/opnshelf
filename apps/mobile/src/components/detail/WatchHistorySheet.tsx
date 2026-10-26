@@ -4,6 +4,7 @@ import { WatchCountBadge } from "@/components/media/WatchCountBadge";
 import { Text } from "@/components/ui/text";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { formatWatchDateTime } from "@/lib/watch-date";
+import { useThemeColors } from "@/theme/colors";
 
 export interface WatchHistoryEntry {
 	id: string;
@@ -40,6 +41,7 @@ export function WatchHistorySheet({
 	timeZone?: string;
 	hour12?: boolean;
 }) {
+	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	return (
 		<Modal
@@ -53,7 +55,7 @@ export function WatchHistorySheet({
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between gap-2">
 						<View className="min-w-0 flex-1">
-							<Text className="font-bold font-display text-foreground text-lg">
+							<Text className="font-display-bold text-foreground text-lg">
 								Watch history
 							</Text>
 							{title ? (
@@ -74,7 +76,7 @@ export function WatchHistorySheet({
 							/>
 						) : null}
 						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
@@ -109,7 +111,7 @@ export function WatchHistorySheet({
 												onPress={() => onEdit(entry)}
 												className="size-8 items-center justify-center rounded-md"
 											>
-												<Pencil color="#94a3b8" size={18} />
+												<Pencil color={colors.mutedForeground} size={18} />
 											</Pressable>
 										)}
 										<Pressable
@@ -119,7 +121,7 @@ export function WatchHistorySheet({
 											className="size-8 items-center justify-center rounded-md"
 											style={{ opacity: isDeleting ? 0.5 : 1 }}
 										>
-											<X color="#ef4444" size={18} />
+											<X color={colors.destructive} size={18} />
 										</Pressable>
 									</View>
 								))}
@@ -131,7 +133,7 @@ export function WatchHistorySheet({
 						onPress={onAddWatch}
 						className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
 					>
-						<Plus color="#94a3b8" size={18} />
+						<Plus color={colors.mutedForeground} size={18} />
 						<Text className="font-semibold text-foreground">Add a watch</Text>
 					</Pressable>
 				</View>

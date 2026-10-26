@@ -6,6 +6,7 @@ import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { LIBRARY_FORMATS, type LibraryFormat } from "@/lib/use-library";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Bottom sheet to mark which Formats the user owns an item in. Mirrors
@@ -25,6 +26,7 @@ export function AddToLibrarySheet({
 	isLoading?: boolean;
 	onToggle: (format: LibraryFormat, boxSet?: string) => void;
 }) {
+	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	const [boxSet, setBoxSet] = useState("");
 
@@ -39,11 +41,11 @@ export function AddToLibrarySheet({
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="max-h-[80%] gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							Add to library
 						</Text>
 						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
@@ -87,10 +89,14 @@ export function AddToLibrarySheet({
 												)}
 											>
 												{isOwned ? (
-													<Check color="#3f2e00" size={16} strokeWidth={3} />
+													<Check
+														color={colors.accentForeground}
+														size={16}
+														strokeWidth={3}
+													/>
 												) : null}
 											</View>
-											<Disc color="#94a3b8" size={18} />
+											<Disc color={colors.mutedForeground} size={18} />
 											<Text className="flex-1 font-medium text-foreground text-sm">
 												{label}
 											</Text>

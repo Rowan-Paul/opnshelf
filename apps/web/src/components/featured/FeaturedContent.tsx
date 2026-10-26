@@ -98,7 +98,7 @@ export function FeaturedContent() {
 	return (
 		<section className="mb-8" aria-label="Featured Content">
 			<div className="mb-3 flex items-center justify-between gap-3">
-				<h2 className="font-display font-semibold text-xl">Featured Content</h2>
+				<h2 className="text-display-3">Featured Content</h2>
 				{canEdit && (
 					<Link
 						to="/admin/featured"

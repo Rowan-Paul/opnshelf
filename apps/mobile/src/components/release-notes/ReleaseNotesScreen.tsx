@@ -14,6 +14,7 @@ import { Screen } from "@/components/ui/screen";
 import { ErrorState, StaleDataNotice } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useReleaseNotes } from "@/lib/use-release-notes";
+import { useThemeColors } from "@/theme/colors";
 
 function Availability({ entry }: { entry: ReleaseNote }) {
 	return (
@@ -32,6 +33,7 @@ function Availability({ entry }: { entry: ReleaseNote }) {
 	);
 }
 export function ReleaseNotesScreen({ slug }: { slug?: string }) {
+	const colors = useThemeColors();
 	const [focused, setFocused] = useState(false);
 	useFocusEffect(
 		useCallback(() => {
@@ -49,14 +51,9 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 					contentContainerClassName="gap-6 py-6"
 					showsVerticalScrollIndicator={false}
 				>
-					{slug && (
-						<Link href="/whats-new">
-							<Text className="text-primary text-sm">← All release notes</Text>
-						</Link>
-					)}
 					<View className="gap-3">
 						{slug && (
-							<Text className="font-bold font-display text-3xl text-foreground">
+							<Text className="text-display-1 text-foreground">
 								{entry?.title ??
 									(!notes.data ? "Release notes" : "Release note not found")}
 							</Text>
@@ -110,17 +107,23 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 							</View>
 						) : (
 							notes.data && (
-								<Text className="text-muted-foreground">
-									This release note isn’t available. Browse the history for
-									published updates.
-								</Text>
+								<View className="gap-3">
+									<Text className="text-muted-foreground">
+										This release note isn’t available.
+									</Text>
+									<Link href="/whats-new">
+										<Text className="text-primary text-sm">
+											Browse all release notes
+										</Text>
+									</Link>
+								</View>
 							)
 						)
 					) : (
 						<>
 							{notes.data?.length === 0 && (
 								<View className="gap-2 rounded-xl border border-border bg-card p-6">
-									<Text className="font-display font-semibold text-lg">
+									<Text className="font-display-semibold text-lg">
 										The next chapter starts here
 									</Text>
 									<Text className="text-muted-foreground text-sm">
@@ -148,10 +151,10 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 											accessibilityRole="link"
 											className="flex-row items-center gap-3"
 										>
-											<Text className="flex-1 font-display font-semibold text-2xl text-foreground">
+											<Text className="flex-1 text-display-3 text-foreground">
 												{note.title}
 											</Text>
-											<ArrowUpRight size={20} color="#f3bc00" />
+											<ArrowUpRight size={20} color={colors.accent} />
 										</Pressable>
 									</Link>
 									<Text className="text-muted-foreground leading-6">

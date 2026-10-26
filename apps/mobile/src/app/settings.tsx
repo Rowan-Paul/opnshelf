@@ -19,13 +19,19 @@ import {
 	AlertTriangle,
 	Bell,
 	ChevronRight,
+	CircleHelp,
 	Compass,
-	Download,
+	type LucideIcon,
 	MessageSquare,
+	PlugZap,
 	RotateCcw,
+	ShieldCheck,
+	SlidersHorizontal,
 	Smartphone,
 	Trash2,
+	UserCog,
 	UserPen,
+	UserRound,
 } from "lucide-react-native";
 import {
 	type ReactNode,
@@ -72,9 +78,9 @@ import {
 	useAccountDeletionJob,
 } from "@/lib/use-account-deletion";
 import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
+import { useThemeColors } from "@/theme/colors";
 
 /** Amber primary used for active switches + selected radios. */
-const PRIMARY = "#f3bc00";
 
 /** Section card wrapper, matching the web settings `card` sections. */
 function SettingsSection({
@@ -93,7 +99,7 @@ function SettingsSection({
 			<View className="gap-1">
 				<View className="flex-row items-center gap-2">
 					{icon}
-					<Text className="font-display font-semibold text-foreground text-lg">
+					<Text className="font-display-semibold text-foreground text-lg">
 						{title}
 					</Text>
 				</View>
@@ -193,6 +199,7 @@ export function SettingsCategoryScreen({
 }: {
 	section: SettingsCategory;
 }) {
+	const colors = useThemeColors();
 	const { showDialog } = useDialog();
 	const { user, signOut, runAuthorizationUrl } = useAuth();
 	const { open: openFeedback } = useFeedback();
@@ -521,16 +528,16 @@ export function SettingsCategoryScreen({
 
 					{section === "profile" && (
 						<View className="gap-3 rounded-xl border border-border bg-card p-4">
-							<Text className="font-display font-semibold text-foreground text-lg">
+							<Text className="font-display-semibold text-foreground text-lg">
 								Profile
 							</Text>
 							<Link href="/edit-profile" asChild>
 								<Pressable className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3">
-									<UserPen color="#94a3b8" size={20} />
+									<UserPen color={colors.mutedForeground} size={20} />
 									<Text className="flex-1 font-medium text-foreground">
 										Edit profile
 									</Text>
-									<ChevronRight color="#94a3b8" size={18} />
+									<ChevronRight color={colors.mutedForeground} size={18} />
 								</Pressable>
 							</Link>
 						</View>
@@ -538,7 +545,7 @@ export function SettingsCategoryScreen({
 
 					{section === "help" && (
 						<View className="gap-3 rounded-xl border border-border bg-card p-4">
-							<Text className="font-display font-semibold text-foreground text-lg">
+							<Text className="font-display-semibold text-foreground text-lg">
 								Welcome tour
 							</Text>
 							<Pressable
@@ -546,18 +553,18 @@ export function SettingsCategoryScreen({
 								accessibilityRole="button"
 								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
 							>
-								<Compass color="#94a3b8" size={20} />
+								<Compass color={colors.mutedForeground} size={20} />
 								<Text className="flex-1 font-medium text-foreground">
 									Take the tour again
 								</Text>
-								<ChevronRight color="#94a3b8" size={18} />
+								<ChevronRight color={colors.mutedForeground} size={18} />
 							</Pressable>
 						</View>
 					)}
 
 					{section === "help" && (
 						<View className="gap-3 rounded-xl border border-border bg-card p-4">
-							<Text className="font-display font-semibold text-foreground text-lg">
+							<Text className="font-display-semibold text-foreground text-lg">
 								Onboarding
 							</Text>
 							<Pressable
@@ -570,13 +577,13 @@ export function SettingsCategoryScreen({
 								onPress={() => resetOnboarding.mutate({})}
 								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
 							>
-								<RotateCcw color="#94a3b8" size={20} />
+								<RotateCcw color={colors.mutedForeground} size={20} />
 								<Text className="flex-1 font-medium text-foreground">
 									{resetOnboarding.isPending
 										? "Resetting onboarding…"
 										: "Reset onboarding"}
 								</Text>
-								<ChevronRight color="#94a3b8" size={18} />
+								<ChevronRight color={colors.mutedForeground} size={18} />
 							</Pressable>
 						</View>
 					)}
@@ -647,7 +654,10 @@ export function SettingsCategoryScreen({
 													})
 												}
 												disabled={settingsBusy}
-												trackColor={{ false: "#3f3f46", true: PRIMARY }}
+												trackColor={{
+													false: colors.borderStrong,
+													true: colors.accent,
+												}}
 												thumbColor="#ffffff"
 											/>
 										</View>
@@ -729,7 +739,10 @@ export function SettingsCategoryScreen({
 												})
 											}
 											disabled={settingsBusy}
-											trackColor={{ false: "#3f3f46", true: PRIMARY }}
+											trackColor={{
+												false: colors.borderStrong,
+												true: colors.accent,
+											}}
 											thumbColor="#ffffff"
 										/>
 									</View>
@@ -776,7 +789,7 @@ export function SettingsCategoryScreen({
 
 								{storedTargetMissing && (
 									<View className="flex-row items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
-										<AlertTriangle color={PRIMARY} size={16} />
+										<AlertTriangle color={colors.accent} size={16} />
 										<Text className="flex-1 text-foreground text-sm leading-5">
 											The blog you selected is no longer available on your
 											account. New reviews still mirror to it, but you may want
@@ -876,7 +889,7 @@ export function SettingsCategoryScreen({
 							</SettingsSection>
 
 							<View className="gap-4 rounded-xl border border-border bg-card p-4">
-								<Text className="font-display font-semibold text-foreground text-lg">
+								<Text className="font-display-semibold text-foreground text-lg">
 									Trakt
 								</Text>
 								<Text className="text-muted-foreground text-sm">
@@ -895,18 +908,18 @@ export function SettingsCategoryScreen({
 
 					{section === "help" && (
 						<View className="gap-3 rounded-xl border border-border bg-card p-4">
-							<Text className="font-display font-semibold text-foreground text-lg">
+							<Text className="font-display-semibold text-foreground text-lg">
 								Feedback
 							</Text>
 							<Pressable
 								onPress={openFeedback}
 								className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
 							>
-								<MessageSquare color="#94a3b8" size={20} />
+								<MessageSquare color={colors.mutedForeground} size={20} />
 								<Text className="flex-1 font-medium text-foreground">
 									Report a bug or send feedback
 								</Text>
-								<ChevronRight color="#94a3b8" size={18} />
+								<ChevronRight color={colors.mutedForeground} size={18} />
 							</Pressable>
 							<Text className="text-muted-foreground text-xs leading-5">
 								Tip: shake your phone anywhere in the app to send feedback.
@@ -918,16 +931,25 @@ export function SettingsCategoryScreen({
 						<>
 							<Link href="/devices" asChild>
 								<Pressable className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-4">
-									<Smartphone color="#94a3b8" size={20} />
+									<Smartphone color={colors.mutedForeground} size={20} />
 									<Text className="flex-1 font-medium text-foreground">
 										Devices
 									</Text>
-									<ChevronRight color="#94a3b8" size={18} />
+									<ChevronRight color={colors.mutedForeground} size={18} />
 								</Pressable>
 							</Link>
+							{/* Sign out — reversible, so a neutral outline; red stays reserved
+							    for the irreversible Delete Account below. Same order as
+							    the Web App: Devices, Sign out, Danger Zone. */}
+							<Button
+								label="Sign out"
+								variant="secondary"
+								loading={isSigningOut}
+								onPress={handleSignOut}
+							/>
 							<View className="gap-4 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
 								<View className="gap-1">
-									<Text className="font-display font-semibold text-destructive text-lg">
+									<Text className="font-display-semibold text-destructive text-lg">
 										Danger Zone
 									</Text>
 									<Text className="text-destructive/80 text-sm leading-5">
@@ -940,7 +962,10 @@ export function SettingsCategoryScreen({
 								{isDeleting && deletionJob ? (
 									<View className="gap-3">
 										<View className="flex-row items-center gap-2">
-											<ActivityIndicator size="small" color="#ef4444" />
+											<ActivityIndicator
+												size="small"
+												color={colors.destructive}
+											/>
 											<Text className="flex-1 font-medium text-destructive text-sm">
 												{deletionMessage}
 											</Text>
@@ -971,27 +996,11 @@ export function SettingsCategoryScreen({
 										label="Delete Account"
 										variant="destructive"
 										loading={deleteAccountMutation.isPending}
-										leading={<Trash2 color="#ef4444" size={18} />}
+										leading={<Trash2 color={colors.destructive} size={18} />}
 										onPress={confirmDeleteAccount}
 									/>
 								)}
 							</View>
-
-							{/* Sign out — reversible, so a neutral outline; red stays reserved
-					    for the irreversible Delete Account above. */}
-							<Pressable
-								disabled={isSigningOut}
-								onPress={handleSignOut}
-								className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
-								style={{ opacity: isSigningOut ? 0.7 : 1 }}
-							>
-								{isSigningOut && (
-									<ActivityIndicator size="small" color="#94a3b8" />
-								)}
-								<Text className="font-semibold text-base text-foreground">
-									Sign out
-								</Text>
-							</Pressable>
 
 							<Text className="text-center text-muted-foreground text-xs">
 								{formatVersionLine()}
@@ -1017,25 +1026,25 @@ const SETTINGS_AREAS: {
 		| "/settings/help";
 	label: string;
 	description: string;
-	Icon: typeof UserPen;
+	Icon: LucideIcon;
 }[] = [
 	{
 		href: "/edit-profile",
 		label: SETTINGS_TITLES.profile,
 		description: "Name, photo and social links",
-		Icon: UserPen,
+		Icon: UserRound,
 	},
 	{
 		href: "/settings/preferences",
 		label: SETTINGS_TITLES.preferences,
 		description: "Appearance, time, streaming and reviews",
-		Icon: Compass,
+		Icon: SlidersHorizontal,
 	},
 	{
 		href: "/settings/privacy",
 		label: SETTINGS_TITLES.privacy,
 		description: "Public and Private data",
-		Icon: Smartphone,
+		Icon: ShieldCheck,
 	},
 	{
 		href: "/settings/notifications",
@@ -1047,19 +1056,19 @@ const SETTINGS_AREAS: {
 		href: "/settings/connections",
 		label: SETTINGS_TITLES.connections,
 		description: "Blog mirroring, Bluesky and Trakt",
-		Icon: Download,
+		Icon: PlugZap,
 	},
 	{
 		href: "/settings/account",
 		label: SETTINGS_TITLES.account,
 		description: "Devices, sign out and account deletion",
-		Icon: Smartphone,
+		Icon: UserCog,
 	},
 	{
 		href: "/settings/help",
 		label: SETTINGS_TITLES.help,
 		description: "Onboarding, welcome tour and feedback",
-		Icon: MessageSquare,
+		Icon: CircleHelp,
 	},
 ];
 
@@ -1086,6 +1095,7 @@ function SettingsColumns({
 }
 
 function SettingsNavigation({ active }: { active?: string }) {
+	const colors = useThemeColors();
 	return (
 		<Screen topInset={false}>
 			<ScrollView
@@ -1101,14 +1111,11 @@ function SettingsNavigation({ active }: { active?: string }) {
 						<Link key={href} href={href} replace={!!active} asChild>
 							<Pressable
 								accessibilityState={{ selected: label === active }}
-								style={{
-									backgroundColor: label === active ? "#f3bc001a" : undefined,
-								}}
 								className={`flex-row items-center gap-3 p-4 ${
 									index > 0 ? "border-border border-t" : ""
-								}`}
+								} ${label === active ? "bg-accent-subtle" : ""}`}
 							>
-								<Icon color="#94a3b8" size={20} />
+								<Icon color={colors.mutedForeground} size={20} />
 								<View className="flex-1 gap-0.5">
 									<View className="flex-row items-center gap-2">
 										<Text className="font-medium text-foreground">{label}</Text>
@@ -1124,7 +1131,7 @@ function SettingsNavigation({ active }: { active?: string }) {
 										{description}
 									</Text>
 								</View>
-								<ChevronRight color="#94a3b8" size={18} />
+								<ChevronRight color={colors.mutedForeground} size={18} />
 							</Pressable>
 						</Link>
 					))}

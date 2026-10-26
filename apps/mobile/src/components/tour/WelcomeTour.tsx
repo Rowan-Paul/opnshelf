@@ -306,7 +306,7 @@ export function WelcomeTour() {
 					<Text className="text-muted-foreground text-xs">
 						Step {index + 1} of {TOUR_STEPS.length}
 					</Text>
-					<Text className="font-bold font-display text-foreground text-lg">
+					<Text className="font-display-bold text-foreground text-lg">
 						{step.title}
 					</Text>
 					<Text className="text-muted-foreground text-sm leading-5">

@@ -2,7 +2,7 @@ import type { PersonFilmographyItemDto } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { DetailColumns } from "@/components/detail/DetailColumns";
 import { FilmographyCard } from "@/components/person/FilmographyCard";
 import { PersonHero } from "@/components/person/PersonHero";
@@ -97,7 +97,7 @@ export default function PersonDetailScreen() {
 								<PersonHero person={person} />
 								{person.biography ? (
 									<View className="px-4">
-										<Text className="mb-2 font-display font-semibold text-base text-foreground">
+										<Text className="mb-2 text-display-3 text-foreground">
 											Biography
 										</Text>
 										<Text className="text-muted-foreground text-sm leading-5">
@@ -133,7 +133,7 @@ export default function PersonDetailScreen() {
 
 										{knownFor.length > 0 ? (
 											<View>
-												<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
+												<Text className="mb-3 px-4 text-display-3 text-foreground">
 													Known for
 												</Text>
 												{/* items-start: horizontal ScrollView content defaults to
@@ -155,15 +155,22 @@ export default function PersonDetailScreen() {
 											</View>
 										) : null}
 
-										<Text className="px-4 font-display font-semibold text-base text-foreground">
+										<Text className="px-4 text-display-3 text-foreground">
 											Filmography
 										</Text>
 									</View>
 								}
+								ListEmptyComponent={
+									<Text className="px-4 py-6 text-center text-muted-foreground text-sm">
+										No filmography available.
+									</Text>
+								}
 								ListFooterComponent={
+									// A row of card-shaped placeholders, not a spinner,
+									// while the next page loads.
 									isFetchingNextPage ? (
-										<View className="py-6">
-											<ActivityIndicator color="#94a3b8" />
+										<View className="px-3">
+											<PosterGridSkeleton rows={1} columns={numColumns} />
 										</View>
 									) : null
 								}

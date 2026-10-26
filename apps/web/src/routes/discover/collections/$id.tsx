@@ -21,7 +21,7 @@ export const Route = createFileRoute("/discover/collections/$id")({
 	component: NotificationCollectionPage,
 });
 
-export function NotificationCollectionPage() {
+function NotificationCollectionPage() {
 	const { id } = Route.useParams();
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const query = useQuery({

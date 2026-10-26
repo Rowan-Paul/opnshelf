@@ -93,28 +93,37 @@ export default function EpisodeRow({
 	};
 
 	return (
-		<Link
-			to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
-			params={{
-				showId,
-				showName,
-				seasonNumber: String(seasonNumber),
-				episodeNumber: String(episode.episode_number),
-			}}
-			className={`flex items-center gap-4 p-4 transition-colors ${
+		// The row is a stretched link rather than an <a> wrapping the shelf
+		// button: interactive content nested in a link is invalid and gives
+		// assistive technology one merged control.
+		<div
+			className={`relative flex items-center gap-4 p-4 transition-colors ${
 				isUpNext ? "bg-(--accent-subtle)" : "hover:bg-(--background-subtle)"
 			} ${!isLast ? "border-(--border) border-b" : ""}`}
 		>
 			<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--background-subtle) font-semibold text-sm">
 				{isWatched ? (
-					<Check className="size-5 text-green-500" />
+					<Check className="size-5 text-success" />
 				) : (
 					episode.episode_number
 				)}
 			</div>
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<h4 className="truncate font-medium">{episode.name}</h4>
+					<h4 className="truncate font-medium">
+						<Link
+							to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
+							params={{
+								showId,
+								showName,
+								seasonNumber: String(seasonNumber),
+								episodeNumber: String(episode.episode_number),
+							}}
+							className="after:absolute after:inset-0"
+						>
+							{episode.name}
+						</Link>
+					</h4>
 					{isUpNext && <span className="badge badge-accent">Up Next</span>}
 				</div>
 				<p className="text-(--foreground-muted) text-sm">
@@ -128,7 +137,7 @@ export default function EpisodeRow({
 					type="button"
 					onClick={handleUnmarkClick}
 					disabled={isUnmarking}
-					className="flex shrink-0 items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 font-medium text-green-600 text-xs transition-colors hover:bg-green-500/20"
+					className="relative flex shrink-0 items-center gap-1.5 rounded-md bg-success/10 px-3 py-1.5 font-medium text-success text-xs transition-colors hover:bg-success/20"
 					title="Remove from shelf"
 				>
 					{isUnmarking ? (
@@ -140,6 +149,7 @@ export default function EpisodeRow({
 						<>
 							<Check className="size-3.5" />
 							On shelf
+							<span className="sr-only">: {episode.name}</span>
 						</>
 					)}
 				</button>
@@ -152,7 +162,7 @@ export default function EpisodeRow({
 						onMarkWatched();
 					}}
 					disabled={isProcessing}
-					className="btn btn-secondary h-8 shrink-0 px-3 text-xs"
+					className="btn btn-secondary relative h-8 shrink-0 px-3 text-xs"
 					title="Add to shelf"
 				>
 					{isProcessing ? (
@@ -161,7 +171,10 @@ export default function EpisodeRow({
 							Loading
 						</>
 					) : (
-						"Add to shelf"
+						<>
+							Add to shelf
+							<span className="sr-only">: {episode.name}</span>
+						</>
 					)}
 				</button>
 			)}
@@ -173,7 +186,7 @@ export default function EpisodeRow({
 				onConfirm={handleConfirmRemove}
 				isPending={isUnmarking}
 			/>
-		</Link>
+		</div>
 	);
 }
 

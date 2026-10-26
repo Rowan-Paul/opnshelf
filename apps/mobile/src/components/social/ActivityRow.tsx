@@ -9,6 +9,7 @@ import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
 import { backdropUrl, posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /** Absolute date + time, mirroring web ("Jun 18, 3:42 PM"). */
 export function formatActivityDate(
@@ -84,6 +85,7 @@ export function ActivityRow({
 	userTimeFormat?: "12h" | "24h";
 	containerClassName?: string;
 }) {
+	const colors = useThemeColors();
 	const avatarStyle = useTwStyle("size-7");
 	const displayName =
 		typeof activity.actor.displayName === "string"
@@ -146,7 +148,7 @@ export function ActivityRow({
 										contentFit="cover"
 									/>
 								) : (
-									<User color="#94a3b8" size={14} />
+									<User color={colors.mutedForeground} size={14} />
 								)}
 							</Pressable>
 						</Link>
@@ -185,7 +187,7 @@ export function ActivityRow({
 					) : null}
 
 					<View className="mt-1 flex-row items-center gap-1.5">
-						<Clock color="#94a3b8" size={12} />
+						<Clock color={colors.mutedForeground} size={12} />
 						<Text className="text-muted-foreground text-xs">
 							{formatActivityDate(
 								activity.activityAt,

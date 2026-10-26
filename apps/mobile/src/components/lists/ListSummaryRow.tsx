@@ -5,8 +5,10 @@ import { type Href, Link } from "expo-router";
 import { ChevronRight, List } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * One list in a list of lists. Shared by the profile Lists tab and the
@@ -29,6 +31,7 @@ export function ListSummaryRow({
 	list: ListSummaryDto;
 	href: Href;
 }) {
+	const themeColors = useThemeColors();
 	const cover = posterUrl(list.coverPosterPath, "w342");
 	// expo-image ignores Uniwind's className at runtime, so its geometry has to
 	// come through `style` (see PosterImage for the same dance).
@@ -75,22 +78,44 @@ export function ListSummaryRow({
 					) : (
 						// An empty list has no first item to borrow art from.
 						<View className="h-[72px] w-12 items-center justify-center">
-							<List color="#94a3b8" size={18} />
+							<List color={themeColors.mutedForeground} size={18} />
 						</View>
 					)}
 				</View>
 
 				<View className="min-w-0 flex-1">
-					<Text
-						className={
-							cover
-								? "font-semibold text-base text-white"
-								: "font-semibold text-base text-foreground"
-						}
-						numberOfLines={1}
-					>
-						{list.name}
-					</Text>
+					<View className="flex-row items-center gap-2">
+						<Text
+							className={
+								cover
+									? "shrink font-semibold text-base text-white"
+									: "shrink font-semibold text-base text-foreground"
+							}
+							numberOfLines={1}
+						>
+							{list.name}
+						</Text>
+						{/* Same "Default" marker as the Web App's list cards. */}
+						{list.isDefault ? (
+							<View
+								className={
+									cover
+										? "rounded-full bg-white/25 px-1.5 py-0.5"
+										: "rounded-full bg-background-subtle px-1.5 py-0.5"
+								}
+							>
+								<Text
+									className={
+										cover
+											? "text-[10px] text-white"
+											: "text-[10px] text-muted-foreground"
+									}
+								>
+									Default
+								</Text>
+							</View>
+						) : null}
+					</View>
 					{list.description ? (
 						<Text
 							className={
@@ -110,11 +135,15 @@ export function ListSummaryRow({
 								: "mt-0.5 text-muted-foreground text-xs"
 						}
 					>
-						{list.itemCount} item{list.itemCount === 1 ? "" : "s"}
+						{list.itemCount} item{list.itemCount === 1 ? "" : "s"} · Updated{" "}
+						{formatRelativeTime(list.updatedAt)}
 					</Text>
 				</View>
 
-				<ChevronRight color={cover ? "#ffffff" : "#94a3b8"} size={18} />
+				<ChevronRight
+					color={cover ? "#ffffff" : themeColors.mutedForeground}
+					size={18}
+				/>
 			</Pressable>
 		</Link>
 	);

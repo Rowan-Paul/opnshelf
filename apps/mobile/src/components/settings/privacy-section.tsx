@@ -27,6 +27,7 @@ import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
+import { useThemeColors } from "@/theme/colors";
 
 export function PrivacySection({
 	onboarding = false,
@@ -37,6 +38,7 @@ export function PrivacySection({
 	onContinue?: () => void;
 	listRkey?: string;
 }) {
+	const colors = useThemeColors();
 	const { runAuthorizationUrl } = useAuth();
 	const { showDialog } = useDialog();
 	const insets = useSafeAreaInsets();
@@ -357,9 +359,9 @@ export function PrivacySection({
 						{label}
 					</Text>
 					{done ? (
-						<Check size={16} color="#16a34a" />
+						<Check size={16} color={colors.success} />
 					) : failed ? (
-						<CircleAlert size={16} color="#ef4444" />
+						<CircleAlert size={16} color={colors.destructive} />
 					) : (
 						<Text className="text-muted-foreground text-xs tabular-nums">
 							{moving.total != null && moving.copied >= moving.total
@@ -421,7 +423,7 @@ export function PrivacySection({
 						<Text
 							className={
 								onboarding
-									? "font-bold font-display text-3xl text-foreground"
+									? "font-display-bold text-3xl text-foreground"
 									: "font-semibold text-2xl text-foreground"
 							}
 						>
@@ -468,9 +470,9 @@ export function PrivacySection({
 						onPress={() => (changing ? openProgress() : chooseListVisibility())}
 					>
 						{scopes?.[0]?.visibility === "private" ? (
-							<Lock size={13} color="#64748b" />
+							<Lock size={13} color={colors.mutedForeground} />
 						) : (
-							<Globe size={13} color="#64748b" />
+							<Globe size={13} color={colors.mutedForeground} />
 						)}
 						<Text className="text-muted-foreground text-xs">
 							{changing
@@ -479,7 +481,7 @@ export function PrivacySection({
 									? "Private"
 									: "Public"}
 						</Text>
-						<ChevronDown size={12} color="#64748b" />
+						<ChevronDown size={12} color={colors.mutedForeground} />
 					</Pressable>
 				)
 			) : !data ? (
@@ -632,7 +634,7 @@ export function PrivacySection({
 								onPress={() => setManageLists(false)}
 								className="h-11 w-11 items-center justify-center rounded-full bg-background-subtle"
 							>
-								<X size={22} color="#64748b" />
+								<X size={22} color={colors.mutedForeground} />
 							</Pressable>
 						</View>
 						<ScrollView
@@ -683,19 +685,19 @@ export function PrivacySection({
 								}`}
 							>
 								{progressState === "stopped" ? (
-									<CircleAlert size={20} color="#ef4444" />
+									<CircleAlert size={20} color={colors.destructive} />
 								) : progressState === "done" ? (
-									<Check size={20} color="#16a34a" />
+									<Check size={20} color={colors.success} />
 								) : target === "Public" ? (
-									<Globe size={20} color="#d97706" />
+									<Globe size={20} color={colors.warning} />
 								) : (
-									<Lock size={20} color="#d97706" />
+									<Lock size={20} color={colors.warning} />
 								)}
 							</View>
 							<View className="flex-1 gap-0.5">
 								<Text
 									accessibilityRole="header"
-									className="font-bold font-display text-foreground text-lg"
+									className="font-display-bold text-foreground text-lg"
 								>
 									{progressTitle}
 								</Text>

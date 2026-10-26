@@ -1,13 +1,6 @@
 import type { PublicUserProfileDto } from "@opnshelf/api";
 import { type Href, Link } from "expo-router";
-import {
-	ChevronRight,
-	Clock,
-	Film,
-	Heart,
-	Star,
-	Tv,
-} from "lucide-react-native";
+import { ChevronRight, Lock } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
@@ -16,6 +9,7 @@ import { ProfileReviewRating } from "@/components/profile/ProfileReviewRating";
 import type { ProfileTab } from "@/components/profile/ProfileTabBar";
 import { StatsStrip } from "@/components/profile/StatsStrip";
 import { ReviewBody } from "@/components/ReviewBody";
+import { EmptyState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { mediaHref } from "@/lib/media-href";
 import {
@@ -23,25 +17,27 @@ import {
 	useProfileReviews,
 	useProfileShelf,
 } from "@/lib/use-public-profile";
+import { useThemeColors } from "@/theme/colors";
 
 const POSTER_W = 120;
+/** Recent Movies and Episodes both use landscape art, as on the Web App. */
+const BACKDROP_W = 220;
 
 function ViewAll() {
+	const colors = useThemeColors();
 	return (
 		<View className="flex-row items-center gap-1">
 			<Text className="font-medium text-primary text-sm">View all</Text>
-			<ChevronRight color="#f3bc00" size={15} />
+			<ChevronRight color={colors.accent} size={15} />
 		</View>
 	);
 }
 
 function SectionHeader({
-	icon,
 	title,
 	onPressAll,
 	href,
 }: {
-	icon: React.ReactNode;
 	title: string;
 	onPressAll?: () => void;
 	/** When set, "View all" is a deep link instead of a callback. */
@@ -50,10 +46,7 @@ function SectionHeader({
 	return (
 		<View className="mb-3 flex-row items-center justify-between">
 			<View className="flex-row items-center gap-2">
-				{icon}
-				<Text className="font-bold font-display text-foreground text-lg">
-					{title}
-				</Text>
+				<Text className="text-display-3 text-foreground">{title}</Text>
 			</View>
 			{href ? (
 				<Link href={href} asChild>
@@ -76,9 +69,12 @@ type PosterRowItem = { card: MediaCardItem; watchCount?: number };
 function PosterRow({
 	items,
 	emptyText,
+	width = POSTER_W,
 }: {
 	items: PosterRowItem[];
 	emptyText: string;
+	/** Card width; landscape episode rows pass a wider one. */
+	width?: number;
 }) {
 	if (items.length === 0) {
 		return (
@@ -94,7 +90,7 @@ function PosterRow({
 					<View
 						// biome-ignore lint/suspicious/noArrayIndexKey: rewatches share a media key in this static, non-reordering row, so index disambiguates
 						key={`${card.type}-${card.id}-${card.episode?.seasonNumber ?? ""}-${card.episode?.episodeNumber ?? ""}-${index}`}
-						style={{ width: POSTER_W }}
+						style={{ width }}
 					>
 						<MediaCard item={card} actions watchCount={watchCount} />
 					</View>
@@ -120,6 +116,7 @@ export function OverviewTab({
 	userDid: string;
 	onNavigate: (tab: ProfileTab, shelfType?: "movie" | "episode") => void;
 }) {
+	const _colors = useThemeColors();
 	// Both rows read the shelf endpoint rather than the dedicated recent-movies /
 	// recent-episodes ones: its DTO carries the episode title and the profile
 	// owner's Watch counts, so these posters badge like the Shelf tab does.
@@ -137,14 +134,14 @@ export function OverviewTab({
 	const movieItems: PosterRowItem[] = (movies.data?.items ?? [])
 		.slice(0, 10)
 		.map((item) => ({
-			card: shelfItemToCardItem(item),
+			card: shelfItemToCardItem(item, "backdrop"),
 			watchCount: item.watchCount,
 		}));
 
 	const episodeItems: PosterRowItem[] = (episodes.data?.items ?? [])
 		.slice(0, 10)
 		.map((item) => ({
-			card: shelfItemToCardItem(item),
+			card: shelfItemToCardItem(item, "backdrop"),
 			watchCount: item.watchCount,
 		}));
 
@@ -168,38 +165,39 @@ export function OverviewTab({
 
 					<View>
 						<SectionHeader
-							icon={<Film color="#f3bc00" size={18} />}
 							title="Recent Movies"
 							onPressAll={() => onNavigate("shelf", "movie")}
 						/>
-						<PosterRow items={movieItems} emptyText="No movies watched yet." />
+						<PosterRow
+							items={movieItems}
+							emptyText="No movies watched yet."
+							width={BACKDROP_W}
+						/>
 					</View>
 
 					<View>
 						<SectionHeader
-							icon={<Tv color="#f3bc00" size={18} />}
 							title="Recent Episodes"
 							onPressAll={() => onNavigate("shelf", "episode")}
 						/>
 						<PosterRow
 							items={episodeItems}
 							emptyText="No episodes watched yet."
+							width={BACKDROP_W}
 						/>
 					</View>
 				</>
 			) : (
-				<Text className="text-muted-foreground">Watches are private.</Text>
+				<EmptyState variant="card" icon={Lock} message="Watches are private." />
 			)}
 			<ListPreview
 				title="Watchlist"
-				icon={<Clock color="#f3bc00" size={18} />}
 				list={watchlist}
 				emptyText="Nothing on watchlist"
 				onPressAll={() => onNavigate("lists")}
 			/>
 			<ListPreview
 				title="Favorites"
-				icon={<Heart color="#f3bc00" size={18} />}
 				list={favorites}
 				emptyText="Nothing on favorites"
 				onPressAll={() => onNavigate("lists")}
@@ -207,7 +205,6 @@ export function OverviewTab({
 
 			<View>
 				<SectionHeader
-					icon={<Star color="#f3bc00" size={18} />}
 					title="Recent Reviews"
 					onPressAll={() => onNavigate("reviews")}
 				/>
@@ -255,27 +252,22 @@ export function OverviewTab({
 
 function ListPreview({
 	title,
-	icon,
 	list,
 	emptyText,
 	onPressAll,
 }: {
 	title: string;
-	icon: React.ReactNode;
 	list?: { slug: string; itemCount: number };
 	emptyText: string;
 	onPressAll: () => void;
 }) {
+	const colors = useThemeColors();
 	// Reuse the lists list-summary; the overview doesn't fetch items per list to
 	// keep the request count down — it links straight into the Lists tab.
 	const count = list?.itemCount ?? 0;
 	return (
 		<View>
-			<SectionHeader
-				icon={icon}
-				title={title}
-				onPressAll={list ? onPressAll : undefined}
-			/>
+			<SectionHeader title={title} onPressAll={list ? onPressAll : undefined} />
 			{!list || count === 0 ? (
 				<View className="items-center rounded-xl border border-border bg-card p-6">
 					<Text className="text-muted-foreground text-sm">{emptyText}</Text>
@@ -288,7 +280,7 @@ function ListPreview({
 					<Text className="font-medium text-foreground text-sm">
 						{count} item{count === 1 ? "" : "s"}
 					</Text>
-					<ChevronRight color="#94a3b8" size={18} />
+					<ChevronRight color={colors.mutedForeground} size={18} />
 				</Pressable>
 			)}
 		</View>

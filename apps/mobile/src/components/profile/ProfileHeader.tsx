@@ -18,6 +18,7 @@ import { posthog } from "@/lib/posthog";
 import { useRelationship } from "@/lib/use-public-profile";
 import { invalidateSocialQueries } from "@/lib/use-social";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Public profile header: avatar, display name, handle, follower/following
@@ -37,6 +38,7 @@ export function ProfileHeader({
 	isAuthenticated: boolean;
 	onPressConnections: (tab: "followers" | "following") => void;
 }) {
+	const colors = useThemeColors();
 	const avatarStyle = useTwStyle("size-20 rounded-full");
 	const [avatarLoaded, setAvatarLoaded] = useState(false);
 	const queryClient = useQueryClient();
@@ -102,7 +104,9 @@ export function ProfileHeader({
 		<View className="gap-4 px-4 pt-2 pb-4">
 			<View className="flex-row items-center gap-4">
 				<View className="size-20 items-center justify-center overflow-hidden rounded-full border border-border bg-background-subtle">
-					{!avatarLoaded ? <User color="#94a3b8" size={32} /> : null}
+					{!avatarLoaded ? (
+						<User color={colors.mutedForeground} size={32} />
+					) : null}
 					{profile.avatar ? (
 						<Image
 							source={{ uri: profile.avatar }}
@@ -116,7 +120,7 @@ export function ProfileHeader({
 				<View className="min-w-0 flex-1">
 					<View className="flex-row items-center gap-2">
 						<Text
-							className="font-bold font-display text-foreground text-xl"
+							className="font-display-bold text-foreground text-xl"
 							numberOfLines={1}
 						>
 							{name}
@@ -164,14 +168,18 @@ export function ProfileHeader({
 					>
 						{isFollowing ? (
 							<>
-								<Check color="#94a3b8" size={15} strokeWidth={3} />
+								<Check
+									color={colors.mutedForeground}
+									size={15}
+									strokeWidth={3}
+								/>
 								<Text className="font-medium text-muted-foreground text-sm">
 									Following
 								</Text>
 							</>
 						) : (
 							<>
-								<UserPlus color="#3f2e00" size={15} />
+								<UserPlus color={colors.accentForeground} size={15} />
 								<Text className="font-medium text-primary-foreground text-sm">
 									Follow
 								</Text>

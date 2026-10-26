@@ -3,7 +3,7 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
+import { Play, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
@@ -31,8 +31,11 @@ import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
-import MediaHero from "../../../../../components/MediaHero";
+import MediaHero, {
+	MediaHeroActionsSkeleton,
+} from "../../../../../components/MediaHero";
 import PersonGrid from "../../../../../components/PersonGrid";
+import { PrevNextNav } from "../../../../../components/PrevNextNav";
 import { ProgressShelfButton } from "../../../../../components/ProgressShelfButton";
 import { ReviewDialog } from "../../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../../components/SimilarMediaGrid";
@@ -125,7 +128,12 @@ function SeasonDetailPage() {
 		error: seasonError,
 	} = useSeasonDetails(showId, seasonNumber);
 
-	const { data: upNextData } = useUserUpNext(user?.did || "", showId);
+	// Continue's destination comes from Up Next, so the actions keep their
+	// skeleton until it loads instead of briefly offering episode 1.
+	const { data: upNextData, isLoading: isUpNextLoading } = useUserUpNext(
+		user?.did || "",
+		showId,
+	);
 	const { data: watchHistory } = useShowWatchHistory(showId);
 	const {
 		data: showProgressData,
@@ -232,9 +240,9 @@ function SeasonDetailPage() {
 			return `Continue S${upNextEpisode.seasonNumber}E${upNextEpisode.episodeNumber}`;
 		}
 		if (episodesWatched > 0) {
-			return "Continue Watching";
+			return "Rewatch from start";
 		}
-		return "Start Season";
+		return "Start watching";
 	};
 
 	const getContinueButtonLink = () => {
@@ -354,11 +362,11 @@ function SeasonDetailPage() {
 					authLoading ||
 					(isAuthenticated && isProgressPending && !isProgressError)
 				}
-				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
+				backLabel="Back to Home"
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
-							<Star className="size-4 fill-yellow-500 text-yellow-500" />
+							<Star className="size-4 fill-accent text-accent" />
 							<span className="font-semibold">
 								{rating?.toFixed(1) || "N/A"}
 							</span>
@@ -381,7 +389,11 @@ function SeasonDetailPage() {
 					</>
 				}
 				actions={
-					isAuthenticated ? (
+					authLoading ||
+					(isAuthenticated &&
+						((isProgressPending && !isProgressError) || isUpNextLoading)) ? (
+						<MediaHeroActionsSkeleton />
+					) : isAuthenticated ? (
 						<>
 							<Link
 								to={continueLink.to}
@@ -397,9 +409,9 @@ function SeasonDetailPage() {
 								markLabel={
 									episodesWatched > 0
 										? "Mark remaining watched"
-										: "Add season to shelf"
+										: "Add to shelf"
 								}
-								unmarkLabel="Remove season from shelf"
+								unmarkLabel="Remove from shelf"
 								isMarkPending={isMarkSeasonPending}
 								isUnmarkPending={isUnmarkShowPending}
 								processing={processingSeason}
@@ -415,44 +427,39 @@ function SeasonDetailPage() {
 						</>
 					) : (
 						<Link to="/login" className="btn btn-primary gap-2">
-							Sign in to track
+							Sign in to add to shelf
 						</Link>
 					)
 				}
 				currentProgress={
-					<div className="flex items-center gap-4 text-sm">
-						{previousSeason && (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(previousSeason.season_number),
-								}}
-								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
-							>
-								<ChevronLeft className="size-4" />
-								Previous (S{previousSeason.season_number})
-							</Link>
-						)}
-						<span className="text-(--foreground-muted)">
-							Season {seasonNum} of {sortedSeasons.length}
-						</span>
-						{nextSeason && (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(nextSeason.season_number),
-								}}
-								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
-							>
-								Next (S{nextSeason.season_number})
-								<ChevronRight className="size-4" />
-							</Link>
-						)}
-					</div>
+					<PrevNextNav
+						previous={
+							previousSeason
+								? {
+										label: "Previous season",
+										code: `S${previousSeason.season_number}`,
+										href: buildSeasonUrl(
+											showId,
+											show.name,
+											previousSeason.season_number,
+										),
+									}
+								: undefined
+						}
+						next={
+							nextSeason
+								? {
+										label: "Next season",
+										code: `S${nextSeason.season_number}`,
+										href: buildSeasonUrl(
+											showId,
+											show.name,
+											nextSeason.season_number,
+										),
+									}
+								: undefined
+						}
+					/>
 				}
 				breadcrumbs={[
 					{

@@ -3,8 +3,13 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Link, router, Stack, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import {
+	type Href,
+	Link,
+	router,
+	Stack,
+	useLocalSearchParams,
+} from "expo-router";
 import { useRef } from "react";
 import type { FlatListInstance } from "react-native";
 import {
@@ -14,6 +19,7 @@ import {
 	RefreshControl,
 	View,
 } from "react-native";
+import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
@@ -26,6 +32,7 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { PrevNextNav } from "@/components/detail/PrevNextNav";
 import { RateReviewButton } from "@/components/detail/RateReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
@@ -35,6 +42,7 @@ import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton, ListRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import {
 	backdropUrl,
 	formatLongDate,
@@ -46,8 +54,10 @@ import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { useUpNext } from "@/lib/use-up-next";
 import { webMediaUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 export default function SeasonDetailScreen() {
+	const themeColors = useThemeColors();
 	const { id, name, seasonNumber, reviewId } = useLocalSearchParams<{
 		id: string;
 		// The slug segment. Carried through sibling links so in-app navigation
@@ -87,7 +97,9 @@ export default function SeasonDetailScreen() {
 	);
 
 	// Episode rows share the cached history index for per-episode Watch state.
-	const { items: upNextItems } = useUpNext(20, id);
+	const upNext = useUpNext(20, id);
+	const upNextItems = upNext.items;
+	const { isAuthenticated } = useAuth();
 
 	const totalEpisodes = seasonProgress?.episodesTotal ?? 0;
 	const nextEpisode = upNextItems.find((i) => i.showId === id)?.nextEpisode;
@@ -95,6 +107,24 @@ export default function SeasonDetailScreen() {
 		nextEpisode?.seasonNumber === seasonNum
 			? nextEpisode.episodeNumber
 			: undefined;
+
+	// Lead with the episode to watch next in this season, worded like the Web
+	// App's season page. Its destination depends on Up Next, so the space holds
+	// a skeleton until that query settles.
+	const seasonEpisodesWatched = seasonProgress?.episodesWatched ?? 0;
+	const continueTo =
+		!isAuthenticated || upNext.isError
+			? undefined
+			: upNext.isLoading || progressQuery.isLoading
+				? ("loading" as const)
+				: {
+						label: upNextEpisodeNumber
+							? `Continue S${seasonNum}E${upNextEpisodeNumber}`
+							: seasonEpisodesWatched > 0
+								? "Rewatch from start"
+								: "Start watching",
+						href: `/shows/${id}/${name}/seasons/${seasonNum}/episodes/${upNextEpisodeNumber ?? 1}` as Href,
+					};
 
 	// Prev/next season navigation, derived from the show's real seasons list.
 	const orderedSeasons = (showData?.seasons ?? [])
@@ -183,6 +213,7 @@ export default function SeasonDetailScreen() {
 									seasonNumber={seasonNum}
 									episodeCount={totalEpisodes}
 									progress={seasonProgress}
+									continueTo={continueTo}
 								/>
 								<WatchlistFavoritesButtons
 									mediaType="show"
@@ -197,6 +228,11 @@ export default function SeasonDetailScreen() {
 										seasonNumber={seasonNum}
 									/>
 									<AddToListButton
+										mediaType="show"
+										mediaId={id}
+										seasonNumber={seasonNum}
+									/>
+									<AddToLibraryButton
 										mediaType="show"
 										mediaId={id}
 										seasonNumber={seasonNum}
@@ -220,36 +256,26 @@ export default function SeasonDetailScreen() {
 								</View>
 							</View>
 
-							{prevSeason || nextSeason ? (
-								<View className="flex-row gap-2 px-4">
-									<Pressable
-										onPress={() =>
-											prevSeason && goToSeason(prevSeason.season_number)
-										}
-										disabled={!prevSeason}
-										className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-										style={{ opacity: prevSeason ? 1 : 0.4 }}
-									>
-										<ChevronLeft color="#94a3b8" size={18} />
-										<Text className="font-semibold text-foreground">
-											Prev season
-										</Text>
-									</Pressable>
-									<Pressable
-										onPress={() =>
-											nextSeason && goToSeason(nextSeason.season_number)
-										}
-										disabled={!nextSeason}
-										className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-										style={{ opacity: nextSeason ? 1 : 0.4 }}
-									>
-										<Text className="font-semibold text-foreground">
-											Next season
-										</Text>
-										<ChevronRight color="#94a3b8" size={18} />
-									</Pressable>
-								</View>
-							) : null}
+							<PrevNextNav
+								previous={
+									prevSeason
+										? {
+												label: "Previous season",
+												code: `S${prevSeason.season_number}`,
+												onPress: () => goToSeason(prevSeason.season_number),
+											}
+										: undefined
+								}
+								next={
+									nextSeason
+										? {
+												label: "Next season",
+												code: `S${nextSeason.season_number}`,
+												onPress: () => goToSeason(nextSeason.season_number),
+											}
+										: undefined
+								}
+							/>
 						</>
 					}
 					secondary={
@@ -303,17 +329,24 @@ export default function SeasonDetailScreen() {
 								<RefreshControl
 									refreshing={refreshing}
 									onRefresh={onRefresh}
-									tintColor="#f3bc00"
-									colors={["#f3bc00"]}
+									tintColor={themeColors.accent}
+									colors={[themeColors.accent]}
 								/>
 							}
-							ListHeaderComponent={<View className="gap-6 pb-6">{header}</View>}
+							ListHeaderComponent={
+								<View className="gap-6 pb-6">
+									{header}
+									<Text className="px-4 text-display-3 text-foreground">
+										Episodes
+									</Text>
+								</View>
+							}
 							ListFooterComponent={
 								<View className="gap-6 pt-6">
 									<DetailsCard
-										title="Season Details"
+										title="Details"
 										items={[
-											{ label: "Season", value: data.season_number },
+											{ label: "Season Number", value: data.season_number },
 											{ label: "Episodes", value: data.episodes.length },
 											{
 												label: "Air Date",

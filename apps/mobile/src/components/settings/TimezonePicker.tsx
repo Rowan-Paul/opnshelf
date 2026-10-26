@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * IANA timezone list. Mirrors the web `TimezoneSelector`: prefer the runtime
@@ -65,6 +66,7 @@ export function TimezonePicker({
 	onChange: (timezone: string) => void;
 	disabled?: boolean;
 }) {
+	const colors = useThemeColors();
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
 	const insets = useSafeAreaInsets();
@@ -94,7 +96,7 @@ export function TimezonePicker({
 				<Text className="text-[16px] text-foreground">
 					{value ?? "Select timezone"}
 				</Text>
-				<ChevronDown color="#94a3b8" size={18} />
+				<ChevronDown color={colors.mutedForeground} size={18} />
 			</Pressable>
 
 			<Modal
@@ -108,21 +110,21 @@ export function TimezonePicker({
 					style={{ paddingTop: insets.top }}
 				>
 					<View className="flex-row items-center justify-between px-4 py-3">
-						<Text className="font-display font-semibold text-foreground text-lg">
+						<Text className="font-display-semibold text-foreground text-lg">
 							Timezone
 						</Text>
 						<Pressable hitSlop={8} onPress={close}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
 					<View className="px-4 pb-3">
 						<TextField
-							leading={<Search color="#94a3b8" size={18} />}
+							leading={<Search color={colors.mutedForeground} size={18} />}
 							trailing={
 								query.length > 0 ? (
 									<Pressable hitSlop={8} onPress={() => setQuery("")}>
-										<X color="#94a3b8" size={18} />
+										<X color={colors.mutedForeground} size={18} />
 									</Pressable>
 								) : null
 							}
@@ -159,7 +161,9 @@ export function TimezonePicker({
 									>
 										{zone}
 									</Text>
-									{isSelected ? <Check color="#f3bc00" size={18} /> : null}
+									{isSelected ? (
+										<Check color={colors.accent} size={18} />
+									) : null}
 								</Pressable>
 							);
 						}}

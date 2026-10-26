@@ -10,6 +10,7 @@ import { formatRuntime, stillUrl } from "@/lib/tmdb";
 import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
+import { useThemeColors } from "@/theme/colors";
 
 export type EpisodeCardData = {
 	showId: number;
@@ -57,6 +58,7 @@ function EpisodeCardBase({
 	action?: ReactNode;
 	upNext?: boolean;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Link
 			href={`/shows/${episode.showId}/${episode.showSlug}/seasons/${episode.seasonNumber}/episodes/${episode.episodeNumber}`}
@@ -97,7 +99,7 @@ function EpisodeCardBase({
 							) : null}
 							{episode.rating && episode.rating > 0 ? (
 								<View className="flex-row items-center gap-0.5">
-									<Star color="#f3bc00" fill="#f3bc00" size={11} />
+									<Star color={colors.accent} fill={colors.accent} size={11} />
 									<Text className="text-muted-foreground text-xs">
 										{episode.rating.toFixed(1)}/10
 									</Text>
@@ -128,6 +130,7 @@ function EpisodeCardWithActions({
 	episode: EpisodeCardData;
 	upNext?: boolean;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const confirmRemoveWatches = useConfirmRemoveWatches();
 	const showId = String(episode.showId);
@@ -173,9 +176,9 @@ function EpisodeCardWithActions({
 			loading={pending}
 			leading={
 				onShelf ? (
-					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					<Check color={colors.accentForeground} size={16} strokeWidth={3} />
 				) : (
-					<Plus color="#94a3b8" size={16} strokeWidth={2.5} />
+					<Plus color={colors.mutedForeground} size={16} strokeWidth={2.5} />
 				)
 			}
 			onPress={(e) => {

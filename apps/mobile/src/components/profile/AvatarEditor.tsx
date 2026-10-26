@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { Camera } from "lucide-react-native";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Avatar upload/remove control shared by onboarding's profile step and the
@@ -22,6 +23,7 @@ export function AvatarEditor({
 	onPick: () => void;
 	onRemove: () => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<View className="flex-row items-center gap-4">
 			<Pressable
@@ -36,7 +38,7 @@ export function AvatarEditor({
 						contentFit="cover"
 					/>
 				) : (
-					<Camera color="#94a3b8" size={26} />
+					<Camera color={colors.mutedForeground} size={26} />
 				)}
 				{uploading ? (
 					<View className="absolute inset-0 items-center justify-center bg-black/40">

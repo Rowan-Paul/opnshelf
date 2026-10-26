@@ -35,8 +35,10 @@ import {
 import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { webMediaUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 export default function MovieDetailScreen() {
+	const themeColors = useThemeColors();
 	const { id, name, reviewId } = useLocalSearchParams<{
 		id: string;
 		// The slug segment, carried into child links so in-app navigation
@@ -164,8 +166,8 @@ export default function MovieDetailScreen() {
 						<RefreshControl
 							refreshing={refreshing}
 							onRefresh={onRefresh}
-							tintColor="#f3bc00"
-							colors={["#f3bc00"]}
+							tintColor={themeColors.accent}
+							colors={[themeColors.accent]}
 						/>
 					}
 				/>

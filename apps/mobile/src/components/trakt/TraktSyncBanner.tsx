@@ -14,7 +14,9 @@ import {
 } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { useThemeColors } from "@/theme/colors";
 export function TraktSyncBanner({ children }: { children: ReactNode }) {
+	const colors = useThemeColors();
 	const insets = useSafeAreaInsets();
 	const { isAuthenticated } = useAuth();
 	// Shares Trakt Sync's status cache, so Settings changes show up here at once.
@@ -41,9 +43,9 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 				>
 					<View className="flex-row items-center gap-2">
 						{syncError ? (
-							<AlertTriangle color="#d97706" size={17} />
+							<AlertTriangle color={colors.warning} size={17} />
 						) : (
-							<ActivityIndicator size="small" color="#f3bc00" />
+							<ActivityIndicator size="small" color={colors.accent} />
 						)}
 						<Text
 							className={`flex-1 text-sm leading-5 ${syncError ? "text-amber-950 dark:text-amber-100" : "text-muted-foreground"}`}

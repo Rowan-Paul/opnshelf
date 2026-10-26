@@ -373,6 +373,65 @@ export function useReviewLikes({
 	};
 }
 
+/**
+ * Like/unlike one review from a user's profile Reviews page. Refreshes that
+ * author's review lists (which carry `likeCount`/`hasLiked`) and the review's
+ * own likes query, so its Review page agrees.
+ */
+export function useUserReviewLike({
+	reviewId,
+	authorDid,
+}: {
+	reviewId: string;
+	authorDid: string;
+}) {
+	const queryClient = useQueryClient();
+
+	const invalidate = () => {
+		queryClient.invalidateQueries({
+			queryKey: reviewsControllerGetUserReviewsQueryKey({
+				path: { userDid: authorDid },
+			}),
+		});
+		queryClient.invalidateQueries({
+			queryKey: reviewsControllerGetReviewLikesQueryKey({
+				path: { reviewId },
+			}),
+		});
+	};
+
+	const likeMutation = useMutation({
+		mutationKey: ["reviews", reviewId, "like"],
+		...reviewsControllerLikeReviewMutation(),
+		onSuccess: () => {
+			posthog.capture("review_liked", { source: "web" });
+			invalidate();
+		},
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to like review",
+			);
+		},
+	});
+
+	const unlikeMutation = useMutation({
+		mutationKey: ["reviews", reviewId, "unlike"],
+		...reviewsControllerUnlikeReviewMutation(),
+		onSuccess: invalidate,
+		onError: (error) => {
+			toast.error(
+				error instanceof Error ? error.message : "Failed to unlike review",
+			);
+		},
+	});
+
+	return {
+		likeReview: () => likeMutation.mutate({ path: { reviewId } }),
+		unlikeReview: () => unlikeMutation.mutate({ path: { reviewId } }),
+		isPending: likeMutation.isPending || unlikeMutation.isPending,
+	};
+}
+
 interface UseToggleReviewLikeOptions {
 	mediaType: "movie" | "show";
 	mediaId: string;

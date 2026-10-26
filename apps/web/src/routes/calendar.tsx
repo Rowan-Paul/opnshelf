@@ -10,16 +10,19 @@ import {
 	Tv,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import ErrorState from "#/components/ErrorState";
 import { CalendarSkeleton } from "#/components/skeletons";
 import { useAuth } from "#/lib/auth-context";
 import {
 	formatMonthDateKey,
+	formatRelativeReleaseDate,
 	formatReleaseDate,
 	formatWeekDayLabel,
 	formatWeekRange,
 	getCalendarDateRange,
 	getDisplayTitle,
 	getMonthGrid,
+	getReleaseEpisodeInfo,
 	getReleaseUrl,
 	getWeekDays,
 	getWeekReleases,
@@ -75,7 +78,11 @@ function CalendarPage() {
 	);
 
 	// Fetch release calendar data with date range
-	const { data: calendarData, isLoading } = useQuery({
+	const {
+		data: calendarData,
+		isLoading,
+		isError,
+	} = useQuery({
 		...showsControllerGetUserReleaseCalendarOptions({
 			path: { userDid: user?.did || "" },
 			query: dateRange,
@@ -153,6 +160,11 @@ function CalendarPage() {
 				<CalendarSkeleton />
 			</div>
 		);
+	}
+
+	// A failed refetch keeps the releases already on screen.
+	if (isError && !calendarData) {
+		return <ErrorState message="Couldn't load releases." />;
 	}
 
 	return (
@@ -272,26 +284,34 @@ function CalendarPage() {
 										)}
 										<div className="min-w-0 flex-1">
 											<p
-												title={getDisplayTitle(release)}
-												className="truncate font-medium"
+												title={release.title}
+												className="line-clamp-2 font-medium"
 											>
-												{getDisplayTitle(release)}
+												{release.title}
 											</p>
-											<div className="mt-1 flex items-center gap-2 text-(--foreground-muted) text-sm">
-												<span className="flex items-center gap-1">
-													{release.mediaType === "movie" ? (
-														<>
-															<Film className="size-4" />
-															Movie
-														</>
-													) : (
-														<>
-															<Tv className="size-4" />
-															TV
-														</>
-													)}
+											<div className="mt-1 flex items-center gap-1.5 text-(--foreground-muted) text-sm">
+												{release.mediaType === "movie" ? (
+													<Film
+														className="size-4 shrink-0"
+														aria-label="Movie"
+													/>
+												) : (
+													<Tv className="size-4 shrink-0" aria-label="TV" />
+												)}
+												<span>
+													{formatReleaseDate(day.dateKey, userTimezone)}
 												</span>
+												{formatRelativeReleaseDate(day.dateKey) && (
+													<span className="font-medium text-(--accent)">
+														• {formatRelativeReleaseDate(day.dateKey)}
+													</span>
+												)}
 											</div>
+											{getReleaseEpisodeInfo(release) && (
+												<p className="mt-0.5 truncate text-(--foreground-muted) text-sm">
+													{getReleaseEpisodeInfo(release)}
+												</p>
+											)}
 										</div>
 										<ChevronRight className="size-6 shrink-0 text-(--foreground-muted)" />
 									</Link>
@@ -381,8 +401,8 @@ function CalendarPage() {
 													<div
 														className={`h-1.5 w-1.5 shrink-0 rounded-full ${
 															release.mediaType === "movie"
-																? "bg-blue-500"
-																: "bg-purple-500"
+																? "bg-(--accent)"
+																: "bg-(--foreground-muted)"
 														}`}
 													/>
 													<span

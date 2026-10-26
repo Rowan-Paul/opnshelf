@@ -11,6 +11,7 @@ import { Modal, Platform, Pressable, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
+import { useThemeColors } from "@/theme/colors";
 
 type DialogAction = {
 	label: string;
@@ -34,7 +35,7 @@ const ACTION_BOX: Record<string, string> = {
 };
 
 const ACTION_TEXT: Record<string, string> = {
-	default: "text-[#3f2e00]",
+	default: "text-accent-foreground",
 	destructive: "text-white",
 	ghost: "text-foreground",
 };
@@ -56,6 +57,7 @@ const DialogContext = createContext<DialogContextValue | null>(null);
 
 /** A consistent, app-rendered replacement for the platform Alert APIs. */
 export function DialogProvider({ children }: { children: ReactNode }) {
+	const colors = useThemeColors();
 	const [dialog, setDialog] = useState<DialogOptions | null>(null);
 	const [inputValue, setInputValue] = useState("");
 	const afterDismiss = useRef<(() => void) | undefined>(undefined);
@@ -103,7 +105,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 					<View className="w-full max-w-sm gap-4 rounded-2xl border border-border bg-card p-5">
 						<View className="flex-row items-start justify-between gap-3">
 							<View className="flex-1 gap-1.5">
-								<Text className="font-bold font-display text-foreground text-lg">
+								<Text className="font-display-bold text-foreground text-lg">
 									{dialog?.title}
 								</Text>
 								{dialog?.description ? (
@@ -117,7 +119,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 								onPress={dismiss}
 								accessibilityLabel="Close dialog"
 							>
-								<X color="#94a3b8" size={20} />
+								<X color={colors.mutedForeground} size={20} />
 							</Pressable>
 						</View>
 						{dialog?.input ? (

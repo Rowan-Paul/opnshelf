@@ -8,15 +8,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { type Href, Link } from "expo-router";
-import {
-	Heart,
-	MessageSquare,
-	Pencil,
-	Plus,
-	Share2,
-	Trash2,
-	User,
-} from "lucide-react-native";
+import { Heart, Pencil, Plus, Share2, Trash2, User } from "lucide-react-native";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import type { ViewInstance } from "react-native";
 import {
@@ -38,10 +30,7 @@ import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
 import { useReview } from "@/lib/use-review";
 import { useTwStyle } from "@/lib/use-tw-style";
-
-const ACCENT = "#f3bc00";
-const MUTED = "#94a3b8";
-const LIKE_RED = "#ef4444";
+import { useThemeColors } from "@/theme/colors";
 
 interface CommunityReviewsProps {
 	mediaType: "movie" | "show";
@@ -164,6 +153,7 @@ function ReviewCard({
 	/** Public web URL for this review; omitted when the media URL is unknown. */
 	shareUrl?: string;
 }) {
+	const colors = useThemeColors();
 	const displayName = review.userDisplayName || review.userHandle;
 	const body = review.markdown || review.description || "";
 	const isLiked = review.hasLiked;
@@ -201,7 +191,7 @@ function ReviewCard({
 									contentFit="cover"
 								/>
 							) : (
-								<User color={MUTED} size={18} />
+								<User color={colors.mutedForeground} size={18} />
 							)}
 						</View>
 						<View className="min-w-0 flex-1">
@@ -232,7 +222,7 @@ function ReviewCard({
 			</View>
 
 			{review.reviewTitle ? (
-				<Text className="font-display font-semibold text-base text-foreground">
+				<Text className="font-display-semibold text-base text-foreground">
 					{review.reviewTitle}
 				</Text>
 			) : null}
@@ -254,7 +244,7 @@ function ReviewCard({
 							onPress={onEdit}
 							className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
 						>
-							<Pencil color={MUTED} size={15} />
+							<Pencil color={colors.mutedForeground} size={15} />
 							<Text className="text-muted-foreground text-sm">Edit</Text>
 						</Pressable>
 						<Pressable
@@ -264,8 +254,8 @@ function ReviewCard({
 							className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
 							style={{ opacity: isDeleting ? 0.5 : 1 }}
 						>
-							<Trash2 color={LIKE_RED} size={15} />
-							<Text className="text-sm" style={{ color: LIKE_RED }}>
+							<Trash2 color={colors.destructive} size={15} />
+							<Text className="text-sm" style={{ color: colors.destructive }}>
 								Delete
 							</Text>
 						</Pressable>
@@ -279,17 +269,19 @@ function ReviewCard({
 						style={{ opacity: !canLike || likePending ? 0.5 : 1 }}
 					>
 						{likePending ? (
-							<ActivityIndicator size="small" color={LIKE_RED} />
+							<ActivityIndicator size="small" color={colors.destructive} />
 						) : (
 							<Heart
-								color={isLiked ? LIKE_RED : MUTED}
-								fill={isLiked ? LIKE_RED : "transparent"}
+								color={isLiked ? colors.destructive : colors.mutedForeground}
+								fill={isLiked ? colors.destructive : "transparent"}
 								size={16}
 							/>
 						)}
 						<Text
 							className="text-sm"
-							style={{ color: isLiked ? LIKE_RED : MUTED }}
+							style={{
+								color: isLiked ? colors.destructive : colors.mutedForeground,
+							}}
 						>
 							{review.likeCount}
 						</Text>
@@ -303,7 +295,7 @@ function ReviewCard({
 						accessibilityLabel="Share review"
 						className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
 					>
-						<Share2 color={MUTED} size={15} />
+						<Share2 color={colors.mutedForeground} size={15} />
 					</Pressable>
 				) : null}
 			</View>
@@ -341,6 +333,7 @@ export function CommunityReviews({
 	 */
 	mediaWebUrl?: string;
 }) {
+	const colors = useThemeColors();
 	const { user, isAuthenticated } = useAuth();
 	const avatarStyle = useTwStyle("size-10");
 	const resolvedMediaType = resolveMediaType(
@@ -444,18 +437,13 @@ export function CommunityReviews({
 			onLayout={handleSectionLayout}
 		>
 			<View className="flex-row items-center justify-between">
-				<View className="flex-row items-center gap-2">
-					<MessageSquare color={ACCENT} size={18} />
-					<Text className="font-display font-semibold text-base text-foreground">
-						Reviews
-					</Text>
-				</View>
+				<Text className="text-display-3 text-foreground">Reviews</Text>
 				{isAuthenticated ? (
 					<Pressable
 						onPress={openCreate}
 						className="flex-row items-center gap-1 rounded-lg border border-border px-3 py-1.5"
 					>
-						<Plus color={MUTED} size={16} />
+						<Plus color={colors.mutedForeground} size={16} />
 						<Text className="font-medium text-foreground text-sm">Write</Text>
 					</Pressable>
 				) : null}

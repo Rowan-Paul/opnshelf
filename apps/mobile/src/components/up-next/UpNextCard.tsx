@@ -13,6 +13,7 @@ import {
 	useShowProgressForShow,
 } from "@/lib/use-show-progress";
 import { useMarkUpNextEpisode } from "@/lib/use-up-next";
+import { useThemeColors } from "@/theme/colors";
 
 function formatAirDate(iso?: string): string | undefined {
 	if (!iso) return undefined;
@@ -27,8 +28,9 @@ function formatAirDate(iso?: string): string | undefined {
 
 /**
  * A single Up Next entry: a tracked show's next unwatched episode, with watch
- * progress and a one-tap "mark watched" action that advances the queue. Shared
- * by Home and Profile previews. The full Up Next screen uses UpNextEpisodeCard. `isOwner` (default true) gates the action so other users' queues are
+ * progress and a one-tap "mark watched" action that advances the queue. Used by
+ * the profile hub preview; Home uses UpNextTile and the full Up Next screen
+ * uses UpNextEpisodeCard. `isOwner` (default true) gates the action so other users' queues are
  * read-only.
  *
  * The card owns its mark-watched mutation, so marking several episodes at once
@@ -41,6 +43,7 @@ export function UpNextCard({
 	item: UpNextShowDto;
 	isOwner?: boolean;
 }) {
+	const colors = useThemeColors();
 	const markEpisode = useMarkUpNextEpisode();
 	const { show, nextEpisode: ep } = item;
 	const viewerProgressQuery = useShowProgressForShow(show.showId, !isOwner);
@@ -109,7 +112,7 @@ export function UpNextCard({
 						</Text>
 						{airDate ? (
 							<View className="mt-0.5 flex-row items-center gap-1.5">
-								<Calendar color="#94a3b8" size={13} />
+								<Calendar color={colors.mutedForeground} size={13} />
 								<Text className="text-muted-foreground text-xs">{airDate}</Text>
 							</View>
 						) : null}
@@ -131,7 +134,13 @@ export function UpNextCard({
 								size="sm"
 								loading={markEpisode.isPending}
 								loadingLabel="Adding…"
-								leading={<Plus color="#3f2e00" size={16} strokeWidth={3} />}
+								leading={
+									<Plus
+										color={colors.accentForeground}
+										size={16}
+										strokeWidth={3}
+									/>
+								}
 								onPress={(e) => {
 									e.stopPropagation();
 									markEpisode.mutate({

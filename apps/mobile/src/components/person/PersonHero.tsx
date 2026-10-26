@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { profileUrl } from "@/lib/tmdb";
+import { useThemeColors } from "@/theme/colors";
 
 function yearOf(date?: string): number | null {
 	if (!date) return null;
@@ -28,6 +29,7 @@ function formatDate(iso?: string): string | undefined {
  * mobile-stacked layout of the web person page.
  */
 export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
+	const colors = useThemeColors();
 	const url = profileUrl(person.profile_path, "h632");
 
 	const birthYear = yearOf(person.birthday);
@@ -43,17 +45,15 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 					{url ? (
 						<PosterImage url={url} className="h-40 w-28" />
 					) : (
-						<User color="#94a3b8" size={32} />
+						<User color={colors.mutedForeground} size={32} />
 					)}
 				</View>
 				<View className="min-w-0 flex-1 justify-end gap-2 pb-1">
-					<Text className="font-bold font-display text-2xl text-foreground">
-						{person.name}
-					</Text>
+					<Text className="text-display-2 text-foreground">{person.name}</Text>
 					{person.known_for_department ? (
 						<View className="flex-row">
 							<View className="flex-row items-center gap-1 rounded-full bg-primary px-2.5 py-1">
-								<Clapperboard color="#3f2e00" size={12} />
+								<Clapperboard color={colors.accentForeground} size={12} />
 								<Text className="font-medium text-primary-foreground text-xs">
 									{person.known_for_department}
 								</Text>
@@ -66,7 +66,7 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 			<View className="mt-3 gap-1.5">
 				{person.birthday ? (
 					<View className="flex-row items-center gap-1.5">
-						<Calendar color="#94a3b8" size={14} />
+						<Calendar color={colors.mutedForeground} size={14} />
 						<Text className="text-muted-foreground text-sm">
 							Born {formatDate(person.birthday)}
 							{age !== null && !person.deathday ? ` (${age})` : ""}
@@ -75,7 +75,7 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 				) : null}
 				{person.deathday ? (
 					<View className="flex-row items-center gap-1.5">
-						<Calendar color="#94a3b8" size={14} />
+						<Calendar color={colors.mutedForeground} size={14} />
 						<Text className="text-muted-foreground text-sm">
 							Died {formatDate(person.deathday)}
 							{age !== null ? ` (aged ${age})` : ""}
@@ -84,7 +84,7 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 				) : null}
 				{person.place_of_birth ? (
 					<View className="flex-row items-center gap-1.5">
-						<MapPin color="#94a3b8" size={14} />
+						<MapPin color={colors.mutedForeground} size={14} />
 						<Text className="text-muted-foreground text-sm" numberOfLines={2}>
 							{person.place_of_birth}
 						</Text>

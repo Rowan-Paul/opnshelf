@@ -192,7 +192,7 @@ export default function SignupHandleScreen() {
 			<Screen>
 				<ScrollView contentContainerClassName="flex-grow justify-center gap-6 py-8">
 					<View className="gap-2">
-						<Text className="font-bold font-display text-4xl text-foreground">
+						<Text className="font-display-bold text-4xl text-foreground">
 							Almost there
 						</Text>
 						<Text className="text-base text-muted-foreground">
@@ -219,7 +219,7 @@ export default function SignupHandleScreen() {
 				keyboardShouldPersistTaps="handled"
 			>
 				<View className="gap-2">
-					<Text className="font-bold font-display text-4xl text-foreground">
+					<Text className="font-display-bold text-4xl text-foreground">
 						Pick your handle
 					</Text>
 					<Text className="text-base text-muted-foreground">

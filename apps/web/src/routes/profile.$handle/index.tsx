@@ -8,9 +8,10 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Clock, Film, Heart, Star, Tv } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { ReviewAuthorRating } from "#/components/ReviewAuthorRating";
 import { ReviewBody } from "#/components/ReviewBody";
 import { SpoilerShield } from "#/components/SpoilerShield";
@@ -25,6 +26,9 @@ const SCROLL_ROW =
 	"flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 const SCROLL_SKELETON =
 	"aspect-[2/3] w-[160px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[180px]";
+// Both Recent rows use 16:9 backdrops so the two columns line up.
+const BACKDROP_SKELETON =
+	"aspect-video w-[260px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[300px]";
 
 export const Route = createFileRoute("/profile/$handle/")({
 	loader: async ({ context, params }) => {
@@ -134,10 +138,7 @@ function ProfileOverviewPage() {
 						{/* Last Movies */}
 						<section className="min-w-0">
 							<div className="mb-4 flex items-center justify-between">
-								<h2 className="flex items-center gap-2 text-display-3">
-									<Film className="size-5 text-(--accent)" />
-									Recent Movies
-								</h2>
+								<h2 className="text-display-3">Recent Movies</h2>
 								<Link
 									to="/profile/$handle/shelf"
 									params={{ handle }}
@@ -151,14 +152,17 @@ function ProfileOverviewPage() {
 
 							{moviesLoading ? (
 								<div className={SCROLL_ROW}>
-									{[1, 2, 3, 4].map((i) => (
-										<div key={i} className={SCROLL_SKELETON} />
+									{[1, 2, 3].map((i) => (
+										<div key={i} className={BACKDROP_SKELETON} />
 									))}
 								</div>
 							) : movies.length > 0 ? (
 								<div className={SCROLL_ROW}>
 									{movies.map((item) => (
-										<div key={item.id} className="shrink-0">
+										<div
+											key={item.id}
+											className="w-[260px] shrink-0 sm:w-[300px]"
+										>
 											<ActionableMediaCard
 												id={item.movieId}
 												title={item.title}
@@ -167,6 +171,12 @@ function ProfileOverviewPage() {
 														? `https://image.tmdb.org/t/p/w500${item.posterPath}`
 														: ""
 												}
+												backdropUrl={
+													item.backdropPath
+														? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
+														: undefined
+												}
+												layout="backdrop"
 												type="movie"
 												watchedDate={item.watchedDate}
 												undatedWatch={!item.watchedDate}
@@ -189,10 +199,7 @@ function ProfileOverviewPage() {
 						{/* Last Episodes */}
 						<section className="min-w-0">
 							<div className="mb-4 flex items-center justify-between">
-								<h2 className="flex items-center gap-2 text-display-3">
-									<Tv className="size-5 text-(--accent)" />
-									Recent Episodes
-								</h2>
+								<h2 className="text-display-3">Recent Episodes</h2>
 								<Link
 									to="/profile/$handle/shelf"
 									params={{ handle }}
@@ -206,14 +213,19 @@ function ProfileOverviewPage() {
 
 							{episodesLoading ? (
 								<div className={SCROLL_ROW}>
-									{[1, 2, 3, 4].map((i) => (
-										<div key={i} className={SCROLL_SKELETON} />
+									{[1, 2, 3].map((i) => (
+										<div key={i} className={BACKDROP_SKELETON} />
 									))}
 								</div>
 							) : episodes.length > 0 ? (
 								<div className={SCROLL_ROW}>
 									{episodes.map((item) => (
-										<div key={item.id} className="shrink-0">
+										// Episode stills, like Home's Your Shelf: the show poster
+										// repeated once per episode read as one item duplicated.
+										<div
+											key={item.id}
+											className="w-[260px] shrink-0 sm:w-[300px]"
+										>
 											<ActionableMediaCard
 												id={item.showId}
 												title={item.showTitle}
@@ -222,6 +234,14 @@ function ProfileOverviewPage() {
 														? `https://image.tmdb.org/t/p/w500${item.posterPath}`
 														: ""
 												}
+												backdropUrl={
+													item.stillPath
+														? `https://image.tmdb.org/t/p/w780${item.stillPath}`
+														: item.backdropPath
+															? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
+															: undefined
+												}
+												layout="backdrop"
 												type="show"
 												seasonNumber={item.seasonNumber}
 												episodeNumber={item.episodeNumber}
@@ -250,7 +270,7 @@ function ProfileOverviewPage() {
 					</div>
 				</>
 			) : profile ? (
-				<p className="text-(--foreground-muted)">Watches are private.</p>
+				<PrivateNotice message="Watches are private." />
 			) : null}
 			{/* Lists Preview */}
 			<div className="grid gap-8 lg:grid-cols-2">
@@ -260,7 +280,6 @@ function ProfileOverviewPage() {
 					handle={handle}
 					userDid={userDid}
 					isOwner={isOwner}
-					icon={Clock}
 					emptyText="Nothing on watchlist"
 				/>
 				<ListPreview
@@ -269,7 +288,6 @@ function ProfileOverviewPage() {
 					handle={handle}
 					userDid={userDid}
 					isOwner={isOwner}
-					icon={Heart}
 					emptyText="Nothing on favorites"
 				/>
 			</div>
@@ -277,10 +295,7 @@ function ProfileOverviewPage() {
 			{/* Recent Reviews */}
 			<section>
 				<div className="mb-4 flex items-center justify-between">
-					<h2 className="flex items-center gap-2 text-display-3">
-						<Star className="size-5 text-(--accent)" />
-						Recent Reviews
-					</h2>
+					<h2 className="text-display-3">Recent Reviews</h2>
 					<Link
 						to="/profile/$handle/reviews"
 						params={{ handle }}
@@ -378,7 +393,6 @@ function ListPreview({
 	handle,
 	userDid,
 	isOwner,
-	icon: Icon,
 	emptyText,
 }: {
 	title: string;
@@ -386,7 +400,6 @@ function ListPreview({
 	handle: string;
 	userDid: string;
 	isOwner: boolean;
-	icon: React.ComponentType<{ className?: string }>;
 	emptyText: string;
 }) {
 	const { data: listDetails, isLoading: itemsLoading } = useQuery({
@@ -401,10 +414,7 @@ function ListPreview({
 	return (
 		<section className="min-w-0">
 			<div className="mb-4 flex items-center justify-between">
-				<h2 className="flex items-center gap-2 text-display-3">
-					<Icon className="h-5 w-5 text-(--accent)" />
-					{title}
-				</h2>
+				<h2 className="text-display-3">{title}</h2>
 				{list && (
 					<Link
 						to="/profile/$handle/lists/$listSlug"

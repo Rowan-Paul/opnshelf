@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Heart, Loader2, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { Loader2, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { formatRelativeTime } from "#/lib/date-utils";
@@ -12,6 +12,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import { UserAvatar } from "./following/UserAvatar";
 import { ReviewBody } from "./ReviewBody";
 import { ReviewDialog } from "./ReviewDialog";
+import { ReviewLikeButton } from "./ReviewLikeButton";
 import { ReviewReaderDialog } from "./ReviewReaderDialog";
 import { ShareButton } from "./ShareButton";
 import { SpoilerShield } from "./SpoilerShield";
@@ -215,7 +216,7 @@ function ReviewCard({
 								type="button"
 								onClick={() => setConfirmOpen(true)}
 								disabled={deleteMutation.isPending}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
 								aria-label="Delete review"
 							>
 								{deleteMutation.isPending ? (
@@ -268,32 +269,14 @@ function ReviewCard({
 			</div>
 
 			<div className="mt-3 flex items-center gap-2">
-				<button
-					type="button"
-					onClick={handleToggleLike}
-					disabled={!canLike || isPending}
-					className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors ${
-						!canLike
-							? "cursor-not-allowed text-(--foreground-muted) opacity-50"
-							: isLiked
-								? "text-red-500 hover:bg-red-500/10"
-								: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--accent)"
-					}`}
-					aria-label={
-						!isAuthenticated
-							? `${review.likeCount} likes`
-							: isLiked
-								? "Unlike review"
-								: "Like review"
-					}
-				>
-					{isPending ? (
-						<Loader2 className="size-4 animate-spin" />
-					) : (
-						<Heart className={`size-4 ${isLiked ? "fill-red-500" : ""}`} />
-					)}
-					<span>{review.likeCount}</span>
-				</button>
+				<ReviewLikeButton
+					likeCount={review.likeCount}
+					isLiked={isLiked}
+					canLike={canLike}
+					isAuthenticated={isAuthenticated}
+					isPending={isPending}
+					onToggle={handleToggleLike}
+				/>
 				{review.reviewUrl && (
 					// Relative to the current media page: sharing keeps the reader here
 					// with this review open, same target as the Bluesky cross-post.
@@ -438,10 +421,7 @@ export default function CommunityReviews({
 	return (
 		<section id="community-reviews">
 			<div className="mb-4 flex items-center justify-between gap-2">
-				<h2 className="text-display-3">
-					<MessageSquare className="mr-2 inline-block size-5" />
-					Community Reviews
-				</h2>
+				<h2 className="text-display-3">Community Reviews</h2>
 				{isAuthenticated && (
 					<button
 						type="button"

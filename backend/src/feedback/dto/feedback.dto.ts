@@ -1,7 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsOptional, IsString, IsUrl, MaxLength } from "class-validator";
+import {
+	IsIn,
+	IsOptional,
+	IsString,
+	IsUrl,
+	Matches,
+	MaxLength,
+} from "class-validator";
 
 export class CreateFeedbackDto {
+	@ApiPropertyOptional({
+		description: "JPEG screenshot as base64, at most 60 KB",
+		maxLength: 80000,
+	})
+	@IsOptional()
+	@IsString()
+	@MaxLength(80000)
+	@Matches(/^\/9j\/[A-Za-z0-9+/]*={0,2}$/)
+	screenshot?: string;
+
 	@ApiProperty({
 		description: "Feedback category",
 		enum: ["bug", "feature_request"],

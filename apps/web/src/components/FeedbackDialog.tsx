@@ -69,7 +69,7 @@ export function FeedbackDialog({
 
 				{submitted ? (
 					<div className="flex flex-col items-center gap-3 py-6">
-						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-success dark:bg-green-900/30 dark:text-green-400">
 							<svg
 								role="img"
 								aria-label="Success"

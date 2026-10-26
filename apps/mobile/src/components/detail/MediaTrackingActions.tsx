@@ -1,7 +1,14 @@
 import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
-import { Calendar, Check, ChevronRight, Plus, X } from "lucide-react-native";
+import { type Href, Link } from "expo-router";
+import {
+	Calendar,
+	Check,
+	ChevronRight,
+	Play,
+	Plus,
+	X,
+} from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
@@ -16,6 +23,7 @@ import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
 import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
+import { useThemeColors } from "@/theme/colors";
 
 type MediaTrackingActionsProps =
 	/** `title` names the item in the remove-all-Watches confirmation. */
@@ -29,6 +37,10 @@ type MediaTrackingActionsProps =
 				episodesWatched: number;
 				episodesTotal: number;
 			};
+			/** Leads the cluster with the episode to watch next, as the Web App's
+			 *  "Continue S2E1" does; the shelf button then steps down to secondary.
+			 *  `loading` reserves its space until the destination is known. */
+			continueTo?: { label: string; href: Href } | "loading";
 	  }
 	| {
 			mediaType: "season";
@@ -40,6 +52,8 @@ type MediaTrackingActionsProps =
 				episodesWatched: number;
 				episodesTotal: number;
 			};
+			/** Same as the show variant: the season's next episode. */
+			continueTo?: { label: string; href: Href } | "loading";
 	  }
 	| {
 			mediaType: "episode";
@@ -60,6 +74,7 @@ type MediaTrackingActionsProps =
  * controls so the wording matches across surfaces.
  */
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const { data: settings } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -290,9 +305,33 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	// Movies can be logged multiple times, so keep the date picker available even
 	// once on the shelf. The other types are binary, so hide it when on the shelf.
 	const showCalendar = !isOnShelf || isMovie;
+	const continueTo =
+		props.mediaType === "show" || props.mediaType === "season"
+			? props.continueTo
+			: undefined;
+	const shelfVariant = isOnShelf || continueTo ? "secondary" : "primary";
 
 	return (
 		<View className="gap-3 px-4">
+			{continueTo === "loading" ? (
+				<View
+					accessibilityLabel="Loading next episode"
+					className="h-12 rounded-lg bg-background-subtle"
+				/>
+			) : continueTo ? (
+				<Link href={continueTo.href} asChild>
+					<Button
+						label={continueTo.label}
+						leading={
+							<Play
+								color={colors.accentForeground}
+								size={18}
+								strokeWidth={2.5}
+							/>
+						}
+					/>
+				</Link>
+			) : null}
 			{canManageHistory && (isOnShelf || isPartial) ? (
 				<Pressable
 					onPress={canManageHistory ? () => setHistoryVisible(true) : undefined}
@@ -301,9 +340,9 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				>
 					<View className="rounded-full bg-primary/20 p-1.5">
 						{isOnShelf ? (
-							<Check color="#22c55e" size={16} />
+							<Check color={colors.success} size={16} />
 						) : (
-							<Plus color="#f3bc00" size={16} />
+							<Plus color={colors.accent} size={16} />
 						)}
 					</View>
 					<View className="flex-1">
@@ -314,7 +353,9 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 							<Text className="text-muted-foreground text-xs">{detail}</Text>
 						) : null}
 					</View>
-					{canManageHistory ? <ChevronRight color="#94a3b8" size={18} /> : null}
+					{canManageHistory ? (
+						<ChevronRight color={colors.mutedForeground} size={18} />
+					) : null}
 				</Pressable>
 			) : null}
 
@@ -328,14 +369,22 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 								: "Add to shelf"
 					}
 					loadingLabel="Loading"
-					variant={isOnShelf ? "secondary" : "primary"}
+					variant={shelfVariant}
 					className="flex-1"
 					loading={isPending}
 					leading={
 						isOnShelf ? (
-							<X color="#ef4444" size={18} />
+							<X color={colors.destructive} size={18} />
 						) : (
-							<Plus color="#3f2e00" size={18} strokeWidth={2.5} />
+							<Plus
+								color={
+									shelfVariant === "primary"
+										? colors.accentForeground
+										: colors.foreground
+								}
+								size={18}
+								strokeWidth={2.5}
+							/>
 						)
 					}
 					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
@@ -346,7 +395,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 						disabled={isPending}
 						className="items-center justify-center rounded-lg border border-border px-4"
 					>
-						<Calendar color="#94a3b8" size={20} />
+						<Calendar color={colors.mutedForeground} size={20} />
 					</Pressable>
 				) : null}
 			</View>

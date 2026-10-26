@@ -17,6 +17,7 @@ export default function ProfileShelfScreen() {
 					userDid={userDid}
 					isOwner={isOwner}
 					initialFilter={initialFilter}
+					showHeading={false}
 				/>
 			)}
 		</ProfileSubScreen>

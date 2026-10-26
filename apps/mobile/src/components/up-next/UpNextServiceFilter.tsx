@@ -17,6 +17,7 @@ import {
 	toggleService,
 } from "@/components/ui/streaming-service-picker";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/theme/colors";
 
 export function UpNextServiceFilter({
 	country,
@@ -35,6 +36,7 @@ export function UpNextServiceFilter({
 	showClear?: boolean;
 	onChange: (value: string | undefined) => void;
 }) {
+	const colors = useThemeColors();
 	const [open, setOpen] = useState(false);
 	const [draft, setDraft] = useState<number[]>([]);
 	useEffect(() => {
@@ -64,11 +66,11 @@ export function UpNextServiceFilter({
 						setOpen(true);
 					}}
 				>
-					<SlidersHorizontal color="#94a3b8" size={14} />
+					<SlidersHorizontal color={colors.mutedForeground} size={14} />
 					<Text className="font-medium text-foreground text-sm">
 						Streaming services{value ? ` (${ids.length})` : ""}
 					</Text>
-					<ChevronDown color="#94a3b8" size={14} />
+					<ChevronDown color={colors.mutedForeground} size={14} />
 				</Pressable>
 				{showClear && value && (
 					<Button
@@ -103,7 +105,7 @@ export function UpNextServiceFilter({
 						style={{ paddingBottom: insets.bottom }}
 					>
 						<View className="flex-row items-center justify-between px-4 py-3">
-							<Text className="font-display font-semibold text-foreground text-lg">
+							<Text className="font-display-semibold text-foreground text-lg">
 								Streaming services
 							</Text>
 							<Pressable
@@ -112,7 +114,7 @@ export function UpNextServiceFilter({
 								hitSlop={8}
 								onPress={() => setOpen(false)}
 							>
-								<X color="#94a3b8" size={22} />
+								<X color={colors.mutedForeground} size={22} />
 							</Pressable>
 						</View>
 						<ScrollView

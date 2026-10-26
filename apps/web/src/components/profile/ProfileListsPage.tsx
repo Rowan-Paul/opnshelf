@@ -480,7 +480,7 @@ export function ProfileListsPage({
 							    the app header so the posters stay reachable while scrolling.
 							    `top-16` clears that header. */}
 							<div className="sticky top-16 z-10 -mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-(--border) border-b bg-(--background)/95 py-3 backdrop-blur">
-								<h2 className="font-semibold text-xl">{listDetails.name}</h2>
+								<h2 className="text-display-3">{listDetails.name}</h2>
 
 								{/* Progress is viewer-relative, so it is absent when signed
 								    out; the item count stands in for it. */}
@@ -699,7 +699,7 @@ export function ProfileListsPage({
 							    and leaves the list alone. */}
 							{listError && !listLoading && (
 								<div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-subtle) px-4 py-2.5">
-									<AlertCircle className="size-4 shrink-0 text-red-500" />
+									<AlertCircle className="size-4 shrink-0 text-destructive" />
 									<p className="text-(--foreground-muted) text-sm">
 										Couldn't refresh this list. Showing what loaded last.
 									</p>
@@ -879,16 +879,22 @@ export function ProfileListsPage({
 									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
 										<List className="size-6 text-(--foreground-subtle)" />
 									</div>
+									{/* Same copy as Mobile. The add hint is for the owner;
+									    a visitor can't add to someone else's list. */}
 									<h3 className="mt-3 font-display font-semibold">
 										{searchQuery || filter !== "all"
-											? "No results found"
-											: "List is empty"}
+											? "No matches"
+											: "Empty list"}
 									</h3>
-									<p className="mt-1 text-(--foreground-muted) text-sm">
-										{searchQuery || filter !== "all"
-											? "Try adjusting your filters"
-											: "Add movies and shows to this list to see them here"}
-									</p>
+									{searchQuery || filter !== "all" ? (
+										<p className="mt-1 text-(--foreground-muted) text-sm">
+											Try adjusting your search or filters.
+										</p>
+									) : isOwner ? (
+										<p className="mt-1 text-(--foreground-muted) text-sm">
+											Add movies and shows to this list to see them here.
+										</p>
+									) : null}
 								</div>
 							)}
 
@@ -965,7 +971,7 @@ export function ProfileListsPage({
 						// telling the reader it is sends them off to look for a list
 						// that is still there. Only a 404 means gone.
 						<div className="flex h-96 flex-col items-center justify-center gap-4 rounded-xl border-(--border) border-2 border-dashed">
-							<AlertCircle className="size-12 text-red-500" />
+							<AlertCircle className="size-12 text-destructive" />
 							<div className="text-center">
 								<h3 className="font-display font-semibold text-lg">
 									Couldn't load this list
@@ -1041,7 +1047,7 @@ export function ProfileListsPage({
 								variant="outline"
 								onClick={confirmDeleteList}
 								disabled={deleteListMutation.isPending}
-								className="gap-1.5 text-red-600 hover:text-red-600"
+								className="gap-1.5 text-destructive hover:text-destructive"
 							>
 								<Trash2 className="size-4" />
 								{deleteListMutation.isPending ? "Deleting..." : "Delete"}

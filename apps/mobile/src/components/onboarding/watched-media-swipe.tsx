@@ -35,6 +35,7 @@ import {
 	toOnboardingMediaItem,
 } from "@/lib/onboarding-media";
 import { posterUrl } from "@/lib/tmdb";
+import { useThemeColors } from "@/theme/colors";
 
 export function WatchedMediaSwipe({
 	onNext,
@@ -43,6 +44,7 @@ export function WatchedMediaSwipe({
 	onNext: () => void;
 	onWatched: () => void;
 }) {
+	const colors = useThemeColors();
 	const { fontScale, height, width } = useWindowDimensions();
 	const insets = useSafeAreaInsets();
 	const compact = height < 720;
@@ -199,7 +201,7 @@ export function WatchedMediaSwipe({
 		>
 			<View className={compact ? "gap-0.5" : "gap-1"}>
 				<Text
-					className={`font-bold font-display text-foreground ${compact ? "text-2xl leading-7" : "text-3xl"}`}
+					className={`font-display-bold text-foreground ${compact ? "text-2xl leading-7" : "text-3xl"}`}
 				>
 					What have you watched?
 				</Text>
@@ -214,7 +216,9 @@ export function WatchedMediaSwipe({
 				className="relative min-h-0 flex-1 items-center justify-center"
 				onLayout={(event) => setStackHeight(event.nativeEvent.layout.height)}
 			>
-				{discovery.isLoading ? <ActivityIndicator color="#f3bc00" /> : null}
+				{discovery.isLoading ? (
+					<ActivityIndicator color={colors.accent} />
+				) : null}
 				{discovery.isError ? (
 					<View className="items-center gap-3">
 						<Text className="text-center text-muted-foreground">
@@ -285,9 +289,9 @@ export function WatchedMediaSwipe({
 				) : !discovery.isLoading && !discovery.isError ? (
 					<View className="items-center gap-3 px-6">
 						<View className="size-16 items-center justify-center rounded-full bg-green-500/10">
-							<Check color="#22c55e" size={32} />
+							<Check color={colors.success} size={32} />
 						</View>
-						<Text className="text-center font-bold font-display text-2xl text-foreground">
+						<Text className="text-center font-display-bold text-2xl text-foreground">
 							That is the stack
 						</Text>
 						<Text className="text-center text-muted-foreground text-sm">
@@ -304,14 +308,14 @@ export function WatchedMediaSwipe({
 						compact={compact}
 						disabled={moving || !ready}
 						onPress={() => void swipe("left")}
-						icon={<X color="#94a3b8" size={25} />}
+						icon={<X color={colors.mutedForeground} size={25} />}
 					/>
 					<ActionButton
 						label="Watched"
 						compact={compact}
 						disabled={moving || !ready}
 						onPress={() => void swipe("right")}
-						icon={<Check color="#3f2e00" size={25} />}
+						icon={<Check color={colors.accentForeground} size={25} />}
 						primary
 					/>
 				</View>
@@ -348,6 +352,7 @@ function MediaSwipeCard({
 	showPoster?: boolean;
 	style?: ViewStyle;
 }) {
+	const colors = useThemeColors();
 	return (
 		<View
 			className={`overflow-hidden rounded-3xl border border-border bg-card ${className ?? ""}`}
@@ -366,14 +371,14 @@ function MediaSwipeCard({
 			<View className={compact ? "gap-1 p-3" : "gap-2 p-4"}>
 				<View className="flex-row items-start justify-between gap-3">
 					<Text
-						className={`min-w-0 flex-1 font-bold font-display text-foreground ${compact ? "text-lg" : "text-xl"}`}
+						className={`min-w-0 flex-1 font-display-bold text-foreground ${compact ? "text-lg" : "text-xl"}`}
 						numberOfLines={2}
 					>
 						{item.title}
 					</Text>
 					{item.rating ? (
 						<View className="flex-row items-center gap-1">
-							<Star color="#f3bc00" fill="#f3bc00" size={14} />
+							<Star color={colors.accent} fill={colors.accent} size={14} />
 							<Text className="text-muted-foreground text-sm">
 								{item.rating.toFixed(1)}/10
 							</Text>

@@ -9,6 +9,7 @@ import {
 } from "lucide-react-native";
 import { Modal, Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/theme/colors";
 
 /** A single tappable row in the quick-actions sheet. */
 function ActionRow({
@@ -25,6 +26,7 @@ function ActionRow({
 	/** Render as the filled accent CTA (the sheet's one focal action). */
 	primary?: boolean;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Pressable
 			onPress={onPress}
@@ -36,7 +38,10 @@ function ActionRow({
 			}
 			style={{ opacity: disabled ? 0.5 : 1 }}
 		>
-			<Icon color={primary ? "#3f2e00" : "#94a3b8"} size={20} />
+			<Icon
+				color={primary ? colors.accentForeground : colors.mutedForeground}
+				size={20}
+			/>
 			<Text
 				className={
 					primary
@@ -81,6 +86,7 @@ export function MediaQuickActionsSheet({
 	hasNote: boolean;
 	isWatchPending?: boolean;
 }) {
+	const colors = useThemeColors();
 	const watchLabel = watched ? "Remove from shelf" : "Add to shelf";
 
 	return (
@@ -95,13 +101,13 @@ export function MediaQuickActionsSheet({
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
 						<Text
-							className="flex-1 font-bold font-display text-foreground text-lg"
+							className="flex-1 font-display-bold text-foreground text-lg"
 							numberOfLines={1}
 						>
 							{title}
 						</Text>
 						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 

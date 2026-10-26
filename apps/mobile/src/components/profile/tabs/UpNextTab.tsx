@@ -78,9 +78,7 @@ export function UpNextTab({
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
 			{showHeading ? (
-				<Text className="font-bold font-display text-2xl text-foreground">
-					Up Next
-				</Text>
+				<Text className="text-display-2 text-foreground">Up Next</Text>
 			) : null}
 
 			{isOwner && (

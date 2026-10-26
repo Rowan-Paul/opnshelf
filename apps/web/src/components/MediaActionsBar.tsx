@@ -181,7 +181,7 @@ export default function MediaActionsBar({
 					type="button"
 					onClick={() => toggleFavorites(isInFavorites)}
 					disabled={isPending}
-					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${isInFavorites ? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
+					className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${isInFavorites ? "border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
 					aria-label={
 						isInFavorites ? "Remove from Favorites" : "Add to Favorites"
 					}
@@ -229,7 +229,7 @@ export default function MediaActionsBar({
 					aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
 				>
 					{shareSuccess ? (
-						<Check className="size-5 text-green-500" />
+						<Check className="size-5 text-success" />
 					) : (
 						<Share2 className="size-5" />
 					)}
@@ -303,7 +303,7 @@ export default function MediaActionsBar({
 						disabled={isPending}
 						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
 							isInFavorites
-								? "border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
+								? "border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
 						aria-label={
@@ -422,7 +422,7 @@ export default function MediaActionsBar({
 						aria-label={shareSuccess ? "Copied to clipboard" : "Share"}
 					>
 						{shareSuccess ? (
-							<Check className="size-5 text-green-500" />
+							<Check className="size-5 text-success" />
 						) : (
 							<Share2 className="size-5" />
 						)}

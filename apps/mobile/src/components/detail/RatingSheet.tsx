@@ -2,6 +2,7 @@ import { StarOff, X } from "lucide-react-native";
 import { Modal, Pressable, View } from "react-native";
 import { StarRating } from "@/components/detail/StarRating";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Bottom sheet for setting the single star rating of a media item. Keeps the
@@ -24,6 +25,7 @@ export function RatingSheet({
 	onClear: () => void;
 	isClearing?: boolean;
 }) {
+	const colors = useThemeColors();
 	const rated = rating > 0;
 
 	return (
@@ -37,11 +39,11 @@ export function RatingSheet({
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-5 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							Your rating
 						</Text>
 						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
@@ -49,7 +51,7 @@ export function RatingSheet({
 						<StarRating rating={rating} onChange={onChange} size={40} />
 						{rated ? (
 							<View className="flex-row items-baseline gap-0.5">
-								<Text className="font-bold font-display text-2xl text-foreground">
+								<Text className="font-display-bold text-2xl text-foreground">
 									{rating}
 								</Text>
 								<Text className="text-muted-foreground text-sm"> /10</Text>
@@ -71,7 +73,7 @@ export function RatingSheet({
 							className="flex-row items-center justify-center gap-1.5 rounded-lg border border-border py-3"
 							style={{ opacity: isClearing ? 0.6 : 1 }}
 						>
-							<StarOff color="#94a3b8" size={16} />
+							<StarOff color={colors.mutedForeground} size={16} />
 							<Text className="font-medium text-muted-foreground">
 								Clear rating
 							</Text>

@@ -483,6 +483,10 @@ export function createScenarioServer(
 		if (url.pathname === "/shows/tmdb/1399") {
 			json({ ...sample(spec.components.schemas.TMDBShowDetailDto), id: 1399, name: "Local fixture show", overview: "A synthetic show for checking season navigation.", first_air_date: "2020-01-01", number_of_episodes: 2, number_of_seasons: 1, seasons: [{ id: 1, season_number: 1, name: "Season 1", episode_count: 2 }], credits: { cast: [], crew: [], cast_total: 0, crew_total: 0 } }); return;
 		}
+		if (/^\/movies\/tmdb\/[12]$/.test(url.pathname)) {
+			const id = Number(url.pathname.split("/").at(-1));
+			json({ ...sample(spec.components.schemas.TMDBMovieDetailDto), id, title: `Fixture film ${id}`, overview: "A synthetic film for checking the movie page.", release_date: "2020-01-01", runtime: 104, vote_average: 7.2, vote_count: 1200, poster_path: "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", genres: [{ id: 18, name: "Drama" }], credits: { cast: [{ id: 1, name: "Fixture Actor", character: "Lead", order: 0 }], crew: [{ id: 2, name: "Fixture Director", job: "Director", department: "Directing" }], cast_total: 1, crew_total: 1 } }); return;
+		}
 		if (url.pathname === "/shows/tmdb/1399/season/1") {
 			json({ ...sample(spec.components.schemas.TMDBSeasonDetailDto), id: 1, name: "Season 1", season_number: 1, overview: "Two fixture episodes", episodes: [1, 2].map(number => ({ id: number, name: `Episode ${number}`, episode_number: number, season_number: 1, air_date: "2020-01-01", overview: "Fixture episode", runtime: 30, vote_average: 7, vote_count: 1, crew: [], guest_stars: [] })) }); return;
 		}

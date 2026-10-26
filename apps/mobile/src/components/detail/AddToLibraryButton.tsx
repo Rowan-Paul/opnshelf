@@ -5,6 +5,7 @@ import { AddToLibrarySheet } from "@/components/library/AddToLibrarySheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useLibraryOwnership } from "@/lib/use-library";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * "Add to library" action for media detail screens: a compact tile (flex-1,
@@ -22,6 +23,7 @@ export function AddToLibraryButton({
 	seasonNumber?: number;
 	episodeNumber?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const [sheetVisible, setSheetVisible] = useState(false);
 	const { ownedFormats, isLoading, toggle } = useLibraryOwnership({
@@ -41,7 +43,10 @@ export function AddToLibraryButton({
 				onPress={() => setSheetVisible(true)}
 				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
-				<Disc color={count > 0 ? "#f3bc00" : "#94a3b8"} size={18} />
+				<Disc
+					color={count > 0 ? colors.accent : colors.mutedForeground}
+					size={18}
+				/>
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>
 					{count > 0 ? `Owned · ${count}` : "Library"}
 				</Text>

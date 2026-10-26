@@ -55,6 +55,7 @@ import { useAuth } from "@/lib/auth-context";
 import { guessWatchCountry } from "@/lib/countries";
 import { posthog } from "@/lib/posthog";
 import { useProfileSetup } from "@/lib/use-profile";
+import { useThemeColors } from "@/theme/colors";
 
 const logo = require("../../assets/images/icon.png");
 const traktStatusKey = ["trakt-sync", "status"];
@@ -98,13 +99,18 @@ function PrimaryButton({
 	disabled?: boolean;
 	icon?: boolean;
 }) {
+	const colors = useThemeColors();
 	const isDisabled = disabled || loading;
 	return (
 		<Button
 			label={label}
 			loading={loading}
 			disabled={isDisabled}
-			trailing={icon ? <ArrowRight color="#3f2e00" size={18} /> : undefined}
+			trailing={
+				icon ? (
+					<ArrowRight color={colors.accentForeground} size={18} />
+				) : undefined
+			}
 			onPress={onPress}
 		/>
 	);
@@ -152,6 +158,7 @@ function StepScaffold({
 }
 
 export default function OnboardingScreen() {
+	const colors = useThemeColors();
 	const { user, isLoading, isAuthenticated } = useAuth();
 	// Trakt authorization can land here as a fresh deep link on Android.
 	const { connection } = useLocalSearchParams<{ connection?: string }>();
@@ -222,7 +229,7 @@ export default function OnboardingScreen() {
 		return (
 			<Screen>
 				<View className="flex-1 items-center justify-center">
-					<ActivityIndicator color="#f3bc00" />
+					<ActivityIndicator color={colors.accent} />
 				</View>
 			</Screen>
 		);
@@ -243,7 +250,7 @@ export default function OnboardingScreen() {
 						accessibilityState={{ disabled: notificationsBusy }}
 						className="flex-row items-center"
 					>
-						<ChevronLeft color="#94a3b8" size={26} />
+						<ChevronLeft color={colors.mutedForeground} size={26} />
 					</Pressable>
 				) : null}
 			</View>
@@ -327,7 +334,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 					contentFit="contain"
 				/>
 				<View className="gap-3">
-					<Text className="text-center font-bold font-display text-4xl text-foreground">
+					<Text className="text-center font-display-bold text-4xl text-foreground">
 						Welcome to Opnshelf
 					</Text>
 					<Text className="text-center text-base text-muted-foreground leading-6">
@@ -377,7 +384,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 			}
 		>
 			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
+				<Text className="font-display-bold text-3xl text-foreground">
 					Set up your profile
 				</Text>
 				<Text className="text-muted-foreground text-sm">
@@ -477,7 +484,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 			}
 		>
 			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
+				<Text className="font-display-bold text-3xl text-foreground">
 					Your preferences
 				</Text>
 				<Text className="text-muted-foreground text-sm leading-5">
@@ -573,7 +580,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 			}
 		>
 			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
+				<Text className="font-display-bold text-3xl text-foreground">
 					Your services
 				</Text>
 				<Text className="text-muted-foreground text-sm leading-5">
@@ -610,6 +617,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 
 /* -------------------------------------------------------------------- Trakt */
 function TraktStep({ onNext }: { onNext: () => void }) {
+	const colors = useThemeColors();
 	const queryClient = useQueryClient();
 	const status = useQuery({
 		queryKey: traktStatusKey,
@@ -654,7 +662,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 	if (!data?.configured)
 		return (
 			<StepScaffold footer={skip}>
-				<Text className="font-bold font-display text-3xl text-foreground">
+				<Text className="font-display-bold text-3xl text-foreground">
 					Trakt Sync
 				</Text>
 				<Text className="text-muted-foreground text-sm">
@@ -673,7 +681,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 				}
 			>
 				<View className="gap-1">
-					<Text className="font-bold font-display text-3xl text-foreground">
+					<Text className="font-display-bold text-3xl text-foreground">
 						{enabled ? "Trakt Sync is on" : "Choose what to sync"}
 					</Text>
 					<Text className="text-muted-foreground text-sm">
@@ -702,7 +710,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 	return (
 		<StepScaffold footer={skip}>
 			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
+				<Text className="font-display-bold text-3xl text-foreground">
 					Already on Trakt?
 				</Text>
 				<Text className="text-muted-foreground text-sm">
@@ -715,7 +723,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 						source={logo}
 						style={{ width: 44, height: 44, borderRadius: 12 }}
 					/>
-					<ArrowLeftRight color="#f3bc00" size={20} />
+					<ArrowLeftRight color={colors.accent} size={20} />
 					<TraktMark size={44} />
 				</View>
 				<View className="gap-1.5">
@@ -725,7 +733,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 						"Review every transfer before sync starts",
 					].map((line) => (
 						<View key={line} className="flex-row gap-2">
-							<Check color="#f3bc00" size={16} />
+							<Check color={colors.accent} size={16} />
 							<Text className="flex-1 text-muted-foreground text-sm leading-5">
 								{line}
 							</Text>
@@ -762,6 +770,7 @@ function DoneStep({
 	followedAnyone: boolean;
 	watchesAdded: number;
 }) {
+	const colors = useThemeColors();
 	const queryClient = useQueryClient();
 	const { user } = useAuth();
 	const toast = useToast();
@@ -807,10 +816,10 @@ function DoneStep({
 	return (
 		<View className="flex-1 items-center justify-center gap-6 py-16">
 			<View className="size-16 items-center justify-center rounded-full bg-primary/15">
-				<CheckCircle2 color="#22c55e" size={34} />
+				<CheckCircle2 color={colors.success} size={34} />
 			</View>
 			<View className="gap-2">
-				<Text className="text-center font-bold font-display text-3xl text-foreground">
+				<Text className="text-center font-display-bold text-3xl text-foreground">
 					You’re all set!
 				</Text>
 				<Text className="text-center text-base text-muted-foreground leading-6">
@@ -821,7 +830,7 @@ function DoneStep({
 
 			{completeOnboarding.isPending ? (
 				<View className="flex-row items-center gap-2">
-					<ActivityIndicator size="small" color="#94a3b8" />
+					<ActivityIndicator size="small" color={colors.mutedForeground} />
 					<Text className="text-muted-foreground text-sm">Finishing up…</Text>
 				</View>
 			) : completeOnboarding.isError ? (
@@ -832,10 +841,7 @@ function DoneStep({
 					icon={false}
 				/>
 			) : (
-				<PrimaryButton
-					label="Go to Dashboard"
-					onPress={() => router.replace("/")}
-				/>
+				<PrimaryButton label="Go to Home" onPress={() => router.replace("/")} />
 			)}
 		</View>
 	);

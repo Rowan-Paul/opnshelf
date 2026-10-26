@@ -115,12 +115,46 @@ export function UserRowsSkeleton({ rows = 4 }: { rows?: number }) {
 	);
 }
 
-/** Review/activity cards: poster thumb + text lines. */
+/** Review cards: poster thumb + text lines. */
 export function ReviewsSkeleton({ rows = 2 }: { rows?: number }) {
 	return (
 		<View className="gap-3">
 			{IDX(rows).map((i) => (
 				<UpNextRowSkeleton key={i} extraLine />
+			))}
+		</View>
+	);
+}
+
+/** Activity Feed cards: mirrors ActivityCard — actor header with the type
+ * pill, then poster + text lines. */
+export function ActivityCardsSkeleton({ rows = 3 }: { rows?: number }) {
+	return (
+		<View className="gap-5">
+			{IDX(rows).map((i) => (
+				<View
+					key={i}
+					testID="activity-card-skeleton"
+					className="gap-3 rounded-xl border border-border bg-card p-4"
+				>
+					<View className="flex-row items-start gap-2">
+						<View className="size-9 rounded-full bg-background-subtle" />
+						<View className="flex-1 gap-1.5">
+							<View className="h-3.5 w-3/5 rounded bg-background-subtle" />
+							<View className="h-2.5 w-1/4 rounded bg-background-subtle" />
+						</View>
+						<View className="h-5 w-12 rounded-full bg-background-subtle" />
+					</View>
+					<View className="flex-row gap-3">
+						<View className="h-32 w-20 rounded-lg bg-background-subtle" />
+						<View className="flex-1 gap-2">
+							<View className="h-3.5 w-2/5 rounded bg-background-subtle" />
+							<View className="h-2.5 w-full rounded bg-background-subtle" />
+							<View className="h-2.5 w-full rounded bg-background-subtle" />
+							<View className="h-2.5 w-2/3 rounded bg-background-subtle" />
+						</View>
+					</View>
+				</View>
 			))}
 		</View>
 	);

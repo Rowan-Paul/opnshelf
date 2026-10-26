@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useProfileSetup } from "@/lib/use-profile";
+import { useThemeColors } from "@/theme/colors";
 
 /** Amber primary used for active switches and accents, matching settings. */
-const PRIMARY = "#f3bc00";
 
 /**
  * Post-onboarding profile editor: avatar (upload/remove), display name, and
@@ -23,6 +23,7 @@ const PRIMARY = "#f3bc00";
  * the web settings page uses, via the shared `useProfileSetup` hook.
  */
 export function EditProfile({ user }: { user: UserDto }) {
+	const colors = useThemeColors();
 	const {
 		updateProfile,
 		uploadAvatar,
@@ -109,9 +110,9 @@ export function EditProfile({ user }: { user: UserDto }) {
 						hitSlop={8}
 					>
 						{refreshSocialLinks.isPending ? (
-							<ActivityIndicator size="small" color={PRIMARY} />
+							<ActivityIndicator size="small" color={colors.accent} />
 						) : (
-							<RefreshCw color={PRIMARY} size={14} />
+							<RefreshCw color={colors.accent} size={14} />
 						)}
 						<Text className="text-primary text-sm">Refresh</Text>
 					</Pressable>
@@ -161,6 +162,7 @@ function SocialLinkRow({
 	disabled: boolean;
 	onValueChange: (checked: boolean) => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<View className="flex-row items-center justify-between rounded-lg border border-border p-3">
 			<View className="flex-1 gap-0.5">
@@ -174,7 +176,7 @@ function SocialLinkRow({
 						hitSlop={6}
 					>
 						<Text className="text-primary text-xs">View profile</Text>
-						<ExternalLink color={PRIMARY} size={12} />
+						<ExternalLink color={colors.accent} size={12} />
 					</Pressable>
 				) : (
 					<Text className="text-muted-foreground text-xs">Not found</Text>
@@ -184,7 +186,7 @@ function SocialLinkRow({
 				value={value}
 				onValueChange={onValueChange}
 				disabled={disabled}
-				trackColor={{ false: "#3f3f46", true: PRIMARY }}
+				trackColor={{ false: colors.borderStrong, true: colors.accent }}
 				thumbColor="#ffffff"
 			/>
 		</View>

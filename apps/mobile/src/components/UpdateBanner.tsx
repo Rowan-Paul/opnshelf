@@ -10,6 +10,7 @@ import {
 } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { isUpdateBannerSuppressed } from "@/lib/update-banner-routes";
+import { useThemeColors } from "@/theme/colors";
 
 /** Minimum gap between foreground update checks, so backgrounding/foregrounding
  * repeatedly doesn't hammer the update server. */
@@ -38,6 +39,7 @@ const CHECK_COOLDOWN_MS = 5 * 60 * 1000;
  * only does anything in EAS builds using the `production` channel.
  */
 export function UpdateBanner({ children }: { children: ReactNode }) {
+	const colors = useThemeColors();
 	const insets = useSafeAreaInsets();
 	const pathname = usePathname();
 	const { isUpdatePending } = Updates.useUpdates();
@@ -96,7 +98,7 @@ export function UpdateBanner({ children }: { children: ReactNode }) {
 				style={{ paddingTop: insets.top + 6 }}
 			>
 				<View className="flex-row items-center gap-2.5">
-					<RefreshCw color="#f3bc00" size={16} strokeWidth={2.5} />
+					<RefreshCw color={colors.accent} size={16} strokeWidth={2.5} />
 					<Text className="flex-1 font-medium text-foreground text-sm">
 						Update ready
 					</Text>
@@ -104,7 +106,7 @@ export function UpdateBanner({ children }: { children: ReactNode }) {
 						onPress={() => void Updates.reloadAsync()}
 						className="rounded-full bg-primary px-3.5 py-1.5"
 					>
-						<Text className="font-semibold text-[#3f2e00] text-sm">
+						<Text className="font-semibold text-accent-foreground text-sm">
 							Restart
 						</Text>
 					</Pressable>

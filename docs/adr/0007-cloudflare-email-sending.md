@@ -26,3 +26,13 @@ Missing configuration or failed delivery is logged with the feedback ID and does
 not reject saved feedback. There is no automatic retry or historical backfill;
 operators can recover failed deliveries from the saved records. See the
 [feedback routing runbook](../runbooks/feedback-github.md) for setup and rollout.
+
+## Amendment: optional feedback screenshots
+
+Mobile captures the current screen locally before opening feedback and previews
+it with a removal control and public-image disclosure. Only Send uploads the
+image. A bounded JPEG is stored on the Feedback row and served through a public
+image-only endpoint for GitHub embedding. Screenshots follow the Feedback row's
+delete lifecycle. This avoids adding a separate object-storage service for small
+feedback images. Web retains text feedback because browser capture requires a
+separate user permission interaction. Capture failure never blocks text feedback.

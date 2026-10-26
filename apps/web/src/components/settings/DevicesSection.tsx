@@ -104,7 +104,7 @@ export function DevicesSection() {
 							variant="outline"
 							disabled={busy}
 							onClick={confirmRevokeOthers}
-							className="w-full text-red-600 dark:text-red-400"
+							className="w-full text-destructive"
 						>
 							<LogOut className="mr-2 size-4" />
 							Sign out all other devices
@@ -150,7 +150,7 @@ function DeviceRow({
 					disabled={disabled}
 					onClick={onRevoke}
 					aria-label={`Sign out ${device.name ?? "unknown device"}`}
-					className="text-red-600 dark:text-red-400"
+					className="text-destructive"
 				>
 					Sign out
 				</Button>

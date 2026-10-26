@@ -41,7 +41,7 @@ export function ShareButton({
 	return (
 		<button type="button" onClick={handleShare} className={className}>
 			{copied ? (
-				<Check className="size-3.5 text-green-500" />
+				<Check className="size-3.5 text-success" />
 			) : (
 				<Share2 className="size-3.5" />
 			)}

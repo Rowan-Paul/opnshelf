@@ -111,7 +111,7 @@ export function ManageCirclesDialog({
 								</span>
 								<button
 									type="button"
-									className="btn btn-ghost btn-sm h-9 px-2 text-red-600"
+									className="btn btn-ghost btn-sm h-9 px-2 text-destructive"
 									onClick={() => handleDelete(circle)}
 									disabled={
 										deleteCircle.isPending &&

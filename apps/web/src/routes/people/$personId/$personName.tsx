@@ -6,7 +6,7 @@ import {
 	ChevronLeft,
 	Clapperboard,
 	MapPin,
-	Star,
+	UserRound,
 } from "lucide-react";
 import { useMemo } from "react";
 import { env } from "#/env";
@@ -177,7 +177,7 @@ function PersonDetailPage() {
 			<ErrorState
 				message={error ? "Failed to load person" : "Person not found"}
 				backTo="/"
-				backLabel="Back to Dashboard"
+				backLabel="Back to Home"
 			/>
 		);
 	}
@@ -204,14 +204,14 @@ function PersonDetailPage() {
 			{/* Hero Section */}
 			<div className="relative z-10 min-h-[40vh] overflow-hidden">
 				{/* Subtle gradient background */}
-				<div className="absolute inset-0 h-[50vh] bg-linear-to-br from-gray-800 to-gray-900" />
+				<div className="absolute inset-0 h-[50vh] bg-(--background-subtle)" />
 				<div className="absolute inset-0 bg-linear-to-t from-(--background) via-(--background)/60 to-transparent" />
 				<div className="absolute inset-0 bg-linear-to-r from-(--background) via-(--background)/40 to-transparent" />
 
 				<div className="container-app relative pt-8">
 					<Link to="/" className="btn btn-secondary mb-6 inline-flex gap-2">
 						<ChevronLeft className="size-4" />
-						Back to Dashboard
+						Back to Home
 					</Link>
 
 					<div className="grid gap-8 lg:grid-cols-[280px_1fr] lg:gap-12">
@@ -225,8 +225,11 @@ function PersonDetailPage() {
 										className="h-full w-full object-cover"
 									/>
 								) : (
-									<div className="flex h-full w-full items-center justify-center bg-linear-to-br from-gray-700 to-gray-800">
-										<span className="text-gray-400">No Photo</span>
+									<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+										<UserRound
+											className="size-12 text-(--foreground-muted)"
+											aria-label="No photo"
+										/>
 									</div>
 								)}
 							</div>
@@ -244,7 +247,12 @@ function PersonDetailPage() {
 											className="h-full w-full object-cover"
 										/>
 									) : (
-										<div className="h-full w-full bg-linear-to-br from-gray-700 to-gray-800" />
+										<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+											<UserRound
+												className="size-8 text-(--foreground-muted)"
+												aria-label="No photo"
+											/>
+										</div>
 									)}
 								</div>
 								<div className="flex flex-col justify-center">
@@ -285,12 +293,6 @@ function PersonDetailPage() {
 										{person.place_of_birth}
 									</span>
 								)}
-								{person.popularity !== undefined && (
-									<span className="flex items-center gap-1 text-(--foreground-muted)">
-										<Star className="size-4 fill-yellow-500 text-yellow-500" />
-										{Math.round(person.popularity * 10) / 10}
-									</span>
-								)}
 							</div>
 						</div>
 					</div>
@@ -315,7 +317,7 @@ function PersonDetailPage() {
 						{/* Known For */}
 						{knownForItems.length > 0 && (
 							<section>
-								<h2 className="mb-4 text-display-3">Known For</h2>
+								<h2 className="mb-4 text-display-3">Known for</h2>
 								<ShowProgressScope
 									showIds={knownForItems
 										.filter((item) => item.media_type === "tv")

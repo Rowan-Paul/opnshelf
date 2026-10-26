@@ -51,6 +51,7 @@ vi.mock("../lexicons/xyz/opnshelf/note", () => ({
 
 import { NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotesController } from "./notes.controller";
 import { NotesService, type ATSession } from "./notes.service";
 
 describe("NotesService", () => {
@@ -268,6 +269,38 @@ describe("NotesService", () => {
 	});
 
 	describe("getUserNotes", () => {
+		it("returns movie and show labels through the profile notes response", async () => {
+			const date = new Date("2026-10-26T12:00:00Z");
+			mockPrismaService.note.count.mockResolvedValue(2);
+			mockPrismaService.note.findMany.mockResolvedValue(
+				["movie", "show"].map((mediaType) => ({
+					id: mediaType,
+					mediaType,
+					mediaId: "1",
+					content: "A note",
+					createdAt: date,
+					updatedAt: date,
+				})),
+			);
+			mockPrismaService.movie.findMany.mockResolvedValue([
+				{ movieId: "1", title: "Movie title", posterPath: null },
+			]);
+			mockPrismaService.show.findMany.mockResolvedValue([
+				{ showId: "1", title: "Show title", posterPath: null },
+			]);
+
+			const result = await new NotesController(service).getUserNotes(
+				session.did,
+				{},
+			);
+
+			expect(result.items).toEqual(
+				["Movie title", "Show title"].map((title) =>
+					expect.objectContaining({ mediaLabel: title, mediaTitle: title }),
+				),
+			);
+		});
+
 		it("returns the requested page window with page metadata", async () => {
 			const rows = [
 				{

@@ -117,8 +117,8 @@ export default function WatchProviderDtos({
 
 	return (
 		<section className="card p-5">
-			<div className="mb-4 flex items-center justify-between">
-				<h3 className="font-display font-semibold">Where to Watch</h3>
+			<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+				<h2 className="font-display font-semibold">Where to Watch</h2>
 				{availableCountries.length > 1 && (
 					<div className="relative">
 						<button

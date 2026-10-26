@@ -101,7 +101,7 @@ function SocialPage() {
 		<div className="container-app py-8">
 			<div className="mb-6 flex flex-wrap items-start justify-between gap-4">
 				<div>
-					<h1 className="font-bold font-display text-3xl" data-tour="social">
+					<h1 className="text-display-2" data-tour="social">
 						Social
 					</h1>
 					<p className="text-(--foreground-muted)">

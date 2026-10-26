@@ -269,7 +269,7 @@ export function PrivacySection({
 					<span className="truncate font-medium">{label}</span>
 					{done ? (
 						<Check
-							className="size-4 shrink-0 text-green-600"
+							className="size-4 shrink-0 text-success"
 							aria-label={`${moving.target === "private" ? "Private" : "Public"}, ${count} records copied`}
 						/>
 					) : failed ? (
@@ -294,7 +294,7 @@ export function PrivacySection({
 					<div
 						className={`h-full rounded-full transition-[width] duration-500 ${
 							done
-								? "bg-green-500"
+								? "bg-success"
 								: failed
 									? "bg-(--destructive)"
 									: "bg-(--accent)"
@@ -557,7 +557,7 @@ export function PrivacySection({
 									? "bg-(--accent-muted) text-(--accent-hover)"
 									: progressState === "stopped"
 										? "bg-(--destructive)/15 text-(--destructive)"
-										: "bg-green-500/15 text-green-600"
+										: "bg-success/15 text-success"
 							}`}
 						>
 							{progressState === "stopped" ? (

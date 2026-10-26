@@ -18,13 +18,15 @@ import { MediaActionBar } from "@/components/social/MediaActionBar";
 import { Text } from "@/components/ui/text";
 import { backdropUrl, posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Rich activity card for the Activity tab (the dashboard preview keeps the
- * compact `ActivityRow`). Mirrors the web "following" `ActivityCard`: poster
- * art on the left, actor + action header, episode line, a review rating +
- * excerpt or a synopsis excerpt, timestamp, and inline actions (one-tap
- * add-to-shelf + ⋯ quick actions) for watch items.
+ * compact `ActivityRow`). Mirrors the web "following" `ActivityCard`: a
+ * full-width actor + action header with timestamp and Movie/TV pill, then
+ * poster art beside the episode line, a review rating + excerpt or a synopsis
+ * excerpt, and inline actions (one-tap add-to-shelf + ⋯ quick actions) for
+ * watch items.
  */
 export function ActivityCard({
 	activity,
@@ -37,6 +39,7 @@ export function ActivityCard({
 	userTimezone?: string;
 	userTimeFormat?: "12h" | "24h";
 }) {
+	const colors = useThemeColors();
 	const [expanded, setExpanded] = useState(false);
 	const bundled = episodes.length > 1;
 	const avatarStyle = useTwStyle("size-9");
@@ -111,7 +114,7 @@ export function ActivityCard({
 										contentFit="cover"
 									/>
 								) : (
-									<User color="#94a3b8" size={16} />
+									<User color={colors.mutedForeground} size={16} />
 								)}
 							</Pressable>
 						</Link>
@@ -130,7 +133,7 @@ export function ActivityCard({
 								</Link>
 							</Text>
 							<View className="mt-0.5 flex-row items-center gap-1.5">
-								<Clock color="#94a3b8" size={12} />
+								<Clock color={colors.mutedForeground} size={12} />
 								<Text className="text-muted-foreground text-xs">
 									{bundled
 										? `Latest · ${formatRelativeTime(activity.activityAt)} · `

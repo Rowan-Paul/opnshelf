@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { type Href, Link, router } from "expo-router";
 import { Check, Plus, Star, X } from "lucide-react-native";
 import { useState } from "react";
@@ -15,7 +16,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { movieHref, showHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
-import { posterUrl } from "@/lib/tmdb";
+import { backdropUrl, posterUrl } from "@/lib/tmdb";
 import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useListMembership } from "@/lib/use-lists";
 import { useNote } from "@/lib/use-note";
@@ -26,6 +27,7 @@ import {
 } from "@/lib/use-show-progress";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
+import { useThemeColors } from "@/theme/colors";
 
 export type MediaCardItem = {
 	id: number;
@@ -59,6 +61,14 @@ export type MediaCardItem = {
 	label?: string;
 	/** Full watch timestamp shown by the dated Shelf timeline. */
 	timestamp?: string;
+	/**
+	 * `backdrop` renders a 16:9 image (the episode still, else the backdrop)
+	 * instead of the poster, matching the Web App's Your Shelf cards: rows of
+	 * episodes from one show otherwise repeat the same poster.
+	 */
+	layout?: "poster" | "backdrop";
+	/** Landscape image for `layout: "backdrop"`. Falls back to the poster. */
+	backdropPath?: string | null;
 };
 
 /**
@@ -202,10 +212,23 @@ function MediaCardBase({
 				delayLongPress={300}
 			>
 				<View className="overflow-hidden rounded-lg border border-border bg-card">
-					<PosterImage
-						url={posterUrl(item.posterPath)}
-						className="aspect-2/3 w-full"
-					/>
+					{item.layout === "backdrop" ? (
+						<>
+							<PosterImage
+								url={
+									backdropUrl(item.backdropPath, "w780") ??
+									posterUrl(item.posterPath)
+								}
+								className="aspect-video w-full"
+							/>
+							<BackdropCaption item={item} />
+						</>
+					) : (
+						<PosterImage
+							url={posterUrl(item.posterPath)}
+							className="aspect-2/3 w-full"
+						/>
+					)}
 					{overlay}
 					<PosterProgress
 						progress={progress}
@@ -232,58 +255,106 @@ function MediaCardBase({
 						</Pressable>
 					) : null}
 				</View>
+				{item.layout === "backdrop" ? null : <PosterCaption item={item} />}
+			</Pressable>
+		</Link>
+	);
+}
+
+/**
+ * Title, label and date written over a backdrop card's image, the way the Web
+ * App's landscape cards and the Home Up Next tiles do.
+ */
+function BackdropCaption({ item }: { item: MediaCardItem }) {
+	const subtitle = item.episode
+		? `${item.episode.showTitle} • S${item.episode.seasonNumber}E${item.episode.episodeNumber}`
+		: (item.label ?? item.year);
+	return (
+		<>
+			<LinearGradient
+				colors={["transparent", "rgba(0,0,0,0.85)"]}
+				style={{ position: "absolute", inset: 0 }}
+				pointerEvents="none"
+			/>
+			<View
+				className="absolute right-0 bottom-0 left-0 gap-0.5 p-3"
+				pointerEvents="none"
+			>
+				<Text className="font-semibold text-sm text-white" numberOfLines={1}>
+					{item.title}
+				</Text>
+				{subtitle ? (
+					<Text className="text-white/80 text-xs" numberOfLines={1}>
+						{subtitle}
+					</Text>
+				) : null}
 				{item.timestamp ? (
-					<Text
-						selectable
-						className="mt-2 text-muted-foreground text-xs"
-						numberOfLines={2}
-					>
+					<Text className="text-white/70 text-xs" numberOfLines={1}>
 						{item.timestamp}
 					</Text>
 				) : null}
+			</View>
+		</>
+	);
+}
+
+/** Title, label and date under a poster card. */
+function PosterCaption({ item }: { item: MediaCardItem }) {
+	const colors = useThemeColors();
+	return (
+		<>
+			{item.timestamp ? (
 				<Text
-					className={`${item.timestamp ? "mt-0.5" : "mt-2"} font-medium text-foreground text-sm leading-5`}
-					style={{ minHeight: 40 }}
+					selectable
+					className="mt-2 text-muted-foreground text-xs"
 					numberOfLines={2}
 				>
-					{item.title}
+					{item.timestamp}
 				</Text>
-				{item.episode ? (
-					// Episode label: "S1E2 · Show", trimmed to just "S1E2" when the
-					// title line already shows the show (i.e. no episode title).
-					<Text
-						className="mt-0.5 text-muted-foreground text-xs"
-						numberOfLines={1}
-					>
-						{`S${item.episode.seasonNumber}E${item.episode.episodeNumber}`}
-						{item.title !== item.episode.showTitle
-							? ` · ${item.episode.showTitle}`
-							: ""}
-					</Text>
-				) : item.label ? (
-					<Text
-						className="mt-0.5 text-muted-foreground text-xs"
-						numberOfLines={1}
-					>
-						{item.label}
-					</Text>
-				) : (
-					<View className="mt-0.5 flex-row items-center gap-2">
-						{item.year ? (
-							<Text className="text-muted-foreground text-xs">{item.year}</Text>
-						) : null}
-						{item.rating && item.rating > 0 ? (
-							<View className="flex-row items-center gap-0.5">
-								<Star color="#f3bc00" fill="#f3bc00" size={11} />
-								<Text className="text-muted-foreground text-xs">
-									{item.rating.toFixed(1)}/10
-								</Text>
-							</View>
-						) : null}
-					</View>
-				)}
-			</Pressable>
-		</Link>
+			) : null}
+			<Text
+				className={`${item.timestamp ? "mt-0.5" : "mt-2"} font-medium text-foreground text-sm leading-5`}
+				// Posters reserve two lines so a row's labels line up.
+				style={{ minHeight: 40 }}
+				numberOfLines={2}
+			>
+				{item.title}
+			</Text>
+			{item.episode ? (
+				// Episode label: "S1E2 · Show", trimmed to just "S1E2" when the
+				// title line already shows the show (i.e. no episode title).
+				<Text
+					className="mt-0.5 text-muted-foreground text-xs"
+					numberOfLines={1}
+				>
+					{`S${item.episode.seasonNumber}E${item.episode.episodeNumber}`}
+					{item.title !== item.episode.showTitle
+						? ` · ${item.episode.showTitle}`
+						: ""}
+				</Text>
+			) : item.label ? (
+				<Text
+					className="mt-0.5 text-muted-foreground text-xs"
+					numberOfLines={1}
+				>
+					{item.label}
+				</Text>
+			) : (
+				<View className="mt-0.5 flex-row items-center gap-2">
+					{item.year ? (
+						<Text className="text-muted-foreground text-xs">{item.year}</Text>
+					) : null}
+					{item.rating && item.rating > 0 ? (
+						<View className="flex-row items-center gap-0.5">
+							<Star color={colors.accent} fill={colors.accent} size={11} />
+							<Text className="text-muted-foreground text-xs">
+								{item.rating.toFixed(1)}/10
+							</Text>
+						</View>
+					) : null}
+				</View>
+			)}
+		</>
 	);
 }
 
@@ -301,6 +372,7 @@ function MediaCardWithActions({
 	item: MediaCardItem;
 	watchCount?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const { showDialog } = useDialog();
 	const confirmRemoveWatches = useConfirmRemoveWatches();
@@ -481,13 +553,13 @@ function MediaCardWithActions({
 			) : isWatchPending ? (
 				<ActivityIndicator size="small" color="#ffffff" />
 			) : isPartialShow ? (
-				<Plus color="#3f2e00" size={16} strokeWidth={2.5} />
+				<Plus color={colors.accentForeground} size={16} strokeWidth={2.5} />
 			) : watched ? (
 				<>
-					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					<Check color={colors.accentForeground} size={16} strokeWidth={3} />
 					{badgeWatchCount && badgeWatchCount > 1 ? (
 						<Text
-							className="font-bold text-[#3f2e00] text-xs"
+							className="font-bold text-accent-foreground text-xs"
 							style={{ fontVariant: ["tabular-nums"] }}
 						>
 							{badgeWatchCount}

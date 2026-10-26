@@ -7,16 +7,21 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Star, Trash2 } from "lucide-react";
 import { useState } from "react";
 import ConfirmDialog from "#/components/ConfirmDialog";
+import { ContentState } from "#/components/ContentState";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { ReviewAuthorRating } from "#/components/ReviewAuthorRating";
 import { ReviewBody } from "#/components/ReviewBody";
 import { ReviewDialog } from "#/components/ReviewDialog";
+import { ReviewLikeButton } from "#/components/ReviewLikeButton";
 import { SpoilerShield } from "#/components/SpoilerShield";
 import { useAuth } from "#/lib/auth-context";
-import { useInfiniteUserReviews } from "#/lib/hooks/useReviews";
+import {
+	useInfiniteUserReviews,
+	useUserReviewLike,
+} from "#/lib/hooks/useReviews";
 import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
 export const Route = createFileRoute("/profile/$handle/reviews")({
@@ -56,7 +61,7 @@ export const Route = createFileRoute("/profile/$handle/reviews")({
 
 function ProfileReviewsPage() {
 	const { handle } = Route.useParams();
-	const { user } = useAuth();
+	const { user, isAuthenticated } = useAuth();
 
 	const { data: profile } = useQuery({
 		...usersControllerGetPublicProfileOptions({ path: { handle } }),
@@ -64,8 +69,14 @@ function ProfileReviewsPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
-		useInfiniteUserReviews({ userDid });
+	const {
+		data,
+		isLoading,
+		isError,
+		hasNextPage,
+		isFetchingNextPage,
+		fetchNextPage,
+	} = useInfiniteUserReviews({ userDid });
 
 	const reviews = data?.pages.flatMap((page) => page.items) ?? [];
 
@@ -86,12 +97,15 @@ function ProfileReviewsPage() {
 						</div>
 					))}
 				</div>
+			) : isError && reviews.length === 0 ? (
+				<ContentState variant="error" message="Couldn't load reviews." />
 			) : reviews.length === 0 ? (
-				<div className="card p-8 text-center">
-					<p className="text-(--foreground-muted)">
-						{isOwner ? "You haven't reviewed anything yet." : "No reviews yet."}
-					</p>
-				</div>
+				<ContentState
+					icon={Star}
+					message={
+						isOwner ? "You haven't reviewed anything yet." : "No reviews yet."
+					}
+				/>
 			) : (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					{reviews.map((review) => (
@@ -99,6 +113,7 @@ function ProfileReviewsPage() {
 							key={review.id}
 							review={review}
 							isOwner={isOwner}
+							isAuthenticated={isAuthenticated}
 							userDid={userDid}
 						/>
 					))}
@@ -124,13 +139,16 @@ function ProfileReviewsPage() {
 function ReviewCard({
 	review,
 	isOwner,
+	isAuthenticated,
 	userDid,
 }: {
 	review: UserReviewDto;
 	isOwner: boolean;
+	isAuthenticated: boolean;
 	userDid: string;
 }) {
 	const queryClient = useQueryClient();
+	const like = useUserReviewLike({ reviewId: review.id, authorDid: userDid });
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -205,7 +223,7 @@ function ReviewCard({
 								type="button"
 								onClick={() => setConfirmOpen(true)}
 								disabled={deleteMutation.isPending}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
 								aria-label="Delete review"
 							>
 								{deleteMutation.isPending ? (
@@ -227,6 +245,20 @@ function ReviewCard({
 						<SpoilerShield spoiler={review.spoiler} authorDid={userDid}>
 							<ReviewBody markdown={review.markdown} />
 						</SpoilerShield>
+					</div>
+				)}
+				{/* Like toggle for visitors, matching Mobile; the owner can't like
+				    their own review. Raised above the card's overlay link. */}
+				{!isOwner && (
+					<div className="relative z-[1] self-start">
+						<ReviewLikeButton
+							likeCount={review.likeCount}
+							isLiked={review.hasLiked}
+							canLike={isAuthenticated}
+							isAuthenticated={isAuthenticated}
+							isPending={like.isPending}
+							onToggle={review.hasLiked ? like.unlikeReview : like.likeReview}
+						/>
 					</div>
 				)}
 			</ProfileContentCard>

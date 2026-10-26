@@ -24,6 +24,7 @@ import {
 	toggleQuote,
 	wrapInline,
 } from "@/lib/markdown-format";
+import { useThemeColors } from "@/theme/colors";
 
 interface MarkdownToolbarProps {
 	value: string;
@@ -31,8 +32,6 @@ interface MarkdownToolbarProps {
 	/** Apply a transform's result back to the editor (text + new selection). */
 	onChange: (edit: MarkdownEdit) => void;
 }
-
-const ICON_COLOR = "#94a3b8";
 
 function ToolbarButton({
 	icon: Icon,
@@ -43,6 +42,7 @@ function ToolbarButton({
 	label: string;
 	onPress: () => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Pressable
 			accessibilityLabel={label}
@@ -50,7 +50,7 @@ function ToolbarButton({
 			onPress={onPress}
 			className="h-9 w-9 items-center justify-center rounded-md active:bg-background-strong"
 		>
-			<Icon color={ICON_COLOR} size={18} />
+			<Icon color={colors.mutedForeground} size={18} />
 		</Pressable>
 	);
 }

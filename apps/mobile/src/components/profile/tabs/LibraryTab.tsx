@@ -54,6 +54,8 @@ export function LibraryTab({ userDid }: { userDid: string }) {
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
+			<Text className="text-display-2 text-foreground">Library</Text>
+
 			<View className="flex-row flex-wrap gap-2">
 				{FILTERS.map((f) => {
 					const isActive = filter === f.key;

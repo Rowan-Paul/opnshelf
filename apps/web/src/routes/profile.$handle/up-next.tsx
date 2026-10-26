@@ -12,6 +12,7 @@ import {
 import { Tv } from "lucide-react";
 import { z } from "zod/mini";
 import { Pagination } from "#/components/Pagination";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { UpNextEpisodeCard } from "#/components/UpNextEpisodeCard";
 import { UpNextServiceFilter } from "#/components/UpNextServiceFilter";
 import { useAuth } from "#/lib/auth-context";
@@ -131,7 +132,7 @@ function ProfileUpNextPage() {
 	};
 
 	if (profile && !canReadWatches)
-		return <p className="text-(--foreground-muted)">Watches are private.</p>;
+		return <PrivateNotice message="Watches are private." />;
 	return (
 		<div className="space-y-6">
 			<header className="flex flex-wrap items-center justify-between gap-4">

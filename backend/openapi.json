@@ -6478,6 +6478,38 @@
         ]
       }
     },
+    "/feedback/{id}/screenshot": {
+      "get": {
+        "operationId": "FeedbackController_screenshot",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "summary": "View a submitted public feedback screenshot",
+        "tags": [
+          "feedback"
+        ]
+      }
+    },
     "/feedback": {
       "post": {
         "operationId": "FeedbackController_createFeedback",
@@ -13076,6 +13108,11 @@
       "CreateFeedbackDto": {
         "type": "object",
         "properties": {
+          "screenshot": {
+            "type": "string",
+            "description": "JPEG screenshot as base64, at most 60 KB",
+            "maxLength": 80000
+          },
           "category": {
             "type": "string",
             "description": "Feedback category",

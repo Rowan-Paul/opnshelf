@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { CatchBoundary, Link, useRouterState } from "@tanstack/react-router";
 import {
 	Clock,
 	Compass,
@@ -16,14 +16,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useAuth } from "#/lib/auth-context";
 import { useSearchDialog } from "#/lib/search-dialog-context";
 import { useReleaseNotes } from "#/lib/use-release-notes";
@@ -32,14 +25,35 @@ import Logo from "./Logo";
 import { UnreadDot } from "./release-notes/UnreadDot";
 import SearchCommand from "./SearchCommand";
 import ThemeToggle from "./ThemeToggle";
+import { UserMenuButton } from "./UserMenuButton";
+
+// Radix's menu and positioning code load on intent rather than on every page:
+// hover or focus prefetches, the first press mounts the menu already open.
+const loadUserMenu = () => import("./UserMenu");
+const UserMenu = lazy(loadUserMenu);
+
+const profileNavigation = [
+	{ name: "Shelf", to: "/profile/$handle/shelf", icon: Film },
+	{ name: "Up Next", to: "/profile/$handle/up-next", icon: Clock },
+	{ name: "Lists", to: "/profile/$handle/lists", icon: List },
+	{ name: "Library", to: "/profile/$handle/library", icon: Disc },
+	{ name: "Notes", to: "/profile/$handle/notes", icon: StickyNote },
+	{ name: "Reviews", to: "/profile/$handle/reviews", icon: Star },
+] as const;
+
+export type ProfileNavigation = typeof profileNavigation;
 
 export default function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [scrolled, setScrolled] = useState(false);
+	const [menuWanted, setMenuWanted] = useState(false);
 	const router = useRouterState();
 	const currentPath = router.location.pathname;
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
 	const { unread } = useReleaseNotes({ enabled: Boolean(user) });
+	// Forget the press on sign-out, so the next sign-in doesn't mount the menu
+	// already open.
+	if (!user && menuWanted) setMenuWanted(false);
 	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
 
 	const navigation = [
@@ -57,15 +71,6 @@ export default function Header() {
 						: []),
 				]
 			: [];
-
-	const profileNavigation = [
-		{ name: "Shelf", to: "/profile/$handle/shelf" as const, icon: Film },
-		{ name: "Up Next", to: "/profile/$handle/up-next" as const, icon: Clock },
-		{ name: "Lists", to: "/profile/$handle/lists" as const, icon: List },
-		{ name: "Library", to: "/profile/$handle/library" as const, icon: Disc },
-		{ name: "Notes", to: "/profile/$handle/notes" as const, icon: StickyNote },
-		{ name: "Reviews", to: "/profile/$handle/reviews" as const, icon: Star },
-	];
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -151,85 +156,35 @@ export default function Header() {
 						{isLoading ? (
 							<div className="hidden h-9 w-9 animate-pulse rounded-full bg-(--background-subtle) sm:block" />
 						) : isAuthenticated && user ? (
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<button
-										type="button"
-										className="relative hidden h-9 w-9 items-center justify-center rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) sm:flex"
-										aria-label={
-											unread ? "User menu, unread release notes" : "User menu"
-										}
+							menuWanted ? (
+								// A failed chunk falls back to the plain avatar instead of
+								// reaching the root, which sits outside the route boundaries.
+								<CatchBoundary
+									getResetKey={() => 0}
+									errorComponent={() => (
+										<UserMenuButton user={user} unread={unread} />
+									)}
+								>
+									<Suspense
+										fallback={<UserMenuButton user={user} unread={unread} />}
 									>
-										{unread && (
-											<span className="absolute top-0 right-0 z-10">
-												<UnreadDot />
-											</span>
-										)}
-										<UserAvatar
-											src={user.avatar}
-											alt={user.displayName || user.handle}
-											className="h-full w-full rounded-full"
+										<UserMenu
+											user={user}
+											unread={unread}
+											logout={logout}
+											profileNavigation={profileNavigation}
 										/>
-									</button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" className="w-56">
-									<DropdownMenuItem asChild>
-										<Link
-											to="/profile/$handle"
-											params={{ handle: user.handle }}
-											className="flex cursor-pointer items-center gap-2 p-2"
-										>
-											<UserAvatar
-												src={user.avatar}
-												alt={user.displayName || user.handle}
-												size="sm"
-											/>
-											<div className="flex flex-col">
-												<span className="font-medium text-sm">
-													{user.displayName || user.handle}
-												</span>
-												<span className="text-xs opacity-60">
-													@{user.handle}
-												</span>
-											</div>
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									{profileNavigation.map(({ name, to, icon: Icon }) => (
-										<DropdownMenuItem key={name} asChild>
-											<Link
-												to={to}
-												params={{ handle: user.handle }}
-												className="cursor-pointer"
-											>
-												<Icon />
-												{name}
-											</Link>
-										</DropdownMenuItem>
-									))}
-									<DropdownMenuSeparator />
-									<DropdownMenuItem asChild>
-										<Link to="/whats-new" className="cursor-pointer">
-											<Newspaper />
-											What’s new {unread && <UnreadDot />}
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuItem asChild>
-										<Link to="/settings" className="cursor-pointer">
-											<Settings />
-											Settings
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									<DropdownMenuItem
-										onClick={logout}
-										className="cursor-pointer text-red-600 focus:text-red-600"
-									>
-										<LogOut className="text-current" />
-										Sign Out
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
+									</Suspense>
+								</CatchBoundary>
+							) : (
+								<UserMenuButton
+									user={user}
+									unread={unread}
+									onPointerEnter={loadUserMenu}
+									onFocus={loadUserMenu}
+									onClick={() => setMenuWanted(true)}
+								/>
+							)
 						) : (
 							<Link
 								to="/login"
@@ -357,7 +312,7 @@ export default function Header() {
 										<button
 											type="button"
 											onClick={logout}
-											className="flex items-center gap-3 rounded-md px-3 py-3 font-medium text-red-600 text-sm transition-colors hover:bg-red-50"
+											className="flex items-center gap-3 rounded-md px-3 py-3 font-medium text-destructive text-sm transition-colors hover:bg-red-50"
 										>
 											<LogOut className="size-5" />
 											Sign Out

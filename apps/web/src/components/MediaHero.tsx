@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ImageOff } from "lucide-react";
 import type { ReactNode } from "react";
+import { backdropSrcSet, posterSrcSet } from "#/lib/tmdb-image";
 import {
 	PosterProgress,
 	type PosterProgressValue,
@@ -37,7 +38,7 @@ export default function MediaHero({
 	progress,
 	progressLabel = "Show progress",
 	isProgressLoading = false,
-	backLabel = "Back to Dashboard",
+	backLabel = "Back to Home",
 }: MediaHeroProps) {
 	const percentage = progress ? progressPercentage(progress) : undefined;
 	const showProgressSummary = progress && progress.episodesTotal > 0;
@@ -56,12 +57,16 @@ export default function MediaHero({
 				{backdropUrl ? (
 					<img
 						src={backdropUrl}
+						srcSet={backdropSrcSet(backdropUrl)}
+						// object-cover scales a 16:9 backdrop to fill the 60vh box, so on
+						// a portrait screen it is drawn about 107vh wide, not 100vw.
+						sizes="(orientation: portrait) 107vh, 100vw"
 						alt={title}
 						className="h-full w-full object-cover"
 						fetchPriority="high"
 					/>
 				) : (
-					<div className="h-full w-full bg-linear-to-br from-gray-800 to-gray-900" />
+					<div className="h-full w-full bg-(--background-subtle)" />
 				)}
 				{/* Gradient Overlays */}
 				<div className="absolute inset-0 bg-linear-to-t from-(--background) via-(--background)/60 to-transparent" />
@@ -124,14 +129,19 @@ export default function MediaHero({
 							{posterUrl ? (
 								<img
 									src={posterUrl}
+									srcSet={posterSrcSet(posterUrl)}
+									sizes="300px"
 									alt={title}
 									className="h-full w-full object-cover"
 									// Hidden below lg, where a lazy image is never fetched.
 									loading="lazy"
 								/>
 							) : (
-								<div className="flex h-full w-full items-center justify-center bg-linear-to-br from-gray-700 to-gray-800">
-									<span className="text-gray-400">No Poster</span>
+								<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+									<ImageOff
+										className="size-10 text-(--foreground-muted)"
+										aria-label="No poster"
+									/>
 								</div>
 							)}
 							{progressOverlay}
@@ -146,11 +156,18 @@ export default function MediaHero({
 								{posterUrl ? (
 									<img
 										src={posterUrl}
+										srcSet={posterSrcSet(posterUrl)}
+										sizes="112px"
 										alt={title}
 										className="h-full w-full object-cover"
 									/>
 								) : (
-									<div className="h-full w-full bg-linear-to-br from-gray-700 to-gray-800" />
+									<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+										<ImageOff
+											className="size-8 text-(--foreground-muted)"
+											aria-label="No poster"
+										/>
+									</div>
 								)}
 								{progressOverlay}
 							</div>
@@ -185,15 +202,15 @@ export default function MediaHero({
 							/>
 						) : null}
 
-						{/* Current Progress */}
-						{currentProgress && <div className="mt-4">{currentProgress}</div>}
-
 						{/* Action Buttons */}
 						{actions && (
 							<div className="mt-6 flex flex-wrap gap-2 lg:gap-3">
 								{actions}
 							</div>
 						)}
+
+						{/* Current Progress */}
+						{currentProgress && <div className="mt-4">{currentProgress}</div>}
 					</div>
 				</div>
 			</div>

@@ -5,29 +5,34 @@ import { SectionHeader } from "@/components/home/SectionHeader";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { UpNextCard } from "@/components/up-next/UpNextCard";
-import { UpNextSkeleton } from "@/components/up-next/UpNextSkeleton";
+import { UpNextTile } from "@/components/up-next/UpNextTile";
 import { useUpNext } from "@/lib/use-up-next";
 
 /**
- * "Up Next" preview for the home dashboard: the next few unwatched episodes
- * across tracked shows, each with a one-tap "mark watched" action. Mirrors the
- * web dashboard Up Next section (preview-only, capped) — the full infinite
- * queue lives on the profile Up Next tab, linked via "View all".
+ * "Up Next" preview for Home: the next few unwatched episodes across tracked
+ * shows as a row of episode-still tiles, each with a one-tap "add to shelf"
+ * action. Mirrors the Web App's Home Up Next cards (preview-only, capped) —
+ * the full queue lives on the profile Up Next tab, linked via "View all".
  *
  * Reads from the shared `showsControllerGetUserUpNext` procedure (via
  * `useUpNext`); rendered inside the dashboard ScrollView, so it shows a fixed
  * preview slice rather than owning its own scrolling list.
  */
-export function UpNextPreview({ handle }: { handle: string | undefined }) {
-	const { items, isLoading, isError } = useUpNext(4);
+/**
+ * Stacked full-width tiles, the shape the Web App's Up Next grid takes at
+ * phone width. Capped so Home stays short; "View all" has the rest. A sideways
+ * row was tried first and hid all but the first tile behind a swipe.
+ */
+const PREVIEW_COUNT = 3;
 
-	const preview = items.slice(0, 4);
+export function UpNextPreview({ handle }: { handle: string | undefined }) {
+	const { items, isLoading, isError } = useUpNext(PREVIEW_COUNT);
+
+	const preview = items.slice(0, PREVIEW_COUNT);
 
 	return (
 		<TourAnchor id="up-next">
 			<SectionHeader
-				icon={Tv}
 				title="Up Next"
 				right={
 					handle ? (
@@ -51,20 +56,29 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 				}
 			/>
 			{isLoading ? (
-				<UpNextSkeleton />
+				<View className="gap-3">
+					{[0, 1, 2].map((i) => (
+						<View
+							key={i}
+							style={{ aspectRatio: 16 / 9 }}
+							className="animate-pulse rounded-xl border border-border bg-background-subtle"
+						/>
+					))}
+				</View>
 			) : isError ? (
 				<ErrorState message="Couldn't load Up Next. Try again." />
 			) : preview.length === 0 ? (
 				<EmptyState
+					variant="card"
 					icon={Tv}
-					title="All caught up!"
-					message="No upcoming episodes to watch. Track a show to see it here."
-					action={{ label: "Find a show", href: "/search" }}
+					title="You're all caught up!"
+					message="Start tracking shows to see your next episodes here."
+					action={{ label: "Discover shows", href: "/search", icon: Tv }}
 				/>
 			) : (
 				<View className="gap-3">
 					{preview.map((item) => (
-						<UpNextCard
+						<UpNextTile
 							key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
 							item={item}
 						/>

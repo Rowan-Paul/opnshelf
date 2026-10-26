@@ -2,6 +2,7 @@ import {
 	notesControllerGetUserNotesInfiniteOptions,
 	notesControllerGetUserNotesQueryKey,
 	slugifyName,
+	type UserNoteDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import {
@@ -10,11 +11,13 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, StickyNote, Trash2 } from "lucide-react";
 import { useState } from "react";
 import ConfirmDialog from "#/components/ConfirmDialog";
+import { ContentState } from "#/components/ContentState";
 import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote } from "#/lib/hooks/useNotes";
 import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
@@ -53,14 +56,8 @@ export const Route = createFileRoute("/profile/$handle/notes")({
 	component: ProfileNotesPage,
 });
 
-function getNoteLink(note: {
-	mediaType: string;
-	mediaId: string;
-	seasonNumber?: number;
-	episodeNumber?: number;
-	title?: string;
-}) {
-	const nameSlug = slugifyName(note.title || "");
+function getNoteLink(note: UserNoteDto) {
+	const nameSlug = slugifyName(note.mediaTitle || "");
 	if (note.mediaType === "movie") {
 		return {
 			to: "/movies/$movieId/$movieName" as const,
@@ -99,18 +96,7 @@ function NoteCard({
 	isOwner,
 	userDid,
 }: {
-	note: {
-		id: string;
-		content: string;
-		mediaType: string;
-		mediaId: string;
-		seasonNumber?: number;
-		episodeNumber?: number;
-		title?: string;
-		posterPath?: string;
-		createdAt: string;
-		updatedAt: string;
-	};
+	note: UserNoteDto;
 	isOwner: boolean;
 	userDid: string;
 }) {
@@ -160,7 +146,7 @@ function NoteCard({
 				posterUrl={posterUrl}
 				to={link.to}
 				params={link.params}
-				title={note.title || "Unknown title"}
+				title={note.mediaLabel || "Unknown title"}
 				meta={new Date(note.updatedAt).toLocaleDateString()}
 				headerRight={
 					isOwner ? (
@@ -177,7 +163,7 @@ function NoteCard({
 								type="button"
 								onClick={() => setConfirmOpen(true)}
 								disabled={deleteMutation.isPending}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
 								aria-label="Delete note"
 							>
 								{deleteMutation.isPending ? (
@@ -210,8 +196,8 @@ function NoteCard({
 				description={
 					<>
 						This permanently deletes your note for{" "}
-						<strong>{note.title || "this title"}</strong>. This action cannot be
-						undone.
+						<strong>{note.mediaLabel || "this title"}</strong>. This action
+						cannot be undone.
 					</>
 				}
 				confirmLabel="Delete note"
@@ -233,24 +219,28 @@ function ProfileNotesPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
-		useInfiniteQuery({
-			...notesControllerGetUserNotesInfiniteOptions({
-				path: { userDid },
-				query: { pageSize: 20 },
-			}),
-			initialPageParam: 1,
-			getNextPageParam: (lastPage) =>
-				lastPage.hasNextPage ? lastPage.page + 1 : undefined,
-			enabled: !!userDid && (isOwner || profile?.notesPublic !== false),
-		});
+	const {
+		data,
+		isLoading,
+		isError,
+		hasNextPage,
+		isFetchingNextPage,
+		fetchNextPage,
+	} = useInfiniteQuery({
+		...notesControllerGetUserNotesInfiniteOptions({
+			path: { userDid },
+			query: { pageSize: 20 },
+		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+		enabled: !!userDid && (isOwner || profile?.notesPublic !== false),
+	});
 
 	const notes = data?.pages.flatMap((page) => page.items) ?? [];
 
 	if (profile?.notesPublic === false && !isOwner)
-		return (
-			<p className="py-8 text-(--foreground-muted)">These Notes are Private.</p>
-		);
+		return <PrivateNotice message="These Notes are private." />;
 	return (
 		<div className="space-y-6">
 			<h1 className="text-display-2">Notes</h1>
@@ -268,12 +258,15 @@ function ProfileNotesPage() {
 						</div>
 					))}
 				</div>
+			) : isError && notes.length === 0 ? (
+				<ContentState variant="error" message="Couldn't load notes." />
 			) : notes.length === 0 ? (
-				<div className="card p-8 text-center">
-					<p className="text-(--foreground-muted)">
-						{isOwner ? "You haven't written any notes yet." : "No notes yet."}
-					</p>
-				</div>
+				<ContentState
+					icon={StickyNote}
+					message={
+						isOwner ? "You haven't written any notes yet." : "No notes yet."
+					}
+				/>
 			) : (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					{notes.map((note) => (

@@ -14,6 +14,7 @@ import { useState } from "react";
 import { z } from "zod/mini";
 import ActionableMediaCard from "#/components/ActionableMediaCard";
 import { Pagination } from "#/components/Pagination";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { Button } from "#/components/ui/button";
 import {
 	DropdownMenu,
@@ -186,7 +187,7 @@ function ProfileShelfPage() {
 	const sections = groupShelfItemsByDate(items, sectionLabel);
 
 	if (profile && !canReadWatches)
-		return <p className="text-(--foreground-muted)">Watches are private.</p>;
+		return <PrivateNotice message="Watches are private." />;
 	return (
 		<div className="space-y-6">
 			{/* Title & Controls */}
@@ -294,7 +295,7 @@ function ProfileShelfPage() {
 				<div className="space-y-8">
 					{sections.map((section) => (
 						<section key={section.label} className="space-y-3">
-							<h2 className="border-(--border) border-b pb-2 font-display font-semibold text-xl">
+							<h2 className="border-(--border) border-b pb-2 text-display-3">
 								{section.label}
 							</h2>
 							<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">

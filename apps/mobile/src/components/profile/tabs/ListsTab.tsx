@@ -50,9 +50,7 @@ export function ListsTab({
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
 			<View className="gap-3">
-				<Text className="font-bold font-display text-2xl text-foreground">
-					Lists
-				</Text>
+				<Text className="text-display-2 text-foreground">Lists</Text>
 				{/* Nothing to sort with a single list. */}
 				{data && data.length > 1 ? (
 					<ListsSortButton
@@ -67,7 +65,22 @@ export function ListsTab({
 			) : isError ? (
 				<ErrorState message="Couldn't load lists." />
 			) : !sorted || sorted.length === 0 ? (
-				<EmptyState icon={ListChecks} title="No lists yet" />
+				<EmptyState
+					icon={ListChecks}
+					title="No lists yet"
+					// Owners get the way in that the Web App's Lists page offers;
+					// creating happens on the manageable Lists screen.
+					message={
+						user?.did === userDid
+							? "Create a list to start organizing movies and shows."
+							: undefined
+					}
+					action={
+						user?.did === userDid
+							? { label: "Create a list", href: "/lists" }
+							: undefined
+					}
+				/>
 			) : (
 				<View className="gap-2">
 					{sorted.map((list) => (
