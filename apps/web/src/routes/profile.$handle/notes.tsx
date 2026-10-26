@@ -10,9 +10,10 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, StickyNote, Trash2 } from "lucide-react";
 import { useState } from "react";
 import ConfirmDialog from "#/components/ConfirmDialog";
+import { ContentState } from "#/components/ContentState";
 import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
 import { useAuth } from "#/lib/auth-context";
@@ -233,17 +234,23 @@ function ProfileNotesPage() {
 	const userDid = profile?.did || "";
 	const isOwner = user?.did === userDid;
 
-	const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
-		useInfiniteQuery({
-			...notesControllerGetUserNotesInfiniteOptions({
-				path: { userDid },
-				query: { pageSize: 20 },
-			}),
-			initialPageParam: 1,
-			getNextPageParam: (lastPage) =>
-				lastPage.hasNextPage ? lastPage.page + 1 : undefined,
-			enabled: !!userDid && (isOwner || profile?.notesPublic !== false),
-		});
+	const {
+		data,
+		isLoading,
+		isError,
+		hasNextPage,
+		isFetchingNextPage,
+		fetchNextPage,
+	} = useInfiniteQuery({
+		...notesControllerGetUserNotesInfiniteOptions({
+			path: { userDid },
+			query: { pageSize: 20 },
+		}),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
+		enabled: !!userDid && (isOwner || profile?.notesPublic !== false),
+	});
 
 	const notes = data?.pages.flatMap((page) => page.items) ?? [];
 
@@ -268,12 +275,15 @@ function ProfileNotesPage() {
 						</div>
 					))}
 				</div>
+			) : isError && notes.length === 0 ? (
+				<ContentState variant="error" message="Couldn't load notes." />
 			) : notes.length === 0 ? (
-				<div className="card p-8 text-center">
-					<p className="text-(--foreground-muted)">
-						{isOwner ? "You haven't written any notes yet." : "No notes yet."}
-					</p>
-				</div>
+				<ContentState
+					icon={StickyNote}
+					message={
+						isOwner ? "You haven't written any notes yet." : "No notes yet."
+					}
+				/>
 			) : (
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					{notes.map((note) => (

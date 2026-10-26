@@ -7,9 +7,12 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
 import { MarkdownContent } from "#/components/MarkdownContent";
+import { ReviewLikeButton } from "#/components/ReviewLikeButton";
 import { ShareButton } from "#/components/ShareButton";
 import { SpoilerShield } from "#/components/SpoilerShield";
+import { useAuth } from "#/lib/auth-context";
 import { formatDate } from "#/lib/date-utils";
+import { useReviewLikes } from "#/lib/hooks/useReviews";
 import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 import { useHydrated } from "#/lib/prompt-state";
 
@@ -101,6 +104,25 @@ function CanonicalReviewPage() {
 	});
 	const review = liveReview ?? loaderReview;
 
+	// Likes load on the client only: `hasLiked` depends on the viewer, which
+	// the SSR loader can't know.
+	const { user, isAuthenticated } = useAuth();
+	const {
+		data: likes,
+		likeReview,
+		unlikeReview,
+		isLikePending,
+		isUnlikePending,
+	} = useReviewLikes({
+		reviewId: review.id,
+		mediaType: review.mediaType === "movie" ? "movie" : "show",
+		mediaId: review.mediaId,
+		seasonNumber: review.seasonNumber,
+		episodeNumber: review.episodeNumber,
+	});
+	// Mirrors Mobile: signed-in non-authors can toggle; everyone sees the count.
+	const canLike = isAuthenticated && user?.did !== review.author.did;
+
 	const posterUrl = review.posterPath
 		? `https://image.tmdb.org/t/p/w300${review.posterPath}`
 		: null;
@@ -143,13 +165,23 @@ function CanonicalReviewPage() {
 						<h1 className="text-display-2">{review.reviewTitle}</h1>
 						{/* Share the media page with this review open rather than the bare
 						    review page — it keeps a first-time visitor oriented. */}
-						<ShareButton
-							url={`${mediaHref(review)}?review=${encodeURIComponent(
-								`/reviews/${handle}/${rkey}`,
-							)}`}
-							surface="review_page"
-							className="btn btn-secondary btn-sm shrink-0 gap-1.5"
-						/>
+						<div className="flex shrink-0 items-center gap-2">
+							<ReviewLikeButton
+								likeCount={likes?.total}
+								isLiked={likes?.hasLiked ?? false}
+								canLike={canLike}
+								isAuthenticated={isAuthenticated}
+								isPending={isLikePending || isUnlikePending}
+								onToggle={likes?.hasLiked ? unlikeReview : likeReview}
+							/>
+							<ShareButton
+								url={`${mediaHref(review)}?review=${encodeURIComponent(
+									`/reviews/${handle}/${rkey}`,
+								)}`}
+								surface="review_page"
+								className="btn btn-secondary btn-sm shrink-0 gap-1.5"
+							/>
+						</div>
 					</div>
 
 					<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-(--foreground-muted) text-sm">
