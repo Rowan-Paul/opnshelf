@@ -7,12 +7,10 @@ import {
 	useRouter,
 } from "expo-router";
 import {
-	ArrowUpDown,
 	List as ListIcon,
 	ListOrdered,
 	Pencil,
 	Plus,
-	Search,
 	Share2,
 	Trash2,
 	X,
@@ -30,7 +28,15 @@ import { HeaderBackButton } from "@/components/AppHeader";
 import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
 import { ListInfoCard } from "@/components/lists/ListInfoCard";
-import { ListSortSheet, sortLabel } from "@/components/lists/ListSortSheet";
+import {
+	LIST_EMPTY_OWNER_MESSAGE,
+	LIST_EMPTY_TITLE,
+	LIST_NO_MATCHES_MESSAGE,
+	LIST_NO_MATCHES_TITLE,
+	ListItemsToolbar,
+	useListItemsFilter,
+} from "@/components/lists/ListItemsToolbar";
+import { ListSortSheet } from "@/components/lists/ListSortSheet";
 import { ReorderableItemGrid } from "@/components/lists/ReorderableItemGrid";
 import { MediaCard } from "@/components/media/MediaCard";
 import { useDialog } from "@/components/ui/dialog";
@@ -41,13 +47,11 @@ import {
 	StaleDataNotice,
 } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
-import { getMediaTitle, listItemToMediaCardItem } from "@/lib/list-media";
+import { listItemToMediaCardItem } from "@/lib/list-media";
 import { posthog } from "@/lib/posthog";
-import { useDebounce } from "@/lib/use-debounce";
 import {
 	type ListSort,
 	useDeleteList,
@@ -62,15 +66,6 @@ import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { webListUrl } from "@/lib/web-url";
 import { useThemeColors } from "@/theme/colors";
-
-type MediaFilter = "all" | "movie" | "show" | "unwatched";
-
-const FILTERS: { key: MediaFilter; label: string }[] = [
-	{ key: "all", label: "All" },
-	{ key: "movie", label: "Movies" },
-	{ key: "show", label: "Shows" },
-	{ key: "unwatched", label: "Unwatched" },
-];
 
 /** `${mediaType}:${mediaId}` key, collapsing season/episode entries onto the show. */
 const itemKey = (item: MediaInListDto) =>
@@ -147,9 +142,12 @@ export default function ListDetailScreen() {
 			setAddVisible(Boolean(addInput));
 	}, [slug, addInput, shortcutRequest]);
 	const [sortVisible, setSortVisible] = useState(false);
-	const [filter, setFilter] = useState<MediaFilter>("all");
-	const [search, setSearch] = useState("");
-	const debouncedSearch = useDebounce(search.trim(), 350);
+	const { filter, setFilter, search, setSearch, filteredItems, isFiltered } =
+		useListItemsFilter(items, {
+			hasNextPage,
+			isFetchingNextPage,
+			fetchNextPage,
+		});
 
 	// Reorder mode holds its own working copy of the ordered items; committing
 	// PUTs the full id list. Entering requires every page loaded, since the
@@ -157,31 +155,6 @@ export default function ListDetailScreen() {
 	const [reorderMode, setReorderMode] = useState(false);
 	const [preparingReorder, setPreparingReorder] = useState(false);
 	const [orderedItems, setOrderedItems] = useState<MediaInListDto[]>([]);
-
-	const filteredItems = useMemo(() => {
-		const query = debouncedSearch.toLowerCase();
-		return items.filter((item) => {
-			if (filter === "movie" && item.mediaType !== "movie") return false;
-			if (filter === "show" && item.mediaType === "movie") return false;
-			if (filter === "unwatched" && item.watched) return false;
-			if (!query) return true;
-			return (
-				getMediaTitle(item.media ?? {})
-					.toLowerCase()
-					.includes(query) ||
-				(item.episodeName ?? "").toLowerCase().includes(query)
-			);
-		});
-	}, [items, filter, debouncedSearch]);
-
-	// Search filters client-side (matching the web list page), so eagerly load
-	// the remaining pages while a query is active — otherwise matches on
-	// unloaded pages stay invisible.
-	useEffect(() => {
-		if (debouncedSearch && hasNextPage && !isFetchingNextPage) {
-			void fetchNextPage();
-		}
-	}, [debouncedSearch, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	const existingKeys = useMemo(() => new Set(items.map(itemKey)), [items]);
 
@@ -436,111 +409,58 @@ export default function ListDetailScreen() {
 							<View className="gap-3 px-1 pb-4">
 								<ListInfoCard {...list} showProgress={showProgress} isOwner />
 
-								<TextField
-									leading={
-										<Search color={themeColors.mutedForeground} size={18} />
-									}
+								<ListItemsToolbar
+									search={search}
+									onSearchChange={setSearch}
+									sort={sort}
+									onSortPress={() => setSortVisible(true)}
+									filter={filter}
+									onFilterChange={setFilter}
 									trailing={
-										search.length > 0 ? (
-											<Pressable hitSlop={8} onPress={() => setSearch("")}>
-												<X color={themeColors.mutedForeground} size={18} />
-											</Pressable>
-										) : null
-									}
-									value={search}
-									onChangeText={setSearch}
-									placeholder="Search list…"
-									autoCapitalize="none"
-									autoCorrect={false}
-								/>
-
-								<View className="flex-row items-center justify-between">
-									<Pressable
-										onPress={() => setSortVisible(true)}
-										className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
-									>
-										<ArrowUpDown
-											color={themeColors.mutedForeground}
-											size={14}
-										/>
-										<Text className="font-medium text-muted-foreground text-sm">
-											{sortLabel(sort)}
-										</Text>
-									</Pressable>
-
-									{total > 1 ? (
-										<Pressable
-											onPress={startReorder}
-											disabled={preparingReorder}
-											className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
-										>
-											{preparingReorder ? (
-												<ActivityIndicator
-													color={themeColors.mutedForeground}
-													size="small"
-												/>
-											) : (
-												<ListOrdered
-													color={
-														sort === "position"
-															? themeColors.mutedForeground
-															: themeColors.mutedForeground
-													}
-													size={14}
-												/>
-											)}
-											<Text
-												className={cn(
-													"font-medium text-sm",
-													sort === "position"
-														? "text-muted-foreground"
-														: "text-muted-foreground/50",
-												)}
-											>
-												Reorder
-											</Text>
-										</Pressable>
-									) : null}
-								</View>
-
-								<View className="flex-row flex-wrap gap-2">
-									{FILTERS.map((f) => {
-										const isActive = filter === f.key;
-										return (
+										total > 1 ? (
 											<Pressable
-												key={f.key}
-												onPress={() => setFilter(f.key)}
-												className={cn(
-													"rounded-full px-3 py-1.5",
-													isActive ? "bg-primary" : "bg-background-subtle",
-												)}
+												onPress={startReorder}
+												disabled={preparingReorder}
+												className="flex-row items-center gap-1.5 rounded-full bg-background-subtle px-3 py-1.5"
 											>
+												{preparingReorder ? (
+													<ActivityIndicator
+														color={themeColors.mutedForeground}
+														size="small"
+													/>
+												) : (
+													<ListOrdered
+														color={themeColors.mutedForeground}
+														size={14}
+													/>
+												)}
 												<Text
 													className={cn(
 														"font-medium text-sm",
-														isActive
-															? "text-primary-foreground"
-															: "text-muted-foreground",
+														sort === "position"
+															? "text-muted-foreground"
+															: "text-muted-foreground/50",
 													)}
 												>
-													{f.label}
+													Reorder
 												</Text>
 											</Pressable>
-										);
-									})}
-								</View>
+										) : null
+									}
+								/>
 							</View>
 						}
 						ListEmptyComponent={
-							debouncedSearch || filter !== "all" ? (
+							isFiltered ? (
 								<EmptyState
-									title="No matches"
-									message="Try a different search or filter."
+									title={LIST_NO_MATCHES_TITLE}
+									message={LIST_NO_MATCHES_MESSAGE}
 								/>
 							) : (
 								<EmptyState
-									title="Empty list"
-									message="Add movies and shows with the + button or from their detail screens."
+									icon={ListIcon}
+									title={LIST_EMPTY_TITLE}
+									message={LIST_EMPTY_OWNER_MESSAGE}
 								/>
 							)
 						}

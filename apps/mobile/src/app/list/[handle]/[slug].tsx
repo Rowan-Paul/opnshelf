@@ -1,9 +1,17 @@
-import { getHttpStatus } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { List as ListIcon } from "lucide-react-native";
+import { useState } from "react";
 import { RefreshControl, View } from "react-native";
 import { ListInfoCard } from "@/components/lists/ListInfoCard";
+import {
+	LIST_EMPTY_TITLE,
+	LIST_NO_MATCHES_MESSAGE,
+	LIST_NO_MATCHES_TITLE,
+	ListItemsToolbar,
+	useListItemsFilter,
+} from "@/components/lists/ListItemsToolbar";
+import { ListSortSheet } from "@/components/lists/ListSortSheet";
 import { MediaCard } from "@/components/media/MediaCard";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import {
@@ -13,6 +21,7 @@ import {
 } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
 import { listItemToMediaCardItem } from "@/lib/list-media";
+import type { ListSort } from "@/lib/use-lists";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useProfileList, usePublicProfile } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
@@ -30,6 +39,9 @@ import { useThemeColors } from "@/theme/colors";
  * carry a DID. When it's already a DID we use it directly; otherwise we resolve
  * it to a DID via the public profile query (`usePublicProfile` is keyed by
  * handle), mirroring how the profile screen itself resolves a handle.
+ *
+ * Search, sort and the media filters are open to every viewer, as on Web;
+ * only Reorder, Add and Edit stay on the owner route.
  */
 export default function PublicListScreen() {
 	const themeColors = useThemeColors();
@@ -55,19 +67,29 @@ export default function PublicListScreen() {
 	const creator =
 		isDid || (!!user?.did && user.did === userDid) ? undefined : segment;
 
-	const {
-		data: list,
-		isLoading,
-		isError,
-		error,
-		refetch,
-		isFetching,
-	} = useProfileList(userDid, slug ?? "", !!userDid && !!slug);
+	const [sort, setSort] = useState<ListSort>("position");
+	const [sortVisible, setSortVisible] = useState(false);
+
 	// A renamed list regenerates its slug, so a shared link can outlive the
 	// list it points at. That reads as missing, not as a broken app.
-	const isNotFound = getHttpStatus(error) === 404;
-
-	const items = list?.items ?? [];
+	const {
+		list,
+		items,
+		isLoading,
+		isError,
+		isNotFound,
+		refetch,
+		isFetching,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useProfileList(userDid, slug ?? "", sort);
+	const { filter, setFilter, search, setSearch, filteredItems, isFiltered } =
+		useListItemsFilter(items, {
+			hasNextPage,
+			isFetchingNextPage,
+			fetchNextPage,
+		});
 	const resolvingHandle = !isDid && profileQuery.isLoading;
 	const handleError = !isDid && profileQuery.isError;
 
@@ -101,7 +123,7 @@ export default function PublicListScreen() {
 				<ErrorState message="Couldn't load this list." />
 			) : (
 				<ShowProgressScope
-					showIds={items
+					showIds={filteredItems
 						.filter(
 							(item) =>
 								item.mediaType === "show" &&
@@ -112,7 +134,7 @@ export default function PublicListScreen() {
 				>
 					<FlashList
 						key={`grid-${numColumns}`}
-						data={items}
+						data={filteredItems}
 						numColumns={numColumns}
 						keyExtractor={(item) => item.id}
 						renderItem={({ item }) => (
@@ -126,6 +148,7 @@ export default function PublicListScreen() {
 						)}
 						contentContainerStyle={gridStyle}
 						showsVerticalScrollIndicator={false}
+						keyboardShouldPersistTaps="handled"
 						refreshControl={
 							<RefreshControl
 								refreshing={refreshing}
@@ -134,6 +157,10 @@ export default function PublicListScreen() {
 								colors={[themeColors.accent]}
 							/>
 						}
+						onEndReachedThreshold={0.5}
+						onEndReached={() => {
+							if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+						}}
 						ListHeaderComponent={
 							<View className="gap-3 px-1 pb-4">
 								<ListInfoCard
@@ -142,12 +169,45 @@ export default function PublicListScreen() {
 									creator={creator}
 									showProgress={isAuthenticated && list.total > 0}
 								/>
+
+								<ListItemsToolbar
+									search={search}
+									onSearchChange={setSearch}
+									sort={sort}
+									onSortPress={() => setSortVisible(true)}
+									filter={filter}
+									onFilterChange={setFilter}
+								/>
 							</View>
 						}
-						ListEmptyComponent={<EmptyState title="Empty list" />}
+						ListEmptyComponent={
+							isFiltered ? (
+								<EmptyState
+									title={LIST_NO_MATCHES_TITLE}
+									message={LIST_NO_MATCHES_MESSAGE}
+								/>
+							) : (
+								<EmptyState icon={ListIcon} title={LIST_EMPTY_TITLE} />
+							)
+						}
+						ListFooterComponent={
+							// Card-shaped placeholders, not a spinner, while more load.
+							isFetchingNextPage ? (
+								<View className="px-3 pt-2">
+									<PosterGridSkeleton rows={1} columns={numColumns} />
+								</View>
+							) : null
+						}
 					/>
 				</ShowProgressScope>
 			)}
+
+			<ListSortSheet
+				visible={sortVisible}
+				onDismiss={() => setSortVisible(false)}
+				value={sort}
+				onChange={setSort}
+			/>
 		</View>
 	);
 }
