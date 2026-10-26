@@ -3,7 +3,7 @@
   "status": "published",
   "slug": "a-more-consistent-opnshelf",
   "title": "A more consistent Opnshelf",
-  "publishedAt": "2026-10-26T20:02:40.574Z",
+  "publishedAt": "2026-10-26T20:11:39.269Z",
   "summary": "A refreshed look across Opnshelf, easier list browsing, and more ways to share feedback.",
   "platforms": {
     "web": { "status": "available" },
