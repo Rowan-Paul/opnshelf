@@ -65,7 +65,22 @@ export function ListsTab({
 			) : isError ? (
 				<ErrorState message="Couldn't load lists." />
 			) : !sorted || sorted.length === 0 ? (
-				<EmptyState icon={ListChecks} title="No lists yet" />
+				<EmptyState
+					icon={ListChecks}
+					title="No lists yet"
+					// Owners get the way in that the Web App's Lists page offers;
+					// creating happens on the manageable Lists screen.
+					message={
+						user?.did === userDid
+							? "Create a list to start organizing movies and shows."
+							: undefined
+					}
+					action={
+						user?.did === userDid
+							? { label: "Create a list", href: "/lists" }
+							: undefined
+					}
+				/>
 			) : (
 				<View className="gap-2">
 					{sorted.map((list) => (

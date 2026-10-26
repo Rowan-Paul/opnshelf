@@ -13,6 +13,7 @@ import {
 	type LucideIcon,
 	MessageCircle,
 	Search,
+	UserPlus,
 	Users,
 	X,
 } from "lucide-react-native";
@@ -27,6 +28,7 @@ import { ActivityCard } from "@/components/social/ActivityCard";
 import { CircleFilterBar } from "@/components/social/CircleFilterBar";
 import { UserRow } from "@/components/social/UserRow";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
+import { Button } from "@/components/ui/button";
 import { ReviewsSkeleton, UserRowsSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -335,6 +337,7 @@ function EmptyFeed({
 	onShowAll: () => void;
 }) {
 	const themeColors = useThemeColors();
+	// Same copy and actions as the Web App's Activity Feed empty states.
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
 			<MessageCircle color={themeColors.mutedForeground} size={44} />
@@ -343,29 +346,26 @@ function EmptyFeed({
 			</Text>
 			<Text className="text-center text-muted-foreground text-sm">
 				{activeCircleId
-					? "Try another Circle or manage its members."
-					: "The people you follow have no recent watches or reviews to show."}
+					? "Try another Circle or add people to this one."
+					: "Follow people to see what they're watching."}
 			</Text>
 			{activeCircleId ? (
 				<View className="mt-2 flex-row gap-2">
 					<Link href={`/social/circles/${activeCircleId}` as const} asChild>
-						<Pressable className="flex-row items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5">
-							<Users color={themeColors.mutedForeground} size={16} />
-							<Text className="font-semibold text-foreground text-sm">
-								Manage Circle
-							</Text>
-						</Pressable>
+						<Button label="Manage Circle" variant="secondary" size="sm" />
 					</Link>
-					<Pressable
-						onPress={onShowAll}
-						className="justify-center rounded-lg border border-border px-4 py-2.5"
-					>
-						<Text className="font-semibold text-primary text-sm">
-							Show all activity
-						</Text>
-					</Pressable>
+					<Button label="Show all activity" size="sm" onPress={onShowAll} />
 				</View>
-			) : null}
+			) : (
+				<Link href="/social/find" asChild>
+					<Button
+						label="Find people to follow"
+						size="sm"
+						className="mt-2"
+						leading={<UserPlus color="#3f2e00" size={16} />}
+					/>
+				</Link>
+			)}
 		</View>
 	);
 }

@@ -249,7 +249,7 @@ function ProfileNotesPage() {
 
 	if (profile?.notesPublic === false && !isOwner)
 		return (
-			<p className="py-8 text-(--foreground-muted)">These Notes are Private.</p>
+			<p className="py-8 text-(--foreground-muted)">These Notes are private.</p>
 		);
 	return (
 		<div className="space-y-6">
