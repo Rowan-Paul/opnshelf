@@ -50,7 +50,7 @@ function LibraryPage() {
 
 	if (profile?.libraryPublic === false && user?.did !== profile.did)
 		return (
-			<p className="py-8 text-(--foreground-muted)">This Library is Private.</p>
+			<p className="py-8 text-(--foreground-muted)">This Library is private.</p>
 		);
 	return <ProfileLibraryPage userDid={profile?.did || ""} />;
 }

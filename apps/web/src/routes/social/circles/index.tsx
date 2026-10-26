@@ -45,7 +45,7 @@ function CirclesPage() {
 			</Link>
 			<div className="space-y-6">
 				<div>
-					<h1 className="font-bold font-display text-3xl">Circles</h1>
+					<h1 className="text-display-2">Circles</h1>
 					<p className="text-(--foreground-muted)">
 						Private groups of people you follow, for filtering your activity
 						feed.

@@ -480,7 +480,7 @@ export function ProfileListsPage({
 							    the app header so the posters stay reachable while scrolling.
 							    `top-16` clears that header. */}
 							<div className="sticky top-16 z-10 -mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-(--border) border-b bg-(--background)/95 py-3 backdrop-blur">
-								<h2 className="font-semibold text-xl">{listDetails.name}</h2>
+								<h2 className="text-display-3">{listDetails.name}</h2>
 
 								{/* Progress is viewer-relative, so it is absent when signed
 								    out; the item count stands in for it. */}

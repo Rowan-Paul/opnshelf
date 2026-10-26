@@ -149,7 +149,7 @@ export default function ProfileScreen() {
 							<LibraryTab userDid={userDid} />
 						) : (
 							<Text className="p-5 text-muted-foreground">
-								This Library is Private.
+								This Library is private.
 							</Text>
 						)
 					) : tab === "notes" ? (
@@ -157,7 +157,7 @@ export default function ProfileScreen() {
 							<NotesTab userDid={userDid} isOwner={isOwner} />
 						) : (
 							<Text className="p-5 text-muted-foreground">
-								These Notes are Private.
+								These Notes are private.
 							</Text>
 						)
 					) : tab === "reviews" ? (

@@ -52,7 +52,7 @@ function FindPeoplePage() {
 			</Link>
 			<div className="space-y-6">
 				<div>
-					<h1 className="font-bold font-display text-3xl">Find people</h1>
+					<h1 className="text-display-2">Find people</h1>
 					<p className="text-(--foreground-muted)">
 						Find people to follow and keep full lists on your Profile.
 					</p>

@@ -5,6 +5,7 @@ import { type Href, Link } from "expo-router";
 import { ChevronRight, List } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useThemeColors } from "@/theme/colors";
@@ -83,16 +84,38 @@ export function ListSummaryRow({
 				</View>
 
 				<View className="min-w-0 flex-1">
-					<Text
-						className={
-							cover
-								? "font-semibold text-base text-white"
-								: "font-semibold text-base text-foreground"
-						}
-						numberOfLines={1}
-					>
-						{list.name}
-					</Text>
+					<View className="flex-row items-center gap-2">
+						<Text
+							className={
+								cover
+									? "shrink font-semibold text-base text-white"
+									: "shrink font-semibold text-base text-foreground"
+							}
+							numberOfLines={1}
+						>
+							{list.name}
+						</Text>
+						{/* Same "Default" marker as the Web App's list cards. */}
+						{list.isDefault ? (
+							<View
+								className={
+									cover
+										? "rounded-full bg-white/25 px-1.5 py-0.5"
+										: "rounded-full bg-background-subtle px-1.5 py-0.5"
+								}
+							>
+								<Text
+									className={
+										cover
+											? "text-[10px] text-white"
+											: "text-[10px] text-muted-foreground"
+									}
+								>
+									Default
+								</Text>
+							</View>
+						) : null}
+					</View>
 					{list.description ? (
 						<Text
 							className={
@@ -112,7 +135,8 @@ export function ListSummaryRow({
 								: "mt-0.5 text-muted-foreground text-xs"
 						}
 					>
-						{list.itemCount} item{list.itemCount === 1 ? "" : "s"}
+						{list.itemCount} item{list.itemCount === 1 ? "" : "s"} · Updated{" "}
+						{formatRelativeTime(list.updatedAt)}
 					</Text>
 				</View>
 

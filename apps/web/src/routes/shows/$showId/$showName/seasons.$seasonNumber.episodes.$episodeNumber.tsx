@@ -25,6 +25,7 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
+import { formatRuntime } from "#/lib/format-runtime";
 import {
 	useEpisodeDetails,
 	useShowDetails,
@@ -359,7 +360,7 @@ function EpisodeDetailPage() {
 						</span>
 						<span className="text-(--border-strong)">•</span>
 						<span>
-							{episode.runtime ? `${episode.runtime} min` : ""}
+							{formatRuntime(episode.runtime) ?? ""}
 							{episode.runtime && episode.air_date ? " • " : ""}
 							{episode.air_date
 								? formatDate(episode.air_date, userTimezone)
@@ -424,7 +425,7 @@ function EpisodeDetailPage() {
 						</>
 					) : (
 						<Link to="/login" className="btn btn-primary gap-2">
-							Sign in to track
+							Sign in to add to shelf
 						</Link>
 					)
 				}
@@ -544,7 +545,7 @@ function EpisodeDetailPage() {
 								},
 								{
 									label: "Runtime",
-									value: episode.runtime ? `${episode.runtime} min` : "N/A",
+									value: formatRuntime(episode.runtime) ?? "Unknown",
 								},
 								{
 									label: "Rating",

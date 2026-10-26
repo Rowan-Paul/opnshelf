@@ -7,6 +7,7 @@ import {
 	useColorScheme,
 	View,
 } from "react-native";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 import { useThemeColors } from "@/theme/colors";
@@ -37,7 +38,11 @@ export function ErrorState({
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
 			<AlertTriangle color={themeColors.destructive} size={40} />
-			<Text className="text-center font-display-semibold text-lg">{title}</Text>
+			{title ? (
+				<Text className="text-center font-display-semibold text-lg">
+					{title}
+				</Text>
+			) : null}
 			{message ? (
 				<Text className="text-center text-muted-foreground text-sm">
 					{message}
@@ -91,21 +96,58 @@ export function StaleDataNotice({
 }
 
 /**
- * Full-screen empty state with a customizable icon and copy, plus an optional
- * link out (e.g. dead-end dashboard sections pointing at Discover).
+ * Empty state with a customizable icon and copy, plus an optional link out.
+ *
+ * `screen` (default) fills an otherwise empty screen. `card` is the in-section
+ * form for Home and other mixed screens, matching the Web App's `card p-8`
+ * empty states: a bordered card with a primary action instead of a tall gap.
  */
 export function EmptyState({
 	icon: Icon = SearchX,
 	title,
 	message,
 	action,
+	variant = "screen",
 }: {
 	icon?: LucideIcon;
-	title: string;
+	title?: string;
 	message?: string;
-	action?: { label: string; href: Href };
+	action?: { label: string; href: Href; icon?: LucideIcon };
+	variant?: "screen" | "card";
 }) {
 	const themeColors = useThemeColors();
+	if (variant === "card") {
+		const ActionIcon = action?.icon;
+		return (
+			<View className="items-center gap-2 rounded-xl border border-border bg-card p-6">
+				<Icon color={themeColors.mutedForeground} size={40} />
+				{title ? (
+					<Text className="text-center font-display-semibold text-base">
+						{title}
+					</Text>
+				) : null}
+				{message ? (
+					<Text className="text-center text-muted-foreground text-sm">
+						{message}
+					</Text>
+				) : null}
+				{action ? (
+					<Link href={action.href} asChild>
+						<Button
+							label={action.label}
+							size="sm"
+							className="mt-2"
+							leading={
+								ActionIcon ? (
+									<ActionIcon color="#3f2e00" size={16} />
+								) : undefined
+							}
+						/>
+					</Link>
+				) : null}
+			</View>
+		);
+	}
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
 			<Icon color={themeColors.mutedForeground} size={44} />

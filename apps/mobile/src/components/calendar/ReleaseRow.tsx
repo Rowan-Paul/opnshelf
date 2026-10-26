@@ -8,18 +8,16 @@ import { movieHref, showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
 import { useThemeColors } from "@/theme/colors";
 
-function displayTitle(item: ReleaseCalendarItemDto): string {
-	if (
-		item.mediaType === "show" &&
-		item.releaseKind === "episode" &&
-		item.seasonNumber !== undefined
-	) {
+/** Same labels as the Web App's Home Upcoming rows ("S1E5", not "1x5"). */
+function episodeInfo(item: ReleaseCalendarItemDto): string | undefined {
+	if (item.releaseKind === "episode" && item.seasonNumber !== undefined) {
 		if (item.episodeNumber !== undefined) {
-			return `${item.seasonNumber}x${item.episodeNumber} ${item.title}`;
+			return `S${item.seasonNumber}E${item.episodeNumber}`;
 		}
-		return `S${item.seasonNumber} ${item.title}`;
+		return `Season ${item.seasonNumber}`;
 	}
-	return item.title;
+	if (item.releaseKind === "show") return "Season Premiere";
+	return undefined;
 }
 
 /** Short absolute day, e.g. `Jun 25`. */
@@ -91,7 +89,7 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 			</View>
 			<View className="min-w-0 flex-1">
 				<Text className="font-medium text-foreground text-sm" numberOfLines={2}>
-					{displayTitle(item)}
+					{item.title}
 				</Text>
 				<View className="mt-1 flex-row items-center gap-1.5">
 					{isMovie ? (
@@ -108,6 +106,11 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 						</Text>
 					) : null}
 				</View>
+				{episodeInfo(item) ? (
+					<Text className="mt-0.5 text-muted-foreground text-xs">
+						{episodeInfo(item)}
+					</Text>
+				) : null}
 			</View>
 			<ChevronRight color={colors.mutedForeground} size={18} />
 		</View>

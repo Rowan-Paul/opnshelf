@@ -209,7 +209,7 @@ export function ShelfTab({
 						<View key={section.label} className="gap-3">
 							<Text
 								accessibilityRole="header"
-								className="border-border border-b pb-2 font-display-semibold text-foreground text-lg"
+								className="border-border border-b pb-2 text-display-3 text-foreground"
 							>
 								{section.label}
 							</Text>

@@ -113,3 +113,41 @@ it("makes no confirmation request when confetti is disabled", async () => {
 	await celebrateWatchCompletion(progress(1));
 	expect(mocks.get).not.toHaveBeenCalled();
 });
+
+it.each([
+	false,
+	true,
+])("selects newest progress with stable ties (%s)", (newestFirst) => {
+	const client = new QueryClient();
+	const batches = [
+		{ ids: ["42"], items: [progress(0)], updatedAt: 100 },
+		{ ids: ["42", "43"], items: [progress(1)], updatedAt: 200 },
+	];
+	if (newestFirst) batches.reverse();
+	batches.push(
+		{ ids: ["42", "44"], items: [progress(2)], updatedAt: 200 },
+		{ ids: ["99"], items: [{ ...progress(2), showId: "99" }], updatedAt: 300 },
+	);
+	for (const batch of batches) {
+		const query = client.getQueryCache().build(client, {
+			queryKey: [
+				{
+					_id: "showsControllerGetShowProgress",
+					query: { showIds: batch.ids },
+				},
+			],
+			queryKeyHashFn: (key) => hashKey([...key, "did:plc:test"]),
+		});
+		query.setData(
+			{ items: batch.items },
+			{ updatedAt: batch.updatedAt, manual: true },
+		);
+	}
+	expect(cachedCompletionProgress(client, "42", "did:plc:test")).toEqual(
+		progress(1),
+	);
+	expect(
+		cachedCompletionProgress(client, "missing", "did:plc:test"),
+	).toBeUndefined();
+	client.clear();
+});
