@@ -177,10 +177,8 @@ export function WatchProviders({
 
 	return (
 		<View className="gap-4 px-4">
-			<View className="flex-row items-center justify-between">
-				<Text className="font-display-semibold text-base text-foreground">
-					Where to Watch
-				</Text>
+			<View className="flex-row flex-wrap items-center justify-between gap-2">
+				<Text className="text-display-3 text-foreground">Where to Watch</Text>
 				{availableCountries.length > 1 ? (
 					<View className="w-40">
 						<CountryPicker value={country} onChange={setSelectedCountry} />

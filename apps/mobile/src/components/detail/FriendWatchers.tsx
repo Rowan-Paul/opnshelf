@@ -28,9 +28,7 @@ export function FriendWatchers({
 
 	return (
 		<View className="gap-2 px-4">
-			<Text className="font-display-semibold text-base text-foreground">
-				Watched by friends
-			</Text>
+			<Text className="text-display-3 text-foreground">Watched by friends</Text>
 			<ScrollView
 				horizontal
 				showsHorizontalScrollIndicator={false}

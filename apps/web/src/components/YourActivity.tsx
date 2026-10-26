@@ -66,7 +66,7 @@ export function YourActivity({
 	return (
 		<section className="card p-5">
 			<div className="mb-4 flex items-center justify-between gap-2">
-				<h3 className="font-display font-semibold">Your Activity</h3>
+				<h2 className="font-display font-semibold">Your Activity</h2>
 				{/* Same pill the posters use, so the count reads the same whether you
 				    got here from a card or from the detail page. */}
 				{watchHistory.length > 0 && (

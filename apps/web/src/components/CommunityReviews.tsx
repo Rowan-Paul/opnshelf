@@ -421,10 +421,7 @@ export default function CommunityReviews({
 	return (
 		<section id="community-reviews">
 			<div className="mb-4 flex items-center justify-between gap-2">
-				<h2 className="text-display-3">
-					<MessageSquare className="mr-2 inline-block size-5" />
-					Community Reviews
-				</h2>
+				<h2 className="text-display-3">Community Reviews</h2>
 				{isAuthenticated && (
 					<button
 						type="button"

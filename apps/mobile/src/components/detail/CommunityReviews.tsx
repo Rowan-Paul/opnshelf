@@ -8,15 +8,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { type Href, Link } from "expo-router";
-import {
-	Heart,
-	MessageSquare,
-	Pencil,
-	Plus,
-	Share2,
-	Trash2,
-	User,
-} from "lucide-react-native";
+import { Heart, Pencil, Plus, Share2, Trash2, User } from "lucide-react-native";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import type { ViewInstance } from "react-native";
 import {
@@ -445,10 +437,7 @@ export function CommunityReviews({
 			onLayout={handleSectionLayout}
 		>
 			<View className="flex-row items-center justify-between">
-				<View className="flex-row items-center gap-2">
-					<MessageSquare color={colors.accent} size={18} />
-					<Text className="text-display-3 text-foreground">Reviews</Text>
-				</View>
+				<Text className="text-display-3 text-foreground">Reviews</Text>
 				{isAuthenticated ? (
 					<Pressable
 						onPress={openCreate}
