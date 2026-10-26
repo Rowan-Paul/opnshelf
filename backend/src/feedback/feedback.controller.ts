@@ -1,5 +1,19 @@
-import { Body, Controller, Post, Req, UseGuards } from "@nestjs/common";
-import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+	Body,
+	Controller,
+	Get,
+	Param,
+	Post,
+	Req,
+	StreamableFile,
+	UseGuards,
+} from "@nestjs/common";
+import {
+	ApiOkResponse,
+	ApiOperation,
+	ApiProduces,
+	ApiTags,
+} from "@nestjs/swagger";
 import { OptionalAuthGuard } from "../auth/optional-auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
 import { CreateFeedbackDto, FeedbackResponseDto } from "./dto/feedback.dto";
@@ -9,6 +23,17 @@ import { FeedbackService } from "./feedback.service";
 @Controller("feedback")
 export class FeedbackController {
 	constructor(private readonly feedbackService: FeedbackService) {}
+
+	@Get(":id/screenshot")
+	@ApiOperation({ summary: "View a submitted public feedback screenshot" })
+	@ApiProduces("image/jpeg")
+	@ApiOkResponse({ schema: { type: "string", format: "binary" } })
+	async screenshot(@Param("id") id: string): Promise<StreamableFile> {
+		return new StreamableFile(await this.feedbackService.getScreenshot(id), {
+			type: "image/jpeg",
+			disposition: 'inline; filename="feedback.jpg"',
+		});
+	}
 
 	@Post()
 	@UseGuards(OptionalAuthGuard)

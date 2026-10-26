@@ -47,3 +47,19 @@ Use the feedback ID to locate the database record and check GitHub before any
 manual retry: a timed-out create may already have produced an issue. Resolve
 configuration, token permissions/expiry or rate limits before retrying. Historical
 submissions made before the public disclosure must stay private.
+
+## Mobile screenshots
+
+Mobile captures the visible screen before opening feedback. The sheet previews
+it and allows removal; capture failure still permits text feedback. Nothing is
+uploaded until Send. Screenshots are JPEG base64 capped at 80,000 characters
+(60 KB), stored with the Feedback row, and served publicly at
+`GET /feedback/:id/screenshot` so GitHub can embed them. This endpoint returns
+only the image, never account data. Deleting feedback also removes its screenshot.
+`BACKEND_PUBLIC_URL` supplies the public image origin. Web does not capture a
+screenshot: browser screen capture requires a separate permission interaction.
+
+Apply the additive feedback screenshot migration before deploying the API.
+Mobile adds `react-native-view-shot`, requiring a new store build rather than
+an OTA to existing binaries. Release version changes and publication remain
+operator-controlled. Test with synthetic screens and mocked GitHub calls.

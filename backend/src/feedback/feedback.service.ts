@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreateFeedbackDto } from "./dto/feedback.dto";
 import { FeedbackIssuesService } from "./feedback-issues.service";
@@ -10,6 +10,15 @@ export class FeedbackService {
 		private issues: FeedbackIssuesService,
 	) {}
 
+	async getScreenshot(id: string): Promise<Buffer> {
+		const feedback = await this.prisma.feedback.findUnique({
+			where: { id },
+			select: { screenshot: true },
+		});
+		if (!feedback?.screenshot) throw new NotFoundException();
+		return Buffer.from(feedback.screenshot, "base64");
+	}
+
 	async createFeedback(userDid: string | null, dto: CreateFeedbackDto) {
 		const feedback = await this.prisma.feedback.create({
 			data: {
@@ -17,6 +26,7 @@ export class FeedbackService {
 				category: dto.category,
 				message: dto.message,
 				pageUrl: dto.pageUrl,
+				screenshot: dto.screenshot,
 			},
 		});
 

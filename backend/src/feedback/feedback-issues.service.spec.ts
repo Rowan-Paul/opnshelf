@@ -5,6 +5,7 @@ describe("feedback GitHub delivery", () => {
 	const fetchMock = vi.fn();
 	const config = {
 		FEEDBACK_GITHUB_TOKEN: "test-token",
+		BACKEND_PUBLIC_URL: "https://api.example.com",
 		FEEDBACK_GITHUB_REPOSITORY: "example/feedback",
 	};
 
@@ -43,6 +44,22 @@ describe("feedback GitHub delivery", () => {
 			expect(issue.body).toContain("Feedback ID: feedback-id");
 		},
 	);
+
+	it("embeds a saved screenshot using the public API URL", async () => {
+		await new FeedbackIssuesService(mockEnvironment(config)).createIssue(
+			"feedback-id",
+			{
+				category: "bug",
+				message: "Test",
+				screenshot: "/9j/2Q==",
+			},
+		);
+		const body = JSON.parse(fetchMock.mock.calls[0][1].body).body;
+		expect(body).toContain(
+			"![Screenshot submitted with feedback](https://api.example.com/feedback/feedback-id/screenshot)",
+		);
+		expect(body).not.toContain("/9j/");
+	});
 
 	it("skips delivery without configuration", async () => {
 		await new FeedbackIssuesService(mockEnvironment()).createIssue("id", {

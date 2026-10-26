@@ -9,13 +9,24 @@ import {
 	type ReactNode,
 	useCallback,
 	useContext,
+	useRef,
 	useState,
 } from "react";
-import { Modal, Platform, Pressable, View } from "react-native";
+import {
+	Dimensions,
+	Image,
+	Modal,
+	PixelRatio,
+	Platform,
+	Pressable,
+	ScrollView,
+	View,
+} from "react-native";
 import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
+import { captureScreen } from "react-native-view-shot";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -51,9 +62,13 @@ const CATEGORIES: { value: Category; label: string; icon: typeof Bug }[] = [
 function FeedbackSheet({
 	visible,
 	onDismiss,
+	screenshot,
+	onRemoveScreenshot,
 }: {
 	visible: boolean;
 	onDismiss: () => void;
+	screenshot?: string;
+	onRemoveScreenshot: () => void;
 }) {
 	const colors = useThemeColors();
 	const toast = useToast();
@@ -93,6 +108,7 @@ function FeedbackSheet({
 		mutation.mutate({
 			body: {
 				category,
+				screenshot,
 				message: (trimmed + contextLine(pathname)).slice(0, MAX_MESSAGE),
 			},
 		});
@@ -115,7 +131,12 @@ function FeedbackSheet({
 			<KeyboardProvider>
 				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
 					<Pressable className="flex-1" onPress={onDismiss} />
-					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+					<ScrollView
+						className="rounded-t-2xl border border-border bg-card"
+						style={{ flexGrow: 0, flexShrink: 1 }}
+						contentContainerStyle={{ padding: 20, gap: 16 }}
+						keyboardShouldPersistTaps="handled"
+					>
 						<View className="flex-row items-center justify-between">
 							<Text className="font-display-bold text-foreground text-lg">
 								Send feedback
@@ -129,6 +150,31 @@ function FeedbackSheet({
 							Your feedback will become a public GitHub issue. Please leave out
 							personal information and secrets.
 						</Text>
+
+						{screenshot && (
+							<View className="flex-row items-center gap-3">
+								<Image
+									source={{ uri: `data:image/jpeg;base64,${screenshot}` }}
+									style={{ width: 48, height: 80 }}
+									resizeMode="contain"
+									accessibilityLabel="Attached screenshot"
+								/>
+								<View className="flex-1 gap-1">
+									<Text className="text-foreground text-sm">
+										Screenshot attached. It will be public.
+									</Text>
+									<Pressable
+										accessibilityRole="button"
+										onPress={onRemoveScreenshot}
+										hitSlop={8}
+									>
+										<Text className="text-primary text-sm">
+											Remove screenshot
+										</Text>
+									</Pressable>
+								</View>
+							</View>
+						)}
 
 						{/* Category toggle */}
 						<View className="flex-row gap-2">
@@ -184,7 +230,7 @@ function FeedbackSheet({
 							disabled={!canSubmit}
 							onPress={submit}
 						/>
-					</View>
+					</ScrollView>
 				</KeyboardAvoidingView>
 			</KeyboardProvider>
 		</Modal>
@@ -195,11 +241,67 @@ function FeedbackSheet({
  * `Providers` (under Query + Toast). */
 export function FeedbackProvider({ children }: { children: ReactNode }) {
 	const [visible, setVisible] = useState(false);
-	const open = useCallback(() => setVisible(true), []);
+	const [screenshot, setScreenshot] = useState<string>();
+	const opening = useRef(false);
+	const sequence = useRef(0);
+	const [openId, setOpenId] = useState(0);
+	const toast = useToast();
+	const open = useCallback(() => {
+		if (opening.current) return;
+		opening.current = true;
+		setOpenId(++sequence.current);
+		setScreenshot(undefined);
+		const screen = Dimensions.get("screen");
+		const width = Platform.OS === "ios" ? 540 / PixelRatio.get() : 540;
+		let timeout: ReturnType<typeof setTimeout> | undefined;
+		void Promise.race([
+			Promise.resolve().then(() =>
+				captureScreen({
+					format: "jpg",
+					quality: 0.6,
+					width: Math.round(width),
+					height: Math.round((width * screen.height) / screen.width),
+					result: "base64",
+				}),
+			),
+			new Promise<string>((_, reject) => {
+				timeout = setTimeout(
+					() => reject(new Error("Screenshot timed out")),
+					3000,
+				);
+			}),
+		])
+			.then((image) => {
+				if (image.length > 80000) throw new Error("Screenshot too large");
+				setScreenshot(image);
+			})
+			.catch(() =>
+				toast.error(
+					"Couldn't attach a screenshot. You can still send feedback.",
+				),
+			)
+			.finally(() => {
+				clearTimeout(timeout);
+				setVisible(true);
+			});
+	}, [toast]);
+	const dismiss = () => {
+		// A finished send from an older opening must not close a new draft.
+		if (openId !== sequence.current) return;
+		setVisible(false);
+		setScreenshot(undefined);
+		opening.current = false;
+	};
 	return (
 		<FeedbackContext.Provider value={{ open }}>
 			{children}
-			<FeedbackSheet visible={visible} onDismiss={() => setVisible(false)} />
+			<FeedbackSheet
+				key={openId}
+				visible={visible}
+				onDismiss={dismiss}
+				screenshot={screenshot}
+				onRemoveScreenshot={() => setScreenshot(undefined)}
+			/>
 		</FeedbackContext.Provider>
 	);
 }
