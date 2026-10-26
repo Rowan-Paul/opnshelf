@@ -2,7 +2,7 @@ import type { PersonFilmographyItemDto } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { DetailColumns } from "@/components/detail/DetailColumns";
 import { FilmographyCard } from "@/components/person/FilmographyCard";
 import { PersonHero } from "@/components/person/PersonHero";
@@ -14,7 +14,6 @@ import { usePersonDetails, usePersonFilmography } from "@/lib/use-person";
 import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useWideLayout } from "@/lib/use-wide-layout";
-import { useThemeColors } from "@/theme/colors";
 
 function sortByDateDesc(items: PersonFilmographyItemDto[]) {
 	return [...items].sort((a, b) => {
@@ -25,7 +24,6 @@ function sortByDateDesc(items: PersonFilmographyItemDto[]) {
 }
 
 export default function PersonDetailScreen() {
-	const colors = useThemeColors();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const gridStyle = useTwStyle("px-3 pb-12");
 	const wide = useWideLayout();
@@ -162,10 +160,17 @@ export default function PersonDetailScreen() {
 										</Text>
 									</View>
 								}
+								ListEmptyComponent={
+									<Text className="px-4 py-6 text-center text-muted-foreground text-sm">
+										No filmography available.
+									</Text>
+								}
 								ListFooterComponent={
+									// A row of card-shaped placeholders, not a spinner,
+									// while the next page loads.
 									isFetchingNextPage ? (
-										<View className="py-6">
-											<ActivityIndicator color={colors.mutedForeground} />
+										<View className="px-3">
+											<PosterGridSkeleton rows={1} columns={numColumns} />
 										</View>
 									) : null
 								}

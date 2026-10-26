@@ -1,13 +1,7 @@
 import type { PersonFilmographyItemDto } from "@opnshelf/api";
 import { peopleControllerGetPersonDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	Calendar,
-	ChevronLeft,
-	Clapperboard,
-	MapPin,
-	Star,
-} from "lucide-react";
+import { Calendar, ChevronLeft, Clapperboard, MapPin } from "lucide-react";
 import { useMemo } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
@@ -285,12 +279,6 @@ function PersonDetailPage() {
 										{person.place_of_birth}
 									</span>
 								)}
-								{person.popularity !== undefined && (
-									<span className="flex items-center gap-1 text-(--foreground-muted)">
-										<Star className="size-4 fill-accent text-accent" />
-										{Math.round(person.popularity * 10) / 10}
-									</span>
-								)}
 							</div>
 						</div>
 					</div>
@@ -315,7 +303,7 @@ function PersonDetailPage() {
 						{/* Known For */}
 						{knownForItems.length > 0 && (
 							<section>
-								<h2 className="mb-4 text-display-3">Known For</h2>
+								<h2 className="mb-4 text-display-3">Known for</h2>
 								<ShowProgressScope
 									showIds={knownForItems
 										.filter((item) => item.media_type === "tv")

@@ -3,7 +3,13 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Link, router, Stack, useLocalSearchParams } from "expo-router";
+import {
+	type Href,
+	Link,
+	router,
+	Stack,
+	useLocalSearchParams,
+} from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRef } from "react";
 import type { FlatListInstance } from "react-native";
@@ -35,6 +41,7 @@ import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton, ListRowsSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import {
 	backdropUrl,
 	formatLongDate,
@@ -89,7 +96,9 @@ export default function SeasonDetailScreen() {
 	);
 
 	// Episode rows share the cached history index for per-episode Watch state.
-	const { items: upNextItems } = useUpNext(20, id);
+	const upNext = useUpNext(20, id);
+	const upNextItems = upNext.items;
+	const { isAuthenticated } = useAuth();
 
 	const totalEpisodes = seasonProgress?.episodesTotal ?? 0;
 	const nextEpisode = upNextItems.find((i) => i.showId === id)?.nextEpisode;
@@ -97,6 +106,24 @@ export default function SeasonDetailScreen() {
 		nextEpisode?.seasonNumber === seasonNum
 			? nextEpisode.episodeNumber
 			: undefined;
+
+	// Lead with the episode to watch next in this season, worded like the Web
+	// App's season page. Its destination depends on Up Next, so the space holds
+	// a skeleton until that query settles.
+	const seasonEpisodesWatched = seasonProgress?.episodesWatched ?? 0;
+	const continueTo =
+		!isAuthenticated || upNext.isError
+			? undefined
+			: upNext.isLoading || progressQuery.isLoading
+				? ("loading" as const)
+				: {
+						label: upNextEpisodeNumber
+							? `Continue S${seasonNum}E${upNextEpisodeNumber}`
+							: seasonEpisodesWatched > 0
+								? "Rewatch from start"
+								: "Start watching",
+						href: `/shows/${id}/${name}/seasons/${seasonNum}/episodes/${upNextEpisodeNumber ?? 1}` as Href,
+					};
 
 	// Prev/next season navigation, derived from the show's real seasons list.
 	const orderedSeasons = (showData?.seasons ?? [])
@@ -185,6 +212,7 @@ export default function SeasonDetailScreen() {
 									seasonNumber={seasonNum}
 									episodeCount={totalEpisodes}
 									progress={seasonProgress}
+									continueTo={continueTo}
 								/>
 								<WatchlistFavoritesButtons
 									mediaType="show"
@@ -315,13 +343,20 @@ export default function SeasonDetailScreen() {
 									colors={[themeColors.accent]}
 								/>
 							}
-							ListHeaderComponent={<View className="gap-6 pb-6">{header}</View>}
+							ListHeaderComponent={
+								<View className="gap-6 pb-6">
+									{header}
+									<Text className="px-4 text-display-3 text-foreground">
+										Episodes
+									</Text>
+								</View>
+							}
 							ListFooterComponent={
 								<View className="gap-6 pt-6">
 									<DetailsCard
-										title="Season Details"
+										title="Details"
 										items={[
-											{ label: "Season", value: data.season_number },
+											{ label: "Season Number", value: data.season_number },
 											{ label: "Episodes", value: data.episodes.length },
 											{
 												label: "Air Date",
