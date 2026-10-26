@@ -107,7 +107,7 @@ export default function EpisodeRow({
 		>
 			<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-(--background-subtle) font-semibold text-sm">
 				{isWatched ? (
-					<Check className="size-5 text-green-500" />
+					<Check className="size-5 text-success" />
 				) : (
 					episode.episode_number
 				)}
@@ -128,7 +128,7 @@ export default function EpisodeRow({
 					type="button"
 					onClick={handleUnmarkClick}
 					disabled={isUnmarking}
-					className="flex shrink-0 items-center gap-1.5 rounded-md bg-green-500/10 px-3 py-1.5 font-medium text-green-600 text-xs transition-colors hover:bg-green-500/20"
+					className="flex shrink-0 items-center gap-1.5 rounded-md bg-success/10 px-3 py-1.5 font-medium text-success text-xs transition-colors hover:bg-success/20"
 					title="Remove from shelf"
 				>
 					{isUnmarking ? (

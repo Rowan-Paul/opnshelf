@@ -22,6 +22,7 @@ import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 type Category = "bug" | "feature_request";
 
@@ -54,6 +55,7 @@ function FeedbackSheet({
 	visible: boolean;
 	onDismiss: () => void;
 }) {
+	const colors = useThemeColors();
 	const toast = useToast();
 	const pathname = usePathname();
 	// KeyboardAvoidingView is third-party, so resolve its layout classes to a
@@ -115,11 +117,11 @@ function FeedbackSheet({
 					<Pressable className="flex-1" onPress={onDismiss} />
 					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
 						<View className="flex-row items-center justify-between">
-							<Text className="font-bold font-display text-foreground text-lg">
+							<Text className="font-display-bold text-foreground text-lg">
 								Send feedback
 							</Text>
 							<Pressable hitSlop={8} onPress={onDismiss}>
-								<X color="#94a3b8" size={22} />
+								<X color={colors.mutedForeground} size={22} />
 							</Pressable>
 						</View>
 
@@ -142,7 +144,10 @@ function FeedbackSheet({
 												: "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5"
 										}
 									>
-										<Icon color={selected ? "#f3bc00" : "#94a3b8"} size={16} />
+										<Icon
+											color={selected ? colors.accent : colors.mutedForeground}
+											size={16}
+										/>
 										<Text
 											className={
 												selected

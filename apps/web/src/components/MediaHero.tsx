@@ -37,7 +37,7 @@ export default function MediaHero({
 	progress,
 	progressLabel = "Show progress",
 	isProgressLoading = false,
-	backLabel = "Back to Dashboard",
+	backLabel = "Back to Home",
 }: MediaHeroProps) {
 	const percentage = progress ? progressPercentage(progress) : undefined;
 	const showProgressSummary = progress && progress.episodesTotal > 0;

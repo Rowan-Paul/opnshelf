@@ -82,7 +82,7 @@ const COLOR_BG: Record<string, string> = {
 	blue: "bg-blue-500",
 	red: "bg-red-500",
 	purple: "bg-purple-500",
-	green: "bg-green-500",
+	green: "bg-success",
 	yellow: "bg-yellow-500",
 	gray: "bg-gray-500",
 };
@@ -295,7 +295,7 @@ export function ProfileListsOverview({
 			    lists they already had. */}
 			{error && !isLoading && !lists && (
 				<div className="flex h-64 flex-col items-center justify-center gap-4">
-					<AlertCircle className="size-12 text-red-500" />
+					<AlertCircle className="size-12 text-destructive" />
 					<div className="text-center">
 						<h2 className="font-semibold text-(--foreground)">
 							Failed to load lists
@@ -312,7 +312,7 @@ export function ProfileListsOverview({
 
 			{error && lists && (
 				<div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--background-subtle) px-4 py-2.5">
-					<AlertCircle className="size-4 shrink-0 text-red-500" />
+					<AlertCircle className="size-4 shrink-0 text-destructive" />
 					<p className="text-(--foreground-muted) text-sm">
 						Couldn't refresh these lists. Showing what loaded last.
 					</p>

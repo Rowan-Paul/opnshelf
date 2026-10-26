@@ -473,7 +473,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 								type="button"
 								onClick={() => deleteAvatarMutation.mutate({})}
 								disabled={deleteAvatarMutation.isPending}
-								className="mt-1 font-medium text-red-600 text-sm hover:text-red-700 disabled:opacity-50"
+								className="mt-1 font-medium text-destructive text-sm hover:text-red-700 disabled:opacity-50"
 							>
 								{deleteAvatarMutation.isPending ? "Removing…" : "Remove photo"}
 							</button>
@@ -989,8 +989,8 @@ function DoneStep({
 	return (
 		<div className="card p-8 text-center">
 			<div className="mb-6 flex justify-center">
-				<div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
-					<CheckCircle className="size-8 text-green-500" />
+				<div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+					<CheckCircle className="size-8 text-success" />
 				</div>
 			</div>
 			<h2 className="mb-2 text-display-2">You&apos;re all set!</h2>
@@ -1009,7 +1009,7 @@ function DoneStep({
 					onClick={() => navigate({ to: "/" })}
 					className="btn btn-primary inline-flex"
 				>
-					Go to Dashboard
+					Go to Home
 					<ArrowRight className="size-4" />
 				</button>
 			)}

@@ -34,9 +34,9 @@ import { mediaHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { posterUrl } from "@/lib/tmdb";
 import { webReviewUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 const LIKE_RED = "#ef4444";
-const MUTED = "#94a3b8";
 
 /**
  * The full review, on its own page — where "Read more" in any review list lands.
@@ -44,6 +44,7 @@ const MUTED = "#94a3b8";
  * page uses, and rendered unclamped.
  */
 export default function ReviewDetailScreen() {
+	const colors = useThemeColors();
 	const { handle, rkey } = useLocalSearchParams<{
 		handle: string;
 		rkey: string;
@@ -192,7 +193,7 @@ export default function ReviewDetailScreen() {
 									</Text>
 									<Text
 										selectable
-										className="font-bold font-display text-foreground text-xl"
+										className="font-display-bold text-foreground text-xl"
 										numberOfLines={3}
 									>
 										{review.mediaTitle ?? "This title"}
@@ -212,10 +213,7 @@ export default function ReviewDetailScreen() {
 					) : null}
 
 					<View className="gap-3">
-						<Text
-							selectable
-							className="font-bold font-display text-2xl text-foreground"
-						>
+						<Text selectable className="text-display-2 text-foreground">
 							{review.reviewTitle}
 						</Text>
 						<View className="flex-row items-center justify-between gap-3">
@@ -229,7 +227,7 @@ export default function ReviewDetailScreen() {
 												contentFit="cover"
 											/>
 										) : (
-											<User color="#94a3b8" size={15} />
+											<User color={colors.mutedForeground} size={15} />
 										)}
 									</View>
 									<Text
@@ -242,7 +240,7 @@ export default function ReviewDetailScreen() {
 								</Pressable>
 							</Link>
 							<View className="flex-row items-center gap-1.5">
-								<CalendarDays color="#94a3b8" size={14} />
+								<CalendarDays color={colors.mutedForeground} size={14} />
 								<Text selectable className="text-muted-foreground text-xs">
 									{new Date(review.createdAt).toLocaleDateString()}
 								</Text>
@@ -262,14 +260,16 @@ export default function ReviewDetailScreen() {
 									<ActivityIndicator size="small" color={LIKE_RED} />
 								) : (
 									<Heart
-										color={likes?.hasLiked ? LIKE_RED : MUTED}
+										color={likes?.hasLiked ? LIKE_RED : colors.mutedForeground}
 										fill={likes?.hasLiked ? LIKE_RED : "transparent"}
 										size={16}
 									/>
 								)}
 								<Text
 									className="text-sm"
-									style={{ color: likes?.hasLiked ? LIKE_RED : MUTED }}
+									style={{
+										color: likes?.hasLiked ? LIKE_RED : colors.mutedForeground,
+									}}
 								>
 									{likes?.total ?? 0}
 								</Text>
@@ -281,7 +281,7 @@ export default function ReviewDetailScreen() {
 								accessibilityLabel="Share review"
 								className="flex-row items-center gap-1 rounded-md py-1"
 							>
-								<Share2 color={MUTED} size={16} />
+								<Share2 color={colors.mutedForeground} size={16} />
 							</Pressable>
 						</View>
 					</View>

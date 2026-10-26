@@ -134,7 +134,7 @@ export function NoteDialog({
 								type="button"
 								onClick={handleDelete}
 								disabled={isPending}
-								className="btn btn-ghost btn-sm gap-1 text-red-500 hover:text-red-600"
+								className="btn btn-ghost btn-sm gap-1 text-destructive hover:text-destructive"
 							>
 								{deleteMutation.isPending && (
 									<Loader2 className="size-3.5 animate-spin" />

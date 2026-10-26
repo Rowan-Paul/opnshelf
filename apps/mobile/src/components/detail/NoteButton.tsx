@@ -4,6 +4,7 @@ import { Pressable, View } from "react-native";
 import { NoteEditorSheet } from "@/components/detail/NoteEditorSheet";
 import { Text } from "@/components/ui/text";
 import { useNote } from "@/lib/use-note";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * "Note" action for media detail screens. Mirrors the `RatingButton` /
@@ -23,6 +24,7 @@ export function NoteButton({
 	seasonNumber?: number;
 	episodeNumber?: number;
 }) {
+	const colors = useThemeColors();
 	const { note, isAuthenticated, saveNote, deleteNote, isSaving, isDeleting } =
 		useNote({ mediaType, mediaId, seasonNumber, episodeNumber });
 
@@ -49,8 +51,8 @@ export function NoteButton({
 				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<StickyNote
-					color={hasNote ? "#f3bc00" : "#94a3b8"}
-					fill={hasNote ? "#f3bc00" : "transparent"}
+					color={hasNote ? colors.accent : colors.mutedForeground}
+					fill={hasNote ? colors.accent : "transparent"}
 					size={18}
 				/>
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>

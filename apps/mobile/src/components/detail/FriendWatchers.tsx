@@ -5,6 +5,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useWatchers } from "@/lib/use-social";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Horizontal row of avatars for people the current user follows who have
@@ -18,6 +19,7 @@ export function FriendWatchers({
 	mediaType: "movie" | "show";
 	mediaId: string;
 }) {
+	const colors = useThemeColors();
 	const avatarStyle = useTwStyle("size-10");
 	const { data } = useWatchers(mediaType, mediaId);
 	const watchers = data?.items ?? [];
@@ -26,7 +28,7 @@ export function FriendWatchers({
 
 	return (
 		<View className="gap-2 px-4">
-			<Text className="font-display font-semibold text-base text-foreground">
+			<Text className="font-display-semibold text-base text-foreground">
 				Watched by friends
 			</Text>
 			<ScrollView
@@ -51,7 +53,7 @@ export function FriendWatchers({
 											contentFit="cover"
 										/>
 									) : (
-										<User color="#94a3b8" size={18} />
+										<User color={colors.mutedForeground} size={18} />
 									)}
 								</View>
 								<Text

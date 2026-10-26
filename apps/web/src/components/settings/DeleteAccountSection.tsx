@@ -185,7 +185,7 @@ export function DeleteAccountSection() {
 							variant="destructive"
 							onClick={handleDeleteAccount}
 							disabled={!confirmChecked || deleteAccountMutation.isPending}
-							className="bg-red-600 hover:bg-red-700"
+							className="bg-destructive hover:bg-destructive/90"
 						>
 							{deleteAccountMutation.isPending ? (
 								<Loader2 data-icon="inline-start" className="animate-spin" />

@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Text } from "@/components/ui/text";
 import { darkNavTheme, lightNavTheme } from "@/theme";
+import { useThemeColors } from "@/theme/colors";
 
 /** Centered spinner for full-screen loading states. */
 export function LoadingState({ label }: { label?: string }) {
@@ -32,12 +33,11 @@ export function ErrorState({
 	message?: string;
 	onRetry?: () => void;
 }) {
+	const themeColors = useThemeColors();
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
-			<AlertTriangle color="#ef4444" size={40} />
-			<Text className="text-center font-display font-semibold text-lg">
-				{title}
-			</Text>
+			<AlertTriangle color={themeColors.destructive} size={40} />
+			<Text className="text-center font-display-semibold text-lg">{title}</Text>
 			{message ? (
 				<Text className="text-center text-muted-foreground text-sm">
 					{message}
@@ -69,9 +69,10 @@ export function StaleDataNotice({
 	onRetry?: () => void;
 	isRetrying?: boolean;
 }) {
+	const themeColors = useThemeColors();
 	return (
 		<View className="mx-3 mt-3 flex-row items-center gap-2 rounded-lg border border-border bg-background-subtle px-3 py-2">
-			<AlertTriangle color="#ef4444" size={16} />
+			<AlertTriangle color={themeColors.destructive} size={16} />
 			<Text className="flex-1 text-muted-foreground text-xs">{message}</Text>
 			{onRetry ? (
 				<Pressable
@@ -104,12 +105,11 @@ export function EmptyState({
 	message?: string;
 	action?: { label: string; href: Href };
 }) {
+	const themeColors = useThemeColors();
 	return (
 		<View className="flex-1 items-center justify-center gap-2 px-8 py-20">
-			<Icon color="#94a3b8" size={44} />
-			<Text className="text-center font-display font-semibold text-lg">
-				{title}
-			</Text>
+			<Icon color={themeColors.mutedForeground} size={44} />
+			<Text className="text-center font-display-semibold text-lg">{title}</Text>
 			{message ? (
 				<Text className="text-center text-muted-foreground text-sm">
 					{message}

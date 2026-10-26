@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type ColorValue, type ImageURISource, View } from "react-native";
 import Svg, { Circle, ClipPath, Defs, Image, Path } from "react-native-svg";
+import { useThemeColors } from "@/theme/colors";
 
 type Images = { default: ImageURISource; selected: ImageURISource };
 export function NativeTabAvatar({
@@ -13,6 +14,7 @@ export function NativeTabAvatar({
 	color: ColorValue;
 	onReady: (images: Images) => void;
 }) {
+	const colors = useThemeColors();
 	const [loaded, setLoaded] = useState({ normal: false, selected: false });
 	const normal = useRef<Svg>(null);
 	const selected = useRef<Svg>(null);
@@ -86,13 +88,13 @@ export function NativeTabAvatar({
 									cy={10}
 									r={4}
 									fill="none"
-									stroke="#94a3b8"
+									stroke={colors.mutedForeground}
 									strokeWidth={2}
 								/>
 								<Path
 									d="M7 23v-3c0-6 14-6 14 0v3"
 									fill="none"
-									stroke="#94a3b8"
+									stroke={colors.mutedForeground}
 									strokeWidth={2}
 								/>
 							</>

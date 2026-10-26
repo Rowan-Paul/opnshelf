@@ -10,18 +10,18 @@ import {
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 
-export type ButtonVariant = "primary" | "secondary" | "destructive";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 export type ButtonSize = "md" | "sm";
 
 /**
  * Spinner tints, which cannot come from a class: ActivityIndicator takes a
  * colour prop. These mirror the tokens in global.css - `--color-primary-
- * foreground` and `--color-destructive` are the same in both themes, and
- * `--color-foreground` is not.
+ * foreground` is the same in both themes, `--color-destructive` and
+ * `--color-foreground` are not.
  */
 const SPINNER = {
 	primary: "#3f2e00",
-	destructive: "#ef4444",
+	destructive: { light: "#dc2626", dark: "#ef4444" },
 	foreground: { light: "#0f172a", dark: "#f8fafc" },
 } as const;
 
@@ -31,6 +31,8 @@ const DISABLED_OPACITY = 0.6;
 const VARIANT = {
 	primary: { box: "bg-primary", label: "text-primary-foreground" },
 	secondary: { box: "border border-border", label: "text-foreground" },
+	/** Dismiss-style action beside a primary one, like the web `btn-ghost`. */
+	ghost: { box: "", label: "text-foreground" },
 	destructive: { box: "border border-destructive", label: "text-destructive" },
 } as const;
 
@@ -110,7 +112,9 @@ export const Button = forwardRef<ViewInstance, ButtonProps>(function Button(
 		variant === "primary"
 			? SPINNER.primary
 			: variant === "destructive"
-				? SPINNER.destructive
+				? dark
+					? SPINNER.destructive.dark
+					: SPINNER.destructive.light
 				: dark
 					? SPINNER.foreground.dark
 					: SPINNER.foreground.light;

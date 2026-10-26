@@ -1,24 +1,22 @@
 import { type Href, Link } from "expo-router";
-import { ChevronRight, type LucideIcon } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useTwStyle } from "@/lib/use-tw-style";
 
 /**
- * Section header for the home dashboard: an optional leading icon + title on the
+ * Section header for Home: the title on the
  * left and an optional "View all" / action link on the right. Mirrors the web
  * dashboard section headers (`<h2>` + accent "View all" link). The right action
  * can be a plain "View all" chevron (pass `href`) or custom content (pass
  * `right`, e.g. the Calendar pill).
  */
 export function SectionHeader({
-	icon: Icon,
 	title,
 	href,
 	right,
 }: {
-	icon?: LucideIcon;
 	title: string;
 	href?: Href;
 	right?: ReactNode;
@@ -27,10 +25,7 @@ export function SectionHeader({
 	return (
 		<View className="mb-3 flex-row items-center justify-between">
 			<View className="min-w-0 flex-1 flex-row items-center gap-2">
-				{Icon ? <Icon color="#94a3b8" size={18} /> : null}
-				<Text className="flex-1 font-bold font-display text-foreground text-xl">
-					{title}
-				</Text>
+				<Text className="flex-1 text-display-3 text-foreground">{title}</Text>
 			</View>
 			{right ??
 				(href ? (

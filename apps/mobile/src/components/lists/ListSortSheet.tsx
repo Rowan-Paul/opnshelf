@@ -3,6 +3,7 @@ import { Modal, Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 import type { ListSort } from "@/lib/use-lists";
+import { useThemeColors } from "@/theme/colors";
 
 export const SORT_OPTIONS: { key: ListSort; label: string }[] = [
 	{ key: "position", label: "Order" },
@@ -27,6 +28,7 @@ export function ListSortSheet({
 	value: ListSort;
 	onChange: (sort: ListSort) => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Modal
 			visible={visible}
@@ -38,11 +40,11 @@ export function ListSortSheet({
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							Sort by
 						</Text>
 						<Pressable hitSlop={8} onPress={onDismiss}>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
@@ -67,7 +69,7 @@ export function ListSortSheet({
 										{option.label}
 									</Text>
 									{isActive ? (
-										<Check color="#f3bc00" size={18} strokeWidth={3} />
+										<Check color={colors.accent} size={18} strokeWidth={3} />
 									) : null}
 								</Pressable>
 							);

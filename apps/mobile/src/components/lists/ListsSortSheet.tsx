@@ -7,6 +7,7 @@ import {
 	type ListsSort,
 	listsSortLabel,
 } from "@/lib/lists-sort";
+import { useThemeColors } from "@/theme/colors";
 
 /** The pill that opens the sheet. Hidden by callers when there is nothing to sort. */
 export function ListsSortButton({
@@ -16,12 +17,13 @@ export function ListsSortButton({
 	sort: ListsSort;
 	onPress: () => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Pressable
 			onPress={onPress}
 			className="flex-row items-center gap-1.5 self-start rounded-full bg-background-subtle px-3 py-1.5"
 		>
-			<ArrowUpDown color="#94a3b8" size={14} />
+			<ArrowUpDown color={colors.mutedForeground} size={14} />
 			<Text className="font-medium text-muted-foreground text-sm">
 				{listsSortLabel(sort)}
 			</Text>
@@ -40,6 +42,7 @@ export function ListsSortSheet({
 	value: ListsSort;
 	onChange: (sort: ListsSort) => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<Modal
 			visible={visible}
@@ -51,7 +54,7 @@ export function ListsSortSheet({
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							Sort lists
 						</Text>
 						<Pressable
@@ -60,7 +63,7 @@ export function ListsSortSheet({
 							hitSlop={8}
 							onPress={onDismiss}
 						>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 
@@ -85,7 +88,7 @@ export function ListsSortSheet({
 										{option.label}
 									</Text>
 									{isActive ? (
-										<Check color="#f3bc00" size={18} strokeWidth={3} />
+										<Check color={colors.accent} size={18} strokeWidth={3} />
 									) : null}
 								</Pressable>
 							);

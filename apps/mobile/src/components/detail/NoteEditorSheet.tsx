@@ -10,6 +10,7 @@ import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 interface NoteEditorSheetProps {
 	visible: boolean;
@@ -41,6 +42,7 @@ export function NoteEditorSheet({
 	isSaving = false,
 	isDeleting = false,
 }: NoteEditorSheetProps) {
+	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	const [content, setContent] = useState(initialContent);
 	// The keyboard controller's KeyboardAvoidingView is third-party, so resolve
@@ -74,11 +76,11 @@ export function NoteEditorSheet({
 					<Pressable className="flex-1" onPress={onDismiss} />
 					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
 						<View className="flex-row items-center justify-between">
-							<Text className="font-bold font-display text-foreground text-lg">
+							<Text className="font-display-bold text-foreground text-lg">
 								{isEditing ? "Edit note" : "Add a note"}
 							</Text>
 							<Pressable hitSlop={8} onPress={onDismiss}>
-								<X color="#94a3b8" size={22} />
+								<X color={colors.mutedForeground} size={22} />
 							</Pressable>
 						</View>
 
@@ -97,7 +99,7 @@ export function NoteEditorSheet({
 								label="Delete note"
 								variant="destructive"
 								loading={isDeleting}
-								leading={<Trash2 color="#ef4444" size={18} />}
+								leading={<Trash2 color={colors.destructive} size={18} />}
 								onPress={onDelete}
 							/>
 						) : null}

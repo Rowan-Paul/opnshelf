@@ -50,6 +50,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TraktMark } from "@/components/marks/TraktMark";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
+import { useThemeColors } from "@/theme/colors";
 
 function displayValue(value: string) {
 	return /^\d{4}-\d{2}-\d{2}T/.test(value) && !Number.isNaN(Date.parse(value))
@@ -448,6 +449,7 @@ export function SyncSettings({
 	onboarding?: boolean;
 	onCancel?: () => void;
 }) {
+	const colors = useThemeColors();
 	const [settings, setSettings] = useState<SyncSettingsDto>(() =>
 		traktSettings(status),
 	);
@@ -598,7 +600,7 @@ export function SyncSettings({
 								className="flex-row items-center gap-2"
 							>
 								<TraktMark size={20} />
-								<Arrow size={16} color="#94a3b8" />
+								<Arrow size={16} color={colors.mutedForeground} />
 								<Image
 									source={require("../../../assets/images/icon.png")}
 									style={{ width: 20, height: 20, borderRadius: 5 }}
@@ -707,7 +709,7 @@ export function SyncSettings({
 							<View className="flex-row items-center justify-between gap-3">
 								<Text
 									accessibilityRole="header"
-									className="flex-1 font-display font-semibold text-foreground text-xl"
+									className="flex-1 font-display-semibold text-foreground text-xl"
 								>
 									{managed ? "Update Trakt Sync" : "Enable Trakt Sync"}
 								</Text>
@@ -718,7 +720,7 @@ export function SyncSettings({
 									disabled={save.isPending}
 									hitSlop={12}
 								>
-									<X size={22} color="#94a3b8" />
+									<X size={22} color={colors.mutedForeground} />
 								</Pressable>
 							</View>
 							<Text className={copy}>
@@ -858,7 +860,7 @@ function SyncIssues({
 				<>
 					<Text
 						accessibilityRole="header"
-						className="font-display font-semibold text-2xl text-foreground"
+						className="font-display-semibold text-2xl text-foreground"
 					>
 						Needs attention
 					</Text>
@@ -934,7 +936,7 @@ function SyncIssues({
 						<View className="flex-row items-center justify-between gap-3">
 							<Text
 								accessibilityRole="header"
-								className="font-display font-semibold text-2xl text-foreground"
+								className="font-display-semibold text-2xl text-foreground"
 							>
 								Ignored items
 							</Text>

@@ -1,6 +1,6 @@
 import { showsControllerGetShowDetailsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { type Href, Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import type { ScrollViewInstance } from "react-native";
 import { RefreshControl, View } from "react-native";
@@ -27,6 +27,7 @@ import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import {
 	backdropUrl,
 	formatLongDate,
@@ -36,9 +37,12 @@ import {
 import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
+import { useUpNext } from "@/lib/use-up-next";
 import { webMediaUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 export default function ShowDetailScreen() {
+	const themeColors = useThemeColors();
 	const { id, name, reviewId } = useLocalSearchParams<{
 		id: string;
 		// The slug segment, carried into child links so in-app navigation
@@ -66,6 +70,26 @@ export default function ShowDetailScreen() {
 	const seasons = (data?.seasons ?? []).filter(
 		(s) => s.season_number > 0 || (data?.seasons?.length ?? 0) === 1,
 	);
+
+	// Lead with the episode to watch next, worded like the Web App's show page.
+	const { isAuthenticated } = useAuth();
+	const { items: upNextItems } = useUpNext(20, id);
+	const nextEpisode = upNextItems.find((i) => i.showId === id)?.nextEpisode;
+	const firstSeasonNumber = seasons.find(
+		(s) => s.season_number > 0,
+	)?.season_number;
+	const continueSeason = nextEpisode?.seasonNumber ?? firstSeasonNumber;
+	const continueTo =
+		isAuthenticated && !progressQuery.isLoading && continueSeason !== undefined
+			? {
+					label: nextEpisode
+						? `Continue S${nextEpisode.seasonNumber}E${nextEpisode.episodeNumber}`
+						: (progress?.episodesWatched ?? 0) > 0
+							? "Rewatch from start"
+							: "Start watching",
+					href: `/shows/${id}/${name}/seasons/${continueSeason}/episodes/${nextEpisode?.episodeNumber ?? 1}` as Href,
+				}
+			: undefined;
 
 	return (
 		<ScreenFrame>
@@ -113,6 +137,7 @@ export default function ShowDetailScreen() {
 									showId={id}
 									episodeCount={data.number_of_episodes}
 									progress={progress}
+									continueTo={continueTo}
 								/>
 								<WatchlistFavoritesButtons mediaType="show" mediaId={id} />
 								{/* Secondary actions as one row of compact tiles. */}
@@ -169,7 +194,7 @@ export default function ShowDetailScreen() {
 
 							{seasons.length > 0 ? (
 								<View className="gap-2 px-4">
-									<Text className="font-display font-semibold text-base text-foreground">
+									<Text className="text-display-3 text-foreground">
 										Seasons
 									</Text>
 									{seasons.map((s) => (
@@ -212,8 +237,8 @@ export default function ShowDetailScreen() {
 						<RefreshControl
 							refreshing={refreshing}
 							onRefresh={onRefresh}
-							tintColor="#f3bc00"
-							colors={["#f3bc00"]}
+							tintColor={themeColors.accent}
+							colors={[themeColors.accent]}
 						/>
 					}
 				/>

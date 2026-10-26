@@ -42,7 +42,7 @@ export function SuggestionsStep({ onFollowed }: { onFollowed: () => void }) {
 	return (
 		<>
 			<View className="gap-1">
-				<Text className="font-bold font-display text-3xl text-foreground">
+				<Text className="font-display-bold text-3xl text-foreground">
 					People to follow
 				</Text>
 				<Text className="text-muted-foreground text-sm">

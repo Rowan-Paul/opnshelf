@@ -126,7 +126,7 @@ function DiscoverRow({
 	const unique = dedupeResults(items);
 	return (
 		<section>
-			<h2 className="mb-3 font-semibold text-lg">{title}</h2>
+			<h2 className="mb-3 text-display-3">{title}</h2>
 			{/* Single horizontal row (carousel), matching the mobile discovery
 			    rails — discovery sections scroll sideways instead of wrapping. */}
 			<ShowProgressScope
@@ -450,7 +450,7 @@ function KeywordSearchPage() {
 		<div className="container-app py-8">
 			<div className="mx-auto mb-8 max-w-2xl">
 				<h1 className="mb-4 text-center text-display-2" data-tour="discover">
-					Search
+					Discover
 				</h1>
 				<div className="relative">
 					<Search className="absolute top-1/2 left-4 size-5 -translate-y-1/2 text-(--foreground-muted)" />

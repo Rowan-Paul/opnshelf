@@ -6,6 +6,7 @@ import { Pressable, View } from "react-native";
 import { FollowButton } from "@/components/social/FollowButton";
 import { Text } from "@/components/ui/text";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * A social user row: avatar, display name, handle, and a follow toggle. Tapping
@@ -23,6 +24,7 @@ export function UserRow({
 	isSelf?: boolean;
 	onToggleFollow: (targetDid: string, currentlyFollowing: boolean) => void;
 }) {
+	const colors = useThemeColors();
 	const avatarStyle = useTwStyle("size-11");
 	const displayName =
 		typeof user.displayName === "string" ? user.displayName : undefined;
@@ -41,7 +43,7 @@ export function UserRow({
 								contentFit="cover"
 							/>
 						) : (
-							<User color="#94a3b8" size={20} />
+							<User color={colors.mutedForeground} size={20} />
 						)}
 					</View>
 					<View className="min-w-0 flex-1">

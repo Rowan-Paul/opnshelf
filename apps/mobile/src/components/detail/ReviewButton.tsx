@@ -5,6 +5,7 @@ import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useReview } from "@/lib/use-review";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * "Review" action for media detail screens. Opens the review editor so the
@@ -22,6 +23,7 @@ export function ReviewButton({
 	seasonNumber?: number;
 	episodeNumber?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const { reviews, createReview, isSavingReview } = useReview({
 		mediaType,
@@ -52,8 +54,8 @@ export function ReviewButton({
 				className="items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				<MessageSquare
-					color={hasReview ? "#f3bc00" : "#94a3b8"}
-					fill={hasReview ? "#f3bc00" : "transparent"}
+					color={hasReview ? colors.accent : colors.mutedForeground}
+					fill={hasReview ? colors.accent : "transparent"}
 					size={18}
 				/>
 				<Text className="font-medium text-foreground text-xs" numberOfLines={1}>

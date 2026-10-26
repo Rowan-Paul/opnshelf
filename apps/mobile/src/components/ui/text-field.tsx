@@ -3,9 +3,7 @@ import type { TextInputInstance } from "react-native";
 import { TextInput, type TextInputProps, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
-
-/** slate-400 — shared placeholder tint across every input. */
-const PLACEHOLDER_COLOR = "#94a3b8";
+import { useThemeColors } from "@/theme/colors";
 
 export interface TextFieldProps extends TextInputProps {
 	/** Label rendered above the field. */
@@ -46,11 +44,13 @@ export const TextField = forwardRef<TextInputInstance, TextFieldProps>(
 			containerClassName,
 			className,
 			multiline,
-			placeholderTextColor = PLACEHOLDER_COLOR,
+			placeholderTextColor,
 			...props
 		},
 		ref,
 	) {
+		// Shared placeholder tint across every input, following the theme.
+		const colors = useThemeColors();
 		return (
 			<View className={cn("gap-1.5", containerClassName)}>
 				{label ? (
@@ -69,7 +69,9 @@ export const TextField = forwardRef<TextInputInstance, TextFieldProps>(
 						ref={ref}
 						multiline={multiline}
 						textAlignVertical={multiline ? "top" : undefined}
-						placeholderTextColor={placeholderTextColor}
+						placeholderTextColor={
+							placeholderTextColor ?? colors.mutedForeground
+						}
 						className={cn(
 							"flex-1 py-3 font-sans text-[16px] text-foreground",
 							// iOS applies explicit line-height differently to the empty

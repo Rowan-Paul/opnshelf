@@ -177,7 +177,7 @@ function NoteCard({
 								type="button"
 								onClick={() => setConfirmOpen(true)}
 								disabled={deleteMutation.isPending}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
 								aria-label="Delete note"
 							>
 								{deleteMutation.isPending ? (

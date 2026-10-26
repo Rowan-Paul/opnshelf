@@ -1,5 +1,6 @@
 import { Smartphone } from "lucide-react";
 import { useState } from "react";
+import { PromptCard } from "#/components/PromptCard";
 import { Button } from "#/components/ui/button";
 import { posthog } from "#/integrations/posthog/provider";
 import { usePlatform } from "#/lib/platform";
@@ -28,24 +29,11 @@ export function MobileAppPrompt() {
 	if (!hydrated || dismissed || isMobileAppDismissed()) return null;
 
 	return (
-		<section className="overflow-hidden rounded-xl border border-(--border) bg-(--background-subtle)">
-			<div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-				<div className="flex min-w-0 items-start gap-4">
-					<div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--accent-subtle) text-(--accent)">
-						<Smartphone className="size-5" aria-hidden="true" />
-					</div>
-					<div>
-						<h2 className="font-semibold text-lg">Opnshelf is on your phone</h2>
-						<p className="mt-1 max-w-xl text-(--foreground-muted) text-sm leading-6">
-							Track what you watch wherever you are. The app is on the App Store
-							and Google Play.
-						</p>
-					</div>
-				</div>
-				{/* One row, dismiss left of the badges: the shape the Trakt and AT Store
-				    Prompts use. Stacking it under the badges left it hanging off the
-				    right edge with nothing to line up against. */}
-				<div className="flex shrink-0 items-center gap-3">
+		<PromptCard
+			icon={Smartphone}
+			title="Opnshelf is on your phone"
+			actions={
+				<>
 					<Button
 						type="button"
 						variant="ghost"
@@ -61,8 +49,11 @@ export function MobileAppPrompt() {
 						No thanks
 					</Button>
 					<StoreBadges platform={platform} />
-				</div>
-			</div>
-		</section>
+				</>
+			}
+		>
+			Track what you watch wherever you are. The app is on the App Store and
+			Google Play.
+		</PromptCard>
 	);
 }

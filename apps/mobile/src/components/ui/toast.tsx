@@ -12,6 +12,7 @@ import {
 import { Animated, PanResponder, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/theme/colors";
 
 type ToastVariant = "success" | "error";
 
@@ -54,6 +55,7 @@ function ToastItem({
 	top: number;
 	onDismiss: (id: number) => void;
 }) {
+	const colors = useThemeColors();
 	const opacity = useRef(new Animated.Value(0)).current;
 	const translateY = useRef(new Animated.Value(0)).current;
 
@@ -128,9 +130,9 @@ function ToastItem({
 					}
 				>
 					{toast.variant === "success" ? (
-						<Check color="#22c55e" size={14} />
+						<Check color={colors.success} size={14} />
 					) : (
-						<X color="#ef4444" size={14} />
+						<X color={colors.destructive} size={14} />
 					)}
 				</View>
 				<Text className="flex-1 font-medium text-foreground text-sm">

@@ -18,6 +18,7 @@ import { MediaActionBar } from "@/components/social/MediaActionBar";
 import { Text } from "@/components/ui/text";
 import { backdropUrl, posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Rich activity card for the Activity tab (the dashboard preview keeps the
@@ -37,6 +38,7 @@ export function ActivityCard({
 	userTimezone?: string;
 	userTimeFormat?: "12h" | "24h";
 }) {
+	const colors = useThemeColors();
 	const [expanded, setExpanded] = useState(false);
 	const bundled = episodes.length > 1;
 	const avatarStyle = useTwStyle("size-9");
@@ -111,7 +113,7 @@ export function ActivityCard({
 										contentFit="cover"
 									/>
 								) : (
-									<User color="#94a3b8" size={16} />
+									<User color={colors.mutedForeground} size={16} />
 								)}
 							</Pressable>
 						</Link>
@@ -130,7 +132,7 @@ export function ActivityCard({
 								</Link>
 							</Text>
 							<View className="mt-0.5 flex-row items-center gap-1.5">
-								<Clock color="#94a3b8" size={12} />
+								<Clock color={colors.mutedForeground} size={12} />
 								<Text className="text-muted-foreground text-xs">
 									{bundled
 										? `Latest · ${formatRelativeTime(activity.activityAt)} · `

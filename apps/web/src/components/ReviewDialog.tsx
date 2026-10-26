@@ -320,7 +320,7 @@ export function ReviewDialog({
 						htmlFor="review-title"
 						className="text-(--foreground-muted) text-sm"
 					>
-						Title <span className="text-red-500">*</span>
+						Title <span className="text-destructive">*</span>
 					</label>
 					<input
 						id="review-title"
@@ -336,7 +336,7 @@ export function ReviewDialog({
 				</div>
 
 				<span className="text-(--foreground-muted) text-sm">
-					Review <span className="text-red-500">*</span>
+					Review <span className="text-destructive">*</span>
 				</span>
 
 				{mounted ? (
@@ -361,7 +361,7 @@ export function ReviewDialog({
 				)}
 
 				{error && (
-					<p className="text-red-500 text-sm" role="alert">
+					<p className="text-destructive text-sm" role="alert">
 						{error}
 					</p>
 				)}
@@ -414,7 +414,7 @@ export function ReviewDialog({
 
 				<div className="flex items-center justify-between">
 					<span
-						className={`text-xs ${overLimit ? "text-red-500" : "text-(--foreground-subtle)"}`}
+						className={`text-xs ${overLimit ? "text-destructive" : "text-(--foreground-subtle)"}`}
 					>
 						{markdown.length}/20000
 					</span>

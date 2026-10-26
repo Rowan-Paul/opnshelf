@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 interface ListEditorSheetProps {
 	visible: boolean;
@@ -33,6 +34,7 @@ export function ListEditorSheet({
 	onSave,
 	isSaving = false,
 }: ListEditorSheetProps) {
+	const colors = useThemeColors();
 	const [name, setName] = useState(initialName);
 	const [description, setDescription] = useState(initialDescription);
 	// KeyboardAvoidingView is third-party, so resolve its layout classes to a
@@ -65,11 +67,11 @@ export function ListEditorSheet({
 					<Pressable className="flex-1" onPress={onDismiss} />
 					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
 						<View className="flex-row items-center justify-between">
-							<Text className="font-bold font-display text-foreground text-lg">
+							<Text className="font-display-bold text-foreground text-lg">
 								{isEditing ? "Edit list" : "New list"}
 							</Text>
 							<Pressable hitSlop={8} onPress={onDismiss}>
-								<X color="#94a3b8" size={22} />
+								<X color={colors.mutedForeground} size={22} />
 							</Pressable>
 						</View>
 

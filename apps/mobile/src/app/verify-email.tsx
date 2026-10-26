@@ -124,7 +124,7 @@ export default function VerifyEmailScreen() {
 					<View className="h-16 w-16 items-center justify-center rounded-2xl bg-primary">
 						<MailCheck color="#3f2e00" size={32} />
 					</View>
-					<Text className="text-center font-bold font-display text-3xl text-foreground">
+					<Text className="text-center font-display-bold text-3xl text-foreground">
 						Verify your email
 					</Text>
 					<Text className="text-center text-base text-muted-foreground">

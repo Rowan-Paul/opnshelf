@@ -13,12 +13,14 @@ import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
 import { useDebounce } from "@/lib/use-debounce";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 type LoginParams = {
 	reason?: "session_expired";
 };
 
 export default function LoginScreen() {
+	const colors = useThemeColors();
 	const { user, isLoading, isAuthenticated, login } = useAuth();
 	const { reason } = useLocalSearchParams<LoginParams>();
 	const [handle, setHandle] = useState("");
@@ -75,7 +77,7 @@ export default function LoginScreen() {
 						style={{ width: 64, height: 64, borderRadius: 16 }}
 					/>
 					<View className="items-center gap-1.5">
-						<Text className="text-center font-bold font-display text-3xl text-foreground">
+						<Text className="text-center font-display-bold text-3xl text-foreground">
 							Welcome to Opnshelf
 						</Text>
 						<Text className="text-center text-base text-muted-foreground">
@@ -155,7 +157,7 @@ export default function LoginScreen() {
 														contentFit="cover"
 													/>
 												) : (
-													<User color="#94a3b8" size={16} />
+													<User color={colors.mutedForeground} size={16} />
 												)}
 											</View>
 											<View className="min-w-0 flex-1">

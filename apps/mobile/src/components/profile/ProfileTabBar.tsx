@@ -12,6 +12,7 @@ import {
 import { Pressable, ScrollView, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
+import { useThemeColors } from "@/theme/colors";
 
 export type ProfileTab =
 	| "overview"
@@ -42,6 +43,7 @@ export function ProfileTabBar({
 	active: ProfileTab;
 	onChange: (tab: ProfileTab) => void;
 }) {
+	const colors = useThemeColors();
 	return (
 		<View className="border-border border-b">
 			<ScrollView
@@ -61,7 +63,10 @@ export function ProfileTabBar({
 								isActive ? "border-primary" : "border-transparent",
 							)}
 						>
-							<Icon color={isActive ? "#f3bc00" : "#94a3b8"} size={15} />
+							<Icon
+								color={isActive ? colors.accent : colors.mutedForeground}
+								size={15}
+							/>
 							<Text
 								className={cn(
 									"font-medium text-sm",

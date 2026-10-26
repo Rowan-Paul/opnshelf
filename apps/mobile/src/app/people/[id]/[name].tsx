@@ -14,6 +14,7 @@ import { usePersonDetails, usePersonFilmography } from "@/lib/use-person";
 import { ShowProgressScope } from "@/lib/use-show-progress";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useWideLayout } from "@/lib/use-wide-layout";
+import { useThemeColors } from "@/theme/colors";
 
 function sortByDateDesc(items: PersonFilmographyItemDto[]) {
 	return [...items].sort((a, b) => {
@@ -24,6 +25,7 @@ function sortByDateDesc(items: PersonFilmographyItemDto[]) {
 }
 
 export default function PersonDetailScreen() {
+	const colors = useThemeColors();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const gridStyle = useTwStyle("px-3 pb-12");
 	const wide = useWideLayout();
@@ -97,7 +99,7 @@ export default function PersonDetailScreen() {
 								<PersonHero person={person} />
 								{person.biography ? (
 									<View className="px-4">
-										<Text className="mb-2 font-display font-semibold text-base text-foreground">
+										<Text className="mb-2 text-display-3 text-foreground">
 											Biography
 										</Text>
 										<Text className="text-muted-foreground text-sm leading-5">
@@ -133,7 +135,7 @@ export default function PersonDetailScreen() {
 
 										{knownFor.length > 0 ? (
 											<View>
-												<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
+												<Text className="mb-3 px-4 text-display-3 text-foreground">
 													Known for
 												</Text>
 												{/* items-start: horizontal ScrollView content defaults to
@@ -155,7 +157,7 @@ export default function PersonDetailScreen() {
 											</View>
 										) : null}
 
-										<Text className="px-4 font-display font-semibold text-base text-foreground">
+										<Text className="px-4 text-display-3 text-foreground">
 											Filmography
 										</Text>
 									</View>
@@ -163,7 +165,7 @@ export default function PersonDetailScreen() {
 								ListFooterComponent={
 									isFetchingNextPage ? (
 										<View className="py-6">
-											<ActivityIndicator color="#94a3b8" />
+											<ActivityIndicator color={colors.mutedForeground} />
 										</View>
 									) : null
 								}

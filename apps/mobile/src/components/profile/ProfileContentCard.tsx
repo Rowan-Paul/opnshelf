@@ -36,7 +36,7 @@ export function ProfileContentCard({
 					<View className="flex-row items-start justify-between gap-2">
 						<View className="min-w-0 flex-1">
 							<Text
-								className="font-display font-semibold text-foreground text-sm"
+								className="font-display-semibold text-foreground text-sm"
 								numberOfLines={1}
 							>
 								{title}

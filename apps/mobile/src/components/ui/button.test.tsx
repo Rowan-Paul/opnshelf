@@ -119,7 +119,7 @@ describe("Button", () => {
 		expect(
 			spinners(render(<Button label="A" loading variant="destructive" />))[0]
 				.props.color,
-		).toBe("#ef4444");
+		).toBe("#dc2626");
 
 		expect(
 			spinners(render(<Button label="A" loading variant="secondary" />))[0]
@@ -130,6 +130,10 @@ describe("Button", () => {
 			spinners(render(<Button label="A" loading variant="secondary" />))[0]
 				.props.color,
 		).toBe("#f8fafc");
+		expect(
+			spinners(render(<Button label="A" loading variant="destructive" />))[0]
+				.props.color,
+		).toBe("#ef4444");
 	});
 
 	it("mutes a disabled primary instead of fading it", () => {

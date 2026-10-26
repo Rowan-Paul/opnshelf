@@ -13,6 +13,7 @@ import { Text } from "@/components/ui/text";
 import { useTheme } from "@/lib/theme-context";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useWideLayout } from "@/lib/use-wide-layout";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Hero header for media detail screens, matching the web `MediaHero`: a
@@ -45,6 +46,7 @@ export function DetailHero({
 	isProgressLoading?: boolean;
 	children?: ReactNode;
 }) {
+	const themeColors = useThemeColors();
 	const { scheme } = useTheme();
 	const wide = useWideLayout();
 	// The page background as an "r,g,b" triple so the scrims can fade it to
@@ -95,9 +97,7 @@ export function DetailHero({
 						poster
 					)}
 					<View className="flex-1 justify-end pb-1">
-						<Text className="font-bold font-display text-2xl text-foreground">
-							{title}
-						</Text>
+						<Text className="text-display-2 text-foreground">{title}</Text>
 						{subtitle ? (
 							<Text className="mt-0.5 text-muted-foreground text-sm">
 								{subtitle}
@@ -105,7 +105,11 @@ export function DetailHero({
 						) : null}
 						{rating && rating > 0 ? (
 							<View className="mt-1 flex-row items-center gap-1">
-								<Star color="#f3bc00" fill="#f3bc00" size={14} />
+								<Star
+									color={themeColors.accent}
+									fill={themeColors.accent}
+									size={14}
+								/>
 								<Text className="font-medium text-foreground text-sm">
 									{rating.toFixed(1)}/10
 								</Text>

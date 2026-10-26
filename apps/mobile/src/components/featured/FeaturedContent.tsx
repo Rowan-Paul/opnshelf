@@ -21,6 +21,7 @@ import {
 } from "react-native";
 import { mediaHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
+import { useThemeColors } from "@/theme/colors";
 
 export function FeaturedContent({ isFocused }: { isFocused: boolean }) {
 	const query = useQuery({
@@ -39,7 +40,7 @@ export function FeaturedContent({ isFocused }: { isFocused: boolean }) {
 	if (!query.isPending && items.length === 0) return null;
 	return (
 		<View className="pt-2 pb-4" accessibilityLabel="Featured Content">
-			<Text className="mb-3 px-4 font-display font-semibold text-base text-foreground">
+			<Text className="mb-3 px-4 text-display-3 text-foreground">
 				Featured Content
 			</Text>
 			<ScrollView
@@ -84,7 +85,7 @@ export function FeaturedContent({ isFocused }: { isFocused: boolean }) {
 									>
 										<FeaturedPoster item={item} />
 										<View className="min-w-0 flex-1">
-											<Text className="font-display font-semibold text-base text-foreground">
+											<Text className="font-display-semibold text-base text-foreground">
 												{featuredTitle(item)}
 											</Text>
 											<Text className="mt-2 text-muted-foreground text-sm leading-relaxed">
@@ -121,6 +122,7 @@ export function FeaturedContent({ isFocused }: { isFocused: boolean }) {
 }
 
 function FeaturedPoster({ item }: { item: FeaturedDto }) {
+	const colors = useThemeColors();
 	const [failedPoster, setFailedPoster] = useState<string | null>(null);
 	return (
 		<View className="h-36 w-24 items-center justify-center overflow-hidden rounded-lg bg-background-subtle">
@@ -134,7 +136,7 @@ function FeaturedPoster({ item }: { item: FeaturedDto }) {
 			) : (
 				<Film
 					size={32}
-					color="#94a3b8"
+					color={colors.mutedForeground}
 					accessibilityLabel="Poster unavailable"
 				/>
 			)}

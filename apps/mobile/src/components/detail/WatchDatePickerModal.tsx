@@ -7,6 +7,7 @@ import { Modal, Platform, Pressable, useColorScheme, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
+import { useThemeColors } from "@/theme/colors";
 
 interface WatchDatePickerModalProps {
 	visible: boolean;
@@ -39,6 +40,7 @@ export function WatchDatePickerModal({
 	initialWatchedAt,
 	timeZone,
 }: WatchDatePickerModalProps) {
+	const colors = useThemeColors();
 	// The picker paints its own text: hardcoding a variant renders dark-mode
 	// text on the light card, which leaves the whole calendar unreadable.
 	useDetailLayoutLock(visible);
@@ -102,7 +104,7 @@ export function WatchDatePickerModal({
 					className="w-full gap-4 rounded-2xl border border-border bg-card p-5"
 				>
 					<View className="flex-row items-center justify-between">
-						<Text className="font-bold font-display text-foreground text-lg">
+						<Text className="font-display-bold text-foreground text-lg">
 							{isEditing ? "Edit watch date" : "Select watch date"}
 						</Text>
 						<Pressable
@@ -112,7 +114,7 @@ export function WatchDatePickerModal({
 							onPress={onDismiss}
 							disabled={isLoading}
 						>
-							<X color="#94a3b8" size={22} />
+							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
 					<Text className="text-muted-foreground text-sm">
@@ -143,7 +145,7 @@ export function WatchDatePickerModal({
 								disabled={isLoading}
 								className="flex-row items-center gap-3 rounded-lg bg-background-subtle p-3"
 							>
-								<Calendar color="#94a3b8" size={20} />
+								<Calendar color={colors.mutedForeground} size={20} />
 								<Text className="font-medium text-foreground">
 									{date.toLocaleDateString(undefined, {
 										timeZone,
@@ -158,7 +160,7 @@ export function WatchDatePickerModal({
 								disabled={isLoading}
 								className="flex-row items-center gap-3 rounded-lg bg-background-subtle p-3"
 							>
-								<Clock color="#94a3b8" size={20} />
+								<Clock color={colors.mutedForeground} size={20} />
 								<Text className="font-medium text-foreground">
 									{date.toLocaleTimeString(undefined, {
 										timeZone,

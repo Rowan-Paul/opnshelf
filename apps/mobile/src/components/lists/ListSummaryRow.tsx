@@ -7,6 +7,7 @@ import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { posterUrl } from "@/lib/tmdb";
 import { useTwStyle } from "@/lib/use-tw-style";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * One list in a list of lists. Shared by the profile Lists tab and the
@@ -29,6 +30,7 @@ export function ListSummaryRow({
 	list: ListSummaryDto;
 	href: Href;
 }) {
+	const themeColors = useThemeColors();
 	const cover = posterUrl(list.coverPosterPath, "w342");
 	// expo-image ignores Uniwind's className at runtime, so its geometry has to
 	// come through `style` (see PosterImage for the same dance).
@@ -75,7 +77,7 @@ export function ListSummaryRow({
 					) : (
 						// An empty list has no first item to borrow art from.
 						<View className="h-[72px] w-12 items-center justify-center">
-							<List color="#94a3b8" size={18} />
+							<List color={themeColors.mutedForeground} size={18} />
 						</View>
 					)}
 				</View>
@@ -114,7 +116,10 @@ export function ListSummaryRow({
 					</Text>
 				</View>
 
-				<ChevronRight color={cover ? "#ffffff" : "#94a3b8"} size={18} />
+				<ChevronRight
+					color={cover ? "#ffffff" : themeColors.mutedForeground}
+					size={18}
+				/>
 			</Pressable>
 		</Link>
 	);

@@ -46,8 +46,10 @@ import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
 import { useUpNext } from "@/lib/use-up-next";
 import { webMediaUrl } from "@/lib/web-url";
+import { useThemeColors } from "@/theme/colors";
 
 export default function SeasonDetailScreen() {
+	const themeColors = useThemeColors();
 	const { id, name, seasonNumber, reviewId } = useLocalSearchParams<{
 		id: string;
 		// The slug segment. Carried through sibling links so in-app navigation
@@ -230,7 +232,10 @@ export default function SeasonDetailScreen() {
 										className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
 										style={{ opacity: prevSeason ? 1 : 0.4 }}
 									>
-										<ChevronLeft color="#94a3b8" size={18} />
+										<ChevronLeft
+											color={themeColors.mutedForeground}
+											size={18}
+										/>
 										<Text className="font-semibold text-foreground">
 											Prev season
 										</Text>
@@ -246,7 +251,10 @@ export default function SeasonDetailScreen() {
 										<Text className="font-semibold text-foreground">
 											Next season
 										</Text>
-										<ChevronRight color="#94a3b8" size={18} />
+										<ChevronRight
+											color={themeColors.mutedForeground}
+											size={18}
+										/>
 									</Pressable>
 								</View>
 							) : null}
@@ -303,8 +311,8 @@ export default function SeasonDetailScreen() {
 								<RefreshControl
 									refreshing={refreshing}
 									onRefresh={onRefresh}
-									tintColor="#f3bc00"
-									colors={["#f3bc00"]}
+									tintColor={themeColors.accent}
+									colors={[themeColors.accent]}
 								/>
 							}
 							ListHeaderComponent={<View className="gap-6 pb-6">{header}</View>}

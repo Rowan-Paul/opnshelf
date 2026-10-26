@@ -2,6 +2,7 @@ import type { ReleaseNote } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
+import { PromptCard } from "#/components/PromptCard";
 import { useAuth } from "#/lib/auth-context";
 import { startPromptCooldown } from "#/lib/prompt-state";
 import { useReleaseNotes } from "#/lib/use-release-notes";
@@ -55,31 +56,26 @@ function Announcement({
 	};
 	if (dismissed) return null;
 	return (
-		<section className="overflow-hidden rounded-2xl border border-(--border) bg-(--background-elevated) p-5 sm:p-6">
-			<div className="flex items-start gap-4">
-				<div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--accent-subtle) text-(--accent)">
-					<Sparkles className="size-5" aria-hidden="true" />
-				</div>
-				<div className="min-w-0 flex-1">
-					<h2 className="font-display font-semibold text-xl">{entry.title}</h2>
-					<p className="mt-1 text-(--foreground-muted) text-sm leading-6">
-						{entry.summary}
-					</p>
-				</div>
-			</div>
-			<div className="mt-4 flex flex-wrap justify-end gap-2">
-				<button type="button" className="btn btn-ghost" onClick={dismiss}>
-					Dismiss
-				</button>
-				<Link
-					to="/whats-new/$slug"
-					params={{ slug: entry.slug }}
-					className="btn btn-primary"
-					onClick={dismiss}
-				>
-					Read what’s new
-				</Link>
-			</div>
-		</section>
+		<PromptCard
+			icon={Sparkles}
+			title={entry.title}
+			actions={
+				<>
+					<button type="button" className="btn btn-ghost" onClick={dismiss}>
+						Dismiss
+					</button>
+					<Link
+						to="/whats-new/$slug"
+						params={{ slug: entry.slug }}
+						className="btn btn-primary"
+						onClick={dismiss}
+					>
+						Read what’s new
+					</Link>
+				</>
+			}
+		>
+			{entry.summary}
+		</PromptCard>
 	);
 }

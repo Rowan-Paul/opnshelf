@@ -29,7 +29,7 @@ export default function ConfirmRemoveDialog({
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<AlertTriangle className="size-5 text-amber-500" />
+						<AlertTriangle className="size-5 text-warning" />
 						Remove all watches?
 					</DialogTitle>
 					<DialogDescription>
@@ -51,7 +51,7 @@ export default function ConfirmRemoveDialog({
 							onConfirm();
 						}}
 						disabled={isPending}
-						className="btn bg-red-600 text-white hover:bg-red-700"
+						className="btn bg-destructive text-white hover:bg-destructive/90"
 					>
 						{isPending ? (
 							<>

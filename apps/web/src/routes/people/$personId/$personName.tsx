@@ -177,7 +177,7 @@ function PersonDetailPage() {
 			<ErrorState
 				message={error ? "Failed to load person" : "Person not found"}
 				backTo="/"
-				backLabel="Back to Dashboard"
+				backLabel="Back to Home"
 			/>
 		);
 	}
@@ -211,7 +211,7 @@ function PersonDetailPage() {
 				<div className="container-app relative pt-8">
 					<Link to="/" className="btn btn-secondary mb-6 inline-flex gap-2">
 						<ChevronLeft className="size-4" />
-						Back to Dashboard
+						Back to Home
 					</Link>
 
 					<div className="grid gap-8 lg:grid-cols-[280px_1fr] lg:gap-12">
@@ -287,7 +287,7 @@ function PersonDetailPage() {
 								)}
 								{person.popularity !== undefined && (
 									<span className="flex items-center gap-1 text-(--foreground-muted)">
-										<Star className="size-4 fill-yellow-500 text-yellow-500" />
+										<Star className="size-4 fill-accent text-accent" />
 										{Math.round(person.popularity * 10) / 10}
 									</span>
 								)}

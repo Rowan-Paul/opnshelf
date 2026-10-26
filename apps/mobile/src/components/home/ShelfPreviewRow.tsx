@@ -1,6 +1,5 @@
 import type { ShelfResponseDto } from "@opnshelf/api";
 import { type Href, Link } from "expo-router";
-import { Film } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { MediaCard, type MediaCardItem } from "@/components/media/MediaCard";
@@ -13,7 +12,8 @@ import { formatWatchDateTime } from "@/lib/watch-date";
 
 type ShelfItem = ShelfResponseDto["items"][number];
 
-const POSTER_W = 110;
+/** Landscape cards, like the Web App's Your Shelf. */
+const CARD_W = 220;
 
 /**
  * "Your Shelf" recent-watched preview: a horizontal poster row of the user's
@@ -37,15 +37,15 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 
 	return (
 		<TourAnchor id="shelf">
-			<SectionHeader icon={Film} title="Your Shelf" href={shelfHref} />
+			<SectionHeader title="Your Shelf" href={shelfHref} />
 			{isLoading ? (
 				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-3">
 						{[0, 1, 2, 3].map((i) => (
 							<View
 								key={i}
-								style={{ width: POSTER_W }}
-								className="aspect-2/3 rounded-lg border border-border bg-card"
+								style={{ width: CARD_W }}
+								className="aspect-video rounded-lg border border-border bg-card"
 							/>
 						))}
 					</View>
@@ -67,9 +67,9 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-3">
 						{items.map((item) => (
-							<View key={item.id} style={{ width: POSTER_W }}>
+							<View key={item.id} style={{ width: CARD_W }}>
 								<MediaCard
-									item={shelfItemToCardItem(item)}
+									item={shelfItemToCardItem(item, "backdrop")}
 									actions
 									watchCount={item.watchCount}
 								/>
@@ -95,14 +95,20 @@ function EmptyCard({ text }: { text: string }) {
  * poster + id (so the show-keyed action hooks resolve) but carry their episode
  * coordinates and deep-link to the episode page, matching the web dashboard.
  * Shared with the profile Overview episode row so the two can't drift.
+ * `backdrop` cards show the episode still (else the backdrop), as on Web.
  */
-export function shelfItemToCardItem(item: ShelfItem): MediaCardItem {
+export function shelfItemToCardItem(
+	item: ShelfItem,
+	layout: MediaCardItem["layout"] = "poster",
+): MediaCardItem {
 	if (item.type === "movie") {
 		return {
 			id: Number(item.movieId),
 			type: "movie",
 			title: item.title,
 			posterPath: item.posterPath,
+			backdropPath: item.backdropPath,
+			layout,
 			year: item.releaseYear ? String(item.releaseYear) : undefined,
 			timestamp: formatWatchDateTime(item.watchedDate),
 		};
@@ -113,6 +119,8 @@ export function shelfItemToCardItem(item: ShelfItem): MediaCardItem {
 		// Title line shows the episode title; the show drops to the label line.
 		title: item.episodeTitle ?? item.showTitle,
 		posterPath: item.posterPath,
+		backdropPath: item.stillPath ?? item.backdropPath,
+		layout,
 		href: showHref(
 			item.showId,
 			item.showTitle,

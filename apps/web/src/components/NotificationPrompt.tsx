@@ -1,7 +1,9 @@
 import { notificationsControllerSettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { Bell } from "lucide-react";
 import { useState } from "react";
+import { PromptCard } from "#/components/PromptCard";
 import { useAuth } from "#/lib/auth-context";
 import { startPromptCooldown, useHydrated } from "#/lib/prompt-state";
 
@@ -30,34 +32,36 @@ export function NotificationPrompt() {
 	)
 		return null;
 	return (
-		<section className="rounded-xl border border-(--border) bg-(--background-subtle) p-5 sm:p-6">
-			<h2 className="font-semibold text-lg">Don’t miss your next watch</h2>
-			<p className="mt-1 text-(--foreground-muted) text-sm">
-				Get mobile alerts for Watchlist releases, new seasons and your watch
-				stats. Manage mobile and email notifications in Settings.
-			</p>
-			<div className="mt-4 flex flex-wrap justify-end gap-3">
-				<button
-					type="button"
-					className="btn btn-secondary"
-					onClick={() => {
-						try {
-							localStorage.setItem(key, String(Date.now() + 7 * 86400000));
-						} catch {}
-						startPromptCooldown();
-						setDismissed(true);
-					}}
-				>
-					Remind me later
-				</button>
-				<Link
-					to="/settings/$section"
-					params={{ section: "notifications" }}
-					className="btn btn-primary"
-				>
-					Set up notifications
-				</Link>
-			</div>
-		</section>
+		<PromptCard
+			icon={Bell}
+			title="Don’t miss your next watch"
+			actions={
+				<>
+					<button
+						type="button"
+						className="btn btn-ghost"
+						onClick={() => {
+							try {
+								localStorage.setItem(key, String(Date.now() + 7 * 86400000));
+							} catch {}
+							startPromptCooldown();
+							setDismissed(true);
+						}}
+					>
+						Remind me later
+					</button>
+					<Link
+						to="/settings/$section"
+						params={{ section: "notifications" }}
+						className="btn btn-primary"
+					>
+						Set up notifications
+					</Link>
+				</>
+			}
+		>
+			Get mobile alerts for Watchlist releases, new seasons and your watch
+			stats. Manage mobile and email notifications in Settings.
+		</PromptCard>
 	);
 }

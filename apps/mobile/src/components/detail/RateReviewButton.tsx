@@ -6,6 +6,7 @@ import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useReview } from "@/lib/use-review";
+import { useThemeColors } from "@/theme/colors";
 
 /** A single detail action for the independent rating and review records. */
 export function RateReviewButton({
@@ -19,6 +20,7 @@ export function RateReviewButton({
 	seasonNumber?: number;
 	episodeNumber?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const [sheetVisible, setSheetVisible] = useState(false);
 	const [editingReview, setEditingReview] = useState<MediaReviewItemDto>();
@@ -73,11 +75,11 @@ export function RateReviewButton({
 				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
 			>
 				{rating > 0 ? (
-					<Star color="#f3bc00" fill="#f3bc00" size={18} />
+					<Star color={colors.accent} fill={colors.accent} size={18} />
 				) : (
 					<MessageSquare
-						color={hasActivity ? "#f3bc00" : "#94a3b8"}
-						fill={hasActivity ? "#f3bc00" : "transparent"}
+						color={hasActivity ? colors.accent : colors.mutedForeground}
+						fill={hasActivity ? colors.accent : "transparent"}
 						size={18}
 					/>
 				)}

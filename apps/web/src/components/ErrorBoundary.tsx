@@ -41,7 +41,7 @@ export function DefaultErrorComponent({
 		<div className="container-app flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
 			{/* Error Icon */}
 			<div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950/20">
-				<AlertTriangle className="size-10 text-red-500" />
+				<AlertTriangle className="size-10 text-destructive" />
 			</div>
 
 			{/* Error Title */}
@@ -61,7 +61,7 @@ export function DefaultErrorComponent({
 					<p className="mb-2 font-semibold text-red-700 text-sm dark:text-red-400">
 						Stack trace:
 					</p>
-					<pre className="text-red-600 text-xs dark:text-red-300">
+					<pre className="text-destructive text-xs dark:text-red-300">
 						{error.stack}
 					</pre>
 				</div>

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AtStoreReviewPrompt } from "@/components/home/atstore-review-prompt";
 import { FriendsActivity } from "@/components/home/FriendsActivity";
 import { NotificationPrompt } from "@/components/home/NotificationPrompt";
+import { PromptSlot } from "@/components/home/prompt-slot";
 import { ReleaseNotePrompt } from "@/components/home/release-note-prompt";
 import { ShelfPreviewRow } from "@/components/home/ShelfPreviewRow";
 import { UpcomingReleases } from "@/components/home/UpcomingReleases";
@@ -23,6 +24,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { usePublicProfile } from "@/lib/use-public-profile";
 import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * Home. Mirrors the Web App's landing route: a welcome greeting, a stats
@@ -35,6 +37,7 @@ import { usePaneWidth, useWideLayout } from "@/lib/use-wide-layout";
  * owns its own loading/empty state; the screen itself is a single ScrollView.
  */
 export default function HomeScreen() {
+	const themeColors = useThemeColors();
 	const insets = useSafeAreaInsets();
 	const wide = useWideLayout();
 	const primaryWidth = usePaneWidth(16);
@@ -95,18 +98,21 @@ export default function HomeScreen() {
 					<RefreshControl
 						refreshing={refreshing}
 						onRefresh={onRefresh}
-						tintColor="#f3bc00"
-						colors={["#f3bc00"]}
+						tintColor={themeColors.accent}
+						colors={[themeColors.accent]}
 					/>
 				}
 			>
 				<View className="gap-8 px-4">
 					<WelcomeHeader user={user} />
-					<ReleaseNotePrompt />
-					<NotificationPrompt />
-
 					{stats}
-					<AtStoreReviewPrompt />
+
+					{/* Same order and one-at-a-time rule as the Web App's Home. */}
+					<PromptSlot>
+						<ReleaseNotePrompt />
+						<NotificationPrompt />
+						<AtStoreReviewPrompt />
+					</PromptSlot>
 
 					{wide ? (
 						<View className="flex-row items-start gap-6">

@@ -34,11 +34,13 @@ import { useProfileShelf, usePublicProfile } from "@/lib/use-public-profile";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { useReleaseNotes } from "@/lib/use-release-notes";
 import { useWideLayout } from "@/lib/use-wide-layout";
+import { useThemeColors } from "@/theme/colors";
 
 const POSTER_W = 110;
 
 /** Personal hub; public profiles keep their separate browsing layout. */
 export default function ProfileTab() {
+	const themeColors = useThemeColors();
 	const insets = useSafeAreaInsets();
 	const paddingBottom = useNativeTabContentPadding();
 	const { user, isAuthenticated } = useAuth();
@@ -61,15 +63,13 @@ export default function ProfileTab() {
 					<RefreshControl
 						refreshing={refreshing}
 						onRefresh={onRefresh}
-						tintColor="#f3bc00"
-						colors={["#f3bc00"]}
+						tintColor={themeColors.accent}
+						colors={[themeColors.accent]}
 					/>
 				}
 			>
 				<View className="flex-row items-center justify-between px-4 pt-3 pb-3">
-					<Text className="font-bold font-display text-2xl text-foreground">
-						Your profile
-					</Text>
+					<Text className="text-display-2 text-foreground">Your profile</Text>
 					<View className="flex-row items-center gap-1">
 						<Link href="/whats-new" asChild>
 							<Pressable
@@ -79,7 +79,7 @@ export default function ProfileTab() {
 								}
 								className="size-11 items-center justify-center"
 							>
-								<Megaphone color="#94a3b8" size={22} />
+								<Megaphone color={themeColors.mutedForeground} size={22} />
 								{unread && (
 									<View className="absolute top-1 right-1">
 										<UnreadDot />
@@ -93,7 +93,7 @@ export default function ProfileTab() {
 								accessibilityLabel="Settings"
 								className="size-11 items-center justify-center"
 							>
-								<Settings color="#94a3b8" size={22} />
+								<Settings color={themeColors.mutedForeground} size={22} />
 							</Pressable>
 						</Link>
 					</View>
@@ -137,7 +137,7 @@ export default function ProfileTab() {
 										accessibilityRole="button"
 										className="min-h-11 flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border px-2 py-2.5"
 									>
-										<Pencil color="#94a3b8" size={16} />
+										<Pencil color={themeColors.mutedForeground} size={16} />
 										<Text className="font-semibold text-foreground text-sm">
 											Edit profile
 										</Text>
@@ -190,11 +190,7 @@ export default function ProfileTab() {
 							/>
 
 							<View>
-								<SectionHeader
-									icon={Film}
-									title="Recently watched"
-									href={shelfHref}
-								/>
+								<SectionHeader title="Recently watched" href={shelfHref} />
 								{shelf.isPending ? (
 									<PosterRowSkeleton />
 								) : !shelf.data && shelf.isError ? (
@@ -262,6 +258,7 @@ function Destination({
 	detail: string;
 	href: Href;
 }) {
+	const themeColors = useThemeColors();
 	const wide = useWideLayout();
 	return (
 		<Link href={href} asChild>
@@ -270,9 +267,9 @@ function Destination({
 				style={{ width: wide ? "22%" : "46%", flexGrow: 1, minWidth: 0 }}
 				className="min-h-16 flex-row items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5"
 			>
-				<Icon color="#f3bc00" size={20} />
+				<Icon color={themeColors.accent} size={20} />
 				<View className="min-w-0 flex-1">
-					<Text className="font-display font-semibold text-base text-foreground">
+					<Text className="font-display-semibold text-base text-foreground">
 						{title}
 					</Text>
 					<Text className="mt-1 text-muted-foreground text-xs">{detail}</Text>
@@ -293,18 +290,19 @@ function LinkRow({
 	detail: string;
 	href: Href;
 }) {
+	const themeColors = useThemeColors();
 	return (
 		<Link href={href} asChild>
 			<Pressable
 				accessibilityRole="link"
 				className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-4"
 			>
-				<Icon color="#f3bc00" size={20} />
+				<Icon color={themeColors.accent} size={20} />
 				<View className="flex-1">
 					<Text className="font-semibold text-foreground">{title}</Text>
 					<Text className="mt-1 text-muted-foreground text-xs">{detail}</Text>
 				</View>
-				<ChevronRight color="#94a3b8" size={18} />
+				<ChevronRight color={themeColors.mutedForeground} size={18} />
 			</Pressable>
 		</Link>
 	);

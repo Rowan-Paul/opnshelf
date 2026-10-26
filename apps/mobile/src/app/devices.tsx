@@ -17,18 +17,21 @@ import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { useThemeColors } from "@/theme/colors";
 
 function DeviceIcon({ platform }: { platform: string | null }) {
+	const colors = useThemeColors();
 	const Icon =
 		platform === "ios" || platform === "android"
 			? Smartphone
 			: platform === "web"
 				? Laptop
 				: Tablet;
-	return <Icon color="#94a3b8" size={20} />;
+	return <Icon color={colors.mutedForeground} size={20} />;
 }
 
 export default function DevicesScreen() {
+	const colors = useThemeColors();
 	const queryClient = useQueryClient();
 	const toast = useToast();
 	const { showDialog } = useDialog();
@@ -161,7 +164,7 @@ export default function DevicesScreen() {
 									label="Sign out all other devices"
 									variant="destructive"
 									disabled={busy}
-									leading={<LogOut color="#ef4444" size={18} />}
+									leading={<LogOut color={colors.destructive} size={18} />}
 									onPress={confirmRevokeOthers}
 								/>
 							) : null}

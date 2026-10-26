@@ -303,7 +303,7 @@ export function SearchCommand({
 		? [
 				{
 					key: "dashboard",
-					label: "Dashboard",
+					label: "Home",
 					Icon: Home,
 					run: () => goTo("/"),
 				},
@@ -703,7 +703,7 @@ export function SearchCommand({
 						<CommandGroup heading="Navigation">
 							<CommandItem value="dashboard" onSelect={() => goTo("/")}>
 								<Home />
-								<span>Dashboard</span>
+								<span>Home</span>
 							</CommandItem>
 							<CommandItem value="calendar" onSelect={() => goTo("/calendar")}>
 								<Calendar />

@@ -223,7 +223,7 @@ export default function Header() {
 									<DropdownMenuSeparator />
 									<DropdownMenuItem
 										onClick={logout}
-										className="cursor-pointer text-red-600 focus:text-red-600"
+										className="cursor-pointer text-destructive focus:text-destructive"
 									>
 										<LogOut className="text-current" />
 										Sign Out
@@ -357,7 +357,7 @@ export default function Header() {
 										<button
 											type="button"
 											onClick={logout}
-											className="flex items-center gap-3 rounded-md px-3 py-3 font-medium text-red-600 text-sm transition-colors hover:bg-red-50"
+											className="flex items-center gap-3 rounded-md px-3 py-3 font-medium text-destructive text-sm transition-colors hover:bg-red-50"
 										>
 											<LogOut className="size-5" />
 											Sign Out

@@ -87,7 +87,7 @@ export default function StarRating({
 						{starPositions.map((pos) => (
 							<Star
 								key={`bg-${pos}`}
-								className={`${sizeClasses[size]} shrink-0 text-yellow-500/30`}
+								className={`${sizeClasses[size]} shrink-0 text-accent/30`}
 							/>
 						))}
 					</div>
@@ -98,7 +98,7 @@ export default function StarRating({
 						{starPositions.map((pos) => (
 							<Star
 								key={`fg-${pos}`}
-								className={`${sizeClasses[size]} shrink-0 fill-yellow-500 text-yellow-500`}
+								className={`${sizeClasses[size]} shrink-0 fill-accent text-accent`}
 							/>
 						))}
 					</div>
@@ -120,7 +120,7 @@ export default function StarRating({
 						{starPositions.map((pos) => (
 							<Star
 								key={`bg-${pos}`}
-								className={`${sizeClasses[size]} shrink-0 text-yellow-500/30`}
+								className={`${sizeClasses[size]} shrink-0 text-accent/30`}
 							/>
 						))}
 					</div>
@@ -131,7 +131,7 @@ export default function StarRating({
 						{starPositions.map((pos) => (
 							<Star
 								key={`fg-${pos}`}
-								className={`${sizeClasses[size]} shrink-0 fill-yellow-500 text-yellow-500`}
+								className={`${sizeClasses[size]} shrink-0 fill-accent text-accent`}
 							/>
 						))}
 					</div>

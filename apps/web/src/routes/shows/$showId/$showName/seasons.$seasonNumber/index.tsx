@@ -354,11 +354,11 @@ function SeasonDetailPage() {
 					authLoading ||
 					(isAuthenticated && isProgressPending && !isProgressError)
 				}
-				backLabel={isAuthenticated ? "Back to Dashboard" : "Back to Home"}
+				backLabel="Back to Home"
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
-							<Star className="size-4 fill-yellow-500 text-yellow-500" />
+							<Star className="size-4 fill-accent text-accent" />
 							<span className="font-semibold">
 								{rating?.toFixed(1) || "N/A"}
 							</span>

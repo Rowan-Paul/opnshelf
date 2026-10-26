@@ -215,7 +215,7 @@ function ReviewCard({
 								type="button"
 								onClick={() => setConfirmOpen(true)}
 								disabled={deleteMutation.isPending}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
 								aria-label="Delete review"
 							>
 								{deleteMutation.isPending ? (
@@ -276,7 +276,7 @@ function ReviewCard({
 						!canLike
 							? "cursor-not-allowed text-(--foreground-muted) opacity-50"
 							: isLiked
-								? "text-red-500 hover:bg-red-500/10"
+								? "text-destructive hover:bg-destructive/10"
 								: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--accent)"
 					}`}
 					aria-label={
@@ -290,7 +290,7 @@ function ReviewCard({
 					{isPending ? (
 						<Loader2 className="size-4 animate-spin" />
 					) : (
-						<Heart className={`size-4 ${isLiked ? "fill-red-500" : ""}`} />
+						<Heart className={`size-4 ${isLiked ? "fill-destructive" : ""}`} />
 					)}
 					<span>{review.likeCount}</span>
 				</button>

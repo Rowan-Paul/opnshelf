@@ -17,9 +17,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useDebounce } from "@/lib/use-debounce";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useFollowToggle, useSuggestions } from "@/lib/use-social";
+import { useThemeColors } from "@/theme/colors";
 
 /** Search and recommendations live under Social so the feed remains the tab. */
 export default function FindPeopleScreen() {
+	const colors = useThemeColors();
 	const { user } = useAuth();
 	const { toggle } = useFollowToggle();
 	const [query, setQuery] = useState("");
@@ -60,11 +62,11 @@ export default function FindPeopleScreen() {
 				onEndReached={loadMoreResults}
 			>
 				<TextField
-					leading={<Search color="#94a3b8" size={18} />}
+					leading={<Search color={colors.mutedForeground} size={18} />}
 					trailing={
 						query.length > 0 ? (
 							<Pressable hitSlop={8} onPress={() => setQuery("")}>
-								<X color="#94a3b8" size={18} />
+								<X color={colors.mutedForeground} size={18} />
 							</Pressable>
 						) : null
 					}
@@ -91,11 +93,11 @@ export default function FindPeopleScreen() {
 
 				<View className="flex-row items-center gap-2">
 					{hasQuery ? (
-						<Search color="#94a3b8" size={18} />
+						<Search color={colors.mutedForeground} size={18} />
 					) : (
-						<Sparkles color="#94a3b8" size={18} />
+						<Sparkles color={colors.mutedForeground} size={18} />
 					)}
-					<Text className="font-display font-semibold text-base text-foreground">
+					<Text className="text-display-3 text-foreground">
 						{hasQuery ? "Search results" : "Suggested people"}
 					</Text>
 				</View>

@@ -4,8 +4,10 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { FullCredits } from "@/components/detail/CreditsSection";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
+import { useThemeColors } from "@/theme/colors";
 
 export default function ShowCreditsScreen() {
+	const themeColors = useThemeColors();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const { data } = useQuery({
 		...showsControllerGetShowDetailsOptions({ path: { showId: id } }),
@@ -26,8 +28,8 @@ export default function ShowCreditsScreen() {
 					<RefreshControl
 						refreshing={refreshing}
 						onRefresh={onRefresh}
-						tintColor="#f3bc00"
-						colors={["#f3bc00"]}
+						tintColor={themeColors.accent}
+						colors={[themeColors.accent]}
 					/>
 				}
 			>

@@ -13,6 +13,7 @@ import {
 	useShowProgressForShow,
 } from "@/lib/use-show-progress";
 import { useMarkUpNextEpisode } from "@/lib/use-up-next";
+import { useThemeColors } from "@/theme/colors";
 
 function formatAirDate(iso?: string): string | undefined {
 	if (!iso) return undefined;
@@ -41,6 +42,7 @@ export function UpNextCard({
 	item: UpNextShowDto;
 	isOwner?: boolean;
 }) {
+	const colors = useThemeColors();
 	const markEpisode = useMarkUpNextEpisode();
 	const { show, nextEpisode: ep } = item;
 	const viewerProgressQuery = useShowProgressForShow(show.showId, !isOwner);
@@ -109,7 +111,7 @@ export function UpNextCard({
 						</Text>
 						{airDate ? (
 							<View className="mt-0.5 flex-row items-center gap-1.5">
-								<Calendar color="#94a3b8" size={13} />
+								<Calendar color={colors.mutedForeground} size={13} />
 								<Text className="text-muted-foreground text-xs">{airDate}</Text>
 							</View>
 						) : null}

@@ -41,9 +41,7 @@ export function NotesTab({
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
-			<Text className="font-bold font-display text-2xl text-foreground">
-				Notes
-			</Text>
+			<Text className="text-display-2 text-foreground">Notes</Text>
 
 			{isLoading ? (
 				<ReviewsSkeleton />

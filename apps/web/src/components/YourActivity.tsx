@@ -117,7 +117,7 @@ export function YourActivity({
 								disabled={
 									isDeletePending || updatingEntryIds.includes(entry.id)
 								}
-								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-red-500/10 hover:text-red-500"
+								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive"
 								aria-label="Remove this watch"
 							>
 								<X className="size-4" />

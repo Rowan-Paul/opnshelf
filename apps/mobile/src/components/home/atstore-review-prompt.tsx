@@ -8,9 +8,12 @@ import * as Haptics from "expo-haptics";
 import { type Href, router } from "expo-router";
 import { Store } from "lucide-react-native";
 import { useEffect, useRef } from "react";
-import { Pressable, View } from "react-native";
+import {
+	PromptCard,
+	PromptSlotItem,
+	usePromptCooldown,
+} from "@/components/home/prompt-slot";
 import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
@@ -20,6 +23,7 @@ const PLATFORM = { platform: "mobile" } as const;
 
 export function AtStoreReviewPrompt() {
 	const queryClient = useQueryClient();
+	const startCooldown = usePromptCooldown();
 	const toast = useToast();
 	const { runAuthorizationUrl } = useAuth();
 	const viewed = useRef(false);
@@ -46,6 +50,7 @@ export function AtStoreReviewPrompt() {
 				permissionGranted: prompt?.permissionGranted ?? false,
 			});
 			posthog?.capture("atstore_review_prompt_dismissed", PLATFORM);
+			startCooldown();
 		},
 		onError: () => toast.error("Could not dismiss the review request"),
 	});
@@ -89,40 +94,30 @@ export function AtStoreReviewPrompt() {
 	if (!prompt?.eligible) return null;
 
 	return (
-		<View className="gap-4 rounded-xl border border-border bg-card p-4">
-			<View className="flex-row items-start gap-3">
-				<View className="size-10 items-center justify-center rounded-full bg-primary/15">
-					<Store color="#f3bc00" size={19} />
-				</View>
-				<View className="min-w-0 flex-1 gap-1">
-					<Text className="font-display font-semibold text-foreground text-lg">
-						Enjoying Opnshelf?
-					</Text>
-					<Text className="text-muted-foreground text-sm leading-5">
-						Share your experience on AT Store. It helps others discover
-						Opnshelf.
-					</Text>
-				</View>
-			</View>
-			<View className="flex-row justify-end gap-2">
-				<Pressable
-					accessibilityRole="button"
-					disabled={dismissMutation.isPending}
-					onPress={() => dismissMutation.mutate({})}
-					className="rounded-lg px-3.5 py-2.5"
-					style={{ opacity: dismissMutation.isPending ? 0.5 : 1 }}
-				>
-					<Text className="font-semibold text-muted-foreground text-sm">
-						No thanks
-					</Text>
-				</Pressable>
-				<Button
-					label="Leave a review"
-					size="sm"
-					loading={permissionMutation.isPending}
-					onPress={leaveReview}
-				/>
-			</View>
-		</View>
+		<PromptSlotItem id="atstore-review">
+			<PromptCard
+				icon={Store}
+				title="Enjoying Opnshelf?"
+				actions={
+					<>
+						<Button
+							label="No thanks"
+							variant="ghost"
+							size="sm"
+							disabled={dismissMutation.isPending}
+							onPress={() => dismissMutation.mutate({})}
+						/>
+						<Button
+							label="Leave a review"
+							size="sm"
+							loading={permissionMutation.isPending}
+							onPress={leaveReview}
+						/>
+					</>
+				}
+			>
+				Share your experience on AT Store. It helps others discover Opnshelf.
+			</PromptCard>
+		</PromptSlotItem>
 	);
 }

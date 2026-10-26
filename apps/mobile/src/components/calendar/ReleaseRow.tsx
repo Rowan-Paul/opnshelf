@@ -6,6 +6,7 @@ import { PosterImage } from "@/components/media/PosterImage";
 import { Text } from "@/components/ui/text";
 import { movieHref, showHref } from "@/lib/media-href";
 import { posterUrl } from "@/lib/tmdb";
+import { useThemeColors } from "@/theme/colors";
 
 function displayTitle(item: ReleaseCalendarItemDto): string {
 	if (
@@ -70,6 +71,7 @@ function hrefFor(item: ReleaseCalendarItemDto): Href | null {
 
 /** A single upcoming release in the calendar week list. */
 export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
+	const colors = useThemeColors();
 	const href = hrefFor(item);
 	const isMovie = item.mediaType === "movie";
 
@@ -82,9 +84,9 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 						className="h-20 w-14"
 					/>
 				) : isMovie ? (
-					<Film color="#94a3b8" size={22} />
+					<Film color={colors.mutedForeground} size={22} />
 				) : (
-					<Tv color="#94a3b8" size={22} />
+					<Tv color={colors.mutedForeground} size={22} />
 				)}
 			</View>
 			<View className="min-w-0 flex-1">
@@ -93,9 +95,9 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 				</Text>
 				<View className="mt-1 flex-row items-center gap-1.5">
 					{isMovie ? (
-						<Film color="#94a3b8" size={13} />
+						<Film color={colors.mutedForeground} size={13} />
 					) : (
-						<Tv color="#94a3b8" size={13} />
+						<Tv color={colors.mutedForeground} size={13} />
 					)}
 					<Text className="text-muted-foreground text-xs">
 						{shortDate(item.releaseDate)}
@@ -107,7 +109,7 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 					) : null}
 				</View>
 			</View>
-			<ChevronRight color="#94a3b8" size={18} />
+			<ChevronRight color={colors.mutedForeground} size={18} />
 		</View>
 	);
 
