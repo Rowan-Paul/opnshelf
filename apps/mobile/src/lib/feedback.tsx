@@ -15,19 +15,16 @@ import {
 import {
 	Dimensions,
 	Image,
-	Modal,
 	PixelRatio,
 	Platform,
 	Pressable,
 	ScrollView,
 	View,
 } from "react-native";
-import {
-	KeyboardAvoidingView,
-	KeyboardProvider,
-} from "react-native-keyboard-controller";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { captureScreen } from "react-native-view-shot";
 import { Button } from "@/components/ui/button";
+import { KeyboardSheetModal } from "@/components/ui/keyboard-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
@@ -115,125 +112,111 @@ function FeedbackSheet({
 	};
 
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
-			{/*
-			 * RN <Modal> renders in a separate window outside the root
-			 * KeyboardProvider (notably on Android), so the keyboard controller
-			 * receives no events there. Nesting a KeyboardProvider inside the Modal
-			 * re-bridges those events, letting its KeyboardAvoidingView lift the
-			 * bottom-anchored sheet above the keyboard on both platforms.
-			 */}
-			<KeyboardProvider>
-				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
-					<Pressable className="flex-1" onPress={onDismiss} />
-					<ScrollView
-						className="rounded-t-2xl border border-border bg-card"
-						style={{ flexGrow: 0, flexShrink: 1 }}
-						contentContainerStyle={{ padding: 20, gap: 16 }}
-						keyboardShouldPersistTaps="handled"
-					>
-						<View className="flex-row items-center justify-between">
-							<Text className="font-display-bold text-foreground text-lg">
-								Send feedback
-							</Text>
-							<Pressable hitSlop={8} onPress={onDismiss}>
-								<X color={colors.mutedForeground} size={22} />
-							</Pressable>
-						</View>
-
-						<Text className="text-muted-foreground text-sm">
-							Your feedback will become a public GitHub issue. Please leave out
-							personal information and secrets.
+		<KeyboardSheetModal visible={visible} onRequestClose={onDismiss}>
+			<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
+				<Pressable className="flex-1" onPress={onDismiss} />
+				<ScrollView
+					className="rounded-t-2xl border border-border bg-card"
+					style={{ flexGrow: 0, flexShrink: 1 }}
+					contentContainerStyle={{ padding: 20, gap: 16 }}
+					keyboardShouldPersistTaps="handled"
+				>
+					<View className="flex-row items-center justify-between">
+						<Text className="font-display-bold text-foreground text-lg">
+							Send feedback
 						</Text>
+						<Pressable hitSlop={8} onPress={onDismiss}>
+							<X color={colors.mutedForeground} size={22} />
+						</Pressable>
+					</View>
 
-						{screenshot && (
-							<View className="flex-row items-center gap-3">
-								<Image
-									source={{ uri: `data:image/jpeg;base64,${screenshot}` }}
-									style={{ width: 48, height: 80 }}
-									resizeMode="contain"
-									accessibilityLabel="Attached screenshot"
-								/>
-								<View className="flex-1 gap-1">
-									<Text className="text-foreground text-sm">
-										Screenshot attached. It will be public.
+					<Text className="text-muted-foreground text-sm">
+						Your feedback will become a public GitHub issue. Please leave out
+						personal information and secrets.
+					</Text>
+
+					{screenshot && (
+						<View className="flex-row items-center gap-3">
+							<Image
+								source={{ uri: `data:image/jpeg;base64,${screenshot}` }}
+								style={{ width: 48, height: 80 }}
+								resizeMode="contain"
+								accessibilityLabel="Attached screenshot"
+							/>
+							<View className="flex-1 gap-1">
+								<Text className="text-foreground text-sm">
+									Screenshot attached. It will be public.
+								</Text>
+								<Pressable
+									accessibilityRole="button"
+									onPress={onRemoveScreenshot}
+									hitSlop={8}
+								>
+									<Text className="text-primary text-sm">
+										Remove screenshot
 									</Text>
-									<Pressable
-										accessibilityRole="button"
-										onPress={onRemoveScreenshot}
-										hitSlop={8}
-									>
-										<Text className="text-primary text-sm">
-											Remove screenshot
-										</Text>
-									</Pressable>
-								</View>
+								</Pressable>
 							</View>
-						)}
+						</View>
+					)}
 
-						{/* Category toggle */}
-						<View className="flex-row gap-2">
-							{CATEGORIES.map(({ value, label, icon: Icon }) => {
-								const selected = category === value;
-								return (
-									<Pressable
-										key={value}
-										onPress={() => setCategory(value)}
+					{/* Category toggle */}
+					<View className="flex-row gap-2">
+						{CATEGORIES.map(({ value, label, icon: Icon }) => {
+							const selected = category === value;
+							return (
+								<Pressable
+									key={value}
+									onPress={() => setCategory(value)}
+									className={
+										selected
+											? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-2.5"
+											: "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5"
+									}
+								>
+									<Icon
+										color={selected ? colors.accent : colors.mutedForeground}
+										size={16}
+									/>
+									<Text
 										className={
 											selected
-												? "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-2.5"
-												: "flex-1 flex-row items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5"
+												? "font-semibold text-primary text-sm"
+												: "font-medium text-foreground text-sm"
 										}
 									>
-										<Icon
-											color={selected ? colors.accent : colors.mutedForeground}
-											size={16}
-										/>
-										<Text
-											className={
-												selected
-													? "font-semibold text-primary text-sm"
-													: "font-medium text-foreground text-sm"
-											}
-										>
-											{label}
-										</Text>
-									</Pressable>
-								);
-							})}
-						</View>
+										{label}
+									</Text>
+								</Pressable>
+							);
+						})}
+					</View>
 
-						<TextField
-							variant="subtle"
-							multiline
-							className="min-h-28"
-							placeholder={
-								category === "bug"
-									? "What went wrong? What were you doing?"
-									: "What would you like to see?"
-							}
-							value={message}
-							onChangeText={setMessage}
-							maxLength={MAX_MESSAGE}
-							autoFocus
-						/>
+					<TextField
+						variant="subtle"
+						multiline
+						className="min-h-28"
+						placeholder={
+							category === "bug"
+								? "What went wrong? What were you doing?"
+								: "What would you like to see?"
+						}
+						value={message}
+						onChangeText={setMessage}
+						maxLength={MAX_MESSAGE}
+						autoFocus
+					/>
 
-						<Button
-							label="Send"
-							loadingLabel="Sending…"
-							loading={mutation.isPending}
-							disabled={!canSubmit}
-							onPress={submit}
-						/>
-					</ScrollView>
-				</KeyboardAvoidingView>
-			</KeyboardProvider>
-		</Modal>
+					<Button
+						label="Send"
+						loadingLabel="Sending…"
+						loading={mutation.isPending}
+						disabled={!canSubmit}
+						onPress={submit}
+					/>
+				</ScrollView>
+			</KeyboardAvoidingView>
+		</KeyboardSheetModal>
 	);
 }
 

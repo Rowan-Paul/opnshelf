@@ -1,11 +1,9 @@
 import { Trash2, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Modal, Pressable, View } from "react-native";
-import {
-	KeyboardAvoidingView,
-	KeyboardProvider,
-} from "react-native-keyboard-controller";
+import { Pressable, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Button } from "@/components/ui/button";
+import { KeyboardSheetModal } from "@/components/ui/keyboard-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
@@ -58,62 +56,48 @@ export function NoteEditorSheet({
 	const canSave = content.trim().length > 0 && !isSaving;
 
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
-			{/*
-			 * RN <Modal> renders in a separate window outside the root
-			 * KeyboardProvider (notably on Android), so the keyboard controller
-			 * receives no events there. Nesting a KeyboardProvider inside the
-			 * Modal re-bridges those events, letting its KeyboardAvoidingView lift
-			 * the bottom-anchored sheet above the keyboard on both platforms.
-			 */}
-			<KeyboardProvider>
-				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
-					<Pressable className="flex-1" onPress={onDismiss} />
-					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
-						<View className="flex-row items-center justify-between">
-							<Text className="font-display-bold text-foreground text-lg">
-								{isEditing ? "Edit note" : "Add a note"}
-							</Text>
-							<Pressable hitSlop={8} onPress={onDismiss}>
-								<X color={colors.mutedForeground} size={22} />
-							</Pressable>
-						</View>
-
-						<TextField
-							variant="subtle"
-							multiline
-							className="min-h-36"
-							value={content}
-							onChangeText={setContent}
-							placeholder="Your thoughts about this title…"
-							maxLength={20000}
-						/>
-
-						{isEditing && onDelete ? (
-							<Button
-								label="Delete note"
-								variant="destructive"
-								loading={isDeleting}
-								leading={<Trash2 color={colors.destructive} size={18} />}
-								onPress={onDelete}
-							/>
-						) : null}
-
-						<Button
-							label="Save"
-							loadingLabel="Saving…"
-							loading={isSaving}
-							disabled={!canSave}
-							onPress={() => onSave(content)}
-						/>
+		<KeyboardSheetModal visible={visible} onRequestClose={onDismiss}>
+			<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
+				<Pressable className="flex-1" onPress={onDismiss} />
+				<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+					<View className="flex-row items-center justify-between">
+						<Text className="font-display-bold text-foreground text-lg">
+							{isEditing ? "Edit note" : "Add a note"}
+						</Text>
+						<Pressable hitSlop={8} onPress={onDismiss}>
+							<X color={colors.mutedForeground} size={22} />
+						</Pressable>
 					</View>
-				</KeyboardAvoidingView>
-			</KeyboardProvider>
-		</Modal>
+
+					<TextField
+						variant="subtle"
+						multiline
+						className="min-h-36"
+						value={content}
+						onChangeText={setContent}
+						placeholder="Your thoughts about this title…"
+						maxLength={20000}
+					/>
+
+					{isEditing && onDelete ? (
+						<Button
+							label="Delete note"
+							variant="destructive"
+							loading={isDeleting}
+							leading={<Trash2 color={colors.destructive} size={18} />}
+							onPress={onDelete}
+						/>
+					) : null}
+
+					<Button
+						label="Save"
+						loadingLabel="Saving…"
+						loading={isSaving}
+						disabled={!canSave}
+						onPress={() => onSave(content)}
+					/>
+				</View>
+			</KeyboardAvoidingView>
+		</KeyboardSheetModal>
 	);
 }

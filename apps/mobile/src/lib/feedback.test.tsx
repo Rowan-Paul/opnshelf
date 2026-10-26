@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 	mutate: vi.fn(),
 	error: vi.fn(),
 	onSuccess: undefined as (() => void) | undefined,
+	dismissKeyboard: vi.fn(() => Promise.resolve()),
 }));
 vi.mock("react-native-view-shot", () => ({ captureScreen: mocks.capture }));
 vi.mock("@opnshelf/api", () => ({
@@ -43,6 +44,7 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("react-native-keyboard-controller", () => ({
 	KeyboardAvoidingView: "avoiding",
+	KeyboardController: { dismiss: mocks.dismissKeyboard },
 	KeyboardProvider: "keyboard",
 }));
 vi.mock("@/components/ui/button", () => ({ Button: "button" }));
@@ -186,4 +188,29 @@ it("opens text feedback after a capture timeout and ignores its late result", as
 		"data:image/jpeg;base64,/9j/fresh",
 	);
 	expect(vi.getTimerCount()).toBe(0);
+});
+
+it("hides the keyboard before closing so screens behind keep their height", async () => {
+	await act(async () => open());
+	let keyboardHidden!: () => void;
+	mocks.dismissKeyboard.mockReturnValueOnce(
+		new Promise<void>((done) => {
+			keyboardHidden = done;
+		}),
+	);
+	await act(async () => modal().props.onRequestClose());
+	expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
+	expect(modal().props.visible).toBe(true);
+	await act(async () => keyboardHidden());
+	expect(modal().props.visible).toBe(false);
+});
+
+it("leaves other screens' keyboards alone when a send finishes after closing", async () => {
+	await act(async () => open());
+	await submit();
+	await act(async () => modal().props.onRequestClose());
+	expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
+	await act(async () => mocks.onSuccess?.());
+	expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
+	expect(modal().props.visible).toBe(false);
 });
