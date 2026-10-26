@@ -1,7 +1,6 @@
 import type { ReactElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { expect, it, vi } from "vitest";
-import { AppHeader } from "@/components/AppHeader";
 import { ReleaseNotesScreen } from "./ReleaseNotesScreen";
 
 const notes = [
@@ -28,7 +27,6 @@ vi.mock("expo-router", () => ({
 }));
 vi.mock("lucide-react-native", () => ({
 	ArrowUpRight: "ArrowUpRight",
-	ChevronLeft: "ChevronLeft",
 }));
 vi.mock("react-native", () => ({
 	Pressable: "Pressable",
@@ -66,25 +64,26 @@ function render(element: ReactElement): ReactTestRenderer {
 	return renderer;
 }
 
-it("uses only the stack back button on a release note detail", () => {
+it("leaves going back to the stack header on a release note detail", () => {
 	const renderer = render(
-		<>
-			<AppHeader
-				navigation={{ goBack: vi.fn() } as never}
-				route={{ key: "detail", name: "whats-new/[slug]" }}
-				options={{ title: "What’s new", headerShown: true }}
-				back={{ title: "What’s new", href: "/whats-new" }}
-			/>
-			<ReleaseNotesScreen slug="celebrate-your-watching" />
-		</>,
+		<ReleaseNotesScreen slug="celebrate-your-watching" />,
 	);
 
-	expect(renderer.root.findAllByType("ChevronLeft" as never)).toHaveLength(1);
 	expect(
 		renderer.root
 			.findAllByType("Link" as never)
 			.filter((node) => node.props.href === "/whats-new"),
 	).toHaveLength(0);
+});
+
+it("links a missing release note to the history", () => {
+	const renderer = render(<ReleaseNotesScreen slug="missing-note" />);
+
+	expect(
+		renderer.root
+			.findAllByType("Link" as never)
+			.filter((node) => node.props.href === "/whats-new"),
+	).toHaveLength(1);
 });
 
 it("keeps history entries linked to their release note details", () => {

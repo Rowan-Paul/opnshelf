@@ -107,10 +107,16 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 							</View>
 						) : (
 							notes.data && (
-								<Text className="text-muted-foreground">
-									This release note isn’t available. Browse the history for
-									published updates.
-								</Text>
+								<View className="gap-3">
+									<Text className="text-muted-foreground">
+										This release note isn’t available.
+									</Text>
+									<Link href="/whats-new">
+										<Text className="text-primary text-sm">
+											Browse all release notes
+										</Text>
+									</Link>
+								</View>
 							)
 						)
 					) : (
