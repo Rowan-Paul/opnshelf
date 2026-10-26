@@ -4,6 +4,11 @@ A social media tracking and review platform where users log, rate, and review mo
 
 ## Language
 
+**Completion confetti**:
+An optional celebration when a successful Watch completes a Season or catches a
+Show up with its aired episodes. Controlled per device in Preferences >
+Appearance, enabled by default, and always suppressed by reduced motion.
+
 **Data Visibility**:
 A User's choice of Public or Private for their content: by category for the Shelf,
 Library Items and Notes, and per List with a default for Lists. Settings remain ordinary account preferences; they are not synchronized to Spaces.
@@ -99,8 +104,14 @@ Yesterday, or with a full calendar date in the viewer's timezone; every Watch
 card repeats its full date and time without a timezone abbreviation.
 
 **Watch**:
-A single logged instance of a user watching a media item — a tracked record with watched status and an optional watch date and time. Correcting or clearing that date preserves the same Watch. Only a **movie** or an **episode** is Watched: a show or season is tracked through its episodes, so it has an **episode Watch count** but never a Watch count of its own, and no surface states one for it. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. An undated Watch belongs on the Shelf but not in date-based Activity or statistics; **No date** is the canonical user-facing wording for one, on every surface and in every picker. Counts of dated "watched" activity (the profile activity graph, "watched this year", most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
+A single logged instance of a user watching a media item — a tracked record with watched status and an optional watch date and time. Correcting or clearing that date preserves the same Watch. Only a **movie** or an **episode** is Watched: a show or season is tracked through its episodes, so it has an **episode Watch count** but never a Watch count of its own, and no surface states one for it. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. An undated Watch belongs on the Shelf but not in date-based Activity or statistics; **No date** is the canonical user-facing wording for one, on every surface and in every picker. Counts of dated "watched" activity (the profile activity graph, "Added this month", Watch Streak, most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
 _Avoid_: View, log entry (a watchlist add is a separate, un-watched state), play, watch entry (both were user-facing wording for a Watch; "Remove all watches?" is the copy), Undated (as user-facing copy), Unknown date, Sometime
+
+**Added this month**:
+The number of movie and episode Watches dated in the current calendar month in the Watcher's timezone, including rewatches. This counts when the media was watched, rather than when the Watch was added to the Shelf. Watches with **No date** do not count.
+
+**Watch Streak**:
+The current number of consecutive calendar days with at least one dated movie or episode Watch, in the Watcher's timezone. A streak ends today or yesterday, allowing today to be completed; a missed full day resets it to zero. Rewatches count, multiple Watches on one day count as one day, and Watches with **No date** do not count.
 
 **Most-Watched Show**:
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
@@ -126,7 +137,7 @@ A single item in the followed-users feed — a followed user's **Watch** (movie 
 _Avoid_: Event, feed post
 
 **Activity Feed**:
-The reverse-chronological stream of **Activities** from Users the authenticated user follows, optionally filtered by **Circle**. It is the primary content of **Social**; **Home** shows a short preview of the same feed.
+The reverse-chronological stream of **Activities** from Users the authenticated user follows, optionally filtered by **Circle**. It is the primary content of **Social**; **Home** shows a short preview of the same feed. Episode Watches by the same User for the same show and calendar day in the viewer’s saved timezone form one expandable bundle, ordered by its latest Watch. Movie Watches and Reviews remain individual. Social uses Today, Yesterday, and full-date headings in that timezone. Bundles are formed before pagination so counts include the whole day; rewatches remain distinct Watches within a bundle.
 
 **Person**:
 A cast or crew member sourced from TMDB — actor, director, writer, composer, etc. — not just actors. Has a TMDB person id and a detail page at `/people/{id}/{name-slug}`. A Person is **not** an opnshelf account holder; see _User_. In the ⌘K palette, Person results appear under the **Cast & Crew** heading (not "Actors", since the set includes directors and crew).

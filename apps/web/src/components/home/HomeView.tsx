@@ -152,7 +152,7 @@ export function HomeView() {
 	// Fetch social activity feed
 	const { data: feedData, isLoading: feedLoading } = useQuery({
 		...socialControllerGetFeedOptions({
-			query: { pageSize: 6 },
+			query: { groupEpisodes: "day", pageSize: 6 },
 		}),
 	});
 
@@ -310,7 +310,8 @@ export function HomeView() {
 				<StatsStrip
 					activity={profile?.activityLast30Days}
 					mostWatchedShow={profile?.mostWatchedShow ?? null}
-					watchedThisYear={profile?.watchedThisYear ?? 0}
+					watchedThisMonth={profile?.watchedThisMonth ?? 0}
+					watchStreak={profile?.watchStreak ?? 0}
 					reviewsCount={profile?.reviewsCount ?? 0}
 					isLoading={profileLoading || (!profile && !!user?.handle)}
 				/>

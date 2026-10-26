@@ -1007,7 +1007,7 @@ export type PublicUserProfileDto = {
      */
     followingCount: number;
     /**
-     * Daily watch activity for the last 30 UTC days, oldest first (always 30 entries)
+     * Daily watch activity for the last 30 days in the watcher’s timezone, oldest first (always 30 entries)
      */
     activityLast30Days: Array<ProfileActivityDayDto>;
     /**
@@ -1015,9 +1015,17 @@ export type PublicUserProfileDto = {
      */
     mostWatchedShow: MostWatchedShowDto | null;
     /**
-     * Items watched (movies + episodes) so far this calendar year, UTC
+     * Items watched (movies + episodes) so far this calendar year in the watcher’s timezone
      */
     watchedThisYear: number;
+    /**
+     * Dated movie and episode Watches this calendar month in the watcher’s timezone, including rewatches
+     */
+    watchedThisMonth: number;
+    /**
+     * Consecutive calendar days with a dated movie or episode Watch in the watcher’s timezone, ending today or yesterday
+     */
+    watchStreak: number;
     /**
      * Total number of reviews the user has written
      */
@@ -1853,6 +1861,10 @@ export type SocialActorDto = {
 };
 
 export type FollowedActivityItemDto = {
+    /**
+     * All episode Watches in this daily bundle, newest first; absent on unbundled activity
+     */
+    episodeWatches?: Array<FollowedActivityItemDto>;
     actor: SocialActorDto;
     id: string;
     type: 'movie' | 'episode' | 'review';
@@ -5715,6 +5727,10 @@ export type SocialControllerGetFeedData = {
          * Number of items to return per page
          */
         pageSize?: number;
+        /**
+         * Bundle episode Watches per User, show and day in the viewer's timezone before pagination
+         */
+        groupEpisodes?: 'day';
         /**
          * Restrict the feed to a single circle of followed users
          */

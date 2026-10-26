@@ -111,6 +111,8 @@ export function createLighthouseServer() {
 				displayName: "Local scenario",
 				watchesPublic: true,
 				watchedThisYear: 42,
+				watchedThisMonth: 12,
+				watchStreak: 3,
 				reviewsCount: 3,
 				activityLast30Days: Array.from({ length: 30 }, (_, i) => ({
 					date: new Date(Date.now() - (29 - i) * 86400000)

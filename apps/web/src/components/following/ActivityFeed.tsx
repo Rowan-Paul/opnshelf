@@ -1,12 +1,12 @@
-import type { FollowedActivityItemDto } from "@opnshelf/api";
+import { type FollowedActivityItemDto, groupActivities } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Activity, UserPlus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { CardRowsSkeleton } from "#/components/skeletons";
 import { ActivityCard } from "./ActivityCard";
 
-// Two columns on large screens so the feed fills the page like other lists
-// (profile connections) instead of a narrow centred column.
-const FEED_GRID = "grid grid-cols-1 gap-4 lg:grid-cols-2";
+// One chronological column keeps daily headings and expanded bundles together.
+const FEED_GRID = "grid grid-cols-1 gap-4";
 
 interface ActivityFeedProps {
 	activities: FollowedActivityItemDto[];
@@ -35,6 +35,12 @@ export function ActivityFeed({
 	onLoadMore,
 	onRetry,
 }: ActivityFeedProps) {
+	const [now, setNow] = useState(() => new Date());
+	useEffect(() => {
+		const timer = setInterval(() => setNow(new Date()), 60_000);
+		return () => clearInterval(timer);
+	}, []);
+
 	if (isLoading && activities.length === 0) {
 		return <CardRowsSkeleton className={FEED_GRID} />;
 	}
@@ -102,16 +108,23 @@ export function ActivityFeed({
 
 	return (
 		<div className="space-y-4">
-			<div className={FEED_GRID}>
-				{activities.map((activity: FollowedActivityItemDto) => (
-					<ActivityCard
-						key={activity.id}
-						activity={activity}
-						userTimezone={userTimezone}
-						userTimeFormat={userTimeFormat}
-					/>
-				))}
-			</div>
+			{groupActivities(activities, userTimezone ?? "UTC", now).map(
+				(group, index, groups) => (
+					<div key={group.id}>
+						{(index === 0 || groups[index - 1].day !== group.day) && (
+							<h2 className="mb-3 font-semibold text-(--foreground-muted) text-sm">
+								{group.label}
+							</h2>
+						)}
+						<ActivityCard
+							activity={group.items[0]}
+							episodes={group.items}
+							userTimezone={userTimezone}
+							userTimeFormat={userTimeFormat}
+						/>
+					</div>
+				),
+			)}
 			{hasNextPage && (
 				<div className="flex justify-center pt-2">
 					<button

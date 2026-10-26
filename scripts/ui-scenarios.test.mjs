@@ -166,3 +166,17 @@ test("sync review queue pages single episodes and advances after resolution", as
 		await new Promise((resolve) => server.close(resolve));
 	}
 });
+
+test("watch completion fixture advances only after a Watch and resets", async () => {
+ const server = createScenarioServer("watch-completion");
+ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+ const base = `http://127.0.0.1:${server.address().port}`;
+ try {
+  const read = async () => (await (await fetch(`${base}/shows/progress?showIds=1399`)).json()).items[0];
+  assert.equal((await read()).state, "partial");
+  await fetch(`${base}/shows/watched`, { method: "POST", body: JSON.stringify({ showId: "1399", seasonNumber: 1, episodeNumber: 2 }) });
+  assert.equal((await read()).state, "complete");
+  await fetch(`${base}/__scenario`, { method: "POST", body: JSON.stringify({ scenario: "watch-completion" }) });
+  assert.equal((await read()).episodesWatched, 1);
+ } finally { await new Promise(resolve => server.close(resolve)); }
+});

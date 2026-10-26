@@ -162,6 +162,13 @@ describe("ShowCatalogueService", () => {
 					ok: true,
 					json: () =>
 						Promise.resolve({
+							posters: [{ file_path: "/season.jpg", iso_639_1: "en" }],
+						}),
+				})
+				.mockResolvedValueOnce({
+					ok: true,
+					json: () =>
+						Promise.resolve({
 							id: 10,
 							name: "Season 1",
 							season_number: 1,

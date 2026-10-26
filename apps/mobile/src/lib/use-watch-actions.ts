@@ -25,6 +25,10 @@ import { useDialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
+import {
+	cachedCompletionProgress,
+	celebrateWatchCompletion,
+} from "@/lib/watch-completion";
 import { insertWatchEntry, optimisticWatchDate } from "@/lib/watch-date";
 import { requestWidgetUpdate } from "../../modules/widget-bridge";
 
@@ -300,6 +304,11 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onMutate: async (variables) => {
+			const completionBefore = cachedCompletionProgress(
+				queryClient,
+				showId,
+				userDid,
+			);
 			await queryClient.cancelQueries({ queryKey: showHistoryKey });
 			const prevHistory =
 				queryClient.getQueryData<EpisodeHistoryItemDto[]>(showHistoryKey);
@@ -321,7 +330,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 						}),
 				);
 			}
-			return { prevHistory };
+			return { prevHistory, completionBefore };
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prevHistory !== undefined) {
@@ -329,7 +338,11 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 			}
 			toast.error(errorMessage(error, "Failed to add episode to shelf"));
 		},
-		onSuccess: (_data, variables) => {
+		onSuccess: (_data, variables, context) => {
+			void celebrateWatchCompletion(
+				context?.completionBefore,
+				variables.body.seasonNumber,
+			);
 			captureWatchLogged("show", "episode", variables.body.watchedAt);
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
 			toast.success("Episode added to shelf");
@@ -412,10 +425,16 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markShow = useMutation({
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
+		onMutate: () => ({
+			completionBefore: cachedCompletionProgress(queryClient, showId, userDid),
+		}),
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add show to shelf"));
 		},
-		onSuccess: (data, variables) => {
+		onSuccess: (data, variables, context) => {
+			if (data.count > 0 && data.count === data.requested) {
+				void celebrateWatchCompletion(context?.completionBefore);
+			}
 			captureWatchLogged("show", "show", variables.body.watchedAt, data.count);
 			haptic(Haptics.ImpactFeedbackStyle.Medium);
 			toastBulkResult(toast, data, "Added to shelf");
@@ -428,10 +447,19 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markSeason = useMutation({
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
+		onMutate: () => ({
+			completionBefore: cachedCompletionProgress(queryClient, showId, userDid),
+		}),
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add season to shelf"));
 		},
-		onSuccess: (data, variables) => {
+		onSuccess: (data, variables, context) => {
+			if (data.count > 0 && data.count === data.requested) {
+				void celebrateWatchCompletion(
+					context?.completionBefore,
+					variables.body.seasonNumber,
+				);
+			}
 			captureWatchLogged(
 				"show",
 				"season",

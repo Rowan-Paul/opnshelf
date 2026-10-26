@@ -97,12 +97,14 @@ export class SocialService {
 		page = 1,
 		pageSize = DEFAULT_FEED_PAGE_SIZE,
 		circleId?: string,
+		groupEpisodes?: "day",
 	): Promise<FollowedActivityFeedDto> {
 		return this.activityFeed.getFollowedActivityFeed(
 			viewerDid,
 			page,
 			pageSize,
 			circleId,
+			groupEpisodes,
 		);
 	}
 

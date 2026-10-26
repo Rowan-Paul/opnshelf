@@ -452,7 +452,13 @@ export class UsersService {
 		const stats =
 			viewerDid === user.did || watchesPublic
 				? await this.getProfileStats(user.did, user.timezone)
-				: { activityLast30Days: [], mostWatchedShow: null, watchedThisYear: 0 };
+				: {
+						activityLast30Days: [],
+						mostWatchedShow: null,
+						watchedThisYear: 0,
+						watchedThisMonth: 0,
+						watchStreak: 0,
+					};
 
 		return {
 			watchesPublic,
@@ -484,9 +490,10 @@ export class UsersService {
 	/**
 	 * Compute the derived stats shown in the profile header: a 30-day watch
 	 * activity graph, the most-watched show over the trailing 30 days, and the
-	 * current year's watch count. A "watch" is one tracked row with status
+	 * current month’s watch count and Watch Streak (plus the yearly count for
+	 * older clients). A "watch" is one tracked row with status
 	 * `watched` and a `watchedDate` — rewatches are counted, watchlist adds are
-	 * not (see the Watch term in GLOSSARY.md). Day/year windows are bucketed in
+	 * not (see the Watch term in GLOSSARY.md). Day/month/year windows are bucketed in
 	 * the profile owner's own timezone, reusing the same activity logic the
 	 * dashboard renders so both surfaces agree; the most-watched show uses a
 	 * rolling 30-day cutoff from now, so it doesn't need timezone bucketing.
@@ -503,25 +510,39 @@ export class UsersService {
 			episodeWatchCount: number;
 		} | null;
 		watchedThisYear: number;
+		watchedThisMonth: number;
+		watchStreak: number;
 	}> {
-		const [activitySummary, yearRows, topShow] = await Promise.all([
+		// Ranking distinct local dates identifies the uninterrupted run from the latest
+		// watch day, without limiting streaks to the graph’s 30-day window.
+		const [activitySummary, watchRows, topShow] = await Promise.all([
 			this.shelfService.getUserActivitySummary(did),
-			this.prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
-				SELECT (
-					(SELECT COUNT(*) FROM "TrackedMovie" tm
-						WHERE tm."userDid" = ${did}
-							AND tm."status" = 'watched'
-							AND tm."watchedDate" IS NOT NULL
-							AND (tm."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date
-								>= date_trunc('year', (now() AT TIME ZONE ${timezone}))::date)
-					+
-					(SELECT COUNT(*) FROM "TrackedEpisode" te
-						WHERE te."userDid" = ${did}
-							AND te."status" = 'watched'
-							AND te."watchedDate" IS NOT NULL
-							AND (te."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date
-								>= date_trunc('year', (now() AT TIME ZONE ${timezone}))::date)
-				)::integer AS "count"
+			this.prisma.$queryRaw<
+				{ count: number; monthCount: number; streak: number }[]
+			>(Prisma.sql`
+				WITH activity AS (
+					SELECT (tm."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date AS day
+					FROM "TrackedMovie" tm
+					WHERE tm."userDid" = ${did} AND tm."status" = 'watched' AND tm."watchedDate" IS NOT NULL
+					UNION ALL
+					SELECT (te."watchedDate" AT TIME ZONE 'UTC' AT TIME ZONE ${timezone})::date AS day
+					FROM "TrackedEpisode" te
+					WHERE te."userDid" = ${did} AND te."status" = 'watched' AND te."watchedDate" IS NOT NULL
+				), bounds AS (
+					SELECT (now() AT TIME ZONE ${timezone})::date AS today
+				), days AS (
+					SELECT DISTINCT day FROM activity, bounds WHERE day <= today
+				), ranked AS (
+					SELECT day, row_number() OVER (ORDER BY day DESC)::integer AS position,
+						max(day) OVER () AS latest FROM days
+				)
+				SELECT
+					COUNT(*) FILTER (WHERE day >= date_trunc('year', today)::date)::integer AS count,
+					COUNT(*) FILTER (WHERE day >= date_trunc('month', today)::date AND day <= today)::integer AS "monthCount",
+					(SELECT COUNT(*)::integer FROM ranked
+						CROSS JOIN bounds
+						WHERE latest >= today - 1 AND day + position = latest + 1) AS streak
+				FROM activity CROSS JOIN bounds
 			`),
 			this.prisma.trackedEpisode.groupBy({
 				by: ["showId"],
@@ -541,7 +562,9 @@ export class UsersService {
 		]);
 
 		const activityLast30Days = activitySummary.dailyActivity;
-		const watchedThisYear = Number(yearRows[0]?.count ?? 0);
+		const watchedThisYear = Number(watchRows[0]?.count ?? 0);
+		const watchedThisMonth = Number(watchRows[0]?.monthCount ?? 0);
+		const watchStreak = Number(watchRows[0]?.streak ?? 0);
 
 		let mostWatchedShow: {
 			showId: string;
@@ -569,6 +592,8 @@ export class UsersService {
 			activityLast30Days,
 			mostWatchedShow,
 			watchedThisYear,
+			watchedThisMonth,
+			watchStreak,
 		};
 	}
 

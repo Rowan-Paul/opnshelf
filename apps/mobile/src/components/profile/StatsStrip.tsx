@@ -24,21 +24,23 @@ function formatDayLabel(date: string): string {
 
 /**
  * Profile stats strip: a 30-day watch-activity bar graph plus a few headline
- * stats (most-watched show, items watched this year, review count). Mirrors the
+ * stats (most-watched show, Watches dated this month, watch streak, review count). Mirrors the
  * web `StatsStrip`, fed from the same `PublicUserProfileDto`, so the numbers
  * stay identical across surfaces. Purely presentational.
  */
 export function StatsStrip({
 	activity,
 	mostWatchedShow,
-	watchedThisYear,
+	watchedThisMonth,
+	watchStreak,
 	reviewsCount,
 	reviewsHref,
 	isLoading,
 }: {
 	activity?: ProfileActivityDayDto[];
 	mostWatchedShow: MostWatchedShowDto | null;
-	watchedThisYear: number;
+	watchedThisMonth: number;
+	watchStreak: number;
 	reviewsCount: number;
 	reviewsHref?: Href;
 	isLoading: boolean;
@@ -69,11 +71,15 @@ export function StatsStrip({
 			</View>
 
 			{/* Headline stats */}
-			<View className="flex-row items-center gap-6 border-border border-t pt-4">
+			<View className="flex-row flex-wrap items-center gap-6 border-border border-t pt-4">
 				{mostWatchedShow ? (
 					<MostWatchedShowStat show={mostWatchedShow} />
 				) : null}
-				<NumberStat label="This year" value={watchedThisYear} />
+				<NumberStat label="Added this month" value={watchedThisMonth} />
+				<NumberStat
+					label="Watch streak"
+					value={`${watchStreak} ${watchStreak === 1 ? "day" : "days"}`}
+				/>
 				{reviewsHref ? (
 					<Link href={reviewsHref} asChild>
 						<Pressable>
@@ -172,7 +178,13 @@ function ActivityGraph({ data }: { data: ProfileActivityDayDto[] }) {
 	);
 }
 
-function NumberStat({ label, value }: { label: string; value: number }) {
+function NumberStat({
+	label,
+	value,
+}: {
+	label: string;
+	value: number | string;
+}) {
 	return (
 		<View>
 			<Text className="font-bold font-display text-2xl text-foreground">

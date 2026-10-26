@@ -145,3 +145,61 @@ describe("Episode navigation", () => {
 		},
 	);
 });
+
+describe("Season poster language", () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it.each([
+		{
+			posters: [{ file_path: "/english.jpg", iso_639_1: "en" }],
+			expected: "/english.jpg",
+		},
+		{
+			posters: [{ file_path: "/neutral.jpg", iso_639_1: null }],
+			expected: "/neutral.jpg",
+		},
+		{
+			posters: [{ file_path: "/hebrew.jpg", iso_639_1: "he" }],
+			expected: "/show.jpg",
+		},
+		{ posters: [], expected: "/show.jpg" },
+		{
+			posters: [
+				{ file_path: "/neutral.jpg", iso_639_1: null },
+				{ file_path: "/english.jpg", iso_639_1: "en" },
+			],
+			expected: "/english.jpg",
+		},
+	])(
+		"uses suitable season artwork or lets clients fall back to the show: $expected",
+		async ({ posters, expected }) => {
+			const fetch = vi.fn(async (input: string) => {
+				const path = new URL(input).pathname;
+				if (path.endsWith("/images")) return Response.json({ posters });
+				if (path.endsWith("/videos")) return Response.json({ results: [] });
+				const season = {
+					id: 1,
+					name: "Season 1",
+					season_number: 1,
+					poster_path: "/hebrew.jpg",
+				};
+				return Response.json(
+					path.endsWith("/season/1")
+						? { ...season, episodes: [] }
+						: { id: 334888, seasons: [season], poster_path: "/show.jpg" },
+				);
+			});
+			vi.stubGlobal("fetch", fetch);
+			const service = new ShowsTmdbService(
+				mockEnvironment({ TMDB_API_KEY: "test" }),
+			);
+			const show = await service.getShowDetails("334888");
+			const season = await service.getSeasonDetails("334888", 1);
+			expect(show.seasons?.[0].poster_path).toBe(expected);
+			expect(season.poster_path).toBe(expected);
+			expect(
+				fetch.mock.calls.filter(([url]) => url.includes("/images")),
+			).toHaveLength(1);
+		},
+	);
+});
