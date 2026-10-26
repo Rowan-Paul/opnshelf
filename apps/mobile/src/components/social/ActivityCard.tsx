@@ -22,10 +22,11 @@ import { useThemeColors } from "@/theme/colors";
 
 /**
  * Rich activity card for the Activity tab (the dashboard preview keeps the
- * compact `ActivityRow`). Mirrors the web "following" `ActivityCard`: poster
- * art on the left, actor + action header, episode line, a review rating +
- * excerpt or a synopsis excerpt, timestamp, and inline actions (one-tap
- * add-to-shelf + ⋯ quick actions) for watch items.
+ * compact `ActivityRow`). Mirrors the web "following" `ActivityCard`: a
+ * full-width actor + action header with timestamp and Movie/TV pill, then
+ * poster art beside the episode line, a review rating + excerpt or a synopsis
+ * excerpt, and inline actions (one-tap add-to-shelf + ⋯ quick actions) for
+ * watch items.
  */
 export function ActivityCard({
 	activity,

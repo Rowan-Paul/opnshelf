@@ -29,7 +29,10 @@ import { CircleFilterBar } from "@/components/social/CircleFilterBar";
 import { UserRow } from "@/components/social/UserRow";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
-import { ReviewsSkeleton, UserRowsSkeleton } from "@/components/ui/skeletons";
+import {
+	ActivityCardsSkeleton,
+	UserRowsSkeleton,
+} from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -151,7 +154,7 @@ export default function SocialScreen() {
 
 			{following.isLoading || isLoading ? (
 				<View className="px-4 pt-3">
-					<ReviewsSkeleton rows={3} />
+					<ActivityCardsSkeleton rows={3} />
 				</View>
 			) : following.isError ? (
 				<ErrorState
@@ -203,7 +206,7 @@ export default function SocialScreen() {
 					ListFooterComponent={
 						isFetchingNextPage ? (
 							<View className="px-4 py-3">
-								<ReviewsSkeleton rows={1} />
+								<ActivityCardsSkeleton rows={1} />
 							</View>
 						) : null
 					}

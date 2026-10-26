@@ -2,11 +2,8 @@ import { type FollowedActivityItemDto, groupActivities } from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Activity, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CardRowsSkeleton } from "#/components/skeletons";
+import { ActivityCardsSkeleton } from "#/components/skeletons";
 import { ActivityCard } from "./ActivityCard";
-
-// One chronological column keeps daily headings and expanded bundles together.
-const FEED_GRID = "grid grid-cols-1 gap-4";
 
 interface ActivityFeedProps {
 	activities: FollowedActivityItemDto[];
@@ -42,14 +39,14 @@ export function ActivityFeed({
 	}, []);
 
 	if (isLoading && activities.length === 0) {
-		return <CardRowsSkeleton className={FEED_GRID} />;
+		return <ActivityCardsSkeleton rows={3} />;
 	}
 
 	if (error && activities.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12 text-(--foreground-muted)">
 				<Activity className="mb-4 size-12 opacity-50" />
-				<p>Failed to load activity feed</p>
+				<p>Couldn&apos;t load activity.</p>
 				<button
 					type="button"
 					className="btn btn-secondary mt-4"
