@@ -2,6 +2,7 @@ import {
 	notesControllerGetUserNotesInfiniteOptions,
 	notesControllerGetUserNotesQueryKey,
 	slugifyName,
+	type UserNoteDto,
 	usersControllerGetPublicProfileOptions,
 } from "@opnshelf/api";
 import {
@@ -55,14 +56,8 @@ export const Route = createFileRoute("/profile/$handle/notes")({
 	component: ProfileNotesPage,
 });
 
-function getNoteLink(note: {
-	mediaType: string;
-	mediaId: string;
-	seasonNumber?: number;
-	episodeNumber?: number;
-	title?: string;
-}) {
-	const nameSlug = slugifyName(note.title || "");
+function getNoteLink(note: UserNoteDto) {
+	const nameSlug = slugifyName(note.mediaTitle || "");
 	if (note.mediaType === "movie") {
 		return {
 			to: "/movies/$movieId/$movieName" as const,
@@ -101,18 +96,7 @@ function NoteCard({
 	isOwner,
 	userDid,
 }: {
-	note: {
-		id: string;
-		content: string;
-		mediaType: string;
-		mediaId: string;
-		seasonNumber?: number;
-		episodeNumber?: number;
-		title?: string;
-		posterPath?: string;
-		createdAt: string;
-		updatedAt: string;
-	};
+	note: UserNoteDto;
 	isOwner: boolean;
 	userDid: string;
 }) {
@@ -162,7 +146,7 @@ function NoteCard({
 				posterUrl={posterUrl}
 				to={link.to}
 				params={link.params}
-				title={note.title || "Unknown title"}
+				title={note.mediaLabel || "Unknown title"}
 				meta={new Date(note.updatedAt).toLocaleDateString()}
 				headerRight={
 					isOwner ? (
@@ -212,8 +196,8 @@ function NoteCard({
 				description={
 					<>
 						This permanently deletes your note for{" "}
-						<strong>{note.title || "this title"}</strong>. This action cannot be
-						undone.
+						<strong>{note.mediaLabel || "this title"}</strong>. This action
+						cannot be undone.
 					</>
 				}
 				confirmLabel="Delete note"

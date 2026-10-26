@@ -138,6 +138,8 @@ export class NotesController {
 				seasonNumber: note.seasonNumber || undefined,
 				episodeNumber: note.episodeNumber || undefined,
 				title: note.title,
+				mediaLabel: note.title,
+				mediaTitle: note.mediaTitle,
 				posterPath: note.posterPath ?? undefined,
 				createdAt: note.createdAt.toISOString(),
 				updatedAt: note.updatedAt.toISOString(),
