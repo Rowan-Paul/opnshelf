@@ -2,8 +2,7 @@ name: Release
 
 # `main` is release-only (ADR 0021), so every push to it is a release. This
 # publishes a GitHub release for that push, with the commit subjects that just
-# went from staging to production as the body, then gets the change to phones
-# by whichever of the two routes fits.
+# went from staging to production as the body, then prepares the Mobile release.
 #
 # ponytail: commit subjects, not PR titles. Work lands as direct commits on
 # `develop`, so GitHub's own --generate-notes (which lists merged PRs only)
@@ -13,7 +12,7 @@ name: Release
 #
 # `version` in `apps/mobile/app.config.ts` is the switch:
 #
-#   bumped      -> store build and submit, both platforms. Hours to days.
+#   bumped      -> store builds for both platforms; submit after checking notes.
 #   not bumped  -> OTA update on the production channel. Next app launch.
 #
 # The two are exclusive by construction, not by preference. The runtime version
@@ -157,17 +156,16 @@ jobs:
           gh release create "$tag" --title "$tag" --notes-file notes.md \
             --target "$GITHUB_SHA"
 
-      # ponytail: dispatch the existing manual workflow instead of repeating its
-      # EAS setup and secret handling here. It runs as its own job, so a flaky
-      # EAS build does not turn the release run red. workflow_dispatch is one of
-      # the two events GITHUB_TOKEN is allowed to trigger.
-      - name: Build and submit the store release
+      # Build without auto-submission so the binaries can be attached to the
+      # prepared store releases and their notes verified before review. This
+      # runs separately, so check the EAS Build workflow result too.
+      - name: Build the store release
         if: needs.validate.outputs.store_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run eas-build.yml --ref main \
-            -f platform=all -f profile=production -f submit=true
+            -f platform=all -f profile=production -f submit=false
 
   # Its own job rather than a step, because publishing an update needs the whole
   # pnpm and EAS toolchain that the release job has no other use for.
