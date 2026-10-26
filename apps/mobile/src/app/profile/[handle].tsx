@@ -1,4 +1,5 @@
 import { Stack, useLocalSearchParams } from "expo-router";
+import { Lock } from "lucide-react-native";
 import { useState } from "react";
 import { View } from "react-native";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -15,8 +16,7 @@ import { ReviewsTab } from "@/components/profile/tabs/ReviewsTab";
 import { ShelfTab } from "@/components/profile/tabs/ShelfTab";
 import { UpNextTab } from "@/components/profile/tabs/UpNextTab";
 import { ProfileHeaderSkeleton } from "@/components/ui/skeletons";
-import { ErrorState } from "@/components/ui/states";
-import { Text } from "@/components/ui/text";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { usePublicProfile } from "@/lib/use-public-profile";
@@ -120,9 +120,13 @@ export default function ProfileScreen() {
 					{!isOwner &&
 					!profile.watchesPublic &&
 					(tab === "shelf" || tab === "up-next") ? (
-						<Text className="px-4 py-6 text-muted-foreground">
-							Watches are private.
-						</Text>
+						<View className="px-4 pt-4 pb-12">
+							<EmptyState
+								variant="card"
+								icon={Lock}
+								message="Watches are private."
+							/>
+						</View>
 					) : tab === "overview" ? (
 						<OverviewTab
 							canReadWatches={isOwner || profile.watchesPublic}
@@ -148,17 +152,25 @@ export default function ProfileScreen() {
 						isOwner || profile.libraryPublic !== false ? (
 							<LibraryTab userDid={userDid} />
 						) : (
-							<Text className="p-5 text-muted-foreground">
-								This Library is private.
-							</Text>
+							<View className="px-4 pt-4 pb-12">
+								<EmptyState
+									variant="card"
+									icon={Lock}
+									message="This Library is private."
+								/>
+							</View>
 						)
 					) : tab === "notes" ? (
 						isOwner || profile.notesPublic !== false ? (
 							<NotesTab userDid={userDid} isOwner={isOwner} />
 						) : (
-							<Text className="p-5 text-muted-foreground">
-								These Notes are private.
-							</Text>
+							<View className="px-4 pt-4 pb-12">
+								<EmptyState
+									variant="card"
+									icon={Lock}
+									message="These Notes are private."
+								/>
+							</View>
 						)
 					) : tab === "reviews" ? (
 						<ReviewsTab

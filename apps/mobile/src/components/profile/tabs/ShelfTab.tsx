@@ -68,16 +68,19 @@ const FILTERS: { key: Filter; label: string; icon?: typeof Film }[] = [
  * Shelf tab: grid of the user's watched movies + episodes, loaded page by page
  * as the reader scrolls, with type filter pills and a search box. Mirrors the
  * web shelf page (which pages by URL instead). Rendered inside the parent
- * screen's `EndReachedScrollView`, so it does not own a list.
+ * screen's `EndReachedScrollView`, so it does not own a list. `showHeading`
+ * is off on the full-screen route, where the stack header already says "Shelf".
  */
 export function ShelfTab({
 	userDid,
 	isOwner = false,
 	initialFilter = "all",
+	showHeading = true,
 }: {
 	userDid: string;
 	isOwner?: boolean;
 	initialFilter?: Filter;
+	showHeading?: boolean;
 }) {
 	const colors = useThemeColors();
 	const [filter, setFilter] = useState<Filter>(initialFilter);
@@ -115,6 +118,10 @@ export function ShelfTab({
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
+			{showHeading ? (
+				<Text className="text-display-2 text-foreground">Shelf</Text>
+			) : null}
+
 			<TextField
 				leading={<Search color={colors.mutedForeground} size={18} />}
 				trailing={

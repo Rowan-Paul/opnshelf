@@ -3,12 +3,14 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	formatLocalDateKey,
 	formatMonthDateKey,
+	formatRelativeReleaseDate,
 	formatReleaseDate,
 	formatWeekDayLabel,
 	formatWeekRange,
 	getCalendarDateRange,
 	getDisplayTitle,
 	getMonthGrid,
+	getReleaseEpisodeInfo,
 	getReleaseUrl,
 	getWeekDays,
 	getWeekReleases,
@@ -504,6 +506,37 @@ describe("formatting", () => {
 		expect(formatWeekRange(new Date(2026, 8, 7), "America/New_York")).toBe(
 			"Sep 7 - Sep 13",
 		);
+	});
+
+	it("labels a release day relative to today and omits past days", () => {
+		const today = new Date(2026, 9, 24, 18);
+		expect(formatRelativeReleaseDate("2026-10-23", today)).toBeUndefined();
+		expect(formatRelativeReleaseDate("2026-10-24", today)).toBe("Today");
+		expect(formatRelativeReleaseDate("2026-10-25", today)).toBe("Tomorrow");
+		// Spans the 2026-10-25 DST transition.
+		expect(formatRelativeReleaseDate("2026-10-27", today)).toBe("in 3 days");
+		expect(formatRelativeReleaseDate("2026-10-31", today)).toBe("in 1 week");
+		expect(formatRelativeReleaseDate("2026-11-10", today)).toBe("in 3 weeks");
+	});
+
+	it("labels episode, season and premiere releases", () => {
+		const releaseDate = "2026-10-24";
+		expect(
+			getReleaseEpisodeInfo(
+				release({ releaseDate, seasonNumber: 1, episodeNumber: 5 }),
+			),
+		).toBe("S1E5");
+		expect(
+			getReleaseEpisodeInfo(release({ releaseDate, seasonNumber: 2 })),
+		).toBe("Season 2");
+		expect(
+			getReleaseEpisodeInfo(release({ releaseDate, releaseKind: "show" })),
+		).toBe("Season Premiere");
+		expect(
+			getReleaseEpisodeInfo(
+				release({ releaseDate, mediaType: "movie", releaseKind: "movie" }),
+			),
+		).toBeUndefined();
 	});
 
 	it("exposes Monday-first weekday labels and twelve month names", () => {

@@ -15,6 +15,7 @@ import { useState } from "react";
 import ConfirmDialog from "#/components/ConfirmDialog";
 import { NoteDialog } from "#/components/NoteDialog";
 import { ProfileContentCard } from "#/components/ProfileContentCard";
+import { PrivateNotice } from "#/components/profile/PrivateNotice";
 import { useAuth } from "#/lib/auth-context";
 import { useDeleteNote } from "#/lib/hooks/useNotes";
 import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
@@ -248,9 +249,7 @@ function ProfileNotesPage() {
 	const notes = data?.pages.flatMap((page) => page.items) ?? [];
 
 	if (profile?.notesPublic === false && !isOwner)
-		return (
-			<p className="py-8 text-(--foreground-muted)">These Notes are private.</p>
-		);
+		return <PrivateNotice message="These Notes are private." />;
 	return (
 		<div className="space-y-6">
 			<h1 className="text-display-2">Notes</h1>

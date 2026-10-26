@@ -93,60 +93,59 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 		})).filter((group) => group.items.length > 0);
 	}, [filtered, groupByFormat]);
 
-	if (isLoading) {
-		return <PosterGridSkeleton gridClassName={LIBRARY_GRID} />;
-	}
-
-	if (!items || items.length === 0) {
-		return (
-			<div className="py-10 text-center text-(--foreground-muted) text-sm">
-				Nothing owned yet.
-			</div>
-		);
-	}
-
 	return (
-		<div className="space-y-4">
-			<div className="flex flex-wrap items-center gap-2">
-				<button
-					type="button"
-					onClick={() => setFormatFilter("all")}
-					className={`${CHIP} ${formatFilter === "all" ? CHIP_ON : CHIP_OFF}`}
-				>
-					All
-				</button>
-				{LIBRARY_FORMATS.map(({ value, label }) => (
-					<button
-						key={value}
-						type="button"
-						onClick={() => setFormatFilter(value)}
-						className={`${CHIP} ${formatFilter === value ? CHIP_ON : CHIP_OFF}`}
-					>
-						{label}
-					</button>
-				))}
-				<button
-					type="button"
-					onClick={() => setGroupByFormat((v) => !v)}
-					className={`${CHIP} ml-auto ${groupByFormat ? CHIP_ON : CHIP_OFF}`}
-				>
-					{groupByFormat ? "Grouped by format" : "Group by format"}
-				</button>
-			</div>
-
-			{grouped ? (
-				<div className="space-y-6">
-					{grouped.map((group) => (
-						<section key={group.format} className="space-y-2">
-							<h3 className="font-display font-semibold text-(--foreground) text-lg">
-								{FORMAT_LABELS[group.format]}
-							</h3>
-							<LibraryGrid items={group.items} />
-						</section>
-					))}
+		<div className="space-y-6">
+			<h1 className="text-display-2">Library</h1>
+			{isLoading ? (
+				<PosterGridSkeleton gridClassName={LIBRARY_GRID} />
+			) : !items || items.length === 0 ? (
+				<div className="py-10 text-center text-(--foreground-muted) text-sm">
+					Nothing owned yet.
 				</div>
 			) : (
-				<LibraryGrid items={filtered} />
+				<div className="space-y-4">
+					<div className="flex flex-wrap items-center gap-2">
+						<button
+							type="button"
+							onClick={() => setFormatFilter("all")}
+							className={`${CHIP} ${formatFilter === "all" ? CHIP_ON : CHIP_OFF}`}
+						>
+							All
+						</button>
+						{LIBRARY_FORMATS.map(({ value, label }) => (
+							<button
+								key={value}
+								type="button"
+								onClick={() => setFormatFilter(value)}
+								className={`${CHIP} ${formatFilter === value ? CHIP_ON : CHIP_OFF}`}
+							>
+								{label}
+							</button>
+						))}
+						<button
+							type="button"
+							onClick={() => setGroupByFormat((v) => !v)}
+							className={`${CHIP} ml-auto ${groupByFormat ? CHIP_ON : CHIP_OFF}`}
+						>
+							{groupByFormat ? "Grouped by format" : "Group by format"}
+						</button>
+					</div>
+
+					{grouped ? (
+						<div className="space-y-6">
+							{grouped.map((group) => (
+								<section key={group.format} className="space-y-2">
+									<h3 className="text-(--foreground) text-display-3">
+										{FORMAT_LABELS[group.format]}
+									</h3>
+									<LibraryGrid items={group.items} />
+								</section>
+							))}
+						</div>
+					) : (
+						<LibraryGrid items={filtered} />
+					)}
+				</div>
 			)}
 		</div>
 	);
