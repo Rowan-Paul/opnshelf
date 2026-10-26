@@ -1,0 +1,5 @@
+Enjoy a more consistent look across Home, Social, Profiles, Calendar and detail pages.
+
+Browse Lists with search, sorting and filters, including Lists shared by others. See episode images in Up Next and manage Notes from more places.
+
+Include a screenshot when sending feedback. This release also brings smoother navigation and editing, plus fixes throughout the app.
