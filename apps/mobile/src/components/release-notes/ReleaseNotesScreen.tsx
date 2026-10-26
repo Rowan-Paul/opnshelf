@@ -51,11 +51,6 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 					contentContainerClassName="gap-6 py-6"
 					showsVerticalScrollIndicator={false}
 				>
-					{slug && (
-						<Link href="/whats-new">
-							<Text className="text-primary text-sm">← All release notes</Text>
-						</Link>
-					)}
 					<View className="gap-3">
 						{slug && (
 							<Text className="text-display-1 text-foreground">
