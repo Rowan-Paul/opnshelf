@@ -166,6 +166,23 @@ describe("Button", () => {
 		}
 	});
 
+	it("stacks a muted description under a stepped-down label", () => {
+		const renderer = render(
+			<Button label="Next episode" description="S1E2" variant="secondary" />,
+		);
+		const texts = renderer.root.findAll((n) => hostType(n) === "text");
+		expect(texts.map((t) => t.props.children)).toEqual([
+			"Next episode",
+			"S1E2",
+		]);
+		expect(texts[0].props.className).toContain("text-sm");
+		expect(texts[1].props.className).toContain("text-muted-foreground");
+		expect(button(renderer).props.className).toContain("h-12 px-3");
+		expect(button(renderer).props.accessibilityLabel).toBe(
+			"Next episode, S1E2",
+		);
+	});
+
 	it("keeps layout classes the caller passes", () => {
 		// Screens need flex-1 / mt-2 / self-start without reaching for a Pressable.
 		const renderer = render(<Button label="A" className="flex-1" />);

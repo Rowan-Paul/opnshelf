@@ -59,6 +59,8 @@ const SIZE = {
 export interface ButtonProps
 	extends Omit<PressableProps, "children" | "style" | "disabled"> {
 	label: string;
+	/** A smaller muted second line under the label, e.g. a target's "S1E2". */
+	description?: string;
 	variant?: ButtonVariant;
 	size?: ButtonSize;
 	/** Blocks presses and dims, without implying anything is in flight. */
@@ -89,6 +91,7 @@ export interface ButtonProps
 export const Button = forwardRef<ViewInstance, ButtonProps>(function Button(
 	{
 		label,
+		description,
 		variant = "primary",
 		size = "md",
 		disabled = false,
@@ -119,35 +122,59 @@ export const Button = forwardRef<ViewInstance, ButtonProps>(function Button(
 					? SPINNER.foreground.dark
 					: SPINNER.foreground.light;
 
+	// Android can wrap the last word below this fixed-height button.
+	const labelText = (
+		<Text
+			numberOfLines={1}
+			className={cn(
+				"font-semibold",
+				muted ? DISABLED_PRIMARY.label : VARIANT[variant].label,
+				// Two lines must share the fixed height, so the label steps down.
+				description ? SIZE.sm.label : SIZE[size].label,
+				showSpinner && !description && "opacity-0",
+			)}
+		>
+			{loading ? (loadingLabel ?? label) : label}
+		</Text>
+	);
+
 	return (
 		<Pressable
 			ref={ref}
 			accessibilityRole="button"
-			accessibilityLabel={label}
+			accessibilityLabel={description ? `${label}, ${description}` : label}
 			accessibilityState={{ disabled: locked, busy: loading }}
 			disabled={locked}
 			className={cn(
 				"flex-row items-center justify-center gap-2 rounded-lg",
 				muted ? DISABLED_PRIMARY.box : VARIANT[variant].box,
-				SIZE[size].box,
+				// Two lines need the md height but sit side by side in pairs, so
+				// they keep the compact padding.
+				description ? "h-12 px-3" : SIZE[size].box,
 				className,
 			)}
 			style={{ opacity: locked && !muted ? DISABLED_OPACITY : 1 }}
 			{...props}
 		>
 			{leading}
-			{/* Android can wrap the last word below this fixed-height button. */}
-			<Text
-				numberOfLines={1}
-				className={cn(
-					"font-semibold",
-					muted ? DISABLED_PRIMARY.label : VARIANT[variant].label,
-					SIZE[size].label,
-					showSpinner && "opacity-0",
-				)}
-			>
-				{loading ? (loadingLabel ?? label) : label}
-			</Text>
+			{description ? (
+				<View className={cn("shrink items-center", showSpinner && "opacity-0")}>
+					{labelText}
+					<Text
+						numberOfLines={1}
+						className={cn(
+							"text-xs",
+							variant === "primary" && !muted
+								? "text-primary-foreground"
+								: "text-muted-foreground",
+						)}
+					>
+						{description}
+					</Text>
+				</View>
+			) : (
+				labelText
+			)}
 			{showSpinner ? (
 				<View className="absolute inset-0 items-center justify-center">
 					<ActivityIndicator size="small" color={spinner} />

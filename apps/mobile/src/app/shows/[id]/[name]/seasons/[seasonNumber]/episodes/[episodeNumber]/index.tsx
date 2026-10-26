@@ -4,10 +4,10 @@ import {
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Link, router, Stack, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRef } from "react";
 import type { ScrollViewInstance } from "react-native";
 import { Pressable, RefreshControl, View } from "react-native";
+import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
 import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import {
@@ -23,6 +23,7 @@ import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
 import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
+import { PrevNextNav } from "@/components/detail/PrevNextNav";
 import { RateReviewButton } from "@/components/detail/RateReviewButton";
 import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
@@ -231,6 +232,12 @@ export default function EpisodeDetailScreen() {
 										seasonNumber={seasonNum}
 										episodeNumber={episodeNum}
 									/>
+									<AddToLibraryButton
+										mediaType="show"
+										mediaId={id}
+										seasonNumber={seasonNum}
+										episodeNumber={episodeNum}
+									/>
 									<NoteButton
 										mediaType="show"
 										mediaId={id}
@@ -252,34 +259,26 @@ export default function EpisodeDetailScreen() {
 								</View>
 							</View>
 
-							<View className="flex-row gap-2 px-4">
-								<Pressable
-									onPress={() => prevEpisode && goToEpisode(prevEpisode)}
-									disabled={!prevEpisode}
-									className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-									style={{ opacity: prevEpisode ? 1 : 0.4 }}
-								>
-									<ChevronLeft color={themeColors.mutedForeground} size={18} />
-									<Text className="font-semibold text-foreground">
-										{prevEpisode
-											? `Prev (S${prevEpisode.season}E${prevEpisode.episode})`
-											: "Previous"}
-									</Text>
-								</Pressable>
-								<Pressable
-									onPress={() => nextEpisode && goToEpisode(nextEpisode)}
-									disabled={!nextEpisode}
-									className="flex-1 flex-row items-center justify-center gap-1 rounded-lg border border-border py-3"
-									style={{ opacity: nextEpisode ? 1 : 0.4 }}
-								>
-									<Text className="font-semibold text-foreground">
-										{nextEpisode
-											? `Next (S${nextEpisode.season}E${nextEpisode.episode})`
-											: "Next"}
-									</Text>
-									<ChevronRight color={themeColors.mutedForeground} size={18} />
-								</Pressable>
-							</View>
+							<PrevNextNav
+								previous={
+									prevEpisode
+										? {
+												label: "Previous episode",
+												code: `S${prevEpisode.season}E${prevEpisode.episode}`,
+												onPress: () => goToEpisode(prevEpisode),
+											}
+										: undefined
+								}
+								next={
+									nextEpisode
+										? {
+												label: "Next episode",
+												code: `S${nextEpisode.season}E${nextEpisode.episode}`,
+												onPress: () => goToEpisode(nextEpisode),
+											}
+										: undefined
+								}
+							/>
 						</>
 					}
 					secondary={

@@ -3,7 +3,7 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
+import { Play, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
@@ -35,6 +35,7 @@ import MediaHero, {
 	MediaHeroActionsSkeleton,
 } from "../../../../../components/MediaHero";
 import PersonGrid from "../../../../../components/PersonGrid";
+import { PrevNextNav } from "../../../../../components/PrevNextNav";
 import { ProgressShelfButton } from "../../../../../components/ProgressShelfButton";
 import { ReviewDialog } from "../../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../../components/SimilarMediaGrid";
@@ -431,39 +432,34 @@ function SeasonDetailPage() {
 					)
 				}
 				currentProgress={
-					<div className="flex items-center gap-4 text-sm">
-						{previousSeason && (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(previousSeason.season_number),
-								}}
-								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
-							>
-								<ChevronLeft className="size-4" />
-								Previous (S{previousSeason.season_number})
-							</Link>
-						)}
-						<span className="text-(--foreground-muted)">
-							Season {seasonNum} of {sortedSeasons.length}
-						</span>
-						{nextSeason && (
-							<Link
-								to="/shows/$showId/$showName/seasons/$seasonNumber"
-								params={{
-									showId,
-									showName: slugifyName(show.name),
-									seasonNumber: String(nextSeason.season_number),
-								}}
-								className="inline-flex items-center gap-1 text-(--foreground-muted) transition-colors hover:text-(--accent)"
-							>
-								Next (S{nextSeason.season_number})
-								<ChevronRight className="size-4" />
-							</Link>
-						)}
-					</div>
+					<PrevNextNav
+						previous={
+							previousSeason
+								? {
+										label: "Previous season",
+										code: `S${previousSeason.season_number}`,
+										href: buildSeasonUrl(
+											showId,
+											show.name,
+											previousSeason.season_number,
+										),
+									}
+								: undefined
+						}
+						next={
+							nextSeason
+								? {
+										label: "Next season",
+										code: `S${nextSeason.season_number}`,
+										href: buildSeasonUrl(
+											showId,
+											show.name,
+											nextSeason.season_number,
+										),
+									}
+								: undefined
+						}
+					/>
 				}
 				breadcrumbs={[
 					{
