@@ -19,6 +19,7 @@ import {
 	PixelRatio,
 	Platform,
 	Pressable,
+	ScrollView,
 	View,
 } from "react-native";
 import {
@@ -130,7 +131,12 @@ function FeedbackSheet({
 			<KeyboardProvider>
 				<KeyboardAvoidingView behavior="padding" style={avoidingStyle}>
 					<Pressable className="flex-1" onPress={onDismiss} />
-					<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+					<ScrollView
+						className="rounded-t-2xl border border-border bg-card"
+						style={{ flexGrow: 0, flexShrink: 1 }}
+						contentContainerStyle={{ padding: 20, gap: 16 }}
+						keyboardShouldPersistTaps="handled"
+					>
 						<View className="flex-row items-center justify-between">
 							<Text className="font-display-bold text-foreground text-lg">
 								Send feedback
@@ -224,7 +230,7 @@ function FeedbackSheet({
 							disabled={!canSubmit}
 							onPress={submit}
 						/>
-					</View>
+					</ScrollView>
 				</KeyboardAvoidingView>
 			</KeyboardProvider>
 		</Modal>

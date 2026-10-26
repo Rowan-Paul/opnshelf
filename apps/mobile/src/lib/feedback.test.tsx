@@ -38,6 +38,7 @@ vi.mock("react-native", () => ({
 	Modal: "modal",
 	Pressable: "pressable",
 	View: "view",
+	ScrollView: "scroll",
 	Platform: { OS: "android", Version: 37 },
 }));
 vi.mock("react-native-keyboard-controller", () => ({
