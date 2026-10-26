@@ -1,6 +1,11 @@
-import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import {
+	act,
+	create,
+	type ReactTestInstance,
+	type ReactTestRenderer,
+} from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
-import { PosterRowSkeleton } from "./skeletons";
+import { ActivityCardsSkeleton, PosterRowSkeleton } from "./skeletons";
 
 vi.mock("@/lib/use-wide-layout", () => ({
 	useWideLayout: () => false,
@@ -32,6 +37,28 @@ describe("PosterRowSkeleton", () => {
 			for (const card of cards)
 				expect(card.props.className).toContain("shrink-0");
 		}
+		act(() => renderer.unmount());
+	});
+});
+
+describe("ActivityCardsSkeleton", () => {
+	it("draws a header row above the poster row for each card", () => {
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(<ActivityCardsSkeleton rows={2} />);
+		});
+		const cards = renderer.root.findAll(
+			(node) => node.props.testID === "activity-card-skeleton",
+		);
+		expect(cards).toHaveLength(2);
+		const [header, body] = cards[0].children as ReactTestInstance[];
+		// Avatar, two text lines, then the Movie/TV pill.
+		expect(
+			header.findAll((node) => node.props.className?.includes("rounded-full")),
+		).toHaveLength(2);
+		expect(body.children[0]).toMatchObject({
+			props: { className: expect.stringContaining("h-32 w-20") },
+		});
 		act(() => renderer.unmount());
 	});
 });

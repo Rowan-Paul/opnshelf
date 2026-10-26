@@ -60,26 +60,33 @@ export function UserRowsSkeleton({ rows = 4 }: { rows?: number }) {
 	);
 }
 
-/** Card rows with thumb + text lines (activity feeds, episode lists). */
-export function CardRowsSkeleton({
-	rows = 4,
-	className = "space-y-3",
-}: {
-	rows?: number;
-	className?: string;
-}) {
+/** Activity Feed cards: mirrors ActivityCard — actor header with the type
+ * pill, then poster + text lines. */
+export function ActivityCardsSkeleton({ rows = 4 }: { rows?: number }) {
 	return (
-		<div className={className}>
+		<div className="space-y-4">
 			{IDX(rows).map((i) => (
 				<div
 					key={i}
-					className="flex gap-3 rounded-xl border border-(--border) p-3"
+					data-testid="activity-card-skeleton"
+					className="card flex flex-col gap-3 p-5"
 				>
-					<div className={`h-24 w-16 shrink-0 rounded-md ${PULSE}`} />
-					<div className="flex flex-1 flex-col justify-center space-y-2">
-						<div className={`h-3 w-3/4 ${PULSE}`} />
-						<div className={`h-2.5 w-1/2 ${PULSE}`} />
-						<div className={`h-2.5 w-2/3 ${PULSE}`} />
+					<div className="flex items-start gap-2">
+						<div className={`size-8 shrink-0 rounded-full ${PULSE}`} />
+						<div className="flex-1 space-y-1.5">
+							<div className={`h-3.5 w-3/5 ${PULSE}`} />
+							<div className={`h-2.5 w-1/4 ${PULSE}`} />
+						</div>
+						<div className={`h-5 w-12 shrink-0 rounded-full ${PULSE}`} />
+					</div>
+					<div className="flex gap-4">
+						<div className={`h-32 w-20 shrink-0 rounded-lg ${PULSE}`} />
+						<div className="flex-1 space-y-2">
+							<div className={`h-3.5 w-2/5 ${PULSE}`} />
+							<div className={`h-2.5 w-full ${PULSE}`} />
+							<div className={`h-2.5 w-full ${PULSE}`} />
+							<div className={`h-2.5 w-2/3 ${PULSE}`} />
+						</div>
 					</div>
 				</div>
 			))}
