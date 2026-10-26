@@ -9,13 +9,23 @@ import {
 	type ReactNode,
 	useCallback,
 	useContext,
+	useRef,
 	useState,
 } from "react";
-import { Modal, Platform, Pressable, View } from "react-native";
+import {
+	Dimensions,
+	Image,
+	Modal,
+	PixelRatio,
+	Platform,
+	Pressable,
+	View,
+} from "react-native";
 import {
 	KeyboardAvoidingView,
 	KeyboardProvider,
 } from "react-native-keyboard-controller";
+import { captureScreen } from "react-native-view-shot";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
@@ -51,9 +61,13 @@ const CATEGORIES: { value: Category; label: string; icon: typeof Bug }[] = [
 function FeedbackSheet({
 	visible,
 	onDismiss,
+	screenshot,
+	onRemoveScreenshot,
 }: {
 	visible: boolean;
 	onDismiss: () => void;
+	screenshot?: string;
+	onRemoveScreenshot: () => void;
 }) {
 	const colors = useThemeColors();
 	const toast = useToast();
@@ -93,6 +107,7 @@ function FeedbackSheet({
 		mutation.mutate({
 			body: {
 				category,
+				screenshot,
 				message: (trimmed + contextLine(pathname)).slice(0, MAX_MESSAGE),
 			},
 		});
@@ -129,6 +144,31 @@ function FeedbackSheet({
 							Your feedback will become a public GitHub issue. Please leave out
 							personal information and secrets.
 						</Text>
+
+						{screenshot && (
+							<View className="flex-row items-center gap-3">
+								<Image
+									source={{ uri: `data:image/jpeg;base64,${screenshot}` }}
+									style={{ width: 48, height: 80 }}
+									resizeMode="contain"
+									accessibilityLabel="Attached screenshot"
+								/>
+								<View className="flex-1 gap-1">
+									<Text className="text-foreground text-sm">
+										Screenshot attached. It will be public.
+									</Text>
+									<Pressable
+										accessibilityRole="button"
+										onPress={onRemoveScreenshot}
+										hitSlop={8}
+									>
+										<Text className="text-primary text-sm">
+											Remove screenshot
+										</Text>
+									</Pressable>
+								</View>
+							</View>
+						)}
 
 						{/* Category toggle */}
 						<View className="flex-row gap-2">
@@ -195,11 +235,51 @@ function FeedbackSheet({
  * `Providers` (under Query + Toast). */
 export function FeedbackProvider({ children }: { children: ReactNode }) {
 	const [visible, setVisible] = useState(false);
-	const open = useCallback(() => setVisible(true), []);
+	const [screenshot, setScreenshot] = useState<string>();
+	const opening = useRef(false);
+	const toast = useToast();
+	const open = useCallback(() => {
+		if (opening.current) return;
+		opening.current = true;
+		setScreenshot(undefined);
+		const screen = Dimensions.get("screen");
+		const width = Platform.OS === "ios" ? 540 / PixelRatio.get() : 540;
+		void Promise.resolve()
+			.then(() =>
+				captureScreen({
+					format: "jpg",
+					quality: 0.6,
+					width: Math.round(width),
+					height: Math.round((width * screen.height) / screen.width),
+					result: "base64",
+				}),
+			)
+			.then((image) => {
+				if (image.length > 80000) throw new Error("Screenshot too large");
+				setScreenshot(image);
+			})
+			.catch(() =>
+				toast.error(
+					"Couldn't attach a screenshot. You can still send feedback.",
+				),
+			)
+			.finally(() => setVisible(true));
+	}, [toast]);
+	const dismiss = () => {
+		setVisible(false);
+		setScreenshot(undefined);
+		opening.current = false;
+	};
 	return (
 		<FeedbackContext.Provider value={{ open }}>
 			{children}
-			<FeedbackSheet visible={visible} onDismiss={() => setVisible(false)} />
+			<FeedbackSheet
+				key={String(visible)}
+				visible={visible}
+				onDismiss={dismiss}
+				screenshot={screenshot}
+				onRemoveScreenshot={() => setScreenshot(undefined)}
+			/>
 		</FeedbackContext.Provider>
 	);
 }

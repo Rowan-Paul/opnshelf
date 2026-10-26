@@ -770,6 +770,7 @@ model ReviewLike {
 }
 
 model Feedback {
+  screenshot String?
   id        String   @id @default(cuid())
   userDid   String?
   user      User?    @relation(fields: [userDid], references: [did], onDelete: Cascade)

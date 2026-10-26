@@ -13,7 +13,7 @@ vi.mock("../auth/auth.service", () => ({ AuthService: class {} }));
 describe("POST /feedback", () => {
 	let app: INestApplication;
 	const prisma = {
-		feedback: { create: vi.fn() },
+		feedback: { create: vi.fn(), findUnique: vi.fn() },
 		user: { findUnique: vi.fn() },
 	};
 	const issues = { createIssue: vi.fn() };
@@ -62,7 +62,12 @@ describe("POST /feedback", () => {
 		expect(response.status).toBe(201);
 		expect(response.body.id).toBe("feedback-id");
 		expect(prisma.feedback.create).toHaveBeenCalledWith({
-			data: { ...body, userDid: null, pageUrl: undefined },
+			data: {
+				...body,
+				userDid: null,
+				pageUrl: undefined,
+				screenshot: undefined,
+			},
 		});
 		expect(prisma.user.findUnique).not.toHaveBeenCalled();
 		expect(issues.createIssue).toHaveBeenCalledWith("feedback-id", body);
@@ -86,7 +91,12 @@ describe("POST /feedback", () => {
 			.expect(201);
 
 		expect(prisma.feedback.create).toHaveBeenCalledWith({
-			data: { ...body, userDid: "did:plc:test", pageUrl: undefined },
+			data: {
+				...body,
+				userDid: "did:plc:test",
+				pageUrl: undefined,
+				screenshot: undefined,
+			},
 		});
 		expect(issues.createIssue).toHaveBeenCalledWith("feedback-id", body);
 	});
@@ -99,9 +109,49 @@ describe("POST /feedback", () => {
 			.send(body)
 			.expect(201);
 		expect(prisma.feedback.create).toHaveBeenCalledWith({
-			data: { ...body, userDid: null, pageUrl: undefined },
+			data: {
+				...body,
+				userDid: null,
+				pageUrl: undefined,
+				screenshot: undefined,
+			},
 		});
 	});
+
+	it("saves an optional screenshot and serves only its JPEG bytes", async () => {
+		const screenshot = "/9j/2Q==";
+		await request(app.getHttpServer())
+			.post("/feedback")
+			.send({ ...body, screenshot })
+			.expect(201);
+		expect(prisma.feedback.create).toHaveBeenCalledWith({
+			data: { ...body, userDid: null, pageUrl: undefined, screenshot },
+		});
+		prisma.feedback.findUnique.mockResolvedValue({ screenshot });
+		const response = await request(app.getHttpServer())
+			.get("/feedback/feedback-id/screenshot")
+			.expect(200);
+		expect(response.headers["content-type"]).toContain("image/jpeg");
+		expect(response.body).toEqual(Buffer.from(screenshot, "base64"));
+	});
+
+	it("returns 404 for missing screenshots", async () => {
+		prisma.feedback.findUnique.mockResolvedValue(null);
+		await request(app.getHttpServer())
+			.get("/feedback/missing/screenshot")
+			.expect(404);
+	});
+
+	it.each(["<script>bad</script>", "a".repeat(80001), 123])(
+		"rejects invalid screenshot %s",
+		async (screenshot) => {
+			await request(app.getHttpServer())
+				.post("/feedback")
+				.send({ ...body, screenshot })
+				.expect(400);
+			expect(prisma.feedback.create).not.toHaveBeenCalled();
+		},
+	);
 
 	it("still validates anonymous feedback", async () => {
 		await request(app.getHttpServer())

@@ -36,6 +36,14 @@ export class FeedbackIssuesService {
 			const url = new URL(dto.pageUrl);
 			body.push("", "Page:", "", `    ${url.origin}${url.pathname}`);
 		}
+		const baseUrl = this.config.BACKEND_PUBLIC_URL;
+		if (dto.screenshot && baseUrl) {
+			const url = new URL(
+				`feedback/${encodeURIComponent(id)}/screenshot`,
+				`${baseUrl.replace(/\/$/, "")}/`,
+			);
+			body.push("", `![Screenshot submitted with feedback](${url.href})`);
+		}
 		body.push("", `Feedback ID: ${id}`);
 
 		try {

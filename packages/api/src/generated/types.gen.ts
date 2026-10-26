@@ -2761,6 +2761,10 @@ export type PersonFilmographyResponseDto = {
 
 export type CreateFeedbackDto = {
     /**
+     * JPEG screenshot as base64, at most 60 KB
+     */
+    screenshot?: string;
+    /**
      * Feedback category
      */
     category: 'bug' | 'feature_request';
@@ -6531,6 +6535,21 @@ export type PeopleControllerGetPersonFilmographyResponses = {
 };
 
 export type PeopleControllerGetPersonFilmographyResponse = PeopleControllerGetPersonFilmographyResponses[keyof PeopleControllerGetPersonFilmographyResponses];
+
+export type FeedbackControllerScreenshotData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/feedback/{id}/screenshot';
+};
+
+export type FeedbackControllerScreenshotResponses = {
+    200: Blob | File;
+};
+
+export type FeedbackControllerScreenshotResponse = FeedbackControllerScreenshotResponses[keyof FeedbackControllerScreenshotResponses];
 
 export type FeedbackControllerCreateFeedbackData = {
     body: CreateFeedbackDto;
