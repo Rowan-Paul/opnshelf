@@ -26,6 +26,9 @@ const SCROLL_ROW =
 	"flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 const SCROLL_SKELETON =
 	"aspect-[2/3] w-[160px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[180px]";
+// Both Recent rows use 16:9 backdrops so the two columns line up.
+const BACKDROP_SKELETON =
+	"aspect-video w-[260px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[300px]";
 
 export const Route = createFileRoute("/profile/$handle/")({
 	loader: async ({ context, params }) => {
@@ -149,14 +152,17 @@ function ProfileOverviewPage() {
 
 							{moviesLoading ? (
 								<div className={SCROLL_ROW}>
-									{[1, 2, 3, 4].map((i) => (
-										<div key={i} className={SCROLL_SKELETON} />
+									{[1, 2, 3].map((i) => (
+										<div key={i} className={BACKDROP_SKELETON} />
 									))}
 								</div>
 							) : movies.length > 0 ? (
 								<div className={SCROLL_ROW}>
 									{movies.map((item) => (
-										<div key={item.id} className="shrink-0">
+										<div
+											key={item.id}
+											className="w-[260px] shrink-0 sm:w-[300px]"
+										>
 											<ActionableMediaCard
 												id={item.movieId}
 												title={item.title}
@@ -165,6 +171,12 @@ function ProfileOverviewPage() {
 														? `https://image.tmdb.org/t/p/w500${item.posterPath}`
 														: ""
 												}
+												backdropUrl={
+													item.backdropPath
+														? `https://image.tmdb.org/t/p/w780${item.backdropPath}`
+														: undefined
+												}
+												layout="backdrop"
 												type="movie"
 												watchedDate={item.watchedDate}
 												undatedWatch={!item.watchedDate}
@@ -202,10 +214,7 @@ function ProfileOverviewPage() {
 							{episodesLoading ? (
 								<div className={SCROLL_ROW}>
 									{[1, 2, 3].map((i) => (
-										<div
-											key={i}
-											className="aspect-video w-[260px] shrink-0 animate-pulse rounded-lg bg-(--background-subtle) sm:w-[300px]"
-										/>
+										<div key={i} className={BACKDROP_SKELETON} />
 									))}
 								</div>
 							) : episodes.length > 0 ? (
