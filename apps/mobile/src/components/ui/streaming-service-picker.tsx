@@ -67,6 +67,7 @@ function ServiceTile({
 	disabled?: boolean;
 	onPress: () => void;
 }) {
+	const colors = useThemeColors();
 	const logoStyle = useTwStyle("size-10 rounded-xl");
 	return (
 		<Pressable
@@ -99,7 +100,7 @@ function ServiceTile({
 			</Text>
 			{selected ? (
 				<View className="absolute top-1 right-1 size-4 items-center justify-center rounded-full bg-primary">
-					<Check color="#3f2e00" size={11} />
+					<Check color={colors.accentForeground} size={11} />
 				</View>
 			) : null}
 		</Pressable>

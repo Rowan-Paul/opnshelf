@@ -53,7 +53,7 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 					{person.known_for_department ? (
 						<View className="flex-row">
 							<View className="flex-row items-center gap-1 rounded-full bg-primary px-2.5 py-1">
-								<Clapperboard color="#3f2e00" size={12} />
+								<Clapperboard color={colors.accentForeground} size={12} />
 								<Text className="font-medium text-primary-foreground text-xs">
 									{person.known_for_department}
 								</Text>

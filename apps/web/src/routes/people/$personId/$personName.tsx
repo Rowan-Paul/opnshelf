@@ -1,7 +1,13 @@
 import type { PersonFilmographyItemDto } from "@opnshelf/api";
 import { peopleControllerGetPersonDetailsOptions } from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Calendar, ChevronLeft, Clapperboard, MapPin } from "lucide-react";
+import {
+	Calendar,
+	ChevronLeft,
+	Clapperboard,
+	MapPin,
+	UserRound,
+} from "lucide-react";
 import { useMemo } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
@@ -198,7 +204,7 @@ function PersonDetailPage() {
 			{/* Hero Section */}
 			<div className="relative z-10 min-h-[40vh] overflow-hidden">
 				{/* Subtle gradient background */}
-				<div className="absolute inset-0 h-[50vh] bg-linear-to-br from-gray-800 to-gray-900" />
+				<div className="absolute inset-0 h-[50vh] bg-(--background-subtle)" />
 				<div className="absolute inset-0 bg-linear-to-t from-(--background) via-(--background)/60 to-transparent" />
 				<div className="absolute inset-0 bg-linear-to-r from-(--background) via-(--background)/40 to-transparent" />
 
@@ -219,8 +225,11 @@ function PersonDetailPage() {
 										className="h-full w-full object-cover"
 									/>
 								) : (
-									<div className="flex h-full w-full items-center justify-center bg-linear-to-br from-gray-700 to-gray-800">
-										<span className="text-gray-400">No Photo</span>
+									<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+										<UserRound
+											className="size-12 text-(--foreground-muted)"
+											aria-label="No photo"
+										/>
 									</div>
 								)}
 							</div>
@@ -238,7 +247,12 @@ function PersonDetailPage() {
 											className="h-full w-full object-cover"
 										/>
 									) : (
-										<div className="h-full w-full bg-linear-to-br from-gray-700 to-gray-800" />
+										<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+											<UserRound
+												className="size-8 text-(--foreground-muted)"
+												aria-label="No photo"
+											/>
+										</div>
 									)}
 								</div>
 								<div className="flex flex-col justify-center">

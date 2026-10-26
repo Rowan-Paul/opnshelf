@@ -6,7 +6,10 @@ import {
 	setConfettiEnabled,
 	useConfettiPreference,
 } from "@/lib/confetti-preference";
+import { useThemeColors } from "@/theme/colors";
+
 export function ConfettiSetting() {
+	const colors = useThemeColors();
 	const enabled = useConfettiPreference();
 	const [saving, setSaving] = useState(false);
 	const toast = useToast();
@@ -27,7 +30,7 @@ export function ConfettiSetting() {
 					accessibilityLabel="Completion confetti"
 					value={enabled}
 					disabled={saving}
-					trackColor={{ false: "#334155", true: "#f2c40d" }}
+					trackColor={{ false: colors.borderStrong, true: colors.accent }}
 					thumbColor="#fff"
 					onValueChange={(next) => {
 						setSaving(true);

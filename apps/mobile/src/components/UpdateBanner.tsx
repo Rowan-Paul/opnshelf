@@ -106,7 +106,7 @@ export function UpdateBanner({ children }: { children: ReactNode }) {
 						onPress={() => void Updates.reloadAsync()}
 						className="rounded-full bg-primary px-3.5 py-1.5"
 					>
-						<Text className="font-semibold text-[#3f2e00] text-sm">
+						<Text className="font-semibold text-accent-foreground text-sm">
 							Restart
 						</Text>
 					</Pressable>

@@ -369,7 +369,7 @@ function SearchResultRow({
 				)}
 			>
 				{added ? (
-					<Check color="#3f2e00" size={18} strokeWidth={3} />
+					<Check color={colors.accentForeground} size={18} strokeWidth={3} />
 				) : (
 					<Plus color={colors.mutedForeground} size={18} strokeWidth={2.5} />
 				)}

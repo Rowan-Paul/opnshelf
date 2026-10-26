@@ -32,7 +32,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { mediaHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
-import { posterUrl } from "@/lib/tmdb";
+import { formatLongDate, posterUrl } from "@/lib/tmdb";
 import { webReviewUrl } from "@/lib/web-url";
 import { useThemeColors } from "@/theme/colors";
 
@@ -144,8 +144,8 @@ export default function ReviewDetailScreen() {
 			: review.mediaType === "season"
 				? `Season ${review.seasonNumber ?? 0}`
 				: review.mediaType === "movie"
-					? "Film"
-					: "Series"
+					? "Movie"
+					: "Show"
 		: "";
 
 	return (
@@ -205,7 +205,7 @@ export default function ReviewDetailScreen() {
 										<Text className="font-medium text-primary text-sm">
 											Explore title
 										</Text>
-										<ArrowRight color="#60a5fa" size={16} />
+										<ArrowRight color={colors.accent} size={16} />
 									</View>
 								</View>
 							</Pressable>
@@ -242,7 +242,13 @@ export default function ReviewDetailScreen() {
 							<View className="flex-row items-center gap-1.5">
 								<CalendarDays color={colors.mutedForeground} size={14} />
 								<Text selectable className="text-muted-foreground text-xs">
-									{new Date(review.createdAt).toLocaleDateString()}
+									{formatLongDate(review.createdAt)}
+									{/* Same "(updated …)" note as the Web App, after a minute's grace. */}
+									{new Date(review.updatedAt).getTime() -
+										new Date(review.createdAt).getTime() >
+									60_000
+										? ` (updated ${formatLongDate(review.updatedAt)})`
+										: ""}
 								</Text>
 							</View>
 							<Pressable

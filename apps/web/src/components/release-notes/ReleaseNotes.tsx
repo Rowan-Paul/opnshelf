@@ -147,7 +147,7 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 									>
 										{releaseNoteDate(note.publishedAt)}
 									</time>
-									<h2 className="font-display font-semibold text-2xl">
+									<h2 className="text-display-3">
 										<Link
 											to="/whats-new/$slug"
 											params={{ slug: note.slug }}

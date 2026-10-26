@@ -196,7 +196,11 @@ export default function CircleDetailScreen() {
 										className="flex-row items-center gap-1 rounded-full bg-primary px-3 py-1.5"
 										style={{ opacity: pending ? 0.5 : 1 }}
 									>
-										<Plus color="#3f2e00" size={14} strokeWidth={3} />
+										<Plus
+											color={colors.accentForeground}
+											size={14}
+											strokeWidth={3}
+										/>
 										<Text className="font-medium text-primary-foreground text-xs">
 											{pending ? "Adding…" : "Add"}
 										</Text>

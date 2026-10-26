@@ -557,7 +557,7 @@ export function PrivacySection({
 									? "bg-(--accent-muted) text-(--accent-hover)"
 									: progressState === "stopped"
 										? "bg-(--destructive)/15 text-(--destructive)"
-										: "bg-green-500/15 text-success"
+										: "bg-success/15 text-success"
 							}`}
 						>
 							{progressState === "stopped" ? (

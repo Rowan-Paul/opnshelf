@@ -19,13 +19,19 @@ import {
 	AlertTriangle,
 	Bell,
 	ChevronRight,
+	CircleHelp,
 	Compass,
-	Download,
+	type LucideIcon,
 	MessageSquare,
+	PlugZap,
 	RotateCcw,
+	ShieldCheck,
+	SlidersHorizontal,
 	Smartphone,
 	Trash2,
+	UserCog,
 	UserPen,
+	UserRound,
 } from "lucide-react-native";
 import {
 	type ReactNode,
@@ -932,6 +938,15 @@ export function SettingsCategoryScreen({
 									<ChevronRight color={colors.mutedForeground} size={18} />
 								</Pressable>
 							</Link>
+							{/* Sign out — reversible, so a neutral outline; red stays reserved
+							    for the irreversible Delete Account below. Same order as
+							    the Web App: Devices, Sign out, Danger Zone. */}
+							<Button
+								label="Sign out"
+								variant="secondary"
+								loading={isSigningOut}
+								onPress={handleSignOut}
+							/>
 							<View className="gap-4 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
 								<View className="gap-1">
 									<Text className="font-display-semibold text-destructive text-lg">
@@ -987,25 +1002,6 @@ export function SettingsCategoryScreen({
 								)}
 							</View>
 
-							{/* Sign out — reversible, so a neutral outline; red stays reserved
-					    for the irreversible Delete Account above. */}
-							<Pressable
-								disabled={isSigningOut}
-								onPress={handleSignOut}
-								className="flex-row items-center justify-center gap-2 rounded-lg border border-border px-4 py-3"
-								style={{ opacity: isSigningOut ? 0.7 : 1 }}
-							>
-								{isSigningOut && (
-									<ActivityIndicator
-										size="small"
-										color={colors.mutedForeground}
-									/>
-								)}
-								<Text className="font-semibold text-base text-foreground">
-									Sign out
-								</Text>
-							</Pressable>
-
 							<Text className="text-center text-muted-foreground text-xs">
 								{formatVersionLine()}
 							</Text>
@@ -1030,25 +1026,25 @@ const SETTINGS_AREAS: {
 		| "/settings/help";
 	label: string;
 	description: string;
-	Icon: typeof UserPen;
+	Icon: LucideIcon;
 }[] = [
 	{
 		href: "/edit-profile",
 		label: SETTINGS_TITLES.profile,
 		description: "Name, photo and social links",
-		Icon: UserPen,
+		Icon: UserRound,
 	},
 	{
 		href: "/settings/preferences",
 		label: SETTINGS_TITLES.preferences,
 		description: "Appearance, time, streaming and reviews",
-		Icon: Compass,
+		Icon: SlidersHorizontal,
 	},
 	{
 		href: "/settings/privacy",
 		label: SETTINGS_TITLES.privacy,
 		description: "Public and Private data",
-		Icon: Smartphone,
+		Icon: ShieldCheck,
 	},
 	{
 		href: "/settings/notifications",
@@ -1060,19 +1056,19 @@ const SETTINGS_AREAS: {
 		href: "/settings/connections",
 		label: SETTINGS_TITLES.connections,
 		description: "Blog mirroring, Bluesky and Trakt",
-		Icon: Download,
+		Icon: PlugZap,
 	},
 	{
 		href: "/settings/account",
 		label: SETTINGS_TITLES.account,
 		description: "Devices, sign out and account deletion",
-		Icon: Smartphone,
+		Icon: UserCog,
 	},
 	{
 		href: "/settings/help",
 		label: SETTINGS_TITLES.help,
 		description: "Onboarding, welcome tour and feedback",
-		Icon: MessageSquare,
+		Icon: CircleHelp,
 	},
 ];
 
@@ -1115,12 +1111,9 @@ function SettingsNavigation({ active }: { active?: string }) {
 						<Link key={href} href={href} replace={!!active} asChild>
 							<Pressable
 								accessibilityState={{ selected: label === active }}
-								style={{
-									backgroundColor: label === active ? "#f3bc001a" : undefined,
-								}}
 								className={`flex-row items-center gap-3 p-4 ${
 									index > 0 ? "border-border border-t" : ""
-								}`}
+								} ${label === active ? "bg-accent-subtle" : ""}`}
 							>
 								<Icon color={colors.mutedForeground} size={20} />
 								<View className="flex-1 gap-0.5">

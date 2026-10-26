@@ -17,6 +17,8 @@ export function useThemeColors() {
 		success,
 		borderStrong,
 		foreground,
+		accentForeground,
+		warning,
 	] = useCSSVariable([
 		"--color-accent",
 		"--color-muted-foreground",
@@ -24,6 +26,8 @@ export function useThemeColors() {
 		"--color-success",
 		"--color-border-strong",
 		"--color-foreground",
+		"--color-accent-foreground",
+		"--color-warning",
 	]);
 	return {
 		accent: String(accent ?? LIGHT_FALLBACK.accent),
@@ -33,6 +37,11 @@ export function useThemeColors() {
 		/** Off-state track for switches. */
 		borderStrong: String(borderStrong ?? LIGHT_FALLBACK.borderStrong),
 		foreground: String(foreground ?? LIGHT_FALLBACK.foreground),
+		/** Icons on an accent fill, e.g. a primary button's leading icon. */
+		accentForeground: String(
+			accentForeground ?? LIGHT_FALLBACK.accentForeground,
+		),
+		warning: String(warning ?? LIGHT_FALLBACK.warning),
 	};
 }
 
@@ -45,4 +54,6 @@ const LIGHT_FALLBACK = {
 	success: "#16a34a",
 	borderStrong: "#cbd5e1",
 	foreground: "#0f172a",
+	accentForeground: "#3f2e00",
+	warning: "#d97706",
 };

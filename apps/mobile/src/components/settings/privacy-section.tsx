@@ -359,7 +359,7 @@ export function PrivacySection({
 						{label}
 					</Text>
 					{done ? (
-						<Check size={16} color="#16a34a" />
+						<Check size={16} color={colors.success} />
 					) : failed ? (
 						<CircleAlert size={16} color={colors.destructive} />
 					) : (
@@ -470,9 +470,9 @@ export function PrivacySection({
 						onPress={() => (changing ? openProgress() : chooseListVisibility())}
 					>
 						{scopes?.[0]?.visibility === "private" ? (
-							<Lock size={13} color="#64748b" />
+							<Lock size={13} color={colors.mutedForeground} />
 						) : (
-							<Globe size={13} color="#64748b" />
+							<Globe size={13} color={colors.mutedForeground} />
 						)}
 						<Text className="text-muted-foreground text-xs">
 							{changing
@@ -481,7 +481,7 @@ export function PrivacySection({
 									? "Private"
 									: "Public"}
 						</Text>
-						<ChevronDown size={12} color="#64748b" />
+						<ChevronDown size={12} color={colors.mutedForeground} />
 					</Pressable>
 				)
 			) : !data ? (
@@ -634,7 +634,7 @@ export function PrivacySection({
 								onPress={() => setManageLists(false)}
 								className="h-11 w-11 items-center justify-center rounded-full bg-background-subtle"
 							>
-								<X size={22} color="#64748b" />
+								<X size={22} color={colors.mutedForeground} />
 							</Pressable>
 						</View>
 						<ScrollView
@@ -687,11 +687,11 @@ export function PrivacySection({
 								{progressState === "stopped" ? (
 									<CircleAlert size={20} color={colors.destructive} />
 								) : progressState === "done" ? (
-									<Check size={20} color="#16a34a" />
+									<Check size={20} color={colors.success} />
 								) : target === "Public" ? (
-									<Globe size={20} color="#d97706" />
+									<Globe size={20} color={colors.warning} />
 								) : (
-									<Lock size={20} color="#d97706" />
+									<Lock size={20} color={colors.warning} />
 								)}
 							</View>
 							<View className="flex-1 gap-0.5">

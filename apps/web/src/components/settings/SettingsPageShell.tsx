@@ -7,6 +7,7 @@ import {
 	Settings,
 	ShieldCheck,
 	SlidersHorizontal,
+	UserCog,
 	UserRound,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -48,7 +49,7 @@ export const SETTINGS_AREAS = [
 		section: "account",
 		label: "Account",
 		description: "Devices, sign out and account deletion",
-		Icon: ShieldCheck,
+		Icon: UserCog,
 	},
 	{
 		section: "help",

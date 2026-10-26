@@ -136,7 +136,7 @@ export function BlogMirrorSection() {
 				)}
 
 				{storedTargetMissing && (
-					<div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800 text-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+					<div className="mb-4 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-(--foreground) text-sm">
 						<AlertTriangle className="mt-0.5 size-4 shrink-0" />
 						<span>
 							Your selected publication is no longer available on your account.
