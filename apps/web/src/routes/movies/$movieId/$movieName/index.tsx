@@ -14,6 +14,7 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { withUserLocale } from "#/lib/date-utils";
+import { formatRuntime } from "#/lib/format-runtime";
 import {
 	useMediaWatchStatus,
 	useMovieDetails,
@@ -66,12 +67,6 @@ export const Route = createFileRoute("/movies/$movieId/$movieName/")({
 	},
 	component: MovieDetailPage,
 });
-
-function formatRuntime(minutes: number): string {
-	const hours = Math.floor(minutes / 60);
-	const mins = minutes % 60;
-	return `${hours}h ${mins}m`;
-}
 
 function MovieDetailPage() {
 	const { movieId, movieName } = Route.useParams();
@@ -188,8 +183,12 @@ function MovieDetailPage() {
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>
 						</div>
-						<span className="text-(--border-strong)">•</span>
-						<span>{formatRuntime(movie.runtime || 0)}</span>
+						{formatRuntime(movie.runtime) ? (
+							<>
+								<span className="text-(--border-strong)">•</span>
+								<span>{formatRuntime(movie.runtime)}</span>
+							</>
+						) : null}
 						<span className="text-(--border-strong)">•</span>
 						<span>
 							{movie.release_date
@@ -294,7 +293,7 @@ function MovieDetailPage() {
 								{ label: "Director", value: director },
 								{
 									label: "Runtime",
-									value: formatRuntime(movie.runtime || 0),
+									value: formatRuntime(movie.runtime) ?? "Unknown",
 								},
 								{
 									label: "Release",

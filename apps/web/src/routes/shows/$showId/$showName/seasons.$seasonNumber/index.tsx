@@ -31,7 +31,9 @@ import DetailsCard from "../../../../../components/DetailsCard";
 import ErrorState from "../../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../../components/MediaActionsBar";
-import MediaHero from "../../../../../components/MediaHero";
+import MediaHero, {
+	MediaHeroActionsSkeleton,
+} from "../../../../../components/MediaHero";
 import PersonGrid from "../../../../../components/PersonGrid";
 import { ProgressShelfButton } from "../../../../../components/ProgressShelfButton";
 import { ReviewDialog } from "../../../../../components/ReviewDialog";
@@ -125,7 +127,12 @@ function SeasonDetailPage() {
 		error: seasonError,
 	} = useSeasonDetails(showId, seasonNumber);
 
-	const { data: upNextData } = useUserUpNext(user?.did || "", showId);
+	// Continue's destination comes from Up Next, so the actions keep their
+	// skeleton until it loads instead of briefly offering episode 1.
+	const { data: upNextData, isLoading: isUpNextLoading } = useUserUpNext(
+		user?.did || "",
+		showId,
+	);
 	const { data: watchHistory } = useShowWatchHistory(showId);
 	const {
 		data: showProgressData,
@@ -232,9 +239,9 @@ function SeasonDetailPage() {
 			return `Continue S${upNextEpisode.seasonNumber}E${upNextEpisode.episodeNumber}`;
 		}
 		if (episodesWatched > 0) {
-			return "Continue Watching";
+			return "Rewatch from start";
 		}
-		return "Start Season";
+		return "Start watching";
 	};
 
 	const getContinueButtonLink = () => {
@@ -381,7 +388,11 @@ function SeasonDetailPage() {
 					</>
 				}
 				actions={
-					isAuthenticated ? (
+					authLoading ||
+					(isAuthenticated &&
+						((isProgressPending && !isProgressError) || isUpNextLoading)) ? (
+						<MediaHeroActionsSkeleton />
+					) : isAuthenticated ? (
 						<>
 							<Link
 								to={continueLink.to}
@@ -397,9 +408,9 @@ function SeasonDetailPage() {
 								markLabel={
 									episodesWatched > 0
 										? "Mark remaining watched"
-										: "Add season to shelf"
+										: "Add to shelf"
 								}
-								unmarkLabel="Remove season from shelf"
+								unmarkLabel="Remove from shelf"
 								isMarkPending={isMarkSeasonPending}
 								isUnmarkPending={isUnmarkShowPending}
 								processing={processingSeason}
@@ -415,7 +426,7 @@ function SeasonDetailPage() {
 						</>
 					) : (
 						<Link to="/login" className="btn btn-primary gap-2">
-							Sign in to track
+							Sign in to add to shelf
 						</Link>
 					)
 				}

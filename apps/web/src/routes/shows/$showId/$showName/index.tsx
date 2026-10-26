@@ -320,9 +320,9 @@ function ShowDetailPage() {
 								markLabel={
 									uniqueEpisodesWatched > 0
 										? "Mark remaining watched"
-										: "Add show to shelf"
+										: "Add to shelf"
 								}
-								unmarkLabel="Remove all watches"
+								unmarkLabel="Remove from shelf"
 								isMarkPending={isMarkShowPending}
 								isUnmarkPending={isUnmarkShowPending}
 								onMarkWatched={handleMarkShowWatched}
@@ -333,7 +333,7 @@ function ShowDetailPage() {
 						</>
 					) : (
 						<Link to="/login" className="btn btn-primary gap-2">
-							Sign in to track
+							Sign in to add to shelf
 						</Link>
 					)
 				}
@@ -355,7 +355,7 @@ function ShowDetailPage() {
 						{/* Episodes */}
 						{show.seasons && show.seasons.length > 0 && (
 							<section>
-								<h2 className="mb-4 text-display-3">Episodes</h2>
+								<h2 className="mb-4 text-display-3">Seasons</h2>
 								<div className="space-y-3">
 									{show.seasons
 										.filter((season) => season.season_number > 0)
@@ -396,7 +396,11 @@ function ShowDetailPage() {
 								creditsTo="/shows/$showId/$showName/credits"
 								creditsParams={{ showId, showName }}
 							/>
-							<CommunityReviews mediaType="show" mediaId={showId} />
+							<CommunityReviews
+								mediaType="show"
+								mediaId={showId}
+								onAddReview={() => setReviewDialogOpen(true)}
+							/>
 							<SimilarMediaGrid items={similarShows} title="Similar Shows" />
 						</div>
 					</div>

@@ -52,6 +52,8 @@ type MediaTrackingActionsProps =
 				episodesWatched: number;
 				episodesTotal: number;
 			};
+			/** Same as the show variant: the season's next episode. */
+			continueTo?: { label: string; href: Href } | "loading";
 	  }
 	| {
 			mediaType: "episode";
@@ -303,7 +305,10 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	// Movies can be logged multiple times, so keep the date picker available even
 	// once on the shelf. The other types are binary, so hide it when on the shelf.
 	const showCalendar = !isOnShelf || isMovie;
-	const continueTo = props.mediaType === "show" ? props.continueTo : undefined;
+	const continueTo =
+		props.mediaType === "show" || props.mediaType === "season"
+			? props.continueTo
+			: undefined;
 	const shelfVariant = isOnShelf || continueTo ? "secondary" : "primary";
 
 	return (

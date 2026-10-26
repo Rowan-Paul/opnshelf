@@ -66,6 +66,10 @@ export default function ShowDetailScreen() {
 	const progressQuery = useShowProgress([id]);
 	const progress = findShowProgress(progressQuery.data, id);
 
+	// TMDB returns the show's status ("Returning Series", "Ended", …) but the
+	// generated DTO does not type it; the Web App reads it the same way.
+	const status = (data as { status?: string } | undefined)?.status;
+
 	// Hide the placeholder "Season 0" specials when there are real seasons.
 	const seasons = (data?.seasons ?? []).filter(
 		(s) => s.season_number > 0 || (data?.seasons?.length ?? 0) === 1,
@@ -129,6 +133,7 @@ export default function ShowDetailScreen() {
 										data.number_of_episodes
 											? `${data.number_of_episodes} episodes`
 											: undefined,
+										status,
 									]}
 								/>
 								<GenreLinks genres={data.genres} mediaType="show" />
@@ -162,40 +167,6 @@ export default function ShowDetailScreen() {
 					secondary={
 						<>
 							<OverviewSection text={data.overview} />
-							<DetailsCard
-								items={[
-									{
-										label: "Creator",
-										value:
-											data.credits?.crew
-												?.filter((p) => p.job === "Creator")
-												.map((p) => p.name)
-												.join(", ") || "Unknown",
-									},
-									{ label: "Seasons", value: data.number_of_seasons || 0 },
-									{ label: "Episodes", value: data.number_of_episodes || 0 },
-									{
-										label: "First Aired",
-										value: formatLongDate(data.first_air_date) ?? "Unknown",
-									},
-									{
-										label: "Genres",
-										value: data.genres?.length ? (
-											<GenreLinks
-												genres={data.genres}
-												mediaType="show"
-												compact
-											/>
-										) : (
-											"N/A"
-										),
-									},
-								]}
-							/>
-
-							<FriendWatchers mediaType="show" mediaId={id} />
-
-							<WatchProviders mediaType="show" mediaId={id} />
 
 							{seasons.length > 0 ? (
 								<View className="gap-2 px-4">
@@ -222,6 +193,41 @@ export default function ShowDetailScreen() {
 									))}
 								</View>
 							) : null}
+							<DetailsCard
+								items={[
+									{
+										label: "Creator",
+										value:
+											data.credits?.crew
+												?.filter((p) => p.job === "Creator")
+												.map((p) => p.name)
+												.join(", ") || "Unknown",
+									},
+									{ label: "Seasons", value: data.number_of_seasons || 0 },
+									{ label: "Episodes", value: data.number_of_episodes || 0 },
+									{ label: "Status", value: status ?? "Unknown" },
+									{
+										label: "First Aired",
+										value: formatLongDate(data.first_air_date) ?? "Unknown",
+									},
+									{
+										label: "Genres",
+										value: data.genres?.length ? (
+											<GenreLinks
+												genres={data.genres}
+												mediaType="show"
+												compact
+											/>
+										) : (
+											"N/A"
+										),
+									},
+								]}
+							/>
+
+							<FriendWatchers mediaType="show" mediaId={id} />
+
+							<WatchProviders mediaType="show" mediaId={id} />
 
 							<CreditsSummary
 								credits={data.credits}
