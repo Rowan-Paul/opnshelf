@@ -40,8 +40,6 @@ import { useReview } from "@/lib/use-review";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useThemeColors } from "@/theme/colors";
 
-const LIKE_RED = "#ef4444";
-
 interface CommunityReviewsProps {
 	mediaType: "movie" | "show";
 	mediaId: string;
@@ -264,8 +262,8 @@ function ReviewCard({
 							className="flex-row items-center gap-1.5 rounded-md px-2 py-1"
 							style={{ opacity: isDeleting ? 0.5 : 1 }}
 						>
-							<Trash2 color={LIKE_RED} size={15} />
-							<Text className="text-sm" style={{ color: LIKE_RED }}>
+							<Trash2 color={colors.destructive} size={15} />
+							<Text className="text-sm" style={{ color: colors.destructive }}>
 								Delete
 							</Text>
 						</Pressable>
@@ -279,17 +277,19 @@ function ReviewCard({
 						style={{ opacity: !canLike || likePending ? 0.5 : 1 }}
 					>
 						{likePending ? (
-							<ActivityIndicator size="small" color={LIKE_RED} />
+							<ActivityIndicator size="small" color={colors.destructive} />
 						) : (
 							<Heart
-								color={isLiked ? LIKE_RED : colors.mutedForeground}
-								fill={isLiked ? LIKE_RED : "transparent"}
+								color={isLiked ? colors.destructive : colors.mutedForeground}
+								fill={isLiked ? colors.destructive : "transparent"}
 								size={16}
 							/>
 						)}
 						<Text
 							className="text-sm"
-							style={{ color: isLiked ? LIKE_RED : colors.mutedForeground }}
+							style={{
+								color: isLiked ? colors.destructive : colors.mutedForeground,
+							}}
 						>
 							{review.likeCount}
 						</Text>

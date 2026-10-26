@@ -36,8 +36,6 @@ import { formatLongDate, posterUrl } from "@/lib/tmdb";
 import { webReviewUrl } from "@/lib/web-url";
 import { useThemeColors } from "@/theme/colors";
 
-const LIKE_RED = "#ef4444";
-
 /**
  * The full review, on its own page — where "Read more" in any review list lands.
  * Resolved by {handle}/{rkey} via the same canonical endpoint the web review
@@ -263,18 +261,24 @@ export default function ReviewDetailScreen() {
 								style={{ opacity: canLike && !isLikePending ? 1 : 0.5 }}
 							>
 								{isLikePending ? (
-									<ActivityIndicator size="small" color={LIKE_RED} />
+									<ActivityIndicator size="small" color={colors.destructive} />
 								) : (
 									<Heart
-										color={likes?.hasLiked ? LIKE_RED : colors.mutedForeground}
-										fill={likes?.hasLiked ? LIKE_RED : "transparent"}
+										color={
+											likes?.hasLiked
+												? colors.destructive
+												: colors.mutedForeground
+										}
+										fill={likes?.hasLiked ? colors.destructive : "transparent"}
 										size={16}
 									/>
 								)}
 								<Text
 									className="text-sm"
 									style={{
-										color: likes?.hasLiked ? LIKE_RED : colors.mutedForeground,
+										color: likes?.hasLiked
+											? colors.destructive
+											: colors.mutedForeground,
 									}}
 								>
 									{likes?.total ?? 0}
