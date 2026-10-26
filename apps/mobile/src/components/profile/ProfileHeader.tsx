@@ -179,7 +179,7 @@ export function ProfileHeader({
 							</>
 						) : (
 							<>
-								<UserPlus color="#3f2e00" size={15} />
+								<UserPlus color={colors.accentForeground} size={15} />
 								<Text className="font-medium text-primary-foreground text-sm">
 									Follow
 								</Text>

@@ -47,7 +47,7 @@ export function FollowButton({
 				</>
 			) : (
 				<>
-					<UserPlus color="#3f2e00" size={14} />
+					<UserPlus color={colors.accentForeground} size={14} />
 					<Text className="font-medium text-primary-foreground text-xs">
 						Follow
 					</Text>

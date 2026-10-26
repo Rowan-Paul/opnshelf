@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ImageOff } from "lucide-react";
 import type { ReactNode } from "react";
 import {
 	PosterProgress,
@@ -61,7 +61,7 @@ export default function MediaHero({
 						fetchPriority="high"
 					/>
 				) : (
-					<div className="h-full w-full bg-linear-to-br from-gray-800 to-gray-900" />
+					<div className="h-full w-full bg-(--background-subtle)" />
 				)}
 				{/* Gradient Overlays */}
 				<div className="absolute inset-0 bg-linear-to-t from-(--background) via-(--background)/60 to-transparent" />
@@ -130,8 +130,11 @@ export default function MediaHero({
 									loading="lazy"
 								/>
 							) : (
-								<div className="flex h-full w-full items-center justify-center bg-linear-to-br from-gray-700 to-gray-800">
-									<span className="text-gray-400">No Poster</span>
+								<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+									<ImageOff
+										className="size-10 text-(--foreground-muted)"
+										aria-label="No poster"
+									/>
 								</div>
 							)}
 							{progressOverlay}
@@ -150,7 +153,12 @@ export default function MediaHero({
 										className="h-full w-full object-cover"
 									/>
 								) : (
-									<div className="h-full w-full bg-linear-to-br from-gray-700 to-gray-800" />
+									<div className="flex h-full w-full items-center justify-center bg-(--background-subtle)">
+										<ImageOff
+											className="size-8 text-(--foreground-muted)"
+											aria-label="No poster"
+										/>
+									</div>
 								)}
 								{progressOverlay}
 							</div>

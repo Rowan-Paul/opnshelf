@@ -99,13 +99,18 @@ function PrimaryButton({
 	disabled?: boolean;
 	icon?: boolean;
 }) {
+	const colors = useThemeColors();
 	const isDisabled = disabled || loading;
 	return (
 		<Button
 			label={label}
 			loading={loading}
 			disabled={isDisabled}
-			trailing={icon ? <ArrowRight color="#3f2e00" size={18} /> : undefined}
+			trailing={
+				icon ? (
+					<ArrowRight color={colors.accentForeground} size={18} />
+				) : undefined
+			}
 			onPress={onPress}
 		/>
 	);

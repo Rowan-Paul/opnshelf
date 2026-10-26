@@ -139,7 +139,7 @@ function SeasonCardWithActions({ season }: { season: SeasonCardData }) {
 				style={{ opacity: pending ? 0.6 : 1 }}
 			>
 				{onShelf ? (
-					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					<Check color={colors.accentForeground} size={16} strokeWidth={3} />
 				) : isPartial ? (
 					<Text className="font-bold text-primary-foreground text-xs">
 						{season.progress?.episodesWatched}/{season.progress?.episodesTotal}

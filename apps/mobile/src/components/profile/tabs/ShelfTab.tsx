@@ -147,7 +147,11 @@ export function ShelfTab({
 							>
 								{Icon ? (
 									<Icon
-										color={isActive ? "#3f2e00" : colors.mutedForeground}
+										color={
+											isActive
+												? colors.accentForeground
+												: colors.mutedForeground
+										}
 										size={14}
 									/>
 								) : null}

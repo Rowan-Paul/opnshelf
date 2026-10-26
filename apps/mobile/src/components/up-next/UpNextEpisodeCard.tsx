@@ -142,7 +142,13 @@ export function UpNextEpisodeCard({
 							size="sm"
 							loading={markEpisode.isPending}
 							loadingLabel="Adding…"
-							leading={<Plus color="#3f2e00" size={16} strokeWidth={3} />}
+							leading={
+								<Plus
+									color={themeColors.accentForeground}
+									size={16}
+									strokeWidth={3}
+								/>
+							}
 							onPress={() =>
 								markEpisode.mutate({
 									body: {

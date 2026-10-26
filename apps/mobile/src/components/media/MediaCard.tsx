@@ -323,6 +323,7 @@ function MediaCardWithActions({
 	item: MediaCardItem;
 	watchCount?: number;
 }) {
+	const colors = useThemeColors();
 	const { isAuthenticated } = useAuth();
 	const { showDialog } = useDialog();
 	const confirmRemoveWatches = useConfirmRemoveWatches();
@@ -503,13 +504,13 @@ function MediaCardWithActions({
 			) : isWatchPending ? (
 				<ActivityIndicator size="small" color="#ffffff" />
 			) : isPartialShow ? (
-				<Plus color="#3f2e00" size={16} strokeWidth={2.5} />
+				<Plus color={colors.accentForeground} size={16} strokeWidth={2.5} />
 			) : watched ? (
 				<>
-					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					<Check color={colors.accentForeground} size={16} strokeWidth={3} />
 					{badgeWatchCount && badgeWatchCount > 1 ? (
 						<Text
-							className="font-bold text-[#3f2e00] text-xs"
+							className="font-bold text-accent-foreground text-xs"
 							style={{ fontVariant: ["tabular-nums"] }}
 						>
 							{badgeWatchCount}

@@ -134,7 +134,13 @@ export function UpNextCard({
 								size="sm"
 								loading={markEpisode.isPending}
 								loadingLabel="Adding…"
-								leading={<Plus color="#3f2e00" size={16} strokeWidth={3} />}
+								leading={
+									<Plus
+										color={colors.accentForeground}
+										size={16}
+										strokeWidth={3}
+									/>
+								}
 								onPress={(e) => {
 									e.stopPropagation();
 									markEpisode.mutate({

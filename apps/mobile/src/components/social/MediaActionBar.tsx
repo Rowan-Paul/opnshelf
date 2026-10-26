@@ -135,7 +135,7 @@ export function MediaActionBar({
 					) : watched ? (
 						<Check color={colors.mutedForeground} size={15} strokeWidth={3} />
 					) : (
-						<Plus color="#3f2e00" size={15} strokeWidth={2.5} />
+						<Plus color={colors.accentForeground} size={15} strokeWidth={2.5} />
 					)}
 					<Text
 						className={`font-semibold text-xs ${

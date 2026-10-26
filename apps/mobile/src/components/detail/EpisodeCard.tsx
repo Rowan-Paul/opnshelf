@@ -176,7 +176,7 @@ function EpisodeCardWithActions({
 			loading={pending}
 			leading={
 				onShelf ? (
-					<Check color="#3f2e00" size={16} strokeWidth={3} />
+					<Check color={colors.accentForeground} size={16} strokeWidth={3} />
 				) : (
 					<Plus color={colors.mutedForeground} size={16} strokeWidth={2.5} />
 				)

@@ -70,7 +70,11 @@ export function AddToListSheet({
 											)}
 										>
 											{list.isInList ? (
-												<Check color="#3f2e00" size={16} strokeWidth={3} />
+												<Check
+													color={colors.accentForeground}
+													size={16}
+													strokeWidth={3}
+												/>
 											) : null}
 										</View>
 										<Text

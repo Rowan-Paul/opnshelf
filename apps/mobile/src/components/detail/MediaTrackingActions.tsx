@@ -317,7 +317,13 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				<Link href={continueTo.href} asChild>
 					<Button
 						label={continueTo.label}
-						leading={<Play color="#3f2e00" size={18} strokeWidth={2.5} />}
+						leading={
+							<Play
+								color={colors.accentForeground}
+								size={18}
+								strokeWidth={2.5}
+							/>
+						}
 					/>
 				</Link>
 			) : null}
@@ -367,7 +373,9 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 						) : (
 							<Plus
 								color={
-									shelfVariant === "primary" ? "#3f2e00" : colors.foreground
+									shelfVariant === "primary"
+										? colors.accentForeground
+										: colors.foreground
 								}
 								size={18}
 								strokeWidth={2.5}

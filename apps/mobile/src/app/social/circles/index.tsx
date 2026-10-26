@@ -58,7 +58,7 @@ export default function CirclesScreen() {
 							opacity: !name.trim() || createCircle.isPending ? 0.5 : 1,
 						}}
 					>
-						<Plus color="#3f2e00" size={20} strokeWidth={3} />
+						<Plus color={colors.accentForeground} size={20} strokeWidth={3} />
 					</Pressable>
 				</View>
 

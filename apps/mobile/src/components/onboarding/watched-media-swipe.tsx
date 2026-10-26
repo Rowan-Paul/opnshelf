@@ -315,7 +315,7 @@ export function WatchedMediaSwipe({
 						compact={compact}
 						disabled={moving || !ready}
 						onPress={() => void swipe("right")}
-						icon={<Check color="#3f2e00" size={25} />}
+						icon={<Check color={colors.accentForeground} size={25} />}
 						primary
 					/>
 				</View>

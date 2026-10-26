@@ -302,7 +302,7 @@ function Picker({
 					label="Type"
 					value={filters.type}
 					options={[
-						{ value: "both", label: "Both" },
+						{ value: "both", label: "Movies and shows" },
 						{ value: "movie", label: "Movies" },
 						{ value: "show", label: "Shows" },
 					]}
@@ -312,9 +312,9 @@ function Picker({
 					label="Progress"
 					value={filters.progress}
 					options={[
-						{ value: "both", label: "Both" },
-						{ value: "start", label: "Start" },
-						{ value: "continue", label: "Continue" },
+						{ value: "both", label: "Start or continue" },
+						{ value: "start", label: "Start something new" },
+						{ value: "continue", label: "Continue a show" },
 					]}
 					onChange={(progress) => change({ ...filters, progress })}
 				/>
@@ -438,7 +438,7 @@ function Picker({
 							className="h-56 w-36 self-center rounded-xl"
 						/>
 					)}
-					<Text className="text-display-2">{selection.title}</Text>
+					<Text className="text-display-3">{selection.title}</Text>
 					<Text className="text-muted-foreground">
 						{pickerEpisodeLabel(selection)}
 					</Text>
@@ -515,7 +515,7 @@ function Picker({
 				!query.isFetching &&
 				!query.isError ? (
 				<View className="gap-3 rounded-xl border border-border p-4">
-					<Text className="font-semibold text-xl">
+					<Text className="text-display-3">
 						{skipped.length
 							? "You’ve tried every match"
 							: "No titles fit these filters"}
@@ -558,7 +558,7 @@ function Picker({
 						outcome
 					) : (
 						<View className="gap-3 rounded-xl border border-border bg-card p-5">
-							<Text className="font-display-semibold text-xl">Your pick</Text>
+							<Text className="text-display-3">Your pick</Text>
 							<Text className="text-muted-foreground">
 								Choose your time and filters, then tap Pick for me. Your
 								suggestion will appear here.

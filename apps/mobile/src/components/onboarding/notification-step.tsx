@@ -155,6 +155,7 @@ function Choice({
 }
 
 function SelectionMark({ selected }: { selected: boolean }) {
+	const colors = useThemeColors();
 	return (
 		<View
 			className={cn(
@@ -162,7 +163,9 @@ function SelectionMark({ selected }: { selected: boolean }) {
 				selected ? "border-primary bg-primary" : "border-border-strong",
 			)}
 		>
-			{selected ? <Check color="#3f2e00" size={16} strokeWidth={3} /> : null}
+			{selected ? (
+				<Check color={colors.accentForeground} size={16} strokeWidth={3} />
+			) : null}
 		</View>
 	);
 }

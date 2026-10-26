@@ -65,17 +65,17 @@ export function DeleteAccountSection() {
 		<>
 			<section
 				id="danger-zone"
-				className="mt-6 scroll-mt-24 rounded-xl border border-red-200 bg-red-50 p-5 sm:p-6 dark:border-red-900 dark:bg-red-950/30"
+				className="mt-6 scroll-mt-24 rounded-xl border border-destructive/40 bg-destructive/5 p-5 sm:p-6"
 			>
-				<h2 className="mb-1 font-semibold text-lg text-red-900 dark:text-red-100">
+				<h2 className="mb-1 font-display font-semibold text-destructive text-lg">
 					Danger Zone
 				</h2>
-				<p className="mb-6 text-red-700 text-sm dark:text-red-300">
+				<p className="mb-6 text-destructive text-sm">
 					Permanently delete your account and all associated data
 				</p>
 
 				{isDeleting ? (
-					<div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+					<div className="flex items-center gap-2 text-destructive/80">
 						<Loader2 className="size-4 animate-spin" />
 						<span className="font-medium text-sm">
 							Account deletion in progress…
@@ -83,14 +83,14 @@ export function DeleteAccountSection() {
 					</div>
 				) : deletionJob?.status === "failed" ? (
 					<div className="space-y-2">
-						<p className="text-red-700 text-sm dark:text-red-300">
+						<p className="text-destructive text-sm">
 							{deletionJob.lastError ?? "Account deletion failed."}
 						</p>
 						<Button
 							variant="outline"
 							onClick={handleDeleteAccount}
 							disabled={deleteAccountMutation.isPending}
-							className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
+							className="border-destructive/40 text-destructive hover:bg-destructive/10"
 						>
 							{deleteAccountMutation.isPending ? (
 								<Loader2 data-icon="inline-start" className="animate-spin" />
@@ -106,7 +106,7 @@ export function DeleteAccountSection() {
 							setDeletePDSData(false);
 							setShowDeleteDialog(true);
 						}}
-						className="btn inline-flex items-center gap-2 border-red-300 bg-red-100 text-red-700 hover:bg-red-200 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
+						className="btn inline-flex items-center gap-2 border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15"
 					>
 						<Trash2 className="size-4" />
 						Delete Account
@@ -118,7 +118,7 @@ export function DeleteAccountSection() {
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
-						<DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
+						<DialogTitle className="flex items-center gap-2 text-destructive">
 							<AlertTriangle className="size-5" />
 							Delete your account?
 						</DialogTitle>
@@ -136,7 +136,7 @@ export function DeleteAccountSection() {
 								id="confirm-delete"
 								checked={confirmChecked}
 								onChange={(e) => setConfirmChecked(e.target.checked)}
-								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-red-600"
+								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-(--destructive)"
 							/>
 							<label
 								htmlFor="confirm-delete"
@@ -153,7 +153,7 @@ export function DeleteAccountSection() {
 								id="delete-pds"
 								checked={deletePDSData}
 								onChange={(e) => setDeletePDSData(e.target.checked)}
-								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-red-600"
+								className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border) accent-(--destructive)"
 							/>
 							<label htmlFor="delete-pds" className="text-sm leading-relaxed">
 								Also delete the records Opnshelf saved to your account's data
@@ -163,7 +163,7 @@ export function DeleteAccountSection() {
 						</div>
 
 						{deleteAccountMutation.isError && (
-							<div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-red-700 text-sm dark:bg-red-950/50 dark:text-red-300">
+							<div className="flex items-center gap-2 rounded-lg bg-destructive/5 p-3 text-destructive text-sm">
 								<AlertTriangle className="size-4 shrink-0" />
 								<span>
 									{deleteAccountMutation.error instanceof Error

@@ -173,7 +173,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 								type="button"
 								onClick={() => deleteAvatarMutation.mutate({})}
 								disabled={deleteAvatarMutation.isPending}
-								className="mt-1 font-medium text-destructive text-sm hover:text-red-700 disabled:opacity-50"
+								className="mt-1 font-medium text-destructive text-sm hover:text-destructive/80 disabled:opacity-50"
 							>
 								{deleteAvatarMutation.isPending ? "Removing…" : "Remove photo"}
 							</button>

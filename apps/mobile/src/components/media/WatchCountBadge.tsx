@@ -1,6 +1,7 @@
 import { Check } from "lucide-react-native";
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/theme/colors";
 
 /**
  * The gold "watched" pill: a bare check for a single Watch, a check plus the
@@ -20,6 +21,7 @@ export function WatchCountBadge({
 	/** Sizing + positioning for the surface this sits on. */
 	className?: string;
 }) {
+	const colors = useThemeColors();
 	const showCount = !!watchCount && watchCount > 1;
 	return (
 		<View
@@ -32,10 +34,10 @@ export function WatchCountBadge({
 					: "Watched"
 			}
 		>
-			<Check color="#3f2e00" size={16} strokeWidth={3} />
+			<Check color={colors.accentForeground} size={16} strokeWidth={3} />
 			{showCount ? (
 				<Text
-					className="font-bold text-[#3f2e00] text-xs"
+					className="font-bold text-accent-foreground text-xs"
 					style={{ fontVariant: ["tabular-nums"] }}
 				>
 					{watchCount}

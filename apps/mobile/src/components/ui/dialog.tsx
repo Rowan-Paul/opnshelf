@@ -35,7 +35,7 @@ const ACTION_BOX: Record<string, string> = {
 };
 
 const ACTION_TEXT: Record<string, string> = {
-	default: "text-[#3f2e00]",
+	default: "text-accent-foreground",
 	destructive: "text-white",
 	ghost: "text-foreground",
 };

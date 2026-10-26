@@ -38,7 +38,10 @@ function ActionRow({
 			}
 			style={{ opacity: disabled ? 0.5 : 1 }}
 		>
-			<Icon color={primary ? "#3f2e00" : colors.mutedForeground} size={20} />
+			<Icon
+				color={primary ? colors.accentForeground : colors.mutedForeground}
+				size={20}
+			/>
 			<Text
 				className={
 					primary

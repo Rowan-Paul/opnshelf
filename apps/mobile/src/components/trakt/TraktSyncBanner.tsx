@@ -43,7 +43,7 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 				>
 					<View className="flex-row items-center gap-2">
 						{syncError ? (
-							<AlertTriangle color="#d97706" size={17} />
+							<AlertTriangle color={colors.warning} size={17} />
 						) : (
 							<ActivityIndicator size="small" color={colors.accent} />
 						)}

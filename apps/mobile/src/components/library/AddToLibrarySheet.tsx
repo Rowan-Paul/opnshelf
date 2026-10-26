@@ -89,7 +89,11 @@ export function AddToLibrarySheet({
 												)}
 											>
 												{isOwned ? (
-													<Check color="#3f2e00" size={16} strokeWidth={3} />
+													<Check
+														color={colors.accentForeground}
+														size={16}
+														strokeWidth={3}
+													/>
 												) : null}
 											</View>
 											<Disc color={colors.mutedForeground} size={18} />

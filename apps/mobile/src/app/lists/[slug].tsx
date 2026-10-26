@@ -484,7 +484,7 @@ export default function ListDetailScreen() {
 													color={
 														sort === "position"
 															? themeColors.mutedForeground
-															: "#64748b"
+															: themeColors.mutedForeground
 													}
 													size={14}
 												/>

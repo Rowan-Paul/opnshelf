@@ -58,7 +58,7 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 					)}
 					<View className="gap-3">
 						{slug && (
-							<Text className="font-display-bold text-3xl text-foreground">
+							<Text className="text-display-1 text-foreground">
 								{entry?.title ??
 									(!notes.data ? "Release notes" : "Release note not found")}
 							</Text>
@@ -150,7 +150,7 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 											accessibilityRole="link"
 											className="flex-row items-center gap-3"
 										>
-											<Text className="flex-1 font-display-semibold text-2xl text-foreground">
+											<Text className="flex-1 text-display-3 text-foreground">
 												{note.title}
 											</Text>
 											<ArrowUpRight size={20} color={colors.accent} />
