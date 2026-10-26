@@ -278,6 +278,17 @@ export class ShowsTmdbService {
 
 		return {
 			...show,
+			seasons: show.seasons
+				? await Promise.all(
+						show.seasons.map(async (season) => ({
+							...season,
+							poster_path:
+								(season.poster_path
+									? await this.getSeasonPoster(showId, season.season_number)
+									: undefined) ?? show.poster_path,
+						})),
+					)
+				: undefined,
 			trailer: selectBestTMDBTrailer(videosData?.results, "show"),
 		};
 	}
@@ -353,6 +364,28 @@ export class ShowsTmdbService {
 		};
 	}
 
+	/** TMDB's default poster may be in any language when English is absent. */
+	private async getSeasonPoster(
+		showId: string,
+		seasonNumber: number,
+	): Promise<string | undefined> {
+		const response = await this.http.fetchCached(
+			`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/images?api_key=${this.tmdbApiKey}&include_image_language=en,null`,
+			`tv:season:images:en:${showId}:${seasonNumber}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
+			{ notFoundValue: { posters: [] } },
+		);
+		if (!response.ok)
+			throw tmdbErrorForResponse(response, "Failed to fetch season images");
+		const { posters } = await response.json<{
+			posters: Array<{ file_path: string; iso_639_1: string | null }>;
+		}>();
+		return (
+			posters.find((poster) => poster.iso_639_1 === "en") ??
+			posters.find((poster) => poster.iso_639_1 === null)
+		)?.file_path;
+	}
+
 	async getSeasonDetails(
 		showId: string,
 		seasonNumber: number,
@@ -378,6 +411,10 @@ export class ShowsTmdbService {
 			: undefined;
 		return {
 			...season,
+			poster_path: season.poster_path
+				? ((await this.getSeasonPoster(showId, seasonNumber)) ??
+					(await this.getShowDetails(showId)).poster_path)
+				: season.poster_path,
 			trailer: selectBestTMDBTrailer(videosData?.results, "season"),
 		};
 	}

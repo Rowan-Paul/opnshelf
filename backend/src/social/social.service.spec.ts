@@ -192,6 +192,7 @@ describe("SocialService", () => {
 			1,
 			10,
 			undefined,
+			undefined,
 		);
 		await expect(service.getFollowedActivityFeed("v", 2, 5, "c")).resolves.toBe(
 			"feed",
@@ -201,6 +202,7 @@ describe("SocialService", () => {
 			2,
 			5,
 			"c",
+			undefined,
 		);
 		await expect(service.getFollowedWatchers("v", "movie", "m")).resolves.toBe(
 			"watchers",

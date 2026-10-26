@@ -15,6 +15,7 @@ import {
 } from "./activity-feed.mapping";
 import {
 	followedActivityFeedQuery,
+	followedActivityGroupCountQuery,
 	movieWatchersQuery,
 	type ShowWatcherScope,
 	showWatchersQuery,
@@ -50,6 +51,7 @@ export class ActivityFeedService {
 		page = 1,
 		pageSize = DEFAULT_FEED_PAGE_SIZE,
 		circleId?: string,
+		groupEpisodes?: "day",
 	): Promise<FollowedActivityFeedDto> {
 		const safePageSize = clampPageSize(pageSize, MAX_FEED_PAGE_SIZE);
 		const safePage = clampPage(page);
@@ -62,6 +64,60 @@ export class ActivityFeedService {
 			return emptyPaginatedResult(safePage, safePageSize);
 		}
 
+		const viewer = groupEpisodes
+			? await this.prisma.user.findUnique({
+					where: { did: viewerDid },
+					select: { timezone: true },
+				})
+			: null;
+		const timezone = groupEpisodes ? (viewer?.timezone ?? "UTC") : undefined;
+		const total = timezone
+			? Number(
+					(
+						await this.prisma.$queryRaw<{ total: number }[]>(
+							followedActivityGroupCountQuery(followedDids, timezone),
+						)
+					)[0]?.total ?? 0,
+				)
+			: await this.countActivities(followedDids);
+		const pagination = getPaginationMeta(total, safePage, safePageSize);
+
+		if (total === 0) return { ...pagination, items: [] };
+
+		const rows = await this.prisma.$queryRaw<FollowedActivityRow[]>(
+			followedActivityFeedQuery(
+				followedDids,
+				(pagination.page - 1) * safePageSize,
+				safePageSize,
+				timezone,
+			),
+		);
+		const actorMap = await this.users.buildSocialActorMap(
+			rows.map((row) => row.actorDid),
+		);
+		const colorMap = await this.loadActivityColorMap(rows);
+		const groups = new Map<string, FollowedActivityFeedDto["items"][number]>();
+		for (const row of rows) {
+			const item = toFollowedActivityItem(
+				row,
+				actorMap.get(row.actorDid) ?? null,
+				colorMap,
+			);
+			const key = row.groupId ?? row.id;
+			const existing = groups.get(key);
+			if (existing) existing.episodeWatches?.push(item);
+			else
+				groups.set(
+					key,
+					timezone && item.type === "episode"
+						? { ...item, id: key, episodeWatches: [item] }
+						: item,
+				);
+		}
+		return { ...pagination, items: [...groups.values()] };
+	}
+
+	private async countActivities(followedDids: string[]): Promise<number> {
 		const [movieCount, episodeCount, reviewCount] = await Promise.all([
 			this.prisma.trackedMovie.count({
 				where: {
@@ -81,36 +137,7 @@ export class ActivityFeedService {
 				where: { userDid: { in: followedDids } },
 			}),
 		]);
-		const total = movieCount + episodeCount + reviewCount;
-		const pagination = getPaginationMeta(total, safePage, safePageSize);
-
-		if (total === 0) {
-			return {
-				...pagination,
-				items: [],
-			};
-		}
-
-		const rows = await this.prisma.$queryRaw<FollowedActivityRow[]>(
-			followedActivityFeedQuery(
-				followedDids,
-				(pagination.page - 1) * safePageSize,
-				safePageSize,
-			),
-		);
-
-		const actorMap = await this.users.buildSocialActorMap(
-			rows.map((row) => row.actorDid),
-		);
-		const colorMap = await this.loadActivityColorMap(rows);
-		const items = rows.map((row) =>
-			toFollowedActivityItem(row, actorMap.get(row.actorDid) ?? null, colorMap),
-		);
-
-		return {
-			...pagination,
-			items,
-		};
+		return movieCount + episodeCount + reviewCount;
 	}
 
 	async getFollowedWatchers(

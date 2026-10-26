@@ -88,6 +88,10 @@ Privacy), migration-running (3/10 records), conflict (409), compact, large-text
 and trakt-sync-catch-up (Trakt Sync Banner at 40%).
 Open `/settings/privacy` to exercise scope dialogs, individual Lists and progress.
 
+The `social-bundles` scenario opens an authenticated Social feed with an eight-episode
+bundle, a separate Review, other Users and shows, and older date sections. Use
+`/social` to check expand/collapse and episode links, and Home for compact previews.
+
 The `issue-fixes` scenario starts with Onboarding complete, a configured Trakt
 connection with all record types selected, six Up Next shows and two picker
 choices. Use `/trakt-sync`, `/profile/synthetic.test/up-next` and `/pick-for-me`

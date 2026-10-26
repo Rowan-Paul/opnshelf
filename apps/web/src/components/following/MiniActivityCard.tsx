@@ -21,6 +21,7 @@ export function MiniActivityCard({
 	userTimezone,
 	userTimeFormat,
 }: MiniActivityCardProps) {
+	const count = activity.episodeWatches?.length ?? 1;
 	const posterSrc = activity.posterPath
 		? `https://image.tmdb.org/t/p/w185${activity.posterPath}`
 		: activity.backdropPath
@@ -91,7 +92,9 @@ export function MiniActivityCard({
 								? "watched"
 								: activity.type === "review"
 									? "reviewed"
-									: "watched episode"}{" "}
+									: count > 1
+										? `watched ${count} episodes of`
+										: "watched episode"}{" "}
 						</span>
 						<Link
 							{...mediaLink}
@@ -104,7 +107,8 @@ export function MiniActivityCard({
 				</div>
 
 				{/* Episode identifier */}
-				{activity.type === "episode" &&
+				{count === 1 &&
+					activity.type === "episode" &&
 					(activity.seasonNumber ||
 						activity.episodeNumber ||
 						activity.episodeName) && (

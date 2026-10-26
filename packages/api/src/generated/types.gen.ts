@@ -1861,6 +1861,10 @@ export type SocialActorDto = {
 };
 
 export type FollowedActivityItemDto = {
+    /**
+     * All episode Watches in this daily bundle, newest first; absent on unbundled activity
+     */
+    episodeWatches?: Array<FollowedActivityItemDto>;
     actor: SocialActorDto;
     id: string;
     type: 'movie' | 'episode' | 'review';
@@ -5723,6 +5727,10 @@ export type SocialControllerGetFeedData = {
          * Number of items to return per page
          */
         pageSize?: number;
+        /**
+         * Bundle episode Watches per User, show and day in the viewer's timezone before pagination
+         */
+        groupEpisodes?: 'day';
         /**
          * Restrict the feed to a single circle of followed users
          */

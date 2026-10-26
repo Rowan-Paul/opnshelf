@@ -137,7 +137,7 @@ A single item in the followed-users feed — a followed user's **Watch** (movie 
 _Avoid_: Event, feed post
 
 **Activity Feed**:
-The reverse-chronological stream of **Activities** from Users the authenticated user follows, optionally filtered by **Circle**. It is the primary content of **Social**; **Home** shows a short preview of the same feed.
+The reverse-chronological stream of **Activities** from Users the authenticated user follows, optionally filtered by **Circle**. It is the primary content of **Social**; **Home** shows a short preview of the same feed. Episode Watches by the same User for the same show and calendar day in the viewer’s saved timezone form one expandable bundle, ordered by its latest Watch. Movie Watches and Reviews remain individual. Social uses Today, Yesterday, and full-date headings in that timezone. Bundles are formed before pagination so counts include the whole day; rewatches remain distinct Watches within a bundle.
 
 **Person**:
 A cast or crew member sourced from TMDB — actor, director, writer, composer, etc. — not just actors. Has a TMDB person id and a detail page at `/people/{id}/{name-slug}`. A Person is **not** an opnshelf account holder; see _User_. In the ⌘K palette, Person results appear under the **Cast & Crew** heading (not "Actors", since the set includes directors and crew).

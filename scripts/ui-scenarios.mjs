@@ -15,6 +15,7 @@ import {
 
 const spec = JSON.parse(readFileSync(join(root, "backend/openapi.json")));
 export const scenarios = [
+ "social-bundles",
 	"normal",
  "watch-completion",
 	"native-tabs-guest",
@@ -65,7 +66,7 @@ export function createScenarioServer(
 	const watchedEpisodes = new Set([1]);
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = ["watch-completion", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
+		completed = ["watch-completion", "social-bundles", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
  fixtureSyncState = "idle",
  fixtureIssue = true,
  fixtureIgnored = false;
@@ -494,6 +495,24 @@ export function createScenarioServer(
 		if (url.pathname === "/users/synthetic.test/profile") {
 			json({ ...sample(spec.components.schemas.PublicUserProfileDto), ...user, watchesPublic: true, watchedThisMonth: 42, watchStreak: 35, mostWatchedShow: { showId: "1399", title: "Local fixture show with a long title", posterPath: null, episodeWatchCount: 12 }, activityLast30Days: Array.from({ length: 30 }, (_, index) => ({ date: new Date(Date.now() - (29 - index) * 86400000).toISOString().slice(0, 10), count: index % 4 })) }); return;
 		}
+  if (scenario === "social-bundles" && (url.pathname === "/social/feed" || url.pathname.endsWith("/following"))) {
+   const actor = { did: "did:plc:fixture-friend", handle: "alex.test", displayName: "Alex", avatar: null, followersCount: 2, followingCount: 3, isFollowing: true };
+   const now = Date.now();
+   const episode = (id, hours, showId = "1399", owner = actor) => ({ id: `episode:${owner.did}:${showId}:${id}`, type: "episode", actor: owner, showId, showTitle: showId === "1399" ? "Severance" : "The Bear", seasonNumber: id > 4 ? 2 : 1, episodeNumber: id, episodeName: `Chapter ${id}`, activityAt: new Date(now - hours * 3600000).toISOString(), watchedDate: new Date(now - hours * 3600000).toISOString(), createdAt: new Date(now - hours * 3600000).toISOString(), overview: "A synthetic show for checking daily activity bundles.", posterPath: null });
+   const watches = Array.from({ length: 8 }, (_, i) => episode(8 - i, i / 100));
+   const bundle = { ...watches[0], id: "bundle:alex:today", episodeWatches: watches };
+   const yesterday = episode(9, 24);
+   const items = url.pathname.endsWith("/following") ? [actor] : [bundle,
+    { ...episode(10, 0.2), type: "review", id: "review:fixture", reviewId: "fixture", title: "Severance", rating: 8, reviewContent: "A beautifully paced chapter. This Review stays separate from episode Watches." },
+    episode(2, 0.5, "1420"),
+    episode(3, 1, "1399", { ...actor, did: "did:plc:fixture-sam", handle: "sam.test", displayName: "Sam" }),
+    yesterday,
+    { ...episode(1, 24 * 8), type: "movie", id: "movie:fixture", movieId: "1", title: "Past Lives", overview: "A separate movie Watch from last week." },
+   ];
+   const pageSize = Number(url.searchParams.get("pageSize")) || 20;
+   const page = Number(url.searchParams.get("page")) || 1;
+   json({ items: items.slice((page - 1) * pageSize, page * pageSize), total: items.length, page, pageSize, totalPages: Math.ceil(items.length / pageSize), hasNextPage: page * pageSize < items.length, hasPreviousPage: page > 1 }); return;
+  }
 		const route = Object.keys(spec.paths).find(path => path.split("/").length === url.pathname.split("/").length && path.split("/").every((part, index) => part.startsWith("{") || part === url.pathname.split("/")[index]));
 		const operation = spec.paths[route]?.[req.method.toLowerCase()];
 		if (operation) {

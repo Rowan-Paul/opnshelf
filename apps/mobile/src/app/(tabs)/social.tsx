@@ -1,8 +1,10 @@
 import {
 	type FollowedActivityItemDto,
+	groupActivities,
 	type SocialUserCardDto,
 	socialControllerGetFeedInfiniteOptions,
 	socialControllerSearchPeopleOptions,
+	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -51,7 +53,13 @@ export default function SocialScreen() {
 	const insets = useSafeAreaInsets();
 	const paddingBottom = useNativeTabContentPadding();
 	const { user } = useAuth();
+	const { data: settings } = useQuery(usersControllerGetMySettingsOptions());
 	const [refreshing, setRefreshing] = useState(false);
+	const [now, setNow] = useState(() => new Date());
+	useEffect(() => {
+		const timer = setInterval(() => setNow(new Date()), 60_000);
+		return () => clearInterval(timer);
+	}, []);
 	const listStyle = useTwStyle("px-4 pb-8");
 
 	const { data: circles = [] } = useCircles();
@@ -75,7 +83,11 @@ export default function SocialScreen() {
 		refetch,
 	} = useInfiniteQuery({
 		...socialControllerGetFeedInfiniteOptions({
-			query: { pageSize: PAGE_SIZE, circleId: activeCircleId },
+			query: {
+				groupEpisodes: "day",
+				pageSize: PAGE_SIZE,
+				circleId: activeCircleId,
+			},
 		}),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) =>
@@ -84,6 +96,7 @@ export default function SocialScreen() {
 
 	const items: FollowedActivityItemDto[] =
 		data?.pages.flatMap((page) => page.items) ?? [];
+	const groups = groupActivities(items, settings?.timezone ?? "UTC", now);
 	// Once per mount: page appends and refetches also change `data`.
 	const activityViewed = useRef(false);
 	useEffect(() => {
@@ -157,9 +170,27 @@ export default function SocialScreen() {
 				/>
 			) : (
 				<FlashList
-					data={items}
+					data={groups}
 					keyExtractor={(item) => item.id}
-					renderItem={({ item }) => <ActivityCard activity={item} />}
+					renderItem={({ item, index }) => (
+						<View className="gap-3">
+							{(index === 0 || groups[index - 1].day !== item.day) && (
+								<Text
+									accessibilityRole="header"
+									className="font-semibold text-muted-foreground text-sm"
+								>
+									{item.label}
+								</Text>
+							)}
+							<ActivityCard
+								key={item.id}
+								activity={item.items[0]}
+								episodes={item.items}
+								userTimezone={settings?.timezone}
+								userTimeFormat={settings?.timeFormat}
+							/>
+						</View>
+					)}
 					ItemSeparatorComponent={() => <View className="h-5" />}
 					contentContainerStyle={{ ...listStyle, paddingBottom }}
 					refreshControl={refreshControl}
