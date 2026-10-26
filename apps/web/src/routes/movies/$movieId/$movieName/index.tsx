@@ -177,9 +177,9 @@ function MovieDetailPage() {
 						<div className="flex items-center gap-1">
 							<Star className="size-4 fill-accent text-accent" />
 							<span className="font-semibold">
-								{(
-									mediaRating?.averageRating ?? Number(movie.vote_average)
-								).toFixed(1)}
+								{(mediaRating?.averageRating ?? movie.vote_average)?.toFixed(
+									1,
+								) || "N/A"}
 							</span>
 							<span className="text-(--foreground-muted)">/10</span>
 						</div>
