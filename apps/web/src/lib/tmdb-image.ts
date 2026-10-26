@@ -18,8 +18,8 @@ export function posterSrcSet(url: string | undefined): string | undefined {
 }
 
 /**
- * w780 alongside a w1280 backdrop or still URL, or undefined for others. A
- * phone's full-width hero needs well under 1280 device pixels.
+ * w780 alongside a w1280 backdrop or still URL, or undefined for others, so
+ * screens that draw the hero under 780 device pixels wide skip w1280.
  */
 export function backdropSrcSet(url: string | undefined): string | undefined {
 	return srcSet(url, TMDB_BACKDROP, [780, 1280]);

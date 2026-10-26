@@ -47,7 +47,14 @@ export default function AccountDeletionDialog({
 						</span>
 					</div>
 					{progress !== null && (
-						<div className="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900">
+						<div
+							role="progressbar"
+							aria-label="Account deletion progress"
+							aria-valuemin={0}
+							aria-valuemax={100}
+							aria-valuenow={progress}
+							className="h-2 w-full overflow-hidden rounded-full bg-red-200 dark:bg-red-900"
+						>
 							<div
 								className="h-full rounded-full bg-red-600 transition-all dark:bg-red-400"
 								style={{ width: `${progress}%` }}

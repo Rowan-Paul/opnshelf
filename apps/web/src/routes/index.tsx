@@ -155,7 +155,9 @@ function LandingPage() {
 					<img
 						src={backdropUrl}
 						srcSet={backdropSrcSet(backdropUrl)}
-						sizes="100vw"
+						// object-cover fills the 70vh hero, so a portrait screen draws
+						// the 16:9 backdrop about 125vh wide, not 100vw.
+						sizes="(orientation: portrait) 125vh, 100vw"
 						alt=""
 						className="h-full w-full object-cover"
 						loading="eager"

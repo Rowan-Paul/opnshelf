@@ -58,7 +58,9 @@ export default function MediaHero({
 					<img
 						src={backdropUrl}
 						srcSet={backdropSrcSet(backdropUrl)}
-						sizes="100vw"
+						// object-cover scales a 16:9 backdrop to fill the 60vh box, so on
+						// a portrait screen it is drawn about 107vh wide, not 100vw.
+						sizes="(orientation: portrait) 107vh, 100vw"
 						alt={title}
 						className="h-full w-full object-cover"
 						fetchPriority="high"

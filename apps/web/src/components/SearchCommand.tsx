@@ -1,3 +1,4 @@
+import { CatchBoundary } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
@@ -50,9 +51,13 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 			</button>
 
 			{wanted && (
-				<Suspense fallback={null}>
-					<SearchCommandDialog open={open} onOpenChange={onOpenChange} />
-				</Suspense>
+				// A failed chunk leaves search unavailable rather than taking the
+				// page down with it; React caches the rejection until a reload.
+				<CatchBoundary getResetKey={() => 0} errorComponent={() => null}>
+					<Suspense fallback={null}>
+						<SearchCommandDialog open={open} onOpenChange={onOpenChange} />
+					</Suspense>
+				</CatchBoundary>
 			)}
 		</>
 	);

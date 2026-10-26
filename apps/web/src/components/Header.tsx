@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { CatchBoundary, Link, useRouterState } from "@tanstack/react-router";
 import {
 	Clock,
 	Compass,
@@ -51,6 +51,9 @@ export default function Header() {
 	const currentPath = router.location.pathname;
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
 	const { unread } = useReleaseNotes({ enabled: Boolean(user) });
+	// Forget the press on sign-out, so the next sign-in doesn't mount the menu
+	// already open.
+	if (!user && menuWanted) setMenuWanted(false);
 	const { open: searchOpen, setOpen: setSearchOpen } = useSearchDialog();
 
 	const navigation = [
@@ -154,16 +157,25 @@ export default function Header() {
 							<div className="hidden h-9 w-9 animate-pulse rounded-full bg-(--background-subtle) sm:block" />
 						) : isAuthenticated && user ? (
 							menuWanted ? (
-								<Suspense
-									fallback={<UserMenuButton user={user} unread={unread} />}
+								// A failed chunk falls back to the plain avatar instead of
+								// reaching the root, which sits outside the route boundaries.
+								<CatchBoundary
+									getResetKey={() => 0}
+									errorComponent={() => (
+										<UserMenuButton user={user} unread={unread} />
+									)}
 								>
-									<UserMenu
-										user={user}
-										unread={unread}
-										logout={logout}
-										profileNavigation={profileNavigation}
-									/>
-								</Suspense>
+									<Suspense
+										fallback={<UserMenuButton user={user} unread={unread} />}
+									>
+										<UserMenu
+											user={user}
+											unread={unread}
+											logout={logout}
+											profileNavigation={profileNavigation}
+										/>
+									</Suspense>
+								</CatchBoundary>
 							) : (
 								<UserMenuButton
 									user={user}
