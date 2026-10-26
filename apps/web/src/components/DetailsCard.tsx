@@ -14,7 +14,7 @@ export default function DetailsCard({
 }: DetailsCardProps) {
 	return (
 		<section className="card p-5">
-			<h3 className="mb-4 font-display font-semibold">{title}</h3>
+			<h2 className="mb-4 font-display font-semibold">{title}</h2>
 			<div className="space-y-3 text-sm">
 				{items.map((item) => (
 					<div key={item.label} className="flex justify-between">

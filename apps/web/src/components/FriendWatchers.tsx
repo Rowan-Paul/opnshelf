@@ -25,7 +25,7 @@ export function FriendWatchers({
 
 	return (
 		<section className="card w-full p-5">
-			<h3 className="mb-4 font-display font-semibold">Watched by friends</h3>
+			<h2 className="mb-4 font-display font-semibold">Watched by friends</h2>
 			<div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
 				{watchers.map(({ actor }) => {
 					const name = actor.displayName || actor.handle;
