@@ -20,8 +20,8 @@ import {
 import { useThemeColors } from "@/theme/colors";
 
 const POSTER_W = 120;
-/** Episodes use landscape stills, as on Home and the Web App. */
-const EPISODE_W = 220;
+/** Recent Movies and Episodes both use landscape art, as on the Web App. */
+const BACKDROP_W = 220;
 
 function ViewAll() {
 	const colors = useThemeColors();
@@ -134,7 +134,7 @@ export function OverviewTab({
 	const movieItems: PosterRowItem[] = (movies.data?.items ?? [])
 		.slice(0, 10)
 		.map((item) => ({
-			card: shelfItemToCardItem(item),
+			card: shelfItemToCardItem(item, "backdrop"),
 			watchCount: item.watchCount,
 		}));
 
@@ -168,7 +168,11 @@ export function OverviewTab({
 							title="Recent Movies"
 							onPressAll={() => onNavigate("shelf", "movie")}
 						/>
-						<PosterRow items={movieItems} emptyText="No movies watched yet." />
+						<PosterRow
+							items={movieItems}
+							emptyText="No movies watched yet."
+							width={BACKDROP_W}
+						/>
 					</View>
 
 					<View>
@@ -179,7 +183,7 @@ export function OverviewTab({
 						<PosterRow
 							items={episodeItems}
 							emptyText="No episodes watched yet."
-							width={EPISODE_W}
+							width={BACKDROP_W}
 						/>
 					</View>
 				</>
