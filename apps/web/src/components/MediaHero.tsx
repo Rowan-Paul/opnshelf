@@ -193,15 +193,15 @@ export default function MediaHero({
 							/>
 						) : null}
 
-						{/* Current Progress */}
-						{currentProgress && <div className="mt-4">{currentProgress}</div>}
-
 						{/* Action Buttons */}
 						{actions && (
 							<div className="mt-6 flex flex-wrap gap-2 lg:gap-3">
 								{actions}
 							</div>
 						)}
+
+						{/* Current Progress */}
+						{currentProgress && <div className="mt-4">{currentProgress}</div>}
 					</div>
 				</div>
 			</div>
