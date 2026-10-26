@@ -3,7 +3,7 @@ import {
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle } from "lucide-react-native";
+import { MessageCircle, Users } from "lucide-react-native";
 import { View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { ActivityRow } from "@/components/social/ActivityRow";
@@ -69,9 +69,14 @@ export function FriendsActivity() {
 				<FriendsActivitySkeleton />
 			) : recentItems.length === 0 ? (
 				<EmptyState
+					variant="card"
 					icon={MessageCircle}
-					title="No recent activity"
 					message="Activity from people you follow will appear here."
+					action={{
+						label: "Find people to follow",
+						href: "/social/find",
+						icon: Users,
+					}}
 				/>
 			) : (
 				<View className="overflow-hidden rounded-xl border border-border bg-card">

@@ -1,4 +1,5 @@
 import { Link } from "expo-router";
+import { Tv } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
@@ -68,9 +69,11 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 				<ErrorState message="Couldn't load Up Next. Try again." />
 			) : preview.length === 0 ? (
 				<EmptyState
-					title="All caught up!"
-					message="No upcoming episodes to watch. Track a show to see it here."
-					action={{ label: "Find a show", href: "/search" }}
+					variant="card"
+					icon={Tv}
+					title="You're all caught up!"
+					message="Start tracking shows to see your next episodes here."
+					action={{ label: "Discover shows", href: "/search", icon: Tv }}
 				/>
 			) : (
 				<View className="gap-3">
