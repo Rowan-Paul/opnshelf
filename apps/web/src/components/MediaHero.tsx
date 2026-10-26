@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ImageOff } from "lucide-react";
 import type { ReactNode } from "react";
+import { backdropSrcSet, posterSrcSet } from "#/lib/tmdb-image";
 import {
 	PosterProgress,
 	type PosterProgressValue,
@@ -56,6 +57,8 @@ export default function MediaHero({
 				{backdropUrl ? (
 					<img
 						src={backdropUrl}
+						srcSet={backdropSrcSet(backdropUrl)}
+						sizes="100vw"
 						alt={title}
 						className="h-full w-full object-cover"
 						fetchPriority="high"
@@ -124,6 +127,8 @@ export default function MediaHero({
 							{posterUrl ? (
 								<img
 									src={posterUrl}
+									srcSet={posterSrcSet(posterUrl)}
+									sizes="300px"
 									alt={title}
 									className="h-full w-full object-cover"
 									// Hidden below lg, where a lazy image is never fetched.
@@ -149,6 +154,8 @@ export default function MediaHero({
 								{posterUrl ? (
 									<img
 										src={posterUrl}
+										srcSet={posterSrcSet(posterUrl)}
+										sizes="112px"
 										alt={title}
 										className="h-full w-full object-cover"
 									/>

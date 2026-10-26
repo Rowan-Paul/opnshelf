@@ -14,6 +14,7 @@ import StoreBadges from "#/components/StoreBadges";
 import { useAuth } from "#/lib/auth-context";
 import { prefetchHomePrompts } from "#/lib/home-prompts";
 import { useHydrated } from "#/lib/prompt-state";
+import { backdropSrcSet } from "#/lib/tmdb-image";
 
 // Home is the signed-in view, so the landing page's anonymous visitors never
 // download it. The session check starts the fetch, so it overlaps the wait.
@@ -153,6 +154,8 @@ function LandingPage() {
 				<div className="absolute inset-0">
 					<img
 						src={backdropUrl}
+						srcSet={backdropSrcSet(backdropUrl)}
+						sizes="100vw"
 						alt=""
 						className="h-full w-full object-cover"
 						loading="eager"
