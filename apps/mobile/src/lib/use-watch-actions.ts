@@ -26,8 +26,8 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { posthog } from "@/lib/posthog";
 import {
+	cachedCompletionProgress,
 	celebrateWatchCompletion,
-	readCompletionProgress,
 } from "@/lib/watch-completion";
 import { insertWatchEntry, optimisticWatchDate } from "@/lib/watch-date";
 import { requestWidgetUpdate } from "../../modules/widget-bridge";
@@ -304,7 +304,11 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 		mutationKey: ["shows", showId, "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
 		onMutate: async (variables) => {
-			const completionBefore = readCompletionProgress(showId);
+			const completionBefore = cachedCompletionProgress(
+				queryClient,
+				showId,
+				userDid,
+			);
 			await queryClient.cancelQueries({ queryKey: showHistoryKey });
 			const prevHistory =
 				queryClient.getQueryData<EpisodeHistoryItemDto[]>(showHistoryKey);
@@ -326,7 +330,7 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 						}),
 				);
 			}
-			return { prevHistory, completionBefore: await completionBefore };
+			return { prevHistory, completionBefore };
 		},
 		onError: (error, _vars, context) => {
 			if (context?.prevHistory !== undefined) {
@@ -421,8 +425,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markShow = useMutation({
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
-		onMutate: async () => ({
-			completionBefore: await readCompletionProgress(showId),
+		onMutate: () => ({
+			completionBefore: cachedCompletionProgress(queryClient, showId, userDid),
 		}),
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add show to shelf"));
@@ -443,8 +447,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markSeason = useMutation({
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
-		onMutate: async () => ({
-			completionBefore: await readCompletionProgress(showId),
+		onMutate: () => ({
+			completionBefore: cachedCompletionProgress(queryClient, showId, userDid),
 		}),
 		onError: (error) => {
 			toast.error(errorMessage(error, "Failed to add season to shelf"));

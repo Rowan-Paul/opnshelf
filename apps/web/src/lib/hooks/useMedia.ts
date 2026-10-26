@@ -24,8 +24,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "#/lib/auth-context";
 import {
+	cachedCompletionProgress,
 	celebrateWatchCompletion,
-	readCompletionProgress,
 } from "#/lib/watch-completion";
 
 // Movie detail hook
@@ -161,11 +161,16 @@ export function useUserUpNext(userDid: string, showId?: string) {
 
 // Mark episode as watched mutation
 export function useMarkEpisodeWatched() {
+	const { user } = useAuth();
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		onMutate: async (variables) => ({
-			completionBefore: await readCompletionProgress(variables.body.showId),
+		onMutate: (variables) => ({
+			completionBefore: cachedCompletionProgress(
+				queryClient,
+				variables.body.showId,
+				user?.did,
+			),
 		}),
 		mutationKey: ["shows", "markEpisodeWatched"],
 		mutationFn: async (variables: {

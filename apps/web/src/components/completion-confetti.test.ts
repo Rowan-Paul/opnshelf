@@ -24,13 +24,17 @@ it("renders one non-interactive decorative burst and removes it", () => {
 		value: animate,
 	});
 	celebrateCompletion();
+	for (let i = 0; i < 100; i++) celebrateCompletion();
+	expect(document.querySelectorAll("[data-completion-confetti]")).toHaveLength(
+		1,
+	);
 	const overlay = document.querySelector<HTMLElement>(
 		"[data-completion-confetti]",
 	);
-	expect(overlay?.children.length).toBe(160);
+	expect(overlay?.children.length).toBe(64);
 	expect(overlay?.style.pointerEvents).toBe("none");
 	expect(overlay?.getAttribute("aria-hidden")).toBe("true");
-	expect(animate).toHaveBeenCalledTimes(160);
+	expect(animate).toHaveBeenCalledTimes(64);
 	vi.advanceTimersByTime(3700);
 	expect(document.querySelector("[data-completion-confetti]")).toBeNull();
 	delete (Element.prototype as Partial<Element>).animate;

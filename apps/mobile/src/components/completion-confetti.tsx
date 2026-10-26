@@ -102,19 +102,30 @@ export function CompletionConfetti() {
 	const [burst, setBurst] = useState(0);
 	useEffect(() => {
 		let mounted = true;
+		let active = false;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const celebrate = () => {
+			if (active) return;
+			active = true;
 			void Promise.all([
 				AccessibilityInfo.isReduceMotionEnabled(),
 				isConfettiEnabled(),
 			])
 				.then(([reduced, enabled]) => {
-					if (!mounted || reduced || !enabled) return;
+					if (!mounted || reduced || !enabled) {
+						active = false;
+						return;
+					}
 					setBurst((value) => value + 1);
 					clearTimeout(timer);
-					timer = setTimeout(() => setBurst(0), CONFETTI_DURATION + 100);
+					timer = setTimeout(() => {
+						active = false;
+						setBurst(0);
+					}, CONFETTI_DURATION + 100);
 				})
-				.catch(() => {});
+				.catch(() => {
+					active = false;
+				});
 		};
 		listeners.add(celebrate);
 		return () => {

@@ -7,6 +7,7 @@ import { useWatchActions } from "./useWatchActions";
 
 const mocks = vi.hoisted(() => ({
 	read: vi.fn(),
+	cached: vi.fn(),
 	celebrate: vi.fn(),
 	mark: vi.fn(),
 	success: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock("@opnshelf/api", async (original) => ({
 }));
 vi.mock("#/lib/watch-completion", () => ({
 	readCompletionProgress: mocks.read,
+	cachedCompletionProgress: mocks.cached,
 	celebrateWatchCompletion: mocks.celebrate,
 }));
 vi.mock("#/lib/auth-context", () => ({
@@ -49,7 +51,7 @@ afterEach(() => {
 });
 it("checks completion from the Episode action used by Season rows and Up Next", async () => {
 	const before = { showId: "42" };
-	mocks.read.mockResolvedValue(before);
+	mocks.cached.mockReturnValue(before);
 	mocks.mark.mockResolvedValue({ data: {} });
 	const { result } = renderHook(useMarkEpisodeWatched, { wrapper });
 	await act(async () => {
@@ -84,7 +86,7 @@ it.each([
 	celebrates,
 }) => {
 	const before = { showId: "42" };
-	mocks.read.mockResolvedValue(before);
+	mocks.cached.mockReturnValue(before);
 	mocks.mark.mockResolvedValue({ count, requested });
 	const { result } = renderHook(
 		() => useWatchActions({ mediaType: "show", showId: "42" }),
@@ -98,4 +100,16 @@ it.each([
 	);
 	if (celebrates) expect(mocks.celebrate).toHaveBeenCalledWith(before, 3);
 	else expect(mocks.celebrate).not.toHaveBeenCalled();
+});
+
+it("saves without waiting for celebration progress", async () => {
+	mocks.read.mockImplementation(() => new Promise(() => {}));
+	mocks.mark.mockResolvedValue({ data: {} });
+	const { result } = renderHook(useMarkEpisodeWatched, { wrapper });
+	act(() =>
+		result.current.mutate({
+			body: { showId: "42", seasonNumber: 1, episodeNumber: 2 },
+		}),
+	);
+	await waitFor(() => expect(mocks.mark).toHaveBeenCalled(), { timeout: 100 });
 });

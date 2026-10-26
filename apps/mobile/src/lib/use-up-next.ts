@@ -12,8 +12,8 @@ import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import {
+	cachedCompletionProgress,
 	celebrateWatchCompletion,
-	readCompletionProgress,
 } from "@/lib/watch-completion";
 
 /**
@@ -58,14 +58,19 @@ export function useUpNext(pageSize = 20, showId?: string) {
  * bar chart — mirroring the web `useMarkEpisodeWatched`.
  */
 export function useMarkUpNextEpisode() {
+	const { user } = useAuth();
 	const queryClient = useQueryClient();
 	const toast = useToast();
 
 	return useMutation({
 		mutationKey: ["shows", "upNext", "markEpisodeWatched"],
 		...showsControllerMarkWatchedMutation(),
-		onMutate: async (variables) => ({
-			completionBefore: await readCompletionProgress(variables.body.showId),
+		onMutate: (variables) => ({
+			completionBefore: cachedCompletionProgress(
+				queryClient,
+				variables.body.showId,
+				user?.did,
+			),
 		}),
 		onSuccess: (_data, variables, context) => {
 			void celebrateWatchCompletion(

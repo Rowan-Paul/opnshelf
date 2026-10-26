@@ -6,6 +6,7 @@ import { isConfettiEnabled } from "#/lib/confetti-preference";
 
 export function celebrateCompletion() {
 	if (
+		document.querySelector("[data-completion-confetti]") ||
 		!isConfettiEnabled() ||
 		window.matchMedia("(prefers-reduced-motion: reduce)").matches
 	)

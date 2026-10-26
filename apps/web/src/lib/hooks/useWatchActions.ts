@@ -27,8 +27,8 @@ import { toast } from "sonner";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import {
+	cachedCompletionProgress,
 	celebrateWatchCompletion,
-	readCompletionProgress,
 } from "#/lib/watch-completion";
 
 // Warn before bulk-logging this many episodes — that volume can exhaust a
@@ -249,8 +249,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markEpisodeWatched = useMutation({
 		mutationKey: ["shows", showId, "episodes", "markWatched"],
 		...showsControllerMarkWatchedMutation(),
-		onMutate: async () => ({
-			completionBefore: await readCompletionProgress(showId),
+		onMutate: () => ({
+			completionBefore: cachedCompletionProgress(queryClient, showId, userDid),
 		}),
 		onSuccess: (_data, variables, context) => {
 			void celebrateWatchCompletion(
@@ -310,8 +310,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markShowWatched = useMutation({
 		mutationKey: ["shows", showId, "markShowWatched"],
 		...showsControllerMarkShowWatchedMutation(),
-		onMutate: async () => ({
-			completionBefore: await readCompletionProgress(showId),
+		onMutate: () => ({
+			completionBefore: cachedCompletionProgress(queryClient, showId, userDid),
 		}),
 		onSuccess: (data, variables, context) => {
 			if (data.count > 0 && data.count === data.requested) {
@@ -347,8 +347,8 @@ export function useWatchActions(options: UseWatchActionsOptions) {
 	const markSeasonWatched = useMutation({
 		mutationKey: ["shows", showId, "markSeasonWatched"],
 		...showsControllerMarkSeasonWatchedMutation(),
-		onMutate: async () => ({
-			completionBefore: await readCompletionProgress(showId),
+		onMutate: () => ({
+			completionBefore: cachedCompletionProgress(queryClient, showId, userDid),
 		}),
 		onSuccess: (data, variables, context) => {
 			if (data.count > 0 && data.count === data.requested) {
