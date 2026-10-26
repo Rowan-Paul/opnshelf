@@ -1,7 +1,15 @@
-const colors = ["#f59e0b", "#22c55e", "#38bdf8", "#f472b6", "#a78bfa"];
+import {
+	CONFETTI_DURATION,
+	createConfettiParticles,
+} from "#/lib/confetti-particles";
+import { isConfettiEnabled } from "#/lib/confetti-preference";
 
 export function celebrateCompletion() {
-	if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+	if (
+		!isConfettiEnabled() ||
+		window.matchMedia("(prefers-reduced-motion: reduce)").matches
+	)
+		return;
 	const overlay = document.createElement("div");
 	overlay.setAttribute("aria-hidden", "true");
 	overlay.dataset.completionConfetti = "true";
@@ -13,32 +21,29 @@ export function celebrateCompletion() {
 		overflow: "hidden",
 	});
 	document.body.append(overlay);
-	for (let index = 0; index < 48; index++) {
+	for (const particle of createConfettiParticles(
+		window.innerWidth,
+		window.innerHeight,
+	)) {
 		const piece = document.createElement("span");
 		Object.assign(piece.style, {
 			position: "absolute",
-			left: `${(index * 37) % 100}%`,
-			top: "-16px",
-			width: "8px",
-			height: "12px",
-			backgroundColor: colors[index % colors.length],
-			borderRadius: "2px",
+			left: "0",
+			top: "0",
+			width: `${particle.width}px`,
+			height: `${particle.height}px`,
+			backgroundColor: particle.color,
+			backfaceVisibility: "visible",
 		});
 		overlay.append(piece);
 		piece.animate(
-			[
-				{ transform: "translate(0, -20px) rotate(0deg)", opacity: 1 },
-				{
-					transform: `translate(${(index % 2 ? 1 : -1) * (30 + index * 2)}px, ${window.innerHeight + 40}px) rotate(${360 + index * 23}deg)`,
-					opacity: 0,
-				},
-			],
-			{
-				duration: 1800 + (index % 5) * 120,
-				delay: (index % 7) * 35,
-				easing: "cubic-bezier(.15,.4,.65,1)",
-			},
+			particle.frames.map(({ offset, x, y, rotation, tumble, opacity }) => ({
+				offset,
+				opacity,
+				transform: `perspective(600px) translate3d(${x}px, ${y}px, 0) rotateZ(${rotation}deg) rotateX(${tumble}deg)`,
+			})),
+			{ duration: CONFETTI_DURATION, easing: "linear", fill: "both" },
 		);
 	}
-	window.setTimeout(() => overlay.remove(), 2600);
+	window.setTimeout(() => overlay.remove(), CONFETTI_DURATION + 100);
 }

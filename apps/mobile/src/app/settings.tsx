@@ -43,6 +43,7 @@ import {
 	Switch,
 	View,
 } from "react-native";
+import { ConfettiSetting } from "@/components/settings/confetti-setting";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { PrivacySection } from "@/components/settings/privacy-section";
@@ -588,6 +589,7 @@ export function SettingsCategoryScreen({
 								description="Choose how Opnshelf looks. System follows your device."
 							>
 								<AppearanceSetting />
+								<ConfettiSetting />
 							</SettingsSection>
 
 							{/* Time & Region */}

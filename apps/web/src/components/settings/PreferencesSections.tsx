@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import StreamingServicePicker, {
 	toggleService,
@@ -7,6 +8,10 @@ import TimezoneSelector from "#/components/TimezoneSelector";
 import { Switch } from "#/components/ui/switch";
 import { useAuth } from "#/lib/auth-context";
 import { createCoalescedSaver, sameIdSet } from "#/lib/coalesced-save";
+import {
+	setConfettiEnabled,
+	useConfettiPreference,
+} from "#/lib/confetti-preference";
 import { type ThemeMode, useThemeMode } from "#/lib/theme";
 import { useUpdateSettings } from "./use-settings-mutations";
 
@@ -46,6 +51,7 @@ function AppearanceSetting() {
 
 /** The compact, frequently revisited controls in Settings > Preferences. */
 export function PreferencesSections() {
+	const confettiEnabled = useConfettiPreference();
 	const { userSettings } = useAuth();
 	const updateSettingsMutation = useUpdateSettings();
 
@@ -60,6 +66,32 @@ export function PreferencesSections() {
 					Choose how Opnshelf looks. System follows your device
 				</p>
 				<AppearanceSetting />
+				<div className="mt-6 flex max-w-lg items-center justify-between gap-4">
+					<div>
+						<label
+							htmlFor="completion-confetti"
+							className="font-medium text-sm"
+						>
+							Completion confetti
+						</label>
+						<p className="text-(--foreground-muted) text-sm">
+							Celebrate completed Seasons and Shows on this device
+						</p>
+					</div>
+					<Switch
+						id="completion-confetti"
+						checked={confettiEnabled}
+						onCheckedChange={(checked) => {
+							try {
+								setConfettiEnabled(checked);
+							} catch {
+								toast.error(
+									"Couldn't save the confetti preference. Please try again.",
+								);
+							}
+						}}
+					/>
+				</div>
 			</section>
 			<section
 				id="time-region"

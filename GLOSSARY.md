@@ -4,6 +4,11 @@ A social media tracking and review platform where users log, rate, and review mo
 
 ## Language
 
+**Completion confetti**:
+An optional celebration when a successful Watch completes a Season or catches a
+Show up with its aired episodes. Controlled per device in Preferences >
+Appearance, enabled by default, and always suppressed by reduced motion.
+
 **Data Visibility**:
 A User's choice of Public or Private for their content: by category for the Shelf,
 Library Items and Notes, and per List with a default for Lists. Settings remain ordinary account preferences; they are not synchronized to Spaces.

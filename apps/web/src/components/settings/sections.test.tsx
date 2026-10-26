@@ -10,17 +10,18 @@ import { PreferencesSections } from "./PreferencesSections";
 
 // The sections read their own state instead of taking it as props, so the
 // context and the network layer are the only things a smoke test has to fake.
+const storedSettings = vi.hoisted(() => ({
+	timezone: "Europe/Amsterdam",
+	timeFormat: "24h",
+	watchCountry: "NL",
+	streamingServiceIds: [],
+	alwaysShowSpoilers: false,
+	blueskyCrossPostEnabled: false,
+}));
 vi.mock("#/lib/auth-context", () => ({
 	useAuth: () => ({
 		user: null,
-		userSettings: {
-			timezone: "Europe/Amsterdam",
-			timeFormat: "24h",
-			watchCountry: "NL",
-			streamingServiceIds: [],
-			alwaysShowSpoilers: false,
-			blueskyCrossPostEnabled: false,
-		},
+		userSettings: storedSettings,
 		isAuthenticated: true,
 		isLoading: false,
 		logout: vi.fn(),
@@ -60,6 +61,21 @@ describe("settings sections", () => {
 		expect(screen.queryByRole("heading", { name: "Notifications" })).toBeNull();
 		// timeFormat "24h" → the 24-hour switch is on.
 		expect(screen.getByRole("switch", { name: /24-hour time/i })).toBeDefined();
+	});
+
+	it("persists the completion confetti toggle on this device", () => {
+		render(<PreferencesSections />, { wrapper: Wrapper });
+		const toggle = screen.getByRole("switch", { name: "Completion confetti" });
+		expect(toggle.getAttribute("aria-checked")).toBe("true");
+		act(() => toggle.click());
+		expect(toggle.getAttribute("aria-checked")).toBe("false");
+		expect(window.localStorage.getItem("opnshelf_completion_confetti")).toBe(
+			"false",
+		);
+		act(() => toggle.click());
+		expect(window.localStorage.getItem("opnshelf_completion_confetti")).toBe(
+			"true",
+		);
 	});
 
 	it("renders notifications separately from preferences", () => {

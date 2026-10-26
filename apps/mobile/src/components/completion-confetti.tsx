@@ -1,14 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	AccessibilityInfo,
 	Animated,
+	Easing,
 	StyleSheet,
 	useWindowDimensions,
 	View,
 } from "react-native";
 
+import {
+	CONFETTI_DURATION,
+	createConfettiParticles,
+} from "@/lib/confetti-particles";
+import { isConfettiEnabled } from "@/lib/confetti-preference";
+
 const listeners = new Set<() => void>();
-const colors = ["#f59e0b", "#22c55e", "#38bdf8", "#f472b6", "#a78bfa"];
 export function celebrateCompletion() {
 	for (const listener of listeners) listener();
 }
@@ -16,10 +22,15 @@ export function celebrateCompletion() {
 function Burst() {
 	const progress = useRef(new Animated.Value(0)).current;
 	const { width, height } = useWindowDimensions();
+	const particles = useMemo(
+		() => createConfettiParticles(width, height),
+		[width, height],
+	);
 	useEffect(() => {
 		const animation = Animated.timing(progress, {
 			toValue: 1,
-			duration: 2400,
+			duration: CONFETTI_DURATION,
+			easing: Easing.linear,
 			useNativeDriver: true,
 		});
 		animation.start();
@@ -32,45 +43,57 @@ function Burst() {
 			importantForAccessibility="no-hide-descendants"
 			style={[StyleSheet.absoluteFill, { zIndex: 9999, overflow: "hidden" }]}
 		>
-			{Array.from({ length: 48 }, (_, index) => (
-				<Animated.View
-					// biome-ignore lint/suspicious/noArrayIndexKey: Fixed decorative particles never reorder.
-					key={index}
-					style={{
-						position: "absolute",
-						top: -16,
-						left: (((index * 37) % 100) * width) / 100,
-						width: 8,
-						height: 12,
-						borderRadius: 2,
-						backgroundColor: colors[index % colors.length],
-						opacity: progress.interpolate({
-							inputRange: [0, 0.8, 1],
-							outputRange: [1, 1, 0],
-						}),
-						transform: [
-							{
-								translateY: progress.interpolate({
-									inputRange: [0, 1],
-									outputRange: [-20 - (index % 7) * 45, height + 350],
-								}),
-							},
-							{
-								translateX: progress.interpolate({
-									inputRange: [0, 1],
-									outputRange: [0, (index % 2 ? 1 : -1) * (30 + index * 2)],
-								}),
-							},
-							{
-								rotate: progress.interpolate({
-									inputRange: [0, 1],
-									outputRange: ["0deg", `${360 + index * 23}deg`],
-								}),
-							},
-						],
-					}}
-				/>
-			))}
+			{particles.map((particle) => {
+				const inputRange = particle.frames.map((frame) => frame.offset);
+				return (
+					<Animated.View
+						key={particle.id}
+						style={{
+							position: "absolute",
+							left: 0,
+							top: 0,
+							width: particle.width,
+							height: particle.height,
+							backgroundColor: particle.color,
+							opacity: progress.interpolate({
+								inputRange,
+								outputRange: particle.frames.map((frame) => frame.opacity),
+							}),
+							transform: [
+								{ perspective: 600 },
+								{
+									translateX: progress.interpolate({
+										inputRange,
+										outputRange: particle.frames.map((frame) => frame.x),
+									}),
+								},
+								{
+									translateY: progress.interpolate({
+										inputRange,
+										outputRange: particle.frames.map((frame) => frame.y),
+									}),
+								},
+								{
+									rotateZ: progress.interpolate({
+										inputRange,
+										outputRange: particle.frames.map(
+											(frame) => `${frame.rotation}deg`,
+										),
+									}),
+								},
+								{
+									rotateX: progress.interpolate({
+										inputRange,
+										outputRange: particle.frames.map(
+											(frame) => `${frame.tumble}deg`,
+										),
+									}),
+								},
+							],
+						}}
+					/>
+				);
+			})}
 		</View>
 	);
 }
@@ -81,12 +104,15 @@ export function CompletionConfetti() {
 		let mounted = true;
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const celebrate = () => {
-			void AccessibilityInfo.isReduceMotionEnabled()
-				.then((reduced) => {
-					if (!mounted || reduced) return;
+			void Promise.all([
+				AccessibilityInfo.isReduceMotionEnabled(),
+				isConfettiEnabled(),
+			])
+				.then(([reduced, enabled]) => {
+					if (!mounted || reduced || !enabled) return;
 					setBurst((value) => value + 1);
 					clearTimeout(timer);
-					timer = setTimeout(() => setBurst(0), 2600);
+					timer = setTimeout(() => setBurst(0), CONFETTI_DURATION + 100);
 				})
 				.catch(() => {});
 		};
