@@ -80,7 +80,9 @@ export function ReviewsTab({
 			) : reviews.length === 0 ? (
 				<EmptyState
 					icon={Star}
-					title={isOwner ? "No reviews yet" : "No reviews"}
+					message={
+						isOwner ? "You haven't reviewed anything yet." : "No reviews yet."
+					}
 				/>
 			) : (
 				<View className="gap-3">
