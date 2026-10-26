@@ -1,9 +1,9 @@
 ---
 {
-  "status": "draft",
+  "status": "published",
   "slug": "better-sharing-and-tracking",
   "title": "Better sharing previews and fresher episode progress",
-  "publishedAt": "2026-10-25T20:00:01.000Z",
+  "publishedAt": "2026-10-26T09:13:28.010Z",
   "summary": "Opnshelf 1.7.9 improves shared links, episode progress, and Mobile layouts.",
   "platforms": {
     "web": {
