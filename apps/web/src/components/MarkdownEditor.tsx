@@ -22,6 +22,9 @@ import {
 import type { Node as ProseNode } from "@milkdown/kit/prose/model";
 import { type EditorState, Plugin } from "@milkdown/kit/prose/state";
 import type { EditorView } from "@milkdown/kit/prose/view";
+// ProseMirror's required base styles (white-space, ligatures, node selection).
+// Scoped to `.ProseMirror`, so the read-only review renderer is untouched.
+import "@milkdown/kit/prose/view/style/prosemirror.css";
 import { callCommand } from "@milkdown/kit/utils";
 import {
 	Milkdown,
