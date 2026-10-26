@@ -9,6 +9,7 @@ vi.mock("#/components/settings/PrivacySection", () => ({
 const mocks = vi.hoisted(() => ({
 	mutate: vi.fn(),
 	uri: undefined as string | undefined,
+	empty: false,
 }));
 const { mutate } = mocks;
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
@@ -18,22 +19,24 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 			name: "Test list",
 			uri: mocks.uri,
 			updatedAt: "2026-09-01",
-			total: 4,
-			items: [
-				...["Alpha", "Beta", "Gamma"].map((title) => ({
-					id: title,
-					mediaType: "movie",
-					media: { title },
-				})),
-				{
-					id: "Delta",
-					mediaType: "episode",
-					media: { name: "Stranger Things" },
-					seasonNumber: 1,
-					episodeNumber: 2,
-					episodeName: "Chapter Two",
-				},
-			],
+			total: mocks.empty ? 0 : 4,
+			items: mocks.empty
+				? []
+				: [
+						...["Alpha", "Beta", "Gamma"].map((title) => ({
+							id: title,
+							mediaType: "movie",
+							media: { title },
+						})),
+						{
+							id: "Delta",
+							mediaType: "episode",
+							media: { name: "Stranger Things" },
+							seasonNumber: 1,
+							episodeNumber: 2,
+							episodeName: "Chapter Two",
+						},
+					],
 		},
 	}),
 	useMutation: () => ({ mutate }),
@@ -63,6 +66,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 	mutate.mockClear();
 	mocks.uri = undefined;
+	mocks.empty = false;
 });
 
 it.each([
@@ -149,4 +153,42 @@ it.each([
 	expect(
 		screen.queryByText(visibility === "Public" ? "Private" : "Public"),
 	).toBeNull();
+});
+
+it("gives a visitor search with the shared no-match copy", () => {
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner={false}
+		/>,
+	);
+	fireEvent.change(screen.getByPlaceholderText("Search list..."), {
+		target: { value: "zzz" },
+	});
+	screen.getByText("No matches");
+	screen.getByText("Try adjusting your search or filters.");
+});
+
+it.each([
+	[true, true],
+	[false, false],
+])("titles an empty list for owner=%s, add hint shown=%s", (isOwner, hint) => {
+	mocks.empty = true;
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner={isOwner}
+		/>,
+	);
+	screen.getByText("Empty list");
+	// The add hint is owner-only: a visitor can't add to someone else's list.
+	expect(
+		screen.queryByText(
+			"Add movies and shows to this list to see them here.",
+		) !== null,
+	).toBe(hint);
 });

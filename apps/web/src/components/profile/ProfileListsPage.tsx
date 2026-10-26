@@ -879,16 +879,22 @@ export function ProfileListsPage({
 									<div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--background-subtle)">
 										<List className="size-6 text-(--foreground-subtle)" />
 									</div>
+									{/* Same copy as Mobile. The add hint is for the owner;
+									    a visitor can't add to someone else's list. */}
 									<h3 className="mt-3 font-display font-semibold">
 										{searchQuery || filter !== "all"
-											? "No results found"
-											: "List is empty"}
+											? "No matches"
+											: "Empty list"}
 									</h3>
-									<p className="mt-1 text-(--foreground-muted) text-sm">
-										{searchQuery || filter !== "all"
-											? "Try adjusting your filters"
-											: "Add movies and shows to this list to see them here"}
-									</p>
+									{searchQuery || filter !== "all" ? (
+										<p className="mt-1 text-(--foreground-muted) text-sm">
+											Try adjusting your search or filters.
+										</p>
+									) : isOwner ? (
+										<p className="mt-1 text-(--foreground-muted) text-sm">
+											Add movies and shows to this list to see them here.
+										</p>
+									) : null}
 								</div>
 							)}
 

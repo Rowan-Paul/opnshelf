@@ -1,5 +1,6 @@
 import {
-	listsControllerGetPublicUserListOptions,
+	getHttpStatus,
+	listsControllerGetPublicUserListInfiniteOptions,
 	listsControllerGetPublicUserListsOptions,
 	notesControllerGetUserNotes,
 	notesControllerGetUserNotesInfiniteQueryKey,
@@ -21,6 +22,7 @@ import {
 	useInfiniteQuery,
 	useQuery,
 } from "@tanstack/react-query";
+import type { ListSort } from "@/lib/use-lists";
 
 /**
  * Data hooks for the public profile screen. These wrap the same generated
@@ -165,15 +167,42 @@ export function useProfileLists(userDid: string) {
 	});
 }
 
-/** A single public list with its items (used for Overview previews). */
-export function useProfileList(userDid: string, slug: string, enabled = true) {
-	return useQuery({
-		...listsControllerGetPublicUserListOptions({ path: { userDid, slug } }),
-		enabled: !!userDid && !!slug && enabled,
+/**
+ * A public list with its items, accumulated page by page (public list screen).
+ * Same shape as the owner's `useList`, so both list screens share the
+ * search/sort/filter toolbar and its eager-load-on-search behaviour.
+ */
+export function useProfileList(
+	userDid: string,
+	slug: string,
+	sort: ListSort = "position",
+	pageSize = 30,
+) {
+	const query = useInfiniteQuery({
+		...listsControllerGetPublicUserListInfiniteOptions({
+			path: { userDid, slug },
+			query: { pageSize, sort },
+		}),
+		enabled: !!userDid && !!slug,
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.hasNextPage ? lastPage.page + 1 : undefined,
 		// A renamed list leaves its old slug dead, and the endpoint answers 404
 		// for it. Retrying that only delays the not-found state.
 		retry: retryUnlessNotFound,
 	});
+	return {
+		list: query.data?.pages[0],
+		items: query.data?.pages.flatMap((p) => p.items) ?? [],
+		isLoading: query.isLoading,
+		isError: query.isError,
+		isNotFound: getHttpStatus(query.error) === 404,
+		fetchNextPage: query.fetchNextPage,
+		hasNextPage: query.hasNextPage,
+		isFetchingNextPage: query.isFetchingNextPage,
+		refetch: query.refetch,
+		isFetching: query.isFetching,
+	};
 }
 
 /** One page of the user's notes. */
