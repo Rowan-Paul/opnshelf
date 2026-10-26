@@ -30,8 +30,9 @@ export function ProfileContentCard({
 		<View className="flex-row gap-3 rounded-xl border border-border bg-card p-3">
 			<Link href={href} asChild>
 				<Pressable
-					accessibilityLabel={title}
-					accessibilityRole="link"
+					accessible={false}
+					accessibilityElementsHidden
+					importantForAccessibility="no-hide-descendants"
 					className="h-28 w-20 shrink-0 overflow-hidden rounded-lg"
 				>
 					<PosterImage url={posterUrl} className="h-28 w-20" />

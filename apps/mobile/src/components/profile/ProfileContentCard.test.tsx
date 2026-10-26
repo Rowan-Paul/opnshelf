@@ -32,7 +32,17 @@ it("keeps header and body actions outside navigation targets", () => {
 		);
 	});
 	const links = renderer.root.findAllByType("link" as never);
-	expect(links.length).toBeGreaterThan(0);
+	expect(links).toHaveLength(2);
+	const [poster, title] = links.map((link) =>
+		link.findByType("pressable" as never),
+	);
+	expect(poster.props).toMatchObject({
+		accessible: false,
+		accessibilityElementsHidden: true,
+		importantForAccessibility: "no-hide-descendants",
+	});
+	expect(title.props.accessibilityRole).toBe("link");
+	expect(title.props.accessible).not.toBe(false);
 	for (const link of links) {
 		expect(link.props.href).toBe("/movies/1/example");
 		expect(link.findAllByType("button" as never)).toHaveLength(0);

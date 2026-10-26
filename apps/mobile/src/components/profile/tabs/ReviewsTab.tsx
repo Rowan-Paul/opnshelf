@@ -243,10 +243,7 @@ function ReviewCard({
 										accessibilityRole="button"
 										accessibilityLabel="Edit review"
 										hitSlop={8}
-										onPress={(e) => {
-											e.stopPropagation();
-											setEditorVisible(true);
-										}}
+										onPress={() => setEditorVisible(true)}
 										className="size-8 items-center justify-center rounded-md"
 									>
 										<Pencil color={colors.mutedForeground} size={16} />
@@ -256,10 +253,7 @@ function ReviewCard({
 										accessibilityLabel="Delete review"
 										hitSlop={8}
 										disabled={deleteMutation.isPending}
-										onPress={(e) => {
-											e.stopPropagation();
-											confirmDelete();
-										}}
+										onPress={confirmDelete}
 										className="size-8 items-center justify-center rounded-md"
 									>
 										{deleteMutation.isPending ? (
@@ -297,7 +291,6 @@ function ReviewCard({
 						accessibilityLabel={
 							review.hasLiked ? "Unlike review" : "Like review"
 						}
-						accessibilityState={{ selected: review.hasLiked }}
 						onPress={toggleLike}
 						disabled={
 							!isAuthenticated ||
