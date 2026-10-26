@@ -7,9 +7,10 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from "react";
-import { View } from "react-native";
+import { AppState, View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/theme/colors";
 
@@ -50,22 +51,40 @@ const SlotContext = createContext<SlotContextValue | null>(null);
  */
 export function PromptSlot({ children }: { children: ReactNode }) {
 	const [claims, setClaims] = useState<ReadonlySet<PromptId>>(new Set());
-	// null while the stored cooldown loads: show nothing rather than flash a
-	// card that turns out to be silenced.
-	const [coolingDown, setCoolingDown] = useState<boolean | null>(null);
+	// When the cooldown ends (epoch ms, 0 for none). null while the stored value
+	// loads: show nothing rather than flash a card that turns out to be silenced.
+	const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+	// Home stays mounted behind the tab bar for days, so "now" is re-read when
+	// the app returns to the foreground and when the cooldown runs out.
+	const [now, setNow] = useState(() => Date.now());
 	useEffect(() => {
 		let active = true;
 		void SecureStore.getItemAsync(COOLDOWN_KEY)
 			.then((until) => {
-				if (active) setCoolingDown(Number(until) > Date.now());
+				if (active) setCooldownUntil(Number(until) || 0);
 			})
 			.catch(() => {
-				if (active) setCoolingDown(false);
+				if (active) setCooldownUntil(0);
 			});
 		return () => {
 			active = false;
 		};
 	}, []);
+	useEffect(() => {
+		const subscription = AppState.addEventListener("change", (state) => {
+			if (state === "active") setNow(Date.now());
+		});
+		return () => subscription.remove();
+	}, []);
+	const coolingDown = cooldownUntil === null ? null : cooldownUntil > now;
+	useEffect(() => {
+		if (!coolingDown || cooldownUntil === null) return;
+		const timer = setTimeout(
+			() => setNow(Date.now()),
+			Math.max(0, cooldownUntil - Date.now()),
+		);
+		return () => clearTimeout(timer);
+	}, [coolingDown, cooldownUntil]);
 	const claim = useCallback((id: PromptId) => {
 		setClaims((current) => new Set(current).add(id));
 		return () =>
@@ -76,11 +95,10 @@ export function PromptSlot({ children }: { children: ReactNode }) {
 			});
 	}, []);
 	const startCooldown = useCallback(() => {
-		setCoolingDown(true);
-		void SecureStore.setItemAsync(
-			COOLDOWN_KEY,
-			String(Date.now() + COOLDOWN_MS),
-		).catch(() => {});
+		const until = Date.now() + COOLDOWN_MS;
+		setNow(Date.now());
+		setCooldownUntil(until);
+		void SecureStore.setItemAsync(COOLDOWN_KEY, String(until)).catch(() => {});
 	}, []);
 	const active =
 		coolingDown === false
@@ -107,15 +125,26 @@ function noop() {}
  */
 export function PromptSlotItem({
 	id,
+	onShown,
 	children,
 }: {
 	id: PromptId;
+	/** Fires each time the card actually appears, for impression tracking.
+	 *  A claimant hidden behind a higher-priority Prompt or a cooldown is not
+	 *  seen, so it must not count as viewed. */
+	onShown?: () => void;
 	children: ReactNode;
 }) {
 	const slot = useContext(SlotContext);
 	const claim = slot?.claim;
 	useEffect(() => claim?.(id), [claim, id]);
-	if (slot && slot.active !== id) return null;
+	const visible = !slot || slot.active === id;
+	const onShownRef = useRef(onShown);
+	onShownRef.current = onShown;
+	useEffect(() => {
+		if (visible) onShownRef.current?.();
+	}, [visible]);
+	if (!visible) return null;
 	return <>{children}</>;
 }
 

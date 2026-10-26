@@ -51,7 +51,7 @@ export default function ConfirmRemoveDialog({
 							onConfirm();
 						}}
 						disabled={isPending}
-						className="btn bg-destructive text-white hover:bg-destructive/90"
+						className="btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
 					>
 						{isPending ? (
 							<>

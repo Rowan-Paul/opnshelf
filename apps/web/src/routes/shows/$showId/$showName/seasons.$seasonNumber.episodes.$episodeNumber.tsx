@@ -626,7 +626,7 @@ function EpisodeDetailPage() {
 								setConfirmRemoveOpen(false);
 							}}
 							disabled={isUnmarkEpisodePending}
-							className="btn bg-destructive text-white hover:bg-destructive/90"
+							className="btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
 						>
 							{isUnmarkEpisodePending ? (
 								<>

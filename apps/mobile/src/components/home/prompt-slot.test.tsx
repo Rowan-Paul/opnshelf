@@ -12,9 +12,19 @@ vi.mock("expo-secure-store", () => ({
 	},
 }));
 
+const appState = vi.hoisted(() => ({
+	listeners: new Set<(state: string) => void>(),
+}));
+
 vi.mock("react-native", async () => {
 	const { createElement } = await import("react");
 	return {
+		AppState: {
+			addEventListener: (_: string, listener: (state: string) => void) => {
+				appState.listeners.add(listener);
+				return { remove: () => appState.listeners.delete(listener) };
+			},
+		},
 		View: (props: Record<string, unknown>) =>
 			createElement("view", props, props.children as never),
 	};
@@ -54,7 +64,10 @@ const shown = (renderer: ReactTestRenderer) =>
 		.findAll((node) => hostType(node) === "card")
 		.map((node) => node.props.name);
 
-beforeEach(() => store.clear());
+beforeEach(() => {
+	store.clear();
+	vi.useRealTimers();
+});
 
 describe("PromptSlot", () => {
 	it("shows only the highest-priority Prompt that has a card", async () => {
@@ -120,5 +133,72 @@ describe("PromptSlot", () => {
 			</PromptSlotItem>,
 		);
 		expect(shown(next)).toEqual([]);
+	});
+
+	it("comes back once the cooldown ends, even if Home never unmounted", async () => {
+		vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+		const renderer = await render(
+			<>
+				<PromptSlotItem id="notification">
+					<Card name="notification" />
+				</PromptSlotItem>
+				<DismissButton />
+			</>,
+		);
+		await act(async () => {
+			renderer.root
+				.find((node) => hostType(node) === "dismiss")
+				.props.onPress();
+		});
+		expect(shown(renderer)).toEqual([]);
+
+		await act(async () => {
+			vi.advanceTimersByTime(3 * 24 * 60 * 60 * 1000 + 1);
+		});
+		expect(shown(renderer)).toEqual(["notification"]);
+	});
+
+	it("rechecks the cooldown when the app returns to the foreground", async () => {
+		store.set("prompt-cooldown-until", String(Date.now() + 1000));
+		const renderer = await render(
+			<PromptSlotItem id="notification">
+				<Card name="notification" />
+			</PromptSlotItem>,
+		);
+		expect(shown(renderer)).toEqual([]);
+
+		// Timers do not run while the app is suspended; the resume event does.
+		store.set("prompt-cooldown-until", "0");
+		vi.spyOn(Date, "now").mockReturnValue(Date.now() + 2000);
+		await act(async () => {
+			for (const listener of appState.listeners) listener("active");
+		});
+		expect(shown(renderer)).toEqual(["notification"]);
+	});
+
+	it("reports an impression only when the card is actually on screen", async () => {
+		const onShown = vi.fn();
+		const renderer = await render(
+			<>
+				<PromptSlotItem id="release-note">
+					<Card name="release-note" />
+				</PromptSlotItem>
+				<PromptSlotItem id="atstore-review" onShown={onShown}>
+					<Card name="atstore-review" />
+				</PromptSlotItem>
+			</>,
+		);
+		expect(onShown).not.toHaveBeenCalled();
+
+		await act(async () => {
+			renderer.update(
+				<PromptSlot>
+					<PromptSlotItem id="atstore-review" onShown={onShown}>
+						<Card name="atstore-review" />
+					</PromptSlotItem>
+				</PromptSlot>,
+			);
+		});
+		expect(onShown).toHaveBeenCalledTimes(1);
 	});
 });

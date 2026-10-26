@@ -59,7 +59,7 @@ export default function ConfirmDialog({
 						disabled={isPending}
 						className={
 							variant === "destructive"
-								? "btn bg-destructive text-white hover:bg-destructive/90"
+								? "btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
 								: "btn btn-primary"
 						}
 					>

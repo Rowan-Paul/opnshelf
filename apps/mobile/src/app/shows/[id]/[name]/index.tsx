@@ -72,24 +72,29 @@ export default function ShowDetailScreen() {
 	);
 
 	// Lead with the episode to watch next, worded like the Web App's show page.
+	// Its destination depends on Up Next, so hold the space with a skeleton
+	// until that query settles: guessing from progress alone pointed a
+	// half-watched show at episode 1 ("Rewatch from start") for a moment.
 	const { isAuthenticated } = useAuth();
-	const { items: upNextItems } = useUpNext(20, id);
-	const nextEpisode = upNextItems.find((i) => i.showId === id)?.nextEpisode;
+	const upNext = useUpNext(20, id);
+	const nextEpisode = upNext.items.find((i) => i.showId === id)?.nextEpisode;
 	const firstSeasonNumber = seasons.find(
 		(s) => s.season_number > 0,
 	)?.season_number;
 	const continueSeason = nextEpisode?.seasonNumber ?? firstSeasonNumber;
 	const continueTo =
-		isAuthenticated && !progressQuery.isLoading && continueSeason !== undefined
-			? {
-					label: nextEpisode
-						? `Continue S${nextEpisode.seasonNumber}E${nextEpisode.episodeNumber}`
-						: (progress?.episodesWatched ?? 0) > 0
-							? "Rewatch from start"
-							: "Start watching",
-					href: `/shows/${id}/${name}/seasons/${continueSeason}/episodes/${nextEpisode?.episodeNumber ?? 1}` as Href,
-				}
-			: undefined;
+		!isAuthenticated || continueSeason === undefined || upNext.isError
+			? undefined
+			: upNext.isLoading || progressQuery.isLoading
+				? ("loading" as const)
+				: {
+						label: nextEpisode
+							? `Continue S${nextEpisode.seasonNumber}E${nextEpisode.episodeNumber}`
+							: (progress?.episodesWatched ?? 0) > 0
+								? "Rewatch from start"
+								: "Start watching",
+						href: `/shows/${id}/${name}/seasons/${continueSeason}/episodes/${nextEpisode?.episodeNumber ?? 1}` as Href,
+					};
 
 	return (
 		<ScreenFrame>

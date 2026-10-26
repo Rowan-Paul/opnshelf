@@ -38,8 +38,9 @@ type MediaTrackingActionsProps =
 				episodesTotal: number;
 			};
 			/** Leads the cluster with the episode to watch next, as the Web App's
-			 *  "Continue S2E1" does; the shelf button then steps down to secondary. */
-			continueTo?: { label: string; href: Href };
+			 *  "Continue S2E1" does; the shelf button then steps down to secondary.
+			 *  `loading` reserves its space until the destination is known. */
+			continueTo?: { label: string; href: Href } | "loading";
 	  }
 	| {
 			mediaType: "season";
@@ -307,7 +308,12 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	return (
 		<View className="gap-3 px-4">
-			{continueTo ? (
+			{continueTo === "loading" ? (
+				<View
+					accessibilityLabel="Loading next episode"
+					className="h-12 rounded-lg bg-background-subtle"
+				/>
+			) : continueTo ? (
 				<Link href={continueTo.href} asChild>
 					<Button
 						label={continueTo.label}

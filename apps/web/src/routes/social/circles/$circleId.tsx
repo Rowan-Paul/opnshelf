@@ -132,7 +132,7 @@ function CircleDetailPage() {
 					/>
 					<button
 						type="button"
-						className="btn bg-destructive text-white hover:bg-destructive/90"
+						className="btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
 						onClick={remove}
 						disabled={deleteCircle.isPending}
 						title="Delete circle"

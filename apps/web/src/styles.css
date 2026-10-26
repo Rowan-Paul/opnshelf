@@ -83,6 +83,11 @@
   --muted-foreground: var(--foreground-muted);
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
+  /* Filled destructive buttons carry white labels, so they keep red-600 in
+     both themes: the brighter dark-theme --destructive is for text and icons
+     and only reaches 3.8:1 under white. */
+  --destructive-solid: #dc2626;
+  --destructive-solid-hover: #b91c1c;
   --success: #16a34a;
   --warning: #d97706;
   --input: var(--border);
@@ -156,6 +161,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-solid: var(--destructive-solid);
+  --color-destructive-solid-hover: var(--destructive-solid-hover);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-border: var(--border);

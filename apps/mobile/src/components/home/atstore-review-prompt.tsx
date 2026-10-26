@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { type Href, router } from "expo-router";
 import { Store } from "lucide-react-native";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import {
 	PromptCard,
 	PromptSlotItem,
@@ -34,12 +34,13 @@ export function AtStoreReviewPrompt() {
 		retry: false,
 	});
 
-	useEffect(() => {
-		if (prompt?.eligible && !viewed.current) {
-			viewed.current = true;
-			posthog?.capture("atstore_review_prompt_viewed", PLATFORM);
-		}
-	}, [prompt?.eligible]);
+	// Counted when the card is on screen, not when it is merely eligible: the
+	// slot may be showing a higher-priority Prompt or cooling down.
+	const recordView = () => {
+		if (viewed.current) return;
+		viewed.current = true;
+		posthog?.capture("atstore_review_prompt_viewed", PLATFORM);
+	};
 
 	const dismissMutation = useMutation({
 		mutationKey: ["atstore-review", "dismiss"],
@@ -94,7 +95,7 @@ export function AtStoreReviewPrompt() {
 	if (!prompt?.eligible) return null;
 
 	return (
-		<PromptSlotItem id="atstore-review">
+		<PromptSlotItem id="atstore-review" onShown={recordView}>
 			<PromptCard
 				icon={Store}
 				title="Enjoying Opnshelf?"

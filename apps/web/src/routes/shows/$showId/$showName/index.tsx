@@ -98,7 +98,12 @@ function ShowDetailPage() {
 		error: showError,
 	} = useShowDetails(showId);
 
-	const { data: upNextData } = useUserUpNext(userDid, showId);
+	// The Continue link's destination comes from Up Next, so the actions keep
+	// their skeleton until it loads instead of briefly offering episode 1.
+	const { data: upNextData, isLoading: isUpNextLoading } = useUserUpNext(
+		userDid,
+		showId,
+	);
 	const { data: discoverShowsData } = useShowRecommendations(showId);
 	const {
 		data: showProgressData,
@@ -252,7 +257,8 @@ function ShowDetailPage() {
 					// A pending session check is probably a signed-in reader too
 					// (ADR 0039).
 					authLoading ||
-					(isAuthenticated && isProgressPending && !isProgressError)
+					(isAuthenticated &&
+						((isProgressPending && !isProgressError) || isUpNextLoading))
 				}
 				backLabel="Back to Home"
 				metaItems={
@@ -288,7 +294,8 @@ function ShowDetailPage() {
 				}
 				actions={
 					authLoading ||
-					(isAuthenticated && isProgressPending && !isProgressError) ? (
+					(isAuthenticated &&
+						((isProgressPending && !isProgressError) || isUpNextLoading)) ? (
 						<MediaHeroActionsSkeleton />
 					) : isAuthenticated ? (
 						<>
