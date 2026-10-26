@@ -28,8 +28,9 @@ function formatAirDate(iso?: string): string | undefined {
 
 /**
  * A single Up Next entry: a tracked show's next unwatched episode, with watch
- * progress and a one-tap "mark watched" action that advances the queue. Shared
- * by Home and Profile previews. The full Up Next screen uses UpNextEpisodeCard. `isOwner` (default true) gates the action so other users' queues are
+ * progress and a one-tap "mark watched" action that advances the queue. Used by
+ * the profile hub preview; Home uses UpNextTile and the full Up Next screen
+ * uses UpNextEpisodeCard. `isOwner` (default true) gates the action so other users' queues are
  * read-only.
  *
  * The card owns its mark-watched mutation, so marking several episodes at once
