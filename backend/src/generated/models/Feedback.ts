@@ -25,34 +25,34 @@ export type AggregateFeedback = {
 }
 
 export type FeedbackMinAggregateOutputType = {
-  screenshot: string | null
   id: string | null
   userDid: string | null
   category: string | null
   message: string | null
   pageUrl: string | null
+  screenshot: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type FeedbackMaxAggregateOutputType = {
-  screenshot: string | null
   id: string | null
   userDid: string | null
   category: string | null
   message: string | null
   pageUrl: string | null
+  screenshot: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type FeedbackCountAggregateOutputType = {
-  screenshot: number
   id: number
   userDid: number
   category: number
   message: number
   pageUrl: number
+  screenshot: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -60,34 +60,34 @@ export type FeedbackCountAggregateOutputType = {
 
 
 export type FeedbackMinAggregateInputType = {
-  screenshot?: true
   id?: true
   userDid?: true
   category?: true
   message?: true
   pageUrl?: true
+  screenshot?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type FeedbackMaxAggregateInputType = {
-  screenshot?: true
   id?: true
   userDid?: true
   category?: true
   message?: true
   pageUrl?: true
+  screenshot?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type FeedbackCountAggregateInputType = {
-  screenshot?: true
   id?: true
   userDid?: true
   category?: true
   message?: true
   pageUrl?: true
+  screenshot?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -166,12 +166,12 @@ export type FeedbackGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 export type FeedbackGroupByOutputType = {
-  screenshot: string | null
   id: string
   userDid: string | null
   category: string
   message: string
   pageUrl: string | null
+  screenshot: string | null
   createdAt: Date
   updatedAt: Date
   _count: FeedbackCountAggregateOutputType | null
@@ -198,24 +198,24 @@ export type FeedbackWhereInput = {
   AND?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   OR?: Prisma.FeedbackWhereInput[]
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
-  screenshot?: Prisma.StringNullableFilter<"Feedback"> | string | null
   id?: Prisma.StringFilter<"Feedback"> | string
   userDid?: Prisma.StringNullableFilter<"Feedback"> | string | null
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  screenshot?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type FeedbackOrderByWithRelationInput = {
-  screenshot?: Prisma.SortOrderInput | Prisma.SortOrder
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
   pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  screenshot?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -226,23 +226,23 @@ export type FeedbackWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
   OR?: Prisma.FeedbackWhereInput[]
   NOT?: Prisma.FeedbackWhereInput | Prisma.FeedbackWhereInput[]
-  screenshot?: Prisma.StringNullableFilter<"Feedback"> | string | null
   userDid?: Prisma.StringNullableFilter<"Feedback"> | string | null
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  screenshot?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id">
 
 export type FeedbackOrderByWithAggregationInput = {
-  screenshot?: Prisma.SortOrderInput | Prisma.SortOrder
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
   pageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  screenshot?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.FeedbackCountOrderByAggregateInput
@@ -254,88 +254,88 @@ export type FeedbackScalarWhereWithAggregatesInput = {
   AND?: Prisma.FeedbackScalarWhereWithAggregatesInput | Prisma.FeedbackScalarWhereWithAggregatesInput[]
   OR?: Prisma.FeedbackScalarWhereWithAggregatesInput[]
   NOT?: Prisma.FeedbackScalarWhereWithAggregatesInput | Prisma.FeedbackScalarWhereWithAggregatesInput[]
-  screenshot?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   id?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
   userDid?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   category?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
   message?: Prisma.StringWithAggregatesFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
+  screenshot?: Prisma.StringNullableWithAggregatesFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Feedback"> | Date | string
 }
 
 export type FeedbackCreateInput = {
-  screenshot?: string | null
   id?: string
   category: string
   message: string
   pageUrl?: string | null
+  screenshot?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutFeedbackInput
 }
 
 export type FeedbackUncheckedCreateInput = {
-  screenshot?: string | null
   id?: string
   userDid?: string | null
   category: string
   message: string
   pageUrl?: string | null
+  screenshot?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type FeedbackUpdateInput = {
-  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutFeedbackNestedInput
 }
 
 export type FeedbackUncheckedUpdateInput = {
-  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userDid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FeedbackCreateManyInput = {
-  screenshot?: string | null
   id?: string
   userDid?: string | null
   category: string
   message: string
   pageUrl?: string | null
+  screenshot?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type FeedbackUpdateManyMutationInput = {
-  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FeedbackUncheckedUpdateManyInput = {
-  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userDid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -351,34 +351,34 @@ export type FeedbackOrderByRelationAggregateInput = {
 }
 
 export type FeedbackCountOrderByAggregateInput = {
-  screenshot?: Prisma.SortOrder
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
   pageUrl?: Prisma.SortOrder
+  screenshot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type FeedbackMaxOrderByAggregateInput = {
-  screenshot?: Prisma.SortOrder
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
   pageUrl?: Prisma.SortOrder
+  screenshot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type FeedbackMinOrderByAggregateInput = {
-  screenshot?: Prisma.SortOrder
   id?: Prisma.SortOrder
   userDid?: Prisma.SortOrder
   category?: Prisma.SortOrder
   message?: Prisma.SortOrder
   pageUrl?: Prisma.SortOrder
+  screenshot?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -426,21 +426,21 @@ export type FeedbackUncheckedUpdateManyWithoutUserNestedInput = {
 }
 
 export type FeedbackCreateWithoutUserInput = {
-  screenshot?: string | null
   id?: string
   category: string
   message: string
   pageUrl?: string | null
+  screenshot?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type FeedbackUncheckedCreateWithoutUserInput = {
-  screenshot?: string | null
   id?: string
   category: string
   message: string
   pageUrl?: string | null
+  screenshot?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -475,52 +475,52 @@ export type FeedbackScalarWhereInput = {
   AND?: Prisma.FeedbackScalarWhereInput | Prisma.FeedbackScalarWhereInput[]
   OR?: Prisma.FeedbackScalarWhereInput[]
   NOT?: Prisma.FeedbackScalarWhereInput | Prisma.FeedbackScalarWhereInput[]
-  screenshot?: Prisma.StringNullableFilter<"Feedback"> | string | null
   id?: Prisma.StringFilter<"Feedback"> | string
   userDid?: Prisma.StringNullableFilter<"Feedback"> | string | null
   category?: Prisma.StringFilter<"Feedback"> | string
   message?: Prisma.StringFilter<"Feedback"> | string
   pageUrl?: Prisma.StringNullableFilter<"Feedback"> | string | null
+  screenshot?: Prisma.StringNullableFilter<"Feedback"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Feedback"> | Date | string
 }
 
 export type FeedbackCreateManyUserInput = {
-  screenshot?: string | null
   id?: string
   category: string
   message: string
   pageUrl?: string | null
+  screenshot?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type FeedbackUpdateWithoutUserInput = {
-  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FeedbackUncheckedUpdateWithoutUserInput = {
-  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FeedbackUncheckedUpdateManyWithoutUserInput = {
-  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   id?: Prisma.StringFieldUpdateOperationsInput | string
   category?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   pageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  screenshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -528,53 +528,53 @@ export type FeedbackUncheckedUpdateManyWithoutUserInput = {
 
 
 export type FeedbackSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  screenshot?: boolean
   id?: boolean
   userDid?: boolean
   category?: boolean
   message?: boolean
   pageUrl?: boolean
+  screenshot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  screenshot?: boolean
   id?: boolean
   userDid?: boolean
   category?: boolean
   message?: boolean
   pageUrl?: boolean
+  screenshot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  screenshot?: boolean
   id?: boolean
   userDid?: boolean
   category?: boolean
   message?: boolean
   pageUrl?: boolean
+  screenshot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }, ExtArgs["result"]["feedback"]>
 
 export type FeedbackSelectScalar = {
-  screenshot?: boolean
   id?: boolean
   userDid?: boolean
   category?: boolean
   message?: boolean
   pageUrl?: boolean
+  screenshot?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"screenshot" | "id" | "userDid" | "category" | "message" | "pageUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["feedback"]>
+export type FeedbackOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "category" | "message" | "pageUrl" | "screenshot" | "createdAt" | "updatedAt", ExtArgs["result"]["feedback"]>
 export type FeedbackInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.Feedback$userArgs<ExtArgs>
 }
@@ -591,12 +591,12 @@ export type $FeedbackPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     user: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    screenshot: string | null
     id: string
     userDid: string | null
     category: string
     message: string
     pageUrl: string | null
+    screenshot: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["feedback"]>
@@ -682,8 +682,8 @@ export interface FeedbackDelegate<ExtArgs extends runtime.Types.Extensions.Inter
    * // Get first 10 Feedbacks
    * const feedbacks = await prisma.feedback.findMany({ take: 10 })
    * 
-   * // Only select the `screenshot`
-   * const feedbackWithScreenshotOnly = await prisma.feedback.findMany({ select: { screenshot: true } })
+   * // Only select the `id`
+   * const feedbackWithIdOnly = await prisma.feedback.findMany({ select: { id: true } })
    * 
    */
   findMany<T extends FeedbackFindManyArgs>(args?: Prisma.SelectSubset<T, FeedbackFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -727,9 +727,9 @@ export interface FeedbackDelegate<ExtArgs extends runtime.Types.Extensions.Inter
    *   ]
    * })
    * 
-   * // Create many Feedbacks and only return the `screenshot`
-   * const feedbackWithScreenshotOnly = await prisma.feedback.createManyAndReturn({
-   *   select: { screenshot: true },
+   * // Create many Feedbacks and only return the `id`
+   * const feedbackWithIdOnly = await prisma.feedback.createManyAndReturn({
+   *   select: { id: true },
    *   data: [
    *     // ... provide data here
    *   ]
@@ -818,9 +818,9 @@ export interface FeedbackDelegate<ExtArgs extends runtime.Types.Extensions.Inter
    *   ]
    * })
    * 
-   * // Update zero or more Feedbacks and only return the `screenshot`
-   * const feedbackWithScreenshotOnly = await prisma.feedback.updateManyAndReturn({
-   *   select: { screenshot: true },
+   * // Update zero or more Feedbacks and only return the `id`
+   * const feedbackWithIdOnly = await prisma.feedback.updateManyAndReturn({
+   *   select: { id: true },
    *   where: {
    *     // ... provide filter here
    *   },
@@ -1023,12 +1023,12 @@ export interface Prisma__FeedbackClient<T, Null = never, ExtArgs extends runtime
  * Fields of the Feedback model
  */
 export interface FeedbackFieldRefs {
-  readonly screenshot: Prisma.FieldRef<"Feedback", 'String'>
   readonly id: Prisma.FieldRef<"Feedback", 'String'>
   readonly userDid: Prisma.FieldRef<"Feedback", 'String'>
   readonly category: Prisma.FieldRef<"Feedback", 'String'>
   readonly message: Prisma.FieldRef<"Feedback", 'String'>
   readonly pageUrl: Prisma.FieldRef<"Feedback", 'String'>
+  readonly screenshot: Prisma.FieldRef<"Feedback", 'String'>
   readonly createdAt: Prisma.FieldRef<"Feedback", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Feedback", 'DateTime'>
 }

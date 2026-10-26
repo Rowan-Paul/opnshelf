@@ -237,10 +237,13 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 	const [visible, setVisible] = useState(false);
 	const [screenshot, setScreenshot] = useState<string>();
 	const opening = useRef(false);
+	const sequence = useRef(0);
+	const [openId, setOpenId] = useState(0);
 	const toast = useToast();
 	const open = useCallback(() => {
 		if (opening.current) return;
 		opening.current = true;
+		setOpenId(++sequence.current);
 		setScreenshot(undefined);
 		const screen = Dimensions.get("screen");
 		const width = Platform.OS === "ios" ? 540 / PixelRatio.get() : 540;
@@ -266,6 +269,8 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 			.finally(() => setVisible(true));
 	}, [toast]);
 	const dismiss = () => {
+		// A finished send from an older opening must not close a new draft.
+		if (openId !== sequence.current) return;
 		setVisible(false);
 		setScreenshot(undefined);
 		opening.current = false;
@@ -274,7 +279,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 		<FeedbackContext.Provider value={{ open }}>
 			{children}
 			<FeedbackSheet
-				key={String(visible)}
+				key={openId}
 				visible={visible}
 				onDismiss={dismiss}
 				screenshot={screenshot}

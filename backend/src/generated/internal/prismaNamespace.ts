@@ -3440,12 +3440,12 @@ export type ReviewLikeScalarFieldEnum = (typeof ReviewLikeScalarFieldEnum)[keyof
 
 
 export const FeedbackScalarFieldEnum = {
-  screenshot: 'screenshot',
   id: 'id',
   userDid: 'userDid',
   category: 'category',
   message: 'message',
   pageUrl: 'pageUrl',
+  screenshot: 'screenshot',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
