@@ -88,9 +88,11 @@ describe("sortCrewByJob", () => {
 
 	it("does not mutate the input", () => {
 		const input = [...duneCrew];
-		sortCrewByJob(input, KEY_JOBS);
+		const original = [...input];
+		const sorted = sortCrewByJob(input, KEY_JOBS);
 
-		expect(input[0]).toMatchObject({ name: "Mary Parent" });
+		expect(input).toEqual(original);
+		expect(sorted).not.toBe(input);
 	});
 });
 

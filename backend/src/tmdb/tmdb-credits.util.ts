@@ -97,8 +97,8 @@ export function sortCrewByJob<T extends TMDBCrewMember>(
 		return index === -1 ? keyJobs.length : index;
 	};
 
-	// Array#sort is stable, so equal ranks keep TMDB's ordering.
-	return [...(crew ?? [])].sort((a, b) => rank(a) - rank(b));
+	// Array#toSorted is stable, so equal ranks keep TMDB's ordering.
+	return (crew ?? []).toSorted((a, b) => rank(a) - rank(b));
 }
 
 /**
