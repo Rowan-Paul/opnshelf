@@ -6,8 +6,12 @@ import {
 	memberKey,
 	validateList,
 	type ListMember,
-} from "./list-value";
-import { equivalent, fingerprint, type SyncRecord } from "./reconcile";
+} from "../integrations/list-value";
+import {
+	equivalent,
+	fingerprint,
+	type SyncRecord,
+} from "../integrations/reconcile";
 
 type Api = Pick<TraktSyncClient, "request">;
 class ListReadError extends Error {}

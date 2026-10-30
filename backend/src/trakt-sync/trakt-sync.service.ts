@@ -2,9 +2,14 @@ import {
 	contentValue,
 	isContentRecord,
 	validateOutboundContent,
-} from "./content-value";
+} from "../integrations/content-value";
 import { TID } from "@atproto/common";
-import { encodeList, listValue, memberKey, validateList } from "./list-value";
+import {
+	encodeList,
+	listValue,
+	memberKey,
+	validateList,
+} from "../integrations/list-value";
 import {
 	WatchAccountBusyError,
 	WatchAccountLock,
@@ -38,7 +43,7 @@ import {
 } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { getPaginationMeta } from "../common/pagination";
-import { LocalSyncRecords } from "./local-records.service";
+import { LocalSyncRecords } from "../integrations/local-records.service";
 import {
 	candidates,
 	isListRecord,
@@ -49,7 +54,7 @@ import {
 	readRecord,
 	type Direction,
 	type SyncRecord,
-} from "./reconcile";
+} from "../integrations/reconcile";
 import {
 	TraktSyncClient,
 	TraktSyncError,

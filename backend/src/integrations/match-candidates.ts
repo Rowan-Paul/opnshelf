@@ -1,6 +1,15 @@
 import type { TMDBMovie } from "../movies/movies-tmdb.service";
 import type { TMDBShow } from "../shows/shows-tmdb.service";
-import type { TraktMatchCandidateDto } from "./trakt-sync.dto";
+/** A TMDB title offered when an Integration record needs a manual match. */
+export type MatchCandidate = {
+	tmdbId: string;
+	mediaType: "movie" | "show";
+	title: string;
+	year?: number;
+	posterPath?: string;
+	overview?: string;
+};
+
 function yearFromDate(value?: string): number | undefined {
 	if (!value) return undefined;
 	const year = Number.parseInt(value.slice(0, 4), 10);
@@ -17,7 +26,7 @@ function candidateYearScore(
 export function rankMovieMatchCandidates(
 	results: TMDBMovie[],
 	sourceYear: number | null,
-): TraktMatchCandidateDto[] {
+): MatchCandidate[] {
 	return [...results]
 		.sort(
 			(a, b) =>
@@ -39,7 +48,7 @@ export function rankMovieMatchCandidates(
 export function rankShowMatchCandidates(
 	results: TMDBShow[],
 	sourceYear: number | null,
-): TraktMatchCandidateDto[] {
+): MatchCandidate[] {
 	return [...results]
 		.sort(
 			(a, b) =>

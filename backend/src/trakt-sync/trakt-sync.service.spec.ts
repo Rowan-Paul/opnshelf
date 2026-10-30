@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
 import type { WatchAccountLock } from "../privacy/watch-account-lock";
 import type { PrismaService } from "../prisma/prisma.service";
-import type { LocalSyncRecords } from "./local-records.service";
+import type { LocalSyncRecords } from "../integrations/local-records.service";
 import { TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
 import { TraktSyncService } from "./trakt-sync.service";
 

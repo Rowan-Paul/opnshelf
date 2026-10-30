@@ -1,4 +1,4 @@
-import { encodeContent, isContentRecord } from "./content-value";
+import { encodeContent, isContentRecord } from "../integrations/content-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
 import { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
 import { Pool } from "pg";
@@ -7,14 +7,18 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
 import { PrismaClient } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
-import type { LocalSyncRecords } from "./local-records.service";
-import { encodeList, listValue, type ListMember } from "./list-value";
+import type { LocalSyncRecords } from "../integrations/local-records.service";
+import {
+	encodeList,
+	listValue,
+	type ListMember,
+} from "../integrations/list-value";
 import {
 	equivalent,
 	mediaKey,
 	isListRecord,
 	type SyncRecord,
-} from "./reconcile";
+} from "../integrations/reconcile";
 import { type TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
 import { TraktSyncService } from "./trakt-sync.service";
 

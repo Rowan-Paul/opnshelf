@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { snapshotLists, writeList } from "./remote-lists";
-import { encodeList, listValue, memberKey } from "./list-value";
-import type { SyncRecord } from "./reconcile";
+import { encodeList, listValue, memberKey } from "../integrations/list-value";
+import type { SyncRecord } from "../integrations/reconcile";
 
 const metadata = {
 	name: "Weekend",

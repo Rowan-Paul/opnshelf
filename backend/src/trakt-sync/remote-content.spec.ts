@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { snapshotContent, writeContent } from "./remote-content";
-import { contentValue, encodeContent } from "./content-value";
-import { candidates, mediaKey, type SyncRecord } from "./reconcile";
+import { contentValue, encodeContent } from "../integrations/content-value";
+import {
+	candidates,
+	mediaKey,
+	type SyncRecord,
+} from "../integrations/reconcile";
 const movie = { title: "Fixture film", ids: { trakt: 9, tmdb: 12 } };
 const response = (data: unknown, count?: number) => ({
 	data,

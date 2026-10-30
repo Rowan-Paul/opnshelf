@@ -7,8 +7,12 @@ import {
 	validateOutboundContent,
 	type ContentKind,
 	type ContentOptions,
-} from "./content-value";
-import { equivalent, fingerprint, type SyncRecord } from "./reconcile";
+} from "../integrations/content-value";
+import {
+	equivalent,
+	fingerprint,
+	type SyncRecord,
+} from "../integrations/reconcile";
 
 type Api = Pick<TraktSyncClient, "request">;
 const object = z.record(z.string(), z.unknown());

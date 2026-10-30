@@ -2,9 +2,17 @@ import { createHash } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { z } from "zod";
 import { BackendEnv } from "../config/env.schema";
-import { isListRecord, type MediaType, type SyncRecord } from "./reconcile";
+import {
+	isListRecord,
+	type MediaType,
+	type SyncRecord,
+} from "../integrations/reconcile";
 
-import { isContentRecord } from "./content-value";
+import type {
+	IntegrationRemote,
+	SyncRecordTypes,
+} from "../integrations/adapter";
+import { isContentRecord } from "../integrations/content-value";
 import { snapshotContent, writeContent } from "./remote-content";
 import { snapshotLists, writeList } from "./remote-lists";
 
@@ -109,7 +117,7 @@ export function normalizeRemote(
 }
 
 @Injectable()
-export class TraktSyncClient {
+export class TraktSyncClient implements IntegrationRemote<string> {
 	private readonly nextRequests = new Map<string, number>();
 	constructor(private readonly config: BackendEnv) {}
 	get configured() {
@@ -242,16 +250,7 @@ export class TraktSyncClient {
 	}
 	async snapshot(
 		token: string,
-		options: {
-			watches?: boolean;
-			ratings?: boolean;
-			lists?: boolean;
-			watchlist?: boolean;
-			favorites?: boolean;
-			notes?: boolean;
-			library?: boolean;
-			reviews?: boolean;
-		} = {},
+		options: SyncRecordTypes = {},
 	): Promise<SyncRecord[]> {
 		const before = (await this.request("/sync/last_activities", token)).data;
 		const watches =
