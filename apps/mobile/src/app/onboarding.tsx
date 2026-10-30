@@ -1,6 +1,7 @@
 import {
 	authControllerMeQueryKey,
 	bringsTraktWatches,
+	TRAKT_INTEGRATION,
 	traktError,
 	traktSyncControllerConnectMutation,
 	traktSyncControllerStatus,
@@ -29,6 +30,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SyncSettings } from "@/components/integrations/IntegrationSyncManager";
 import { TraktMark } from "@/components/marks/TraktMark";
 import {
 	type NotificationStage,
@@ -39,7 +41,6 @@ import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
-import { SyncSettings } from "@/components/trakt/TraktSyncManager";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
@@ -695,6 +696,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 				{enabled ? null : (
 					<SyncSettings
 						key={data.username}
+						integration={TRAKT_INTEGRATION}
 						status={data}
 						onSaved={() => {
 							void refresh();

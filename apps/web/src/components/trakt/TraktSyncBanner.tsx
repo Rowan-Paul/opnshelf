@@ -27,7 +27,8 @@ export function TraktSyncBanner() {
 	if (!syncMessage) return null;
 	return (
 		<Link
-			to="/trakt-sync"
+			to="/integrations/$provider"
+			params={{ provider: "trakt" }}
 			search={{}}
 			className={`block border-b ${syncError ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100" : "border-(--border) bg-(--background-subtle) text-(--foreground-muted)"}`}
 		>

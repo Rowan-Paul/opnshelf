@@ -84,6 +84,7 @@ export {
 	getYouTubeThumbnailUrl,
 	resolveDetailTrailer,
 } from "./trailer";
+export * from "./integrations";
 export * from "./trakt-sync";
 export {
 	invalidateWatchActivityQueries,

@@ -1,7 +1,7 @@
 # Popfeed Sync
 
 Design brief for [issue #29](https://github.com/Rowan-Paul/opnshelf/issues/29).
-Status: agreed direction. The shared core and Popfeed → Opnshelf are implemented in the #29 branch; the Integrations section and Opnshelf → Popfeed are not. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
+Status: agreed direction. The shared core, Popfeed → Opnshelf and the Integrations section are implemented in the #29 branch; the Popfeed Onboarding offer and Opnshelf → Popfeed are not. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
 
 ## Why this is back
 
@@ -117,7 +117,7 @@ A new **Integrations** settings section on Web and Mobile lists each integration
 | Popfeed management: direction, types, history scope, status, pause, disconnect | Included | Included |
 | Popfeed Needs attention, conflicts, ignore and undo | Included | Included |
 | Trakt Sync moved into Integrations, old routes redirect | Included | Included |
-| Onboarding integration offer, Popfeed suggested when detected | Included | Included |
+| Onboarding integration offer, Popfeed suggested when detected | Not yet: Onboarding still offers Trakt only | Not yet: Onboarding still offers Trakt only |
 
 ## Open verification
 
@@ -148,7 +148,7 @@ These are facts to establish, not product decisions. If one contradicts the rule
 
 1. Extract the shared integration core with Trakt as its first adapter, with no behavior change. Done.
 2. Add the Popfeed adapter inbound, with its `/popfeed-sync` API. Done; it ran before the Integrations section so the section has two real Integrations to list.
-3. Add the Integrations section on both clients, move Trakt Sync into it, add Popfeed and redirect the old routes.
+3. Add the Integrations section on both clients, move Trakt Sync into it, add Popfeed and redirect the old routes. Done, except the Popfeed Onboarding offer.
 4. Add Popfeed outbound once the open verification items are answered.
 
 Each step is its own pull request.

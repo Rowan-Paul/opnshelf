@@ -146,6 +146,10 @@ export default function RootLayout() {
 						options={{ headerShown: true }}
 					/>
 					<Stack.Screen
+						name="settings/integrations"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
 						name="settings/account"
 						options={{ headerShown: true }}
 					/>
@@ -161,6 +165,14 @@ export default function RootLayout() {
 						options={{ headerShown: true, title: "Your pick" }}
 					/>
 					<Stack.Screen name="trakt-sync" options={{ headerShown: true }} />
+					<Stack.Screen
+						name="integrations/[provider]"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="integrations/[provider]/attention"
+						options={{ headerShown: true }}
+					/>
 					<Stack.Screen
 						name="atstore-review"
 						options={{

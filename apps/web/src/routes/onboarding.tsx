@@ -3,6 +3,7 @@ import {
 	authControllerResendVerificationMutation,
 	authControllerVerifyEmailMutation,
 	bringsTraktWatches,
+	TRAKT_INTEGRATION,
 	traktError,
 	traktSyncControllerConnectMutation,
 	traktSyncControllerStatus,
@@ -29,6 +30,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
+import { SyncSettings } from "#/components/integrations/IntegrationSyncManager";
 import Logo from "#/components/Logo";
 import { FollowSuggestionsStep } from "#/components/onboarding/FollowSuggestionsStep";
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
@@ -41,7 +43,6 @@ import { NotificationEmailSection } from "#/components/settings/NotificationEmai
 import { PrivacySection } from "#/components/settings/PrivacySection";
 import TimezoneSelector from "#/components/TimezoneSelector";
 import { TraktMark } from "#/components/TraktMark";
-import { SyncSettings } from "#/components/trakt/TraktSyncManager";
 import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -843,6 +844,7 @@ function TraktStep({
 				{!enabled && (
 					<SyncSettings
 						key={data.username}
+						integration={TRAKT_INTEGRATION}
 						status={data}
 						onSaved={() => {
 							void refresh();

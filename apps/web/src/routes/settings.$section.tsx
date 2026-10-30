@@ -5,7 +5,7 @@ import { BlueskyCrossPostsSection } from "#/components/settings/BlueskyCrossPost
 import { DeleteAccountSection } from "#/components/settings/DeleteAccountSection";
 import { DevicesSection } from "#/components/settings/DevicesSection";
 import { HelpSection } from "#/components/settings/HelpSection";
-import { ImportHistorySection } from "#/components/settings/ImportHistorySection";
+import { IntegrationsSection } from "#/components/settings/IntegrationsSection";
 import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
 import { PreferencesSections } from "#/components/settings/PreferencesSections";
 import { PrivacySection } from "#/components/settings/PrivacySection";
@@ -31,8 +31,11 @@ const SECTION_COPY = {
 	},
 	connections: {
 		title: "Connections",
-		description:
-			"Manage optional services that work with your Reviews and Shelf.",
+		description: "Manage optional services that publish your Reviews.",
+	},
+	integrations: {
+		title: "Integrations",
+		description: "Keep your history in sync with other services.",
 	},
 	account: {
 		title: "Account",
@@ -68,9 +71,9 @@ function SettingsSectionPage() {
 					<>
 						<BlogMirrorSection />
 						<BlueskyCrossPostsSection />
-						<ImportHistorySection />
 					</>
 				) : null}
+				{section === "integrations" ? <IntegrationsSection /> : null}
 				{section === "account" ? (
 					<>
 						<DevicesSection />

@@ -8,19 +8,26 @@ import {
 	isRedirect,
 } from "@tanstack/react-router";
 import { expect, it, vi } from "vitest";
+import { Route as IntegrationRoute } from "./integrations.$provider";
 import { Route as SettingsRoute } from "./settings";
-import { Route as SyncRoute } from "./trakt-sync";
+import { Route as TraktRedirectRoute } from "./trakt-sync";
 
 vi.mock("#/lib/api", () => ({ ssrAuthOptions: () => ({}) }));
 
-const routes: [string, AnyRoute][] = [
-	["/trakt-sync", SyncRoute],
-	["/settings", SettingsRoute],
+// [route path, URL, route, params]
+const routes: [string, string, AnyRoute, Record<string, string>][] = [
+	[
+		"/integrations/$provider",
+		"/integrations/trakt",
+		IntegrationRoute,
+		{ provider: "trakt" },
+	],
+	["/settings", "/settings", SettingsRoute, {}],
 ];
 
 it.each(
 	routes,
-)("keeps %s on refresh when SSR cannot see the API session", async (path, route) => {
+)("keeps %s on refresh when SSR cannot see the API session", async (path, url, route) => {
 	const queryClient = new QueryClient();
 	const fetchQuery = vi
 		.spyOn(queryClient, "fetchQuery")
@@ -34,12 +41,12 @@ it.each(
 	const router = createRouter({
 		routeTree: root.addChildren([child]),
 		context: { queryClient },
-		history: createMemoryHistory({ initialEntries: [path] }),
+		history: createMemoryHistory({ initialEntries: [url] }),
 		isServer: true,
 	});
 	try {
 		await router.load();
-		expect(router.state.location.pathname).toBe(path);
+		expect(router.state.location.pathname).toBe(url);
 		expect(fetchQuery).not.toHaveBeenCalled();
 	} finally {
 		queryClient.clear();
@@ -48,13 +55,14 @@ it.each(
 
 it.each(
 	routes,
-)("checks the browser session for %s before redirecting or rendering", async (_path, route) => {
+)("checks the browser session for %s before redirecting or rendering", async (_path, _url, route, params) => {
 	const queryClient = new QueryClient();
 	const fetchQuery = vi.spyOn(queryClient, "fetchQuery");
 	const load = () =>
-		route.options.beforeLoad?.({ context: { queryClient } } as Parameters<
-			NonNullable<typeof route.options.beforeLoad>
-		>[0]);
+		route.options.beforeLoad?.({
+			context: { queryClient },
+			params,
+		} as Parameters<NonNullable<typeof route.options.beforeLoad>>[0]);
 	try {
 		fetchQuery.mockResolvedValue({ did: "did:plc:test" });
 		await expect(load()).resolves.toBeUndefined();
@@ -71,4 +79,29 @@ it.each(
 	} finally {
 		queryClient.clear();
 	}
+});
+
+it("sends Trakt Sync's old address to the Trakt Integration, keeping the OAuth result", () => {
+	let thrown: unknown;
+	try {
+		TraktRedirectRoute.options.beforeLoad?.({
+			search: { connection: "failed" },
+		} as unknown as Parameters<
+			NonNullable<typeof TraktRedirectRoute.options.beforeLoad>
+		>[0]);
+	} catch (error) {
+		thrown = error;
+	}
+	expect(isRedirect(thrown)).toBe(true);
+	expect(
+		isRedirect(thrown) && {
+			to: thrown.options.to,
+			params: thrown.options.params,
+			search: thrown.options.search,
+		},
+	).toEqual({
+		to: "/integrations/$provider",
+		params: { provider: "trakt" },
+		search: { connection: "failed" },
+	});
 });

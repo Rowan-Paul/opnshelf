@@ -1,29 +1,25 @@
 import {
-	type SyncIssueDto,
-	type SyncResolveDto,
+	type IntegrationDefinition,
+	type IntegrationIssueDto,
+	type IntegrationResolveDto,
+	integrationActionLabel,
+	integrationDirections,
+	integrationIssueRecovery,
+	integrationKey,
+	integrationMissingConfirmation,
+	integrationRecords,
+	integrationResolutionLabel,
+	integrationStateMessage,
+	integrationUnconfirmedChoiceCopy,
+	type SyncActionDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
-	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
-	TRAKT_SYNC_DIRECTIONS,
-	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
-	TRAKT_UNCONFIRMED_CHOICE_COPY,
 	traktError,
-	traktIssueRecovery,
 	traktRecordTitle,
-	traktResolutionLabel,
 	traktSettings,
-	traktSyncActionLabel,
-	traktSyncControllerActionMutation,
-	traktSyncControllerConfigureMutation,
-	traktSyncControllerConnectMutation,
-	traktSyncControllerIssues,
-	traktSyncControllerMatchesOptions,
-	traktSyncControllerResolveMutation,
-	traktSyncControllerStatus,
-	traktSyncStateMessage,
 } from "@opnshelf/api";
 import {
 	keepPreviousData,
@@ -42,7 +38,8 @@ import {
 	Settings2,
 } from "lucide-react";
 import { useRef, useState } from "react";
-import { TraktMark } from "#/components/TraktMark";
+import { IntegrationMark } from "#/components/integrations/IntegrationMark";
+
 import {
 	Dialog,
 	DialogContent,
@@ -61,37 +58,40 @@ function displayValue(value: string) {
 		: value;
 }
 
-const rootKey = ["trakt-sync"];
 const card =
 	"rounded-2xl border border-(--border) bg-(--background-elevated) p-5 sm:p-7";
 
-export function TraktSyncManager({
+export function IntegrationSyncManager({
+	integration,
 	connectionFailed = false,
 	embedded = false,
 	issuesOnly = false,
 }: {
+	integration: IntegrationDefinition;
 	connectionFailed?: boolean;
 	embedded?: boolean;
 	issuesOnly?: boolean;
 }) {
+	const { id, name } = integration;
+	const rootKey = integrationKey(integration);
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
 	const status = useQuery({
 		queryKey: [...rootKey, "status"],
-		queryFn: async ({ signal }) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		queryFn: ({ signal }) => integration.api.status(signal),
 		refetchInterval: 5000,
 	});
 	const connect = useMutation({
-		mutationKey: ["trakt-sync", "connect"],
-		...traktSyncControllerConnectMutation(),
+		mutationKey: [...rootKey, "connect"],
+		mutationFn: integration.api.connect,
 		onSuccess: (data) => {
-			window.location.assign(data.url);
+			if (data.url) window.location.assign(data.url);
+			else void refresh();
 		},
 	});
 	const action = useMutation({
-		mutationKey: ["trakt-sync", "action"],
-		...traktSyncControllerActionMutation(),
+		mutationKey: [...rootKey, "action"],
+		mutationFn: (name: SyncActionDto["action"]) => integration.api.action(name),
 		onSuccess: refresh,
 	});
 	const [disconnect, setDisconnect] = useState(false);
@@ -110,7 +110,7 @@ export function TraktSyncManager({
 			</p>
 		) : (
 			<output
-				aria-label="Loading Trakt Sync"
+				aria-label={`Loading ${name} Sync`}
 				className={`${embedded ? "" : card} block animate-pulse space-y-4`}
 			>
 				<span className="block h-5 w-36 rounded bg-(--background-subtle)" />
@@ -126,13 +126,17 @@ export function TraktSyncManager({
 	if (issuesOnly)
 		return (
 			<div className="mx-auto max-w-3xl space-y-6">
-				<Link to="/trakt-sync" className="text-sm underline">
-					Back to Trakt Sync
+				<Link
+					to="/integrations/$provider"
+					params={{ provider: id }}
+					className="text-sm underline"
+				>
+					Back to {name} Sync
 				</Link>
 				<h1 className="font-display font-semibold text-3xl">
 					Review sync items
 				</h1>
-				<SyncIssues connected={connected} />
+				<SyncIssues integration={integration} connected={connected} />
 			</div>
 		);
 	const needsSetup =
@@ -149,29 +153,33 @@ export function TraktSyncManager({
 				<header className="space-y-3">
 					<Link
 						to="/settings/$section"
-						params={{ section: "connections" }}
+						params={{ section: "integrations" }}
 						className="inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
 					>
 						<ChevronLeft className="size-4" />
 						Back to Settings
 					</Link>
 					<h1 className="font-display font-semibold text-3xl sm:text-4xl">
-						Trakt Sync
+						{name} Sync
 					</h1>
 					<p className="max-w-xl text-(--foreground-muted)">
-						Keep your Watches, Ratings, Lists, Favorites, Notes, Library and
-						Reviews in sync, even when the app is closed. You choose what moves
-						and in which direction.
+						{integration.summary} Sync runs even when the app is closed, and you
+						choose what moves.
 					</p>
 				</header>
 			)}
-			<section className={embedded ? "" : card} aria-label="Trakt connection">
+			<section
+				className={embedded ? "" : card}
+				aria-label={`${name} connection`}
+			>
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div>
 						<h2 className="font-semibold text-lg">
 							{data.username
 								? `@${data.username}`
-								: "Connect your Trakt account"}
+								: integration.connect === "oauth"
+									? `Connect your ${name} account`
+									: `Use your ${name} records`}
 						</h2>
 						<p className="mt-1 text-(--foreground-muted) text-sm">
 							{needsSetup
@@ -184,50 +192,46 @@ export function TraktSyncManager({
 											? "Sync is paused"
 											: data.status === "reconnect"
 												? "Reconnect to continue"
-												: "No account connected"}
+												: integration.connect === "oauth"
+													? "No account connected"
+													: "Not connected"}
 						</p>
 					</div>
 					<Link2 className="size-5 text-(--foreground-muted)" />
 				</div>
 				{!data.configured ? (
 					<p className="mt-4 text-(--foreground-muted)">
-						Trakt Sync is not configured on this server yet.
+						{name} Sync is not configured on this server yet.
 					</p>
 				) : !connected ? (
 					<button
 						className="btn btn-primary mt-5"
 						type="button"
 						disabled={connect.isPending}
-						onClick={() => connect.mutate({ body: { platform: "web" } })}
+						onClick={() => connect.mutate({ platform: "web" })}
 					>
 						{connect.isPending
-							? "Opening Trakt…"
+							? integration.connect === "oauth"
+								? `Opening ${name}…`
+								: "Connecting…"
 							: data.status === "reconnect"
-								? "Reconnect Trakt"
-								: "Connect Trakt"}
+								? `Reconnect ${name}`
+								: `Connect ${name}`}
 					</button>
 				) : !needsSetup ? (
 					<>
 						<div className="mt-4 flex flex-wrap gap-2 text-sm">
 							<span className="rounded-lg bg-(--background-subtle) px-3 py-1.5 font-medium">
 								{
-									TRAKT_SYNC_DIRECTIONS.find(
+									integrationDirections(integration).find(
 										(choice) => choice.value === data.direction,
 									)?.label
 								}
 							</span>
 							<span className="rounded-lg bg-(--background-subtle) px-3 py-1.5">
-								{[
-									data.watches && "Watch history",
-									data.ratings && "Ratings",
-									data.lists && "Custom Lists",
-									data.watchlist && "Watchlist",
-									data.favorites && "Favorites",
-									data.notes && "Notes",
-									data.library && "Library",
-									data.reviews && "Reviews",
-								]
-									.filter(Boolean)
+								{integrationRecords(integration)
+									.filter(({ value }) => data[value])
+									.map(({ label }) => label)
 									.join(", ")}
 							</span>
 						</div>
@@ -235,8 +239,7 @@ export function TraktSyncManager({
 							{data.lastSuccessAt
 								? `Last successful check: ${new Date(data.lastSuccessAt).toLocaleString()}`
 								: "No successful sync yet."}{" "}
-							Trakt is checked about every 15 minutes; rate limits can delay
-							transfers.
+							{integration.checkCopy}
 						</p>
 						<div className="mt-4 flex flex-wrap gap-2">
 							<button
@@ -256,27 +259,25 @@ export function TraktSyncManager({
 								] as const
 							)
 								.filter(
-									(name) =>
-										name !== "sync" ||
+									(choice) =>
+										choice !== "sync" ||
 										!["running", "queued", "waiting"].includes(
 											data.syncState ?? "",
 										),
 								)
-								.map((name) => (
+								.map((choice) => (
 									<button
-										key={name}
+										key={choice}
 										type="button"
 										className="btn btn-secondary max-w-full whitespace-normal"
-										disabled={
-											action.isPending && action.variables?.body.action === name
-										}
-										onClick={() => action.mutate({ body: { action: name } })}
+										disabled={action.isPending && action.variables === choice}
+										onClick={() => action.mutate(choice)}
 									>
-										{action.isPending && action.variables?.body.action === name
+										{action.isPending && action.variables === choice
 											? "Saving…"
-											: name === "sync"
-												? traktSyncActionLabel(data)
-												: name === "pause"
+											: choice === "sync"
+												? integrationActionLabel(data, name)
+												: choice === "pause"
 													? "Pause"
 													: "Resume"}
 									</button>
@@ -303,11 +304,11 @@ export function TraktSyncManager({
 					<Dialog open onOpenChange={setDisconnect}>
 						<DialogContent>
 							<DialogHeader>
-								<DialogTitle>Disconnect Trakt?</DialogTitle>
+								<DialogTitle>Disconnect {name}?</DialogTitle>
 								<DialogDescription>
-									Disconnecting stops sync and revokes access. Transferred
-									records remain on both services. Reconnecting this account
-									catches up previously linked records.
+									{integration.connect === "oauth"
+										? "Disconnecting stops sync and revokes access. Transferred records remain on both services. Reconnecting this account catches up previously linked records."
+										: `Disconnecting stops sync. Transferred records stay in Opnshelf and your ${name} records are untouched. Reconnecting catches up previously linked records.`}
 								</DialogDescription>
 							</DialogHeader>
 							<div className="flex flex-wrap gap-2">
@@ -323,10 +324,9 @@ export function TraktSyncManager({
 									className="btn btn-primary max-w-full whitespace-normal"
 									disabled={action.isPending}
 									onClick={() =>
-										action.mutate(
-											{ body: { action: "disconnect" } },
-											{ onSuccess: () => setDisconnect(false) },
-										)
+										action.mutate("disconnect", {
+											onSuccess: () => setDisconnect(false),
+										})
 									}
 								>
 									Confirm disconnect
@@ -335,12 +335,12 @@ export function TraktSyncManager({
 						</DialogContent>
 					</Dialog>
 				)}
-				{traktSyncStateMessage(data) && (
+				{integrationStateMessage(data, name) && (
 					<output
 						aria-live="polite"
 						className="mt-4 block text-(--foreground-muted) text-sm"
 					>
-						{traktSyncStateMessage(data)}
+						{integrationStateMessage(data, name)}
 					</output>
 				)}
 				{(connectionFailed ||
@@ -349,7 +349,7 @@ export function TraktSyncManager({
 					data.lastError) && (
 					<p role="alert" className="mt-4 text-(--destructive)">
 						{connectionFailed
-							? "Trakt could not connect. Try connecting again."
+							? `${name} could not connect. Try connecting again.`
 							: connect.error
 								? traktError(connect.error)
 								: action.error
@@ -361,6 +361,7 @@ export function TraktSyncManager({
 			{connected && needsSetup && !editing && (
 				<SyncSettings
 					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.notes}:${data.library}:${data.reviews}:${data.contentPublicationConsent}:${data.listPublicationConsent}:${data.historyScope}`}
+					integration={integration}
 					status={data}
 					className={card}
 					onSaved={() => {
@@ -375,11 +376,12 @@ export function TraktSyncManager({
 					<DialogHeader>
 						<DialogTitle>Sync settings</DialogTitle>
 						<DialogDescription>
-							Choose what moves between Trakt and Opnshelf.
+							Choose what moves between {name} and Opnshelf.
 						</DialogDescription>
 					</DialogHeader>
 					{editing && (
 						<SyncSettings
+							integration={integration}
 							status={data}
 							className="space-y-5"
 							showHeading={false}
@@ -401,7 +403,11 @@ export function TraktSyncManager({
 							{data.needsAttention === 1 ? "item" : "items"} to review ·{" "}
 							{data.ignored} ignored. Other records keep syncing.
 						</p>
-						<Link to="/trakt-sync/attention" className="btn btn-primary">
+						<Link
+							to="/integrations/$provider/attention"
+							params={{ provider: id }}
+							className="btn btn-primary"
+						>
 							Review items <ArrowRight className="size-4" />
 						</Link>
 					</section>
@@ -411,6 +417,7 @@ export function TraktSyncManager({
 }
 
 export function SyncSettings({
+	integration,
 	status,
 	onSaved,
 	className = card,
@@ -418,6 +425,7 @@ export function SyncSettings({
 	onboarding = false,
 	onCancel,
 }: {
+	integration: IntegrationDefinition;
 	status: SyncStatusDto;
 	onSaved: () => unknown;
 	className?: string;
@@ -425,9 +433,15 @@ export function SyncSettings({
 	onboarding?: boolean;
 	onCancel?: () => void;
 }) {
-	const [settings, setSettings] = useState<SyncSettingsDto>(() =>
-		traktSettings(status),
-	);
+	const { name } = integration;
+	const records = integrationRecords(integration);
+	const directions = integrationDirections(integration);
+	const [settings, setSettings] = useState<SyncSettingsDto>(() => {
+		const saved = traktSettings(status);
+		return integration.directions.includes(saved.direction)
+			? saved
+			: { ...saved, direction: integration.directions[0] };
+	});
 	const [reviewing, setReviewing] = useState(false);
 	const [choosingRecords, setChoosingRecords] = useState(false);
 	const submitButton = useRef<HTMLButtonElement>(null);
@@ -442,8 +456,8 @@ export function SyncSettings({
 				status.contentPublicationConsent,
 		);
 	const save = useMutation({
-		mutationKey: ["trakt-sync", "configure"],
-		...traktSyncControllerConfigureMutation(),
+		mutationKey: [...integrationKey(integration), "configure"],
+		mutationFn: integration.api.configure,
 		onSuccess: () => {
 			setReviewing(false);
 			onSaved();
@@ -485,7 +499,8 @@ export function SyncSettings({
 						<div className="min-w-0 space-y-1">
 							<p className="font-medium text-sm">Records</p>
 							<p className="text-(--foreground-muted) text-sm leading-relaxed">
-								{TRAKT_SYNC_RECORDS.filter(({ value }) => settings[value])
+								{records
+									.filter(({ value }) => settings[value])
 									.map(({ label }) => label)
 									.join(", ") || "Choose at least one record type"}
 							</p>
@@ -507,7 +522,7 @@ export function SyncSettings({
 							</DialogHeader>
 							<fieldset className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-(--border) p-3">
 								<legend className="sr-only">Records</legend>
-								{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
+								{records.map(({ value, label }) => (
 									<label
 										key={value}
 										className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm hover:bg-(--background)"
@@ -538,8 +553,15 @@ export function SyncSettings({
 				</div>
 				<fieldset>
 					<legend className="mb-2 font-medium text-sm">Direction</legend>
-					<div className="grid grid-cols-3 gap-2 sm:gap-3">
-						{TRAKT_SYNC_DIRECTIONS.map((choice) => {
+					{integration.directionNote && (
+						<p className="mb-3 text-(--foreground-muted) text-sm">
+							{integration.directionNote}
+						</p>
+					)}
+					<div
+						className={`grid gap-2 sm:gap-3 ${directions.length > 1 ? "grid-cols-3" : "max-w-56 grid-cols-1"}`}
+					>
+						{directions.map((choice) => {
 							const Arrow =
 								choice.value === "inbound"
 									? ArrowRight
@@ -563,7 +585,7 @@ export function SyncSettings({
 											aria-hidden="true"
 											className="flex items-center gap-2"
 										>
-											<TraktMark className="size-5" />
+											<IntegrationMark id={integration.id} className="size-5" />
 											<Arrow className="size-4 text-(--foreground-muted)" />
 											<img
 												src="/icon.png"
@@ -655,7 +677,7 @@ export function SyncSettings({
 				>
 					<DialogHeader>
 						<DialogTitle>
-							{managed ? "Update Trakt Sync" : "Enable Trakt Sync"}
+							{managed ? `Update ${name} Sync` : `Enable ${name} Sync`}
 						</DialogTitle>
 						<DialogDescription>
 							Confirm what will move between your accounts.
@@ -665,24 +687,15 @@ export function SyncSettings({
 						{[
 							[
 								"Records",
-								[
-									settings.watches && "Watch history",
-									settings.ratings && "Ratings",
-									settings.lists && "Custom Lists",
-									settings.watchlist && "Watchlist",
-									settings.favorites && "Favorites",
-									settings.notes && "Notes",
-									settings.library && "Library",
-									settings.reviews && "Reviews",
-								]
-									.filter(Boolean)
+								records
+									.filter(({ value }) => settings[value])
+									.map(({ label }) => label)
 									.join(", "),
 							],
 							[
 								"Direction",
-								TRAKT_SYNC_DIRECTIONS.find(
-									(choice) => choice.value === settings.direction,
-								)?.label,
+								directions.find((choice) => choice.value === settings.direction)
+									?.label,
 							],
 							[
 								"History",
@@ -744,7 +757,7 @@ export function SyncSettings({
 							type="button"
 							className="btn btn-primary disabled:opacity-50"
 							disabled={save.isPending || !canSave}
-							onClick={() => save.mutate({ body: settings })}
+							onClick={() => save.mutate(settings)}
 						>
 							{save.isPending
 								? "Saving…"
@@ -764,24 +777,21 @@ export function SyncSettings({
 }
 
 function SyncIssues({
+	integration,
 	connected,
 	view = "attention",
 }: {
+	integration: IntegrationDefinition;
 	connected: boolean;
 	view?: "attention" | "ignored";
 }) {
+	const rootKey = integrationKey(integration);
 	const [ignoredOpen, setIgnoredOpen] = useState(false);
 	const [page, setPage] = useState(1);
 	const result = useQuery({
 		queryKey: [...rootKey, "issues", view, page],
-		queryFn: async ({ signal }) =>
-			(
-				await traktSyncControllerIssues({
-					query: { view, page, pageSize: 1 },
-					signal,
-					throwOnError: true,
-				})
-			).data,
+		queryFn: ({ signal }) =>
+			integration.api.issues({ view, page, pageSize: 1 }, signal),
 		placeholderData: keepPreviousData,
 		refetchInterval: 10_000,
 	});
@@ -862,7 +872,11 @@ function SyncIssues({
 						key={item.id}
 						className="rounded-2xl border border-(--border) bg-(--background-elevated) pt-5"
 					>
-						<SyncIssue item={item} connected={connected} />
+						<SyncIssue
+							integration={integration}
+							item={item}
+							connected={connected}
+						/>
 					</div>
 				))}
 				{result.data?.total === 0 && (
@@ -878,10 +892,16 @@ function SyncIssues({
 						<DialogHeader>
 							<DialogTitle>Ignored items</DialogTitle>
 							<DialogDescription>
-								Items you’ve set aside from Trakt Sync.
+								Items you’ve set aside from {integration.name} Sync.
 							</DialogDescription>
 						</DialogHeader>
-						{ignoredOpen && <SyncIssues connected={connected} view="ignored" />}
+						{ignoredOpen && (
+							<SyncIssues
+								integration={integration}
+								connected={connected}
+								view="ignored"
+							/>
+						)}
 					</DialogContent>
 				)}
 			</section>
@@ -890,56 +910,60 @@ function SyncIssues({
 }
 
 function SyncIssue({
+	integration,
 	item,
 	connected,
 }: {
-	item: SyncIssueDto;
+	integration: IntegrationDefinition;
+	item: IntegrationIssueDto;
 	connected: boolean;
 }) {
+	const { name } = integration;
+	const rootKey = integrationKey(integration);
 	const client = useQueryClient();
-	const [choice, setChoice] = useState<SyncResolveDto | null>(null);
+	const [choice, setChoice] = useState<IntegrationResolveDto | null>(null);
 	const [search, setSearch] = useState("");
 	const [query, setQuery] = useState<string | null>(null);
 	const mutation = useMutation({
-		mutationKey: ["trakt-sync", "issues", "resolve"],
-		...traktSyncControllerResolveMutation(),
+		mutationKey: [...rootKey, "issues", "resolve"],
+		mutationFn: (body: IntegrationResolveDto) =>
+			integration.api.resolve(item.id, body),
 		onSuccess: () => {
 			setChoice(null);
 			void client.invalidateQueries({ queryKey: rootKey });
 		},
 	});
 	const matches = useQuery({
-		...traktSyncControllerMatchesOptions({
-			path: { id: item.id },
-			query: { q: query ?? "" },
-		}),
+		queryKey: [...rootKey, "issues", item.id, "matches", query],
+		queryFn: ({ signal }) =>
+			integration.api.matches(item.id, query ?? "", signal),
 		enabled: query !== null,
 	});
-	const resolve = (body: SyncResolveDto) =>
-		mutation.mutate({ path: { id: item.id }, body });
+	const resolve = (body: IntegrationResolveDto) => mutation.mutate(body);
 	return (
 		<article className="px-5 pb-5" aria-busy={mutation.isPending}>
 			<h3 className="font-semibold text-lg">
 				{traktRecordTitle(item.opnshelf) ??
-					traktRecordTitle(item.trakt) ??
+					traktRecordTitle(item.remote) ??
 					"Removed record"}
 			</h3>
 			<p className="mt-2 text-(--foreground-muted) text-sm">
-				{traktIssueRecovery(item) === "verify"
-					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again, or check your Trakt account before choosing a version."
+				{integrationIssueRecovery(item) === "verify"
+					? `Saved in Opnshelf. We couldn’t confirm whether ${name} received it. Check again, or check your ${name} account before choosing a version.`
 					: item.issue}
 			</p>
 			<dl className="my-4 grid grid-cols-2 gap-3">
-				{(["opnshelf", "trakt"] as const).map((name) => (
-					<div key={name} className="rounded-lg bg-(--background-subtle) p-3">
+				{(["opnshelf", "remote"] as const).map((side) => (
+					<div key={side} className="rounded-lg bg-(--background-subtle) p-3">
 						<dt className="text-(--foreground-muted) text-xs">
-							{name === "trakt" ? "Trakt" : "Opnshelf"}
+							{side === "remote" ? name : "Opnshelf"}
 						</dt>
 						<dd className="mt-1 break-words text-sm">
-							{(item[name]?.displayValue
-								? displayValue(item[name].displayValue)
+							{(item[side]?.displayValue
+								? displayValue(item[side].displayValue)
 								: undefined) ??
-								(name === "trakt" && traktIssueRecovery(item) === "verify"
+								(side === "remote" &&
+								integrationIssueRecovery(item) === "verify"
 									? "Not confirmed yet"
 									: "Not present")}
 						</dd>
@@ -958,8 +982,8 @@ function SyncIssue({
 			) : (
 				<div className="flex flex-wrap gap-2">
 					{connected &&
-						traktIssueRecovery(item) !== "retry" &&
-						(["trakt", "opnshelf"] as const).map((action) => (
+						integrationIssueRecovery(item) !== "retry" &&
+						(["remote", "opnshelf"] as const).map((action) => (
 							<button
 								key={action}
 								type="button"
@@ -968,17 +992,21 @@ function SyncIssue({
 								onClick={() =>
 									setChoice({
 										action,
-										...(traktIssueRecovery(item) === "verify"
-											? { confirmedTraktMissing: false }
+										...(integrationIssueRecovery(item) === "verify"
+											? { confirmedRemoteMissing: false }
 											: {}),
 									})
 								}
 							>
-								{traktIssueRecovery(item) === "verify"
+								{integrationIssueRecovery(item) === "verify"
 									? action === "opnshelf"
-										? "Send after checking Trakt"
+										? `Send after checking ${name}`
 										: "Remove from Opnshelf"
-									: traktResolutionLabel(action, Boolean(item[action]))}
+									: integrationResolutionLabel(
+											action,
+											Boolean(item[action]),
+											name,
+										)}
 							</button>
 						))}
 					{connected && (
@@ -988,7 +1016,9 @@ function SyncIssue({
 							disabled={mutation.isPending}
 							onClick={() => resolve({ action: "retry" })}
 						>
-							{traktIssueRecovery(item) === "verify" ? "Check again" : "Retry"}
+							{integrationIssueRecovery(item) === "verify"
+								? "Check again"
+								: "Retry"}
 						</button>
 					)}
 					<button
@@ -1011,7 +1041,7 @@ function SyncIssue({
 						>
 							<p className="text-(--foreground-muted) text-xs">
 								Existing {item.kind === "watch" ? "Watch" : "record"} in{" "}
-								{item.opnshelf ? "Trakt" : "Opnshelf"}
+								{item.opnshelf ? name : "Opnshelf"}
 							</p>
 							<p className="font-semibold text-sm">
 								{traktRecordTitle(candidate)}
@@ -1049,8 +1079,8 @@ function SyncIssue({
 				item.kind !== "list" &&
 				item.kind !== "watchlist" &&
 				item.kind !== "favorites" &&
-				item.trakt?.mediaId === null &&
-				item.trakt?.mediaType !== "list" && (
+				item.remote?.mediaId === null &&
+				item.remote?.mediaType !== "list" && (
 					<form
 						className="mt-4 space-y-2"
 						onSubmit={(e) => {
@@ -1067,7 +1097,7 @@ function SyncIssue({
 								className="input min-w-0 flex-1"
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
-								placeholder={item.trakt.title}
+								placeholder={item.remote.title}
 							/>
 							<button
 								type="submit"
@@ -1108,7 +1138,7 @@ function SyncIssue({
 							<DialogDescription>
 								This choice applies to{" "}
 								{traktRecordTitle(item.opnshelf) ??
-									traktRecordTitle(item.trakt) ??
+									traktRecordTitle(item.remote) ??
 									"this item"}
 								.
 							</DialogDescription>
@@ -1116,32 +1146,33 @@ function SyncIssue({
 						<p>
 							{choice.action === "link"
 								? item.kind === "watch"
-									? "Link the existing Opnshelf and Trakt Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings."
+									? `Link the existing Opnshelf and ${name} Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings.`
 									: "Link these records?"
 								: choice.action === "match"
 									? item.kind === "watch"
-										? "Use this title for this Trakt media identity and its Watch dates?"
-										: "Use this title for this Trakt item?"
-									: traktResolutionLabel(
+										? `Use this title for this ${name} media identity and its Watch dates?`
+										: `Use this title for this ${name} item?`
+									: integrationResolutionLabel(
 											choice.action,
-											Boolean(item[choice.action as "trakt" | "opnshelf"]),
+											Boolean(item[choice.action as "remote" | "opnshelf"]),
+											name,
 										)}
 						</p>
-						{choice.confirmedTraktMissing !== undefined && (
+						{choice.confirmedRemoteMissing !== undefined && (
 							<div className="space-y-3">
-								<p>{TRAKT_UNCONFIRMED_CHOICE_COPY}</p>
+								<p>{integrationUnconfirmedChoiceCopy(name)}</p>
 								<label className="flex gap-2 text-sm">
 									<input
 										type="checkbox"
-										checked={choice.confirmedTraktMissing}
+										checked={choice.confirmedRemoteMissing}
 										onChange={(event) =>
 											setChoice({
 												...choice,
-												confirmedTraktMissing: event.target.checked,
+												confirmedRemoteMissing: event.target.checked,
 											})
 										}
 									/>
-									{TRAKT_MISSING_CONFIRMATION}
+									{integrationMissingConfirmation(name)}
 								</label>
 							</div>
 						)}
@@ -1170,7 +1201,7 @@ function SyncIssue({
 								type="button"
 								className="btn btn-primary max-w-full whitespace-normal"
 								disabled={
-									mutation.isPending || choice.confirmedTraktMissing === false
+									mutation.isPending || choice.confirmedRemoteMissing === false
 								}
 								onClick={() => resolve(choice)}
 							>
