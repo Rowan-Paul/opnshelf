@@ -1,6 +1,8 @@
 import {
+	POPFEED_OAUTH_SCOPES,
 	ATSTORE_REVIEW_GRANTED_SCOPES,
 	CORE_GRANTED_SCOPES,
+	DECLARED_OAUTH_SCOPE,
 	buildOAuthScopes,
 	includesOAuthCapabilities,
 	includesRequestedScopes,
@@ -153,5 +155,24 @@ describe("reference Spaces resolved owner authority", () => {
 		expect(
 			includesOAuthCapabilities(granted, preferences, "did:plc:other"),
 		).toBe(false);
+	});
+	it("requests and verifies Popfeed write access only when enabled", () => {
+		expect(buildOAuthScopes()).not.toEqual(
+			expect.arrayContaining([...POPFEED_OAUTH_SCOPES]),
+		);
+		const scopes = buildOAuthScopes({ popfeedEnabled: true });
+		expect(scopes).toEqual(expect.arrayContaining([...POPFEED_OAUTH_SCOPES]));
+		const granted = [...buildOAuthScopes(), ...CORE_GRANTED_SCOPES];
+		expect(includesOAuthCapabilities(granted, { popfeedEnabled: true })).toBe(
+			false,
+		);
+		expect(
+			includesOAuthCapabilities([...granted, ...POPFEED_OAUTH_SCOPES], {
+				popfeedEnabled: true,
+			}),
+		).toBe(true);
+		expect(DECLARED_OAUTH_SCOPE.split(" ")).toEqual(
+			expect.arrayContaining([...POPFEED_OAUTH_SCOPES]),
+		);
 	});
 });

@@ -603,18 +603,34 @@ describe("Popfeed Sync", () => {
 		);
 		expect(await screen.findByText("@fixture.test")).toBeTruthy();
 	});
-	it("offers only Popfeed → Opnshelf and Popfeed's record types", async () => {
+	it("asks for write access before sending changes to Popfeed", async () => {
 		mountPopfeed(true);
+		const radios = await screen.findAllByRole("radio", { name: /→|Both/ });
+		expect(radios.map((radio) => radio.getAttribute("aria-label"))).toEqual([
+			"Popfeed → Opnshelf",
+			"Opnshelf → Popfeed",
+			"Both directions",
+		]);
 		expect(
-			await screen.findByText(
-				"Popfeed records come into Opnshelf. Sending Opnshelf changes to Popfeed is not available yet.",
-			),
-		).toBeTruthy();
-		expect(screen.getAllByRole("radio", { name: /→|Both/ })).toHaveLength(1);
+			screen.queryByRole("button", { name: "Allow Popfeed access" }),
+		).toBeNull();
+		fireEvent.click(screen.getByRole("radio", { name: "Both directions" }));
 		expect(
-			screen.getByRole("radio", { name: "Popfeed → Opnshelf" }),
+			await screen.findByRole("button", { name: "Allow Popfeed access" }),
 		).toBeTruthy();
-		fireEvent.click(screen.getByRole("button", { name: "Choose records" }));
+		expect(
+			screen.getByText(/Other devices then need to sign in again/),
+		).toBeTruthy();
+		expect(
+			(screen.getByRole("button", { name: "Enable sync" }) as HTMLButtonElement)
+				.disabled,
+		).toBe(true);
+	});
+	it("offers Popfeed's record types only", async () => {
+		mountPopfeed(true);
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Choose records" }),
+		);
 		const dialog = await screen.findByRole("dialog", {
 			name: "Choose records",
 		});

@@ -153,6 +153,10 @@ vi.mock("lucide-react-native", () => ({
 vi.mock("react-native-safe-area-context", () => ({
 	useSafeAreaInsets: () => ({ top: 0, bottom: 0 }),
 }));
+vi.mock("@/lib/auth-context", () => ({
+	useAuth: () => ({ runAuthorizationUrl: vi.fn() }),
+}));
+vi.mock("@/lib/auth-handoff", () => ({ beginHandoff: async () => null }));
 vi.mock("@/components/integrations/IntegrationMark", () => ({
 	IntegrationMark: "icon",
 }));
@@ -503,27 +507,42 @@ it("shows candidate details above a short link action", () => {
 	});
 });
 
-it("offers Popfeed only as Popfeed → Opnshelf, with its own record types", () => {
+it("asks for Popfeed write access before sending changes, with Popfeed's record types", () => {
 	act(() => {
 		renderer = create(
 			<IntegrationSyncManager integration={POPFEED_INTEGRATION} embedded />,
 		);
 	});
-	const texts = renderer.root
-		.findAll((node) => node.type === "text")
-		.map((node) => node.props.children);
-	expect(texts).toContain(
-		"Popfeed records come into Opnshelf. Sending Opnshelf changes to Popfeed is not available yet.",
-	);
+	const radios = () =>
+		renderer.root.findAll(
+			(node) =>
+				node.type === Pressable && node.props.accessibilityRole === "radio",
+		);
 	expect(
-		renderer.root
-			.findAll(
-				(node) =>
-					node.type === Pressable && node.props.accessibilityRole === "radio",
-			)
+		radios()
 			.map((node) => node.props.accessibilityLabel)
 			.filter((label: string) => /→|Both/.test(label)),
-	).toEqual(["Popfeed → Opnshelf"]);
+	).toEqual(["Popfeed → Opnshelf", "Opnshelf → Popfeed", "Both directions"]);
+	// The fixture status has no write access and syncs both ways.
+	const texts = () =>
+		renderer.root
+			.findAll((node) => node.type === "text")
+			.map((node) => node.props.children);
+	expect(texts()).toContain("Allow Popfeed access");
+	const enable = renderer.root.find(
+		(node) =>
+			node.type === Pressable &&
+			node.props.accessibilityRole === "button" &&
+			node.findAll((child) => child.props.children === "Enable sync").length >
+				0,
+	);
+	expect(enable.props.disabled).toBe(true);
+	act(() =>
+		radios()
+			.find((node) => node.props.accessibilityLabel === "Popfeed → Opnshelf")
+			?.props.onPress(),
+	);
+	expect(texts()).not.toContain("Allow Popfeed access");
 	press("Choose records");
 	expect(
 		renderer.root

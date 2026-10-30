@@ -1,4 +1,5 @@
 import {
+	authControllerPermissions,
 	type IntegrationDefinition,
 	type IntegrationIssueDto,
 	type IntegrationResolveDto,
@@ -11,6 +12,7 @@ import {
 	integrationResolutionLabel,
 	integrationStateMessage,
 	integrationUnconfirmedChoiceCopy,
+	integrationWriteGrantCopy,
 	type SyncActionDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
@@ -45,6 +47,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IntegrationMark } from "@/components/integrations/IntegrationMark";
+import { useAuth } from "@/lib/auth-context";
+import { beginHandoff } from "@/lib/auth-handoff";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useThemeColors } from "@/theme/colors";
 
@@ -217,6 +221,12 @@ export function IntegrationSyncManager({
 											? "No account connected"
 											: "Not connected"}
 				</Text>
+				{connected && integration.writeGrant && data.writeAccess && (
+					<WriteAccess
+						integration={integration}
+						removable={data.direction === "inbound"}
+					/>
+				)}
 				{!data.configured ? (
 					<Text className={copy}>
 						{name} Sync is not configured on this server yet.
@@ -510,7 +520,12 @@ export function SyncSettings({
 			(!requiresListConsent || status.listPublicationConsent) &&
 			(!requiresContentConsent || status.contentPublicationConsent),
 	);
-	const canSave = hasConsent;
+	const needsGrant = Boolean(
+		integration.writeGrant &&
+			settings.direction !== "inbound" &&
+			!status.writeAccess,
+	);
+	const canSave = hasConsent && !needsGrant;
 	const dismiss = () => {
 		if (!save.isPending) setReviewing(false);
 	};
@@ -684,20 +699,22 @@ export function SyncSettings({
 				})}
 			</View>
 			<Text className={copy}>{TRAKT_SCOPE_COPY}</Text>
+			{needsGrant && <WriteGrant integration={integration} />}
 			<Action
 				primary
 				label={
 					onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"
 				}
 				disabled={
-					!settings.watches &&
-					!settings.ratings &&
-					!settings.lists &&
-					!settings.watchlist &&
-					!settings.favorites &&
-					!settings.notes &&
-					!settings.library &&
-					!settings.reviews
+					needsGrant ||
+					(!settings.watches &&
+						!settings.ratings &&
+						!settings.lists &&
+						!settings.watchlist &&
+						!settings.favorites &&
+						!settings.notes &&
+						!settings.library &&
+						!settings.reviews)
 				}
 				onPress={() => setReviewing(true)}
 			/>
@@ -1255,6 +1272,97 @@ function SyncIssue({
 			{mutation.error && (
 				<Text selectable accessibilityRole="alert" className={copy}>
 					{traktError(mutation.error)}
+				</Text>
+			)}
+		</View>
+	);
+}
+
+function useWriteGrant(
+	integration: IntegrationDefinition,
+	action: "connect" | "disconnect",
+) {
+	const { runAuthorizationUrl } = useAuth();
+	return useMutation({
+		mutationKey: [...integrationKey(integration), "write-access", action],
+		mutationFn: async () => {
+			if (!integration.writeGrant) return;
+			// Handoff code (ADR 0026): the callback returns a single-use code.
+			const codeChallenge = (await beginHandoff()) ?? undefined;
+			const result = await authControllerPermissions({
+				body: {
+					integration: integration.writeGrant,
+					action,
+					platform: "mobile",
+					codeChallenge,
+				},
+				throwOnError: true,
+			});
+			await runAuthorizationUrl(result.data.authorizationUrl);
+		},
+	});
+}
+
+/** External Integration Access (ADR 0030), asked for before the first write. */
+function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
+	const grant = useWriteGrant(integration, "connect");
+	return (
+		<View className="gap-3 rounded-xl border border-border bg-background-subtle p-4">
+			<Text className="text-foreground text-sm leading-5">
+				{integrationWriteGrantCopy(integration.name)}
+			</Text>
+			<Action
+				primary
+				label={
+					grant.isPending
+						? "Opening your account…"
+						: `Allow ${integration.name} access`
+				}
+				disabled={grant.isPending}
+				onPress={() => grant.mutate()}
+			/>
+			{grant.error && (
+				<Text
+					selectable
+					accessibilityRole="alert"
+					className="text-destructive text-sm"
+				>
+					{traktError(grant.error)}
+				</Text>
+			)}
+		</View>
+	);
+}
+
+function WriteAccess({
+	integration,
+	removable,
+}: {
+	integration: IntegrationDefinition;
+	removable: boolean;
+}) {
+	const remove = useWriteGrant(integration, "disconnect");
+	return (
+		<View className="gap-3 border-border border-t pt-4">
+			<Text className={copy}>
+				{removable
+					? `Opnshelf may write your ${integration.name} records.`
+					: `Opnshelf may write your ${integration.name} records. To remove this, first choose ${integration.name} → Opnshelf in Sync settings.`}
+			</Text>
+			{removable && (
+				<Action
+					label="Remove access"
+					disabled={remove.isPending}
+					onPress={() => remove.mutate()}
+				/>
+			)}
+			{remove.error && (
+				<Text
+					selectable
+					accessibilityRole="alert"
+					className="text-destructive text-sm"
+				>
+					{traktError(remove.error)}
 				</Text>
 			)}
 		</View>

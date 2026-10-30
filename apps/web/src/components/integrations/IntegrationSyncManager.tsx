@@ -1,4 +1,5 @@
 import {
+	authControllerPermissions,
 	type IntegrationDefinition,
 	type IntegrationIssueDto,
 	type IntegrationResolveDto,
@@ -11,6 +12,7 @@ import {
 	integrationResolutionLabel,
 	integrationStateMessage,
 	integrationUnconfirmedChoiceCopy,
+	integrationWriteGrantCopy,
 	type SyncActionDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
@@ -199,6 +201,12 @@ export function IntegrationSyncManager({
 					</div>
 					<Link2 className="size-5 text-(--foreground-muted)" />
 				</div>
+				{connected && integration.writeGrant && data.writeAccess && (
+					<WriteAccess
+						integration={integration}
+						removable={data.direction === "inbound"}
+					/>
+				)}
 				{!data.configured ? (
 					<p className="mt-4 text-(--foreground-muted)">
 						{name} Sync is not configured on this server yet.
@@ -483,7 +491,12 @@ export function SyncSettings({
 			(!requiresListConsent || status.listPublicationConsent) &&
 			(!requiresContentConsent || status.contentPublicationConsent),
 	);
-	const canSave = hasConsent;
+	const needsGrant = Boolean(
+		integration.writeGrant &&
+			settings.direction !== "inbound" &&
+			!status.writeAccess,
+	);
+	const canSave = hasConsent && !needsGrant;
 	return (
 		<section className={className}>
 			{showHeading && <h2 className="font-semibold text-lg">Sync settings</h2>}
@@ -627,20 +640,22 @@ export function SyncSettings({
 						{TRAKT_SCOPE_COPY}
 					</p>
 				</fieldset>
+				{needsGrant && <WriteGrant integration={integration} />}
 				<div className="flex flex-wrap gap-2">
 					<button
 						ref={submitButton}
 						type="submit"
 						className="btn btn-primary"
 						disabled={
-							!settings.watches &&
-							!settings.ratings &&
-							!settings.lists &&
-							!settings.watchlist &&
-							!settings.favorites &&
-							!settings.notes &&
-							!settings.library &&
-							!settings.reviews
+							needsGrant ||
+							(!settings.watches &&
+								!settings.ratings &&
+								!settings.lists &&
+								!settings.watchlist &&
+								!settings.favorites &&
+								!settings.notes &&
+								!settings.library &&
+								!settings.reviews)
 						}
 					>
 						{onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"}
@@ -1217,5 +1232,84 @@ function SyncIssue({
 				</p>
 			)}
 		</article>
+	);
+}
+
+function requestWriteGrant(
+	integration: IntegrationDefinition,
+	action: "connect" | "disconnect",
+) {
+	return async () => {
+		if (!integration.writeGrant) return;
+		const result = await authControllerPermissions({
+			body: { integration: integration.writeGrant, action },
+			throwOnError: true,
+		});
+		window.location.assign(result.data.authorizationUrl);
+	};
+}
+
+/** External Integration Access (ADR 0030), asked for before the first write. */
+function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
+	const grant = useMutation({
+		mutationKey: [...integrationKey(integration), "write-access", "connect"],
+		mutationFn: requestWriteGrant(integration, "connect"),
+	});
+	return (
+		<div className="space-y-3 rounded-xl border border-(--border) bg-(--background-subtle) p-4">
+			<p className="text-sm">{integrationWriteGrantCopy(integration.name)}</p>
+			<button
+				type="button"
+				className="btn btn-primary"
+				disabled={grant.isPending}
+				onClick={() => grant.mutate()}
+			>
+				{grant.isPending
+					? "Opening your account…"
+					: `Allow ${integration.name} access`}
+			</button>
+			{grant.error && (
+				<p role="alert" className="text-(--destructive) text-sm">
+					{traktError(grant.error)}
+				</p>
+			)}
+		</div>
+	);
+}
+
+function WriteAccess({
+	integration,
+	removable,
+}: {
+	integration: IntegrationDefinition;
+	removable: boolean;
+}) {
+	const remove = useMutation({
+		mutationKey: [...integrationKey(integration), "write-access", "disconnect"],
+		mutationFn: requestWriteGrant(integration, "disconnect"),
+	});
+	return (
+		<div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-(--border) border-t pt-4 text-sm">
+			<p className="text-(--foreground-muted)">
+				{removable
+					? `Opnshelf may write your ${integration.name} records.`
+					: `Opnshelf may write your ${integration.name} records. To remove this, first choose ${integration.name} → Opnshelf in Sync settings.`}
+			</p>
+			{removable && (
+				<button
+					type="button"
+					className="btn btn-secondary"
+					disabled={remove.isPending}
+					onClick={() => remove.mutate()}
+				>
+					Remove access
+				</button>
+			)}
+			{remove.error && (
+				<p role="alert" className="w-full text-(--destructive)">
+					{traktError(remove.error)}
+				</p>
+			)}
+		</div>
 	);
 }

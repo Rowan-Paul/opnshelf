@@ -497,7 +497,7 @@ export type MobileHandoffExchangeResponseDto = {
 };
 
 export type PermissionChangeDto = {
-    integration: 'atstore' | 'blog' | 'bluesky' | 'spaces' | 'watches';
+    integration: 'atstore' | 'blog' | 'bluesky' | 'popfeed' | 'spaces' | 'watches';
     action: 'connect' | 'disconnect';
     platform?: 'mobile';
     /**

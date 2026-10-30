@@ -74,6 +74,11 @@ export type IntegrationDefinition = {
 	checkCopy: string;
 	/** Shown when only some directions exist yet. */
 	directionNote?: string;
+	/**
+	 * The External Integration Access (ADR 0030) needed before Opnshelf may
+	 * write this provider's records. Absent when the provider's sign-in grants it.
+	 */
+	writeGrant?: "popfeed";
 	api: IntegrationApi;
 };
 
@@ -168,13 +173,12 @@ const popfeed: IntegrationDefinition = {
 	id: "popfeed",
 	name: "Popfeed",
 	summary:
-		"Bring the Watches, Ratings, Reviews, Lists and watchlist you keep on Popfeed into Opnshelf.",
+		"Keep your Watches, Ratings, Reviews, Lists and watchlist in sync with Popfeed.",
 	records: ["watches", "ratings", "watchlist", "lists", "reviews"],
-	directions: ["inbound"],
+	directions: ["inbound", "outbound", "both"],
 	connect: "repository",
 	checkCopy: "Popfeed is checked about every 15 minutes.",
-	directionNote:
-		"Popfeed records come into Opnshelf. Sending Opnshelf changes to Popfeed is not available yet.",
+	writeGrant: "popfeed",
 	api: {
 		status: async (signal) =>
 			(await popfeedSyncControllerStatus({ signal, throwOnError: true })).data,
@@ -354,4 +358,9 @@ export function integrationStatusLabel(status: SyncStatusDto | undefined) {
 	if (status.status === "preparing") return "Comparing your history";
 	if (status.status === "active") return "Sync is on";
 	return status.lastSuccessAt ? "Sync is paused" : "Connected, not enabled";
+}
+
+/** Why a write grant is needed, shown before the User is sent to authorize it. */
+export function integrationWriteGrantCopy(name: string) {
+	return `Sending changes to ${name} needs permission to create and update your ${name} records. Your account asks you to approve it. Other devices then need to sign in again.`;
 }

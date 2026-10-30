@@ -67,6 +67,7 @@ export class AuthService {
 				handle: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				popfeedWriteEnabled: true,
 				privateSettingsEnabled: true,
 				privateSettingsHasCopy: true,
 				watchPrivacyEnabled: true,
@@ -83,6 +84,7 @@ export class AuthService {
 					),
 					blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
 					blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
+					popfeedEnabled: knownUser?.popfeedWriteEnabled ?? false,
 					reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
 				};
 
@@ -268,6 +270,7 @@ export class AuthService {
 					watchPrivacyEnabled: Boolean(preferences.watchPrivacyEnabled),
 					blogIntegrationEnabled: Boolean(preferences.blogEnabled),
 					blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
+					popfeedWriteEnabled: Boolean(preferences.popfeedEnabled),
 				},
 			});
 			await tx.authSession.deleteMany({
@@ -293,7 +296,9 @@ export class AuthService {
 						? { privateSettingsEnabled: false }
 						: integration === "blog"
 							? { blogIntegrationEnabled: false }
-							: { blueskyCrossPostEnabled: false },
+							: integration === "popfeed"
+								? { popfeedWriteEnabled: false }
+								: { blueskyCrossPostEnabled: false },
 		});
 	}
 

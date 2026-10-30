@@ -445,7 +445,9 @@ export class AuthController {
 					? "?permission=atstore"
 					: statePayload.permissionChange === "watches"
 						? "?permission=privacy"
-						: "";
+						: statePayload.permissionChange === "popfeed"
+							? "?permission=popfeed"
+							: "";
 			const completeUrl =
 				platform === "mobile"
 					? this.buildMobileCompleteUrl(
@@ -483,11 +485,14 @@ export class AuthController {
 							? statePayload.requestedPreferences?.blogEnabled
 							: statePayload.permissionChange === "bluesky"
 								? statePayload.requestedPreferences?.blueskyEnabled
-								: statePayload.permissionChange === "watches"
-									? statePayload.requestedPreferences?.watchPrivacyEnabled
-									: statePayload.permissionChange === "spaces"
-										? statePayload.requestedPreferences?.privateSettingsEnabled
-										: false;
+								: statePayload.permissionChange === "popfeed"
+									? statePayload.requestedPreferences?.popfeedEnabled
+									: statePayload.permissionChange === "watches"
+										? statePayload.requestedPreferences?.watchPrivacyEnabled
+										: statePayload.permissionChange === "spaces"
+											? statePayload.requestedPreferences
+													?.privateSettingsEnabled
+											: false;
 				if (statePayload.permissionChange) {
 					if (
 						declinedConnection &&
@@ -521,6 +526,12 @@ export class AuthController {
 							"bluesky",
 						);
 					}
+					if (statePayload.requestedPreferences.popfeedEnabled) {
+						await this.authService.disableIntegration(
+							statePayload.accountDid,
+							"popfeed",
+						);
+					}
 					if (statePayload.accountHandle) {
 						return res.redirect(
 							await this.authService.authorize(
@@ -531,6 +542,7 @@ export class AuthController {
 									privateSettingsEnabled: false,
 									blogEnabled: false,
 									blueskyEnabled: false,
+									popfeedEnabled: false,
 								},
 							),
 						);

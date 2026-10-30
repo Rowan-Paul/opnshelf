@@ -81,6 +81,8 @@ export class PermissionsController {
 				integration === "blog" ? enable : user.blogIntegrationEnabled,
 			blueskyEnabled:
 				integration === "bluesky" ? enable : user.blueskyCrossPostEnabled,
+			popfeedEnabled:
+				integration === "popfeed" ? enable : user.popfeedWriteEnabled,
 			reviewsMirrorFormat: user.reviewsMirrorFormat,
 		};
 		const authorizationUrl = platform

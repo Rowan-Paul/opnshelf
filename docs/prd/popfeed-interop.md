@@ -1,7 +1,7 @@
 # Popfeed Sync
 
 Design brief for [issue #29](https://github.com/Rowan-Paul/opnshelf/issues/29).
-Status: agreed direction. The shared core, Popfeed → Opnshelf and the Integrations section are implemented in the #29 branch; the Popfeed Onboarding offer and Opnshelf → Popfeed are not. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
+Status: implemented in the #29 branch in both directions, verified with fixtures and local databases only. No Popfeed record has been written to a real repository yet, so the open verification items below still decide whether outbound is ready to release. The Popfeed Onboarding offer is not implemented. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
 
 ## Why this is back
 
@@ -83,6 +83,9 @@ Matching uses `identifiers.tmdbId`. A record without one goes to Needs attention
 
 ### Rewatches
 
+Implemented: a second Opnshelf Watch of a movie, or of an episode, stays local and appears in Needs attention as something Popfeed cannot hold.
+
+
 Popfeed holds one watched marker per movie. Opnshelf holds one Watch per viewing. Following ADR 0049, never invent dates and never collapse Opnshelf history to fit a destination. Until revisit reviews are verified, extra Opnshelf Watches stay local and appear in Needs attention as not representable on Popfeed. If `isRevisit` reviews turn out to be Popfeed's rewatch log, map extra Watches to them in both directions.
 
 ## Sync behavior
@@ -119,6 +122,15 @@ A new **Integrations** settings section on Web and Mobile lists each integration
 | Trakt Sync moved into Integrations, old routes redirect | Included | Included |
 | Onboarding integration offer, Popfeed suggested when detected | Not yet: Onboarding still offers Trakt only | Not yet: Onboarding still offers Trakt only |
 
+## Outbound as built
+
+- Writes need a separate `popfeed` External Integration Access grant (`repo:social.popfeed.feed.listItem`, `.review` and `.list`). Choosing a direction that writes to Popfeed asks for it first and warns that other devices must sign in again. Access can be removed once sync is back to Popfeed → Opnshelf.
+- Watched movies are written to the Watched Movies list, created if missing. On older accounts that have the items but no list record, the existing items' `listUri` is reused. A movie Watch needs a date.
+- Episodes are added to the show's existing entry. When no entry exists, the show is added to Currently Watching Shows, the list Popfeed itself used in the observed records.
+- A Rating updates the latest rated Popfeed review of that title, or creates a review with empty text. Removing it deletes a text-less review, or sets `rating: 0` on a review that has text. A new Review copies the title's current rating so it stays consistent.
+- Lists and the movie watchlist are kept in step item by item. Items Popfeed cannot hold (seasons, episodes, unmatched titles, item notes, shows on the movie watchlist) stop the transfer and appear in Needs attention; nothing is dropped.
+- New records carry TMDB title, release date, genres, director or creator, `posterUrl`, `backdropUrl` and a poster blob, the same fields Popfeed writes. Updates keep every field Opnshelf does not own.
+
 ## Open verification
 
 These are facts to establish, not product decisions. If one contradicts the rules above, surface it before changing the design.
@@ -127,7 +139,7 @@ These are facts to establish, not product decisions. If one contradicts the rule
 - What `rating: 0` means in Popfeed, and what rating an Opnshelf Review without a Rating should carry outbound, since `rating` is required.
 - Whether Popfeed writes `status`, `startedAt` or `completedAt` on movie or TV items in current versions.
 - Whether Popfeed writes `isRevisit: true` reviews for rewatches, and how they relate to the watched marker.
-- Whether Popfeed displays items and reviews written without a poster blob (with `posterUrl` only), and whether it requires the `currently_watching_tv_shows` membership for TV progress.
+- Whether Popfeed displays the records Opnshelf writes, including without a poster blob when the upload fails, and whether it accepts a show added to Currently Watching Shows by another app.
 - How Popfeed renders a review whose `text` came from a titled Opnshelf Review. Decide whether to prepend the title to `text` or drop it, and show that in setup.
 - How Opnshelf renders a Review with an empty title on Web and Mobile, including Community Reviews, the Blog Mirror and Bluesky Cross-posts. The lexicon allows an empty title, but surfaces may assume one exists.
 - Whether Popfeed tolerates unknown fields, and whether it rewrites records it did not create.
@@ -149,6 +161,6 @@ These are facts to establish, not product decisions. If one contradicts the rule
 1. Extract the shared integration core with Trakt as its first adapter, with no behavior change. Done.
 2. Add the Popfeed adapter inbound, with its `/popfeed-sync` API. Done; it ran before the Integrations section so the section has two real Integrations to list.
 3. Add the Integrations section on both clients, move Trakt Sync into it, add Popfeed and redirect the old routes. Done, except the Popfeed Onboarding offer.
-4. Add Popfeed outbound once the open verification items are answered.
+4. Add Popfeed outbound. Done in code at the operator's request on 2026-10-30, before the open verification items were answered. Release waits on a controlled write to a real account.
 
 Each step is its own pull request.
