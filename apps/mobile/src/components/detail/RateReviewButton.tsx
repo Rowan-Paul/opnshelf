@@ -8,7 +8,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useReview } from "@/lib/use-review";
 import { useThemeColors } from "@/theme/colors";
 
-/** A single detail action for the independent rating and review records. */
+/**
+ * A single detail action for the independent rating and review records: a
+ * compact button in the shelf row showing the user's rating once there is one,
+ * like web's `MediaActionsBar`.
+ */
 export function RateReviewButton({
 	mediaType,
 	mediaId,
@@ -55,7 +59,7 @@ export function RateReviewButton({
 	};
 
 	return (
-		<View className="flex-1">
+		<View>
 			<Pressable
 				accessibilityRole="button"
 				accessibilityLabel={
@@ -72,24 +76,24 @@ export function RateReviewButton({
 					setEditingReview(reviews[0]);
 					setSheetVisible(true);
 				}}
-				className="flex-1 items-center justify-center gap-1 rounded-lg border border-border px-1 py-2.5"
+				className="h-12 min-w-12 flex-row items-center justify-center gap-1 rounded-lg border border-border px-3"
 			>
-				{rating > 0 ? (
-					<Star color={colors.accent} fill={colors.accent} size={18} />
+				{isReviewError ? (
+					<Text className="font-medium text-foreground text-xs">Retry</Text>
+				) : rating > 0 ? (
+					<>
+						<Star color={colors.accent} fill={colors.accent} size={16} />
+						<Text className="font-medium text-foreground text-xs tabular-nums">
+							{rating}/10
+						</Text>
+					</>
 				) : (
 					<MessageSquare
 						color={hasActivity ? colors.accent : colors.mutedForeground}
 						fill={hasActivity ? colors.accent : "transparent"}
-						size={18}
+						size={20}
 					/>
 				)}
-				<Text className="text-center font-medium text-foreground text-xs tabular-nums">
-					{isReviewError
-						? "Retry reviews"
-						: rating > 0
-							? `${rating}/10`
-							: "Rate & review"}
-				</Text>
 			</Pressable>
 
 			<ReviewEditorSheet

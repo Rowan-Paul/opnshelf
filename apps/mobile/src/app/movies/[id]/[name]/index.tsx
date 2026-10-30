@@ -3,24 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import type { ScrollViewInstance } from "react-native";
-import { RefreshControl, View } from "react-native";
-import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
-import { AddToListButton } from "@/components/detail/AddToListButton";
+import { RefreshControl } from "react-native";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CreditsSummary } from "@/components/detail/CreditsSection";
+import { DetailActions } from "@/components/detail/DetailActions";
 import { DetailColumns } from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { GenreLinks } from "@/components/detail/GenreLinks";
-import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
-import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
-import { RateReviewButton } from "@/components/detail/RateReviewButton";
-import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
-import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
@@ -87,27 +81,18 @@ export default function MovieDetailScreen() {
 								<GenreLinks genres={data.genres} mediaType="movie" />
 							</DetailHero>
 
-							{/* Shelf, watchlist and secondary tiles form one action cluster,
-					    kept tight (gap-2) like the show/season/episode screens. */}
-							<View className="gap-2">
-								<MediaTrackingActions
-									mediaType="movie"
-									movieId={id}
-									title={data.title}
-								/>
-								<WatchlistFavoritesButtons mediaType="movie" mediaId={id} />
-								{/* Secondary actions as one row of compact tiles. */}
-								<View className="flex-row gap-2 px-4">
-									<RateReviewButton mediaType="movie" mediaId={id} />
-									<AddToListButton mediaType="movie" mediaId={id} />
-									<AddToLibraryButton mediaType="movie" mediaId={id} />
-									<NoteButton mediaType="movie" mediaId={id} />
-									<ShareButton
-										url={webMediaUrl({ type: "movie", id, name: data.title })}
-										title={data.title}
-									/>
-								</View>
-							</View>
+							<DetailActions
+								tracking={{
+									mediaType: "movie",
+									movieId: id,
+									title: data.title,
+								}}
+								target={{ mediaType: "movie", mediaId: id }}
+								share={{
+									url: webMediaUrl({ type: "movie", id, name: data.title }),
+									title: data.title,
+								}}
+							/>
 						</>
 					}
 					secondary={
