@@ -4,13 +4,13 @@ import { ChevronDown, SlidersHorizontal, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
 	KeyboardAvoidingView,
-	Modal,
 	Platform,
 	Pressable,
 	ScrollView,
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import {
 	StreamingServicePicker,
@@ -85,15 +85,10 @@ export function UpNextServiceFilter({
 					/>
 				)}
 			</View>
-			<Modal
-				visible={open}
-				animationType="slide"
-				transparent
-				onRequestClose={() => setOpen(false)}
-			>
+			<BottomSheetModal visible={open} onRequestClose={() => setOpen(false)}>
 				<KeyboardAvoidingView
 					behavior={Platform.OS === "ios" ? "padding" : undefined}
-					className="flex-1 justify-end bg-black/40"
+					className="flex-1 justify-end"
 				>
 					<Pressable
 						className="flex-1"
@@ -154,7 +149,7 @@ export function UpNextServiceFilter({
 						</View>
 					</View>
 				</KeyboardAvoidingView>
-			</Modal>
+			</BottomSheetModal>
 		</>
 	);
 }

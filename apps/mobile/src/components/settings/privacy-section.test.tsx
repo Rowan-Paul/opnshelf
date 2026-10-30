@@ -70,6 +70,11 @@ vi.mock("react-native", async () => {
 			createElement("view", props, props.children as never),
 	};
 });
+// Hide the progress sheet on close without BottomSheetModal's animation.
+vi.mock("@/components/ui/bottom-sheet-modal", async () => {
+	const { Modal } = await import("react-native");
+	return { BottomSheetModal: Modal };
+});
 vi.mock("react-native-safe-area-context", async () => {
 	const { createElement } = await import("react");
 	return {

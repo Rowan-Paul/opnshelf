@@ -1,5 +1,6 @@
 import { ArrowUpDown, Check, X } from "lucide-react-native";
-import { Modal, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
 import {
@@ -44,12 +45,7 @@ export function ListsSortSheet({
 }) {
 	const colors = useThemeColors();
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -96,6 +92,6 @@ export function ListsSortSheet({
 					</View>
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }

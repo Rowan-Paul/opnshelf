@@ -22,6 +22,7 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
@@ -654,10 +655,8 @@ export function PrivacySection({
 					</SafeAreaView>
 				</View>
 			</Modal>
-			<Modal
+			<BottomSheetModal
 				visible={sheet === "progress"}
-				animationType="slide"
-				transparent
 				statusBarTranslucent
 				navigationBarTranslucent
 				onRequestClose={() => setManageLists(false)}
@@ -741,7 +740,7 @@ export function PrivacySection({
 						</View>
 					</View>
 				</View>
-			</Modal>
+			</BottomSheetModal>
 		</View>
 	);
 }
