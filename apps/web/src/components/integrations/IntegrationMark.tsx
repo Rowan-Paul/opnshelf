@@ -1,10 +1,9 @@
 import type { IntegrationId } from "@opnshelf/api";
-import { Popcorn } from "lucide-react";
 import { TraktMark } from "#/components/TraktMark";
 
 /**
- * Trakt keeps its own logomark. Popfeed publishes no brand assets we can use,
- * so it gets a neutral popcorn glyph rather than a copy of its logo.
+ * Each provider keeps its own logo. Popfeed publishes no brand kit; its mark is
+ * the avatar of its official @popfeed.social account, shown unaltered.
  */
 export function IntegrationMark({
 	id,
@@ -15,9 +14,11 @@ export function IntegrationMark({
 }) {
 	if (id === "trakt") return <TraktMark className={className} />;
 	return (
-		<Popcorn
+		<img
+			src="/integrations/popfeed.png"
+			alt=""
 			aria-hidden="true"
-			className={`text-(--accent) ${className ?? ""}`}
+			className={`rounded-[22%] ${className ?? ""}`}
 		/>
 	);
 }

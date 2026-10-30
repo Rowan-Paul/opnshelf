@@ -1,11 +1,10 @@
 import type { IntegrationId } from "@opnshelf/api";
-import { Popcorn } from "lucide-react-native";
+import { Image } from "expo-image";
 import { TraktMark } from "@/components/marks/TraktMark";
-import { useThemeColors } from "@/theme/colors";
 
 /**
- * Trakt keeps its own logomark. Popfeed publishes no brand assets we can use,
- * so it gets a neutral popcorn glyph rather than a copy of its logo. Same
+ * Each provider keeps its own logo. Popfeed publishes no brand kit; its mark is
+ * the avatar of its official @popfeed.social account, shown unaltered. Same
  * choice as the Web App's `IntegrationMark`.
  */
 export function IntegrationMark({
@@ -15,7 +14,12 @@ export function IntegrationMark({
 	id: IntegrationId;
 	size?: number;
 }) {
-	const colors = useThemeColors();
 	if (id === "trakt") return <TraktMark size={size} />;
-	return <Popcorn size={size} color={colors.accent} />;
+	return (
+		<Image
+			source={require("../../../assets/images/popfeed.png")}
+			accessible={false}
+			style={{ width: size, height: size, borderRadius: size * 0.22 }}
+		/>
+	);
 }
