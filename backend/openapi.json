@@ -5984,6 +5984,243 @@
         ]
       }
     },
+    "/popfeed-sync": {
+      "get": {
+        "operationId": "PopfeedSyncController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "popfeed-sync"
+        ]
+      },
+      "patch": {
+        "operationId": "PopfeedSyncController_configure",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "popfeed-sync"
+        ]
+      }
+    },
+    "/popfeed-sync/connect": {
+      "post": {
+        "operationId": "PopfeedSyncController_connect",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "popfeed-sync"
+        ]
+      }
+    },
+    "/popfeed-sync/action": {
+      "post": {
+        "operationId": "PopfeedSyncController_action",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "popfeed-sync"
+        ]
+      }
+    },
+    "/popfeed-sync/issues": {
+      "get": {
+        "operationId": "PopfeedSyncController_issues",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number to return (1-based)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "view",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "attention",
+                "ignored"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationIssuesDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "popfeed-sync"
+        ]
+      }
+    },
+    "/popfeed-sync/issues/{id}": {
+      "post": {
+        "operationId": "PopfeedSyncController_resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResolveDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "popfeed-sync"
+        ]
+      }
+    },
+    "/popfeed-sync/issues/{id}/matches": {
+      "get": {
+        "operationId": "PopfeedSyncController_matches",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "popfeed-sync"
+        ]
+      }
+    },
     "/notifications/collections/{id}": {
       "get": {
         "operationId": "NotificationsController_collection",
@@ -12404,6 +12641,138 @@
         },
         "required": [
           "uri"
+        ]
+      },
+      "IntegrationIssueDto": {
+        "type": "object",
+        "properties": {
+          "recovery": {
+            "type": "string",
+            "enum": [
+              "verify",
+              "choose",
+              "retry"
+            ]
+          },
+          "remoteState": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "missing",
+              "present"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "ignored": {
+            "type": "boolean"
+          },
+          "opnshelf": {
+            "$ref": "#/components/schemas/SyncRecordDto"
+          },
+          "remote": {
+            "$ref": "#/components/schemas/SyncRecordDto"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncRecordDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "issue",
+          "ignored",
+          "candidates"
+        ]
+      },
+      "IntegrationIssuesDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationIssueDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
+        ]
+      },
+      "IntegrationResolveDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "remote keeps the provider's version; opnshelf keeps Opnshelf's.",
+            "enum": [
+              "remote",
+              "opnshelf",
+              "ignore",
+              "undo",
+              "retry",
+              "link",
+              "match",
+              "separate"
+            ]
+          },
+          "candidateKey": {
+            "type": "string"
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie or show ID"
+          },
+          "allRatings": {
+            "type": "boolean"
+          },
+          "confirmedRemoteMissing": {
+            "type": "boolean",
+            "description": "The User checked the provider and confirmed the unacknowledged creation is missing before choosing a version."
+          }
+        },
+        "required": [
+          "action"
         ]
       },
       "WatchRecapHighlightDto": {

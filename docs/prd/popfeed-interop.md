@@ -1,7 +1,7 @@
 # Popfeed Sync
 
 Design brief for [issue #29](https://github.com/Rowan-Paul/opnshelf/issues/29).
-Status: agreed direction, not implemented. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
+Status: agreed direction. The shared core and Popfeed → Opnshelf are implemented in the #29 branch; the Integrations section and Opnshelf → Popfeed are not. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
 
 ## Why this is back
 
@@ -79,7 +79,7 @@ A controlled log on the operator's account on 2026-10-30 (The Fellowship of the 
 
 Popfeed puts a rating and text in one record. Opnshelf keeps them as an independent Rating and Review. Each Popfeed review links to at most one Opnshelf Rating and one Opnshelf Review. A Popfeed review with text and a rating produces both, and the two stay linked to the same Popfeed record.
 
-Matching uses `identifiers.tmdbId` first. For an `imdbId` only, use a TMDB `find` lookup. Records with neither, or with a non-movie/TV `creativeWorkType`, go to Needs attention and are never dropped silently.
+Matching uses `identifiers.tmdbId`. A record without one goes to Needs attention as "Choose a TMDB match"; the first version does not look up an `imdbId` on TMDB. Popfeed records carry no title identifier, so a chosen match applies to that one record. A non-movie/TV item in a custom List marks the List as needing attention rather than being dropped silently.
 
 ### Rewatches
 
@@ -92,7 +92,8 @@ Everything Trakt Sync defines in [its brief](trakt-sync.md) applies unless state
 Popfeed-specific rules:
 
 - **No external account.** Connecting Popfeed means choosing to sync with Popfeed records in the User's own repository. There is no Popfeed credential and no account switching.
-- **Reading.** The initial run pages through `listRecords`. After that, Tab ingests `social.popfeed.feed.*` changes for connected Users only. Tab does not index Popfeed records for other accounts.
+- **Reading.** Each read pages through `listRecords` on the User's PDS for the three collections and compares the repository's latest commit before and after, so a read taken while records change is discarded. The first version re-reads about every 15 minutes, like Trakt Sync; ingesting `social.popfeed.feed.*` changes through Tab for connected Users is a later improvement.
+- **Date-only Watches.** A midnight-UTC `addedAt` becomes noon on that date in the owner's saved timezone and is marked date-only. A date-only Watch is the same viewing as an Opnshelf Watch within 12 hours of that noon, which is exactly that calendar day, so an existing Opnshelf Watch links instead of being duplicated.
 - **Writing.** Writing `social.popfeed.*` collections is External Integration Access under ADR 0030. Enabling an outbound direction requests that grant, and disconnecting removes it. Inbound-only sync needs no extra grant.
 - **Echo suppression.** Both sides live in the same repository and both reach Tab. Links record the URI and CID each side last wrote, so the change Tab sees after a sync write is recognized as the sync's own.
 - **Denormalized fields.** Outbound records carry the title, release date, genres, main credit and poster that Popfeed records include, sourced from TMDB. When updating an existing Popfeed record, keep every field the sync does not own.
@@ -145,9 +146,9 @@ These are facts to establish, not product decisions. If one contradicts the rule
 
 ## Delivery order
 
-1. Extract the shared integration core with Trakt as its first adapter, with no behavior change.
-2. Add the Integrations section on both clients, move Trakt Sync into it and redirect the old routes.
-3. Add the Popfeed adapter inbound.
+1. Extract the shared integration core with Trakt as its first adapter, with no behavior change. Done.
+2. Add the Popfeed adapter inbound, with its `/popfeed-sync` API. Done; it ran before the Integrations section so the section has two real Integrations to list.
+3. Add the Integrations section on both clients, move Trakt Sync into it, add Popfeed and redirect the old routes.
 4. Add Popfeed outbound once the open verification items are answered.
 
 Each step is its own pull request.

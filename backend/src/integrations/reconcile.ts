@@ -23,6 +23,8 @@ export type SyncRecord = {
 	// The provider's own record and parent-title identifiers, when it has them.
 	remoteId?: number;
 	remoteParentId?: number;
+	// A Watch whose source has a date but no time, stored as noon in the owner's timezone.
+	dateOnly?: boolean;
 	rkey?: string;
 	cid?: string;
 	problem?: string;
@@ -66,6 +68,15 @@ export function minute(value: SyncRecord["value"]): number | null {
 		: null;
 }
 
+// Noon ± 12 hours covers the owner's whole calendar day for a date-only Watch.
+const DATE_ONLY_MINUTES = 12 * 60;
+const watchDistance = (a: SyncRecord, b: SyncRecord) =>
+	Math.abs((minute(a.value) ?? 0) - (minute(b.value) ?? 0));
+const sameViewing = (a: SyncRecord, b: SyncRecord) =>
+	a.dateOnly || b.dateOnly
+		? watchDistance(a, b) < DATE_ONLY_MINUTES
+		: minute(a.value) === minute(b.value);
+
 export function equivalent(
 	a: SyncRecord | null,
 	b: SyncRecord | null,
@@ -73,9 +84,9 @@ export function equivalent(
 	if (!a || !b) return a === b;
 	if (a.unreadable || b.unreadable) return false;
 	if (mediaKey(a) !== mediaKey(b)) return false;
-	return a.kind === "watch"
-		? minute(a.value) === minute(b.value)
-		: a.value === b.value;
+	if (a.kind !== "watch") return a.value === b.value;
+	if (a.value === null || b.value === null) return a.value === b.value;
+	return sameViewing(a, b);
 }
 
 export function decide(
@@ -121,8 +132,9 @@ export function candidates(
 			(record.kind !== "watch" ||
 				record.value === null ||
 				other.value === null ||
-				Math.abs((minute(record.value) ?? 0) - (minute(other.value) ?? 0)) <=
-					5),
+				(record.dateOnly || other.dateOnly
+					? watchDistance(record, other) < DATE_ONLY_MINUTES
+					: watchDistance(record, other) <= 5)),
 	);
 }
 

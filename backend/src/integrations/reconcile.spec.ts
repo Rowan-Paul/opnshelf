@@ -91,4 +91,19 @@ describe("Trakt reconciliation", () => {
 		expect(decide(base, changed, remote, "both", "trakt")).toBe("pull");
 		expect(decide(base, watch, changed, "both", "opnshelf")).toBe("push");
 	});
+	it("treats a date-only remote Watch as any viewing on that calendar day", () => {
+		// Noon in the owner's timezone stands for a date without a time.
+		const dated = {
+			...remote,
+			value: "2020-01-01T12:00:00.000Z",
+			dateOnly: true,
+		};
+		const evening = { ...watch, value: "2020-01-01T23:30:00.000Z" };
+		const nextDay = { ...watch, value: "2020-01-02T00:30:00.000Z" };
+		expect(equivalent(evening, dated)).toBe(true);
+		expect(equivalent(nextDay, dated)).toBe(false);
+		expect(candidates(dated, [evening, nextDay])).toEqual([evening]);
+		// Precise Watches keep the five-minute window.
+		expect(candidates(remote, [evening])).toEqual([]);
+	});
 });
