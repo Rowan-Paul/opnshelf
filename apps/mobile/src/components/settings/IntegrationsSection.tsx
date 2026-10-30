@@ -21,7 +21,7 @@ export function IntegrationsSection() {
 		})),
 	});
 	return (
-		<View className="gap-3 rounded-xl border border-border bg-card p-4">
+		<View className="overflow-hidden rounded-xl border border-border bg-card">
 			{INTEGRATIONS.map((integration, index) => {
 				const status = statuses[index];
 				return (
@@ -36,7 +36,7 @@ export function IntegrationsSection() {
 						<Pressable
 							accessibilityRole="button"
 							accessibilityLabel={`${integration.name}, ${status.data ? integrationStatusLabel(status.data) : "loading"}`}
-							className="flex-row items-center gap-3 rounded-lg border border-border bg-background-subtle p-3"
+							className={`flex-row items-center gap-3 p-4 active:bg-background-subtle ${index > 0 ? "border-border border-t" : ""}`}
 						>
 							<IntegrationMark id={integration.id} size={28} />
 							<View className="flex-1 gap-1">
