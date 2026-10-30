@@ -23,15 +23,15 @@ export * from './enums.js';
  */
 export type User = Prisma.UserModel
 /**
- * Model TraktSyncConnection
+ * Model IntegrationConnection
  * 
  */
-export type TraktSyncConnection = Prisma.TraktSyncConnectionModel
+export type IntegrationConnection = Prisma.IntegrationConnectionModel
 /**
- * Model TraktSyncEntry
+ * Model IntegrationEntry
  * 
  */
-export type TraktSyncEntry = Prisma.TraktSyncEntryModel
+export type IntegrationEntry = Prisma.IntegrationEntryModel
 /**
  * Model NotificationSettings
  * 

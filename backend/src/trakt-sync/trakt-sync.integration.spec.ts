@@ -200,7 +200,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 	}
 	async function tick() {
-		await db.traktSyncConnection.updateMany({
+		await db.integrationConnection.updateMany({
 			where: { userDid },
 			data: { nextRunAt: new Date(0), remoteReadAt: null },
 		});
@@ -287,7 +287,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			localRecords = [curated("list:local", ["12"])];
 			remoteRecords = [broken];
 			await configureLists(direction);
-			const before = await db.traktSyncEntry.findFirstOrThrow({
+			const before = await db.integrationEntry.findFirstOrThrow({
 				where: { connection: { userDid }, remoteKey: broken.key },
 			});
 			expect(before.linked).toBe(true);
@@ -322,7 +322,9 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				curated("list:local", ["12"]),
 			);
 			expect(
-				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: before.id } }),
+				await db.integrationEntry.findUniqueOrThrow({
+					where: { id: before.id },
+				}),
 			).toMatchObject({
 				localBase: before.localBase,
 				remoteBase: before.remoteBase,
@@ -349,7 +351,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		localRecords = [curated("list:local", ["12"])];
 		remoteRecords = [previous];
 		await configureLists("outbound");
-		const entry = await db.traktSyncEntry.findFirstOrThrow({
+		const entry = await db.integrationEntry.findFirstOrThrow({
 			where: { connection: { userDid }, remoteKey: previous.key },
 		});
 		localRecords = [curated("list:local", ["12", "13"])];
@@ -359,7 +361,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			previous,
 			source: localRecords[0],
 		};
-		await db.traktSyncEntry.update({
+		await db.integrationEntry.update({
 			where: { id: entry.id },
 			data: { pending },
 		});
@@ -375,7 +377,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(remoteApi.write).not.toHaveBeenCalled();
 		expect(localApi.write).not.toHaveBeenCalled();
 		expect(
-			(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+			(await db.integrationEntry.findUniqueOrThrow({ where: { id: entry.id } }))
 				.pending,
 		).toEqual(pending);
 		remoteRecords = [previous];
@@ -406,7 +408,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		]);
 		expect(localRecords[0].key).toBe("favorites:local");
 		expect(
-			await db.traktSyncEntry.count({
+			await db.integrationEntry.count({
 				where: { connection: { userDid }, kind: "list", eligible: true },
 			}),
 		).toBe(0);
@@ -530,17 +532,17 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(issue.issue).toContain("200 words");
 		expect(issue.recovery).toBe("retry");
 		expect(
-			(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: issue.id } }))
+			(await db.integrationEntry.findUniqueOrThrow({ where: { id: issue.id } }))
 				.pending,
 		).toBeNull();
 	});
 	it("repairs legacy short-Review intents instead of asking for a missing version", async () => {
 		localRecords = [content("review", "review:short", "A short review")];
 		await configureContent("outbound", "review");
-		const entry = await db.traktSyncEntry.findFirstOrThrow({
+		const entry = await db.integrationEntry.findFirstOrThrow({
 			where: { kind: "review" },
 		});
-		await db.traktSyncEntry.update({
+		await db.integrationEntry.update({
 			where: { id: entry.id },
 			data: {
 				pending: {
@@ -556,7 +558,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			(await service.issues(userDid, { view: "attention" })).items[0],
 		).toMatchObject({ recovery: "retry", traktState: "missing" });
 		expect(
-			(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
+			(await db.integrationEntry.findUniqueOrThrow({ where: { id: entry.id } }))
 				.pending,
 		).toBeNull();
 		expect(remoteApi.write).not.toHaveBeenCalled();
@@ -576,7 +578,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			expect(remoteRecords).toHaveLength(1);
 			expect((await service.status(userDid)).needsAttention).toBe(0);
 			expect(
-				await db.traktSyncEntry.findFirstOrThrow({ where: { kind } }),
+				await db.integrationEntry.findFirstOrThrow({ where: { kind } }),
 			).toMatchObject({ remoteKey: `${kind}:77`, linked: true, pending: null });
 		},
 	);
@@ -641,7 +643,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			contentPublicationConsent: true,
 		});
 		await tick();
-		const entries = await db.traktSyncEntry.findMany({
+		const entries = await db.integrationEntry.findMany({
 			where: { connection: { userDid } },
 		});
 		const selected = entries.find((e) => e.remoteKey === "note:7");
@@ -651,7 +653,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			mediaId: "99",
 		});
 		for (const entry of entries) {
-			const actual = await db.traktSyncEntry.findUniqueOrThrow({
+			const actual = await db.integrationEntry.findUniqueOrThrow({
 				where: { id: entry.id },
 			});
 			if (["note:7", "note:8"].includes(entry.remoteKey ?? ""))
@@ -1188,7 +1190,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			}
 			expect(localApi.write).toHaveBeenCalledTimes(1);
 			expect((await service.status(userDid)).needsAttention).toBe(0);
-			const c = await db.traktSyncConnection.findFirstOrThrow({
+			const c = await db.integrationConnection.findFirstOrThrow({
 				where: { userDid },
 			});
 			expect(c.lastError).toMatch(
@@ -1198,7 +1200,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	);
 
 	it("encrypts credentials, consumes authorization state once, and starts paused", async () => {
-		const c = await db.traktSyncConnection.findFirstOrThrow({
+		const c = await db.integrationConnection.findFirstOrThrow({
 			where: { userDid },
 		});
 		expect(c.accessToken).not.toBe("fixture-access");
@@ -1251,7 +1253,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	it("disconnects for account deletion even when remote revocation fails", async () => {
 		remoteApi.revoke.mockRejectedValueOnce(new Error("Trakt unavailable"));
 		await service.disconnectForDeletion(userDid);
-		const c = await db.traktSyncConnection.findFirstOrThrow({
+		const c = await db.integrationConnection.findFirstOrThrow({
 			where: { userDid },
 		});
 		expect(c).toMatchObject({
@@ -1280,10 +1282,10 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			},
 		];
 		await configure("all");
-		const movie = await db.traktSyncEntry.findFirstOrThrow({
+		const movie = await db.integrationEntry.findFirstOrThrow({
 			where: { remoteKey: "watch:movie" },
 		});
-		const episode = await db.traktSyncEntry.findFirstOrThrow({
+		const episode = await db.integrationEntry.findFirstOrThrow({
 			where: { remoteKey: "watch:episode" },
 		});
 		await service.resolve(userDid, episode.id, {
@@ -1291,14 +1293,16 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			mediaId: "99",
 		});
 		expect(
-			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: movie.id } }),
+			await db.integrationEntry.findUniqueOrThrow({ where: { id: movie.id } }),
 		).toMatchObject({
 			remoteBase: movie.remoteBase,
 			eligible: true,
 			issue: movie.issue,
 		});
 		expect(
-			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: episode.id } }),
+			await db.integrationEntry.findUniqueOrThrow({
+				where: { id: episode.id },
+			}),
 		).toMatchObject({ remoteBase: { mediaId: "99" }, eligible: true });
 	});
 	it("confirms outbound writes with a scoped read and retains unrelated snapshot records", async () => {
@@ -1309,7 +1313,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(remoteApi.snapshot).toHaveBeenCalledTimes(1);
 		expect(remoteApi.readForRecord).toHaveBeenCalledTimes(1);
-		const c = await db.traktSyncConnection.findFirstOrThrow({
+		const c = await db.integrationConnection.findFirstOrThrow({
 			where: { userDid },
 		});
 		expect(c.remoteSnapshot).toEqual(
@@ -1333,7 +1337,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			remaining: 15,
 			progress: 40,
 		});
-		const connection = await db.traktSyncConnection.findFirstOrThrow({
+		const connection = await db.integrationConnection.findFirstOrThrow({
 			where: { userDid },
 		});
 		expect(connection.remoteSnapshot).toHaveLength(10);
@@ -1348,7 +1352,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(remoteRecords).toHaveLength(25);
 		expect(await service.status(userDid)).toMatchObject({ remaining: 0 });
 		expect(
-			await db.traktSyncEntry.count({
+			await db.integrationEntry.count({
 				where: { connectionId: connection.id, linked: true },
 			}),
 		).toBe(25);
@@ -1361,7 +1365,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(remoteRecords).toHaveLength(1);
 		expect(localRecords).toHaveLength(2);
 		expect(
-			await db.traktSyncEntry.count({
+			await db.integrationEntry.count({
 				where: { issue: { contains: "cannot represent another Watch" } },
 			}),
 		).toBe(1);
@@ -1389,14 +1393,14 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(remoteRecords.find((r) => r.mediaId === "13")?.value).toBe(
 			"2023-01-01T00:00:00Z",
 		);
-		const c = await db.traktSyncConnection.findFirstOrThrow({
+		const c = await db.integrationConnection.findFirstOrThrow({
 			where: { userDid },
 		});
 		expect(c.lastError).toContain("changed during transfer");
 		expect(c.remoteReadAt).toBeNull();
 		await tick();
 		expect(
-			await db.traktSyncEntry.count({
+			await db.integrationEntry.count({
 				where: { issue: { contains: "Both services changed" } },
 			}),
 		).toBe(1);
@@ -1480,7 +1484,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect((await service.status(userDid)).needsAttention).toBe(0);
 		expect(remoteApi.write).not.toHaveBeenCalled();
 		expect(localApi.write).not.toHaveBeenCalled();
-		const excluded = await db.traktSyncEntry.findFirstOrThrow({
+		const excluded = await db.integrationEntry.findFirstOrThrow({
 			where: { localKey: "episode:old" },
 		});
 		await expect(
@@ -1506,7 +1510,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			localRecords = [watch("local:excluded")];
 			remoteRecords = [watch("watch:excluded")];
 			await configure("future", direction);
-			const entry = await db.traktSyncEntry.findFirstOrThrow();
+			const entry = await db.integrationEntry.findFirstOrThrow();
 			expect(entry).toMatchObject({
 				eligible: false,
 				linked: false,
@@ -1522,7 +1526,9 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			expect(localApi.write).not.toHaveBeenCalled();
 			expect(remoteApi.write).not.toHaveBeenCalled();
 			expect(
-				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
+				await db.integrationEntry.findUniqueOrThrow({
+					where: { id: entry.id },
+				}),
 			).toMatchObject({ eligible: false, linked: false });
 		},
 	);
@@ -1531,7 +1537,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			{ ...watch("watch:old"), mediaId: null, traktId: 42, traktParentId: 42 },
 		];
 		await configure("future");
-		const old = await db.traktSyncEntry.findFirstOrThrow();
+		const old = await db.integrationEntry.findFirstOrThrow();
 		remoteRecords.push({
 			...remoteRecords[0],
 			key: "watch:new",
@@ -1545,7 +1551,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			mediaId: "12",
 		});
 		expect(
-			await db.traktSyncEntry.findUniqueOrThrow({ where: { id: old.id } }),
+			await db.integrationEntry.findUniqueOrThrow({ where: { id: old.id } }),
 		).toMatchObject({
 			remoteBase: { mediaId: "12" },
 			eligible: false,
@@ -1561,11 +1567,11 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		localRecords = [watch("local:old", "2026-10-17T21:36:00Z")];
 		remoteRecords = [watch("watch:old", "2026-10-17T21:37:00Z")];
 		await configure("future");
-		await db.traktSyncEntry.deleteMany();
-		const connection = await db.traktSyncConnection.findFirstOrThrow({
+		await db.integrationEntry.deleteMany();
+		const connection = await db.integrationConnection.findFirstOrThrow({
 			where: { userDid },
 		});
-		const entry = await db.traktSyncEntry.create({
+		const entry = await db.integrationEntry.create({
 			data: {
 				connectionId: connection.id,
 				kind: "watch",
@@ -1642,10 +1648,10 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		localRecords = [watch("movie:one")];
 		await configure();
 		await tick();
-		const count = await db.traktSyncEntry.count();
+		const count = await db.integrationEntry.count();
 		await service.action(userDid, "disconnect");
 		expect(remoteApi.revoke).toHaveBeenCalled();
-		expect(await db.traktSyncEntry.count()).toBe(count);
+		expect(await db.integrationEntry.count()).toBe(count);
 		localRecords[0].value = "2021-01-01T00:00:00Z";
 		await connect();
 		await configure("future");
@@ -1696,10 +1702,10 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	it("does not allow choosing a missing remote version while creation is unconfirmed", async () => {
 		localRecords = [curated("list:local", ["12"])];
 		await configureLists("outbound");
-		const entry = await db.traktSyncEntry.findFirstOrThrow({
+		const entry = await db.integrationEntry.findFirstOrThrow({
 			where: { connection: { userDid } },
 		});
-		await db.traktSyncEntry.update({
+		await db.integrationEntry.update({
 			where: { id: entry.id },
 			data: {
 				pending: {
@@ -1733,7 +1739,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				new Error("Request never reached Trakt"),
 			);
 			await tick();
-			const entry = await db.traktSyncEntry.findFirstOrThrow({
+			const entry = await db.integrationEntry.findFirstOrThrow({
 				where: { connection: { userDid }, kind },
 			});
 			for (let attempt = 0; attempt < 3; attempt++) {
@@ -1747,10 +1753,13 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				"verify",
 			);
 			expect(
-				(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
-					.pending,
+				(
+					await db.integrationEntry.findUniqueOrThrow({
+						where: { id: entry.id },
+					})
+				).pending,
 			).not.toBeNull();
-			await db.traktSyncConnection.updateMany({
+			await db.integrationConnection.updateMany({
 				where: { userDid },
 				data: { direction: "inbound" },
 			});
@@ -1800,7 +1809,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			await configureContent("outbound", "review");
 			remoteApi.write.mockRejectedValueOnce(new Error("Acknowledgement lost"));
 			await tick();
-			const entry = await db.traktSyncEntry.findFirstOrThrow({
+			const entry = await db.integrationEntry.findFirstOrThrow({
 				where: { connection: { userDid }, kind: "review" },
 			});
 			remoteRecords = [{ ...localRecords[0], key: "review:77", traktId: 77 }];
@@ -1811,8 +1820,11 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				}),
 			).rejects.toThrow("possible copy");
 			expect(
-				(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
-					.pending,
+				(
+					await db.integrationEntry.findUniqueOrThrow({
+						where: { id: entry.id },
+					})
+				).pending,
 			).not.toBeNull();
 			expect(localRecords).toHaveLength(1);
 			await tick();
@@ -1828,7 +1840,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			new Error("Request never reached Trakt"),
 		);
 		await tick();
-		const entry = await db.traktSyncEntry.findFirstOrThrow({
+		const entry = await db.integrationEntry.findFirstOrThrow({
 			where: { connection: { userDid }, kind: "list" },
 		});
 		await service.resolve(userDid, entry.id, {
@@ -1849,13 +1861,13 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			new Error("Request never reached Trakt"),
 		);
 		await tick();
-		let entry = await db.traktSyncEntry.findFirstOrThrow({
+		let entry = await db.integrationEntry.findFirstOrThrow({
 			where: { connection: { userDid }, localKey: "list:second" },
 		});
 		// Initial same-name pairing needs an explicit source choice before export.
 		await service.resolve(userDid, entry.id, { action: "opnshelf" });
 		await tick();
-		entry = await db.traktSyncEntry.findUniqueOrThrow({
+		entry = await db.integrationEntry.findUniqueOrThrow({
 			where: { id: entry.id },
 		});
 		expect(entry.pending).not.toBeNull();
@@ -1884,7 +1896,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			else await configure("all", "outbound");
 			remoteApi.write.mockRejectedValueOnce(new Error("Request interrupted"));
 			await tick();
-			const entry = await db.traktSyncEntry.findFirstOrThrow({
+			const entry = await db.integrationEntry.findFirstOrThrow({
 				where: { connection: { userDid }, kind },
 			});
 			expect(entry.pending).not.toBeNull();
@@ -1897,8 +1909,11 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				"choose",
 			);
 			expect(
-				(await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }))
-					.pending,
+				(
+					await db.integrationEntry.findUniqueOrThrow({
+						where: { id: entry.id },
+					})
+				).pending,
 			).toBeNull();
 			await service.resolve(userDid, entry.id, { action: "retry" });
 			await tick();
@@ -1909,7 +1924,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	);
 	it("reports an overdue provider retry as queued instead of waiting", async () => {
 		await configure();
-		await db.traktSyncConnection.updateMany({
+		await db.integrationConnection.updateMany({
 			where: { userDid },
 			data: { nextRunAt: new Date(0), lastError: "Trakt rate limit" },
 		});
@@ -1920,7 +1935,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	it("keeps the scheduled retry when Sync now is pressed during a provider delay", async () => {
 		await configure();
 		const nextRunAt = new Date(Date.now() + 60_000);
-		await db.traktSyncConnection.updateMany({
+		await db.integrationConnection.updateMany({
 			where: { userDid },
 			data: {
 				nextRunAt,
@@ -1934,7 +1949,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	});
 	it("returns the running sync when Sync now is pressed repeatedly", async () => {
 		await configure();
-		await db.traktSyncConnection.updateMany({
+		await db.integrationConnection.updateMany({
 			where: { userDid },
 			data: {
 				leaseId: "worker",
@@ -1953,13 +1968,13 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		async (initiallyUnreadable) => {
 			localRecords = [curated("list:local", ["12"])];
 			await configureLists("outbound");
-			const connection = await db.traktSyncConnection.findFirstOrThrow({
+			const connection = await db.integrationConnection.findFirstOrThrow({
 				where: { userDid },
 			});
-			const entry = await db.traktSyncEntry.findFirstOrThrow({
+			const entry = await db.integrationEntry.findFirstOrThrow({
 				where: { connectionId: connection.id },
 			});
-			await db.traktSyncEntry.update({
+			await db.integrationEntry.update({
 				where: { id: entry.id },
 				data: {
 					pending: {
@@ -1982,12 +1997,12 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				await tick();
 				await tick();
 				expect(
-					await db.traktSyncEntry.count({
+					await db.integrationEntry.count({
 						where: { connectionId: connection.id },
 					}),
 				).toBe(1);
 				expect(
-					await db.traktSyncEntry.findUniqueOrThrow({
+					await db.integrationEntry.findUniqueOrThrow({
 						where: { id: entry.id },
 					}),
 				).toMatchObject({
@@ -2005,10 +2020,12 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			expect((await service.issues(userDid, {})).total).toBe(0);
 			expect(remoteApi.write).not.toHaveBeenCalled();
 			expect(
-				await db.traktSyncEntry.findUniqueOrThrow({ where: { id: entry.id } }),
+				await db.integrationEntry.findUniqueOrThrow({
+					where: { id: entry.id },
+				}),
 			).toMatchObject({ remoteKey: "list:22", linked: true, pending: null });
 			expect(
-				await db.traktSyncEntry.count({
+				await db.integrationEntry.count({
 					where: { connectionId: connection.id },
 				}),
 			).toBe(1);
@@ -2016,10 +2033,10 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	);
 	it("serializes controls against a worker lease and does not erase history on disconnect", async () => {
 		await configure();
-		const c = await db.traktSyncConnection.findFirstOrThrow({
+		const c = await db.integrationConnection.findFirstOrThrow({
 			where: { userDid },
 		});
-		await db.traktSyncConnection.update({
+		await db.integrationConnection.update({
 			where: { id: c.id },
 			data: {
 				leaseId: "another-worker",
@@ -2050,7 +2067,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await configure();
 		localRecords[0].value = 8;
 		remoteRecords[0].value = 9;
-		await db.traktSyncConnection.updateMany({
+		await db.integrationConnection.updateMany({
 			where: { userDid },
 			data: { nextRunAt: new Date(0) },
 		});
@@ -2106,10 +2123,10 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		remoteRecords = [{ ...watch("rating:remote"), kind: "rating", value: 9 }];
 		await configure();
 		await tick();
-		const e = await db.traktSyncEntry.findFirstOrThrow({
+		const e = await db.integrationEntry.findFirstOrThrow({
 			where: { connection: { userDid } },
 		});
-		await db.traktSyncEntry.update({
+		await db.integrationEntry.update({
 			where: { id: e.id },
 			data: {
 				pending: {
@@ -2126,16 +2143,40 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	});
 	it("enforces a single connected account in the database", async () => {
 		await expect(
-			db.traktSyncConnection.create({
-				data: { userDid, traktUserId: "another", username: "another" },
+			db.integrationConnection.create({
+				data: {
+					userDid,
+					provider: "trakt",
+					accountId: "another",
+					username: "another",
+				},
 			}),
 		).rejects.toThrow();
 		await service.action(userDid, "disconnect");
 		await expect(
-			db.traktSyncConnection.create({
-				data: { userDid, traktUserId: "another", username: "another" },
+			db.integrationConnection.create({
+				data: {
+					userDid,
+					provider: "trakt",
+					accountId: "another",
+					username: "another",
+				},
 			}),
 		).resolves.toBeDefined();
+	});
+	it("allows another Integration provider alongside a connected Trakt account", async () => {
+		await expect(
+			db.integrationConnection.create({
+				data: {
+					userDid,
+					provider: "popfeed",
+					accountId: userDid,
+					username: "popfeed",
+				},
+			}),
+		).resolves.toBeDefined();
+		// The newer Popfeed row must not shadow the Trakt connection.
+		expect((await service.status(userDid)).username).toBe("fixture");
 	});
 	it("adopts a legacy recovery that reached the PDS before its link was saved", async () => {
 		remoteRecords = [watch("watch:1")];
@@ -2145,7 +2186,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(localApi.write).not.toHaveBeenCalled();
 		expect(remoteApi.write).not.toHaveBeenCalled();
 		expect(
-			await db.traktSyncEntry.count({
+			await db.integrationEntry.count({
 				where: {
 					connection: { userDid },
 					linked: true,
@@ -2162,7 +2203,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await service.disconnectForDeletion(userDid);
 		await db.user.delete({ where: { did: userDid } });
 		expect(remoteApi.revoke).toHaveBeenCalled();
-		expect(await db.traktSyncEntry.count()).toBe(0);
+		expect(await db.integrationEntry.count()).toBe(0);
 		expect(remoteRecords).toHaveLength(1);
 	});
 });

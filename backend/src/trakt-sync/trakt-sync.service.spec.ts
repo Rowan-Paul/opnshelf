@@ -34,7 +34,7 @@ it.each([
 			findUnique: vi.fn(async () => saved),
 			deleteMany: vi.fn(async () => ({ count: 1 })),
 		},
-		traktSyncConnection: {
+		integrationConnection: {
 			findFirst: vi.fn(async () => null),
 			findUnique: vi.fn(async () => null),
 			create: vi.fn(fail),
@@ -103,7 +103,7 @@ it("does not repeatedly scan every link while discovering a large account", asyn
 		},
 	}));
 	const prisma = {
-		traktSyncEntry: {
+		integrationEntry: {
 			findMany: vi.fn(async () => entries),
 			update: vi.fn(),
 			createMany: vi.fn(),
@@ -121,8 +121,8 @@ it("does not repeatedly scan every link while discovering a large account", asyn
 		local,
 		remote,
 	);
-	expect(prisma.traktSyncEntry.update).not.toHaveBeenCalled();
-	expect(prisma.traktSyncEntry.createMany).not.toHaveBeenCalled();
+	expect(prisma.integrationEntry.update).not.toHaveBeenCalled();
+	expect(prisma.integrationEntry.createMany).not.toHaveBeenCalled();
 	expect(keyReads).toBeLessThan(entries.length * 10);
 });
 
@@ -157,7 +157,7 @@ it.each([
 			eligible: true,
 		}));
 		const prisma = {
-			traktSyncEntry: {
+			integrationEntry: {
 				findMany: vi.fn(async () => entries),
 				update: vi.fn(),
 				createMany: vi.fn(),
@@ -175,9 +175,9 @@ it.each([
 			local,
 			remote,
 		);
-		expect(prisma.traktSyncEntry.update).toHaveBeenCalledTimes(updates);
+		expect(prisma.integrationEntry.update).toHaveBeenCalledTimes(updates);
 		if (updates)
-			expect(prisma.traktSyncEntry.update).toHaveBeenCalledWith(
+			expect(prisma.integrationEntry.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ localKey: "local:0", linked: true }),
 				}),
@@ -206,7 +206,7 @@ it("limits remote ambiguity comparisons to the matching media", async () => {
 		},
 	}));
 	const prisma = {
-		traktSyncEntry: { findMany: vi.fn(async () => []), createMany: vi.fn() },
+		integrationEntry: { findMany: vi.fn(async () => []), createMany: vi.fn() },
 	};
 	const service = new TraktSyncService(
 		prisma as unknown as PrismaService,
@@ -222,12 +222,12 @@ it("limits remote ambiguity comparisons to the matching media", async () => {
 		local,
 		remote,
 	);
-	expect(prisma.traktSyncEntry.createMany).toHaveBeenCalledTimes(1);
-	expect(prisma.traktSyncEntry.createMany.mock.calls[0][0].data).toHaveLength(
+	expect(prisma.integrationEntry.createMany).toHaveBeenCalledTimes(1);
+	expect(prisma.integrationEntry.createMany.mock.calls[0][0].data).toHaveLength(
 		200,
 	);
 	expect(
-		prisma.traktSyncEntry.createMany.mock.calls[0][0].data.every(
+		prisma.integrationEntry.createMany.mock.calls[0][0].data.every(
 			(input: { linked: boolean }) => input.linked,
 		),
 	).toBe(true);
@@ -267,8 +267,8 @@ it.each([false, true])(
 			.mockResolvedValueOnce(refresh ? [] : local)
 			.mockResolvedValue(local);
 		const prisma = {
-			traktSyncEntry: { findMany: vi.fn(async () => entries) },
-			traktSyncConnection: { update: vi.fn() },
+			integrationEntry: { findMany: vi.fn(async () => entries) },
+			integrationConnection: { update: vi.fn() },
 		};
 		const service = new TraktSyncService(
 			prisma as unknown as PrismaService,
@@ -332,8 +332,8 @@ it.each([false, true])(
 		];
 		const update = vi.fn();
 		const prisma = {
-			traktSyncEntry: { findMany: vi.fn(async () => entries), update },
-			traktSyncConnection: { update: vi.fn() },
+			integrationEntry: { findMany: vi.fn(async () => entries), update },
+			integrationConnection: { update: vi.fn() },
 		};
 		const service = new TraktSyncService(
 			prisma as unknown as PrismaService,
@@ -376,8 +376,8 @@ it("excludes historical issues from both the review list and its count", async (
 	const groupBy = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany, groupBy, count: vi.fn(async () => 0) },
-			traktSyncConnection: {
+			integrationEntry: { findMany, groupBy, count: vi.fn(async () => 0) },
+			integrationConnection: {
 				findFirst: vi.fn(async () => ({
 					id: "fixture",
 					nextRunAt: new Date(),
@@ -417,7 +417,7 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 	async (action) => {
 		const service = new TraktSyncService(
 			{
-				traktSyncEntry: {
+				integrationEntry: {
 					findFirst: vi.fn(async () => ({ eligible: false, linked: false })),
 				},
 			} as unknown as PrismaService,
@@ -465,7 +465,7 @@ it("builds candidate comparisons only for the requested sync issue page", async 
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => entries.length),
 				findMany: vi.fn(async (input) =>
 					input.select
@@ -527,7 +527,7 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => entries.length),
 				findMany: vi.fn(async (input) =>
 					input.select
@@ -560,7 +560,7 @@ it("does not read local repositories when the issue queue is empty", async () =>
 	const snapshot = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => 0),
 				findMany: vi.fn(async () => []),
 			},
@@ -591,7 +591,7 @@ it("reads only the enabled content repositories needed for the visible issue pag
 	const snapshot = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => 2),
 				findMany: vi.fn(async (input) =>
 					[
@@ -722,7 +722,7 @@ it.each([
 		};
 		const service = new TraktSyncService(
 			{
-				traktSyncEntry: {
+				integrationEntry: {
 					count: vi.fn(async () => 2),
 					findMany: vi.fn(async (input) =>
 						[
@@ -789,7 +789,7 @@ it("inserts a large initial comparison in bounded batches instead of one round t
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany: vi.fn(async () => entries), createMany },
+			integrationEntry: { findMany: vi.fn(async () => entries), createMany },
 		} as unknown as PrismaService,
 		{} as TraktSyncClient,
 		{} as LocalSyncRecords,
@@ -855,7 +855,10 @@ it.each([
 		);
 		const service = new TraktSyncService(
 			{
-				traktSyncEntry: { count: vi.fn(async () => entries.length), findMany },
+				integrationEntry: {
+					count: vi.fn(async () => entries.length),
+					findMany,
+				},
 			} as unknown as PrismaService,
 			{} as TraktSyncClient,
 			{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,

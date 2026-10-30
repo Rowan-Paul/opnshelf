@@ -33,8 +33,8 @@ import { ZodError } from "zod";
 import { BackendEnv } from "../config/env.schema";
 import {
 	Prisma,
-	type TraktSyncConnection,
-	type TraktSyncEntry,
+	type IntegrationConnection,
+	type IntegrationEntry,
 } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { getPaginationMeta } from "../common/pagination";
@@ -65,6 +65,8 @@ import type {
 class SyncAccountUnavailable extends TraktSyncError {}
 class SyncSnapshotChanged extends TraktSyncError {}
 
+/** Integration provider whose connections this service owns (ADR 0051). */
+const PROVIDER = "trakt";
 const SOURCE_CHANGED =
 	"The source changed during an interrupted transfer. Choose which version to keep.";
 const json = (v: SyncRecord | null) =>
@@ -101,7 +103,7 @@ const inRemoteScope = (
 				: record.key === previous?.key || mediaKey(record) === mediaKey(target);
 // An absent remote record is not proof that a non-idempotent POST failed.
 const unconfirmedCreate = (
-	entry: Pick<TraktSyncEntry, "kind" | "pending" | "remoteKey">,
+	entry: Pick<IntegrationEntry, "kind" | "pending" | "remoteKey">,
 ) => {
 	const pending = entry.pending as {
 		direction?: string;
@@ -169,7 +171,7 @@ const traktMappingKey = (record: SyncRecord): string | null => {
 };
 const applyMappings = (
 	remote: SyncRecord[],
-	entries: Pick<TraktSyncEntry, "remoteBase">[],
+	entries: Pick<IntegrationEntry, "remoteBase">[],
 ) => {
 	let saved: Map<string, string> | undefined;
 	return remote.map((r) => {
@@ -191,7 +193,7 @@ const applyMappings = (
 		return mediaId ? { ...r, mediaId } : r;
 	});
 };
-const enabled = (c: TraktSyncConnection, r: Pick<SyncRecord, "kind">) =>
+const enabled = (c: IntegrationConnection, r: Pick<SyncRecord, "kind">) =>
 	r.kind === "watch"
 		? c.watches
 		: r.kind === "rating"
@@ -260,19 +262,19 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		};
 	}
 	private current(userDid: string) {
-		return this.prisma.traktSyncConnection.findFirst({
-			where: { userDid },
+		return this.prisma.integrationConnection.findFirst({
+			where: { userDid, provider: PROVIDER },
 			orderBy: [{ updatedAt: "desc" }],
 		});
 	}
 	async status(userDid: string): Promise<SyncStatusDto> {
-		const c = await this.prisma.traktSyncConnection.findFirst({
-			where: { userDid },
+		const c = await this.prisma.integrationConnection.findFirst({
+			where: { userDid, provider: PROVIDER },
 			orderBy: [{ updatedAt: "desc" }],
 			omit: { remoteSnapshot: true },
 		});
 		const counts = c
-			? await this.prisma.traktSyncEntry.groupBy({
+			? await this.prisma.integrationEntry.groupBy({
 					by: ["ignored"],
 					where: {
 						connectionId: c.id,
@@ -398,22 +400,23 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				if (
 					previous &&
 					previous.status !== "disconnected" &&
-					previous.traktUserId !== profile.ids.uuid
+					previous.accountId !== profile.ids.uuid
 				)
 					throw new ConflictException(
 						"Disconnect the current Trakt account before switching.",
 					);
-				const existing = await this.prisma.traktSyncConnection.findUnique({
+				const existing = await this.prisma.integrationConnection.findUnique({
 					where: {
-						userDid_traktUserId: {
+						userDid_provider_accountId: {
 							userDid: data.userDid,
-							traktUserId: profile.ids.uuid,
+							provider: PROVIDER,
+							accountId: profile.ids.uuid,
 						},
 					},
 				});
 				if (existing)
 					await this.locked(existing, async () => {
-						await this.prisma.traktSyncConnection.update({
+						await this.prisma.integrationConnection.update({
 							select: { id: true },
 							where: { id: existing.id },
 							data: {
@@ -425,10 +428,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						});
 					});
 				else
-					await this.prisma.traktSyncConnection.create({
+					await this.prisma.integrationConnection.create({
 						data: {
 							userDid: data.userDid,
-							traktUserId: profile.ids.uuid,
+							provider: PROVIDER,
+							accountId: profile.ids.uuid,
 							username: profile.username,
 							...this.tokenData(token),
 						},
@@ -466,11 +470,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 	private async locked<T>(
-		c: TraktSyncConnection,
+		c: IntegrationConnection,
 		operation: (lease: () => Promise<void>) => Promise<T>,
 	): Promise<T> {
 		const leaseId = randomUUID();
-		const claim = await this.prisma.traktSyncConnection.updateMany({
+		const claim = await this.prisma.integrationConnection.updateMany({
 			where: {
 				id: c.id,
 				OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }],
@@ -483,7 +487,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			);
 		let lost = false;
 		const lease = async () => {
-			const updated = await this.prisma.traktSyncConnection.updateMany({
+			const updated = await this.prisma.integrationConnection.updateMany({
 				where: { id: c.id, leaseId },
 				data: { leaseUntil: new Date(Date.now() + 120_000) },
 			});
@@ -502,14 +506,14 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			return await operation(lease);
 		} finally {
 			clearInterval(heartbeat);
-			await this.prisma.traktSyncConnection.updateMany({
+			await this.prisma.integrationConnection.updateMany({
 				where: { id: c.id, leaseId },
 				data: { leaseId: null, leaseUntil: null },
 			});
 		}
 	}
-	private async token(c: TraktSyncConnection) {
-		const current = await this.prisma.traktSyncConnection.findUniqueOrThrow({
+	private async token(c: IntegrationConnection) {
+		const current = await this.prisma.integrationConnection.findUniqueOrThrow({
 			where: { id: c.id },
 			select: {
 				id: true,
@@ -528,7 +532,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				const fresh = await this.api.refresh(
 					this.crypt(current.refreshToken, true),
 				);
-				await this.prisma.traktSyncConnection.update({
+				await this.prisma.integrationConnection.update({
 					select: { id: true },
 					where: { id: current.id },
 					data: this.tokenData(fresh),
@@ -540,7 +544,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					![400, 401].includes(error.status)
 				)
 					throw error;
-				await this.prisma.traktSyncConnection.update({
+				await this.prisma.integrationConnection.update({
 					select: { id: true },
 					where: { id: current.id },
 					data: {
@@ -600,7 +604,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			settings.reviews ??= false;
 			settings.contentPublicationConsent ??= false;
 			settings.listPublicationConsent ??= false;
-			await this.prisma.traktSyncConnection.update({
+			await this.prisma.integrationConnection.update({
 				select: { id: true },
 				where: { id: c.id },
 				data: {
@@ -635,7 +639,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			// covers a worker claiming the lease after this request read the row.
 			// This only schedules work; the worker still takes the shared account lock.
 			// Joining an active run deliberately does not enqueue another remote read.
-			await this.prisma.traktSyncConnection.updateMany({
+			await this.prisma.integrationConnection.updateMany({
 				where: {
 					id: c.id,
 					status: c.status,
@@ -651,12 +655,12 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			return this.status(userDid);
 		}
 		await this.locked(c, async () => {
-			c = await this.prisma.traktSyncConnection.findUniqueOrThrow({
+			c = await this.prisma.integrationConnection.findUniqueOrThrow({
 				where: { id: c.id },
 			});
 			if (action === "disconnect") {
 				// Freeze first, even if remote revocation is temporarily unavailable.
-				await this.prisma.traktSyncConnection.update({
+				await this.prisma.integrationConnection.update({
 					select: { id: true },
 					where: { id: c.id },
 					data: { status: "paused" },
@@ -669,7 +673,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						"Trakt revocation failed; disconnect will clear local credentials.",
 					);
 				}
-				await this.prisma.traktSyncConnection.update({
+				await this.prisma.integrationConnection.update({
 					select: { id: true },
 					where: { id: c.id },
 					data: {
@@ -690,7 +694,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					action !== "pause"
 				)
 					throw new BadRequestException("Choose your sync settings first.");
-				await this.prisma.traktSyncConnection.update({
+				await this.prisma.integrationConnection.update({
 					select: { id: true },
 					where: { id: c.id },
 					data: {
@@ -708,14 +712,14 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			await this.action(userDid, "disconnect");
 	}
 	private async discover(
-		c: TraktSyncConnection,
+		c: IntegrationConnection,
 		local: SyncRecord[],
 		remote: SyncRecord[],
-		known?: TraktSyncEntry[],
+		known?: IntegrationEntry[],
 	) {
 		const entries =
 			known ??
-			(await this.prisma.traktSyncEntry.findMany({
+			(await this.prisma.integrationEntry.findMany({
 				where: { connectionId: c.id },
 			}));
 		const usedLocal = new Set(entries.map((e) => e.localKey));
@@ -734,7 +738,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			}
 			return groups;
 		};
-		const pendingByMedia = new Map<string, TraktSyncEntry[]>();
+		const pendingByMedia = new Map<string, IntegrationEntry[]>();
 		for (const e of entries) {
 			if (!e.pending) continue;
 			const desired = readRecord((e.pending as { desired?: unknown }).desired);
@@ -763,7 +767,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			)
 				continue;
 			const l = matches[0];
-			await this.prisma.traktSyncEntry.update({
+			await this.prisma.integrationEntry.update({
 				select: { id: true },
 				where: { id: e.id },
 				data: {
@@ -828,7 +832,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			if (possible.length === 1) {
 				e.remoteKey = possible[0].key;
 				usedRemote.add(possible[0].key);
-				await this.prisma.traktSyncEntry.update({
+				await this.prisma.integrationEntry.update({
 					select: { id: true },
 					where: { id: e.id },
 					data: {
@@ -853,10 +857,10 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		const newLocal = local.filter((r) => !usedLocal.has(r.key));
 		const newRemote = remote.filter((r) => !usedRemote.has(r.key));
 		const newRemoteByMedia = groupByMedia(newRemote);
-		const creations: Prisma.TraktSyncEntryCreateManyInput[] = [];
+		const creations: Prisma.IntegrationEntryCreateManyInput[] = [];
 		const flush = async () => {
 			if (!creations.length) return;
-			await this.prisma.traktSyncEntry.createMany({ data: [...creations] });
+			await this.prisma.integrationEntry.createMany({ data: [...creations] });
 			creations.length = 0;
 		};
 		for (const r of newRemote) {
@@ -975,20 +979,20 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	async issues(userDid: string, query: SyncIssuesQueryDto) {
 		const c = await this.requireConnection(userDid);
-		const where: Prisma.TraktSyncEntryWhereInput = {
+		const where: Prisma.IntegrationEntryWhereInput = {
 			connectionId: c.id,
 			issue: { not: null },
 			OR: [{ eligible: true }, { linked: true }],
 			ignored: query.view === "ignored",
 		};
-		const total = await this.prisma.traktSyncEntry.count({ where });
+		const total = await this.prisma.integrationEntry.count({ where });
 		const pagination = getPaginationMeta(
 			total,
 			query.page ?? 1,
 			query.pageSize ?? 20,
 		);
 		if (!total) return { ...pagination, items: [] };
-		const entries = await this.prisma.traktSyncEntry.findMany({
+		const entries = await this.prisma.integrationEntry.findMany({
 			where,
 			orderBy: [{ createdAt: "asc" }, { id: "asc" }],
 			skip: (pagination.page - 1) * pagination.pageSize,
@@ -1017,7 +1021,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		const mappings = remote.some(
 			(r) => pageRemoteKeys.has(r.key) && !isListRecord(r) && !r.mediaId,
 		)
-			? await this.prisma.traktSyncEntry.findMany({
+			? await this.prisma.integrationEntry.findMany({
 					where,
 					orderBy: { createdAt: "asc" },
 					select: { remoteBase: true },
@@ -1071,7 +1075,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	async resolve(userDid: string, id: string, dto: SyncResolveDto) {
 		const c = await this.requireConnection(userDid);
 		await this.locked(c, async () => {
-			const entry = await this.prisma.traktSyncEntry.findFirst({
+			const entry = await this.prisma.integrationEntry.findFirst({
 				where: { id, connectionId: c.id },
 			});
 			if (!entry) throw new NotFoundException("Sync item not found.");
@@ -1110,7 +1114,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					(entry.pending as { desired?: unknown }).desired,
 				);
 				const remote = await this.api.snapshot(await this.token(c), c);
-				const peers = await this.prisma.traktSyncEntry.findMany({
+				const peers = await this.prisma.integrationEntry.findMany({
 					where: {
 						connectionId: c.id,
 						id: { not: entry.id },
@@ -1152,13 +1156,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				if (!r || !dto.mediaId)
 					throw new BadRequestException("Choose a TMDB title.");
 				await this.local.validateMatch(r, dto.mediaId);
-				const peers = await this.prisma.traktSyncEntry.findMany({
+				const peers = await this.prisma.integrationEntry.findMany({
 					where: { connectionId: c.id },
 				});
 				for (const peer of peers) {
 					const p = readRecord(peer.remoteBase);
 					if (p && sameTraktTitle(r, p))
-						await this.prisma.traktSyncEntry.update({
+						await this.prisma.integrationEntry.update({
 							select: { id: true },
 							where: { id: peer.id },
 							data: {
@@ -1170,7 +1174,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						});
 				}
 			} else if (dto.action === "link") {
-				const other = await this.prisma.traktSyncEntry.findFirst({
+				const other = await this.prisma.integrationEntry.findFirst({
 					where: {
 						connectionId: c.id,
 						...(entry.localKey
@@ -1197,8 +1201,8 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 						"These records describe different titles.",
 					);
 				await this.prisma.$transaction(async (tx) => {
-					await tx.traktSyncEntry.delete({ where: { id: other.id } });
-					await tx.traktSyncEntry.update({
+					await tx.integrationEntry.delete({ where: { id: other.id } });
+					await tx.integrationEntry.update({
 						where: { id },
 						data: {
 							localKey: l.key,
@@ -1220,7 +1224,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					});
 				});
 			} else {
-				await this.prisma.traktSyncEntry.updateMany({
+				await this.prisma.integrationEntry.updateMany({
 					where: dto.allRatings
 						? {
 								connectionId: c.id,
@@ -1250,7 +1254,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 									},
 				});
 			}
-			await this.prisma.traktSyncConnection.update({
+			await this.prisma.integrationConnection.update({
 				select: { id: true },
 				where: { id: c.id },
 				data: { nextRunAt: new Date(), remoteReadAt: null },
@@ -1260,7 +1264,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 	}
 	async matches(userDid: string, id: string, query: string) {
 		const c = await this.requireConnection(userDid);
-		const entry = await this.prisma.traktSyncEntry.findFirst({
+		const entry = await this.prisma.integrationEntry.findFirst({
 			where: { id, connectionId: c.id },
 		});
 		const record = readRecord(entry?.remoteBase);
@@ -1274,8 +1278,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		if (this.busy || !this.configured) return;
 		this.busy = true;
 		try {
-			const c = await this.prisma.traktSyncConnection.findFirst({
+			const c = await this.prisma.integrationConnection.findFirst({
 				where: {
+					provider: PROVIDER,
 					status: "active",
 					nextRunAt: { lte: new Date() },
 					OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }],
@@ -1288,14 +1293,14 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					await this.process(c, lease);
 				} catch (error) {
 					if (error instanceof WatchAccountBusyError) {
-						await this.prisma.traktSyncConnection.update({
+						await this.prisma.integrationConnection.update({
 							select: { id: true },
 							where: { id: c.id },
 							data: { nextRunAt: new Date(Date.now() + 5000) },
 						});
 						return;
 					}
-					await this.prisma.traktSyncConnection.update({
+					await this.prisma.integrationConnection.update({
 						select: { id: true },
 						where: { id: c.id },
 						data: {
@@ -1323,7 +1328,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 	private async publicWatchOperation<T>(
-		c: TraktSyncConnection,
+		c: IntegrationConnection,
 		work: (signal: AbortSignal, withWrite: WithAccountWrite) => Promise<T>,
 		mode: AccountLockMode = "exclusive",
 	): Promise<T> {
@@ -1364,7 +1369,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		);
 	}
 
-	private async process(c: TraktSyncConnection, lease: () => Promise<void>) {
+	private async process(c: IntegrationConnection, lease: () => Promise<void>) {
 		let remote = records(c.remoteSnapshot);
 		// Account reads and transfers share the privacy lock, but slow Trakt
 		// pagination must not prevent someone from adding a Watch to their Shelf.
@@ -1379,7 +1384,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			);
 		});
 		const token = await this.token(c);
-		const known = await this.prisma.traktSyncEntry.findMany({
+		const known = await this.prisma.integrationEntry.findMany({
 			where: { connectionId: c.id },
 		});
 		const knownLocalKeys = new Set(known.map((e) => e.localKey));
@@ -1405,7 +1410,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		) {
 			remote = await this.api.snapshot(token, c);
 			await lease();
-			await this.prisma.traktSyncConnection.update({
+			await this.prisma.integrationConnection.update({
 				select: { id: true },
 				where: { id: c.id },
 				data: {
@@ -1433,12 +1438,12 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		await this.discover(c, local, remote, known);
 		if (!c.initialised) {
 			// Initial comparison runs in the worker: large accounts never hold an HTTP request open.
-			const unlinked = await this.prisma.traktSyncEntry.findMany({
+			const unlinked = await this.prisma.integrationEntry.findMany({
 				where: { connectionId: c.id, linked: false },
 			});
 			for (const e of unlinked) {
 				if (!enabled(c, { kind: e.kind as SyncRecord["kind"] })) continue;
-				await this.prisma.traktSyncEntry.update({
+				await this.prisma.integrationEntry.update({
 					select: { id: true },
 					where: { id: e.id },
 					data: {
@@ -1450,7 +1455,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					},
 				});
 			}
-			await this.prisma.traktSyncConnection.update({
+			await this.prisma.integrationConnection.update({
 				select: { id: true },
 				where: { id: c.id },
 				data: {
@@ -1463,7 +1468,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			return;
 		}
 
-		const entries = await this.prisma.traktSyncEntry.findMany({
+		const entries = await this.prisma.integrationEntry.findMany({
 			where: { connectionId: c.id, ignored: false },
 			orderBy: { updatedAt: "asc" },
 		});
@@ -1493,7 +1498,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				!entry.resolution &&
 				!entry.pending
 			) {
-				await this.prisma.traktSyncEntry.update({
+				await this.prisma.integrationEntry.update({
 					select: { id: true },
 					where: { id: entry.id },
 					data: { issue: null },
@@ -1515,7 +1520,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					fingerprint(r) === fingerprint(readRecord(entry.remoteBase))
 				)
 					continue;
-				await this.prisma.traktSyncEntry.update({
+				await this.prisma.integrationEntry.update({
 					select: { id: true },
 					where: { id: entry.id },
 					data: { eligible: true },
@@ -1739,7 +1744,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					![408, 499].includes(error.status) &&
 					!entry.remoteKey
 				)
-					await this.prisma.traktSyncEntry.update({
+					await this.prisma.integrationEntry.update({
 						select: { id: true },
 						where: { id: entry.id },
 						data: { pending: Prisma.DbNull },
@@ -1769,7 +1774,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			)
 				stopped = true;
 		}
-		await this.prisma.traktSyncConnection.update({
+		await this.prisma.integrationConnection.update({
 			select: { id: true },
 			where: { id: c.id },
 			data: {
@@ -1786,18 +1791,18 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		});
 	}
 	private issue(id: string, issue: string) {
-		return this.prisma.traktSyncEntry.update({
+		return this.prisma.integrationEntry.update({
 			select: { id: true },
 			where: { id },
 			data: { issue, resolution: null },
 		});
 	}
 	private complete(
-		entry: TraktSyncEntry,
+		entry: IntegrationEntry,
 		l: SyncRecord | null,
 		r: SyncRecord | null,
 	) {
-		return this.prisma.traktSyncEntry.update({
+		return this.prisma.integrationEntry.update({
 			select: { id: true },
 			where: { id: entry.id },
 			data: {
@@ -1814,8 +1819,8 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		});
 	}
 	private async transfer(
-		c: TraktSyncConnection,
-		entry: TraktSyncEntry,
+		c: IntegrationConnection,
+		entry: IntegrationEntry,
 		local: SyncRecord | null,
 		remote: SyncRecord | null,
 		snapshot: SyncRecord[],
@@ -1871,7 +1876,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				fingerprint(pending.source === undefined ? desired : pending.source)
 		) {
 			if (!unconfirmedCreate(entry))
-				await this.prisma.traktSyncEntry.update({
+				await this.prisma.integrationEntry.update({
 					select: { id: true },
 					where: { id: entry.id },
 					data: { pending: Prisma.DbNull },
@@ -1889,7 +1894,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			fingerprint(remote) !== fingerprint(previous) &&
 			!equivalent(remote, desired)
 		) {
-			await this.prisma.traktSyncEntry.update({
+			await this.prisma.integrationEntry.update({
 				select: { id: true },
 				where: { id: entry.id },
 				data: { pending: Prisma.DbNull },
@@ -1903,7 +1908,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				validateOutboundContent(desired);
 			} catch (error) {
 				if (pending)
-					await this.prisma.traktSyncEntry.update({
+					await this.prisma.integrationEntry.update({
 						select: { id: true },
 						where: { id: entry.id },
 						data: { pending: Prisma.DbNull },
@@ -1920,7 +1925,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				);
 		}
 		if (!pending)
-			await this.prisma.traktSyncEntry.update({
+			await this.prisma.integrationEntry.update({
 				select: { id: true },
 				where: { id: entry.id },
 				data: {
@@ -1950,7 +1955,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				!entry.localKey
 			) {
 				entry.localKey = `${desired.kind}:${TID.nextStr()}`;
-				await this.prisma.traktSyncEntry.update({
+				await this.prisma.integrationEntry.update({
 					select: { id: true },
 					where: { id: entry.id },
 					data: { localKey: entry.localKey },
@@ -1978,7 +1983,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				(r) => r.key !== previous?.key && equivalent(desired, r),
 			);
 			if (collisions.length) {
-				const used = await this.prisma.traktSyncEntry.findFirst({
+				const used = await this.prisma.integrationEntry.findFirst({
 					where: {
 						connectionId: c.id,
 						remoteKey: { in: collisions.map((r) => r.key) },
@@ -2017,7 +2022,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				async (created) => {
 					createdRecord = created;
 					entry.remoteKey = created.key;
-					await this.prisma.traktSyncEntry.update({
+					await this.prisma.integrationEntry.update({
 						select: { id: true },
 						where: { id: entry.id },
 						data: {
@@ -2061,7 +2066,7 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 			);
 		if (!desired && previous && refreshed.some((r) => r.key === previous.key))
 			throw new Error("Trakt has not confirmed this removal yet.");
-		await this.prisma.traktSyncConnection.update({
+		await this.prisma.integrationConnection.update({
 			select: { id: true },
 			where: { id: c.id },
 			data: {
