@@ -185,7 +185,7 @@ export function IntegrationSyncManager({
 						</h2>
 						<p className="mt-1 text-(--foreground-muted) text-sm">
 							{needsSetup
-								? "Connected. Sync is not enabled yet."
+								? "Choose what to sync to finish setting up."
 								: data.status === "preparing"
 									? "Comparing your history. You can leave this screen."
 									: data.status === "active"

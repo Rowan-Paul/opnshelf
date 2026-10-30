@@ -357,7 +357,7 @@ export function integrationStatusLabel(status: SyncStatusDto | undefined) {
 	if (status.needsAttention) return "Needs attention";
 	if (status.status === "preparing") return "Comparing your history";
 	if (status.status === "active") return "Sync is on";
-	return status.lastSuccessAt ? "Sync is paused" : "Connected, not enabled";
+	return status.lastSuccessAt ? "Paused" : "Not set up yet";
 }
 
 /** Why a write grant is needed, shown before the User is sent to authorize it. */

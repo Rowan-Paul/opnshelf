@@ -208,7 +208,7 @@ export function IntegrationSyncManager({
 				</Text>
 				<Text className={copy}>
 					{needsSetup
-						? "Connected. Sync is not enabled yet."
+						? "Choose what to sync to finish setting up."
 						: data.status === "preparing"
 							? "Comparing your history. You can leave this screen."
 							: data.status === "active"
