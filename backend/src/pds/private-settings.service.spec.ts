@@ -17,7 +17,7 @@ describe("retired Settings cleanup", () => {
 		const { service, session } = fixture();
 		await service.delete(did, session);
 		expect(session.fetchHandler).toHaveBeenCalledExactlyOnceWith(
-			"/xrpc/com.atproto.simplespace.deleteSpace",
+			"/xrpc/com.atproto.space.deleteSpace",
 			expect.objectContaining({
 				method: "POST",
 				body: JSON.stringify({
