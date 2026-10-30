@@ -15,7 +15,7 @@ import { spawn, execFileSync } from "node:child_process";
 import { root } from "./dev-session.mjs";
 
 const image =
-	"ghcr.io/bluesky-social/atproto@sha256:1cf9349e9f0e89789784569fed376cd647742ea7c368948625f44779ba03f150";
+	"ghcr.io/bluesky-social/atproto@sha256:f003adf7ca7cbb8ff60a4d99323fd009dfc1259b208f468f71accf0366ecab1e";
 const base = "http://localhost:3213";
 let authority = "did:plc:aaaaaaaaaaaaaaaaaaaaaaaa";
 const directory = mkdtempSync(join(tmpdir(), "opnshelf-reference-"));

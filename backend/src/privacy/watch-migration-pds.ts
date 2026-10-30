@@ -26,7 +26,8 @@ export class WatchMigrationPdsError extends Error {
 		super(`Watch privacy request failed (${code})`);
 	}
 }
-const MEMBER_POLICY = "com.atproto.simplespace.defs#memberListPolicy";
+const PERSONAL_POLICY = "com.atproto.personalspace.policy";
+const MEMBER_POLICY = "com.atproto.memberspace.policy";
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 function object(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -73,7 +74,7 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 		if (
 			this.session.did !== this.ownerDid ||
 			((method.startsWith("com.atproto.space.") ||
-				method.startsWith("com.atproto.simplespace.")) &&
+				method.startsWith("com.atproto.memberspace.")) &&
 				!includesWatchSpaceGrant(
 					(await this.session.getTokenInfo()).scope,
 					this.config.scope,
@@ -217,9 +218,9 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 		return this.checkPrivate(false);
 	}
 	private async checkPrivate(create: boolean): Promise<void> {
-		let config: Record<string, unknown>;
+		let space: Record<string, unknown>;
 		try {
-			config = await this.call("com.atproto.simplespace.getSpace", {
+			space = await this.call("com.atproto.space.getSpace", {
 				space: this.space,
 			});
 		} catch (error) {
@@ -231,13 +232,11 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 				throw error;
 			try {
 				await this.call(
-					"com.atproto.simplespace.createSpace",
+					"com.atproto.space.createSpace",
 					{
 						spaceType: this.config.spaceType,
 						skey: this.config.skey,
-						readPolicy: { $type: MEMBER_POLICY },
-						writePolicy: { $type: MEMBER_POLICY },
-						appAccess: { $type: "com.atproto.simplespace.defs#open" },
+						policy: { $type: PERSONAL_POLICY },
 					},
 					true,
 				);
@@ -248,15 +247,21 @@ export class WatchMigrationPds implements ReversibleWatchMigrationRepository {
 				)
 					throw race;
 			}
-			config = await this.call("com.atproto.simplespace.getSpace", {
+			space = await this.call("com.atproto.space.getSpace", {
 				space: this.space,
 			});
 		}
-		for (const key of ["readPolicy", "writePolicy"]) {
-			if (!object(config[key]) || config[key].$type !== MEMBER_POLICY)
-				throw new WatchMigrationPdsError("SpaceNotPrivate", 403);
-		}
-		const members = await this.call("com.atproto.simplespace.listMembers", {
+		const policy = object(space.policy) ? space.policy : {};
+		if (policy.$type === PERSONAL_POLICY) return;
+		// Spaces created before the October 29 alpha became memberspaces. They
+		// stay private while nothing is public and the owner is the only member.
+		if (
+			policy.$type !== MEMBER_POLICY ||
+			policy.publicRead !== false ||
+			policy.publicWrite !== false
+		)
+			throw new WatchMigrationPdsError("SpaceNotPrivate", 403);
+		const members = await this.call("com.atproto.memberspace.listMembers", {
 			space: this.space,
 			limit: 100,
 		});
