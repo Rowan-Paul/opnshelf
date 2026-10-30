@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Modal, Platform, Pressable, useColorScheme, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { ToastHost } from "@/components/ui/toast-host";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { useThemeColors } from "@/theme/colors";
 
@@ -218,6 +219,7 @@ export function WatchDatePickerModal({
 					</Pressable>
 				</Pressable>
 			</Pressable>
+			<ToastHost />
 		</Modal>
 	);
 }

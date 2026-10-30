@@ -49,6 +49,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TraktMark } from "@/components/marks/TraktMark";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useThemeColors } from "@/theme/colors";
 
@@ -299,13 +300,8 @@ export function TraktSyncManager({
 					<Action label="Disconnect" onPress={() => setDisconnect(true)} />
 				)}
 				{disconnect && (
-					<Modal
-						visible
-						transparent
-						animationType="slide"
-						onRequestClose={() => setDisconnect(false)}
-					>
-						<View className="flex-1 justify-end bg-black/40">
+					<BottomSheetModal visible onRequestClose={() => setDisconnect(false)}>
+						<View className="flex-1 justify-end">
 							<Pressable
 								accessibilityLabel="Close confirmation"
 								className="flex-1"
@@ -344,7 +340,7 @@ export function TraktSyncManager({
 								</ScrollView>
 							</View>
 						</View>
-					</Modal>
+					</BottomSheetModal>
 				)}
 				{traktSyncStateMessage(data) && (
 					<Text accessibilityLiveRegion="polite" className={copy}>
@@ -687,13 +683,8 @@ export function SyncSettings({
 					Settings saved
 				</Text>
 			)}
-			<Modal
-				visible={reviewing}
-				animationType="slide"
-				transparent
-				onRequestClose={dismiss}
-			>
-				<View className="flex-1 justify-end bg-black/40">
+			<BottomSheetModal visible={reviewing} onRequestClose={dismiss}>
+				<View className="flex-1 justify-end">
 					<Pressable
 						accessibilityLabel="Close confirmation"
 						className="flex-1"
@@ -828,7 +819,7 @@ export function SyncSettings({
 						</ScrollView>
 					</View>
 				</View>
-			</Modal>
+			</BottomSheetModal>
 		</View>
 	);
 }
@@ -1141,13 +1132,8 @@ function SyncIssue({
 					</View>
 				)}
 			{choice && (
-				<Modal
-					visible
-					transparent
-					animationType="slide"
-					onRequestClose={() => setChoice(null)}
-				>
-					<View className="flex-1 justify-end bg-black/40">
+				<BottomSheetModal visible onRequestClose={() => setChoice(null)}>
+					<View className="flex-1 justify-end">
 						<Pressable
 							accessibilityLabel="Close confirmation"
 							className="flex-1"
@@ -1220,7 +1206,7 @@ function SyncIssue({
 							</ScrollView>
 						</View>
 					</View>
-				</Modal>
+				</BottomSheetModal>
 			)}
 			{mutation.error && (
 				<Text selectable accessibilityRole="alert" className={copy}>

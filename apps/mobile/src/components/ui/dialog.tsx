@@ -11,6 +11,7 @@ import { Modal, Platform, Pressable, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
+import { ToastHost } from "@/components/ui/toast-host";
 import { useThemeColors } from "@/theme/colors";
 
 type DialogAction = {
@@ -155,6 +156,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 						</View>
 					</View>
 				</View>
+				<ToastHost />
 			</Modal>
 		</DialogContext.Provider>
 	);

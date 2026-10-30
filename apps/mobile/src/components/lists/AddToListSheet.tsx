@@ -1,6 +1,7 @@
 import type { ListsForItemDto } from "@opnshelf/api";
 import { Check, X } from "lucide-react-native";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { ListRowsSkeleton } from "@/components/ui/skeletons";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/cn";
@@ -28,12 +29,7 @@ export function AddToListSheet({
 	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="max-h-[70%] gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -90,6 +86,6 @@ export function AddToListSheet({
 					)}
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }

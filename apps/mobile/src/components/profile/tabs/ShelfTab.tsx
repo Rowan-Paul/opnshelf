@@ -9,9 +9,10 @@ import {
 	X,
 } from "lucide-react-native";
 import { useState } from "react";
-import { Modal, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { shelfItemToCardItem } from "@/components/home/ShelfPreviewRow";
 import { MediaCard } from "@/components/media/MediaCard";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { canLoadMore, LoadMoreFooter } from "@/components/ui/load-more";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
@@ -319,12 +320,7 @@ function ShelfViewSheet({
 }) {
 	const colors = useThemeColors();
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -388,6 +384,6 @@ function ShelfViewSheet({
 					</View>
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }
