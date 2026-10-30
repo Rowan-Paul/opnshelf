@@ -500,7 +500,7 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 		kind: "watch",
 		mediaType: "movie",
 		mediaId: null,
-		traktId: i,
+		remoteId: i,
 		season: 0,
 		episode: 0,
 		title: "Fixture",
@@ -518,7 +518,7 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 			return {
 				...r,
 				mediaId: String(i),
-				get traktId() {
+				get remoteId() {
 					titleComparisons++;
 					return i;
 				},
@@ -652,20 +652,20 @@ it("reads only the enabled content repositories needed for the visible issue pag
 it.each([
 	{
 		name: "movie Watches",
-		source: { kind: "watch", mediaType: "movie", traktId: 7 },
-		saved: { kind: "watch", mediaType: "movie", traktId: 7 },
+		source: { kind: "watch", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "watch", mediaType: "movie", remoteId: 7 },
 		expected: "99",
 	},
 	{
 		name: "different record types",
-		source: { kind: "watch", mediaType: "movie", traktId: 7 },
-		saved: { kind: "rating", mediaType: "movie", traktId: 7 },
+		source: { kind: "watch", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "rating", mediaType: "movie", remoteId: 7 },
 		expected: null,
 	},
 	{
 		name: "movie and show IDs",
-		source: { kind: "watch", mediaType: "movie", traktId: 7 },
-		saved: { kind: "watch", mediaType: "episode", traktParentId: 7 },
+		source: { kind: "watch", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "watch", mediaType: "episode", remoteParentId: 7 },
 		expected: null,
 	},
 	{
@@ -673,14 +673,14 @@ it.each([
 		source: {
 			kind: "watch",
 			mediaType: "episode",
-			traktId: 8,
-			traktParentId: 7,
+			remoteId: 8,
+			remoteParentId: 7,
 		},
 		saved: {
 			kind: "watch",
 			mediaType: "episode",
-			traktId: 9,
-			traktParentId: 7,
+			remoteId: 9,
+			remoteParentId: 7,
 		},
 		expected: "99",
 	},
@@ -695,16 +695,21 @@ it.each([
 		source: {
 			kind: "review",
 			mediaType: "movie",
-			traktId: 8,
-			traktParentId: 7,
+			remoteId: 8,
+			remoteParentId: 7,
 		},
-		saved: { kind: "review", mediaType: "movie", traktId: 9, traktParentId: 7 },
+		saved: {
+			kind: "review",
+			mediaType: "movie",
+			remoteId: 9,
+			remoteParentId: 7,
+		},
 		expected: "99",
 	},
 	{
 		name: "Reviews without parent IDs",
-		source: { kind: "review", mediaType: "movie", traktId: 7 },
-		saved: { kind: "review", mediaType: "movie", traktId: 7 },
+		source: { kind: "review", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "review", mediaType: "movie", remoteId: 7 },
 		expected: null,
 	},
 ])(
@@ -820,7 +825,7 @@ it.each([
 			kind: "watch" as const,
 			mediaType: "movie" as const,
 			mediaId: "1",
-			traktId: 1,
+			remoteId: 1,
 			season: 0,
 			episode: 0,
 			title: "Known",
@@ -830,7 +835,7 @@ it.each([
 			...known,
 			key: "remote:unmatched",
 			mediaId: null,
-			traktId: 2,
+			remoteId: 2,
 			title: "Unmatched",
 		};
 		const entries = [

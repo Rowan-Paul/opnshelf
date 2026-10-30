@@ -127,8 +127,8 @@ function coordinates(
 					: 0,
 		episode: type.data === "episode" ? (item.number ?? 0) : 0,
 		title: parent.title ?? `${type.data} ${parent.ids.trakt}`,
-		traktId: item.ids.trakt,
-		traktParentId: parent.ids.trakt,
+		remoteId: item.ids.trakt,
+		remoteParentId: parent.ids.trakt,
 		value: encodeContent({}),
 	};
 }
@@ -151,7 +151,7 @@ export async function snapshotContent(
 			result.push({
 				...record,
 				key: `note:${n.id}`,
-				traktId: n.id,
+				remoteId: n.id,
 				value: encodeContent({
 					content: n.notes ?? "",
 					spoiler: n.spoiler ?? false,
@@ -174,7 +174,7 @@ export async function snapshotContent(
 			result.push({
 				...record,
 				key: `review:${c.id}`,
-				traktId: c.id,
+				remoteId: c.id,
 				value: encodeContent({
 					content: c.comment,
 					spoiler: c.spoiler || /\[spoiler\]/i.test(c.comment),
@@ -262,7 +262,7 @@ export async function writeContent(
 			"Trakt content changed before transfer. Choose which version to keep.",
 		);
 	const value = contentValue(desired);
-	let id = remove ? desired.traktId : previous?.traktId;
+	let id = remove ? desired.remoteId : previous?.remoteId;
 	if (remove) {
 		if (!id)
 			throw new Error("Missing linked Trakt identity. Nothing was deleted.");
@@ -361,14 +361,14 @@ export async function writeContent(
 			await onCreated?.({
 				...desired,
 				key: `${desired.kind}:${id}`,
-				traktId: id,
+				remoteId: id,
 			});
 		}
 	}
 	const after = await snapshotContent(api, token, optionsFor(desired));
 	if (
 		!after.some(
-			(r) => (id === undefined || r.traktId === id) && equivalent(r, desired),
+			(r) => (id === undefined || r.remoteId === id) && equivalent(r, desired),
 		)
 	)
 		throw new Error(

@@ -111,8 +111,8 @@ export function normalizeRemote(
 		episode: row.type === "episode" ? (item.number ?? 0) : 0,
 		title: parent?.title ?? item.title ?? `Trakt ${row.type} ${item.ids.trakt}`,
 		value,
-		traktId: item.ids.trakt,
-		traktParentId: parent?.ids.trakt,
+		remoteId: item.ids.trakt,
+		remoteParentId: parent?.ids.trakt,
 	};
 }
 
@@ -294,15 +294,15 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		if (isListRecord(record))
 			return snapshotLists(this, token, {
 				lists: record.kind === "list",
-				listId: record.traktId,
+				listId: record.remoteId,
 				watchlist: record.kind === "watchlist",
 				favorites: record.kind === "favorites",
 			});
 		const plural = `${record.mediaType}s`;
 		if (record.kind === "rating")
 			return this.pages(`/sync/ratings/${plural}`, token, "rating");
-		let traktId = record.traktId;
-		if (!traktId) {
+		let remoteId = record.remoteId;
+		if (!remoteId) {
 			if (!record.mediaId)
 				throw new TraktSyncError("Choose a matching title first.");
 			const type = record.mediaType === "movie" ? "movie" : "show";
@@ -328,18 +328,18 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 				throw new TraktSyncError(
 					"Trakt could not uniquely identify the written title.",
 				);
-			traktId = matches[0][type]?.ids.trakt;
+			remoteId = matches[0][type]?.ids.trakt;
 			if (record.mediaType === "episode") {
 				const episode = await this.request(
-					`/shows/${traktId}/seasons/${record.season}/episodes/${record.episode}`,
+					`/shows/${remoteId}/seasons/${record.season}/episodes/${record.episode}`,
 					token,
 				);
-				traktId = media.parse(episode.data).ids.trakt;
+				remoteId = media.parse(episode.data).ids.trakt;
 			}
 		}
-		if (!traktId)
+		if (!remoteId)
 			throw new TraktSyncError("Trakt did not return a title identity.");
-		return this.pages(`/sync/history/${plural}/${traktId}`, token, "watch");
+		return this.pages(`/sync/history/${plural}/${remoteId}`, token, "watch");
 	}
 
 	async pages(
@@ -414,7 +414,7 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 					? {}
 					: { rating: record.value };
 		let body: unknown;
-		if (record.traktId) {
+		if (record.remoteId) {
 			const plural: Record<MediaType, string> = {
 				movie: "movies",
 				show: "shows",
@@ -424,7 +424,7 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 			};
 			body = {
 				[plural[record.mediaType]]: [
-					{ ids: { trakt: record.traktId }, ...props },
+					{ ids: { trakt: record.remoteId }, ...props },
 				],
 			};
 		} else {

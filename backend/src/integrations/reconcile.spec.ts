@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { candidates, decide, equivalent, type SyncRecord } from "./reconcile";
+import {
+	candidates,
+	decide,
+	equivalent,
+	readRecord,
+	type SyncRecord,
+} from "./reconcile";
 
 const watch: SyncRecord = {
 	key: "one",
@@ -69,5 +75,14 @@ describe("Trakt reconciliation", () => {
 		expect(
 			candidates(watch, [{ ...remote, value: "2020-01-01T12:03:00Z" }]),
 		).toHaveLength(1);
+	});
+	it("reads remote identifiers saved under their pre-Integration names", () => {
+		const legacy = readRecord({ ...remote, traktId: 7, traktParentId: 3 });
+		expect(legacy).toMatchObject({ remoteId: 7, remoteParentId: 3 });
+		expect(legacy).not.toHaveProperty("traktId");
+		expect(readRecord({ ...remote, remoteId: 9 })).toEqual({
+			...remote,
+			remoteId: 9,
+		});
 	});
 });

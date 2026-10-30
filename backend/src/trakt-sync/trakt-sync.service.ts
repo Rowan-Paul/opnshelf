@@ -98,9 +98,9 @@ const inRemoteScope = (
 	target: SyncRecord,
 	previous?: SyncRecord | null,
 ) =>
-	target.kind === "list" && target.traktId
+	target.kind === "list" && target.remoteId
 		? record.kind === "list" &&
-			(record.traktId === target.traktId || record.key === previous?.key)
+			(record.remoteId === target.remoteId || record.key === previous?.key)
 		: isListRecord(target) || isContentRecord(target)
 			? record.kind === target.kind
 			: target.kind === "rating"
@@ -155,22 +155,22 @@ const sameTraktTitle = (record: SyncRecord, peer: SyncRecord): boolean => {
 	if (isContentRecord(record) || isContentRecord(peer))
 		return Boolean(
 			record.kind === peer.kind &&
-				record.traktParentId &&
-				peer.traktParentId === record.traktParentId &&
+				record.remoteParentId &&
+				peer.remoteParentId === record.remoteParentId &&
 				(record.mediaType === "movie") === (peer.mediaType === "movie"),
 		);
 	return record.mediaType === "movie"
-		? peer.mediaType === "movie" && peer.traktId === record.traktId
+		? peer.mediaType === "movie" && peer.remoteId === record.remoteId
 		: Boolean(
 				peer.mediaType !== "movie" &&
-					record.traktParentId &&
-					peer.traktParentId === record.traktParentId,
+					record.remoteParentId &&
+					peer.remoteParentId === record.remoteParentId,
 			);
 };
 // Content IDs identify individual records; their parent identifies the title.
 const traktMappingKey = (record: SyncRecord): string | null => {
 	const parent = isContentRecord(record) || record.mediaType !== "movie";
-	const id = parent ? record.traktParentId : record.traktId;
+	const id = parent ? record.remoteParentId : record.remoteId;
 	if (parent && !id) return null;
 	return `${record.kind}:${record.mediaType === "movie"}:${typeof id}:${id}`;
 };
@@ -1646,13 +1646,13 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 					const sourceTarget = l ?? r ?? base.localBase ?? base.remoteBase;
 					const target = sourceTarget && {
 						...sourceTarget,
-						traktId: r?.traktId ?? sourceTarget.traktId,
+						remoteId: r?.remoteId ?? sourceTarget.remoteId,
 					};
 					if (!target) throw new Error("Missing transfer target.");
 					const current = applyMappings(
 						await this.api.readForRecord(token, {
 							...target,
-							traktId: r?.traktId ?? target.traktId,
+							remoteId: r?.remoteId ?? target.remoteId,
 						}),
 						entries,
 					);
@@ -2017,9 +2017,9 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 				{
 					...desired,
 					...(isListRecord(desired) || isContentRecord(desired)
-						? { traktId: remote?.traktId }
-						: remote?.traktId
-							? { traktId: remote.traktId }
+						? { remoteId: remote?.remoteId }
+						: remote?.remoteId
+							? { remoteId: remote.remoteId }
 							: {}),
 				},
 				false,
@@ -2047,11 +2047,11 @@ export class TraktSyncService implements OnModuleInit, OnModuleDestroy {
 		if (!sourceTarget) throw new Error("Missing transfer target.");
 		const target = {
 			...sourceTarget,
-			traktId:
-				remote?.traktId ??
-				previous?.traktId ??
-				createdRecord?.traktId ??
-				sourceTarget.traktId,
+			remoteId:
+				remote?.remoteId ??
+				previous?.remoteId ??
+				createdRecord?.remoteId ??
+				sourceTarget.remoteId,
 		};
 		const confirmation = applyMappings(
 			await this.api.readForRecord(token, target),

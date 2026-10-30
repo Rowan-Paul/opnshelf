@@ -364,7 +364,7 @@ describe("Trakt content adapters", () => {
 			remember,
 		);
 		expect(remember).toHaveBeenCalledWith(
-			expect.objectContaining({ key: "note:7", traktId: 7 }),
+			expect.objectContaining({ key: "note:7", remoteId: 7 }),
 		);
 	});
 });

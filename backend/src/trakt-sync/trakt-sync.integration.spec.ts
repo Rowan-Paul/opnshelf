@@ -80,9 +80,9 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 					return;
 				}
 				const previous =
-					(isListRecord(r) || isContentRecord(r)) && r.traktId
+					(isListRecord(r) || isContentRecord(r)) && r.remoteId
 						? remoteRecords.find(
-								(v) => v.kind === r.kind && v.traktId === r.traktId,
+								(v) => v.kind === r.kind && v.remoteId === r.remoteId,
 							)
 						: r.kind === "rating"
 							? remoteRecords.find(
@@ -96,7 +96,8 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 					remoteRecords.push({
 						...r,
 						key: `${r.kind}:${++serial}`,
-						traktId: isListRecord(r) || isContentRecord(r) ? serial : r.traktId,
+						remoteId:
+							isListRecord(r) || isContentRecord(r) ? serial : r.remoteId,
 						rkey: undefined,
 						cid: undefined,
 						value:
@@ -351,7 +352,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		},
 	);
 	it("retains a pending List transfer while its destination is unreadable", async () => {
-		const previous = { ...curated("list:22", ["12"]), traktId: 22 };
+		const previous = { ...curated("list:22", ["12"]), remoteId: 22 };
 		localRecords = [curated("list:local", ["12"])];
 		remoteRecords = [previous];
 		await configureLists("outbound");
@@ -451,7 +452,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 						spoiler: false,
 					},
 		),
-		traktId: 22,
+		remoteId: 22,
 	});
 	async function configureContent(
 		direction: "inbound" | "outbound" | "both",
@@ -572,7 +573,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		async (kind) => {
 			localRecords = [content(kind, `${kind}:local`)];
 			remoteApi.write.mockImplementationOnce(async (_token, desired) => {
-				remoteRecords = [{ ...desired, key: `${kind}:77`, traktId: 77 }];
+				remoteRecords = [{ ...desired, key: `${kind}:77`, remoteId: 77 }];
 				throw new Error("Acknowledgement lost");
 			});
 			await configureContent("outbound", kind);
@@ -590,48 +591,48 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		remoteRecords = [
 			{
 				...content("note", "note:7"),
-				traktId: 7,
-				traktParentId: 42,
+				remoteId: 7,
+				remoteParentId: 42,
 				mediaId: null,
 			},
 			{
 				...content("note", "note:8"),
-				traktId: 8,
-				traktParentId: 42,
+				remoteId: 8,
+				remoteParentId: 42,
 				mediaId: null,
 			},
 			{
 				...content("note", "note:show"),
-				traktId: 9,
-				traktParentId: 42,
+				remoteId: 9,
+				remoteParentId: 42,
 				mediaType: "show",
 				mediaId: null,
 			},
 			{
 				...content("note", "note:other"),
-				traktId: 10,
-				traktParentId: 99,
+				remoteId: 10,
+				remoteParentId: 99,
 				mediaId: null,
 			},
-			{ ...watch("watch:7"), traktId: 7, traktParentId: 7, mediaId: null },
+			{ ...watch("watch:7"), remoteId: 7, remoteParentId: 7, mediaId: null },
 			{
 				...watch("rating:7"),
 				kind: "rating",
 				value: 7,
-				traktId: 7,
-				traktParentId: 7,
+				remoteId: 7,
+				remoteParentId: 7,
 				mediaId: null,
 			},
 			{
 				...content("library", "library:7"),
-				traktId: 7,
-				traktParentId: 7,
+				remoteId: 7,
+				remoteParentId: 7,
 				mediaId: null,
 			},
 			{
 				...content("review", "review:42"),
-				traktId: 42,
-				traktParentId: 42,
+				remoteId: 42,
+				remoteParentId: 42,
 				mediaId: null,
 			},
 		];
@@ -697,7 +698,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				...content("note", "note:22"),
 				mediaType: "show",
 				mediaId: "34",
-				traktParentId: 22,
+				remoteParentId: 22,
 			},
 		];
 		await configureContent("inbound", "note");
@@ -705,8 +706,8 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		remoteRecords.push({
 			...content("note", "note:23"),
 			mediaId: null,
-			traktId: 23,
-			traktParentId: 22,
+			remoteId: 23,
+			remoteParentId: 22,
 		});
 		await tick();
 		expect(localRecords).toHaveLength(1);
@@ -739,7 +740,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		).rejects.toThrow("List contents may become public");
 	});
 	it("imports private custom Lists and follows their stable link through renames", async () => {
-		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		remoteRecords = [{ ...curated("list:22", ["12"]), remoteId: 22 }];
 		await configureLists("inbound");
 		await tick();
 		expect(localRecords).toHaveLength(1);
@@ -764,7 +765,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	});
 	it("preserves unrelated memberships through one-way source edits and removals", async () => {
 		localRecords = [curated("list:local", ["99"])];
-		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		remoteRecords = [{ ...curated("list:22", ["12"]), remoteId: 22 }];
 		await configureLists("inbound");
 		await tick();
 		expect(listValue(localRecords[0]).items.map((i) => i.mediaId)).toEqual([
@@ -785,7 +786,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	});
 	it("requires a choice for initial two-way List differences, then updates the paired List", async () => {
 		localRecords = [curated("list:local", ["12"])];
-		remoteRecords = [{ ...curated("list:22", ["13"]), traktId: 22 }];
+		remoteRecords = [{ ...curated("list:22", ["13"]), remoteId: 22 }];
 		await configureLists("both");
 		await tick();
 		expect(remoteApi.write).not.toHaveBeenCalled();
@@ -822,7 +823,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				}),
 			},
 		];
-		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		remoteRecords = [{ ...curated("list:22", ["12"]), remoteId: 22 }];
 		await configureLists("inbound");
 		await tick();
 		remoteRecords = [];
@@ -1272,8 +1273,8 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			{
 				...watch("watch:movie"),
 				mediaId: null,
-				traktId: 42,
-				traktParentId: 42,
+				remoteId: 42,
+				remoteParentId: 42,
 			},
 			{
 				...watch("watch:episode"),
@@ -1281,8 +1282,8 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				mediaId: null,
 				season: 1,
 				episode: 1,
-				traktId: 77,
-				traktParentId: 42,
+				remoteId: 77,
+				remoteParentId: 42,
 			},
 		];
 		await configure("all");
@@ -1538,7 +1539,12 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	);
 	it("maps an excluded title peer without importing its historical Watch", async () => {
 		remoteRecords = [
-			{ ...watch("watch:old"), mediaId: null, traktId: 42, traktParentId: 42 },
+			{
+				...watch("watch:old"),
+				mediaId: null,
+				remoteId: 42,
+				remoteParentId: 42,
+			},
 		];
 		await configure("future");
 		const old = await db.integrationEntry.findFirstOrThrow();
@@ -1788,7 +1794,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			localRecords = [content(kind, `${kind}:local`)];
 			await configureContent("outbound", kind);
 			remoteApi.write.mockImplementationOnce(async (_token, desired) => {
-				remoteRecords = [{ ...desired, key: `${kind}:77`, traktId: 77 }];
+				remoteRecords = [{ ...desired, key: `${kind}:77`, remoteId: 77 }];
 				throw new Error("Acknowledgement lost");
 			});
 			await tick();
@@ -1816,7 +1822,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			const entry = await db.integrationEntry.findFirstOrThrow({
 				where: { connection: { userDid }, kind: "review" },
 			});
-			remoteRecords = [{ ...localRecords[0], key: "review:77", traktId: 77 }];
+			remoteRecords = [{ ...localRecords[0], key: "review:77", remoteId: 77 }];
 			await expect(
 				service.resolve(userDid, entry.id, {
 					action,
@@ -1857,7 +1863,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	});
 	it("recovers an uncertain List without treating an already-linked same-name List as its copy", async () => {
 		localRecords = [curated("list:first", ["12"])];
-		remoteRecords = [{ ...curated("list:22", ["12"]), traktId: 22 }];
+		remoteRecords = [{ ...curated("list:22", ["12"]), remoteId: 22 }];
 		await configureLists("outbound");
 		await tick();
 		localRecords.push(curated("list:second", ["13"]));
@@ -1988,7 +1994,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 					},
 				},
 			});
-			const created = { ...localRecords[0], key: "list:22", traktId: 22 };
+			const created = { ...localRecords[0], key: "list:22", remoteId: 22 };
 			if (initiallyUnreadable) {
 				remoteRecords = [
 					{

@@ -20,8 +20,9 @@ export type SyncRecord = {
 	episode: number;
 	title: string;
 	value: string | number | null;
-	traktId?: number;
-	traktParentId?: number;
+	// The provider's own record and parent-title identifiers, when it has them.
+	remoteId?: number;
+	remoteParentId?: number;
 	rkey?: string;
 	cid?: string;
 	problem?: string;
@@ -148,5 +149,16 @@ export function readRecord(value: unknown): SyncRecord | null {
 		typeof v.title !== "string"
 	)
 		return null;
-	return v as SyncRecord;
+	// State saved before ADR 0051 stored Trakt identifiers under Trakt names.
+	const { traktId, traktParentId, ...record } = v as Partial<SyncRecord> & {
+		traktId?: number;
+		traktParentId?: number;
+	};
+	if (traktId === undefined && traktParentId === undefined)
+		return v as SyncRecord;
+	return {
+		...record,
+		remoteId: record.remoteId ?? traktId,
+		remoteParentId: record.remoteParentId ?? traktParentId,
+	} as SyncRecord;
 }
