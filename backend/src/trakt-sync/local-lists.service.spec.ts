@@ -75,14 +75,7 @@ function fixture(visibility: "public" | "private") {
 				});
 			const key = `${body.collection}/${body.rkey}`;
 			if (method.endsWith("getSpace"))
-				return reply({
-					readPolicy: {
-						$type: "com.atproto.simplespace.defs#memberListPolicy",
-					},
-					writePolicy: {
-						$type: "com.atproto.simplespace.defs#memberListPolicy",
-					},
-				});
+				return reply({ policy: { $type: "com.atproto.personalspace.policy" } });
 			if (method.endsWith("listMembers")) return reply({ members: [] });
 			if (method.endsWith("listRecords"))
 				return reply({
