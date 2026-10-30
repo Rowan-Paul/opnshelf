@@ -509,22 +509,31 @@ export function PrivacySection({
 				)
 			) : data.availability !== "available" ? (
 				<View className="gap-4">
-					<Text className="text-muted-foreground text-sm">
-						{data.availability === "unsupported"
-							? "Your PDS does not support Spaces yet. You can keep using Public."
-							: "We could not check Spaces support. Try again to load privacy choices."}
-					</Text>
-					<Button
-						disabled={query.isFetching}
-						onPress={() => void query.refetch()}
-						label="Try again"
-					/>
-					{onboarding && (
-						<Button
-							onPress={onContinue}
-							label="Continue without changing privacy"
-						/>
-					)}
+					<View className="flex-row items-start gap-3 rounded-2xl border border-border bg-background-subtle p-4">
+						<View className="pt-0.5">
+							<Lock size={16} color={colors.mutedForeground} />
+						</View>
+						<View className="flex-1 gap-1">
+							<Text className="text-foreground text-sm leading-5">
+								<Text className="font-semibold text-foreground text-sm">
+									Private isn't available for your account yet.
+								</Text>{" "}
+								It needs a PDS that supports Spaces.
+							</Text>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel="Check again"
+								className="min-h-11 justify-center self-start"
+								disabled={query.isFetching}
+								onPress={() => void query.refetch()}
+							>
+								<Text className="text-muted-foreground text-xs underline">
+									Check again
+								</Text>
+							</Pressable>
+						</View>
+					</View>
+					{onboarding && <Button onPress={onContinue} label="Continue" />}
 				</View>
 			) : (
 				<>
