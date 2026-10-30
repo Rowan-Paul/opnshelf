@@ -662,11 +662,17 @@ it.each([
 				),
 		),
 	).toHaveLength(0);
-	act(() => button(renderer, "Try again").props.onPress());
-	expect(mocks.refetch).toHaveBeenCalled();
 	act(() =>
-		button(renderer, "Continue without changing privacy").props.onPress(),
+		renderer.root
+			.find(
+				(node) =>
+					node.props.accessibilityLabel === "Check again" &&
+					typeof node.props.onPress === "function",
+			)
+			.props.onPress(),
 	);
+	expect(mocks.refetch).toHaveBeenCalled();
+	act(() => button(renderer, "Continue").props.onPress());
 	expect(next).toHaveBeenCalled();
 	expect(mocks.mutate).not.toHaveBeenCalled();
 });
