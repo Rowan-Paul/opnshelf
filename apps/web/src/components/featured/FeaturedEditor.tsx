@@ -129,6 +129,7 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 		});
 	};
 	const remove = useMutation({
+		mutationKey: ["featured", "remove"],
 		...featuredControllerRemoveMutation(),
 		onSuccess: async () => {
 			await refresh();
@@ -137,6 +138,7 @@ function EditorWorkspace({ timezone }: { timezone: string }) {
 		onError: (error) => toast.error(errorMessage(error)),
 	});
 	const reorder = useMutation({
+		mutationKey: ["featured", "reorder"],
 		...featuredControllerReorderMutation(),
 		onSuccess: refresh,
 		onError: async (error) => {
@@ -348,8 +350,14 @@ function EntryForm({
 		featuredExpiryInput(initialExpiry, timezone),
 	);
 	const [error, setError] = useState<string | null>(null);
-	const create = useMutation(featuredControllerPublishMutation());
-	const update = useMutation(featuredControllerUpdateMutation());
+	const create = useMutation({
+		mutationKey: ["featured", "publish"],
+		...featuredControllerPublishMutation(),
+	});
+	const update = useMutation({
+		mutationKey: ["featured", "update"],
+		...featuredControllerUpdateMutation(),
+	});
 	const pending = create.isPending || update.isPending;
 	async function save(published: boolean) {
 		if (!selected) {

@@ -83,12 +83,14 @@ export function TraktSyncManager({
 		refetchInterval: 5000,
 	});
 	const connect = useMutation({
+		mutationKey: ["trakt-sync", "connect"],
 		...traktSyncControllerConnectMutation(),
 		onSuccess: (data) => {
 			window.location.assign(data.url);
 		},
 	});
 	const action = useMutation({
+		mutationKey: ["trakt-sync", "action"],
 		...traktSyncControllerActionMutation(),
 		onSuccess: refresh,
 	});
@@ -440,6 +442,7 @@ export function SyncSettings({
 				status.contentPublicationConsent,
 		);
 	const save = useMutation({
+		mutationKey: ["trakt-sync", "configure"],
 		...traktSyncControllerConfigureMutation(),
 		onSuccess: () => {
 			setReviewing(false);
@@ -898,6 +901,7 @@ function SyncIssue({
 	const [search, setSearch] = useState("");
 	const [query, setQuery] = useState<string | null>(null);
 	const mutation = useMutation({
+		mutationKey: ["trakt-sync", "issues", "resolve"],
 		...traktSyncControllerResolveMutation(),
 		onSuccess: () => {
 			setChoice(null);
