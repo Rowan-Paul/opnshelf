@@ -277,7 +277,7 @@ it.each([false, true])(
 			parseEnvironment({ NODE_ENV: "test" }),
 			{} as WatchAccountLock,
 		);
-		service["token"] = vi.fn(async () => "fixture");
+		service["credential"] = vi.fn(async () => "fixture");
 		service["discover"] = vi.fn(async () => undefined);
 		service["publicWatchOperation"] = async (_c, operation) =>
 			operation(new AbortController().signal, async (write) => write());
@@ -342,7 +342,7 @@ it.each([false, true])(
 			parseEnvironment({ NODE_ENV: "test" }),
 			{} as WatchAccountLock,
 		);
-		service["token"] = vi.fn(async () => "fixture");
+		service["credential"] = vi.fn(async () => "fixture");
 		service["discover"] = vi.fn(async () => undefined);
 		service["publicWatchOperation"] = async (_c, operation) =>
 			operation(new AbortController().signal, async (write) => write());

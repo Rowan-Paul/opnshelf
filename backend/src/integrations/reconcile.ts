@@ -89,7 +89,8 @@ export function decide(
 	const remoteChanged = fingerprint(remote) !== fingerprint(base.remoteBase);
 	if (!base.eligible && !localChanged && !remoteChanged) return "none";
 	if (resolution === "opnshelf") return "push";
-	if (resolution === "trakt") return "pull";
+	// Choices saved before ADR 0051 named the remote side "trakt".
+	if (resolution === "remote" || resolution === "trakt") return "pull";
 	if (equivalent(local, remote)) return "none";
 	if (base.linked && !localChanged && !remoteChanged) return "none";
 	// Initial absence is not a deletion. One-way sync never erases unrelated data.

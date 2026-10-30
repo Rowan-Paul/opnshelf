@@ -85,4 +85,10 @@ describe("Trakt reconciliation", () => {
 			remoteId: 9,
 		});
 	});
+	it("keeps the remote version for current and pre-Integration choices", () => {
+		const changed = { ...watch, value: "2021-01-01T12:00:00.000Z" };
+		expect(decide(base, changed, remote, "both", "remote")).toBe("pull");
+		expect(decide(base, changed, remote, "both", "trakt")).toBe("pull");
+		expect(decide(base, watch, changed, "both", "opnshelf")).toBe("push");
+	});
 });

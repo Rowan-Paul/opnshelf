@@ -13,6 +13,7 @@ import type {
 	SyncRecordTypes,
 } from "../integrations/adapter";
 import { isContentRecord } from "../integrations/content-value";
+import { IntegrationError } from "../integrations/integration-error";
 import { snapshotContent, writeContent } from "./remote-content";
 import { snapshotLists, writeList } from "./remote-lists";
 
@@ -63,14 +64,14 @@ type TraktResponseDiagnostics = {
 	challenge: boolean;
 	cloudflareRay?: string;
 };
-export class TraktSyncError extends Error {
+export class TraktSyncError extends IntegrationError {
 	constructor(
 		message: string,
-		readonly status = 0,
-		readonly retrySeconds = 60,
+		status = 0,
+		retrySeconds = 60,
 		readonly diagnostics?: TraktResponseDiagnostics,
 	) {
-		super(message);
+		super(message, status, retrySeconds);
 	}
 }
 
