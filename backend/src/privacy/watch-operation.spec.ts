@@ -2,7 +2,7 @@ import { WATCH_SPACE_SCOPE } from "../auth/oauth-scopes";
 import { createWatchAgent, watchOperation } from "./watch-operation";
 const did = "did:plc:owner";
 const collection = "xyz.opnshelf.movie";
-const policy = { $type: "com.atproto.simplespace.defs#memberListPolicy" };
+const policy = { $type: "com.atproto.personalspace.policy" };
 function fixture() {
 	const calls: {
 		path: string;
@@ -20,7 +20,7 @@ function fixture() {
 				signal: init?.signal,
 			});
 			const body = path.includes("getSpace")
-				? { readPolicy: policy, writePolicy: policy }
+				? { policy }
 				: path.includes("listMembers")
 					? { members: [] }
 					: path.includes("applyWrites")

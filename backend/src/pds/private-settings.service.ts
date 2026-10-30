@@ -24,7 +24,7 @@ export class PrivateSettingsService {
 				"Sign in again to finish removing the retired Settings experiment.",
 			);
 		const response = await session.fetchHandler(
-			"/xrpc/com.atproto.simplespace.deleteSpace",
+			"/xrpc/com.atproto.space.deleteSpace",
 			{
 				method: "POST",
 				headers: { "Content-Type": "application/json" },

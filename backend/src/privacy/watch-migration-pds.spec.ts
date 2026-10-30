@@ -14,10 +14,15 @@ const record = {
 		extension: { preserve: true },
 	},
 };
-const config = {
-	readPolicy: { $type: "com.atproto.simplespace.defs#memberListPolicy" },
-	writePolicy: { $type: "com.atproto.simplespace.defs#memberListPolicy" },
+const personal = { policy: { $type: "com.atproto.personalspace.policy" } };
+const memberPolicy = {
+	$type: "com.atproto.memberspace.policy",
+	publicRead: false,
+	publicWrite: false,
+	publishPolicy: false,
+	publishMembers: false,
 };
+const config = { policy: memberPolicy };
 const response = (body: unknown, status = 200) =>
 	new Response(JSON.stringify(body), { status });
 function fixture() {
@@ -43,34 +48,47 @@ describe("Watch migration PDS transport", () => {
 		await expect(f.repo.assertPrivate()).rejects.toThrow("InsufficientScope");
 		expect(f.session.fetchHandler).not.toHaveBeenCalled();
 	});
-	it("creates an owner-only Space only when it is absent, then rechecks its configuration", async () => {
+	it("creates a personal Space only when it is absent, then rechecks its policy", async () => {
 		const f = fixture();
 		f.session.fetchHandler
 			.mockResolvedValueOnce(response({ error: "SpaceNotFound" }, 400))
 			.mockResolvedValueOnce(response({}))
-			.mockResolvedValueOnce(response(config))
-			.mockResolvedValueOnce(response({ members: [] }));
+			.mockResolvedValueOnce(response(personal));
 		await f.repo.assertPrivate();
-		expect(f.session.fetchHandler.mock.calls[1][0]).toBe(
-			"/xrpc/com.atproto.simplespace.createSpace",
-		);
+		expect(f.session.fetchHandler.mock.calls.map(([path]) => path)).toEqual([
+			`/xrpc/com.atproto.space.getSpace?space=${encodeURIComponent(f.repo.space)}`,
+			"/xrpc/com.atproto.space.createSpace",
+			`/xrpc/com.atproto.space.getSpace?space=${encodeURIComponent(f.repo.space)}`,
+		]);
 		expect(
 			JSON.parse(String(f.session.fetchHandler.mock.calls[1][1]?.body)),
-		).toMatchObject({
+		).toEqual({
 			spaceType: "xyz.opnshelf.watches",
 			skey: "self",
-			...config,
+			...personal,
 		});
 	});
+	it("accepts a migrated memberspace whose only member is the owner", async () => {
+		const f = fixture();
+		f.session.fetchHandler
+			.mockResolvedValueOnce(response(config))
+			.mockResolvedValueOnce(response({ members: [{ did }] }));
+		await f.repo.assertPrivate();
+		expect(f.session.fetchHandler.mock.calls[1][0]).toContain(
+			"/xrpc/com.atproto.memberspace.listMembers?",
+		);
+	});
 	it.each([
+		{ policy: { ...memberPolicy, publicRead: true } },
+		{ policy: { ...memberPolicy, publicWrite: true } },
+		{ policy: { ...memberPolicy, publicRead: undefined } },
 		{
-			...config,
-			readPolicy: { $type: "com.atproto.simplespace.defs#publicPolicy" },
+			policy: {
+				$type: "com.atproto.managedspace.policy",
+				managingApp: "did:web:app.example",
+			},
 		},
-		{
-			...config,
-			writePolicy: { $type: "com.atproto.simplespace.defs#publicPolicy" },
-		},
+		{},
 	])("refuses a Space with a non-private policy", async (policy) => {
 		const f = fixture();
 		f.session.fetchHandler.mockResolvedValue(response(policy));
