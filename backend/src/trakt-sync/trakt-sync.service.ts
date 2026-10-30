@@ -32,6 +32,7 @@ import {
 	TraktSyncError,
 	type TraktToken,
 } from "./trakt-sync.client";
+import { validateOutboundContent } from "./remote-content";
 import type { SyncResolveDto } from "./trakt-sync.dto";
 
 // The readback endpoints cover a Watch title, a Rating category, or an entire
@@ -325,6 +326,9 @@ export class TraktSyncService extends IntegrationSyncService<string> {
 	}
 	protected mappingKey(record: SyncRecord) {
 		return traktMappingKey(record);
+	}
+	protected validateOutboundContent(record: SyncRecord) {
+		validateOutboundContent(record);
 	}
 	protected validateOutboundList(value: ListValue) {
 		if (value.items.some((item) => item.notes.length > 500))

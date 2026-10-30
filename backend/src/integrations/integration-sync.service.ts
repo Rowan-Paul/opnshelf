@@ -27,7 +27,7 @@ import type { IntegrationRemote, SyncRecordTypes } from "./adapter";
 import {
 	contentValue,
 	isContentRecord,
-	validateOutboundContent,
+	validateContent,
 } from "./content-value";
 import { IntegrationError } from "./integration-error";
 import {
@@ -227,6 +227,10 @@ export abstract class IntegrationSyncService<Credential>
 	): boolean;
 	/** The title identity a saved TMDB match applies to, or null if unknown. */
 	protected abstract mappingKey(record: SyncRecord): string | null;
+	/** Reject content the provider cannot hold, without truncating anything. */
+	protected validateOutboundContent(record: SyncRecord): void {
+		validateContent(record);
+	}
 	/** Reject a List the provider cannot hold, without truncating anything. */
 	protected validateOutboundList(_value: ListValue): void {}
 
@@ -1713,7 +1717,7 @@ export abstract class IntegrationSyncService<Credential>
 		}
 		if (direction === "push" && desired && isContentRecord(desired)) {
 			try {
-				validateOutboundContent(desired);
+				this.validateOutboundContent(desired);
 			} catch (error) {
 				if (pending)
 					await this.prisma.integrationEntry.update({
