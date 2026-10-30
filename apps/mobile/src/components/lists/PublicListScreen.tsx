@@ -30,9 +30,8 @@ import { useTwStyle } from "@/lib/use-tw-style";
 import { useThemeColors } from "@/theme/colors";
 
 /**
- * Read-only public list screen, reachable for ANY user (own or someone else's).
- * Sits at the top level (`/list/[handle]/[slug]`) to avoid clashing with the
- * owner-only `/lists/[slug]` editor and the `/profile/[handle]` file route.
+ * Read-only List screen for someone else's List, rendered by
+ * `/profile/[handle]/lists/[slug]` when the viewer doesn't own it.
  *
  * The `[handle]` segment may be a real AT Protocol handle or a raw DID — the
  * profile Lists tab links here with the owner's handle, but older deep links
@@ -41,9 +40,9 @@ import { useThemeColors } from "@/theme/colors";
  * handle), mirroring how the profile screen itself resolves a handle.
  *
  * Search, sort and the media filters are open to every viewer, as on Web;
- * only Reorder, Add and Edit stay on the owner route.
+ * only Reorder, Add and Edit stay on the owner screen.
  */
-export default function PublicListScreen() {
+export function PublicListScreen() {
 	const themeColors = useThemeColors();
 	const { handle: handleParam, slug } = useLocalSearchParams<{
 		handle: string;

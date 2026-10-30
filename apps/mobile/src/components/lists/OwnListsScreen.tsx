@@ -1,6 +1,6 @@
 import type { ListSummaryDto } from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
-import { Stack } from "expo-router";
+import { type Href, Stack } from "expo-router";
 import { ListPlus, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, View } from "react-native";
@@ -17,7 +17,8 @@ import { useCreateList, useUserLists } from "@/lib/use-lists";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useThemeColors } from "@/theme/colors";
 
-export default function ListsScreen() {
+/** The signed-in user's Lists overview, where Lists are created. */
+export function OwnListsScreen({ handle }: { handle: string }) {
 	const themeColors = useThemeColors();
 	const listStyle = useTwStyle("px-4 pb-8");
 	const {
@@ -66,7 +67,10 @@ export default function ListsScreen() {
 				keyExtractor={(item: ListSummaryDto) => item.id}
 				renderItem={({ item }: { item: ListSummaryDto }) => (
 					<View className="pb-2">
-						<ListSummaryRow list={item} href={`/lists/${item.slug}` as const} />
+						<ListSummaryRow
+							list={item}
+							href={`/profile/${handle}/lists/${item.slug}` as Href}
+						/>
 					</View>
 				)}
 				contentContainerStyle={listStyle}

@@ -152,12 +152,6 @@ export default function RootLayout() {
 					<Stack.Screen name="settings/help" options={{ headerShown: true }} />
 					<Stack.Screen name="edit-profile" options={{ headerShown: true }} />
 					<Stack.Screen name="calendar" options={{ headerShown: true }} />
-					<Stack.Screen name="lists/index" options={{ headerShown: true }} />
-					<Stack.Screen name="lists/[slug]" options={{ headerShown: true }} />
-					<Stack.Screen
-						name="list/[handle]/[slug]"
-						options={{ headerShown: true }}
-					/>
 					<Stack.Screen
 						name="pick-for-me/index"
 						options={{ headerShown: true, title: "Pick for me" }}
@@ -194,6 +188,14 @@ export default function RootLayout() {
 					/>
 					<Stack.Screen
 						name="profile/[handle]/connections"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="profile/[handle]/lists/index"
+						options={{ headerShown: true }}
+					/>
+					<Stack.Screen
+						name="profile/[handle]/lists/[slug]"
 						options={{ headerShown: true }}
 					/>
 					<Stack.Screen name="movies/[id]/[name]/index" />

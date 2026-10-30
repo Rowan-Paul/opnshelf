@@ -16,8 +16,13 @@ describe("App Shortcut destinations", () => {
 			"/profile/local.test/up-next",
 		);
 		expect(appShortcutDestination(intent("openWatchlist"), user)).toEqual({
-			pathname: "/lists/[slug]",
-			params: { slug: "watchlist", addInput: "", shortcutRequest: "request" },
+			pathname: "/profile/[handle]/lists/[slug]",
+			params: {
+				handle: "local.test",
+				slug: "watchlist",
+				addInput: "",
+				shortcutRequest: "request",
+			},
 		});
 	});
 	it.each([
@@ -104,8 +109,9 @@ describe("App Shortcut destinations", () => {
 				user,
 			),
 		).toEqual({
-			pathname: "/lists/[slug]",
+			pathname: "/profile/[handle]/lists/[slug]",
 			params: {
+				handle: "local.test",
 				slug: "watchlist",
 				addInput: "Severance",
 				shortcutRequest: "request",

@@ -15,13 +15,9 @@ import { type ListsSort, sortLists } from "@/lib/lists-sort";
 import { useProfileLists } from "@/lib/use-public-profile";
 
 /**
- * Lists tab: the user's public list summaries. Rows link to the owner list
- * screen (`/lists/[slug]`) for the viewer's own profile, and to the dedicated
- * read-only list page (`/list/[handle]/[slug]`) for other users.
- * Mirrors the web profile Lists page, which also routes to a per-list screen.
- *
- * The standalone list route resolves the owner from its `[handle]` segment and
- * also accepts raw DIDs from older deep links.
+ * Lists tab: the user's public list summaries. Rows link to
+ * `/profile/[handle]/lists/[slug]`, the Web App's URL, which opens the owner
+ * screen for the viewer's own List and the read-only one for anyone else's.
  */
 export function ListsTab({
 	userDid,
@@ -40,12 +36,8 @@ export function ListsTab({
 		[data, sort],
 	);
 
-	// Own lists open the manageable owner screen (sort/reorder/add/edit);
-	// other users' lists open the read-only public route.
 	const hrefFor = (slug: string) =>
-		(user?.did === userDid
-			? `/lists/${slug}`
-			: `/list/${encodeURIComponent(handle)}/${slug}`) as Href;
+		`/profile/${encodeURIComponent(handle)}/lists/${slug}` as Href;
 
 	return (
 		<View className="gap-4 px-4 pt-4 pb-12">
@@ -77,7 +69,10 @@ export function ListsTab({
 					}
 					action={
 						user?.did === userDid
-							? { label: "Create a list", href: "/lists" }
+							? {
+									label: "Create a list",
+									href: `/profile/${encodeURIComponent(handle)}/lists` as Href,
+								}
 							: undefined
 					}
 				/>
