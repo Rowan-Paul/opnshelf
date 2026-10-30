@@ -98,7 +98,8 @@ function ListItemCard({
 	);
 }
 
-export default function ListDetailScreen() {
+/** The signed-in user's own List: reorder, add, edit and delete. */
+export function OwnListScreen() {
 	const themeColors = useThemeColors();
 	const { showDialog } = useDialog();
 	const { slug, addInput, shortcutRequest } = useLocalSearchParams<{

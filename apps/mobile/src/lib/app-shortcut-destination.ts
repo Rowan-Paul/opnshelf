@@ -60,8 +60,13 @@ export function appShortcutDestination(
 			break;
 		case "openWatchlist":
 			destination = {
-				pathname: "/lists/[slug]",
-				params: { slug: "watchlist", addInput: "", shortcutRequest: intent.id },
+				pathname: "/profile/[handle]/lists/[slug]",
+				params: {
+					handle: user?.handle ?? "",
+					slug: "watchlist",
+					addInput: "",
+					shortcutRequest: intent.id,
+				},
 			};
 			break;
 		case "addToWatchlist": {
@@ -71,8 +76,9 @@ export function appShortcutDestination(
 			)
 				return null;
 			destination = {
-				pathname: "/lists/[slug]",
+				pathname: "/profile/[handle]/lists/[slug]",
 				params: {
+					handle: user?.handle ?? "",
 					slug: "watchlist",
 					addInput: params.input.trim(),
 					shortcutRequest: intent.id,

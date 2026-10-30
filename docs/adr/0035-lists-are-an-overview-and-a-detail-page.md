@@ -6,7 +6,7 @@ The Web App rendered every List on one route. A sidebar listed the user's Lists;
 
 ## Decision
 
-Lists are two routes on both clients. `/profile/$handle/lists` is an overview of every List; `/profile/$handle/lists/$listSlug` is one List and its items. The Mobile App's existing `/lists` and `/lists/[slug]` already match, which satisfies ADR 0023's shared URL shapes without changing Mobile's routes.
+Lists are two routes on both clients. `/profile/$handle/lists` is an overview of every List; `/profile/$handle/lists/$listSlug` is one List and its items. The Mobile App serves the same two URLs, as ADR 0023 requires. (This ADR first said Mobile's `/lists` and `/lists/[slug]` already matched; they did not, and issue #634 moved them under `/profile/[handle]/lists`.)
 
 Each List on the overview is a card carrying a cover, not a row carrying a name. The cover is the List's first item in manual (`position`) order: the artwork fills the card blurred, a scrim darkens it toward the text, the crisp poster keeps its 2:3 shape at the leading edge and overhangs into the body, and the List's name sits on the artwork. A List with no items keeps a plain coloured card, because there is no first item to borrow art from and a grey blur reads as broken.
 
