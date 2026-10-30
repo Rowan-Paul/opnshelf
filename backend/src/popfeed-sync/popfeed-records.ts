@@ -1,7 +1,11 @@
 import { z } from "zod";
 import type { SyncRecordTypes } from "../integrations/adapter";
 import { encodeContent } from "../integrations/content-value";
-import { encodeList, type ListMember } from "../integrations/list-value";
+import {
+	encodeList,
+	type ListMember,
+	memberKey,
+} from "../integrations/list-value";
 import type { MediaType, SyncRecord } from "../integrations/reconcile";
 
 /**
@@ -161,6 +165,10 @@ export function reviewMarkdown(text: string, facets: unknown[] = []): string {
 	return out + decoder.decode(bytes.slice(at));
 }
 
+// Popfeed lists keep no member order; read them in one stable order.
+const sorted = (members: ListMember[]) =>
+	[...members].sort((a, b) => memberKey(a).localeCompare(memberKey(b)));
+
 const titleType = (creativeWorkType: string): "movie" | "show" | null =>
 	creativeWorkType === "movie"
 		? "movie"
@@ -227,6 +235,7 @@ export function popfeedRecords(
 					title,
 					// Popfeed keeps watched episodes without dates.
 					value: null,
+					undated: true,
 				});
 			}
 		const member = type && {
@@ -259,9 +268,10 @@ export function popfeedRecords(
 			value: encodeList({
 				name: "Watchlist",
 				description: "",
-				items: watchlist,
+				items: sorted(watchlist),
 			}),
 			visibility: "public",
+			unordered: true,
 		});
 	if (types.lists)
 		for (const [uri, list] of lists) {
@@ -278,9 +288,10 @@ export function popfeedRecords(
 				value: encodeList({
 					name: list.name,
 					description: list.description ?? "",
-					items: entry.members,
+					items: sorted(entry.members),
 				}),
 				visibility: "public",
+				unordered: true,
 				...(entry.problem ? { problem: entry.problem } : {}),
 			});
 		}

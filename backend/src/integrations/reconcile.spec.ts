@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { encodeList } from "./list-value";
 import {
 	candidates,
 	decide,
@@ -105,5 +106,45 @@ describe("Trakt reconciliation", () => {
 		expect(candidates(dated, [evening, nextDay])).toEqual([evening]);
 		// Precise Watches keep the five-minute window.
 		expect(candidates(remote, [evening])).toEqual([]);
+	});
+	it("treats a remote that never stores Watch dates as the same viewing", () => {
+		const episode = {
+			...watch,
+			mediaType: "episode" as const,
+			season: 1,
+			episode: 2,
+		};
+		const undated = { ...episode, key: "remote", value: null, undated: true };
+		expect(equivalent(episode, undated)).toBe(true);
+		expect(equivalent({ ...episode, episode: 3 }, undated)).toBe(false);
+		// Without the flag a missing date is still a different viewing.
+		expect(equivalent(episode, { ...undated, undated: undefined })).toBe(false);
+	});
+	it("ignores member order when one side keeps Lists unordered", () => {
+		const member = (mediaId: string) => ({
+			mediaType: "movie" as const,
+			mediaId,
+			season: 0,
+			episode: 0,
+			notes: "",
+		});
+		const list = (ids: string[], unordered?: boolean): SyncRecord => ({
+			key: "list",
+			kind: "list",
+			mediaType: "list",
+			mediaId: null,
+			season: 0,
+			episode: 0,
+			title: "Weekend",
+			value: encodeList({
+				name: "Weekend",
+				description: "",
+				items: ids.map(member),
+			}),
+			...(unordered ? { unordered } : {}),
+		});
+		expect(equivalent(list(["1", "2"]), list(["2", "1"], true))).toBe(true);
+		expect(equivalent(list(["1", "2"]), list(["2", "1"]))).toBe(false);
+		expect(equivalent(list(["1"]), list(["1", "2"], true))).toBe(false);
 	});
 });

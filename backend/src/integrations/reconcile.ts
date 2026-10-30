@@ -1,4 +1,5 @@
 import { contentValue } from "./content-value";
+import { encodeList, listValue, memberKey } from "./list-value";
 
 /** Pure reconciliation policy. Transport IDs and last successful values survive disconnects. */
 export type Direction = "inbound" | "outbound" | "both";
@@ -25,6 +26,10 @@ export type SyncRecord = {
 	remoteParentId?: number;
 	// A Watch whose source has a date but no time, stored as noon in the owner's timezone.
 	dateOnly?: boolean;
+	// A Watch from a provider that never stores Watch dates, such as Popfeed episodes.
+	undated?: boolean;
+	// A List whose provider keeps no member order, such as Popfeed.
+	unordered?: boolean;
 	rkey?: string;
 	cid?: string;
 	problem?: string;
@@ -77,6 +82,16 @@ const sameViewing = (a: SyncRecord, b: SyncRecord) =>
 		? watchDistance(a, b) < DATE_ONLY_MINUTES
 		: minute(a.value) === minute(b.value);
 
+const sortedList = (record: SyncRecord) => {
+	const value = listValue(record);
+	return encodeList({
+		...value,
+		items: [...value.items].sort((x, y) =>
+			memberKey(x).localeCompare(memberKey(y)),
+		),
+	});
+};
+
 export function equivalent(
 	a: SyncRecord | null,
 	b: SyncRecord | null,
@@ -84,7 +99,10 @@ export function equivalent(
 	if (!a || !b) return a === b;
 	if (a.unreadable || b.unreadable) return false;
 	if (mediaKey(a) !== mediaKey(b)) return false;
+	if (isListRecord(a) && (a.unordered || b.unordered))
+		return sortedList(a) === sortedList(b);
 	if (a.kind !== "watch") return a.value === b.value;
+	if (a.undated || b.undated) return true;
 	if (a.value === null || b.value === null) return a.value === b.value;
 	return sameViewing(a, b);
 }

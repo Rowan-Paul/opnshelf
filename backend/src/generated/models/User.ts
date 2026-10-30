@@ -81,6 +81,7 @@ export type UserMinAggregateOutputType = {
   privateSettingsHasCopy: boolean | null
   blogIntegrationEnabled: boolean | null
   blueskyCrossPostEnabled: boolean | null
+  popfeedWriteEnabled: boolean | null
   reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -129,6 +130,7 @@ export type UserMaxAggregateOutputType = {
   privateSettingsHasCopy: boolean | null
   blogIntegrationEnabled: boolean | null
   blueskyCrossPostEnabled: boolean | null
+  popfeedWriteEnabled: boolean | null
   reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -178,6 +180,7 @@ export type UserCountAggregateOutputType = {
   privateSettingsHasCopy: number
   blogIntegrationEnabled: number
   blueskyCrossPostEnabled: number
+  popfeedWriteEnabled: number
   reviewsMirrorFormat: number
   createdAt: number
   updatedAt: number
@@ -240,6 +243,7 @@ export type UserMinAggregateInputType = {
   privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
+  popfeedWriteEnabled?: true
   reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
@@ -288,6 +292,7 @@ export type UserMaxAggregateInputType = {
   privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
+  popfeedWriteEnabled?: true
   reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
@@ -337,6 +342,7 @@ export type UserCountAggregateInputType = {
   privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
+  popfeedWriteEnabled?: true
   reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
@@ -473,6 +479,7 @@ export type UserGroupByOutputType = {
   privateSettingsHasCopy: boolean
   blogIntegrationEnabled: boolean
   blueskyCrossPostEnabled: boolean
+  popfeedWriteEnabled: boolean
   reviewsMirrorFormat: $Enums.BlogMirrorFormat
   createdAt: Date
   updatedAt: Date
@@ -545,6 +552,7 @@ export type UserWhereInput = {
   privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFilter<"User"> | boolean
+  popfeedWriteEnabled?: Prisma.BoolFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -614,6 +622,7 @@ export type UserOrderByWithRelationInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -686,6 +695,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFilter<"User"> | boolean
+  popfeedWriteEnabled?: Prisma.BoolFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -755,6 +765,7 @@ export type UserOrderByWithAggregationInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -812,6 +823,7 @@ export type UserScalarWhereWithAggregatesInput = {
   privateSettingsHasCopy?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  popfeedWriteEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatWithAggregatesFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -861,6 +873,7 @@ export type UserCreateInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -930,6 +943,7 @@ export type UserUncheckedCreateInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -999,6 +1013,7 @@ export type UserUpdateInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1068,6 +1083,7 @@ export type UserUncheckedUpdateInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1137,6 +1153,7 @@ export type UserCreateManyInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1186,6 +1203,7 @@ export type UserUpdateManyMutationInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1235,6 +1253,7 @@ export type UserUncheckedUpdateManyInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1292,6 +1311,7 @@ export type UserCountOrderByAggregateInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1346,6 +1366,7 @@ export type UserMaxOrderByAggregateInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1394,6 +1415,7 @@ export type UserMinOrderByAggregateInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1782,6 +1804,7 @@ export type UserCreateWithoutIntegrationConnectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1850,6 +1873,7 @@ export type UserUncheckedCreateWithoutIntegrationConnectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1934,6 +1958,7 @@ export type UserUpdateWithoutIntegrationConnectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2002,6 +2027,7 @@ export type UserUncheckedUpdateWithoutIntegrationConnectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2070,6 +2096,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2138,6 +2165,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2222,6 +2250,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2290,6 +2319,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2358,6 +2388,7 @@ export type UserCreateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2426,6 +2457,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2510,6 +2542,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2578,6 +2611,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2646,6 +2680,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2714,6 +2749,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2798,6 +2834,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2866,6 +2903,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2934,6 +2972,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3002,6 +3041,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3086,6 +3126,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3154,6 +3195,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3222,6 +3264,7 @@ export type UserCreateWithoutFollowingInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3290,6 +3333,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3363,6 +3407,7 @@ export type UserCreateWithoutFollowersInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3431,6 +3476,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3515,6 +3561,7 @@ export type UserUpdateWithoutFollowingInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3583,6 +3630,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3662,6 +3710,7 @@ export type UserUpdateWithoutFollowersInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3730,6 +3779,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3798,6 +3848,7 @@ export type UserCreateWithoutCirclesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3866,6 +3917,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3950,6 +4002,7 @@ export type UserUpdateWithoutCirclesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4018,6 +4071,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4086,6 +4140,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4154,6 +4209,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4238,6 +4294,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4306,6 +4363,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4374,6 +4432,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4442,6 +4501,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4526,6 +4586,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4594,6 +4655,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4662,6 +4724,7 @@ export type UserCreateWithoutListsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4730,6 +4793,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4814,6 +4878,7 @@ export type UserUpdateWithoutListsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4882,6 +4947,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4950,6 +5016,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5018,6 +5085,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5102,6 +5170,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5170,6 +5239,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5238,6 +5308,7 @@ export type UserCreateWithoutNotesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5306,6 +5377,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5390,6 +5462,7 @@ export type UserUpdateWithoutNotesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5458,6 +5531,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5526,6 +5600,7 @@ export type UserCreateWithoutReviewsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5594,6 +5669,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5678,6 +5754,7 @@ export type UserUpdateWithoutReviewsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5746,6 +5823,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5814,6 +5892,7 @@ export type UserCreateWithoutPublicationsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5882,6 +5961,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5966,6 +6046,7 @@ export type UserUpdateWithoutPublicationsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6034,6 +6115,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6102,6 +6184,7 @@ export type UserCreateWithoutRatingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6170,6 +6253,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6254,6 +6338,7 @@ export type UserUpdateWithoutRatingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6322,6 +6407,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6390,6 +6476,7 @@ export type UserCreateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6458,6 +6545,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6542,6 +6630,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6610,6 +6699,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6678,6 +6768,7 @@ export type UserCreateWithoutFeedbackInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6746,6 +6837,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6830,6 +6922,7 @@ export type UserUpdateWithoutFeedbackInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6898,6 +6991,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6966,6 +7060,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -7034,6 +7129,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -7118,6 +7214,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7186,6 +7283,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7254,6 +7352,7 @@ export type UserCreateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -7322,6 +7421,7 @@ export type UserUncheckedCreateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -7406,6 +7506,7 @@ export type UserUpdateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7474,6 +7575,7 @@ export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7726,6 +7828,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -7796,6 +7899,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -7845,6 +7949,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -7894,12 +7999,13 @@ export type UserSelectScalar = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "listsDefaultVisibility" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "listsDefaultVisibility" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "popfeedWriteEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   privacyScopes?: boolean | Prisma.User$privacyScopesArgs<ExtArgs>
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
@@ -7994,6 +8100,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     privateSettingsHasCopy: boolean
     blogIntegrationEnabled: boolean
     blueskyCrossPostEnabled: boolean
+    popfeedWriteEnabled: boolean
     reviewsMirrorFormat: $Enums.BlogMirrorFormat
     createdAt: Date
     updatedAt: Date
@@ -8483,6 +8590,7 @@ export interface UserFieldRefs {
   readonly privateSettingsHasCopy: Prisma.FieldRef<"User", 'Boolean'>
   readonly blogIntegrationEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly blueskyCrossPostEnabled: Prisma.FieldRef<"User", 'Boolean'>
+  readonly popfeedWriteEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly reviewsMirrorFormat: Prisma.FieldRef<"User", 'BlogMirrorFormat'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>

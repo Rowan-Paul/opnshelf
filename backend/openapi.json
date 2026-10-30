@@ -10898,6 +10898,10 @@
           },
           "ignored": {
             "type": "number"
+          },
+          "writeAccess": {
+            "type": "boolean",
+            "description": "Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it."
           }
         },
         "required": [

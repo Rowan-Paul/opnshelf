@@ -706,8 +706,7 @@ export abstract class IntegrationSyncService<Credential>
 							matches[0],
 							newRemoteByMedia.get(mediaKey(matches[0])) ?? [],
 						).length === 1)) ||
-					(r.value !== null &&
-						matches[0].value !== null &&
+					((r.undated || (r.value !== null && matches[0].value !== null)) &&
 						equivalent(matches[0], r) &&
 						candidates(
 							matches[0],

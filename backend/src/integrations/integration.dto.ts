@@ -93,6 +93,11 @@ export class SyncStatusDto {
 	progress?: number;
 	@ApiProperty() needsAttention: number;
 	@ApiProperty() ignored: number;
+	@ApiPropertyOptional({
+		description:
+			"Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it.",
+	})
+	writeAccess?: boolean;
 }
 export class SyncRecordDto {
 	@ApiProperty() key: string;

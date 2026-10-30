@@ -1667,6 +1667,10 @@ export type SyncStatusDto = {
     progress?: number;
     needsAttention: number;
     ignored: number;
+    /**
+     * Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it.
+     */
+    writeAccess?: boolean;
 };
 
 export type SyncConnectDto = {

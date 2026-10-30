@@ -9,11 +9,19 @@ import type { LocalSyncRecords } from "../integrations/local-records.service";
 import { isListRecord, type SyncRecord } from "../integrations/reconcile";
 import type { PrismaService } from "../prisma/prisma.service";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
-import { popfeedRecords, type PopfeedRepository } from "./popfeed-records";
+import {
+	LIST,
+	type PopfeedRecord,
+	popfeedRecords,
+	type PopfeedRepository,
+	REVIEW,
+} from "./popfeed-records";
+import { type PopfeedRepo, PopfeedWriter } from "./popfeed-writer";
 import type {
 	PopfeedCredential,
 	PopfeedSyncClient,
 } from "./popfeed-sync.client";
+import type { PopfeedMediaService } from "./popfeed-media";
 import { PopfeedSyncService } from "./popfeed-sync.service";
 
 // Shares the disposable database used by the Trakt Sync persisted suite.
@@ -38,9 +46,55 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 		snapshot: vi.fn(async (c: PopfeedCredential, types: SyncRecordTypes) =>
 			popfeedRecords(structuredClone(repo), types, c.timeZone),
 		),
-		readForRecord: vi.fn(),
-		write: vi.fn(),
+		readForRecord: vi.fn(async (_c: PopfeedCredential, record: SyncRecord) =>
+			writer.read(record.kind),
+		),
+		write: vi.fn(
+			async (
+				_c: PopfeedCredential,
+				record: SyncRecord,
+				remove?: boolean,
+				previous?: SyncRecord | null,
+				onCreated?: (record: SyncRecord) => Promise<void>,
+			) => writer.write(record, remove, previous, onCreated),
+		),
 	};
+	let serial = 0;
+	const collectionOf = (uri: string) => uri.split("/")[3];
+	const memory: PopfeedRepo = {
+		read: async () => structuredClone(repo),
+		create: async (collection, record) => {
+			const uri = `${repoUri}/${collection}/w${++serial}`;
+			const entry = { uri, value: structuredClone(record) };
+			if (collection === LIST) repo.lists.push(entry);
+			else if (collection === REVIEW) repo.reviews.push(entry);
+			else repo.listItems.push(entry);
+			return uri;
+		},
+		put: async (uri, record) => {
+			for (const records of [repo.lists, repo.reviews, repo.listItems])
+				for (const entry of records)
+					if (entry.uri === uri) entry.value = structuredClone(record);
+		},
+		remove: async (uri) => {
+			const keep = (records: PopfeedRecord[]) =>
+				records.filter((entry) => entry.uri !== uri);
+			if (collectionOf(uri) === LIST) repo.lists = keep(repo.lists);
+			else if (collectionOf(uri) === REVIEW) repo.reviews = keep(repo.reviews);
+			else repo.listItems = keep(repo.listItems);
+		},
+		poster: async () => undefined,
+	};
+	const writer = new PopfeedWriter(
+		memory,
+		{
+			media: async (type, id) => ({
+				title: type === "movie" ? `Movie ${id}` : `Show ${id}`,
+				genres: [],
+			}),
+		},
+		"America/New_York",
+	);
 	const localApi = {
 		validateMatch: vi.fn(async () => undefined),
 		snapshot: vi.fn(async () => structuredClone(localRecords)),
@@ -80,6 +134,8 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 		localApi as unknown as LocalSyncRecords,
 		parseEnvironment({ NODE_ENV: "test" }),
 		new WatchAccountLock(lockPool),
+		{} as PopfeedMediaService,
+		{ restore: async () => undefined },
 	);
 	// Never resolve a real DID document in tests.
 	service["credential"] = async () => ({
@@ -259,7 +315,7 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 		]);
 	});
 
-	it("accepts only Popfeed → Opnshelf for now", async () => {
+	it("needs Popfeed write access before sending changes to Popfeed", async () => {
 		await expect(
 			service.configure(userDid, {
 				direction: "both",
@@ -268,6 +324,115 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 				ratings: true,
 				publicationConsent: true,
 			}),
-		).rejects.toThrow("Opnshelf → Popfeed is not available yet.");
+		).rejects.toThrow("Allow Opnshelf to write your Popfeed records");
+	});
+
+	describe("in both directions", () => {
+		const own = (key: string, value: string, mediaId = "120"): SyncRecord => ({
+			key,
+			kind: "watch",
+			mediaType: "movie",
+			mediaId,
+			season: 0,
+			episode: 0,
+			title: "Logged in Opnshelf",
+			value,
+		});
+		async function both(types: SyncRecordTypes = {}) {
+			await db.user.update({
+				where: { did: userDid },
+				data: { popfeedWriteEnabled: true },
+			});
+			await service.configure(userDid, {
+				direction: "both",
+				historyScope: "all",
+				watches: true,
+				ratings: false,
+				publicationConsent: true,
+				...types,
+			});
+			await settle();
+		}
+		it("sends an Opnshelf Watch to Popfeed once, then stays quiet", async () => {
+			localRecords = [own("movie:own", "2026-10-30T20:15:00.000Z")];
+			await both();
+			expect(repo.listItems).toHaveLength(1);
+			expect(repo.listItems[0].value).toMatchObject({
+				listType: "watched_movies",
+				addedAt: "2026-10-30T20:15:00.000Z",
+				identifiers: { tmdbId: "120" },
+			});
+			expect(repo.lists[0].value).toMatchObject({ listType: "watched_movies" });
+			const writes = remoteApi.write.mock.calls.length;
+			await settle();
+			expect(remoteApi.write).toHaveBeenCalledTimes(writes);
+			expect(localApi.write).not.toHaveBeenCalled();
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+		});
+		it("links a dated Opnshelf episode to Popfeed's undated one without asking", async () => {
+			localRecords = [
+				{
+					...own("episode:own", "2026-10-29T21:00:00.000Z", "1920"),
+					mediaType: "episode",
+					season: 1,
+					episode: 1,
+				},
+			];
+			repo.listItems = [
+				item("s", {
+					creativeWorkType: "tv_show",
+					listType: undefined,
+					identifiers: { tmdbId: "1920" },
+					watchedEpisodes: [{ seasonNumber: 1, episodeNumber: 1 }],
+				}),
+			];
+			await both();
+			expect(remoteApi.write).not.toHaveBeenCalled();
+			expect(localApi.write).not.toHaveBeenCalled();
+			expect((await service.status(userDid)).needsAttention).toBe(0);
+		});
+		it("keeps a movie rewatch in Needs attention instead of duplicating it", async () => {
+			localRecords = [
+				own("movie:first", "2026-01-01T20:00:00.000Z"),
+				own("movie:second", "2026-10-30T20:00:00.000Z"),
+			];
+			await both();
+			expect(repo.listItems).toHaveLength(1);
+			const { items } = await service.listIssues(userDid, {});
+			expect(items).toEqual([
+				expect.objectContaining({
+					issue: expect.stringContaining("one watched entry per movie"),
+				}),
+			]);
+		});
+		it("carries Rating edits and removals both ways", async () => {
+			const rating = (value: number): SyncRecord => ({
+				key: "rating:own",
+				kind: "rating",
+				mediaType: "movie",
+				mediaId: "120",
+				season: 0,
+				episode: 0,
+				title: "Fixture Movie",
+				value,
+			});
+			localRecords = [rating(8)];
+			await both({ watches: false, ratings: true });
+			expect(
+				repo.reviews.map((r) => (r.value as { rating: number }).rating),
+			).toEqual([8]);
+			localRecords = [rating(9)];
+			await settle();
+			expect(
+				repo.reviews.map((r) => (r.value as { rating: number }).rating),
+			).toEqual([9]);
+			// A change made in Popfeed comes back into Opnshelf.
+			(repo.reviews[0].value as { rating: number }).rating = 6;
+			await settle();
+			expect(localRecords.find((r) => r.kind === "rating")?.value).toBe(6);
+			localRecords = [];
+			await settle();
+			expect(repo.reviews).toEqual([]);
+		});
 	});
 });

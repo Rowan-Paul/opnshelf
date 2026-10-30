@@ -2974,6 +2974,7 @@ export const UserScalarFieldEnum = {
   privateSettingsHasCopy: 'privateSettingsHasCopy',
   blogIntegrationEnabled: 'blogIntegrationEnabled',
   blueskyCrossPostEnabled: 'blueskyCrossPostEnabled',
+  popfeedWriteEnabled: 'popfeedWriteEnabled',
   reviewsMirrorFormat: 'reviewsMirrorFormat',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

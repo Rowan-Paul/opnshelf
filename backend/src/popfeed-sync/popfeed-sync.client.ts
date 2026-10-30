@@ -9,13 +9,23 @@ import type { SyncRecord } from "../integrations/reconcile";
 import {
 	LIST,
 	LIST_ITEM,
+	type PopfeedRecord,
+	type PopfeedRepository,
 	popfeedRecords,
 	REVIEW,
-	type PopfeedRecord,
 } from "./popfeed-records";
+import type { PopfeedWriter } from "./popfeed-writer";
 
-/** Where the User's Popfeed records live, and the timezone their dates mean. */
-export type PopfeedCredential = { did: string; pds: string; timeZone: string };
+/**
+ * Where the User's Popfeed records live and the timezone their dates mean.
+ * `writer` exists only while the User grants Popfeed write access (ADR 0030).
+ */
+export type PopfeedCredential = {
+	did: string;
+	pds: string;
+	timeZone: string;
+	writer?: PopfeedWriter;
+};
 
 const PAGE = 100;
 // Stop instead of reading an unbounded repository in one sync run.
@@ -110,11 +120,44 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 		);
 	}
 
-	async readForRecord(): Promise<SyncRecord[]> {
-		throw new IntegrationError("Opnshelf → Popfeed is not available yet.");
+	/** All three collections, for a writer that must see the current records. */
+	async repository(credential: PopfeedCredential): Promise<PopfeedRepository> {
+		const [listItems, reviews, lists] = await Promise.all([
+			this.collection(credential, LIST_ITEM),
+			this.collection(credential, REVIEW),
+			this.collection(credential, LIST),
+		]);
+		return { listItems, reviews, lists };
 	}
 
-	async write(): Promise<void> {
-		throw new IntegrationError("Opnshelf → Popfeed is not available yet.");
+	async readForRecord(
+		credential: PopfeedCredential,
+		record: SyncRecord,
+	): Promise<SyncRecord[]> {
+		return this.writerFor(credential).read(record.kind);
+	}
+
+	async write(
+		credential: PopfeedCredential,
+		record: SyncRecord,
+		remove?: boolean,
+		previous?: SyncRecord | null,
+		onCreated?: (record: SyncRecord) => Promise<void>,
+	): Promise<void> {
+		return this.writerFor(credential).write(
+			record,
+			remove,
+			previous,
+			onCreated,
+		);
+	}
+
+	private writerFor(credential: PopfeedCredential) {
+		if (!credential.writer)
+			throw new IntegrationError(
+				"Allow Opnshelf to write your Popfeed records to send changes to Popfeed.",
+				403,
+			);
+		return credential.writer;
 	}
 }
