@@ -789,6 +789,7 @@ function TraktStep({
 			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
 	});
 	const connect = useMutation({
+		mutationKey: ["trakt-sync", "connect"],
 		...traktSyncControllerConnectMutation(),
 		onSuccess: (data) => window.location.assign(data.url),
 	});

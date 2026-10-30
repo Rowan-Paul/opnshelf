@@ -206,6 +206,7 @@ export function SettingsCategoryScreen({
 	const toast = useToast();
 	const queryClient = useQueryClient();
 	const resetOnboarding = useMutation({
+		mutationKey: ["users", "me", "onboarding", "reset"],
 		...usersControllerResetOnboardingMutation(),
 		onSuccess: async () => {
 			await queryClient.cancelQueries({ queryKey: authControllerMeQueryKey() });

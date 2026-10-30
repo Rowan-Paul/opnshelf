@@ -627,6 +627,7 @@ function TraktStep({ onNext }: { onNext: () => void }) {
 	const refresh = () =>
 		queryClient.invalidateQueries({ queryKey: traktStatusKey });
 	const connect = useMutation({
+		mutationKey: ["trakt-sync", "connect"],
 		...traktSyncControllerConnectMutation(),
 		onSuccess: async (data) => {
 			const result = await WebBrowser.openAuthSessionAsync(

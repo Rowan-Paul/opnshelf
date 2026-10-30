@@ -71,6 +71,7 @@ export function NotificationPreferences({
 		...notificationsControllerSettingsOptions(),
 	});
 	const testNotification = useMutation({
+		mutationKey: ["notifications", "test"],
 		...notificationsControllerTestNotificationMutation(),
 	});
 	const sendTest = async (channel: "push" | "email") => {
@@ -88,12 +89,15 @@ export function NotificationPreferences({
 	};
 
 	const update = useMutation({
+		mutationKey: ["notifications", "settings", "update"],
 		...notificationsControllerUpdateSettingsMutation(),
 	});
 	const requestEmail = useMutation({
+		mutationKey: ["notifications", "email", "request"],
 		...notificationsControllerRequestEmailMutation(),
 	});
 	const confirmEmail = useMutation({
+		mutationKey: ["notifications", "email", "confirm"],
 		...notificationsControllerConfirmEmailMutation(),
 	});
 
