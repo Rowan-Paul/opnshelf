@@ -565,6 +565,6 @@ it("connects Popfeed in place instead of opening a browser", () => {
 			<IntegrationSyncManager integration={POPFEED_INTEGRATION} embedded />,
 		);
 	});
-	press("Connect Popfeed");
+	press("Set up Popfeed Sync");
 	expect(mocks.mutate).toHaveBeenCalledWith({ platform: "mobile" });
 });

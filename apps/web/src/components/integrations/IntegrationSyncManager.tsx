@@ -4,6 +4,7 @@ import {
 	type IntegrationIssueDto,
 	type IntegrationResolveDto,
 	integrationActionLabel,
+	integrationConnectionCopy,
 	integrationDirections,
 	integrationIssueRecovery,
 	integrationKey,
@@ -123,6 +124,7 @@ export function IntegrationSyncManager({
 			</output>
 		);
 	const data = status.data;
+	const words = integrationConnectionCopy(integration, data.username);
 	const connected =
 		data.status !== "disconnected" && data.status !== "reconnect";
 	if (issuesOnly)
@@ -176,14 +178,9 @@ export function IntegrationSyncManager({
 			>
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div>
-						<h2 className="font-semibold text-lg">
-							{data.username
-								? `@${data.username}`
-								: integration.connect === "oauth"
-									? `Connect your ${name} account`
-									: `Use your ${name} records`}
-						</h2>
+						<h2 className="font-semibold text-lg">{words.heading}</h2>
 						<p className="mt-1 text-(--foreground-muted) text-sm">
+							{words.handle && <span>{words.handle} · </span>}
 							{needsSetup
 								? "Choose what to sync to finish setting up."
 								: data.status === "preparing"
@@ -196,10 +193,12 @@ export function IntegrationSyncManager({
 												? "Reconnect to continue"
 												: integration.connect === "oauth"
 													? "No account connected"
-													: "Not connected"}
+													: "Not set up yet"}
 						</p>
 					</div>
-					<Link2 className="size-5 text-(--foreground-muted)" />
+					{integration.connect === "oauth" && (
+						<Link2 className="size-5 text-(--foreground-muted)" />
+					)}
 				</div>
 				{connected && integration.writeGrant && data.writeAccess && (
 					<WriteAccess
@@ -219,12 +218,10 @@ export function IntegrationSyncManager({
 						onClick={() => connect.mutate({ platform: "web" })}
 					>
 						{connect.isPending
-							? integration.connect === "oauth"
-								? `Opening ${name}…`
-								: "Connecting…"
+							? words.starting
 							: data.status === "reconnect"
 								? `Reconnect ${name}`
-								: `Connect ${name}`}
+								: words.start}
 					</button>
 				) : !needsSetup ? (
 					<>
@@ -295,29 +292,25 @@ export function IntegrationSyncManager({
 								className="btn btn-secondary max-w-full whitespace-normal"
 								onClick={() => setDisconnect(true)}
 							>
-								Disconnect
+								{words.stop}
 							</button>
 						</div>
 					</>
-				) : (
+				) : integration.connect === "oauth" ? (
 					<button
 						type="button"
 						className="btn btn-secondary mt-4"
 						onClick={() => setDisconnect(true)}
 					>
-						Disconnect
+						{words.stop}
 					</button>
-				)}
+				) : null}
 				{disconnect && (
 					<Dialog open onOpenChange={setDisconnect}>
 						<DialogContent>
 							<DialogHeader>
-								<DialogTitle>Disconnect {name}?</DialogTitle>
-								<DialogDescription>
-									{integration.connect === "oauth"
-										? "Disconnecting stops sync and revokes access. Transferred records remain on both services. Reconnecting this account catches up previously linked records."
-										: `Disconnecting stops sync. Transferred records stay in Opnshelf and your ${name} records are untouched. Reconnecting catches up previously linked records.`}
-								</DialogDescription>
+								<DialogTitle>{words.stopTitle}</DialogTitle>
+								<DialogDescription>{words.stopBody}</DialogDescription>
 							</DialogHeader>
 							<div className="flex flex-wrap gap-2">
 								<button
@@ -337,7 +330,7 @@ export function IntegrationSyncManager({
 										})
 									}
 								>
-									Confirm disconnect
+									{words.stopConfirm}
 								</button>
 							</div>
 						</DialogContent>

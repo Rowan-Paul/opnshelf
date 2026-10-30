@@ -4,6 +4,7 @@ import {
 	type IntegrationIssueDto,
 	type IntegrationResolveDto,
 	integrationActionLabel,
+	integrationConnectionCopy,
 	integrationDirections,
 	integrationIssueRecovery,
 	integrationKey,
@@ -184,6 +185,7 @@ export function IntegrationSyncManager({
 			</View>
 		);
 	const data = status.data;
+	const words = integrationConnectionCopy(integration, data.username);
 	const connected =
 		data.status !== "disconnected" && data.status !== "reconnect";
 	if (issuesOnly)
@@ -200,13 +202,10 @@ export function IntegrationSyncManager({
 		<View className="gap-5">
 			<View className={embedded ? "gap-4" : card}>
 				<Text selectable className="font-semibold text-foreground text-lg">
-					{data.username
-						? `@${data.username}`
-						: integration.connect === "oauth"
-							? `Connect your ${name} account`
-							: `Use your ${name} records`}
+					{words.heading}
 				</Text>
 				<Text className={copy}>
+					{words.handle ? `${words.handle} · ` : ""}
 					{needsSetup
 						? "Choose what to sync to finish setting up."
 						: data.status === "preparing"
@@ -219,7 +218,7 @@ export function IntegrationSyncManager({
 										? "Reconnect to continue"
 										: integration.connect === "oauth"
 											? "No account connected"
-											: "Not connected"}
+											: "Not set up yet"}
 				</Text>
 				{connected && integration.writeGrant && data.writeAccess && (
 					<WriteAccess
@@ -236,12 +235,10 @@ export function IntegrationSyncManager({
 						primary
 						label={
 							connect.isPending
-								? integration.connect === "oauth"
-									? `Opening ${name}…`
-									: "Connecting…"
+								? words.starting
 								: data.status === "reconnect"
 									? `Reconnect ${name}`
-									: `Connect ${name}`
+									: words.start
 						}
 						disabled={connect.isPending}
 						onPress={() => connect.mutate({ platform: "mobile" })}
@@ -302,12 +299,12 @@ export function IntegrationSyncManager({
 										onPress={() => action.mutate(choice)}
 									/>
 								))}
-							<Action label="Disconnect" onPress={() => setDisconnect(true)} />
+							<Action label={words.stop} onPress={() => setDisconnect(true)} />
 						</View>
 					</>
-				) : (
-					<Action label="Disconnect" onPress={() => setDisconnect(true)} />
-				)}
+				) : integration.connect === "oauth" ? (
+					<Action label={words.stop} onPress={() => setDisconnect(true)} />
+				) : null}
 				{disconnect && (
 					<Modal
 						visible
@@ -332,17 +329,13 @@ export function IntegrationSyncManager({
 										accessibilityRole="header"
 										className="font-semibold text-foreground text-xl"
 									>
-										Disconnect {name}?
+										{words.stopTitle}
 									</Text>
-									<Text className={copy}>
-										{integration.connect === "oauth"
-											? "Disconnecting stops sync and revokes access. Transferred records remain on both services. Reconnecting this account catches up previously linked records."
-											: `Disconnecting stops sync. Transferred records stay in Opnshelf and your ${name} records are untouched. Reconnecting catches up previously linked records.`}
-									</Text>
+									<Text className={copy}>{words.stopBody}</Text>
 									<Action label="Cancel" onPress={() => setDisconnect(false)} />
 									<Action
 										primary
-										label="Confirm disconnect"
+										label={words.stopConfirm}
 										disabled={action.isPending}
 										onPress={() =>
 											action.mutate("disconnect", {

@@ -364,3 +364,37 @@ export function integrationStatusLabel(status: SyncStatusDto | undefined) {
 export function integrationWriteGrantCopy(name: string) {
 	return `Sending changes to ${name} needs permission to create and update your ${name} records. Your account asks you to approve it. Other devices then need to sign in again.`;
 }
+
+/**
+ * Words for connecting and stopping an Integration. An OAuth provider has an
+ * account to connect; a repository provider such as Popfeed only has a sync to
+ * set up or turn off, because its records are already the User's own.
+ */
+export function integrationConnectionCopy(
+	integration: Pick<IntegrationDefinition, "name" | "connect">,
+	username?: string,
+) {
+	const { name } = integration;
+	if (integration.connect === "oauth")
+		return {
+			heading: username ? `@${username}` : `Connect your ${name} account`,
+			handle: undefined,
+			start: `Connect ${name}`,
+			starting: `Opening ${name}…`,
+			stop: "Disconnect",
+			stopTitle: `Disconnect ${name}?`,
+			stopBody:
+				"Disconnecting stops sync and revokes access. Transferred records remain on both services. Reconnecting this account catches up previously linked records.",
+			stopConfirm: "Confirm disconnect",
+		};
+	return {
+		heading: `Your ${name} records`,
+		handle: username ? `@${username}` : undefined,
+		start: `Set up ${name} Sync`,
+		starting: "Setting up…",
+		stop: `Turn off ${name} Sync`,
+		stopTitle: `Turn off ${name} Sync?`,
+		stopBody: `Sync stops. Records already transferred stay in Opnshelf and on ${name}. Turning it back on catches up previously linked records.`,
+		stopConfirm: `Turn off ${name} Sync`,
+	};
+}

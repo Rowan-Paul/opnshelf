@@ -593,7 +593,7 @@ describe("Popfeed Sync", () => {
 	it("connects in place, without leaving Opnshelf", async () => {
 		const connect = mountPopfeed(false);
 		fireEvent.click(
-			await screen.findByRole("button", { name: "Connect Popfeed" }),
+			await screen.findByRole("button", { name: "Set up Popfeed Sync" }),
 		);
 		await waitFor(() =>
 			expect(connect).toHaveBeenCalledWith(
@@ -601,7 +601,15 @@ describe("Popfeed Sync", () => {
 				expect.anything(),
 			),
 		);
-		expect(await screen.findByText("@fixture.test")).toBeTruthy();
+		expect(await screen.findByText("@fixture.test ·")).toBeTruthy();
+		expect(
+			screen.getByRole("heading", { name: "Your Popfeed records" }),
+		).toBeTruthy();
+		// Nothing is on before setup, so there is nothing to turn off.
+		expect(
+			screen.queryByRole("button", { name: "Turn off Popfeed Sync" }),
+		).toBeNull();
+		expect(screen.queryByRole("button", { name: "Disconnect" })).toBeNull();
 	});
 	it("asks for write access before sending changes to Popfeed", async () => {
 		mountPopfeed(true);
