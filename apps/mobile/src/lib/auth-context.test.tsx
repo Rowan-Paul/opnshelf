@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
 	saveSessionToken: vi.fn(),
 	setOnUnauthorized: vi.fn(),
 	setWidgetHandle: vi.fn(),
+	rememberAccount: vi.fn(),
 }));
 
 vi.mock("@opnshelf/api", () => ({
@@ -68,6 +69,12 @@ vi.mock("@/lib/posthog", () => ({
 
 vi.mock("@/lib/push-notifications", () => ({
 	removeCurrentPushDevice: mocks.removeCurrentPushDevice,
+}));
+
+vi.mock("@/lib/recent-accounts", () => ({
+	loadRecentAccounts: vi.fn().mockResolvedValue(undefined),
+	noteSignInMethod: vi.fn(),
+	rememberAccount: mocks.rememberAccount,
 }));
 
 vi.mock("../../modules/widget-bridge", () => ({
@@ -795,6 +802,8 @@ describe("AuthProvider", () => {
 		expect(mocks.posthogIdentify).toHaveBeenCalledWith(nextUser.did, {
 			$set_once: { first_login_date: expect.any(String) },
 		});
+		// Offered on the login screen once this session ends.
+		expect(mocks.rememberAccount).toHaveBeenCalledWith(nextUser);
 
 		harness.unmount();
 	});

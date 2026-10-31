@@ -7,6 +7,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useAuth } from "#/lib/auth-context";
+import { forgetAccount } from "#/lib/recent-accounts";
 
 /**
  * The current account-deletion job, read from the server instead of component
@@ -14,7 +15,7 @@ import { useAuth } from "#/lib/auth-context";
  * while the job is active and logs out once it finishes.
  */
 export function useAccountDeletionJob(): AccountDeletionJobDto | null {
-	const { isAuthenticated, logout } = useAuth();
+	const { isAuthenticated, logout, user } = useAuth();
 
 	const { data, error } = useQuery({
 		...usersControllerGetMyAccountDeletionOptions(),
@@ -28,6 +29,16 @@ export function useAccountDeletionJob(): AccountDeletionJobDto | null {
 
 	const job = data ?? null;
 	const sawActiveJob = useRef(false);
+
+	// A deleted account can no longer sign in, so stop offering it as soon as a
+	// deletion is running rather than when it completes: the app may be closed
+	// by then, and the revoked session means this hook never runs again. Also
+	// re-runs when the user refetches, which would otherwise remember it again.
+	useEffect(() => {
+		if (user && job && isActiveAccountDeletionStatus(job.status)) {
+			void forgetAccount(user.did);
+		}
+	}, [user, job]);
 
 	useEffect(() => {
 		if (job && isActiveAccountDeletionStatus(job.status)) {

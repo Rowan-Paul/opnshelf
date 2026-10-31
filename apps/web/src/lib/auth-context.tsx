@@ -20,6 +20,7 @@ import {
 import { env } from "#/env";
 import { posthog } from "#/integrations/posthog/provider";
 import { currentUserQueryOptions } from "./auth-query";
+import { noteSignInMethod, rememberAccount } from "./recent-accounts";
 import {
 	mayBeSignedIn,
 	rememberSignedIn,
@@ -81,6 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	}, [isFetchedAfterMount, isSessionCheckError, user]);
 
+	// Offer this account on the login page once its session ends.
+	useEffect(() => {
+		if (user) rememberAccount(user);
+	}, [user]);
+
 	// The API callback is a browser singleton. Register it after mount so SSR
 	// requests never capture their request-scoped QueryClient in global state.
 	useEffect(() => {
@@ -92,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [queryClient]);
 
 	const login = useCallback((handle: string) => {
+		noteSignInMethod("handle");
 		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const loginUrl = getLoginUrl(handle, timezone, undefined);
 		window.location.href = loginUrl;

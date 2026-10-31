@@ -2,15 +2,26 @@ import { authControllerSuggestionsOptions } from "@opnshelf/api";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { User } from "lucide-react-native";
+import { User, X } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
-import { ProviderButtons } from "@/components/ProviderButtons";
+import { AppleMark } from "@/components/marks/AppleMark";
+import { GoogleMark } from "@/components/marks/GoogleMark";
+import {
+	ProviderButtons,
+	useProviderSignIn,
+} from "@/components/ProviderButtons";
 import { Button } from "@/components/ui/button";
 import { Screen } from "@/components/ui/screen";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { useAuth } from "@/lib/auth-context";
+import {
+	forgetAccount,
+	type RecentAccount,
+	useRecentAccounts,
+} from "@/lib/recent-accounts";
+import { useTheme } from "@/lib/theme-context";
 import { useDebounce } from "@/lib/use-debounce";
 import { useTwStyle } from "@/lib/use-tw-style";
 import { useThemeColors } from "@/theme/colors";
@@ -21,6 +32,7 @@ type LoginParams = {
 
 export default function LoginScreen() {
 	const colors = useThemeColors();
+	const { scheme } = useTheme();
 	const { user, isLoading, isAuthenticated, login } = useAuth();
 	const { reason } = useLocalSearchParams<LoginParams>();
 	const [handle, setHandle] = useState("");
@@ -28,7 +40,11 @@ export default function LoginScreen() {
 	// A provider flow and a handle sign-in both end in completeSession, so
 	// running them at once races session state and navigation.
 	const [providerBusy, setProviderBusy] = useState(false);
-	const authBusy = isSubmitting || providerBusy;
+	const recentAccounts = useRecentAccounts();
+	const recentProvider = useProviderSignIn();
+	// The remembered account being signed in to, so only its row shows progress.
+	const [continuingDid, setContinuingDid] = useState<string | null>(null);
+	const authBusy = isSubmitting || providerBusy || recentProvider.busy !== null;
 	const [error, setError] = useState<string | null>(null);
 	const avatarStyle = useTwStyle("size-9");
 
@@ -68,6 +84,19 @@ export default function LoginScreen() {
 		}
 	};
 
+	const continueAs = async (account: RecentAccount) => {
+		setContinuingDid(account.did);
+		try {
+			if (account.method === "handle") {
+				await submit(() => login(account.handle));
+			} else {
+				await recentProvider.signIn(account.method);
+			}
+		} finally {
+			setContinuingDid(null);
+		}
+	};
+
 	return (
 		<Screen>
 			<View className="flex-1 justify-center gap-6">
@@ -102,6 +131,80 @@ export default function LoginScreen() {
 						<Text className="text-destructive text-sm">{error}</Text>
 					</View>
 				)}
+
+				{recentAccounts.length > 0 ? (
+					<View className="gap-1.5">
+						<Text className="font-medium text-foreground text-sm">
+							Continue as
+						</Text>
+						<View className="overflow-hidden rounded-lg border border-border bg-card">
+							{recentAccounts.map((account, index) => (
+								<View
+									key={account.did}
+									className={`flex-row items-center ${index > 0 ? "border-border border-t" : ""} ${authBusy && continuingDid !== account.did ? "opacity-60" : ""}`}
+								>
+									<Pressable
+										accessibilityRole="button"
+										accessibilityLabel={`Continue as ${account.displayName || account.handle}, @${account.handle}${account.method === "handle" ? "" : `, with ${account.method === "google" ? "Google" : "Apple"}`}`}
+										accessibilityState={{
+											disabled: authBusy,
+											busy: continuingDid === account.did,
+										}}
+										disabled={authBusy}
+										onPress={() => void continueAs(account)}
+										className="min-w-0 flex-1 flex-row items-center gap-3 py-3 pl-3"
+									>
+										<View className="size-9 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+											{account.avatar ? (
+												<Image
+													source={{ uri: account.avatar }}
+													style={avatarStyle}
+													contentFit="cover"
+												/>
+											) : (
+												<User color={colors.mutedForeground} size={16} />
+											)}
+										</View>
+										<View className="min-w-0 flex-1">
+											<Text
+												className="font-medium text-foreground text-sm"
+												numberOfLines={1}
+											>
+												{account.displayName || account.handle}
+											</Text>
+											<Text
+												className="text-muted-foreground text-xs"
+												numberOfLines={1}
+											>
+												@{account.handle}
+											</Text>
+										</View>
+										{continuingDid === account.did ? (
+											<ActivityIndicator size="small" />
+										) : account.method === "google" ? (
+											<GoogleMark size={16} />
+										) : account.method === "apple" ? (
+											<AppleMark
+												size={16}
+												color={scheme === "dark" ? "#FFFFFF" : "#000000"}
+											/>
+										) : null}
+									</Pressable>
+									<Pressable
+										accessibilityRole="button"
+										accessibilityLabel={`Remove @${account.handle} from this device`}
+										disabled={authBusy}
+										onPress={() => void forgetAccount(account.did)}
+										hitSlop={4}
+										className="justify-center self-stretch px-3"
+									>
+										<X color={colors.mutedForeground} size={16} />
+									</Pressable>
+								</View>
+							))}
+						</View>
+					</View>
+				) : null}
 
 				<ProviderButtons disabled={authBusy} onBusyChange={setProviderBusy} />
 

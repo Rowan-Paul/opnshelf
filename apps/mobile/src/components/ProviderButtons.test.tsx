@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
 	colorScheme: vi.fn(),
 }));
 
+vi.mock("@/lib/recent-accounts", () => ({ noteSignInMethod: vi.fn() }));
+
 vi.mock("expo-apple-authentication", async () => {
 	const { createElement } = await import("react");
 	return {
