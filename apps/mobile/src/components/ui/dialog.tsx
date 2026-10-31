@@ -7,10 +7,18 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { Modal, Platform, Pressable, View } from "react-native";
+import {
+	Modal,
+	Platform,
+	Pressable,
+	ScrollView,
+	useWindowDimensions,
+	View,
+} from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
+import { ToastHost } from "@/components/ui/toast-host";
 import { useThemeColors } from "@/theme/colors";
 
 type DialogAction = {
@@ -43,6 +51,10 @@ const ACTION_TEXT: Record<string, string> = {
 type DialogOptions = {
 	title: string;
 	description?: string;
+	/** Richer content between the description and the actions. */
+	body?: ReactNode;
+	/** Runs when the dialog closes without one of its actions being pressed. */
+	onCancel?: () => void;
 	actions: DialogAction[];
 	input?: {
 		placeholder?: string;
@@ -60,6 +72,8 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 	const colors = useThemeColors();
 	const [dialog, setDialog] = useState<DialogOptions | null>(null);
 	const [inputValue, setInputValue] = useState("");
+	// Long content scrolls so the actions stay on screen with large text.
+	const maxCardHeight = useWindowDimensions().height * 0.85;
 	const afterDismiss = useRef<(() => void) | undefined>(undefined);
 	const didDismiss = () => {
 		const callback = afterDismiss.current;
@@ -73,6 +87,10 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const dismiss = useCallback(() => setDialog(null), []);
+	const cancel = () => {
+		dialog?.onCancel?.();
+		dismiss();
+	};
 	const pressAction = (action: DialogAction) => {
 		afterDismiss.current = action.onDismiss;
 		dismiss();
@@ -97,45 +115,59 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 				visible={dialog !== null}
 				transparent
 				animationType="fade"
-				onRequestClose={dismiss}
+				onRequestClose={cancel}
 				onDismiss={didDismiss}
 			>
 				<View className="flex-1 items-center justify-center bg-black/50 p-6">
-					<Pressable className="absolute inset-0" onPress={dismiss} />
-					<View className="w-full max-w-sm gap-4 rounded-2xl border border-border bg-card p-5">
-						<View className="flex-row items-start justify-between gap-3">
-							<View className="flex-1 gap-1.5">
-								<Text className="font-display-bold text-foreground text-lg">
-									{dialog?.title}
-								</Text>
-								{dialog?.description ? (
-									<Text className="text-muted-foreground text-sm">
-										{dialog.description}
+					<Pressable className="absolute inset-0" onPress={cancel} />
+					<View
+						className="w-full max-w-sm gap-4 rounded-2xl border border-border bg-card p-5"
+						style={{ maxHeight: maxCardHeight }}
+					>
+						<ScrollView
+							style={{ flexGrow: 0, flexShrink: 1 }}
+							contentContainerClassName="gap-4"
+							keyboardShouldPersistTaps="handled"
+						>
+							<View className="flex-row items-start justify-between gap-3">
+								<View className="flex-1 gap-1.5">
+									<Text className="font-display-bold text-foreground text-lg">
+										{dialog?.title}
 									</Text>
-								) : null}
+									{dialog?.description ? (
+										<Text className="text-muted-foreground text-sm">
+											{dialog.description}
+										</Text>
+									) : null}
+								</View>
+								<Pressable
+									hitSlop={8}
+									onPress={cancel}
+									accessibilityLabel="Close dialog"
+								>
+									<X color={colors.mutedForeground} size={20} />
+								</Pressable>
 							</View>
-							<Pressable
-								hitSlop={8}
-								onPress={dismiss}
-								accessibilityLabel="Close dialog"
-							>
-								<X color={colors.mutedForeground} size={20} />
-							</Pressable>
-						</View>
-						{dialog?.input ? (
-							<TextField
-								value={inputValue}
-								onChangeText={setInputValue}
-								placeholder={dialog.input.placeholder}
-								autoFocus
-								autoCapitalize="none"
-								keyboardType="url"
-								onSubmitEditing={submitInput}
-							/>
-						) : null}
+							{dialog?.body}
+							{dialog?.input ? (
+								<TextField
+									value={inputValue}
+									onChangeText={setInputValue}
+									placeholder={dialog.input.placeholder}
+									autoFocus
+									autoCapitalize="none"
+									keyboardType="url"
+									onSubmitEditing={submitInput}
+								/>
+							) : null}
+						</ScrollView>
 						{/* Three or more actions don't fit side by side on a phone, so they
 						    stack full-width, most emphasized first and the cancel last. */}
-						<View className={stacked ? "gap-2" : "flex-row justify-end gap-2"}>
+						<View
+							className={
+								stacked ? "gap-2" : "flex-row flex-wrap justify-end gap-2"
+							}
+						>
 							{orderedActions.map((action) => (
 								<Pressable
 									key={action.label}
@@ -155,6 +187,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 						</View>
 					</View>
 				</View>
+				<ToastHost />
 			</Modal>
 		</DialogContext.Provider>
 	);

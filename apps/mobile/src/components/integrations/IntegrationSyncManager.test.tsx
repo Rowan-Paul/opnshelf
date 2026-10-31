@@ -157,6 +157,10 @@ vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({ runAuthorizationUrl: vi.fn() }),
 }));
 vi.mock("@/lib/auth-handoff", () => ({ beginHandoff: async () => null }));
+const requestPermission = vi.hoisted(() => vi.fn(async () => false));
+vi.mock("@/components/settings/permission-request", () => ({
+	usePermissionRequest: () => requestPermission,
+}));
 vi.mock("@/components/integrations/IntegrationMark", () => ({
 	IntegrationMark: "icon",
 }));
@@ -189,7 +193,9 @@ function press(label: string) {
 	const button = renderer.root.find(
 		(node) => node.type === "text" && node.props.children === label,
 	).parent;
-	act(() => button?.props.onPress());
+	act(() => {
+		button?.props.onPress();
+	});
 }
 
 it("allows disconnecting before setup without enabling sync", () => {
@@ -529,6 +535,9 @@ it("asks for Popfeed write access before sending changes, with Popfeed's record 
 			.findAll((node) => node.type === "text")
 			.map((node) => node.props.children);
 	expect(texts()).toContain("Allow Popfeed access");
+	// The grant explains itself first; declining it starts nothing.
+	press("Allow Popfeed access");
+	expect(requestPermission).toHaveBeenCalledWith("popfeed");
 	const enable = renderer.root.find(
 		(node) =>
 			node.type === Pressable &&

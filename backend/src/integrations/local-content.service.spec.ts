@@ -58,14 +58,7 @@ function fixture(kind: ContentKind, visibility: "public" | "private") {
 					headers: { "content-type": "application/json" },
 				});
 			if (method.endsWith("getSpace"))
-				return reply({
-					readPolicy: {
-						$type: "com.atproto.simplespace.defs#memberListPolicy",
-					},
-					writePolicy: {
-						$type: "com.atproto.simplespace.defs#memberListPolicy",
-					},
-				});
+				return reply({ policy: { $type: "com.atproto.personalspace.policy" } });
 			if (method.endsWith("listMembers")) return reply({ members: [] });
 			if (method.endsWith("listRecords"))
 				return reply({

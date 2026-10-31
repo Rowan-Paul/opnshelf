@@ -14,6 +14,16 @@ vi.mock("uniwind", () => ({
 	Uniwind: { setTheme: () => {} },
 }));
 
+// Reanimated's entry point imports native initializers Node cannot load.
+// Animated styles resolve to their end values, so sheets render in place.
+vi.mock("react-native-reanimated", () => ({
+	default: { View: "Animated.View" },
+	Easing: { cubic: 0, in: () => 0, out: () => 0 },
+	useSharedValue: (value: unknown) => ({ value }),
+	useAnimatedStyle: (style: () => object) => style(),
+	withTiming: (value: unknown) => value,
+}));
+
 const testRendererDeprecation =
 	"react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer";
 const originalConsoleError = console.error;

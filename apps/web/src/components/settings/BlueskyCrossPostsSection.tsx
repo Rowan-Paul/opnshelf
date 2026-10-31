@@ -14,6 +14,7 @@ export function BlueskyCrossPostsSection() {
 				when you publish them.
 			</p>
 			<IntegrationPermissionRow
+				integration="bluesky"
 				name="Bluesky Cross-posts"
 				description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
 				connected={userSettings?.blueskyCrossPostEnabled ?? false}

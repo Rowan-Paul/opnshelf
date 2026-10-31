@@ -633,6 +633,17 @@ describe("Popfeed Sync", () => {
 			(screen.getByRole("button", { name: "Enable sync" }) as HTMLButtonElement)
 				.disabled,
 		).toBe(true);
+		// The grant explains what Popfeed access allows before leaving the page.
+		fireEvent.click(
+			screen.getByRole("button", { name: "Allow Popfeed access" }),
+		);
+		expect(
+			await screen.findByRole("dialog", {
+				name: "Let Opnshelf write to Popfeed",
+			}),
+		).toBeTruthy();
+		fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 	});
 	it("offers Popfeed's record types only", async () => {
 		mountPopfeed(true);

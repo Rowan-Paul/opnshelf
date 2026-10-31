@@ -778,6 +778,7 @@ export function SettingsCategoryScreen({
 									(pub) => pub.uri === storedPublicationUri,
 								) ? (
 									<IntegrationPermissionRow
+										integration="blog"
 										name="Blog mirroring"
 										description="Allow Opnshelf to publish and update Review mirrors in the selected publication."
 										connected={settings?.blogIntegrationEnabled ?? false}
@@ -885,6 +886,7 @@ export function SettingsCategoryScreen({
 								description="Connect once, then choose which Reviews should also appear on Bluesky when you publish them."
 							>
 								<IntegrationPermissionRow
+									integration="bluesky"
 									name="Bluesky Cross-posts"
 									description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
 									connected={settings?.blueskyCrossPostEnabled ?? false}

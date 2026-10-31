@@ -8,8 +8,9 @@ import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Search, SearchX, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Modal, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
@@ -183,12 +184,7 @@ export function AddItemsToListSheet({
 	};
 
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={handleDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={handleDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={handleDismiss} />
 				<View className="h-[80%] gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -320,7 +316,7 @@ export function AddItemsToListSheet({
 					</View>
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }
 

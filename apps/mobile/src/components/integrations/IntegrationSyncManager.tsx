@@ -48,6 +48,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IntegrationMark } from "@/components/integrations/IntegrationMark";
+import { usePermissionRequest } from "@/components/settings/permission-request";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
@@ -306,13 +308,8 @@ export function IntegrationSyncManager({
 					<Action label={words.stop} onPress={() => setDisconnect(true)} />
 				) : null}
 				{disconnect && (
-					<Modal
-						visible
-						transparent
-						animationType="slide"
-						onRequestClose={() => setDisconnect(false)}
-					>
-						<View className="flex-1 justify-end bg-black/40">
+					<BottomSheetModal visible onRequestClose={() => setDisconnect(false)}>
+						<View className="flex-1 justify-end">
 							<Pressable
 								accessibilityLabel="Close confirmation"
 								className="flex-1"
@@ -346,7 +343,7 @@ export function IntegrationSyncManager({
 								</ScrollView>
 							</View>
 						</View>
-					</Modal>
+					</BottomSheetModal>
 				)}
 				{integrationStateMessage(data, name) && (
 					<Text accessibilityLiveRegion="polite" className={copy}>
@@ -717,13 +714,8 @@ export function SyncSettings({
 					Settings saved
 				</Text>
 			)}
-			<Modal
-				visible={reviewing}
-				animationType="slide"
-				transparent
-				onRequestClose={dismiss}
-			>
-				<View className="flex-1 justify-end bg-black/40">
+			<BottomSheetModal visible={reviewing} onRequestClose={dismiss}>
+				<View className="flex-1 justify-end">
 					<Pressable
 						accessibilityLabel="Close confirmation"
 						className="flex-1"
@@ -850,7 +842,7 @@ export function SyncSettings({
 						</ScrollView>
 					</View>
 				</View>
-			</Modal>
+			</BottomSheetModal>
 		</View>
 	);
 }
@@ -1179,13 +1171,8 @@ function SyncIssue({
 					</View>
 				)}
 			{choice && (
-				<Modal
-					visible
-					transparent
-					animationType="slide"
-					onRequestClose={() => setChoice(null)}
-				>
-					<View className="flex-1 justify-end bg-black/40">
+				<BottomSheetModal visible onRequestClose={() => setChoice(null)}>
+					<View className="flex-1 justify-end">
 						<Pressable
 							accessibilityLabel="Close confirmation"
 							className="flex-1"
@@ -1260,7 +1247,7 @@ function SyncIssue({
 							</ScrollView>
 						</View>
 					</View>
-				</Modal>
+				</BottomSheetModal>
 			)}
 			{mutation.error && (
 				<Text selectable accessibilityRole="alert" className={copy}>
@@ -1299,6 +1286,11 @@ function useWriteGrant(
 /** External Integration Access (ADR 0030), asked for before the first write. */
 function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
 	const grant = useWriteGrant(integration, "connect");
+	const requestPermission = usePermissionRequest();
+	const allow = async () => {
+		if (!integration.writeGrant) return;
+		if (await requestPermission(integration.writeGrant)) grant.mutate();
+	};
 	return (
 		<View className="gap-3 rounded-xl border border-border bg-background-subtle p-4">
 			<Text className="text-foreground text-sm leading-5">
@@ -1312,7 +1304,7 @@ function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
 						: `Allow ${integration.name} access`
 				}
 				disabled={grant.isPending}
-				onPress={() => grant.mutate()}
+				onPress={allow}
 			/>
 			{grant.error && (
 				<Text

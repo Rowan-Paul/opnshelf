@@ -15,7 +15,7 @@ export function privacyPdsFixture(
 	let hasSpace = false;
 	let supportsDelete = true;
 	let failDelete = false;
-	const policy = { $type: "com.atproto.simplespace.defs#memberListPolicy" };
+	const policy = { $type: "com.atproto.personalspace.policy" };
 	const cid = (value: unknown) =>
 		createHash("sha256").update(JSON.stringify(value)).digest("hex");
 	const session = {
@@ -47,7 +47,7 @@ export function privacyPdsFixture(
 			}
 			if (method === "getSpace")
 				return hasSpace
-					? respond({ readPolicy: policy, writePolicy: policy })
+					? respond({ policy })
 					: respond({ error: "SpaceNotFound" }, 400);
 			if (method === "listMembers") return respond({ members: [] });
 			if (method === "listRecords")

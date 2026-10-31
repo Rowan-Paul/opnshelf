@@ -445,9 +445,12 @@ export class AuthController {
 					? "?permission=atstore"
 					: statePayload.permissionChange === "watches"
 						? "?permission=privacy"
-						: statePayload.permissionChange === "popfeed"
-							? "?permission=popfeed"
-							: "";
+						: statePayload.permissionChange === "blog" ||
+								statePayload.permissionChange === "bluesky"
+							? "?permission=connections"
+							: statePayload.permissionChange === "popfeed"
+								? "?permission=popfeed"
+								: "";
 			const completeUrl =
 				platform === "mobile"
 					? this.buildMobileCompleteUrl(
@@ -575,6 +578,19 @@ export class AuthController {
 						frontendUrl,
 					).toString(),
 				);
+			}
+			if (
+				(statePayload.permissionChange === "blog" ||
+					statePayload.permissionChange === "bluesky") &&
+				platform !== "mobile"
+			) {
+				// The User is still signed in, so return to the settings they left.
+				const connectionsUrl = new URL("/settings/connections", frontendUrl);
+				connectionsUrl.searchParams.set(
+					"permission",
+					declined ? "declined" : "failed",
+				);
+				return res.redirect(connectionsUrl.toString());
 			}
 			if (platform === "mobile") {
 				return res.redirect(

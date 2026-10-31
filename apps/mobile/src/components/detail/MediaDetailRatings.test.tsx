@@ -105,12 +105,6 @@ vi.mock("@/lib/use-up-next", () => ({ useUpNext: () => ({ items: [] }) }));
 vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({ isAuthenticated: false }),
 }));
-vi.mock("@/components/detail/AddToLibraryButton", () => ({
-	AddToLibraryButton: () => null,
-}));
-vi.mock("@/components/detail/AddToListButton", () => ({
-	AddToListButton: () => null,
-}));
 vi.mock("@/components/detail/CommunityReviews", () => ({
 	CommunityReviews: () => null,
 }));
@@ -123,26 +117,18 @@ vi.mock("@/components/detail/CreditsSection", () => ({
 vi.mock("@/components/detail/FriendWatchers", () => ({
 	FriendWatchers: () => null,
 }));
-vi.mock("@/components/detail/MediaTrackingActions", () => ({
-	MediaTrackingActions: () => null,
+vi.mock("@/components/detail/DetailActions", () => ({
+	DetailActions: () => null,
 }));
 vi.mock("@/components/detail/MetadataPills", () => ({
 	MetadataPills: () => null,
 }));
-vi.mock("@/components/detail/NoteButton", () => ({ NoteButton: () => null }));
 vi.mock("@/components/detail/OverviewSection", () => ({
 	OverviewSection: () => null,
 }));
 vi.mock("@/components/detail/PrevNextNav", () => ({ PrevNextNav: () => null }));
-vi.mock("@/components/detail/RateReviewButton", () => ({
-	RateReviewButton: () => null,
-}));
-vi.mock("@/components/detail/ShareButton", () => ({ ShareButton: () => null }));
 vi.mock("@/components/detail/SimilarMedia", () => ({
 	SimilarMedia: () => null,
-}));
-vi.mock("@/components/detail/WatchlistFavoritesButtons", () => ({
-	WatchlistFavoritesButtons: () => null,
 }));
 vi.mock("@/components/detail/WatchProviders", () => ({
 	WatchProviders: () => null,

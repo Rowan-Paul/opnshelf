@@ -7,27 +7,21 @@ import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import type { ScrollViewInstance } from "react-native";
 import { Pressable, RefreshControl, View } from "react-native";
-import { AddToLibraryButton } from "@/components/detail/AddToLibraryButton";
-import { AddToListButton } from "@/components/detail/AddToListButton";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import {
 	CastSection,
 	CreditsSection,
 	CrewSection,
 } from "@/components/detail/CreditsSection";
+import { DetailActions } from "@/components/detail/DetailActions";
 import { DetailColumns } from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
-import { MediaTrackingActions } from "@/components/detail/MediaTrackingActions";
 import { MetadataPills } from "@/components/detail/MetadataPills";
-import { NoteButton } from "@/components/detail/NoteButton";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { PrevNextNav } from "@/components/detail/PrevNextNav";
-import { RateReviewButton } from "@/components/detail/RateReviewButton";
-import { ShareButton } from "@/components/detail/ShareButton";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
-import { WatchlistFavoritesButtons } from "@/components/detail/WatchlistFavoritesButtons";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
@@ -204,60 +198,35 @@ export default function EpisodeDetailScreen() {
 								</View>
 							</DetailHero>
 
-							<View className="gap-2">
-								<MediaTrackingActions
-									mediaType="episode"
-									showId={id}
-									seasonNumber={seasonNum}
-									episodeNumber={episodeNum}
-									title={data.name}
-								/>
-								<WatchlistFavoritesButtons
-									mediaType="show"
-									mediaId={id}
-									seasonNumber={seasonNum}
-									episodeNumber={episodeNum}
-								/>
-								{/* Secondary actions as one row of compact tiles. */}
-								<View className="flex-row gap-2 px-4">
-									<RateReviewButton
-										mediaType="show"
-										mediaId={id}
-										seasonNumber={seasonNum}
-										episodeNumber={episodeNum}
-									/>
-									<AddToListButton
-										mediaType="show"
-										mediaId={id}
-										seasonNumber={seasonNum}
-										episodeNumber={episodeNum}
-									/>
-									<AddToLibraryButton
-										mediaType="show"
-										mediaId={id}
-										seasonNumber={seasonNum}
-										episodeNumber={episodeNum}
-									/>
-									<NoteButton
-										mediaType="show"
-										mediaId={id}
-										seasonNumber={seasonNum}
-										episodeNumber={episodeNum}
-									/>
-									{showData?.name ? (
-										<ShareButton
-											url={webMediaUrl({
-												type: "episode",
-												showId: id,
-												showName: showData.name,
-												seasonNumber: seasonNum,
-												episodeNumber: episodeNum,
-											})}
-											title={`${showData.name} — ${data.name}`}
-										/>
-									) : null}
-								</View>
-							</View>
+							<DetailActions
+								tracking={{
+									mediaType: "episode",
+									showId: id,
+									seasonNumber: seasonNum,
+									episodeNumber: episodeNum,
+									title: data.name,
+								}}
+								target={{
+									mediaType: "show",
+									mediaId: id,
+									seasonNumber: seasonNum,
+									episodeNumber: episodeNum,
+								}}
+								share={
+									showData?.name
+										? {
+												url: webMediaUrl({
+													type: "episode",
+													showId: id,
+													showName: showData.name,
+													seasonNumber: seasonNum,
+													episodeNumber: episodeNum,
+												}),
+												title: `${showData.name} — ${data.name}`,
+											}
+										: undefined
+								}
+							/>
 
 							<PrevNextNav
 								previous={

@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { IntegrationMark } from "#/components/integrations/IntegrationMark";
+import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
 
 import {
 	Dialog,
@@ -1244,6 +1245,7 @@ function requestWriteGrant(
 
 /** External Integration Access (ADR 0030), asked for before the first write. */
 function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
+	const [explaining, setExplaining] = useState(false);
 	const grant = useMutation({
 		mutationKey: [...integrationKey(integration), "write-access", "connect"],
 		mutationFn: requestWriteGrant(integration, "connect"),
@@ -1255,12 +1257,21 @@ function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
 				type="button"
 				className="btn btn-primary"
 				disabled={grant.isPending}
-				onClick={() => grant.mutate()}
+				onClick={() => setExplaining(true)}
 			>
 				{grant.isPending
 					? "Opening your account…"
 					: `Allow ${integration.name} access`}
 			</button>
+			{integration.writeGrant && (
+				<PermissionRequestDialog
+					integration={integration.writeGrant}
+					open={explaining}
+					pending={grant.isPending}
+					onCancel={() => setExplaining(false)}
+					onContinue={() => grant.mutate()}
+				/>
+			)}
 			{grant.error && (
 				<p role="alert" className="text-(--destructive) text-sm">
 					{traktError(grant.error)}

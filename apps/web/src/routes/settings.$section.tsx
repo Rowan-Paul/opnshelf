@@ -10,6 +10,7 @@ import { NotificationEmailSection } from "#/components/settings/NotificationEmai
 import { PreferencesSections } from "#/components/settings/PreferencesSections";
 import { PrivacySection } from "#/components/settings/PrivacySection";
 import { SettingsPageShell } from "#/components/settings/SettingsPageShell";
+import { usePermissionChangeResult } from "#/components/settings/use-settings-mutations";
 import { useAuth } from "#/lib/auth-context";
 
 const SECTION_COPY = {
@@ -59,6 +60,7 @@ function SettingsSectionPage() {
 	const { section } = Route.useParams();
 	const { user, logout } = useAuth();
 	const copy = SECTION_COPY[section as keyof typeof SECTION_COPY];
+	usePermissionChangeResult(section === "connections");
 
 	return (
 		<SettingsPageShell {...copy}>

@@ -511,7 +511,48 @@ describe("AuthController callback", () => {
 				"blog",
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login?error=permission_declined",
+				"http://127.0.0.1:3000/settings/connections?permission=declined",
+			);
+		});
+
+		it("returns a failed Bluesky permission change to Connections", async () => {
+			mockAuthService.callback.mockRejectedValue(new Error("boom"));
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				accountDid: "did:plc:abc123",
+				permissionChange: "bluesky",
+			});
+			const res = createMockResponse();
+
+			await controller.callback(createMockRequest(), res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/settings/connections?permission=failed",
+			);
+		});
+
+		it("returns a granted Blog permission change to Connections", async () => {
+			const mockProfile = {
+				did: "did:plc:abc123",
+				handle: "user.bsky.social",
+			};
+			mockAuthService.callback.mockResolvedValue({
+				session: { did: "did:plc:abc123" },
+				sessionId: "session-123",
+				state: "permission-state",
+			});
+			mockAuthService.fetchProfile.mockResolvedValue(mockProfile);
+			mockAuthService.upsertUser.mockResolvedValue(mockProfile);
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				accountDid: "did:plc:abc123",
+				permissionChange: "blog",
+				requestedPreferences: { blogEnabled: true },
+			});
+			const res = createMockResponse();
+
+			await controller.callback(createMockRequest(), res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/auth/complete?permission=connections",
 			);
 		});
 

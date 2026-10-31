@@ -29,7 +29,8 @@ type WatchDateOrderBy = [
  * Order by watch date with undated Watches last.
  *
  * Returns a fresh array each call so callers can safely spread additional
- * tie-breakers after it (see `getUserUpNext`, which appends season/episode).
+ * tie-breakers after it, or slot their own in between (see `loadUserUpNext`,
+ * which puts season/episode ahead of `createdAt`).
  */
 export function watchDateOrderBy(
 	direction: SortOrder = "desc",

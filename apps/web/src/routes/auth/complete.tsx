@@ -70,11 +70,13 @@ function AuthCompletePage() {
 					? "/onboarding"
 					: permission === "privacy"
 						? "/settings/privacy"
-						: permission === "atstore"
-							? "/?review=compose"
-							: permission === "popfeed"
-								? "/integrations/popfeed"
-								: "/";
+						: permission === "connections"
+							? "/settings/connections"
+							: permission === "atstore"
+								? "/?review=compose"
+								: permission === "popfeed"
+									? "/integrations/popfeed"
+									: "/";
 				// Clear any stale query cache from previous sessions
 				queryClient.clear();
 				setTimeout(() => {
