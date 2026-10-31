@@ -86,7 +86,8 @@ const button = () => renderer.root.findAllByType("button" as never)[0];
 
 it("sets Popfeed up in place, then opens its settings", async () => {
 	const { onOpen } = mount();
-	expect(button().props.label).toBe("Set up Popfeed Sync");
+	expect(button().props.label).toBe("Set up");
+	expect(button().props.accessibilityLabel).toBe("Set up Popfeed Sync");
 	act(() => button().props.onPress());
 	expect(mocks.mutate).toHaveBeenCalledWith({
 		platform: "mobile",
@@ -101,7 +102,8 @@ it("sets Popfeed up in place, then opens its settings", async () => {
 
 it("connects Trakt in the auth browser and opens its settings on return", async () => {
 	const { onOpen } = mount({ integration: TRAKT_INTEGRATION });
-	expect(button().props.label).toBe("Connect Trakt");
+	expect(button().props.label).toBe("Connect");
+	expect(button().props.accessibilityLabel).toBe("Connect Trakt");
 	mocks.openAuthSession.mockResolvedValue({
 		type: "success",
 		url: "opnshelf://onboarding?connection=connected",
@@ -148,8 +150,5 @@ it("shows the settings once open, and On when sync runs", () => {
 		.findAllByType("text" as never)
 		.map((node) => node.props.children);
 	expect(texts).toContain("On");
-	expect(texts).toContainEqual([
-		"@reader.test · ",
-		POPFEED_INTEGRATION.summary,
-	]);
+	expect(texts).toContain("@reader.test");
 });

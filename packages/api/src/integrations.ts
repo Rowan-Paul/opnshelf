@@ -440,20 +440,37 @@ export function onboardingIntegrationAction(
 ):
 	| { kind: "unavailable" }
 	| { kind: "on" }
-	| { kind: "connect"; label: string; pending: string }
-	| { kind: "choose"; label: string } {
+	| {
+			kind: "connect";
+			label: string;
+			accessibilityLabel: string;
+			pending: string;
+	  }
+	| { kind: "choose"; label: string; accessibilityLabel: string } {
 	if (!status.configured) return { kind: "unavailable" };
 	if (status.status === "active" || status.status === "preparing")
 		return { kind: "on" };
-	const words = integrationConnectionCopy(integration);
-	if (status.status === "disconnected" || status.status === "reconnect")
+	// Short labels keep every row's button the same size; the row names the
+	// Integration, and the accessibility label repeats it for screen readers.
+	const oauth = integration.connect === "oauth";
+	const { name } = integration;
+	if (status.status === "disconnected" || status.status === "reconnect") {
+		const label =
+			status.status === "reconnect"
+				? "Reconnect"
+				: oauth
+					? "Connect"
+					: "Set up";
 		return {
 			kind: "connect",
-			label:
-				status.status === "reconnect"
-					? `Reconnect ${integration.name}`
-					: words.start,
-			pending: words.starting,
+			label,
+			accessibilityLabel: oauth ? `${label} ${name}` : `Set up ${name} Sync`,
+			pending: oauth ? "Opening…" : "Setting up…",
 		};
-	return { kind: "choose", label: "Choose what to sync" };
+	}
+	return {
+		kind: "choose",
+		label: "Set up",
+		accessibilityLabel: `Choose what to sync with ${name}`,
+	};
 }

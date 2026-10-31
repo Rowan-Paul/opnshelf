@@ -122,9 +122,15 @@ function IntegrationRow({
 					<IntegrationMark id={integration.id} className="size-6" />
 				</span>
 				<div className="min-w-0 flex-1">
-					<p className="font-semibold">{integration.name}</p>
+					<p className="flex flex-wrap items-baseline gap-x-2">
+						<span className="font-semibold">{integration.name}</span>
+						{handle && (
+							<span className="truncate text-(--foreground-muted) text-sm">
+								{handle}
+							</span>
+						)}
+					</p>
 					<p className="text-(--foreground-muted) text-sm">
-						{handle ? `${handle} · ` : ""}
 						{integration.summary}
 					</p>
 				</div>
@@ -148,6 +154,7 @@ function IntegrationRow({
 					<button
 						type="button"
 						className="btn btn-secondary shrink-0"
+						aria-label={action.accessibilityLabel}
 						disabled={connect.isPending}
 						onClick={() =>
 							connect.mutate({ platform: "web", returnTo: "onboarding" })
@@ -160,6 +167,7 @@ function IntegrationRow({
 						<button
 							type="button"
 							className="btn btn-secondary shrink-0"
+							aria-label={action.accessibilityLabel}
 							onClick={onOpen}
 						>
 							{action.label}

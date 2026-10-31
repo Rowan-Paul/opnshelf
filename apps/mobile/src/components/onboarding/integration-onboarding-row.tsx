@@ -76,49 +76,59 @@ export function IntegrationOnboardingRow({
 					<IntegrationMark id={integration.id} size={24} />
 				</View>
 				<View className="flex-1 gap-0.5">
-					<Text className="font-semibold text-base text-foreground">
-						{integration.name}
-					</Text>
+					<View className="flex-row flex-wrap items-baseline gap-x-2">
+						<Text className="font-semibold text-base text-foreground">
+							{integration.name}
+						</Text>
+						{handle ? (
+							<Text
+								numberOfLines={1}
+								className="shrink text-muted-foreground text-sm"
+							>
+								{handle}
+							</Text>
+						) : null}
+					</View>
 					<Text className="text-muted-foreground text-sm leading-5">
-						{handle ? `${handle} · ` : ""}
 						{integration.summary}
 					</Text>
 				</View>
-				{action?.kind === "on" ? (
+				{!action ? (
+					!status.isError && (
+						<View
+							accessibilityLabel={`Loading ${integration.name}`}
+							className="h-10 w-20 animate-pulse rounded-xl bg-background-subtle"
+						/>
+					)
+				) : action.kind === "on" ? (
 					<View className="flex-row items-center gap-1">
 						<Check color={colors.success} size={16} />
 						<Text className="font-medium text-sm text-success">On</Text>
 					</View>
-				) : action?.kind === "unavailable" ? (
+				) : action.kind === "unavailable" ? (
 					<Text className="text-muted-foreground text-sm">Unavailable</Text>
+				) : action.kind === "connect" ? (
+					<Button
+						variant="secondary"
+						size="sm"
+						label={action.label}
+						accessibilityLabel={action.accessibilityLabel}
+						loadingLabel={action.pending}
+						loading={connect.isPending}
+						onPress={() =>
+							connect.mutate({ platform: "mobile", returnTo: "onboarding" })
+						}
+					/>
+				) : !open ? (
+					<Button
+						variant="secondary"
+						size="sm"
+						label={action.label}
+						accessibilityLabel={action.accessibilityLabel}
+						onPress={onOpen}
+					/>
 				) : null}
 			</View>
-			{!action ? (
-				!status.isError && (
-					<View
-						accessibilityLabel={`Loading ${integration.name}`}
-						className="h-10 animate-pulse rounded-xl bg-background-subtle"
-					/>
-				)
-			) : action.kind === "connect" ? (
-				<Button
-					variant="secondary"
-					size="sm"
-					label={action.label}
-					loadingLabel={action.pending}
-					loading={connect.isPending}
-					onPress={() =>
-						connect.mutate({ platform: "mobile", returnTo: "onboarding" })
-					}
-				/>
-			) : action.kind === "choose" && !open ? (
-				<Button
-					variant="secondary"
-					size="sm"
-					label={action.label}
-					onPress={onOpen}
-				/>
-			) : null}
 			{error ? (
 				<Text accessibilityRole="alert" className="text-destructive text-sm">
 					{traktError(error)}

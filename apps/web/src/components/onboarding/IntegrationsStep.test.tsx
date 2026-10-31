@@ -94,7 +94,7 @@ it("sets Popfeed up in place, then opens its settings", async () => {
 		platform: "web",
 		returnTo: "onboarding",
 	});
-	expect(screen.getByText(/@reader\.test/)).toBeTruthy();
+	expect(screen.getByText("@reader.test")).toBeTruthy();
 	expect(screen.queryByText("Trakt settings")).toBeNull();
 });
 
