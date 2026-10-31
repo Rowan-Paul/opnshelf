@@ -102,8 +102,8 @@ it("sets Popfeed up in place, then opens its settings", async () => {
 
 it("connects Trakt in the auth browser and opens its settings on return", async () => {
 	const { onOpen } = mount({ integration: TRAKT_INTEGRATION });
-	expect(button().props.label).toBe("Connect");
-	expect(button().props.accessibilityLabel).toBe("Connect Trakt");
+	expect(button().props.label).toBe("Set up");
+	expect(button().props.accessibilityLabel).toBe("Set up Trakt Sync");
 	mocks.openAuthSession.mockResolvedValue({
 		type: "success",
 		url: "opnshelf://onboarding?connection=connected",

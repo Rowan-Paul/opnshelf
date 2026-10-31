@@ -71,7 +71,7 @@ it("offers Trakt and Popfeed in one step and can be skipped", async () => {
 		screen.getByRole("heading", { name: "Already on Trakt or Popfeed?" }),
 	).toBeTruthy();
 	expect(
-		await screen.findByRole("button", { name: "Connect Trakt" }),
+		await screen.findByRole("button", { name: "Set up Trakt Sync" }),
 	).toBeTruthy();
 	expect(
 		screen.getByRole("button", { name: "Set up Popfeed Sync" }),

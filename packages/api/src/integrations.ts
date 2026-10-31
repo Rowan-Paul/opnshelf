@@ -450,22 +450,16 @@ export function onboardingIntegrationAction(
 	if (!status.configured) return { kind: "unavailable" };
 	if (status.status === "active" || status.status === "preparing")
 		return { kind: "on" };
-	// Short labels keep every row's button the same size; the row names the
-	// Integration, and the accessibility label repeats it for screen readers.
-	const oauth = integration.connect === "oauth";
+	// Every row says the same short "Set up", so the buttons line up; the row
+	// names the Integration and the accessibility label repeats it.
 	const { name } = integration;
 	if (status.status === "disconnected" || status.status === "reconnect") {
-		const label =
-			status.status === "reconnect"
-				? "Reconnect"
-				: oauth
-					? "Connect"
-					: "Set up";
+		const reconnect = status.status === "reconnect";
 		return {
 			kind: "connect",
-			label,
-			accessibilityLabel: oauth ? `${label} ${name}` : `Set up ${name} Sync`,
-			pending: oauth ? "Opening…" : "Setting up…",
+			label: reconnect ? "Reconnect" : "Set up",
+			accessibilityLabel: `${reconnect ? "Reconnect" : "Set up"} ${name} Sync`,
+			pending: integration.connect === "oauth" ? "Opening…" : "Setting up…",
 		};
 	}
 	return {
