@@ -203,7 +203,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		expect(screen.getByRole("dialog")).toBeTruthy();
 	});
 
-	it("uses Continue in onboarding and saves only after the modal's consent", async () => {
+	it("saves onboarding settings only after the modal's consent", async () => {
 		const saved = vi.fn();
 		const client = new QueryClient({
 			defaultOptions: { mutations: { retry: false } },
@@ -229,10 +229,10 @@ describe("Trakt Sync setup and conflict choices", () => {
 				/>
 			</QueryClientProvider>,
 		);
-		fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+		fireEvent.click(screen.getByRole("button", { name: "Enable sync" }));
 		expect(saved).not.toHaveBeenCalled();
 		const confirm = screen.getByRole("button", {
-			name: "Enable sync and continue",
+			name: "Confirm and enable sync",
 		}) as HTMLButtonElement;
 		expect(confirm.disabled).toBe(true);
 		fireEvent.click(screen.getByLabelText(/I understand that sync/));

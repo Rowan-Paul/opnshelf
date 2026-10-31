@@ -12,7 +12,7 @@ export const ONBOARDING_STEPS = [
 	"preferences",
 	"services",
 	"notifications",
-	"trakt",
+	"integrations",
 	"suggestions",
 	"watched",
 	"done",
@@ -29,6 +29,12 @@ export function nextOnboardingStep(step: OnboardingStep): OnboardingStep {
 	const index = ONBOARDING_STEPS.indexOf(step);
 	return ONBOARDING_STEPS[Math.min(index + 1, ONBOARDING_STEPS.length - 1)];
 }
+
+/**
+ * Session key naming the Integration whose write grant left onboarding for the
+ * account server, so onboarding resumes at that Integration when it returns.
+ */
+export const ONBOARDING_INTEGRATION = "opnshelf-onboarding-integration";
 
 export const RESEND_COOLDOWN_SECONDS = 60;
 

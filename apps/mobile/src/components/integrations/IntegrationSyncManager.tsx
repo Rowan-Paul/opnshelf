@@ -446,7 +446,6 @@ export function SyncSettings({
 	onSaved,
 	className = card,
 	showHeading = true,
-	onboarding = false,
 	onCancel,
 }: {
 	integration: IntegrationDefinition;
@@ -454,7 +453,6 @@ export function SyncSettings({
 	onSaved: () => unknown;
 	className?: string;
 	showHeading?: boolean;
-	onboarding?: boolean;
 	onCancel?: () => void;
 }) {
 	const colors = useThemeColors();
@@ -692,9 +690,7 @@ export function SyncSettings({
 			{needsGrant && <WriteGrant integration={integration} />}
 			<Action
 				primary
-				label={
-					onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"
-				}
+				label={managed ? "Save changes" : "Enable sync"}
 				disabled={
 					needsGrant ||
 					(!settings.watches &&
@@ -823,13 +819,11 @@ export function SyncSettings({
 								label={
 									save.isPending
 										? "Saving…"
-										: onboarding
-											? "Enable sync and continue"
-											: managed
-												? status.status === "paused"
-													? "Save and resume sync"
-													: "Confirm changes"
-												: "Confirm and enable sync"
+										: managed
+											? status.status === "paused"
+												? "Save and resume sync"
+												: "Confirm changes"
+											: "Confirm and enable sync"
 								}
 								disabled={save.isPending || !canSave}
 								onPress={() => save.mutate(settings)}

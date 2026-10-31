@@ -1,7 +1,7 @@
 # Popfeed Sync
 
 Design brief for [issue #29](https://github.com/Rowan-Paul/opnshelf/issues/29).
-Status: implemented in the #29 branch in both directions, verified with fixtures and local databases only. No Popfeed record has been written to a real repository yet, so the open verification items below still decide whether outbound is ready to release. The Popfeed Onboarding offer is not implemented. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
+Status: implemented in the #29 branch in both directions, verified with fixtures and local databases only. No Popfeed record has been written to a real repository yet, so the open verification items below still decide whether outbound is ready to release. Onboarding offers Popfeed alongside Trakt in one Integrations step. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
 
 ## Why this is back
 
@@ -109,7 +109,7 @@ A new **Integrations** settings section on Web and Mobile lists each integration
 
 - Trakt Sync moves from the Connections section into Integrations. Blog Mirror and Bluesky Cross-posts stay in Connections: they publish Reviews rather than syncing records.
 - Proposed URLs, the same on Web and Mobile (ADR 0023): `/settings/integrations`, `/integrations/trakt`, `/integrations/trakt/attention`, `/integrations/popfeed`, `/integrations/popfeed/attention`. The existing `/trakt-sync` and `/trakt-sync/attention` redirect to the new routes, so captured links on Mobile (ADR 0022) keep working.
-- Onboarding offers integrations from the same list. Popfeed is suggested first when the User's repository already contains `social.popfeed.*` collections.
+- Onboarding offers every integration from the same list in one Integrations step, in place of the old Trakt step. Popfeed is set up in place there; a write grant asked for during Onboarding returns to that step on both clients. The operator chose one step for everyone over detecting `social.popfeed.*` collections first.
 - The settings section named Connections shares a name with the social **Connections** term in `GLOSSARY.md`. That is an existing collision. This brief does not change it.
 
 ## Client parity
@@ -120,7 +120,7 @@ A new **Integrations** settings section on Web and Mobile lists each integration
 | Popfeed management: direction, types, history scope, status, pause, disconnect | Included | Included |
 | Popfeed Needs attention, conflicts, ignore and undo | Included | Included |
 | Trakt Sync moved into Integrations, old routes redirect | Included | Included |
-| Onboarding integration offer, Popfeed suggested when detected | Not yet: Onboarding still offers Trakt only | Not yet: Onboarding still offers Trakt only |
+| Onboarding Integrations step offering Trakt and Popfeed | Done | Done |
 
 ## Outbound as built
 
@@ -160,7 +160,7 @@ These are facts to establish, not product decisions. If one contradicts the rule
 
 1. Extract the shared integration core with Trakt as its first adapter, with no behavior change. Done.
 2. Add the Popfeed adapter inbound, with its `/popfeed-sync` API. Done; it ran before the Integrations section so the section has two real Integrations to list.
-3. Add the Integrations section on both clients, move Trakt Sync into it, add Popfeed and redirect the old routes. Done, except the Popfeed Onboarding offer.
+3. Add the Integrations section on both clients, move Trakt Sync into it, add Popfeed and redirect the old routes. Done, including the Onboarding Integrations step.
 4. Add Popfeed outbound. Done in code at the operator's request on 2026-10-30, before the open verification items were answered. Release waits on a controlled write to a real account.
 
 Each step is its own pull request.

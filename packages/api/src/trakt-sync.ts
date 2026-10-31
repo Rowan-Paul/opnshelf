@@ -123,21 +123,6 @@ export function traktSyncCatchUpMessage(
 		return `Syncing with Trakt${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
 	return null;
 }
-/**
- * Whether Trakt Sync is bringing the User's Watches into Opnshelf, so
- * onboarding can skip asking which titles they have watched.
- */
-export function bringsTraktWatches(
-	sync: Pick<SyncStatusDto, "status" | "direction" | "watches"> | undefined,
-): boolean {
-	return Boolean(
-		sync &&
-			(sync.status === "active" || sync.status === "preparing") &&
-			sync.watches &&
-			sync.direction !== "outbound",
-	);
-}
-
 /** Older servers omit structured recovery fields; keep uncertain writes safe during rollout. */
 export function traktIssueRecovery(
 	item: SyncIssueDto,

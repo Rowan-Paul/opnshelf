@@ -592,6 +592,19 @@ export class AuthController {
 				);
 				return res.redirect(connectionsUrl.toString());
 			}
+			if (
+				statePayload.permissionChange === "popfeed" &&
+				platform !== "mobile"
+			) {
+				// Still signed in: return to Popfeed Sync, which hands back to
+				// onboarding when the request started there.
+				const popfeedUrl = new URL("/integrations/popfeed", frontendUrl);
+				popfeedUrl.searchParams.set(
+					"permission",
+					declined ? "declined" : "failed",
+				);
+				return res.redirect(popfeedUrl.toString());
+			}
 			if (platform === "mobile") {
 				return res.redirect(
 					this.resolveErrorRedirect(

@@ -43,7 +43,6 @@ import {
 import { useRef, useState } from "react";
 import { IntegrationMark } from "#/components/integrations/IntegrationMark";
 import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
-
 import {
 	Dialog,
 	DialogContent,
@@ -52,6 +51,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "#/components/ui/dialog";
+import { ONBOARDING_INTEGRATION } from "#/lib/onboarding-steps";
 
 function displayValue(value: string) {
 	return /^\d{4}-\d{2}-\d{2}T/.test(value) && !Number.isNaN(Date.parse(value))
@@ -634,7 +634,9 @@ export function SyncSettings({
 						{TRAKT_SCOPE_COPY}
 					</p>
 				</fieldset>
-				{needsGrant && <WriteGrant integration={integration} />}
+				{needsGrant && (
+					<WriteGrant integration={integration} onboarding={onboarding} />
+				)}
 				<div className="flex flex-wrap gap-2">
 					<button
 						ref={submitButton}
@@ -652,7 +654,7 @@ export function SyncSettings({
 								!settings.reviews)
 						}
 					>
-						{onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"}
+						{managed ? "Save changes" : "Enable sync"}
 					</button>
 					{onCancel && (
 						<button
@@ -770,13 +772,11 @@ export function SyncSettings({
 						>
 							{save.isPending
 								? "Saving…"
-								: onboarding
-									? "Enable sync and continue"
-									: managed
-										? status.status === "paused"
-											? "Save and resume sync"
-											: "Confirm changes"
-										: "Confirm and enable sync"}
+								: managed
+									? status.status === "paused"
+										? "Save and resume sync"
+										: "Confirm changes"
+									: "Confirm and enable sync"}
 						</button>
 					</div>
 				</DialogContent>
@@ -1232,6 +1232,7 @@ function SyncIssue({
 function requestWriteGrant(
 	integration: IntegrationDefinition,
 	action: "connect" | "disconnect",
+	onboarding = false,
 ) {
 	return async () => {
 		if (!integration.writeGrant) return;
@@ -1239,16 +1240,26 @@ function requestWriteGrant(
 			body: { integration: integration.writeGrant, action },
 			throwOnError: true,
 		});
+		// The account server returns to /onboarding or this Integration's page;
+		// either way onboarding picks up again at this Integration.
+		if (onboarding)
+			sessionStorage.setItem(ONBOARDING_INTEGRATION, integration.id);
 		window.location.assign(result.data.authorizationUrl);
 	};
 }
 
 /** External Integration Access (ADR 0030), asked for before the first write. */
-function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
+function WriteGrant({
+	integration,
+	onboarding,
+}: {
+	integration: IntegrationDefinition;
+	onboarding: boolean;
+}) {
 	const [explaining, setExplaining] = useState(false);
 	const grant = useMutation({
 		mutationKey: [...integrationKey(integration), "write-access", "connect"],
-		mutationFn: requestWriteGrant(integration, "connect"),
+		mutationFn: requestWriteGrant(integration, "connect", onboarding),
 	});
 	return (
 		<div className="space-y-3 rounded-xl border border-(--border) bg-(--background-subtle) p-4">

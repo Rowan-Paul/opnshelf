@@ -398,3 +398,62 @@ export function integrationConnectionCopy(
 		stopConfirm: `Turn off ${name} Sync`,
 	};
 }
+
+/**
+ * Whether an Integration is bringing the User's Watches into Opnshelf, so
+ * onboarding can skip asking which titles they have watched.
+ */
+export function bringsIntegrationWatches(
+	sync: Pick<SyncStatusDto, "status" | "direction" | "watches"> | undefined,
+): boolean {
+	return Boolean(
+		sync &&
+			(sync.status === "active" || sync.status === "preparing") &&
+			sync.watches &&
+			sync.direction !== "outbound",
+	);
+}
+
+/** Words for the onboarding step that offers every Integration at once. */
+export function onboardingIntegrationsCopy(
+	integrations: readonly Pick<IntegrationDefinition, "name">[] = INTEGRATIONS,
+) {
+	const names = integrations.map(({ name }) => name);
+	const either =
+		names.length < 3
+			? names.join(" or ")
+			: `${names.slice(0, -1).join(", ")}, or ${names.at(-1)}`;
+	return {
+		title: `Already on ${either}?`,
+		body: "Bring your history over and keep it in step. You choose what moves and in which direction, and confirm before anything transfers.",
+		later: "You can change this later in Settings.",
+	};
+}
+
+/**
+ * What an Integration's onboarding row offers next. Connecting an OAuth
+ * provider leaves the app; setting up a repository provider happens in place.
+ */
+export function onboardingIntegrationAction(
+	integration: Pick<IntegrationDefinition, "name" | "connect">,
+	status: SyncStatusDto,
+):
+	| { kind: "unavailable" }
+	| { kind: "on" }
+	| { kind: "connect"; label: string; pending: string }
+	| { kind: "choose"; label: string } {
+	if (!status.configured) return { kind: "unavailable" };
+	if (status.status === "active" || status.status === "preparing")
+		return { kind: "on" };
+	const words = integrationConnectionCopy(integration);
+	if (status.status === "disconnected" || status.status === "reconnect")
+		return {
+			kind: "connect",
+			label:
+				status.status === "reconnect"
+					? `Reconnect ${integration.name}`
+					: words.start,
+			pending: words.starting,
+		};
+	return { kind: "choose", label: "Choose what to sync" };
+}
