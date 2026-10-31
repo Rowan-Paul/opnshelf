@@ -70,6 +70,13 @@ export {
 export { onboardingDiscoveryOptions } from "./onboarding-discovery";
 export { preparePostHogEvent } from "./posthog-event";
 export {
+	PERMISSION_DISCONNECT_DESCRIPTION,
+	PERMISSION_REQUEST_COPY,
+	PERMISSION_REQUEST_NOTES,
+	type PermissionRequestCopy,
+	type PermissionRequestIntegration,
+} from "./permission-request";
+export {
 	type PrivacyAction,
 	privacyActionKey,
 	privacyErrorMessage,

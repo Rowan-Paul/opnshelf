@@ -1,4 +1,9 @@
+import {
+	PERMISSION_DISCONNECT_DESCRIPTION,
+	type PermissionRequestIntegration,
+} from "@opnshelf/api";
 import { useState } from "react";
+import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -12,18 +17,18 @@ import {
 type PermissionAction = "connect" | "disconnect";
 
 export function IntegrationPermissionRow({
+	integration,
 	name,
 	description,
 	connected,
 	disabled = false,
-	confirmationDescription = "Other devices will need to sign in again after this permission change. Your saved publication and format choices stay in place.",
 	onConfirm,
 }: {
+	integration: PermissionRequestIntegration;
 	name: string;
 	description: string;
 	connected: boolean;
 	disabled?: boolean;
-	confirmationDescription?: string;
 	onConfirm: (action: PermissionAction) => void;
 }) {
 	const [pendingAction, setPendingAction] = useState<PermissionAction | null>(
@@ -54,18 +59,26 @@ export function IntegrationPermissionRow({
 				</Button>
 			</div>
 
+			<PermissionRequestDialog
+				integration={integration}
+				open={pendingAction === "connect"}
+				onCancel={() => setPendingAction(null)}
+				onContinue={() => {
+					setPendingAction(null);
+					onConfirm("connect");
+				}}
+			/>
+
 			<Dialog
-				open={pendingAction !== null}
+				open={pendingAction === "disconnect"}
 				onOpenChange={(open) => !open && setPendingAction(null)}
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>
-							{pendingAction === "disconnect"
-								? `Disconnect ${name}?`
-								: `Connect ${name}?`}
-						</DialogTitle>
-						<DialogDescription>{confirmationDescription}</DialogDescription>
+						<DialogTitle>Disconnect {name}?</DialogTitle>
+						<DialogDescription>
+							{PERMISSION_DISCONNECT_DESCRIPTION}
+						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
 						<Button
@@ -77,17 +90,13 @@ export function IntegrationPermissionRow({
 						</Button>
 						<Button
 							type="button"
-							variant={
-								pendingAction === "disconnect" ? "destructive" : "default"
-							}
+							variant="destructive"
 							onClick={() => {
-								if (!pendingAction) return;
-								const confirmedAction = pendingAction;
 								setPendingAction(null);
-								onConfirm(confirmedAction);
+								onConfirm("disconnect");
 							}}
 						>
-							Continue and {pendingAction}
+							Continue and disconnect
 						</Button>
 					</DialogFooter>
 				</DialogContent>

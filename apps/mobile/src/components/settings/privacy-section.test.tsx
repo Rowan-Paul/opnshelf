@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 	refetch: vi.fn(),
 	showDialog: vi.fn(),
 	runAuthorizationUrl: vi.fn(),
+	requestPermission: vi.fn(),
 	authorize: undefined as (() => Promise<boolean>) | undefined,
 	isError: false,
 	mutationError: null as unknown,
@@ -51,6 +52,9 @@ vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({ runAuthorizationUrl: mocks.runAuthorizationUrl }),
 }));
 vi.mock("@/lib/auth-handoff", () => ({ beginHandoff: vi.fn() }));
+vi.mock("@/components/settings/permission-request", () => ({
+	usePermissionRequest: () => mocks.requestPermission,
+}));
 vi.mock("@/components/ui/dialog", () => ({
 	useDialog: () => ({ showDialog: mocks.showDialog }),
 }));
@@ -118,6 +122,7 @@ beforeEach(() => {
 	mocks.isError = false;
 	mocks.mutationError = null;
 	mocks.runAuthorizationUrl.mockResolvedValue(false);
+	mocks.requestPermission.mockResolvedValue(true);
 	mocks.data = {
 		availability: "available",
 		authorized: true,
@@ -405,6 +410,19 @@ describe("Privacy Alpha mobile", () => {
 		expect(mocks.runAuthorizationUrl).toHaveBeenCalledWith(
 			"https://pds.test/authorize",
 		);
+	});
+
+	it("explains Private access before opening the account host", async () => {
+		render();
+		mocks.requestPermission.mockResolvedValue(false);
+		if (!mocks.authorize) throw new Error("Missing authorization callback");
+		let authorized: boolean | undefined;
+		await act(async () => {
+			authorized = await mocks.authorize?.();
+		});
+		expect(mocks.requestPermission).toHaveBeenCalledWith("watches");
+		expect(authorized).toBe(false);
+		expect(mocks.runAuthorizationUrl).not.toHaveBeenCalled();
 	});
 
 	it("authorizes after a sheet was dismissed during the permission lookup", async () => {

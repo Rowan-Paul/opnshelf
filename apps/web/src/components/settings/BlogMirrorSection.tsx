@@ -121,6 +121,7 @@ export function BlogMirrorSection() {
 					(pub) => pub.uri === storedPublicationUri,
 				) ? (
 					<IntegrationPermissionRow
+						integration="blog"
 						name="Blog mirroring"
 						description="Allow Opnshelf to publish and update review mirrors in the selected publication."
 						connected={userSettings?.blogIntegrationEnabled ?? false}

@@ -11,6 +11,7 @@ import {
 import { Check, ChevronDown, CircleAlert, Globe, Lock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -47,10 +48,23 @@ export function PrivacySection({
 			new URLSearchParams(window.location.search).has("privacyAuthorization"),
 		);
 	}, []);
+	const [permissionRequest, setPermissionRequest] = useState<
+		"closed" | "open" | "continuing"
+	>("closed");
+	const answerPermissionRequest = useRef<(approved: boolean) => void>(() => {});
 	const { query, mutation, pendingKey } = usePrivacy(async (action) => {
+		setShowProgress(false);
+		const approved = await new Promise<boolean>((resolve) => {
+			answerPermissionRequest.current = resolve;
+			setPermissionRequest("open");
+		});
+		if (!approved) return false;
 		const result = await authControllerPermissions({
 			body: { integration: "watches", action: "connect" },
 			throwOnError: true,
+		}).catch((error: unknown) => {
+			setPermissionRequest("closed");
+			throw error;
 		});
 		sessionStorage.setItem(
 			PENDING,
@@ -545,6 +559,19 @@ export function PrivacySection({
 					)}
 				</>
 			)}
+			<PermissionRequestDialog
+				integration="watches"
+				open={permissionRequest !== "closed"}
+				pending={permissionRequest === "continuing"}
+				onCancel={() => {
+					setPermissionRequest("closed");
+					answerPermissionRequest.current(false);
+				}}
+				onContinue={() => {
+					setPermissionRequest("continuing");
+					answerPermissionRequest.current(true);
+				}}
+			/>
 			<Dialog open={showError} onOpenChange={setShowError}>
 				<DialogContent>
 					<DialogHeader>

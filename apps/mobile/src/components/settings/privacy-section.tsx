@@ -22,6 +22,7 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { usePermissionRequest } from "@/components/settings/permission-request";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
@@ -74,7 +75,11 @@ export function PrivacySection({
 		[sheetDidDismiss, setManageLists],
 	);
 
+	const requestPermission = usePermissionRequest();
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
+		// The explanation dialog is a native modal too, so wait for any sheet.
+		await new Promise<void>((resolve) => afterClosingSheet(resolve));
+		if (!(await requestPermission("watches"))) return false;
 		const codeChallenge = (await beginHandoff()) ?? undefined;
 		const result = await authControllerPermissions({
 			body: {
@@ -85,8 +90,6 @@ export function PrivacySection({
 			},
 			throwOnError: true,
 		});
-		// ASWebAuthenticationSession must not compete with an animating native sheet.
-		await new Promise<void>((resolve) => afterClosingSheet(resolve));
 		return runAuthorizationUrl(result.data.authorizationUrl);
 	});
 	const data = query.data;

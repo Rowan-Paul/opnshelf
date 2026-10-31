@@ -44,6 +44,10 @@ const ACTION_TEXT: Record<string, string> = {
 type DialogOptions = {
 	title: string;
 	description?: string;
+	/** Richer content between the description and the actions. */
+	body?: ReactNode;
+	/** Runs when the dialog closes without one of its actions being pressed. */
+	onCancel?: () => void;
 	actions: DialogAction[];
 	input?: {
 		placeholder?: string;
@@ -74,6 +78,10 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const dismiss = useCallback(() => setDialog(null), []);
+	const cancel = () => {
+		dialog?.onCancel?.();
+		dismiss();
+	};
 	const pressAction = (action: DialogAction) => {
 		afterDismiss.current = action.onDismiss;
 		dismiss();
@@ -98,11 +106,11 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 				visible={dialog !== null}
 				transparent
 				animationType="fade"
-				onRequestClose={dismiss}
+				onRequestClose={cancel}
 				onDismiss={didDismiss}
 			>
 				<View className="flex-1 items-center justify-center bg-black/50 p-6">
-					<Pressable className="absolute inset-0" onPress={dismiss} />
+					<Pressable className="absolute inset-0" onPress={cancel} />
 					<View className="w-full max-w-sm gap-4 rounded-2xl border border-border bg-card p-5">
 						<View className="flex-row items-start justify-between gap-3">
 							<View className="flex-1 gap-1.5">
@@ -117,12 +125,13 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 							</View>
 							<Pressable
 								hitSlop={8}
-								onPress={dismiss}
+								onPress={cancel}
 								accessibilityLabel="Close dialog"
 							>
 								<X color={colors.mutedForeground} size={20} />
 							</Pressable>
 						</View>
+						{dialog?.body}
 						{dialog?.input ? (
 							<TextField
 								value={inputValue}
