@@ -74,7 +74,9 @@ function AuthCompletePage() {
 							? "/settings/connections"
 							: permission === "atstore"
 								? "/?review=compose"
-								: "/";
+								: permission === "popfeed"
+									? "/integrations/popfeed"
+									: "/";
 				// Clear any stale query cache from previous sessions
 				queryClient.clear();
 				setTimeout(() => {

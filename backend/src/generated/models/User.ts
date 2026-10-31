@@ -81,6 +81,7 @@ export type UserMinAggregateOutputType = {
   privateSettingsHasCopy: boolean | null
   blogIntegrationEnabled: boolean | null
   blueskyCrossPostEnabled: boolean | null
+  popfeedWriteEnabled: boolean | null
   reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -129,6 +130,7 @@ export type UserMaxAggregateOutputType = {
   privateSettingsHasCopy: boolean | null
   blogIntegrationEnabled: boolean | null
   blueskyCrossPostEnabled: boolean | null
+  popfeedWriteEnabled: boolean | null
   reviewsMirrorFormat: $Enums.BlogMirrorFormat | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -178,6 +180,7 @@ export type UserCountAggregateOutputType = {
   privateSettingsHasCopy: number
   blogIntegrationEnabled: number
   blueskyCrossPostEnabled: number
+  popfeedWriteEnabled: number
   reviewsMirrorFormat: number
   createdAt: number
   updatedAt: number
@@ -240,6 +243,7 @@ export type UserMinAggregateInputType = {
   privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
+  popfeedWriteEnabled?: true
   reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
@@ -288,6 +292,7 @@ export type UserMaxAggregateInputType = {
   privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
+  popfeedWriteEnabled?: true
   reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
@@ -337,6 +342,7 @@ export type UserCountAggregateInputType = {
   privateSettingsHasCopy?: true
   blogIntegrationEnabled?: true
   blueskyCrossPostEnabled?: true
+  popfeedWriteEnabled?: true
   reviewsMirrorFormat?: true
   createdAt?: true
   updatedAt?: true
@@ -473,6 +479,7 @@ export type UserGroupByOutputType = {
   privateSettingsHasCopy: boolean
   blogIntegrationEnabled: boolean
   blueskyCrossPostEnabled: boolean
+  popfeedWriteEnabled: boolean
   reviewsMirrorFormat: $Enums.BlogMirrorFormat
   createdAt: Date
   updatedAt: Date
@@ -545,6 +552,7 @@ export type UserWhereInput = {
   privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFilter<"User"> | boolean
+  popfeedWriteEnabled?: Prisma.BoolFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -567,7 +575,7 @@ export type UserWhereInput = {
   pushDevices?: Prisma.PushDeviceListRelationFilter
   notificationDeliveries?: Prisma.NotificationDeliveryListRelationFilter
   notificationCollections?: Prisma.NotificationCollectionListRelationFilter
-  traktConnections?: Prisma.TraktSyncConnectionListRelationFilter
+  integrationConnections?: Prisma.IntegrationConnectionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -614,6 +622,7 @@ export type UserOrderByWithRelationInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -636,7 +645,7 @@ export type UserOrderByWithRelationInput = {
   pushDevices?: Prisma.PushDeviceOrderByRelationAggregateInput
   notificationDeliveries?: Prisma.NotificationDeliveryOrderByRelationAggregateInput
   notificationCollections?: Prisma.NotificationCollectionOrderByRelationAggregateInput
-  traktConnections?: Prisma.TraktSyncConnectionOrderByRelationAggregateInput
+  integrationConnections?: Prisma.IntegrationConnectionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -686,6 +695,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   privateSettingsHasCopy?: Prisma.BoolFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFilter<"User"> | boolean
+  popfeedWriteEnabled?: Prisma.BoolFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -708,7 +718,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   pushDevices?: Prisma.PushDeviceListRelationFilter
   notificationDeliveries?: Prisma.NotificationDeliveryListRelationFilter
   notificationCollections?: Prisma.NotificationCollectionListRelationFilter
-  traktConnections?: Prisma.TraktSyncConnectionListRelationFilter
+  integrationConnections?: Prisma.IntegrationConnectionListRelationFilter
 }, "did" | "handle">
 
 export type UserOrderByWithAggregationInput = {
@@ -755,6 +765,7 @@ export type UserOrderByWithAggregationInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -812,6 +823,7 @@ export type UserScalarWhereWithAggregatesInput = {
   privateSettingsHasCopy?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   blogIntegrationEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   blueskyCrossPostEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  popfeedWriteEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatWithAggregatesFilter<"User"> | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -861,6 +873,7 @@ export type UserCreateInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -883,7 +896,7 @@ export type UserCreateInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -930,6 +943,7 @@ export type UserUncheckedCreateInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -952,7 +966,7 @@ export type UserUncheckedCreateInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -999,6 +1013,7 @@ export type UserUpdateInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1021,7 +1036,7 @@ export type UserUpdateInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -1068,6 +1083,7 @@ export type UserUncheckedUpdateInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1090,7 +1106,7 @@ export type UserUncheckedUpdateInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -1137,6 +1153,7 @@ export type UserCreateManyInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1186,6 +1203,7 @@ export type UserUpdateManyMutationInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1235,6 +1253,7 @@ export type UserUncheckedUpdateManyInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1292,6 +1311,7 @@ export type UserCountOrderByAggregateInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1346,6 +1366,7 @@ export type UserMaxOrderByAggregateInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1394,6 +1415,7 @@ export type UserMinOrderByAggregateInput = {
   privateSettingsHasCopy?: Prisma.SortOrder
   blogIntegrationEnabled?: Prisma.SortOrder
   blueskyCrossPostEnabled?: Prisma.SortOrder
+  popfeedWriteEnabled?: Prisma.SortOrder
   reviewsMirrorFormat?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1456,18 +1478,18 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
-export type UserCreateNestedOneWithoutTraktConnectionsInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTraktConnectionsInput
+export type UserCreateNestedOneWithoutIntegrationConnectionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutIntegrationConnectionsInput, Prisma.UserUncheckedCreateWithoutIntegrationConnectionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutIntegrationConnectionsInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutTraktConnectionsNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTraktConnectionsInput
-  upsert?: Prisma.UserUpsertWithoutTraktConnectionsInput
+export type UserUpdateOneRequiredWithoutIntegrationConnectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutIntegrationConnectionsInput, Prisma.UserUncheckedCreateWithoutIntegrationConnectionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutIntegrationConnectionsInput
+  upsert?: Prisma.UserUpsertWithoutIntegrationConnectionsInput
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTraktConnectionsInput, Prisma.UserUpdateWithoutTraktConnectionsInput>, Prisma.UserUncheckedUpdateWithoutTraktConnectionsInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutIntegrationConnectionsInput, Prisma.UserUpdateWithoutIntegrationConnectionsInput>, Prisma.UserUncheckedUpdateWithoutIntegrationConnectionsInput>
 }
 
 export type UserCreateNestedOneWithoutNotificationSettingsInput = {
@@ -1738,7 +1760,7 @@ export type UserUpdateOneRequiredWithoutPrivacyScopesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPrivacyScopesInput, Prisma.UserUpdateWithoutPrivacyScopesInput>, Prisma.UserUncheckedUpdateWithoutPrivacyScopesInput>
 }
 
-export type UserCreateWithoutTraktConnectionsInput = {
+export type UserCreateWithoutIntegrationConnectionsInput = {
   did: string
   handle: string
   displayName?: string | null
@@ -1782,6 +1804,7 @@ export type UserCreateWithoutTraktConnectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1806,7 +1829,7 @@ export type UserCreateWithoutTraktConnectionsInput = {
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
 }
 
-export type UserUncheckedCreateWithoutTraktConnectionsInput = {
+export type UserUncheckedCreateWithoutIntegrationConnectionsInput = {
   did: string
   handle: string
   displayName?: string | null
@@ -1850,6 +1873,7 @@ export type UserUncheckedCreateWithoutTraktConnectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1874,23 +1898,23 @@ export type UserUncheckedCreateWithoutTraktConnectionsInput = {
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
 }
 
-export type UserCreateOrConnectWithoutTraktConnectionsInput = {
+export type UserCreateOrConnectWithoutIntegrationConnectionsInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutIntegrationConnectionsInput, Prisma.UserUncheckedCreateWithoutIntegrationConnectionsInput>
 }
 
-export type UserUpsertWithoutTraktConnectionsInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutTraktConnectionsInput, Prisma.UserUncheckedUpdateWithoutTraktConnectionsInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutTraktConnectionsInput, Prisma.UserUncheckedCreateWithoutTraktConnectionsInput>
+export type UserUpsertWithoutIntegrationConnectionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutIntegrationConnectionsInput, Prisma.UserUncheckedUpdateWithoutIntegrationConnectionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutIntegrationConnectionsInput, Prisma.UserUncheckedCreateWithoutIntegrationConnectionsInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutTraktConnectionsInput = {
+export type UserUpdateToOneWithWhereWithoutIntegrationConnectionsInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutTraktConnectionsInput, Prisma.UserUncheckedUpdateWithoutTraktConnectionsInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutIntegrationConnectionsInput, Prisma.UserUncheckedUpdateWithoutIntegrationConnectionsInput>
 }
 
-export type UserUpdateWithoutTraktConnectionsInput = {
+export type UserUpdateWithoutIntegrationConnectionsInput = {
   did?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1934,6 +1958,7 @@ export type UserUpdateWithoutTraktConnectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1958,7 +1983,7 @@ export type UserUpdateWithoutTraktConnectionsInput = {
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
 }
 
-export type UserUncheckedUpdateWithoutTraktConnectionsInput = {
+export type UserUncheckedUpdateWithoutIntegrationConnectionsInput = {
   did?: Prisma.StringFieldUpdateOperationsInput | string
   handle?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2002,6 +2027,7 @@ export type UserUncheckedUpdateWithoutTraktConnectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2070,6 +2096,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2091,7 +2118,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationSettingsInput = {
@@ -2138,6 +2165,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2159,7 +2187,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationSettingsInput = {
@@ -2222,6 +2250,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2243,7 +2272,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
@@ -2290,6 +2319,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2311,7 +2341,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPushDevicesInput = {
@@ -2358,6 +2388,7 @@ export type UserCreateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2379,7 +2410,7 @@ export type UserCreateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPushDevicesInput = {
@@ -2426,6 +2457,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2447,7 +2479,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPushDevicesInput = {
@@ -2510,6 +2542,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2531,7 +2564,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPushDevicesInput = {
@@ -2578,6 +2611,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2599,7 +2633,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationCollectionsInput = {
@@ -2646,6 +2680,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2667,7 +2702,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
@@ -2714,6 +2749,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2735,7 +2771,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationCollectionsInput = {
@@ -2798,6 +2834,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2819,7 +2856,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
@@ -2866,6 +2903,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2887,7 +2925,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationDeliveriesInput = {
@@ -2934,6 +2972,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2955,7 +2994,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
@@ -3002,6 +3041,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3023,7 +3063,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationDeliveriesInput = {
@@ -3086,6 +3126,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3107,7 +3148,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
@@ -3154,6 +3195,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3175,7 +3217,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFollowingInput = {
@@ -3222,6 +3264,7 @@ export type UserCreateWithoutFollowingInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3243,7 +3286,7 @@ export type UserCreateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFollowingInput = {
@@ -3290,6 +3333,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3311,7 +3355,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFollowingInput = {
@@ -3363,6 +3407,7 @@ export type UserCreateWithoutFollowersInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3384,7 +3429,7 @@ export type UserCreateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFollowersInput = {
@@ -3431,6 +3476,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3452,7 +3498,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFollowersInput = {
@@ -3515,6 +3561,7 @@ export type UserUpdateWithoutFollowingInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3536,7 +3583,7 @@ export type UserUpdateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowingInput = {
@@ -3583,6 +3630,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3604,7 +3652,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutFollowersInput = {
@@ -3662,6 +3710,7 @@ export type UserUpdateWithoutFollowersInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3683,7 +3732,7 @@ export type UserUpdateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFollowersInput = {
@@ -3730,6 +3779,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3751,7 +3801,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCirclesInput = {
@@ -3798,6 +3848,7 @@ export type UserCreateWithoutCirclesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3819,7 +3870,7 @@ export type UserCreateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCirclesInput = {
@@ -3866,6 +3917,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -3887,7 +3939,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCirclesInput = {
@@ -3950,6 +4002,7 @@ export type UserUpdateWithoutCirclesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -3971,7 +4024,7 @@ export type UserUpdateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCirclesInput = {
@@ -4018,6 +4071,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4039,7 +4093,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTrackedMoviesInput = {
@@ -4086,6 +4140,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4107,7 +4162,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTrackedMoviesInput = {
@@ -4154,6 +4209,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4175,7 +4231,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTrackedMoviesInput = {
@@ -4238,6 +4294,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4259,7 +4316,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
@@ -4306,6 +4363,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4327,7 +4385,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTrackedEpisodesInput = {
@@ -4374,6 +4432,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4395,7 +4454,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
@@ -4442,6 +4501,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4463,7 +4523,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTrackedEpisodesInput = {
@@ -4526,6 +4586,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4547,7 +4608,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
@@ -4594,6 +4655,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4615,7 +4677,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutListsInput = {
@@ -4662,6 +4724,7 @@ export type UserCreateWithoutListsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4683,7 +4746,7 @@ export type UserCreateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutListsInput = {
@@ -4730,6 +4793,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4751,7 +4815,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutListsInput = {
@@ -4814,6 +4878,7 @@ export type UserUpdateWithoutListsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4835,7 +4900,7 @@ export type UserUpdateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutListsInput = {
@@ -4882,6 +4947,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -4903,7 +4969,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutLibraryItemsInput = {
@@ -4950,6 +5016,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -4971,7 +5038,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutLibraryItemsInput = {
@@ -5018,6 +5085,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5039,7 +5107,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutLibraryItemsInput = {
@@ -5102,6 +5170,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5123,7 +5192,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLibraryItemsInput = {
@@ -5170,6 +5239,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5191,7 +5261,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotesInput = {
@@ -5238,6 +5308,7 @@ export type UserCreateWithoutNotesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5259,7 +5330,7 @@ export type UserCreateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotesInput = {
@@ -5306,6 +5377,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5327,7 +5399,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotesInput = {
@@ -5390,6 +5462,7 @@ export type UserUpdateWithoutNotesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5411,7 +5484,7 @@ export type UserUpdateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotesInput = {
@@ -5458,6 +5531,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5479,7 +5553,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -5526,6 +5600,7 @@ export type UserCreateWithoutReviewsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5547,7 +5622,7 @@ export type UserCreateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -5594,6 +5669,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5615,7 +5691,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -5678,6 +5754,7 @@ export type UserUpdateWithoutReviewsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5699,7 +5776,7 @@ export type UserUpdateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -5746,6 +5823,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5767,7 +5845,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPublicationsInput = {
@@ -5814,6 +5892,7 @@ export type UserCreateWithoutPublicationsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5835,7 +5914,7 @@ export type UserCreateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPublicationsInput = {
@@ -5882,6 +5961,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -5903,7 +5983,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPublicationsInput = {
@@ -5966,6 +6046,7 @@ export type UserUpdateWithoutPublicationsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -5987,7 +6068,7 @@ export type UserUpdateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPublicationsInput = {
@@ -6034,6 +6115,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6055,7 +6137,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRatingsInput = {
@@ -6102,6 +6184,7 @@ export type UserCreateWithoutRatingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6123,7 +6206,7 @@ export type UserCreateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRatingsInput = {
@@ -6170,6 +6253,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6191,7 +6275,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRatingsInput = {
@@ -6254,6 +6338,7 @@ export type UserUpdateWithoutRatingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6275,7 +6360,7 @@ export type UserUpdateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRatingsInput = {
@@ -6322,6 +6407,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6343,7 +6429,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReviewLikesInput = {
@@ -6390,6 +6476,7 @@ export type UserCreateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6411,7 +6498,7 @@ export type UserCreateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReviewLikesInput = {
@@ -6458,6 +6545,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6479,7 +6567,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReviewLikesInput = {
@@ -6542,6 +6630,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6563,7 +6652,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewLikesInput = {
@@ -6610,6 +6699,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6631,7 +6721,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFeedbackInput = {
@@ -6678,6 +6768,7 @@ export type UserCreateWithoutFeedbackInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6699,7 +6790,7 @@ export type UserCreateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFeedbackInput = {
@@ -6746,6 +6837,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6767,7 +6859,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFeedbackInput = {
@@ -6830,6 +6922,7 @@ export type UserUpdateWithoutFeedbackInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6851,7 +6944,7 @@ export type UserUpdateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFeedbackInput = {
@@ -6898,6 +6991,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -6919,7 +7013,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutWatchPrivacyMigrationInput = {
@@ -6966,6 +7060,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -6987,7 +7082,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
@@ -7034,6 +7129,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -7055,7 +7151,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutWatchPrivacyMigrationInput = {
@@ -7118,6 +7214,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7139,7 +7236,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
@@ -7186,6 +7283,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7207,7 +7305,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPrivacyScopesInput = {
@@ -7254,6 +7352,7 @@ export type UserCreateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -7275,7 +7374,7 @@ export type UserCreateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPrivacyScopesInput = {
@@ -7322,6 +7421,7 @@ export type UserUncheckedCreateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: $Enums.BlogMirrorFormat
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -7343,7 +7443,7 @@ export type UserUncheckedCreateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPrivacyScopesInput = {
@@ -7406,6 +7506,7 @@ export type UserUpdateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7427,7 +7528,7 @@ export type UserUpdateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
@@ -7474,6 +7575,7 @@ export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
   privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -7495,7 +7597,7 @@ export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
   pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
   notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
   notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
-  traktConnections?: Prisma.TraktSyncConnectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -7521,7 +7623,7 @@ export type UserCountOutputType = {
   pushDevices: number
   notificationDeliveries: number
   notificationCollections: number
-  traktConnections: number
+  integrationConnections: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -7542,7 +7644,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   pushDevices?: boolean | UserCountOutputTypeCountPushDevicesArgs
   notificationDeliveries?: boolean | UserCountOutputTypeCountNotificationDeliveriesArgs
   notificationCollections?: boolean | UserCountOutputTypeCountNotificationCollectionsArgs
-  traktConnections?: boolean | UserCountOutputTypeCountTraktConnectionsArgs
+  integrationConnections?: boolean | UserCountOutputTypeCountIntegrationConnectionsArgs
 }
 
 /**
@@ -7677,8 +7779,8 @@ export type UserCountOutputTypeCountNotificationCollectionsArgs<ExtArgs extends 
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountTraktConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.TraktSyncConnectionWhereInput
+export type UserCountOutputTypeCountIntegrationConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IntegrationConnectionWhereInput
 }
 
 
@@ -7726,6 +7828,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -7748,7 +7851,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   pushDevices?: boolean | Prisma.User$pushDevicesArgs<ExtArgs>
   notificationDeliveries?: boolean | Prisma.User$notificationDeliveriesArgs<ExtArgs>
   notificationCollections?: boolean | Prisma.User$notificationCollectionsArgs<ExtArgs>
-  traktConnections?: boolean | Prisma.User$traktConnectionsArgs<ExtArgs>
+  integrationConnections?: boolean | Prisma.User$integrationConnectionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -7796,6 +7899,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -7845,6 +7949,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -7894,12 +7999,13 @@ export type UserSelectScalar = {
   privateSettingsHasCopy?: boolean
   blogIntegrationEnabled?: boolean
   blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
   reviewsMirrorFormat?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "listsDefaultVisibility" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "listsDefaultVisibility" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "popfeedWriteEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   privacyScopes?: boolean | Prisma.User$privacyScopesArgs<ExtArgs>
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
@@ -7920,7 +8026,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   pushDevices?: boolean | Prisma.User$pushDevicesArgs<ExtArgs>
   notificationDeliveries?: boolean | Prisma.User$notificationDeliveriesArgs<ExtArgs>
   notificationCollections?: boolean | Prisma.User$notificationCollectionsArgs<ExtArgs>
-  traktConnections?: boolean | Prisma.User$traktConnectionsArgs<ExtArgs>
+  integrationConnections?: boolean | Prisma.User$integrationConnectionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -7948,7 +8054,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     pushDevices: Prisma.$PushDevicePayload<ExtArgs>[]
     notificationDeliveries: Prisma.$NotificationDeliveryPayload<ExtArgs>[]
     notificationCollections: Prisma.$NotificationCollectionPayload<ExtArgs>[]
-    traktConnections: Prisma.$TraktSyncConnectionPayload<ExtArgs>[]
+    integrationConnections: Prisma.$IntegrationConnectionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     did: string
@@ -7994,6 +8100,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     privateSettingsHasCopy: boolean
     blogIntegrationEnabled: boolean
     blueskyCrossPostEnabled: boolean
+    popfeedWriteEnabled: boolean
     reviewsMirrorFormat: $Enums.BlogMirrorFormat
     createdAt: Date
     updatedAt: Date
@@ -8410,7 +8517,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   pushDevices<T extends Prisma.User$pushDevicesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$pushDevicesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PushDevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificationDeliveries<T extends Prisma.User$notificationDeliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationDeliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationDeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificationCollections<T extends Prisma.User$notificationCollectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationCollectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationCollectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  traktConnections<T extends Prisma.User$traktConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$traktConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TraktSyncConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  integrationConnections<T extends Prisma.User$integrationConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$integrationConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IntegrationConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8483,6 +8590,7 @@ export interface UserFieldRefs {
   readonly privateSettingsHasCopy: Prisma.FieldRef<"User", 'Boolean'>
   readonly blogIntegrationEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly blueskyCrossPostEnabled: Prisma.FieldRef<"User", 'Boolean'>
+  readonly popfeedWriteEnabled: Prisma.FieldRef<"User", 'Boolean'>
   readonly reviewsMirrorFormat: Prisma.FieldRef<"User", 'BlogMirrorFormat'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -9325,27 +9433,27 @@ export type User$notificationCollectionsArgs<ExtArgs extends runtime.Types.Exten
 }
 
 /**
- * User.traktConnections
+ * User.integrationConnections
  */
-export type User$traktConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$integrationConnectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the TraktSyncConnection
+   * Select specific fields to fetch from the IntegrationConnection
    */
-  select?: Prisma.TraktSyncConnectionSelect<ExtArgs> | null
+  select?: Prisma.IntegrationConnectionSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the TraktSyncConnection
+   * Omit specific fields from the IntegrationConnection
    */
-  omit?: Prisma.TraktSyncConnectionOmit<ExtArgs> | null
+  omit?: Prisma.IntegrationConnectionOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.TraktSyncConnectionInclude<ExtArgs> | null
-  where?: Prisma.TraktSyncConnectionWhereInput
-  orderBy?: Prisma.TraktSyncConnectionOrderByWithRelationInput | Prisma.TraktSyncConnectionOrderByWithRelationInput[]
-  cursor?: Prisma.TraktSyncConnectionWhereUniqueInput
+  include?: Prisma.IntegrationConnectionInclude<ExtArgs> | null
+  where?: Prisma.IntegrationConnectionWhereInput
+  orderBy?: Prisma.IntegrationConnectionOrderByWithRelationInput | Prisma.IntegrationConnectionOrderByWithRelationInput[]
+  cursor?: Prisma.IntegrationConnectionWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.TraktSyncConnectionScalarFieldEnum | Prisma.TraktSyncConnectionScalarFieldEnum[]
+  distinct?: Prisma.IntegrationConnectionScalarFieldEnum | Prisma.IntegrationConnectionScalarFieldEnum[]
 }
 
 /**

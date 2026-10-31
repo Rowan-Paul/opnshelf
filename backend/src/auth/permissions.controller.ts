@@ -70,6 +70,8 @@ export class PermissionsController {
 			);
 		if (integration === "watches" && !enable)
 			await this.authService.assertCanDisconnectWatches(did);
+		if (integration === "popfeed" && !enable)
+			await this.authService.assertPopfeedWritesStopped(did);
 		const preferences: OAuthScopePreferences = {
 			watchPrivacyEnabled:
 				integration === "watches" ? enable : user.watchPrivacyEnabled,
@@ -81,6 +83,8 @@ export class PermissionsController {
 				integration === "blog" ? enable : user.blogIntegrationEnabled,
 			blueskyEnabled:
 				integration === "bluesky" ? enable : user.blueskyCrossPostEnabled,
+			popfeedEnabled:
+				integration === "popfeed" ? enable : user.popfeedWriteEnabled,
 			reviewsMirrorFormat: user.reviewsMirrorFormat,
 		};
 		const authorizationUrl = platform

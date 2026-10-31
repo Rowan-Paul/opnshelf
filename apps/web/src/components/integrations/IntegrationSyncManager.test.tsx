@@ -1,3 +1,10 @@
+import {
+	type IntegrationDefinition,
+	type IntegrationIssuesDto,
+	POPFEED_INTEGRATION,
+	type SyncStatusDto,
+	TRAKT_INTEGRATION,
+} from "@opnshelf/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	cleanup,
@@ -8,12 +15,12 @@ import {
 	within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SyncSettings, TraktSyncManager } from "./TraktSyncManager";
+import { IntegrationSyncManager, SyncSettings } from "./IntegrationSyncManager";
 
 const mocks = vi.hoisted(() => ({
-	configure: vi.fn(async () => ({})),
-	action: vi.fn(async () => ({})),
-	resolve: vi.fn(async () => ({})),
+	configure: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
+	action: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
+	resolve: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
 	issue: false,
 	candidate: false,
 	issueRead: vi.fn(),
@@ -30,87 +37,87 @@ vi.mock("@tanstack/react-router", () => ({
 		<span>{children}</span>
 	),
 }));
-vi.mock("@opnshelf/api", async (original) => ({
-	...(await original<typeof import("@opnshelf/api")>()),
-	traktSyncControllerStatus: async () => ({
-		data: {
-			configured: true,
-			status: mocks.status,
-			syncState: mocks.syncState,
-			username: "fixture",
-			direction: "both",
-			watches: true,
-			ratings: true,
-			historyScope: "all",
-			publicationConsent: mocks.consent,
-			remaining: 0,
-			needsAttention: mocks.issue ? 1 : 0,
-			ignored: mocks.ignored ? 1 : 0,
-		},
-	}),
-	traktSyncControllerIssues: async ({
-		query,
-	}: {
-		query: { view?: string; page?: number };
-	}) => {
-		mocks.issueRead(query);
-		const page = query.page ?? 1;
-		if (page > 1) await mocks.nextPage;
-		return {
-			data: {
-				items: (query.view === "ignored" ? mocks.ignored : mocks.issue)
-					? [
-							{
-								id: page === 1 ? "one" : "two",
-								recovery: mocks.uncertain ? "verify" : "choose",
-								kind: "watch",
-								ignored: query.view === "ignored",
-								issue: mocks.uncertain
-									? "The outcome of creating this Trakt Review is unknown. Check Trakt, then choose a version before retrying."
-									: "Both services changed this Watch. Choose which version to keep.",
-								opnshelf: {
-									title: page === 1 ? "Fixture" : "Second fixture",
-									mediaType: "episode",
-									season: 0,
-									episode: 2,
-									displayValue: "2020-01-01",
-								},
-								candidates: mocks.candidate
-									? [
-											{
-												key: "existing",
-												mediaType: "episode",
-												season: 0,
-												episode: 2,
-												title: "Fixture",
-												displayValue: "2026-10-18T19:53:55.311Z",
-											},
-										]
-									: [],
-							},
-						]
-					: [],
-				total: (query.view === "ignored" ? mocks.ignored : mocks.issue)
-					? mocks.issuePages
-					: 0,
-				page,
-				totalPages: mocks.issuePages,
-				hasPreviousPage: page > 1,
-				hasNextPage: page < mocks.issuePages,
-			},
-		};
+const status = async () =>
+	({
+		configured: true,
+		status: mocks.status,
+		syncState: mocks.syncState,
+		username: "fixture",
+		direction: "both",
+		watches: true,
+		ratings: true,
+		historyScope: "all",
+		publicationConsent: mocks.consent,
+		remaining: 0,
+		needsAttention: mocks.issue ? 1 : 0,
+		ignored: mocks.ignored ? 1 : 0,
+	}) as SyncStatusDto;
+const issues = async (query: { view?: string; page?: number }) => {
+	mocks.issueRead(query);
+	const page = query.page ?? 1;
+	if (page > 1) await mocks.nextPage;
+	return {
+		items: (query.view === "ignored" ? mocks.ignored : mocks.issue)
+			? [
+					{
+						id: page === 1 ? "one" : "two",
+						recovery: mocks.uncertain ? "verify" : "choose",
+						kind: "watch",
+						ignored: query.view === "ignored",
+						issue: mocks.uncertain
+							? "The outcome of creating this Trakt Review is unknown. Check Trakt, then choose a version before retrying."
+							: "Both services changed this Watch. Choose which version to keep.",
+						opnshelf: {
+							title: page === 1 ? "Fixture" : "Second fixture",
+							mediaType: "episode",
+							season: 0,
+							episode: 2,
+							displayValue: "2020-01-01",
+						},
+						candidates: mocks.candidate
+							? [
+									{
+										key: "existing",
+										mediaType: "episode",
+										season: 0,
+										episode: 2,
+										title: "Fixture",
+										displayValue: "2026-10-18T19:53:55.311Z",
+									},
+								]
+							: [],
+					},
+				]
+			: [],
+		total: (query.view === "ignored" ? mocks.ignored : mocks.issue)
+			? mocks.issuePages
+			: 0,
+		page,
+		totalPages: mocks.issuePages,
+		hasPreviousPage: page > 1,
+		hasNextPage: page < mocks.issuePages,
+	} as IntegrationIssuesDto;
+};
+// Trakt's definition with its transport replaced; payload shapes match the API calls.
+const integration: IntegrationDefinition = {
+	...TRAKT_INTEGRATION,
+	api: {
+		...TRAKT_INTEGRATION.api,
+		status,
+		issues,
+		configure: (body) => mocks.configure({ body }, {}),
+		action: (action) => mocks.action({ body: { action } }, {}),
+		resolve: (id, body) => mocks.resolve({ path: { id }, body }, {}),
 	},
-	traktSyncControllerConfigureMutation: () => ({ mutationFn: mocks.configure }),
-	traktSyncControllerActionMutation: () => ({ mutationFn: mocks.action }),
-	traktSyncControllerResolveMutation: () => ({ mutationFn: mocks.resolve }),
-}));
+};
 function mount(connectionFailed = false, embedded = false, issuesOnly = false) {
 	const client = new QueryClient({
 		defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 	});
 	render(
 		<QueryClientProvider client={client}>
-			<TraktSyncManager
+			<IntegrationSyncManager
+				integration={integration}
 				connectionFailed={connectionFailed}
 				embedded={embedded}
 				issuesOnly={issuesOnly}
@@ -196,7 +203,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		expect(screen.getByRole("dialog")).toBeTruthy();
 	});
 
-	it("uses Continue in onboarding and saves only after the modal's consent", async () => {
+	it("saves onboarding settings only after the modal's consent", async () => {
 		const saved = vi.fn();
 		const client = new QueryClient({
 			defaultOptions: { mutations: { retry: false } },
@@ -204,6 +211,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		render(
 			<QueryClientProvider client={client}>
 				<SyncSettings
+					integration={integration}
 					onboarding
 					onSaved={saved}
 					status={{
@@ -221,10 +229,10 @@ describe("Trakt Sync setup and conflict choices", () => {
 				/>
 			</QueryClientProvider>,
 		);
-		fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+		fireEvent.click(screen.getByRole("button", { name: "Enable sync" }));
 		expect(saved).not.toHaveBeenCalled();
 		const confirm = screen.getByRole("button", {
-			name: "Enable sync and continue",
+			name: "Confirm and enable sync",
 		}) as HTMLButtonElement;
 		expect(confirm.disabled).toBe(true);
 		fireEvent.click(screen.getByLabelText(/I understand that sync/));
@@ -244,7 +252,7 @@ describe("Trakt Sync setup and conflict choices", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
 		await waitFor(() =>
 			expect(mocks.resolve).toHaveBeenCalledWith(
-				{ path: { id: "one" }, body: { action: "trakt" } },
+				{ path: { id: "one" }, body: { action: "remote" } },
 				expect.anything(),
 			),
 		);
@@ -363,7 +371,7 @@ it("opens ignored items in a dialog, restores an item and keeps attention in pla
 	mocks.ignored = true;
 	mocks.resolve.mockImplementationOnce(async () => {
 		mocks.ignored = false;
-		return {};
+		return {} as SyncStatusDto;
 	});
 	mount(false, false, true);
 	fireEvent.click(await screen.findByRole("button", { name: "View ignored" }));
@@ -416,8 +424,8 @@ it.each([
 			{
 				path: { id: "one" },
 				body: {
-					action: label.startsWith("Send") ? "opnshelf" : "trakt",
-					confirmedTraktMissing: true,
+					action: label.startsWith("Send") ? "opnshelf" : "remote",
+					confirmedRemoteMissing: true,
 				},
 			},
 			expect.anything(),
@@ -533,4 +541,128 @@ it("keeps the current review item visible while the next page loads", async () =
 	fireEvent.click(navigation.getByRole("button", { name: "Previous" }));
 	await screen.findByText("Item 1 of 2");
 	expect(screen.getAllByText("Fixture · S0E2").length).toBeGreaterThan(0);
+});
+
+describe("Popfeed Sync", () => {
+	const popfeedStatus = (connected: boolean) =>
+		({
+			configured: true,
+			status: connected ? "paused" : "disconnected",
+			syncState: "idle",
+			username: connected ? "fixture.test" : undefined,
+			direction: "inbound",
+			watches: true,
+			ratings: true,
+			historyScope: "all",
+			publicationConsent: false,
+			remaining: 0,
+			needsAttention: 0,
+			ignored: 0,
+		}) as SyncStatusDto;
+	function mountPopfeed(connected: boolean) {
+		let current = connected;
+		const connect = vi.fn(async () => {
+			current = true;
+			return {};
+		});
+		const popfeed: IntegrationDefinition = {
+			...POPFEED_INTEGRATION,
+			api: {
+				...POPFEED_INTEGRATION.api,
+				status: async () => popfeedStatus(current),
+				connect,
+				configure: (body) => mocks.configure({ body }, {}),
+			},
+		};
+		render(
+			<QueryClientProvider
+				client={
+					new QueryClient({
+						defaultOptions: {
+							queries: { retry: false },
+							mutations: { retry: false },
+						},
+					})
+				}
+			>
+				<IntegrationSyncManager integration={popfeed} />
+			</QueryClientProvider>,
+		);
+		return connect;
+	}
+	it("connects in place, without leaving Opnshelf", async () => {
+		const connect = mountPopfeed(false);
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Set up Popfeed Sync" }),
+		);
+		await waitFor(() =>
+			expect(connect).toHaveBeenCalledWith(
+				{ platform: "web" },
+				expect.anything(),
+			),
+		);
+		expect(await screen.findByText("@fixture.test ·")).toBeTruthy();
+		expect(
+			screen.getByRole("heading", { name: "Your Popfeed records" }),
+		).toBeTruthy();
+		// Nothing is on before setup, so there is nothing to turn off.
+		expect(
+			screen.queryByRole("button", { name: "Turn off Popfeed Sync" }),
+		).toBeNull();
+		expect(screen.queryByRole("button", { name: "Disconnect" })).toBeNull();
+	});
+	it("asks for write access before sending changes to Popfeed", async () => {
+		mountPopfeed(true);
+		const radios = await screen.findAllByRole("radio", { name: /→|Both/ });
+		expect(radios.map((radio) => radio.getAttribute("aria-label"))).toEqual([
+			"Popfeed → Opnshelf",
+			"Opnshelf → Popfeed",
+			"Both directions",
+		]);
+		expect(
+			screen.queryByRole("button", { name: "Allow Popfeed access" }),
+		).toBeNull();
+		fireEvent.click(screen.getByRole("radio", { name: "Both directions" }));
+		expect(
+			await screen.findByRole("button", { name: "Allow Popfeed access" }),
+		).toBeTruthy();
+		expect(
+			screen.getByText(/Other devices then need to sign in again/),
+		).toBeTruthy();
+		expect(
+			(screen.getByRole("button", { name: "Enable sync" }) as HTMLButtonElement)
+				.disabled,
+		).toBe(true);
+		// The grant explains what Popfeed access allows before leaving the page.
+		fireEvent.click(
+			screen.getByRole("button", { name: "Allow Popfeed access" }),
+		);
+		expect(
+			await screen.findByRole("dialog", {
+				name: "Let Opnshelf write to Popfeed",
+			}),
+		).toBeTruthy();
+		fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+	});
+	it("offers Popfeed's record types only", async () => {
+		mountPopfeed(true);
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Choose records" }),
+		);
+		const dialog = await screen.findByRole("dialog", {
+			name: "Choose records",
+		});
+		expect(
+			within(dialog)
+				.getAllByRole("checkbox")
+				.map((box) => box.parentElement?.textContent),
+		).toEqual([
+			"Watch history",
+			"Ratings",
+			"Watchlist",
+			"Custom Lists",
+			"Reviews",
+		]);
+	});
 });

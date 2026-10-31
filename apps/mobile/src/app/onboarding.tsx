@@ -1,25 +1,25 @@
 import {
 	authControllerMeQueryKey,
-	bringsTraktWatches,
-	traktError,
-	traktSyncControllerConnectMutation,
-	traktSyncControllerStatus,
+	bringsIntegrationWatches,
+	INTEGRATIONS,
+	type IntegrationId,
+	integrationKey,
+	onboardingIntegrationsCopy,
+	TRAKT_INTEGRATION,
 	type UserDto,
 	usersControllerCompleteOnboarding,
 	usersControllerGetMySettingsOptions,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
-import {
-	ArrowLeftRight,
-	ArrowRight,
-	Check,
-	CheckCircle2,
-	ChevronLeft,
-} from "lucide-react-native";
+import { ArrowRight, CheckCircle2, ChevronLeft } from "lucide-react-native";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import {
 	ActivityIndicator,
@@ -29,7 +29,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TraktMark } from "@/components/marks/TraktMark";
+import { IntegrationOnboardingRow } from "@/components/onboarding/integration-onboarding-row";
 import {
 	type NotificationStage,
 	NotificationStep,
@@ -39,7 +39,6 @@ import { WatchedMediaSwipe } from "@/components/onboarding/watched-media-swipe";
 import { AvatarEditor } from "@/components/profile/AvatarEditor";
 import { PrivacySection } from "@/components/settings/privacy-section";
 import { TimezonePicker } from "@/components/settings/TimezonePicker";
-import { SyncSettings } from "@/components/trakt/TraktSyncManager";
 import { Button } from "@/components/ui/button";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Screen } from "@/components/ui/screen";
@@ -58,7 +57,6 @@ import { useProfileSetup } from "@/lib/use-profile";
 import { useThemeColors } from "@/theme/colors";
 
 const logo = require("../../assets/images/icon.png");
-const traktStatusKey = ["trakt-sync", "status"];
 
 type OnboardingStep =
 	| "welcome"
@@ -67,7 +65,7 @@ type OnboardingStep =
 	| "preferences"
 	| "services"
 	| "notifications"
-	| "trakt"
+	| "integrations"
 	| "suggestions"
 	| "watches"
 	| "done";
@@ -79,7 +77,7 @@ const STEP_SEQUENCE: OnboardingStep[] = [
 	"preferences",
 	"services",
 	"notifications",
-	"trakt",
+	"integrations",
 	"suggestions",
 	"watches",
 	"done",
@@ -163,28 +161,35 @@ export default function OnboardingScreen() {
 	// Trakt authorization can land here as a fresh deep link on Android.
 	const { connection } = useLocalSearchParams<{ connection?: string }>();
 	const [step, setStep] = useState<OnboardingStep>(
-		connection ? "trakt" : "welcome",
+		connection ? "integrations" : "welcome",
 	);
 	const queryClient = useQueryClient();
 	useEffect(() => {
 		if (!connection) return;
-		setStep("trakt");
-		queryClient.invalidateQueries({ queryKey: traktStatusKey });
+		setStep("integrations");
+		queryClient.invalidateQueries({
+			queryKey: integrationKey(TRAKT_INTEGRATION),
+		});
 	}, [connection, queryClient]);
 	const [notificationStage, setNotificationStage] =
 		useState<NotificationStage>("topics");
 	const [notificationsBusy, setNotificationsBusy] = useState(false);
 	const [followedAnyone, setFollowedAnyone] = useState(false);
 	const [watchesAdded, setWatchesAdded] = useState(0);
-	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
-	const { data: traktSync } = useQuery({
-		queryKey: traktStatusKey,
-		queryFn: async ({ signal }) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
-		enabled: isAuthenticated,
+	// Shares the Integrations step's cache, so a Sync enabled there is seen here.
+	const integrationStatuses = useQueries({
+		queries: INTEGRATIONS.map((integration) => ({
+			queryKey: [...integrationKey(integration), "status"],
+			queryFn: ({ signal }: { signal: AbortSignal }) =>
+				integration.api.status(signal),
+			enabled: isAuthenticated,
+		})),
 	});
-	// Watch history already coming from Trakt makes the watches step redundant.
-	const skipWatches = bringsTraktWatches(traktSync);
+	// Watch history already coming from an Integration makes the watches step
+	// redundant.
+	const skipWatches = integrationStatuses.some(({ data }) =>
+		bringsIntegrationWatches(data),
+	);
 
 	const goBack = useCallback(() => {
 		if (notificationsBusy) return;
@@ -285,11 +290,15 @@ export default function OnboardingScreen() {
 						stage={notificationStage}
 						onStageChange={setNotificationStage}
 						onBusyChange={setNotificationsBusy}
-						onNext={() => setStep("trakt")}
+						onNext={() => setStep("integrations")}
 					/>
 				)}
-				{step === "trakt" && (
-					<TraktStep onNext={() => setStep("suggestions")} />
+				{step === "integrations" && (
+					<IntegrationsStep
+						onNext={() => setStep("suggestions")}
+						initialOpen={connection === "connected" ? "trakt" : null}
+						connectionFailed={connection === "failed" ? "trakt" : null}
+					/>
 				)}
 				{step === "suggestions" && (
 					<StepScaffold
@@ -615,150 +624,67 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 	);
 }
 
-/* -------------------------------------------------------------------- Trakt */
-function TraktStep({ onNext }: { onNext: () => void }) {
-	const colors = useThemeColors();
-	const queryClient = useQueryClient();
-	const status = useQuery({
-		queryKey: traktStatusKey,
-		queryFn: async ({ signal }) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+/* ------------------------------------------------------------- Integrations */
+function IntegrationsStep({
+	onNext,
+	initialOpen,
+	connectionFailed,
+}: {
+	onNext: () => void;
+	initialOpen: IntegrationId | null;
+	/** The Integration whose connection just failed. */
+	connectionFailed: IntegrationId | null;
+}) {
+	const statuses = useQueries({
+		queries: INTEGRATIONS.map((integration) => ({
+			queryKey: [...integrationKey(integration), "status"],
+			queryFn: ({ signal }: { signal: AbortSignal }) =>
+				integration.api.status(signal),
+		})),
 	});
-	const refresh = () =>
-		queryClient.invalidateQueries({ queryKey: traktStatusKey });
-	const connect = useMutation({
-		mutationKey: ["trakt-sync", "connect"],
-		...traktSyncControllerConnectMutation(),
-		onSuccess: async (data) => {
-			const result = await WebBrowser.openAuthSessionAsync(
-				data.url,
-				"opnshelf://onboarding",
-			);
-			if (
-				result.type === "success" &&
-				new URL(result.url).searchParams.get("connection") === "failed"
-			)
-				throw new Error("Trakt could not connect. Try connecting again.");
-			await refresh();
-		},
-	});
-	const skip = (
-		<Pressable onPress={onNext} className="items-center py-3">
-			<Text className="font-medium text-base text-muted-foreground">
-				Skip for now
-			</Text>
-		</Pressable>
+	const [open, setOpen] = useState<IntegrationId | null>(initialOpen);
+	useEffect(() => {
+		if (initialOpen) setOpen(initialOpen);
+	}, [initialOpen]);
+	const copy = onboardingIntegrationsCopy();
+	const anyOn = statuses.some(
+		({ data }) => data?.status === "active" || data?.status === "preparing",
 	);
-
-	if (status.isPending) {
-		return (
-			<View
-				accessibilityLabel="Loading Trakt"
-				className="h-96 animate-pulse rounded-2xl bg-card"
-			/>
-		);
-	}
-
-	const data = status.data;
-	if (!data?.configured)
-		return (
-			<StepScaffold footer={skip}>
-				<Text className="font-display-bold text-3xl text-foreground">
-					Trakt Sync
-				</Text>
-				<Text className="text-muted-foreground text-sm">
-					Trakt Sync is unavailable. You can connect later in Settings.
-				</Text>
-			</StepScaffold>
-		);
-	const connected =
-		data.status !== "disconnected" && data.status !== "reconnect";
-	if (connected) {
-		const enabled = data.status === "active" || data.status === "preparing";
-		return (
-			<StepScaffold
-				footer={
-					enabled ? <PrimaryButton label="Continue" onPress={onNext} /> : skip
-				}
-			>
-				<View className="gap-1">
-					<Text className="font-display-bold text-3xl text-foreground">
-						{enabled ? "Trakt Sync is on" : "Choose what to sync"}
-					</Text>
-					<Text className="text-muted-foreground text-sm">
-						Connected as @{data.username}.{" "}
-						{enabled
-							? "We’re comparing your history in the background. You can keep going."
-							: "Pick what moves and in which direction, then confirm."}
-					</Text>
-				</View>
-				{enabled ? null : (
-					<SyncSettings
-						key={data.username}
-						status={data}
-						onSaved={() => {
-							void refresh();
-							onNext();
-						}}
-						onboarding
-						showHeading={false}
-					/>
-				)}
-			</StepScaffold>
-		);
-	}
-
 	return (
-		<StepScaffold footer={skip}>
+		<StepScaffold
+			footer={
+				anyOn ? (
+					<PrimaryButton label="Continue" onPress={onNext} />
+				) : (
+					<Pressable onPress={onNext} className="items-center py-3">
+						<Text className="font-medium text-base text-muted-foreground">
+							Skip for now
+						</Text>
+					</Pressable>
+				)
+			}
+		>
 			<View className="gap-1">
 				<Text className="font-display-bold text-3xl text-foreground">
-					Already on Trakt?
+					{copy.title}
 				</Text>
-				<Text className="text-muted-foreground text-sm">
-					Connect once and Opnshelf keeps your history in step with Trakt.
-				</Text>
+				<Text className="text-muted-foreground text-sm">{copy.body}</Text>
 			</View>
-			<View className="gap-4 rounded-2xl border border-primary/30 bg-primary/10 p-4">
-				<View className="flex-row items-center justify-center gap-3">
-					<Image
-						source={logo}
-						style={{ width: 44, height: 44, borderRadius: 12 }}
+			<View className="overflow-hidden rounded-2xl border border-border bg-card">
+				{INTEGRATIONS.map((integration, index) => (
+					<IntegrationOnboardingRow
+						key={integration.id}
+						integration={integration}
+						status={statuses[index]}
+						open={open === integration.id}
+						onOpen={() => setOpen(integration.id)}
+						onClose={() => setOpen(null)}
+						divided={index > 0}
+						connectionFailed={connectionFailed === integration.id}
 					/>
-					<ArrowLeftRight color={colors.accent} size={20} />
-					<TraktMark size={44} />
-				</View>
-				<View className="gap-1.5">
-					{[
-						"Bring over your Watch history, Ratings, Lists, Favorites, Notes, Library and Reviews",
-						"New Watches keep flowing, in the direction you choose",
-						"Review every transfer before sync starts",
-					].map((line) => (
-						<View key={line} className="flex-row gap-2">
-							<Check color={colors.accent} size={16} />
-							<Text className="flex-1 text-muted-foreground text-sm leading-5">
-								{line}
-							</Text>
-						</View>
-					))}
-				</View>
-				<Button
-					label={
-						data.status === "reconnect" ? "Reconnect Trakt" : "Connect Trakt"
-					}
-					loadingLabel="Opening Trakt…"
-					loading={connect.isPending}
-					onPress={() =>
-						connect.mutate({
-							body: { platform: "mobile", returnTo: "onboarding" },
-						})
-					}
-				/>
-				{connect.error ? (
-					<Text accessibilityRole="alert" className="text-destructive text-sm">
-						{traktError(connect.error)}
-					</Text>
-				) : null}
+				))}
 			</View>
+			<Text className="text-muted-foreground text-xs">{copy.later}</Text>
 		</StepScaffold>
 	);
 }

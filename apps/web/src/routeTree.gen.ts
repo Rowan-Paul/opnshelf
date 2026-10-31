@@ -26,6 +26,7 @@ import { Route as ApiOgRouteImport } from './routes/api.og'
 import { Route as ApiReleaseNotesRouteImport } from './routes/api.release-notes'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 import { Route as EmbedReviewEditorRouteImport } from './routes/embed.review-editor'
+import { Route as IntegrationsProviderRouteImport } from './routes/integrations.$provider'
 import { Route as PickForMeResultRouteImport } from './routes/pick-for-me.result'
 import { Route as ProfileHandleRouteImport } from './routes/profile.$handle'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
@@ -38,6 +39,7 @@ import { Route as TraktSyncAttentionRouteImport } from './routes/trakt-sync_.att
 import { Route as WhatsNewIndexRouteImport } from './routes/whats-new.index'
 import { Route as WhatsNewSlugRouteImport } from './routes/whats-new.$slug'
 import { Route as DiscoverCollectionsIdRouteImport } from './routes/discover/collections/$id'
+import { Route as IntegrationsProviderAttentionRouteImport } from './routes/integrations.$provider_.attention'
 import { Route as PeoplePersonIdPersonNameRouteImport } from './routes/people/$personId/$personName'
 import { Route as ProfileHandleIndexRouteImport } from './routes/profile.$handle/index'
 import { Route as ProfileHandleConnectionsRouteImport } from './routes/profile.$handle/connections'
@@ -146,6 +148,11 @@ const EmbedReviewEditorRoute = EmbedReviewEditorRouteImport.update({
   path: '/embed/review-editor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IntegrationsProviderRoute = IntegrationsProviderRouteImport.update({
+  id: '/integrations/$provider',
+  path: '/integrations/$provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PickForMeResultRoute = PickForMeResultRouteImport.update({
   id: '/result',
   path: '/result',
@@ -206,6 +213,12 @@ const DiscoverCollectionsIdRoute = DiscoverCollectionsIdRouteImport.update({
   path: '/discover/collections/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IntegrationsProviderAttentionRoute =
+  IntegrationsProviderAttentionRouteImport.update({
+    id: '/integrations/$provider_/attention',
+    path: '/integrations/$provider/attention',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PeoplePersonIdPersonNameRoute =
   PeoplePersonIdPersonNameRouteImport.update({
     id: '/people/$personId/$personName',
@@ -347,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/integrations/$provider': typeof IntegrationsProviderRoute
   '/pick-for-me/result': typeof PickForMeResultRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
@@ -359,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/social/': typeof SocialIndexRoute
   '/whats-new/': typeof WhatsNewIndexRoute
   '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
+  '/integrations/$provider/attention': typeof IntegrationsProviderAttentionRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -398,6 +413,7 @@ export interface FileRoutesByTo {
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/integrations/$provider': typeof IntegrationsProviderRoute
   '/pick-for-me/result': typeof PickForMeResultRoute
   '/settings/$section': typeof SettingsSectionRoute
   '/signup/apple': typeof SignupAppleRoute
@@ -409,6 +425,7 @@ export interface FileRoutesByTo {
   '/social': typeof SocialIndexRoute
   '/whats-new': typeof WhatsNewIndexRoute
   '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
+  '/integrations/$provider/attention': typeof IntegrationsProviderAttentionRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -448,6 +465,7 @@ export interface FileRoutesById {
   '/api/release-notes': typeof ApiReleaseNotesRoute
   '/auth/complete': typeof AuthCompleteRoute
   '/embed/review-editor': typeof EmbedReviewEditorRoute
+  '/integrations/$provider': typeof IntegrationsProviderRoute
   '/pick-for-me/result': typeof PickForMeResultRoute
   '/profile/$handle': typeof ProfileHandleRouteWithChildren
   '/settings/$section': typeof SettingsSectionRoute
@@ -460,6 +478,7 @@ export interface FileRoutesById {
   '/social/': typeof SocialIndexRoute
   '/whats-new/': typeof WhatsNewIndexRoute
   '/discover/collections/$id': typeof DiscoverCollectionsIdRoute
+  '/integrations/$provider_/attention': typeof IntegrationsProviderAttentionRoute
   '/people/$personId/$personName': typeof PeoplePersonIdPersonNameRoute
   '/profile/$handle/connections': typeof ProfileHandleConnectionsRoute
   '/profile/$handle/library': typeof ProfileHandleLibraryRoute
@@ -503,6 +522,7 @@ export interface FileRouteTypes {
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
+    | '/integrations/$provider'
     | '/pick-for-me/result'
     | '/profile/$handle'
     | '/settings/$section'
@@ -515,6 +535,7 @@ export interface FileRouteTypes {
     | '/social/'
     | '/whats-new/'
     | '/discover/collections/$id'
+    | '/integrations/$provider/attention'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -554,6 +575,7 @@ export interface FileRouteTypes {
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
+    | '/integrations/$provider'
     | '/pick-for-me/result'
     | '/settings/$section'
     | '/signup/apple'
@@ -565,6 +587,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/whats-new'
     | '/discover/collections/$id'
+    | '/integrations/$provider/attention'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -603,6 +626,7 @@ export interface FileRouteTypes {
     | '/api/release-notes'
     | '/auth/complete'
     | '/embed/review-editor'
+    | '/integrations/$provider'
     | '/pick-for-me/result'
     | '/profile/$handle'
     | '/settings/$section'
@@ -615,6 +639,7 @@ export interface FileRouteTypes {
     | '/social/'
     | '/whats-new/'
     | '/discover/collections/$id'
+    | '/integrations/$provider_/attention'
     | '/people/$personId/$personName'
     | '/profile/$handle/connections'
     | '/profile/$handle/library'
@@ -657,6 +682,7 @@ export interface RootRouteChildren {
   ApiReleaseNotesRoute: typeof ApiReleaseNotesRoute
   AuthCompleteRoute: typeof AuthCompleteRoute
   EmbedReviewEditorRoute: typeof EmbedReviewEditorRoute
+  IntegrationsProviderRoute: typeof IntegrationsProviderRoute
   ProfileHandleRoute: typeof ProfileHandleRouteWithChildren
   SignupAppleRoute: typeof SignupAppleRoute
   SignupGoogleRoute: typeof SignupGoogleRoute
@@ -664,6 +690,7 @@ export interface RootRouteChildren {
   WhatsNewSlugRoute: typeof WhatsNewSlugRoute
   WhatsNewIndexRoute: typeof WhatsNewIndexRoute
   DiscoverCollectionsIdRoute: typeof DiscoverCollectionsIdRoute
+  IntegrationsProviderAttentionRoute: typeof IntegrationsProviderAttentionRoute
   PeoplePersonIdPersonNameRoute: typeof PeoplePersonIdPersonNameRoute
   ReviewsHandleRkeyRoute: typeof ReviewsHandleRkeyRoute
   ShowsShowIdShowNameRoute: typeof ShowsShowIdShowNameRouteWithChildren
@@ -792,6 +819,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbedReviewEditorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/integrations/$provider': {
+      id: '/integrations/$provider'
+      path: '/integrations/$provider'
+      fullPath: '/integrations/$provider'
+      preLoaderRoute: typeof IntegrationsProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pick-for-me/result': {
       id: '/pick-for-me/result'
       path: '/result'
@@ -874,6 +908,13 @@ declare module '@tanstack/react-router' {
       path: '/discover/collections/$id'
       fullPath: '/discover/collections/$id'
       preLoaderRoute: typeof DiscoverCollectionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrations/$provider_/attention': {
+      id: '/integrations/$provider_/attention'
+      path: '/integrations/$provider/attention'
+      fullPath: '/integrations/$provider/attention'
+      preLoaderRoute: typeof IntegrationsProviderAttentionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/people/$personId/$personName': {
@@ -1167,6 +1208,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiReleaseNotesRoute: ApiReleaseNotesRoute,
   AuthCompleteRoute: AuthCompleteRoute,
   EmbedReviewEditorRoute: EmbedReviewEditorRoute,
+  IntegrationsProviderRoute: IntegrationsProviderRoute,
   ProfileHandleRoute: ProfileHandleRouteWithChildren,
   SignupAppleRoute: SignupAppleRoute,
   SignupGoogleRoute: SignupGoogleRoute,
@@ -1174,6 +1216,7 @@ const rootRouteChildren: RootRouteChildren = {
   WhatsNewSlugRoute: WhatsNewSlugRoute,
   WhatsNewIndexRoute: WhatsNewIndexRoute,
   DiscoverCollectionsIdRoute: DiscoverCollectionsIdRoute,
+  IntegrationsProviderAttentionRoute: IntegrationsProviderAttentionRoute,
   PeoplePersonIdPersonNameRoute: PeoplePersonIdPersonNameRoute,
   ReviewsHandleRkeyRoute: ReviewsHandleRkeyRoute,
   ShowsShowIdShowNameRoute: ShowsShowIdShowNameRouteWithChildren,

@@ -7,6 +7,7 @@ export type PermissionRequestIntegration =
 	| "atstore"
 	| "blog"
 	| "bluesky"
+	| "popfeed"
 	| "watches";
 
 export type PermissionRequestCopy = {
@@ -48,6 +49,18 @@ export const PERMISSION_REQUEST_COPY: Record<
 			"Show Private items to anyone else",
 			"Post to Bluesky",
 			"Read your direct messages",
+		],
+	},
+	popfeed: {
+		title: "Let Opnshelf write to Popfeed",
+		can: [
+			"Add your Watches, Ratings, Reviews, Lists and watchlist to Popfeed",
+			"Update or remove the Popfeed Watches, Reviews, Lists and watchlist items it keeps in step with Opnshelf",
+		],
+		cannot: [
+			"Post to Bluesky",
+			"Read your direct messages",
+			"Change anything in Popfeed when Popfeed Sync is off",
 		],
 	},
 	atstore: {

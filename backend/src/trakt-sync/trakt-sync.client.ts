@@ -2,9 +2,18 @@ import { createHash } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { z } from "zod";
 import { BackendEnv } from "../config/env.schema";
-import { isListRecord, type MediaType, type SyncRecord } from "./reconcile";
+import {
+	isListRecord,
+	type MediaType,
+	type SyncRecord,
+} from "../integrations/reconcile";
 
-import { isContentRecord } from "./content-value";
+import type {
+	IntegrationRemote,
+	SyncRecordTypes,
+} from "../integrations/adapter";
+import { isContentRecord } from "../integrations/content-value";
+import { IntegrationError } from "../integrations/integration-error";
 import { snapshotContent, writeContent } from "./remote-content";
 import { snapshotLists, writeList } from "./remote-lists";
 
@@ -55,14 +64,14 @@ type TraktResponseDiagnostics = {
 	challenge: boolean;
 	cloudflareRay?: string;
 };
-export class TraktSyncError extends Error {
+export class TraktSyncError extends IntegrationError {
 	constructor(
 		message: string,
-		readonly status = 0,
-		readonly retrySeconds = 60,
+		status = 0,
+		retrySeconds = 60,
 		readonly diagnostics?: TraktResponseDiagnostics,
 	) {
-		super(message);
+		super(message, status, retrySeconds);
 	}
 }
 
@@ -103,13 +112,13 @@ export function normalizeRemote(
 		episode: row.type === "episode" ? (item.number ?? 0) : 0,
 		title: parent?.title ?? item.title ?? `Trakt ${row.type} ${item.ids.trakt}`,
 		value,
-		traktId: item.ids.trakt,
-		traktParentId: parent?.ids.trakt,
+		remoteId: item.ids.trakt,
+		remoteParentId: parent?.ids.trakt,
 	};
 }
 
 @Injectable()
-export class TraktSyncClient {
+export class TraktSyncClient implements IntegrationRemote<string> {
 	private readonly nextRequests = new Map<string, number>();
 	constructor(private readonly config: BackendEnv) {}
 	get configured() {
@@ -242,16 +251,7 @@ export class TraktSyncClient {
 	}
 	async snapshot(
 		token: string,
-		options: {
-			watches?: boolean;
-			ratings?: boolean;
-			lists?: boolean;
-			watchlist?: boolean;
-			favorites?: boolean;
-			notes?: boolean;
-			library?: boolean;
-			reviews?: boolean;
-		} = {},
+		options: SyncRecordTypes = {},
 	): Promise<SyncRecord[]> {
 		const before = (await this.request("/sync/last_activities", token)).data;
 		const watches =
@@ -295,15 +295,15 @@ export class TraktSyncClient {
 		if (isListRecord(record))
 			return snapshotLists(this, token, {
 				lists: record.kind === "list",
-				listId: record.traktId,
+				listId: record.remoteId,
 				watchlist: record.kind === "watchlist",
 				favorites: record.kind === "favorites",
 			});
 		const plural = `${record.mediaType}s`;
 		if (record.kind === "rating")
 			return this.pages(`/sync/ratings/${plural}`, token, "rating");
-		let traktId = record.traktId;
-		if (!traktId) {
+		let remoteId = record.remoteId;
+		if (!remoteId) {
 			if (!record.mediaId)
 				throw new TraktSyncError("Choose a matching title first.");
 			const type = record.mediaType === "movie" ? "movie" : "show";
@@ -329,18 +329,18 @@ export class TraktSyncClient {
 				throw new TraktSyncError(
 					"Trakt could not uniquely identify the written title.",
 				);
-			traktId = matches[0][type]?.ids.trakt;
+			remoteId = matches[0][type]?.ids.trakt;
 			if (record.mediaType === "episode") {
 				const episode = await this.request(
-					`/shows/${traktId}/seasons/${record.season}/episodes/${record.episode}`,
+					`/shows/${remoteId}/seasons/${record.season}/episodes/${record.episode}`,
 					token,
 				);
-				traktId = media.parse(episode.data).ids.trakt;
+				remoteId = media.parse(episode.data).ids.trakt;
 			}
 		}
-		if (!traktId)
+		if (!remoteId)
 			throw new TraktSyncError("Trakt did not return a title identity.");
-		return this.pages(`/sync/history/${plural}/${traktId}`, token, "watch");
+		return this.pages(`/sync/history/${plural}/${remoteId}`, token, "watch");
 	}
 
 	async pages(
@@ -415,7 +415,7 @@ export class TraktSyncClient {
 					? {}
 					: { rating: record.value };
 		let body: unknown;
-		if (record.traktId) {
+		if (record.remoteId) {
 			const plural: Record<MediaType, string> = {
 				movie: "movies",
 				show: "shows",
@@ -425,7 +425,7 @@ export class TraktSyncClient {
 			};
 			body = {
 				[plural[record.mediaType]]: [
-					{ ids: { trakt: record.traktId }, ...props },
+					{ ids: { trakt: record.remoteId }, ...props },
 				],
 			};
 		} else {

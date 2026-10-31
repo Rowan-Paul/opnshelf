@@ -448,7 +448,9 @@ export class AuthController {
 						: statePayload.permissionChange === "blog" ||
 								statePayload.permissionChange === "bluesky"
 							? "?permission=connections"
-							: "";
+							: statePayload.permissionChange === "popfeed"
+								? "?permission=popfeed"
+								: "";
 			const completeUrl =
 				platform === "mobile"
 					? this.buildMobileCompleteUrl(
@@ -486,11 +488,14 @@ export class AuthController {
 							? statePayload.requestedPreferences?.blogEnabled
 							: statePayload.permissionChange === "bluesky"
 								? statePayload.requestedPreferences?.blueskyEnabled
-								: statePayload.permissionChange === "watches"
-									? statePayload.requestedPreferences?.watchPrivacyEnabled
-									: statePayload.permissionChange === "spaces"
-										? statePayload.requestedPreferences?.privateSettingsEnabled
-										: false;
+								: statePayload.permissionChange === "popfeed"
+									? statePayload.requestedPreferences?.popfeedEnabled
+									: statePayload.permissionChange === "watches"
+										? statePayload.requestedPreferences?.watchPrivacyEnabled
+										: statePayload.permissionChange === "spaces"
+											? statePayload.requestedPreferences
+													?.privateSettingsEnabled
+											: false;
 				if (statePayload.permissionChange) {
 					if (
 						declinedConnection &&
@@ -524,6 +529,12 @@ export class AuthController {
 							"bluesky",
 						);
 					}
+					if (statePayload.requestedPreferences.popfeedEnabled) {
+						await this.authService.disableIntegration(
+							statePayload.accountDid,
+							"popfeed",
+						);
+					}
 					if (statePayload.accountHandle) {
 						return res.redirect(
 							await this.authService.authorize(
@@ -534,6 +545,7 @@ export class AuthController {
 									privateSettingsEnabled: false,
 									blogEnabled: false,
 									blueskyEnabled: false,
+									popfeedEnabled: false,
 								},
 							),
 						);
@@ -579,6 +591,19 @@ export class AuthController {
 					declined ? "declined" : "failed",
 				);
 				return res.redirect(connectionsUrl.toString());
+			}
+			if (
+				statePayload.permissionChange === "popfeed" &&
+				platform !== "mobile"
+			) {
+				// Still signed in: return to Popfeed Sync, which hands back to
+				// onboarding when the request started there.
+				const popfeedUrl = new URL("/integrations/popfeed", frontendUrl);
+				popfeedUrl.searchParams.set(
+					"permission",
+					declined ? "declined" : "failed",
+				);
+				return res.redirect(popfeedUrl.toString());
 			}
 			if (platform === "mobile") {
 				return res.redirect(

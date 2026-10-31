@@ -1,4 +1,5 @@
 import { contentValue } from "./content-value";
+import { encodeList, listValue, memberKey } from "./list-value";
 
 /** Pure reconciliation policy. Transport IDs and last successful values survive disconnects. */
 export type Direction = "inbound" | "outbound" | "both";
@@ -20,8 +21,15 @@ export type SyncRecord = {
 	episode: number;
 	title: string;
 	value: string | number | null;
-	traktId?: number;
-	traktParentId?: number;
+	// The provider's own record and parent-title identifiers, when it has them.
+	remoteId?: number;
+	remoteParentId?: number;
+	// A Watch whose source has a date but no time, stored as noon in the owner's timezone.
+	dateOnly?: boolean;
+	// A Watch from a provider that never stores Watch dates, such as Popfeed episodes.
+	undated?: boolean;
+	// A List whose provider keeps no member order, such as Popfeed.
+	unordered?: boolean;
 	rkey?: string;
 	cid?: string;
 	problem?: string;
@@ -65,6 +73,25 @@ export function minute(value: SyncRecord["value"]): number | null {
 		: null;
 }
 
+// Noon ± 12 hours covers the owner's whole calendar day for a date-only Watch.
+const DATE_ONLY_MINUTES = 12 * 60;
+const watchDistance = (a: SyncRecord, b: SyncRecord) =>
+	Math.abs((minute(a.value) ?? 0) - (minute(b.value) ?? 0));
+const sameViewing = (a: SyncRecord, b: SyncRecord) =>
+	a.dateOnly || b.dateOnly
+		? watchDistance(a, b) < DATE_ONLY_MINUTES
+		: minute(a.value) === minute(b.value);
+
+const sortedList = (record: SyncRecord) => {
+	const value = listValue(record);
+	return encodeList({
+		...value,
+		items: [...value.items].sort((x, y) =>
+			memberKey(x).localeCompare(memberKey(y)),
+		),
+	});
+};
+
 export function equivalent(
 	a: SyncRecord | null,
 	b: SyncRecord | null,
@@ -72,9 +99,12 @@ export function equivalent(
 	if (!a || !b) return a === b;
 	if (a.unreadable || b.unreadable) return false;
 	if (mediaKey(a) !== mediaKey(b)) return false;
-	return a.kind === "watch"
-		? minute(a.value) === minute(b.value)
-		: a.value === b.value;
+	if (isListRecord(a) && (a.unordered || b.unordered))
+		return sortedList(a) === sortedList(b);
+	if (a.kind !== "watch") return a.value === b.value;
+	if (a.undated || b.undated) return true;
+	if (a.value === null || b.value === null) return a.value === b.value;
+	return sameViewing(a, b);
 }
 
 export function decide(
@@ -88,7 +118,8 @@ export function decide(
 	const remoteChanged = fingerprint(remote) !== fingerprint(base.remoteBase);
 	if (!base.eligible && !localChanged && !remoteChanged) return "none";
 	if (resolution === "opnshelf") return "push";
-	if (resolution === "trakt") return "pull";
+	// Choices saved before ADR 0051 named the remote side "trakt".
+	if (resolution === "remote" || resolution === "trakt") return "pull";
 	if (equivalent(local, remote)) return "none";
 	if (base.linked && !localChanged && !remoteChanged) return "none";
 	// Initial absence is not a deletion. One-way sync never erases unrelated data.
@@ -119,8 +150,9 @@ export function candidates(
 			(record.kind !== "watch" ||
 				record.value === null ||
 				other.value === null ||
-				Math.abs((minute(record.value) ?? 0) - (minute(other.value) ?? 0)) <=
-					5),
+				(record.dateOnly || other.dateOnly
+					? watchDistance(record, other) < DATE_ONLY_MINUTES
+					: watchDistance(record, other) <= 5)),
 	);
 }
 
@@ -148,5 +180,16 @@ export function readRecord(value: unknown): SyncRecord | null {
 		typeof v.title !== "string"
 	)
 		return null;
-	return v as SyncRecord;
+	// State saved before ADR 0051 stored Trakt identifiers under Trakt names.
+	const { traktId, traktParentId, ...record } = v as Partial<SyncRecord> & {
+		traktId?: number;
+		traktParentId?: number;
+	};
+	if (traktId === undefined && traktParentId === undefined)
+		return v as SyncRecord;
+	return {
+		...record,
+		remoteId: record.remoteId ?? traktId,
+		remoteParentId: record.remoteParentId ?? traktParentId,
+	} as SyncRecord;
 }

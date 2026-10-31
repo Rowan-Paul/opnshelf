@@ -74,6 +74,8 @@ model User {
   privateSettingsHasCopy Boolean @default(false)
   blogIntegrationEnabled  Boolean          @default(false)
   blueskyCrossPostEnabled Boolean          @default(false)
+  // External Integration Access to write social.popfeed.* records (ADR 0030, ADR 0051).
+  popfeedWriteEnabled     Boolean          @default(false)
   // The explicitly confirmed reader format for blog mirrors. This remains
   // markdown until a user selects a supported reader-specific format.
   reviewsMirrorFormat     BlogMirrorFormat @default(markdown)
@@ -97,18 +99,20 @@ model User {
   pushDevices PushDevice[]
   notificationDeliveries NotificationDelivery[]
   notificationCollections NotificationCollection[]
-  traktConnections TraktSyncConnection[]
+  integrationConnections IntegrationConnection[]
 
   @@index([handle])
   @@index([profileAvatarCid])
 }
 
 // Private integration state; never published to a user's AT repository.
-model TraktSyncConnection {
+// One row per connected account of an Integration provider such as "trakt".
+model IntegrationConnection {
   id String @id @default(cuid())
   userDid String
   user User @relation(fields: [userDid], references: [did], onDelete: Cascade)
-  traktUserId String
+  provider String
+  accountId String
   username String
   accessToken String?
   refreshToken String?
@@ -137,18 +141,18 @@ model TraktSyncConnection {
   remoteReadAt DateTime?
   remaining Int @default(0)
   remainingTotal Int @default(0)
-  entries TraktSyncEntry[]
+  entries IntegrationEntry[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userDid, traktUserId])
-  @@index([status, nextRunAt])
+  @@unique([userDid, provider, accountId])
+  @@index([provider, status, nextRunAt])
 }
 
-model TraktSyncEntry {
+model IntegrationEntry {
   id String @id @default(cuid())
   connectionId String
-  connection TraktSyncConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  connection IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   kind String
   localKey String?
   remoteKey String?

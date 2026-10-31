@@ -17,6 +17,7 @@ import { Link, router, Stack, useFocusEffect } from "expo-router";
 import * as Updates from "expo-updates";
 import {
 	AlertTriangle,
+	ArrowLeftRight,
 	Bell,
 	ChevronRight,
 	CircleHelp,
@@ -50,6 +51,7 @@ import {
 	View,
 } from "react-native";
 import { ConfettiSetting } from "@/components/settings/confetti-setting";
+import { IntegrationsSection } from "@/components/settings/IntegrationsSection";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 import { PrivacySection } from "@/components/settings/privacy-section";
@@ -181,6 +183,7 @@ export type SettingsCategory =
 	| "privacy"
 	| "notifications"
 	| "connections"
+	| "integrations"
 	| "account"
 	| "help";
 
@@ -190,6 +193,7 @@ const SETTINGS_TITLES: Record<SettingsCategory, string> = {
 	privacy: "Privacy",
 	notifications: "Notifications",
 	connections: "Connections",
+	integrations: "Integrations",
 	account: "Account",
 	help: "Help",
 };
@@ -754,6 +758,8 @@ export function SettingsCategoryScreen({
 						</>
 					)}
 
+					{section === "integrations" && <IntegrationsSection />}
+
 					{section === "notifications" && (
 						<SettingsSection
 							title="Delivery"
@@ -892,22 +898,6 @@ export function SettingsCategoryScreen({
 									}
 								/>
 							</SettingsSection>
-
-							<View className="gap-4 rounded-xl border border-border bg-card p-4">
-								<Text className="font-display-semibold text-foreground text-lg">
-									Trakt
-								</Text>
-								<Text className="text-muted-foreground text-sm">
-									Keep your Watch history, Ratings, Lists, Favorites, Notes,
-									Library and Reviews in sync with Trakt.
-								</Text>
-								<Link
-									href="/trakt-sync"
-									className="py-3 font-medium text-primary"
-								>
-									Manage Trakt Sync
-								</Link>
-							</View>
 						</>
 					)}
 
@@ -1027,6 +1017,7 @@ const SETTINGS_AREAS: {
 		| "/settings/privacy"
 		| "/settings/notifications"
 		| "/settings/connections"
+		| "/settings/integrations"
 		| "/settings/account"
 		| "/settings/help";
 	label: string;
@@ -1060,8 +1051,14 @@ const SETTINGS_AREAS: {
 	{
 		href: "/settings/connections",
 		label: SETTINGS_TITLES.connections,
-		description: "Blog mirroring, Bluesky and Trakt",
+		description: "Blog mirroring and Bluesky",
 		Icon: PlugZap,
+	},
+	{
+		href: "/settings/integrations",
+		label: SETTINGS_TITLES.integrations,
+		description: "Sync with Trakt and Popfeed",
+		Icon: ArrowLeftRight,
 	},
 	{
 		href: "/settings/account",

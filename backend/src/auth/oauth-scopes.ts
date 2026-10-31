@@ -39,6 +39,7 @@ export type OAuthIntegration =
 	| "atstore"
 	| "blog"
 	| "bluesky"
+	| "popfeed"
 	| "spaces"
 	| "watches";
 
@@ -89,6 +90,12 @@ export const OFFPRINT_OAUTH_SCOPE = "repo:app.offprint.document.article";
 export const BLUESKY_OAUTH_SCOPES = [
 	"repo:app.bsky.feed.post?action=create&action=update",
 ] as const;
+/** Writing the User's own Popfeed records for Popfeed Sync (ADR 0051). */
+export const POPFEED_OAUTH_SCOPES = [
+	"repo:social.popfeed.feed.listItem",
+	"repo:social.popfeed.feed.review",
+	"repo:social.popfeed.feed.list",
+] as const;
 export const ATSTORE_REVIEW_OAUTH_SCOPES = [
 	"include:fyi.atstore.authThirdPartyReviews",
 ] as const;
@@ -102,6 +109,7 @@ export interface OAuthScopePreferences {
 	privateSettingsEnabled?: boolean;
 	blogEnabled?: boolean;
 	blueskyEnabled?: boolean;
+	popfeedEnabled?: boolean;
 	atStoreReviewEnabled?: boolean;
 	reviewsMirrorFormat?: BlogMirrorFormat | null;
 }
@@ -119,6 +127,7 @@ export function buildOAuthScopes(
 		}
 	}
 	if (preferences.blueskyEnabled) scopes.push(...BLUESKY_OAUTH_SCOPES);
+	if (preferences.popfeedEnabled) scopes.push(...POPFEED_OAUTH_SCOPES);
 	if (preferences.atStoreReviewEnabled) {
 		scopes.push(...ATSTORE_REVIEW_OAUTH_SCOPES);
 	}
@@ -242,6 +251,9 @@ export function includesOAuthCapabilities(
 	if (preferences.blueskyEnabled) {
 		directScopes.push(...BLUESKY_OAUTH_SCOPES);
 	}
+	if (preferences.popfeedEnabled) {
+		directScopes.push(...POPFEED_OAUTH_SCOPES);
+	}
 
 	return (
 		includesRequestedScopes(grantedScope, directScopes) &&
@@ -277,6 +289,7 @@ export const DECLARED_OAUTH_SCOPE =
 		atStoreReviewEnabled: true,
 		blogEnabled: true,
 		blueskyEnabled: true,
+		popfeedEnabled: true,
 		reviewsMirrorFormat: "offprint",
 	}) + ` ${PRIVATE_SETTINGS_SCOPE}`;
 

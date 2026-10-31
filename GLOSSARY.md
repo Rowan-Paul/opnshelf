@@ -117,7 +117,7 @@ The current number of consecutive calendar days with at least one dated movie or
 The show for which a user has the most logged episode-Watches (rewatches included), ties broken by most recent Watch. Shown as the personal headline stat on a profile.
 
 **Onboarding**:
-The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → **My Services** → optional mobile and email notification preferences → optional **Trakt Sync** → follow suggestions → add watched Media Items → done. The watched-Media-Items step presents the same mixed deck on both clients: 14 all-time recognizable movies and shows, ranked by TMDB vote count, plus 6 titles trending that week. Skipping a card makes no change. Marking a movie watched adds one undated Watch. Marking a show watched adds an undated Watch for each aired episode. The step is skipped when Watch history is already coming from Trakt: Trakt Sync bringing Watches into Opnshelf. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
+The first-run setup a user completes _after_ account creation and email verification: welcome → profile (display name, avatar) → timezone and watch-country preferences → **My Services** → optional mobile and email notification preferences → optional **Integrations** (Trakt Sync and Popfeed Sync in one step) → follow suggestions → add watched Media Items → done. The watched-Media-Items step presents the same mixed deck on both clients: 14 all-time recognizable movies and shows, ranked by TMDB vote count, plus 6 titles trending that week. Skipping a card makes no change. Marking a movie watched adds one undated Watch. Marking a show watched adds an undated Watch for each aired episode. The step is skipped when Watch history is already coming from an **Integration**: Trakt Sync or Popfeed Sync bringing Watches into Opnshelf. Gated by `needsOnboarding` and ended by `onboardingCompletedAt`. It does **not** include Signup (which creates the account) or Email Verification (which precedes it and is its own gate). The same step sequence is the target on both web and mobile. It is followed by the **Welcome Tour**, which is a separate thing.
 _Avoid_: Signup, registration, sign-up flow (those create the account; onboarding is the post-verification setup), Welcome Tour (that comes after, over the live UI)
 
 **Welcome Tour**:
@@ -129,8 +129,15 @@ One stop on the **Welcome Tour**: navigate to a surface, then explain one thing 
 _Avoid_: Spotlight (the dimmed cutout is one part of a Step, and bare "Spotlight" collides with **Discover** and with the macOS feature), coach mark, tooltip (that's the Radix hover component), slide, page
 
 **Trakt Sync**:
-An optional ongoing transfer of a User's chosen Watch history, Ratings, custom Lists, watchlist, Favorites, Notes, Library Items and Reviews from Trakt to Opnshelf, from Opnshelf to Trakt, or in both directions, as selected by the User.
+An **Integration** for the optional ongoing transfer of a User's chosen Watch history, Ratings, custom Lists, watchlist, Favorites, Notes, Library Items and Reviews from Trakt to Opnshelf, from Opnshelf to Trakt, or in both directions, as selected by the User.
 _Avoid_: backup (does not describe synchronization)
+
+**Integration**:
+An optional ongoing sync between a User's Opnshelf records and another service, such as Trakt or Popfeed, managed from the **Integrations** settings section. Every Integration follows the same rules for direction, record links, conflicts and Needs attention.
+_Avoid_: Connection (the social term), Import (retired one-time copy)
+
+**Popfeed Sync**:
+An **Integration** that syncs a User's Watches, Ratings, Reviews, Lists and watchlist with the Popfeed records in their own AT Protocol repository, from Popfeed to Opnshelf, from Opnshelf to Popfeed, or in both directions.
 
 **Activity**:
 A single item in the followed-users feed — a followed user's **Watch** (movie or episode) or **Review**, surfaced to the people who follow them. Not a separately stored entity; it is a projection over Watches and Reviews, ordered by when the action happened.

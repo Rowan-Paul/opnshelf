@@ -1,8 +1,9 @@
 import { createRequire } from "node:module";
+import { POPFEED_INTEGRATION, TRAKT_INTEGRATION } from "@opnshelf/api";
 import { Modal, Pressable } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterAll, afterEach, beforeEach, expect, it, vi } from "vitest";
-import { TraktSyncManager } from "./TraktSyncManager";
+import { IntegrationSyncManager } from "./IntegrationSyncManager";
 
 const require = createRequire(import.meta.url);
 const pngLoader = require.extensions[".png"];
@@ -64,7 +65,7 @@ vi.mock("@tanstack/react-query", () => ({
 												ignored: false,
 												recovery: "retry",
 												issue: "Possible duplicate",
-												trakt: {
+												remote: {
 													title: "Fixture",
 													mediaType: "episode",
 													season: 2,
@@ -152,7 +153,17 @@ vi.mock("lucide-react-native", () => ({
 vi.mock("react-native-safe-area-context", () => ({
 	useSafeAreaInsets: () => ({ top: 0, bottom: 0 }),
 }));
-vi.mock("@/components/marks/TraktMark", () => ({ TraktMark: "icon" }));
+vi.mock("@/lib/auth-context", () => ({
+	useAuth: () => ({ runAuthorizationUrl: vi.fn() }),
+}));
+vi.mock("@/lib/auth-handoff", () => ({ beginHandoff: async () => null }));
+const requestPermission = vi.hoisted(() => vi.fn(async () => false));
+vi.mock("@/components/settings/permission-request", () => ({
+	usePermissionRequest: () => requestPermission,
+}));
+vi.mock("@/components/integrations/IntegrationMark", () => ({
+	IntegrationMark: "icon",
+}));
 
 beforeEach(() => {
 	mocks.active = false;
@@ -170,7 +181,11 @@ afterEach(() => {
 function mount(embedded = true, issuesOnly = false) {
 	act(() => {
 		renderer = create(
-			<TraktSyncManager embedded={embedded} issuesOnly={issuesOnly} />,
+			<IntegrationSyncManager
+				integration={TRAKT_INTEGRATION}
+				embedded={embedded}
+				issuesOnly={issuesOnly}
+			/>,
 		);
 	});
 }
@@ -178,7 +193,9 @@ function press(label: string) {
 	const button = renderer.root.find(
 		(node) => node.type === "text" && node.props.children === label,
 	).parent;
-	act(() => button?.props.onPress());
+	act(() => {
+		button?.props.onPress();
+	});
 }
 
 it("allows disconnecting before setup without enabling sync", () => {
@@ -204,7 +221,7 @@ it("allows disconnecting before setup without enabling sync", () => {
 	press("Disconnect");
 	press("Confirm disconnect");
 	expect(mocks.mutate).toHaveBeenCalledExactlyOnceWith(
-		{ body: { action: "disconnect" } },
+		"disconnect",
 		expect.anything(),
 	);
 });
@@ -311,8 +328,8 @@ it.each([
 	act(() => consent.props.onValueChange(true));
 	expect(confirm()?.props.disabled).toBe(false);
 	press("Confirm and enable sync");
-	expect(mocks.mutate).toHaveBeenCalledWith({
-		body: expect.objectContaining({
+	expect(mocks.mutate).toHaveBeenCalledWith(
+		expect.objectContaining({
 			watches: false,
 			ratings: false,
 			lists: scope === "lists",
@@ -324,7 +341,7 @@ it.each([
 			contentPublicationConsent: true,
 			listPublicationConsent: true,
 		}),
-	});
+	);
 });
 
 it("opens record choices separately and retains changes when closed", () => {
@@ -396,10 +413,7 @@ it("opens ignored items in a sheet and restores without replacing attention", ()
 		),
 	).toHaveLength(1);
 	press("Restore item");
-	expect(mocks.mutate).toHaveBeenCalledWith({
-		path: { id: "one" },
-		body: { action: "undo" },
-	});
+	expect(mocks.mutate).toHaveBeenCalledWith({ action: "undo" });
 	press("Done");
 	expect(
 		renderer.root.findAllByType(Modal).filter((node) => node.props.visible),
@@ -449,11 +463,8 @@ it.each([
 	expect(confirm()?.props.disabled).toBe(false);
 	press("Confirm choice");
 	expect(mocks.mutate).toHaveBeenCalledWith({
-		path: { id: "one" },
-		body: {
-			action: label.startsWith("Send") ? "opnshelf" : "trakt",
-			confirmedTraktMissing: true,
-		},
+		action: label.startsWith("Send") ? "opnshelf" : "remote",
+		confirmedRemoteMissing: true,
 	});
 });
 
@@ -497,7 +508,72 @@ it("shows candidate details above a short link action", () => {
 	expect(mocks.mutate).not.toHaveBeenCalled();
 	press("Confirm choice");
 	expect(mocks.mutate).toHaveBeenCalledWith({
-		path: { id: "one" },
-		body: { action: "link", candidateKey: "existing" },
+		action: "link",
+		candidateKey: "existing",
 	});
+});
+
+it("asks for Popfeed write access before sending changes, with Popfeed's record types", () => {
+	act(() => {
+		renderer = create(
+			<IntegrationSyncManager integration={POPFEED_INTEGRATION} embedded />,
+		);
+	});
+	const radios = () =>
+		renderer.root.findAll(
+			(node) =>
+				node.type === Pressable && node.props.accessibilityRole === "radio",
+		);
+	expect(
+		radios()
+			.map((node) => node.props.accessibilityLabel)
+			.filter((label: string) => /→|Both/.test(label)),
+	).toEqual(["Popfeed → Opnshelf", "Opnshelf → Popfeed", "Both directions"]);
+	// The fixture status has no write access and syncs both ways.
+	const texts = () =>
+		renderer.root
+			.findAll((node) => node.type === "text")
+			.map((node) => node.props.children);
+	expect(texts()).toContain("Allow Popfeed access");
+	// The grant explains itself first; declining it starts nothing.
+	press("Allow Popfeed access");
+	expect(requestPermission).toHaveBeenCalledWith("popfeed");
+	const enable = renderer.root.find(
+		(node) =>
+			node.type === Pressable &&
+			node.props.accessibilityRole === "button" &&
+			node.findAll((child) => child.props.children === "Enable sync").length >
+				0,
+	);
+	expect(enable.props.disabled).toBe(true);
+	act(() =>
+		radios()
+			.find((node) => node.props.accessibilityLabel === "Popfeed → Opnshelf")
+			?.props.onPress(),
+	);
+	expect(texts()).not.toContain("Allow Popfeed access");
+	press("Choose records");
+	expect(
+		renderer.root
+			.findAll((node) => node.type === "switch")
+			.map((node) => node.props.accessibilityLabel)
+			.filter((label: string) => !label.startsWith("I understand")),
+	).toEqual([
+		"Watch history",
+		"Ratings",
+		"Watchlist",
+		"Custom Lists",
+		"Reviews",
+	]);
+});
+
+it("connects Popfeed in place instead of opening a browser", () => {
+	mocks.disconnected = true;
+	act(() => {
+		renderer = create(
+			<IntegrationSyncManager integration={POPFEED_INTEGRATION} embedded />,
+		);
+	});
+	press("Set up Popfeed Sync");
+	expect(mocks.mutate).toHaveBeenCalledWith({ platform: "mobile" });
 });

@@ -1,29 +1,28 @@
 import {
-	type SyncIssueDto,
-	type SyncResolveDto,
+	authControllerPermissions,
+	type IntegrationDefinition,
+	type IntegrationIssueDto,
+	type IntegrationResolveDto,
+	integrationActionLabel,
+	integrationConnectionCopy,
+	integrationDirections,
+	integrationIssueRecovery,
+	integrationKey,
+	integrationMissingConfirmation,
+	integrationRecords,
+	integrationResolutionLabel,
+	integrationStateMessage,
+	integrationUnconfirmedChoiceCopy,
+	integrationWriteGrantCopy,
+	type SyncActionDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
-	TRAKT_MISSING_CONFIRMATION,
 	TRAKT_PUBLICATION_COPY,
 	TRAKT_SCOPE_COPY,
-	TRAKT_SYNC_DIRECTIONS,
-	TRAKT_SYNC_RECORDS,
 	TRAKT_SYNC_SCOPES,
-	TRAKT_UNCONFIRMED_CHOICE_COPY,
 	traktError,
-	traktIssueRecovery,
 	traktRecordTitle,
-	traktResolutionLabel,
 	traktSettings,
-	traktSyncActionLabel,
-	traktSyncControllerActionMutation,
-	traktSyncControllerConfigureMutation,
-	traktSyncControllerConnectMutation,
-	traktSyncControllerIssues,
-	traktSyncControllerMatchesOptions,
-	traktSyncControllerResolveMutation,
-	traktSyncControllerStatus,
-	traktSyncStateMessage,
 } from "@opnshelf/api";
 import {
 	keepPreviousData,
@@ -48,8 +47,11 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TraktMark } from "@/components/marks/TraktMark";
+import { IntegrationMark } from "@/components/integrations/IntegrationMark";
+import { usePermissionRequest } from "@/components/settings/permission-request";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { useAuth } from "@/lib/auth-context";
+import { beginHandoff } from "@/lib/auth-handoff";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useThemeColors } from "@/theme/colors";
 
@@ -62,7 +64,6 @@ function displayValue(value: string) {
 		: value;
 }
 
-const rootKey = ["trakt-sync"];
 const card = "gap-4 rounded-2xl border border-border bg-card p-4";
 const copy = "text-sm leading-5 text-muted-foreground";
 
@@ -117,43 +118,50 @@ function Toggle({
 	);
 }
 
-export function TraktSyncManager({
+export function IntegrationSyncManager({
+	integration,
 	connectionFailed = false,
 	embedded = false,
 	issuesOnly = false,
 }: {
+	integration: IntegrationDefinition;
 	connectionFailed?: boolean;
 	embedded?: boolean;
 	issuesOnly?: boolean;
 }) {
+	const { id, name } = integration;
+	const rootKey = integrationKey(integration);
 	const insets = useSafeAreaInsets();
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
 	const status = useQuery({
 		queryKey: [...rootKey, "status"],
-		queryFn: async ({ signal }) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
+		queryFn: ({ signal }) => integration.api.status(signal),
 		refetchInterval: 5000,
 	});
 	const connect = useMutation({
-		mutationKey: ["trakt-sync", "connect"],
-		...traktSyncControllerConnectMutation(),
+		mutationKey: [...rootKey, "connect"],
+		mutationFn: integration.api.connect,
 		onSuccess: async (data) => {
-			const result = await WebBrowser.openAuthSessionAsync(
-				data.url,
-				"opnshelf://trakt-sync",
-			);
-			if (
-				result.type === "success" &&
-				new URL(result.url).searchParams.get("connection") === "failed"
-			)
-				throw new Error("Trakt could not connect. Try connecting again.");
+			if (data.url) {
+				// Trakt's OAuth callback still returns to its original app link.
+				const result = await WebBrowser.openAuthSessionAsync(
+					data.url,
+					"opnshelf://trakt-sync",
+				);
+				if (
+					result.type === "success" &&
+					new URL(result.url).searchParams.get("connection") === "failed"
+				)
+					throw new Error(`${name} could not connect. Try connecting again.`);
+			}
 			await refresh();
 		},
 	});
 	const action = useMutation({
-		mutationKey: ["trakt-sync", "action"],
-		...traktSyncControllerActionMutation(),
+		mutationKey: [...rootKey, "action"],
+		mutationFn: (choice: SyncActionDto["action"]) =>
+			integration.api.action(choice),
 		onSuccess: refresh,
 	});
 	const [disconnect, setDisconnect] = useState(false);
@@ -168,7 +176,7 @@ export function TraktSyncManager({
 			</View>
 		) : (
 			<View
-				accessibilityLabel="Loading Trakt Sync"
+				accessibilityLabel={`Loading ${name} Sync`}
 				className={`${embedded ? "gap-4" : card} animate-pulse`}
 			>
 				<View className="h-5 w-36 rounded bg-background-subtle" />
@@ -179,9 +187,11 @@ export function TraktSyncManager({
 			</View>
 		);
 	const data = status.data;
+	const words = integrationConnectionCopy(integration, data.username);
 	const connected =
 		data.status !== "disconnected" && data.status !== "reconnect";
-	if (issuesOnly) return <SyncIssues connected={connected} />;
+	if (issuesOnly)
+		return <SyncIssues integration={integration} connected={connected} />;
 	const needsSetup =
 		connected &&
 		data.status === "paused" &&
@@ -194,11 +204,12 @@ export function TraktSyncManager({
 		<View className="gap-5">
 			<View className={embedded ? "gap-4" : card}>
 				<Text selectable className="font-semibold text-foreground text-lg">
-					{data.username ? `@${data.username}` : "Connect your Trakt account"}
+					{words.heading}
 				</Text>
 				<Text className={copy}>
+					{words.handle ? `${words.handle} · ` : ""}
 					{needsSetup
-						? "Connected. Sync is not enabled yet."
+						? "Choose what to sync to finish setting up."
 						: data.status === "preparing"
 							? "Comparing your history. You can leave this screen."
 							: data.status === "active"
@@ -207,47 +218,47 @@ export function TraktSyncManager({
 									? "Sync is paused"
 									: data.status === "reconnect"
 										? "Reconnect to continue"
-										: "No account connected"}
+										: integration.connect === "oauth"
+											? "No account connected"
+											: "Not set up yet"}
 				</Text>
+				{connected && integration.writeGrant && data.writeAccess && (
+					<WriteAccess
+						integration={integration}
+						removable={data.direction === "inbound"}
+					/>
+				)}
 				{!data.configured ? (
 					<Text className={copy}>
-						Trakt Sync is not configured on this server yet.
+						{name} Sync is not configured on this server yet.
 					</Text>
 				) : !connected ? (
 					<Action
 						primary
 						label={
 							connect.isPending
-								? "Opening Trakt…"
+								? words.starting
 								: data.status === "reconnect"
-									? "Reconnect Trakt"
-									: "Connect Trakt"
+									? `Reconnect ${name}`
+									: words.start
 						}
 						disabled={connect.isPending}
-						onPress={() => connect.mutate({ body: { platform: "mobile" } })}
+						onPress={() => connect.mutate({ platform: "mobile" })}
 					/>
 				) : !needsSetup ? (
 					<>
 						<View className="flex-row flex-wrap gap-2">
 							<Text className="rounded-lg bg-background-subtle px-3 py-2 font-medium text-foreground text-sm">
 								{
-									TRAKT_SYNC_DIRECTIONS.find(
+									integrationDirections(integration).find(
 										(choice) => choice.value === data.direction,
 									)?.label
 								}
 							</Text>
 							<Text className="rounded-lg bg-background-subtle px-3 py-2 text-foreground text-sm">
-								{[
-									data.watches && "Watch history",
-									data.ratings && "Ratings",
-									data.lists && "Custom Lists",
-									data.watchlist && "Watchlist",
-									data.favorites && "Favorites",
-									data.notes && "Notes",
-									data.library && "Library",
-									data.reviews && "Reviews",
-								]
-									.filter(Boolean)
+								{integrationRecords(integration)
+									.filter(({ value }) => data[value])
+									.map(({ label }) => label)
 									.join(", ")}
 							</Text>
 						</View>
@@ -255,8 +266,7 @@ export function TraktSyncManager({
 							{data.lastSuccessAt
 								? `Last successful check: ${new Date(data.lastSuccessAt).toLocaleString()}`
 								: "No successful sync yet."}{" "}
-							Trakt is checked about every 15 minutes; rate limits can delay
-							transfers.
+							{integration.checkCopy}
 						</Text>
 						<View className="flex-row flex-wrap gap-2">
 							<Action label="Sync settings" onPress={() => setEditing(true)} />
@@ -269,36 +279,34 @@ export function TraktSyncManager({
 								] as const
 							)
 								.filter(
-									(name) =>
-										name !== "sync" ||
+									(choice) =>
+										choice !== "sync" ||
 										!["running", "queued", "waiting"].includes(
 											data.syncState ?? "",
 										),
 								)
-								.map((name) => (
+								.map((choice) => (
 									<Action
-										key={name}
-										disabled={
-											action.isPending && action.variables?.body.action === name
-										}
+										key={choice}
+										disabled={action.isPending && action.variables === choice}
 										label={
-											action.isPending && action.variables?.body.action === name
+											action.isPending && action.variables === choice
 												? "Saving…"
-												: name === "sync"
-													? traktSyncActionLabel(data)
-													: name === "pause"
+												: choice === "sync"
+													? integrationActionLabel(data, name)
+													: choice === "pause"
 														? "Pause"
 														: "Resume"
 										}
-										onPress={() => action.mutate({ body: { action: name } })}
+										onPress={() => action.mutate(choice)}
 									/>
 								))}
-							<Action label="Disconnect" onPress={() => setDisconnect(true)} />
+							<Action label={words.stop} onPress={() => setDisconnect(true)} />
 						</View>
 					</>
-				) : (
-					<Action label="Disconnect" onPress={() => setDisconnect(true)} />
-				)}
+				) : integration.connect === "oauth" ? (
+					<Action label={words.stop} onPress={() => setDisconnect(true)} />
+				) : null}
 				{disconnect && (
 					<BottomSheetModal visible onRequestClose={() => setDisconnect(false)}>
 						<View className="flex-1 justify-end">
@@ -318,23 +326,18 @@ export function TraktSyncManager({
 										accessibilityRole="header"
 										className="font-semibold text-foreground text-xl"
 									>
-										Disconnect Trakt?
+										{words.stopTitle}
 									</Text>
-									<Text className={copy}>
-										Disconnecting stops sync and revokes access. Transferred
-										records remain on both services. Reconnecting this account
-										catches up previously linked records.
-									</Text>
+									<Text className={copy}>{words.stopBody}</Text>
 									<Action label="Cancel" onPress={() => setDisconnect(false)} />
 									<Action
 										primary
-										label="Confirm disconnect"
+										label={words.stopConfirm}
 										disabled={action.isPending}
 										onPress={() =>
-											action.mutate(
-												{ body: { action: "disconnect" } },
-												{ onSuccess: () => setDisconnect(false) },
-											)
+											action.mutate("disconnect", {
+												onSuccess: () => setDisconnect(false),
+											})
 										}
 									/>
 								</ScrollView>
@@ -342,9 +345,9 @@ export function TraktSyncManager({
 						</View>
 					</BottomSheetModal>
 				)}
-				{traktSyncStateMessage(data) && (
+				{integrationStateMessage(data, name) && (
 					<Text accessibilityLiveRegion="polite" className={copy}>
-						{traktSyncStateMessage(data)}
+						{integrationStateMessage(data, name)}
 					</Text>
 				)}
 				{(connectionFailed ||
@@ -357,7 +360,7 @@ export function TraktSyncManager({
 						className="text-destructive text-sm"
 					>
 						{connectionFailed
-							? "Trakt could not connect. Try connecting again."
+							? `${name} could not connect. Try connecting again.`
 							: connect.error
 								? traktError(connect.error)
 								: action.error
@@ -369,6 +372,7 @@ export function TraktSyncManager({
 			{connected && needsSetup && !editing && (
 				<SyncSettings
 					key={`${data.username}:${data.direction}:${data.watches}:${data.ratings}:${data.lists}:${data.watchlist}:${data.favorites}:${data.notes}:${data.library}:${data.reviews}:${data.contentPublicationConsent}:${data.listPublicationConsent}:${data.historyScope}`}
+					integration={integration}
 					status={data}
 					className={embedded ? "gap-4 border-border border-t pt-4" : card}
 					onSaved={() => {
@@ -397,6 +401,7 @@ export function TraktSyncManager({
 					>
 						{editing && (
 							<SyncSettings
+								integration={integration}
 								status={data}
 								className="gap-4"
 								onSaved={() => {
@@ -421,7 +426,10 @@ export function TraktSyncManager({
 							{data.ignored} ignored. Other records keep syncing.
 						</Text>
 						<Link
-							href="/trakt-sync/attention"
+							href={{
+								pathname: "/integrations/[provider]/attention",
+								params: { provider: id },
+							}}
 							className="font-semibold text-primary"
 						>
 							Review items →
@@ -433,24 +441,30 @@ export function TraktSyncManager({
 }
 
 export function SyncSettings({
+	integration,
 	status,
 	onSaved,
 	className = card,
 	showHeading = true,
-	onboarding = false,
 	onCancel,
 }: {
+	integration: IntegrationDefinition;
 	status: SyncStatusDto;
 	onSaved: () => unknown;
 	className?: string;
 	showHeading?: boolean;
-	onboarding?: boolean;
 	onCancel?: () => void;
 }) {
 	const colors = useThemeColors();
-	const [settings, setSettings] = useState<SyncSettingsDto>(() =>
-		traktSettings(status),
-	);
+	const { name } = integration;
+	const records = integrationRecords(integration);
+	const directions = integrationDirections(integration);
+	const [settings, setSettings] = useState<SyncSettingsDto>(() => {
+		const saved = traktSettings(status);
+		return integration.directions.includes(saved.direction)
+			? saved
+			: { ...saved, direction: integration.directions[0] };
+	});
 	const [reviewing, setReviewing] = useState(false);
 	const [choosingRecords, setChoosingRecords] = useState(false);
 	const { width, fontScale } = useWindowDimensions();
@@ -467,8 +481,8 @@ export function SyncSettings({
 				status.contentPublicationConsent,
 		);
 	const save = useMutation({
-		mutationKey: ["trakt-sync", "configure"],
-		...traktSyncControllerConfigureMutation(),
+		mutationKey: [...integrationKey(integration), "configure"],
+		mutationFn: integration.api.configure,
 		onSuccess: () => {
 			setReviewing(false);
 			onSaved();
@@ -494,7 +508,12 @@ export function SyncSettings({
 			(!requiresListConsent || status.listPublicationConsent) &&
 			(!requiresContentConsent || status.contentPublicationConsent),
 	);
-	const canSave = hasConsent;
+	const needsGrant = Boolean(
+		integration.writeGrant &&
+			settings.direction !== "inbound" &&
+			!status.writeAccess,
+	);
+	const canSave = hasConsent && !needsGrant;
 	const dismiss = () => {
 		if (!save.isPending) setReviewing(false);
 	};
@@ -513,7 +532,8 @@ export function SyncSettings({
 					<View className="flex-1 gap-1">
 						<Text className="font-medium text-foreground text-sm">Records</Text>
 						<Text className={copy}>
-							{TRAKT_SYNC_RECORDS.filter(({ value }) => settings[value])
+							{records
+								.filter(({ value }) => settings[value])
 								.map(({ label }) => label)
 								.join(", ") || "Choose at least one record type"}
 						</Text>
@@ -553,7 +573,7 @@ export function SyncSettings({
 								Choose records
 							</Text>
 							<Text className={copy}>Choose what to sync.</Text>
-							{TRAKT_SYNC_RECORDS.map(({ value, label }) => (
+							{records.map(({ value, label }) => (
 								<Toggle
 									key={value}
 									label={label}
@@ -569,12 +589,19 @@ export function SyncSettings({
 				)}
 			</View>
 			<Text className="font-medium text-foreground text-sm">Direction</Text>
+			{integration.directionNote && (
+				<Text className={copy}>{integration.directionNote}</Text>
+			)}
 			<View
 				accessibilityRole="radiogroup"
 				accessibilityLabel="Direction"
-				className={compactDirections ? "gap-2" : "flex-row gap-2"}
+				className={
+					compactDirections || directions.length === 1
+						? "gap-2"
+						: "flex-row gap-2"
+				}
 			>
-				{TRAKT_SYNC_DIRECTIONS.map((choice) => {
+				{directions.map((choice) => {
 					const Arrow =
 						choice.value === "inbound"
 							? ArrowRight
@@ -598,7 +625,7 @@ export function SyncSettings({
 								importantForAccessibility="no-hide-descendants"
 								className="flex-row items-center gap-2"
 							>
-								<TraktMark size={20} />
+								<IntegrationMark id={integration.id} size={20} />
 								<Arrow size={16} color={colors.mutedForeground} />
 								<Image
 									source={require("../../../assets/images/icon.png")}
@@ -660,20 +687,20 @@ export function SyncSettings({
 				})}
 			</View>
 			<Text className={copy}>{TRAKT_SCOPE_COPY}</Text>
+			{needsGrant && <WriteGrant integration={integration} />}
 			<Action
 				primary
-				label={
-					onboarding ? "Continue" : managed ? "Save changes" : "Enable sync"
-				}
+				label={managed ? "Save changes" : "Enable sync"}
 				disabled={
-					!settings.watches &&
-					!settings.ratings &&
-					!settings.lists &&
-					!settings.watchlist &&
-					!settings.favorites &&
-					!settings.notes &&
-					!settings.library &&
-					!settings.reviews
+					needsGrant ||
+					(!settings.watches &&
+						!settings.ratings &&
+						!settings.lists &&
+						!settings.watchlist &&
+						!settings.favorites &&
+						!settings.notes &&
+						!settings.library &&
+						!settings.reviews)
 				}
 				onPress={() => setReviewing(true)}
 			/>
@@ -705,7 +732,7 @@ export function SyncSettings({
 									accessibilityRole="header"
 									className="flex-1 font-display-semibold text-foreground text-xl"
 								>
-									{managed ? "Update Trakt Sync" : "Enable Trakt Sync"}
+									{managed ? `Update ${name} Sync` : `Enable ${name} Sync`}
 								</Text>
 								<Pressable
 									accessibilityRole="button"
@@ -724,22 +751,14 @@ export function SyncSettings({
 								{[
 									[
 										"Records",
-										[
-											settings.watches && "Watch history",
-											settings.ratings && "Ratings",
-											settings.lists && "Custom Lists",
-											settings.watchlist && "Watchlist",
-											settings.favorites && "Favorites",
-											settings.notes && "Notes",
-											settings.library && "Library",
-											settings.reviews && "Reviews",
-										]
-											.filter(Boolean)
+										records
+											.filter(({ value }) => settings[value])
+											.map(({ label }) => label)
 											.join(", "),
 									],
 									[
 										"Direction",
-										TRAKT_SYNC_DIRECTIONS.find(
+										directions.find(
 											(choice) => choice.value === settings.direction,
 										)?.label,
 									],
@@ -800,16 +819,14 @@ export function SyncSettings({
 								label={
 									save.isPending
 										? "Saving…"
-										: onboarding
-											? "Enable sync and continue"
-											: managed
-												? status.status === "paused"
-													? "Save and resume sync"
-													: "Confirm changes"
-												: "Confirm and enable sync"
+										: managed
+											? status.status === "paused"
+												? "Save and resume sync"
+												: "Confirm changes"
+											: "Confirm and enable sync"
 								}
 								disabled={save.isPending || !canSave}
-								onPress={() => save.mutate({ body: settings })}
+								onPress={() => save.mutate(settings)}
 							/>
 							<Action
 								label="Back"
@@ -825,25 +842,22 @@ export function SyncSettings({
 }
 
 function SyncIssues({
+	integration,
 	connected,
 	view = "attention",
 }: {
+	integration: IntegrationDefinition;
 	connected: boolean;
 	view?: "attention" | "ignored";
 }) {
+	const rootKey = integrationKey(integration);
 	const [ignoredOpen, setIgnoredOpen] = useState(false);
 	const insets = useSafeAreaInsets();
 	const [page, setPage] = useState(1);
 	const result = useQuery({
 		queryKey: [...rootKey, "issues", view, page],
-		queryFn: async ({ signal }) =>
-			(
-				await traktSyncControllerIssues({
-					query: { view, page, pageSize: 1 },
-					signal,
-					throwOnError: true,
-				})
-			).data,
+		queryFn: ({ signal }) =>
+			integration.api.issues({ view, page, pageSize: 1 }, signal),
 		placeholderData: keepPreviousData,
 		refetchInterval: 10_000,
 	});
@@ -901,7 +915,12 @@ function SyncIssues({
 				</View>
 			)}
 			{items.map((item) => (
-				<SyncIssue key={item.id} item={item} connected={connected} />
+				<SyncIssue
+					key={item.id}
+					integration={integration}
+					item={item}
+					connected={connected}
+				/>
 			))}
 			{result.data && items.length === 0 && (
 				<Text className={copy}>
@@ -936,7 +955,11 @@ function SyncIssues({
 							</Text>
 							<Action label="Done" onPress={() => setIgnoredOpen(false)} />
 						</View>
-						<SyncIssues connected={connected} view="ignored" />
+						<SyncIssues
+							integration={integration}
+							connected={connected}
+							view="ignored"
+						/>
 					</EndReachedScrollView>
 				</Modal>
 			)}
@@ -945,60 +968,64 @@ function SyncIssues({
 }
 
 function SyncIssue({
+	integration,
 	item,
 	connected,
 }: {
-	item: SyncIssueDto;
+	integration: IntegrationDefinition;
+	item: IntegrationIssueDto;
 	connected: boolean;
 }) {
+	const { name } = integration;
+	const rootKey = integrationKey(integration);
 	const insets = useSafeAreaInsets();
 	const client = useQueryClient();
-	const [choice, setChoice] = useState<SyncResolveDto | null>(null);
+	const [choice, setChoice] = useState<IntegrationResolveDto | null>(null);
 	const [search, setSearch] = useState("");
 	const [query, setQuery] = useState<string | null>(null);
 	const mutation = useMutation({
-		mutationKey: ["trakt-sync", "issues", "resolve"],
-		...traktSyncControllerResolveMutation(),
+		mutationKey: [...rootKey, "issues", "resolve"],
+		mutationFn: (body: IntegrationResolveDto) =>
+			integration.api.resolve(item.id, body),
 		onSuccess: () => {
 			setChoice(null);
 			void client.invalidateQueries({ queryKey: rootKey });
 		},
 	});
 	const matches = useQuery({
-		...traktSyncControllerMatchesOptions({
-			path: { id: item.id },
-			query: { q: query ?? "" },
-		}),
+		queryKey: [...rootKey, "issues", item.id, "matches", query],
+		queryFn: ({ signal }) =>
+			integration.api.matches(item.id, query ?? "", signal),
 		enabled: query !== null,
 	});
-	const resolve = (body: SyncResolveDto) =>
-		mutation.mutate({ path: { id: item.id }, body });
+	const resolve = (body: IntegrationResolveDto) => mutation.mutate(body);
 	return (
 		<View className={card}>
 			<Text selectable className="font-semibold text-foreground text-lg">
 				{traktRecordTitle(item.opnshelf) ??
-					traktRecordTitle(item.trakt) ??
+					traktRecordTitle(item.remote) ??
 					"Removed record"}
 			</Text>
 			<Text selectable className={copy}>
-				{traktIssueRecovery(item) === "verify"
-					? "Saved in Opnshelf. We couldn’t confirm whether Trakt received it. Check again, or check your Trakt account before choosing a version."
+				{integrationIssueRecovery(item) === "verify"
+					? `Saved in Opnshelf. We couldn’t confirm whether ${name} received it. Check again, or check your ${name} account before choosing a version.`
 					: item.issue}
 			</Text>
 			<View className="flex-row gap-3">
-				{(["opnshelf", "trakt"] as const).map((name) => (
+				{(["opnshelf", "remote"] as const).map((side) => (
 					<View
-						key={name}
+						key={side}
 						className="flex-1 gap-1 rounded-xl bg-background-subtle p-3"
 					>
 						<Text className="text-muted-foreground text-xs">
-							{name === "trakt" ? "Trakt" : "Opnshelf"}
+							{side === "remote" ? name : "Opnshelf"}
 						</Text>
 						<Text selectable className="text-foreground text-sm">
-							{(item[name]?.displayValue
-								? displayValue(item[name].displayValue)
+							{(item[side]?.displayValue
+								? displayValue(item[side].displayValue)
 								: undefined) ??
-								(name === "trakt" && traktIssueRecovery(item) === "verify"
+								(side === "remote" &&
+								integrationIssueRecovery(item) === "verify"
 									? "Not confirmed yet"
 									: "Not present")}
 						</Text>
@@ -1014,23 +1041,27 @@ function SyncIssue({
 			) : (
 				<View className="gap-2">
 					{connected &&
-						traktIssueRecovery(item) !== "retry" &&
-						(["trakt", "opnshelf"] as const).map((action) => (
+						integrationIssueRecovery(item) !== "retry" &&
+						(["remote", "opnshelf"] as const).map((action) => (
 							<Action
 								key={action}
 								label={
-									traktIssueRecovery(item) === "verify"
+									integrationIssueRecovery(item) === "verify"
 										? action === "opnshelf"
-											? "Send after checking Trakt"
+											? `Send after checking ${name}`
 											: "Remove from Opnshelf"
-										: traktResolutionLabel(action, Boolean(item[action]))
+										: integrationResolutionLabel(
+												action,
+												Boolean(item[action]),
+												name,
+											)
 								}
 								disabled={mutation.isPending}
 								onPress={() =>
 									setChoice({
 										action,
-										...(traktIssueRecovery(item) === "verify"
-											? { confirmedTraktMissing: false }
+										...(integrationIssueRecovery(item) === "verify"
+											? { confirmedRemoteMissing: false }
 											: {}),
 									})
 								}
@@ -1039,7 +1070,9 @@ function SyncIssue({
 					{connected && (
 						<Action
 							label={
-								traktIssueRecovery(item) === "verify" ? "Check again" : "Retry"
+								integrationIssueRecovery(item) === "verify"
+									? "Check again"
+									: "Retry"
 							}
 							disabled={mutation.isPending}
 							onPress={() => resolve({ action: "retry" })}
@@ -1059,7 +1092,7 @@ function SyncIssue({
 						<View className="gap-1">
 							<Text className="text-muted-foreground text-xs">
 								Existing {item.kind === "watch" ? "Watch" : "record"} in{" "}
-								{item.opnshelf ? "Trakt" : "Opnshelf"}
+								{item.opnshelf ? name : "Opnshelf"}
 							</Text>
 							<Text
 								selectable
@@ -1097,8 +1130,8 @@ function SyncIssue({
 				item.kind !== "list" &&
 				item.kind !== "watchlist" &&
 				item.kind !== "favorites" &&
-				item.trakt?.mediaId === null &&
-				item.trakt?.mediaType !== "list" && (
+				item.remote?.mediaId === null &&
+				item.remote?.mediaType !== "list" && (
 					<View className="gap-2">
 						<Text className="text-foreground text-sm">
 							Find the matching title
@@ -1108,7 +1141,7 @@ function SyncIssue({
 							className="rounded-xl border border-border bg-background px-3 py-3 text-foreground"
 							value={search}
 							onChangeText={setSearch}
-							placeholder={item.trakt.title}
+							placeholder={item.remote.title}
 							onSubmitEditing={() => setQuery(search)}
 						/>
 						<Action label="Search" onPress={() => setQuery(search)} />
@@ -1155,27 +1188,28 @@ function SyncIssue({
 								<Text className={copy}>
 									{choice.action === "link"
 										? item.kind === "watch"
-											? "Link the existing Opnshelf and Trakt Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings."
+											? `Link the existing Opnshelf and ${name} Watches as one viewing. This step keeps both dates. If they differ, you’ll next choose which watch date to keep. Future changes follow your sync settings.`
 											: "Link these records?"
 										: choice.action === "match"
 											? item.kind === "watch"
-												? "Use this title for this Trakt media identity and its Watch dates?"
-												: "Use this title for this Trakt item?"
-											: traktResolutionLabel(
+												? `Use this title for this ${name} media identity and its Watch dates?`
+												: `Use this title for this ${name} item?`
+											: integrationResolutionLabel(
 													choice.action,
-													Boolean(item[choice.action as "trakt" | "opnshelf"]),
+													Boolean(item[choice.action as "remote" | "opnshelf"]),
+													name,
 												)}
 								</Text>
-								{choice.confirmedTraktMissing !== undefined && (
+								{choice.confirmedRemoteMissing !== undefined && (
 									<View className="gap-3">
 										<Text className={copy}>
-											{TRAKT_UNCONFIRMED_CHOICE_COPY}
+											{integrationUnconfirmedChoiceCopy(name)}
 										</Text>
 										<Toggle
-											label={TRAKT_MISSING_CONFIRMATION}
-											value={choice.confirmedTraktMissing}
-											onChange={(confirmedTraktMissing) =>
-												setChoice({ ...choice, confirmedTraktMissing })
+											label={integrationMissingConfirmation(name)}
+											value={choice.confirmedRemoteMissing}
+											onChange={(confirmedRemoteMissing) =>
+												setChoice({ ...choice, confirmedRemoteMissing })
 											}
 										/>
 									</View>
@@ -1199,7 +1233,8 @@ function SyncIssue({
 									primary
 									label={mutation.isPending ? "Saving…" : "Confirm choice"}
 									disabled={
-										mutation.isPending || choice.confirmedTraktMissing === false
+										mutation.isPending ||
+										choice.confirmedRemoteMissing === false
 									}
 									onPress={() => resolve(choice)}
 								/>
@@ -1211,6 +1246,102 @@ function SyncIssue({
 			{mutation.error && (
 				<Text selectable accessibilityRole="alert" className={copy}>
 					{traktError(mutation.error)}
+				</Text>
+			)}
+		</View>
+	);
+}
+
+function useWriteGrant(
+	integration: IntegrationDefinition,
+	action: "connect" | "disconnect",
+) {
+	const { runAuthorizationUrl } = useAuth();
+	return useMutation({
+		mutationKey: [...integrationKey(integration), "write-access", action],
+		mutationFn: async () => {
+			if (!integration.writeGrant) return;
+			// Handoff code (ADR 0026): the callback returns a single-use code.
+			const codeChallenge = (await beginHandoff()) ?? undefined;
+			const result = await authControllerPermissions({
+				body: {
+					integration: integration.writeGrant,
+					action,
+					platform: "mobile",
+					codeChallenge,
+				},
+				throwOnError: true,
+			});
+			await runAuthorizationUrl(result.data.authorizationUrl);
+		},
+	});
+}
+
+/** External Integration Access (ADR 0030), asked for before the first write. */
+function WriteGrant({ integration }: { integration: IntegrationDefinition }) {
+	const grant = useWriteGrant(integration, "connect");
+	const requestPermission = usePermissionRequest();
+	const allow = async () => {
+		if (!integration.writeGrant) return;
+		if (await requestPermission(integration.writeGrant)) grant.mutate();
+	};
+	return (
+		<View className="gap-3 rounded-xl border border-border bg-background-subtle p-4">
+			<Text className="text-foreground text-sm leading-5">
+				{integrationWriteGrantCopy(integration.name)}
+			</Text>
+			<Action
+				primary
+				label={
+					grant.isPending
+						? "Opening your account…"
+						: `Allow ${integration.name} access`
+				}
+				disabled={grant.isPending}
+				onPress={allow}
+			/>
+			{grant.error && (
+				<Text
+					selectable
+					accessibilityRole="alert"
+					className="text-destructive text-sm"
+				>
+					{traktError(grant.error)}
+				</Text>
+			)}
+		</View>
+	);
+}
+
+function WriteAccess({
+	integration,
+	removable,
+}: {
+	integration: IntegrationDefinition;
+	removable: boolean;
+}) {
+	const remove = useWriteGrant(integration, "disconnect");
+	return (
+		<View className="gap-3 border-border border-t pt-4">
+			<Text className={copy}>
+				{removable
+					? `Opnshelf may write your ${integration.name} records.`
+					: `Opnshelf may write your ${integration.name} records. To remove this, first choose ${integration.name} → Opnshelf in Sync settings.`}
+			</Text>
+			{removable && (
+				<Action
+					label="Remove access"
+					disabled={remove.isPending}
+					onPress={() => remove.mutate()}
+				/>
+			)}
+			{remove.error && (
+				<Text
+					selectable
+					accessibilityRole="alert"
+					className="text-destructive text-sm"
+				>
+					{traktError(remove.error)}
 				</Text>
 			)}
 		</View>

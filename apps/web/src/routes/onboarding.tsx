@@ -2,10 +2,11 @@ import {
 	authControllerMeOptions,
 	authControllerResendVerificationMutation,
 	authControllerVerifyEmailMutation,
-	bringsTraktWatches,
-	traktError,
-	traktSyncControllerConnectMutation,
-	traktSyncControllerStatus,
+	bringsIntegrationWatches,
+	findIntegration,
+	INTEGRATIONS,
+	type IntegrationId,
+	integrationKey,
 	type UserDto,
 	type UserProfileDto,
 	usersControllerCompleteOnboarding,
@@ -14,13 +15,16 @@ import {
 	usersControllerUpdateMyProfileMutation,
 	usersControllerUpdateMySettingsMutation,
 } from "@opnshelf/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueries,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
-	ArrowLeftRight,
 	ArrowRight,
 	Camera,
-	Check,
 	CheckCircle,
 	Loader2,
 	MailCheck,
@@ -31,6 +35,7 @@ import { toast } from "sonner";
 import CountrySelector from "#/components/CountrySelector";
 import Logo from "#/components/Logo";
 import { FollowSuggestionsStep } from "#/components/onboarding/FollowSuggestionsStep";
+import { IntegrationsStep } from "#/components/onboarding/IntegrationsStep";
 import { WatchedSwipeStep } from "#/components/onboarding/WatchedSwipeStep";
 import { WelcomeStep } from "#/components/onboarding/WelcomeStep";
 import StreamingServicePicker, {
@@ -39,9 +44,8 @@ import StreamingServicePicker, {
 } from "#/components/StreamingServicePicker";
 import { NotificationEmailSection } from "#/components/settings/NotificationEmailSection";
 import { PrivacySection } from "#/components/settings/PrivacySection";
+import { usePermissionChangeResult } from "#/components/settings/use-settings-mutations";
 import TimezoneSelector from "#/components/TimezoneSelector";
-import { TraktMark } from "#/components/TraktMark";
-import { SyncSettings } from "#/components/trakt/TraktSyncManager";
 import { posthog } from "#/integrations/posthog/provider";
 import { apiConfig } from "#/lib/api";
 import { useAuth } from "#/lib/auth-context";
@@ -52,6 +56,7 @@ import {
 	getResendLabel,
 	markOnboardingCompleted,
 	nextOnboardingStep,
+	ONBOARDING_INTEGRATION,
 	type OnboardingStep,
 	RESEND_COOLDOWN_SECONDS,
 	resolveOnboardingCountry,
@@ -67,11 +72,40 @@ export const Route = createFileRoute("/onboarding")({
 function OnboardingPage() {
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const navigate = useNavigate();
+	// Leaving for an Integration (Trakt's sign-in, or the account server for
+	// Popfeed write access) returns here and resumes at that Integration.
+	const [resume] = useState<{
+		open: IntegrationId | null;
+		failed: IntegrationId | null;
+	} | null>(() => {
+		if (typeof window === "undefined") return null;
+		const connection = new URLSearchParams(window.location.search).get(
+			"connection",
+		);
+		if (connection)
+			return {
+				open: connection === "connected" ? "trakt" : null,
+				failed: connection === "failed" ? "trakt" : null,
+			};
+		const left = findIntegration(
+			sessionStorage.getItem(ONBOARDING_INTEGRATION) ?? "",
+		);
+		return left ? { open: left.id, failed: null } : null;
+	});
+	useEffect(() => {
+		if (!resume) return;
+		sessionStorage.removeItem(ONBOARDING_INTEGRATION);
+		const url = new URL(window.location.href);
+		if (!url.searchParams.has("connection")) return;
+		url.searchParams.delete("connection");
+		window.history.replaceState(null, "", url.toString());
+	}, [resume]);
+	// A declined Popfeed grant comes back with ?permission=declined.
+	usePermissionChangeResult(Boolean(resume));
 	const [step, setStep] = useState<OnboardingStep>(() => {
 		if (typeof window === "undefined") return "welcome";
 		const search = new URLSearchParams(window.location.search);
-		// Trakt authorization returns to the Trakt step.
-		if (search.has("connection")) return "trakt";
+		if (resume) return "integrations";
 		return sessionStorage.getItem("opnshelf-privacy-choice") ||
 			search.has("privacyAuthorization")
 			? "privacy"
@@ -98,18 +132,22 @@ function OnboardingPage() {
 		}
 	}, [authLoading, isAuthenticated, user?.needsOnboarding, navigate]);
 
-	// Shares the Trakt step's cache, so a Sync enabled there is seen here.
-	const { data: traktSync } = useQuery({
-		queryKey: traktStatusKey,
-		queryFn: async ({ signal }) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
-		enabled: isAuthenticated && !authLoading,
+	// Shares the Integrations step's cache, so a Sync enabled there is seen here.
+	const integrationStatuses = useQueries({
+		queries: INTEGRATIONS.map((integration) => ({
+			queryKey: [...integrationKey(integration), "status"],
+			queryFn: ({ signal }: { signal: AbortSignal }) =>
+				integration.api.status(signal),
+			enabled: isAuthenticated && !authLoading,
+		})),
 	});
-	// Watch history already coming from Trakt makes the watched step redundant.
-	const skipWatched = bringsTraktWatches(traktSync);
+	// Watch history already coming from an Integration makes the watched step
+	// redundant.
+	const skipWatched = integrationStatuses.some(({ data }) =>
+		bringsIntegrationWatches(data),
+	);
 
-	// Every step hands off to its linear successor; the Trakt step's skip and
-	// complete paths both land on suggestions.
+	// Every step hands off to its linear successor.
 	const goToNextStep = () =>
 		setStep((current) => {
 			const next = nextOnboardingStep(current);
@@ -158,8 +196,12 @@ function OnboardingPage() {
 								</button>
 							</div>
 						)}
-						{step === "trakt" && (
-							<TraktStep onNext={goToNextStep} onSkip={goToNextStep} />
+						{step === "integrations" && (
+							<IntegrationsStep
+								onNext={goToNextStep}
+								initialOpen={resume?.open}
+								connectionFailed={resume?.failed}
+							/>
 						)}
 						{step === "suggestions" && (
 							<FollowSuggestionsStep
@@ -755,182 +797,6 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 							<ArrowRight className="size-4" />
 						</>
 					)}
-				</button>
-			</div>
-		</div>
-	);
-}
-
-/* ------------------------------------------------------------------
-   Step 4: Trakt Sync
-   ------------------------------------------------------------------ */
-const traktStatusKey = ["trakt-sync", "status"];
-
-function TraktStep({
-	onNext,
-	onSkip,
-}: {
-	onNext: () => void;
-	onSkip: () => void;
-}) {
-	const queryClient = useQueryClient();
-	// Trakt authorization returns here with ?connection=connected|cancelled|failed.
-	const [connection] = useState(() =>
-		typeof window === "undefined"
-			? null
-			: new URLSearchParams(window.location.search).get("connection"),
-	);
-	useEffect(() => {
-		if (connection) window.history.replaceState(null, "", "/onboarding");
-	}, [connection]);
-	const status = useQuery({
-		queryKey: traktStatusKey,
-		queryFn: async ({ signal }) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
-	});
-	const connect = useMutation({
-		mutationKey: ["trakt-sync", "connect"],
-		...traktSyncControllerConnectMutation(),
-		onSuccess: (data) => window.location.assign(data.url),
-	});
-	const refresh = () =>
-		queryClient.invalidateQueries({ queryKey: traktStatusKey });
-
-	if (status.isPending) {
-		return (
-			<output
-				aria-label="Loading Trakt"
-				className="card block h-96 animate-pulse"
-			/>
-		);
-	}
-
-	const data = status.data;
-	if (!data?.configured)
-		return (
-			<div className="card p-6">
-				<h2 className="text-display-3">Trakt Sync</h2>
-				<p className="mt-2 text-(--foreground-muted) text-sm">
-					Trakt Sync is unavailable. You can connect later in Settings.
-				</p>
-				<button
-					className="btn btn-primary mt-5 w-full"
-					type="button"
-					onClick={onSkip}
-				>
-					Skip
-				</button>
-			</div>
-		);
-	const connected =
-		data.status !== "disconnected" && data.status !== "reconnect";
-
-	if (connected) {
-		const enabled = data.status === "active" || data.status === "preparing";
-		return (
-			<div className="card space-y-5 p-6">
-				<div>
-					<h2 className="text-display-3">
-						{enabled ? "Trakt Sync is on" : "Choose what to sync"}
-					</h2>
-					<p className="mt-1 text-(--foreground-muted) text-sm">
-						Connected as @{data.username}.{" "}
-						{enabled
-							? "We're comparing your history in the background. You can keep going."
-							: "Pick what moves and in which direction, then confirm."}
-					</p>
-				</div>
-				{!enabled && (
-					<SyncSettings
-						key={data.username}
-						status={data}
-						onSaved={() => {
-							void refresh();
-							onNext();
-						}}
-						onboarding
-						className=""
-						showHeading={false}
-					/>
-				)}
-				<div className="flex items-center justify-between gap-3">
-					<p className="text-(--foreground-subtle) text-xs">
-						You can change this later in Settings.
-					</p>
-					{enabled ? (
-						<button type="button" onClick={onNext} className="btn btn-primary">
-							Continue
-							<ArrowRight className="size-4" />
-						</button>
-					) : (
-						<button
-							type="button"
-							onClick={onSkip}
-							className="shrink-0 text-(--foreground-muted) text-sm hover:text-(--foreground)"
-						>
-							Skip
-						</button>
-					)}
-				</div>
-			</div>
-		);
-	}
-
-	return (
-		<div className="card p-6">
-			<h2 className="text-display-3">Already on Trakt?</h2>
-			<p className="mt-1 mb-5 text-(--foreground-muted) text-sm">
-				Connect once and Opnshelf keeps your history in step with Trakt.
-			</p>
-			<div className="rounded-xl border border-(--accent)/30 bg-linear-to-br from-(--accent)/15 to-transparent p-5">
-				<div className="mb-4 flex items-center justify-center gap-3">
-					<img src="/icon.png" alt="" className="size-11 rounded-xl" />
-					<ArrowLeftRight className="size-5 text-(--accent)" />
-					<TraktMark className="size-11" />
-				</div>
-				<ul className="mb-5 space-y-1.5 text-(--foreground-muted) text-sm">
-					{[
-						"Bring over your Watch history, Ratings, Lists, Favorites, Notes, Library and Reviews",
-						"New Watches keep flowing, in the direction you choose",
-						"Review every transfer before sync starts",
-					].map((line) => (
-						<li key={line} className="flex gap-2">
-							<Check className="mt-0.5 size-4 shrink-0 text-(--accent)" />
-							{line}
-						</li>
-					))}
-				</ul>
-				<button
-					type="button"
-					className="btn btn-primary w-full"
-					disabled={connect.isPending}
-					onClick={() =>
-						connect.mutate({
-							body: { platform: "web", returnTo: "onboarding" },
-						})
-					}
-				>
-					{connect.isPending
-						? "Opening Trakt…"
-						: data.status === "reconnect"
-							? "Reconnect Trakt"
-							: "Connect Trakt"}
-				</button>
-				{(connect.error || connection === "failed") && (
-					<p role="alert" className="mt-3 text-(--destructive) text-sm">
-						{connect.error
-							? traktError(connect.error)
-							: "Trakt could not connect. Try connecting again."}
-					</p>
-				)}
-			</div>
-			<div className="mt-5 flex justify-end">
-				<button
-					type="button"
-					onClick={onSkip}
-					className="text-(--foreground-muted) text-sm hover:text-(--foreground)"
-				>
-					Skip
 				</button>
 			</div>
 		</div>

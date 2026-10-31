@@ -12,7 +12,7 @@ Keep `PROVIDER_STATE_SECRET` stable: changing it makes retained credentials unre
 
 Apply both `20261005120000_trakt_sync` and `20261005121000_trakt_sync_account_guard` through the normal explicitly approved deployment process. The second migration contains a partial unique index enforcing one connected Trakt account per User. Preserve this SQL constraint in future schema migrations; disconnected accounts retain their separate links. This work has applied migrations only to a disposable local database.
 
-Web and Mobile expose `/trakt-sync` from Settings and optional Onboarding. Mobile changes are JavaScript only and leave the app version unchanged, so the release route is OTA. Neither backend deployment nor Web/Mobile publication has been performed.
+Web and Mobile expose Trakt Sync at `/integrations/trakt` from Settings → Integrations and optional Onboarding. `/trakt-sync` and `/trakt-sync/attention` redirect there, so the OAuth return routes above keep working (ADR 0051). Mobile changes are JavaScript only and leave the app version unchanged, so the release route is OTA. Neither backend deployment nor Web/Mobile publication has been performed.
 
 ## Worker behavior
 

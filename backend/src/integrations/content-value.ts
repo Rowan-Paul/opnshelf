@@ -49,32 +49,3 @@ export function validateContent(record: SyncRecord) {
 			"Choose a supported ownership format on Trakt before syncing this Library Item. No Digital format was assumed.",
 		);
 }
-
-/** Validate export constraints before recording an uncertain remote write. */
-export function validateOutboundContent(desired: SyncRecord) {
-	validateContent(desired);
-	const value = contentValue(desired);
-	if (
-		desired.kind === "review" &&
-		value.content.trim().split(/\s+/u).length < 200
-	)
-		throw new Error(
-			"Trakt classifies Reviews at 200 words. Shorter text stays in Opnshelf; no text was padded.",
-		);
-	if (desired.kind === "library" && (value.notes || value.boxSet))
-		throw new Error(
-			"Trakt collection cannot represent this item's notes or Box Set. Your Library Item is preserved.",
-		);
-	if (desired.kind === "library" && desired.visibility === "private")
-		throw new Error(
-			"Private Library Items cannot be sent until Trakt collection privacy is verified.",
-		);
-	if (
-		desired.kind === "review" &&
-		/\[\/?spoiler\]/i.test(value.content) &&
-		!value.spoiler
-	)
-		throw new Error(
-			"Mark this Review as containing spoilers before sending it to Trakt.",
-		);
-}

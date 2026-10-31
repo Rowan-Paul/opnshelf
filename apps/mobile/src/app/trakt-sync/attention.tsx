@@ -1,18 +1,13 @@
-import { Stack } from "expo-router";
-import { TraktSyncManager } from "@/components/trakt/TraktSyncManager";
-import { EndReachedScrollView } from "@/lib/use-end-reached";
-export default function TraktSyncAttentionScreen() {
+import { Redirect } from "expo-router";
+
+// Older links to Trakt Sync's Needs attention list still open this path (ADR 0051).
+export default function TraktSyncAttentionRedirect() {
 	return (
-		<EndReachedScrollView
-			className="flex-1 bg-background"
-			contentContainerClassName="px-4 py-4 pb-12"
-			contentInsetAdjustmentBehavior="automatic"
-			keyboardShouldPersistTaps="handled"
-		>
-			<Stack.Screen
-				options={{ headerShown: true, title: "Review sync items" }}
-			/>
-			<TraktSyncManager issuesOnly />
-		</EndReachedScrollView>
+		<Redirect
+			href={{
+				pathname: "/integrations/[provider]/attention",
+				params: { provider: "trakt" },
+			}}
+		/>
 	);
 }

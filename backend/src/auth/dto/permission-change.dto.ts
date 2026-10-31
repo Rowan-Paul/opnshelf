@@ -6,6 +6,7 @@ export const OAUTH_INTEGRATIONS = [
 	"atstore",
 	"blog",
 	"bluesky",
+	"popfeed",
 	"spaces",
 	"watches",
 ] as const;

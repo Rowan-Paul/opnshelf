@@ -530,6 +530,26 @@ describe("AuthController callback", () => {
 			);
 		});
 
+		it("returns a declined Popfeed grant to Popfeed Sync on Web", async () => {
+			const error = Object.assign(new Error("Permission declined"), {
+				state: "permission-state",
+				params: new URLSearchParams("error=access_denied"),
+			});
+			mockAuthService.callback.mockRejectedValue(error);
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				accountDid: "did:plc:abc123",
+				permissionChange: "popfeed",
+				requestedPreferences: { popfeedEnabled: true },
+			});
+			const res = createMockResponse();
+
+			await controller.callback(createMockRequest(), res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/integrations/popfeed?permission=declined",
+			);
+		});
+
 		it("returns a granted Blog permission change to Connections", async () => {
 			const mockProfile = {
 				did: "did:plc:abc123",
