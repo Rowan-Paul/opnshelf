@@ -32,6 +32,11 @@ import {
 import { NoPendingHandoffError } from "@/lib/handoff-error";
 import { posthog } from "@/lib/posthog";
 import { removeCurrentPushDevice } from "@/lib/push-notifications";
+import {
+	loadRecentAccounts,
+	noteSignInMethod,
+	rememberAccount,
+} from "@/lib/recent-accounts";
 import { setWidgetHandle } from "../../modules/widget-bridge";
 
 /** Where the PDS OAuth flow redirects back into the app. */
@@ -143,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// Restore the persisted token on mount and apply it to the API client.
 	useEffect(() => {
 		let isMounted = true;
+		void loadRecentAccounts();
 
 		void loadSessionToken().then(
 			(token) => {
@@ -380,6 +386,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const login = useCallback(
 		async (handle?: string) => {
+			noteSignInMethod("handle");
 			const codeChallenge = await beginHandoff();
 			const loginUrl = getLoginUrl(
 				handle?.trim() || undefined,
@@ -401,6 +408,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			if (!data?.sessionId) {
 				throw new Error("No session returned from register");
 			}
+			noteSignInMethod("handle");
 			// Native apps can't use the httpOnly cookie the backend also sets, so we
 			// persist the opaque session id from the body and drive the API client
 			// off it (same Bearer-token path as the OAuth flow).
@@ -466,6 +474,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		if (isLoading) return;
 		setWidgetHandle(user?.handle ?? null);
 	}, [isLoading, user?.handle]);
+
+	// Offer this account on the login screen once its session ends, including
+	// after an explicit sign-out; the screen lets the user remove it.
+	useEffect(() => {
+		if (user) void rememberAccount(user);
+	}, [user]);
 
 	const value: AuthContextType = {
 		user: user ?? null,

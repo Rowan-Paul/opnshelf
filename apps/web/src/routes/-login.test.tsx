@@ -54,3 +54,52 @@ it("starts OAuth for a typed local handle even when Bluesky cannot resolve it", 
 	);
 	expect(publicLookup).not.toHaveBeenCalled();
 });
+
+it("continues as a remembered account without typing its handle", async () => {
+	localStorage.setItem(
+		"opnshelf_recent_accounts",
+		JSON.stringify([
+			{
+				did: "did:plc:alice",
+				handle: "alice.opnshelf.social",
+				displayName: "Alice",
+				avatar: null,
+				method: "handle",
+			},
+		]),
+	);
+	const Page = Route.options.component;
+	if (!Page) throw new Error("Missing login page");
+	render(<Page />);
+	fireEvent.click(screen.getByRole("button", { name: /Alice/ }));
+	await waitFor(() =>
+		expect(login).toHaveBeenCalledWith("alice.opnshelf.social"),
+	);
+	localStorage.clear();
+});
+
+it("removes a remembered account from this browser", async () => {
+	localStorage.setItem(
+		"opnshelf_recent_accounts",
+		JSON.stringify([
+			{
+				did: "did:plc:alice",
+				handle: "alice.opnshelf.social",
+				displayName: "Alice",
+				avatar: null,
+				method: "google",
+			},
+		]),
+	);
+	const Page = Route.options.component;
+	if (!Page) throw new Error("Missing login page");
+	render(<Page />);
+	fireEvent.click(
+		screen.getByRole("button", {
+			name: "Remove @alice.opnshelf.social from this browser",
+		}),
+	);
+	await waitFor(() => expect(screen.queryByText("Continue as")).toBeNull());
+	expect(localStorage.getItem("opnshelf_recent_accounts")).toBe("[]");
+	localStorage.clear();
+});

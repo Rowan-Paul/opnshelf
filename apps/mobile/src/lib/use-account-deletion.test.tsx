@@ -10,6 +10,7 @@ import {
 
 const api = vi.hoisted(() => ({ getDeletion: vi.fn() }));
 const auth = vi.hoisted(() => ({ signOut: vi.fn() }));
+const recent = vi.hoisted(() => ({ forgetAccount: vi.fn() }));
 
 vi.mock("@opnshelf/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@opnshelf/api")>()),
@@ -20,8 +21,14 @@ vi.mock("@opnshelf/api", async (importOriginal) => ({
 }));
 
 vi.mock("@/lib/auth-context", () => ({
-	useAuth: () => ({ isAuthenticated: true, signOut: auth.signOut }),
+	useAuth: () => ({
+		isAuthenticated: true,
+		signOut: auth.signOut,
+		user: { did: "did:plc:deleted" },
+	}),
 }));
+
+vi.mock("@/lib/recent-accounts", () => recent);
 
 let mounted: { unmount(): void } | null = null;
 let activeClient: QueryClient | null = null;
@@ -63,6 +70,7 @@ afterEach(() => {
 	activeClient = null;
 	api.getDeletion.mockReset();
 	auth.signOut.mockReset();
+	recent.forgetAccount.mockReset();
 });
 
 describe("useAccountDeletionJob", () => {
@@ -81,7 +89,7 @@ describe("useAccountDeletionJob", () => {
 		expect(auth.signOut).not.toHaveBeenCalled();
 	});
 
-	it("signs out once the job it was watching completes", async () => {
+	it("signs out and forgets the account once the job it was watching completes", async () => {
 		api.getDeletion.mockResolvedValue({ id: "job-1", status: "running" });
 		const hook = renderHook();
 
@@ -98,6 +106,7 @@ describe("useAccountDeletionJob", () => {
 			});
 			await vi.waitFor(() => expect(auth.signOut).toHaveBeenCalled());
 		});
+		expect(recent.forgetAccount).toHaveBeenCalledWith("did:plc:deleted");
 	});
 
 	it("stays signed in when the only job on file finished long ago", async () => {

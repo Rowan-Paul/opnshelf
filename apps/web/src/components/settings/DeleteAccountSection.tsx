@@ -15,13 +15,14 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
+import { forgetAccount } from "#/lib/recent-accounts";
 import {
 	isAccountDeletionRunning,
 	useAccountDeletionJob,
 } from "#/lib/use-account-deletion";
 
 export function DeleteAccountSection() {
-	const { logout } = useAuth();
+	const { logout, user } = useAuth();
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [confirmChecked, setConfirmChecked] = useState(false);
 	const [deletePDSData, setDeletePDSData] = useState(false);
@@ -46,6 +47,7 @@ export function DeleteAccountSection() {
 			await deleteAccountMutation.mutateAsync({ body: { deletePDSData } });
 			if (!deletePDSData) {
 				// Immediate deletion, no job returned
+				if (user) forgetAccount(user.did);
 				await logout();
 				return;
 			}

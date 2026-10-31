@@ -162,6 +162,15 @@ _Avoid_: Social login (these are identity providers, not social graphs), SSO
 (Opnshelf's own PDS authorization is also OAuth — they are different legs of the
 same signup)
 
+**Recent Account**:
+An account this device or browser signed in to lately, offered on the login
+screen under "Continue as" so a User whose session ended does not retype their
+**Handle**. Up to three, newest first, kept after sign-out and expiry, removed
+by the User or when the account is deleted. It stores only public profile
+fields and how the account last signed in (Handle, Google or Apple), and grants
+nothing: tapping one starts that same sign-in.
+_Avoid_: Saved login, remembered session (no session or credential is kept)
+
 **Provider Identity**:
 A provider paired with the stable subject identifier it assigns a person. It is
 the only thing account matching uses — email is never matched on, and Apple may

@@ -71,6 +71,7 @@ import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { createCoalescedSaver, sameIdSet } from "@/lib/coalesced-save";
 import { useFeedback } from "@/lib/feedback";
+import { forgetAccount } from "@/lib/recent-accounts";
 import type { ThemePreference } from "@/lib/theme-context";
 import { useTheme } from "@/lib/theme-context";
 import {
@@ -435,6 +436,7 @@ export function SettingsCategoryScreen({
 			await deleteAccountMutation.mutateAsync({ body: { deletePDSData } });
 			if (!deletePDSData) {
 				// Immediate deletion, no job returned (204).
+				if (user) await forgetAccount(user.did);
 				await signOut();
 				return;
 			}
