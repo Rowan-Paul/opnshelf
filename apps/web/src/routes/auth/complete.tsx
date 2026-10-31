@@ -14,6 +14,8 @@ export const Route = createFileRoute("/auth/complete")({
 
 function AuthCompletePage() {
 	const search = useSearch({ from: "/auth/complete" });
+	// A permission change returns here too, from a User who is already signed in.
+	const permission = (search as { permission?: string }).permission;
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<"loading" | "success" | "error">(
 		"loading",
@@ -65,14 +67,15 @@ function AuthCompletePage() {
 				}
 				setStatus("success");
 				// Redirect to onboarding for new users, otherwise home
-				const permission = (search as { permission?: string }).permission;
 				const redirectTo = data?.needsOnboarding
 					? "/onboarding"
 					: permission === "privacy"
 						? "/settings/privacy"
 						: permission === "atstore"
 							? "/?review=compose"
-							: "/";
+							: permission === "blog" || permission === "bluesky"
+								? "/settings/connections"
+								: "/";
 				// Clear any stale query cache from previous sessions
 				queryClient.clear();
 				setTimeout(() => {
@@ -94,7 +97,7 @@ function AuthCompletePage() {
 						: "Failed to complete authentication. Please try again.",
 				);
 			});
-	}, [queryClient, search, getErrorMessage]);
+	}, [queryClient, search, permission, getErrorMessage]);
 
 	return (
 		<div className="container-app flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
@@ -102,9 +105,13 @@ function AuthCompletePage() {
 				{status === "loading" && (
 					<>
 						<Loader2 className="mx-auto size-16 animate-spin text-(--accent)" />
-						<h1 className="mt-6 text-display-3">Completing Sign In...</h1>
+						<h1 className="mt-6 text-display-3">
+							{permission ? "Saving your permission…" : "Completing Sign In..."}
+						</h1>
 						<p className="mt-2 text-(--foreground-muted)">
-							Please wait while we verify your account.
+							{permission
+								? "You'll be back where you started in a moment."
+								: "Please wait while we verify your account."}
 						</p>
 					</>
 				)}

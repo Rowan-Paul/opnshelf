@@ -11,6 +11,7 @@ import {
 import { Check, ChevronDown, CircleAlert, Globe, Lock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { usePermissionExplainer } from "#/components/PermissionExplainer";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -47,16 +48,29 @@ export function PrivacySection({
 			new URLSearchParams(window.location.search).has("privacyAuthorization"),
 		);
 	}, []);
+	const explainer = usePermissionExplainer();
 	const { query, mutation, pendingKey } = usePrivacy(async (action) => {
-		const result = await authControllerPermissions({
-			body: { integration: "watches", action: "connect" },
-			throwOnError: true,
+		const authorizationUrl = await explainer.request({
+			integration: "watches",
+			action: "connect",
+			start: async () => {
+				const { data } = await authControllerPermissions({
+					body: { integration: "watches", action: "connect" },
+					throwOnError: true,
+				});
+				// The progress dialog stays up while access is checked; the
+				// explainer replaces it rather than following a gap.
+				setManageLists(false);
+				setShowProgress(false);
+				return data.authorizationUrl;
+			},
 		});
+		if (!authorizationUrl) return false;
 		sessionStorage.setItem(
 			PENDING,
 			JSON.stringify({ did: user?.did, action, at: Date.now(), onboarding }),
 		);
-		window.location.assign(result.data.authorizationUrl);
+		window.location.assign(authorizationUrl);
 		return false;
 	});
 	const errorMessage = privacyErrorMessage(
@@ -363,7 +377,8 @@ export function PrivacySection({
 			)}
 			{declined && (
 				<output>
-					Private access was not authorized. Your visibility is unchanged.
+					Nothing changed. Private access wasn't granted, so your visibility is
+					the same as before.
 				</output>
 			)}
 			{listRkey ? (
@@ -726,6 +741,7 @@ export function PrivacySection({
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+			{explainer.dialog}
 		</section>
 	);
 }

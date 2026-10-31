@@ -377,6 +377,35 @@ describe("AuthController callback", () => {
 			);
 		});
 
+		it.each(["blog", "bluesky"] as const)(
+			"returns an approved %s change on the Web App to Connections",
+			async (integration) => {
+				mockAuthService.callback.mockResolvedValue({
+					session: { did: "did:plc:abc123" },
+					state: "permission-state",
+					sessionId: "session-123",
+				});
+				mockAuthService.parseOAuthAppState.mockReturnValue({
+					permissionChange: integration,
+					requestedPreferences: { [`${integration}Enabled`]: true },
+				});
+				mockAuthService.fetchProfile.mockResolvedValue({
+					did: "did:plc:abc123",
+					handle: "reader.example",
+					displayName: "Reader",
+					avatar: null,
+				});
+				mockAuthService.upsertUser.mockResolvedValue({ isNewUser: false });
+				const res = createMockResponse();
+
+				await controller.callback(createMockRequest(), res);
+
+				expect(res.redirect).toHaveBeenCalledWith(
+					`http://127.0.0.1:3000/auth/complete?permission=${integration}`,
+				);
+			},
+		);
+
 		it("hands the app a single-use code, never the session id, when the state carries a challenge", async () => {
 			mockAuthService.callback.mockResolvedValue({
 				session: { did: "did:plc:abc123" },
@@ -511,7 +540,47 @@ describe("AuthController callback", () => {
 				"blog",
 			);
 			expect(res.redirect).toHaveBeenCalledWith(
-				"http://127.0.0.1:3000/login?error=permission_declined",
+				"http://127.0.0.1:3000/settings/connections?permissionChange=declined&integration=blog",
+			);
+		});
+
+		it("returns a failed Bluesky change on the Web App to Connections", async () => {
+			const error = Object.assign(new Error("Token exchange failed"), {
+				state: "permission-state",
+			});
+			mockAuthService.callback.mockRejectedValue(error);
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				accountDid: "did:plc:abc123",
+				permissionChange: "bluesky",
+				requestedPreferences: { blueskyEnabled: true },
+			});
+			const res = createMockResponse();
+
+			await controller.callback(createMockRequest(), res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"http://127.0.0.1:3000/settings/connections?permissionChange=failed&integration=bluesky",
+			);
+		});
+
+		it("keeps the Mobile App's error deep link when a Blog change is declined", async () => {
+			const error = Object.assign(new Error("Permission declined"), {
+				state: "permission-state",
+				params: new URLSearchParams("error=access_denied"),
+			});
+			mockAuthService.callback.mockRejectedValue(error);
+			mockAuthService.parseOAuthAppState.mockReturnValue({
+				accountDid: "did:plc:abc123",
+				platform: "mobile",
+				permissionChange: "blog",
+				requestedPreferences: { blogEnabled: true },
+			});
+			const res = createMockResponse();
+
+			await controller.callback(createMockRequest(), res);
+
+			expect(res.redirect).toHaveBeenCalledWith(
+				"opnshelf://auth/complete?error=permission_declined",
 			);
 		});
 

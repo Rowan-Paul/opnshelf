@@ -68,6 +68,15 @@ export {
 	type MutationFailureReport,
 } from "./mutation-failure";
 export { onboardingDiscoveryOptions } from "./onboarding-discovery";
+export {
+	accountHostName,
+	PERMISSION_DECLINED_MESSAGE,
+	PERMISSION_DEVICES_NOTICE,
+	type PermissionExplainer,
+	type PermissionExplainerAction,
+	type PermissionIntegration,
+	permissionExplainer,
+} from "./permission-explainer";
 export { preparePostHogEvent } from "./posthog-event";
 export {
 	type PrivacyAction,

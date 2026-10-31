@@ -1,10 +1,12 @@
 import { IntegrationPermissionRow } from "#/components/settings/IntegrationPermissionRow";
 import { useAuth } from "#/lib/auth-context";
+import { PermissionChangeOutcome } from "./PermissionChangeOutcome";
 import { usePermissionChange } from "./use-settings-mutations";
 
 export function BlueskyCrossPostsSection() {
 	const { userSettings } = useAuth();
-	const { requestPermissionChange, isPending } = usePermissionChange();
+	const { requestPermissionChange, isPending, explainerDialog } =
+		usePermissionChange();
 
 	return (
 		<section className="border-(--border) border-b p-5 sm:p-7">
@@ -13,13 +15,15 @@ export function BlueskyCrossPostsSection() {
 				Connect once, then choose which Reviews should also appear on Bluesky
 				when you publish them.
 			</p>
+			<PermissionChangeOutcome integration="bluesky" />
 			<IntegrationPermissionRow
 				name="Bluesky Cross-posts"
 				description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
 				connected={userSettings?.blueskyCrossPostEnabled ?? false}
 				disabled={isPending}
-				onConfirm={(action) => requestPermissionChange("bluesky", action)}
+				onRequest={(action) => void requestPermissionChange("bluesky", action)}
 			/>
+			{explainerDialog}
 		</section>
 	);
 }

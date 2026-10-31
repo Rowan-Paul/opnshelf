@@ -21,6 +21,7 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { useAuth } from "#/lib/auth-context";
+import { PermissionChangeOutcome } from "./PermissionChangeOutcome";
 import {
 	usePermissionChange,
 	useUpdateSettings,
@@ -42,8 +43,11 @@ const SERVICES = {
 export function BlogMirrorSection() {
 	const { userSettings, isAuthenticated } = useAuth();
 	const updateSettingsMutation = useUpdateSettings();
-	const { requestPermissionChange, isPending: permissionChangePending } =
-		usePermissionChange();
+	const {
+		requestPermissionChange,
+		isPending: permissionChangePending,
+		explainerDialog,
+	} = usePermissionChange();
 
 	const {
 		data: myPublications,
@@ -115,6 +119,7 @@ export function BlogMirrorSection() {
 					Your reviews always live on Opnshelf. Optionally, mirror new reviews
 					to one of your own blogs as well.
 				</p>
+				<PermissionChangeOutcome integration="blog" />
 
 				{userSettings?.blogIntegrationEnabled ||
 				myPublications?.items.some(
@@ -125,7 +130,7 @@ export function BlogMirrorSection() {
 						description="Allow Opnshelf to publish and update review mirrors in the selected publication."
 						connected={userSettings?.blogIntegrationEnabled ?? false}
 						disabled={permissionChangePending}
-						onConfirm={(action) => requestPermissionChange("blog", action)}
+						onRequest={(action) => void requestPermissionChange("blog", action)}
 					/>
 				) : (
 					<p className="mb-4 text-(--foreground-muted) text-sm">
@@ -272,6 +277,7 @@ export function BlogMirrorSection() {
 					</div>
 				</DialogContent>
 			</Dialog>
+			{explainerDialog}
 		</>
 	);
 }

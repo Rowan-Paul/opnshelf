@@ -122,7 +122,9 @@ describe("settings sections", () => {
 		expect(
 			screen.getByRole("heading", { name: "Bluesky Cross-posts" }),
 		).toBeDefined();
-		expect(screen.getByRole("button", { name: "Connect" })).toBeDefined();
+		expect(
+			screen.getByRole("button", { name: "Connect Bluesky Cross-posts" }),
+		).toBeDefined();
 	});
 
 	it("renders the danger zone without an active deletion job", () => {

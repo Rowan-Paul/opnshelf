@@ -445,7 +445,10 @@ export class AuthController {
 					? "?permission=atstore"
 					: statePayload.permissionChange === "watches"
 						? "?permission=privacy"
-						: "";
+						: statePayload.permissionChange === "blog" ||
+								statePayload.permissionChange === "bluesky"
+							? `?permission=${statePayload.permissionChange}`
+							: "";
 			const completeUrl =
 				platform === "mobile"
 					? this.buildMobileCompleteUrl(
@@ -564,13 +567,23 @@ export class AuthController {
 					).toString(),
 				);
 			}
-			if (platform === "mobile") {
-				return res.redirect(
-					this.resolveErrorRedirect(
-						declined ? "permission_declined" : "callback_failed",
-						platform,
-					),
+			if (
+				(statePayload.permissionChange === "blog" ||
+					statePayload.permissionChange === "bluesky") &&
+				platform !== "mobile"
+			) {
+				// The User is still signed in: return them to Connections, where the
+				// change started, instead of the login page.
+				const connectionsUrl = new URL("/settings/connections", frontendUrl);
+				connectionsUrl.searchParams.set(
+					"permissionChange",
+					declined ? "declined" : "failed",
 				);
+				connectionsUrl.searchParams.set(
+					"integration",
+					statePayload.permissionChange,
+				);
+				return res.redirect(connectionsUrl.toString());
 			}
 
 			return res.redirect(

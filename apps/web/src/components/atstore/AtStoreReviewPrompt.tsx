@@ -1,12 +1,14 @@
 import {
 	atStoreReviewsControllerDismissMutation,
 	atStoreReviewsControllerPublishMutation,
-	authControllerPermissionsMutation,
+	authControllerPermissions,
+	PERMISSION_DECLINED_MESSAGE,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Star, Store } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { usePermissionExplainer } from "#/components/PermissionExplainer";
 import { PromptCard } from "#/components/PromptCard";
 import { Button } from "#/components/ui/button";
 import {
@@ -61,7 +63,7 @@ export function AtStoreReviewPrompt() {
 		if (reviewState === "compose") {
 			setComposerOpen(true);
 		} else if (reviewState === "permission-declined") {
-			toast.message("Review permission was not granted");
+			toast.message(PERMISSION_DECLINED_MESSAGE);
 		} else if (reviewState === "permission-failed") {
 			toast.error("Could not request review permission");
 		}
@@ -81,14 +83,31 @@ export function AtStoreReviewPrompt() {
 		onError: () => toast.error("Could not dismiss the review request"),
 	});
 
-	const permissionMutation = useMutation({
-		mutationKey: ["auth", "permissions", "atstore-review"],
-		...authControllerPermissionsMutation(),
-		onSuccess: ({ authorizationUrl }) => {
-			window.location.assign(authorizationUrl);
-		},
-		onError: () => toast.error("Could not request review permission"),
-	});
+	const explainer = usePermissionExplainer();
+	const [requestingPermission, setRequestingPermission] = useState(false);
+	const requestPermission = async () => {
+		setRequestingPermission(true);
+		try {
+			const authorizationUrl = await explainer.request({
+				integration: "atstore",
+				action: "connect",
+				start: async () =>
+					(
+						await authControllerPermissions({
+							body: { integration: "atstore", action: "connect" },
+							throwOnError: true,
+						})
+					).data.authorizationUrl,
+			});
+			if (authorizationUrl) {
+				window.location.assign(authorizationUrl);
+				return;
+			}
+		} catch {
+			toast.error("Could not request review permission");
+		}
+		setRequestingPermission(false);
+	};
 
 	const publishMutation = useMutation({
 		mutationKey: ["atstore-review", "publish"],
@@ -113,9 +132,7 @@ export function AtStoreReviewPrompt() {
 			setComposerOpen(true);
 			return;
 		}
-		permissionMutation.mutate({
-			body: { integration: "atstore", action: "connect" },
-		});
+		void requestPermission();
 	};
 
 	useEffect(() => {
@@ -155,7 +172,7 @@ export function AtStoreReviewPrompt() {
 						</Button>
 						<Button
 							type="button"
-							disabled={permissionMutation.isPending}
+							disabled={requestingPermission}
 							onClick={openComposer}
 						>
 							Leave a review
@@ -235,6 +252,7 @@ export function AtStoreReviewPrompt() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+			{explainer.dialog}
 		</>
 	);
 }

@@ -1,21 +1,23 @@
 import {
 	atStoreReviewsControllerDismissMutation,
 	atStoreReviewsControllerGetPromptOptions,
-	authControllerPermissionsMutation,
+	authControllerPermissions,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { type Href, router } from "expo-router";
 import { Store } from "lucide-react-native";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
 	PromptCard,
 	PromptSlotItem,
 	usePromptCooldown,
 } from "@/components/home/prompt-slot";
+import { usePermissionExplainer } from "@/components/permission-explainer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { AuthFlowError, authErrorMessage } from "@/lib/auth-error";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { posthog } from "@/lib/posthog";
 
@@ -56,19 +58,8 @@ export function AtStoreReviewPrompt() {
 		onError: () => toast.error("Could not dismiss the review request"),
 	});
 
-	const permissionMutation = useMutation({
-		mutationKey: ["auth", "permissions", "atstore-review"],
-		...authControllerPermissionsMutation(),
-		onSuccess: async ({ authorizationUrl }) => {
-			try {
-				const granted = await runAuthorizationUrl(authorizationUrl);
-				if (granted) router.push("/atstore-review" as Href);
-			} catch {
-				toast.error("Review permission was not granted");
-			}
-		},
-		onError: () => toast.error("Could not request review permission"),
-	});
+	const explainer = usePermissionExplainer();
+	const [requestingPermission, setRequestingPermission] = useState(false);
 
 	const leaveReview = async () => {
 		if (process.env.EXPO_OS === "ios") {
@@ -79,46 +70,71 @@ export function AtStoreReviewPrompt() {
 			router.push("/atstore-review" as Href);
 			return;
 		}
-		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
-		// callback hands back a single-use code instead of the session id.
-		const codeChallenge = (await beginHandoff()) ?? undefined;
-		permissionMutation.mutate({
-			body: {
+		setRequestingPermission(true);
+		try {
+			// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
+			// callback hands back a single-use code instead of the session id.
+			const codeChallenge = (await beginHandoff()) ?? undefined;
+			const authorizationUrl = await explainer.request({
 				integration: "atstore",
 				action: "connect",
-				platform: "mobile",
-				codeChallenge,
-			},
-		});
+				start: async () =>
+					(
+						await authControllerPermissions({
+							body: {
+								integration: "atstore",
+								action: "connect",
+								platform: "mobile",
+								codeChallenge,
+							},
+							throwOnError: true,
+						})
+					).data.authorizationUrl,
+			});
+			if (!authorizationUrl) return;
+			const granted = await runAuthorizationUrl(authorizationUrl);
+			if (granted) router.push("/atstore-review" as Href);
+		} catch (error) {
+			toast.error(
+				error instanceof AuthFlowError
+					? authErrorMessage(error.code)
+					: "Could not request review permission",
+			);
+		} finally {
+			setRequestingPermission(false);
+		}
 	};
 
 	if (!prompt?.eligible) return null;
 
 	return (
-		<PromptSlotItem id="atstore-review" onShown={recordView}>
-			<PromptCard
-				icon={Store}
-				title="Enjoying Opnshelf?"
-				actions={
-					<>
-						<Button
-							label="No thanks"
-							variant="ghost"
-							size="sm"
-							disabled={dismissMutation.isPending}
-							onPress={() => dismissMutation.mutate({})}
-						/>
-						<Button
-							label="Leave a review"
-							size="sm"
-							loading={permissionMutation.isPending}
-							onPress={leaveReview}
-						/>
-					</>
-				}
-			>
-				Share your experience on AT Store. It helps others discover Opnshelf.
-			</PromptCard>
-		</PromptSlotItem>
+		<>
+			<PromptSlotItem id="atstore-review" onShown={recordView}>
+				<PromptCard
+					icon={Store}
+					title="Enjoying Opnshelf?"
+					actions={
+						<>
+							<Button
+								label="No thanks"
+								variant="ghost"
+								size="sm"
+								disabled={dismissMutation.isPending}
+								onPress={() => dismissMutation.mutate({})}
+							/>
+							<Button
+								label="Leave a review"
+								size="sm"
+								loading={requestingPermission}
+								onPress={leaveReview}
+							/>
+						</>
+					}
+				>
+					Share your experience on AT Store. It helps others discover Opnshelf.
+				</PromptCard>
+			</PromptSlotItem>
+			{explainer.sheet}
+		</>
 	);
 }

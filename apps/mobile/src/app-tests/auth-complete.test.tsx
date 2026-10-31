@@ -271,7 +271,7 @@ describe("the auth/complete deep link", () => {
 			const renderer = renderScreen();
 
 			expect(visibleText(renderer)).toContain(
-				"Review permission was not granted",
+				"Nothing changed. The permission wasn't granted",
 			);
 			await settle();
 		});

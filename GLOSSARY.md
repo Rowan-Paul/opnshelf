@@ -198,6 +198,14 @@ _Avoid_: Full access (incorrectly suggests access to unrelated AT Protocol servi
 Permission for one optional ecosystem outside Opnshelf, enabled and disabled independently for a User across all devices. Declining or disconnecting one integration leaves **Core Opnshelf Access** and every other integration unchanged.
 _Avoid_: External publishing access (incorrectly combines independent ecosystems), add-on scope (implementation language)
 
+**Account Host**:
+The service that holds a User's account and repository (their PDS), such as Opnshelf for an Opnshelf-hosted **Handle** or bsky.social for a Bluesky one. It, not Opnshelf, approves every permission change. User-facing copy names it by its host name, taken from the authorization request, never guessed from the Handle.
+_Avoid_: PDS (protocol jargon in user-facing copy), server, provider (reserved for **Provider Sign-In** and streaming services)
+
+**Permission Explainer**:
+The step before Opnshelf sends a User to their **Account Host** to change **External Integration Access** or Private access. It says in plain language what Opnshelf will and won't be able to do, names the Account Host that will ask for approval, and warns that other **Devices** will need to sign in again. Declining on the Account Host returns the User where they started with a "Nothing changed" message. Web and Mobile share its copy.
+_Avoid_: Consent screen (that is the Account Host's own page), scope prompt (implementation language)
+
 **Device**:
 One place a User is signed in from: the app on a phone or tablet, or a browser profile on a computer. A User has at most one Device per install per account, so signing in again from the same install takes over the existing Device instead of adding a second one. A Device is not a physical machine — two browser profiles on one laptop are two Devices, and clearing browser storage produces a new one. A User revokes a Device from the **Devices** settings surface; revoking ends that install's **Core Opnshelf Access** and leaves every other Device signed in, and it never changes **External Integration Access**, which is per-User across all Devices.
 _Avoid_: Session (the entity a User manages is the Device), Connected device (collides with **Connections**), Token, Login, Client

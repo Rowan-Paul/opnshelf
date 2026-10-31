@@ -22,11 +22,13 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { usePermissionExplainer } from "@/components/permission-explainer";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { AuthFlowError, authErrorMessage } from "@/lib/auth-error";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { useThemeColors } from "@/theme/colors";
 
@@ -74,20 +76,40 @@ export function PrivacySection({
 		[sheetDidDismiss, setManageLists],
 	);
 
+	const explainer = usePermissionExplainer();
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
 		const codeChallenge = (await beginHandoff()) ?? undefined;
-		const result = await authControllerPermissions({
-			body: {
-				integration: "watches",
-				action: "connect",
-				platform: "mobile",
-				codeChallenge,
+		const authorizationUrl = await explainer.request({
+			integration: "watches",
+			action: "connect",
+			start: async () => {
+				const { data } = await authControllerPermissions({
+					body: {
+						integration: "watches",
+						action: "connect",
+						platform: "mobile",
+						codeChallenge,
+					},
+					throwOnError: true,
+				});
+				// One native modal at a time: the open sheet stays up while access
+				// is checked, then closes before the explainer opens. The explainer
+				// settles only once it has closed too, so the
+				// ASWebAuthenticationSession never competes with an animating sheet.
+				await new Promise<void>((resolve) => afterClosingSheet(resolve));
+				return data.authorizationUrl;
 			},
-			throwOnError: true,
 		});
-		// ASWebAuthenticationSession must not compete with an animating native sheet.
-		await new Promise<void>((resolve) => afterClosingSheet(resolve));
-		return runAuthorizationUrl(result.data.authorizationUrl);
+		if (!authorizationUrl) return false;
+		try {
+			return await runAuthorizationUrl(authorizationUrl);
+		} catch (error) {
+			// Declining on the Account Host is an answer, not a crash: say what it
+			// means instead of the flow's internal error code.
+			if (error instanceof AuthFlowError)
+				throw new Error(authErrorMessage(error.code));
+			throw error;
+		}
 	});
 	const data = query.data;
 	const scopes = useMemo(
@@ -750,6 +772,7 @@ export function PrivacySection({
 					</View>
 				</View>
 			</BottomSheetModal>
+			{explainer.sheet}
 		</View>
 	);
 }

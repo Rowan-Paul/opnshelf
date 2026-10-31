@@ -51,6 +51,13 @@ vi.mock("@/lib/auth-context", () => ({
 	useAuth: () => ({ runAuthorizationUrl: mocks.runAuthorizationUrl }),
 }));
 vi.mock("@/lib/auth-handoff", () => ({ beginHandoff: vi.fn() }));
+// The explainer has its own tests; here the User always continues.
+vi.mock("@/components/permission-explainer", () => ({
+	usePermissionExplainer: () => ({
+		request: ({ start }: { start: () => Promise<string> }) => start(),
+		sheet: null,
+	}),
+}));
 vi.mock("@/components/ui/dialog", () => ({
 	useDialog: () => ({ showDialog: mocks.showDialog }),
 }));

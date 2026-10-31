@@ -1,8 +1,9 @@
 import {
 	authControllerMeQueryKey,
-	authControllerPermissionsMutation,
+	authControllerPermissions,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
+	getErrorMessage,
 	reviewsControllerListMyPublicationsOptions,
 	type UserDto,
 	usersControllerDeleteMyAccountMutation,
@@ -49,6 +50,7 @@ import {
 	Switch,
 	View,
 } from "react-native";
+import { usePermissionExplainer } from "@/components/permission-explainer";
 import { ConfettiSetting } from "@/components/settings/confetti-setting";
 import { IntegrationPermissionRow } from "@/components/settings/integration-permission-row";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
@@ -68,6 +70,7 @@ import {
 import { Text } from "@/components/ui/text";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
+import { AuthFlowError, authErrorMessage } from "@/lib/auth-error";
 import { beginHandoff } from "@/lib/auth-handoff";
 import { createCoalescedSaver, sameIdSet } from "@/lib/coalesced-save";
 import { useFeedback } from "@/lib/feedback";
@@ -259,30 +262,38 @@ export function SettingsCategoryScreen({
 			),
 	});
 
-	const permissionChangeMutation = useMutation({
-		mutationKey: ["auth", "permissions", "change"],
-		...authControllerPermissionsMutation(),
-		onSuccess: async (result) => {
-			await runAuthorizationUrl(result.authorizationUrl);
-		},
-		onError: (error) =>
-			toast.error(
-				error instanceof Error
-					? error.message
-					: "Could not start the permission change",
-			),
-	});
-
+	const permissionExplainer = usePermissionExplainer();
+	const [permissionChangePending, setPermissionChangePending] = useState(false);
 	const requestPermissionChange = async (
-		integration: "blog" | "bluesky" | "spaces" | "watches",
+		integration: "blog" | "bluesky",
 		action: "connect" | "disconnect",
 	) => {
-		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
-		// callback hands back a single-use code instead of the session id.
-		const codeChallenge = (await beginHandoff()) ?? undefined;
-		permissionChangeMutation.mutate({
-			body: { integration, action, platform: "mobile", codeChallenge },
-		});
+		setPermissionChangePending(true);
+		try {
+			// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
+			// callback hands back a single-use code instead of the session id.
+			const codeChallenge = (await beginHandoff()) ?? undefined;
+			const authorizationUrl = await permissionExplainer.request({
+				integration,
+				action,
+				start: async () =>
+					(
+						await authControllerPermissions({
+							body: { integration, action, platform: "mobile", codeChallenge },
+							throwOnError: true,
+						})
+					).data.authorizationUrl,
+			});
+			if (authorizationUrl) await runAuthorizationUrl(authorizationUrl);
+		} catch (error) {
+			toast.error(
+				error instanceof AuthFlowError
+					? authErrorMessage(error.code)
+					: getErrorMessage(error, "Could not start the permission change"),
+			);
+		} finally {
+			setPermissionChangePending(false);
+		}
 	};
 
 	// Blog-mirror publication (#118). Reviews are opnshelf-owned records; a
@@ -775,9 +786,9 @@ export function SettingsCategoryScreen({
 										name="Blog mirroring"
 										description="Allow Opnshelf to publish and update Review mirrors in the selected publication."
 										connected={settings?.blogIntegrationEnabled ?? false}
-										disabled={permissionChangeMutation.isPending}
-										onConfirm={(action) =>
-											requestPermissionChange("blog", action)
+										disabled={permissionChangePending}
+										onRequest={(action) =>
+											void requestPermissionChange("blog", action)
 										}
 									/>
 								) : (
@@ -882,9 +893,9 @@ export function SettingsCategoryScreen({
 									name="Bluesky Cross-posts"
 									description="Allow Opnshelf to post to Bluesky for Reviews you explicitly select."
 									connected={settings?.blueskyCrossPostEnabled ?? false}
-									disabled={permissionChangeMutation.isPending}
-									onConfirm={(action) =>
-										requestPermissionChange("bluesky", action)
+									disabled={permissionChangePending}
+									onRequest={(action) =>
+										void requestPermissionChange("bluesky", action)
 									}
 								/>
 							</SettingsSection>
@@ -1012,6 +1023,7 @@ export function SettingsCategoryScreen({
 			</Screen>
 			{/* The blocking overlay during PDS deletion lives at the app root
 			    (AccountDeletionGate), so it also shows after an app restart. */}
+			{permissionExplainer.sheet}
 		</SettingsColumns>
 	);
 }

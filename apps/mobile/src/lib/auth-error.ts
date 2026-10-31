@@ -8,6 +8,8 @@
  * one of them shows a vague "unexpected error" on the other.
  */
 
+import { PERMISSION_DECLINED_MESSAGE } from "@opnshelf/api";
+
 /** Thrown when the auth flow came back carrying an error instead of a session. */
 export class AuthFlowError extends Error {
 	readonly code: string;
@@ -28,7 +30,7 @@ export function authErrorMessage(code: string): string {
 		case "callback_failed":
 			return "Something went wrong during sign in. Please try again.";
 		case "permission_declined":
-			return "Review permission was not granted.";
+			return PERMISSION_DECLINED_MESSAGE;
 		// Sign in with Apple runs in a browser on Android (ADR 0027), so its
 		// signup failures arrive here rather than from the native credential.
 		case "apple_unavailable":
