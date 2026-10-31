@@ -137,9 +137,17 @@ export function reviewMarkdown(text: string, facets: unknown[] = []): string {
 				index?: { byteStart?: number; byteEnd?: number };
 				features?: { $type?: string; uri?: string }[];
 			};
-			const uri = f.features?.find(
-				(x) => x.$type === "app.bsky.richtext.facet#link",
-			)?.uri;
+			// Parentheses and spaces would end a Markdown link destination early.
+			const uri = f.features
+				?.find((x) => x.$type === "app.bsky.richtext.facet#link")
+				?.uri?.replace(/[()\s]/g, (character) =>
+					// encodeURIComponent leaves parentheses as they are.
+					character === "("
+						? "%28"
+						: character === ")"
+							? "%29"
+							: encodeURIComponent(character),
+				);
 			const start = f.index?.byteStart;
 			const end = f.index?.byteEnd;
 			return uri &&
@@ -321,7 +329,8 @@ export function popfeedRecords(
 		const createdAt = Date.parse(review.createdAt);
 		// Popfeed requires a rating; 0 has no Opnshelf meaning and creates none.
 		if (types.ratings && review.rating) {
-			const key = `rating:${mediaType}:${coordinates.mediaId}:${season}:${episode}`;
+			// Unmatched titles keep their own key, so each reaches Needs attention.
+			const key = `rating:${mediaType}:${coordinates.mediaId ?? raw.uri}:${season}:${episode}`;
 			const current = ratings.get(key);
 			if (!current || createdAt > current.createdAt)
 				ratings.set(key, {

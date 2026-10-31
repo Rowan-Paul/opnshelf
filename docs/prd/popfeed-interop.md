@@ -128,7 +128,7 @@ A new **Integrations** settings section on Web and Mobile lists each integration
 - Watched movies are written to the Watched Movies list, created if missing. On older accounts that have the items but no list record, the existing items' `listUri` is reused. A movie Watch needs a date.
 - Episodes are added to the show's existing entry. When no entry exists, the show is added to Currently Watching Shows, the list Popfeed itself used in the observed records.
 - A Rating updates the latest rated Popfeed review of that title, or creates a review with empty text. Removing it deletes a text-less review, or sets `rating: 0` on a review that has text. A new Review copies the title's current rating so it stays consistent.
-- Lists and the movie watchlist are kept in step item by item. Items Popfeed cannot hold (seasons, episodes, unmatched titles, item notes, shows on the movie watchlist) stop the transfer and appear in Needs attention; nothing is dropped.
+- Lists and the movie watchlist are kept in step item by item. Items Popfeed cannot hold (seasons, episodes, unmatched titles, item notes, shows on the movie watchlist) stop the transfer and appear in Needs attention; nothing is dropped. Popfeed items Opnshelf cannot match, such as titles without a TMDB ID or books, are never removed from a Popfeed List.
 - New records carry TMDB title, release date, genres, director or creator, `posterUrl`, `backdropUrl` and a poster blob, the same fields Popfeed writes. Updates keep every field Opnshelf does not own.
 
 ## Open verification

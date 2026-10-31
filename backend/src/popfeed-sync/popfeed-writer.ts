@@ -379,6 +379,10 @@ export class PopfeedWriter {
 		const wanted = new Set(members.map(memberKey));
 		const present = new Set<string>();
 		for (const item of items) {
+			// Items Opnshelf cannot match (no TMDB ID, or books and games) are
+			// not Opnshelf's to remove; leave them on Popfeed.
+			const type = raw(item).creativeWorkType;
+			if (!tmdbOf(item) || (type !== "movie" && type !== "tv_show")) continue;
 			const key = memberKey(this.member(item));
 			if (wanted.has(key) && !present.has(key)) present.add(key);
 			else await this.repo.remove(item.uri);

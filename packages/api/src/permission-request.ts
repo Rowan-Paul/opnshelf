@@ -54,8 +54,8 @@ export const PERMISSION_REQUEST_COPY: Record<
 	popfeed: {
 		title: "Let Opnshelf write to Popfeed",
 		can: [
-			"Add your Watches, Ratings, Reviews and Lists to Popfeed",
-			"Update or remove Popfeed watched items, reviews and lists to keep them in step with Opnshelf",
+			"Add your Watches, Ratings, Reviews, Lists and watchlist to Popfeed",
+			"Update or remove the Popfeed Watches, Reviews, Lists and watchlist items it keeps in step with Opnshelf",
 		],
 		cannot: [
 			"Post to Bluesky",

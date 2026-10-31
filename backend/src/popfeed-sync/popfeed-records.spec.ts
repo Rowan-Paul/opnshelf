@@ -236,6 +236,24 @@ describe("Popfeed record mapping", () => {
 			spoiler: true,
 		});
 	});
+	it("keeps Ratings of different unmatched titles apart", () => {
+		const unmatched = (rkey: string, title: string) =>
+			review(rkey, {
+				identifiers: {},
+				title,
+				rating: 6,
+				createdAt: "2026-10-01T00:00:00.000Z",
+			});
+		const ratings = popfeedRecords(
+			{
+				...empty,
+				reviews: [unmatched("a", "First"), unmatched("b", "Second")],
+			},
+			all,
+			"UTC",
+		).filter((r) => r.kind === "rating");
+		expect(ratings.map((r) => r.title).sort()).toEqual(["First", "Second"]);
+	});
 	it("reads only enabled record types", () => {
 		const records = popfeedRecords(
 			{
@@ -285,5 +303,20 @@ describe("Popfeed review facets", () => {
 				{ index: { byteStart: 0, byteEnd: 4 }, features: [{ $type: "tag" }] },
 			]),
 		).toBe("Read [más](https://x.test) here");
+	});
+	it("keeps parentheses and spaces from ending a link early", () => {
+		expect(
+			reviewMarkdown("wiki", [
+				{
+					index: { byteStart: 0, byteEnd: 4 },
+					features: [
+						{
+							$type: "app.bsky.richtext.facet#link",
+							uri: "https://w.test/Dune_(film) x",
+						},
+					],
+				},
+			]),
+		).toBe("[wiki](https://w.test/Dune_%28film%29%20x)");
 	});
 });

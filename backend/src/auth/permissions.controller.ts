@@ -70,6 +70,8 @@ export class PermissionsController {
 			);
 		if (integration === "watches" && !enable)
 			await this.authService.assertCanDisconnectWatches(did);
+		if (integration === "popfeed" && !enable)
+			await this.authService.assertPopfeedWritesStopped(did);
 		const preferences: OAuthScopePreferences = {
 			watchPrivacyEnabled:
 				integration === "watches" ? enable : user.watchPrivacyEnabled,

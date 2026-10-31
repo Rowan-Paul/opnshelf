@@ -30,6 +30,7 @@ export function IntegrationOnboardingRow({
 	onOpen,
 	onClose,
 	divided,
+	connectionFailed = false,
 }: {
 	integration: IntegrationDefinition;
 	status: UseQueryResult<SyncStatusDto>;
@@ -37,6 +38,8 @@ export function IntegrationOnboardingRow({
 	onOpen: () => void;
 	onClose: () => void;
 	divided: boolean;
+	/** Set when this Integration's sign-in returned as a failed deep link. */
+	connectionFailed?: boolean;
 }) {
 	const colors = useThemeColors();
 	const queryClient = useQueryClient();
@@ -129,9 +132,11 @@ export function IntegrationOnboardingRow({
 					/>
 				) : null}
 			</View>
-			{error ? (
+			{error || connectionFailed ? (
 				<Text accessibilityRole="alert" className="text-destructive text-sm">
-					{traktError(error)}
+					{error
+						? traktError(error)
+						: `${integration.name} could not connect. Try connecting again.`}
 				</Text>
 			) : null}
 			{open && data && action?.kind === "choose" ? (

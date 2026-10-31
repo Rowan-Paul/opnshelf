@@ -216,6 +216,26 @@ export class AuthService {
 			);
 	}
 
+	/**
+	 * Popfeed write access may only be removed once Popfeed Sync no longer
+	 * sends changes; otherwise every outbound transfer would fail with 403.
+	 */
+	async assertPopfeedWritesStopped(did: string) {
+		const sending = await this.prisma.integrationConnection.findFirst({
+			where: {
+				userDid: did,
+				provider: "popfeed",
+				status: { not: "disconnected" },
+				direction: { not: "inbound" },
+			},
+			select: { id: true },
+		});
+		if (sending)
+			throw new ConflictException(
+				"Set Popfeed Sync to bring changes into Opnshelf only before removing Popfeed write access.",
+			);
+	}
+
 	/** Persist account-wide integration state and revoke superseded devices atomically. */
 	async completePermissionChange(
 		did: string,

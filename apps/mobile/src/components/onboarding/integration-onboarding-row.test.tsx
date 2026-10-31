@@ -152,3 +152,13 @@ it("shows the settings once open, and On when sync runs", () => {
 	expect(texts).toContain("On");
 	expect(texts).toContain("@reader.test");
 });
+
+it("says the sign-in failed when it returns as a failed deep link", () => {
+	mount({ integration: TRAKT_INTEGRATION, connectionFailed: true });
+	const alert = renderer.root.find(
+		(node) => node.props.accessibilityRole === "alert",
+	);
+	expect(alert.props.children).toBe(
+		"Trakt could not connect. Try connecting again.",
+	);
+});

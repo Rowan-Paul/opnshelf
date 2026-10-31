@@ -297,6 +297,7 @@ export default function OnboardingScreen() {
 					<IntegrationsStep
 						onNext={() => setStep("suggestions")}
 						initialOpen={connection === "connected" ? "trakt" : null}
+						connectionFailed={connection === "failed" ? "trakt" : null}
 					/>
 				)}
 				{step === "suggestions" && (
@@ -627,9 +628,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 function IntegrationsStep({
 	onNext,
 	initialOpen,
+	connectionFailed,
 }: {
 	onNext: () => void;
 	initialOpen: IntegrationId | null;
+	/** The Integration whose connection just failed. */
+	connectionFailed: IntegrationId | null;
 }) {
 	const statuses = useQueries({
 		queries: INTEGRATIONS.map((integration) => ({
@@ -676,6 +680,7 @@ function IntegrationsStep({
 						onOpen={() => setOpen(integration.id)}
 						onClose={() => setOpen(null)}
 						divided={index > 0}
+						connectionFailed={connectionFailed === integration.id}
 					/>
 				))}
 			</View>

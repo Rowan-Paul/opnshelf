@@ -282,6 +282,38 @@ describe("Popfeed Lists", () => {
 		await writer.write(list([], key), true);
 		expect(values()).toHaveLength(0);
 	});
+	it("leaves Popfeed items it cannot match on the List", async () => {
+		const created = vi.fn(async (_record: SyncRecord) => undefined);
+		await writer.write(list([member("1")]), false, null, created);
+		const key = created.mock.calls[0][0].key;
+		const listUri = key.slice("list:".length);
+		records.set(`at://${did}/${LIST_ITEM}/unmatched`, {
+			creativeWorkType: "movie",
+			listType: "default",
+			listUri,
+			identifiers: {},
+		});
+		records.set(`at://${did}/${LIST_ITEM}/book`, {
+			creativeWorkType: "book",
+			listType: "default",
+			listUri,
+			identifiers: { isbn13: "9780000000000" },
+		});
+		await writer.write(list([member("2")], key));
+		expect(records.has(`at://${did}/${LIST_ITEM}/unmatched`)).toBe(true);
+		expect(records.has(`at://${did}/${LIST_ITEM}/book`)).toBe(true);
+		expect(
+			values()
+				.filter((v) => v.listUri === listUri)
+				.map((v) => (v.identifiers as { tmdbId?: string }).tmdbId),
+		).toEqual(expect.arrayContaining(["2"]));
+		expect(
+			values().some(
+				(v) =>
+					(v.identifiers as { tmdbId?: string } | undefined)?.tmdbId === "1",
+			),
+		).toBe(false);
+	});
 	it("refuses items and notes Popfeed cannot hold, without writing", async () => {
 		await expect(
 			writer.write(

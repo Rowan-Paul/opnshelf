@@ -26,10 +26,12 @@ describe("PermissionsController", () => {
 		getUser: Mock;
 		hasBlueskyProfile: Mock;
 		authorizePermissionChange: Mock;
+		assertPopfeedWritesStopped: Mock;
 	} = {
 		getUser: vi.fn(),
 		hasBlueskyProfile: vi.fn().mockResolvedValue(false),
 		authorizePermissionChange: vi.fn(),
+		assertPopfeedWritesStopped: vi.fn(),
 	};
 
 	const createMockRequest = (
@@ -68,6 +70,23 @@ describe("PermissionsController", () => {
 				action: "connect",
 			}),
 		).rejects.toThrow("retired");
+		expect(mockAuthService.authorizePermissionChange).not.toHaveBeenCalled();
+	});
+
+	it("keeps Popfeed write access while Popfeed Sync still sends changes", async () => {
+		mockAuthService.getUser.mockResolvedValue({ handle: "owner.example" });
+		mockAuthService.assertPopfeedWritesStopped.mockRejectedValueOnce(
+			new Error("Set Popfeed Sync to bring changes into Opnshelf only"),
+		);
+		await expect(
+			controller.permissions({ user: { did: "did:plc:owner" } } as never, {
+				integration: "popfeed",
+				action: "disconnect",
+			}),
+		).rejects.toThrow("bring changes into Opnshelf only");
+		expect(mockAuthService.assertPopfeedWritesStopped).toHaveBeenCalledWith(
+			"did:plc:owner",
+		);
 		expect(mockAuthService.authorizePermissionChange).not.toHaveBeenCalled();
 	});
 
