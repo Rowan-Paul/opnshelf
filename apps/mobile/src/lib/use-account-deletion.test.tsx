@@ -86,10 +86,13 @@ describe("useAccountDeletionJob", () => {
 			await vi.waitFor(() => expect(hook.current?.status).toBe("running"));
 		});
 		expect(isAccountDeletionRunning(hook.current)).toBe(true);
+		// Forgotten while running: a revoked session after an app restart would
+		// never reach the completion branch.
+		expect(recent.forgetAccount).toHaveBeenCalledWith("did:plc:deleted");
 		expect(auth.signOut).not.toHaveBeenCalled();
 	});
 
-	it("signs out and forgets the account once the job it was watching completes", async () => {
+	it("signs out once the job it was watching completes", async () => {
 		api.getDeletion.mockResolvedValue({ id: "job-1", status: "running" });
 		const hook = renderHook();
 
@@ -106,7 +109,6 @@ describe("useAccountDeletionJob", () => {
 			});
 			await vi.waitFor(() => expect(auth.signOut).toHaveBeenCalled());
 		});
-		expect(recent.forgetAccount).toHaveBeenCalledWith("did:plc:deleted");
 	});
 
 	it("stays signed in when the only job on file finished long ago", async () => {

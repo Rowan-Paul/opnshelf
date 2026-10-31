@@ -16,12 +16,6 @@ import { forgetAccount } from "@/lib/recent-accounts";
  */
 export function useAccountDeletionJob(): AccountDeletionJobDto | null {
 	const { isAuthenticated, signOut, user } = useAuth();
-	// Captured while signed in: the 401 that ends a deletion clears the user
-	// before the effect below can read it.
-	const deletingDid = useRef<string | null>(null);
-	useEffect(() => {
-		if (user) deletingDid.current = user.did;
-	}, [user]);
 
 	const { data, error } = useQuery({
 		...usersControllerGetMyAccountDeletionOptions(),
@@ -36,6 +30,16 @@ export function useAccountDeletionJob(): AccountDeletionJobDto | null {
 	const job = data ?? null;
 	const sawActiveJob = useRef(false);
 
+	// A deleted account can no longer sign in, so stop offering it as soon as a
+	// deletion is running rather than when it completes: the app may be closed
+	// by then, and the revoked session means this hook never runs again. Also
+	// re-runs when the user refetches, which would otherwise remember it again.
+	useEffect(() => {
+		if (user && job && isActiveAccountDeletionStatus(job.status)) {
+			void forgetAccount(user.did);
+		}
+	}, [user, job]);
+
 	useEffect(() => {
 		if (job && isActiveAccountDeletionStatus(job.status)) {
 			sawActiveJob.current = true;
@@ -45,7 +49,6 @@ export function useAccountDeletionJob(): AccountDeletionJobDto | null {
 		// and later signed up again still has a completed job on file — without
 		// this guard every sign-in gets signed straight back out.
 		if (sawActiveJob.current && job?.status === "completed") {
-			forgetDeletedAccount(deletingDid.current);
 			void signOut();
 		}
 	}, [job, signOut]);
@@ -55,17 +58,11 @@ export function useAccountDeletionJob(): AccountDeletionJobDto | null {
 		// right after) marking the job completed. If our next poll arrives after
 		// revocation, we get a 401 — treat that as "done" and sign out.
 		if (error && sawActiveJob.current && isUnauthorizedError(error)) {
-			forgetDeletedAccount(deletingDid.current);
 			void signOut();
 		}
 	}, [error, signOut]);
 
 	return job;
-}
-
-/** A deleted account can no longer sign in, so the login screen stops offering it. */
-function forgetDeletedAccount(did: string | null): void {
-	if (did) void forgetAccount(did);
 }
 
 export function isAccountDeletionRunning(

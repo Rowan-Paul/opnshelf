@@ -84,6 +84,9 @@ function SignupPage() {
 		...authControllerRegisterMutation(),
 		onSuccess: async () => {
 			posthog.capture("user_signed_up", { method: "password" });
+			// Before the refresh below remembers the account, so a provider button
+			// clicked and abandoned earlier is not recorded as its method.
+			noteSignInMethod("handle");
 			// Cookie is set; refresh the cached user so the app sees us as logged in.
 			await queryClient.invalidateQueries({
 				queryKey: authControllerMeOptions().queryKey,
