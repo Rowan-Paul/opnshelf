@@ -1,4 +1,9 @@
+import {
+	PERMISSION_DISCONNECT_DESCRIPTION,
+	type PermissionRequestIntegration,
+} from "@opnshelf/api";
 import { View } from "react-native";
+import { usePermissionRequest } from "@/components/settings/permission-request";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
@@ -6,33 +11,37 @@ import { Text } from "@/components/ui/text";
 type PermissionAction = "connect" | "disconnect";
 
 export function IntegrationPermissionRow({
+	integration,
 	name,
 	description,
 	connected,
 	disabled = false,
-	confirmationDescription = "Other devices will need to sign in again after this permission change. Your saved publication and format choices stay in place.",
 	onConfirm,
 }: {
+	integration: PermissionRequestIntegration;
 	name: string;
 	description: string;
 	connected: boolean;
 	disabled?: boolean;
-	confirmationDescription?: string;
 	onConfirm: (action: PermissionAction) => void;
 }) {
 	const { showDialog } = useDialog();
-	const action: PermissionAction = connected ? "disconnect" : "connect";
+	const requestPermission = usePermissionRequest();
 
-	const requestChange = () => {
+	const requestChange = async () => {
+		if (!connected) {
+			if (await requestPermission(integration)) onConfirm("connect");
+			return;
+		}
 		showDialog({
-			title: `${connected ? "Disconnect" : "Connect"} ${name}?`,
-			description: confirmationDescription,
+			title: `Disconnect ${name}?`,
+			description: PERMISSION_DISCONNECT_DESCRIPTION,
 			actions: [
 				{ label: "Cancel" },
 				{
-					label: `Continue and ${action}`,
-					variant: action === "disconnect" ? "destructive" : "default",
-					onPress: () => onConfirm(action),
+					label: "Continue and disconnect",
+					variant: "destructive",
+					onPress: () => onConfirm("disconnect"),
 				},
 			],
 		});
@@ -56,7 +65,7 @@ export function IntegrationPermissionRow({
 				variant={connected ? "secondary" : "primary"}
 				size="sm"
 				disabled={disabled}
-				onPress={requestChange}
+				onPress={() => void requestChange()}
 			/>
 		</View>
 	);
