@@ -1,7 +1,7 @@
 # Popfeed Sync
 
 Design brief for [issue #29](https://github.com/Rowan-Paul/opnshelf/issues/29).
-Status: implemented in the #29 branch in both directions, verified with fixtures and local databases only. No Popfeed record has been written to a real repository yet, so the open verification items below still decide whether outbound is ready to release. Onboarding offers Popfeed alongside Trakt in one Integrations step. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The verification items below must be resolved before the outbound half ships.
+Status: implemented in the #29 branch in both directions, verified with fixtures, local databases and, on 2026-10-31, an operator check of outbound writes on a real account. Onboarding offers Popfeed alongside Trakt in one Integrations step. [ADR 0051](../adr/0051-integrations-share-one-sync-core.md) records the shared integration architecture. The open verification items below are follow-up facts about Popfeed's behavior; they no longer block release.
 
 ## Why this is back
 
@@ -161,6 +161,6 @@ These are facts to establish, not product decisions. If one contradicts the rule
 1. Extract the shared integration core with Trakt as its first adapter, with no behavior change. Done.
 2. Add the Popfeed adapter inbound, with its `/popfeed-sync` API. Done; it ran before the Integrations section so the section has two real Integrations to list.
 3. Add the Integrations section on both clients, move Trakt Sync into it, add Popfeed and redirect the old routes. Done, including the Onboarding Integrations step.
-4. Add Popfeed outbound. Done in code at the operator's request on 2026-10-30, before the open verification items were answered. Release waits on a controlled write to a real account.
+4. Add Popfeed outbound. Done in code at the operator's request on 2026-10-30, before the open verification items were answered. The operator verified it with a real account on 2026-10-31.
 
 Each step is its own pull request.
