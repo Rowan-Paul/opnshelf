@@ -350,6 +350,8 @@ export class TraktSyncClient {
 	): Promise<SyncRecord[]> {
 		const result: SyncRecord[] = [];
 		const seen = new Set<string>();
+		// Trakt can serve a stale item count on earlier pages; the last page's
+		// count is the one that matches the rows actually returned.
 		let expectedCount: number | undefined;
 		for (let page = 1; ; page++) {
 			const { data, headers } = await this.request(
@@ -360,12 +362,11 @@ export class TraktSyncClient {
 			const pages = Number(headers.get("x-pagination-page-count"));
 			const countHeader = headers.get("x-pagination-item-count");
 			const count = countHeader === null ? undefined : Number(countHeader);
-			if (page === 1) expectedCount = count;
+			expectedCount = count;
 			if (
 				count === undefined ||
 				!Number.isInteger(count) ||
 				count < 0 ||
-				count !== expectedCount ||
 				!Number.isInteger(pages) ||
 				pages < 0 ||
 				headers.get("x-pagination-page-count") === null
