@@ -1102,6 +1102,31 @@ export abstract class IntegrationSyncService<Credential>
 						});
 						return;
 					}
+					// lastError is overwritten by the next run, so this log is the only
+					// lasting record of why a run failed. IntegrationError messages are
+					// user-safe by contract; other exceptions log only their type.
+					this.logger.warn(
+						JSON.stringify({
+							message: `${this.name} Sync run failed`,
+							connectionId: c.id,
+							category:
+								error instanceof IntegrationError ? "provider" : "internal",
+							error:
+								error instanceof IntegrationError
+									? error.message
+									: error instanceof Error
+										? error.constructor.name
+										: typeof error,
+							status:
+								error instanceof IntegrationError ? error.status : undefined,
+							retrySeconds:
+								error instanceof IntegrationError ? error.retrySeconds : 60,
+							response:
+								error instanceof IntegrationError && "diagnostics" in error
+									? error.diagnostics
+									: undefined,
+						}),
+					);
 					await this.prisma.integrationConnection.update({
 						select: { id: true },
 						where: { id: c.id },
