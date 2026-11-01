@@ -294,17 +294,24 @@ export class TmdbHttpClient {
 	 * are not cached unless the caller supplies a JSON value for a 404. That
 	 * value is cached and returned as a successful response for the same TTL.
 	 *
+	 * `fresh` skips the cache read but still writes the result back. Use it
+	 * where the result is persisted elsewhere, such as the Postgres catalogue:
+	 * reading through the cache there would stack its TTL on top of the
+	 * persisted copy's own refresh interval.
+	 *
 	 * Opt-in: only call this from safe detail/search GETs.
 	 */
 	async fetchCached(
 		url: string,
 		cacheKey: string,
 		ttlMs: number = TMDB_CACHE_TTL_MS,
-		options?: { notFoundValue: Record<string, unknown> },
+		options?: { notFoundValue?: Record<string, unknown>; fresh?: boolean },
 	): Promise<TmdbResponse> {
-		const cached = await this.store.get(cacheKey);
-		if (cached !== undefined) {
-			return makeCachedResponse(cached);
+		if (!options?.fresh) {
+			const cached = await this.store.get(cacheKey);
+			if (cached !== undefined) {
+				return makeCachedResponse(cached);
+			}
 		}
 
 		const shared = this.inFlight.get(cacheKey);
@@ -325,7 +332,7 @@ export class TmdbHttpClient {
 		);
 		try {
 			const response = await this.fetch(url);
-			if (response.ok || (response.status === 404 && options)) {
+			if (response.ok || (response.status === 404 && options?.notFoundValue)) {
 				const data = response.ok
 					? await response.json<TMDBCachedResult>()
 					: options?.notFoundValue;
