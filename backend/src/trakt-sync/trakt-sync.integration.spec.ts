@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { encodeContent, isContentRecord } from "../integrations/content-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
 import { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
@@ -1640,6 +1641,53 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(localRecords).toHaveLength(1);
 		expect((await service.status(userDid)).lastError).toContain("incomplete");
+	});
+	it("logs why a Sync run failed, without internal exception messages", async () => {
+		const warn = vi
+			.spyOn(Logger.prototype, "warn")
+			.mockImplementation(() => {});
+		await configure();
+		await tick();
+		const response = {
+			responseFormat: "json" as const,
+			cloudflare: false,
+			challenge: true,
+			cloudflareRay: "0123456789abcdef-XYZ",
+		};
+		remoteApi.snapshot.mockRejectedValueOnce(
+			new TraktSyncError("Trakt pagination was incomplete.", 0, 30, response),
+		);
+		await tick();
+		remoteApi.snapshot.mockRejectedValueOnce(
+			new TypeError("private-token in a stack"),
+		);
+		await tick();
+		const logged = warn.mock.calls
+			.map(([message]) => String(message))
+			.filter((message) => message.includes("Sync run failed"))
+			.map((message) => JSON.parse(message));
+		const connection = await db.integrationConnection.findFirstOrThrow({
+			where: { userDid },
+		});
+		expect(logged).toEqual([
+			{
+				message: "Trakt Sync run failed",
+				connectionId: connection.id,
+				category: "provider",
+				error: "Trakt pagination was incomplete.",
+				status: 0,
+				retrySeconds: 30,
+				response,
+			},
+			expect.objectContaining({
+				connectionId: connection.id,
+				category: "internal",
+				error: "TypeError",
+				retrySeconds: 60,
+			}),
+		]);
+		expect(JSON.stringify(logged)).not.toContain("private-token");
+		warn.mockRestore();
 	});
 	it("recovers an uncertain outbound write without a duplicate Watch", async () => {
 		localRecords = [watch("movie:one")];
