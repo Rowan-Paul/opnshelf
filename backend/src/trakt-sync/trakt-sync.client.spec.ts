@@ -227,6 +227,24 @@ describe("Trakt transport boundaries", () => {
 			client.pages("/sync/history", "fixture", "watch"),
 		).rejects.toThrow("incomplete");
 	});
+	it("accepts a stale item count on earlier pages when the last page accounts for every row", async () => {
+		const client = new TraktSyncClient(config);
+		vi.spyOn(client, "request")
+			.mockResolvedValueOnce(page([movie], 1, 2))
+			.mockResolvedValueOnce(page([{ ...movie, id: 42 }], 2, 2));
+		await expect(
+			client.pages("/sync/history", "fixture", "watch"),
+		).resolves.toHaveLength(2);
+	});
+	it("rejects a read whose rows do not match the last page's item count", async () => {
+		const client = new TraktSyncClient(config);
+		vi.spyOn(client, "request")
+			.mockResolvedValueOnce(page([movie], 3, 2))
+			.mockResolvedValueOnce(page([{ ...movie, id: 42 }], 3, 2));
+		await expect(
+			client.pages("/sync/history", "fixture", "watch"),
+		).rejects.toThrow("incomplete results");
+	});
 	it("rejects a history snapshot when activity changed during its pages", async () => {
 		const client = new TraktSyncClient(config);
 		vi.spyOn(client, "pages").mockResolvedValue([]);
