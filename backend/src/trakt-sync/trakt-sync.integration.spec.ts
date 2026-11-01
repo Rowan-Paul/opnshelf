@@ -1648,8 +1648,14 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			.mockImplementation(() => {});
 		await configure();
 		await tick();
+		const response = {
+			responseFormat: "json" as const,
+			cloudflare: false,
+			challenge: true,
+			cloudflareRay: "0123456789abcdef-XYZ",
+		};
 		remoteApi.snapshot.mockRejectedValueOnce(
-			new TraktSyncError("Trakt pagination was incomplete.", 0, 30),
+			new TraktSyncError("Trakt pagination was incomplete.", 0, 30, response),
 		);
 		await tick();
 		remoteApi.snapshot.mockRejectedValueOnce(
@@ -1660,13 +1666,21 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			.map(([message]) => String(message))
 			.filter((message) => message.includes("Sync run failed"))
 			.map((message) => JSON.parse(message));
+		const connection = await db.integrationConnection.findFirstOrThrow({
+			where: { userDid },
+		});
 		expect(logged).toEqual([
-			expect.objectContaining({
+			{
+				message: "Trakt Sync run failed",
+				connectionId: connection.id,
 				category: "provider",
 				error: "Trakt pagination was incomplete.",
+				status: 0,
 				retrySeconds: 30,
-			}),
+				response,
+			},
 			expect.objectContaining({
+				connectionId: connection.id,
 				category: "internal",
 				error: "TypeError",
 				retrySeconds: 60,
