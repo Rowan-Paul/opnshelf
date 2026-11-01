@@ -253,12 +253,20 @@ export class ShowsTmdbService {
 		return similar.json<TMDBSearchResponse>();
 	}
 
-	async getShowDetails(showId: string): Promise<TMDBShow> {
+	/**
+	 * `fresh` reads the show itself from TMDB instead of the cache; pass it
+	 * when the result is persisted (see `TmdbHttpClient.fetchCached`).
+	 */
+	async getShowDetails(
+		showId: string,
+		options: { fresh?: boolean } = {},
+	): Promise<TMDBShow> {
 		const [detailResponse, videosResponse] = await Promise.all([
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}?api_key=${this.tmdbApiKey}`,
 				`tv:detail:${showId}`,
 				TMDB_DETAIL_CACHE_TTL_MS,
+				{ fresh: options.fresh },
 			),
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/videos?api_key=${this.tmdbApiKey}`,
@@ -386,15 +394,18 @@ export class ShowsTmdbService {
 		)?.file_path;
 	}
 
+	/** `fresh` as in {@link getShowDetails}; covers the season and its episodes. */
 	async getSeasonDetails(
 		showId: string,
 		seasonNumber: number,
+		options: { fresh?: boolean } = {},
 	): Promise<TMDBSeason> {
 		const [detailResponse, videosResponse] = await Promise.all([
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}?api_key=${this.tmdbApiKey}`,
 				`tv:season:detail:${showId}:${seasonNumber}`,
 				TMDB_DETAIL_CACHE_TTL_MS,
+				{ fresh: options.fresh },
 			),
 			this.http.fetchCached(
 				`${this.tmdbBaseUrl}/tv/${showId}/season/${seasonNumber}/videos?api_key=${this.tmdbApiKey}`,

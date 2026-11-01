@@ -15,6 +15,31 @@ afterEach(() => {
 });
 
 describe("TmdbHttpClient.fetchCached", () => {
+	it("skips the cached copy on a fresh read but still refreshes it", async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(jsonResponse({ episodes: 8 }))
+			.mockResolvedValueOnce(jsonResponse({ episodes: 10 }));
+		vi.stubGlobal("fetch", fetchMock);
+		const client = new TmdbHttpClient("key");
+		await client.fetchCached("https://tmdb/tv/1/season/1", "tv:season:1:1");
+
+		const fresh = await client.fetchCached(
+			"https://tmdb/tv/1/season/1",
+			"tv:season:1:1",
+			undefined,
+			{ fresh: true },
+		);
+		const cached = await client.fetchCached(
+			"https://tmdb/tv/1/season/1",
+			"tv:season:1:1",
+		);
+
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(await fresh.json()).toEqual({ episodes: 10 });
+		expect(await cached.json()).toEqual({ episodes: 10 });
+	});
+
 	it("shares one TMDB request between concurrent misses on the same key", async () => {
 		const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: 1399 }));
 		vi.stubGlobal("fetch", fetchMock);

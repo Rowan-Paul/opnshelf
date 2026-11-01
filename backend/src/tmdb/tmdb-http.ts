@@ -122,6 +122,27 @@ export interface TmdbResponse {
 /** Parsed JSON we may cache for a successful GET. */
 type TMDBCachedResult = unknown;
 
+/**
+ * Misses already on their way to TMDB, per store. Keyed by the store rather
+ * than held per client so every service sharing the app's store also shares
+ * one request per key; a client with its own store keeps its own map.
+ */
+const inFlightByStore = new WeakMap<
+	TmdbCacheStore,
+	Map<string, Promise<TMDBCachedResult | null>>
+>();
+
+function inFlightFor(
+	store: TmdbCacheStore,
+): Map<string, Promise<TMDBCachedResult | null>> {
+	let inFlight = inFlightByStore.get(store);
+	if (!inFlight) {
+		inFlight = new Map();
+		inFlightByStore.set(store, inFlight);
+	}
+	return inFlight;
+}
+
 const sleep = (ms: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -164,11 +185,8 @@ function getHeader(response: TmdbResponse, name: string): string | null {
 export class TmdbHttpClient {
 	private readonly logger: Logger;
 	private readonly store: TmdbCacheStore;
-	/** Misses already on their way to TMDB, so concurrent callers share one request. */
-	private readonly inFlight = new Map<
-		string,
-		Promise<TMDBCachedResult | null>
-	>();
+	/** Concurrent misses for one key share a request, across clients on this store. */
+	private readonly inFlight: Map<string, Promise<TMDBCachedResult | null>>;
 
 	constructor(
 		private readonly apiKey: string,
@@ -177,6 +195,7 @@ export class TmdbHttpClient {
 	) {
 		this.logger = new Logger(loggerContext);
 		this.store = store ?? new MemoryTmdbCacheStore();
+		this.inFlight = inFlightFor(this.store);
 	}
 
 	/** Clears the cache store. Exposed for tests / explicit invalidation. */
@@ -275,17 +294,24 @@ export class TmdbHttpClient {
 	 * are not cached unless the caller supplies a JSON value for a 404. That
 	 * value is cached and returned as a successful response for the same TTL.
 	 *
+	 * `fresh` skips the cache read but still writes the result back. Use it
+	 * where the result is persisted elsewhere, such as the Postgres catalogue:
+	 * reading through the cache there would stack its TTL on top of the
+	 * persisted copy's own refresh interval.
+	 *
 	 * Opt-in: only call this from safe detail/search GETs.
 	 */
 	async fetchCached(
 		url: string,
 		cacheKey: string,
 		ttlMs: number = TMDB_CACHE_TTL_MS,
-		options?: { notFoundValue: Record<string, unknown> },
+		options?: { notFoundValue?: Record<string, unknown>; fresh?: boolean },
 	): Promise<TmdbResponse> {
-		const cached = await this.store.get(cacheKey);
-		if (cached !== undefined) {
-			return makeCachedResponse(cached);
+		if (!options?.fresh) {
+			const cached = await this.store.get(cacheKey);
+			if (cached !== undefined) {
+				return makeCachedResponse(cached);
+			}
 		}
 
 		const shared = this.inFlight.get(cacheKey);
@@ -306,7 +332,7 @@ export class TmdbHttpClient {
 		);
 		try {
 			const response = await this.fetch(url);
-			if (response.ok || (response.status === 404 && options)) {
+			if (response.ok || (response.status === 404 && options?.notFoundValue)) {
 				const data = response.ok
 					? await response.json<TMDBCachedResult>()
 					: options?.notFoundValue;

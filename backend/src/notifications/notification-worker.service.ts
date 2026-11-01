@@ -229,7 +229,10 @@ export class NotificationWorkerService
 		}
 		for (const show of shows) {
 			try {
-				const detail = await this.shows.getShowDetails(show.showId);
+				// Fresh: premiere detection reads these persisted season air dates.
+				const detail = await this.shows.getShowDetails(show.showId, {
+					fresh: true,
+				});
 				await this.prisma.show.update({
 					where: { showId: show.showId },
 					data: {
