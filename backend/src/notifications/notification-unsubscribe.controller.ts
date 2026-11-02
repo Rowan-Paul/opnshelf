@@ -46,7 +46,7 @@ export class NotificationUnsubscribeController {
 			);
 		}
 		return page(
-			`<p>Stop receiving emails about ${emailCategories[payload.category]}?</p><form method="post" action="?token=${encodeURIComponent(token)}"><button type="submit">Unsubscribe from ${emailCategories[payload.category]} emails</button></form><p>Your other email and push preferences will stay the same.</p>`,
+			`<p>Stop receiving emails about ${emailCategories[payload.category]}?</p><form method="post" action="?token=${encodeURIComponent(token)}"><button type="submit">Unsubscribe</button></form><p>Your other email and push preferences will stay the same.</p>`,
 		);
 	}
 

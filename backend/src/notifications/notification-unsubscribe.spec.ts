@@ -77,9 +77,7 @@ describe("email unsubscribe", () => {
 					baseUrl: "https://opnshelf.xyz",
 					unsubscribeUrl: url.toString(),
 				});
-				expect(email.text).toContain(
-					`Unsubscribe from this email type: ${url}`,
-				);
+				expect(email.text).toContain(`Unsubcribe: ${url}`);
 				expect(email.text).toContain(
 					"Manage notifications: https://opnshelf.xyz/settings/notifications",
 				);
@@ -87,13 +85,12 @@ describe("email unsubscribe", () => {
 					'href="https://opnshelf.xyz/settings/notifications"',
 				);
 				expect(email.html.match(/Manage notifications/g)).toHaveLength(1);
-				expect(
-					email.html.match(/Unsubscribe from this email type/g),
-				).toHaveLength(1);
+				expect(email.html.match(/Unsubcribe/g)).toHaveLength(1);
 				await request(app.getHttpServer())
 					.get(path)
 					.expect(200)
-					.expect(/<form method="post"/);
+					.expect(/<form method="post"/)
+					.expect(/<button type="submit">Unsubscribe<\/button>/);
 				expect(updateMany).not.toHaveBeenCalled();
 				for (let attempt = 0; attempt < 2; attempt++) {
 					await request(app.getHttpServer())
