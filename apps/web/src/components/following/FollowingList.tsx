@@ -49,11 +49,11 @@ export function FollowingList({
 							>
 								<UserAvatar
 									src={friend.avatar}
-									alt={String(friend.displayName) || friend.handle}
+									alt={String(friend.displayName || friend.handle)}
 								/>
 								<div className="min-w-0">
 									<p className="truncate font-medium text-sm">
-										{String(friend.displayName) || friend.handle}
+										{String(friend.displayName || friend.handle)}
 									</p>
 									<p className="truncate text-(--foreground-muted) text-xs">
 										@{friend.handle}
