@@ -483,9 +483,9 @@ export class MoviesService {
 			},
 		});
 
-		if (!trackedMovie) {
-			throw new Error("Tracked movie not found");
-		}
+		// Already gone (double tap, stale list, or the ingester removed it
+		// first): the user's intent is met, so succeed without a write.
+		if (!trackedMovie) return;
 
 		// Delete the AT Protocol record from user's PDS
 		const agent = createWatchAgent(session);
@@ -495,8 +495,9 @@ export class MoviesService {
 			rkey: trackedMovie.rkey,
 		});
 
-		// Delete from local database
-		await this.prisma.trackedMovie.delete({
+		// Delete from local database. deleteMany, not delete: the ingester may
+		// remove the row from the firehose between the PDS delete and this one.
+		await this.prisma.trackedMovie.deleteMany({
 			where: {
 				id: trackedMovieId,
 			},
