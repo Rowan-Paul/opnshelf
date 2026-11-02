@@ -2258,10 +2258,42 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		localRecords = [watch("movie:one")];
 		await configure();
 		await tick();
-		await service.disconnectForDeletion(userDid);
-		await db.user.delete({ where: { did: userDid } });
-		expect(remoteApi.revoke).toHaveBeenCalled();
-		expect(await db.integrationEntry.count()).toBe(0);
-		expect(remoteRecords).toHaveLength(1);
+		const entries = await db.integrationEntry.findMany({
+			where: { connection: { userDid } },
+			select: { id: true },
+		});
+		expect(entries).toHaveLength(1);
+		const otherUser = await db.user.create({
+			data: {
+				did: `${userDid}-unrelated`,
+				handle: "unrelated-sync-fixture.test",
+				integrationConnections: {
+					create: {
+						provider: "popfeed",
+						accountId: "unrelated",
+						username: "unrelated",
+						entries: { create: { kind: "watch" } },
+					},
+				},
+			},
+		});
+		try {
+			await service.disconnectForDeletion(userDid);
+			await db.user.delete({ where: { did: userDid } });
+			expect(remoteApi.revoke).toHaveBeenCalled();
+			expect(
+				await db.integrationEntry.count({
+					where: { id: { in: entries.map((entry) => entry.id) } },
+				}),
+			).toBe(0);
+			expect(
+				await db.integrationEntry.count({
+					where: { connection: { userDid: otherUser.did } },
+				}),
+			).toBe(1);
+			expect(remoteRecords).toHaveLength(1);
+		} finally {
+			await db.user.delete({ where: { did: otherUser.did } });
+		}
 	});
 });
