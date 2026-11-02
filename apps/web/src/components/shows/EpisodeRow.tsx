@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import ConfirmRemoveDialog from "#/components/ConfirmRemoveDialog";
 import { useAuth } from "#/lib/auth-context";
@@ -70,12 +70,15 @@ export default function EpisodeRow({
 	const { userSettings } = useAuth();
 	const userTimezone = userSettings?.timezone;
 	const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+	const isPending = isProcessing || isUnmarking;
+	const pendingLabel = isProcessing ? "Adding…" : "Removing…";
 
 	const dialogTitle = `${episode.name} S${seasonNumber}E${episode.episode_number}`;
 
 	const handleUnmarkClick = (e: React.MouseEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
+		if (isPending) return;
 		if (watchHistoryCount > 1) {
 			setConfirmRemoveOpen(true);
 		} else {
@@ -136,22 +139,14 @@ export default function EpisodeRow({
 				<button
 					type="button"
 					onClick={handleUnmarkClick}
-					disabled={isUnmarking}
-					className="relative flex shrink-0 items-center gap-1.5 rounded-md bg-success/10 px-3 py-1.5 font-medium text-success text-xs transition-colors hover:bg-success/20"
+					aria-disabled={isPending}
+					aria-busy={isPending}
+					className="relative flex shrink-0 items-center gap-1.5 rounded-md bg-success/10 px-3 py-1.5 font-medium text-success text-xs transition-colors hover:bg-success/20 aria-disabled:opacity-50"
 					title="Remove from shelf"
 				>
-					{isUnmarking ? (
-						<>
-							<Loader2 className="size-3 animate-spin" />
-							Loading
-						</>
-					) : (
-						<>
-							<Check className="size-3.5" />
-							On shelf
-							<span className="sr-only">: {episode.name}</span>
-						</>
-					)}
+					<Check className="size-3.5" />
+					{isPending ? pendingLabel : "On shelf"}
+					<span className="sr-only">: {episode.name}</span>
 				</button>
 			) : (
 				<button
@@ -159,23 +154,15 @@ export default function EpisodeRow({
 					onClick={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
-						onMarkWatched();
+						if (!isPending) onMarkWatched();
 					}}
-					disabled={isProcessing}
-					className="btn btn-secondary relative h-8 shrink-0 px-3 text-xs"
+					aria-disabled={isPending}
+					aria-busy={isPending}
+					className="btn btn-secondary relative h-8 shrink-0 px-3 text-xs aria-disabled:opacity-50"
 					title="Add to shelf"
 				>
-					{isProcessing ? (
-						<>
-							<Loader2 className="size-3 animate-spin" />
-							Loading
-						</>
-					) : (
-						<>
-							Add to shelf
-							<span className="sr-only">: {episode.name}</span>
-						</>
-					)}
+					{isPending ? pendingLabel : "Add to shelf"}
+					<span className="sr-only">: {episode.name}</span>
 				</button>
 			)}
 			<ConfirmRemoveDialog
