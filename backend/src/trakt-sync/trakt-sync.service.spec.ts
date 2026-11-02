@@ -440,6 +440,36 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 	},
 );
 
+it("logs why a resolve was rejected, since the HTTP log only has the status", async () => {
+	const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
+	const service = new TraktSyncService(
+		{
+			integrationEntry: {
+				findFirst: vi.fn(async () => ({ eligible: false, linked: false })),
+			},
+		} as unknown as PrismaService,
+		{} as TraktSyncClient,
+		{} as LocalSyncRecords,
+		parseEnvironment({ NODE_ENV: "test" }),
+		{} as WatchAccountLock,
+	);
+	service["requireConnection"] = vi.fn(
+		async () =>
+			({ id: "fixture" }) as Awaited<
+				ReturnType<(typeof service)["requireConnection"]>
+			>,
+	);
+	service["locked"] = async (_connection, operation) =>
+		operation(async () => undefined);
+	await expect(
+		service.resolve("fixture", "item-1", { action: "link" }),
+	).rejects.toThrow("outside your sync scope");
+	expect(warn).toHaveBeenCalledWith(
+		"Resolve link on sync item item-1 rejected with 400: This existing item is outside your sync scope.",
+	);
+	warn.mockRestore();
+});
+
 it("builds candidate comparisons only for the requested sync issue page", async () => {
 	let comparisons = 0;
 	const watch = {

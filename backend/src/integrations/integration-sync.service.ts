@@ -2,6 +2,7 @@ import { TID } from "@atproto/common";
 import {
 	BadRequestException,
 	ConflictException,
+	HttpException,
 	Logger,
 	NotFoundException,
 	type OnModuleDestroy,
@@ -874,6 +875,23 @@ export abstract class IntegrationSyncService<Credential>
 		};
 	}
 	async resolveIssue(userDid: string, id: string, dto: IntegrationResolve) {
+		try {
+			return await this.applyResolution(userDid, id, dto);
+		} catch (error) {
+			// The HTTP log only records the status. Every rejection message here is a
+			// fixed string without user input, so log it to explain a 4xx later.
+			if (error instanceof HttpException && error.getStatus() < 500)
+				this.logger.warn(
+					`Resolve ${dto.action} on sync item ${id} rejected with ${error.getStatus()}: ${error.message}`,
+				);
+			throw error;
+		}
+	}
+	private async applyResolution(
+		userDid: string,
+		id: string,
+		dto: IntegrationResolve,
+	) {
 		const c = await this.requireConnection(userDid);
 		await this.locked(c, async () => {
 			const entry = await this.prisma.integrationEntry.findFirst({
