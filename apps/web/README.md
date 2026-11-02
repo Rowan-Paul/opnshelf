@@ -44,6 +44,29 @@ filename, excludes it from browser output.
 Refer to the [root environment documentation](../../README.md#environment-variables)
 for the corresponding backend and mobile settings.
 
+## Source maps
+
+Production builds upload source maps to PostHog when both
+`POSTHOG_CLI_API_KEY` and `POSTHOG_CLI_PROJECT_ID` are set in the build
+environment. The API key must be a personal API key with Error Tracking write
+and Organization read scopes, not the public `VITE_POSTHOG_KEY`.
+`POSTHOG_CLI_HOST` defaults to `https://eu.posthog.com`.
+
+Set these variables on the Railway Web service before its next deployment;
+the Dockerfile accepts them as build arguments. They are not runtime or
+`VITE_` variables. For local builds, export them in the shell; Vite does not
+load `.env` into `process.env` while evaluating this config.
+
+The Vite plugin injects chunk IDs before asset hashing, uploads the matching
+maps, and deletes them before Nitro copies and compresses the public assets.
+Builds without credentials skip source map generation and uploading. Once
+configured, upload failures fail the build so it cannot silently ship missing
+maps. Existing deployed bundles need a new build; this does not repair maps
+for older releases. Mobile has its own native and OTA upload configuration
+documented in [Mobile releases](../mobile/RELEASE.md#source-maps).
+
+See [PostHog's Vite setup](https://posthog.com/docs/error-tracking/upload-source-maps/vite).
+
 ## Commands
 
 Run commands from the repository root:

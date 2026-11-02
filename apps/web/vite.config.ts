@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import posthog from "@posthog/rollup-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -69,6 +70,18 @@ const config = defineConfig({
 		}),
 		nitro(),
 		viteReact(),
+		process.env.POSTHOG_CLI_API_KEY && process.env.POSTHOG_CLI_PROJECT_ID
+			? posthog({
+					personalApiKey: process.env.POSTHOG_CLI_API_KEY,
+					projectId: process.env.POSTHOG_CLI_PROJECT_ID,
+					host: process.env.POSTHOG_CLI_HOST || "https://eu.posthog.com",
+					sourcemaps: {
+						releaseName: "opnshelf-web",
+						releaseMode: "symbol-set",
+						deleteAfterUpload: true,
+					},
+				})
+			: false,
 	],
 	test: {
 		environment: "jsdom",
