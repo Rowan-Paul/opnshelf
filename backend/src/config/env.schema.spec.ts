@@ -111,30 +111,6 @@ describe("backend environment", () => {
 		);
 	});
 
-	it("accepts legacy Tab names for one release, with canonical precedence and value-free warnings", () => {
-		const warn = vi.fn();
-		const env = parseEnvironment(
-			{
-				...production,
-				TAB_URL: "",
-				TAB_ADMIN_PASSWORD: undefined,
-				TAP_URL: "http://legacy:2480",
-				TAP_ADMIN_PASSWORD: "legacy-secret",
-			},
-			warn,
-		);
-		expect(env.TAB_URL).toBe("http://legacy:2480");
-		expect(env.TAB_ADMIN_PASSWORD).toBe("legacy-secret");
-		expect(env).not.toHaveProperty("TAP_URL");
-		expect(warn).toHaveBeenCalledTimes(2);
-		expect(warn.mock.calls.flat().join(" ")).not.toContain("legacy-secret");
-		expect(warn.mock.calls.flat().join(" ")).not.toContain("http://legacy");
-		expect(
-			parseEnvironment({ ...production, TAP_URL: "http://legacy:2480" }, warn)
-				.TAB_URL,
-		).toBe(production.TAB_URL);
-	});
-
 	it("fails before Nest boot and loads .env before validation without replacing deployment values", () => {
 		const directory = mkdtempSync(resolve(tmpdir(), "opnshelf-env-"));
 		const register = require.resolve("ts-node/register/transpile-only");

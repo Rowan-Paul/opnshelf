@@ -79,16 +79,6 @@ export const envSchema = z.object({
 		text,
 		"Tab admin password; must match its container.",
 	),
-	TAP_URL: httpUrl
-		.optional()
-		.describe(
-			"Deprecated alias for TAB_URL; accepted for one transition release.",
-		),
-	TAP_ADMIN_PASSWORD: text
-		.optional()
-		.describe(
-			"Deprecated alias for TAB_ADMIN_PASSWORD; accepted for one transition release.",
-		),
 	REDIS_URL: z
 		.url({ protocol: /^rediss?$/ })
 		.optional()
@@ -174,10 +164,7 @@ export const envSchema = z.object({
 		.describe("Maintenance Retry-After header in seconds; defaults to 300."),
 });
 
-export type Environment = Omit<
-	z.infer<typeof envSchema>,
-	"TAP_URL" | "TAP_ADMIN_PASSWORD"
->;
+export type Environment = z.infer<typeof envSchema>;
 
 /** Class token lets Nest inject the same typed object without string-keyed reads. */
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Abstract DI token only; EnvModule supplies the validated object through useValue.
@@ -188,7 +175,6 @@ export interface BackendEnv extends Environment {}
 
 export function parseEnvironment(
 	source: Record<string, string | undefined>,
-	warn: (message: string) => void = console.warn,
 ): Environment {
 	const input = Object.fromEntries(
 		Object.entries(source).map(([key, value]) => [
@@ -196,18 +182,6 @@ export function parseEnvironment(
 			value?.trim() ? value : undefined,
 		]),
 	);
-	const deprecated: string[] = [];
-	for (const [legacy, canonical] of [
-		["TAP_URL", "TAB_URL"],
-		["TAP_ADMIN_PASSWORD", "TAB_ADMIN_PASSWORD"],
-	]) {
-		if (input[legacy] !== undefined) {
-			deprecated.push(
-				`${legacy} is deprecated; use ${canonical} (legacy support ends after the transition release).`,
-			);
-			input[canonical] ??= input[legacy];
-		}
-	}
 	if (input.PDS_MAINTENANCE_MODE)
 		input.PDS_MAINTENANCE_MODE =
 			input.PDS_MAINTENANCE_MODE.trim().toLowerCase();
@@ -228,9 +202,7 @@ export function parseEnvironment(
 			`Invalid backend environment (missing or invalid): ${[...invalid].sort().join(", ")}`,
 		);
 	}
-	for (const message of deprecated) warn(message);
-	const { TAP_URL: _url, TAP_ADMIN_PASSWORD: _password, ...env } = result.data;
-	return env;
+	return result.data;
 }
 
 export function environmentTable(): string {
