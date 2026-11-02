@@ -18,6 +18,12 @@ export interface MutationFailureReport {
 	/** Synthetic error whose message groups by mutation key and status. */
 	error: Error;
 	properties: {
+		/**
+		 * Every report is built on the same line, so PostHog's default
+		 * stack-based grouping would merge all mutation failures into one
+		 * issue. Group by the message (mutation key and status) instead.
+		 */
+		$exception_fingerprint: string;
 		mutation_key: string;
 		http_status: number | null;
 		error_name: string;
@@ -46,9 +52,12 @@ export function describeMutationFailure(
 	const key = formatMutationKey(mutationKey);
 	const suffix = status === undefined ? "" : ` with HTTP ${status}`;
 
+	const message = `${key} failed${suffix}`;
+
 	return {
-		error: new MutationFailedError(`${key} failed${suffix}`),
+		error: new MutationFailedError(message),
 		properties: {
+			$exception_fingerprint: `MutationFailedError: ${message}`,
 			mutation_key: key,
 			http_status: status ?? null,
 			error_name: errorName(error),

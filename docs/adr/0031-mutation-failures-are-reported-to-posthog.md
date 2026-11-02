@@ -20,3 +20,13 @@ Other exceptions and ordinary analytics events remain reportable. Rate limiting,
 retry behavior, and user-facing errors remain unchanged; backend request logs
 remain the source for investigating throttling. This deliberately trades
 PostHog visibility into rate-limit failures for capacity to capture other bugs.
+
+## Amendment: fingerprint reports by message
+
+Every report is created on the same line of `describeMutationFailure`, so
+PostHog's stack-based grouping filed all mutation failures under one issue: a
+`trakt-sync/issues/resolve` 400 reopened the resolved
+`shows/124101/markShowWatched` 500. Reports now set `$exception_fingerprint`
+to their message, so each mutation key and status gets its own issue, as the
+message was always meant to provide.
+

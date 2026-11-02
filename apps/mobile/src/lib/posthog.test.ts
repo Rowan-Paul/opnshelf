@@ -128,6 +128,28 @@ describe("PostHog exception titles", () => {
 	});
 });
 
+describe("Mutation failure grouping", () => {
+	it("fingerprints each report by mutation key and status, not by its shared stack", async () => {
+		const { describeMutationFailure } = await import("@opnshelf/api");
+		const show = describeMutationFailure({ status: 500 }, [
+			"shows",
+			"124101",
+			"markShowWatched",
+		]);
+		const trakt = describeMutationFailure({ status: 400 }, [
+			"trakt-sync",
+			"issues",
+			"resolve",
+		]);
+		expect(show?.properties.$exception_fingerprint).toBe(
+			"MutationFailedError: shows/124101/markShowWatched failed with HTTP 500",
+		);
+		expect(trakt?.properties.$exception_fingerprint).not.toBe(
+			show?.properties.$exception_fingerprint,
+		);
+	});
+});
+
 describe("PostHog rate-limit filtering", () => {
 	it.each([
 		{ http_status: 429 },
