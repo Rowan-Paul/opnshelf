@@ -53,12 +53,17 @@ and Organization read scopes, not the public `VITE_POSTHOG_KEY`.
 `POSTHOG_CLI_HOST` defaults to `https://eu.posthog.com`.
 
 Set these variables on the Railway Web service before its next deployment;
-the Dockerfile accepts them as build arguments. They are not runtime or
-`VITE_` variables. For local builds, export them in the shell; Vite does not
-load `.env` into `process.env` while evaluating this config.
+the Dockerfile accepts them as build arguments. Docker ARGs alone do not persist
+as runtime environment variables, but Railway also injects service variables
+into the running container. The Docker command removes `POSTHOG_CLI_API_KEY`
+before starting Node so the SSR process does not inherit the upload credential.
+Keep the key out of `VITE_` variables. For local builds, export it only in the
+build shell; Vite does not load `.env` into `process.env` while evaluating this
+config. Local server launches must not inherit the upload key either.
 
 The Vite plugin injects chunk IDs before asset hashing, uploads the matching
 maps, and deletes them before Nitro copies and compresses the public assets.
+An independent build guard fails if any maps remain in the client output.
 Builds without credentials skip source map generation and uploading. Once
 configured, upload failures fail the build so it cannot silently ship missing
 maps. Existing deployed bundles need a new build; this does not repair maps

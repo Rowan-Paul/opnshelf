@@ -8,6 +8,7 @@ import { traceNodeModules } from "nf3";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { assertNoPublicSourceMaps } from "./src/lib/public-source-maps";
 
 const config = defineConfig({
 	ssr: { external: ["sharp"] },
@@ -82,6 +83,21 @@ const config = defineConfig({
 					},
 				})
 			: false,
+		{
+			name: "reject-public-source-maps",
+			apply: "build",
+			applyToEnvironment: (environment) =>
+				environment.config.consumer === "client",
+			writeBundle: {
+				order: "post",
+				sequential: true,
+				async handler({ dir }) {
+					if (!dir) throw new Error("Client build output directory is missing");
+					await assertNoPublicSourceMaps(dir);
+					await assertNoPublicSourceMaps(new URL("./public", import.meta.url));
+				},
+			},
+		},
 	],
 	test: {
 		environment: "jsdom",
