@@ -14,17 +14,39 @@ const config = mockEnvironment({
 });
 
 describe("email unsubscribe", () => {
+	it("keeps the settings footer when signing is unavailable in development", () => {
+		const url = unsubscribeUrl(
+			mockEnvironment(),
+			"did:plc:alice",
+			"alice@example.com",
+			"Stats",
+		);
+		expect(url).toBeUndefined();
+		const email = notificationEmail({
+			title: "Notification",
+			body: "Hello",
+			url: null,
+			baseUrl: "https://opnshelf.xyz",
+			unsubscribeUrl: url,
+		});
+		expect(email.text).toContain(
+			"Manage notifications: https://opnshelf.xyz/settings/notifications",
+		);
+	});
 	it.each(Object.keys(emailCategories))(
 		"unsubscribes only %s without a session, after confirmation",
 		async (category) => {
 			const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+			const findUnique = vi
+				.fn()
+				.mockResolvedValue({ email: "alice@example.com" });
 			const module = await Test.createTestingModule({
 				controllers: [NotificationUnsubscribeController],
 				providers: [
 					{ provide: BackendEnv, useValue: config },
 					{
 						provide: PrismaService,
-						useValue: { notificationSettings: { updateMany } },
+						useValue: { notificationSettings: { updateMany, findUnique } },
 					},
 				],
 			}).compile();
@@ -37,9 +59,17 @@ describe("email unsubscribe", () => {
 						"did:plc:alice",
 						"alice@example.com",
 						category,
-					),
+					) ?? "",
 				);
 				const path = `${url.pathname}${url.search}`;
+				const tokenBody = JSON.parse(
+					Buffer.from(
+						(url.searchParams.get("token") ?? "").split(".")[0],
+						"base64url",
+					).toString(),
+				);
+				expect(tokenBody).not.toHaveProperty("email");
+				expect(JSON.stringify(tokenBody)).not.toContain("alice@example.com");
 				const email = notificationEmail({
 					title: "Notification",
 					body: "Hello",
@@ -61,7 +91,7 @@ describe("email unsubscribe", () => {
 				for (let attempt = 0; attempt < 2; attempt++) {
 					await request(app.getHttpServer())
 						.post(path)
-						.expect(201)
+						.expect(200)
 						.expect(/You're unsubscribed/);
 				}
 				expect(updateMany).toHaveBeenCalledWith({
@@ -69,7 +99,28 @@ describe("email unsubscribe", () => {
 					data: { [`email${category}`]: false },
 				});
 				updateMany.mockClear();
-				await request(app.getHttpServer()).post(`${path}tampered`).expect(400);
+				findUnique.mockResolvedValue({ email: "changed@example.com" });
+				await request(app.getHttpServer())
+					.post(path)
+					.expect(200)
+					.expect(/address you no longer use/);
+				expect(updateMany).not.toHaveBeenCalled();
+				findUnique.mockResolvedValue({ email: "alice@example.com" });
+				updateMany.mockResolvedValue({ count: 0 });
+				await request(app.getHttpServer())
+					.post(path)
+					.expect(200)
+					.expect(/address changed/);
+				updateMany.mockClear();
+				await request(app.getHttpServer())
+					.post(`${path}tampered`)
+					.expect(400)
+					.expect("Content-Type", /text\/html/)
+					.expect(/link is invalid/);
+				await request(app.getHttpServer())
+					.get(`${path}tampered`)
+					.expect(400)
+					.expect(/link is invalid/);
 				await request(app.getHttpServer())
 					.post("/notifications/unsubscribe")
 					.expect(400);
@@ -79,7 +130,7 @@ describe("email unsubscribe", () => {
 						"did:plc:alice",
 						"alice@example.com",
 						"Unknown",
-					),
+					) ?? "",
 				);
 				await request(app.getHttpServer())
 					.post(`${invalid.pathname}${invalid.search}`)

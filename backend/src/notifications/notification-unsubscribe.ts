@@ -1,5 +1,4 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { BadRequestException } from "@nestjs/common";
 import type { BackendEnv } from "../config/env.schema";
 
 export const emailCategories = {
@@ -15,16 +14,24 @@ function signature(secret: string, body: string): Buffer {
 		.digest();
 }
 
+/** Keyed address binding keeps the delivery address out of URLs and logs. */
+export function unsubscribeEmailTag(secret: string, email: string): string {
+	return createHmac("sha256", secret)
+		.update(`notification-unsubscribe-email:${email}`)
+		.digest("base64url");
+}
+
 export function unsubscribeUrl(
 	config: BackendEnv,
 	did: string,
 	email: string,
 	category: string,
-): string {
-	if (!config.PROVIDER_STATE_SECRET) throw new Error("Missing signing secret");
-	const body = Buffer.from(JSON.stringify({ did, email, category })).toString(
-		"base64url",
-	);
+): string | undefined {
+	if (!config.PROVIDER_STATE_SECRET) return undefined;
+	const emailTag = unsubscribeEmailTag(config.PROVIDER_STATE_SECRET, email);
+	const body = Buffer.from(
+		JSON.stringify({ did, emailTag, category }),
+	).toString("base64url");
 	const token = `${body}.${signature(config.PROVIDER_STATE_SECRET, body).toString("base64url")}`;
 	const url = new URL(
 		"/notifications/unsubscribe",
@@ -50,12 +57,12 @@ export function verifyUnsubscribe(secret: string | undefined, token: unknown) {
 					);
 					if (
 						typeof value.did === "string" &&
-						typeof value.email === "string" &&
+						typeof value.emailTag === "string" &&
 						Object.hasOwn(emailCategories, value.category)
 					) {
 						return {
 							did: value.did as string,
-							email: value.email as string,
+							emailTag: value.emailTag as string,
 							category: value.category as keyof typeof emailCategories,
 						};
 					}
@@ -65,7 +72,5 @@ export function verifyUnsubscribe(secret: string | undefined, token: unknown) {
 			}
 		}
 	}
-	throw new BadRequestException(
-		"This unsubscribe link is invalid. Use the link in a recent notification email.",
-	);
+	return null;
 }
