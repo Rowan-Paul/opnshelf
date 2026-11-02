@@ -1,3 +1,4 @@
+import { NotificationUnsubscribeController } from "./notification-unsubscribe.controller";
 import { Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
 import { EmailModule } from "../email/email.module";
@@ -10,7 +11,7 @@ import { NotificationsService } from "./notifications.service";
 
 @Module({
 	imports: [AuthModule, EmailModule, PrismaModule, MoviesModule, ShowsModule],
-	controllers: [NotificationsController],
+	controllers: [NotificationsController, NotificationUnsubscribeController],
 	providers: [NotificationsService, NotificationWorkerService],
 })
 export class NotificationsModule {}
