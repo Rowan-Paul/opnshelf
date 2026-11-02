@@ -465,7 +465,13 @@ it("logs why a resolve was rejected, since the HTTP log only has the status", as
 		service.resolve("fixture", "item-1", { action: "link" }),
 	).rejects.toThrow("outside your sync scope");
 	expect(warn).toHaveBeenCalledWith(
-		"Resolve link on sync item item-1 rejected with 400: This existing item is outside your sync scope.",
+		'Resolve link on sync item "item-1" rejected with 400: This existing item is outside your sync scope.',
+	);
+	await expect(
+		service.resolve("fixture", "x\nforged line", { action: "link" }),
+	).rejects.toThrow();
+	expect(warn).toHaveBeenLastCalledWith(
+		expect.stringContaining('sync item "x\\nforged line" rejected'),
 	);
 	warn.mockRestore();
 });

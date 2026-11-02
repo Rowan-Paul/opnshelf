@@ -879,10 +879,11 @@ export abstract class IntegrationSyncService<Credential>
 			return await this.applyResolution(userDid, id, dto);
 		} catch (error) {
 			// The HTTP log only records the status. Every rejection message here is a
-			// fixed string without user input, so log it to explain a 4xx later.
+			// fixed string without user input, so log it to explain a 4xx later. The
+			// id comes from the URL unvalidated: JSON-encode it so it cannot forge lines.
 			if (error instanceof HttpException && error.getStatus() < 500)
 				this.logger.warn(
-					`Resolve ${dto.action} on sync item ${id} rejected with ${error.getStatus()}: ${error.message}`,
+					`Resolve ${dto.action} on sync item ${JSON.stringify(id)} rejected with ${error.getStatus()}: ${error.message}`,
 				);
 			throw error;
 		}
