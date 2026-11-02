@@ -78,6 +78,7 @@ const config = defineConfig({
 					host: process.env.POSTHOG_CLI_HOST || "https://eu.posthog.com",
 					sourcemaps: {
 						releaseName: "opnshelf-web",
+						releaseVersion: process.env.RAILWAY_GIT_COMMIT_SHA,
 						releaseMode: "symbol-set",
 						deleteAfterUpload: true,
 					},
