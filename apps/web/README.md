@@ -51,6 +51,8 @@ Production builds upload source maps to PostHog when both
 environment. The API key must be a personal API key with Error Tracking write
 and Organization read scopes, not the public `VITE_POSTHOG_KEY`.
 `POSTHOG_CLI_HOST` defaults to `https://eu.posthog.com`.
+Railway's `RAILWAY_GIT_COMMIT_SHA` build argument supplies the release version;
+the Docker build has no Git checkout from which PostHog could infer it.
 
 Set these variables on the Railway Web service before its next deployment;
 the Dockerfile accepts them as build arguments. Docker ARGs alone do not persist
