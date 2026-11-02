@@ -41,6 +41,7 @@ COPY apps/web ./apps/web
 ARG POSTHOG_CLI_API_KEY
 ARG POSTHOG_CLI_PROJECT_ID
 ARG POSTHOG_CLI_HOST=https://eu.posthog.com
+ARG RAILWAY_GIT_COMMIT_SHA
 RUN pnpm --filter @opnshelf/web build
 
 # ---- runtime: self-contained Nitro node-server ----
