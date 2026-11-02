@@ -403,6 +403,44 @@ describe("EpisodeWatchService", () => {
 		});
 	});
 
+	describe("removeTrackedEpisodeById", () => {
+		const session = { did: "did:plc:abc123" };
+
+		it("deletes the record and the local row", async () => {
+			mockPrismaService.trackedEpisode.findFirst.mockResolvedValue({
+				id: "te1",
+				rkey: "rk1",
+			});
+			mockDeleteRecord.mockResolvedValue({});
+			mockPrismaService.trackedEpisode.deleteMany.mockResolvedValue({
+				count: 0,
+			});
+
+			await service.removeTrackedEpisodeById("did:plc:abc123", session, "te1");
+
+			expect(mockDeleteRecord).toHaveBeenCalledWith({
+				repo: "did:plc:abc123",
+				collection: "xyz.opnshelf.episode",
+				rkey: "rk1",
+			});
+			expect(mockPrismaService.trackedEpisode.deleteMany).toHaveBeenCalledWith({
+				where: { id: "te1" },
+			});
+		});
+
+		it("succeeds without writing when the entry is already gone", async () => {
+			mockPrismaService.trackedEpisode.findFirst.mockResolvedValue(null);
+
+			await expect(
+				service.removeTrackedEpisodeById("did:plc:abc123", session, "te1"),
+			).resolves.toBeUndefined();
+			expect(mockDeleteRecord).not.toHaveBeenCalled();
+			expect(
+				mockPrismaService.trackedEpisode.deleteMany,
+			).not.toHaveBeenCalled();
+		});
+	});
+
 	describe("unmarkEpisodeWatched", () => {
 		it("should delete latest episode record in latest mode", async () => {
 			const mockSession = { did: "did:plc:abc123" };
