@@ -604,7 +604,7 @@ function KeywordSearchPage() {
 											>
 												<UserAvatar
 													src={person.avatar}
-													alt={String(person.displayName) || person.handle}
+													alt={String(person.displayName || person.handle)}
 													size="md"
 												/>
 												<div className="min-w-0 flex-1">
@@ -615,7 +615,7 @@ function KeywordSearchPage() {
 														}}
 														className="block truncate font-medium text-sm hover:text-(--accent)"
 													>
-														{String(person.displayName) || person.handle}
+														{String(person.displayName || person.handle)}
 													</Link>
 													<p className="truncate text-(--foreground-muted) text-xs">
 														@{person.handle}

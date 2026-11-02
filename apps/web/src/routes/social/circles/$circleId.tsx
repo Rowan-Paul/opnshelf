@@ -37,11 +37,11 @@ function UserLine({
 		<div className="flex items-center gap-3 rounded-lg border border-(--border) p-3">
 			<UserAvatar
 				src={user.avatar}
-				alt={String(user.displayName) || user.handle}
+				alt={String(user.displayName || user.handle)}
 			/>
 			<div className="min-w-0 flex-1">
 				<p className="truncate font-medium text-sm">
-					{String(user.displayName) || user.handle}
+					{String(user.displayName || user.handle)}
 				</p>
 				<p className="truncate text-(--foreground-muted) text-xs">
 					@{user.handle}

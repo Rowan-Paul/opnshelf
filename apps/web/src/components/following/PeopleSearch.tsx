@@ -181,11 +181,11 @@ function UserSearchRow({
 			>
 				<UserAvatar
 					src={person.avatar}
-					alt={String(person.displayName) || person.handle}
+					alt={String(person.displayName || person.handle)}
 				/>
 				<div className="min-w-0">
 					<p className="truncate font-medium text-sm">
-						{String(person.displayName) || person.handle}
+						{String(person.displayName || person.handle)}
 					</p>
 					<p className="truncate text-(--foreground-muted) text-xs">
 						@{person.handle}

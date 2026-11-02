@@ -146,11 +146,11 @@ export function FollowSuggestionsStep({
 								src={
 									typeof person.avatar === "string" ? person.avatar : undefined
 								}
-								alt={String(person.displayName) || person.handle}
+								alt={String(person.displayName || person.handle)}
 							/>
 							<div className="min-w-0 flex-1">
 								<p className="truncate font-medium text-sm">
-									{String(person.displayName) || person.handle}
+									{String(person.displayName || person.handle)}
 								</p>
 								<p className="text-(--foreground-muted) text-xs">
 									@{person.handle}
