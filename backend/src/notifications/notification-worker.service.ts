@@ -1,3 +1,4 @@
+import { unsubscribeUrl } from "./notification-unsubscribe";
 import { buildWatchRecap } from "./watch-recap";
 import {
 	collectionItems,
@@ -229,7 +230,10 @@ export class NotificationWorkerService
 		}
 		for (const show of shows) {
 			try {
-				const detail = await this.shows.getShowDetails(show.showId);
+				// Fresh: premiere detection reads these persisted season air dates.
+				const detail = await this.shows.getShowDetails(show.showId, {
+					fresh: true,
+				});
 				await this.prisma.show.update({
 					where: { showId: show.showId },
 					data: {
@@ -791,6 +795,12 @@ export class NotificationWorkerService
 							to: settings.email,
 							subject: job.title,
 							...notificationEmail({
+								unsubscribeUrl: unsubscribeUrl(
+									this.config,
+									job.userDid,
+									settings.email,
+									job.category,
+								),
 								title: job.title,
 								body: job.body,
 								url: job.url,

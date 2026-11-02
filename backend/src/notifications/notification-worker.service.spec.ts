@@ -39,7 +39,11 @@ describe("NotificationWorkerService", () => {
 		trackedEpisode: { findMany: vi.fn(), count: vi.fn().mockResolvedValue(3) },
 	};
 	const email = { sendNotification: vi.fn() };
-	const config = mockEnvironment({ get: vi.fn() });
+	const config = mockEnvironment({
+		PROVIDER_STATE_SECRET: "test-signing-secret",
+		BACKEND_PUBLIC_URL: "https://api.example.com",
+		FRONTEND_URL: "https://staging.opnshelf.xyz",
+	});
 	const movies = { discoverReleasesBetween: vi.fn() };
 	const shows = { discoverPremieresBetween: vi.fn() };
 	const worker = new NotificationWorkerService(
@@ -78,7 +82,7 @@ describe("NotificationWorkerService", () => {
 		prisma.notificationDelivery.updateMany.mockResolvedValue({ count: 1 });
 		prisma.notificationDelivery.update.mockResolvedValue({});
 		email.sendNotification.mockResolvedValue(undefined);
-		config.get.mockReturnValue("https://staging.opnshelf.xyz");
+
 		prisma.listItem.findMany.mockResolvedValue([]);
 		movies.discoverReleasesBetween.mockResolvedValue([
 			{ id: 42, title: "A Movie" },
@@ -363,7 +367,7 @@ describe("NotificationWorkerService", () => {
 		});
 	});
 
-	it("links notification emails to their settings section", async () => {
+	it("links notification emails to a sign-in-free unsubscribe page", async () => {
 		prisma.notificationDelivery.findMany.mockResolvedValue([
 			{
 				id: "delivery-1",
@@ -385,7 +389,7 @@ describe("NotificationWorkerService", () => {
 		expect(email.sendNotification).toHaveBeenCalledWith(
 			expect.objectContaining({
 				text: expect.stringContaining(
-					"Manage notifications: https://staging.opnshelf.xyz/settings/notifications",
+					"Unsubcribe: https://api.example.com/notifications/unsubscribe?token=",
 				),
 			}),
 		);

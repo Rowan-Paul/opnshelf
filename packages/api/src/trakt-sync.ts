@@ -84,13 +84,16 @@ export function traktResolutionLabel(
 }
 export function traktError(error: unknown): string {
 	if (error instanceof Error) return error.message;
-	if (
-		error &&
-		typeof error === "object" &&
-		"message" in error &&
-		typeof error.message === "string"
-	)
-		return error.message;
+	if (error && typeof error === "object" && "message" in error) {
+		if (typeof error.message === "string") return error.message;
+		// Validation failures arrive as a list of messages.
+		if (
+			Array.isArray(error.message) &&
+			error.message.every((item) => typeof item === "string") &&
+			error.message.length
+		)
+			return error.message.join(" ");
+	}
 	return "Could not complete this action. Try again.";
 }
 /**
@@ -120,21 +123,6 @@ export function traktSyncCatchUpMessage(
 		return `Syncing with Trakt${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
 	return null;
 }
-/**
- * Whether Trakt Sync is bringing the User's Watches into Opnshelf, so
- * onboarding can skip asking which titles they have watched.
- */
-export function bringsTraktWatches(
-	sync: Pick<SyncStatusDto, "status" | "direction" | "watches"> | undefined,
-): boolean {
-	return Boolean(
-		sync &&
-			(sync.status === "active" || sync.status === "preparing") &&
-			sync.watches &&
-			sync.direction !== "outbound",
-	);
-}
-
 /** Older servers omit structured recovery fields; keep uncertain writes safe during rollout. */
 export function traktIssueRecovery(
 	item: SyncIssueDto,

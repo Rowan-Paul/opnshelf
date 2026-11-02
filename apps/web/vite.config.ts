@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import posthog from "@posthog/rollup-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -7,6 +8,7 @@ import { traceNodeModules } from "nf3";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { assertNoPublicSourceMaps } from "./src/lib/public-source-maps";
 
 const config = defineConfig({
 	ssr: { external: ["sharp"] },
@@ -69,6 +71,33 @@ const config = defineConfig({
 		}),
 		nitro(),
 		viteReact(),
+		process.env.POSTHOG_CLI_API_KEY && process.env.POSTHOG_CLI_PROJECT_ID
+			? posthog({
+					personalApiKey: process.env.POSTHOG_CLI_API_KEY,
+					projectId: process.env.POSTHOG_CLI_PROJECT_ID,
+					host: process.env.POSTHOG_CLI_HOST || "https://eu.posthog.com",
+					sourcemaps: {
+						releaseName: "opnshelf-web",
+						releaseMode: "symbol-set",
+						deleteAfterUpload: true,
+					},
+				})
+			: false,
+		{
+			name: "reject-public-source-maps",
+			apply: "build",
+			applyToEnvironment: (environment) =>
+				environment.config.consumer === "client",
+			writeBundle: {
+				order: "post",
+				sequential: true,
+				async handler({ dir }) {
+					if (!dir) throw new Error("Client build output directory is missing");
+					await assertNoPublicSourceMaps(dir);
+					await assertNoPublicSourceMaps(new URL("./public", import.meta.url));
+				},
+			},
+		},
 	],
 	test: {
 		environment: "jsdom",

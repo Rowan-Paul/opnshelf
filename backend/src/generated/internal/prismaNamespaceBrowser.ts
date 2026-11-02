@@ -52,8 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
-  TraktSyncConnection: 'TraktSyncConnection',
-  TraktSyncEntry: 'TraktSyncEntry',
+  IntegrationConnection: 'IntegrationConnection',
+  IntegrationEntry: 'IntegrationEntry',
   NotificationSettings: 'NotificationSettings',
   PushDevice: 'PushDevice',
   NotificationCollection: 'NotificationCollection',
@@ -146,6 +146,7 @@ export const UserScalarFieldEnum = {
   privateSettingsHasCopy: 'privateSettingsHasCopy',
   blogIntegrationEnabled: 'blogIntegrationEnabled',
   blueskyCrossPostEnabled: 'blueskyCrossPostEnabled',
+  popfeedWriteEnabled: 'popfeedWriteEnabled',
   reviewsMirrorFormat: 'reviewsMirrorFormat',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -154,10 +155,11 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const TraktSyncConnectionScalarFieldEnum = {
+export const IntegrationConnectionScalarFieldEnum = {
   id: 'id',
   userDid: 'userDid',
-  traktUserId: 'traktUserId',
+  provider: 'provider',
+  accountId: 'accountId',
   username: 'username',
   accessToken: 'accessToken',
   refreshToken: 'refreshToken',
@@ -190,10 +192,10 @@ export const TraktSyncConnectionScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type TraktSyncConnectionScalarFieldEnum = (typeof TraktSyncConnectionScalarFieldEnum)[keyof typeof TraktSyncConnectionScalarFieldEnum]
+export type IntegrationConnectionScalarFieldEnum = (typeof IntegrationConnectionScalarFieldEnum)[keyof typeof IntegrationConnectionScalarFieldEnum]
 
 
-export const TraktSyncEntryScalarFieldEnum = {
+export const IntegrationEntryScalarFieldEnum = {
   id: 'id',
   connectionId: 'connectionId',
   kind: 'kind',
@@ -211,7 +213,7 @@ export const TraktSyncEntryScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type TraktSyncEntryScalarFieldEnum = (typeof TraktSyncEntryScalarFieldEnum)[keyof typeof TraktSyncEntryScalarFieldEnum]
+export type IntegrationEntryScalarFieldEnum = (typeof IntegrationEntryScalarFieldEnum)[keyof typeof IntegrationEntryScalarFieldEnum]
 
 
 export const NotificationSettingsScalarFieldEnum = {

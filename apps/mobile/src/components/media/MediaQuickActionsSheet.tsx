@@ -7,7 +7,8 @@ import {
 	StickyNote,
 	X,
 } from "lucide-react-native";
-import { Modal, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/theme/colors";
 
@@ -90,12 +91,7 @@ export function MediaQuickActionsSheet({
 	const watchLabel = watched ? "Remove from shelf" : "Add to shelf";
 
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -133,6 +129,6 @@ export function MediaQuickActionsSheet({
 					</View>
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }

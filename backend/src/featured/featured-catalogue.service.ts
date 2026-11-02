@@ -36,9 +36,11 @@ export class FeaturedCatalogueService {
 		path: string,
 	): Promise<{ title?: string; name?: string; poster_path?: string | null }> {
 		const url = `${TMDB_BASE_URL}${path}?api_key=${this.config.TMDB_API_KEY ?? ""}&language=en-US`;
+		// The key is the path, never the URL: the URL carries the api_key, and
+		// cache keys are visible to anyone who can list the Redis keyspace.
 		const response = await this.http.fetchCached(
 			url,
-			url,
+			`featured:en-US:${path}`,
 			TMDB_DETAIL_CACHE_TTL_MS,
 		);
 		// Only a real 404 proves the title is missing; authentication/limits/outages do not.

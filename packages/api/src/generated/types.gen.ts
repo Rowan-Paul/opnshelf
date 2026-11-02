@@ -497,7 +497,7 @@ export type MobileHandoffExchangeResponseDto = {
 };
 
 export type PermissionChangeDto = {
-    integration: 'atstore' | 'blog' | 'bluesky' | 'spaces' | 'watches';
+    integration: 'atstore' | 'blog' | 'bluesky' | 'popfeed' | 'spaces' | 'watches';
     action: 'connect' | 'disconnect';
     platform?: 'mobile';
     /**
@@ -1667,6 +1667,10 @@ export type SyncStatusDto = {
     progress?: number;
     needsAttention: number;
     ignored: number;
+    /**
+     * Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it.
+     */
+    writeAccess?: boolean;
 };
 
 export type SyncConnectDto = {
@@ -2457,6 +2461,63 @@ export type PublishAtStoreReviewResponseDto = {
      * AT URI of the review record
      */
     uri: string;
+};
+
+export type IntegrationIssueDto = {
+    recovery?: 'verify' | 'choose' | 'retry';
+    remoteState?: 'unknown' | 'missing' | 'present';
+    id: string;
+    kind: string;
+    issue: string;
+    ignored: boolean;
+    opnshelf?: SyncRecordDto;
+    remote?: SyncRecordDto;
+    candidates: Array<SyncRecordDto>;
+};
+
+export type IntegrationIssuesDto = {
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<IntegrationIssueDto>;
+};
+
+export type IntegrationResolveDto = {
+    /**
+     * remote keeps the provider's version; opnshelf keeps Opnshelf's.
+     */
+    action: 'remote' | 'opnshelf' | 'ignore' | 'undo' | 'retry' | 'link' | 'match' | 'separate';
+    candidateKey?: string;
+    /**
+     * TMDB movie or show ID
+     */
+    mediaId?: string;
+    allRatings?: boolean;
+    /**
+     * The User checked the provider and confirmed the unacknowledged creation is missing before choosing a version.
+     */
+    confirmedRemoteMissing?: boolean;
 };
 
 export type WatchRecapHighlightDto = {
@@ -6298,6 +6359,113 @@ export type AtStoreReviewsControllerPublishResponses = {
 };
 
 export type AtStoreReviewsControllerPublishResponse = AtStoreReviewsControllerPublishResponses[keyof AtStoreReviewsControllerPublishResponses];
+
+export type PopfeedSyncControllerStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/popfeed-sync';
+};
+
+export type PopfeedSyncControllerStatusResponses = {
+    200: SyncStatusDto;
+};
+
+export type PopfeedSyncControllerStatusResponse = PopfeedSyncControllerStatusResponses[keyof PopfeedSyncControllerStatusResponses];
+
+export type PopfeedSyncControllerConfigureData = {
+    body: SyncSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/popfeed-sync';
+};
+
+export type PopfeedSyncControllerConfigureResponses = {
+    200: SyncStatusDto;
+};
+
+export type PopfeedSyncControllerConfigureResponse = PopfeedSyncControllerConfigureResponses[keyof PopfeedSyncControllerConfigureResponses];
+
+export type PopfeedSyncControllerConnectData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/popfeed-sync/connect';
+};
+
+export type PopfeedSyncControllerConnectResponses = {
+    201: SyncStatusDto;
+};
+
+export type PopfeedSyncControllerConnectResponse = PopfeedSyncControllerConnectResponses[keyof PopfeedSyncControllerConnectResponses];
+
+export type PopfeedSyncControllerActionData = {
+    body: SyncActionDto;
+    path?: never;
+    query?: never;
+    url: '/popfeed-sync/action';
+};
+
+export type PopfeedSyncControllerActionResponses = {
+    201: SyncStatusDto;
+};
+
+export type PopfeedSyncControllerActionResponse = PopfeedSyncControllerActionResponses[keyof PopfeedSyncControllerActionResponses];
+
+export type PopfeedSyncControllerIssuesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        view?: 'attention' | 'ignored';
+    };
+    url: '/popfeed-sync/issues';
+};
+
+export type PopfeedSyncControllerIssuesResponses = {
+    200: IntegrationIssuesDto;
+};
+
+export type PopfeedSyncControllerIssuesResponse = PopfeedSyncControllerIssuesResponses[keyof PopfeedSyncControllerIssuesResponses];
+
+export type PopfeedSyncControllerResolveData = {
+    body: IntegrationResolveDto;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/popfeed-sync/issues/{id}';
+};
+
+export type PopfeedSyncControllerResolveResponses = {
+    201: SyncStatusDto;
+};
+
+export type PopfeedSyncControllerResolveResponse = PopfeedSyncControllerResolveResponses[keyof PopfeedSyncControllerResolveResponses];
+
+export type PopfeedSyncControllerMatchesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        q?: string;
+    };
+    url: '/popfeed-sync/issues/{id}/matches';
+};
+
+export type PopfeedSyncControllerMatchesResponses = {
+    200: Array<TraktMatchCandidateDto>;
+};
+
+export type PopfeedSyncControllerMatchesResponse = PopfeedSyncControllerMatchesResponses[keyof PopfeedSyncControllerMatchesResponses];
 
 export type NotificationsControllerCollectionData = {
     body?: never;

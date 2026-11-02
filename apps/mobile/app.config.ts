@@ -59,7 +59,7 @@ const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.7.11",
+	version: "1.7.14",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -161,6 +161,9 @@ const config: ExpoConfig = {
 		// R8 needs more Gradle daemon memory than Expo's template allows; the
 		// plugin explains why it cannot go through expo-build-properties.
 		"./plugins/with-gradle-jvm-args",
+		// Pins OkHttp past the compromised eMudhra certificates; the plugin
+		// explains why. Native config: needs a store build, not an OTA update.
+		"./plugins/with-okhttp-version",
 		"expo-secure-store",
 		"expo-font",
 		"expo-image",

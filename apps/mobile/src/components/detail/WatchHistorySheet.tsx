@@ -1,6 +1,7 @@
 import { Pencil, Plus, X } from "lucide-react-native";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { WatchCountBadge } from "@/components/media/WatchCountBadge";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { formatWatchDateTime } from "@/lib/watch-date";
@@ -44,12 +45,7 @@ export function WatchHistorySheet({
 	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -138,6 +134,6 @@ export function WatchHistorySheet({
 					</Pressable>
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }

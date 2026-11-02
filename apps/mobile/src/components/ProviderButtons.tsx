@@ -22,6 +22,7 @@ import {
 	signInWithProvider,
 	supportsNativeApple,
 } from "@/lib/provider-signin";
+import { noteSignInMethod } from "@/lib/recent-accounts";
 
 /**
  * Shared geometry. Both providers get the same box, because Apple asks that
@@ -165,28 +166,15 @@ function ProviderButton({
 }
 
 /**
- * "Continue with Apple" / "Continue with Google" (ADR 0027).
- *
- * Both labels are approved by their respective vendor, and both buttons are
- * the same size on purpose: App Store guideline 4.8 is the reason the Google
- * button can exist in this app at all, so neither may read as the default.
+ * Runs Provider Sign-In for one provider at a time: native where the platform
+ * offers a credential, the browser leg otherwise, then on to the Handle Picker
+ * for someone new. Shared by the provider buttons and the login screen's
+ * remembered accounts.
  */
-export function ProviderButtons({
-	disabled = false,
-	onBusyChange,
-}: ProviderButtonsProps) {
+export function useProviderSignIn() {
 	const { runAuthorizationUrl } = useAuth();
 	const toast = useToast();
-	const dark = useColorScheme() === "dark";
 	const [busy, setBusy] = useState<Provider | null>(null);
-
-	const googleAvailable = isGoogleConfigured();
-	const locked = disabled || busy !== null;
-	const apple = dark ? APPLE.dark : APPLE.light;
-
-	useEffect(() => {
-		onBusyChange?.(busy !== null);
-	}, [busy, onBusyChange]);
 
 	/**
 	 * Apple on Android has no native credential, so it runs the same browser
@@ -202,9 +190,10 @@ export function ProviderButtons({
 		if (completed) router.replace("/");
 	};
 
-	const onPress = async (provider: Provider) => {
-		if (locked) return;
+	const signIn = async (provider: Provider) => {
+		if (busy !== null) return;
 		setBusy(provider);
+		noteSignInMethod(provider);
 		try {
 			if (provider === "apple" && !supportsNativeApple()) {
 				await runAppleInBrowser();
@@ -246,6 +235,35 @@ export function ProviderButtons({
 		}
 	};
 
+	return { busy, signIn };
+}
+
+/**
+ * "Continue with Apple" / "Continue with Google" (ADR 0027).
+ *
+ * Both labels are approved by their respective vendor, and both buttons are
+ * the same size on purpose: App Store guideline 4.8 is the reason the Google
+ * button can exist in this app at all, so neither may read as the default.
+ */
+export function ProviderButtons({
+	disabled = false,
+	onBusyChange,
+}: ProviderButtonsProps) {
+	const dark = useColorScheme() === "dark";
+	const { busy, signIn } = useProviderSignIn();
+
+	const googleAvailable = isGoogleConfigured();
+	const locked = disabled || busy !== null;
+	const apple = dark ? APPLE.dark : APPLE.light;
+
+	useEffect(() => {
+		onBusyChange?.(busy !== null);
+	}, [busy, onBusyChange]);
+
+	const onPress = (provider: Provider) => {
+		if (!locked) void signIn(provider);
+	};
+
 	// Apple is offered on every platform: natively on iOS, through the browser
 	// elsewhere. Hiding it on Android would lock out anyone who signed up on an
 	// iPhone.
@@ -267,7 +285,7 @@ export function ProviderButtons({
 					cornerRadius={APPLE_CORNER_RADIUS}
 					style={{ height: BUTTON_HEIGHT, opacity: locked ? 0.6 : 1 }}
 					onPress={() => {
-						if (!locked) void onPress("apple");
+						onPress("apple");
 					}}
 				/>
 			) : (

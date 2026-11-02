@@ -11,6 +11,7 @@ import {
 import { Check, ChevronDown, CircleAlert, Globe, Lock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -47,10 +48,23 @@ export function PrivacySection({
 			new URLSearchParams(window.location.search).has("privacyAuthorization"),
 		);
 	}, []);
+	const [permissionRequest, setPermissionRequest] = useState<
+		"closed" | "open" | "continuing"
+	>("closed");
+	const answerPermissionRequest = useRef<(approved: boolean) => void>(() => {});
 	const { query, mutation, pendingKey } = usePrivacy(async (action) => {
+		setShowProgress(false);
+		const approved = await new Promise<boolean>((resolve) => {
+			answerPermissionRequest.current = resolve;
+			setPermissionRequest("open");
+		});
+		if (!approved) return false;
 		const result = await authControllerPermissions({
 			body: { integration: "watches", action: "connect" },
 			throwOnError: true,
+		}).catch((error: unknown) => {
+			setPermissionRequest("closed");
+			throw error;
 		});
 		sessionStorage.setItem(
 			PENDING,
@@ -431,20 +445,28 @@ export function PrivacySection({
 				)
 			) : data.availability !== "available" ? (
 				<div className="space-y-4">
-					<p className="text-(--foreground-muted) text-sm">
-						{data.availability === "unsupported"
-							? "Your PDS does not support Spaces yet. You can keep using Public."
-							: "We could not check Spaces support. Try again to load privacy choices."}
-					</p>
-					<Button
-						disabled={query.isFetching}
-						onClick={() => void query.refetch()}
-					>
-						Try again
-					</Button>
+					<div className="flex items-start gap-3 rounded-2xl border border-(--border) bg-(--background-subtle) p-4 text-sm">
+						<Lock className="mt-0.5 size-4 shrink-0 text-(--foreground-muted)" />
+						<div className="space-y-1">
+							<p>
+								<span className="font-medium">
+									Private isn't available for your account yet.
+								</span>{" "}
+								It needs a PDS that supports Spaces.
+							</p>
+							<button
+								type="button"
+								className="text-(--foreground-muted) text-xs underline underline-offset-2 disabled:opacity-50"
+								disabled={query.isFetching}
+								onClick={() => void query.refetch()}
+							>
+								Check again
+							</button>
+						</div>
+					</div>
 					{onboarding && (
-						<Button onClick={onContinue}>
-							Continue without changing privacy
+						<Button className="btn btn-primary w-full" onClick={onContinue}>
+							Continue
 						</Button>
 					)}
 				</div>
@@ -537,6 +559,19 @@ export function PrivacySection({
 					)}
 				</>
 			)}
+			<PermissionRequestDialog
+				integration="watches"
+				open={permissionRequest !== "closed"}
+				pending={permissionRequest === "continuing"}
+				onCancel={() => {
+					setPermissionRequest("closed");
+					answerPermissionRequest.current(false);
+				}}
+				onContinue={() => {
+					setPermissionRequest("continuing");
+					answerPermissionRequest.current(true);
+				}}
+			/>
 			<Dialog open={showError} onOpenChange={setShowError}>
 				<DialogContent>
 					<DialogHeader>

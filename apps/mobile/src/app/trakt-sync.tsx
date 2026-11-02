@@ -1,18 +1,14 @@
-import { Stack, useLocalSearchParams } from "expo-router";
-import { TraktSyncManager } from "@/components/trakt/TraktSyncManager";
-import { EndReachedScrollView } from "@/lib/use-end-reached";
+import { Redirect, useLocalSearchParams } from "expo-router";
 
-export default function TraktSyncScreen() {
+// Trakt's OAuth callback and captured links still open this path (ADR 0022, ADR 0051).
+export default function TraktSyncRedirect() {
 	const { connection } = useLocalSearchParams<{ connection?: string }>();
 	return (
-		<EndReachedScrollView
-			className="flex-1 bg-background"
-			contentContainerClassName="px-4 py-4 pb-12"
-			contentInsetAdjustmentBehavior="automatic"
-			keyboardShouldPersistTaps="handled"
-		>
-			<Stack.Screen options={{ headerShown: true, title: "Trakt Sync" }} />
-			<TraktSyncManager connectionFailed={connection === "failed"} />
-		</EndReachedScrollView>
+		<Redirect
+			href={{
+				pathname: "/integrations/[provider]",
+				params: { provider: "trakt", ...(connection ? { connection } : {}) },
+			}}
+		/>
 	);
 }

@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
 import type { WatchAccountLock } from "../privacy/watch-account-lock";
 import type { PrismaService } from "../prisma/prisma.service";
-import type { LocalSyncRecords } from "./local-records.service";
+import type { LocalSyncRecords } from "../integrations/local-records.service";
 import { TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
 import { TraktSyncService } from "./trakt-sync.service";
 
@@ -34,7 +34,7 @@ it.each([
 			findUnique: vi.fn(async () => saved),
 			deleteMany: vi.fn(async () => ({ count: 1 })),
 		},
-		traktSyncConnection: {
+		integrationConnection: {
 			findFirst: vi.fn(async () => null),
 			findUnique: vi.fn(async () => null),
 			create: vi.fn(fail),
@@ -103,7 +103,7 @@ it("does not repeatedly scan every link while discovering a large account", asyn
 		},
 	}));
 	const prisma = {
-		traktSyncEntry: {
+		integrationEntry: {
 			findMany: vi.fn(async () => entries),
 			update: vi.fn(),
 			createMany: vi.fn(),
@@ -121,8 +121,8 @@ it("does not repeatedly scan every link while discovering a large account", asyn
 		local,
 		remote,
 	);
-	expect(prisma.traktSyncEntry.update).not.toHaveBeenCalled();
-	expect(prisma.traktSyncEntry.createMany).not.toHaveBeenCalled();
+	expect(prisma.integrationEntry.update).not.toHaveBeenCalled();
+	expect(prisma.integrationEntry.createMany).not.toHaveBeenCalled();
 	expect(keyReads).toBeLessThan(entries.length * 10);
 });
 
@@ -157,7 +157,7 @@ it.each([
 			eligible: true,
 		}));
 		const prisma = {
-			traktSyncEntry: {
+			integrationEntry: {
 				findMany: vi.fn(async () => entries),
 				update: vi.fn(),
 				createMany: vi.fn(),
@@ -175,9 +175,9 @@ it.each([
 			local,
 			remote,
 		);
-		expect(prisma.traktSyncEntry.update).toHaveBeenCalledTimes(updates);
+		expect(prisma.integrationEntry.update).toHaveBeenCalledTimes(updates);
 		if (updates)
-			expect(prisma.traktSyncEntry.update).toHaveBeenCalledWith(
+			expect(prisma.integrationEntry.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ localKey: "local:0", linked: true }),
 				}),
@@ -206,7 +206,7 @@ it("limits remote ambiguity comparisons to the matching media", async () => {
 		},
 	}));
 	const prisma = {
-		traktSyncEntry: { findMany: vi.fn(async () => []), createMany: vi.fn() },
+		integrationEntry: { findMany: vi.fn(async () => []), createMany: vi.fn() },
 	};
 	const service = new TraktSyncService(
 		prisma as unknown as PrismaService,
@@ -222,12 +222,12 @@ it("limits remote ambiguity comparisons to the matching media", async () => {
 		local,
 		remote,
 	);
-	expect(prisma.traktSyncEntry.createMany).toHaveBeenCalledTimes(1);
-	expect(prisma.traktSyncEntry.createMany.mock.calls[0][0].data).toHaveLength(
+	expect(prisma.integrationEntry.createMany).toHaveBeenCalledTimes(1);
+	expect(prisma.integrationEntry.createMany.mock.calls[0][0].data).toHaveLength(
 		200,
 	);
 	expect(
-		prisma.traktSyncEntry.createMany.mock.calls[0][0].data.every(
+		prisma.integrationEntry.createMany.mock.calls[0][0].data.every(
 			(input: { linked: boolean }) => input.linked,
 		),
 	).toBe(true);
@@ -267,8 +267,8 @@ it.each([false, true])(
 			.mockResolvedValueOnce(refresh ? [] : local)
 			.mockResolvedValue(local);
 		const prisma = {
-			traktSyncEntry: { findMany: vi.fn(async () => entries) },
-			traktSyncConnection: { update: vi.fn() },
+			integrationEntry: { findMany: vi.fn(async () => entries) },
+			integrationConnection: { update: vi.fn() },
 		};
 		const service = new TraktSyncService(
 			prisma as unknown as PrismaService,
@@ -277,7 +277,7 @@ it.each([false, true])(
 			parseEnvironment({ NODE_ENV: "test" }),
 			{} as WatchAccountLock,
 		);
-		service["token"] = vi.fn(async () => "fixture");
+		service["credential"] = vi.fn(async () => "fixture");
 		service["discover"] = vi.fn(async () => undefined);
 		service["publicWatchOperation"] = async (_c, operation) =>
 			operation(new AbortController().signal, async (write) => write());
@@ -332,8 +332,8 @@ it.each([false, true])(
 		];
 		const update = vi.fn();
 		const prisma = {
-			traktSyncEntry: { findMany: vi.fn(async () => entries), update },
-			traktSyncConnection: { update: vi.fn() },
+			integrationEntry: { findMany: vi.fn(async () => entries), update },
+			integrationConnection: { update: vi.fn() },
 		};
 		const service = new TraktSyncService(
 			prisma as unknown as PrismaService,
@@ -342,7 +342,7 @@ it.each([false, true])(
 			parseEnvironment({ NODE_ENV: "test" }),
 			{} as WatchAccountLock,
 		);
-		service["token"] = vi.fn(async () => "fixture");
+		service["credential"] = vi.fn(async () => "fixture");
 		service["discover"] = vi.fn(async () => undefined);
 		service["publicWatchOperation"] = async (_c, operation) =>
 			operation(new AbortController().signal, async (write) => write());
@@ -376,8 +376,8 @@ it("excludes historical issues from both the review list and its count", async (
 	const groupBy = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany, groupBy, count: vi.fn(async () => 0) },
-			traktSyncConnection: {
+			integrationEntry: { findMany, groupBy, count: vi.fn(async () => 0) },
+			integrationConnection: {
 				findFirst: vi.fn(async () => ({
 					id: "fixture",
 					nextRunAt: new Date(),
@@ -417,7 +417,7 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 	async (action) => {
 		const service = new TraktSyncService(
 			{
-				traktSyncEntry: {
+				integrationEntry: {
 					findFirst: vi.fn(async () => ({ eligible: false, linked: false })),
 				},
 			} as unknown as PrismaService,
@@ -465,7 +465,7 @@ it("builds candidate comparisons only for the requested sync issue page", async 
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => entries.length),
 				findMany: vi.fn(async (input) =>
 					input.select
@@ -500,7 +500,7 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 		kind: "watch",
 		mediaType: "movie",
 		mediaId: null,
-		traktId: i,
+		remoteId: i,
 		season: 0,
 		episode: 0,
 		title: "Fixture",
@@ -518,7 +518,7 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 			return {
 				...r,
 				mediaId: String(i),
-				get traktId() {
+				get remoteId() {
 					titleComparisons++;
 					return i;
 				},
@@ -527,7 +527,7 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => entries.length),
 				findMany: vi.fn(async (input) =>
 					input.select
@@ -560,7 +560,7 @@ it("does not read local repositories when the issue queue is empty", async () =>
 	const snapshot = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => 0),
 				findMany: vi.fn(async () => []),
 			},
@@ -591,7 +591,7 @@ it("reads only the enabled content repositories needed for the visible issue pag
 	const snapshot = vi.fn(async () => []);
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: {
+			integrationEntry: {
 				count: vi.fn(async () => 2),
 				findMany: vi.fn(async (input) =>
 					[
@@ -652,20 +652,20 @@ it("reads only the enabled content repositories needed for the visible issue pag
 it.each([
 	{
 		name: "movie Watches",
-		source: { kind: "watch", mediaType: "movie", traktId: 7 },
-		saved: { kind: "watch", mediaType: "movie", traktId: 7 },
+		source: { kind: "watch", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "watch", mediaType: "movie", remoteId: 7 },
 		expected: "99",
 	},
 	{
 		name: "different record types",
-		source: { kind: "watch", mediaType: "movie", traktId: 7 },
-		saved: { kind: "rating", mediaType: "movie", traktId: 7 },
+		source: { kind: "watch", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "rating", mediaType: "movie", remoteId: 7 },
 		expected: null,
 	},
 	{
 		name: "movie and show IDs",
-		source: { kind: "watch", mediaType: "movie", traktId: 7 },
-		saved: { kind: "watch", mediaType: "episode", traktParentId: 7 },
+		source: { kind: "watch", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "watch", mediaType: "episode", remoteParentId: 7 },
 		expected: null,
 	},
 	{
@@ -673,14 +673,14 @@ it.each([
 		source: {
 			kind: "watch",
 			mediaType: "episode",
-			traktId: 8,
-			traktParentId: 7,
+			remoteId: 8,
+			remoteParentId: 7,
 		},
 		saved: {
 			kind: "watch",
 			mediaType: "episode",
-			traktId: 9,
-			traktParentId: 7,
+			remoteId: 9,
+			remoteParentId: 7,
 		},
 		expected: "99",
 	},
@@ -695,16 +695,21 @@ it.each([
 		source: {
 			kind: "review",
 			mediaType: "movie",
-			traktId: 8,
-			traktParentId: 7,
+			remoteId: 8,
+			remoteParentId: 7,
 		},
-		saved: { kind: "review", mediaType: "movie", traktId: 9, traktParentId: 7 },
+		saved: {
+			kind: "review",
+			mediaType: "movie",
+			remoteId: 9,
+			remoteParentId: 7,
+		},
 		expected: "99",
 	},
 	{
 		name: "Reviews without parent IDs",
-		source: { kind: "review", mediaType: "movie", traktId: 7 },
-		saved: { kind: "review", mediaType: "movie", traktId: 7 },
+		source: { kind: "review", mediaType: "movie", remoteId: 7 },
+		saved: { kind: "review", mediaType: "movie", remoteId: 7 },
 		expected: null,
 	},
 ])(
@@ -722,7 +727,7 @@ it.each([
 		};
 		const service = new TraktSyncService(
 			{
-				traktSyncEntry: {
+				integrationEntry: {
 					count: vi.fn(async () => 2),
 					findMany: vi.fn(async (input) =>
 						[
@@ -789,7 +794,7 @@ it("inserts a large initial comparison in bounded batches instead of one round t
 	}));
 	const service = new TraktSyncService(
 		{
-			traktSyncEntry: { findMany: vi.fn(async () => entries), createMany },
+			integrationEntry: { findMany: vi.fn(async () => entries), createMany },
 		} as unknown as PrismaService,
 		{} as TraktSyncClient,
 		{} as LocalSyncRecords,
@@ -820,7 +825,7 @@ it.each([
 			kind: "watch" as const,
 			mediaType: "movie" as const,
 			mediaId: "1",
-			traktId: 1,
+			remoteId: 1,
 			season: 0,
 			episode: 0,
 			title: "Known",
@@ -830,7 +835,7 @@ it.each([
 			...known,
 			key: "remote:unmatched",
 			mediaId: null,
-			traktId: 2,
+			remoteId: 2,
 			title: "Unmatched",
 		};
 		const entries = [
@@ -855,7 +860,10 @@ it.each([
 		);
 		const service = new TraktSyncService(
 			{
-				traktSyncEntry: { count: vi.fn(async () => entries.length), findMany },
+				integrationEntry: {
+					count: vi.fn(async () => entries.length),
+					findMany,
+				},
 			} as unknown as PrismaService,
 			{} as TraktSyncClient,
 			{ snapshot: vi.fn(async () => []) } as unknown as LocalSyncRecords,

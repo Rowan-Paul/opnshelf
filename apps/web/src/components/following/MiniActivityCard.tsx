@@ -74,7 +74,7 @@ export function MiniActivityCard({
 					>
 						<UserAvatar
 							src={activity.actor.avatar}
-							alt={String(activity.actor.displayName) || activity.actor.handle}
+							alt={String(activity.actor.displayName || activity.actor.handle)}
 							size="sm"
 						/>
 					</Link>
@@ -84,7 +84,7 @@ export function MiniActivityCard({
 							params={{ handle: activity.actor.handle }}
 							className="relative z-10 font-semibold hover:text-(--accent)"
 						>
-							{String(activity.actor.displayName) || activity.actor.handle}
+							{String(activity.actor.displayName || activity.actor.handle)}
 						</Link>
 						<span className="text-(--foreground-muted)">
 							{" "}

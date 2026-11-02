@@ -1,4 +1,8 @@
-import { bringsTraktWatches, type UserDto } from "@opnshelf/api";
+import {
+	bringsIntegrationWatches,
+	onboardingIntegrationsCopy,
+	type UserDto,
+} from "@opnshelf/api";
 import { describe, expect, it, vi } from "vitest";
 import {
 	buildDisplayNameUpdate,
@@ -21,7 +25,7 @@ describe("onboarding steps", () => {
 			"preferences",
 			"services",
 			"notifications",
-			"trakt",
+			"integrations",
 			"suggestions",
 			"watched",
 			"done",
@@ -34,8 +38,8 @@ describe("onboarding steps", () => {
 		expect(nextOnboardingStep("privacy")).toBe("preferences");
 		expect(nextOnboardingStep("preferences")).toBe("services");
 		expect(nextOnboardingStep("services")).toBe("notifications");
-		expect(nextOnboardingStep("notifications")).toBe("trakt");
-		expect(nextOnboardingStep("trakt")).toBe("suggestions");
+		expect(nextOnboardingStep("notifications")).toBe("integrations");
+		expect(nextOnboardingStep("integrations")).toBe("suggestions");
 		expect(nextOnboardingStep("suggestions")).toBe("watched");
 		expect(nextOnboardingStep("watched")).toBe("done");
 	});
@@ -45,7 +49,7 @@ describe("onboarding steps", () => {
 	});
 
 	it("recognises step ids and rejects unknown ones", () => {
-		expect(isOnboardingStep("trakt")).toBe(true);
+		expect(isOnboardingStep("integrations")).toBe(true);
 		expect(isOnboardingStep("Trakt")).toBe(false);
 		expect(isOnboardingStep("verify")).toBe(false);
 		expect(isOnboardingStep(undefined)).toBe(false);
@@ -160,20 +164,41 @@ describe("markOnboardingCompleted", () => {
 	});
 });
 
-describe("bringsTraktWatches", () => {
+describe("bringsIntegrationWatches", () => {
 	const sync = {
 		status: "active",
 		direction: "both",
 		watches: true,
 	} as const;
 
-	it("is true only when Trakt Sync brings Watches in", () => {
-		expect(bringsTraktWatches(sync)).toBe(true);
-		expect(bringsTraktWatches({ ...sync, status: "preparing" })).toBe(true);
-		expect(bringsTraktWatches({ ...sync, direction: "inbound" })).toBe(true);
-		expect(bringsTraktWatches({ ...sync, direction: "outbound" })).toBe(false);
-		expect(bringsTraktWatches({ ...sync, watches: false })).toBe(false);
-		expect(bringsTraktWatches({ ...sync, status: "paused" })).toBe(false);
-		expect(bringsTraktWatches(undefined)).toBe(false);
+	it("is true only when an Integration brings Watches in", () => {
+		expect(bringsIntegrationWatches(sync)).toBe(true);
+		expect(bringsIntegrationWatches({ ...sync, status: "preparing" })).toBe(
+			true,
+		);
+		expect(bringsIntegrationWatches({ ...sync, direction: "inbound" })).toBe(
+			true,
+		);
+		expect(bringsIntegrationWatches({ ...sync, direction: "outbound" })).toBe(
+			false,
+		);
+		expect(bringsIntegrationWatches({ ...sync, watches: false })).toBe(false);
+		expect(bringsIntegrationWatches({ ...sync, status: "paused" })).toBe(false);
+		expect(bringsIntegrationWatches(undefined)).toBe(false);
+	});
+});
+
+describe("onboardingIntegrationsCopy", () => {
+	it("names every Integration in the step title", () => {
+		expect(onboardingIntegrationsCopy().title).toBe(
+			"Already on Trakt or Popfeed?",
+		);
+		expect(
+			onboardingIntegrationsCopy([
+				{ name: "Trakt" },
+				{ name: "Popfeed" },
+				{ name: "Letterboxd" },
+			]).title,
+		).toBe("Already on Trakt, Popfeed, or Letterboxd?");
 	});
 });

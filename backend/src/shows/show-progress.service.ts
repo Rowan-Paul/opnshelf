@@ -201,7 +201,10 @@ export class ShowProgressService {
 		services?: string,
 		warmAvailability = true,
 	) {
-		// Query 1: one anchor per show via Prisma distinct (S0 excluded, tie-broken)
+		// Query 1: one anchor per show via Prisma distinct (S0 excluded). Ties on
+		// watch date go to the furthest Episode before `createdAt`: a bulk add
+		// gives a whole season one date, and insert order is arbitrary (#633).
+		const [byWatchDate, byCreatedAt] = watchDateOrderBy();
 		const anchors = (await this.prisma.trackedEpisode.findMany({
 			where: {
 				userDid,
@@ -209,9 +212,10 @@ export class ShowProgressService {
 				...(showIdFilter ? { showId: showIdFilter } : {}),
 			},
 			orderBy: [
-				...watchDateOrderBy(),
+				byWatchDate,
 				{ seasonNumber: "desc" },
 				{ episodeNumber: "desc" },
+				byCreatedAt,
 			],
 			distinct: ["showId"],
 			include: { show: true },

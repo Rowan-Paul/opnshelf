@@ -563,14 +563,15 @@ describe("ShowProgressService", () => {
 
 			// The anchor query must select the newest watch per show, not the
 			// furthest episode: watchedDate desc first, distinct on showId. An
-			// undated Watch must never win the anchor, so nulls sort last.
+			// undated Watch must never win the anchor, so nulls sort last. Only
+			// a tie on watchedDate falls through to the furthest Episode (#633).
 			expect(mockPrismaService.trackedEpisode.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [
 						{ watchedDate: { sort: "desc", nulls: "last" } },
-						{ createdAt: "desc" },
 						{ seasonNumber: "desc" },
 						{ episodeNumber: "desc" },
+						{ createdAt: "desc" },
 					],
 					distinct: ["showId"],
 				}),
@@ -591,6 +592,25 @@ describe("ShowProgressService", () => {
 					name: "Episode 3",
 				},
 			});
+		});
+		it("anchors a season added in one go on its last Episode, not on insert order (#633)", async () => {
+			mockPrismaService.trackedEpisode.findMany.mockResolvedValue([]);
+
+			await service.getUserUpNext("did:plc:abc123");
+
+			// A bulk add gives every Watch the same watchedDate, and the rows'
+			// createdAt order is whatever the insert produced. Season and Episode
+			// must break that tie before createdAt, or the anchor lands mid-season
+			// and Up Next suggests an Episode already on the Shelf.
+			const { orderBy } =
+				mockPrismaService.trackedEpisode.findMany.mock.calls[0][0];
+			const keys = orderBy.map((entry: object) => Object.keys(entry)[0]);
+			expect(keys).toEqual([
+				"watchedDate",
+				"seasonNumber",
+				"episodeNumber",
+				"createdAt",
+			]);
 		});
 	});
 

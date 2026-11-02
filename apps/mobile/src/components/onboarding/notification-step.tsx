@@ -198,13 +198,18 @@ function NotificationDraft({
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const inFlight = useRef(false);
-	const requestEmail = useMutation(
-		notificationsControllerRequestEmailMutation(),
-	);
-	const confirmEmail = useMutation(
-		notificationsControllerConfirmEmailMutation(),
-	);
-	const update = useMutation(notificationsControllerUpdateSettingsMutation());
+	const requestEmail = useMutation({
+		mutationKey: ["notifications", "email", "request"],
+		...notificationsControllerRequestEmailMutation(),
+	});
+	const confirmEmail = useMutation({
+		mutationKey: ["notifications", "email", "confirm"],
+		...notificationsControllerConfirmEmailMutation(),
+	});
+	const update = useMutation({
+		mutationKey: ["notifications", "settings", "update"],
+		...notificationsControllerUpdateSettingsMutation(),
+	});
 	const normalizedAddress = address.trim().toLowerCase();
 	const hasTopics = topics.some(Boolean);
 	const emailNeedsConfirmation =

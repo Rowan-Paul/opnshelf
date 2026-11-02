@@ -398,8 +398,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
-  TraktSyncConnection: 'TraktSyncConnection',
-  TraktSyncEntry: 'TraktSyncEntry',
+  IntegrationConnection: 'IntegrationConnection',
+  IntegrationEntry: 'IntegrationEntry',
   NotificationSettings: 'NotificationSettings',
   PushDevice: 'PushDevice',
   NotificationCollection: 'NotificationCollection',
@@ -445,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "traktSyncConnection" | "traktSyncEntry" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration" | "privacyScope" | "privacyCopy"
+    modelProps: "user" | "integrationConnection" | "integrationEntry" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration" | "privacyScope" | "privacyCopy"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -523,151 +523,151 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    TraktSyncConnection: {
-      payload: Prisma.$TraktSyncConnectionPayload<ExtArgs>
-      fields: Prisma.TraktSyncConnectionFieldRefs
+    IntegrationConnection: {
+      payload: Prisma.$IntegrationConnectionPayload<ExtArgs>
+      fields: Prisma.IntegrationConnectionFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.TraktSyncConnectionFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload> | null
+          args: Prisma.IntegrationConnectionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.TraktSyncConnectionFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>
+          args: Prisma.IntegrationConnectionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>
         }
         findFirst: {
-          args: Prisma.TraktSyncConnectionFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload> | null
+          args: Prisma.IntegrationConnectionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.TraktSyncConnectionFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>
+          args: Prisma.IntegrationConnectionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>
         }
         findMany: {
-          args: Prisma.TraktSyncConnectionFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>[]
+          args: Prisma.IntegrationConnectionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>[]
         }
         create: {
-          args: Prisma.TraktSyncConnectionCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>
+          args: Prisma.IntegrationConnectionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>
         }
         createMany: {
-          args: Prisma.TraktSyncConnectionCreateManyArgs<ExtArgs>
+          args: Prisma.IntegrationConnectionCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.TraktSyncConnectionCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>[]
+          args: Prisma.IntegrationConnectionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>[]
         }
         delete: {
-          args: Prisma.TraktSyncConnectionDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>
+          args: Prisma.IntegrationConnectionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>
         }
         update: {
-          args: Prisma.TraktSyncConnectionUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>
+          args: Prisma.IntegrationConnectionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>
         }
         deleteMany: {
-          args: Prisma.TraktSyncConnectionDeleteManyArgs<ExtArgs>
+          args: Prisma.IntegrationConnectionDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.TraktSyncConnectionUpdateManyArgs<ExtArgs>
+          args: Prisma.IntegrationConnectionUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.TraktSyncConnectionUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>[]
+          args: Prisma.IntegrationConnectionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>[]
         }
         upsert: {
-          args: Prisma.TraktSyncConnectionUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncConnectionPayload>
+          args: Prisma.IntegrationConnectionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationConnectionPayload>
         }
         aggregate: {
-          args: Prisma.TraktSyncConnectionAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTraktSyncConnection>
+          args: Prisma.IntegrationConnectionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIntegrationConnection>
         }
         groupBy: {
-          args: Prisma.TraktSyncConnectionGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktSyncConnectionGroupByOutputType>[]
+          args: Prisma.IntegrationConnectionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IntegrationConnectionGroupByOutputType>[]
         }
         count: {
-          args: Prisma.TraktSyncConnectionCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktSyncConnectionCountAggregateOutputType> | number
+          args: Prisma.IntegrationConnectionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IntegrationConnectionCountAggregateOutputType> | number
         }
       }
     }
-    TraktSyncEntry: {
-      payload: Prisma.$TraktSyncEntryPayload<ExtArgs>
-      fields: Prisma.TraktSyncEntryFieldRefs
+    IntegrationEntry: {
+      payload: Prisma.$IntegrationEntryPayload<ExtArgs>
+      fields: Prisma.IntegrationEntryFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.TraktSyncEntryFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload> | null
+          args: Prisma.IntegrationEntryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.TraktSyncEntryFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>
+          args: Prisma.IntegrationEntryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>
         }
         findFirst: {
-          args: Prisma.TraktSyncEntryFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload> | null
+          args: Prisma.IntegrationEntryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.TraktSyncEntryFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>
+          args: Prisma.IntegrationEntryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>
         }
         findMany: {
-          args: Prisma.TraktSyncEntryFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>[]
+          args: Prisma.IntegrationEntryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>[]
         }
         create: {
-          args: Prisma.TraktSyncEntryCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>
+          args: Prisma.IntegrationEntryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>
         }
         createMany: {
-          args: Prisma.TraktSyncEntryCreateManyArgs<ExtArgs>
+          args: Prisma.IntegrationEntryCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.TraktSyncEntryCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>[]
+          args: Prisma.IntegrationEntryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>[]
         }
         delete: {
-          args: Prisma.TraktSyncEntryDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>
+          args: Prisma.IntegrationEntryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>
         }
         update: {
-          args: Prisma.TraktSyncEntryUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>
+          args: Prisma.IntegrationEntryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>
         }
         deleteMany: {
-          args: Prisma.TraktSyncEntryDeleteManyArgs<ExtArgs>
+          args: Prisma.IntegrationEntryDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.TraktSyncEntryUpdateManyArgs<ExtArgs>
+          args: Prisma.IntegrationEntryUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.TraktSyncEntryUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>[]
+          args: Prisma.IntegrationEntryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>[]
         }
         upsert: {
-          args: Prisma.TraktSyncEntryUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraktSyncEntryPayload>
+          args: Prisma.IntegrationEntryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IntegrationEntryPayload>
         }
         aggregate: {
-          args: Prisma.TraktSyncEntryAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTraktSyncEntry>
+          args: Prisma.IntegrationEntryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIntegrationEntry>
         }
         groupBy: {
-          args: Prisma.TraktSyncEntryGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktSyncEntryGroupByOutputType>[]
+          args: Prisma.IntegrationEntryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IntegrationEntryGroupByOutputType>[]
         }
         count: {
-          args: Prisma.TraktSyncEntryCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TraktSyncEntryCountAggregateOutputType> | number
+          args: Prisma.IntegrationEntryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IntegrationEntryCountAggregateOutputType> | number
         }
       }
     }
@@ -2974,6 +2974,7 @@ export const UserScalarFieldEnum = {
   privateSettingsHasCopy: 'privateSettingsHasCopy',
   blogIntegrationEnabled: 'blogIntegrationEnabled',
   blueskyCrossPostEnabled: 'blueskyCrossPostEnabled',
+  popfeedWriteEnabled: 'popfeedWriteEnabled',
   reviewsMirrorFormat: 'reviewsMirrorFormat',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -2982,10 +2983,11 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const TraktSyncConnectionScalarFieldEnum = {
+export const IntegrationConnectionScalarFieldEnum = {
   id: 'id',
   userDid: 'userDid',
-  traktUserId: 'traktUserId',
+  provider: 'provider',
+  accountId: 'accountId',
   username: 'username',
   accessToken: 'accessToken',
   refreshToken: 'refreshToken',
@@ -3018,10 +3020,10 @@ export const TraktSyncConnectionScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type TraktSyncConnectionScalarFieldEnum = (typeof TraktSyncConnectionScalarFieldEnum)[keyof typeof TraktSyncConnectionScalarFieldEnum]
+export type IntegrationConnectionScalarFieldEnum = (typeof IntegrationConnectionScalarFieldEnum)[keyof typeof IntegrationConnectionScalarFieldEnum]
 
 
-export const TraktSyncEntryScalarFieldEnum = {
+export const IntegrationEntryScalarFieldEnum = {
   id: 'id',
   connectionId: 'connectionId',
   kind: 'kind',
@@ -3039,7 +3041,7 @@ export const TraktSyncEntryScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type TraktSyncEntryScalarFieldEnum = (typeof TraktSyncEntryScalarFieldEnum)[keyof typeof TraktSyncEntryScalarFieldEnum]
+export type IntegrationEntryScalarFieldEnum = (typeof IntegrationEntryScalarFieldEnum)[keyof typeof IntegrationEntryScalarFieldEnum]
 
 
 export const NotificationSettingsScalarFieldEnum = {
@@ -3855,8 +3857,8 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
-  traktSyncConnection?: Prisma.TraktSyncConnectionOmit
-  traktSyncEntry?: Prisma.TraktSyncEntryOmit
+  integrationConnection?: Prisma.IntegrationConnectionOmit
+  integrationEntry?: Prisma.IntegrationEntryOmit
   notificationSettings?: Prisma.NotificationSettingsOmit
   pushDevice?: Prisma.PushDeviceOmit
   notificationCollection?: Prisma.NotificationCollectionOmit

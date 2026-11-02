@@ -343,7 +343,11 @@ describe("Privacy settings", () => {
 		"unavailable",
 	] as const)("hides privacy choices when Spaces is %s", (availability) => {
 		mocks.data.availability = availability;
-		render(<PrivacySection />);
+		const next = vi.fn();
+		render(<PrivacySection onboarding onContinue={next} />);
+		expect(
+			screen.getByText("Private isn't available for your account yet."),
+		).toBeDefined();
 		expect(
 			screen.queryByRole("group", { name: "Shelf visibility" }),
 		).toBeNull();
@@ -353,8 +357,11 @@ describe("Privacy settings", () => {
 		expect(
 			screen.queryByRole("button", { name: "Manage individual Lists" }),
 		).toBeNull();
-		fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+		fireEvent.click(screen.getByRole("button", { name: "Check again" }));
 		expect(mocks.refetch).toHaveBeenCalled();
+		fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+		expect(next).toHaveBeenCalled();
+		expect(mocks.mutate).not.toHaveBeenCalled();
 	});
 	it("starts onboarding with Public selected without writing a privacy change", () => {
 		mocks.data.scopes = mocks.data.scopes.map((scope) => ({

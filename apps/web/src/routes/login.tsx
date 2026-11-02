@@ -6,7 +6,7 @@ import {
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppleMark } from "#/components/AppleMark";
@@ -18,6 +18,13 @@ import { env } from "#/env";
 import { useDebounce } from "#/hooks/useDebounce";
 import { useAuth } from "#/lib/auth-context";
 import { nextIndex } from "#/lib/list-navigation";
+import {
+	forgetAccount,
+	noteSignInMethod,
+	type RecentAccount,
+	type SignInMethod,
+	useRecentAccounts,
+} from "#/lib/recent-accounts";
 
 export const Route = createFileRoute("/login")({
 	head: () => ({
@@ -38,6 +45,10 @@ function LoginPage() {
 	const message = (search as { message?: string }).message;
 	const error = (search as { error?: string }).error;
 	const inputAreaRef = useRef<HTMLDivElement>(null);
+	const recentAccounts = useRecentAccounts();
+	// The row being signed in to, so only that row shows progress.
+	const [continuingDid, setContinuingDid] = useState<string | null>(null);
+	const busy = isLoading || isSignupLoading || continuingDid !== null;
 
 	const debouncedHandle = useDebounce(handle, 300).trim();
 	const suggestionsQuery = useQuery({
@@ -119,6 +130,16 @@ function LoginPage() {
 		startLogin(actorHandle);
 	};
 
+	const continueAs = (account: RecentAccount) => {
+		setContinuingDid(account.did);
+		if (account.method === "handle") {
+			login(account.handle);
+			return;
+		}
+		noteSignInMethod(account.method);
+		window.location.href = providerStartUrl(account.method);
+	};
+
 	const handleSignup = () => {
 		setIsSignupLoading(true);
 		navigate({ to: "/signup" });
@@ -144,6 +165,64 @@ function LoginPage() {
 
 				{/* Login Form */}
 				<div className="card p-6">
+					{recentAccounts.length > 0 && (
+						<>
+							<section aria-labelledby="recent-accounts">
+								<h2 id="recent-accounts" className="mb-1.5 font-medium text-sm">
+									Continue as
+								</h2>
+								<ul className="divide-y divide-(--border) overflow-hidden rounded-lg border border-(--border)">
+									{recentAccounts.map((account) => (
+										<li key={account.did} className="flex items-center">
+											<button
+												type="button"
+												onClick={() => continueAs(account)}
+												disabled={busy}
+												className={`flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 text-left transition-colors enabled:hover:bg-(--background-subtle) ${busy && continuingDid !== account.did ? "opacity-60" : ""}`}
+											>
+												<UserAvatar src={account.avatar} alt="" size="md" />
+												<div className="min-w-0 flex-1">
+													<div className="truncate font-medium text-sm">
+														{account.displayName || account.handle}
+													</div>
+													<div className="truncate text-(--foreground-muted) text-xs">
+														@{account.handle}
+													</div>
+												</div>
+												{continuingDid === account.did ? (
+													<Loader2
+														className="size-4 shrink-0 animate-spin text-(--foreground-muted)"
+														aria-label="Connecting"
+													/>
+												) : (
+													<MethodMark method={account.method} />
+												)}
+											</button>
+											<button
+												type="button"
+												onClick={() => forgetAccount(account.did)}
+												disabled={busy}
+												aria-label={`Remove @${account.handle} from this browser`}
+												title="Remove from this browser"
+												className="shrink-0 self-stretch px-3 text-(--foreground-muted) transition-colors enabled:hover:bg-(--background-subtle) enabled:hover:text-(--foreground)"
+											>
+												<X className="size-4" />
+											</button>
+										</li>
+									))}
+								</ul>
+							</section>
+
+							<div className="my-6 flex items-center gap-4">
+								<div className="h-px flex-1 bg-(--border)" />
+								<span className="text-(--foreground-muted) text-xs">
+									or use another account
+								</span>
+								<div className="h-px flex-1 bg-(--border)" />
+							</div>
+						</>
+					)}
+
 					<form onSubmit={handleLogin} className="space-y-4">
 						<div>
 							<label
@@ -196,7 +275,7 @@ function LoginPage() {
 										}
 									}}
 									className="input"
-									disabled={isLoading}
+									disabled={busy}
 									autoComplete="off"
 									role="combobox"
 									aria-expanded={shouldShowSuggestions}
@@ -262,7 +341,7 @@ function LoginPage() {
 
 						<button
 							type="submit"
-							disabled={isLoading || isSignupLoading || !handle.trim()}
+							disabled={busy || !handle.trim()}
 							className="btn btn-primary w-full"
 						>
 							{isLoading ? (
@@ -290,14 +369,16 @@ function LoginPage() {
 						    account we already know and creates one we don't, and either
 						    way it never shows the PDS's invite-code form. */}
 						<a
-							href={`${env.VITE_API_URL}/auth/google/start`}
+							href={providerStartUrl("google")}
+							onClick={() => noteSignInMethod("google")}
 							className="btn btn-secondary w-full"
 						>
 							<GoogleMark className="size-4" />
 							Continue with Google
 						</a>
 						<a
-							href={`${env.VITE_API_URL}/auth/apple/start`}
+							href={providerStartUrl("apple")}
+							onClick={() => noteSignInMethod("apple")}
 							className="btn btn-secondary w-full"
 						>
 							<AppleMark className="size-4" />
@@ -307,7 +388,7 @@ function LoginPage() {
 						<button
 							type="button"
 							onClick={handleSignup}
-							disabled={isLoading || isSignupLoading}
+							disabled={busy}
 							className="btn btn-secondary w-full"
 						>
 							{isSignupLoading ? (
@@ -338,5 +419,22 @@ function LoginPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function providerStartUrl(provider: Exclude<SignInMethod, "handle">): string {
+	return `${env.VITE_API_URL}/auth/${provider}/start`;
+}
+
+/** Which provider a remembered account continues with; a Handle gets none. */
+function MethodMark({ method }: { method: SignInMethod }) {
+	if (method === "handle") return null;
+	const name = method === "google" ? "Google" : "Apple";
+	const Mark = method === "google" ? GoogleMark : AppleMark;
+	return (
+		<span className="shrink-0" title={`Continues with ${name}`}>
+			<Mark className="size-4" />
+			<span className="sr-only">, with {name}</span>
+		</span>
 	);
 }

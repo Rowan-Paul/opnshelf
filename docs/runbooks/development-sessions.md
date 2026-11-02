@@ -94,7 +94,7 @@ bundle, a separate Review, other Users and shows, and older date sections. Use
 
 The `issue-fixes` scenario starts with Onboarding complete, a configured Trakt
 connection with all record types selected, six Up Next shows and two picker
-choices. Use `/trakt-sync`, `/profile/synthetic.test/up-next` and `/pick-for-me`
+choices. Use `/integrations/trakt` (or the old `/trakt-sync`, which redirects), `/profile/synthetic.test/up-next` and `/pick-for-me`
 to verify the chooser and responsive layouts. Picker budgets below 45 minutes
 return no choices. Its synthetic titles use one public TMDB image for cache
 checks; only those image reads leave the local fixture stack.

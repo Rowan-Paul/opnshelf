@@ -21,7 +21,7 @@ describe("isUpdateBannerSuppressed", () => {
 		"/settings",
 		"/settings/account",
 		"/movies/123/some-title",
-		"/lists/watchlist",
+		"/profile/local.test/lists/watchlist",
 		"/login-help",
 		"/signup-bonus",
 		"/authors",

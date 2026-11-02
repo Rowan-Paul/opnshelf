@@ -42,6 +42,11 @@ vi.mock("react-native", () => ({
 	ScrollView: "scroll",
 	Platform: { OS: "android", Version: 37 },
 }));
+// The sheet's close animation is BottomSheetModal's concern; here it hides
+// as soon as the keyboard has.
+vi.mock("@/components/ui/bottom-sheet-modal", () => ({
+	BottomSheetModal: "modal",
+}));
 vi.mock("react-native-keyboard-controller", () => ({
 	KeyboardAvoidingView: "avoiding",
 	KeyboardController: { dismiss: mocks.dismissKeyboard },

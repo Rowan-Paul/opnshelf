@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+	ArrowLeftRight,
 	Bell,
 	CircleHelp,
 	Loader2,
@@ -42,8 +43,14 @@ export const SETTINGS_AREAS = [
 	{
 		section: "connections",
 		label: "Connections",
-		description: "Blog mirroring, Bluesky and Trakt",
+		description: "Blog mirroring and Bluesky",
 		Icon: PlugZap,
+	},
+	{
+		section: "integrations",
+		label: "Integrations",
+		description: "Sync with Trakt and Popfeed",
+		Icon: ArrowLeftRight,
 	},
 	{
 		section: "account",

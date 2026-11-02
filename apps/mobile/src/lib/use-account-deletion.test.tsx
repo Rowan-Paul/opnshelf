@@ -10,6 +10,7 @@ import {
 
 const api = vi.hoisted(() => ({ getDeletion: vi.fn() }));
 const auth = vi.hoisted(() => ({ signOut: vi.fn() }));
+const recent = vi.hoisted(() => ({ forgetAccount: vi.fn() }));
 
 vi.mock("@opnshelf/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@opnshelf/api")>()),
@@ -20,8 +21,14 @@ vi.mock("@opnshelf/api", async (importOriginal) => ({
 }));
 
 vi.mock("@/lib/auth-context", () => ({
-	useAuth: () => ({ isAuthenticated: true, signOut: auth.signOut }),
+	useAuth: () => ({
+		isAuthenticated: true,
+		signOut: auth.signOut,
+		user: { did: "did:plc:deleted" },
+	}),
 }));
+
+vi.mock("@/lib/recent-accounts", () => recent);
 
 let mounted: { unmount(): void } | null = null;
 let activeClient: QueryClient | null = null;
@@ -63,6 +70,7 @@ afterEach(() => {
 	activeClient = null;
 	api.getDeletion.mockReset();
 	auth.signOut.mockReset();
+	recent.forgetAccount.mockReset();
 });
 
 describe("useAccountDeletionJob", () => {
@@ -78,6 +86,9 @@ describe("useAccountDeletionJob", () => {
 			await vi.waitFor(() => expect(hook.current?.status).toBe("running"));
 		});
 		expect(isAccountDeletionRunning(hook.current)).toBe(true);
+		// Forgotten while running: a revoked session after an app restart would
+		// never reach the completion branch.
+		expect(recent.forgetAccount).toHaveBeenCalledWith("did:plc:deleted");
 		expect(auth.signOut).not.toHaveBeenCalled();
 	});
 

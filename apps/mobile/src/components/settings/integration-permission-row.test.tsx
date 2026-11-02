@@ -4,6 +4,12 @@ import { IntegrationPermissionRow } from "./integration-permission-row";
 
 const mocks = vi.hoisted(() => ({ showDialog: vi.fn() }));
 
+vi.mock("lucide-react-native", () => ({
+	Check: () => null,
+	Laptop: () => null,
+	X: () => null,
+}));
+
 vi.mock("@/components/ui/dialog", () => ({
 	useDialog: () => ({ showDialog: mocks.showDialog }),
 }));
@@ -31,12 +37,13 @@ vi.mock("@/components/ui/text", async () => {
 describe("IntegrationPermissionRow", () => {
 	beforeEach(() => vi.clearAllMocks());
 
-	it("warns before connecting and confirms through the native dialog", () => {
+	it("explains the permission before connecting through the account host", async () => {
 		const onConfirm = vi.fn();
 		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = create(
 				<IntegrationPermissionRow
+					integration="blog"
 					name="Blog mirroring"
 					description="Publish selected Reviews to your blog."
 					connected={false}
@@ -52,10 +59,65 @@ describe("IntegrationPermissionRow", () => {
 		});
 
 		const dialog = mocks.showDialog.mock.calls[0]?.[0];
+		expect(dialog.title).toBe("Let Opnshelf mirror Reviews to your blog");
+		expect(dialog.description).toContain("sends you back here");
+		expect(onConfirm).not.toHaveBeenCalled();
+		// Continue resolves only once the modal has gone, before the browser opens.
+		await act(async () => dialog.actions.at(-1).onDismiss());
+		expect(onConfirm).toHaveBeenCalledWith("connect");
+	});
+
+	it("does not connect when the explanation is dismissed", async () => {
+		const onConfirm = vi.fn();
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(
+				<IntegrationPermissionRow
+					integration="bluesky"
+					name="Bluesky Cross-posts"
+					description="Publish selected Reviews to Bluesky."
+					connected={false}
+					onConfirm={onConfirm}
+				/>,
+			);
+		});
+
+		act(() => {
+			renderer.root
+				.findByProps({ accessibilityLabel: "Connect Bluesky Cross-posts" })
+				.props.onPress();
+		});
+
+		await act(async () => mocks.showDialog.mock.calls[0]?.[0].onCancel());
+		expect(onConfirm).not.toHaveBeenCalled();
+	});
+
+	it("warns before disconnecting an account-wide integration", () => {
+		const onConfirm = vi.fn();
+		let renderer!: ReactTestRenderer;
+		act(() => {
+			renderer = create(
+				<IntegrationPermissionRow
+					integration="blog"
+					name="Blog mirroring"
+					description="Publish selected Reviews to your blog."
+					connected
+					onConfirm={onConfirm}
+				/>,
+			);
+		});
+
+		act(() => {
+			renderer.root
+				.findByProps({ accessibilityLabel: "Disconnect Blog mirroring" })
+				.props.onPress();
+		});
+
+		const dialog = mocks.showDialog.mock.calls[0]?.[0];
 		expect(dialog.description).toContain(
-			"Other devices will need to sign in again",
+			"Your other Devices will need to sign in again",
 		);
 		act(() => dialog.actions.at(-1).onPress());
-		expect(onConfirm).toHaveBeenCalledWith("connect");
+		expect(onConfirm).toHaveBeenCalledWith("disconnect");
 	});
 });

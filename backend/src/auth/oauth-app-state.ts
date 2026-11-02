@@ -67,6 +67,7 @@ export function parseOAuthAppState(
 			parsed.permissionChange === "atstore" ||
 			parsed.permissionChange === "blog" ||
 			parsed.permissionChange === "bluesky" ||
+			parsed.permissionChange === "popfeed" ||
 			parsed.permissionChange === "spaces" ||
 			parsed.permissionChange === "watches"
 				? parsed.permissionChange

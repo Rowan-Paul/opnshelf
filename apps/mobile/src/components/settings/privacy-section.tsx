@@ -22,6 +22,8 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { usePermissionRequest } from "@/components/settings/permission-request";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
@@ -73,7 +75,11 @@ export function PrivacySection({
 		[sheetDidDismiss, setManageLists],
 	);
 
+	const requestPermission = usePermissionRequest();
 	const { query, mutation, pendingKey } = usePrivacy(async () => {
+		// The explanation dialog is a native modal too, so wait for any sheet.
+		await new Promise<void>((resolve) => afterClosingSheet(resolve));
+		if (!(await requestPermission("watches"))) return false;
 		const codeChallenge = (await beginHandoff()) ?? undefined;
 		const result = await authControllerPermissions({
 			body: {
@@ -84,8 +90,6 @@ export function PrivacySection({
 			},
 			throwOnError: true,
 		});
-		// ASWebAuthenticationSession must not compete with an animating native sheet.
-		await new Promise<void>((resolve) => afterClosingSheet(resolve));
 		return runAuthorizationUrl(result.data.authorizationUrl);
 	});
 	const data = query.data;
@@ -508,22 +512,31 @@ export function PrivacySection({
 				)
 			) : data.availability !== "available" ? (
 				<View className="gap-4">
-					<Text className="text-muted-foreground text-sm">
-						{data.availability === "unsupported"
-							? "Your PDS does not support Spaces yet. You can keep using Public."
-							: "We could not check Spaces support. Try again to load privacy choices."}
-					</Text>
-					<Button
-						disabled={query.isFetching}
-						onPress={() => void query.refetch()}
-						label="Try again"
-					/>
-					{onboarding && (
-						<Button
-							onPress={onContinue}
-							label="Continue without changing privacy"
-						/>
-					)}
+					<View className="flex-row items-start gap-3 rounded-2xl border border-border bg-background-subtle p-4">
+						<View className="pt-0.5">
+							<Lock size={16} color={colors.mutedForeground} />
+						</View>
+						<View className="flex-1 gap-1">
+							<Text className="text-foreground text-sm leading-5">
+								<Text className="font-semibold text-foreground text-sm">
+									Private isn't available for your account yet.
+								</Text>{" "}
+								It needs a PDS that supports Spaces.
+							</Text>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel="Check again"
+								className="min-h-11 justify-center self-start"
+								disabled={query.isFetching}
+								onPress={() => void query.refetch()}
+							>
+								<Text className="text-muted-foreground text-xs underline">
+									Check again
+								</Text>
+							</Pressable>
+						</View>
+					</View>
+					{onboarding && <Button onPress={onContinue} label="Continue" />}
 				</View>
 			) : (
 				<>
@@ -654,10 +667,8 @@ export function PrivacySection({
 					</SafeAreaView>
 				</View>
 			</Modal>
-			<Modal
+			<BottomSheetModal
 				visible={sheet === "progress"}
-				animationType="slide"
-				transparent
 				statusBarTranslucent
 				navigationBarTranslucent
 				onRequestClose={() => setManageLists(false)}
@@ -741,7 +752,7 @@ export function PrivacySection({
 						</View>
 					</View>
 				</View>
-			</Modal>
+			</BottomSheetModal>
 		</View>
 	);
 }

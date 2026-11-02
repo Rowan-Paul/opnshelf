@@ -46,6 +46,26 @@ describe("Featured catalogue validation", () => {
 			).rejects.toBeInstanceOf(ServiceUnavailableException);
 		},
 	);
+	it("keeps the TMDB api key out of its cache keys", async () => {
+		const cache = new MemoryTmdbCacheStore();
+		const set = vi.spyOn(cache, "set");
+		vi.stubGlobal(
+			"fetch",
+			vi
+				.fn()
+				.mockResolvedValue(new Response(JSON.stringify({ title: "Movie" }))),
+		);
+		await new FeaturedCatalogueService(
+			parseEnvironment({ TMDB_API_KEY: "fixture-key" }),
+			cache,
+		).resolve({ mediaType: "movie", mediaId: 12 });
+		expect(set).toHaveBeenCalledWith(
+			"featured:en-US:/movie/12",
+			expect.anything(),
+			expect.any(Number),
+		);
+		expect(set.mock.calls[0][0]).not.toContain("fixture-key");
+	});
 	it("recognizes a genuine missing catalogue title", async () => {
 		vi.stubGlobal(
 			"fetch",

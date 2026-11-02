@@ -13,9 +13,9 @@ At investigation time, Favorites was missing from both the existing one-time Tra
 | Area | Evidence |
 | --- | --- |
 | Default Favorites is an Opnshelf List with slug `favorites`. | [lists.service.ts](../../backend/src/lists/lists.service.ts#L57) |
-| Public and private List sync explicitly selects only the default watchlist, excluding default Favorites. | [local-lists.service.ts](../../backend/src/trakt-sync/local-lists.service.ts#L162), [private selection](../../backend/src/trakt-sync/local-lists.service.ts#L189) |
+| Public and private List sync explicitly selects only the default watchlist, excluding default Favorites. | [local-lists.service.ts](../../backend/src/integrations/local-lists.service.ts#L162), [private selection](../../backend/src/integrations/local-lists.service.ts#L189) |
 | Remote List sync reads personal Lists and watchlist, with no Favorites adapter. | [remote-lists.ts](../../backend/src/trakt-sync/remote-lists.ts#L146) |
-| Reconciliation supports `watch`, `rating`, `list`, and `watchlist`. | [reconcile.ts](../../backend/src/trakt-sync/reconcile.ts#L6) |
+| Reconciliation supports `watch`, `rating`, `list`, and `watchlist`. | [reconcile.ts](../../backend/src/integrations/reconcile.ts#L6) |
 | One-time Import fetches Trakt watched history. | [trakt-api.client.ts](../../backend/src/users/trakt-api.client.ts#L61) |
 | The accepted decision explicitly leaves Favorites separate. | [ADR 0049](../adr/0049-trakt-sync-links-records-alongside-one-time-import.md#L23) |
 

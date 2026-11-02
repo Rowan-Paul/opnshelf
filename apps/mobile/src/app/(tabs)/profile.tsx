@@ -166,7 +166,7 @@ export default function ProfileTab() {
 									icon={List}
 									title="Lists"
 									detail="Your curated picks"
-									href="/lists"
+									href={`/profile/${handle}/lists` as Href}
 								/>
 								<Destination
 									icon={Disc}

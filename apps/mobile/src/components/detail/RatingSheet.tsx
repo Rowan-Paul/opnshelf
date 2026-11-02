@@ -1,6 +1,7 @@
 import { StarOff, X } from "lucide-react-native";
-import { Modal, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { StarRating } from "@/components/detail/StarRating";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/theme/colors";
 
@@ -29,12 +30,7 @@ export function RatingSheet({
 	const rated = rating > 0;
 
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-5 rounded-t-2xl border border-border bg-card p-5">
@@ -81,6 +77,6 @@ export function RatingSheet({
 					) : null}
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }

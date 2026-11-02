@@ -95,7 +95,9 @@ export class ShowCatalogueService {
 			return;
 		}
 
-		const show = await this.showsTmdb.getShowDetails(showId);
+		// Fresh reads: this copy is persisted and refreshed on its own interval,
+		// so reading through the TMDB cache would make it up to twice as stale.
+		const show = await this.showsTmdb.getShowDetails(showId, { fresh: true });
 		const dbShowId = show.id.toString();
 		await this.upsertShow(show);
 		const tmdbSeasons = (show.seasons ?? []).filter(
@@ -109,6 +111,7 @@ export class ShowCatalogueService {
 				seasonDetail = await this.showsTmdb.getSeasonDetails(
 					showId,
 					tmdbSeason.season_number,
+					{ fresh: true },
 				);
 			} catch {
 				failedSeasonNumbers.push(tmdbSeason.season_number);

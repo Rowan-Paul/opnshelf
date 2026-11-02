@@ -6,8 +6,8 @@ import { formatRelativeTime } from "@/lib/relative-time";
 
 /**
  * One info card summarising a list: description, who made it, when it last
- * changed, and completion. Shared by the owner route (`/lists/[slug]`) and the
- * public route (`/list/[handle]/[slug]`) so both render the same card, matching
+ * changed, and completion. Shared by the owner and read-only List screens
+ * behind `/profile/[handle]/lists/[slug]` so both render the same card, matching
  * the Web profile Lists page (ADR 0006 parity).
  *
  * Progress is viewer-relative, so callers pass `showProgress` false when signed

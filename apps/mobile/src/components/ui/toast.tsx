@@ -12,6 +12,7 @@ import {
 import { Animated, PanResponder, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
+import { ToastHostContext } from "@/components/ui/toast-host";
 import { useThemeColors } from "@/theme/colors";
 
 type ToastVariant = "success" | "error";
@@ -42,6 +43,7 @@ interface ToastContextValue {
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
+
 const TOAST_DURATION = 3600;
 
 function ToastItem({
@@ -181,26 +183,37 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 		[],
 	);
 
+	const [hosts, setHosts] = useState<string[]>([]);
+	const register = useCallback((id: string) => {
+		setHosts((current) => [...current, id]);
+		return () => setHosts((current) => current.filter((host) => host !== id));
+	}, []);
+	const topHost = hosts.at(-1) ?? null;
+
 	const value: ToastContextValue = {
 		show,
 		success: (message, options) => show(message, "success", options),
 		error: (message, options) => show(message, "error", options),
 	};
 
+	const stack = toasts.map((toast, index) => (
+		<ToastItem
+			key={toast.id}
+			toast={toast}
+			index={index}
+			// Below the status bar, and clear of the sheets that slide up from
+			// the bottom.
+			top={insets.top + 12}
+			onDismiss={dismiss}
+		/>
+	));
+
 	return (
 		<ToastContext.Provider value={value}>
-			{children}
-			{toasts.map((toast, index) => (
-				<ToastItem
-					key={toast.id}
-					toast={toast}
-					index={index}
-					// Below the status bar, and clear of the sheets that slide up from
-					// the bottom.
-					top={insets.top + 12}
-					onDismiss={dismiss}
-				/>
-			))}
+			<ToastHostContext.Provider value={{ register, topHost, stack }}>
+				{children}
+				{topHost ? null : stack}
+			</ToastHostContext.Provider>
 		</ToastContext.Provider>
 	);
 }

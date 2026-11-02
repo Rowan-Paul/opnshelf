@@ -142,7 +142,7 @@ describe("Trakt transport boundaries", () => {
 			.mockResolvedValueOnce(page([], 0, 0));
 		await client.readForRecord("fixture", {
 			...normalizeRemote(movie, "watch"),
-			traktId: undefined,
+			remoteId: undefined,
 			mediaType: "episode",
 			season: 2,
 			episode: 3,
@@ -158,7 +158,7 @@ describe("Trakt transport boundaries", () => {
 		expect(normalizeRemote(movie, "watch")).toMatchObject({
 			key: "watch:41",
 			mediaId: "34",
-			traktId: 12,
+			remoteId: 12,
 			value: null,
 		});
 		expect(() =>
@@ -178,8 +178,8 @@ describe("Trakt transport boundaries", () => {
 			),
 		).toMatchObject({
 			mediaId: "9",
-			traktId: 6,
-			traktParentId: 8,
+			remoteId: 6,
+			remoteParentId: 8,
 			season: 2,
 			episode: 3,
 			value: 8,

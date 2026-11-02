@@ -1,6 +1,7 @@
 import { Check, Disc, X } from "lucide-react-native";
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Text } from "@/components/ui/text";
 import { TextField } from "@/components/ui/text-field";
 import { cn } from "@/lib/cn";
@@ -31,12 +32,7 @@ export function AddToLibrarySheet({
 	const [boxSet, setBoxSet] = useState("");
 
 	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent
-			onRequestClose={onDismiss}
-		>
+		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="max-h-[80%] gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -108,6 +104,6 @@ export function AddToLibrarySheet({
 					)}
 				</View>
 			</View>
-		</Modal>
+		</BottomSheetModal>
 	);
 }

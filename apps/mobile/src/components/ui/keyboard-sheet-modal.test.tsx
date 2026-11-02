@@ -5,7 +5,9 @@ import { KeyboardSheetModal } from "./keyboard-sheet-modal";
 const mocks = vi.hoisted(() => ({
 	dismissKeyboard: vi.fn(() => Promise.resolve()),
 }));
-vi.mock("react-native", () => ({ Modal: "modal" }));
+vi.mock("@/components/ui/bottom-sheet-modal", () => ({
+	BottomSheetModal: "modal",
+}));
 vi.mock("react-native-keyboard-controller", () => ({
 	KeyboardController: { dismiss: mocks.dismissKeyboard },
 	KeyboardProvider: "keyboard",

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { snapshotLists, writeList } from "./remote-lists";
-import { encodeList, listValue, memberKey } from "./list-value";
-import type { SyncRecord } from "./reconcile";
+import { encodeList, listValue, memberKey } from "../integrations/list-value";
+import type { SyncRecord } from "../integrations/reconcile";
 
 const metadata = {
 	name: "Weekend",
@@ -60,7 +60,7 @@ describe("Trakt Lists transport", () => {
 		);
 		const result = await snapshotLists({ request }, "fixture", { lists: true });
 		expect(result).toEqual([
-			{ ...record, key: "list:22", traktId: 22, problem: undefined },
+			{ ...record, key: "list:22", remoteId: 22, problem: undefined },
 		]);
 		expect(
 			request.mock.calls.every(([path]) => !path.includes("privacy=")),
@@ -237,7 +237,7 @@ describe("Trakt Lists transport", () => {
 			expect.objectContaining({ privacy: "private" }),
 		);
 		expect(onCreated).toHaveBeenCalledWith(
-			expect.objectContaining({ key: "list:22", traktId: 22 }),
+			expect.objectContaining({ key: "list:22", remoteId: 22 }),
 		);
 		expect(request).toHaveBeenCalledWith(
 			"/users/me/lists/22",
@@ -254,7 +254,7 @@ describe("Trakt Lists transport", () => {
 			return response({ ...metadata, name: "Edited elsewhere" });
 		});
 		await expect(
-			writeList({ request }, "fixture", { ...record, traktId: 22 }, false, {
+			writeList({ request }, "fixture", { ...record, remoteId: 22 }, false, {
 				...record,
 				key: "list:22",
 			}),
@@ -461,7 +461,7 @@ it("updates metadata without resolving or rewriting existing memberships and ord
 			throw new Error(`Unnecessary request: ${path}`);
 		},
 	);
-	await writeList({ request }, "fixture", { ...record, traktId: 22 }, false);
+	await writeList({ request }, "fixture", { ...record, remoteId: 22 }, false);
 	expect(
 		request.mock.calls.filter(([, , , method]) => method === "PUT"),
 	).toHaveLength(1);
@@ -538,7 +538,7 @@ it("writes manual order when the desired membership order differs", async () => 
 	];
 	const desired = {
 		...record,
-		traktId: 22,
+		remoteId: 22,
 		value: encodeList({
 			...listValue(record),
 			items: [

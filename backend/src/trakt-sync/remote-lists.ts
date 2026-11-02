@@ -6,8 +6,12 @@ import {
 	memberKey,
 	validateList,
 	type ListMember,
-} from "./list-value";
-import { equivalent, fingerprint, type SyncRecord } from "./reconcile";
+} from "../integrations/list-value";
+import {
+	equivalent,
+	fingerprint,
+	type SyncRecord,
+} from "../integrations/reconcile";
 
 type Api = Pick<TraktSyncClient, "request">;
 class ListReadError extends Error {}
@@ -131,7 +135,7 @@ function record(
 		title: metadata?.name ?? defaultName,
 		season: 0,
 		episode: 0,
-		traktId: metadata?.ids.trakt,
+		remoteId: metadata?.ids.trakt,
 		visibility: metadata
 			? metadata.privacy === "public"
 				? "public"
@@ -342,9 +346,9 @@ export async function writeList(
 			"Default Lists cannot be deleted. Remove their memberships instead.",
 		);
 	if (remove) {
-		if (!desired.traktId) throw new Error("Missing Trakt List identity.");
+		if (!desired.remoteId) throw new Error("Missing Trakt List identity.");
 		await api.request(
-			`/users/me/lists/${desired.traktId}`,
+			`/users/me/lists/${desired.remoteId}`,
 			token,
 			undefined,
 			"DELETE",
@@ -389,13 +393,13 @@ export async function writeList(
 		string,
 		Awaited<ReturnType<typeof listMemberPayload>>
 	>();
-	if (desired.kind === "list" && !desired.traktId)
+	if (desired.kind === "list" && !desired.remoteId)
 		for (const item of value.items)
 			bodies.set(
 				memberKey(item),
 				await listMemberPayload(identities, token, item),
 			);
-	let id = desired.traktId;
+	let id = desired.remoteId;
 	if (desired.kind === "list" && !id) {
 		const created = metadataSchema.parse(
 			(

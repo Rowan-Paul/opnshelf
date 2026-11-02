@@ -36,7 +36,13 @@ export function TraktSyncBanner({ children }: { children: ReactNode }) {
 	if (!syncMessage) return <>{children}</>;
 	return (
 		<View className="flex-1 bg-background">
-			<Link href="/trakt-sync" asChild>
+			<Link
+				href={{
+					pathname: "/integrations/[provider]",
+					params: { provider: "trakt" },
+				}}
+				asChild
+			>
 				<Pressable
 					className={`border-b px-4 pb-2 ${syncError ? "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950" : "border-border bg-background-subtle"}`}
 					style={{ paddingTop: insets.top }}

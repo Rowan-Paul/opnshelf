@@ -1,15 +1,8 @@
 import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { type Href, Link } from "expo-router";
-import {
-	Calendar,
-	Check,
-	ChevronRight,
-	Play,
-	Plus,
-	X,
-} from "lucide-react-native";
-import { useState } from "react";
+import { Check, ChevronRight, Play, Plus, X } from "lucide-react-native";
+import { type ReactNode, useState } from "react";
 import { Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
 import {
@@ -25,7 +18,16 @@ import { useWatchStatus } from "@/lib/use-watch-status";
 import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
 import { useThemeColors } from "@/theme/colors";
 
-type MediaTrackingActionsProps =
+type MediaTrackingActionsProps = TrackingTarget & {
+	/**
+	 * Buttons placed after the shelf button, in its row. `addWithDate` opens
+	 * the date picker; it is undefined when signed out, and when a binary type
+	 * (show, season, episode) is already on the shelf.
+	 */
+	renderTrailing: (addWithDate?: () => void) => ReactNode;
+};
+
+export type TrackingTarget =
 	/** `title` names the item in the remove-all-Watches confirmation. */
 	| { mediaType: "movie"; movieId: string; title?: string }
 	| {
@@ -64,11 +66,11 @@ type MediaTrackingActionsProps =
 	  };
 
 /**
- * The shared "shelf" split button for every media detail surface — movie, show,
+ * The shared "shelf" button for every media detail surface — movie, show,
  * season and episode. The primary action toggles the item on/off the shelf
- * ("Add to shelf" / "Remove from shelf"); the trailing calendar button adds it
- * with a custom date (and, for movies, logs an extra watch while already on the
- * shelf). When on the shelf it surfaces a small status card with the relevant
+ * ("Add to shelf" / "Remove from shelf"); `renderTrailing` fills the rest of
+ * its row and gets the "Add with date" opener, which adds it with a custom
+ * date (and, for movies, logs an extra watch while already on the shelf). When on the shelf it surfaces a small status card with the relevant
  * progress detail. Watch state is read via `useWatchStatus`; writes go through
  * the optimistic mutations in `useWatchActions`. Mirrors the web "Add to shelf"
  * controls so the wording matches across surfaces.
@@ -294,16 +296,17 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 	if (!isAuthenticated) {
 		return (
-			<View className="px-4">
+			<View className="flex-row gap-2 px-4">
 				<Link href="/login" asChild>
-					<Button label="Sign in to add to shelf" />
+					<Button label="Sign in to add to shelf" className="flex-1" />
 				</Link>
+				{props.renderTrailing()}
 			</View>
 		);
 	}
 
-	// Movies can be logged multiple times, so keep the date picker available even
-	// once on the shelf. The other types are binary, so hide it when on the shelf.
+	// Movies can be logged multiple times, so keep "Add with date" available even
+	// once on the shelf. The other types are binary, so drop it when on the shelf.
 	const showCalendar = !isOnShelf || isMovie;
 	const continueTo =
 		props.mediaType === "show" || props.mediaType === "season"
@@ -361,7 +364,12 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 
 			<View className="flex-row gap-2">
 				<Button
+					// The row shares its width with three buttons, so the visible label
+					// stays short; the status card above says what it acts on.
 					label={
+						isOnShelf ? "Remove" : isPartial ? "Mark watched" : "Add to shelf"
+					}
+					accessibilityLabel={
 						isOnShelf
 							? "Remove from shelf"
 							: isPartial
@@ -389,15 +397,9 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 					}
 					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
 				/>
-				{showCalendar ? (
-					<Pressable
-						onPress={() => setDatePickerVisible(true)}
-						disabled={isPending}
-						className="items-center justify-center rounded-lg border border-border px-4"
-					>
-						<Calendar color={colors.mutedForeground} size={20} />
-					</Pressable>
-				) : null}
+				{props.renderTrailing(
+					showCalendar ? () => setDatePickerVisible(true) : undefined,
+				)}
 			</View>
 
 			<WatchDatePickerModal

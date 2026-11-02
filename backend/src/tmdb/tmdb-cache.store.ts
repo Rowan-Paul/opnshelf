@@ -45,7 +45,9 @@ export class MemoryTmdbCacheStore implements TmdbCacheStore {
 		// oldest: popular Media Items stay cached through a crawl.
 		this.entries.delete(key);
 		this.entries.set(key, entry);
-		return entry.value;
+		// Hand out a copy, as Redis does by parsing: a caller that mutates its
+		// result in place must not corrupt the entry for the next reader.
+		return structuredClone(entry.value);
 	}
 
 	async set(key: string, value: unknown, ttlMs: number): Promise<void> {
@@ -54,7 +56,10 @@ export class MemoryTmdbCacheStore implements TmdbCacheStore {
 			if (oldest !== undefined) this.entries.delete(oldest);
 		}
 		this.entries.delete(key);
-		this.entries.set(key, { value, expiresAt: Date.now() + ttlMs });
+		this.entries.set(key, {
+			value: structuredClone(value),
+			expiresAt: Date.now() + ttlMs,
+		});
 	}
 
 	async clear(): Promise<void> {
@@ -69,12 +74,31 @@ export class MemoryTmdbCacheStore implements TmdbCacheStore {
 export interface RedisLikeClient {
 	get(key: string): Promise<string | null>;
 	set(key: string, value: string, mode: "PX", ttlMs: number): Promise<unknown>;
-	/** Delete every key matching a pattern; used only by `clear`. */
-	keys(pattern: string): Promise<string[]>;
+	/** Incremental keyspace walk; used only by `clear`. Never `KEYS`, which blocks Redis. */
+	scan(
+		cursor: string,
+		matchOption: "MATCH",
+		pattern: string,
+		countOption: "COUNT",
+		count: number,
+	): Promise<[cursor: string, keys: string[]]>;
 	del(...keys: string[]): Promise<number>;
 }
 
 export const TMDB_REDIS_KEY_PREFIX = "tmdb:";
+
+/**
+ * Spread of a Redis TTL, as a fraction either way. A fan-out such as the Up
+ * Next service filter writes dozens of keys within seconds; without a spread
+ * they all expire together and the next viewer pays the whole fan-out again.
+ */
+export const TMDB_REDIS_TTL_JITTER = 0.1;
+
+/** `ttlMs` moved by up to ±{@link TMDB_REDIS_TTL_JITTER}, never below 1 ms. */
+export function jitterTtl(ttlMs: number, random: () => number = Math.random) {
+	const factor = 1 + (random() * 2 - 1) * TMDB_REDIS_TTL_JITTER;
+	return Math.max(1, Math.round(ttlMs * factor));
+}
 
 /**
  * Redis-backed store. Fails open: any Redis error is logged once per outage
@@ -90,6 +114,7 @@ export class RedisTmdbCacheStore implements TmdbCacheStore {
 	constructor(
 		private readonly client: RedisLikeClient,
 		private readonly prefix = TMDB_REDIS_KEY_PREFIX,
+		private readonly random: () => number = Math.random,
 	) {}
 
 	async get(key: string): Promise<unknown | undefined> {
@@ -110,7 +135,7 @@ export class RedisTmdbCacheStore implements TmdbCacheStore {
 				this.prefix + key,
 				JSON.stringify(value),
 				"PX",
-				Math.max(1, Math.round(ttlMs)),
+				jitterTtl(ttlMs, this.random),
 			);
 			this.recover();
 		} catch (error) {
@@ -120,8 +145,18 @@ export class RedisTmdbCacheStore implements TmdbCacheStore {
 
 	async clear(): Promise<void> {
 		try {
-			const keys = await this.client.keys(`${this.prefix}*`);
-			if (keys.length > 0) await this.client.del(...keys);
+			let cursor = "0";
+			do {
+				const [next, keys] = await this.client.scan(
+					cursor,
+					"MATCH",
+					`${this.prefix}*`,
+					"COUNT",
+					500,
+				);
+				if (keys.length > 0) await this.client.del(...keys);
+				cursor = next;
+			} while (cursor !== "0");
 			this.recover();
 		} catch (error) {
 			this.degrade("clear", error);

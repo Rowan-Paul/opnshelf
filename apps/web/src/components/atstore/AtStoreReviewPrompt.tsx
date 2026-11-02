@@ -8,6 +8,7 @@ import { Star, Store } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PromptCard } from "#/components/PromptCard";
+import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -28,6 +29,7 @@ export function AtStoreReviewPrompt() {
 	const viewed = useRef(false);
 	const redirectHandled = useRef(false);
 	const [composerOpen, setComposerOpen] = useState(false);
+	const [permissionRequestOpen, setPermissionRequestOpen] = useState(false);
 	const [rating, setRating] = useState<number | null>(null);
 	const [text, setText] = useState("");
 
@@ -113,9 +115,7 @@ export function AtStoreReviewPrompt() {
 			setComposerOpen(true);
 			return;
 		}
-		permissionMutation.mutate({
-			body: { integration: "atstore", action: "connect" },
-		});
+		setPermissionRequestOpen(true);
 	};
 
 	useEffect(() => {
@@ -165,6 +165,18 @@ export function AtStoreReviewPrompt() {
 			>
 				Share your experience on AT Store. It helps others discover Opnshelf.
 			</PromptCard>
+
+			<PermissionRequestDialog
+				integration="atstore"
+				open={permissionRequestOpen}
+				pending={permissionMutation.isPending}
+				onCancel={() => setPermissionRequestOpen(false)}
+				onContinue={() =>
+					permissionMutation.mutate({
+						body: { integration: "atstore", action: "connect" },
+					})
+				}
+			/>
 
 			<Dialog
 				open={composerOpen}

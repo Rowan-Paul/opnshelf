@@ -28,6 +28,7 @@ import { SocialModule } from "./social/social.module";
 import { ShelfModule } from "./shelf/shelf.module";
 import { ShowsModule } from "./shows/shows.module";
 import { UsersModule } from "./users/users.module";
+import { PopfeedSyncModule } from "./popfeed-sync/popfeed-sync.module";
 
 @Module({
 	imports: [
@@ -52,6 +53,7 @@ import { UsersModule } from "./users/users.module";
 		AtStoreReviewsModule,
 		IngesterModule,
 		UsersModule,
+		PopfeedSyncModule,
 		ListsModule,
 		LibraryModule,
 		NotesModule,

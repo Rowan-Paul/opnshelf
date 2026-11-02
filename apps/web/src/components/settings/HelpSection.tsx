@@ -13,6 +13,7 @@ export function HelpSection() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 	const resetOnboarding = useMutation({
+		mutationKey: ["users", "me", "onboarding", "reset"],
 		...usersControllerResetOnboardingMutation(),
 		onSuccess: async () => {
 			await queryClient.cancelQueries({ queryKey: authControllerMeQueryKey() });

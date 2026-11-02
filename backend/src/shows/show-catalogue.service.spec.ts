@@ -16,6 +16,7 @@ global.fetch = mockFetch;
 
 describe("ShowCatalogueService", () => {
 	let service: ShowCatalogueService;
+	let module: TestingModule;
 
 	const mockPrismaService = {
 		show: {
@@ -53,7 +54,7 @@ describe("ShowCatalogueService", () => {
 		mockPrismaService.season.findMany.mockResolvedValue([]);
 		mockPrismaService.episode.findMany.mockResolvedValue([]);
 
-		const module: TestingModule = await Test.createTestingModule({
+		module = await Test.createTestingModule({
 			providers: [
 				ShowCatalogueService,
 				ShowsTmdbService,
@@ -117,6 +118,27 @@ describe("ShowCatalogueService", () => {
 	});
 
 	describe("syncShowMetadata", () => {
+		it("reads the show and its seasons from TMDB, not the TMDB cache", async () => {
+			const showsTmdb = module.get(ShowsTmdbService);
+			const getShow = vi.spyOn(showsTmdb, "getShowDetails").mockResolvedValue({
+				id: 123,
+				name: "Test Show",
+				seasons: [{ season_number: 1 }],
+			} as never);
+			const getSeason = vi
+				.spyOn(showsTmdb, "getSeasonDetails")
+				.mockResolvedValue({ id: 1, name: "Season 1", episodes: [] } as never);
+			mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(
+				null,
+			);
+			mockPrismaService.season.upsert.mockResolvedValue({ id: "season-1" });
+
+			await service.syncShowMetadata("123");
+
+			expect(getShow).toHaveBeenCalledWith("123", { fresh: true });
+			expect(getSeason).toHaveBeenCalledWith("123", 1, { fresh: true });
+		});
+
 		it("should upsert the show before upserting seasons", async () => {
 			mockPrismaService.season.findFirst.mockResolvedValue(null);
 			mockColorExtractionService.extractColorsFromPoster.mockResolvedValue(

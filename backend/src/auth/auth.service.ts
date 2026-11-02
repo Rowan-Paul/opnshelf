@@ -67,6 +67,7 @@ export class AuthService {
 				handle: true,
 				blogIntegrationEnabled: true,
 				blueskyCrossPostEnabled: true,
+				popfeedWriteEnabled: true,
 				privateSettingsEnabled: true,
 				privateSettingsHasCopy: true,
 				watchPrivacyEnabled: true,
@@ -83,6 +84,7 @@ export class AuthService {
 					),
 					blogEnabled: knownUser?.blogIntegrationEnabled ?? false,
 					blueskyEnabled: knownUser?.blueskyCrossPostEnabled ?? false,
+					popfeedEnabled: knownUser?.popfeedWriteEnabled ?? false,
 					reviewsMirrorFormat: knownUser?.reviewsMirrorFormat,
 				};
 
@@ -214,6 +216,26 @@ export class AuthService {
 			);
 	}
 
+	/**
+	 * Popfeed write access may only be removed once Popfeed Sync no longer
+	 * sends changes; otherwise every outbound transfer would fail with 403.
+	 */
+	async assertPopfeedWritesStopped(did: string) {
+		const sending = await this.prisma.integrationConnection.findFirst({
+			where: {
+				userDid: did,
+				provider: "popfeed",
+				status: { not: "disconnected" },
+				direction: { not: "inbound" },
+			},
+			select: { id: true },
+		});
+		if (sending)
+			throw new ConflictException(
+				"Set Popfeed Sync to bring changes into Opnshelf only before removing Popfeed write access.",
+			);
+	}
+
 	/** Persist account-wide integration state and revoke superseded devices atomically. */
 	async completePermissionChange(
 		did: string,
@@ -268,6 +290,7 @@ export class AuthService {
 					watchPrivacyEnabled: Boolean(preferences.watchPrivacyEnabled),
 					blogIntegrationEnabled: Boolean(preferences.blogEnabled),
 					blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
+					popfeedWriteEnabled: Boolean(preferences.popfeedEnabled),
 				},
 			});
 			await tx.authSession.deleteMany({
@@ -293,7 +316,9 @@ export class AuthService {
 						? { privateSettingsEnabled: false }
 						: integration === "blog"
 							? { blogIntegrationEnabled: false }
-							: { blueskyCrossPostEnabled: false },
+							: integration === "popfeed"
+								? { popfeedWriteEnabled: false }
+								: { blueskyCrossPostEnabled: false },
 		});
 	}
 

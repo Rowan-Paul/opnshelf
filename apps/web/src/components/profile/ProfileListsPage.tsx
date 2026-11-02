@@ -287,6 +287,7 @@ export function ProfileListsPage({
 	// so the URL we are on goes stale and we have to follow the new one or the
 	// next refetch 404s.
 	const updateListMutation = useMutation({
+		mutationKey: ["lists", "update"],
 		...listsControllerUpdateListMutation(),
 		onSuccess: (updated) => {
 			toast.success("List updated");
@@ -320,6 +321,7 @@ export function ProfileListsPage({
 	// Deleting a list: Mobile has had this, Web has not. Owner-only, and never
 	// offered for default lists — same gating as Edit.
 	const deleteListMutation = useMutation({
+		mutationKey: ["lists", "delete"],
 		...listsControllerDeleteListMutation(),
 		onSuccess: () => {
 			toast.success("List deleted");

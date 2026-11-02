@@ -13,6 +13,7 @@ import {
 	PromptSlotItem,
 	usePromptCooldown,
 } from "@/components/home/prompt-slot";
+import { usePermissionRequest } from "@/components/settings/permission-request";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -70,6 +71,7 @@ export function AtStoreReviewPrompt() {
 		onError: () => toast.error("Could not request review permission"),
 	});
 
+	const requestPermission = usePermissionRequest();
 	const leaveReview = async () => {
 		if (process.env.EXPO_OS === "ios") {
 			void Haptics.selectionAsync();
@@ -79,6 +81,7 @@ export function AtStoreReviewPrompt() {
 			router.push("/atstore-review" as Href);
 			return;
 		}
+		if (!(await requestPermission("atstore"))) return;
 		// Handoff code (ADR 0026): the challenge rides in the OAuth state so the
 		// callback hands back a single-use code instead of the session id.
 		const codeChallenge = (await beginHandoff()) ?? undefined;

@@ -51,3 +51,7 @@ as well.
   not part of #168.
 - Cached JSON is served up to a day stale. A show that moves service today is
   filtered by yesterday's data until its key expires.
+- Reads whose result is persisted skip the cache read and write the fresh
+  result back. The Postgres Show, Season and Episode catalogue refreshes on
+  its own 24 hour interval; reading through this cache would stack the two and
+  leave a new episode out of Up Next for up to two days.
