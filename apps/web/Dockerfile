@@ -3,6 +3,8 @@
 # Build context is the REPO ROOT — on Railway set RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile.
 
 FROM node:24.22.1-slim AS base
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 ENV PNPM_HOME="/pnpm" PATH="/pnpm:$PATH"
 RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 WORKDIR /app
