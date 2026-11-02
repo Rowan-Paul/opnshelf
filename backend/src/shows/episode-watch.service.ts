@@ -1,5 +1,6 @@
 import { createWatchAgent } from "../privacy/watch-operation";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Prisma } from "../generated/client";
 import { updateWatchDate } from "../common/update-watch-date";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import { $nsid as COLLECTION } from "../lexicons/xyz/opnshelf/episode";
@@ -36,6 +37,8 @@ export class EpisodeWatchService {
 	private readonly logger = new Logger(EpisodeWatchService.name);
 	// Max records per com.atproto.repo.applyWrites call (PDS limit).
 	private static readonly PDS_BULK_BATCH_SIZE = 200;
+	// Attempts at the bulk index INSERT before giving up on a deadlock.
+	private static readonly INDEX_DEADLOCK_ATTEMPTS = 3;
 
 	constructor(
 		private prisma: PrismaService,
@@ -348,6 +351,11 @@ export class EpisodeWatchService {
 	// absorbs the firehose-double-write race (same rkey). Returns the count of
 	// episodes now logged — written.length, since a skipped duplicate was
 	// already logged and still counts as watched.
+	//
+	// The ingester upserts the same rows one by one as the records come back
+	// through Tab, so this INSERT can lose a deadlock (P2034) against it. The
+	// PDS writes already succeeded and skipDuplicates makes a retry idempotent,
+	// so retry instead of failing the whole request.
 	private async indexWrittenEpisodes(
 		userDid: string,
 		showId: string,
@@ -355,21 +363,39 @@ export class EpisodeWatchService {
 		written: WrittenEpisode[],
 	) {
 		if (written.length === 0) return 0;
-		await this.prisma.trackedEpisode.createMany({
-			data: written.map((w) => ({
-				uri: w.uri,
-				rkey: w.rkey,
-				cid: w.cid,
-				userDid,
-				showId,
-				seasonNumber: w.seasonNumber,
-				episodeNumber: w.episodeNumber,
-				watchedDate: watchedAt ? new Date(watchedAt) : null,
-				status: "watched",
-			})),
-			skipDuplicates: true,
-		});
-		return written.length;
+		const data = written.map((w) => ({
+			uri: w.uri,
+			rkey: w.rkey,
+			cid: w.cid,
+			userDid,
+			showId,
+			seasonNumber: w.seasonNumber,
+			episodeNumber: w.episodeNumber,
+			watchedDate: watchedAt ? new Date(watchedAt) : null,
+			status: "watched",
+		}));
+		for (let attempt = 1; ; attempt++) {
+			try {
+				await this.prisma.trackedEpisode.createMany({
+					data,
+					skipDuplicates: true,
+				});
+				return written.length;
+			} catch (err) {
+				const deadlocked =
+					err instanceof Prisma.PrismaClientKnownRequestError &&
+					err.code === "P2034";
+				if (
+					!deadlocked ||
+					attempt >= EpisodeWatchService.INDEX_DEADLOCK_ATTEMPTS
+				) {
+					throw err;
+				}
+				this.logger.warn(
+					`Bulk episode index deadlocked for show ${showId} (attempt ${attempt}), retrying`,
+				);
+			}
+		}
 	}
 
 	async markSeasonWatched(

@@ -49,6 +49,7 @@ vi.mock("../lexicons/xyz/opnshelf/episode", () => ({
 }));
 
 import { ColorExtractionService } from "../movies/color-extraction.service";
+import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { EpisodeWatchService } from "./episode-watch.service";
 import { ShowCatalogueService } from "./show-catalogue.service";
@@ -333,6 +334,71 @@ describe("EpisodeWatchService", () => {
 				expect.objectContaining({
 					data: [expect.objectContaining({ watchedDate: null })],
 				}),
+			);
+		});
+	});
+
+	describe("markShowWatched index deadlock", () => {
+		const showResponse = {
+			ok: true,
+			json: () =>
+				Promise.resolve({
+					id: 123,
+					name: "Test Show",
+					number_of_seasons: 1,
+					seasons: [],
+					episodes: [
+						{ episode_number: 1, season_number: 1, air_date: "2020-01-01" },
+					],
+					results: [],
+				}),
+		};
+		const deadlock = () =>
+			new Prisma.PrismaClientKnownRequestError("deadlock", {
+				code: "P2034",
+				clientVersion: "test",
+			});
+
+		beforeEach(() => {
+			mockFetch.mockResolvedValue(showResponse);
+			mockApplyWrites.mockResolvedValue({ data: { results: [] }, headers: {} });
+			mockPrismaService.show.upsert.mockResolvedValue({ showId: "123" });
+		});
+
+		it("retries the index INSERT when it loses a deadlock to the ingester", async () => {
+			mockPrismaService.trackedEpisode.createMany
+				.mockRejectedValueOnce(deadlock())
+				.mockResolvedValueOnce({ count: 1 });
+
+			const result = await service.markShowWatched(
+				"did:plc:abc123",
+				{ did: "did:plc:abc123" },
+				"123",
+				null,
+			);
+
+			expect(result).toEqual({ count: 1, requested: 1 });
+			expect(mockPrismaService.trackedEpisode.createMany).toHaveBeenCalledTimes(
+				2,
+			);
+		});
+
+		it("gives up after repeated deadlocks", async () => {
+			mockPrismaService.trackedEpisode.createMany
+				.mockRejectedValueOnce(deadlock())
+				.mockRejectedValueOnce(deadlock())
+				.mockRejectedValueOnce(deadlock());
+
+			await expect(
+				service.markShowWatched(
+					"did:plc:abc123",
+					{ did: "did:plc:abc123" },
+					"123",
+					null,
+				),
+			).rejects.toMatchObject({ code: "P2034" });
+			expect(mockPrismaService.trackedEpisode.createMany).toHaveBeenCalledTimes(
+				3,
 			);
 		});
 	});
