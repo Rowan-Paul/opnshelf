@@ -80,6 +80,13 @@ describe("email unsubscribe", () => {
 				expect(email.text).toContain(
 					`Unsubscribe from this email type: ${url}`,
 				);
+				expect(email.text).toContain(
+					"Manage notifications: https://opnshelf.xyz/settings/notifications",
+				);
+				expect(email.html).toContain(
+					'href="https://opnshelf.xyz/settings/notifications"',
+				);
+				expect(email.html.match(/Manage notifications/g)).toHaveLength(1);
 				expect(
 					email.html.match(/Unsubscribe from this email type/g),
 				).toHaveLength(1);
