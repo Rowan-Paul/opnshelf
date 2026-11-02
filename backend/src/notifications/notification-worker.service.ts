@@ -1,3 +1,4 @@
+import { unsubscribeUrl } from "./notification-unsubscribe";
 import { buildWatchRecap } from "./watch-recap";
 import {
 	collectionItems,
@@ -794,6 +795,12 @@ export class NotificationWorkerService
 							to: settings.email,
 							subject: job.title,
 							...notificationEmail({
+								unsubscribeUrl: unsubscribeUrl(
+									this.config,
+									job.userDid,
+									settings.email,
+									job.category,
+								),
 								title: job.title,
 								body: job.body,
 								url: job.url,
