@@ -269,9 +269,9 @@ export class EpisodeWatchService {
 			},
 		});
 
-		if (!trackedEpisode) {
-			throw new Error("Tracked episode not found");
-		}
+		// Already gone (double tap, stale list, or the ingester removed it
+		// first): the user's intent is met, so succeed without a write.
+		if (!trackedEpisode) return;
 
 		const agent = createWatchAgent(session);
 		await agent.com.atproto.repo.deleteRecord({
@@ -280,7 +280,9 @@ export class EpisodeWatchService {
 			rkey: trackedEpisode.rkey,
 		});
 
-		await this.prisma.trackedEpisode.delete({
+		// deleteMany, not delete: the ingester may remove the row from the
+		// firehose between the PDS delete and this one.
+		await this.prisma.trackedEpisode.deleteMany({
 			where: {
 				id: trackedEpisodeId,
 			},

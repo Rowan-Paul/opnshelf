@@ -159,8 +159,6 @@ Notes:
 | `FRONTEND_URL` | Required in production | Web origin for CORS, redirects and notification links. |
 | `TAB_URL` | Required in production | Tab ingestion service URL; local fallback is http://localhost:2480. |
 | `TAB_ADMIN_PASSWORD` | Required in production | Tab admin password; must match its container. |
-| `TAP_URL` | Optional | Deprecated alias for TAB_URL; accepted for one transition release. |
-| `TAP_ADMIN_PASSWORD` | Optional | Deprecated alias for TAB_ADMIN_PASSWORD; accepted for one transition release. |
 | `REDIS_URL` | Optional | Optional TMDB cache; absence uses process memory, including on Staging (ADR 0041). |
 | `GOOGLE_CLIENT_ID` | Required in production | Google OAuth client ID shared with the PDS. |
 | `GOOGLE_CLIENT_SECRET` | Required in production | Google OAuth client secret shared with the PDS. |
@@ -193,14 +191,11 @@ aggregate errors and generated documentation share one schema. A typed global
 Nest provider replaces ConfigModule loading; no T3 wrapper is needed. Node 24 loads `backend/.env` when commands run in the backend workspace;
 already-set deployment variables take precedence.
 
-`TAB_URL` and `TAB_ADMIN_PASSWORD` are canonical. For the transition release,
-`TAP_URL` and `TAP_ADMIN_PASSWORD` remain accepted with a deprecation warning;
-nonempty canonical values win. Before removing aliases in the following release,
-rename legacy variables on each Railway Server service to `TAB_*`, retaining the
-same environment-specific values/references. First verify a Staging deploy with
-its current names unchanged, then rename and verify again. Do not change the
-Tab service's own upstream variable names or share Tab between environments.
-Deployment and Railway changes require operator approval.
+On each Railway Server service, `TAB_URL` and `TAB_ADMIN_PASSWORD` reference that
+environment's own Tab service (`http://${{tap.RAILWAY_PRIVATE_DOMAIN}}:2480` and
+`${{tap.TAB_ADMIN_PASSWORD}}`). Do not change the Tab service's own upstream
+variable names or share Tab between environments. Deployment and Railway changes
+require operator approval.
 
 `backend/.env.example` provides local setup examples. Deployed values live in
 Railway service variables on the `Server` service and are never checked in.

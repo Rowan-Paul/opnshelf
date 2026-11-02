@@ -851,6 +851,42 @@ describe("MoviesService", () => {
 		});
 	});
 
+	describe("removeTrackedMovieById", () => {
+		const session = { did: "did:plc:abc123" };
+
+		it("deletes the record and the local row", async () => {
+			mockPrismaService.trackedMovie.findFirst.mockResolvedValue({
+				id: "tm1",
+				rkey: "rk1",
+			});
+			mockDeleteRecord.mockResolvedValue({});
+			mockPrismaService.trackedMovie.deleteMany.mockResolvedValue({
+				count: 0,
+			});
+
+			await service.removeTrackedMovieById("did:plc:abc123", session, "tm1");
+
+			expect(mockDeleteRecord).toHaveBeenCalledWith({
+				repo: "did:plc:abc123",
+				collection: "xyz.opnshelf.movie",
+				rkey: "rk1",
+			});
+			expect(mockPrismaService.trackedMovie.deleteMany).toHaveBeenCalledWith({
+				where: { id: "tm1" },
+			});
+		});
+
+		it("succeeds without writing when the entry is already gone", async () => {
+			mockPrismaService.trackedMovie.findFirst.mockResolvedValue(null);
+
+			await expect(
+				service.removeTrackedMovieById("did:plc:abc123", session, "tm1"),
+			).resolves.toBeUndefined();
+			expect(mockDeleteRecord).not.toHaveBeenCalled();
+			expect(mockPrismaService.trackedMovie.deleteMany).not.toHaveBeenCalled();
+		});
+	});
+
 	describe("indexTrackedMovie", () => {
 		beforeEach(() => {
 			mockPrismaService.trackedMovie.create = vi.fn();

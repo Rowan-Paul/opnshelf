@@ -56,6 +56,8 @@ describe("shared QueryClient mutation failure reporting", () => {
 		);
 		expect(error.message).not.toContain("Too many parts");
 		expect(properties).toEqual({
+			$exception_fingerprint:
+				"MutationFailedError: users/me/profile/avatar/upload failed with HTTP 400",
 			mutation_key: "users/me/profile/avatar/upload",
 			http_status: 400,
 			error_name: "Error",
@@ -94,6 +96,7 @@ describe("shared QueryClient mutation failure reporting", () => {
 		expect(mocks.captureException).toHaveBeenCalledWith(
 			expect.objectContaining({ message: "reviews/create failed" }),
 			{
+				$exception_fingerprint: "MutationFailedError: reviews/create failed",
 				mutation_key: "reviews/create",
 				http_status: null,
 				error_name: "TypeError",
