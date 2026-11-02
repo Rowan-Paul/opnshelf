@@ -46,8 +46,8 @@ function note(slug: string, publishedAt: string): ReleaseNote {
 
 // This is the announcement shipped with this bundle, not the newest server note.
 const installed = note(
-	"a-more-consistent-opnshelf",
-	"2026-10-26T20:00:00.000Z",
+	"popfeed-and-easier-sign-in",
+	"2026-11-02T13:16:56.000Z",
 );
 let renderer: ReactTestRenderer;
 afterEach(async () => {
@@ -60,7 +60,7 @@ describe("installed Mobile release announcement", () => {
 		{
 			label: "newer server release even when the installed note is in the feed",
 			entries: [
-				note("future-mobile-update", "2026-10-28T20:00:00.000Z"),
+				note("future-mobile-update", "2026-11-03T20:00:00.000Z"),
 				installed,
 			],
 			visible: false,
