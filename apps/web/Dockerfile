@@ -35,6 +35,10 @@ ENV VITE_API_URL=$VITE_API_URL \
     VITE_POSTHOG_KEY=$VITE_POSTHOG_KEY
 COPY packages/api ./packages/api
 COPY apps/web ./apps/web
+# Build credentials for PostHog source maps; ARGs are not baked into runtime ENV.
+ARG POSTHOG_CLI_API_KEY
+ARG POSTHOG_CLI_PROJECT_ID
+ARG POSTHOG_CLI_HOST=https://eu.posthog.com
 RUN pnpm --filter @opnshelf/web build
 
 # ---- runtime: self-contained Nitro node-server ----
@@ -48,4 +52,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/apps/web/.output ./.output
 EXPOSE 3000
-CMD ["node", ".output/server/index.mjs"]
+# Railway also injects service variables at runtime. Remove the upload key
+# before starting the SSR process.
+CMD ["env", "-u", "POSTHOG_CLI_API_KEY", "node", ".output/server/index.mjs"]

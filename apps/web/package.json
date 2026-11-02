@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.5",
+    "@posthog/rollup-plugin": "^1.6.2",
     "@tailwindcss/typography": "^0.5.20",
     "@tanstack/devtools-vite": "^0.8.5",
     "@testing-library/dom": "^10.4.2",
