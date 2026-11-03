@@ -85,6 +85,15 @@ export default function Header() {
 		setMobileMenuOpen(false);
 	}, []);
 
+	useEffect(() => {
+		const desktop = window.matchMedia("(min-width: 768px)");
+		const closeDesktopMenu = () => {
+			if (!desktop.matches) setMenuWanted(false);
+		};
+		desktop.addEventListener("change", closeDesktopMenu);
+		return () => desktop.removeEventListener("change", closeDesktopMenu);
+	}, []);
+
 	// Don't show navigation on login or onboarding pages
 	if (currentPath === "/login" || currentPath === "/onboarding") {
 		return (
