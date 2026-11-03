@@ -1,4 +1,6 @@
 import {
+	integrationSyncBusyRetry,
+	isIntegrationSyncBusy,
 	usersControllerDeleteMyAccountMutation,
 	usersControllerGetMyAccountDeletionOptions,
 } from "@opnshelf/api";
@@ -35,6 +37,9 @@ export function DeleteAccountSection() {
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "me", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
+		// A running sync can hold the account briefly; nothing is deleted until
+		// it finishes, so wait for it instead of failing.
+		...integrationSyncBusyRetry,
 		onError: (error) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to delete account",
@@ -117,7 +122,14 @@ export function DeleteAccountSection() {
 			</section>
 
 			{/* Delete Account Confirmation Dialog */}
-			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+			<Dialog
+				open={showDeleteDialog}
+				onOpenChange={(open) => {
+					// Closing would only hide a deletion that keeps running (and retrying).
+					if (!open && deleteAccountMutation.isPending) return;
+					setShowDeleteDialog(open);
+				}}
+			>
 				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2 text-destructive">
@@ -126,8 +138,8 @@ export function DeleteAccountSection() {
 						</DialogTitle>
 						<DialogDescription>
 							This action cannot be undone. All your data will be permanently
-							removed. Trakt Sync stops; records already transferred to Trakt
-							remain there.
+							removed. Trakt and Popfeed Sync stop; records already sent to
+							Trakt or Popfeed remain there.
 						</DialogDescription>
 					</DialogHeader>
 
@@ -164,6 +176,12 @@ export function DeleteAccountSection() {
 							</label>
 						</div>
 
+						{deleteAccountMutation.isPending &&
+							isIntegrationSyncBusy(deleteAccountMutation.failureReason) && (
+								<output className="block text-muted-foreground text-sm">
+									Waiting for the current sync to finish…
+								</output>
+							)}
 						{deleteAccountMutation.isError && (
 							<div className="flex items-center gap-2 rounded-lg bg-destructive/5 p-3 text-destructive text-sm">
 								<AlertTriangle className="size-4 shrink-0" />
@@ -180,6 +198,7 @@ export function DeleteAccountSection() {
 						<Button
 							variant="outline"
 							onClick={() => setShowDeleteDialog(false)}
+							disabled={deleteAccountMutation.isPending}
 						>
 							Cancel
 						</Button>

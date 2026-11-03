@@ -16,6 +16,7 @@ import { UserDeletionService } from "./user-deletion.service";
 import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
 import { TraktSyncModule } from "../trakt-sync/trakt-sync.module";
+import { PopfeedSyncModule } from "../popfeed-sync/popfeed-sync.module";
 
 @Module({
 	imports: [
@@ -23,6 +24,7 @@ import { TraktSyncModule } from "../trakt-sync/trakt-sync.module";
 		PdsModule,
 		PrismaModule,
 		TraktSyncModule,
+		PopfeedSyncModule,
 		ListsModule,
 		MoviesModule,
 		ShowsModule,

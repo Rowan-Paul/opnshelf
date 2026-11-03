@@ -30,7 +30,12 @@ import {
 	isContentRecord,
 	validateContent,
 } from "./content-value";
-import { IntegrationError, SyncSnapshotChanged } from "./integration-error";
+import {
+	IntegrationError,
+	isSyncBusy,
+	SyncSnapshotChanged,
+	syncBusy,
+} from "./integration-error";
 import {
 	encodeList,
 	listValue,
@@ -348,12 +353,7 @@ export abstract class IntegrationSyncService<Credential>
 			},
 			data: { leaseId, leaseUntil: new Date(Date.now() + 120_000) },
 		});
-		if (!claim.count)
-			throw new ConflictException({
-				statusCode: 409,
-				code: "SYNC_BUSY",
-				message: "Sync is finishing its current operation. Try again shortly.",
-			});
+		if (!claim.count) throw syncBusy();
 		let lost = false;
 		const lease = async () => {
 			const updated = await this.prisma.integrationConnection.updateMany({
@@ -529,10 +529,26 @@ export abstract class IntegrationSyncService<Credential>
 		});
 		return this.status(userDid);
 	}
+	/** How long account deletion waits for a running sync to release the lease. */
+	protected deletionLeaseWaitMs = 10_000;
+	/**
+	 * Disconnect before account deletion. A running sync holds the lease, so
+	 * wait briefly for it to finish instead of failing the deletion; if it is
+	 * still busy, the SYNC_BUSY conflict lets the client retry.
+	 */
 	async disconnectForDeletion(userDid: string) {
-		const current = await this.current(userDid);
-		if (current && current.status !== "disconnected")
-			await this.action(userDid, "disconnect");
+		const deadline = Date.now() + this.deletionLeaseWaitMs;
+		for (;;) {
+			const current = await this.current(userDid);
+			if (!current || current.status === "disconnected") return;
+			try {
+				await this.action(userDid, "disconnect");
+				return;
+			} catch (error) {
+				if (!isSyncBusy(error) || Date.now() >= deadline) throw error;
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
+		}
 	}
 	protected async discover(
 		c: IntegrationConnection,

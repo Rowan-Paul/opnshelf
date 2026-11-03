@@ -3,6 +3,7 @@ import {
 	integrationSyncBusyRetry,
 	POPFEED_INTEGRATION,
 	TRAKT_INTEGRATION,
+	usersControllerDeleteMyAccountMutation,
 } from "@opnshelf/api";
 import {
 	MutationCache,
@@ -126,6 +127,40 @@ it.each([
 	for (const request of requests) {
 		expect(new URL(request.url).pathname).toBe(path);
 		expect(await request.json()).toEqual(body);
+	}
+	expect(onError).not.toHaveBeenCalled();
+	client.clear();
+});
+
+it("retries a busy account deletion with the same choice", async () => {
+	vi.useFakeTimers();
+	configureApiClient("http://fixture.test");
+	const fetch = vi
+		.fn()
+		.mockResolvedValueOnce(
+			Response.json(
+				{ statusCode: 409, code: "SYNC_BUSY", message: "Busy" },
+				{ status: 409 },
+			),
+		)
+		.mockResolvedValueOnce(new Response(null, { status: 204 }));
+	vi.stubGlobal("fetch", fetch);
+	const onError = vi.fn();
+	const client = new QueryClient({
+		mutationCache: new MutationCache({ onError }),
+	});
+	const observer = new MutationObserver(client, {
+		...usersControllerDeleteMyAccountMutation(),
+		...integrationSyncBusyRetry,
+	});
+	const done = observer.mutate({ body: { deletePDSData: false } });
+	await vi.advanceTimersByTimeAsync(2000);
+	await done;
+	const requests = fetch.mock.calls.map(([request]) => request as Request);
+	expect(requests).toHaveLength(2);
+	for (const request of requests) {
+		expect(request.method).toBe("DELETE");
+		expect(await request.json()).toEqual({ deletePDSData: false });
 	}
 	expect(onError).not.toHaveBeenCalled();
 	client.clear();
