@@ -20,12 +20,12 @@ export function UserMenuButton({
 	return (
 		<button
 			type="button"
-			className="relative hidden h-9 w-9 items-center justify-center rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) sm:flex"
+			className="relative hidden h-9 w-9 items-center justify-center rounded-full border border-(--border) bg-(--background-elevated) transition-colors hover:border-(--border-strong) md:flex"
 			aria-label={unread ? "User menu, unread release notes" : "User menu"}
 			{...props}
 		>
 			{unread && (
-				<span className="absolute top-0 right-0 z-10">
+				<span className="absolute top-0 right-0 z-10 flex rounded-full ring-(--background) ring-2">
 					<UnreadDot />
 				</span>
 			)}
