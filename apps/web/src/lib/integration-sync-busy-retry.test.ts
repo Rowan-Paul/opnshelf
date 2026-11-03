@@ -1,6 +1,6 @@
 import {
 	configureApiClient,
-	integrationSettingsRetry,
+	integrationSyncBusyRetry,
 	POPFEED_INTEGRATION,
 	TRAKT_INTEGRATION,
 } from "@opnshelf/api";
@@ -42,7 +42,7 @@ it.each([
 	});
 	const observer = new MutationObserver(client, {
 		mutationFn: integration.api.configure,
-		...integrationSettingsRetry,
+		...integrationSyncBusyRetry,
 	});
 	const unsubscribe = observer.subscribe(() => {});
 	const settings = {
@@ -70,6 +70,67 @@ it.each([
 	client.clear();
 });
 
+it.each([
+	{
+		name: "action",
+		run: () => POPFEED_INTEGRATION.api.action("pause"),
+		body: { action: "pause" },
+		path: "/popfeed-sync/action",
+	},
+	{
+		name: "issue resolution",
+		run: () =>
+			POPFEED_INTEGRATION.api.resolve("fixture-item", { action: "link" }),
+		body: { action: "link" },
+		path: "/popfeed-sync/issues/fixture-item",
+	},
+])("retries a busy $name request with the same body", async ({
+	run,
+	body,
+	path,
+}) => {
+	vi.useFakeTimers();
+	configureApiClient("http://fixture.test");
+	const fetch = vi
+		.fn()
+		.mockResolvedValueOnce(
+			Response.json(
+				{
+					statusCode: 409,
+					code: "SYNC_BUSY",
+					message: "Sync is finishing its current operation.",
+				},
+				{ status: 409 },
+			),
+		)
+		.mockResolvedValueOnce(Response.json({ status: "paused" }));
+	vi.stubGlobal("fetch", fetch);
+	const onError = vi.fn();
+	const client = new QueryClient({
+		mutationCache: new MutationCache({ onError }),
+	});
+	const observer = new MutationObserver(client, {
+		mutationFn: run,
+		...integrationSyncBusyRetry,
+	});
+	const done = observer.mutate();
+	await vi.advanceTimersByTimeAsync(0);
+	expect(observer.getCurrentResult()).toMatchObject({
+		status: "pending",
+		failureCount: 1,
+	});
+	await vi.advanceTimersByTimeAsync(2000);
+	await expect(done).resolves.toMatchObject({ status: "paused" });
+	const requests = fetch.mock.calls.map(([request]) => request as Request);
+	expect(requests).toHaveLength(2);
+	for (const request of requests) {
+		expect(new URL(request.url).pathname).toBe(path);
+		expect(await request.json()).toEqual(body);
+	}
+	expect(onError).not.toHaveBeenCalled();
+	client.clear();
+});
+
 it("stops after sixty seconds of busy retry waits and reports one terminal error", async () => {
 	vi.useFakeTimers();
 	const busy = { statusCode: 409, code: "SYNC_BUSY" };
@@ -80,7 +141,7 @@ it("stops after sixty seconds of busy retry waits and reports one terminal error
 	});
 	const observer = new MutationObserver(client, {
 		mutationFn: save,
-		...integrationSettingsRetry,
+		...integrationSyncBusyRetry,
 	});
 	const unsubscribe = observer.subscribe(() => {});
 	const result = observer.mutate({ watches: true }).catch((error) => error);
@@ -106,7 +167,7 @@ it.each([
 	const client = new QueryClient();
 	const observer = new MutationObserver(client, {
 		mutationFn: save,
-		...integrationSettingsRetry,
+		...integrationSyncBusyRetry,
 	});
 	await expect(observer.mutate({})).rejects.toBe(error);
 	expect(save).toHaveBeenCalledOnce();

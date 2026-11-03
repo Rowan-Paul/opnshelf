@@ -11,8 +11,8 @@ import {
 	integrationMissingConfirmation,
 	integrationRecords,
 	integrationResolutionLabel,
-	integrationSettingsRetry,
 	integrationStateMessage,
+	integrationSyncBusyRetry,
 	integrationUnconfirmedChoiceCopy,
 	integrationWriteGrantCopy,
 	isIntegrationSyncBusy,
@@ -164,6 +164,7 @@ export function IntegrationSyncManager({
 		mutationKey: [...rootKey, "action"],
 		mutationFn: (choice: SyncActionDto["action"]) =>
 			integration.api.action(choice),
+		...integrationSyncBusyRetry,
 		onSuccess: refresh,
 	});
 	const [disconnect, setDisconnect] = useState(false);
@@ -352,6 +353,11 @@ export function IntegrationSyncManager({
 						{integrationStateMessage(data, name)}
 					</Text>
 				)}
+				{action.isPending && isIntegrationSyncBusy(action.failureReason) && (
+					<Text accessibilityLiveRegion="polite" className={copy}>
+						Waiting for the current sync to finish…
+					</Text>
+				)}
 				{(connectionFailed ||
 					connect.error ||
 					action.error ||
@@ -485,7 +491,7 @@ export function SyncSettings({
 	const save = useMutation({
 		mutationKey: [...integrationKey(integration), "configure"],
 		mutationFn: integration.api.configure,
-		...integrationSettingsRetry,
+		...integrationSyncBusyRetry,
 		onSuccess: () => {
 			setReviewing(false);
 			onSaved();
@@ -1000,6 +1006,7 @@ function SyncIssue({
 		mutationKey: [...rootKey, "issues", "resolve"],
 		mutationFn: (body: IntegrationResolveDto) =>
 			integration.api.resolve(item.id, body),
+		...integrationSyncBusyRetry,
 		onSuccess: () => {
 			setChoice(null);
 			void client.invalidateQueries({ queryKey: rootKey });
@@ -1236,7 +1243,13 @@ function SyncIssue({
 										}
 									/>
 								)}
-								{mutation.error && (
+								{mutation.isPending &&
+									isIntegrationSyncBusy(mutation.failureReason) && (
+										<Text accessibilityLiveRegion="polite" className={copy}>
+											Waiting for the current sync to finish…
+										</Text>
+									)}
+								{Boolean(mutation.error) && (
 									<Text accessibilityRole="alert" className={copy}>
 										{traktError(mutation.error)}
 									</Text>
@@ -1256,7 +1269,12 @@ function SyncIssue({
 					</View>
 				</BottomSheetModal>
 			)}
-			{mutation.error && (
+			{mutation.isPending && isIntegrationSyncBusy(mutation.failureReason) && (
+				<Text accessibilityLiveRegion="polite" className={copy}>
+					Waiting for the current sync to finish…
+				</Text>
+			)}
+			{Boolean(mutation.error) && (
 				<Text selectable accessibilityRole="alert" className={copy}>
 					{traktError(mutation.error)}
 				</Text>
