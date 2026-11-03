@@ -154,7 +154,7 @@ export default function Header() {
 
 						{/* User Menu or Login Button */}
 						{isLoading ? (
-							<div className="hidden h-9 w-9 animate-pulse rounded-full bg-(--background-subtle) sm:block" />
+							<div className="hidden h-9 w-9 animate-pulse rounded-full bg-(--background-subtle) md:block" />
 						) : isAuthenticated && user ? (
 							menuWanted ? (
 								// A failed chunk falls back to the plain avatar instead of
