@@ -30,7 +30,7 @@ import {
 	isContentRecord,
 	validateContent,
 } from "./content-value";
-import { IntegrationError } from "./integration-error";
+import { IntegrationError, SyncSnapshotChanged } from "./integration-error";
 import {
 	encodeList,
 	listValue,
@@ -105,7 +105,6 @@ const coolingDown = (
 	);
 
 class SyncAccountUnavailable extends IntegrationError {}
-class SyncSnapshotChanged extends IntegrationError {}
 
 const SOURCE_CHANGED =
 	"The source changed during an interrupted transfer. Choose which version to keep.";

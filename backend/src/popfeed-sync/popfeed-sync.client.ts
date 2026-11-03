@@ -4,7 +4,10 @@ import type {
 	IntegrationRemote,
 	SyncRecordTypes,
 } from "../integrations/adapter";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	SyncSnapshotChanged,
+} from "../integrations/integration-error";
 import type { SyncRecord } from "../integrations/reconcile";
 import {
 	LIST,
@@ -103,19 +106,27 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 		credential: PopfeedCredential,
 		types: SyncRecordTypes = {},
 	): Promise<SyncRecord[]> {
+		return popfeedRecords(
+			await this.repository(credential),
+			types,
+			credential.timeZone,
+		);
+	}
+
+	/**
+	 * All three collections, for a writer that must see the current records.
+	 * A writer given a partial view could recreate a record it missed, so a
+	 * read the repository changed under stops the run instead.
+	 */
+	async repository(credential: PopfeedCredential): Promise<PopfeedRepository> {
 		const repository = await this.read(credential);
 		if (!repository)
-			throw new IntegrationError(
+			throw new SyncSnapshotChanged(
 				"Your Popfeed records changed during the read. Sync will read a fresh snapshot.",
 				0,
 				5,
 			);
-		return popfeedRecords(repository, types, credential.timeZone);
-	}
-
-	/** All three collections, for a writer that must see the current records. */
-	async repository(credential: PopfeedCredential): Promise<PopfeedRepository> {
-		return (await this.read(credential)) ?? this.collections(credential);
+		return repository;
 	}
 
 	/**

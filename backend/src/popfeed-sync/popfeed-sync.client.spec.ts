@@ -1,5 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	SyncSnapshotChanged,
+} from "../integrations/integration-error";
 import {
 	type PopfeedCredential,
 	PopfeedSyncClient,
@@ -69,6 +72,16 @@ it("does not cache or return a snapshot that changed while it was read", async (
 	const c = credential();
 	await expect(client.snapshot(c, { watches: true })).rejects.toBeInstanceOf(
 		IntegrationError,
+	);
+	expect(c.read).toBeUndefined();
+});
+
+it("never hands a writer a read the repository changed under", async () => {
+	pds(["a", "b"]);
+	const client = new PopfeedSyncClient();
+	const c = credential();
+	await expect(client.repository(c)).rejects.toBeInstanceOf(
+		SyncSnapshotChanged,
 	);
 	expect(c.read).toBeUndefined();
 });

@@ -8,3 +8,9 @@ export class IntegrationError extends Error {
 		super(message);
 	}
 }
+
+/**
+ * The remote changed while it was read. The sync run stops without marking
+ * the item it was working on and reads a fresh snapshot shortly.
+ */
+export class SyncSnapshotChanged extends IntegrationError {}
