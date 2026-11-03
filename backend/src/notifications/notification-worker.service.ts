@@ -17,7 +17,7 @@ import {
 	type OnModuleInit,
 } from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
-import slugify from "slugify";
+import { mediaPath } from "./notification-media-path";
 import { EmailService } from "../email/email.service";
 import { MoviesTmdbService } from "../movies/movies-tmdb.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -72,14 +72,6 @@ function localParts(now: Date, timezone: string) {
 	} catch {
 		return localParts(now, "UTC");
 	}
-}
-
-function mediaPath(
-	kind: "movies" | "shows",
-	id: string,
-	title: string,
-): string {
-	return `/${kind}/${id}/${slugify(title, { lower: true, strict: true }) || "title"}`;
 }
 
 function addDays(date: string, days: number): string {
