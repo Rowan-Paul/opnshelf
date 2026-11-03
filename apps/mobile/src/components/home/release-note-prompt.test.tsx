@@ -45,10 +45,7 @@ function note(slug: string, publishedAt: string): ReleaseNote {
 }
 
 // This is the announcement shipped with this bundle, not the newest server note.
-const installed = note(
-	"popfeed-and-easier-sign-in",
-	"2026-11-02T13:16:56.000Z",
-);
+const installed = note("smoother-sync-settings", "2026-11-02T13:16:56.000Z");
 let renderer: ReactTestRenderer;
 afterEach(async () => {
 	await act(async () => renderer?.unmount());

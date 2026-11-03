@@ -24,4 +24,4 @@ Search, sort and filter Lists on Mobile, including Lists belonging to other peop
 
 When sending feedback on Mobile, you can include a screenshot to help explain what you saw. Web pages load with less initial JavaScript and lighter hero images. This release also fixes a missing-rating display and improves navigation and editing across both clients.
 
-**Availability:** These improvements arrive on Web with this release. Mobile changes require version 1.7.11, which is coming to the App Store and Google Play after the store release and review.
+**Availability:** Available on Web. Mobile changes require version 1.7.11 or later, available in the App Store and Google Play.
