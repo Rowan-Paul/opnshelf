@@ -1,3 +1,4 @@
+import { isSyncBusy } from "../integrations/integration-error";
 import { Logger } from "@nestjs/common";
 import { encodeContent, isContentRecord } from "../integrations/content-value";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
@@ -1751,6 +1752,56 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(remoteRecords).toHaveLength(2);
 		expect(await nextRun()).toBeLessThanOrEqual(5_000);
+	});
+	it("waits for a running sync before disconnecting for account deletion", async () => {
+		await configure();
+		await db.integrationConnection.updateMany({
+			where: { userDid },
+			data: { leaseId: "worker", leaseUntil: new Date(Date.now() + 60_000) },
+		});
+		const release = setTimeout(
+			() =>
+				// Prisma queries run only once awaited or then-ed.
+				void db.integrationConnection
+					.updateMany({
+						where: { userDid },
+						data: { leaseId: null, leaseUntil: null },
+					})
+					.then(),
+			700,
+		);
+		try {
+			await service.disconnectForDeletion(userDid);
+		} finally {
+			clearTimeout(release);
+		}
+		expect(remoteApi.revoke).toHaveBeenCalled();
+		expect(
+			(await db.integrationConnection.findFirstOrThrow({ where: { userDid } }))
+				.status,
+		).toBe("disconnected");
+	});
+	it("reports a busy sync when it outlasts the account deletion wait", async () => {
+		await configure();
+		await db.integrationConnection.updateMany({
+			where: { userDid },
+			data: { leaseId: "worker", leaseUntil: new Date(Date.now() + 60_000) },
+		});
+		const waiting = service as unknown as { deletionLeaseWaitMs: number };
+		const wait = waiting.deletionLeaseWaitMs;
+		waiting.deletionLeaseWaitMs = 600;
+		const error = await service
+			.disconnectForDeletion(userDid)
+			.catch((e: unknown) => e)
+			.finally(() => {
+				waiting.deletionLeaseWaitMs = wait;
+			});
+		expect(isSyncBusy(error)).toBe(true);
+		expect(remoteApi.revoke).not.toHaveBeenCalled();
+		expect(
+			(await db.integrationConnection.findFirstOrThrow({ where: { userDid } }))
+				.status,
+		).not.toBe("disconnected");
 	});
 	it("retains links across disconnect and catches up on reconnect", async () => {
 		localRecords = [watch("movie:one")];

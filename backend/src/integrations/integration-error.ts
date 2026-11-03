@@ -1,3 +1,5 @@
+import { ConflictException } from "@nestjs/common";
+
 /** A provider failure with a user-safe message. Status 401 asks the User to reconnect. */
 export class IntegrationError extends Error {
 	constructor(
@@ -14,3 +16,21 @@ export class IntegrationError extends Error {
  * the item it was working on and reads a fresh snapshot shortly.
  */
 export class SyncSnapshotChanged extends IntegrationError {}
+
+/**
+ * The connection is busy with a sync run. Clients retry a 409 carrying this
+ * code automatically; nothing was changed when it is thrown.
+ */
+export function syncBusy(
+	message = "Sync is finishing its current operation. Try again shortly.",
+) {
+	return new ConflictException({ statusCode: 409, code: "SYNC_BUSY", message });
+}
+export function isSyncBusy(error: unknown) {
+	if (!(error instanceof ConflictException)) return false;
+	const response = error.getResponse();
+	return (
+		typeof response === "object" &&
+		(response as { code?: unknown }).code === "SYNC_BUSY"
+	);
+}

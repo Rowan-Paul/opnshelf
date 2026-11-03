@@ -1,4 +1,7 @@
 import { mockWatchCoordinator } from "../../test/watch-privacy";
+import { isSyncBusy } from "../integrations/integration-error";
+import { WatchAccountBusyError } from "../privacy/watch-account-lock";
+import type { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
 import { PrivateSettingsService } from "../pds/private-settings.service";
 import { mockEnvironment } from "../../test/env";
 import { ConflictException, NotFoundException } from "@nestjs/common";
@@ -196,6 +199,88 @@ describe("UserDeletionService", () => {
 
 			await expect(service.deleteUserSync("did:plc:missing")).rejects.toThrow(
 				NotFoundException,
+			);
+		});
+	});
+
+	describe("waiting for a running sync", () => {
+		const integrations = () => ({
+			trakt: { disconnectForDeletion: vi.fn().mockResolvedValue(undefined) },
+			popfeed: { disconnectForDeletion: vi.fn().mockResolvedValue(undefined) },
+		});
+		const withIntegrations = (
+			watch: WatchPrivacyCoordinator,
+			sync: ReturnType<typeof integrations>,
+		) =>
+			new UserDeletionService(
+				prisma,
+				authService,
+				config,
+				new PrivateSettingsService(),
+				watch,
+				sync.trakt as never,
+				sync.popfeed as never,
+			);
+
+		it("disconnects every Integration and waits for the account lock", async () => {
+			const watch = mockWatchCoordinator(prisma);
+			const sync = integrations();
+			await withIntegrations(watch, sync).deleteUserSync("did:plc:test");
+			expect(sync.trakt.disconnectForDeletion).toHaveBeenCalledWith(
+				"did:plc:test",
+			);
+			expect(sync.popfeed.disconnectForDeletion).toHaveBeenCalledWith(
+				"did:plc:test",
+			);
+			expect(
+				sync.popfeed.disconnectForDeletion.mock.invocationCallOrder[0],
+			).toBeLessThan(vi.mocked(prisma.user.delete).mock.invocationCallOrder[0]);
+			expect(watch.stopForAccountDeletion).toHaveBeenCalledWith(
+				"did:plc:test",
+				{ wait: true },
+			);
+			expect(watch.deleteLocalAccount).toHaveBeenCalledWith(
+				"did:plc:test",
+				expect.any(Function),
+				{ wait: true },
+			);
+		});
+
+		it.each([
+			["deleteUserSync", "stopForAccountDeletion"],
+			["createDeletionJob", "withAccountLock"],
+		] as const)(
+			"%s reports SYNC_BUSY without deleting when the account stays locked",
+			async (method, lock) => {
+				const watch = mockWatchCoordinator(prisma);
+				vi.mocked(watch[lock]).mockRejectedValueOnce(
+					new WatchAccountBusyError(),
+				);
+				const service = withIntegrations(watch, integrations());
+				const result =
+					method === "deleteUserSync"
+						? service.deleteUserSync("did:plc:test")
+						: service.createDeletionJob("did:plc:test", true);
+				const error = await result.catch((e: unknown) => e);
+				expect(isSyncBusy(error)).toBe(true);
+				expect(prisma.user.delete).not.toHaveBeenCalled();
+				expect(prisma.backgroundJob.create).not.toHaveBeenCalled();
+			},
+		);
+
+		it("creates the deletion job after disconnecting every Integration", async () => {
+			const watch = mockWatchCoordinator(prisma);
+			const sync = integrations();
+			await withIntegrations(watch, sync).createDeletionJob(
+				"did:plc:test",
+				true,
+			);
+			expect(sync.trakt.disconnectForDeletion).toHaveBeenCalled();
+			expect(sync.popfeed.disconnectForDeletion).toHaveBeenCalled();
+			expect(watch.withAccountLock).toHaveBeenCalledWith(
+				"did:plc:test",
+				expect.any(Function),
+				{ wait: true },
 			);
 		});
 	});
