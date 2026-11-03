@@ -11,8 +11,8 @@ import {
 	integrationMissingConfirmation,
 	integrationRecords,
 	integrationResolutionLabel,
-	integrationSettingsRetry,
 	integrationStateMessage,
+	integrationSyncBusyRetry,
 	integrationUnconfirmedChoiceCopy,
 	integrationWriteGrantCopy,
 	isIntegrationSyncBusy,
@@ -98,6 +98,7 @@ export function IntegrationSyncManager({
 	const action = useMutation({
 		mutationKey: [...rootKey, "action"],
 		mutationFn: (name: SyncActionDto["action"]) => integration.api.action(name),
+		...integrationSyncBusyRetry,
 		onSuccess: refresh,
 	});
 	const [disconnect, setDisconnect] = useState(false);
@@ -347,6 +348,11 @@ export function IntegrationSyncManager({
 						{integrationStateMessage(data, name)}
 					</output>
 				)}
+				{action.isPending && isIntegrationSyncBusy(action.failureReason) && (
+					<output className="mt-4 block text-(--foreground-muted) text-sm">
+						Waiting for the current sync to finish…
+					</output>
+				)}
 				{(connectionFailed ||
 					connect.error ||
 					action.error ||
@@ -462,7 +468,7 @@ export function SyncSettings({
 	const save = useMutation({
 		mutationKey: [...integrationKey(integration), "configure"],
 		mutationFn: integration.api.configure,
-		...integrationSettingsRetry,
+		...integrationSyncBusyRetry,
 		onSuccess: () => {
 			setReviewing(false);
 			onSaved();
@@ -947,6 +953,7 @@ function SyncIssue({
 		mutationKey: [...rootKey, "issues", "resolve"],
 		mutationFn: (body: IntegrationResolveDto) =>
 			integration.api.resolve(item.id, body),
+		...integrationSyncBusyRetry,
 		onSuccess: () => {
 			setChoice(null);
 			void client.invalidateQueries({ queryKey: rootKey });
@@ -1207,7 +1214,15 @@ function SyncIssue({
 								Apply to all Rating conflicts
 							</label>
 						)}
-						{mutation.error && <p role="alert">{traktError(mutation.error)}</p>}
+						{mutation.isPending &&
+							isIntegrationSyncBusy(mutation.failureReason) && (
+								<output className="block text-(--foreground-muted) text-sm">
+									Waiting for the current sync to finish…
+								</output>
+							)}
+						{Boolean(mutation.error) && (
+							<p role="alert">{traktError(mutation.error)}</p>
+						)}
 						<div className="flex flex-wrap gap-2">
 							<button
 								type="button"
@@ -1230,7 +1245,12 @@ function SyncIssue({
 					</DialogContent>
 				</Dialog>
 			)}
-			{mutation.error && (
+			{mutation.isPending && isIntegrationSyncBusy(mutation.failureReason) && (
+				<output className="mt-3 block text-(--foreground-muted) text-sm">
+					Waiting for the current sync to finish…
+				</output>
+			)}
+			{Boolean(mutation.error) && (
 				<p className="mt-3" role="alert">
 					{traktError(mutation.error)}
 				</p>
