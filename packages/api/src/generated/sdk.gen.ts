@@ -828,6 +828,41 @@ export const ratingsControllerSetRating = <ThrowOnError extends boolean = false>
  */
 export const ratingsControllerClearRating = <ThrowOnError extends boolean = false>(options: Options<RatingsControllerClearRatingData, ThrowOnError>) => (options.client ?? client).delete<RatingsControllerClearRatingResponses, RatingsControllerClearRatingErrors, ThrowOnError>({ url: '/ratings/{ratingId}', ...options });
 
+export const popfeedSyncControllerStatus = <ThrowOnError extends boolean = false>(options?: Options<PopfeedSyncControllerStatusData, ThrowOnError>) => (options?.client ?? client).get<PopfeedSyncControllerStatusResponses, unknown, ThrowOnError>({ url: '/popfeed-sync', ...options });
+
+export const popfeedSyncControllerConfigure = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerConfigureData, ThrowOnError>) => (options.client ?? client).patch<PopfeedSyncControllerConfigureResponses, unknown, ThrowOnError>({
+    url: '/popfeed-sync',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const popfeedSyncControllerConnect = <ThrowOnError extends boolean = false>(options?: Options<PopfeedSyncControllerConnectData, ThrowOnError>) => (options?.client ?? client).post<PopfeedSyncControllerConnectResponses, unknown, ThrowOnError>({ url: '/popfeed-sync/connect', ...options });
+
+export const popfeedSyncControllerAction = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerActionData, ThrowOnError>) => (options.client ?? client).post<PopfeedSyncControllerActionResponses, unknown, ThrowOnError>({
+    url: '/popfeed-sync/action',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const popfeedSyncControllerIssues = <ThrowOnError extends boolean = false>(options?: Options<PopfeedSyncControllerIssuesData, ThrowOnError>) => (options?.client ?? client).get<PopfeedSyncControllerIssuesResponses, unknown, ThrowOnError>({ url: '/popfeed-sync/issues', ...options });
+
+export const popfeedSyncControllerResolve = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerResolveData, ThrowOnError>) => (options.client ?? client).post<PopfeedSyncControllerResolveResponses, unknown, ThrowOnError>({
+    url: '/popfeed-sync/issues/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const popfeedSyncControllerMatches = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerMatchesData, ThrowOnError>) => (options.client ?? client).get<PopfeedSyncControllerMatchesResponses, unknown, ThrowOnError>({ url: '/popfeed-sync/issues/{id}/matches', ...options });
+
 /**
  * Get follow suggestions based on Bluesky follows, falling back to active users
  */
@@ -1032,41 +1067,6 @@ export const atStoreReviewsControllerPublish = <ThrowOnError extends boolean = f
         ...options.headers
     }
 });
-
-export const popfeedSyncControllerStatus = <ThrowOnError extends boolean = false>(options?: Options<PopfeedSyncControllerStatusData, ThrowOnError>) => (options?.client ?? client).get<PopfeedSyncControllerStatusResponses, unknown, ThrowOnError>({ url: '/popfeed-sync', ...options });
-
-export const popfeedSyncControllerConfigure = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerConfigureData, ThrowOnError>) => (options.client ?? client).patch<PopfeedSyncControllerConfigureResponses, unknown, ThrowOnError>({
-    url: '/popfeed-sync',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const popfeedSyncControllerConnect = <ThrowOnError extends boolean = false>(options?: Options<PopfeedSyncControllerConnectData, ThrowOnError>) => (options?.client ?? client).post<PopfeedSyncControllerConnectResponses, unknown, ThrowOnError>({ url: '/popfeed-sync/connect', ...options });
-
-export const popfeedSyncControllerAction = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerActionData, ThrowOnError>) => (options.client ?? client).post<PopfeedSyncControllerActionResponses, unknown, ThrowOnError>({
-    url: '/popfeed-sync/action',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const popfeedSyncControllerIssues = <ThrowOnError extends boolean = false>(options?: Options<PopfeedSyncControllerIssuesData, ThrowOnError>) => (options?.client ?? client).get<PopfeedSyncControllerIssuesResponses, unknown, ThrowOnError>({ url: '/popfeed-sync/issues', ...options });
-
-export const popfeedSyncControllerResolve = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerResolveData, ThrowOnError>) => (options.client ?? client).post<PopfeedSyncControllerResolveResponses, unknown, ThrowOnError>({
-    url: '/popfeed-sync/issues/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const popfeedSyncControllerMatches = <ThrowOnError extends boolean = false>(options: Options<PopfeedSyncControllerMatchesData, ThrowOnError>) => (options.client ?? client).get<PopfeedSyncControllerMatchesResponses, unknown, ThrowOnError>({ url: '/popfeed-sync/issues/{id}/matches', ...options });
 
 export const notificationsControllerCollection = <ThrowOnError extends boolean = false>(options: Options<NotificationsControllerCollectionData, ThrowOnError>) => (options.client ?? client).get<NotificationsControllerCollectionResponses, unknown, ThrowOnError>({ url: '/notifications/collections/{id}', ...options });
 
