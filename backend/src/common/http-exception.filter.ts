@@ -10,6 +10,7 @@ import type { Request, Response } from "express";
 import { TmdbNotFoundError } from "../tmdb/tmdb-http";
 
 interface ErrorBody {
+	code?: "SYNC_BUSY";
 	statusCode: number;
 	message: string | string[];
 	error: string;
@@ -73,6 +74,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 					message: (obj.message as string | string[]) ?? exception.message,
 					error: (obj.error as string) ?? exception.name,
 				};
+				// Only forward this application-owned retry signal, never arbitrary codes.
+				if (status === HttpStatus.CONFLICT && obj.code === "SYNC_BUSY")
+					body.code = "SYNC_BUSY";
 			}
 		}
 

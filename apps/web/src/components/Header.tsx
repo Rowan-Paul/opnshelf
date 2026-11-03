@@ -85,6 +85,15 @@ export default function Header() {
 		setMobileMenuOpen(false);
 	}, []);
 
+	useEffect(() => {
+		const desktop = window.matchMedia("(min-width: 768px)");
+		const closeDesktopMenu = () => {
+			if (!desktop.matches) setMenuWanted(false);
+		};
+		desktop.addEventListener("change", closeDesktopMenu);
+		return () => desktop.removeEventListener("change", closeDesktopMenu);
+	}, []);
+
 	// Don't show navigation on login or onboarding pages
 	if (currentPath === "/login" || currentPath === "/onboarding") {
 		return (
@@ -154,7 +163,7 @@ export default function Header() {
 
 						{/* User Menu or Login Button */}
 						{isLoading ? (
-							<div className="hidden h-9 w-9 animate-pulse rounded-full bg-(--background-subtle) sm:block" />
+							<div className="hidden h-9 w-9 animate-pulse rounded-full bg-(--background-subtle) md:block" />
 						) : isAuthenticated && user ? (
 							menuWanted ? (
 								// A failed chunk falls back to the plain avatar instead of
@@ -197,12 +206,16 @@ export default function Header() {
 						{/* Mobile menu button - only visible on small screens */}
 						<button
 							type="button"
-							className="flex h-9 w-9 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) md:hidden"
+							className="relative flex h-9 w-9 items-center justify-center rounded-md border border-(--border) bg-(--background-elevated) text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) md:hidden"
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
 							aria-label={`${mobileMenuOpen ? "Close menu" : "Open menu"}${unread ? ", unread release notes" : ""}`}
 							aria-expanded={mobileMenuOpen}
 						>
-							{unread && <UnreadDot />}
+							{unread && (
+								<span className="absolute top-0 right-0 flex rounded-full ring-(--background) ring-2">
+									<UnreadDot />
+								</span>
+							)}
 							{mobileMenuOpen ? (
 								<X className="size-5" />
 							) : (

@@ -11,9 +11,11 @@ import {
 	integrationMissingConfirmation,
 	integrationRecords,
 	integrationResolutionLabel,
+	integrationSettingsRetry,
 	integrationStateMessage,
 	integrationUnconfirmedChoiceCopy,
 	integrationWriteGrantCopy,
+	isIntegrationSyncBusy,
 	type SyncActionDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
@@ -483,6 +485,7 @@ export function SyncSettings({
 	const save = useMutation({
 		mutationKey: [...integrationKey(integration), "configure"],
 		mutationFn: integration.api.configure,
+		...integrationSettingsRetry,
 		onSuccess: () => {
 			setReviewing(false);
 			onSaved();
@@ -805,7 +808,15 @@ export function SyncSettings({
 									/>
 								))}
 
-							{save.error && (
+							{save.isPending && isIntegrationSyncBusy(save.failureReason) && (
+								<Text
+									accessibilityLiveRegion="polite"
+									className="text-muted-foreground text-sm"
+								>
+									Waiting for the current sync to finish…
+								</Text>
+							)}
+							{Boolean(save.error) && (
 								<Text
 									selectable
 									accessibilityRole="alert"
@@ -819,14 +830,16 @@ export function SyncSettings({
 								label={
 									save.isPending
 										? "Saving…"
-										: managed
-											? status.status === "paused"
-												? "Save and resume sync"
-												: "Confirm changes"
-											: "Confirm and enable sync"
+										: save.isError
+											? "Retry save"
+											: managed
+												? status.status === "paused"
+													? "Save and resume sync"
+													: "Confirm changes"
+												: "Confirm and enable sync"
 								}
 								disabled={save.isPending || !canSave}
-								onPress={() => save.mutate(settings)}
+								onPress={() => save.mutate({ ...settings })}
 							/>
 							<Action
 								label="Back"
