@@ -481,8 +481,10 @@ export function isIntegrationSyncBusy(error: unknown): boolean {
 	);
 }
 
-/** Thirty two-second waits; other failures retain the normal mutation error flow. */
-export const integrationSettingsRetry = {
+/** Retries a request the sync lease rejected (SYNC_BUSY) with thirty two-second
+ * waits. The lease is claimed before any work, so a busy response changed nothing.
+ * Other failures retain the normal mutation error flow. */
+export const integrationSyncBusyRetry = {
 	retry: (failureCount: number, error: unknown) =>
 		failureCount < 30 && isIntegrationSyncBusy(error),
 	retryDelay: 2000,
