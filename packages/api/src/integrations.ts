@@ -1,3 +1,4 @@
+import { getHttpStatus } from "./http-errors";
 import {
 	popfeedSyncControllerAction,
 	popfeedSyncControllerConfigure,
@@ -468,3 +469,21 @@ export function onboardingIntegrationAction(
 		accessibilityLabel: `Choose what to sync with ${name}`,
 	};
 }
+
+/** Only a failed lease claim is safe to retry: no settings have been written. */
+export function isIntegrationSyncBusy(error: unknown): boolean {
+	return (
+		getHttpStatus(error) === 409 &&
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		error.code === "SYNC_BUSY"
+	);
+}
+
+/** Thirty two-second waits; other failures retain the normal mutation error flow. */
+export const integrationSettingsRetry = {
+	retry: (failureCount: number, error: unknown) =>
+		failureCount < 30 && isIntegrationSyncBusy(error),
+	retryDelay: 2000,
+};
