@@ -2522,6 +2522,131 @@ export const ratingsControllerClearRatingMutation = (options?: Partial<Options<R
     return mutationOptions;
 };
 
+export const popfeedSyncControllerStatusQueryKey = (options?: Options<PopfeedSyncControllerStatusData>) => createQueryKey('popfeedSyncControllerStatus', options);
+
+export const popfeedSyncControllerStatusOptions = (options?: Options<PopfeedSyncControllerStatusData>) => queryOptions<PopfeedSyncControllerStatusResponse, DefaultError, PopfeedSyncControllerStatusResponse, ReturnType<typeof popfeedSyncControllerStatusQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await popfeedSyncControllerStatus({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: popfeedSyncControllerStatusQueryKey(options)
+});
+
+export const popfeedSyncControllerConfigureMutation = (options?: Partial<Options<PopfeedSyncControllerConfigureData>>): UseMutationOptions<PopfeedSyncControllerConfigureResponse, DefaultError, Options<PopfeedSyncControllerConfigureData>> => {
+    const mutationOptions: UseMutationOptions<PopfeedSyncControllerConfigureResponse, DefaultError, Options<PopfeedSyncControllerConfigureData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await popfeedSyncControllerConfigure({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const popfeedSyncControllerConnectMutation = (options?: Partial<Options<PopfeedSyncControllerConnectData>>): UseMutationOptions<PopfeedSyncControllerConnectResponse, DefaultError, Options<PopfeedSyncControllerConnectData>> => {
+    const mutationOptions: UseMutationOptions<PopfeedSyncControllerConnectResponse, DefaultError, Options<PopfeedSyncControllerConnectData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await popfeedSyncControllerConnect({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const popfeedSyncControllerActionMutation = (options?: Partial<Options<PopfeedSyncControllerActionData>>): UseMutationOptions<PopfeedSyncControllerActionResponse, DefaultError, Options<PopfeedSyncControllerActionData>> => {
+    const mutationOptions: UseMutationOptions<PopfeedSyncControllerActionResponse, DefaultError, Options<PopfeedSyncControllerActionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await popfeedSyncControllerAction({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const popfeedSyncControllerIssuesQueryKey = (options?: Options<PopfeedSyncControllerIssuesData>) => createQueryKey('popfeedSyncControllerIssues', options);
+
+export const popfeedSyncControllerIssuesOptions = (options?: Options<PopfeedSyncControllerIssuesData>) => queryOptions<PopfeedSyncControllerIssuesResponse, DefaultError, PopfeedSyncControllerIssuesResponse, ReturnType<typeof popfeedSyncControllerIssuesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await popfeedSyncControllerIssues({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: popfeedSyncControllerIssuesQueryKey(options)
+});
+
+export const popfeedSyncControllerIssuesInfiniteQueryKey = (options?: Options<PopfeedSyncControllerIssuesData>): QueryKey<Options<PopfeedSyncControllerIssuesData>> => createQueryKey('popfeedSyncControllerIssues', options, true);
+
+export const popfeedSyncControllerIssuesInfiniteOptions = (options?: Options<PopfeedSyncControllerIssuesData>) => infiniteQueryOptions<PopfeedSyncControllerIssuesResponse, DefaultError, InfiniteData<PopfeedSyncControllerIssuesResponse>, QueryKey<Options<PopfeedSyncControllerIssuesData>>, number | Pick<QueryKey<Options<PopfeedSyncControllerIssuesData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<PopfeedSyncControllerIssuesData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                page: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await popfeedSyncControllerIssues({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: popfeedSyncControllerIssuesInfiniteQueryKey(options)
+});
+
+export const popfeedSyncControllerResolveMutation = (options?: Partial<Options<PopfeedSyncControllerResolveData>>): UseMutationOptions<PopfeedSyncControllerResolveResponse, DefaultError, Options<PopfeedSyncControllerResolveData>> => {
+    const mutationOptions: UseMutationOptions<PopfeedSyncControllerResolveResponse, DefaultError, Options<PopfeedSyncControllerResolveData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await popfeedSyncControllerResolve({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const popfeedSyncControllerMatchesQueryKey = (options: Options<PopfeedSyncControllerMatchesData>) => createQueryKey('popfeedSyncControllerMatches', options);
+
+export const popfeedSyncControllerMatchesOptions = (options: Options<PopfeedSyncControllerMatchesData>) => queryOptions<PopfeedSyncControllerMatchesResponse, DefaultError, PopfeedSyncControllerMatchesResponse, ReturnType<typeof popfeedSyncControllerMatchesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await popfeedSyncControllerMatches({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: popfeedSyncControllerMatchesQueryKey(options)
+});
+
 export const socialControllerGetSuggestionsQueryKey = (options?: Options<SocialControllerGetSuggestionsData>) => createQueryKey('socialControllerGetSuggestions', options);
 
 /**
@@ -3334,131 +3459,6 @@ export const atStoreReviewsControllerPublishMutation = (options?: Partial<Option
     };
     return mutationOptions;
 };
-
-export const popfeedSyncControllerStatusQueryKey = (options?: Options<PopfeedSyncControllerStatusData>) => createQueryKey('popfeedSyncControllerStatus', options);
-
-export const popfeedSyncControllerStatusOptions = (options?: Options<PopfeedSyncControllerStatusData>) => queryOptions<PopfeedSyncControllerStatusResponse, DefaultError, PopfeedSyncControllerStatusResponse, ReturnType<typeof popfeedSyncControllerStatusQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await popfeedSyncControllerStatus({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: popfeedSyncControllerStatusQueryKey(options)
-});
-
-export const popfeedSyncControllerConfigureMutation = (options?: Partial<Options<PopfeedSyncControllerConfigureData>>): UseMutationOptions<PopfeedSyncControllerConfigureResponse, DefaultError, Options<PopfeedSyncControllerConfigureData>> => {
-    const mutationOptions: UseMutationOptions<PopfeedSyncControllerConfigureResponse, DefaultError, Options<PopfeedSyncControllerConfigureData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await popfeedSyncControllerConfigure({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const popfeedSyncControllerConnectMutation = (options?: Partial<Options<PopfeedSyncControllerConnectData>>): UseMutationOptions<PopfeedSyncControllerConnectResponse, DefaultError, Options<PopfeedSyncControllerConnectData>> => {
-    const mutationOptions: UseMutationOptions<PopfeedSyncControllerConnectResponse, DefaultError, Options<PopfeedSyncControllerConnectData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await popfeedSyncControllerConnect({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const popfeedSyncControllerActionMutation = (options?: Partial<Options<PopfeedSyncControllerActionData>>): UseMutationOptions<PopfeedSyncControllerActionResponse, DefaultError, Options<PopfeedSyncControllerActionData>> => {
-    const mutationOptions: UseMutationOptions<PopfeedSyncControllerActionResponse, DefaultError, Options<PopfeedSyncControllerActionData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await popfeedSyncControllerAction({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const popfeedSyncControllerIssuesQueryKey = (options?: Options<PopfeedSyncControllerIssuesData>) => createQueryKey('popfeedSyncControllerIssues', options);
-
-export const popfeedSyncControllerIssuesOptions = (options?: Options<PopfeedSyncControllerIssuesData>) => queryOptions<PopfeedSyncControllerIssuesResponse, DefaultError, PopfeedSyncControllerIssuesResponse, ReturnType<typeof popfeedSyncControllerIssuesQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await popfeedSyncControllerIssues({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: popfeedSyncControllerIssuesQueryKey(options)
-});
-
-export const popfeedSyncControllerIssuesInfiniteQueryKey = (options?: Options<PopfeedSyncControllerIssuesData>): QueryKey<Options<PopfeedSyncControllerIssuesData>> => createQueryKey('popfeedSyncControllerIssues', options, true);
-
-export const popfeedSyncControllerIssuesInfiniteOptions = (options?: Options<PopfeedSyncControllerIssuesData>) => infiniteQueryOptions<PopfeedSyncControllerIssuesResponse, DefaultError, InfiniteData<PopfeedSyncControllerIssuesResponse>, QueryKey<Options<PopfeedSyncControllerIssuesData>>, number | Pick<QueryKey<Options<PopfeedSyncControllerIssuesData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<PopfeedSyncControllerIssuesData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                page: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await popfeedSyncControllerIssues({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: popfeedSyncControllerIssuesInfiniteQueryKey(options)
-});
-
-export const popfeedSyncControllerResolveMutation = (options?: Partial<Options<PopfeedSyncControllerResolveData>>): UseMutationOptions<PopfeedSyncControllerResolveResponse, DefaultError, Options<PopfeedSyncControllerResolveData>> => {
-    const mutationOptions: UseMutationOptions<PopfeedSyncControllerResolveResponse, DefaultError, Options<PopfeedSyncControllerResolveData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await popfeedSyncControllerResolve({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const popfeedSyncControllerMatchesQueryKey = (options: Options<PopfeedSyncControllerMatchesData>) => createQueryKey('popfeedSyncControllerMatches', options);
-
-export const popfeedSyncControllerMatchesOptions = (options: Options<PopfeedSyncControllerMatchesData>) => queryOptions<PopfeedSyncControllerMatchesResponse, DefaultError, PopfeedSyncControllerMatchesResponse, ReturnType<typeof popfeedSyncControllerMatchesQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await popfeedSyncControllerMatches({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: popfeedSyncControllerMatchesQueryKey(options)
-});
 
 export const notificationsControllerCollectionQueryKey = (options: Options<NotificationsControllerCollectionData>) => createQueryKey('notificationsControllerCollection', options);
 

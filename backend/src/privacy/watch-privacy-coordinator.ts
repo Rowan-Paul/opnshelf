@@ -19,39 +19,48 @@ export class WatchPrivacyCoordinator {
 		private readonly transactionTimeoutMs = 120_000,
 	) {}
 
+	/** `wait` blocks for the lock (bounded by the lock pool's query timeout)
+	 * instead of failing at once when another Watch operation holds it. */
 	async withAccountLock<T>(
 		ownerDid: string,
 		operation: (
 			tx: Prisma.TransactionClient,
 			signal: AbortSignal,
 		) => Promise<T>,
+		{ wait = false }: { wait?: boolean } = {},
 	): Promise<T> {
-		return this.locks.run(ownerDid, async (lockSignal) => {
-			const deadline = new AbortController();
-			const signal = AbortSignal.any([lockSignal, deadline.signal]);
-			let timer: ReturnType<typeof setTimeout> | undefined;
-			let work: Promise<T> | undefined;
-			try {
-				return await this.prisma.$transaction(
-					(tx) => {
-						timer = setTimeout(
-							() =>
-								deadline.abort(new Error("Watch operation deadline exceeded")),
-							this.transactionTimeoutMs,
-						);
-						work = operation(tx, signal);
-						return work;
-					},
-					{ timeout: this.transactionTimeoutMs, maxWait: 5_000 },
-				);
-			} finally {
-				clearTimeout(timer);
-				deadline.abort(new Error("Watch transaction ended"));
-				// Prisma can close a transaction before an external operation settles.
-				// Keep the independent session lock until the callback really stops.
-				await work?.catch(() => {});
-			}
-		});
+		return this.locks.run(
+			ownerDid,
+			async (lockSignal) => {
+				const deadline = new AbortController();
+				const signal = AbortSignal.any([lockSignal, deadline.signal]);
+				let timer: ReturnType<typeof setTimeout> | undefined;
+				let work: Promise<T> | undefined;
+				try {
+					return await this.prisma.$transaction(
+						(tx) => {
+							timer = setTimeout(
+								() =>
+									deadline.abort(
+										new Error("Watch operation deadline exceeded"),
+									),
+								this.transactionTimeoutMs,
+							);
+							work = operation(tx, signal);
+							return work;
+						},
+						{ timeout: this.transactionTimeoutMs, maxWait: 5_000 },
+					);
+				} finally {
+					clearTimeout(timer);
+					deadline.abort(new Error("Watch transaction ended"));
+					// Prisma can close a transaction before an external operation settles.
+					// Keep the independent session lock until the callback really stops.
+					await work?.catch(() => {});
+				}
+			},
+			{ wait },
+		);
 	}
 
 	/** Interactive callers must bound their PDS requests and finish within the
@@ -294,21 +303,25 @@ export class WatchPrivacyCoordinator {
 	/** Acquire this stop before requesting PDS account deletion. It waits for no
 	 * live worker: contention returns a conflict for the deletion job to retry.
 	 * Retain snapshots until local account deletion succeeds. */
-	async stopForAccountDeletion(ownerDid: string) {
-		return this.withAccountLock(ownerDid, async (tx) => {
-			const migration = await tx.watchPrivacyMigration.findUnique({
-				where: { userDid: ownerDid },
-			});
-			if (!migration) return;
-			await tx.backgroundJob.update({
-				where: { id: migration.jobId },
-				data: {
-					status: "stopped_for_deletion",
-					lastError:
-						"Watch privacy change stopped for account deletion. Recovery snapshots are retained until deletion completes.",
-				},
-			});
-		});
+	async stopForAccountDeletion(ownerDid: string, options?: { wait?: boolean }) {
+		return this.withAccountLock(
+			ownerDid,
+			async (tx) => {
+				const migration = await tx.watchPrivacyMigration.findUnique({
+					where: { userDid: ownerDid },
+				});
+				if (!migration) return;
+				await tx.backgroundJob.update({
+					where: { id: migration.jobId },
+					data: {
+						status: "stopped_for_deletion",
+						lastError:
+							"Watch privacy change stopped for account deletion. Recovery snapshots are retained until deletion completes.",
+					},
+				});
+			},
+			options,
+		);
 	}
 
 	/** Local account deletion must remove recovery data and jobs atomically with
@@ -316,22 +329,27 @@ export class WatchPrivacyCoordinator {
 	async deleteLocalAccount(
 		ownerDid: string,
 		deleteAccount: (tx: Prisma.TransactionClient) => Promise<void>,
+		options?: { wait?: boolean },
 	) {
-		return this.withAccountLock(ownerDid, async (tx) => {
-			const jobs = await tx.backgroundJob.findMany({
-				where: { userDid: ownerDid, type: WATCH_PRIVACY_JOB_TYPE },
-				select: { id: true },
-			});
-			const jobIds = jobs.map((job) => job.id);
-			await tx.watchPrivacyCopy.deleteMany({
-				where: { jobId: { in: jobIds } },
-			});
-			await tx.watchPrivacyMigration.deleteMany({
-				where: { userDid: ownerDid },
-			});
-			await tx.backgroundJob.deleteMany({ where: { id: { in: jobIds } } });
-			await deleteAccount(tx);
-		});
+		return this.withAccountLock(
+			ownerDid,
+			async (tx) => {
+				const jobs = await tx.backgroundJob.findMany({
+					where: { userDid: ownerDid, type: WATCH_PRIVACY_JOB_TYPE },
+					select: { id: true },
+				});
+				const jobIds = jobs.map((job) => job.id);
+				await tx.watchPrivacyCopy.deleteMany({
+					where: { jobId: { in: jobIds } },
+				});
+				await tx.watchPrivacyMigration.deleteMany({
+					where: { userDid: ownerDid },
+				});
+				await tx.backgroundJob.deleteMany({ where: { id: { in: jobIds } } });
+				await deleteAccount(tx);
+			},
+			options,
+		);
 	}
 
 	private async requireNoDeletion(

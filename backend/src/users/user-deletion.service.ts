@@ -34,6 +34,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
 import { TraktSyncService } from "../trakt-sync/trakt-sync.service";
+import { PopfeedSyncService } from "../popfeed-sync/popfeed-sync.service";
+import { syncBusy } from "../integrations/integration-error";
+import { WatchAccountBusyError } from "../privacy/watch-account-lock";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
@@ -91,14 +94,37 @@ export class UserDeletionService {
 		private readonly privateSettings: PrivateSettingsService,
 		private readonly watchPrivacy: WatchPrivacyCoordinator,
 		@Optional() private readonly traktSync?: TraktSyncService,
+		@Optional() private readonly popfeedSync?: PopfeedSyncService,
 	) {
 		this.tab = new Tap(config.TAB_URL || "http://localhost:2480", {
 			adminPassword: config.TAB_ADMIN_PASSWORD,
 		});
 	}
 
+	/** Stop every Integration first so no sync run starts during deletion. */
+	private async disconnectIntegrations(did: string) {
+		await this.traktSync?.disconnectForDeletion(did);
+		await this.popfeedSync?.disconnectForDeletion(did);
+	}
+
+	/**
+	 * A User-requested deletion waits for a running sync or Watch operation to
+	 * release the account lock. If it is still held, report SYNC_BUSY so the
+	 * client retries; nothing has been deleted at that point.
+	 */
+	private async waitForAccount<T>(work: () => Promise<T>): Promise<T> {
+		try {
+			return await work();
+		} catch (error) {
+			if (error instanceof WatchAccountBusyError) throw syncBusy();
+			throw error;
+		}
+	}
+
 	async deleteUserSync(did: string): Promise<void> {
-		await this.watchPrivacy.stopForAccountDeletion(did);
+		await this.waitForAccount(() =>
+			this.watchPrivacy.stopForAccountDeletion(did, { wait: true }),
+		);
 		const user = await this.prisma.user.findUnique({
 			where: { did },
 		});
@@ -107,18 +133,28 @@ export class UserDeletionService {
 			throw new NotFoundException("User not found");
 		}
 
-		// Revoke the OAuth session too — it lives in a standalone table (no FK
-		// cascade), so deleting the user alone leaves a live session behind.
-		await this.traktSync?.disconnectForDeletion(did);
-		await this.authService.revoke(did);
-
-		await this.deleteLocalAccount(did);
+		await this.disconnectIntegrations(did);
+		await this.waitForAccount(() =>
+			this.deleteLocalAccount(did, { wait: true }),
+		);
 	}
 
-	private async deleteLocalAccount(did: string): Promise<void> {
-		await this.watchPrivacy.deleteLocalAccount(did, async (tx) => {
-			await tx.user.delete({ where: { did } });
-		});
+	private async deleteLocalAccount(
+		did: string,
+		options?: { wait?: boolean },
+	): Promise<void> {
+		await this.watchPrivacy.deleteLocalAccount(
+			did,
+			async (tx) => {
+				// Revoke the OAuth session too: it lives in a standalone table (no FK
+				// cascade), so deleting the user alone leaves a live session behind.
+				// Revoke only once the account lock is held, so a busy lock leaves the
+				// session valid for the client's retry.
+				await this.authService.revoke(did);
+				await tx.user.delete({ where: { did } });
+			},
+			options,
+		);
 
 		try {
 			await this.tab.removeRepos([did]);
@@ -131,9 +167,13 @@ export class UserDeletionService {
 	}
 
 	async createDeletionJob(did: string, deletePdsData: boolean) {
-		await this.traktSync?.disconnectForDeletion(did);
-		return this.watchPrivacy.withAccountLock(did, () =>
-			this.createDeletionJobLocked(did, deletePdsData),
+		await this.disconnectIntegrations(did);
+		return this.waitForAccount(() =>
+			this.watchPrivacy.withAccountLock(
+				did,
+				() => this.createDeletionJobLocked(did, deletePdsData),
+				{ wait: true },
+			),
 		);
 	}
 	private async createDeletionJobLocked(did: string, deletePdsData: boolean) {
@@ -314,9 +354,7 @@ export class UserDeletionService {
 				},
 			});
 
-			// Revoke the OAuth session (standalone table, no FK cascade) so a
-			// deleted account doesn't leave a live session behind.
-			await this.authService.revoke(job.userDid);
+			// Revokes the OAuth session under the account lock, then deletes the user.
 			await this.deleteLocalAccount(job.userDid);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);

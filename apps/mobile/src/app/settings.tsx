@@ -3,6 +3,8 @@ import {
 	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
+	integrationSyncBusyRetry,
+	isIntegrationSyncBusy,
 	reviewsControllerListMyPublicationsOptions,
 	type UserDto,
 	usersControllerDeleteMyAccountMutation,
@@ -429,6 +431,9 @@ export function SettingsCategoryScreen({
 	const deleteAccountMutation = useMutation({
 		mutationKey: ["users", "me", "account", "delete"],
 		...usersControllerDeleteMyAccountMutation(),
+		// A running sync can hold the account briefly; nothing is deleted until
+		// it finishes, so wait for it instead of failing.
+		...integrationSyncBusyRetry,
 		onError: (error) =>
 			toast.error(
 				error instanceof Error ? error.message : "Failed to delete account",
@@ -459,7 +464,7 @@ export function SettingsCategoryScreen({
 		showDialog({
 			title: "Delete your account?",
 			description:
-				"This action cannot be undone. All your data will be permanently removed. Trakt Sync stops; records already transferred to Trakt remain there.",
+				"This action cannot be undone. All your data will be permanently removed. Trakt and Popfeed Sync stop; records already sent to Trakt or Popfeed remain there.",
 			actions: [
 				{ label: "Cancel" },
 				{
@@ -949,8 +954,8 @@ export function SettingsCategoryScreen({
 									</Text>
 									<Text className="text-destructive/80 text-sm leading-5">
 										Permanently delete your account and all associated data.
-										Trakt Sync stops; records already transferred to Trakt
-										remain there.
+										Trakt and Popfeed Sync stop; records already sent to Trakt
+										or Popfeed remain there.
 									</Text>
 								</View>
 
@@ -987,13 +992,26 @@ export function SettingsCategoryScreen({
 										/>
 									</View>
 								) : (
-									<Button
-										label="Delete Account"
-										variant="destructive"
-										loading={deleteAccountMutation.isPending}
-										leading={<Trash2 color={colors.destructive} size={18} />}
-										onPress={confirmDeleteAccount}
-									/>
+									<View className="gap-2">
+										<Button
+											label="Delete Account"
+											variant="destructive"
+											loading={deleteAccountMutation.isPending}
+											leading={<Trash2 color={colors.destructive} size={18} />}
+											onPress={confirmDeleteAccount}
+										/>
+										{deleteAccountMutation.isPending &&
+											isIntegrationSyncBusy(
+												deleteAccountMutation.failureReason,
+											) && (
+												<Text
+													accessibilityLiveRegion="polite"
+													className="text-muted-foreground text-sm"
+												>
+													Waiting for the current sync to finish…
+												</Text>
+											)}
+									</View>
 								)}
 							</View>
 
