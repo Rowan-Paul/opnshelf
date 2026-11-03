@@ -30,7 +30,7 @@ import {
 	isContentRecord,
 	validateContent,
 } from "./content-value";
-import { IntegrationError } from "./integration-error";
+import { IntegrationError, SyncSnapshotChanged } from "./integration-error";
 import {
 	encodeList,
 	listValue,
@@ -82,8 +82,29 @@ export type IntegrationResolve = {
 	confirmedRemoteMissing?: boolean;
 };
 
+// A run that changed nothing checks again after IDLE_RUN_MS. While a backlog
+// is draining, or right after a transfer, the next batch follows quickly.
+// Every run holds the connection lease, which User actions also need.
+const BUSY_RUN_MS = 5_000;
+const IDLE_RUN_MS = 2 * 60_000;
+// A failed transfer keeps its pending intent so Sync can finish it later.
+// Retrying it on every run forced a full remote read under the lease every
+// few seconds; Retry in Needs attention clears the issue and skips this wait.
+const FAILED_TRANSFER_RETRY_MS = 5 * 60_000;
+const coolingDown = (
+	entry: Pick<
+		IntegrationEntry,
+		"issue" | "resolution" | "pending" | "updatedAt"
+	>,
+) =>
+	Boolean(
+		entry.issue &&
+			!entry.resolution &&
+			entry.pending &&
+			entry.updatedAt.getTime() > Date.now() - FAILED_TRANSFER_RETRY_MS,
+	);
+
 class SyncAccountUnavailable extends IntegrationError {}
-class SyncSnapshotChanged extends IntegrationError {}
 
 const SOURCE_CHANGED =
 	"The source changed during an interrupted transfer. Choose which version to keep.";
@@ -1250,6 +1271,7 @@ export abstract class IntegrationSyncService<Credential>
 				known.some(
 					(e) =>
 						!e.ignored &&
+						!coolingDown(e) &&
 						(!e.issue || e.resolution || e.pending) &&
 						enabled(c, { kind: e.kind as SyncRecord["kind"] }) &&
 						(e.resolution === "opnshelf" ||
@@ -1338,6 +1360,7 @@ export abstract class IntegrationSyncService<Credential>
 		let remaining = 0;
 		for (const entry of entries) {
 			if (!enabled(c, { kind: entry.kind as SyncRecord["kind"] })) continue;
+			if (coolingDown(entry)) continue;
 			const l = localByKey.get(entry.localKey ?? "") ?? null;
 			let r = remoteByKey.get(entry.remoteKey ?? "") ?? null;
 			const mapped = readRecord(entry.remoteBase);
@@ -1637,7 +1660,9 @@ export abstract class IntegrationSyncService<Credential>
 			data: {
 				lastSuccessAt: new Date(),
 				lastError: null,
-				nextRunAt: new Date(Date.now() + 5000),
+				nextRunAt: new Date(
+					Date.now() + (writes || remaining ? BUSY_RUN_MS : IDLE_RUN_MS),
+				),
 				remaining,
 				// The largest backlog since sync last caught up, so progress
 				// only moves forward while new changes trickle in.

@@ -1,5 +1,5 @@
 import { Agent } from "@atproto/api";
-import { IdResolver } from "@atproto/identity";
+import { IdResolver, MemoryCache } from "@atproto/identity";
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
@@ -25,6 +25,10 @@ import { type PopfeedRepo, PopfeedWriter } from "./popfeed-writer";
 const POSTER_SOURCE = "https://image.tmdb.org/t/p/w500";
 // Popfeed's own posters are well under this; never upload an unbounded image.
 const POSTER_MAX_BYTES = 1_000_000;
+// Every sync run locates the User's repository. A PDS rarely moves, so reuse
+// the DID document for a while instead of asking the PLC directory each run.
+const DID_STALE_MS = 15 * 60_000;
+const DID_MAX_MS = 60 * 60_000;
 
 /**
  * Popfeed as an Integration provider. Its records live in the User's own
@@ -47,7 +51,10 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 	) {
 		super(prisma, local, config, watchLocks);
 		this.remote = api;
-		this.identity = new IdResolver({ plcUrl: config.PLC_DIRECTORY_URL });
+		this.identity = new IdResolver({
+			plcUrl: config.PLC_DIRECTORY_URL,
+			didCache: new MemoryCache(DID_STALE_MS, DID_MAX_MS),
+		});
 	}
 	protected get configured() {
 		return true;
