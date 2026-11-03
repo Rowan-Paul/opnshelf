@@ -1,4 +1,4 @@
-import slugify from "slugify";
+import { mediaPath } from "./notification-media-path";
 import type {
 	NotificationCollectionItemDto,
 	WatchRecapDto,
@@ -39,7 +39,11 @@ export function buildWatchRecap(
 			(a.episodeNumber ?? 0) - (b.episodeNumber ?? 0),
 	);
 	const path = (watch: Watch) =>
-		`/${watch.mediaType === "movie" ? "movies" : "shows"}/${watch.mediaId}/${slugify(watch.title, { lower: true, strict: true }) || "title"}`;
+		mediaPath(
+			watch.mediaType === "movie" ? "movies" : "shows",
+			watch.mediaId,
+			watch.title,
+		);
 	const highlight = (watch: (typeof dated)[number] | undefined) =>
 		watch
 			? {
