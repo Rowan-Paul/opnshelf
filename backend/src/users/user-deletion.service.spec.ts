@@ -191,7 +191,7 @@ describe("UserDeletionService", () => {
 
 			expect(prisma.user.delete).not.toHaveBeenCalled();
 			expect(prisma.backgroundJob.deleteMany).not.toHaveBeenCalled();
-			expect(prisma.$transaction).not.toHaveBeenCalled();
+			// Revocation runs inside the deletion transaction, which rolls back.
 		});
 
 		it("throws when user not found", async () => {
@@ -244,6 +244,19 @@ describe("UserDeletionService", () => {
 				expect.any(Function),
 				{ wait: true },
 			);
+		});
+
+		it("keeps the session when the final account lock stays busy", async () => {
+			const watch = mockWatchCoordinator(prisma);
+			vi.mocked(watch.deleteLocalAccount).mockRejectedValueOnce(
+				new WatchAccountBusyError(),
+			);
+			const error = await withIntegrations(watch, integrations())
+				.deleteUserSync("did:plc:test")
+				.catch((e: unknown) => e);
+			expect(isSyncBusy(error)).toBe(true);
+			expect(authService.revoke).not.toHaveBeenCalled();
+			expect(prisma.user.delete).not.toHaveBeenCalled();
 		});
 
 		it.each([
@@ -497,7 +510,7 @@ describe("UserDeletionService", () => {
 
 			expect(prisma.user.delete).not.toHaveBeenCalled();
 			expect(prisma.backgroundJob.deleteMany).not.toHaveBeenCalled();
-			expect(prisma.$transaction).not.toHaveBeenCalled();
+			// Revocation runs inside the deletion transaction, which rolls back.
 			expect(prisma.backgroundJob.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({

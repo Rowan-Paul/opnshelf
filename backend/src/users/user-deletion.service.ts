@@ -133,11 +133,7 @@ export class UserDeletionService {
 			throw new NotFoundException("User not found");
 		}
 
-		// Revoke the OAuth session too — it lives in a standalone table (no FK
-		// cascade), so deleting the user alone leaves a live session behind.
 		await this.disconnectIntegrations(did);
-		await this.authService.revoke(did);
-
 		await this.waitForAccount(() =>
 			this.deleteLocalAccount(did, { wait: true }),
 		);
@@ -150,6 +146,11 @@ export class UserDeletionService {
 		await this.watchPrivacy.deleteLocalAccount(
 			did,
 			async (tx) => {
+				// Revoke the OAuth session too: it lives in a standalone table (no FK
+				// cascade), so deleting the user alone leaves a live session behind.
+				// Revoke only once the account lock is held, so a busy lock leaves the
+				// session valid for the client's retry.
+				await this.authService.revoke(did);
 				await tx.user.delete({ where: { did } });
 			},
 			options,
@@ -353,9 +354,7 @@ export class UserDeletionService {
 				},
 			});
 
-			// Revoke the OAuth session (standalone table, no FK cascade) so a
-			// deleted account doesn't leave a live session behind.
-			await this.authService.revoke(job.userDid);
+			// Revokes the OAuth session under the account lock, then deletes the user.
 			await this.deleteLocalAccount(job.userDid);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);

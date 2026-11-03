@@ -122,7 +122,14 @@ export function DeleteAccountSection() {
 			</section>
 
 			{/* Delete Account Confirmation Dialog */}
-			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+			<Dialog
+				open={showDeleteDialog}
+				onOpenChange={(open) => {
+					// Closing would only hide a deletion that keeps running (and retrying).
+					if (!open && deleteAccountMutation.isPending) return;
+					setShowDeleteDialog(open);
+				}}
+			>
 				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2 text-destructive">
@@ -191,6 +198,7 @@ export function DeleteAccountSection() {
 						<Button
 							variant="outline"
 							onClick={() => setShowDeleteDialog(false)}
+							disabled={deleteAccountMutation.isPending}
 						>
 							Cancel
 						</Button>
