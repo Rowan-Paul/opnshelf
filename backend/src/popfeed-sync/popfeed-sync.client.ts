@@ -4,7 +4,10 @@ import type {
 	IntegrationRemote,
 	SyncRecordTypes,
 } from "../integrations/adapter";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	SyncSnapshotChanged,
+} from "../integrations/integration-error";
 import type { SyncRecord } from "../integrations/reconcile";
 import {
 	LIST,
@@ -25,6 +28,11 @@ export type PopfeedCredential = {
 	pds: string;
 	timeZone: string;
 	writer?: PopfeedWriter;
+	/**
+	 * The last consistent repository read and the commit revision it reflects.
+	 * Lives as long as the credential, which is one sync run.
+	 */
+	read?: { rev: string; repository: PopfeedRepository };
 };
 
 const PAGE = 100;
@@ -98,33 +106,54 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 		credential: PopfeedCredential,
 		types: SyncRecordTypes = {},
 	): Promise<SyncRecord[]> {
-		const before = await this.revision(credential);
-		const items = types.watches || types.watchlist || types.lists;
-		const listItems = items ? await this.collection(credential, LIST_ITEM) : [];
-		const reviews =
-			types.ratings || types.reviews
-				? await this.collection(credential, REVIEW)
-				: [];
-		// List records name custom Lists and, on older items, carry the List role.
-		const lists = items ? await this.collection(credential, LIST) : [];
-		if ((await this.revision(credential)) !== before)
-			throw new IntegrationError(
-				"Your Popfeed records changed during the read. Sync will read a fresh snapshot.",
-				0,
-				5,
-			);
 		return popfeedRecords(
-			{ listItems, reviews, lists },
+			await this.repository(credential),
 			types,
 			credential.timeZone,
 		);
 	}
 
-	/** All three collections, for a writer that must see the current records. */
+	/**
+	 * All three collections, for a writer that must see the current records.
+	 * A writer given a partial view could recreate a record it missed, so a
+	 * read the repository changed under stops the run instead.
+	 */
 	async repository(credential: PopfeedCredential): Promise<PopfeedRepository> {
+		const repository = await this.read(credential);
+		if (!repository)
+			throw new SyncSnapshotChanged(
+				"Your Popfeed records changed during the read. Sync will read a fresh snapshot.",
+				0,
+				5,
+			);
+		return repository;
+	}
+
+	/**
+	 * A consistent read of all three collections, or null when the repository
+	 * changed while it was read. A sync run reads the repository before a write,
+	 * inside the writer and again to confirm it; while the commit revision is
+	 * unchanged those reads return the same records, so reuse the last one.
+	 * Every write advances the revision, so a confirmation always reads afresh.
+	 */
+	private async read(
+		credential: PopfeedCredential,
+	): Promise<PopfeedRepository | null> {
+		const before = await this.revision(credential);
+		if (credential.read?.rev === before) return credential.read.repository;
+		const repository = await this.collections(credential);
+		if ((await this.revision(credential)) !== before) return null;
+		credential.read = { rev: before, repository };
+		return repository;
+	}
+
+	private async collections(
+		credential: PopfeedCredential,
+	): Promise<PopfeedRepository> {
 		const [listItems, reviews, lists] = await Promise.all([
 			this.collection(credential, LIST_ITEM),
 			this.collection(credential, REVIEW),
+			// List records name custom Lists and, on older items, carry the List role.
 			this.collection(credential, LIST),
 		]);
 		return { listItems, reviews, lists };

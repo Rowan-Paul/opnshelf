@@ -69,3 +69,4 @@ Numbering notes:
 | [0049-trakt-sync-links-records-alongside-one-time-import.md](0049-trakt-sync-links-records-alongside-one-time-import.md) | 0049 | Trakt Sync links records alongside one-time Import | Accepted; Import provisions superseded by 0050 |
 | [0050-remove-one-time-trakt-import.md](0050-remove-one-time-trakt-import.md) | 0050 | Remove one-time Trakt Import | Accepted |
 | [0051-integrations-share-one-sync-core.md](0051-integrations-share-one-sync-core.md) | 0051 | Integrations share one sync core | Accepted |
+| [0052-idle-sync-runs-yield-the-connection-lease.md](0052-idle-sync-runs-yield-the-connection-lease.md) | 0052 | Idle sync runs yield the connection lease | Accepted |
