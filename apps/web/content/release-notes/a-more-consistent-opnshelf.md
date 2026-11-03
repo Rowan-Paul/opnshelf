@@ -7,8 +7,8 @@
   "summary": "A refreshed look across Opnshelf, easier list browsing, and more ways to share feedback.",
   "platforms": {
     "web": { "status": "available" },
-    "ios": { "status": "coming-soon", "minimumVersion": "1.7.11", "note": "Requires the 1.7.11 App Store release." },
-    "android": { "status": "coming-soon", "minimumVersion": "1.7.11", "note": "Requires the 1.7.11 Google Play release." }
+    "ios": { "status": "update-required", "minimumVersion": "1.7.11", "note": "Requires the 1.7.11 App Store release." },
+    "android": { "status": "update-required", "minimumVersion": "1.7.11", "note": "Requires the 1.7.11 Google Play release." }
   }
 }
 ---

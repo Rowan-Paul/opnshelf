@@ -7,8 +7,8 @@
   "summary": "Import your Watches, Ratings, Reviews, Lists and watchlist from Popfeed, and keep them in sync.",
   "platforms": {
     "web": { "status": "available" },
-    "ios": { "status": "coming-soon", "note": "Planned for the next store release; not yet available." },
-    "android": { "status": "coming-soon", "note": "Planned for the next store release; not yet available." }
+    "ios": { "status": "update-required", "minimumVersion": "1.7.14", "note": "Requires the 1.7.14 App Store release." },
+    "android": { "status": "update-required", "minimumVersion": "1.7.14", "note": "Requires the 1.7.14 Google Play release." }
   }
 }
 ---
