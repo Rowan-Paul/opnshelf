@@ -328,9 +328,11 @@ export abstract class IntegrationSyncService<Credential>
 			data: { leaseId, leaseUntil: new Date(Date.now() + 120_000) },
 		});
 		if (!claim.count)
-			throw new ConflictException(
-				"Sync is finishing its current operation. Try again shortly.",
-			);
+			throw new ConflictException({
+				statusCode: 409,
+				code: "SYNC_BUSY",
+				message: "Sync is finishing its current operation. Try again shortly.",
+			});
 		let lost = false;
 		const lease = async () => {
 			const updated = await this.prisma.integrationConnection.updateMany({

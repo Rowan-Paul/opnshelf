@@ -11,9 +11,11 @@ import {
 	integrationMissingConfirmation,
 	integrationRecords,
 	integrationResolutionLabel,
+	integrationSettingsRetry,
 	integrationStateMessage,
 	integrationUnconfirmedChoiceCopy,
 	integrationWriteGrantCopy,
+	isIntegrationSyncBusy,
 	type SyncActionDto,
 	type SyncSettingsDto,
 	type SyncStatusDto,
@@ -460,6 +462,7 @@ export function SyncSettings({
 	const save = useMutation({
 		mutationKey: [...integrationKey(integration), "configure"],
 		mutationFn: integration.api.configure,
+		...integrationSettingsRetry,
 		onSuccess: () => {
 			setReviewing(false);
 			onSaved();
@@ -750,7 +753,12 @@ export function SyncSettings({
 							</label>
 						))}
 
-					{save.error && (
+					{save.isPending && isIntegrationSyncBusy(save.failureReason) && (
+						<output className="block text-(--foreground-muted) text-sm">
+							Waiting for the current sync to finish…
+						</output>
+					)}
+					{Boolean(save.error) && (
 						<p role="alert" className="text-(--destructive) text-sm">
 							{traktError(save.error)}
 						</p>
@@ -768,15 +776,17 @@ export function SyncSettings({
 							type="button"
 							className="btn btn-primary disabled:opacity-50"
 							disabled={save.isPending || !canSave}
-							onClick={() => save.mutate(settings)}
+							onClick={() => save.mutate({ ...settings })}
 						>
 							{save.isPending
 								? "Saving…"
-								: managed
-									? status.status === "paused"
-										? "Save and resume sync"
-										: "Confirm changes"
-									: "Confirm and enable sync"}
+								: save.isError
+									? "Retry save"
+									: managed
+										? status.status === "paused"
+											? "Save and resume sync"
+											: "Confirm changes"
+										: "Confirm and enable sync"}
 						</button>
 					</div>
 				</DialogContent>

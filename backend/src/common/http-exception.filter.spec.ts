@@ -197,3 +197,37 @@ it.each(catalogueErrorCases)(
 		logError.mockRestore();
 	},
 );
+
+it.each([
+	[409, "SYNC_BUSY", "SYNC_BUSY"],
+	[409, "PRIVATE_UPSTREAM_CODE", undefined],
+	[500, "SYNC_BUSY", undefined],
+])(
+	"only exposes the safe sync busy code on conflicts (%s, %s)",
+	(status, code, expected) => {
+		const warn = vi
+			.spyOn(Logger.prototype, "warn")
+			.mockImplementation(() => {});
+		const error = vi
+			.spyOn(Logger.prototype, "error")
+			.mockImplementation(() => {});
+		const response = {
+			setHeader: vi.fn(),
+			status: vi.fn().mockReturnThis(),
+			json: vi.fn(),
+		};
+		const host = {
+			switchToHttp: () => ({
+				getResponse: () => response,
+				getRequest: () => ({ method: "PATCH", url: "/popfeed-sync" }),
+			}),
+		} as ArgumentsHost;
+		new AllExceptionsFilter().catch(
+			new HttpException({ message: "Busy", code }, status),
+			host,
+		);
+		expect(response.json.mock.calls[0][0].code).toBe(expected);
+		warn.mockRestore();
+		error.mockRestore();
+	},
+);
