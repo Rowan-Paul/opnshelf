@@ -1,9 +1,9 @@
 ---
 {
-  "status": "draft",
+  "status": "published",
   "slug": "smoother-sync-settings",
   "title": "Smoother sync settings",
-  "publishedAt": "2026-11-03T10:34:14.474Z",
+  "publishedAt": "2026-11-03T10:37:58.931Z",
   "summary": "Sync settings wait for a running sync, and Web’s unread indicator is clearer.",
   "platforms": {
     "web": { "status": "available" },
