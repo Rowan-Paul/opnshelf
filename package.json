@@ -27,6 +27,7 @@
     "dev:device:release": "node scripts/dev-session.mjs release-device",
     "dev:device:record": "node scripts/dev-session.mjs record-build",
     "dev:scenarios": "node scripts/ui-scenarios.mjs",
+    "dev:scenarios:check": "node scripts/ui-checks.mjs",
     "test:privacy-reference": "node scripts/privacy-reference.mjs",
     "review:status": "node scripts/review-readiness.mjs",
     "test:lighthouse": "node scripts/lighthouse.mjs"

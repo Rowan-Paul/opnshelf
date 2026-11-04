@@ -61,3 +61,20 @@ void posthog?.register({
 	"eas/project_id": Constants.expoConfig?.extra?.eas?.projectId ?? null,
 	"eas/account": Constants.expoConfig?.owner ?? null,
 });
+
+/** Commit this bundle was built from (app.config.ts `extra.commit`). OTA
+ * updates carry their own config, so this names the running JS, not the binary. */
+export const release: string | null =
+	Constants.expoConfig?.extra?.commit ?? null;
+
+let currentPathname: string | null = null;
+
+/** Remember the current screen for mutation failure reports, which run
+ * outside React and cannot read Expo Router's hooks. */
+export function noteCurrentPathname(pathname: string) {
+	currentPathname = pathname;
+}
+
+export function getCurrentPathname(): string | null {
+	return currentPathname;
+}

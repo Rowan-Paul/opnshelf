@@ -1,6 +1,6 @@
 import { describeMutationFailure } from "@opnshelf/api";
 import { MutationCache } from "@tanstack/react-query";
-import { posthog } from "@/lib/posthog";
+import { getCurrentPathname, posthog, release } from "@/lib/posthog";
 
 /**
  * MutationCache for the shared QueryClient. Every failed mutation becomes one
@@ -16,6 +16,7 @@ export function createReportingMutationCache(): MutationCache {
 			const report = describeMutationFailure(
 				error,
 				mutation.options.mutationKey,
+				{ pathname: getCurrentPathname(), release },
 			);
 			if (report) posthog.captureException(report.error, report.properties);
 		},

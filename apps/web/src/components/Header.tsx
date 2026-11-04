@@ -86,12 +86,15 @@ export default function Header() {
 	}, []);
 
 	useEffect(() => {
+		// Each menu's trigger is hidden on the other side of the breakpoint, so
+		// close the menu there instead of leaving it mounted without a trigger.
 		const desktop = window.matchMedia("(min-width: 768px)");
-		const closeDesktopMenu = () => {
-			if (!desktop.matches) setMenuWanted(false);
+		const closeHiddenMenu = () => {
+			if (desktop.matches) setMobileMenuOpen(false);
+			else setMenuWanted(false);
 		};
-		desktop.addEventListener("change", closeDesktopMenu);
-		return () => desktop.removeEventListener("change", closeDesktopMenu);
+		desktop.addEventListener("change", closeHiddenMenu);
+		return () => desktop.removeEventListener("change", closeHiddenMenu);
 	}, []);
 
 	// Don't show navigation on login or onboarding pages
@@ -210,6 +213,7 @@ export default function Header() {
 							onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
 							aria-label={`${mobileMenuOpen ? "Close menu" : "Open menu"}${unread ? ", unread release notes" : ""}`}
 							aria-expanded={mobileMenuOpen}
+							aria-controls="mobile-navigation"
 						>
 							{unread && (
 								<span className="absolute top-0 right-0 flex rounded-full ring-(--background) ring-2">
@@ -227,7 +231,11 @@ export default function Header() {
 
 				{/* Mobile Navigation - Overlay */}
 				{mobileMenuOpen && (
-					<div className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-(--border) border-t bg-(--background) md:hidden">
+					<nav
+						id="mobile-navigation"
+						aria-label="Menu"
+						className="fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] border-(--border) border-t bg-(--background) md:hidden"
+					>
 						<div className="container-app h-full overflow-y-auto py-4">
 							<div className="flex flex-col gap-1">
 								{visibleNavigation.map((item) => {
@@ -347,7 +355,7 @@ export default function Header() {
 								)}
 							</div>
 						</div>
-					</div>
+					</nav>
 				)}
 			</div>
 		</header>

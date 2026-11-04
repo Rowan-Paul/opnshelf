@@ -94,12 +94,22 @@ client.interceptors.response.use(async (response, request) => {
 	return response;
 });
 
-client.interceptors.error.use((error, response) => {
+// Diagnostics for describeMutationFailure: the request ID the backend logged
+// this request under, and the operation as method plus path template (the
+// options still hold `/users/{did}`, not the filled-in path).
+client.interceptors.error.use((error, response, request, options) => {
+	if (typeof error !== 'object' || error === null) return error;
 	const requestId = response?.headers.get('x-request-id');
-	if (requestId && typeof error === 'object' && error !== null) {
-		return Object.assign(error, { requestId });
-	}
-	return error;
+	const method = request?.method ?? options?.method;
+	const apiOperation =
+		method && typeof options?.url === 'string'
+			? `${method.toUpperCase()} ${options.url}`
+			: undefined;
+	return Object.assign(
+		error,
+		requestId ? { requestId } : {},
+		apiOperation ? { apiOperation } : {},
+	);
 });
 
 // Initialize client with default config

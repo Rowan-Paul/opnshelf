@@ -10,7 +10,6 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Href } from "expo-router";
 import { Heart, Pencil, Star, Trash2 } from "lucide-react-native";
-import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { ReviewEditorSheet } from "@/components/detail/ReviewEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
@@ -28,6 +27,7 @@ import { mediaHref } from "@/lib/media-href";
 import { posthog } from "@/lib/posthog";
 import { useEndReached } from "@/lib/use-end-reached";
 import { useInfiniteProfileReviews } from "@/lib/use-public-profile";
+import { useSheetOpening } from "@/lib/use-sheet-opening";
 import { useThemeColors } from "@/theme/colors";
 
 /**
@@ -123,7 +123,7 @@ function ReviewCard({
 	const { showDialog } = useDialog();
 	const queryClient = useQueryClient();
 	const toast = useToast();
-	const [editorVisible, setEditorVisible] = useState(false);
+	const editor = useSheetOpening();
 
 	const updateMutation = useMutation({
 		mutationKey: ["reviews", review.id, "update"],
@@ -164,11 +164,13 @@ function ReviewCard({
 		markdown: string;
 		spoiler: boolean;
 	}) => {
+		// A save that finishes after a close or reopen leaves the sheet alone.
+		const closeEditor = editor.closeIfCurrent();
 		updateMutation.mutate(
 			{ path: { reviewId: review.id }, body: { title, markdown, spoiler } },
 			{
 				onSuccess: () => {
-					setEditorVisible(false);
+					closeEditor();
 					invalidateList();
 					toast.success("Review saved");
 				},
@@ -243,7 +245,7 @@ function ReviewCard({
 										accessibilityRole="button"
 										accessibilityLabel="Edit review"
 										hitSlop={8}
-										onPress={() => setEditorVisible(true)}
+										onPress={editor.open}
 										className="size-8 items-center justify-center rounded-md"
 									>
 										<Pencil color={colors.mutedForeground} size={16} />
@@ -334,15 +336,15 @@ function ReviewCard({
 
 			{isOwner ? (
 				<ReviewEditorSheet
-					visible={editorVisible}
-					onDismiss={() => setEditorVisible(false)}
+					visible={editor.visible}
+					onDismiss={editor.close}
 					isEditing
 					initialTitle={review.reviewTitle ?? ""}
 					initialMarkdown={review.markdown ?? ""}
 					initialSpoiler={review.spoiler}
 					onSave={handleSave}
 					onDelete={() => {
-						setEditorVisible(false);
+						editor.close();
 						confirmDelete();
 					}}
 					isSaving={updateMutation.isPending}

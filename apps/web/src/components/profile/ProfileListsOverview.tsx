@@ -42,6 +42,7 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { formatRelativeTime } from "#/lib/date-utils";
 import { useCreateList } from "#/lib/hooks";
+import { useDialogOpening } from "#/lib/hooks/useDialogOpening";
 import { cn } from "#/lib/utils";
 
 type SortOption = "default" | "updated" | "name" | "items";
@@ -231,18 +232,30 @@ export function ProfileListsOverview({
 		[lists, sort],
 	);
 
+	const startCreate = useDialogOpening(showCreateModal);
+
 	const handleCreateList = async () => {
 		if (!newListName.trim()) return;
+		const isCurrent = startCreate();
+		const name = newListName;
+		const description = newListDescription;
 		try {
 			const newList = await createListMutation.mutateAsync({
 				body: {
-					name: newListName.trim(),
-					description: newListDescription.trim() || undefined,
+					name: name.trim(),
+					description: description.trim() || undefined,
 				},
 			});
+			// Clear the fields only while they still hold this create, so a
+			// draft typed into a reopened dialog survives.
+			setNewListName((current) => (current === name ? "" : current));
+			setNewListDescription((current) =>
+				current === description ? "" : current,
+			);
+			// A create that finishes after the dialog closed or reopened leaves
+			// it alone and does not pull the user onto the new List.
+			if (!isCurrent()) return;
 			setShowCreateModal(false);
-			setNewListName("");
-			setNewListDescription("");
 			navigate({
 				to: "/profile/$handle/lists/$listSlug",
 				params: { handle, listSlug: newList.slug },

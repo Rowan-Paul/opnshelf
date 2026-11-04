@@ -26,6 +26,8 @@ describe.skipIf(!url)("Featured Content PostgreSQL transactions", () => {
 		message: "Fixture announcement",
 		expiresAt: "2099-01-01T00:00:00Z",
 	});
+	// Featured Content is one global selection capped at five, so this suite
+	// owns the whole table; the isolation setup seeds no foreign rows into it.
 	beforeEach(async () => {
 		await db.featuredContent.deleteMany();
 	});
@@ -40,7 +42,14 @@ describe.skipIf(!url)("Featured Content PostgreSQL transactions", () => {
 		expect(
 			results.filter((result) => result.status === "fulfilled"),
 		).toHaveLength(5);
-		expect(await db.featuredContent.count()).toBe(5);
+		expect(
+			await db.featuredContent.count({
+				where: {
+					message: input(0).message,
+					mediaId: { in: [1, 2, 3, 4, 5, 6] },
+				},
+			}),
+		).toBe(5);
 	});
 	it("serializes duplicate publication, reorders, expires, and reuses records", async () => {
 		const duplicates = await Promise.allSettled([

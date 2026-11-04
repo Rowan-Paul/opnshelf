@@ -4,12 +4,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
 	captureException: vi.fn(),
 	posthog: null as { captureException: (...args: unknown[]) => void } | null,
+	pathname: null as string | null,
 }));
 
 vi.mock("@/lib/posthog", () => ({
 	get posthog() {
 		return mocks.posthog;
 	},
+	release: "c94eadea",
+	getCurrentPathname: () => mocks.pathname,
 }));
 
 import { queryClient } from "@/lib/query-client";
@@ -34,6 +37,7 @@ describe("shared QueryClient mutation failure reporting", () => {
 	beforeEach(() => {
 		mocks.captureException.mockClear();
 		mocks.posthog = { captureException: mocks.captureException };
+		mocks.pathname = null;
 	});
 
 	it("reports a failed mutation to PostHog with categorical properties only", async () => {
@@ -62,6 +66,10 @@ describe("shared QueryClient mutation failure reporting", () => {
 			http_status: 400,
 			error_name: "Error",
 			request_id: null,
+			error_code: null,
+			api_operation: null,
+			route: null,
+			release: "c94eadea",
 		});
 	});
 
@@ -90,6 +98,69 @@ describe("shared QueryClient mutation failure reporting", () => {
 		);
 	});
 
+	it("forwards safe diagnostics from an API failure and nothing secret", async () => {
+		mocks.pathname = "/verify-email/someone@example.com?code=482913";
+		const error = await client
+			.post({
+				url: "/auth/verify-email",
+				body: { code: "482913", email: "someone@example.com" },
+				headers: { Authorization: "Bearer secret-token" },
+				throwOnError: true,
+				fetch: async () =>
+					new Response(
+						JSON.stringify({
+							statusCode: 400,
+							code: "EMAIL_CODE_EXPIRED",
+							message: "Code 482913 for someone@example.com has expired",
+							accessJwt: "secret-token",
+						}),
+						{
+							status: 400,
+							headers: {
+								"X-Request-ID": "1bb20dbc-dbf4-4636-9919-c0dd15d04084",
+							},
+						},
+					),
+			})
+			.catch((failure: unknown) => failure);
+		await failMutation(["auth", "verify-email"], error);
+
+		const [reported, properties] = mocks.captureException.mock.calls[0];
+		expect(properties).toEqual({
+			$exception_fingerprint:
+				"MutationFailedError: auth/verify-email failed with HTTP 400",
+			mutation_key: "auth/verify-email",
+			http_status: 400,
+			error_name: "object",
+			request_id: "1bb20dbc-dbf4-4636-9919-c0dd15d04084",
+			error_code: "EMAIL_CODE_EXPIRED",
+			api_operation: "POST /auth/verify-email",
+			route: "/verify-email",
+			release: "c94eadea",
+		});
+		const sent = JSON.stringify([reported.message, properties]);
+		expect(sent).not.toMatch(/482913|secret-token|example\.com|Bearer/);
+	});
+
+	it("drops diagnostics that are not in their expected shape", async () => {
+		await failMutation(["auth", "verify-email"], {
+			statusCode: 400,
+			code: "someone@example.com",
+			requestId: "secret-token",
+			apiOperation: "POST /auth/verify-email?code=482913",
+		});
+
+		const [, properties] = mocks.captureException.mock.calls[0];
+		expect(properties).toMatchObject({
+			error_code: null,
+			request_id: null,
+			api_operation: null,
+		});
+		expect(JSON.stringify(properties)).not.toMatch(
+			/482913|secret-token|example\.com/,
+		);
+	});
+
 	it("reports network failures without a status", async () => {
 		await failMutation(["reviews", "create"], new TypeError("Failed to fetch"));
 
@@ -101,6 +172,10 @@ describe("shared QueryClient mutation failure reporting", () => {
 				http_status: null,
 				error_name: "TypeError",
 				request_id: null,
+				error_code: null,
+				api_operation: null,
+				route: null,
+				release: "c94eadea",
 			},
 		);
 	});

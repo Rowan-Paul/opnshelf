@@ -49,6 +49,12 @@ The `development` and `preview` profiles set `POSTHOG_CLI_DRY_RUN=true` in
 `eas.json` instead: the upload step runs but writes nothing, so those builds
 need no PostHog credentials.
 
+The `eas-build-pre-install` script in `package.json` checks that key with
+`scripts/release-preflight.mjs` at the start of every build, so a stale copy
+fails in seconds instead of after the native compile. When the key is rotated,
+replace every copy listed in
+[credential rotation](../../docs/runbooks/credential-rotation.md).
+
 ### 3. CI secrets
 Add an Expo access token (`eas whoami`-capable, Personal/Robot token) as the
 `EXPO_TOKEN` GitHub Actions secret so the **EAS Build** workflow can run.

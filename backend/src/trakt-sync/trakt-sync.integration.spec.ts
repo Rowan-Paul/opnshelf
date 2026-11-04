@@ -23,6 +23,13 @@ import {
 } from "../integrations/reconcile";
 import { type TraktSyncClient, TraktSyncError } from "./trakt-sync.client";
 import { TraktSyncService } from "./trakt-sync.service";
+import {
+	deleteFixtureOwner,
+	fixtureOwner,
+	lockWaiters,
+	ownedEntries,
+	suiteApplicationName,
+} from "../../test/db-fixtures";
 
 const url = process.env.TRAKT_SYNC_TEST_DATABASE_URL;
 if (url && !["127.0.0.1", "localhost"].includes(new URL(url).hostname))
@@ -33,14 +40,17 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	const db = new PrismaClient({
 		adapter: new PrismaPg({ connectionString: url, max: 5 }),
 	});
+	const applicationName = suiteApplicationName("trakt-sync");
 	const lockPool = new Pool({
 		connectionString: url,
 		max: 2,
 		query_timeout: 5000,
 		connectionTimeoutMillis: 5000,
+		application_name: applicationName,
 	});
 	const locks = new WatchAccountLock(lockPool);
-	const userDid = "did:plc:trakt-sync-test";
+	const owner = fixtureOwner("trakt-sync");
+	const userDid = owner.did;
 	let localRecords: SyncRecord[] = [];
 	let remoteRecords: SyncRecord[] = [];
 	let serial = 100;
@@ -172,6 +182,16 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		config,
 		locks,
 	);
+	// Trakt stores OAuth state encrypted, so remember the keys this suite issues.
+	const issuedStates: string[] = [];
+	const authorize = service.authorize.bind(service);
+	service.authorize = async (...args: Parameters<typeof authorize>) => {
+		const result = await authorize(...args);
+		issuedStates.push(`trakt:${new URL(result.url).searchParams.get("state")}`);
+		return result;
+	};
+	const deleteIssuedStates = () =>
+		db.authState.deleteMany({ where: { key: { in: issuedStates.splice(0) } } });
 	const watch = (
 		key: string,
 		value: string | null = "2020-01-01T12:00:25.000Z",
@@ -216,27 +236,22 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 	// Sync retries a failed transfer automatically once its retry wait passes.
 	async function afterRetryWait() {
 		await db.integrationEntry.updateMany({
-			where: { connection: { userDid } },
+			where: ownedEntries(userDid),
 			data: { updatedAt: new Date(Date.now() - 10 * 60_000) },
 		});
 	}
 	beforeEach(async () => {
-		await db.watchPrivacyMigration.deleteMany({ where: { userDid } });
-		await db.user.deleteMany({ where: { did: userDid } });
-		await db.authState.deleteMany({ where: { key: { startsWith: "trakt:" } } });
-		await db.backgroundJob.deleteMany({ where: { userDid } });
-		await db.user.create({
-			data: { did: userDid, handle: "trakt-sync-fixture.test" },
-		});
+		await deleteFixtureOwner(db, userDid);
+		await deleteIssuedStates();
+		await db.user.create({ data: { did: userDid, handle: owner.handle } });
 		localRecords = [];
 		remoteRecords = [];
 		vi.clearAllMocks();
 		await connect();
 	});
 	afterAll(async () => {
-		await db.watchPrivacyMigration.deleteMany({ where: { userDid } });
-		await db.user.deleteMany({ where: { did: userDid } });
-		await db.backgroundJob.deleteMany({ where: { userDid } });
+		await deleteFixtureOwner(db, userDid);
+		await deleteIssuedStates();
 		await db.$disconnect();
 		await lockPool.end();
 	});
@@ -1093,10 +1108,9 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			});
 			let queued = false;
 			for (let attempt = 0; attempt < 100; attempt++) {
-				const [row] = await db.$queryRaw<
-					{ count: number }[]
-				>`SELECT COUNT(*)::int AS count FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%pg_advisory_lock%'`;
-				if (row.count > 0) {
+				if (
+					(await lockWaiters(db, applicationName, "%pg_advisory_lock%")) > 0
+				) {
 					queued = true;
 					break;
 				}
@@ -1383,7 +1397,9 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(localRecords).toHaveLength(2);
 		expect(
 			await db.integrationEntry.count({
-				where: { issue: { contains: "cannot represent another Watch" } },
+				where: ownedEntries(userDid, {
+					issue: { contains: "cannot represent another Watch" },
+				}),
 			}),
 		).toBe(1);
 	});
@@ -1418,7 +1434,9 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		await tick();
 		expect(
 			await db.integrationEntry.count({
-				where: { issue: { contains: "Both services changed" } },
+				where: ownedEntries(userDid, {
+					issue: { contains: "Both services changed" },
+				}),
 			}),
 		).toBe(1);
 	});
@@ -2372,7 +2390,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		const otherUser = await db.user.create({
 			data: {
 				did: `${userDid}-unrelated`,
-				handle: "unrelated-sync-fixture.test",
+				handle: `unrelated-${owner.handle}`,
 				integrationConnections: {
 					create: {
 						provider: "popfeed",

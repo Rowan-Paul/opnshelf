@@ -14,7 +14,8 @@ Before opening or merging a `develop` → `main` release pull request:
 
 1. Review the changes since the previous production release and write a new in-app Release Note for user-facing improvements, following [Publishing Release Notes](../runbooks/release-notes.md). Include the note in the release branch before merge, with accurate Web, iOS, and Android availability. Internal-only releases may skip a note; record the reason in the release PR.
 2. Show the operator the final copy and obtain publication approval before marking it `published`. Complete the release PR with the note path and approval state, or the reason no note is needed. A release with user-facing improvements is ready to merge when its approved note is included with a publication timestamp appropriate to the release.
-3. After the authorized production Web deployment completes, verify the new entry at `/whats-new` and `/api/release-notes` on `https://opnshelf.xyz`. Report the entry URL and the terminal deployment result. Mobile receives the same feed; describe OTA or store availability accurately in the note.
+3. If a build or upload credential was rotated since the previous release, confirm every copy in [credential rotation](../runbooks/credential-rotation.md) was replaced. The release PR's `Check release credentials` step verifies the GitHub copies; EAS and Railway copies are checked only inside their own builds.
+4. After the authorized production Web deployment completes, verify the new entry at `/whats-new` and `/api/release-notes` on `https://opnshelf.xyz`. Report the entry URL and the terminal deployment result. Mobile receives the same feed; describe OTA or store availability accurately in the note.
 
 The Release workflow generates GitHub release bodies from commit subjects. Those
 bodies do not populate the in-app feed; writing and including the curated note
@@ -47,6 +48,12 @@ For T3 PR monitoring, use `watch_pull_request` when available and yield until
 notified; end monitoring with `unwatch_pull_request` when handing back the PR.
 Use bounded polling only when the runtime lacks a watcher. Report status changes,
 not repeated unchanged queue states.
+
+When a reviewer was requested, monitoring ends only when `pnpm review:status`
+reports `ready: true` for the current head, or a terminal non-approval you report
+as such. Green CI ends nothing on its own: report it as "checks complete, review
+pending" (or "blocked: skipped / rate-limited / changes requested"), with the head
+SHA, and keep watching.
 
 Review cross-client behavior, loading/error/cancellation states, delayed callbacks,
 and native sheet dismissal against the accepted ADRs. These are judgment calls.

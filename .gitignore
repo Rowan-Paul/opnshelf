@@ -57,5 +57,8 @@ candidate-provenance.json
 # Local Lighthouse reports and server logs
 .lighthouseci/
 
+# Local UI scenario check screenshots
+.ui-checks/
+
 # Local LHCI dashboard storage
 services/lighthouse/data/

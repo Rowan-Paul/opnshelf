@@ -124,6 +124,19 @@ jobs:
             echo "range=$range"
           } >> "$GITHUB_OUTPUT"
 
+      # Before anything is published, queued or uploaded: prove the GitHub copies
+      # of the upload/build credentials still authenticate, so a key rotated in
+      # one place but not here fails on the release PR, not after a build. The
+      # EAS and Railway copies are checked inside their own builds.
+      # See docs/runbooks/credential-rotation.md.
+      - name: Check release credentials
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          POSTHOG_CLI_API_KEY: ${{ secrets.POSTHOG_CLI_API_KEY }}
+          POSTHOG_CLI_PROJECT_ID: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
+          POSTHOG_CLI_HOST: https://eu.posthog.com
+        run: node scripts/release-preflight.mjs
+
   release:
     needs: validate
     if: github.event_name == 'push'

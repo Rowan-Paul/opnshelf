@@ -9,6 +9,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
+    "eas-build-pre-install": "node ../../scripts/release-preflight.mjs POSTHOG_CLI_API_KEY",
     "lint": "biome check .",
     "format": "biome format .",
     "check": "biome check .",

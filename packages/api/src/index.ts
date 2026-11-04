@@ -65,6 +65,7 @@ export { slugifyName } from "./media-slug";
 export {
 	describeMutationFailure,
 	MutationFailedError,
+	type MutationFailureContext,
 	type MutationFailureReport,
 } from "./mutation-failure";
 export { onboardingDiscoveryOptions } from "./onboarding-discovery";
