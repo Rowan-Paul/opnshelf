@@ -21,6 +21,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 	// Stays mounted after the first open so closing keeps its exit animation.
 	const [wanted, setWanted] = useState(open);
 	const [failed, setFailed] = useState(false);
+	const buttonRef = useRef<HTMLButtonElement>(null);
 	if (open && !wanted) setWanted(true);
 	const isOpenRef = useRef(open);
 	isOpenRef.current = open;
@@ -31,16 +32,22 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 		const down = (e: KeyboardEvent) => {
 			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
 				e.preventDefault();
-				onOpenChangeRef.current(!isOpenRef.current);
+				if (failed) window.location.reload();
+				else onOpenChangeRef.current(!isOpenRef.current);
 			}
 		};
 		document.addEventListener("keydown", down);
 		return () => document.removeEventListener("keydown", down);
-	}, []);
+	}, [failed]);
+
+	useEffect(() => {
+		if (failed) buttonRef.current?.focus();
+	}, [failed]);
 
 	return (
 		<>
 			<button
+				ref={buttonRef}
 				type="button"
 				onClick={() => (failed ? window.location.reload() : onOpenChange(true))}
 				onPointerEnter={preloadDialog}
@@ -63,7 +70,8 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 			</button>
 
 			{wanted && (
-				// React caches a lazy import rejection until the document reloads.
+				// Keep dialog failures contained and offer a reload. A rejected lazy
+				// import in particular stays cached until the document reloads.
 				<CatchBoundary
 					getResetKey={() => 0}
 					onCatch={() => setFailed(true)}
