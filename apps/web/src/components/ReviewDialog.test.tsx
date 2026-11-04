@@ -137,6 +137,7 @@ describe("ReviewDialog editing and new review", () => {
 					markdown: "Existing body",
 				}),
 			}),
+			expect.anything(),
 		);
 		expect(mocks.create).not.toHaveBeenCalled();
 	});
@@ -163,16 +164,19 @@ describe("ReviewDialog editing and new review", () => {
 			target: { value: "New body" },
 		});
 		fireEvent.click(screen.getByRole("button", { name: "Publish" }));
-		expect(mocks.create).toHaveBeenCalledWith({
-			body: expect.objectContaining({
-				mediaType: "episode",
-				mediaId: "123",
-				seasonNumber: 3,
-				episodeNumber: 2,
-				title: "New title",
-				markdown: "New body",
-			}),
-		});
+		expect(mocks.create).toHaveBeenCalledWith(
+			{
+				body: expect.objectContaining({
+					mediaType: "episode",
+					mediaId: "123",
+					seasonNumber: 3,
+					episodeNumber: 2,
+					title: "New title",
+					markdown: "New body",
+				}),
+			},
+			expect.anything(),
+		);
 		expect(mocks.update).not.toHaveBeenCalled();
 		confirm.mockRestore();
 	});

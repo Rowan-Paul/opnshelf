@@ -8,6 +8,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
+import { useDialogOpening } from "#/lib/hooks/useDialogOpening";
 import { useDeleteNote, useNote, useUpsertNote } from "#/lib/hooks/useNotes";
 
 interface NoteDialogProps {
@@ -61,12 +62,19 @@ export function NoteDialog({
 		if (open) setContent(note?.content ?? "");
 	}, [open, note?.content]);
 
-	const close = () => {
-		onOpenChange(false);
-		onSuccess?.();
+	const startSave = useDialogOpening(open);
+
+	// A save that finishes after the dialog closed or reopened leaves it alone.
+	const closeOnSuccess = () => {
+		const isCurrent = startSave();
+		return () => {
+			if (isCurrent()) onOpenChange(false);
+			onSuccess?.();
+		};
 	};
 
 	const handleSave = () => {
+		const close = closeOnSuccess();
 		if (!content.trim()) {
 			if (note?.id) {
 				deleteMutation.mutate(
@@ -99,7 +107,10 @@ export function NoteDialog({
 
 	const handleDelete = () => {
 		if (!note?.id) return;
-		deleteMutation.mutate({ path: { noteId: note.id } }, { onSuccess: close });
+		deleteMutation.mutate(
+			{ path: { noteId: note.id } },
+			{ onSuccess: closeOnSuccess() },
+		);
 	};
 
 	const isPending = upsertMutation.isPending || deleteMutation.isPending;
