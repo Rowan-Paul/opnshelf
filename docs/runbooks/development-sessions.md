@@ -88,6 +88,11 @@ Privacy), migration-running (3/10 records), conflict (409), compact, large-text
 and trakt-sync-catch-up (Trakt Sync Banner at 40%).
 Open `/settings/privacy` to exercise scope dialogs, individual Lists and progress.
 
+With `pnpm dev:scenarios web` running from this worktree, `pnpm dev:scenarios:check [SCENARIO]`
+(default `issue-fixes`) asserts in Chromium that each breakpoint shows exactly one unread indicator in its trigger's
+top-right corner and that resizing across 768 px unmounts an open menu. Add `--capture before` (old code) or
+`--capture after` for `.ui-checks/<scenario>-<phone|tablet|desktop>-<before|after>.png` at fixed viewport sizes.
+
 The `social-bundles` scenario opens an authenticated Social feed with an eight-episode
 bundle, a separate Review, other Users and shows, and older date sections. Use
 `/social` to check expand/collapse and episode links, and Home for compact previews.
