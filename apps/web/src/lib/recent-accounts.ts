@@ -31,6 +31,10 @@ export const PENDING_SIGN_IN_METHOD_KEY = "opnshelf_sign_in_method";
 const EMPTY: RecentAccount[] = [];
 const METHODS: readonly SignInMethod[] = ["handle", "google", "apple"];
 
+function isSignInMethod(value: unknown): value is SignInMethod {
+	return METHODS.some((method) => method === value);
+}
+
 function isRecentAccount(value: unknown): value is RecentAccount {
 	if (!value || typeof value !== "object") return false;
 	const account = value as Record<string, unknown>;
@@ -39,7 +43,7 @@ function isRecentAccount(value: unknown): value is RecentAccount {
 		typeof account.handle === "string" &&
 		(account.displayName === null || typeof account.displayName === "string") &&
 		(account.avatar === null || typeof account.avatar === "string") &&
-		METHODS.includes(account.method as SignInMethod)
+		isSignInMethod(account.method)
 	);
 }
 
@@ -111,9 +115,7 @@ function takePendingSignInMethod(): SignInMethod | null {
 	const value = store?.getItem(PENDING_SIGN_IN_METHOD_KEY) ?? null;
 	if (value === null) return null;
 	store?.removeItem(PENDING_SIGN_IN_METHOD_KEY);
-	return METHODS.includes(value as SignInMethod)
-		? (value as SignInMethod)
-		: null;
+	return isSignInMethod(value) ? value : null;
 }
 
 /**
