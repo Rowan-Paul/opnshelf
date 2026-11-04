@@ -44,8 +44,12 @@ ARG POSTHOG_CLI_HOST=https://eu.posthog.com
 ARG RAILWAY_GIT_COMMIT_SHA
 # Fail before the build when Railway's copy of the upload key is stale
 # (docs/runbooks/credential-rotation.md). Prints a status, never the value.
+# SKIP_RELEASE_PREFLIGHT is only set by scripts/web-image-gate.sh, which needs a
+# fake key to reach the uploader; Railway never sets it.
+ARG SKIP_RELEASE_PREFLIGHT
 COPY scripts/release-preflight.mjs ./scripts/
-RUN node scripts/release-preflight.mjs POSTHOG_CLI_API_KEY
+RUN if [ "$SKIP_RELEASE_PREFLIGHT" = "1" ]; then echo "Release preflight skipped (web-image gate)."; \
+	else node scripts/release-preflight.mjs POSTHOG_CLI_API_KEY; fi
 RUN pnpm --filter @opnshelf/web build
 
 # ---- runtime: self-contained Nitro node-server ----

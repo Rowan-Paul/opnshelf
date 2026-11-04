@@ -35,10 +35,28 @@ docker run --rm "$image-base" test -s /etc/ssl/certs/ca-certificates.crt ||
 	{ echo "::error::The Web build stage has no CA bundle; PostHog uploads cannot verify HTTPS."; exit 1; }
 echo "::endgroup::"
 
+fake_key_args=(
+	--build-arg "POSTHOG_CLI_API_KEY=phx_ci_placeholder_not_a_real_key"
+	--build-arg "POSTHOG_CLI_PROJECT_ID=1"
+)
+
+echo "::group::Check that the release preflight rejects a stale upload key"
+# The preflight runs before vite build, so a rejected key stops the build there.
+if docker build --progress=plain "${production_args[@]}" --target build "${fake_key_args[@]}" . >"$log" 2>&1; then
+	echo "::error::The Web build succeeded with a fake PostHog key; the release preflight did not run."
+	exit 1
+fi
+if ! grep -q "POSTHOG_CLI_API_KEY): invalid" "$log"; then
+	tail -n 40 "$log"
+	echo "::error::The Web build failed before the release preflight could reject the fake key."
+	exit 1
+fi
+echo "::endgroup::"
+
 echo "::group::Probe the source-map upload up to authentication"
-if docker build --progress=plain "${production_args[@]}" --target build \
-	--build-arg "POSTHOG_CLI_API_KEY=phx_ci_placeholder_not_a_real_key" \
-	--build-arg "POSTHOG_CLI_PROJECT_ID=1" \
+# Skip the preflight so the fake key reaches the PostHog CLI itself.
+if docker build --progress=plain "${production_args[@]}" --target build "${fake_key_args[@]}" \
+	--build-arg "SKIP_RELEASE_PREFLIGHT=1" \
 	. >"$log" 2>&1; then
 	echo "::error::The Web build succeeded with a fake PostHog key; the source-map upload did not run."
 	exit 1
