@@ -12,6 +12,7 @@ import {
 	ServiceUnavailableException,
 	UseGuards,
 } from "@nestjs/common";
+import { coded } from "../common/error-codes";
 import { BackendEnv } from "../config/env.schema";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
@@ -195,7 +196,9 @@ export class SignupController {
 	): Promise<VerifyEmailResponseDto> {
 		const did = req.user?.did;
 		if (!did) {
-			throw new BadRequestException("User not found in request");
+			throw new BadRequestException(
+				coded("USER_NOT_FOUND", "User not found in request"),
+			);
 		}
 		// Reuse the session the guard already restored. Restoring again here would
 		// spin up a competing credential session that races the guard's on the
@@ -206,7 +209,7 @@ export class SignupController {
 
 		const user = await this.authService.getUser(did);
 		if (!user) {
-			throw new BadRequestException("User not found");
+			throw new BadRequestException(coded("USER_NOT_FOUND", "User not found"));
 		}
 
 		try {

@@ -11,6 +11,13 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { assertNoPublicSourceMaps } from "./src/lib/public-source-maps";
 
 const config = defineConfig({
+	// The commit this bundle was built from, for mutation failure reports. The
+	// same value names the PostHog source map release below.
+	define: {
+		"import.meta.env.VITE_RELEASE_SHA": JSON.stringify(
+			process.env.RAILWAY_GIT_COMMIT_SHA ?? "",
+		),
+	},
 	ssr: { external: ["sharp"] },
 	environments: { nitro: { resolve: { external: ["sharp"] } } },
 	nitro: {

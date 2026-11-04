@@ -15,6 +15,11 @@ export function createReportingMutationCache(): MutationCache {
 			const report = describeMutationFailure(
 				error,
 				mutation.options.mutationKey,
+				{
+					pathname:
+						typeof window === "undefined" ? null : window.location.pathname,
+					release: import.meta.env.VITE_RELEASE_SHA,
+				},
 			);
 			if (report) posthog.captureException(report.error, report.properties);
 		},

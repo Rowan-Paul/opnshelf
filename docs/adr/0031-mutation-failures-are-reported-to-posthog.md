@@ -30,3 +30,28 @@ PostHog's stack-based grouping filed all mutation failures under one issue: a
 to their message, so each mutation key and status gets its own issue, as the
 message was always meant to provide.
 
+
+## Amendment: diagnostic fields for investigating another User's failure
+
+"The backend logs carry the why" only held if a report could be matched to its
+log line and the log line said why. Six `auth/verify-email` 400s and a
+`popfeed-sync/configure` 409 could not be explained without asking the User to
+reproduce them. Reports now also carry `request_id`, `error_code`,
+`api_operation`, `route` and `release`:
+
+- The backend gives every request an `X-Request-ID` (`common/request-id.ts`)
+  and logs failures as `METHOD /route/template request_id=<id> -> <status>
+  code=<code>`. The ID is generated server-side; an inbound header is ignored.
+- `code` is a registered, categorical reason from `common/error-codes.ts`
+  (for example `EMAIL_CODE_EXPIRED`, `SYNC_BUSY`, `VALIDATION_FAILED`).
+  `AllExceptionsFilter` forwards only registered codes, so a code never echoes
+  input. Add a code where the backend already distinguishes a case.
+- `api_operation` is the method plus the OpenAPI path template (`/users/{did}`,
+  never the filled-in path). `route` is the first path segment, the same
+  granularity as pageview and screen events. `release` is the client build's
+  commit SHA.
+
+Every field is checked against a strict shape in `describeMutationFailure`
+and dropped when it does not match, so tokens, verification codes, email
+addresses and request bodies stay out. The message and fingerprint are
+unchanged, so existing PostHog issues keep grouping as before.

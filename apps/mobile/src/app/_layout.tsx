@@ -24,7 +24,7 @@ import { ScreenFrame } from "@/components/ui/screen-frame";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
 import { PickForMeIntentBridge } from "@/lib/pick-for-me-intent-bridge";
-import { posthog } from "@/lib/posthog";
+import { noteCurrentPathname, posthog } from "@/lib/posthog";
 import { PushNotificationBridge } from "@/lib/push-notification-bridge";
 import { useTheme } from "@/lib/theme-context";
 import { setWidgetApiUrl } from "../../modules/widget-bridge";
@@ -38,6 +38,8 @@ function useScreenTracking() {
 	const pathname = usePathname();
 	const screenSection = pathname.split("/")[1] || "home";
 	const previous = useRef<string | undefined>(undefined);
+
+	useEffect(() => noteCurrentPathname(pathname), [pathname]);
 
 	useEffect(() => {
 		if (previous.current !== screenSection) {

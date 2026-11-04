@@ -71,8 +71,9 @@ it("distinguishes a busy configure lease from ownership loss and saves after rel
 	await expect(
 		service.configure(connection.userDid, settings),
 	).rejects.toMatchObject({
+		status: 409,
 		response: {
-			statusCode: 409,
+			code: "SYNC_OWNERSHIP_CHANGED",
 			message: "Sync ownership changed. Try again.",
 		},
 	});

@@ -9,6 +9,7 @@ import {
 	type OnModuleInit,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import { coded } from "../common/error-codes";
 import { getPaginationMeta } from "../common/pagination";
 import type { BackendEnv } from "../config/env.schema";
 import {
@@ -362,7 +363,9 @@ export abstract class IntegrationSyncService<Credential>
 			});
 			if (!updated.count) lost = true;
 			if (lost)
-				throw new ConflictException("Sync ownership changed. Try again.");
+				throw new ConflictException(
+					coded("SYNC_OWNERSHIP_CHANGED", "Sync ownership changed. Try again."),
+				);
 		};
 		const heartbeat = setInterval(
 			() =>
@@ -445,7 +448,10 @@ export abstract class IntegrationSyncService<Credential>
 	}
 	protected async requireConnection(userDid: string) {
 		const c = await this.current(userDid);
-		if (!c) throw new NotFoundException(`Connect ${this.name} first.`);
+		if (!c)
+			throw new NotFoundException(
+				coded("INTEGRATION_NOT_CONNECTED", `Connect ${this.name} first.`),
+			);
 		return c;
 	}
 	async action(

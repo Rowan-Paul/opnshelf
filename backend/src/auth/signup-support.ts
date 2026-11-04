@@ -6,6 +6,7 @@ import {
 	ServiceUnavailableException,
 } from "@nestjs/common";
 import type { Request } from "express";
+import { coded } from "../common/error-codes";
 
 /** The address a signup attempt is charged to by the rate limiter. */
 export function getClientIp(req: Request): string {
@@ -75,15 +76,23 @@ export function mapConfirmEmailError(
 	switch (code) {
 		case "ExpiredToken":
 			return new BadRequestException(
-				"That code has expired. Request a new one.",
+				coded(
+					"EMAIL_CODE_EXPIRED",
+					"That code has expired. Request a new one.",
+				),
 			);
 		case "InvalidToken":
 		case "InvalidRequest":
-			return new BadRequestException("That code is invalid.");
+			return new BadRequestException(
+				coded("EMAIL_CODE_INVALID", "That code is invalid."),
+			);
 		default:
 			logger.error(`confirmEmail failed (${code})`, error);
 			return new BadRequestException(
-				"Could not verify that code. Please try again.",
+				coded(
+					"EMAIL_VERIFICATION_FAILED",
+					"Could not verify that code. Please try again.",
+				),
 			);
 	}
 }
