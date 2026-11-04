@@ -42,9 +42,9 @@ the upload preset may not grant `project:read`.
 
 | Credential | Provider | Railway (service / environment) | GitHub Actions secret (workflow) | EAS environment variable (profile) | Preflight |
 | --- | --- | --- | --- | --- | --- |
-| `POSTHOG_CLI_API_KEY`: personal API key, "Source map upload" preset | PostHog (EU) | `Web` / production (Docker build arg for `@posthog/rollup-plugin`, unset before the server starts) | `POSTHOG_CLI_API_KEY` (`release.yml`: `validate` preflight, `ota` source-map upload) | `POSTHOG_CLI_API_KEY`, environment `production` (profile `production`; read by `posthog-react-native/expo` during the native bundle phase). `development` and `preview` set `POSTHOG_CLI_DRY_RUN=true` in `eas.json` instead | yes |
+| `POSTHOG_CLI_API_KEY`: personal API key, "Source map upload" preset | PostHog (EU) | `Web` / production only, not staging (Docker build arg for `@posthog/rollup-plugin`, unset before the server starts) | `POSTHOG_CLI_API_KEY` (`release.yml`: `validate` preflight, `ota` source-map upload) | `POSTHOG_CLI_API_KEY`, environment `production` (profile `production`; read by `posthog-react-native/expo` during the native bundle phase). `development` and `preview` hold no copy and set `POSTHOG_CLI_DRY_RUN=true` in `eas.json` | yes |
 | `POSTHOG_CLI_PROJECT_ID` (identifier, rotate with the key if the project changes) | PostHog | `Web` / production | `POSTHOG_CLI_PROJECT_ID` (`release.yml`) | `POSTHOG_CLI_PROJECT_ID`, `production` | used by the PostHog check |
-| `EXPO_TOKEN`: Expo personal or robot access token | Expo | none | `EXPO_TOKEN` (`release.yml` `validate` + `ota`, `staging.yml` `update`, `eas-build.yml` `build`) | none | yes (GitHub copy) |
+| `EXPO_TOKEN`: Expo access token (personal or robot: to confirm) | Expo | none (checked) | `EXPO_TOKEN` (`release.yml` `validate` + `ota`, `staging.yml` `update`, `eas-build.yml` `build`) | none (checked) | yes (GitHub copy) |
 | Store signing and submission: iOS distribution certificate and provisioning profiles, App Store Connect access for `eas submit`, Android upload keystore, Google Play service-account key | Apple, Google | none | none | Stored in EAS credentials (`eas credentials`), not environment variables. The Play service-account key is assigned under EAS → Credentials → Android → `com.rowanpaul.opnshelf` (`apps/mobile/RELEASE.md`) | no |
 | `EXPO_APPLE_ID`, `EXPO_ASC_APP_ID`, `EXPO_APPLE_TEAM_ID` (identifiers for `eas submit`, not secrets) | Apple | none | same names (`eas-build.yml` `build`) | none | no |
 | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` | Docker Hub | none | same names (`pds-operator-image.yml`, `tranquil-image.yml`) | none | no |
@@ -61,7 +61,7 @@ OTA update:
 
 ## Runtime credentials
 
-Read by deployed services at runtime. None has a GitHub or EAS copy. `Server`
+Read by deployed services at runtime. Only the Lighthouse tokens also have a GitHub copy. `Server`
 and `Web` live in the Opnshelf Railway project with `production` and `staging`
 environments; `tranquil-pds` and `mail-relay` live in the separate
 `opnshelf-pds` project (ADR 0019). Use a distinct value per environment where
@@ -75,36 +75,44 @@ the column says so.
 | `PDS_ADMIN_PASSWORD` | Tranquil PDS admin account | `Server` / production, staging | Must match the admin account on `tranquil-pds`; Staging shares the production PDS |
 | `TAB_ADMIN_PASSWORD` | Tab | `Server` / each environment, as a reference to that environment's `tap` service | Rotate on `tap`; the reference follows |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth | `Server` / production, staging; the PDS's own Google SSO uses the same client | |
-| `APPLE_PRIVATE_KEY` | Apple (.p8) | `Server` / production, staging; `SSO_APPLE_PRIVATE_KEY` on `tranquil-pds` / production | `scripts/push-apple-secrets.sh` sets all three from one file |
+| `APPLE_PRIVATE_KEY`, `APPLE_KEY_ID` | Apple (.p8) | `Server` / production, staging; `SSO_APPLE_PRIVATE_KEY` on `tranquil-pds` / production | `scripts/push-apple-secrets.sh` sets all three from one file |
 | `PROVIDER_STATE_SECRET` | self-generated | `Server` / production, staging (distinct values) | Rotating breaks Apple signups in flight; `push-apple-secrets.sh` only writes it when absent |
 | `SSR_RATE_LIMIT_SECRET` | self-generated | `Server` and `Web` / production, staging (same value within an environment, distinct between them) | See [SSR rate limiting](ssr-rate-limiting.md) |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile | `Server` / production, staging | |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare Email Sending | `Server` / production, staging; `mail-relay` / production | `mail-relay` needs a user-owned token (`services/mail-relay/README.md`) |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare Email Sending | `Server` / production, staging; `mail-relay` / production | Same name in all three; whether they hold one token or several is not visible from names. `mail-relay` needs a user-owned token (`services/mail-relay/README.md`) |
 | `FEEDBACK_GITHUB_TOKEN` | GitHub fine-grained token | `Server` / production, staging | Issues read/write on one repository |
 | `REDIS_URL` | Railway Redis | `Server`, where set | Optional (ADR 0041) |
-| `LHCI_BASIC_AUTH_PASSWORD` | self-generated | the Lighthouse dashboard service (`services/lighthouse`) | Clients read `LHCI_SERVER_URL`, `LHCI_BUILD_TOKEN`, `LHCI_BASIC_AUTH_*` in `lighthouserc.cjs` |
+| `LHCI_BUILD_TOKEN`, `LHCI_BASIC_AUTH_PASSWORD` | self-generated | none: the Lighthouse dashboard runs locally only (`services/lighthouse/README.md`) | GitHub repository secrets of the same names; clients read them in `lighthouserc.cjs` |
 | `LEXICON_PUBLISHER_PASSWORD` | PDS account | none; local shell for `backend/scripts/publish-lexicons.ts` | |
+
+### PDS project (`opnshelf-pds`)
+
+| Variable | Railway consumers | Notes |
+| --- | --- | --- |
+| `SSO_GOOGLE_CLIENT_SECRET` | `tranquil-pds` / production | Same Google client as `Server`'s `GOOGLE_CLIENT_SECRET` |
+| `SSO_APPLE_PRIVATE_KEY`, `SSO_APPLE_KEY_ID` | `tranquil-pds` / production | Set by `scripts/push-apple-secrets.sh` |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | `tranquil-pds` / production | Blob storage |
+| `JWT_SECRET`, `DPOP_SECRET`, `MASTER_KEY` | `tranquil-pds` / production | Rotating invalidates sessions or stored keys; read the Tranquil docs first |
+| `NOTIFY_APP_PASSWORD`, `PDS_OPERATOR_ACCOUNT_RECOVERY_PASSWORD`, `SESSION_SECRET` | `pds-operator` | |
+| `TAP_ADMIN_PASSWORD` | `tap` / production, staging | Source of `Server`'s `TAB_ADMIN_PASSWORD` reference |
+
+Railway-managed database passwords (`PGPASSWORD`, `POSTGRES_PASSWORD`,
+`REDISPASSWORD`, `REDIS_PASSWORD`) rotate through Railway; services read them via
+references. No credential lives only in a Railway shared variable (none are set
+in either project).
+
+The names above were confirmed on 2026-11-04 by listing variable names only
+(`railway variable list ... --json | jq -r 'keys[]'`, `gh secret list`, EAS
+`env:list` with values stripped). Use the same name-only commands to re-check.
 
 ## To confirm with Rowan
 
-The repository cannot answer these. Update the tables above once confirmed.
+Name listings cannot answer these. Update the tables above once confirmed.
 
-- Whether `POSTHOG_CLI_API_KEY` / `POSTHOG_CLI_PROJECT_ID` are set on `Web` /
-  staging, or production only.
-- Whether the EAS `preview` or `development` environments hold a
-  `POSTHOG_CLI_API_KEY` copy (the profiles dry-run, so a stale copy would not
-  fail a build, but it would still be a stale secret).
-- Which `EXPO_TOKEN` it is (personal or robot) and whether any other place
-  holds it, such as a local shell profile.
-- How `eas submit` authenticates to App Store Connect: an ASC API key stored in
-  EAS credentials, or an Apple ID session.
-- Whether the Google Play service-account key or the ASC API key has a copy
-  outside EAS credentials.
-- The variable names `tranquil-pds` uses for the shared Google OAuth client
-  secret, and any other PDS-side credential (S3 bucket keys, PLC rotation key,
-  JWT secrets) that `tranquil-pds` reads.
+- Which `EXPO_TOKEN` the GitHub secret holds (personal or robot), and whether a
+  local shell profile holds another copy.
+- How `eas submit` authenticates to App Store Connect (an ASC API key in EAS
+  credentials or an Apple ID session), and whether the ASC API key or the
+  Google Play service-account key has a copy outside EAS credentials. `eas
+  credentials` is interactive, so this was not listed.
 - Whether `Server` and `mail-relay` share one Cloudflare token or hold two.
-- Where the Lighthouse dashboard service runs and where `LHCI_BUILD_TOKEN` is
-  kept.
-- Whether any credential lives only in a Railway shared variable, which the
-  per-service names above would not show.
