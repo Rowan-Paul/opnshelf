@@ -30,7 +30,16 @@ export function DefaultErrorComponent({
 	}, [thrown, routeId, status]);
 
 	const handleRetry = () => {
-		if (reset) {
+		// Browsers cache rejected module imports. Resetting the route cannot fetch
+		// a new asset manifest after a deploy; a user-requested reload can.
+		if (
+			error &&
+			/error loading dynamically imported module|Failed to fetch dynamically imported module|Importing a module script failed/.test(
+				error.message,
+			)
+		) {
+			window.location.reload();
+		} else if (reset) {
 			reset();
 		} else {
 			router.invalidate();
