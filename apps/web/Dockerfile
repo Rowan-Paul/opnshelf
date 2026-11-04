@@ -42,6 +42,10 @@ ARG POSTHOG_CLI_API_KEY
 ARG POSTHOG_CLI_PROJECT_ID
 ARG POSTHOG_CLI_HOST=https://eu.posthog.com
 ARG RAILWAY_GIT_COMMIT_SHA
+# Fail before the build when Railway's copy of the upload key is stale
+# (docs/runbooks/credential-rotation.md). Prints a status, never the value.
+COPY scripts/release-preflight.mjs ./scripts/
+RUN node scripts/release-preflight.mjs POSTHOG_CLI_API_KEY
 RUN pnpm --filter @opnshelf/web build
 
 # ---- runtime: self-contained Nitro node-server ----
