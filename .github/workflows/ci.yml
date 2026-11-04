@@ -200,6 +200,8 @@ jobs:
       DATABASE_URL: postgresql://postgres@127.0.0.1:5432/opnshelf_test
       WATCH_PRIVACY_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/opnshelf_test
       TRAKT_SYNC_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/opnshelf_test
+      SOCIAL_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/opnshelf_test
+      FEATURED_TEST_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/opnshelf_test
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -23,6 +23,7 @@ import type {
 } from "./popfeed-sync.client";
 import type { PopfeedMediaService } from "./popfeed-media";
 import { PopfeedSyncService } from "./popfeed-sync.service";
+import { deleteFixtureOwner, fixtureOwner } from "../../test/db-fixtures";
 
 // Shares the disposable database used by the Trakt Sync persisted suite.
 const url = process.env.TRAKT_SYNC_TEST_DATABASE_URL;
@@ -38,7 +39,8 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 		query_timeout: 5000,
 		connectionTimeoutMillis: 5000,
 	});
-	const userDid = "did:plc:popfeed-sync-test";
+	const owner = fixtureOwner("popfeed-sync");
+	const userDid = owner.did;
 	const repoUri = `at://${userDid}`;
 	let repo: PopfeedRepository;
 	let localRecords: SyncRecord[] = [];
@@ -191,11 +193,11 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 		for (let i = 0; i < 5; i++) await tick();
 	}
 	beforeEach(async () => {
-		await db.user.deleteMany({ where: { did: userDid } });
+		await deleteFixtureOwner(db, userDid);
 		await db.user.create({
 			data: {
 				did: userDid,
-				handle: "popfeed-sync-fixture.test",
+				handle: owner.handle,
 				timezone: "America/New_York",
 			},
 		});
@@ -205,7 +207,7 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 		await service.connect(userDid);
 	});
 	afterAll(async () => {
-		await db.user.deleteMany({ where: { did: userDid } });
+		await deleteFixtureOwner(db, userDid);
 		await db.$disconnect();
 		await lockPool.end();
 	});
