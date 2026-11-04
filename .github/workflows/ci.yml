@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       web: ${{ steps.filter.outputs.web }}
+      web_image: ${{ steps.filter.outputs.web_image }}
       backend: ${{ steps.filter.outputs.backend }}
       mobile: ${{ steps.filter.outputs.mobile }}
       api: ${{ steps.filter.outputs.api }}
@@ -56,6 +57,15 @@ jobs:
               - 'package.json'
               - 'pnpm-workspace.yaml'
               - 'turbo.json'
+              - '.github/workflows/ci.yml'
+            web_image:
+              - 'apps/web/**'
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+              - 'pnpm-workspace.yaml'
+              - '.dockerignore'
+              - 'scripts/web-image-gate.sh'
               - '.github/workflows/ci.yml'
             backend:
               - 'backend/**'
@@ -152,6 +162,22 @@ jobs:
 
       - name: Test
         run: pnpm --filter "./apps/web" run test
+
+  web-image:
+    needs: changes
+    if: ${{ needs.changes.outputs.web_image == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Builds apps/web/Dockerfile as Railway does and probes the PostHog
+      # source-map upload with a fake key, so no secrets are needed.
+      - name: Build and check the Web production image
+        env:
+          RAILWAY_GIT_COMMIT_SHA: ${{ github.sha }}
+        run: scripts/web-image-gate.sh
 
   backend:
     needs: changes
@@ -280,7 +306,7 @@ jobs:
 
   ci:
     name: CI result
-    needs: [changes, web, backend, mobile, api, scripts, privacy-reference]
+    needs: [changes, web, web-image, backend, mobile, api, scripts, privacy-reference]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
@@ -288,6 +314,7 @@ jobs:
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
           WEB_RESULT: ${{ needs.web.result }}
+          WEB_IMAGE_RESULT: ${{ needs.web-image.result }}
           BACKEND_RESULT: ${{ needs.backend.result }}
           MOBILE_RESULT: ${{ needs.mobile.result }}
           API_RESULT: ${{ needs.api.result }}
@@ -299,7 +326,7 @@ jobs:
             exit 1
           fi
 
-          for result in "$WEB_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT" "$SCRIPTS_RESULT" "$REFERENCE_RESULT"; do
+          for result in "$WEB_RESULT" "$WEB_IMAGE_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT" "$SCRIPTS_RESULT" "$REFERENCE_RESULT"; do
             case "$result" in
               success|skipped) ;;
               *)
