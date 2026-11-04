@@ -1,4 +1,13 @@
 {
   "$schema": "https://t3.codes/schema/t3.json",
-  "iconPath": "design/branding/opnshelf-app-icon.svg"
+  "iconPath": "design/branding/opnshelf-app-icon.svg",
+  "scripts": [
+    {
+      "name": "Install dependencies",
+      "command": "pnpm install --frozen-lockfile && pnpm prisma:generate",
+      "icon": "configure",
+      "runOnWorktreeCreate": true,
+      "async": false
+    }
+  ]
 }

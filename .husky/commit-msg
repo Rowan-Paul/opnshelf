@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Commit subjects are plain imperative sentences (see AGENTS.md), not Conventional Commits.
+subject=$(head -n 1 "$1")
+if printf '%s' "$subject" | grep -Eq '^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\([^)]*\))?!?:'; then
+	echo "commit-msg: drop the '${subject%%:*}:' prefix. Write the subject as a plain imperative sentence,"
+	echo "e.g. 'Keep loaded rows visible while the list refetches'."
+	exit 1
+fi
