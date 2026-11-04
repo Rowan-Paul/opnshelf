@@ -3,6 +3,7 @@ import {
 	forgetAccount,
 	MAX_RECENT_ACCOUNTS,
 	noteSignInMethod,
+	PENDING_SIGN_IN_METHOD_KEY,
 	parseRecentAccounts,
 	RECENT_ACCOUNTS_KEY,
 	readRecentAccounts,
@@ -46,6 +47,25 @@ describe("recent accounts", () => {
 		expect(readRecentAccounts()[0]?.method).toBe("handle");
 	});
 
+	it.each([
+		"handle",
+		"google",
+		"apple",
+	])("accepts the stored %s sign-in method", (method) => {
+		localStorage.setItem(PENDING_SIGN_IN_METHOD_KEY, method);
+		rememberAccount(user(1));
+		expect(readRecentAccounts()[0]?.method).toBe(method);
+	});
+
+	it("discards an invalid pending method and keeps the previous one", () => {
+		noteSignInMethod("apple");
+		rememberAccount(user(1));
+		localStorage.setItem(PENDING_SIGN_IN_METHOD_KEY, "invalid");
+		rememberAccount(user(1));
+		expect(readRecentAccounts()[0]?.method).toBe("apple");
+		expect(localStorage.getItem(PENDING_SIGN_IN_METHOD_KEY)).toBeNull();
+	});
+
 	it("defaults to Handle sign-in, which works for every account", () => {
 		rememberAccount(user(1));
 		expect(readRecentAccounts()[0]?.method).toBe("handle");
@@ -65,5 +85,10 @@ describe("recent accounts", () => {
 		);
 		expect(readRecentAccounts().map((a) => a.did)).toEqual(["did:plc:1"]);
 		expect(parseRecentAccounts("not json")).toEqual([]);
+		for (const method of ["invalid", null, 1, {}, ["handle"]]) {
+			expect(
+				parseRecentAccounts(JSON.stringify([{ ...user(1), method }])),
+			).toEqual([]);
+		}
 	});
 });
