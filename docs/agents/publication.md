@@ -48,6 +48,12 @@ notified; end monitoring with `unwatch_pull_request` when handing back the PR.
 Use bounded polling only when the runtime lacks a watcher. Report status changes,
 not repeated unchanged queue states.
 
+When a reviewer was requested, monitoring ends only when `pnpm review:status`
+reports `ready: true` for the current head, or a terminal non-approval you report
+as such. Green CI ends nothing on its own: report it as "checks complete, review
+pending" (or "blocked: skipped / rate-limited / changes requested"), with the head
+SHA, and keep watching.
+
 Review cross-client behavior, loading/error/cancellation states, delayed callbacks,
 and native sheet dismissal against the accepted ADRs. These are judgment calls.
 Mechanical rules belong in the repository's automated checks. Verify findings
