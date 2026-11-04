@@ -37,12 +37,16 @@ export function KeyboardSheetModal({
 }) {
 	const [shown, setShown] = useState(visible);
 	const latest = useRef(visible);
+	// Bumped on every visibility change, so a dismissal only closes the sheet
+	// if no reopen or later close has happened since it started.
+	const change = useRef(0);
 	const release = useRef(releaseFocus);
 	release.current = releaseFocus;
 
 	useEffect(() => {
 		const wasVisible = latest.current;
 		latest.current = visible;
+		const token = ++change.current;
 		if (visible) {
 			setShown(true);
 			return;
@@ -63,8 +67,9 @@ export function KeyboardSheetModal({
 			}),
 		]).finally(() => {
 			clearTimeout(fallback);
-			// Reopened while the keyboard was hiding: keep the sheet up.
-			if (!latest.current) setShown(false);
+			// Reopened while the keyboard was hiding, or reopened and closed
+			// again: the newer change decides when the sheet hides.
+			if (change.current === token) setShown(false);
 		});
 	}, [visible]);
 

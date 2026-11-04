@@ -6,7 +6,6 @@ import {
 } from "@opnshelf/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, StickyNote, Trash2 } from "lucide-react-native";
-import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { NoteEditorSheet } from "@/components/detail/NoteEditorSheet";
 import { ProfileContentCard } from "@/components/profile/ProfileContentCard";
@@ -20,6 +19,7 @@ import { mediaHref } from "@/lib/media-href";
 import { useEndReached } from "@/lib/use-end-reached";
 import { invalidateUserNotesQueries } from "@/lib/use-note";
 import { useInfiniteProfileNotes } from "@/lib/use-public-profile";
+import { useSheetOpening } from "@/lib/use-sheet-opening";
 import { useThemeColors } from "@/theme/colors";
 
 /**
@@ -100,7 +100,7 @@ function NoteCard({
 	const { showDialog } = useDialog();
 	const queryClient = useQueryClient();
 	const toast = useToast();
-	const [editorVisible, setEditorVisible] = useState(false);
+	const editor = useSheetOpening();
 
 	const upsertMutation = useMutation({
 		mutationKey: ["notes", note.id, "update"],
@@ -131,6 +131,8 @@ function NoteCard({
 	const handleSave = (content: string) => {
 		const trimmed = content.trim();
 		if (!trimmed) return;
+		// A save that finishes after a close or reopen leaves the sheet alone.
+		const closeEditor = editor.closeIfCurrent();
 		upsertMutation.mutate(
 			{
 				body: {
@@ -143,7 +145,7 @@ function NoteCard({
 			},
 			{
 				onSuccess: () => {
-					setEditorVisible(false);
+					closeEditor();
 					invalidate();
 					toast.success("Note saved");
 				},
@@ -193,7 +195,7 @@ function NoteCard({
 								hitSlop={8}
 								accessibilityRole="button"
 								accessibilityLabel="Edit note"
-								onPress={() => setEditorVisible(true)}
+								onPress={editor.open}
 								className="size-8 items-center justify-center rounded-md"
 							>
 								<Pencil color={colors.mutedForeground} size={16} />
@@ -223,13 +225,13 @@ function NoteCard({
 
 			{isOwner ? (
 				<NoteEditorSheet
-					visible={editorVisible}
-					onDismiss={() => setEditorVisible(false)}
+					visible={editor.visible}
+					onDismiss={editor.close}
 					isEditing
 					initialContent={note.content}
 					onSave={handleSave}
 					onDelete={() => {
-						setEditorVisible(false);
+						editor.close();
 						confirmDelete();
 					}}
 					isSaving={upsertMutation.isPending}
