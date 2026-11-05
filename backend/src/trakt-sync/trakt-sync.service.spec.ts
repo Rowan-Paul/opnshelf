@@ -504,9 +504,18 @@ it("builds candidate comparisons only for the requested sync issue page", async 
 			integrationEntry: {
 				count: vi.fn(async () => entries.length),
 				findMany: vi.fn(async (input) =>
-					input.select
-						? entries
-						: entries.slice(input.skip, input.skip + input.take),
+					input.select?.localKey
+						? [
+								{
+									id: "local-peer",
+									localKey: "local",
+									remoteKey: null,
+									linked: false,
+								},
+							]
+						: input.select
+							? entries
+							: entries.slice(input.skip, input.skip + input.take),
 				),
 			},
 		} as unknown as PrismaService,
@@ -917,8 +926,109 @@ it.each([
 		);
 		const result = await service.issues("fixture", { page, pageSize: 1 });
 		expect(result.items[0].trakt?.mediaId).toBe(expectedMediaId);
-		expect(findMany.mock.calls.filter(([query]) => query.select)).toHaveLength(
-			mappingReads,
+		expect(
+			findMany.mock.calls.filter(([query]) => query.select?.remoteBase),
+		).toHaveLength(mappingReads);
+	},
+);
+
+it.each([
+	{ linked: false, reverse: false },
+	{ linked: true, reverse: false },
+	{ linked: false, reverse: true },
+])(
+	"offers only unlinked candidates ($linked, reverse: $reverse)",
+	async ({ linked, reverse }) => {
+		const record = {
+			kind: "watch",
+			mediaType: "movie",
+			mediaId: "12",
+			season: 0,
+			episode: 0,
+			title: "Fixture",
+			value: null,
+		};
+		const local = { ...record, key: "local:source" };
+		const remote = ["available", "linked", "paired", "missing"].map((key) => ({
+			...record,
+			key: `remote:${key}`,
+		}));
+		const entry = {
+			id: "source",
+			kind: "watch",
+			localKey: local.key,
+			remoteKey: linked ? "remote:removed" : null,
+			linked,
+			eligible: true,
+			issue: "Choose a match",
+		};
+		const peers = [
+			{
+				id: "available",
+				localKey: null,
+				remoteKey: "remote:available",
+				linked: false,
+			},
+			{
+				id: "linked",
+				localKey: "local:other",
+				remoteKey: "remote:linked",
+				linked: true,
+			},
+			{
+				id: "paired",
+				localKey: "local:paired",
+				remoteKey: "remote:paired",
+				linked: false,
+			},
+		];
+		if (reverse) {
+			for (const peer of [entry, ...peers]) {
+				const key = peer.localKey;
+				peer.localKey = peer.remoteKey;
+				peer.remoteKey = key;
+			}
+		}
+		const candidateKeys = remote.map((r) => r.key);
+		remote.push({ ...record, key: "unrelated", mediaId: "99" });
+		const findMany = vi.fn(async (input) => (input.select ? peers : [entry]));
+		const service = new TraktSyncService(
+			{
+				integrationEntry: {
+					count: vi.fn(async () => 1),
+					findMany,
+				},
+			} as unknown as PrismaService,
+			{} as TraktSyncClient,
+			{
+				snapshot: vi.fn(async () => (reverse ? remote : [local])),
+			} as unknown as LocalSyncRecords,
+			parseEnvironment({ NODE_ENV: "test" }),
+			{} as WatchAccountLock,
 		);
+		service["requireConnection"] = vi.fn(
+			async () =>
+				({
+					id: "fixture",
+					remoteSnapshot: reverse ? [local] : remote,
+				}) as unknown as Awaited<
+					ReturnType<(typeof service)["requireConnection"]>
+				>,
+		);
+		const result = await service.issues("fixture", {});
+		expect(findMany).toHaveBeenLastCalledWith({
+			where: {
+				connectionId: "fixture",
+				kind: { in: ["watch"] },
+				OR: [
+					{ localKey: { in: reverse ? candidateKeys : [] } },
+					{ remoteKey: { in: reverse ? [] : candidateKeys } },
+				],
+			},
+			select: { id: true, localKey: true, remoteKey: true, linked: true },
+		});
+		expect(
+			result.items[0].candidates.map((candidate) => candidate.key),
+		).toEqual(["remote:available"]);
 	},
 );
