@@ -51,6 +51,22 @@ describe("createCoalescedSaver", () => {
 		expect(save).toHaveBeenCalledTimes(1);
 	});
 
+	it("preserves queued writes after an undefined value", async () => {
+		const first = deferred<void>();
+		const save = vi.fn<(v: undefined) => Promise<void>>();
+		save.mockReturnValueOnce(first.promise).mockResolvedValue(undefined);
+		const saver = createCoalescedSaver(save);
+
+		saver.submit(undefined);
+		saver.submit(undefined);
+		first.resolve();
+		await tick();
+		await tick();
+
+		expect(save).toHaveBeenCalledTimes(2);
+		expect(saver.isDirty()).toBe(false);
+	});
+
 	it("frees the line after a failed save so the next edit still goes out", async () => {
 		const first = deferred<void>();
 		const save = vi.fn<(v: number[]) => Promise<void>>();
