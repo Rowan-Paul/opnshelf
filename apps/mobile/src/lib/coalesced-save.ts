@@ -19,12 +19,10 @@ export function createCoalescedSaver<T>(
 	isEqual: (a: T, b: T) => boolean = Object.is,
 ): CoalescedSaver<T> {
 	let inFlight = false;
-	let lastSent: T | undefined;
 	let pending: { value: T } | null = null;
 
 	const flush = async (value: T): Promise<void> => {
 		inFlight = true;
-		lastSent = value;
 		try {
 			await save(value);
 		} catch {
@@ -35,7 +33,7 @@ export function createCoalescedSaver<T>(
 		}
 		const next = pending;
 		pending = null;
-		if (next && (lastSent === undefined || !isEqual(next.value, lastSent))) {
+		if (next && (value === undefined || !isEqual(next.value, value))) {
 			await flush(next.value);
 		}
 	};
