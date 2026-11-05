@@ -1,14 +1,14 @@
 ---
 {
-  "status": "draft",
+  "status": "published",
   "slug": "smoother-sync-and-recovery",
   "title": "Smoother sync and recovery",
-  "publishedAt": "2026-11-05T14:07:56.000Z",
+  "publishedAt": "2026-11-05T14:11:24.058Z",
   "summary": "More reliable sync choices, Web reload recovery, and fixes for editing on Mobile.",
   "platforms": {
-    "web": { "status": "coming-soon", "note": "Available after this release reaches production." },
-    "ios": { "status": "coming-soon", "note": "The sync fix needs no app update. Editing fixes require the upcoming production over-the-air update." },
-    "android": { "status": "coming-soon", "note": "The sync fix needs no app update. Editing fixes require the upcoming production over-the-air update." }
+    "web": { "status": "available" },
+    "ios": { "status": "update-required", "minimumVersion": "1.7.14", "note": "The sync fix needs no app update. Editing fixes require the production over-the-air update once it becomes available." },
+    "android": { "status": "update-required", "minimumVersion": "1.7.14", "note": "The sync fix needs no app update. Editing fixes require the production over-the-air update once it becomes available." }
   }
 }
 ---
