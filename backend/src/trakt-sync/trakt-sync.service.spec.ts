@@ -989,11 +989,14 @@ it.each([
 				peer.remoteKey = key;
 			}
 		}
+		const candidateKeys = remote.map((r) => r.key);
+		remote.push({ ...record, key: "unrelated", mediaId: "99" });
+		const findMany = vi.fn(async (input) => (input.select ? peers : [entry]));
 		const service = new TraktSyncService(
 			{
 				integrationEntry: {
 					count: vi.fn(async () => 1),
-					findMany: vi.fn(async (input) => (input.select ? peers : [entry])),
+					findMany,
 				},
 			} as unknown as PrismaService,
 			{} as TraktSyncClient,
@@ -1013,6 +1016,17 @@ it.each([
 				>,
 		);
 		const result = await service.issues("fixture", {});
+		expect(findMany).toHaveBeenLastCalledWith({
+			where: {
+				connectionId: "fixture",
+				kind: { in: ["watch"] },
+				OR: [
+					{ localKey: { in: reverse ? candidateKeys : [] } },
+					{ remoteKey: { in: reverse ? [] : candidateKeys } },
+				],
+			},
+			select: { id: true, localKey: true, remoteKey: true, linked: true },
+		});
 		expect(
 			result.items[0].candidates.map((candidate) => candidate.key),
 		).toEqual(["remote:available"]);

@@ -878,12 +878,39 @@ export abstract class IntegrationSyncService<Credential>
 			]),
 		);
 		const localByKey = new Map(local.map((r) => [r.key, r]));
+		const localCandidateKeys = new Set<string>();
+		const remoteCandidateKeys = new Set<string>();
+		const pageItems = page.items.map((e) => {
+			const l = localByKey.get(e.localKey ?? "") ?? null;
+			const r = mapped.get(e.remoteKey ?? "") ?? null;
+			const source =
+				l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
+			const matches =
+				source && !isListRecord(source) && (!e.linked || (l && !r))
+					? e.linked
+						? remote.filter((v) => mediaKey(v) === mediaKey(source))
+						: candidates(source, l ? remote : local)
+					: [];
+			for (const match of matches)
+				(l ? remoteCandidateKeys : localCandidateKeys).add(match.key);
+			return { e, l, r, matches };
+		});
 		// A snapshot match is not necessarily available: another entry may already
 		// own it. Offer only single-sided entries that resolve(link) can consume.
-		const peers = await this.prisma.integrationEntry.findMany({
-			where: { connectionId: c.id, kind: { in: [...kinds] } },
-			select: { id: true, localKey: true, remoteKey: true, linked: true },
-		});
+		const peers =
+			localCandidateKeys.size || remoteCandidateKeys.size
+				? await this.prisma.integrationEntry.findMany({
+						where: {
+							connectionId: c.id,
+							kind: { in: [...kinds] },
+							OR: [
+								{ localKey: { in: [...localCandidateKeys] } },
+								{ remoteKey: { in: [...remoteCandidateKeys] } },
+							],
+						},
+						select: { id: true, localKey: true, remoteKey: true, linked: true },
+					})
+				: [];
 		const availableLocal = new Map<string, string>();
 		const availableRemote = new Map<string, string>();
 		for (const peer of peers) {
@@ -893,11 +920,7 @@ export abstract class IntegrationSyncService<Credential>
 		}
 		return {
 			...page,
-			items: page.items.map((e) => {
-				const l = localByKey.get(e.localKey ?? "") ?? null;
-				const r = mapped.get(e.remoteKey ?? "") ?? null;
-				const source =
-					l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
+			items: pageItems.map(({ e, l, r, matches }) => {
 				const uncertain = unconfirmedCreate(e);
 				return {
 					recovery: r?.unreadable
@@ -918,20 +941,12 @@ export abstract class IntegrationSyncService<Credential>
 					ignored: e.ignored,
 					opnshelf: display(l, this.name),
 					remote: display(r, this.name),
-					candidates:
-						source && !isListRecord(source) && (!e.linked || (l && !r))
-							? (e.linked
-									? remote.filter((v) => mediaKey(v) === mediaKey(source))
-									: candidates(source, l ? remote : local)
-								).flatMap((v) => {
-									const owner = (l ? availableRemote : availableLocal).get(
-										v.key,
-									);
-									if (!owner || owner === e.id) return [];
-									const item = display(v, this.name);
-									return item ? [item] : [];
-								})
-							: [],
+					candidates: matches.flatMap((v) => {
+						const owner = (l ? availableRemote : availableLocal).get(v.key);
+						if (!owner || owner === e.id) return [];
+						const item = display(v, this.name);
+						return item ? [item] : [];
+					}),
 				};
 			}),
 		};
