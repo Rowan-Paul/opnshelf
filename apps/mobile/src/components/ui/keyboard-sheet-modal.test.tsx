@@ -68,6 +68,20 @@ it("stays open when reopened while the keyboard is hiding", async () => {
 	expect(shown()).toBe(true);
 });
 
+it("waits for its own keyboard when closed again after a reopen", async () => {
+	await act(async () => render(true));
+	const firstHidden = deferDismiss();
+	await act(async () => render(false));
+	await act(async () => render(true));
+	const secondHidden = deferDismiss();
+	await act(async () => render(false));
+	// The first closing's keyboard settles; the second is still hiding.
+	await act(async () => firstHidden());
+	expect(shown()).toBe(true);
+	await act(async () => secondHidden());
+	expect(shown()).toBe(false);
+});
+
 it("releases WebView focus before hiding the keyboard", async () => {
 	const releaseFocus = vi.fn();
 	await act(async () => {

@@ -1,7 +1,7 @@
 import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Pencil, Save, StarOff, X } from "lucide-react";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -10,6 +10,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useAuth } from "#/lib/auth-context";
+import { useDialogOpening } from "#/lib/hooks/useDialogOpening";
 import {
 	useClearRating,
 	useRating,
@@ -125,9 +126,10 @@ export function ReviewDialog({
 		!!settings?.reviewsPublicationUri && settings.blogIntegrationEnabled;
 	const hasBluesky = settings?.blueskyCrossPostEnabled === true;
 
-	const wasPending = useRef(false);
 	const isEditing = !!review;
 	const isPending = createMutation.isPending || updateMutation.isPending;
+
+	const startSave = useDialogOpening(open);
 
 	useEffect(() => {
 		setMounted(true);
@@ -148,33 +150,6 @@ export function ReviewDialog({
 		review?.markdown,
 		review?.mirrorToBlog,
 		review?.spoiler,
-	]);
-
-	useEffect(() => {
-		const succeeded = createMutation.isSuccess || updateMutation.isSuccess;
-		if (wasPending.current && !isPending && succeeded) {
-			onOpenChange(false);
-			onSuccess?.();
-			if (scrollTargetId) {
-				// Defer so the dialog can start closing and the list can render the
-				// new review before we scroll to it.
-				requestAnimationFrame(() => {
-					document
-						.getElementById(scrollTargetId)
-						?.scrollIntoView({ behavior: "smooth", block: "start" });
-				});
-			}
-			createMutation.reset();
-			updateMutation.reset();
-		}
-		wasPending.current = isPending;
-	}, [
-		isPending,
-		createMutation,
-		updateMutation,
-		onOpenChange,
-		onSuccess,
-		scrollTargetId,
 	]);
 
 	const resolvedMediaType =
@@ -224,32 +199,56 @@ export function ReviewDialog({
 		}
 		setError(null);
 
+		// A save that finishes after the dialog closed or reopened leaves it
+		// alone: no closing the newer opening, no scrolling the page.
+		const isCurrent = startSave();
+		const closeOnSuccess = () => {
+			onSuccess?.();
+			if (!isCurrent()) return;
+			onOpenChange(false);
+			if (scrollTargetId) {
+				// Defer so the dialog can start closing and the list can render the
+				// new review before we scroll to it.
+				requestAnimationFrame(() => {
+					document
+						.getElementById(scrollTargetId)
+						?.scrollIntoView({ behavior: "smooth", block: "start" });
+				});
+			}
+		};
+
 		if (isEditing && review) {
-			updateMutation.mutate({
-				path: { reviewId: review.id },
+			updateMutation.mutate(
+				{
+					path: { reviewId: review.id },
+					body: {
+						title: trimmedTitle,
+						markdown: trimmedBody,
+						mirrorToBlog,
+						spoiler,
+					},
+				},
+				{ onSuccess: closeOnSuccess },
+			);
+			return;
+		}
+
+		createMutation.mutate(
+			{
 				body: {
+					mediaType: resolvedMediaType,
+					mediaId,
+					seasonNumber,
+					episodeNumber,
 					title: trimmedTitle,
 					markdown: trimmedBody,
 					mirrorToBlog,
 					spoiler,
+					postToBluesky,
 				},
-			});
-			return;
-		}
-
-		createMutation.mutate({
-			body: {
-				mediaType: resolvedMediaType,
-				mediaId,
-				seasonNumber,
-				episodeNumber,
-				title: trimmedTitle,
-				markdown: trimmedBody,
-				mirrorToBlog,
-				spoiler,
-				postToBluesky,
 			},
-		});
+			{ onSuccess: closeOnSuccess },
+		);
 	};
 
 	const startNewReview = () => {

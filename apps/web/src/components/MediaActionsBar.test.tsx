@@ -85,15 +85,18 @@ it("opens the newest author-filtered review from the header and saves an update"
 		).value,
 	).toBe("Latest");
 	fireEvent.click(screen.getByRole("button", { name: "Save" }));
-	expect(mocks.update).toHaveBeenCalledWith({
-		path: { reviewId: "newest" },
-		body: {
-			title: "Latest",
-			markdown: "Latest body",
-			spoiler: true,
-			mirrorToBlog: false,
+	expect(mocks.update).toHaveBeenCalledWith(
+		{
+			path: { reviewId: "newest" },
+			body: {
+				title: "Latest",
+				markdown: "Latest body",
+				spoiler: true,
+				mirrorToBlog: false,
+			},
 		},
-	});
+		expect.anything(),
+	);
 	expect(mocks.create).not.toHaveBeenCalled();
 });
 

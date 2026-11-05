@@ -41,7 +41,7 @@ describe("AllExceptionsFilter", () => {
 			host,
 		);
 		expect(log).toHaveBeenLastCalledWith(
-			"POST /users/:id/privacy request_id=request-456 -> 409 reason=privacy_account_busy",
+			"POST /users/:id/privacy request_id=request-456 -> 409 code=PRIVACY_ACCOUNT_BUSY",
 		);
 		filter.catch(
 			new HttpException(
@@ -51,7 +51,7 @@ describe("AllExceptionsFilter", () => {
 			host,
 		);
 		expect(log).toHaveBeenLastCalledWith(
-			"POST /users/:id/privacy request_id=request-456 -> 409 reason=privacy_migration_conflict",
+			"POST /users/:id/privacy request_id=request-456 -> 409 code=PRIVACY_MIGRATION_CONFLICT",
 		);
 		filter.catch(
 			new HttpException(

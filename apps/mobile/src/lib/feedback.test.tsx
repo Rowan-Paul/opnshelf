@@ -1,21 +1,27 @@
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { holdKeyboardDismiss, keyboard, step } from "@/test/async-races";
 import { FeedbackProvider, useFeedback } from "./feedback";
 
 const mocks = vi.hoisted(() => ({
 	capture: vi.fn(),
 	mutate: vi.fn(),
 	error: vi.fn(),
+	success: vi.fn(),
 	onSuccess: undefined as (() => void) | undefined,
-	dismissKeyboard: vi.fn(() => Promise.resolve()),
+	onError: undefined as ((error: Error) => void) | undefined,
 }));
 vi.mock("react-native-view-shot", () => ({ captureScreen: mocks.capture }));
 vi.mock("@opnshelf/api", () => ({
 	feedbackControllerCreateFeedbackMutation: () => ({}),
 }));
 vi.mock("@tanstack/react-query", () => ({
-	useMutation: (options: { onSuccess: () => void }) => {
+	useMutation: (options: {
+		onSuccess: () => void;
+		onError: (error: Error) => void;
+	}) => {
 		mocks.onSuccess = options.onSuccess;
+		mocks.onError = options.onError;
 		return { mutate: mocks.mutate, isPending: false };
 	},
 }));
@@ -47,16 +53,14 @@ vi.mock("react-native", () => ({
 vi.mock("@/components/ui/bottom-sheet-modal", () => ({
 	BottomSheetModal: "modal",
 }));
-vi.mock("react-native-keyboard-controller", () => ({
-	KeyboardAvoidingView: "avoiding",
-	KeyboardController: { dismiss: mocks.dismissKeyboard },
-	KeyboardProvider: "keyboard",
-}));
+vi.mock("react-native-keyboard-controller", async () =>
+	(await import("@/test/async-races")).keyboardControllerMock(),
+);
 vi.mock("@/components/ui/button", () => ({ Button: "button" }));
 vi.mock("@/components/ui/text", () => ({ Text: "text" }));
 vi.mock("@/components/ui/text-field", () => ({ TextField: "field" }));
 vi.mock("@/components/ui/toast", () => ({
-	useToast: () => ({ error: mocks.error, success: vi.fn() }),
+	useToast: () => ({ error: mocks.error, success: mocks.success }),
 }));
 vi.mock("@/lib/posthog", () => ({ posthog: null }));
 vi.mock("@/lib/use-tw-style", () => ({ useTwStyle: () => ({}) }));
@@ -197,16 +201,11 @@ it("opens text feedback after a capture timeout and ignores its late result", as
 
 it("hides the keyboard before closing so screens behind keep their height", async () => {
 	await act(async () => open());
-	let keyboardHidden!: () => void;
-	mocks.dismissKeyboard.mockReturnValueOnce(
-		new Promise<void>((done) => {
-			keyboardHidden = done;
-		}),
-	);
+	const keyboardHidden = holdKeyboardDismiss();
 	await act(async () => modal().props.onRequestClose());
-	expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
+	expect(keyboard.dismiss).toHaveBeenCalledOnce();
 	expect(modal().props.visible).toBe(true);
-	await act(async () => keyboardHidden());
+	await act(async () => keyboardHidden.resolve());
 	expect(modal().props.visible).toBe(false);
 });
 
@@ -214,8 +213,55 @@ it("leaves other screens' keyboards alone when a send finishes after closing", a
 	await act(async () => open());
 	await submit();
 	await act(async () => modal().props.onRequestClose());
-	expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
+	expect(keyboard.dismiss).toHaveBeenCalledOnce();
 	await act(async () => mocks.onSuccess?.());
-	expect(mocks.dismissKeyboard).toHaveBeenCalledOnce();
+	expect(keyboard.dismiss).toHaveBeenCalledOnce();
 	expect(modal().props.visible).toBe(false);
+});
+
+it("opens a fresh sheet after a send finished while closed", async () => {
+	await act(async () => open());
+	await submit();
+	await step(() => modal().props.onRequestClose());
+	await step(() => mocks.onSuccess?.());
+	expect(keyboard.dismiss).toHaveBeenCalledOnce();
+	mocks.capture.mockResolvedValue("/9j/fresh");
+	await step(() => open());
+	expect(modal().props.visible).toBe(true);
+	expect(view.root.findByType("field" as never).props.value).toBe("");
+	expect(keyboard.dismiss).toHaveBeenCalledOnce();
+});
+
+it("leaves a reopened sheet alone when the earlier send and keyboard settle late", async () => {
+	await act(async () => open());
+	await submit();
+	const finishEarlierSend = mocks.onSuccess;
+	const keyboardHidden = holdKeyboardDismiss();
+	await step(() => modal().props.onRequestClose());
+	await step(() => open());
+	await step(() =>
+		view.root.findByType("field" as never).props.onChangeText("New draft"),
+	);
+	await step(() => finishEarlierSend?.());
+	await step(() => keyboardHidden.resolve());
+	expect(modal().props.visible).toBe(true);
+	expect(view.root.findByType("field" as never).props.value).toBe("New draft");
+	expect(keyboard.dismiss).toHaveBeenCalledOnce();
+});
+
+it("still reports an earlier send that fails after a newer one succeeded", async () => {
+	await act(async () => open());
+	await submit();
+	const failEarlierSend = mocks.onError;
+	await step(() => modal().props.onRequestClose());
+	await step(() => open());
+	await submit();
+	await step(() => mocks.onSuccess?.());
+	expect(modal().props.visible).toBe(false);
+	// Each send is its own report, so the newer one does not replace it: the
+	// user must hear that the earlier report was lost.
+	await step(() => failEarlierSend?.(new Error("Network")));
+	expect(mocks.error).toHaveBeenCalledWith("Network");
+	expect(modal().props.visible).toBe(false);
+	expect(keyboard.dismiss).toHaveBeenCalledTimes(2);
 });

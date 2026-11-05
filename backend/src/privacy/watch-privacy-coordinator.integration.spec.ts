@@ -5,6 +5,12 @@ import { PrismaClient } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
 import { PrismaWatchMigrationJournal } from "./watch-migration-journal";
 import { WatchPrivacyCoordinator } from "./watch-privacy-coordinator";
+import {
+	deleteFixtureOwner,
+	fixtureOwner,
+	lockWaiters,
+	suiteApplicationName,
+} from "../../test/db-fixtures";
 
 // Opt-in disposable database only; never fall back to the application's URL.
 const url = process.env.WATCH_PRIVACY_TEST_DATABASE_URL;
@@ -22,8 +28,14 @@ describe.skipIf(!url)("durable Watch privacy coordinator", () => {
 	let lockPool: Pool;
 	let locks: WatchAccountLock;
 	let owner: string;
+	const applicationName = suiteApplicationName("watch-privacy-coordinator");
 	beforeAll(() => {
-		db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+		db = new PrismaClient({
+			adapter: new PrismaPg({
+				connectionString: url,
+				application_name: applicationName,
+			}),
+		});
 		lockPool = new Pool({
 			connectionString: url,
 			max: 2,
@@ -34,24 +46,11 @@ describe.skipIf(!url)("durable Watch privacy coordinator", () => {
 		coordinator = new WatchPrivacyCoordinator(db as PrismaService, locks);
 	});
 	beforeEach(async () => {
-		const suffix = crypto.randomUUID();
-		owner = `did:plc:test-${suffix}`;
-		await db.user.create({
-			data: { did: owner, handle: `privacy-${suffix}.test` },
-		});
+		const fixture = fixtureOwner("watch-privacy");
+		owner = fixture.did;
+		await db.user.create({ data: { did: owner, handle: fixture.handle } });
 	});
-	afterEach(async () => {
-		const jobs = await db.backgroundJob.findMany({
-			where: { userDid: owner },
-			select: { id: true },
-		});
-		await db.watchPrivacyCopy.deleteMany({
-			where: { jobId: { in: jobs.map((job) => job.id) } },
-		});
-		await db.watchPrivacyMigration.deleteMany({ where: { userDid: owner } });
-		await db.backgroundJob.deleteMany({ where: { userDid: owner } });
-		await db.user.deleteMany({ where: { did: owner } });
-	});
+	afterEach(() => deleteFixtureOwner(db, owner));
 	afterAll(async () => {
 		await db?.$disconnect();
 		await lockPool?.end();
@@ -286,10 +285,7 @@ describe.skipIf(!url)("durable Watch privacy coordinator", () => {
 		try {
 			let blocked = false;
 			for (let attempt = 0; attempt < 100; attempt++) {
-				const [row] = await db.$queryRaw<
-					{ count: number }[]
-				>`SELECT COUNT(*)::int AS count FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%BackgroundJob%'`;
-				if (row.count > 0) {
+				if ((await lockWaiters(db, applicationName, "%BackgroundJob%")) > 0) {
 					blocked = true;
 					break;
 				}

@@ -9,6 +9,7 @@ import {
 	type OnModuleInit,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import { coded } from "../common/error-codes";
 import { getPaginationMeta } from "../common/pagination";
 import type { BackendEnv } from "../config/env.schema";
 import {
@@ -362,7 +363,9 @@ export abstract class IntegrationSyncService<Credential>
 			});
 			if (!updated.count) lost = true;
 			if (lost)
-				throw new ConflictException("Sync ownership changed. Try again.");
+				throw new ConflictException(
+					coded("SYNC_OWNERSHIP_CHANGED", "Sync ownership changed. Try again."),
+				);
 		};
 		const heartbeat = setInterval(
 			() =>
@@ -445,7 +448,10 @@ export abstract class IntegrationSyncService<Credential>
 	}
 	protected async requireConnection(userDid: string) {
 		const c = await this.current(userDid);
-		if (!c) throw new NotFoundException(`Connect ${this.name} first.`);
+		if (!c)
+			throw new NotFoundException(
+				coded("INTEGRATION_NOT_CONNECTED", `Connect ${this.name} first.`),
+			);
 		return c;
 	}
 	async action(
@@ -872,13 +878,49 @@ export abstract class IntegrationSyncService<Credential>
 			]),
 		);
 		const localByKey = new Map(local.map((r) => [r.key, r]));
+		const localCandidateKeys = new Set<string>();
+		const remoteCandidateKeys = new Set<string>();
+		const pageItems = page.items.map((e) => {
+			const l = localByKey.get(e.localKey ?? "") ?? null;
+			const r = mapped.get(e.remoteKey ?? "") ?? null;
+			const source =
+				l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
+			const matches =
+				source && !isListRecord(source) && (!e.linked || (l && !r))
+					? e.linked
+						? remote.filter((v) => mediaKey(v) === mediaKey(source))
+						: candidates(source, l ? remote : local)
+					: [];
+			for (const match of matches)
+				(l ? remoteCandidateKeys : localCandidateKeys).add(match.key);
+			return { e, l, r, matches };
+		});
+		// A snapshot match is not necessarily available: another entry may already
+		// own it. Offer only single-sided entries that resolve(link) can consume.
+		const peers =
+			localCandidateKeys.size || remoteCandidateKeys.size
+				? await this.prisma.integrationEntry.findMany({
+						where: {
+							connectionId: c.id,
+							kind: { in: [...kinds] },
+							OR: [
+								{ localKey: { in: [...localCandidateKeys] } },
+								{ remoteKey: { in: [...remoteCandidateKeys] } },
+							],
+						},
+						select: { id: true, localKey: true, remoteKey: true, linked: true },
+					})
+				: [];
+		const availableLocal = new Map<string, string>();
+		const availableRemote = new Map<string, string>();
+		for (const peer of peers) {
+			if (peer.linked || (peer.localKey && peer.remoteKey)) continue;
+			if (peer.localKey) availableLocal.set(peer.localKey, peer.id);
+			if (peer.remoteKey) availableRemote.set(peer.remoteKey, peer.id);
+		}
 		return {
 			...page,
-			items: page.items.map((e) => {
-				const l = localByKey.get(e.localKey ?? "") ?? null;
-				const r = mapped.get(e.remoteKey ?? "") ?? null;
-				const source =
-					l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
+			items: pageItems.map(({ e, l, r, matches }) => {
 				const uncertain = unconfirmedCreate(e);
 				return {
 					recovery: r?.unreadable
@@ -899,16 +941,12 @@ export abstract class IntegrationSyncService<Credential>
 					ignored: e.ignored,
 					opnshelf: display(l, this.name),
 					remote: display(r, this.name),
-					candidates:
-						source && !isListRecord(source) && (!e.linked || (l && !r))
-							? (e.linked
-									? remote.filter((v) => mediaKey(v) === mediaKey(source))
-									: candidates(source, l ? remote : local)
-								).flatMap((v) => {
-									const item = display(v, this.name);
-									return item ? [item] : [];
-								})
-							: [],
+					candidates: matches.flatMap((v) => {
+						const owner = (l ? availableRemote : availableLocal).get(v.key);
+						if (!owner || owner === e.id) return [];
+						const item = display(v, this.name);
+						return item ? [item] : [];
+					}),
 				};
 			}),
 		};

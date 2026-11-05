@@ -37,5 +37,7 @@ export default defineConfig({
 		globals: true,
 		environment: "node",
 		include: ["src/**/*.spec.ts"],
+		// Seeds foreign rows when a *_TEST_DATABASE_URL is set; a no-op otherwise.
+		globalSetup: ["test/db-isolation.setup.ts"],
 	},
 });

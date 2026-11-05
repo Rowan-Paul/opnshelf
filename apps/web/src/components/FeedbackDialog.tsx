@@ -8,6 +8,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { useDialogOpening } from "#/lib/hooks/useDialogOpening";
 
 interface FeedbackDialogProps {
 	open: boolean;
@@ -29,16 +30,26 @@ export function FeedbackDialog({
 	const [message, setMessage] = useState("");
 	const [submitted, setSubmitted] = useState(false);
 
+	const startSend = useDialogOpening(open);
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!message.trim()) return;
+		const isCurrent = startSend();
+		const sent = message;
 
 		try {
-			await onSubmit({ category, message: message.trim() });
+			await onSubmit({ category, message: sent.trim() });
+			toast.success("Feedback sent. Thank you!");
+			// A send that finishes after the dialog closed or reopened leaves it
+			// alone, apart from clearing a form that still holds this send.
+			if (!isCurrent()) {
+				setMessage((current) => (current === sent ? "" : current));
+				return;
+			}
 			setSubmitted(true);
 			setMessage("");
 			setCategory("bug");
-			toast.success("Feedback sent. Thank you!");
 		} catch {
 			toast.error("Failed to send feedback. Please try again.");
 		}
