@@ -878,6 +878,19 @@ export abstract class IntegrationSyncService<Credential>
 			]),
 		);
 		const localByKey = new Map(local.map((r) => [r.key, r]));
+		// A snapshot match is not necessarily available: another entry may already
+		// own it. Offer only single-sided entries that resolve(link) can consume.
+		const peers = await this.prisma.integrationEntry.findMany({
+			where: { connectionId: c.id, kind: { in: [...kinds] } },
+			select: { id: true, localKey: true, remoteKey: true, linked: true },
+		});
+		const availableLocal = new Map<string, string>();
+		const availableRemote = new Map<string, string>();
+		for (const peer of peers) {
+			if (peer.linked || (peer.localKey && peer.remoteKey)) continue;
+			if (peer.localKey) availableLocal.set(peer.localKey, peer.id);
+			if (peer.remoteKey) availableRemote.set(peer.remoteKey, peer.id);
+		}
 		return {
 			...page,
 			items: page.items.map((e) => {
@@ -911,6 +924,10 @@ export abstract class IntegrationSyncService<Credential>
 									? remote.filter((v) => mediaKey(v) === mediaKey(source))
 									: candidates(source, l ? remote : local)
 								).flatMap((v) => {
+									const owner = (l ? availableRemote : availableLocal).get(
+										v.key,
+									);
+									if (!owner || owner === e.id) return [];
 									const item = display(v, this.name);
 									return item ? [item] : [];
 								})
