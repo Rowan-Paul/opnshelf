@@ -1,5 +1,3 @@
-import interFont from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
-import jakartaFont from "@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url";
 import type { UserDto } from "@opnshelf/api";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
@@ -12,6 +10,8 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
+import boldFont from "#/assets/fonts/TimelessSans-Bold.woff2?url";
+import regularFont from "#/assets/fonts/TimelessSans-Regular.woff2?url";
 import { AccountDeletionGate } from "#/components/AccountDeletionGate";
 import { MobileAppBanner } from "#/components/MobileAppBanner";
 import { WelcomeTour } from "#/components/tour/WelcomeTour";
@@ -116,9 +116,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
-			// Found only once the stylesheet is parsed otherwise; the Latin
-			// subsets cover nearly every page.
-			...[interFont, jakartaFont].map((href) => ({
+			// Preload the body and heading weights before stylesheet discovery.
+			...[regularFont, boldFont].map((href) => ({
 				rel: "preload",
 				href,
 				as: "font",

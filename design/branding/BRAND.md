@@ -23,7 +23,7 @@ These values align with the existing web and mobile design tokens. On dark surfa
 
 ## Typography
 
-Use **Plus Jakarta Sans Bold** for the wordmark and display headings. Use **Inter** for interface and body copy. The SVG lockup keeps the wordmark as live text so it stays consistent with the product; convert it to outlines before sending artwork to third parties.
+Use **Timeless Sans Bold** for the wordmark and display headings, and **Timeless Sans** Regular to Semibold for interface and body copy. The SVG lockup keeps the wordmark as live text so it stays consistent with the product; convert it to outlines before sending artwork to third parties.
 
 ## Usage
 

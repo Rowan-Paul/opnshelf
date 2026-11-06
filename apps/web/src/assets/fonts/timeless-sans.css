@@ -1,0 +1,63 @@
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-Regular.woff2") format("woff2");
+	font-weight: 420;
+	font-display: swap;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-Medium.woff2") format("woff2");
+	font-weight: 500;
+	font-display: swap;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-Semibold.woff2") format("woff2");
+	font-weight: 600;
+	font-display: swap;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-Bold.woff2") format("woff2");
+	font-weight: 700;
+	font-display: swap;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-RegularItalic.woff2") format("woff2");
+	font-weight: 420;
+	font-display: swap;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-MediumItalic.woff2") format("woff2");
+	font-weight: 500;
+	font-display: swap;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-SemiboldItalic.woff2") format("woff2");
+	font-weight: 600;
+	font-display: swap;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: "Timeless Sans";
+	src: url("./TimelessSans-BoldItalic.woff2") format("woff2");
+	font-weight: 700;
+	font-display: swap;
+	font-style: italic;
+}
