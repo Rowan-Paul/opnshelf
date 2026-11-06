@@ -3,11 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationEmailSection } from "./NotificationEmailSection";
 
 const mocks = vi.hoisted(() => ({
-	settings: {
-		email: "viewer@example.com",
-		emailVerified: true,
-		pushSyncErrors: true,
-	},
+	settings: { email: "viewer@example.com", emailVerified: true },
 	mutateAsync: vi.fn(),
 }));
 vi.mock("@opnshelf/api", () => ({
@@ -25,11 +21,7 @@ vi.mock("@tanstack/react-query", () => ({
 	useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 beforeEach(() => {
-	mocks.settings = {
-		email: "viewer@example.com",
-		emailVerified: true,
-		pushSyncErrors: true,
-	};
+	mocks.settings = { email: "viewer@example.com", emailVerified: true };
 	vi.clearAllMocks();
 });
 
@@ -50,11 +42,7 @@ describe("email setup", () => {
 		expect(
 			screen.getByRole("textbox", { name: "Notification email address" }),
 		).toBeDefined();
-		mocks.settings = {
-			...mocks.settings,
-			emailVerified: true,
-			pushSyncErrors: true,
-		};
+		mocks.settings = { ...mocks.settings, emailVerified: true };
 		rerender(<NotificationEmailSection onboarding />);
 		expect(
 			screen.queryByRole("button", { name: "Send test email" }),
@@ -76,20 +64,13 @@ describe("email setup", () => {
 			screen.queryByRole("button", { name: "Send test email" }),
 		).toBeNull();
 	});
-	it("keeps maintenance options visible in Settings", () => {
+	it("keeps maintenance options visible and mobile categories in the Mobile App", () => {
 		render(<NotificationEmailSection />);
 		expect(
 			screen.getByRole("button", { name: "Send test email" }),
 		).toBeDefined();
-	});
-});
-
-it("saves the dedicated mobile sync preference without changing email", async () => {
-	render(<NotificationEmailSection />);
-	fireEvent.click(
-		screen.getByRole("switch", { name: "Sync errors and disconnections" }),
-	);
-	expect(mocks.mutateAsync).toHaveBeenCalledWith({
-		body: { pushSyncErrors: false },
+		expect(
+			screen.queryByRole("switch", { name: "Sync errors and disconnections" }),
+		).toBeNull();
 	});
 });

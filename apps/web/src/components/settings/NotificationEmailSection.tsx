@@ -295,31 +295,13 @@ export function NotificationEmailSection({
 					</div>
 				</div>
 			)}
-			{!onboarding && settings && (
+			{!onboarding && (
 				<div className="mt-8 space-y-3 border-(--border) border-t pt-6">
 					<h3 className="font-semibold">Mobile notifications</h3>
 					<p className="text-(--foreground-muted) text-sm">
 						Open Settings → Notifications in the Mobile App to enable alerts on
 						your phone and send a test notification.
 					</p>
-					<div className="flex max-w-lg items-center justify-between gap-4">
-						<div>
-							<label htmlFor="pushSyncErrors" className="font-medium text-sm">
-								Sync errors and disconnections
-							</label>
-							<p className="text-(--foreground-muted) text-sm">
-								Mobile alerts for Trakt and Popfeed Sync
-							</p>
-						</div>
-						<Switch
-							id="pushSyncErrors"
-							checked={settings.pushSyncErrors}
-							onCheckedChange={(checked) =>
-								void change("pushSyncErrors", checked)
-							}
-							disabled={pendingKey === "pushSyncErrors"}
-						/>
-					</div>
 					<StoreBadges className="justify-start" />
 				</div>
 			)}
