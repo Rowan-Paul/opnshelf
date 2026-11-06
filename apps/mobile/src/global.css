@@ -50,11 +50,14 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Fonts (theme-agnostic constants). React Native cannot synthesize a weight
-   * for a registered custom font, so `font-bold` on `font-display` silently
-   * renders Medium. Each display weight is its own family, registered in
-   * src/app/_layout.tsx: use `font-display-semibold` / `font-display-bold`. */
+  /* Fonts (theme-agnostic constants). React Native cannot pick a weight inside
+   * a registered custom font, so each weight is its own family, registered in
+   * src/app/_layout.tsx. The Text primitive maps `font-medium|semibold|bold`
+   * to `font-sans-*`; for display text use `font-display-semibold|bold`. */
   --font-sans: 'TimelessSans';
+  --font-sans-medium: 'TimelessSans-Medium';
+  --font-sans-semibold: 'TimelessSans-Semibold';
+  --font-sans-bold: 'TimelessSans-Bold';
   --font-display: 'TimelessSans-Medium';
   --font-display-semibold: 'TimelessSans-Semibold';
   --font-display-bold: 'TimelessSans-Bold';

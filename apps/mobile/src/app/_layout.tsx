@@ -42,16 +42,14 @@ function useScreenTracking() {
 }
 
 export default function RootLayout() {
-	// Static aliases match the font tokens and explicit Markdown styles.
+	// One family per weight: the font tokens in global.css, Markdown and
+	// ProviderButtons reference these names directly.
 	const [fontsLoaded] = useFonts({
 		TimelessSans: require("../../assets/fonts/TimelessSans-Regular.ttf"),
 		"TimelessSans-Italic": require("../../assets/fonts/TimelessSans-RegularItalic.ttf"),
 		"TimelessSans-Medium": require("../../assets/fonts/TimelessSans-Medium.ttf"),
-		"TimelessSans-MediumItalic": require("../../assets/fonts/TimelessSans-MediumItalic.ttf"),
 		"TimelessSans-Semibold": require("../../assets/fonts/TimelessSans-Semibold.ttf"),
-		"TimelessSans-SemiboldItalic": require("../../assets/fonts/TimelessSans-SemiboldItalic.ttf"),
 		"TimelessSans-Bold": require("../../assets/fonts/TimelessSans-Bold.ttf"),
-		"TimelessSans-BoldItalic": require("../../assets/fonts/TimelessSans-BoldItalic.ttf"),
 	});
 
 	useEffect(() => {
