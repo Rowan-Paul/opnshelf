@@ -6,17 +6,16 @@ const list = (
 	name: string,
 	itemCount: number,
 	updatedAt: string,
-): ListSummaryDto =>
-	({
-		id: name,
-		rkey: name,
-		name,
-		slug: name.toLowerCase().replace(/\s+/g, "-"),
-		isDefault: false,
-		itemCount,
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt,
-	}) as ListSummaryDto;
+): ListSummaryDto => ({
+	id: name,
+	rkey: name,
+	name,
+	slug: name.toLowerCase().replace(/\s+/g, "-"),
+	isDefault: false,
+	itemCount,
+	createdAt: "2026-01-01T00:00:00.000Z",
+	updatedAt,
+});
 
 // Mirrors the local data that surfaced the bug: a default-ordered set where
 // every sort moves something.
@@ -68,9 +67,33 @@ describe("sortLists", () => {
 		]);
 	});
 
-	it("does not mutate the array it was given", () => {
-		const original = lists.map((l) => l.name);
-		sortLists(lists, "name");
-		expect(lists.map((l) => l.name)).toEqual(original);
+	it.each<ListsSort>([
+		"default",
+		"updated",
+		"name",
+		"items",
+	])("does not mutate the input when sorting by %s", (sort) => {
+		const input = lists.map((item) => ({ ...item }));
+		const original = structuredClone(input);
+		for (const item of input) Object.freeze(item);
+		Object.freeze(input);
+
+		sortLists(input, sort);
+
+		expect(input).toEqual(original);
+	});
+
+	it("breaks item-count ties by name", () => {
+		const input = [
+			list("Zebra", 3, "2026-03-01T00:00:00.000Z"),
+			list("Alpha", 3, "2026-03-01T00:00:00.000Z"),
+			list("Largest", 5, "2026-03-01T00:00:00.000Z"),
+		];
+
+		expect(sortLists(input, "items").map((item) => item.name)).toEqual([
+			"Largest",
+			"Alpha",
+			"Zebra",
+		]);
 	});
 });
