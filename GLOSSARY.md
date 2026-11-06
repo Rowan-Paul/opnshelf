@@ -23,7 +23,7 @@ An AT Protocol access-control and synchronization boundary. Each author has a se
 
 **Release Notes**:
 Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
-_Avoid_: Notification (reserved for media and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
+_Avoid_: Notification (reserved for media, sync health and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
 
 **Rating**:
 A user's numeric 1–10 score for a specific media item, with no text. Its own first-class entity. Each user has at most one Rating per media item. A Rating can exist with no Review and a Review with no Rating — the two are independent.
@@ -94,7 +94,7 @@ The saved selection of Media Items from a release Notification, presented within
 A saved summary of a User’s dated movie and episode Watches for a completed week, month, or year in their timezone, including rewatches, most-watched titles, and first and last Watches. Email and Mobile App push open the same private recap.
 
 **Notification**:
-An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or a weekly, monthly, or yearly **Watch Recap**. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Each category email includes an unsubscribe link that requires no sign-in and disables only that email category after confirmation. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
+An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or a weekly, monthly, or yearly **Watch Recap**. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Each category email includes an unsubscribe link that requires no sign-in and disables only that email category after confirmation. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly. Registered Mobile App devices also receive push-only sync health Notifications when Trakt Sync or Popfeed Sync has a run error or needs reconnecting. These open the integration, are checked every five minutes, and are deduplicated until the next successful run (with a separate warning if reconnection becomes necessary). Recovery, pause and deliberate disconnect suppress pending sync warnings. OS notification permission controls this operational delivery; media category switches do not apply.
 
 **Shelf**:
 The collection of media items a user has marked as watched or tracked. Its dated

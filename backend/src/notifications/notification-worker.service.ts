@@ -11,6 +11,10 @@ import type {
 } from "./notifications.dto";
 import { sendPushNotification } from "./send-push";
 import {
+	syncErrorNotification,
+	syncErrorSelect,
+} from "./sync-error-notification";
+import {
 	Injectable,
 	Logger,
 	type OnModuleDestroy,
@@ -159,6 +163,8 @@ export class NotificationWorkerService
 				});
 				this.schedulesReconciled = true;
 			}
+			await this.queueSyncErrors();
+			await this.deliverPending();
 			await this.refreshRelevantCatalog();
 			await this.queueDueEvents(new Date());
 			await this.deliverPending();
@@ -169,6 +175,41 @@ export class NotificationWorkerService
 		} finally {
 			this.busy = false;
 		}
+	}
+
+	/** Independent of digest schedules: an unhealthy integration needs attention now. */
+	async queueSyncErrors(): Promise<void> {
+		let cursor: string | undefined;
+		do {
+			const connections = await this.prisma.integrationConnection.findMany({
+				where: {
+					provider: { in: ["trakt", "popfeed"] },
+					OR: [
+						{ status: "reconnect" },
+						{ status: "active", lastError: { not: null } },
+					],
+				},
+				select: syncErrorSelect,
+				orderBy: { id: "asc" },
+				take: 100,
+				...(cursor && { skip: 1, cursor: { id: cursor } }),
+			});
+			for (const connection of connections) {
+				const event = syncErrorNotification(connection);
+				if (!event) continue;
+				const devices = await this.prisma.pushDevice.findMany({
+					where: { userDid: connection.userDid },
+				});
+				for (const device of devices)
+					await this.enqueue(
+						connection.userDid,
+						`push:${device.token}`,
+						"SyncErrors",
+						event,
+					);
+			}
+			cursor = connections.length === 100 ? connections.at(-1)?.id : undefined;
+		} while (cursor);
 	}
 
 	/** Refresh watchlist dates and followed-show season summaries from TMDB. */
@@ -725,7 +766,7 @@ export class NotificationWorkerService
 	private async enqueue(
 		did: string,
 		channel: string,
-		category: Category,
+		category: Category | "SyncErrors",
 		event: Event,
 	): Promise<void> {
 		await this.prisma.notificationDelivery.upsert({
@@ -806,8 +847,19 @@ export class NotificationWorkerService
 					const device = await this.prisma.pushDevice.findUnique({
 						where: { token },
 					});
-					const enabled =
+					let enabled =
 						job.user.notificationSettings?.[`push${job.category as Category}`];
+					if (job.category === "SyncErrors") {
+						const connection =
+							await this.prisma.integrationConnection.findFirst({
+								where: { id: job.eventKey.split(":")[1], userDid: job.userDid },
+								select: syncErrorSelect,
+							});
+						// Recovery, pause and deliberate disconnect cancel queued warnings.
+						enabled =
+							!!connection &&
+							syncErrorNotification(connection)?.key === job.eventKey;
+					}
 					if (enabled && device?.userDid === job.userDid)
 						await sendPushNotification(this.prisma, token, job);
 				}
