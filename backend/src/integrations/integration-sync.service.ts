@@ -97,6 +97,17 @@ const IDLE_RUN_MS = 2 * 60_000;
 // Retrying it on every run forced a full remote read under the lease every
 // few seconds; Retry in Needs attention clears the issue and skips this wait.
 const FAILED_TRANSFER_RETRY_MS = 5 * 60_000;
+/**
+ * Start of the failure episode a new failure belongs to. Every recovery path
+ * clears lastError, so a failure after a healthy state starts a new episode.
+ */
+export const failingSince = (
+	c: Pick<IntegrationConnection, "status" | "lastError" | "failingSince">,
+) =>
+	c.lastError || c.status === "reconnect"
+		? (c.failingSince ?? new Date())
+		: new Date();
+
 const coolingDown = (
 	entry: Pick<
 		IntegrationEntry,
@@ -1223,6 +1234,12 @@ export abstract class IntegrationSyncService<Credential>
 									: undefined,
 						}),
 					);
+					// Re-read: a credential refresh may already have recorded the failure.
+					const failing =
+						await this.prisma.integrationConnection.findUniqueOrThrow({
+							where: { id: c.id },
+							select: { status: true, lastError: true, failingSince: true },
+						});
 					await this.prisma.integrationConnection.update({
 						select: { id: true },
 						where: { id: c.id },
@@ -1234,6 +1251,9 @@ export abstract class IntegrationSyncService<Credential>
 							...(error instanceof IntegrationError && error.status === 401
 								? { status: "reconnect" }
 								: {}),
+							// Every recovery path clears lastError, so a failure after a
+							// healthy state starts a new episode for sync warnings.
+							failingSince: failingSince(failing),
 							nextRunAt: new Date(
 								Date.now() +
 									(error instanceof IntegrationError

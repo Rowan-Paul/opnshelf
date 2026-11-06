@@ -135,6 +135,8 @@ model IntegrationConnection {
   nextRunAt DateTime @default(now())
   lastSuccessAt DateTime?
   lastError String?
+  // Start of the current failure episode; drives sync warning notifications.
+  failingSince DateTime?
   leaseId String?
   leaseUntil DateTime?
   remoteSnapshot Json @default("[]")
@@ -189,6 +191,7 @@ model NotificationSettings {
   pushWatchlistReleases Boolean @default(false)
   pushNewSeasons Boolean @default(false)
   pushStats Boolean @default(false)
+  pushSyncErrors Boolean @default(true)
   pushInitialized Boolean @default(false)
   emailNewReleases Boolean @default(true)
   emailWatchlistReleases Boolean @default(true)

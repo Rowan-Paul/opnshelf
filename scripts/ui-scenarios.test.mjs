@@ -180,3 +180,20 @@ test("watch completion fixture advances only after a Watch and resets", async ()
   assert.equal((await read()).episodesWatched, 1);
  } finally { await new Promise(resolve => server.close(resolve)); }
 });
+
+test("notification fixtures persist the mobile sync preference without changing email", async () => {
+	const server = createScenarioServer("issue-fixes");
+	await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+	const url = `http://127.0.0.1:${server.address().port}/notifications/settings`;
+	try {
+		const initial = await (await fetch(url)).json();
+		assert.equal(initial.pushSyncErrors, true);
+		await fetch(url, {
+			method: "PATCH", headers: { "content-type": "application/json" },
+			body: JSON.stringify({ pushSyncErrors: false, emailVerified: false }),
+		});
+		const saved = await (await fetch(url)).json();
+		assert.equal(saved.pushSyncErrors, false);
+		assert.equal(saved.emailVerified, true);
+	} finally { await new Promise(resolve => server.close(resolve)); }
+});

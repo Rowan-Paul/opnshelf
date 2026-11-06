@@ -79,6 +79,13 @@ export function createScenarioServer(
 		welcomeTourWebVersion: 999,
 		welcomeTourMobileVersion: 999,
 	};
+	const notificationSettings = {
+		...sample(spec.components.schemas.NotificationSettingsDto),
+		email: "fixture@example.com",
+		emailVerified: true,
+		pushDeviceCount: 0,
+		pushSyncErrors: true,
+	};
 	const user = {
 		...sample(spec.components.schemas.UserDto),
 		did: "did:plc:bbbbbbbbbbbbbbbbbbbbbbbb",
@@ -311,14 +318,15 @@ export function createScenarioServer(
 			return;
 		}
 		if (url.pathname === "/notifications/settings") {
-			json({
-				...sample(spec.components.schemas.NotificationSettingsDto),
-				email: "fixture@example.com",
-				emailVerified: true,
-				pushDeviceCount: 0,
-			});
+			if (req.method === "PATCH") {
+				for (const key of Object.keys(spec.components.schemas.UpdateNotificationSettingsDto.properties)) {
+					if (typeof body[key] === "boolean") notificationSettings[key] = body[key];
+				}
+			}
+			json(notificationSettings);
 			return;
 		}
+
 		if (url.pathname === "/trakt-sync/action" && req.method === "POST") {
 			fixtureSyncState = "running";
 			json({}); return;

@@ -1,6 +1,8 @@
+import assert from "node:assert/strict";
 import { mockEnvironment } from "../../test/env";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationWorkerService } from "./notification-worker.service";
+import { syncErrorNotification } from "./sync-error-notification";
 
 describe("NotificationWorkerService", () => {
 	const user = {
@@ -22,11 +24,13 @@ describe("NotificationWorkerService", () => {
 		pushWatchlistReleases: false,
 		pushNewSeasons: false,
 		pushStats: false,
+		pushSyncErrors: true,
 	};
 	const prisma = {
+		integrationConnection: { findMany: vi.fn(), findFirst: vi.fn() },
 		notificationCollection: { upsert: vi.fn() },
 		notificationSettings: { findMany: vi.fn(), updateMany: vi.fn() },
-		pushDevice: { findMany: vi.fn() },
+		pushDevice: { findMany: vi.fn(), findUnique: vi.fn() },
 		notificationDelivery: {
 			upsert: vi.fn(),
 			findMany: vi.fn(),
@@ -56,6 +60,7 @@ describe("NotificationWorkerService", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		prisma.integrationConnection.findMany.mockResolvedValue([]);
 		prisma.notificationCollection.upsert.mockImplementation(({ create }) =>
 			Promise.resolve({ id: "collection-1", ...create }),
 		);
@@ -90,6 +95,204 @@ describe("NotificationWorkerService", () => {
 		shows.discoverPremieresBetween.mockResolvedValue([
 			{ id: 24, name: "A Show" },
 		]);
+	});
+
+	describe("sync health push notifications", () => {
+		const connection = {
+			id: "connection-1",
+			userDid: settings.userDid,
+			provider: "trakt",
+			status: "active",
+			lastError: "Provider unavailable",
+			failingSince: new Date(Date.now() - 20 * 60_000),
+		};
+
+		it("waits out the retry window for errors but not for reconnection", async () => {
+			prisma.pushDevice.findMany.mockResolvedValue([{ token: "device" }]);
+			const recent = { ...connection, failingSince: new Date() };
+			prisma.integrationConnection.findMany.mockResolvedValue([recent]);
+			await worker.queueSyncErrors();
+			expect(prisma.notificationDelivery.upsert).not.toHaveBeenCalled();
+			prisma.integrationConnection.findMany.mockResolvedValue([
+				{ ...recent, status: "reconnect" },
+			]);
+			await worker.queueSyncErrors();
+			expect(prisma.notificationDelivery.upsert).toHaveBeenCalledOnce();
+		});
+
+		it("deduplicates retries, distinguishes reconnection, and resets per failure episode", async () => {
+			const queued = new Map<string, unknown>();
+			prisma.notificationDelivery.upsert.mockImplementation(
+				({ where, create }) => {
+					const key = JSON.stringify(where);
+					if (!queued.has(key)) queued.set(key, create);
+					return Promise.resolve({});
+				},
+			);
+			prisma.pushDevice.findMany.mockResolvedValue([{ token: "device" }]);
+			prisma.integrationConnection.findMany.mockResolvedValue([connection]);
+			await worker.queueSyncErrors();
+			await worker.queueSyncErrors();
+			expect(prisma.pushDevice.findMany).toHaveBeenCalledWith({
+				where: {
+					userDid: connection.userDid,
+					user: { notificationSettings: { is: { pushSyncErrors: true } } },
+				},
+			});
+			expect(queued.size).toBe(1);
+			expect([...queued.values()][0]).toMatchObject({
+				channel: "push:device",
+				category: "SyncErrors",
+				url: "/integrations/trakt",
+				title: "Trakt Sync could not finish",
+			});
+			prisma.integrationConnection.findMany.mockResolvedValue([
+				{ ...connection, status: "reconnect" },
+			]);
+			await worker.queueSyncErrors();
+			expect(queued.size).toBe(2);
+			// A reconnect or successful run clears the error; the next failure
+			// is a new episode even if no run succeeded in between.
+			prisma.integrationConnection.findMany.mockResolvedValue([
+				{ ...connection, failingSince: new Date(Date.now() - 16 * 60_000) },
+			]);
+			await worker.queueSyncErrors();
+			expect(queued.size).toBe(3);
+			expect(email.sendNotification).not.toHaveBeenCalled();
+		});
+
+		it.each(["paused", "disconnected", "active"])(
+			"ignores a %s connection without an error",
+			async (status) => {
+				prisma.integrationConnection.findMany.mockResolvedValue([
+					{ ...connection, status, lastError: null },
+				]);
+				await worker.queueSyncErrors();
+				expect(prisma.notificationDelivery.upsert).not.toHaveBeenCalled();
+			},
+		);
+
+		it("links Popfeed reconnection to Popfeed and requires a registered device", async () => {
+			prisma.integrationConnection.findMany.mockResolvedValue([
+				{
+					...connection,
+					provider: "popfeed",
+					status: "reconnect",
+					lastError: null,
+				},
+			]);
+			await worker.queueSyncErrors();
+			expect(prisma.notificationDelivery.upsert).not.toHaveBeenCalled();
+			prisma.pushDevice.findMany.mockResolvedValue([{ token: "device" }]);
+			await worker.queueSyncErrors();
+			expect(prisma.notificationDelivery.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({
+						title: "Popfeed Sync needs reconnecting",
+						url: "/integrations/popfeed",
+					}),
+				}),
+			);
+		});
+
+		it.each([
+			"active",
+			"paused",
+			"disconnected",
+			"deleted",
+			"recovered",
+			"other-user",
+			"disabled",
+		])(
+			"suppresses queued delivery when the connection is %s",
+			async (state) => {
+				const event = syncErrorNotification(connection);
+				assert(event);
+				prisma.notificationDelivery.findMany.mockResolvedValue([
+					{
+						id: "delivery",
+						userDid: connection.userDid,
+						channel: "push:device",
+						category: "SyncErrors",
+						eventKey: event.key,
+						status: "pending",
+						attempts: 0,
+						nextAttemptAt: new Date(),
+						user: {
+							notificationSettings: {
+								...settings,
+								pushSyncErrors: state !== "disabled",
+							},
+						},
+					},
+				]);
+				prisma.pushDevice.findUnique.mockResolvedValue({
+					userDid: state === "other-user" ? "someone-else" : connection.userDid,
+				});
+				prisma.integrationConnection.findFirst.mockResolvedValue(
+					state === "deleted"
+						? null
+						: {
+								...connection,
+								status: ["paused", "disconnected"].includes(state)
+									? state
+									: "active",
+								lastError: state === "active" ? null : connection.lastError,
+								failingSince:
+									state === "recovered"
+										? new Date(Date.now() - 16 * 60_000)
+										: connection.failingSince,
+							},
+				);
+				const fetch = vi
+					.spyOn(globalThis, "fetch")
+					.mockResolvedValue(
+						new Response(JSON.stringify({ data: { status: "ok" } })),
+					);
+				await worker.deliverPending();
+				expect(fetch).not.toHaveBeenCalled();
+				fetch.mockRestore();
+			},
+		);
+
+		it("delivers operational push without enabling media categories", async () => {
+			const event = syncErrorNotification(connection);
+			assert(event);
+			prisma.notificationDelivery.findMany.mockResolvedValue([
+				{
+					id: "delivery",
+					userDid: connection.userDid,
+					channel: "push:device",
+					category: "SyncErrors",
+					eventKey: event.key,
+					status: "pending",
+					attempts: 0,
+					title: event.title,
+					body: event.body,
+					url: event.path,
+					nextAttemptAt: new Date(),
+					user: { notificationSettings: settings },
+				},
+			]);
+			prisma.pushDevice.findUnique.mockResolvedValue({
+				userDid: connection.userDid,
+			});
+			prisma.integrationConnection.findFirst.mockResolvedValue(connection);
+			const fetch = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(
+					new Response(JSON.stringify({ data: { status: "ok" } })),
+				);
+			await worker.deliverPending();
+			expect(fetch).toHaveBeenCalledWith(
+				"https://exp.host/--/api/v2/push/send",
+				expect.objectContaining({
+					body: expect.stringContaining('"path":"/integrations/trakt"'),
+				}),
+			);
+			expect(email.sendNotification).not.toHaveBeenCalled();
+			fetch.mockRestore();
+		});
 	});
 
 	describe("startup with a schedule saved by an older deployment", () => {

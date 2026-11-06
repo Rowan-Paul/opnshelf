@@ -65,6 +65,7 @@ export class NotificationsService {
 			pushWatchlistReleases: settings.pushWatchlistReleases,
 			pushNewSeasons: settings.pushNewSeasons,
 			pushStats: settings.pushStats,
+			pushSyncErrors: settings.pushSyncErrors,
 			emailNewReleases: settings.emailNewReleases,
 			emailWatchlistReleases: settings.emailWatchlistReleases,
 			emailNewSeasons: settings.emailNewSeasons,
