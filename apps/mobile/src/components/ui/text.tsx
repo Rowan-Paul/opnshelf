@@ -2,7 +2,7 @@ import { Text as RNText, type TextProps } from "react-native";
 import { cn } from "@/lib/cn";
 
 /**
- * Themed text primitive. Defaults to the Inter body font + foreground color;
+ * Themed text primitive. Defaults to the Timeless Sans body font + foreground color;
  * pass `className` to override. Uniwind resolves the font-family token via the
  * `--font-sans` / `--font-display` theme variables in global.css.
  */

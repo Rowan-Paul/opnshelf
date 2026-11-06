@@ -86,14 +86,14 @@ describe("Markdown", () => {
 		expect(
 			textNodes.some(
 				(node) =>
-					node.props.style?.fontFamily === "Inter-Italic" &&
+					node.props.style?.fontFamily === "TimelessSans-Italic" &&
 					flattenInstanceText(node).includes("it"),
 			),
 		).toBe(true);
 		expect(
 			textNodes.filter(
 				(node) =>
-					node.props.style?.fontFamily === "Inter-Bold" &&
+					node.props.style?.fontFamily === "TimelessSans-Bold" &&
 					flattenInstanceText(node).includes("bold"),
 			).length,
 		).toBeGreaterThanOrEqual(2);
@@ -106,7 +106,7 @@ describe("Markdown", () => {
 		expect(
 			renderer.root
 				.findAllByType("text")
-				.some((node) => node.props.style?.fontFamily === "Inter-Italic"),
+				.some((node) => node.props.style?.fontFamily === "TimelessSans-Italic"),
 		).toBe(false);
 	});
 
@@ -166,7 +166,7 @@ describe("Markdown", () => {
 				.findAllByType("text")
 				.some(
 					(node) =>
-						node.props.style?.fontFamily === "PlusJakartaSans-SemiBold" &&
+						node.props.style?.fontFamily === "TimelessSans-Semibold" &&
 						flattenInstanceText(node) === "four",
 				),
 		).toBe(true);

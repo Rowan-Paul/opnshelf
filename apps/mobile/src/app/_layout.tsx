@@ -1,15 +1,5 @@
 import "../global.css";
 
-// Import each weight directly: the package root references every font asset,
-// including weights the app never loads.
-import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
-import { Inter_400Regular_Italic } from "@expo-google-fonts/inter/400Regular_Italic";
-import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
-import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
-import { Inter_700Bold } from "@expo-google-fonts/inter/700Bold";
-import { PlusJakartaSans_500Medium } from "@expo-google-fonts/plus-jakarta-sans/500Medium";
-import { PlusJakartaSans_600SemiBold } from "@expo-google-fonts/plus-jakarta-sans/600SemiBold";
-import { PlusJakartaSans_700Bold } from "@expo-google-fonts/plus-jakarta-sans/700Bold";
 import { useFonts } from "expo-font";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -52,19 +42,16 @@ function useScreenTracking() {
 }
 
 export default function RootLayout() {
-	// Register fonts under the exact family names the design tokens reference
-	// (`--font-sans: 'Inter'`, `--font-display: 'PlusJakartaSans'` in
-	// global.css), plus weighted aliases for explicit use. RN can't synthesize
-	// weights, so each weight is its own family.
+	// Static aliases match the font tokens and explicit Markdown styles.
 	const [fontsLoaded] = useFonts({
-		Inter: Inter_400Regular,
-		"Inter-Italic": Inter_400Regular_Italic,
-		"Inter-Medium": Inter_500Medium,
-		"Inter-SemiBold": Inter_600SemiBold,
-		"Inter-Bold": Inter_700Bold,
-		PlusJakartaSans: PlusJakartaSans_500Medium,
-		"PlusJakartaSans-SemiBold": PlusJakartaSans_600SemiBold,
-		"PlusJakartaSans-Bold": PlusJakartaSans_700Bold,
+		TimelessSans: require("../../assets/fonts/TimelessSans-Regular.ttf"),
+		"TimelessSans-Italic": require("../../assets/fonts/TimelessSans-RegularItalic.ttf"),
+		"TimelessSans-Medium": require("../../assets/fonts/TimelessSans-Medium.ttf"),
+		"TimelessSans-MediumItalic": require("../../assets/fonts/TimelessSans-MediumItalic.ttf"),
+		"TimelessSans-Semibold": require("../../assets/fonts/TimelessSans-Semibold.ttf"),
+		"TimelessSans-SemiboldItalic": require("../../assets/fonts/TimelessSans-SemiboldItalic.ttf"),
+		"TimelessSans-Bold": require("../../assets/fonts/TimelessSans-Bold.ttf"),
+		"TimelessSans-BoldItalic": require("../../assets/fonts/TimelessSans-BoldItalic.ttf"),
 	});
 
 	useEffect(() => {
