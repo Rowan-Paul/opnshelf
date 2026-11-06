@@ -3057,6 +3057,7 @@ export const NotificationSettingsScalarFieldEnum = {
   pushWatchlistReleases: 'pushWatchlistReleases',
   pushNewSeasons: 'pushNewSeasons',
   pushStats: 'pushStats',
+  pushSyncErrors: 'pushSyncErrors',
   pushInitialized: 'pushInitialized',
   emailNewReleases: 'emailNewReleases',
   emailWatchlistReleases: 'emailWatchlistReleases',

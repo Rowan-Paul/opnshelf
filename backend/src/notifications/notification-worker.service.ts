@@ -198,7 +198,10 @@ export class NotificationWorkerService
 				const event = syncErrorNotification(connection);
 				if (!event) continue;
 				const devices = await this.prisma.pushDevice.findMany({
-					where: { userDid: connection.userDid },
+					where: {
+						userDid: connection.userDid,
+						user: { notificationSettings: { is: { pushSyncErrors: true } } },
+					},
 				});
 				for (const device of devices)
 					await this.enqueue(
@@ -857,6 +860,7 @@ export class NotificationWorkerService
 							});
 						// Recovery, pause and deliberate disconnect cancel queued warnings.
 						enabled =
+							!!job.user.notificationSettings?.pushSyncErrors &&
 							!!connection &&
 							syncErrorNotification(connection)?.key === job.eventKey;
 					}

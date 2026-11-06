@@ -28,7 +28,7 @@ const SECTION_COPY = {
 	},
 	notifications: {
 		title: "Notifications",
-		description: "Choose which updates Opnshelf emails you.",
+		description: "Manage email and mobile notifications.",
 	},
 	connections: {
 		title: "Connections",

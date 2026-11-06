@@ -189,6 +189,7 @@ model NotificationSettings {
   pushWatchlistReleases Boolean @default(false)
   pushNewSeasons Boolean @default(false)
   pushStats Boolean @default(false)
+  pushSyncErrors Boolean @default(true)
   pushInitialized Boolean @default(false)
   emailNewReleases Boolean @default(true)
   emailWatchlistReleases Boolean @default(true)

@@ -261,6 +261,22 @@ export function NotificationPreferences({
 						A physical device is required for push notifications.
 					</Text>
 				)}
+				<View className="flex-row items-center justify-between gap-3 border-border border-t pt-3">
+					<View className="flex-1 gap-0.5">
+						<Text className="font-medium text-foreground text-sm">
+							Sync errors and disconnections
+						</Text>
+						<Text className="text-muted-foreground text-xs">
+							Mobile alerts for Trakt and Popfeed Sync
+						</Text>
+					</View>
+					<Switch
+						accessibilityLabel="Sync errors and disconnections"
+						value={settings.pushSyncErrors}
+						onValueChange={(checked) => void change("pushSyncErrors", checked)}
+						disabled={pendingKey === "pushSyncErrors"}
+					/>
+				</View>
 			</View>
 
 			<View className="gap-2">

@@ -12951,6 +12951,9 @@
           "pushStats": {
             "type": "boolean"
           },
+          "pushSyncErrors": {
+            "type": "boolean"
+          },
           "emailNewReleases": {
             "type": "boolean"
           },
@@ -12971,6 +12974,7 @@
           "pushWatchlistReleases",
           "pushNewSeasons",
           "pushStats",
+          "pushSyncErrors",
           "emailNewReleases",
           "emailWatchlistReleases",
           "emailNewSeasons",
@@ -12990,6 +12994,9 @@
             "type": "boolean"
           },
           "pushStats": {
+            "type": "boolean"
+          },
+          "pushSyncErrors": {
             "type": "boolean"
           },
           "emailNewReleases": {

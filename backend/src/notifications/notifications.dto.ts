@@ -22,6 +22,7 @@ export class NotificationSettingsDto {
 	@ApiProperty() pushWatchlistReleases!: boolean;
 	@ApiProperty() pushNewSeasons!: boolean;
 	@ApiProperty() pushStats!: boolean;
+	@ApiProperty() pushSyncErrors!: boolean;
 	@ApiProperty() emailNewReleases!: boolean;
 	@ApiProperty() emailWatchlistReleases!: boolean;
 	@ApiProperty() emailNewSeasons!: boolean;
@@ -36,6 +37,7 @@ export class UpdateNotificationSettingsDto {
 	pushWatchlistReleases?: boolean;
 	@ApiPropertyOptional() @IsOptional() @IsBoolean() pushNewSeasons?: boolean;
 	@ApiPropertyOptional() @IsOptional() @IsBoolean() pushStats?: boolean;
+	@ApiPropertyOptional() @IsOptional() @IsBoolean() pushSyncErrors?: boolean;
 	@ApiPropertyOptional() @IsOptional() @IsBoolean() emailNewReleases?: boolean;
 	@ApiPropertyOptional()
 	@IsOptional()

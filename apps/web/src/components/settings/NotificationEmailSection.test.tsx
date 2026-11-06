@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationEmailSection } from "./NotificationEmailSection";
 
 const mocks = vi.hoisted(() => ({
-	settings: { email: "viewer@example.com", emailVerified: true },
+	settings: {
+		email: "viewer@example.com",
+		emailVerified: true,
+		pushSyncErrors: true,
+	},
 	mutateAsync: vi.fn(),
 }));
 vi.mock("@opnshelf/api", () => ({
@@ -21,7 +25,11 @@ vi.mock("@tanstack/react-query", () => ({
 	useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 beforeEach(() => {
-	mocks.settings = { email: "viewer@example.com", emailVerified: true };
+	mocks.settings = {
+		email: "viewer@example.com",
+		emailVerified: true,
+		pushSyncErrors: true,
+	};
 	vi.clearAllMocks();
 });
 
@@ -42,7 +50,11 @@ describe("email setup", () => {
 		expect(
 			screen.getByRole("textbox", { name: "Notification email address" }),
 		).toBeDefined();
-		mocks.settings = { ...mocks.settings, emailVerified: true };
+		mocks.settings = {
+			...mocks.settings,
+			emailVerified: true,
+			pushSyncErrors: true,
+		};
 		rerender(<NotificationEmailSection onboarding />);
 		expect(
 			screen.queryByRole("button", { name: "Send test email" }),
@@ -69,5 +81,15 @@ describe("email setup", () => {
 		expect(
 			screen.getByRole("button", { name: "Send test email" }),
 		).toBeDefined();
+	});
+});
+
+it("saves the dedicated mobile sync preference without changing email", async () => {
+	render(<NotificationEmailSection />);
+	fireEvent.click(
+		screen.getByRole("switch", { name: "Sync errors and disconnections" }),
+	);
+	expect(mocks.mutateAsync).toHaveBeenCalledWith({
+		body: { pushSyncErrors: false },
 	});
 });

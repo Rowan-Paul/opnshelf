@@ -24,6 +24,7 @@ describe("NotificationWorkerService", () => {
 		pushWatchlistReleases: false,
 		pushNewSeasons: false,
 		pushStats: false,
+		pushSyncErrors: true,
 	};
 	const prisma = {
 		integrationConnection: { findMany: vi.fn(), findFirst: vi.fn() },
@@ -119,6 +120,12 @@ describe("NotificationWorkerService", () => {
 			prisma.integrationConnection.findMany.mockResolvedValue([connection]);
 			await worker.queueSyncErrors();
 			await worker.queueSyncErrors();
+			expect(prisma.pushDevice.findMany).toHaveBeenCalledWith({
+				where: {
+					userDid: connection.userDid,
+					user: { notificationSettings: { is: { pushSyncErrors: true } } },
+				},
+			});
 			expect(queued.size).toBe(1);
 			expect([...queued.values()][0]).toMatchObject({
 				channel: "push:device",
@@ -180,6 +187,7 @@ describe("NotificationWorkerService", () => {
 			"deleted",
 			"recovered",
 			"other-user",
+			"disabled",
 		])(
 			"suppresses queued delivery when the connection is %s",
 			async (state) => {
@@ -195,7 +203,12 @@ describe("NotificationWorkerService", () => {
 						status: "pending",
 						attempts: 0,
 						nextAttemptAt: new Date(),
-						user: { notificationSettings: null },
+						user: {
+							notificationSettings: {
+								...settings,
+								pushSyncErrors: state !== "disabled",
+							},
+						},
 					},
 				]);
 				prisma.pushDevice.findUnique.mockResolvedValue({

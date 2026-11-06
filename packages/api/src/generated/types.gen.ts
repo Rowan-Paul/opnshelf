@@ -2563,6 +2563,7 @@ export type NotificationSettingsDto = {
     pushWatchlistReleases: boolean;
     pushNewSeasons: boolean;
     pushStats: boolean;
+    pushSyncErrors: boolean;
     emailNewReleases: boolean;
     emailWatchlistReleases: boolean;
     emailNewSeasons: boolean;
@@ -2574,6 +2575,7 @@ export type UpdateNotificationSettingsDto = {
     pushWatchlistReleases?: boolean;
     pushNewSeasons?: boolean;
     pushStats?: boolean;
+    pushSyncErrors?: boolean;
     emailNewReleases?: boolean;
     emailWatchlistReleases?: boolean;
     emailNewSeasons?: boolean;
