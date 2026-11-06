@@ -135,6 +135,8 @@ model IntegrationConnection {
   nextRunAt DateTime @default(now())
   lastSuccessAt DateTime?
   lastError String?
+  // Start of the current failure episode; drives sync warning notifications.
+  failingSince DateTime?
   leaseId String?
   leaseUntil DateTime?
   remoteSnapshot Json @default("[]")

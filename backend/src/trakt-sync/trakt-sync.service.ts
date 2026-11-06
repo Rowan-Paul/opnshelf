@@ -15,6 +15,7 @@ import { BackendEnv } from "../config/env.schema";
 import type { IntegrationConnection } from "../generated/client";
 import { isContentRecord } from "../integrations/content-value";
 import {
+	failingSince,
 	IntegrationSyncService,
 	type IntegrationIssuesQuery,
 } from "../integrations/integration-sync.service";
@@ -271,6 +272,9 @@ export class TraktSyncService extends IntegrationSyncService<string> {
 				accessToken: true,
 				refreshToken: true,
 				expiresAt: true,
+				status: true,
+				lastError: true,
+				failingSince: true,
 			},
 		});
 		if (!current.accessToken || !current.refreshToken)
@@ -301,6 +305,7 @@ export class TraktSyncService extends IntegrationSyncService<string> {
 					data: {
 						status: "reconnect",
 						lastError: "Reconnect Trakt to continue syncing.",
+						failingSince: failingSince(current),
 					},
 				});
 				throw new TraktSyncError("Reconnect Trakt to continue syncing.", 401);

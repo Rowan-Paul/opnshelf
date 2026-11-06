@@ -126,6 +126,8 @@ it("saves the dedicated sync preference without changing other categories", asyn
 			node.props.accessibilityLabel === "Sync errors and disconnections",
 	)[0];
 	expect(toggle.props.value).toBe(true);
+	// Like the other push categories, it needs OS permission first.
+	expect(toggle.props.disabled).toBe(true);
 	await act(async () => {
 		await toggle.props.onValueChange(false);
 	});

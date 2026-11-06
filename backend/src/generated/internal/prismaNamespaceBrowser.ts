@@ -182,6 +182,7 @@ export const IntegrationConnectionScalarFieldEnum = {
   nextRunAt: 'nextRunAt',
   lastSuccessAt: 'lastSuccessAt',
   lastError: 'lastError',
+  failingSince: 'failingSince',
   leaseId: 'leaseId',
   leaseUntil: 'leaseUntil',
   remoteSnapshot: 'remoteSnapshot',

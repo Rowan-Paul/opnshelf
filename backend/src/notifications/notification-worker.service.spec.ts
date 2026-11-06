@@ -104,10 +104,23 @@ describe("NotificationWorkerService", () => {
 			provider: "trakt",
 			status: "active",
 			lastError: "Provider unavailable",
-			lastSuccessAt: null,
+			failingSince: new Date(Date.now() - 20 * 60_000),
 		};
 
-		it("deduplicates retries, distinguishes reconnection, and resets after success", async () => {
+		it("waits out the retry window for errors but not for reconnection", async () => {
+			prisma.pushDevice.findMany.mockResolvedValue([{ token: "device" }]);
+			const recent = { ...connection, failingSince: new Date() };
+			prisma.integrationConnection.findMany.mockResolvedValue([recent]);
+			await worker.queueSyncErrors();
+			expect(prisma.notificationDelivery.upsert).not.toHaveBeenCalled();
+			prisma.integrationConnection.findMany.mockResolvedValue([
+				{ ...recent, status: "reconnect" },
+			]);
+			await worker.queueSyncErrors();
+			expect(prisma.notificationDelivery.upsert).toHaveBeenCalledOnce();
+		});
+
+		it("deduplicates retries, distinguishes reconnection, and resets per failure episode", async () => {
 			const queued = new Map<string, unknown>();
 			prisma.notificationDelivery.upsert.mockImplementation(
 				({ where, create }) => {
@@ -138,8 +151,10 @@ describe("NotificationWorkerService", () => {
 			]);
 			await worker.queueSyncErrors();
 			expect(queued.size).toBe(2);
+			// A reconnect or successful run clears the error; the next failure
+			// is a new episode even if no run succeeded in between.
 			prisma.integrationConnection.findMany.mockResolvedValue([
-				{ ...connection, lastSuccessAt: new Date() },
+				{ ...connection, failingSince: new Date(Date.now() - 16 * 60_000) },
 			]);
 			await worker.queueSyncErrors();
 			expect(queued.size).toBe(3);
@@ -223,7 +238,10 @@ describe("NotificationWorkerService", () => {
 									? state
 									: "active",
 								lastError: state === "active" ? null : connection.lastError,
-								lastSuccessAt: state === "recovered" ? new Date() : null,
+								failingSince:
+									state === "recovered"
+										? new Date(Date.now() - 16 * 60_000)
+										: connection.failingSince,
 							},
 				);
 				const fetch = vi

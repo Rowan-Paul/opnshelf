@@ -274,7 +274,7 @@ export function NotificationPreferences({
 						accessibilityLabel="Sync errors and disconnections"
 						value={settings.pushSyncErrors}
 						onValueChange={(checked) => void change("pushSyncErrors", checked)}
-						disabled={pendingKey === "pushSyncErrors"}
+						disabled={!pushGranted || pendingKey === "pushSyncErrors"}
 					/>
 				</View>
 			</View>

@@ -11,8 +11,10 @@ import type {
 } from "./notifications.dto";
 import { sendPushNotification } from "./send-push";
 import {
+	syncErrorConnectionId,
 	syncErrorNotification,
 	syncErrorSelect,
+	syncErrorWhere,
 } from "./sync-error-notification";
 import {
 	Injectable,
@@ -163,6 +165,7 @@ export class NotificationWorkerService
 				});
 				this.schedulesReconciled = true;
 			}
+			// Deliver sync warnings before the slower catalog refresh.
 			await this.queueSyncErrors();
 			await this.deliverPending();
 			await this.refreshRelevantCatalog();
@@ -179,19 +182,14 @@ export class NotificationWorkerService
 
 	/** Independent of digest schedules: an unhealthy integration needs attention now. */
 	async queueSyncErrors(): Promise<void> {
+		const PAGE_SIZE = 100;
 		let cursor: string | undefined;
 		do {
 			const connections = await this.prisma.integrationConnection.findMany({
-				where: {
-					provider: { in: ["trakt", "popfeed"] },
-					OR: [
-						{ status: "reconnect" },
-						{ status: "active", lastError: { not: null } },
-					],
-				},
+				where: syncErrorWhere,
 				select: syncErrorSelect,
 				orderBy: { id: "asc" },
-				take: 100,
+				take: PAGE_SIZE,
 				...(cursor && { skip: 1, cursor: { id: cursor } }),
 			});
 			for (const connection of connections) {
@@ -211,7 +209,8 @@ export class NotificationWorkerService
 						event,
 					);
 			}
-			cursor = connections.length === 100 ? connections.at(-1)?.id : undefined;
+			cursor =
+				connections.length === PAGE_SIZE ? connections.at(-1)?.id : undefined;
 		} while (cursor);
 	}
 
@@ -855,7 +854,10 @@ export class NotificationWorkerService
 					if (job.category === "SyncErrors") {
 						const connection =
 							await this.prisma.integrationConnection.findFirst({
-								where: { id: job.eventKey.split(":")[1], userDid: job.userDid },
+								where: {
+									id: syncErrorConnectionId(job.eventKey),
+									userDid: job.userDid,
+								},
 								select: syncErrorSelect,
 							});
 						// Recovery, pause and deliberate disconnect cancel queued warnings.
