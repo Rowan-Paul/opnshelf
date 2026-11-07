@@ -169,6 +169,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		};
 	}, []);
 
+	const identifiedDid = useRef<string | null>(null);
+	useEffect(() => {
+		if (!user?.did) return;
+		if (identifiedDid.current && identifiedDid.current !== user.did)
+			posthog?.reset();
+		identifiedDid.current = user.did;
+		posthog?.identify(user.did, {
+			$set_once: { first_login_date: new Date().toISOString() },
+		});
+	}, [user?.did]);
+
 	const resetIdentityCache = useCallback(async () => {
 		await queryClient.cancelQueries();
 		queryClient.clear();
@@ -178,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		reauthorizationReturn.current = false;
 		await saveSessionToken(null);
 		posthog?.reset();
+		identifiedDid.current = null;
 		await resetIdentityCache();
 		setHasSessionToken(false);
 	}, [resetIdentityCache]);
@@ -237,12 +249,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				},
 				staleTime: 0,
 			});
-			if (fetchedUser) {
-				posthog?.identify(fetchedUser.did, {
-					$set_once: { first_login_date: new Date().toISOString() },
-				});
-				posthog?.capture("user_logged_in");
-			}
 			return fetchedUser;
 		},
 		[queryClient, resetIdentityCache],
@@ -416,7 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			await saveSessionToken(data.sessionId);
 			isExpiringSession.current = false;
 			setHasSessionToken(true);
-			const fetchedUser = await queryClient.fetchQuery({
+			await queryClient.fetchQuery({
 				queryKey: authControllerMeQueryKey(),
 				queryFn: async () => {
 					const { data } = await authControllerMe({ throwOnError: true });
@@ -424,12 +430,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				},
 				staleTime: 0,
 			});
-			if (fetchedUser) {
-				posthog?.identify(fetchedUser.did, {
-					$set_once: { first_login_date: new Date().toISOString() },
-				});
-				posthog?.capture("user_signed_up", { method: "pds_register" });
-			}
 		},
 		[queryClient, resetIdentityCache],
 	);
@@ -455,6 +455,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 		await saveSessionToken(null);
 		posthog?.reset();
+		identifiedDid.current = null;
 		await resetIdentityCache();
 		setHasSessionToken(false);
 		router.replace("/login");

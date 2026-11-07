@@ -1,3 +1,4 @@
+import { ProductAnalyticsInterceptor } from "./analytics/product-analytics.interceptor";
 import { WatchPrivacyModule } from "./privacy/watch-privacy.module";
 import { FeaturedModule } from "./featured/featured.module";
 import { WatchPickerModule } from "./watch-picker/watch-picker.module";
@@ -5,7 +6,7 @@ import { Module } from "@nestjs/common";
 import { EnvModule } from "./config/env.module";
 import { StreamingServicesModule } from "./streaming-services/streaming-services.module";
 import { TmdbCacheModule } from "./tmdb/tmdb-cache.module";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { SessionThrottlerGuard } from "./common/session-throttler.guard";
 import { AuthModule } from "./auth/auth.module";
@@ -72,6 +73,7 @@ import { PopfeedSyncModule } from "./popfeed-sync/popfeed-sync.module";
 		WatchPickerModule,
 	],
 	providers: [
+		{ provide: APP_INTERCEPTOR, useClass: ProductAnalyticsInterceptor },
 		// Must run before route handlers so an operator can freeze every unsafe
 		// request before a PDS database/blob cutover. See PdsMaintenanceGuard.
 		{

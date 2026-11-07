@@ -1,3 +1,4 @@
+import { captureProductEvent } from "../analytics/capture";
 import { Agent } from "@atproto/api";
 import { randomUUID } from "node:crypto";
 import {
@@ -523,7 +524,11 @@ export class AuthService {
 			avatar: string | null;
 		},
 		timezone?: string,
-		opts?: { emailVerified?: boolean; isNativePds?: boolean },
+		opts?: {
+			emailVerified?: boolean;
+			isNativePds?: boolean;
+			signupMethod?: "password" | "google" | "apple" | "oauth";
+		},
 	) {
 		const existingUser = await this.prisma.user.findUnique({
 			where: { did: profile.did },
@@ -582,6 +587,16 @@ export class AuthService {
 					isNativePds,
 				},
 			});
+			if (!existingUser)
+				captureProductEvent(
+					this.configService,
+					profile.did,
+					"account_created",
+					{
+						method: opts?.signupMethod ?? "oauth",
+					},
+					`account_created:${profile.did}`,
+				);
 			return {
 				user,
 				isNewUser: !existingUser,
@@ -634,6 +649,16 @@ export class AuthService {
 					},
 				});
 			});
+			if (!existingUser)
+				captureProductEvent(
+					this.configService,
+					profile.did,
+					"account_created",
+					{
+						method: opts?.signupMethod ?? "oauth",
+					},
+					`account_created:${profile.did}`,
+				);
 			return {
 				user,
 				isNewUser: !existingUser,

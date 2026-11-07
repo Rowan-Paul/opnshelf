@@ -143,6 +143,8 @@ Notes:
 | Variable | Requirement | Purpose |
 | --- | --- | --- |
 | `NODE_ENV` | Defaulted | Runtime mode; defaults to development. |
+| `POSTHOG_KEY` | Optional | Optional PostHog project capture key; only the production API sends events. |
+| `POSTHOG_HOST` | Optional | PostHog ingestion origin; defaults to EU (https://eu.i.posthog.com). |
 | `PORT` | Defaulted | HTTP listening port; defaults to 3001. |
 | `HOST` | Defaulted | HTTP bind address; defaults to 0.0.0.0. Use 127.0.0.1 for a local-only server. |
 | `DATABASE_URL` | Required in production | PostgreSQL connection string. |

@@ -284,7 +284,7 @@ export function useReview(target: ReviewTarget) {
 			posthog?.capture("review_published", {
 				media_type: resolvedMediaType,
 				spoiler: !!spoiler,
-				mirrored_to_blog: !!mirrorToBlog,
+				mirror_requested: !!mirrorToBlog,
 				shared_to_bluesky: created.blueskyCrossPost.status === "posted",
 			});
 			void Haptics.notificationAsync(

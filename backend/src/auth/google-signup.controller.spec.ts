@@ -296,7 +296,7 @@ describe("GoogleSignupController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				expect.objectContaining({ did: account.did }),
 				"Europe/Amsterdam",
-				{ isNativePds: true, emailVerified: true },
+				{ isNativePds: true, emailVerified: true, signupMethod: "google" },
 			);
 			expect(result).toEqual({
 				did: account.did,

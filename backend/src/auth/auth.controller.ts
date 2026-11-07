@@ -1,3 +1,4 @@
+import { captureProductEvent } from "../analytics/capture";
 import { rebaseAvatarUrl } from "../users/avatar-url";
 import {
 	BadRequestException,
@@ -378,6 +379,24 @@ export class AuthController {
 					statePayload.requestedPreferences,
 				);
 			}
+
+			if (!statePayload.permissionChange)
+				captureProductEvent(
+					this.configService,
+					session.did,
+					"user_logged_in",
+					{},
+					`login:${sessionId}`,
+				);
+			else
+				captureProductEvent(
+					this.configService,
+					session.did,
+					"integration_permission_changed",
+					{
+						integration: statePayload.permissionChange,
+					},
+				);
 
 			// Clear timezone cookie after use
 			if (timezone) {

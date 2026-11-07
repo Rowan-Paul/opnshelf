@@ -1,3 +1,4 @@
+import { captureProductEvent } from "../analytics/capture";
 import { Agent } from "@atproto/api";
 import { IdResolver, MemoryCache } from "@atproto/identity";
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
@@ -176,6 +177,10 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 					where: { id: existing.id },
 					data: { status: "paused", username: user.handle, lastError: null },
 				});
+			});
+		if (!existing || existing.status === "disconnected")
+			captureProductEvent(this.config, userDid, "integration_connected", {
+				provider: this.provider,
 			});
 		return this.status(userDid);
 	}

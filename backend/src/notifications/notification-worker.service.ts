@@ -1,3 +1,4 @@
+import { captureProductEvent } from "../analytics/capture";
 import { unsubscribeUrl } from "./notification-unsubscribe";
 import { buildWatchRecap } from "./watch-recap";
 import {
@@ -821,6 +822,7 @@ export class NotificationWorkerService
 				},
 			});
 			if (!claimed.count) continue;
+			let accepted = false;
 			try {
 				if (job.channel === "email") {
 					const settings = job.user.notificationSettings;
@@ -843,6 +845,7 @@ export class NotificationWorkerService
 								baseUrl: this.config.FRONTEND_URL || "https://opnshelf.xyz",
 							}),
 						});
+						accepted = true;
 					}
 				} else if (job.channel.startsWith("push:")) {
 					const token = job.channel.slice(5);
@@ -867,12 +870,23 @@ export class NotificationWorkerService
 							syncErrorNotification(connection)?.key === job.eventKey;
 					}
 					if (enabled && device?.userDid === job.userDid)
-						await sendPushNotification(this.prisma, token, job);
+						accepted = await sendPushNotification(this.prisma, token, job);
 				}
 				await this.prisma.notificationDelivery.update({
 					where: { id: job.id },
 					data: { status: "sent", sentAt: new Date() },
 				});
+				captureProductEvent(
+					this.config,
+					job.userDid,
+					"notification_delivery_processed",
+					{
+						channel: job.channel === "email" ? "email" : "push",
+						category: job.category,
+						outcome: accepted ? "accepted" : "skipped",
+					},
+					`notification:${job.id}`,
+				);
 			} catch (error) {
 				const attempts = job.attempts + 1;
 				await this.prisma.notificationDelivery.update({
@@ -884,6 +898,17 @@ export class NotificationWorkerService
 						),
 					},
 				});
+				if (attempts >= MAX_ATTEMPTS)
+					captureProductEvent(
+						this.config,
+						job.userDid,
+						"notification_delivery_failed",
+						{
+							channel: job.channel === "email" ? "email" : "push",
+							category: job.category,
+						},
+						`notification_failed:${job.id}`,
+					);
 				this.logger.warn(`Notification ${job.id} failed: ${String(error)}`);
 			}
 		}

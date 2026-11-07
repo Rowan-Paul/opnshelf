@@ -9,6 +9,7 @@ import {
 	socialControllerSearchPeopleOptions,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
+import { useSearchAnalytics } from "@opnshelf/api/analytics-react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -167,6 +168,8 @@ export default function SearchCommandDialog({
 		data: searchData,
 		isLoading: isSearching,
 		isError: isSearchError,
+		isPlaceholderData: isSearchPlaceholder,
+		isFetching: isSearchFetching,
 	} = useQuery({
 		...searchControllerSearchAllOptions({
 			query: { query: debouncedQuery },
@@ -175,15 +178,15 @@ export default function SearchCommandDialog({
 		placeholderData: keepPreviousData,
 	});
 
-	useEffect(() => {
-		if (!debouncedQuery || !searchData) return;
-		posthog.capture("search_performed", {
-			surface: "command",
-			tab: "all",
-			query_length: debouncedQuery.length,
-			result_count: searchData.items?.length ?? 0,
-		});
-	}, [debouncedQuery, searchData]);
+	useSearchAnalytics({
+		query: debouncedQuery,
+		tab: "all",
+		surface: "command",
+		enabled: isOpen,
+		ready: !!searchData && !isSearchPlaceholder && !isSearchFetching,
+		resultCount: searchData?.items.length ?? 0,
+		capture: posthog.capture,
+	});
 
 	const { data: userLists } = useQuery({
 		...listsControllerGetUserListsOptions(),

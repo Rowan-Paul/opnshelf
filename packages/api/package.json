@@ -9,7 +9,8 @@
       "require": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./release-notes-react": "./src/use-release-notes.ts"
+    "./release-notes-react": "./src/use-release-notes.ts",
+    "./analytics-react": "./src/use-search-analytics.ts"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.13.1",

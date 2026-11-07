@@ -53,6 +53,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "#/components/ui/dialog";
+import { posthog } from "#/integrations/posthog/provider";
 import { ONBOARDING_INTEGRATION } from "#/lib/onboarding-steps";
 
 function displayValue(value: string) {
@@ -91,6 +92,10 @@ export function IntegrationSyncManager({
 		mutationKey: [...rootKey, "connect"],
 		mutationFn: integration.api.connect,
 		onSuccess: (data) => {
+			posthog.capture("integration_connection_requested", {
+				provider: id,
+				platform: "web",
+			});
 			if (data.url) window.location.assign(data.url);
 			else void refresh();
 		},
@@ -99,7 +104,14 @@ export function IntegrationSyncManager({
 		mutationKey: [...rootKey, "action"],
 		mutationFn: (name: SyncActionDto["action"]) => integration.api.action(name),
 		...integrationSyncBusyRetry,
-		onSuccess: refresh,
+		onSuccess: (_data, action) => {
+			posthog.capture("integration_action_completed", {
+				provider: id,
+				platform: "web",
+				action,
+			});
+			return refresh();
+		},
 	});
 	const [disconnect, setDisconnect] = useState(false);
 	const [editing, setEditing] = useState(false);
@@ -469,7 +481,16 @@ export function SyncSettings({
 		mutationKey: [...integrationKey(integration), "configure"],
 		mutationFn: integration.api.configure,
 		...integrationSyncBusyRetry,
-		onSuccess: () => {
+		onSuccess: (_data, settings) => {
+			posthog.capture("integration_settings_saved", {
+				provider: integration.id,
+				platform: "web",
+				direction: settings.direction,
+				history_scope: settings.historyScope,
+				record_types: integrationRecords(integration)
+					.filter(({ value }) => settings[value])
+					.map(({ value }) => value),
+			});
 			setReviewing(false);
 			onSaved();
 		},
@@ -954,7 +975,14 @@ function SyncIssue({
 		mutationFn: (body: IntegrationResolveDto) =>
 			integration.api.resolve(item.id, body),
 		...integrationSyncBusyRetry,
-		onSuccess: () => {
+		onSuccess: (_data, choice) => {
+			posthog.capture("integration_issue_action_completed", {
+				provider: integration.id,
+				platform: "web",
+				action: choice.action,
+				record_type: item.kind,
+				all_ratings: choice.allRatings ?? false,
+			});
 			setChoice(null);
 			void client.invalidateQueries({ queryKey: rootKey });
 		},

@@ -1,3 +1,5 @@
+import { captureProductEvent } from "../analytics/capture";
+import { BackendEnv } from "../config/env.schema";
 import type { Agent } from "@atproto/api";
 import { Injectable, Logger } from "@nestjs/common";
 import { main as markdownDef } from "../lexicons/at/markpub/markdown.defs";
@@ -284,6 +286,7 @@ export class BlogMirrorService {
 	constructor(
 		private prisma: PrismaService,
 		private reviewMedia: ReviewMediaService,
+		private readonly config: BackendEnv,
 	) {}
 
 	/**
@@ -451,11 +454,13 @@ export class BlogMirrorService {
 				await this.deleteArticlePointer(userDid, agent, review.rkey);
 			}
 
+			captureProductEvent(this.config, userDid, "blog_mirror_synced");
 			return {
 				blogDocumentUri: response.data.uri,
 				blogDocumentCid: response.data.cid,
 			};
 		} catch (err) {
+			captureProductEvent(this.config, userDid, "blog_mirror_sync_failed");
 			this.logger.warn(
 				`Blog mirror sync failed for review ${review.rkey}`,
 				err instanceof Error ? err.stack : undefined,

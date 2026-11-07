@@ -828,9 +828,10 @@ describe("AuthProvider", () => {
 
 		expect(mocks.saveSessionToken).toHaveBeenCalledWith("registered-b-session");
 		expect(harness.queryClient.getQueryData(["auth", "me"])).toEqual(nextUser);
-		expect(mocks.posthogCapture).toHaveBeenCalledWith("user_signed_up", {
-			method: "pds_register",
-		});
+		expect(mocks.posthogCapture).not.toHaveBeenCalledWith(
+			"user_signed_up",
+			expect.anything(),
+		);
 
 		harness.unmount();
 	});

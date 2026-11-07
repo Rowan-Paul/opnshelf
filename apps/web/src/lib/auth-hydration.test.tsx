@@ -29,7 +29,7 @@ vi.mock("@opnshelf/api", () => ({
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
 vi.mock("#/env", () => ({ env: { VITE_API_URL: "https://api.example.test" } }));
 vi.mock("#/integrations/posthog/provider", () => ({
-	posthog: { reset: vi.fn() },
+	posthog: { reset: vi.fn(), identify: vi.fn() },
 }));
 const hint = vi.hoisted(() => ({ present: true, remember: vi.fn() }));
 vi.mock("./session-hint", () => ({
