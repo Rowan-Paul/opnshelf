@@ -1,6 +1,8 @@
+import { Logger } from "@nestjs/common";
 import { createHash } from "node:crypto";
 import type { BackendEnv } from "../config/env.schema";
 
+const logger = new Logger("ProductAnalytics");
 let pending = 0;
 const MAX_PENDING = 64;
 
@@ -22,10 +24,11 @@ export function captureProductEvent(
 	event: string,
 	properties: Properties = {},
 	identity?: string,
+	occurredAt: Date = new Date(),
 ): void {
 	if (!isProductAnalyticsEnabled(env) || pending >= MAX_PENDING) return;
 	pending++;
-	// The event UUID makes repeated first-account observations idempotent at ingestion.
+	// Deduplication also needs a stable timestamp; callers pass the persisted event time.
 	const hash = identity
 		? createHash("sha256").update(identity).digest("hex")
 		: null;
@@ -42,7 +45,7 @@ export function captureProductEvent(
 				event,
 				distinct_id: did,
 				uuid,
-				timestamp: new Date().toISOString(),
+				timestamp: occurredAt.toISOString(),
 				properties: {
 					...properties,
 					platform: "backend",
@@ -53,9 +56,11 @@ export function captureProductEvent(
 		},
 	)
 		.then(async (response) => {
+			if (!response.ok)
+				logger.warn(`PostHog capture rejected with HTTP ${response.status}`);
 			await response.body?.cancel();
 		})
-		.catch(() => undefined)
+		.catch(() => logger.warn("PostHog capture failed: network or timeout"))
 		.finally(() => {
 			pending--;
 		});

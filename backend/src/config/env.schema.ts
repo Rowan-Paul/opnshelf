@@ -25,6 +25,21 @@ export const envSchema = z.object({
 			"Optional PostHog project capture key; only the production API sends events.",
 		),
 	POSTHOG_HOST: httpUrl
+		.refine((value) => {
+			let url: URL;
+			try {
+				url = new URL(value);
+			} catch {
+				return false;
+			}
+			return (
+				url.pathname === "/" &&
+				!value.includes("?") &&
+				!value.includes("#") &&
+				!url.username &&
+				!url.password
+			);
+		})
 		.optional()
 		.describe(
 			"PostHog ingestion origin; defaults to EU (https://eu.i.posthog.com).",

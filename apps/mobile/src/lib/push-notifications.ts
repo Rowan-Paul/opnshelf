@@ -10,6 +10,14 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { posthog } from "./posthog";
 
+const NOTIFICATION_SURFACES = [
+	"movies",
+	"shows",
+	"notifications",
+	"integrations",
+	"trakt-sync",
+];
+
 const REGISTERED_TOKEN_KEY = "opnshelf_registered_push_token";
 let activeUserDid: string | null = null;
 let generation = 0;
@@ -161,13 +169,7 @@ export function openPushResponse(
 	) {
 		const section = path.split("/")[1]?.split(/[?#]/)[0];
 		posthog?.capture("notification_opened", {
-			surface: [
-				"movies",
-				"shows",
-				"notifications",
-				"integrations",
-				"trakt-sync",
-			].includes(section ?? "")
+			surface: NOTIFICATION_SURFACES.includes(section ?? "")
 				? section
 				: "other",
 		});

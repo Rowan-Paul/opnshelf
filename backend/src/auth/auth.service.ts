@@ -596,6 +596,7 @@ export class AuthService {
 						method: opts?.signupMethod ?? "oauth",
 					},
 					`account_created:${profile.did}`,
+					user.createdAt,
 				);
 			return {
 				user,
@@ -658,6 +659,7 @@ export class AuthService {
 						method: opts?.signupMethod ?? "oauth",
 					},
 					`account_created:${profile.did}`,
+					user.createdAt,
 				);
 			return {
 				user,

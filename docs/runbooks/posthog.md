@@ -19,7 +19,8 @@ or app-version change is needed; Mobile release route is an approved OTA update.
 
 Backend capture uses the documented [HTTP event endpoint](https://posthog.com/docs/api/capture#single-event),
 with a three-second timeout and at most 64 concurrent requests. Events are best-effort:
-a failed capture never retries or fails a business operation, and process termination
+a failed capture logs only a sanitized HTTP status or network/timeout category, never
+retries or fails a business operation, and process termination
 can lose in-flight events. There is no durable analytics outbox. This is product
 telemetry, not an audit ledger or financial count.
 
@@ -34,14 +35,14 @@ allowlist and copies only categorical values. Add tests when extending that list
 
 | Event | Owner | Meaning and useful properties |
 | --- | --- | --- |
-| `account_created` | Backend AuthService | First local account creation; `method=password|google|apple|oauth`. Stable event UUID guards duplicate observations. Replaces client `user_signed_up`. |
+| `account_created` | Backend AuthService | First local account creation; `method` is `password`, `google`, `apple` or `oauth`. A stable event UUID and persisted creation timestamp guard duplicate observations. Replaces client `user_signed_up`. |
 | `user_logged_in` | Backend OAuth callback | Successful sign-in, excluding permission replacement. Stable session event UUID. Counts completed OAuth sessions, not restored sessions or bootstrap registration. |
 | `integration_permission_changed` | Backend OAuth callback | An authorized permission replacement completed; categorical `integration`. |
 | `integration_connection_requested` | Clients | Connection request accepted; `provider`. OAuth can still be cancelled or fail. |
 | `integration_connected` | Backend adapters | Credentials/connection successfully saved. |
 | `integration_connection_failed` | Backend Trakt callback | Cancellation or failure after owner recovery from state; fixed `reason`/`stage`, no raw error. Invalid unreadable state has no attributable User event. |
 | `integration_settings_saved` | Clients | API accepted settings; `provider`, `direction`, `history_scope`, `record_types`. |
-| `integration_action_completed` | Clients | API accepted `action=sync|pause|resume|disconnect`; does not assert a finished run. |
+| `integration_action_completed` | Clients | API accepted an action: `sync`, `pause`, `resume` or `disconnect`; does not assert a finished run. |
 | `integration_issue_action_completed` | Clients | API accepted a choice/retry; `provider`, `action`, `record_type`, `all_ratings`. Does not assert successful retry. |
 | `integration_sync_prepared` | Backend core | Initial comparison persisted, before transfer batches. |
 | `integration_sync_completed` | Backend core | Meaningful completed batch: transfers, backlog, attention change or recovery. `transferred_count`, `remaining_count`, `needs_attention_count`, `duration_ms`, `direction`, `caught_up`. Idle healthy checks are excluded. |
@@ -55,7 +56,7 @@ allowlist and copies only categorical values. Add tests when extending that list
 | `notification_permission_responded` | Mobile | OS permission prompt result; `granted`. |
 | `notification_device_registered`, `notification_device_removed` | Backend HTTP success | Device registration/removal accepted; no token. Registration includes token refresh. |
 | `notification_preference_changed` | Backend HTTP success | Categorical `setting`, boolean `enabled`. |
-| `notification_delivery_processed` | Backend worker | `channel=email|push`, `category`, `outcome=accepted|skipped`. Accepted means handed to the provider, not delivered to a human. |
+| `notification_delivery_processed` | Backend worker | `channel` is `email` or `push`, `category`, `outcome` is `accepted` or `skipped`. Accepted means handed to the provider, not delivered to a human. |
 | `notification_delivery_failed` | Backend worker | Terminal retry exhaustion; channel/category only. |
 | `notification_opened` | Mobile bridge | Valid internal Notification destination opened; allowlisted section only. |
 | `release_notes_read` | Backend HTTP success | Read acknowledgement persisted after history was shown; not every history visit. |
@@ -67,7 +68,9 @@ allowlist and copies only categorical values. Add tests when extending that list
 ## Identity and privacy
 
 Both clients identify the verified current User when a persisted session is restored,
-without reporting another login. Switching between known DIDs resets the SDK identity;
+without reporting another login or setting a client-clock `first_login_date`;
+account creation time comes from the Backend event timestamp. Switching between
+known DIDs resets the SDK identity;
 logout/expiry resets it too. Auth callbacks no longer manufacture signup events from
 `needsOnboarding`, and permission callbacks do not count as new sign-ins.
 
@@ -110,7 +113,7 @@ an empty new series with zero real product activity before capture is enabled.
 - `pnpm typecheck` and `pnpm check` passed; existing lint warnings remain.
 - `pnpm --filter web run test`: 657 passed, one skipped.
 - `pnpm --filter mobile run test`: 652 passed, one skipped.
-- `pnpm --filter backend run test`: 1457 passed, 132 skipped. The skipped groups
+- `pnpm --filter backend run test`: 1470 passed, 132 skipped. The skipped groups
   include local-database integration suites; no shared database was used.
 - `pnpm --filter backend run build` passed, including Prisma and lexicon generation.
 - `pnpm generate:api` completed with no OpenAPI/generated-client changes;

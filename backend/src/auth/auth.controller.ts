@@ -380,24 +380,6 @@ export class AuthController {
 				);
 			}
 
-			if (!statePayload.permissionChange)
-				captureProductEvent(
-					this.configService,
-					session.did,
-					"user_logged_in",
-					{},
-					`login:${sessionId}`,
-				);
-			else
-				captureProductEvent(
-					this.configService,
-					session.did,
-					"integration_permission_changed",
-					{
-						integration: statePayload.permissionChange,
-					},
-				);
-
 			// Clear timezone cookie after use
 			if (timezone) {
 				res.clearCookie(TIMEZONE_COOKIE_NAME);
@@ -480,6 +462,24 @@ export class AuthController {
 								: undefined,
 						)
 					: new URL(`/auth/complete${permissionQuery}`, frontendUrl).toString();
+
+			if (!statePayload.permissionChange)
+				captureProductEvent(
+					this.configService,
+					session.did,
+					"user_logged_in",
+					{},
+					`login:${sessionId}`,
+				);
+			else
+				captureProductEvent(
+					this.configService,
+					session.did,
+					"integration_permission_changed",
+					{
+						integration: statePayload.permissionChange,
+					},
+				);
 
 			return res.redirect(completeUrl);
 		} catch (error) {

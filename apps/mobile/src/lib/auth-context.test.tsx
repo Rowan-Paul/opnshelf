@@ -799,9 +799,7 @@ describe("AuthProvider", () => {
 
 		expect(mocks.saveSessionToken).toHaveBeenCalledWith("account-b-session");
 		expect(harness.queryClient.getQueryData(["auth", "me"])).toEqual(nextUser);
-		expect(mocks.posthogIdentify).toHaveBeenCalledWith(nextUser.did, {
-			$set_once: { first_login_date: expect.any(String) },
-		});
+		expect(mocks.posthogIdentify).toHaveBeenCalledWith(nextUser.did);
 		// Offered on the login screen once this session ends.
 		expect(mocks.rememberAccount).toHaveBeenCalledWith(nextUser);
 

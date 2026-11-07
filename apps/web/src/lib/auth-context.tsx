@@ -89,9 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		if (identifiedDid.current && identifiedDid.current !== user.did)
 			posthog.reset();
 		identifiedDid.current = user.did;
-		posthog.identify(user.did, {
-			$set_once: { first_login_date: new Date().toISOString() },
-		});
+		posthog.identify(user.did);
 	}, [user?.did]);
 
 	// Offer this account on the login page once its session ends.

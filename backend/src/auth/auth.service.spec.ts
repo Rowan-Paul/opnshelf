@@ -182,7 +182,11 @@ describe("AuthService", () => {
 			mockPrismaService.user.findUnique
 				.mockResolvedValueOnce(null)
 				.mockResolvedValueOnce({ ...profile, emailVerifiedAt: null });
-			mockPrismaService.user.upsert.mockResolvedValue(profile);
+			const createdAt = new Date("2026-10-01T12:00:00.000Z");
+			mockPrismaService.user.upsert.mockResolvedValue({
+				...profile,
+				createdAt,
+			});
 			await service.upsertUser(profile, undefined, { signupMethod: method });
 			await service.upsertUser(profile, undefined, { signupMethod: method });
 			expect(captureProductEvent).toHaveBeenCalledTimes(1);
@@ -192,6 +196,7 @@ describe("AuthService", () => {
 				"account_created",
 				{ method },
 				`account_created:${profile.did}`,
+				createdAt,
 			);
 		},
 	);

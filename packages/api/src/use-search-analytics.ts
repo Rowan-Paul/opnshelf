@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 
 /** One completed first-page search per query/tab visit. Query text stays local. */
 export function useSearchAnalytics({
@@ -21,6 +21,7 @@ export function useSearchAnalytics({
 	capture: (event: string, properties: Record<string, string | number>) => void;
 }) {
 	const previous = useRef<string | null>(null);
+	const captureEvent = useEffectEvent(capture);
 	useEffect(() => {
 		if (!enabled || !query.trim()) {
 			previous.current = null;
@@ -30,11 +31,11 @@ export function useSearchAnalytics({
 		const key = JSON.stringify([query, tab, surface]);
 		if (previous.current === key) return;
 		previous.current = key;
-		capture("search_performed", {
+		captureEvent("search_performed", {
 			surface,
 			tab,
 			query_length: query.trim().length,
 			result_count: resultCount,
 		});
-	}, [query, tab, surface, ready, resultCount, enabled, page, capture]);
+	}, [query, tab, surface, ready, resultCount, enabled, page]);
 }
