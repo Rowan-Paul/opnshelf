@@ -449,7 +449,7 @@ describe("AppleSignupController", () => {
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
 				expect.objectContaining({ did: "did:plc:abc" }),
 				"Europe/Amsterdam",
-				{ isNativePds: true, emailVerified: true },
+				{ isNativePds: true, emailVerified: true, signupMethod: "apple" },
 			);
 			expect(res.clearCookie).toHaveBeenCalledWith("apple_pending", {
 				path: "/",

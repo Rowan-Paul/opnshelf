@@ -219,3 +219,22 @@ describe("PostHog rate-limit filtering", () => {
 		expect(beforeSend(event)).not.toBeNull();
 	});
 });
+
+it("tags product events and strips inherited URL fields", async () => {
+	await import("./posthog");
+	const beforeSend = mocks.PostHog.mock.calls[0][1].before_send;
+	expect(
+		beforeSend({
+			event: "integration_connected",
+			properties: {
+				provider: "popfeed",
+				$current_url: "opnshelf://auth/complete?code=private",
+				$pathname: "/private",
+				$referrer: "private",
+			},
+		}),
+	).toEqual({
+		event: "integration_connected",
+		properties: { provider: "popfeed", platform: "mobile" },
+	});
+});

@@ -17,6 +17,7 @@ import {
 	type UnifiedSearchResultDto,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
+import { useSearchAnalytics } from "@opnshelf/api/analytics-react";
 import {
 	hashKey,
 	useMutation,
@@ -224,16 +225,6 @@ function KeywordSearchPage() {
 		enabled: debouncedQuery.length > 0,
 	});
 
-	useEffect(() => {
-		if (!debouncedQuery || !searchData) return;
-		posthog.capture("search_performed", {
-			surface: "search",
-			tab: activeTab,
-			query_length: debouncedQuery.length,
-			result_count: searchData.items?.length ?? 0,
-		});
-	}, [activeTab, debouncedQuery, searchData]);
-
 	const { data: peopleData, isLoading: isSearchingPeople } = useQuery({
 		...socialControllerSearchPeopleOptions({
 			query: { q: debouncedQuery, pageSize: 20 },
@@ -247,6 +238,27 @@ function KeywordSearchPage() {
 			query: { query: debouncedQuery, page },
 		}),
 		enabled: debouncedQuery.length > 0 && activeTab === "cast",
+	});
+
+	useSearchAnalytics({
+		query: debouncedQuery,
+		tab: activeTab,
+		surface: "search",
+		page,
+		ready:
+			activeTab === "people"
+				? !!peopleData
+				: activeTab === "cast"
+					? !!castData
+					: !!searchData,
+		resultCount:
+			(activeTab === "people"
+				? peopleData
+				: activeTab === "cast"
+					? castData
+					: searchData
+			)?.items.length ?? 0,
+		capture: posthog.capture,
 	});
 
 	const followMutation = useMutation({

@@ -17,7 +17,12 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IntegrationSyncManager, SyncSettings } from "./IntegrationSyncManager";
 
+vi.mock("#/integrations/posthog/provider", () => ({
+	posthog: { capture: (...args: unknown[]) => mocks.capture(...args) },
+}));
+
 const mocks = vi.hoisted(() => ({
+	capture: vi.fn(),
 	configure: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
 	action: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
 	resolve: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
@@ -149,6 +154,16 @@ describe("Trakt Sync setup and conflict choices", () => {
 				expect.anything(),
 			),
 		);
+		await waitFor(() =>
+			expect(mocks.capture).toHaveBeenCalledWith(
+				"integration_action_completed",
+				{
+					provider: "trakt",
+					platform: "web",
+					action: "disconnect",
+				},
+			),
+		);
 		expect(mocks.configure).not.toHaveBeenCalled();
 		expect(screen.queryByLabelText(/I understand that sync/)).toBeNull();
 	});
@@ -183,6 +198,15 @@ describe("Trakt Sync setup and conflict choices", () => {
 				}),
 				expect.anything(),
 			),
+		);
+		await waitFor(() =>
+			expect(mocks.capture).toHaveBeenCalledWith("integration_settings_saved", {
+				provider: "trakt",
+				platform: "web",
+				direction: "both",
+				history_scope: "all",
+				record_types: ["watches", "ratings"],
+			}),
 		);
 	});
 	it("shows an existing connection inline without repeating setup or offering another Import", async () => {
@@ -363,6 +387,18 @@ it("checks an uncertain transfer without offering a deletion choice", async () =
 		expect(mocks.resolve).toHaveBeenCalledWith(
 			{ path: { id: "one" }, body: { action: "retry" } },
 			expect.anything(),
+		),
+	);
+	await waitFor(() =>
+		expect(mocks.capture).toHaveBeenCalledWith(
+			"integration_issue_action_completed",
+			{
+				provider: "trakt",
+				platform: "web",
+				action: "retry",
+				record_type: "watch",
+				all_ratings: false,
+			},
 		),
 	);
 });
@@ -601,6 +637,13 @@ describe("Popfeed Sync", () => {
 				expect.anything(),
 			),
 		);
+		expect(mocks.capture).toHaveBeenCalledWith(
+			"integration_connection_requested",
+			{
+				provider: "popfeed",
+				platform: "web",
+			},
+		);
 		expect(await screen.findByText("@fixture.test ·")).toBeTruthy();
 		expect(
 			screen.getByRole("heading", { name: "Your Popfeed records" }),
@@ -665,4 +708,13 @@ describe("Popfeed Sync", () => {
 			"Reviews",
 		]);
 	});
+});
+
+it("does not capture a completed action when the API rejects it", async () => {
+	mocks.action.mockRejectedValueOnce(new Error("Fixture failure"));
+	mount(false, true);
+	fireEvent.click(await screen.findByRole("button", { name: "Disconnect" }));
+	fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+	await screen.findByText("Fixture failure");
+	expect(mocks.capture).not.toHaveBeenCalled();
 });

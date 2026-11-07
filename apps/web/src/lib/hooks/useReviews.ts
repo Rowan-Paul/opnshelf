@@ -214,7 +214,7 @@ export function useCreateReview(options: UseReviewMutationOptions) {
 			posthog.capture("review_published", {
 				media_type: resolvedMediaType,
 				spoiler: !!variables.body.spoiler,
-				mirrored_to_blog: !!variables.body.mirrorToBlog,
+				mirror_requested: !!variables.body.mirrorToBlog,
 				shared_to_bluesky: data.blueskyCrossPost.status === "posted",
 			});
 			toast.success("Review published");

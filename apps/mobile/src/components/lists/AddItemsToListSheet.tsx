@@ -4,6 +4,7 @@ import {
 	showsControllerGetShowDetailsOptions,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
+import { useSearchAnalytics } from "@opnshelf/api/analytics-react";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Search, SearchX, X } from "lucide-react-native";
@@ -129,15 +130,18 @@ export function AddItemsToListSheet({
 					}
 				: undefined;
 
-	useEffect(() => {
-		if (!visible || !hasQuery || !searchQuery.data) return;
-		posthog?.capture("search_performed", {
-			surface: "list_item_picker",
-			tab: "all",
-			query_length: debouncedQuery.length,
-			result_count: searchQuery.data.items?.length ?? 0,
-		});
-	}, [debouncedQuery.length, hasQuery, searchQuery.data, visible]);
+	useSearchAnalytics({
+		query: debouncedQuery,
+		tab: "all",
+		surface: "list_item_picker",
+		enabled: visible,
+		ready:
+			searchQuery.isSuccess &&
+			!searchQuery.isFetching &&
+			!searchQuery.isPlaceholderData,
+		resultCount: searchQuery.data?.items.length ?? 0,
+		capture: (event, properties) => posthog?.capture(event, properties),
+	});
 
 	const results: SearchResult[] = target
 		? linkedResult

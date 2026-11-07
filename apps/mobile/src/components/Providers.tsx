@@ -60,7 +60,7 @@ export function Providers({ children }: { children: ReactNode }) {
 							client={posthog}
 							autocapture={{
 								captureScreens: false,
-								captureTouches: true,
+								captureTouches: false,
 							}}
 						>
 							{inner}

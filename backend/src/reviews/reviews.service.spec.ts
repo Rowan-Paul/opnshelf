@@ -1,3 +1,4 @@
+import { BackendEnv, parseEnvironment } from "../config/env.schema";
 import { Test, type TestingModule } from "@nestjs/testing";
 
 vi.mock("../prisma/prisma.service", () => ({
@@ -167,6 +168,7 @@ describe("ReviewsService", () => {
 
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
+				{ provide: BackendEnv, useValue: parseEnvironment({}) },
 				ReviewsService,
 				ReviewMediaService,
 				BlogMirrorService,

@@ -29,6 +29,10 @@ describe("PostHog lazy loading", () => {
 
 		await posthogLoaded;
 		expect(mocks.init).toHaveBeenCalledBefore(mocks.capture);
+		expect(mocks.init.mock.calls[0][1]).toMatchObject({
+			autocapture: false,
+			disable_session_recording: true,
+		});
 		expect(mocks.capture).toHaveBeenCalledWith("watch_logged", {
 			media_type: "movie",
 		});
@@ -56,6 +60,7 @@ describe("PostHog exception titles", () => {
 			},
 		});
 		expect(pageview.properties).toEqual({
+			platform: "web",
 			$current_url: "https://opnshelf.xyz",
 			$pathname: "/discover",
 		});
@@ -79,6 +84,7 @@ describe("PostHog exception titles", () => {
 			},
 		});
 		expect(event.properties).toEqual({
+			platform: "web",
 			$exception_list: [exception],
 			$exception_fingerprint: "existing-fingerprint",
 			$issue_name: "Internal server error",

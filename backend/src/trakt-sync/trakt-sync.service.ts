@@ -1,3 +1,4 @@
+import { captureProductEvent } from "../analytics/capture";
 import {
 	BadRequestException,
 	ConflictException,
@@ -158,6 +159,7 @@ export class TraktSyncService extends IntegrationSyncService<string> {
 	async callback(state: string, code?: string) {
 		let redirect = `${this.config.FRONTEND_URL}/trakt-sync`;
 		let stage = "state-validation";
+		let owner: string | undefined;
 		try {
 			const saved = await this.prisma.authState.findUnique({
 				where: { key: `trakt:${state}` },
@@ -168,6 +170,7 @@ export class TraktSyncService extends IntegrationSyncService<string> {
 				platform: string;
 				returnTo?: string;
 			};
+			owner = data.userDid;
 			const path = data.returnTo === "onboarding" ? "onboarding" : "trakt-sync";
 			redirect =
 				data.platform === "mobile"
@@ -184,7 +187,15 @@ export class TraktSyncService extends IntegrationSyncService<string> {
 				throw new BadRequestException(
 					"Trakt authorization has already been used.",
 				);
-			if (!code) return `${redirect}?connection=cancelled`;
+			if (!code) {
+				captureProductEvent(
+					this.config,
+					data.userDid,
+					"integration_connection_failed",
+					{ provider: this.provider, reason: "cancelled" },
+				);
+				return `${redirect}?connection=cancelled`;
+			}
 			stage = "token-exchange";
 			const token = await this.api.exchange(code, data.verifier);
 			try {
@@ -236,8 +247,18 @@ export class TraktSyncService extends IntegrationSyncService<string> {
 				await this.api.revoke(token.access_token).catch(() => undefined);
 				throw error;
 			}
+			captureProductEvent(this.config, data.userDid, "integration_connected", {
+				provider: this.provider,
+			});
 			return `${redirect}?connection=connected`;
 		} catch (error) {
+			if (owner)
+				captureProductEvent(
+					this.config,
+					owner,
+					"integration_connection_failed",
+					{ provider: this.provider, stage },
+				);
 			// Never log exception messages, payloads, codes, state, or credentials.
 			this.logger.warn(
 				JSON.stringify({

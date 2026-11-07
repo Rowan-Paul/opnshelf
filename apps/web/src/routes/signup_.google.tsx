@@ -10,7 +10,6 @@ import LoadingState from "#/components/LoadingState";
 import Logo from "#/components/Logo";
 import { TurnstileWidget } from "#/components/TurnstileWidget";
 import { env } from "#/env";
-import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
 export const Route = createFileRoute("/signup_/google")({
@@ -54,7 +53,6 @@ function GoogleSignupPage() {
 		mutationKey: ["auth", "google-register"],
 		...authControllerGoogleRegisterMutation(),
 		onSuccess: (data) => {
-			posthog.capture("user_signed_up", { method: "google" });
 			// Straight into the PDS authorization page. It grants opnshelf its
 			// scopes and its callback seeds the profile and default lists, so this
 			// has to be a full navigation, not a router push.

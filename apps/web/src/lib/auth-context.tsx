@@ -15,6 +15,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 import { env } from "#/env";
@@ -82,6 +83,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	}, [isFetchedAfterMount, isSessionCheckError, user]);
 
+	const identifiedDid = useRef<string | null>(null);
+	useEffect(() => {
+		if (!user?.did) return;
+		if (identifiedDid.current && identifiedDid.current !== user.did)
+			posthog.reset();
+		identifiedDid.current = user.did;
+		posthog.identify(user.did);
+	}, [user?.did]);
+
 	// Offer this account on the login page once its session ends.
 	useEffect(() => {
 		if (user) rememberAccount(user);
@@ -91,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// requests never capture their request-scoped QueryClient in global state.
 	useEffect(() => {
 		setOnUnauthorized(() => {
+			posthog.reset();
+			identifiedDid.current = null;
 			queryClient.setQueryData(authControllerMeOptions().queryKey, undefined);
 		});
 

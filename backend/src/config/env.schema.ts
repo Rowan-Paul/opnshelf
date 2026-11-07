@@ -19,6 +19,31 @@ export const envSchema = z.object({
 		.enum(["development", "test", "production"])
 		.default("development")
 		.describe("Runtime mode; defaults to development."),
+	POSTHOG_KEY: text
+		.optional()
+		.describe(
+			"Optional PostHog project capture key; only the production API sends events.",
+		),
+	POSTHOG_HOST: httpUrl
+		.refine((value) => {
+			let url: URL;
+			try {
+				url = new URL(value);
+			} catch {
+				return false;
+			}
+			return (
+				url.pathname === "/" &&
+				!value.includes("?") &&
+				!value.includes("#") &&
+				!url.username &&
+				!url.password
+			);
+		})
+		.optional()
+		.describe(
+			"PostHog ingestion origin; defaults to EU (https://eu.i.posthog.com).",
+		),
 	PORT: positiveInteger
 		.max(65535)
 		.default(3001)

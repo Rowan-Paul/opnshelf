@@ -8,6 +8,15 @@ import * as Notifications from "expo-notifications";
 import { type Href, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+import { posthog } from "./posthog";
+
+const NOTIFICATION_SURFACES = [
+	"movies",
+	"shows",
+	"notifications",
+	"integrations",
+	"trakt-sync",
+];
 
 const REGISTERED_TOKEN_KEY = "opnshelf_registered_push_token";
 let activeUserDid: string | null = null;
@@ -118,6 +127,7 @@ export async function requestAndRegisterPush(
 	const permission = await Notifications.requestPermissionsAsync();
 	if (generation !== expectedGeneration) return false;
 	const granted = hasPermission(permission);
+	posthog?.capture("notification_permission_responded", { granted });
 	onPermission?.(granted);
 	if (!granted) return false;
 	return registerAuthorizedToken(expectedGeneration);
@@ -157,6 +167,12 @@ export function openPushResponse(
 		path.startsWith("/") &&
 		!path.startsWith("//")
 	) {
+		const section = path.split("/")[1]?.split(/[?#]/)[0];
+		posthog?.capture("notification_opened", {
+			surface: NOTIFICATION_SURFACES.includes(section ?? "")
+				? section
+				: "other",
+		});
 		router.push(path as Href);
 	}
 }
