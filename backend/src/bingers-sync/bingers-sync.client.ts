@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { getFrontendUrl } from "../auth/auth-flow";
 import { z } from "zod";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { BackendEnv } from "../config/env.schema";
@@ -145,11 +146,18 @@ export class BingersSyncClient {
 	get clientId() {
 		return `${this.config.BACKEND_PUBLIC_URL}/bingers-sync/client-metadata`;
 	}
+	/** Same-origin client page; it redirects to the Web App homepage. */
+	get clientUri() {
+		return `${this.config.BACKEND_PUBLIC_URL}/bingers-sync/client`;
+	}
+	get homepage() {
+		return getFrontendUrl(this.config);
+	}
 	metadata() {
 		return {
 			client_id: this.clientId,
 			client_name: "Opnshelf",
-			client_uri: this.config.BACKEND_PUBLIC_URL,
+			client_uri: this.clientUri,
 			redirect_uris: [this.callbackUrl],
 			grant_types: ["authorization_code", "refresh_token"],
 			response_types: ["code"],
