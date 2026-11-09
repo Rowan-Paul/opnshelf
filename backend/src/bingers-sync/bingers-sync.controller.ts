@@ -10,7 +10,12 @@ import {
 	Res,
 	UseGuards,
 } from "@nestjs/common";
-import { ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+	ApiExcludeEndpoint,
+	ApiQuery,
+	ApiResponse,
+	ApiTags,
+} from "@nestjs/swagger";
 import type { Response } from "express";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/types";
@@ -36,6 +41,11 @@ export class BingersSyncController {
 	@Get("client-metadata")
 	metadata() {
 		return this.sync.metadata();
+	}
+	@Get("client")
+	@ApiExcludeEndpoint()
+	client(@Res() res: Response) {
+		res.redirect(this.sync.homepage());
 	}
 	@Get()
 	@UseGuards(AuthGuard)

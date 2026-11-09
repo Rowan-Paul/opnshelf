@@ -87,6 +87,9 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	metadata() {
 		return this.api.metadata();
 	}
+	homepage() {
+		return this.api.homepage;
+	}
 	protected async revoke(c: IntegrationConnection) {
 		let failed = false;
 		try {
