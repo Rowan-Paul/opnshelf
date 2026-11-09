@@ -42,7 +42,7 @@ import {
 	Link2,
 	Settings2,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IntegrationMark } from "#/components/integrations/IntegrationMark";
 import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
 import {
@@ -88,6 +88,16 @@ export function IntegrationSyncManager({
 		queryFn: ({ signal }) => integration.api.status(signal),
 		refetchInterval: 5000,
 	});
+	// The mutation settles before the browser leaves for the provider, so the
+	// button stays busy until navigation. A back/forward-cache restore resets it.
+	const [redirecting, setRedirecting] = useState(false);
+	useEffect(() => {
+		const reset = (event: PageTransitionEvent) => {
+			if (event.persisted) setRedirecting(false);
+		};
+		window.addEventListener("pageshow", reset);
+		return () => window.removeEventListener("pageshow", reset);
+	}, []);
 	const connect = useMutation({
 		mutationKey: [...rootKey, "connect"],
 		mutationFn: integration.api.connect,
@@ -96,10 +106,13 @@ export function IntegrationSyncManager({
 				provider: id,
 				platform: "web",
 			});
-			if (data.url) window.location.assign(data.url);
-			else void refresh();
+			if (data.url) {
+				setRedirecting(true);
+				window.location.assign(data.url);
+			} else void refresh();
 		},
 	});
+	const connecting = connect.isPending || redirecting;
 	const action = useMutation({
 		mutationKey: [...rootKey, "action"],
 		mutationFn: (name: SyncActionDto["action"]) => integration.api.action(name),
@@ -235,10 +248,10 @@ export function IntegrationSyncManager({
 					<button
 						className="btn btn-primary mt-5"
 						type="button"
-						disabled={connect.isPending}
+						disabled={connecting}
 						onClick={() => connect.mutate({ platform: "web" })}
 					>
-						{connect.isPending
+						{connecting
 							? words.starting
 							: data.status === "reconnect"
 								? `Reconnect ${name}`

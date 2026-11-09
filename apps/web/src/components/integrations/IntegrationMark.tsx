@@ -3,7 +3,8 @@ import { TraktMark } from "#/components/TraktMark";
 
 /**
  * Each provider keeps its own logo. Popfeed publishes no brand kit; its mark is
- * the avatar of its official @popfeed.social account, shown unaltered.
+ * the avatar of its official @popfeed.social account, shown unaltered. Bingers'
+ * mark is the app icon it serves at bingers.app/apple-touch-icon.png.
  */
 export function IntegrationMark({
 	id,
@@ -13,18 +14,9 @@ export function IntegrationMark({
 	className?: string;
 }) {
 	if (id === "trakt") return <TraktMark className={className} />;
-	if (id === "bingers")
-		return (
-			<span
-				aria-hidden="true"
-				className={`inline-flex items-center justify-center rounded-xl bg-muted font-bold ${className ?? ""}`}
-			>
-				B
-			</span>
-		);
 	return (
 		<img
-			src="/integrations/popfeed.png"
+			src={`/integrations/${id}.png`}
 			alt=""
 			aria-hidden="true"
 			className={`rounded-[22%] ${className ?? ""}`}
