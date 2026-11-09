@@ -141,7 +141,7 @@ export default function EpisodeRow({
 					onClick={handleUnmarkClick}
 					aria-disabled={isPending}
 					aria-busy={isPending}
-					className="relative flex shrink-0 items-center gap-1.5 rounded-md bg-success/10 px-3 py-1.5 font-medium text-success text-xs transition-colors hover:bg-success/20 aria-disabled:opacity-50"
+					className="relative flex shrink-0 items-center gap-1.5 rounded-md bg-success/10 px-3 py-1.5 font-medium text-green-800 text-xs transition-colors hover:bg-success/20 aria-disabled:opacity-50 dark:text-green-400"
 					title="Remove from shelf"
 				>
 					<Check className="size-3.5" />
