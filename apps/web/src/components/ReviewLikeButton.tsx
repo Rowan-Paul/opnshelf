@@ -37,7 +37,9 @@ export function ReviewLikeButton({
 			}`}
 			aria-label={
 				!isAuthenticated
-					? `${likeCount ?? 0} likes`
+					? likeCount === undefined
+						? "Review likes"
+						: `${likeCount} likes`
 					: isLiked
 						? "Unlike review"
 						: "Like review"

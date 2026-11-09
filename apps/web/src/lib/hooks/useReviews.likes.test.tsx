@@ -109,6 +109,13 @@ it.each([
 	expect(writes).toEqual([initial ? "DELETE" : "POST"]);
 });
 it("keeps a detail mutation pending until its new state has loaded", async () => {
+	const show = renderHook(() => useMediaReviews(target), { wrapper });
+	await waitFor(() =>
+		expect(show.result.current.data?.items[0]).toMatchObject({
+			hasLiked: false,
+			likeCount: 0,
+		}),
+	);
 	const detail = renderHook(
 		() => useReviewLikes({ ...target, reviewId: "r1" }),
 		{ wrapper },
@@ -127,4 +134,10 @@ it("keeps a detail mutation pending until its new state has loaded", async () =>
 		hasLiked: true,
 		total: 1,
 	});
+	await waitFor(() =>
+		expect(show.result.current.data?.items[0]).toMatchObject({
+			hasLiked: true,
+			likeCount: 1,
+		}),
+	);
 });

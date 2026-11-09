@@ -52,8 +52,8 @@ function resolveMediaType(
 
 /**
  * Like / unlike toggle for review cards, mirroring web's `useToggleReviewLike`.
- * Both mutations invalidate the media-reviews query so `likeCount` / `hasLiked`
- * refresh from the server after a toggle.
+ * Both mutations refresh the media reviews and detail likes queries so the
+ * count and viewer state agree after a toggle.
  */
 function useToggleReviewLike({
 	mediaType,
