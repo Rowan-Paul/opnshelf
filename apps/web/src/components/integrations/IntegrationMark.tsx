@@ -13,6 +13,15 @@ export function IntegrationMark({
 	className?: string;
 }) {
 	if (id === "trakt") return <TraktMark className={className} />;
+	if (id === "bingers")
+		return (
+			<span
+				aria-hidden="true"
+				className={`inline-flex items-center justify-center rounded-xl bg-muted font-bold ${className ?? ""}`}
+			>
+				B
+			</span>
+		);
 	return (
 		<img
 			src="/integrations/popfeed.png"

@@ -146,10 +146,13 @@ export function IntegrationSyncManager({
 		mutationFn: integration.api.connect,
 		onSuccess: async (data) => {
 			if (data.url) {
-				// Trakt's OAuth callback still returns to its original app link.
+				if (!data.returnUrl)
+					throw new Error(
+						`${name} did not provide a sign-in return link. Try again.`,
+					);
 				const result = await WebBrowser.openAuthSessionAsync(
 					data.url,
-					"opnshelf://trakt-sync",
+					data.returnUrl,
 				);
 				if (
 					result.type === "success" &&
@@ -206,6 +209,9 @@ export function IntegrationSyncManager({
 	return (
 		<View className="gap-5">
 			<View className={embedded ? "gap-4" : card}>
+				{integration.summary && (
+					<Text className={copy}>{integration.summary}</Text>
+				)}
 				<Text selectable className="font-semibold text-foreground text-lg">
 					{words.heading}
 				</Text>
@@ -1062,31 +1068,39 @@ function SyncIssue({
 				<View className="gap-2">
 					{connected &&
 						integrationIssueRecovery(item) !== "retry" &&
-						(["remote", "opnshelf"] as const).map((action) => (
-							<Action
-								key={action}
-								label={
-									integrationIssueRecovery(item) === "verify"
-										? action === "opnshelf"
-											? `Send after checking ${name}`
-											: "Remove from Opnshelf"
-										: integrationResolutionLabel(
-												action,
-												Boolean(item[action]),
-												name,
-											)
-								}
-								disabled={mutation.isPending}
-								onPress={() =>
-									setChoice({
-										action,
-										...(integrationIssueRecovery(item) === "verify"
-											? { confirmedRemoteMissing: false }
-											: {}),
-									})
-								}
-							/>
-						))}
+						(["remote", "opnshelf"] as const)
+							.filter(
+								(action) =>
+									action === "remote" ||
+									integration.directions.some(
+										(direction) => direction !== "inbound",
+									),
+							)
+							.map((action) => (
+								<Action
+									key={action}
+									label={
+										integrationIssueRecovery(item) === "verify"
+											? action === "opnshelf"
+												? `Send after checking ${name}`
+												: "Remove from Opnshelf"
+											: integrationResolutionLabel(
+													action,
+													Boolean(item[action]),
+													name,
+												)
+									}
+									disabled={mutation.isPending}
+									onPress={() =>
+										setChoice({
+											action,
+											...(integrationIssueRecovery(item) === "verify"
+												? { confirmedRemoteMissing: false }
+												: {}),
+										})
+									}
+								/>
+							))}
 					{connected && (
 						<Action
 							label={

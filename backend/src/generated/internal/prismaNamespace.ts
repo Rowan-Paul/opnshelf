@@ -3013,6 +3013,7 @@ export const IntegrationConnectionScalarFieldEnum = {
   failingSince: 'failingSince',
   leaseId: 'leaseId',
   leaseUntil: 'leaseUntil',
+  remoteFeed: 'remoteFeed',
   remoteSnapshot: 'remoteSnapshot',
   remoteReadAt: 'remoteReadAt',
   remaining: 'remaining',

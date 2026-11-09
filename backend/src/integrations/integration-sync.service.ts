@@ -167,6 +167,7 @@ const display = (r: SyncRecord | null, name: string) =>
 				title: r.title,
 				season: r.season,
 				episode: r.episode,
+				coordinatesUnknown: r.coordinatesUnknown,
 				displayValue: r.unreadable
 					? `${name} could not return the complete List. Its contents are preserved.`
 					: isContentRecord(r)
@@ -296,7 +297,7 @@ export abstract class IntegrationSyncService<Credential>
 		const c = await this.prisma.integrationConnection.findFirst({
 			where: { userDid, provider: this.provider },
 			orderBy: [{ updatedAt: "desc" }],
-			omit: { remoteSnapshot: true },
+			omit: { remoteSnapshot: true, remoteFeed: true },
 		});
 		const counts = c
 			? await this.prisma.integrationEntry.groupBy({
@@ -756,6 +757,7 @@ export abstract class IntegrationSyncService<Credential>
 						)
 					: [];
 			const match =
+				!r.problem &&
 				matches.length === 1 &&
 				((r.kind !== "watch" &&
 					((!isListRecord(r) && !isContentRecord(r)) ||
@@ -897,7 +899,10 @@ export abstract class IntegrationSyncService<Credential>
 			const source =
 				l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
 			const matches =
-				source && !isListRecord(source) && (!e.linked || (l && !r))
+				source &&
+				!r?.problem &&
+				!isListRecord(source) &&
+				(!e.linked || (l && !r))
 					? e.linked
 						? remote.filter((v) => mediaKey(v) === mediaKey(source))
 						: candidates(source, l ? remote : local)
@@ -934,13 +939,14 @@ export abstract class IntegrationSyncService<Credential>
 			items: pageItems.map(({ e, l, r, matches }) => {
 				const uncertain = unconfirmedCreate(e);
 				return {
-					recovery: r?.unreadable
-						? ("retry" as const)
-						: uncertain
-							? ("verify" as const)
-							: (l && r) || e.linked || e.issue === SOURCE_CHANGED
-								? ("choose" as const)
-								: ("retry" as const),
+					recovery:
+						r?.unreadable || r?.problem
+							? ("retry" as const)
+							: uncertain
+								? ("verify" as const)
+								: (l && r) || e.linked || e.issue === SOURCE_CHANGED
+									? ("choose" as const)
+									: ("retry" as const),
 					remoteState: r
 						? ("present" as const)
 						: uncertain
@@ -1105,6 +1111,10 @@ export abstract class IntegrationSyncService<Credential>
 				const r = entry.linked
 					? readRecord(other.remoteBase)
 					: (readRecord(entry.remoteBase) ?? readRecord(other.remoteBase));
+				if (l?.problem || r?.problem)
+					throw new BadRequestException(
+						"These records cannot be represented faithfully. Retry or ignore this item.",
+					);
 				if (!l || !r || mediaKey(l) !== mediaKey(r))
 					throw new BadRequestException(
 						"These records describe different titles.",

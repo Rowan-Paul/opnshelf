@@ -12,7 +12,12 @@ const mocks = vi.hoisted(() => ({
 	mutate: vi.fn(),
 	options: undefined as
 		| undefined
-		| { onSuccess: (result: { url?: string }) => Promise<void> },
+		| {
+				onSuccess: (result: {
+					url?: string;
+					returnUrl?: string;
+				}) => Promise<void>;
+		  },
 	openAuthSession: vi.fn(),
 	invalidate: vi.fn(async () => undefined),
 }));
@@ -109,7 +114,10 @@ it("connects Trakt in the auth browser and opens its settings on return", async 
 		url: "opnshelf://onboarding?connection=connected",
 	});
 	await act(async () => {
-		await mocks.options?.onSuccess({ url: "https://trakt.example" });
+		await mocks.options?.onSuccess({
+			url: "https://trakt.example",
+			returnUrl: "opnshelf://onboarding",
+		});
 	});
 	expect(mocks.openAuthSession).toHaveBeenCalledWith(
 		"https://trakt.example",
@@ -122,7 +130,10 @@ it("stays put when the Trakt sign-in is dismissed", async () => {
 	const { onOpen } = mount({ integration: TRAKT_INTEGRATION });
 	mocks.openAuthSession.mockResolvedValue({ type: "cancel" });
 	await act(async () => {
-		await mocks.options?.onSuccess({ url: "https://trakt.example" });
+		await mocks.options?.onSuccess({
+			url: "https://trakt.example",
+			returnUrl: "opnshelf://onboarding",
+		});
 	});
 	expect(onOpen).not.toHaveBeenCalled();
 });

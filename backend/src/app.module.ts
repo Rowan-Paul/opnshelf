@@ -29,6 +29,7 @@ import { ShelfModule } from "./shelf/shelf.module";
 import { ShowsModule } from "./shows/shows.module";
 import { UsersModule } from "./users/users.module";
 import { PopfeedSyncModule } from "./popfeed-sync/popfeed-sync.module";
+import { BingersSyncModule } from "./bingers-sync/bingers-sync.module";
 
 @Module({
 	imports: [
@@ -54,6 +55,7 @@ import { PopfeedSyncModule } from "./popfeed-sync/popfeed-sync.module";
 		IngesterModule,
 		UsersModule,
 		PopfeedSyncModule,
+		BingersSyncModule,
 		ListsModule,
 		LibraryModule,
 		NotesModule,

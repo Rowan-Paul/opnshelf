@@ -162,6 +162,8 @@ export function traktRecordTitle(
 	record: SyncRecordDto | null | undefined,
 ): string | undefined {
 	if (!record) return undefined;
+	if (record.coordinatesUnknown)
+		return `${record.title} · Episode (season and number unavailable)`;
 	if (record.mediaType === "episode")
 		return `${record.title} · S${record.season}E${record.episode}`;
 	if (record.mediaType === "season")

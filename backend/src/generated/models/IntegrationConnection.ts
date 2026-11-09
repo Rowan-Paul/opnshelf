@@ -140,6 +140,7 @@ export type IntegrationConnectionCountAggregateOutputType = {
   failingSince: number
   leaseId: number
   leaseUntil: number
+  remoteFeed: number
   remoteSnapshot: number
   remoteReadAt: number
   remaining: number
@@ -264,6 +265,7 @@ export type IntegrationConnectionCountAggregateInputType = {
   failingSince?: true
   leaseId?: true
   leaseUntil?: true
+  remoteFeed?: true
   remoteSnapshot?: true
   remoteReadAt?: true
   remaining?: true
@@ -389,6 +391,7 @@ export type IntegrationConnectionGroupByOutputType = {
   failingSince: Date | null
   leaseId: string | null
   leaseUntil: Date | null
+  remoteFeed: runtime.JsonValue
   remoteSnapshot: runtime.JsonValue
   remoteReadAt: Date | null
   remaining: number
@@ -450,6 +453,7 @@ export type IntegrationConnectionWhereInput = {
   failingSince?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
   leaseId?: Prisma.StringNullableFilter<"IntegrationConnection"> | string | null
   leaseUntil?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
+  remoteFeed?: Prisma.JsonFilter<"IntegrationConnection">
   remoteSnapshot?: Prisma.JsonFilter<"IntegrationConnection">
   remoteReadAt?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
   remaining?: Prisma.IntFilter<"IntegrationConnection"> | number
@@ -490,6 +494,7 @@ export type IntegrationConnectionOrderByWithRelationInput = {
   failingSince?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseId?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  remoteFeed?: Prisma.SortOrder
   remoteSnapshot?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrderInput | Prisma.SortOrder
   remaining?: Prisma.SortOrder
@@ -534,6 +539,7 @@ export type IntegrationConnectionWhereUniqueInput = Prisma.AtLeast<{
   failingSince?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
   leaseId?: Prisma.StringNullableFilter<"IntegrationConnection"> | string | null
   leaseUntil?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
+  remoteFeed?: Prisma.JsonFilter<"IntegrationConnection">
   remoteSnapshot?: Prisma.JsonFilter<"IntegrationConnection">
   remoteReadAt?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
   remaining?: Prisma.IntFilter<"IntegrationConnection"> | number
@@ -574,6 +580,7 @@ export type IntegrationConnectionOrderByWithAggregationInput = {
   failingSince?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseId?: Prisma.SortOrderInput | Prisma.SortOrder
   leaseUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  remoteFeed?: Prisma.SortOrder
   remoteSnapshot?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrderInput | Prisma.SortOrder
   remaining?: Prisma.SortOrder
@@ -620,6 +627,7 @@ export type IntegrationConnectionScalarWhereWithAggregatesInput = {
   failingSince?: Prisma.DateTimeNullableWithAggregatesFilter<"IntegrationConnection"> | Date | string | null
   leaseId?: Prisma.StringNullableWithAggregatesFilter<"IntegrationConnection"> | string | null
   leaseUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"IntegrationConnection"> | Date | string | null
+  remoteFeed?: Prisma.JsonWithAggregatesFilter<"IntegrationConnection">
   remoteSnapshot?: Prisma.JsonWithAggregatesFilter<"IntegrationConnection">
   remoteReadAt?: Prisma.DateTimeNullableWithAggregatesFilter<"IntegrationConnection"> | Date | string | null
   remaining?: Prisma.IntWithAggregatesFilter<"IntegrationConnection"> | number
@@ -657,6 +665,7 @@ export type IntegrationConnectionCreateInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -697,6 +706,7 @@ export type IntegrationConnectionUncheckedCreateInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -735,6 +745,7 @@ export type IntegrationConnectionUpdateInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -775,6 +786,7 @@ export type IntegrationConnectionUncheckedUpdateInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -814,6 +826,7 @@ export type IntegrationConnectionCreateManyInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -851,6 +864,7 @@ export type IntegrationConnectionUpdateManyMutationInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -889,6 +903,7 @@ export type IntegrationConnectionUncheckedUpdateManyInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -943,6 +958,7 @@ export type IntegrationConnectionCountOrderByAggregateInput = {
   failingSince?: Prisma.SortOrder
   leaseId?: Prisma.SortOrder
   leaseUntil?: Prisma.SortOrder
+  remoteFeed?: Prisma.SortOrder
   remoteSnapshot?: Prisma.SortOrder
   remoteReadAt?: Prisma.SortOrder
   remaining?: Prisma.SortOrder
@@ -1125,6 +1141,7 @@ export type IntegrationConnectionCreateWithoutUserInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -1163,6 +1180,7 @@ export type IntegrationConnectionUncheckedCreateWithoutUserInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -1231,6 +1249,7 @@ export type IntegrationConnectionScalarWhereInput = {
   failingSince?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
   leaseId?: Prisma.StringNullableFilter<"IntegrationConnection"> | string | null
   leaseUntil?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
+  remoteFeed?: Prisma.JsonFilter<"IntegrationConnection">
   remoteSnapshot?: Prisma.JsonFilter<"IntegrationConnection">
   remoteReadAt?: Prisma.DateTimeNullableFilter<"IntegrationConnection"> | Date | string | null
   remaining?: Prisma.IntFilter<"IntegrationConnection"> | number
@@ -1268,6 +1287,7 @@ export type IntegrationConnectionCreateWithoutEntriesInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -1307,6 +1327,7 @@ export type IntegrationConnectionUncheckedCreateWithoutEntriesInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -1360,6 +1381,7 @@ export type IntegrationConnectionUpdateWithoutEntriesInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1399,6 +1421,7 @@ export type IntegrationConnectionUncheckedUpdateWithoutEntriesInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1436,6 +1459,7 @@ export type IntegrationConnectionCreateManyUserInput = {
   failingSince?: Date | string | null
   leaseId?: string | null
   leaseUntil?: Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Date | string | null
   remaining?: number
@@ -1473,6 +1497,7 @@ export type IntegrationConnectionUpdateWithoutUserInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1511,6 +1536,7 @@ export type IntegrationConnectionUncheckedUpdateWithoutUserInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1549,6 +1575,7 @@ export type IntegrationConnectionUncheckedUpdateManyWithoutUserInput = {
   failingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   leaseId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaseUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remoteFeed?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   remoteReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   remaining?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1618,6 +1645,7 @@ export type IntegrationConnectionSelect<ExtArgs extends runtime.Types.Extensions
   failingSince?: boolean
   leaseId?: boolean
   leaseUntil?: boolean
+  remoteFeed?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
   remaining?: boolean
@@ -1659,6 +1687,7 @@ export type IntegrationConnectionSelectCreateManyAndReturn<ExtArgs extends runti
   failingSince?: boolean
   leaseId?: boolean
   leaseUntil?: boolean
+  remoteFeed?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
   remaining?: boolean
@@ -1698,6 +1727,7 @@ export type IntegrationConnectionSelectUpdateManyAndReturn<ExtArgs extends runti
   failingSince?: boolean
   leaseId?: boolean
   leaseUntil?: boolean
+  remoteFeed?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
   remaining?: boolean
@@ -1737,6 +1767,7 @@ export type IntegrationConnectionSelectScalar = {
   failingSince?: boolean
   leaseId?: boolean
   leaseUntil?: boolean
+  remoteFeed?: boolean
   remoteSnapshot?: boolean
   remoteReadAt?: boolean
   remaining?: boolean
@@ -1745,7 +1776,7 @@ export type IntegrationConnectionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type IntegrationConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "provider" | "accountId" | "username" | "accessToken" | "refreshToken" | "expiresAt" | "status" | "direction" | "watches" | "ratings" | "lists" | "watchlist" | "favorites" | "notes" | "library" | "reviews" | "contentPublicationConsent" | "listPublicationConsent" | "historyScope" | "publicationConsent" | "initialised" | "nextRunAt" | "lastSuccessAt" | "lastError" | "failingSince" | "leaseId" | "leaseUntil" | "remoteSnapshot" | "remoteReadAt" | "remaining" | "remainingTotal" | "createdAt" | "updatedAt", ExtArgs["result"]["integrationConnection"]>
+export type IntegrationConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userDid" | "provider" | "accountId" | "username" | "accessToken" | "refreshToken" | "expiresAt" | "status" | "direction" | "watches" | "ratings" | "lists" | "watchlist" | "favorites" | "notes" | "library" | "reviews" | "contentPublicationConsent" | "listPublicationConsent" | "historyScope" | "publicationConsent" | "initialised" | "nextRunAt" | "lastSuccessAt" | "lastError" | "failingSince" | "leaseId" | "leaseUntil" | "remoteFeed" | "remoteSnapshot" | "remoteReadAt" | "remaining" | "remainingTotal" | "createdAt" | "updatedAt", ExtArgs["result"]["integrationConnection"]>
 export type IntegrationConnectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   entries?: boolean | Prisma.IntegrationConnection$entriesArgs<ExtArgs>
@@ -1794,6 +1825,7 @@ export type $IntegrationConnectionPayload<ExtArgs extends runtime.Types.Extensio
     failingSince: Date | null
     leaseId: string | null
     leaseUntil: Date | null
+    remoteFeed: runtime.JsonValue
     remoteSnapshot: runtime.JsonValue
     remoteReadAt: Date | null
     remaining: number
@@ -2254,6 +2286,7 @@ export interface IntegrationConnectionFieldRefs {
   readonly failingSince: Prisma.FieldRef<"IntegrationConnection", 'DateTime'>
   readonly leaseId: Prisma.FieldRef<"IntegrationConnection", 'String'>
   readonly leaseUntil: Prisma.FieldRef<"IntegrationConnection", 'DateTime'>
+  readonly remoteFeed: Prisma.FieldRef<"IntegrationConnection", 'Json'>
   readonly remoteSnapshot: Prisma.FieldRef<"IntegrationConnection", 'Json'>
   readonly remoteReadAt: Prisma.FieldRef<"IntegrationConnection", 'DateTime'>
   readonly remaining: Prisma.FieldRef<"IntegrationConnection", 'Int'>

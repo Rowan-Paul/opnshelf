@@ -180,6 +180,11 @@ export function IntegrationSyncManager({
 				className={embedded ? "" : card}
 				aria-label={`${name} connection`}
 			>
+				{embedded && (
+					<p className="mb-4 text-(--foreground-muted) text-sm">
+						{integration.summary}
+					</p>
+				)}
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div>
 						<h2 className="font-semibold text-lg">{words.heading}</h2>
@@ -1009,32 +1014,40 @@ function SyncIssue({
 				<div className="flex flex-wrap gap-2">
 					{connected &&
 						integrationIssueRecovery(item) !== "retry" &&
-						(["remote", "opnshelf"] as const).map((action) => (
-							<button
-								key={action}
-								type="button"
-								className="btn btn-secondary max-w-full whitespace-normal"
-								disabled={mutation.isPending}
-								onClick={() =>
-									setChoice({
-										action,
-										...(integrationIssueRecovery(item) === "verify"
-											? { confirmedRemoteMissing: false }
-											: {}),
-									})
-								}
-							>
-								{integrationIssueRecovery(item) === "verify"
-									? action === "opnshelf"
-										? `Send after checking ${name}`
-										: "Remove from Opnshelf"
-									: integrationResolutionLabel(
+						(["remote", "opnshelf"] as const)
+							.filter(
+								(action) =>
+									action === "remote" ||
+									integration.directions.some(
+										(direction) => direction !== "inbound",
+									),
+							)
+							.map((action) => (
+								<button
+									key={action}
+									type="button"
+									className="btn btn-secondary max-w-full whitespace-normal"
+									disabled={mutation.isPending}
+									onClick={() =>
+										setChoice({
 											action,
-											Boolean(item[action]),
-											name,
-										)}
-							</button>
-						))}
+											...(integrationIssueRecovery(item) === "verify"
+												? { confirmedRemoteMissing: false }
+												: {}),
+										})
+									}
+								>
+									{integrationIssueRecovery(item) === "verify"
+										? action === "opnshelf"
+											? `Send after checking ${name}`
+											: "Remove from Opnshelf"
+										: integrationResolutionLabel(
+												action,
+												Boolean(item[action]),
+												name,
+											)}
+								</button>
+							))}
 					{connected && (
 						<button
 							type="button"

@@ -1,3 +1,4 @@
+import { BingersSyncService } from "../bingers-sync/bingers-sync.service";
 import { privacyRepositoryConfig } from "../privacy/privacy-category";
 import { WatchPrivacyCoordinator } from "../privacy/watch-privacy-coordinator";
 import {
@@ -10,6 +11,7 @@ import { PrivateSettingsService } from "../pds/private-settings.service";
 import { Agent } from "@atproto/api";
 import { Tap } from "@atproto/tap";
 import {
+	forwardRef,
 	ConflictException,
 	Inject,
 	Injectable,
@@ -95,6 +97,9 @@ export class UserDeletionService {
 		private readonly watchPrivacy: WatchPrivacyCoordinator,
 		@Optional() private readonly traktSync?: TraktSyncService,
 		@Optional() private readonly popfeedSync?: PopfeedSyncService,
+		@Optional()
+		@Inject(forwardRef(() => BingersSyncService))
+		private readonly bingersSync?: BingersSyncService,
 	) {
 		this.tab = new Tap(config.TAB_URL || "http://localhost:2480", {
 			adminPassword: config.TAB_ADMIN_PASSWORD,
@@ -105,6 +110,7 @@ export class UserDeletionService {
 	private async disconnectIntegrations(did: string) {
 		await this.traktSync?.disconnectForDeletion(did);
 		await this.popfeedSync?.disconnectForDeletion(did);
+		await this.bingersSync?.disconnectForDeletion(did);
 	}
 
 	/**

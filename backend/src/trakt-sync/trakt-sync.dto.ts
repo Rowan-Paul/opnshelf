@@ -26,7 +26,7 @@ export class SyncConnectDto {
 	@ApiPropertyOptional({
 		enum: ["onboarding"],
 		description:
-			"Return to Onboarding after Trakt authorization instead of Trakt Sync.",
+			"Return to Onboarding after authorization instead of Integration management.",
 	})
 	@IsOptional()
 	@IsIn(["onboarding"])
@@ -34,6 +34,7 @@ export class SyncConnectDto {
 }
 export class SyncAuthorizeDto {
 	@ApiProperty() url: string;
+	@ApiProperty() returnUrl: string;
 }
 export class SyncResolveDto {
 	@ApiProperty({
