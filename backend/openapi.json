@@ -4864,6 +4864,290 @@
         ]
       }
     },
+    "/bingers-sync/client-metadata": {
+      "get": {
+        "operationId": "BingersSyncController_metadata",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
+    "/bingers-sync": {
+      "get": {
+        "operationId": "BingersSyncController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      },
+      "patch": {
+        "operationId": "BingersSyncController_configure",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
+    "/bingers-sync/connect": {
+      "post": {
+        "operationId": "BingersSyncController_connect",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncConnectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncAuthorizeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
+    "/bingers-sync/callback": {
+      "get": {
+        "operationId": "BingersSyncController_callback",
+        "parameters": [
+          {
+            "name": "state",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
+    "/bingers-sync/action": {
+      "post": {
+        "operationId": "BingersSyncController_action",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
+    "/bingers-sync/issues": {
+      "get": {
+        "operationId": "BingersSyncController_issues",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number to return (1-based)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "view",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "attention",
+                "ignored"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationIssuesDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
+    "/bingers-sync/issues/{id}": {
+      "post": {
+        "operationId": "BingersSyncController_resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResolveDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
+    "/bingers-sync/issues/{id}/matches": {
+      "get": {
+        "operationId": "BingersSyncController_matches",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "bingers-sync"
+        ]
+      }
+    },
     "/social/suggestions": {
       "get": {
         "operationId": "SocialController_getSuggestions",
@@ -10933,7 +11217,7 @@
             "enum": [
               "onboarding"
             ],
-            "description": "Return to Onboarding after Trakt authorization instead of Trakt Sync."
+            "description": "Return to Onboarding after authorization instead of Integration management."
           }
         },
         "required": [
@@ -10945,10 +11229,14 @@
         "properties": {
           "url": {
             "type": "string"
+          },
+          "returnUrl": {
+            "type": "string"
           }
         },
         "required": [
-          "url"
+          "url",
+          "returnUrl"
         ]
       },
       "SyncSettingsDto": {
@@ -11060,6 +11348,9 @@
           },
           "episode": {
             "type": "number"
+          },
+          "coordinatesUnknown": {
+            "type": "boolean"
           },
           "displayValue": {
             "type": "string",

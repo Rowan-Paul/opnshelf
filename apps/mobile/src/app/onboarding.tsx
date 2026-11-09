@@ -1,6 +1,7 @@
 import {
 	authControllerMeQueryKey,
 	bringsIntegrationWatches,
+	findIntegration,
 	INTEGRATIONS,
 	type IntegrationId,
 	integrationKey,
@@ -159,7 +160,12 @@ export default function OnboardingScreen() {
 	const colors = useThemeColors();
 	const { user, isLoading, isAuthenticated } = useAuth();
 	// Trakt authorization can land here as a fresh deep link on Android.
-	const { connection } = useLocalSearchParams<{ connection?: string }>();
+	const { connection, provider } = useLocalSearchParams<{
+		connection?: string;
+		provider?: string;
+	}>();
+	const returningIntegration =
+		findIntegration(provider ?? "trakt") ?? TRAKT_INTEGRATION;
 	const [step, setStep] = useState<OnboardingStep>(
 		connection ? "integrations" : "welcome",
 	);
@@ -168,9 +174,9 @@ export default function OnboardingScreen() {
 		if (!connection) return;
 		setStep("integrations");
 		queryClient.invalidateQueries({
-			queryKey: integrationKey(TRAKT_INTEGRATION),
+			queryKey: integrationKey(returningIntegration),
 		});
-	}, [connection, queryClient]);
+	}, [connection, queryClient, returningIntegration]);
 	const [notificationStage, setNotificationStage] =
 		useState<NotificationStage>("topics");
 	const [notificationsBusy, setNotificationsBusy] = useState(false);
@@ -296,8 +302,12 @@ export default function OnboardingScreen() {
 				{step === "integrations" && (
 					<IntegrationsStep
 						onNext={() => setStep("suggestions")}
-						initialOpen={connection === "connected" ? "trakt" : null}
-						connectionFailed={connection === "failed" ? "trakt" : null}
+						initialOpen={
+							connection === "connected" ? returningIntegration.id : null
+						}
+						connectionFailed={
+							connection === "failed" ? returningIntegration.id : null
+						}
 					/>
 				)}
 				{step === "suggestions" && (

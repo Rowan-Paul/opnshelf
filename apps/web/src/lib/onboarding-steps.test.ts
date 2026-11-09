@@ -191,7 +191,7 @@ describe("bringsIntegrationWatches", () => {
 describe("onboardingIntegrationsCopy", () => {
 	it("names every Integration in the step title", () => {
 		expect(onboardingIntegrationsCopy().title).toBe(
-			"Already on Trakt or Popfeed?",
+			"Already on Trakt, Popfeed, or Bingers?",
 		);
 		expect(
 			onboardingIntegrationsCopy([

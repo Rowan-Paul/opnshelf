@@ -171,6 +171,7 @@ const display = (r: SyncRecord | null, name: string) =>
 				title: r.title,
 				season: r.season,
 				episode: r.episode,
+				coordinatesUnknown: r.coordinatesUnknown,
 				displayValue: r.unreadable
 					? `${name} could not return the complete List. Its contents are preserved.`
 					: isContentRecord(r)
@@ -300,7 +301,7 @@ export abstract class IntegrationSyncService<Credential>
 		const c = await this.prisma.integrationConnection.findFirst({
 			where: { userDid, provider: this.provider },
 			orderBy: [{ updatedAt: "desc" }],
-			omit: { remoteSnapshot: true },
+			omit: { remoteSnapshot: true, remoteFeed: true },
 		});
 		const counts = c
 			? await this.prisma.integrationEntry.groupBy({
@@ -359,7 +360,7 @@ export abstract class IntegrationSyncService<Credential>
 	}
 	protected async locked<T>(
 		c: IntegrationConnection,
-		operation: (lease: () => Promise<void>) => Promise<T>,
+		operation: (lease: () => Promise<void>, leaseId: string) => Promise<T>,
 	): Promise<T> {
 		const leaseId = randomUUID();
 		const claim = await this.prisma.integrationConnection.updateMany({
@@ -390,7 +391,7 @@ export abstract class IntegrationSyncService<Credential>
 			30_000,
 		);
 		try {
-			return await operation(lease);
+			return await operation(lease, leaseId);
 		} finally {
 			clearInterval(heartbeat);
 			await this.prisma.integrationConnection.updateMany({
@@ -760,6 +761,7 @@ export abstract class IntegrationSyncService<Credential>
 						)
 					: [];
 			const match =
+				!r.problem &&
 				matches.length === 1 &&
 				((r.kind !== "watch" &&
 					((!isListRecord(r) && !isContentRecord(r)) ||
@@ -901,7 +903,10 @@ export abstract class IntegrationSyncService<Credential>
 			const source =
 				l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
 			const matches =
-				source && !isListRecord(source) && (!e.linked || (l && !r))
+				source &&
+				!r?.problem &&
+				!isListRecord(source) &&
+				(!e.linked || (l && !r))
 					? e.linked
 						? remote.filter((v) => mediaKey(v) === mediaKey(source))
 						: candidates(source, l ? remote : local)
@@ -938,13 +943,14 @@ export abstract class IntegrationSyncService<Credential>
 			items: pageItems.map(({ e, l, r, matches }) => {
 				const uncertain = unconfirmedCreate(e);
 				return {
-					recovery: r?.unreadable
-						? ("retry" as const)
-						: uncertain
-							? ("verify" as const)
-							: (l && r) || e.linked || e.issue === SOURCE_CHANGED
-								? ("choose" as const)
-								: ("retry" as const),
+					recovery:
+						r?.unreadable || r?.problem
+							? ("retry" as const)
+							: uncertain
+								? ("verify" as const)
+								: (l && r) || e.linked || e.issue === SOURCE_CHANGED
+									? ("choose" as const)
+									: ("retry" as const),
 					remoteState: r
 						? ("present" as const)
 						: uncertain
@@ -986,7 +992,7 @@ export abstract class IntegrationSyncService<Credential>
 		dto: IntegrationResolve,
 	) {
 		const c = await this.requireConnection(userDid);
-		await this.locked(c, async () => {
+		await this.locked(c, async (_lease, leaseId) => {
 			const entry = await this.prisma.integrationEntry.findFirst({
 				where: { id, connectionId: c.id },
 			});
@@ -1025,7 +1031,11 @@ export abstract class IntegrationSyncService<Credential>
 				const desired = readRecord(
 					(entry.pending as { desired?: unknown }).desired,
 				);
-				const remote = await this.remote.snapshot(await this.credential(c), c);
+				const remote = await this.remote.snapshot(
+					await this.credential(c),
+					c,
+					leaseId,
+				);
 				const peers = await this.prisma.integrationEntry.findMany({
 					where: {
 						connectionId: c.id,
@@ -1109,6 +1119,10 @@ export abstract class IntegrationSyncService<Credential>
 				const r = entry.linked
 					? readRecord(other.remoteBase)
 					: (readRecord(entry.remoteBase) ?? readRecord(other.remoteBase));
+				if (l?.problem || r?.problem)
+					throw new BadRequestException(
+						"These records cannot be represented faithfully. Retry or ignore this item.",
+					);
 				if (!l || !r || mediaKey(l) !== mediaKey(r))
 					throw new BadRequestException(
 						"These records describe different titles.",
@@ -1201,9 +1215,9 @@ export abstract class IntegrationSyncService<Credential>
 				orderBy: { nextRunAt: "asc" },
 			});
 			if (!c) return;
-			await this.locked(c, async (lease) => {
+			await this.locked(c, async (lease, leaseId) => {
 				try {
-					await this.process(c, lease);
+					await this.process(c, lease, leaseId);
 				} catch (error) {
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.integrationConnection.update({
@@ -1341,6 +1355,7 @@ export abstract class IntegrationSyncService<Credential>
 	protected async process(
 		c: IntegrationConnection,
 		lease: () => Promise<void>,
+		leaseId?: string,
 	) {
 		const startedAtRun = Date.now();
 		let remote = records(c.remoteSnapshot);
@@ -1382,7 +1397,7 @@ export abstract class IntegrationSyncService<Credential>
 			!c.remoteReadAt ||
 			c.remoteReadAt.getTime() < Date.now() - 15 * 60_000
 		) {
-			remote = await this.remote.snapshot(token, c);
+			remote = await this.remote.snapshot(token, c, leaseId);
 			await lease();
 			await this.prisma.integrationConnection.update({
 				select: { id: true },

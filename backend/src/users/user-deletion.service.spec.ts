@@ -207,6 +207,7 @@ describe("UserDeletionService", () => {
 		const integrations = () => ({
 			trakt: { disconnectForDeletion: vi.fn().mockResolvedValue(undefined) },
 			popfeed: { disconnectForDeletion: vi.fn().mockResolvedValue(undefined) },
+			bingers: { disconnectForDeletion: vi.fn().mockResolvedValue(undefined) },
 		});
 		const withIntegrations = (
 			watch: WatchPrivacyCoordinator,
@@ -220,6 +221,7 @@ describe("UserDeletionService", () => {
 				watch,
 				sync.trakt as never,
 				sync.popfeed as never,
+				sync.bingers as never,
 			);
 
 		it("disconnects every Integration and waits for the account lock", async () => {
@@ -227,6 +229,9 @@ describe("UserDeletionService", () => {
 			const sync = integrations();
 			await withIntegrations(watch, sync).deleteUserSync("did:plc:test");
 			expect(sync.trakt.disconnectForDeletion).toHaveBeenCalledWith(
+				"did:plc:test",
+			);
+			expect(sync.bingers.disconnectForDeletion).toHaveBeenCalledWith(
 				"did:plc:test",
 			);
 			expect(sync.popfeed.disconnectForDeletion).toHaveBeenCalledWith(

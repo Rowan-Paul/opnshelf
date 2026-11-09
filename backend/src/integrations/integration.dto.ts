@@ -107,6 +107,7 @@ export class SyncRecordDto {
 	@ApiProperty() title: string;
 	@ApiProperty() season: number;
 	@ApiProperty() episode: number;
+	@ApiPropertyOptional() coordinatesUnknown?: boolean;
 	@ApiProperty({ type: String, description: "Watch date, No date, or Rating" })
 	displayValue: string;
 }

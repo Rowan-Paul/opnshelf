@@ -133,11 +133,17 @@ An **Integration** for the optional ongoing transfer of a User's chosen Watch hi
 _Avoid_: backup (does not describe synchronization)
 
 **Integration**:
-An optional ongoing sync between a User's Opnshelf records and another service, such as Trakt or Popfeed, managed from the **Integrations** settings section. Every Integration follows the same rules for direction, record links, conflicts and Needs attention.
+An optional ongoing sync between a User's Opnshelf records and another service, such as Trakt, Popfeed or Bingers, managed from the **Integrations** settings section. Every Integration follows the same rules for direction, record links, conflicts and Needs attention.
 _Avoid_: Connection (the social term), Import (retired one-time copy)
 
 **Popfeed Sync**:
 An **Integration** that syncs a User's Watches, Ratings, Reviews, Lists and watchlist with the Popfeed records in their own AT Protocol repository, from Popfeed to Opnshelf, from Opnshelf to Popfeed, or in both directions.
+
+**Bingers Sync**:
+An optional inbound **Integration** that brings representable movie **Watches**
+and **Ratings** from Bingers into Opnshelf. Aggregate rewatches and episodes
+without verified coordinates remain in **Needs attention**. Requires Bingers API
+access on a Legend or Icon subscription. Distinct from **Sync Watches**.
 
 **Activity**:
 A single item in the followed-users feed — a followed user's **Watch** (movie or episode) or **Review**, surfaced to the people who follow them. Not a separately stored entity; it is a projection over Watches and Reviews, ordered by when the action happened.

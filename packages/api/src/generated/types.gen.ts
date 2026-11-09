@@ -1676,13 +1676,14 @@ export type SyncStatusDto = {
 export type SyncConnectDto = {
     platform: 'web' | 'mobile';
     /**
-     * Return to Onboarding after Trakt authorization instead of Trakt Sync.
+     * Return to Onboarding after authorization instead of Integration management.
      */
     returnTo?: 'onboarding';
 };
 
 export type SyncAuthorizeDto = {
     url: string;
+    returnUrl: string;
 };
 
 export type SyncSettingsDto = {
@@ -1713,6 +1714,7 @@ export type SyncRecordDto = {
     title: string;
     season: number;
     episode: number;
+    coordinatesUnknown?: boolean;
     /**
      * Watch date, No date, or Rating
      */
@@ -5753,6 +5755,137 @@ export type PopfeedSyncControllerMatchesResponses = {
 };
 
 export type PopfeedSyncControllerMatchesResponse = PopfeedSyncControllerMatchesResponses[keyof PopfeedSyncControllerMatchesResponses];
+
+export type BingersSyncControllerMetadataData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/bingers-sync/client-metadata';
+};
+
+export type BingersSyncControllerMetadataResponses = {
+    200: unknown;
+};
+
+export type BingersSyncControllerStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/bingers-sync';
+};
+
+export type BingersSyncControllerStatusResponses = {
+    200: SyncStatusDto;
+};
+
+export type BingersSyncControllerStatusResponse = BingersSyncControllerStatusResponses[keyof BingersSyncControllerStatusResponses];
+
+export type BingersSyncControllerConfigureData = {
+    body: SyncSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/bingers-sync';
+};
+
+export type BingersSyncControllerConfigureResponses = {
+    200: SyncStatusDto;
+};
+
+export type BingersSyncControllerConfigureResponse = BingersSyncControllerConfigureResponses[keyof BingersSyncControllerConfigureResponses];
+
+export type BingersSyncControllerConnectData = {
+    body: SyncConnectDto;
+    path?: never;
+    query?: never;
+    url: '/bingers-sync/connect';
+};
+
+export type BingersSyncControllerConnectResponses = {
+    201: SyncAuthorizeDto;
+};
+
+export type BingersSyncControllerConnectResponse = BingersSyncControllerConnectResponses[keyof BingersSyncControllerConnectResponses];
+
+export type BingersSyncControllerCallbackData = {
+    body?: never;
+    path?: never;
+    query: {
+        state: string;
+    };
+    url: '/bingers-sync/callback';
+};
+
+export type BingersSyncControllerCallbackResponses = {
+    200: unknown;
+};
+
+export type BingersSyncControllerActionData = {
+    body: SyncActionDto;
+    path?: never;
+    query?: never;
+    url: '/bingers-sync/action';
+};
+
+export type BingersSyncControllerActionResponses = {
+    201: SyncStatusDto;
+};
+
+export type BingersSyncControllerActionResponse = BingersSyncControllerActionResponses[keyof BingersSyncControllerActionResponses];
+
+export type BingersSyncControllerIssuesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        view?: 'attention' | 'ignored';
+    };
+    url: '/bingers-sync/issues';
+};
+
+export type BingersSyncControllerIssuesResponses = {
+    200: IntegrationIssuesDto;
+};
+
+export type BingersSyncControllerIssuesResponse = BingersSyncControllerIssuesResponses[keyof BingersSyncControllerIssuesResponses];
+
+export type BingersSyncControllerResolveData = {
+    body: IntegrationResolveDto;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/bingers-sync/issues/{id}';
+};
+
+export type BingersSyncControllerResolveResponses = {
+    201: SyncStatusDto;
+};
+
+export type BingersSyncControllerResolveResponse = BingersSyncControllerResolveResponses[keyof BingersSyncControllerResolveResponses];
+
+export type BingersSyncControllerMatchesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        q?: string;
+    };
+    url: '/bingers-sync/issues/{id}/matches';
+};
+
+export type BingersSyncControllerMatchesResponses = {
+    200: Array<TraktMatchCandidateDto>;
+};
+
+export type BingersSyncControllerMatchesResponse = BingersSyncControllerMatchesResponses[keyof BingersSyncControllerMatchesResponses];
 
 export type SocialControllerGetSuggestionsData = {
     body?: never;

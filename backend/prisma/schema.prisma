@@ -139,6 +139,8 @@ model IntegrationConnection {
   failingSince DateTime?
   leaseId String?
   leaseUntil DateTime?
+  // Provider-owned durable change-feed cursor and materialized records.
+  remoteFeed Json @default("{}")
   remoteSnapshot Json @default("[]")
   remoteReadAt DateTime?
   remaining Int @default(0)

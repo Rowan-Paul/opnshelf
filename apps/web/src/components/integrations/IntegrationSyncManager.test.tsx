@@ -1,4 +1,5 @@
 import {
+	BINGERS_INTEGRATION,
 	type IntegrationDefinition,
 	type IntegrationIssuesDto,
 	POPFEED_INTEGRATION,
@@ -708,6 +709,32 @@ describe("Popfeed Sync", () => {
 			"Reviews",
 		]);
 	});
+});
+
+it("offers only incoming Bingers sync and explains subscription and history limits", async () => {
+	const client = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	});
+	const bingers = {
+		...BINGERS_INTEGRATION,
+		api: { ...BINGERS_INTEGRATION.api, status, issues },
+	};
+	render(
+		<QueryClientProvider client={client}>
+			<IntegrationSyncManager integration={bingers} />
+		</QueryClientProvider>,
+	);
+	expect(
+		await screen.findByRole("radio", { name: "Bingers → Opnshelf" }),
+	).toBeTruthy();
+	expect(
+		screen.queryByRole("radio", { name: "Opnshelf → Bingers" }),
+	).toBeNull();
+	expect(screen.queryByRole("radio", { name: "Both directions" })).toBeNull();
+	expect(
+		screen.getByText(/Bring movie Watches and Ratings from Bingers/)
+			.textContent,
+	).toContain("Legend or Icon");
 });
 
 it("does not capture a completed action when the API rejects it", async () => {

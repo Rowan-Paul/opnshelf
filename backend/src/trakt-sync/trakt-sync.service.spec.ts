@@ -16,6 +16,9 @@ it.each([
 	["save", "connection-save"],
 ] as const)("logs safe diagnostics when %s fails", async (failure, stage) => {
 	const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
+	const capture = vi
+		.spyOn(analytics, "captureProductEvent")
+		.mockImplementation(() => {});
 	const config = parseEnvironment({
 		NODE_ENV: "test",
 		TRAKT_API_KEY: "fixture-client",
@@ -67,6 +70,18 @@ it.each([
 	const state = new URL(url).searchParams.get("state") ?? "";
 	expect(await service.callback(state, "private-code")).toBe(
 		"https://example.test/trakt-sync?connection=failed",
+	);
+	expect(capture).toHaveBeenCalledWith(
+		config,
+		"private-did",
+		"integration_connection_failed",
+		{
+			provider: "trakt",
+			stage,
+		},
+	);
+	expect(JSON.stringify(capture.mock.calls)).not.toMatch(
+		/private-code|private-token|private-user/,
 	);
 	expect(warn.mock.calls.map(([message]) => [JSON.parse(message)])).toEqual([
 		[
@@ -434,7 +449,7 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 				>,
 		);
 		service["locked"] = async (_connection, operation) =>
-			operation(async () => undefined);
+			operation(async () => undefined, "fixture-lease");
 		await expect(service.resolve("fixture", "old", { action })).rejects.toThrow(
 			"outside your sync scope",
 		);
@@ -461,7 +476,7 @@ it("logs why a resolve was rejected, since the HTTP log only has the status", as
 			>,
 	);
 	service["locked"] = async (_connection, operation) =>
-		operation(async () => undefined);
+		operation(async () => undefined, "fixture-lease");
 	await expect(
 		service.resolve("fixture", "item-1", { action: "link" }),
 	).rejects.toThrow("outside your sync scope");

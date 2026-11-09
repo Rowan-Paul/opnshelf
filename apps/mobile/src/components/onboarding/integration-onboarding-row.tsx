@@ -50,9 +50,13 @@ export function IntegrationOnboardingRow({
 		mutationFn: integration.api.connect,
 		onSuccess: async (result) => {
 			if (result.url) {
+				if (!result.returnUrl)
+					throw new Error(
+						`${integration.name} did not provide a sign-in return link. Try again.`,
+					);
 				const auth = await WebBrowser.openAuthSessionAsync(
 					result.url,
-					"opnshelf://onboarding",
+					result.returnUrl,
 				);
 				if (
 					auth.type === "success" &&
