@@ -23,6 +23,13 @@ import {
 	main as listItemSchema,
 } from "../lexicons/xyz/opnshelf/list/item";
 import type { Main as ListItemRecord } from "../lexicons/xyz/opnshelf/list/item.defs";
+import {
+	clampPage,
+	clampPageSize,
+	DEFAULT_PAGE_SIZE,
+	getPaginationMeta,
+	MAX_PAGE_SIZE,
+} from "../common/pagination";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ShowsService } from "../shows/shows.service";
@@ -178,9 +185,9 @@ export class ListsService {
 	): Promise<ListWithItemsDto | null> {
 		const shouldPaginate = page !== undefined || pageSize !== undefined;
 		const safePageSize = shouldPaginate
-			? Math.min(Math.max(pageSize ?? 20, 1), 50)
+			? clampPageSize(pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
 			: undefined;
-		const requestedPage = Math.max(page ?? 1, 1);
+		const requestedPage = clampPage(page ?? 1);
 
 		const list = await this.prisma.list.findFirst({
 			where: { userDid, slug },
@@ -196,20 +203,13 @@ export class ListsService {
 		}
 
 		const total = list._count.items;
-		const totalPages =
-			shouldPaginate && safePageSize
-				? total > 0
-					? Math.ceil(total / safePageSize)
-					: 0
-				: total > 0
-					? 1
-					: 0;
-		const currentPage =
-			shouldPaginate && totalPages > 0
-				? Math.min(requestedPage, totalPages)
-				: 1;
+		const pagination = getPaginationMeta(
+			total,
+			requestedPage,
+			shouldPaginate && safePageSize ? safePageSize : total,
+		);
 		const offset =
-			shouldPaginate && safePageSize ? (currentPage - 1) * safePageSize : 0;
+			shouldPaginate && safePageSize ? (pagination.page - 1) * safePageSize : 0;
 
 		const watchState = await this.buildWatchState(viewerDid, list.id);
 
@@ -304,13 +304,8 @@ export class ListsService {
 						: undefined;
 				return mapItemToDto(item, episodeName, watchState.watchCount(item));
 			}),
-			total,
+			...pagination,
 			watchedCount: watchState.watchedCount,
-			page: currentPage,
-			pageSize: shouldPaginate && safePageSize ? safePageSize : total,
-			totalPages,
-			hasPreviousPage: shouldPaginate && totalPages > 0 && currentPage > 1,
-			hasNextPage: shouldPaginate && totalPages > 0 && currentPage < totalPages,
 		};
 	}
 
