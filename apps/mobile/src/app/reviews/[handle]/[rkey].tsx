@@ -234,8 +234,9 @@ export default function ReviewDetailScreen() {
 											<User color={colors.mutedForeground} size={15} />
 										)}
 									</View>
+									{/* Not selectable: Android ignores numberOfLines' ellipsis on
+									    selectable text and lets a clipped second line show. */}
 									<Text
-										selectable
 										className="shrink text-foreground text-sm"
 										numberOfLines={1}
 									>
