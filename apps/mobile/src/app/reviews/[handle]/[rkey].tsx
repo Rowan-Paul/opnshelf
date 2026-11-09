@@ -223,7 +223,7 @@ export default function ReviewDetailScreen() {
 						<View className="flex-row items-center justify-between gap-3">
 							<Link href={`/profile/${review.author.handle}` as Href} asChild>
 								<Pressable className="min-w-0 flex-1 flex-row items-center gap-2 active:opacity-70">
-									<View className="size-7 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+									<View className="size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
 										{review.author.avatar ? (
 											<Image
 												source={{ uri: review.author.avatar }}
@@ -236,25 +236,13 @@ export default function ReviewDetailScreen() {
 									</View>
 									<Text
 										selectable
-										className="text-foreground text-sm"
+										className="shrink text-foreground text-sm"
 										numberOfLines={1}
 									>
 										{review.author.displayName || review.author.handle}
 									</Text>
 								</Pressable>
 							</Link>
-							<View className="flex-row items-center gap-1.5">
-								<CalendarDays color={colors.mutedForeground} size={14} />
-								<Text selectable className="text-muted-foreground text-xs">
-									{formatLongDate(review.createdAt)}
-									{/* Same "(updated …)" note as the Web App, after a minute's grace. */}
-									{new Date(review.updatedAt).getTime() -
-										new Date(review.createdAt).getTime() >
-									60_000
-										? ` (updated ${formatLongDate(review.updatedAt)})`
-										: ""}
-								</Text>
-							</View>
 							<Pressable
 								onPress={handleToggleLike}
 								disabled={!canLike || isLikePending}
@@ -299,6 +287,21 @@ export default function ReviewDetailScreen() {
 							>
 								<Share2 color={colors.mutedForeground} size={16} />
 							</Pressable>
+						</View>
+						{/* Dates get their own row so they can wrap instead of squeezing the author out. */}
+						<View className="flex-row items-start gap-1.5">
+							<View className="h-4 justify-center">
+								<CalendarDays color={colors.mutedForeground} size={14} />
+							</View>
+							<Text selectable className="shrink text-muted-foreground text-xs">
+								{formatLongDate(review.createdAt)}
+								{/* Same "(updated …)" note as the Web App, after a minute's grace. */}
+								{new Date(review.updatedAt).getTime() -
+									new Date(review.createdAt).getTime() >
+								60_000
+									? ` (updated ${formatLongDate(review.updatedAt)})`
+									: ""}
+							</Text>
 						</View>
 					</View>
 
