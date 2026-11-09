@@ -42,6 +42,24 @@ describe("ReviewLikeButton", () => {
 		expect(onToggle).not.toHaveBeenCalled();
 	});
 
+	it("does not announce an unknown count as zero for signed-out viewers", () => {
+		render(
+			<ReviewLikeButton
+				{...base}
+				likeCount={undefined}
+				canLike={false}
+				isAuthenticated={false}
+				onToggle={vi.fn()}
+			/>,
+		);
+		expect(
+			screen
+				.getByRole("button", { name: "Review likes" })
+				.hasAttribute("disabled"),
+		).toBe(true);
+		expect(screen.queryByLabelText("0 likes")).toBeNull();
+	});
+
 	it("ignores clicks while a like is in flight", () => {
 		const onToggle = vi.fn();
 		render(<ReviewLikeButton {...base} isPending onToggle={onToggle} />);
