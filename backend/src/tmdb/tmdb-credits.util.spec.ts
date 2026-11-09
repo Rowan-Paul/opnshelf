@@ -4,6 +4,8 @@ import {
 	sortCrewByJob,
 	SUMMARY_CREW_LIMIT,
 	summarizeCrew,
+	trimCast,
+	trimCrew,
 } from "./tmdb-credits.util";
 
 const KEY_JOBS = [
@@ -175,6 +177,79 @@ describe("groupCrewByDepartment", () => {
 		expect(groups.at(-1)?.members.map((m) => m.name)).toEqual([
 			"A Driver",
 			"No Dept",
+		]);
+	});
+});
+
+describe("credit payload trimming", () => {
+	it("keeps cast fields and drops unused TMDB metadata without mutating input", () => {
+		const fields = {
+			id: 1,
+			name: "Cast member",
+			character: "Character",
+			profile_path: "/cast.jpg",
+			order: 0,
+		};
+		const member = Object.freeze({
+			...fields,
+			adult: false,
+			gender: 1,
+			credit_id: "cast-credit",
+			popularity: 42,
+			known_for_department: "Acting",
+		});
+
+		const result = trimCast([member]);
+
+		expect(result).toEqual([fields]);
+		expect(result[0]).not.toBe(member);
+		expect(member.credit_id).toBe("cast-credit");
+	});
+
+	it("keeps crew fields and drops unused TMDB metadata without mutating input", () => {
+		const fields = {
+			id: 2,
+			name: "Crew member",
+			job: "Director",
+			department: "Directing",
+			profile_path: "/crew.jpg",
+		};
+		const member = Object.freeze({
+			...fields,
+			adult: false,
+			gender: 2,
+			credit_id: "crew-credit",
+			popularity: 24,
+			known_for_department: "Directing",
+		});
+
+		const result = trimCrew([member]);
+
+		expect(result).toEqual([fields]);
+		expect(result[0]).not.toBe(member);
+		expect(member.credit_id).toBe("crew-credit");
+	});
+
+	it("accepts missing credits and preserves members with optional fields absent", () => {
+		expect(trimCast()).toEqual([]);
+		expect(trimCrew()).toEqual([]);
+		expect(trimCast([{ id: 1, name: "Cast member", order: 0 }])).toStrictEqual([
+			{
+				id: 1,
+				name: "Cast member",
+				order: 0,
+				character: undefined,
+				profile_path: undefined,
+			},
+		]);
+		expect(trimCrew([{ id: 2, name: "Crew member" }])).toStrictEqual([
+			{
+				id: 2,
+				name: "Crew member",
+				job: undefined,
+				department: undefined,
+				profile_path: undefined,
+			},
 		]);
 	});
 });
