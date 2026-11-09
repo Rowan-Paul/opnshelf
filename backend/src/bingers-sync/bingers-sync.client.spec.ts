@@ -257,6 +257,15 @@ it("uses form-encoded PKCE and the API audience, and rejects write attempts", as
 	expect(h.client.metadata().redirect_uris).toEqual([h.client.callbackUrl]);
 });
 
+it("keeps OAuth client metadata on the backend origin", () => {
+	const h = harness();
+	expect(h.client.metadata()).toMatchObject({
+		client_id: "https://api.example.test/bingers-sync/client-metadata",
+		client_uri: "https://api.example.test",
+		redirect_uris: ["https://api.example.test/bingers-sync/callback"],
+	});
+});
+
 it("retains refresh credentials when OAuth omits an unchanged scope and refresh token", async () => {
 	const h = harness();
 	h.fetcher.mockResolvedValueOnce(

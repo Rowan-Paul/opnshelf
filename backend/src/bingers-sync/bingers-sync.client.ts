@@ -149,7 +149,7 @@ export class BingersSyncClient {
 		return {
 			client_id: this.clientId,
 			client_name: "Opnshelf",
-			client_uri: this.config.FRONTEND_URL,
+			client_uri: this.config.BACKEND_PUBLIC_URL,
 			redirect_uris: [this.callbackUrl],
 			grant_types: ["authorization_code", "refresh_token"],
 			response_types: ["code"],
