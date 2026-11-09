@@ -740,47 +740,52 @@ it("offers only incoming Bingers sync and explains subscription and history limi
 it("stays in its loading state until the browser leaves for OAuth", async () => {
 	const assign = vi.fn();
 	vi.stubGlobal("location", { ...window.location, assign });
-	const connect = vi.fn(async () => ({ url: "https://bingers.example/auth" }));
-	const bingers: IntegrationDefinition = {
-		...BINGERS_INTEGRATION,
-		api: {
-			...BINGERS_INTEGRATION.api,
-			status: async () =>
-				({ ...(await status()), status: "disconnected" }) as SyncStatusDto,
-			issues,
-			connect,
-		},
-	};
-	render(
-		<QueryClientProvider
-			client={
-				new QueryClient({
-					defaultOptions: {
-						queries: { retry: false },
-						mutations: { retry: false },
-					},
-				})
-			}
-		>
-			<IntegrationSyncManager integration={bingers} />
-		</QueryClientProvider>,
-	);
-	fireEvent.click(
-		await screen.findByRole("button", { name: "Connect Bingers" }),
-	);
-	await waitFor(() =>
-		expect(assign).toHaveBeenCalledWith("https://bingers.example/auth"),
-	);
-	const button = screen.getByRole("button", { name: "Opening Bingers…" });
-	expect(button.hasAttribute("disabled")).toBe(true);
-	// Returning through the back/forward cache offers the button again.
-	window.dispatchEvent(
-		new PageTransitionEvent("pageshow", { persisted: true }),
-	);
-	expect(
-		await screen.findByRole("button", { name: "Connect Bingers" }),
-	).toBeTruthy();
-	vi.unstubAllGlobals();
+	try {
+		const connect = vi.fn(async () => ({
+			url: "https://bingers.example/auth",
+		}));
+		const bingers: IntegrationDefinition = {
+			...BINGERS_INTEGRATION,
+			api: {
+				...BINGERS_INTEGRATION.api,
+				status: async () =>
+					({ ...(await status()), status: "disconnected" }) as SyncStatusDto,
+				issues,
+				connect,
+			},
+		};
+		render(
+			<QueryClientProvider
+				client={
+					new QueryClient({
+						defaultOptions: {
+							queries: { retry: false },
+							mutations: { retry: false },
+						},
+					})
+				}
+			>
+				<IntegrationSyncManager integration={bingers} />
+			</QueryClientProvider>,
+		);
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Connect Bingers" }),
+		);
+		await waitFor(() =>
+			expect(assign).toHaveBeenCalledWith("https://bingers.example/auth"),
+		);
+		const button = screen.getByRole("button", { name: "Opening Bingers…" });
+		expect(button.hasAttribute("disabled")).toBe(true);
+		// Returning through the back/forward cache offers the button again.
+		window.dispatchEvent(
+			new PageTransitionEvent("pageshow", { persisted: true }),
+		);
+		expect(
+			await screen.findByRole("button", { name: "Connect Bingers" }),
+		).toBeTruthy();
+	} finally {
+		vi.unstubAllGlobals();
+	}
 });
 
 it("does not capture a completed action when the API rejects it", async () => {
