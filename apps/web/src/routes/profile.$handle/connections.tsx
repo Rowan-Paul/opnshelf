@@ -19,8 +19,13 @@ import {
 } from "#/lib/hooks/usePublicProfile";
 import { getPageMeta, getSharingImageUrl } from "#/lib/media-meta";
 
+// `tab` only picks which list is shown, so a malformed value falls back to
+// Followers (as on Mobile) instead of failing the route.
 const connectionsSearchSchema = z.object({
-	tab: z._default(z.optional(z.enum(["followers", "following"])), "followers"),
+	tab: z.catch(
+		z._default(z.optional(z.enum(["followers", "following"])), "followers"),
+		"followers",
+	),
 });
 
 export const Route = createFileRoute("/profile/$handle/connections")({
