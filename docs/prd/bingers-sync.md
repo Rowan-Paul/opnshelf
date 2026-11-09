@@ -226,3 +226,17 @@ artifact then failed to remain running; the device tool returned
 relaunch. Simulator automation was stopped. This does not establish a successful
 check of `/integrations/bingers`; authenticated Mobile visual verification
 remains incomplete. No tracked signing configuration was changed.
+
+### Pre-publication review follow-ups
+
+Opus reviewed commit `299cbff4438483eafd5745f89d3a57a508b281bc` and reported no
+publication blockers. The shared problem-record safeguards intentionally apply to
+Trakt and Popfeed too: this is the common core's representability policy, with
+provider regression tests. Nonblocking helper/DTO naming cleanup is deferred to
+avoid unnecessary API-schema churn.
+
+Follow-up fixes guard feed persistence with an atomic comparison of the captured
+lease ID and its live expiry, revoke both OAuth tokens if an authorization cannot
+be saved, and prevent scoped confirmation reads from starting or recovering via a
+cursor-less complete read. Focused tests cover these cases. These small changes
+were verified locally rather than sent for another delegated review.

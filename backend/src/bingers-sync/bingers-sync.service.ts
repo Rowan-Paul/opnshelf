@@ -1,3 +1,4 @@
+import { SyncSnapshotChanged } from "../integrations/integration-error";
 import { z } from "zod";
 import type {
 	IntegrationRemote,
@@ -113,7 +114,7 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	) {
 		const row = await this.prisma.integrationConnection.findUniqueOrThrow({
 			where: { id: c.connectionId },
-			select: { remoteFeed: true },
+			select: { remoteFeed: true, leaseId: true, leaseUntil: true },
 		});
 		const saved = z
 			.object({
@@ -124,6 +125,10 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		if (Boolean(saved.cursor) !== Boolean(saved.records))
 			throw new BingersSyncError(
 				"Bingers saved history is incomplete. No records were removed.",
+			);
+		if (!persist && !saved.cursor)
+			throw new BingersSyncError(
+				"Bingers history is not ready for confirmation. Run sync first.",
 			);
 		const records = (saved.records ?? []).map((value) => {
 			const record = readRecord(value);
@@ -140,16 +145,28 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 				records,
 			});
 		} catch (error) {
-			if (!(error instanceof BingersCursorRejected)) throw error;
+			if (!(error instanceof BingersCursorRejected) || !persist) throw error;
 			// Discard only the in-memory attempt. Never publish an empty or partial replacement.
 			feed = await this.api.readFeed(c.token);
 		}
-		if (persist)
-			await this.prisma.integrationConnection.update({
-				where: { id: c.connectionId },
-				select: { id: true },
+		if (persist) {
+			if (!row.leaseId)
+				throw new SyncSnapshotChanged(
+					"Bingers Sync ownership changed. Previous history was retained.",
+				);
+			const savedFeed = await this.prisma.integrationConnection.updateMany({
+				where: {
+					id: c.connectionId,
+					leaseId: row.leaseId,
+					leaseUntil: { gt: new Date() },
+				},
 				data: { remoteFeed: feed as unknown as Prisma.InputJsonValue },
 			});
+			if (savedFeed.count !== 1)
+				throw new SyncSnapshotChanged(
+					"Bingers Sync ownership changed. Previous history was retained.",
+				);
+		}
 		return feed.records.filter((r) =>
 			r.kind === "watch" ? types?.watches !== false : types?.ratings !== false,
 		);

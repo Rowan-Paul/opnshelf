@@ -211,7 +211,11 @@ export abstract class OAuthIntegrationSyncService<
 						},
 					});
 			} catch (error) {
-				await this.oauth.revoke(token.access_token).catch(() => undefined);
+				await Promise.allSettled(
+					[token.refresh_token, token.access_token].map((credential) =>
+						this.oauth.revoke(credential),
+					),
+				);
 				throw error;
 			}
 			return `${redirect}?${this.callbackQuery}connection=connected`;

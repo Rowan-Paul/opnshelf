@@ -68,6 +68,10 @@ it.each([
 	expect(await service.callback(state, "private-code")).toBe(
 		"https://example.test/integrations/bingers?provider=bingers&connection=failed",
 	);
+	if (failure !== "exchange") {
+		expect(api.revoke).toHaveBeenCalledWith("private-refresh");
+		expect(api.revoke).toHaveBeenCalledWith("private-token");
+	}
 	expect(warn.mock.calls.map(([message]) => [JSON.parse(message)])).toEqual([
 		[
 			{

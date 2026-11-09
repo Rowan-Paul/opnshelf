@@ -101,7 +101,15 @@ function harness() {
 	let remoteFeed: unknown = {};
 	const prisma = {
 		integrationConnection: {
-			findUniqueOrThrow: vi.fn(async () => ({ remoteFeed })),
+			findUniqueOrThrow: vi.fn(async () => ({
+				remoteFeed,
+				leaseId: "fixture-lease",
+				leaseUntil: new Date(Date.now() + 120000),
+			})),
+			updateMany: vi.fn(async ({ data }: { data: { remoteFeed: unknown } }) => {
+				remoteFeed = data.remoteFeed;
+				return { count: 1 };
+			}),
 			update: vi.fn(async ({ data }: { data: { remoteFeed: unknown } }) => {
 				remoteFeed = data.remoteFeed;
 				return { id: "connection-1" };
@@ -189,7 +197,7 @@ describe("durable change feed", () => {
 		await expect(h.snapshot(credential)).rejects.toThrow("repeated");
 		h.fetcher.mockResolvedValueOnce(response({ items: [] }));
 		await expect(h.snapshot(credential)).rejects.toThrow();
-		expect(h.prisma.integrationConnection.update).toHaveBeenCalledTimes(1);
+		expect(h.prisma.integrationConnection.updateMany).toHaveBeenCalledTimes(1);
 	});
 	it("turns a previously exact Watch into a problem instead of replacing its date", async () => {
 		const h = harness();
@@ -220,7 +228,7 @@ it.each([
 		message: expect.stringContaining(message),
 		retrySeconds: 900,
 	});
-	expect(h.prisma.integrationConnection.update).not.toHaveBeenCalled();
+	expect(h.prisma.integrationConnection.updateMany).not.toHaveBeenCalled();
 });
 it("uses form-encoded PKCE and the API audience, and rejects write attempts", async () => {
 	const h = harness();
@@ -314,7 +322,7 @@ it("does not persist cursor advancement during a scoped confirmation read", asyn
 		response(page([], { next_cursor: "cursor-2" })),
 	);
 	await h.service["remote"].readForRecord(credential, values(page())[0]);
-	expect(h.prisma.integrationConnection.update).toHaveBeenCalledTimes(1);
+	expect(h.prisma.integrationConnection.updateMany).toHaveBeenCalledTimes(1);
 	expect(h.feed()).toMatchObject({ cursor: "cursor-1" });
 });
 it("clears cached history on disconnect even when remote revocation fails", async () => {
@@ -350,4 +358,38 @@ it("sends subscription rejection to reconnection instead of a minute retry loop"
 		retrySeconds: 3600,
 		message: expect.stringContaining("Legend or Icon"),
 	});
+});
+
+it("cannot restore a feed after lease ownership changed or disconnect completed", async () => {
+	const h = harness();
+	h.fetcher.mockResolvedValueOnce(response(page()));
+	await h.snapshot();
+	const before = structuredClone(h.feed());
+	h.prisma.integrationConnection.updateMany.mockResolvedValueOnce({ count: 0 });
+	h.fetcher.mockResolvedValueOnce(response(page([], { next_cursor: "later" })));
+	await expect(h.snapshot()).rejects.toThrow("ownership changed");
+	expect(h.feed()).toEqual(before);
+	expect(h.prisma.integrationConnection.updateMany).toHaveBeenLastCalledWith(
+		expect.objectContaining({
+			where: {
+				id: credential.connectionId,
+				leaseId: "fixture-lease",
+				leaseUntil: { gt: expect.any(Date) },
+			},
+		}),
+	);
+});
+it("does not spend a full-read budget on confirmation without a valid cursor", async () => {
+	const h = harness();
+	await expect(
+		h.service["remote"].readForRecord(credential, values(page())[0]),
+	).rejects.toThrow("Run sync first");
+	expect(h.fetcher).not.toHaveBeenCalled();
+	h.fetcher.mockResolvedValueOnce(response(page()));
+	await h.snapshot();
+	h.fetcher.mockResolvedValueOnce(response({}, 400));
+	await expect(
+		h.service["remote"].readForRecord(credential, values(page())[0]),
+	).rejects.toThrow("rejected");
+	expect(h.fetcher).toHaveBeenCalledTimes(2);
 });
