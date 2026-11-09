@@ -408,7 +408,7 @@ export class AppleSignupController {
 			dto.timezone,
 			// Native account on our PDS, but already verified by Apple, so it must
 			// not be caught by the verify-email gate (see needsEmailVerification).
-			{ isNativePds: true, emailVerified: true },
+			{ isNativePds: true, emailVerified: true, signupMethod: "apple" },
 		);
 
 		if (dto.timezone) {

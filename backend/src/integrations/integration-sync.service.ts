@@ -1,3 +1,7 @@
+import {
+	captureProductEvent,
+	isProductAnalyticsEnabled,
+} from "../analytics/capture";
 import { TID } from "@atproto/common";
 import {
 	BadRequestException,
@@ -1274,6 +1278,24 @@ export abstract class IntegrationSyncService<Credential>
 							remoteReadAt: null,
 						},
 					});
+					const reconnect =
+						error instanceof IntegrationError && error.status === 401;
+					if (!c.lastError || (reconnect && c.status !== "reconnect"))
+						captureProductEvent(
+							this.config,
+							c.userDid,
+							reconnect
+								? "integration_reconnect_required"
+								: "integration_sync_failed",
+							{
+								provider: this.provider,
+								direction: c.direction,
+								error_category:
+									error instanceof IntegrationError ? "provider" : "internal",
+								http_status:
+									error instanceof IntegrationError ? error.status : null,
+							},
+						);
 				}
 			});
 		} catch {
@@ -1330,6 +1352,7 @@ export abstract class IntegrationSyncService<Credential>
 		c: IntegrationConnection,
 		lease: () => Promise<void>,
 	) {
+		const startedAtRun = Date.now();
 		let remote = records(c.remoteSnapshot);
 		// Account reads and transfers share the privacy lock, but slow remote
 		// pagination must not prevent someone from adding a Watch to their Shelf.
@@ -1425,6 +1448,11 @@ export abstract class IntegrationSyncService<Credential>
 					remaining: 0,
 					remainingTotal: 0,
 				},
+			});
+			captureProductEvent(this.config, c.userDid, "integration_sync_prepared", {
+				provider: this.provider,
+				direction: c.direction,
+				duration_ms: Date.now() - startedAtRun,
 			});
 			return;
 		}
@@ -1755,6 +1783,57 @@ export abstract class IntegrationSyncService<Credential>
 					: 0,
 			},
 		});
+		if (!isProductAnalyticsEnabled(this.config)) return;
+		const needsAttention = await this.prisma.integrationEntry
+			.count({
+				where: {
+					connectionId: c.id,
+					issue: { not: null },
+					ignored: false,
+					OR: [{ eligible: true }, { linked: true }],
+				},
+			})
+			.catch(() => null);
+		const previousAttention = known.filter(
+			(e) => e.issue && !e.ignored && (e.eligible || e.linked),
+		).length;
+		if (
+			writes ||
+			remaining ||
+			c.lastError ||
+			needsAttention !== previousAttention
+		)
+			captureProductEvent(
+				this.config,
+				c.userDid,
+				"integration_sync_completed",
+				{
+					provider: this.provider,
+					direction: c.direction,
+					duration_ms: Date.now() - startedAtRun,
+					transferred_count: writes,
+					remaining_count: remaining,
+					needs_attention_count: needsAttention,
+					caught_up: remaining === 0 && needsAttention === 0,
+				},
+			);
+		if (needsAttention !== null && needsAttention !== previousAttention)
+			captureProductEvent(
+				this.config,
+				c.userDid,
+				"integration_attention_changed",
+				{
+					provider: this.provider,
+					needs_attention_count: needsAttention,
+				},
+			);
+		if (c.lastError)
+			captureProductEvent(
+				this.config,
+				c.userDid,
+				"integration_sync_recovered",
+				{ provider: this.provider },
+			);
 	}
 	protected issue(id: string, issue: string) {
 		return this.prisma.integrationEntry.update({

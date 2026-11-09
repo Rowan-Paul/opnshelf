@@ -32,12 +32,15 @@ export const posthogLoaded: Promise<void> | undefined = isPostHogEnabled
 				// PostHog EU.
 				api_host: "/ingest",
 				person_profiles: "identified_only",
+				autocapture: false,
+				disable_session_recording: true,
 				capture_pageview: false,
 				capture_pageleave: true,
 				capture_performance: true,
 				defaults: "2025-11-30",
 				before_send: (event) => {
 					if (!event) return event;
+					event.properties.platform = "web";
 					// The root route supplies only the origin and route section for
 					// pageviews. Other events can inherit sensitive browser URLs.
 					if (event.event !== "$pageview") {

@@ -347,7 +347,7 @@ export class GoogleSignupController {
 			dto.timezone,
 			// Native account on our PDS, but already verified by Google, so it must
 			// not be caught by the verify-email gate (see needsEmailVerification).
-			{ isNativePds: true, emailVerified: true },
+			{ isNativePds: true, emailVerified: true, signupMethod: "google" },
 		);
 
 		// The pending registration is already bound to Core OAuth. Preserve the

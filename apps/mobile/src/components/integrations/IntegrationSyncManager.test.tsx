@@ -20,7 +20,12 @@ afterAll(() => {
 	else delete require.extensions[".png"];
 });
 
+vi.mock("@/lib/posthog", () => ({
+	posthog: { capture: (...args: unknown[]) => mocks.capture(...args) },
+}));
+
 const mocks = vi.hoisted(() => ({
+	capture: vi.fn(),
 	mutate: vi.fn(),
 	active: false,
 	disconnected: false,

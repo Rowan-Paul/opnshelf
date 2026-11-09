@@ -7,9 +7,10 @@ import {
 	searchControllerSearchAllOptions,
 	type UnifiedSearchResultDto,
 } from "@opnshelf/api";
+import { useSearchAnalytics } from "@opnshelf/api/analytics-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Film, Loader2, Plus, Search, Tv, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
 	Dialog,
@@ -78,15 +79,15 @@ export default function AddListItemsDialog({
 		enabled: open && debouncedQuery.trim().length > 0,
 	});
 
-	useEffect(() => {
-		if (!open || !debouncedQuery.trim() || !searchData) return;
-		posthog.capture("search_performed", {
-			surface: "list_item_picker",
-			tab: "all",
-			query_length: debouncedQuery.trim().length,
-			result_count: searchData.items?.length ?? 0,
-		});
-	}, [debouncedQuery, open, searchData]);
+	useSearchAnalytics({
+		query: debouncedQuery,
+		tab: "all",
+		surface: "list_item_picker",
+		enabled: open,
+		ready: !!searchData && !isFetching,
+		resultCount: searchData?.items.length ?? 0,
+		capture: posthog.capture,
+	});
 
 	// Movies + shows only in v1.
 	const results = useMemo(() => {

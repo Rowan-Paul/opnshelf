@@ -1,3 +1,4 @@
+import { captureProductEvent } from "../analytics/capture";
 import {
 	BadRequestException,
 	ConflictException,
@@ -133,6 +134,7 @@ export abstract class OAuthIntegrationSyncService<
 	async callback(state: string, code?: string) {
 		let redirect = `${this.config.FRONTEND_URL}/${this.returnPath}`;
 		let stage = "state-validation";
+		let owner: string | undefined;
 		try {
 			const saved = await this.prisma.authState.findUnique({
 				where: { key: `${this.provider}:${state}` },
@@ -143,6 +145,7 @@ export abstract class OAuthIntegrationSyncService<
 				platform: string;
 				returnTo?: string;
 			};
+			owner = data.userDid;
 			const path =
 				data.returnTo === "onboarding" ? "onboarding" : this.returnPath;
 			redirect =
@@ -160,7 +163,18 @@ export abstract class OAuthIntegrationSyncService<
 				throw new BadRequestException(
 					`${this.name} authorization has already been used.`,
 				);
-			if (!code) return `${redirect}?${this.callbackQuery}connection=cancelled`;
+			if (!code) {
+				captureProductEvent(
+					this.config,
+					data.userDid,
+					"integration_connection_failed",
+					{
+						provider: this.provider,
+						reason: "cancelled",
+					},
+				);
+				return `${redirect}?${this.callbackQuery}connection=cancelled`;
+			}
 			stage = "token-exchange";
 			const token = await this.oauth.exchange(code, data.verifier);
 			try {
@@ -218,8 +232,21 @@ export abstract class OAuthIntegrationSyncService<
 				);
 				throw error;
 			}
+			captureProductEvent(this.config, data.userDid, "integration_connected", {
+				provider: this.provider,
+			});
 			return `${redirect}?${this.callbackQuery}connection=connected`;
 		} catch (error) {
+			if (owner)
+				captureProductEvent(
+					this.config,
+					owner,
+					"integration_connection_failed",
+					{
+						provider: this.provider,
+						stage,
+					},
+				);
 			// Never log exception messages, payloads, codes, state, or credentials.
 			this.logger.warn(
 				JSON.stringify({

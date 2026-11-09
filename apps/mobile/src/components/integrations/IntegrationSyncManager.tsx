@@ -54,6 +54,7 @@ import { usePermissionRequest } from "@/components/settings/permission-request";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { useAuth } from "@/lib/auth-context";
 import { beginHandoff } from "@/lib/auth-handoff";
+import { posthog } from "@/lib/posthog";
 import { EndReachedScrollView } from "@/lib/use-end-reached";
 import { useThemeColors } from "@/theme/colors";
 
@@ -145,6 +146,10 @@ export function IntegrationSyncManager({
 		mutationKey: [...rootKey, "connect"],
 		mutationFn: integration.api.connect,
 		onSuccess: async (data) => {
+			posthog?.capture("integration_connection_requested", {
+				provider: id,
+				platform: "mobile",
+			});
 			if (data.url) {
 				if (!data.returnUrl)
 					throw new Error(
@@ -168,7 +173,14 @@ export function IntegrationSyncManager({
 		mutationFn: (choice: SyncActionDto["action"]) =>
 			integration.api.action(choice),
 		...integrationSyncBusyRetry,
-		onSuccess: refresh,
+		onSuccess: (_data, action) => {
+			posthog?.capture("integration_action_completed", {
+				provider: id,
+				platform: "mobile",
+				action,
+			});
+			return refresh();
+		},
 	});
 	const [disconnect, setDisconnect] = useState(false);
 	const [editing, setEditing] = useState(false);
@@ -498,7 +510,16 @@ export function SyncSettings({
 		mutationKey: [...integrationKey(integration), "configure"],
 		mutationFn: integration.api.configure,
 		...integrationSyncBusyRetry,
-		onSuccess: () => {
+		onSuccess: (_data, settings) => {
+			posthog?.capture("integration_settings_saved", {
+				provider: integration.id,
+				platform: "mobile",
+				direction: settings.direction,
+				history_scope: settings.historyScope,
+				record_types: integrationRecords(integration)
+					.filter(({ value }) => settings[value])
+					.map(({ value }) => value),
+			});
 			setReviewing(false);
 			onSaved();
 		},
@@ -1013,7 +1034,14 @@ function SyncIssue({
 		mutationFn: (body: IntegrationResolveDto) =>
 			integration.api.resolve(item.id, body),
 		...integrationSyncBusyRetry,
-		onSuccess: () => {
+		onSuccess: (_data, choice) => {
+			posthog?.capture("integration_issue_action_completed", {
+				provider: integration.id,
+				platform: "mobile",
+				action: choice.action,
+				record_type: item.kind,
+				all_ratings: choice.allRatings ?? false,
+			});
 			setChoice(null);
 			void client.invalidateQueries({ queryKey: rootKey });
 		},

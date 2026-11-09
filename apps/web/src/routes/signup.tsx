@@ -24,7 +24,6 @@ import {
 	TooltipTrigger,
 } from "#/components/ui/tooltip";
 import { env } from "#/env";
-import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 import { noteSignInMethod } from "#/lib/recent-accounts";
 
@@ -83,7 +82,6 @@ function SignupPage() {
 		mutationKey: ["auth", "register"],
 		...authControllerRegisterMutation(),
 		onSuccess: async () => {
-			posthog.capture("user_signed_up", { method: "password" });
 			// Before the refresh below remembers the account, so a provider button
 			// clicked and abandoned earlier is not recorded as its method.
 			noteSignInMethod("handle");

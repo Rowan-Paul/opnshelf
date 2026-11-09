@@ -1,3 +1,5 @@
+import { captureProductEvent } from "../analytics/capture";
+vi.mock("../analytics/capture", () => ({ captureProductEvent: vi.fn() }));
 import { mockEnvironment } from "../../test/env";
 import type { Mock, Mocked } from "vitest";
 import { BackendEnv } from "../config/env.schema";
@@ -157,6 +159,16 @@ describe("AuthController callback", () => {
 
 			await controller.callback(req, res);
 
+			expect(captureProductEvent).toHaveBeenCalledWith(
+				mockBackendEnv,
+				mockSession.did,
+				"user_logged_in",
+				{},
+				"login:session-123",
+			);
+			expect(res.cookie).toHaveBeenCalledBefore(vi.mocked(captureProductEvent));
+			expect(captureProductEvent).toHaveBeenCalledBefore(res.redirect);
+
 			expect(mockAuthService.callback).toHaveBeenCalled();
 			expect(mockAuthService.fetchProfile).toHaveBeenCalledWith(mockSession);
 			expect(mockAuthService.upsertUser).toHaveBeenCalledWith(
@@ -177,6 +189,32 @@ describe("AuthController callback", () => {
 				"http://127.0.0.1:3000/auth/complete",
 			);
 		});
+
+		it.each([undefined, "blog"])(
+			"does not report callback completion when profile initialization fails (%s)",
+			async (permissionChange) => {
+				mockAuthService.parseOAuthAppState.mockReturnValue({
+					permissionChange,
+					requestedPreferences: { blogEnabled: true },
+				});
+				mockAuthService.callback.mockResolvedValue({
+					session: { did: "did:plc:fixture" },
+					sessionId: "fixture-session",
+				});
+				mockAuthService.fetchProfile.mockResolvedValue({
+					did: "did:plc:fixture",
+					handle: "fixture.test",
+				});
+				mockAuthService.upsertUser.mockResolvedValue({ isNewUser: true });
+				mockUsersService.initializeProfileForNewUser.mockRejectedValueOnce(
+					new Error("fixture initialization failure"),
+				);
+				const res = createMockResponse();
+				await controller.callback(createMockRequest(), res);
+				expect(res.cookie).not.toHaveBeenCalled();
+				expect(captureProductEvent).not.toHaveBeenCalled();
+			},
+		);
 
 		it("initializes the seeded profile and default lists for new users", async () => {
 			const mockSession = { did: "did:plc:new123" };

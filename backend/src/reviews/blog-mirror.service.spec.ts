@@ -1,3 +1,4 @@
+import { parseEnvironment } from "../config/env.schema";
 vi.mock("../prisma/prisma.service", () => ({
 	PrismaService: vi.fn(),
 }));
@@ -155,6 +156,7 @@ describe("BlogMirrorService", () => {
 		service = new BlogMirrorService(
 			mockPrisma as unknown as PrismaService,
 			mockReviewMedia as unknown as ReviewMediaService,
+			parseEnvironment({}),
 		);
 	});
 
