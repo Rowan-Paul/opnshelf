@@ -113,6 +113,10 @@ function CanonicalReviewPage() {
 		unlikeReview,
 		isLikePending,
 		isUnlikePending,
+		isSuccess: likesLoaded,
+		isFetching: likesFetching,
+		isError: likesError,
+		refetch: refetchLikes,
 	} = useReviewLikes({
 		reviewId: review.id,
 		mediaType: review.mediaType === "movie" ? "movie" : "show",
@@ -121,7 +125,11 @@ function CanonicalReviewPage() {
 		episodeNumber: review.episodeNumber,
 	});
 	// Mirrors Mobile: signed-in non-authors can toggle; everyone sees the count.
-	const canLike = isAuthenticated && user?.did !== review.author.did;
+	const canLike =
+		isAuthenticated &&
+		user?.did !== review.author.did &&
+		likesLoaded &&
+		!likesFetching;
 
 	const posterUrl = review.posterPath
 		? `https://image.tmdb.org/t/p/w300${review.posterPath}`
@@ -183,6 +191,20 @@ function CanonicalReviewPage() {
 							/>
 						</div>
 					</div>
+
+					{likesError && (
+						<p className="mt-2 text-(--foreground-muted) text-sm">
+							Couldn't load review likes.{" "}
+							<button
+								type="button"
+								aria-label="Retry loading review likes"
+								className="text-(--accent) underline"
+								onClick={() => void refetchLikes()}
+							>
+								Try again
+							</button>
+						</p>
+					)}
 
 					<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-(--foreground-muted) text-sm">
 						<Link

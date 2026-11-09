@@ -72,22 +72,24 @@ export default function ReviewDetailScreen() {
 			episodeNumber: review?.episodeNumber,
 		},
 	});
-	const { data: likes } = useQuery({
+	const likesQuery = useQuery({
 		...reviewsControllerGetReviewLikesOptions({
 			path: { reviewId: review?.id ?? "" },
 		}),
 		enabled: Boolean(review?.id),
 	});
-	const invalidateLikes = () => {
-		queryClient.invalidateQueries({ queryKey: likesQueryKey });
-		queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-	};
+	const { data: likes } = likesQuery;
+	const invalidateLikes = () =>
+		Promise.all([
+			queryClient.invalidateQueries({ queryKey: likesQueryKey }),
+			queryClient.invalidateQueries({ queryKey: mediaReviewsKey }),
+		]);
 	const likeMutation = useMutation({
 		mutationKey: ["reviews", review?.id, "like"],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
 			posthog?.capture("review_liked", { source: "mobile" });
-			invalidateLikes();
+			return invalidateLikes();
 		},
 		onError: (error) => {
 			toast.error(
@@ -106,7 +108,11 @@ export default function ReviewDetailScreen() {
 		},
 	});
 	const isLikePending = likeMutation.isPending || unlikeMutation.isPending;
-	const canLike = isAuthenticated && user?.did !== review?.author.did;
+	const canLike =
+		isAuthenticated &&
+		user?.did !== review?.author.did &&
+		likesQuery.isSuccess &&
+		!likesQuery.isFetching;
 	const handleToggleLike = () => {
 		if (!review || !canLike || isLikePending) return;
 		if (likes?.hasLiked)
@@ -281,7 +287,7 @@ export default function ReviewDetailScreen() {
 											: colors.mutedForeground,
 									}}
 								>
-									{likes?.total ?? 0}
+									{likes?.total ?? "—"}
 								</Text>
 							</Pressable>
 							<Pressable
@@ -295,6 +301,21 @@ export default function ReviewDetailScreen() {
 							</Pressable>
 						</View>
 					</View>
+
+					{likesQuery.isError && (
+						<View className="flex-row items-center gap-2">
+							<Text className="text-muted-foreground text-sm">
+								Couldn't load review likes.
+							</Text>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel="Retry loading review likes"
+								onPress={() => void likesQuery.refetch()}
+							>
+								<Text className="text-primary text-sm">Try again</Text>
+							</Pressable>
+						</View>
+					)}
 
 					<SpoilerShield spoiler={review.spoiler} authorDid={review.author.did}>
 						<Markdown value={review.markdown} />
