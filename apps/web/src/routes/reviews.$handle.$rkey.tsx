@@ -169,8 +169,10 @@ function CanonicalReviewPage() {
 				)}
 
 				<div className="min-w-0 flex-1">
-					<div className="flex items-start justify-between gap-4">
-						<h1 className="text-display-2">{review.reviewTitle}</h1>
+					{/* Wraps so Like and Share drop below a long title instead of
+					    running off a narrow screen. */}
+					<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+						<h1 className="min-w-0 text-display-2">{review.reviewTitle}</h1>
 						{/* Share the media page with this review open rather than the bare
 						    review page — it keeps a first-time visitor oriented. */}
 						<div className="flex shrink-0 items-center gap-2">
@@ -210,16 +212,18 @@ function CanonicalReviewPage() {
 						<Link
 							to="/profile/$handle"
 							params={{ handle: review.author.handle }}
-							className="flex items-center gap-2 transition-colors hover:text-(--foreground)"
+							className="flex min-w-0 max-w-full items-center gap-2 transition-colors hover:text-(--foreground)"
 						>
-							<span className="flex size-7 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated)">
+							<span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated)">
 								<UserAvatar
 									src={review.author.avatar ?? undefined}
 									alt={review.author.displayName || review.author.handle}
 									className="h-full w-full rounded-full"
 								/>
 							</span>
-							<span>{review.author.displayName || review.author.handle}</span>
+							<span className="truncate">
+								{review.author.displayName || review.author.handle}
+							</span>
 						</Link>
 						<span className="flex items-center gap-1.5">
 							<CalendarDays className="size-4" />
