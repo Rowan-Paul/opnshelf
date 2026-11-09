@@ -106,10 +106,17 @@ function harness() {
 				leaseId: "fixture-lease",
 				leaseUntil: new Date(Date.now() + 120000),
 			})),
-			updateMany: vi.fn(async ({ data }: { data: { remoteFeed: unknown } }) => {
-				remoteFeed = data.remoteFeed;
-				return { count: 1 };
-			}),
+			updateMany: vi.fn(
+				async ({
+					data,
+				}: {
+					data: { remoteFeed: unknown };
+					where: { leaseId: string };
+				}) => {
+					remoteFeed = data.remoteFeed;
+					return { count: 1 };
+				},
+			),
 			update: vi.fn(async ({ data }: { data: { remoteFeed: unknown } }) => {
 				remoteFeed = data.remoteFeed;
 				return { id: "connection-1" };
@@ -127,10 +134,10 @@ function harness() {
 		);
 	const service = build();
 	const snapshot = (c = credential, types?: SyncRecordTypes) =>
-		service["readSnapshot"](c, types);
+		service["remote"].snapshot(c, types, "fixture-lease");
 	const restart = () => ({
 		snapshot: (c = credential, types?: SyncRecordTypes) =>
-			build()["readSnapshot"](c, types),
+			build()["remote"].snapshot(c, types, "fixture-lease"),
 	});
 	const fetcher = vi.fn();
 	vi.stubGlobal("fetch", fetcher);
@@ -392,4 +399,27 @@ it("does not spend a full-read budget on confirmation without a valid cursor", a
 		h.service["remote"].readForRecord(credential, values(page())[0]),
 	).rejects.toThrow("rejected");
 	expect(h.fetcher).toHaveBeenCalledTimes(2);
+});
+
+it("uses the run lease even if a new owner acquired the connection before its feed read", async () => {
+	const h = harness();
+	h.fetcher.mockResolvedValueOnce(response(page()));
+	await h.snapshot();
+	const before = structuredClone(h.feed());
+	h.prisma.integrationConnection.findUniqueOrThrow.mockResolvedValueOnce({
+		remoteFeed: before,
+		leaseId: "new-owner",
+		leaseUntil: new Date(Date.now() + 120000),
+	});
+	h.prisma.integrationConnection.updateMany.mockImplementationOnce(
+		async ({ where }) => ({ count: where.leaseId === "new-owner" ? 1 : 0 }),
+	);
+	h.fetcher.mockResolvedValueOnce(response(page([], { next_cursor: "stale" })));
+	await expect(h.snapshot()).rejects.toThrow("ownership changed");
+	expect(h.feed()).toEqual(before);
+	expect(h.prisma.integrationConnection.updateMany).toHaveBeenLastCalledWith(
+		expect.objectContaining({
+			where: expect.objectContaining({ leaseId: "fixture-lease" }),
+		}),
+	);
 });

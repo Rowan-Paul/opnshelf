@@ -360,7 +360,7 @@ export abstract class IntegrationSyncService<Credential>
 	}
 	protected async locked<T>(
 		c: IntegrationConnection,
-		operation: (lease: () => Promise<void>) => Promise<T>,
+		operation: (lease: () => Promise<void>, leaseId: string) => Promise<T>,
 	): Promise<T> {
 		const leaseId = randomUUID();
 		const claim = await this.prisma.integrationConnection.updateMany({
@@ -391,7 +391,7 @@ export abstract class IntegrationSyncService<Credential>
 			30_000,
 		);
 		try {
-			return await operation(lease);
+			return await operation(lease, leaseId);
 		} finally {
 			clearInterval(heartbeat);
 			await this.prisma.integrationConnection.updateMany({
@@ -992,7 +992,7 @@ export abstract class IntegrationSyncService<Credential>
 		dto: IntegrationResolve,
 	) {
 		const c = await this.requireConnection(userDid);
-		await this.locked(c, async () => {
+		await this.locked(c, async (_lease, leaseId) => {
 			const entry = await this.prisma.integrationEntry.findFirst({
 				where: { id, connectionId: c.id },
 			});
@@ -1031,7 +1031,11 @@ export abstract class IntegrationSyncService<Credential>
 				const desired = readRecord(
 					(entry.pending as { desired?: unknown }).desired,
 				);
-				const remote = await this.remote.snapshot(await this.credential(c), c);
+				const remote = await this.remote.snapshot(
+					await this.credential(c),
+					c,
+					leaseId,
+				);
 				const peers = await this.prisma.integrationEntry.findMany({
 					where: {
 						connectionId: c.id,
@@ -1211,9 +1215,9 @@ export abstract class IntegrationSyncService<Credential>
 				orderBy: { nextRunAt: "asc" },
 			});
 			if (!c) return;
-			await this.locked(c, async (lease) => {
+			await this.locked(c, async (lease, leaseId) => {
 				try {
-					await this.process(c, lease);
+					await this.process(c, lease, leaseId);
 				} catch (error) {
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.integrationConnection.update({
@@ -1351,6 +1355,7 @@ export abstract class IntegrationSyncService<Credential>
 	protected async process(
 		c: IntegrationConnection,
 		lease: () => Promise<void>,
+		leaseId?: string,
 	) {
 		const startedAtRun = Date.now();
 		let remote = records(c.remoteSnapshot);
@@ -1392,7 +1397,7 @@ export abstract class IntegrationSyncService<Credential>
 			!c.remoteReadAt ||
 			c.remoteReadAt.getTime() < Date.now() - 15 * 60_000
 		) {
-			remote = await this.remote.snapshot(token, c);
+			remote = await this.remote.snapshot(token, c, leaseId);
 			await lease();
 			await this.prisma.integrationConnection.update({
 				select: { id: true },

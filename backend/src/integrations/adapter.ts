@@ -18,10 +18,11 @@ export type SyncRecordTypes = {
  * writes the provider and reports what it cannot represent as a thrown error.
  */
 export interface IntegrationRemote<Credential> {
-	/** A complete, consistent read of the enabled types. Partial reads must throw. */
+	/** A complete read; partial reads throw. Durable adapter state must use the run's acquired leaseId. */
 	snapshot(
 		credential: Credential,
 		types?: SyncRecordTypes,
+		leaseId?: string,
 	): Promise<SyncRecord[]>;
 	/** A scoped read that confirms the outcome of one write. */
 	readForRecord(

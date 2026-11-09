@@ -449,7 +449,7 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 				>,
 		);
 		service["locked"] = async (_connection, operation) =>
-			operation(async () => undefined);
+			operation(async () => undefined, "fixture-lease");
 		await expect(service.resolve("fixture", "old", { action })).rejects.toThrow(
 			"outside your sync scope",
 		);
@@ -476,7 +476,7 @@ it("logs why a resolve was rejected, since the HTTP log only has the status", as
 			>,
 	);
 	service["locked"] = async (_connection, operation) =>
-		operation(async () => undefined);
+		operation(async () => undefined, "fixture-lease");
 	await expect(
 		service.resolve("fixture", "item-1", { action: "link" }),
 	).rejects.toThrow("outside your sync scope");

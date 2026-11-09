@@ -47,7 +47,8 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	) {
 		super(prisma, local, config, watchLocks);
 		this.remote = {
-			snapshot: (credential, types) => this.readSnapshot(credential, types),
+			snapshot: (credential, types, leaseId) =>
+				this.readSnapshot(credential, types, true, leaseId),
 			readForRecord: async (credential, record) =>
 				(await this.readSnapshot(credential, undefined, false)).filter(
 					(r) => r.key === record.key,
@@ -111,10 +112,11 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		c: BingersCredential,
 		types?: SyncRecordTypes,
 		persist = true,
+		leaseId?: string,
 	) {
 		const row = await this.prisma.integrationConnection.findUniqueOrThrow({
 			where: { id: c.connectionId },
-			select: { remoteFeed: true, leaseId: true, leaseUntil: true },
+			select: { remoteFeed: true },
 		});
 		const saved = z
 			.object({
@@ -150,14 +152,14 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 			feed = await this.api.readFeed(c.token);
 		}
 		if (persist) {
-			if (!row.leaseId)
+			if (!leaseId)
 				throw new SyncSnapshotChanged(
 					"Bingers Sync ownership changed. Previous history was retained.",
 				);
 			const savedFeed = await this.prisma.integrationConnection.updateMany({
 				where: {
 					id: c.connectionId,
-					leaseId: row.leaseId,
+					leaseId,
 					leaseUntil: { gt: new Date() },
 				},
 				data: { remoteFeed: feed as unknown as Prisma.InputJsonValue },

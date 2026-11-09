@@ -99,7 +99,8 @@ function fixture(provider: "trakt" | "popfeed", remote: SyncRecord) {
 		remoteSnapshot: [remote],
 	} as unknown as IntegrationConnection;
 	service["requireConnection"] = vi.fn(async () => c);
-	service["locked"] = async (_c, operation) => operation(async () => undefined);
+	service["locked"] = async (_c, operation) =>
+		operation(async () => undefined, "fixture-lease");
 	return { service, prisma, local, remote, entry, peer, c };
 }
 it.each(["trakt", "popfeed"] as const)(
