@@ -592,7 +592,7 @@ describe("NotificationWorkerService", () => {
 		expect(email.sendNotification).toHaveBeenCalledWith(
 			expect.objectContaining({
 				text: expect.stringContaining(
-					"Unsubcribe: https://api.example.com/notifications/unsubscribe?token=",
+					"Unsubscribe: https://api.example.com/notifications/unsubscribe?token=",
 				),
 			}),
 		);
