@@ -125,6 +125,7 @@ export function normalizeRemote(
 export class TraktSyncClient implements IntegrationRemote<string> {
 	private readonly requests = new IntegrationRateLimiter({
 		name: "Trakt",
+		intervalMs: 1100,
 		retrySeconds: 60,
 		requestPoints: 1,
 		budgets: [[5 * 60_000, 500]],

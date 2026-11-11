@@ -6,6 +6,20 @@ import {
 } from "./rate-limit-headers";
 
 afterEach(() => vi.useRealTimers());
+
+it("accepts delta-seconds reset headers and avoids a full fallback for expired epochs", () => {
+	vi.useFakeTimers();
+	vi.setSystemTime(new Date("2026-11-11T10:00:00Z"));
+	expect(
+		rateLimitRetrySeconds(new Headers({ "ratelimit-reset": "60" }), 300),
+	).toBe(60);
+	expect(
+		rateLimitRetrySeconds(
+			new Headers({ "ratelimit-reset": String(Date.now() / 1000 - 10) }),
+			300,
+		),
+	).toBe(1);
+});
 it.each([
 	["900", 900],
 	["0", 1],

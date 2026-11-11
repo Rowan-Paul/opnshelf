@@ -14,6 +14,7 @@ const HOUR_MS = 60 * 60_000;
 // Reserve half the documented Bluesky write allowances for other account activity.
 export const PDS_RATE_LIMIT_POLICY: IntegrationRateLimitPolicy = {
 	name: "Your repository",
+	intervalMs: 1100,
 	retrySeconds: 300,
 	budgets: [
 		[HOUR_MS, 2500],

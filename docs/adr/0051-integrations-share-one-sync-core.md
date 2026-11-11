@@ -47,3 +47,9 @@ Current policies retain a conservative 1.1-second request interval. Trakt adds
 its standard 500-request five-minute budget; Bingers adds its 60-request minute
 and 1,000-request hour budgets. PDS write allowances remain as described in
 ADR 0052. Limits are per server process; multiple workers need shared state.
+
+Short advertised reset windows that fit inside the configured request interval
+wait within normal pacing instead of yielding a whole run. Longer cooldowns yield
+immediately. Reading an existing cooldown never extends its absolute deadline.
+Reset headers support contemporary epoch timestamps and delta-seconds; an
+explicitly elapsed reset uses the minimum delay, not the full fallback interval.

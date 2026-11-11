@@ -49,6 +49,71 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
+it("does not extend an existing cooldown when repeatedly checking it", async () => {
+	const limiter = new IntegrationRateLimiter({
+		name: "Fixture",
+		intervalMs: 1100,
+		retrySeconds: 60,
+	});
+	const request = vi.fn(async () => Response.json({}));
+	await expect(
+		limiter.run(
+			"account",
+			async () =>
+				new Response(null, { status: 429, headers: { "retry-after": "4" } }),
+		),
+	).rejects.toMatchObject({ status: 429 });
+	for (let check = 0; check < 5; check++) {
+		await vi.advanceTimersByTimeAsync(400);
+		await expect(limiter.run("account", request)).rejects.toMatchObject({
+			status: 429,
+		});
+	}
+	await vi.advanceTimersByTimeAsync(2000);
+	await limiter.run("account", request);
+	expect(request).toHaveBeenCalledOnce();
+});
+
+it.each([1000, -1000])(
+	"fits Trakt's short or elapsed write window into request pacing (%s ms)",
+	async (resetOffset) => {
+		const client = new TraktSyncClient(config);
+		const fetcher = vi.fn(async () =>
+			Response.json(
+				{},
+				{
+					headers: {
+						"x-ratelimit": JSON.stringify({
+							remaining: 0,
+							until: new Date(Date.now() + resetOffset).toISOString(),
+						}),
+					},
+				},
+			),
+		);
+		vi.stubGlobal("fetch", fetcher);
+		await client.request("/sync/history", "account", {});
+		const next = client.request("/sync/history", "account", {});
+		await vi.advanceTimersByTimeAsync(1100);
+		await next;
+		expect(fetcher).toHaveBeenCalledTimes(2);
+	},
+);
+
+it("reports oversized requests as retryable failures without sending them", async () => {
+	const limiter = new IntegrationRateLimiter({
+		name: "Fixture",
+		intervalMs: 1100,
+		retrySeconds: 60,
+		budgets: [[60_000, 2]],
+	});
+	const request = vi.fn();
+	await expect(limiter.run("account", request, 3)).rejects.toMatchObject({
+		status: 0,
+	});
+	expect(request).not.toHaveBeenCalled();
+});
+
 it.each(["Trakt", "Bingers"] as const)(
 	"%s retains an account cooldown after token rotation",
 	async (provider) => {
@@ -79,6 +144,7 @@ it.each(["Trakt", "Bingers"] as const)(
 it("uses configured rolling budgets and yields instead of sending over budget", async () => {
 	const limiter = new IntegrationRateLimiter({
 		name: "Fixture",
+		intervalMs: 1100,
 		retrySeconds: 60,
 		requestPoints: 1,
 		budgets: [[60_000, 2]],

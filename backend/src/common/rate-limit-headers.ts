@@ -16,13 +16,18 @@ export function rateLimitRetrySeconds(
 ) {
 	const values = new Headers(headers);
 	const retry = retryAfterSeconds(values.get("retry-after"), 0);
-	const reset = Number(values.get("ratelimit-reset"));
-	const resetDelay = Number.isFinite(reset)
-		? Math.max(0, Math.ceil(reset - Date.now() / 1000))
-		: 0;
+	const resetHeader = values.get("ratelimit-reset");
+	const reset = resetHeader?.trim() ? Number(resetHeader) : Number.NaN;
+	const resetDelay =
+		Number.isFinite(reset) && reset >= 0
+			? Math.max(
+					1,
+					Math.ceil(reset >= 1_000_000_000 ? reset - Date.now() / 1000 : reset),
+				)
+			: 0;
 	const metadata = rateLimitMetadata(values);
 	const metadataDelay = metadata?.until
-		? Math.max(0, Math.ceil((Date.parse(metadata.until) - Date.now()) / 1000))
+		? Math.max(1, Math.ceil((Date.parse(metadata.until) - Date.now()) / 1000))
 		: 0;
 	return (
 		Math.max(

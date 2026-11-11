@@ -140,6 +140,7 @@ export function bingersRecords(payload: unknown): {
 export class BingersSyncClient {
 	private readonly requests = new IntegrationRateLimiter({
 		name: "Bingers",
+		intervalMs: 1100,
 		retrySeconds: 60,
 		requestPoints: 1,
 		budgets: [

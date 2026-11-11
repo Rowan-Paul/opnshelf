@@ -20,7 +20,7 @@ export function integrationRateLimitKey(token?: string) {
 
 export type IntegrationRateLimitPolicy = {
 	name: string;
-	intervalMs?: number;
+	intervalMs: number;
 	retrySeconds: number;
 	budgets?: readonly (readonly [windowMs: number, points: number])[];
 	requestPoints?: number;
@@ -86,10 +86,13 @@ export class IntegrationRateLimiter {
 		});
 		queue.pending++;
 		await previous;
+		let localCooldown = false;
 		try {
-			if (queue.retryAt > Date.now())
+			if (queue.retryAt - Date.now() > this.policy.intervalMs) {
+				localCooldown = true;
 				throw this.limited(Math.ceil((queue.retryAt - Date.now()) / 1000));
-			const delay = queue.nextAt - Date.now();
+			}
+			const delay = Math.max(queue.nextAt, queue.retryAt) - Date.now();
 			if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
 			if (points) {
 				const now = Date.now();
@@ -99,8 +102,7 @@ export class IntegrationRateLimiter {
 				for (const [window, budget] of this.policy.budgets ?? []) {
 					if (points > budget)
 						throw new IntegrationError(
-							"This request exceeds the integration rate limit budget.",
-							422,
+							"This transfer exceeds the sync request budget. Your changes are preserved.",
 						);
 					const usage = queue.usage.filter((entry) => entry.at > now - window);
 					let total = usage.reduce((sum, entry) => sum + entry.points, points);
@@ -110,11 +112,13 @@ export class IntegrationRateLimiter {
 						total -= entry.points;
 					}
 				}
-				if (queue.retryAt > now)
+				if (queue.retryAt > now) {
+					localCooldown = true;
 					throw this.limited(Math.ceil((queue.retryAt - now) / 1000));
+				}
 				queue.usage.push({ at: now, points });
 			}
-			queue.nextAt = Date.now() + (this.policy.intervalMs ?? 1100);
+			queue.nextAt = Date.now() + this.policy.intervalMs;
 			const result = await request();
 			if (result instanceof Response && result.status === 429) {
 				const error = this.limited(
@@ -141,7 +145,11 @@ export class IntegrationRateLimiter {
 			return result;
 		} catch (error) {
 			const failure = integrationFailure(error);
-			if (failure instanceof IntegrationError && failure.status === 429)
+			if (
+				!localCooldown &&
+				failure instanceof IntegrationError &&
+				failure.status === 429
+			)
 				queue.retryAt = Math.max(
 					queue.retryAt,
 					Date.now() + failure.retrySeconds * 1000,
