@@ -1,5 +1,9 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { pdsRequestError, retryAfterSeconds } from "./pds-request-error";
+import {
+	pdsRequestError,
+	retryAfterSeconds,
+	pdsRetrySeconds,
+} from "./pds-request-error";
 
 afterEach(() => vi.useRealTimers());
 it.each([
@@ -40,4 +44,19 @@ it("ignores invalid credentials and cyclic causes", () => {
 	const error = new Error("cycle");
 	error.cause = error;
 	expect(pdsRequestError(error)).toBeUndefined();
+});
+
+it("uses the later reset header and Retry-After, including without Retry-After", () => {
+	vi.useFakeTimers();
+	vi.setSystemTime(new Date("2026-11-11T10:00:00Z"));
+	const reset = String(Date.now() / 1000 + 3600);
+	expect(pdsRetrySeconds(new Headers({ "ratelimit-reset": reset }), 300)).toBe(
+		3600,
+	);
+	expect(
+		pdsRetrySeconds(
+			new Headers({ "ratelimit-reset": reset, "retry-after": "900" }),
+			300,
+		),
+	).toBe(3600);
 });

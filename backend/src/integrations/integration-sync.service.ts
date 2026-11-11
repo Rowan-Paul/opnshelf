@@ -1742,7 +1742,7 @@ export abstract class IntegrationSyncService<Credential>
 					error instanceof IntegrationError &&
 					error.status >= 400 &&
 					error.status < 500 &&
-					![408, 499].includes(error.status) &&
+					![401, 408, 429, 499].includes(error.status) &&
 					!entry.remoteKey
 				)
 					await this.prisma.integrationEntry.update({

@@ -11,6 +11,20 @@ export function retryAfterSeconds(value: string | null, fallback: number) {
 		: fallback;
 }
 
+/** Servers may expose the reset timestamp instead of Retry-After. */
+export function pdsRetrySeconds(
+	headers: Headers | Record<string, string> | undefined,
+	fallback: number,
+) {
+	const values = new Headers(headers);
+	const retry = retryAfterSeconds(values.get("retry-after"), 0);
+	const reset = Number(values.get("ratelimit-reset"));
+	const resetDelay = Number.isFinite(reset)
+		? Math.max(0, Math.ceil(reset - Date.now() / 1000))
+		: 0;
+	return Math.max(retry, resetDelay) || fallback;
+}
+
 /** A temporary PDS failure must not invalidate a saved session. */
 export class PdsRequestError extends ServiceUnavailableException {
 	constructor(
@@ -42,13 +56,9 @@ export function pdsRequestError(error: unknown): PdsRequestError | undefined {
 			candidate.response?.status ?? candidate.statusCode ?? candidate.status;
 		if (status === 429 || (status && status >= 500 && status <= 599)) {
 			const headers = candidate.response?.headers ?? candidate.headers;
-			const retry =
-				headers instanceof Headers
-					? headers.get("retry-after")
-					: (headers?.["retry-after"] ?? null);
 			return new PdsRequestError(
 				status,
-				retryAfterSeconds(retry, status === 429 ? 300 : 60),
+				pdsRetrySeconds(headers, status === 429 ? 300 : 60),
 			);
 		}
 		error = candidate.cause;

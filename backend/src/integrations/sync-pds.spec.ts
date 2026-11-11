@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Agent } from "@atproto/api";
 import { PdsRequestError } from "../common/pds-request-error";
-import { SyncPdsRequests, syncPdsFailure, syncPdsSession } from "./sync-pds";
+import {
+	SyncPdsRequests,
+	syncPdsFailure,
+	syncPdsSession,
+	syncPdsRequests,
+} from "./sync-pds";
 import { requireWatchSession } from "../privacy/watch-operation";
 import { PopfeedSyncClient } from "../popfeed-sync/popfeed-sync.client";
 
@@ -35,6 +40,11 @@ it("honors Retry-After on real Popfeed repository reads and blocks another run",
 		status: 429,
 		retrySeconds: 900,
 	});
+	const restore = vi.fn();
+	await expect(
+		syncPdsSession({ restore }, credential.did),
+	).rejects.toMatchObject({ status: 429, retrySeconds: 900 });
+	expect(restore).not.toHaveBeenCalled();
 	expect(fetch).toHaveBeenCalledOnce();
 });
 
@@ -145,4 +155,77 @@ it("requires reconnection only when the saved session is missing", async () => {
 		syncPdsSession({ restore }, "limited-owner"),
 	).rejects.toMatchObject({ retrySeconds: 900 });
 	expect(restore).not.toHaveBeenCalled();
+});
+
+it("defers writes at the reserved hourly budget without making a request", async () => {
+	const queue = new SyncPdsRequests();
+	const request = vi.fn(async () => Response.json({}));
+	await queue.run("budget", request, 2499);
+	const next = expect(queue.run("budget", request, 3)).rejects.toMatchObject({
+		status: 429,
+	});
+	await vi.advanceTimersByTimeAsync(1100);
+	await next;
+	expect(request).toHaveBeenCalledOnce();
+	await vi.advanceTimersByTimeAsync(3600_000);
+	await queue.run("budget", request, 3);
+	expect(request).toHaveBeenCalledTimes(2);
+});
+
+it("also reserves the daily budget across hourly windows", async () => {
+	const queue = new SyncPdsRequests();
+	const request = vi.fn(async () => Response.json({}));
+	for (let hour = 0; hour < 7; hour++) {
+		await queue.run("daily", request, 2500);
+		await vi.advanceTimersByTimeAsync(3600_000);
+	}
+	await expect(queue.run("daily", request, 3)).rejects.toMatchObject({
+		status: 429,
+	});
+	expect(request).toHaveBeenCalledTimes(7);
+});
+
+it("stops queued requests after a successful response reports an exhausted budget", async () => {
+	const queue = new SyncPdsRequests();
+	const reset = String(Date.now() / 1000 + 3600);
+	await queue.run("headers", async () =>
+		Response.json(
+			{},
+			{ headers: { "ratelimit-remaining": "0", "ratelimit-reset": reset } },
+		),
+	);
+	const request = vi.fn();
+	await expect(queue.run("headers", request)).rejects.toMatchObject({
+		retrySeconds: 3600,
+	});
+	expect(request).not.toHaveBeenCalled();
+});
+
+it("charges every authenticated batch record, including conservative puts", async () => {
+	const run = vi
+		.spyOn(syncPdsRequests, "run")
+		.mockImplementation(async (_did, request) => request());
+	const original = {
+		did: "did:plc:batch",
+		fetchHandler: vi.fn(async () => Response.json({})),
+	};
+	const session = await syncPdsSession(
+		{ restore: async () => original } as never,
+		original.did,
+	);
+	await session.fetchHandler("/xrpc/com.atproto.repo.applyWrites", {
+		method: "POST",
+		body: JSON.stringify({
+			writes: [
+				{ $type: "com.atproto.repo.applyWrites#create" },
+				{ $type: "com.atproto.repo.applyWrites#delete" },
+			],
+		}),
+	});
+	expect(run.mock.calls.at(-1)?.[2]).toBe(4);
+	await session.fetchHandler("/xrpc/com.atproto.repo.putRecord", {
+		method: "POST",
+		body: "{}",
+	});
+	expect(run.mock.calls.at(-1)?.[2]).toBe(3);
 });

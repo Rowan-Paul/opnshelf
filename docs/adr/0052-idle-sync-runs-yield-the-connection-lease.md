@@ -35,9 +35,20 @@ catch-up; the existing batch bounds and lease heartbeat remain in effect.
 Protecting the account's repository budget takes priority over catch-up speed.
 Multiple server processes would need a shared limiter to enforce one budget.
 
+Reserve half of Bluesky's documented write-point allowances for other account
+activity: Sync spends at most 2,500 points in a rolling hour and 17,500 in a
+rolling day. Charge creates and puts conservatively at three points, deletes at
+one, and each record in applyWrites separately. Count attempted writes even when
+the response fails because their outcome may be uncertain. Exhausting the local
+budget yields the run until sufficient points expire instead of sleeping under
+the lease. These conservative defaults do not assert that every PDS has the same
+limits. See [Bluesky's limits](https://bsky.network/docs/rate-limits/).
+
 Rate limits stop queued requests and the entire run. Honor Retry-After as seconds
 or an HTTP date, defaulting to five minutes when absent or invalid. The cooldown
-also applies to subsequent runs in the same process. OAuth discovery rate limits
+also honors RateLimit-Reset and starts proactively when a successful response
+reports RateLimit-Remaining of zero. Use the later reset when both headers exist.
+The cooldown also applies to subsequent runs in the same process. OAuth discovery rate limits
 and server failures remain temporary failures, not a reason to reconnect.
 
 Unlike an item-specific transfer failure, a temporary PDS outage stops the run

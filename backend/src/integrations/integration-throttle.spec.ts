@@ -4,9 +4,14 @@ import { PopfeedSyncService } from "../popfeed-sync/popfeed-sync.service";
 import type { SyncRecord } from "./reconcile";
 import { syncPdsFailure } from "./sync-pds";
 
-it.each([429, 503])(
-	"stops an inbound backlog on OAuth HTTP %s and schedules a retry without reconnecting",
-	async (status) => {
+it.each([
+	[429, true],
+	[503, true],
+	[429, false],
+	[503, false],
+] as const)(
+	"stops an inbound backlog on OAuth HTTP %s (remote key: %s) and schedules a retry without reconnecting",
+	async (status, hasRemoteKey) => {
 		const remote: SyncRecord[] = [1, 2].map((id) => ({
 			key: `watch:${id}`,
 			kind: "watch",
@@ -20,7 +25,10 @@ it.each([429, 503])(
 		const entries = remote.map((record) => ({
 			id: record.key,
 			kind: "watch",
-			remoteKey: record.key,
+			remoteKey: hasRemoteKey ? record.key : null,
+			pending: hasRemoteKey
+				? null
+				: { direction: "push", desired: record, previous: null },
 			localKey: null,
 			remoteBase: record,
 			localBase: null,
@@ -32,7 +40,7 @@ it.each([429, 503])(
 			userDid: "did:plc:fixture",
 			provider: "popfeed",
 			status: "active",
-			direction: "inbound",
+			direction: hasRemoteKey ? "inbound" : "outbound",
 			watches: true,
 			initialised: true,
 			historyScope: "all",
@@ -55,7 +63,7 @@ it.each([429, 503])(
 		};
 		const service = new PopfeedSyncService(
 			prisma as never,
-			{} as never,
+			{ snapshot: async () => remote } as never,
 			{ snapshot: async () => [] } as never,
 			parseEnvironment({ NODE_ENV: "test" }),
 			{} as never,
