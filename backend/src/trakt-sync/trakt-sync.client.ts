@@ -1,4 +1,8 @@
-import { createHash } from "node:crypto";
+import {
+	IntegrationRateLimiter,
+	integrationRateLimitKey,
+} from "../integrations/integration-rate-limiter";
+import { rateLimitRetrySeconds } from "../common/rate-limit-headers";
 import { Injectable } from "@nestjs/common";
 import { z } from "zod";
 import { BackendEnv } from "../config/env.schema";
@@ -119,7 +123,12 @@ export function normalizeRemote(
 
 @Injectable()
 export class TraktSyncClient implements IntegrationRemote<string> {
-	private readonly nextRequests = new Map<string, number>();
+	private readonly requests = new IntegrationRateLimiter({
+		name: "Trakt",
+		retrySeconds: 60,
+		requestPoints: 1,
+		budgets: [[5 * 60_000, 500]],
+	});
 	constructor(private readonly config: BackendEnv) {}
 	get configured() {
 		return Boolean(this.config.TRAKT_API_KEY && this.config.BACKEND_PUBLIC_URL);
@@ -137,75 +146,68 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		body?: unknown,
 		method = body === undefined ? "GET" : "POST",
 	): Promise<{ data: unknown; headers: Headers }> {
-		// Pace both reads and writes below Trakt's per-user limits. No credential logging.
-		const now = Date.now();
-		for (const [key, next] of this.nextRequests)
-			if (next <= now) this.nextRequests.delete(key);
-		const key = token
-			? createHash("sha256").update(token).digest("hex")
-			: "oauth";
-		const next = this.nextRequests.get(key) ?? now;
-		const delay = Math.max(0, next - now);
-		this.nextRequests.set(key, Math.max(now, next) + 1100);
-		if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
-		const response = await fetch(`https://api.trakt.tv${path}`, {
-			method,
-			headers: {
-				"Content-Type": "application/json",
-				"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
-				"trakt-api-key": this.clientId,
-				"trakt-api-version": "2",
-				...(token ? { Authorization: `Bearer ${token}` } : {}),
-			},
-			...(body === undefined ? {} : { body: JSON.stringify(body) }),
-			signal: AbortSignal.timeout(15_000),
-		});
-		if (!response.ok) {
-			const retry = Number(response.headers.get("retry-after"));
-			const contentType = response.headers.get("content-type") ?? "";
-			let oauthError: string | undefined;
-			if (contentType.includes("json")) {
-				// Only retain known OAuth error codes, never descriptions or raw bodies.
-				const parsed = oauthErrorSchema.safeParse(
-					await response.json().catch(() => null),
-				);
-				oauthError = parsed.success ? parsed.data.error : undefined;
-			}
-			const ray = response.headers.get("cf-ray") ?? "";
-			throw new TraktSyncError(
-				response.status === 401
-					? "Reconnect Trakt to continue syncing."
-					: response.status === 429
-						? "Trakt rate limit reached. Sync will retry."
-						: response.status === 422 && path.startsWith("/comments")
-							? "Trakt rejected this Review. Check its English-language, word-count and formatting requirements before retrying."
-							: response.status === 420 && path.startsWith("/notes")
-								? "Your Trakt Notes limit was reached. Free space on Trakt and retry; your Note is preserved."
-								: response.status === 420 && path.startsWith("/sync/favorites")
-									? "Your Trakt Favorites limit was reached. Free space and retry; no Favorites were truncated."
-									: "Trakt could not complete the request. Sync will retry.",
-				response.status,
-				Number.isFinite(retry) && retry > 0 ? retry : 60,
-				{
-					responseFormat: contentType.includes("json")
-						? "json"
-						: contentType.includes("html")
-							? "html"
-							: "other",
-					oauthError,
-					cloudflare: response.headers.get("server") === "cloudflare",
-					challenge: response.headers.get("cf-mitigated") === "challenge",
-					cloudflareRay: /^[a-f0-9]{16,32}-[A-Z]{3}$/i.test(ray)
-						? ray
-						: undefined,
+		const key = integrationRateLimitKey(token);
+		return this.requests.run(key, async () => {
+			const response = await fetch(`https://api.trakt.tv${path}`, {
+				method,
+				headers: {
+					"Content-Type": "application/json",
+					"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
+					"trakt-api-key": this.clientId,
+					"trakt-api-version": "2",
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
 				},
-			);
-		}
-		const text = await response.text();
-		return {
-			data: text.trim() ? JSON.parse(text) : null,
-			headers: response.headers,
-		};
+				...(body === undefined ? {} : { body: JSON.stringify(body) }),
+				signal: AbortSignal.timeout(15_000),
+			});
+			if (!response.ok) {
+				const retry = rateLimitRetrySeconds(response.headers, 60);
+				const contentType = response.headers.get("content-type") ?? "";
+				let oauthError: string | undefined;
+				if (contentType.includes("json")) {
+					// Only retain known OAuth error codes, never descriptions or raw bodies.
+					const parsed = oauthErrorSchema.safeParse(
+						await response.json().catch(() => null),
+					);
+					oauthError = parsed.success ? parsed.data.error : undefined;
+				}
+				const ray = response.headers.get("cf-ray") ?? "";
+				throw new TraktSyncError(
+					response.status === 401
+						? "Reconnect Trakt to continue syncing."
+						: response.status === 429
+							? "Trakt rate limit reached. Sync will retry."
+							: response.status === 422 && path.startsWith("/comments")
+								? "Trakt rejected this Review. Check its English-language, word-count and formatting requirements before retrying."
+								: response.status === 420 && path.startsWith("/notes")
+									? "Your Trakt Notes limit was reached. Free space on Trakt and retry; your Note is preserved."
+									: response.status === 420 &&
+											path.startsWith("/sync/favorites")
+										? "Your Trakt Favorites limit was reached. Free space and retry; no Favorites were truncated."
+										: "Trakt could not complete the request. Sync will retry.",
+					response.status,
+					retry,
+					{
+						responseFormat: contentType.includes("json")
+							? "json"
+							: contentType.includes("html")
+								? "html"
+								: "other",
+						oauthError,
+						cloudflare: response.headers.get("server") === "cloudflare",
+						challenge: response.headers.get("cf-mitigated") === "challenge",
+						cloudflareRay: /^[a-f0-9]{16,32}-[A-Z]{3}$/i.test(ray)
+							? ray
+							: undefined,
+					},
+				);
+			}
+			const text = await response.text();
+			return {
+				data: text.trim() ? JSON.parse(text) : null,
+				headers: response.headers,
+			};
+		});
 	}
 
 	async exchange(code: string, verifier: string): Promise<TraktToken> {

@@ -1,8 +1,9 @@
+import { IntegrationRateLimiter } from "./integration-rate-limiter";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Agent } from "@atproto/api";
 import { PdsRequestError } from "../common/pds-request-error";
 import {
-	SyncPdsRequests,
+	PDS_RATE_LIMIT_POLICY,
 	syncPdsFailure,
 	syncPdsSession,
 	syncPdsRequests,
@@ -49,7 +50,7 @@ it("honors Retry-After on real Popfeed repository reads and blocks another run",
 });
 
 it("serializes concurrent pages and shares request pacing across calls for an account", async () => {
-	const queue = new SyncPdsRequests();
+	const queue = new IntegrationRateLimiter(PDS_RATE_LIMIT_POLICY);
 	const starts: number[] = [];
 	const request = async () => {
 		starts.push(Date.now());
@@ -66,7 +67,7 @@ it("serializes concurrent pages and shares request pacing across calls for an ac
 });
 
 it("stops already queued reads after a 429 and retains its cooldown across runs", async () => {
-	const queue = new SyncPdsRequests();
+	const queue = new IntegrationRateLimiter(PDS_RATE_LIMIT_POLICY);
 	const first = queue.run(
 		"owner",
 		async () =>
@@ -158,7 +159,7 @@ it("requires reconnection only when the saved session is missing", async () => {
 });
 
 it("defers writes at the reserved hourly budget without making a request", async () => {
-	const queue = new SyncPdsRequests();
+	const queue = new IntegrationRateLimiter(PDS_RATE_LIMIT_POLICY);
 	const request = vi.fn(async () => Response.json({}));
 	await queue.run("budget", request, 2499);
 	const next = expect(queue.run("budget", request, 3)).rejects.toMatchObject({
@@ -173,7 +174,7 @@ it("defers writes at the reserved hourly budget without making a request", async
 });
 
 it("also reserves the daily budget across hourly windows", async () => {
-	const queue = new SyncPdsRequests();
+	const queue = new IntegrationRateLimiter(PDS_RATE_LIMIT_POLICY);
 	const request = vi.fn(async () => Response.json({}));
 	for (let hour = 0; hour < 7; hour++) {
 		await queue.run("daily", request, 2500);
@@ -186,7 +187,7 @@ it("also reserves the daily budget across hourly windows", async () => {
 });
 
 it("stops queued requests after a successful response reports an exhausted budget", async () => {
-	const queue = new SyncPdsRequests();
+	const queue = new IntegrationRateLimiter(PDS_RATE_LIMIT_POLICY);
 	const reset = String(Date.now() / 1000 + 3600);
 	await queue.run("headers", async () =>
 		Response.json(

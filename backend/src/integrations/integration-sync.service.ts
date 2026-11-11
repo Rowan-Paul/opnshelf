@@ -1,3 +1,4 @@
+import { integrationRateLimitScope } from "./integration-rate-limiter";
 import {
 	captureProductEvent,
 	isProductAnalyticsEnabled,
@@ -393,7 +394,9 @@ export abstract class IntegrationSyncService<Credential>
 			30_000,
 		);
 		try {
-			return await operation(lease, leaseId);
+			return await integrationRateLimitScope.run(c.accountId ?? c.id, () =>
+				operation(lease, leaseId),
+			);
 		} finally {
 			clearInterval(heartbeat);
 			await this.prisma.integrationConnection.updateMany({
