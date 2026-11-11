@@ -1,3 +1,4 @@
+import { expectTypeOf } from "vitest";
 import {
 	clampPage,
 	clampPageSize,
@@ -5,9 +6,32 @@ import {
 	getPaginationMeta,
 	paginateItems,
 	parsePage,
+	type PaginatedResult,
 } from "./pagination";
 
 describe("pagination", () => {
+	it("preserves item types without a mapper and infers mapped item types", () => {
+		const page = {
+			results: [{ id: 1 }],
+			page: 1,
+			total_results: 1,
+			total_pages: 1,
+		};
+		const unchanged = fromTmdbPage(page, undefined, 40);
+		const mapped = fromTmdbPage(page, (item) => item.id);
+
+		expectTypeOf(unchanged).toEqualTypeOf<PaginatedResult<{ id: number }>>();
+		expectTypeOf(mapped).toEqualTypeOf<PaginatedResult<number>>();
+		expect(unchanged.items).toEqual(page.results);
+		expect(unchanged.items).not.toBe(page.results);
+		expect(unchanged.pageSize).toBe(40);
+		expect(mapped.items).toEqual([1]);
+
+		// A different output type requires a mapper, even with explicit generics.
+		// @ts-expect-error A number result cannot be claimed without mapping the items.
+		fromTmdbPage<{ id: number }, number>(page);
+	});
+
 	it("clamps pages and page sizes to their bounds", () => {
 		expect(clampPage(0)).toBe(1);
 		expect(clampPage(4)).toBe(4);
