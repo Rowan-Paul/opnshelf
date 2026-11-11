@@ -15,6 +15,7 @@ export class WatchAccountBusyError extends ConflictException {
  * it while a PDS request is still running. The application owns this small pool's
  * lifecycle; do not share it with Prisma's query pool. */
 export class WatchAccountLock {
+	private remoteOperations = 0;
 	constructor(private readonly pool: Pool) {
 		if (
 			!pool.options.query_timeout ||
@@ -43,13 +44,20 @@ export class WatchAccountLock {
 			scope?: "watches" | "content";
 		} = {},
 	): Promise<T> {
+		// Keep one pool connection available for foreground work. Shared remote
+		// phases and content background jobs must yield before checking one out.
+		const remote = mode === "shared" || scope === "content";
+		if (remote && this.remoteOperations >= (this.pool.options.max ?? 10) - 1)
+			throw new WatchAccountBusyError();
 		// Give other accounts a bounded chance to use a released connection.
 		// Pool connectionTimeoutMillis caps the wait; cap queue length as well.
 		if (this.pool.waitingCount >= 16)
 			throw new ServiceUnavailableException(
 				"Watch operations are busy. Try again shortly.",
 			);
+		if (remote) this.remoteOperations++;
 		const client = await this.pool.connect().catch(() => {
+			if (remote) this.remoteOperations--;
 			throw new ServiceUnavailableException(
 				"Watch operations are busy. Try again shortly.",
 			);
@@ -92,6 +100,18 @@ export class WatchAccountLock {
 			if (!wait && rows[0]?.acquired !== true)
 				throw new WatchAccountBusyError();
 		};
+		const advanceWriteGeneration = async () => {
+			if (scope !== "watches") return;
+			try {
+				await client.query({
+					text: 'UPDATE "User" SET "watchWriteGeneration" = "watchWriteGeneration" + 1 WHERE did = $1',
+					values: [ownerDid],
+				});
+			} catch (error) {
+				onError();
+				throw error;
+			}
+		};
 		const unlockWrite = async () => {
 			if (!writeAcquired || broken) return;
 			try {
@@ -112,6 +132,7 @@ export class WatchAccountLock {
 			await acquire(writeNamespace);
 			writeAcquired = true;
 			try {
+				await advanceWriteGeneration();
 				controller.signal.throwIfAborted();
 				return await work();
 			} finally {
@@ -124,6 +145,7 @@ export class WatchAccountLock {
 			if (mode === "write") {
 				await acquire(writeNamespace);
 				writeAcquired = true;
+				await advanceWriteGeneration();
 			}
 			controller.signal.throwIfAborted();
 			const result = await operation(controller.signal, withWrite);
@@ -143,6 +165,7 @@ export class WatchAccountLock {
 			}
 			client.removeListener("error", onError);
 			client.release(broken);
+			if (remote) this.remoteOperations--;
 		}
 	}
 }

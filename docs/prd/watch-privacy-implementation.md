@@ -72,13 +72,18 @@ writes retain exclusive 252.
 
 Watch polling holds shared 252 during repository reads and catalogue preparation.
 It takes 253 only to capture a local Watch fingerprint and to index/reconcile.
-If the fingerprint changed during the read, it discards the remote snapshot
-before modifying any Watch projection. Background and manual sync yield promptly
+The fingerprint includes the durable per-account Watch write generation,
+advanced under mutex 253 before any interactive or scoped callback. Sync expects
+only its own final acquisition; another acquisition invalidates the snapshot,
+even if a create-then-delete left the same rows. A changed generation or row
+fingerprint discards the remote snapshot before modifying any Watch projection. Background and manual sync yield promptly
 on contention or stale snapshots; background polling retries after at least
 60 seconds. Continuous Watch edits can postpone sync completion.
 
-Each operation retains a dedicated checked-out connection until its callback
-settles. The lock pool must remain separate from the Prisma query pool and close
+Remote phases admit at most `pool.max - 1` operations per lock pool, reserving
+one connection for foreground writes. Extra manual/background reads yield
+before checking out a connection. Each admitted operation retains a dedicated
+checked-out connection until its callback settles. The lock pool must remain separate from the Prisma query pool and close
 with the application. Interactive Watch writes wait up to five seconds per lock
 acquisition; bounded pool waits prevent exhausting the shared connection pool.
 

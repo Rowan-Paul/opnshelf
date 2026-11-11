@@ -153,7 +153,13 @@ export class WatchPrivacyService {
 				// the write mutex, so indexing below only touches the local projection.
 				await this.prepareCatalogue(records, signal);
 				await withWrite(async () => {
-					if (before !== (await this.localWatchFingerprint(did)))
+					const current = await this.localWatchFingerprint(did);
+					// Our own final mutex acquisition advances the counter once. Any
+					// other acquisition invalidates the snapshot, even after deletion.
+					if (
+						current.generation !== before.generation + 1n ||
+						current.fingerprint !== before.fingerprint
+					)
 						throw new WatchAccountBusyError();
 					signal.throwIfAborted();
 					await this.index(did, records, signal);
@@ -176,12 +182,18 @@ export class WatchPrivacyService {
 			updatedAt: true,
 		} as const;
 		const orderBy = { rkey: "asc" } as const;
-		return JSON.stringify(
-			await Promise.all([
-				this.prisma.trackedMovie.findMany({ where, select, orderBy }),
-				this.prisma.trackedEpisode.findMany({ where, select, orderBy }),
-			]),
-		);
+		const [owner, movies, episodes] = await Promise.all([
+			this.prisma.user.findUniqueOrThrow({
+				where: { did },
+				select: { watchWriteGeneration: true },
+			}),
+			this.prisma.trackedMovie.findMany({ where, select, orderBy }),
+			this.prisma.trackedEpisode.findMany({ where, select, orderBy }),
+		]);
+		return {
+			generation: owner.watchWriteGeneration,
+			fingerprint: JSON.stringify([movies, episodes]),
+		};
 	}
 
 	private async prepareCatalogue(records: Snapshot, signal: AbortSignal) {

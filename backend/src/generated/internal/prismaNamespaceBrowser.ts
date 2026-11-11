@@ -138,6 +138,7 @@ export const UserScalarFieldEnum = {
   watchSyncAttemptedAt: 'watchSyncAttemptedAt',
   watchSyncedAt: 'watchSyncedAt',
   watchSyncError: 'watchSyncError',
+  watchWriteGeneration: 'watchWriteGeneration',
   listsDefaultVisibility: 'listsDefaultVisibility',
   watchPrivacyManaged: 'watchPrivacyManaged',
   watchPrivacyEnabled: 'watchPrivacyEnabled',

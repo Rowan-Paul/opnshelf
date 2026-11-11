@@ -33,12 +33,19 @@ background reconciliation. Content jobs remain serialized with each other.
 Watch polling holds the shared barrier throughout remote reads and catalogue
 preparation, but takes the Watch mutex only to capture the local fingerprint
 and later index/reconcile. Before applying the repository snapshot, it compares
-that fingerprint again under the mutex. A concurrent Watch create, edit or
-delete discards the stale snapshot with a retryable busy conflict. Manual sync
+that fingerprint again under the mutex. Every shared Watch write-mutex
+acquisition also advances a durable per-account generation before its callback,
+including scoped reads. Sync allows only its own final acquisition between
+capture and reconciliation. Other acquisitions discard the stale snapshot,
+even if a Watch was created and deleted and the rows match again. The row
+fingerprint remains a second check on local projection changes. Manual sync
 also yields promptly; background polling retries at its existing interval of
 at least 60 seconds. Continuous Watch changes may postpone a successful sync.
 
 The dedicated two-connection lock pool remains separate from Prisma's pool.
+Remote-phase operations share a process-local admission limit of at most
+`pool.max - 1` checked-out connections, reserving one connection for foreground
+work. Admission is released on both connection and callback failures.
 Interactive Watch writes wait up to five seconds per lock acquisition; background
 work fails promptly on contention. Pool waits are bounded to five seconds and
 16 queued requests; exhausted capacity returns a retryable service-busy response.

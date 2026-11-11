@@ -227,7 +227,7 @@ describe.skipIf(!url)("background privacy contention", () => {
 				expect(
 					(await db.user.findUniqueOrThrow({ where: { did } })).watchSyncedAt,
 				).toBeNull();
-			} else expect(await result).toBeNull();
+			} else expect(await result).toBeInstanceOf(WatchAccountBusyError);
 		},
 	);
 	it.each(["movie", "episode"] as const)(
@@ -270,7 +270,10 @@ describe.skipIf(!url)("background privacy contention", () => {
 					),
 				} as unknown as ShowsService,
 			);
-			const background = privacy.sync(did, pds.session);
+			const background = privacy.sync(did, pds.session).then(
+				() => null,
+				(error: unknown) => error,
+			);
 			await entered.promise;
 			try {
 				await expect(watches.write(did, async () => "saved")).resolves.toBe(
@@ -280,6 +283,8 @@ describe.skipIf(!url)("background privacy contention", () => {
 				release.resolve();
 				await background;
 			}
+			expect(await background).toBeInstanceOf(WatchAccountBusyError);
+			await privacy.sync(did, pds.session);
 			expect(
 				await (kind === "movie"
 					? db.trackedMovie.count({ where: { userDid: did } })
@@ -287,4 +292,107 @@ describe.skipIf(!url)("background privacy contention", () => {
 			).toBe(1);
 		},
 	);
+	it("reserves foreground capacity when manual sync overlaps a background read", async () => {
+		const entered = gate(),
+			release = gate();
+		const background = watches.readThenWrite(did, async () => {
+			entered.resolve();
+			await release.promise;
+		});
+		await entered.promise;
+		try {
+			await expect(
+				watches.readThenWrite(did, async () => "admitted"),
+			).rejects.toBeInstanceOf(WatchAccountBusyError);
+			await expect(watches.write(did, async () => "saved")).resolves.toBe(
+				"saved",
+			);
+			expect(pool.totalCount).toBe(2);
+		} finally {
+			release.resolve();
+			await background;
+		}
+	});
+
+	it("does not resurrect a Watch created and deleted during a remote snapshot", async () => {
+		const pds = privacyPdsFixture(did, privacyRepositoryConfig("watches"));
+		const entered = gate(),
+			created = gate(),
+			captured = gate(),
+			release = gate();
+		const fetch = pds.session.fetchHandler;
+		vi.spyOn(pds.session, "fetchHandler").mockImplementationOnce(
+			async (...args) => {
+				entered.resolve();
+				await created.promise;
+				const response = await fetch(...args);
+				captured.resolve();
+				await release.promise;
+				return response;
+			},
+		);
+		const movieId = "736-aba";
+		await db.movie.upsert({
+			where: { movieId },
+			create: { movieId, title: "ABA fixture" },
+			update: {},
+		});
+		const privacy = new WatchPrivacyService(
+			db as PrismaService,
+			watches,
+			{ restore: vi.fn() },
+			{} as MoviesService,
+			{} as ShowsService,
+		);
+		const result = privacy.sync(did, pds.session).then(
+			() => null,
+			(error: unknown) => error,
+		);
+		await entered.promise;
+		try {
+			await watches.write(did, async () => {
+				pds.seed("xyz.opnshelf.movie", "temporary", {
+					$type: "xyz.opnshelf.movie",
+					movieId,
+					source: "tmdb",
+					createdAt: "2026-01-01T00:00:00.000Z",
+				});
+				await db.trackedMovie.create({
+					data: {
+						userDid: did,
+						movieId,
+						rkey: "temporary",
+						uri: `at://${did}/xyz.opnshelf.movie/temporary`,
+						cid: "temporary",
+					},
+				});
+			});
+			created.resolve();
+			await captured.promise;
+			await watches.write(did, async () => {
+				pds.publicRecords.clear();
+				await db.trackedMovie.deleteMany({ where: { userDid: did } });
+			});
+		} finally {
+			created.resolve();
+			release.resolve();
+			await result;
+		}
+		expect(await result).toBeInstanceOf(WatchAccountBusyError);
+		expect(await db.trackedMovie.count({ where: { userDid: did } })).toBe(0);
+	});
+	it("completes a sync when no other Watch mutex acquisition intervenes", async () => {
+		const pds = privacyPdsFixture(did, privacyRepositoryConfig("watches"));
+		const privacy = new WatchPrivacyService(
+			db as PrismaService,
+			watches,
+			{ restore: vi.fn() },
+			{} as MoviesService,
+			{} as ShowsService,
+		);
+		await privacy.sync(did, pds.session);
+		expect(
+			(await db.user.findUniqueOrThrow({ where: { did } })).watchSyncedAt,
+		).not.toBeNull();
+	});
 });
