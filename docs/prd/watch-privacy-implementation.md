@@ -63,10 +63,26 @@ The UI must explain this before the user confirms publication.
 
 ## Coordinator boundary
 
-`WatchPrivacyCoordinator` serializes operations with a PostgreSQL session advisory
-lock on a dedicated checked-out connection. Its pool must remain separate from
-the Prisma query pool and be closed with the application. Contention fails promptly rather than exhausting the shared connection
-pool. New accounts default to Public. Start creates a queued job and an immutable
+`WatchPrivacyCoordinator` uses the session advisory barrier and mutexes documented
+in ADR 0047's locking update for #736. Watch writes hold shared barrier 252 plus
+mutex 253. Watch privacy migration and account deletion hold barrier 252
+exclusively. Content background jobs use shared 252 plus their own mutex 254,
+so they exclude each other without blocking Watch writes; interactive content
+writes retain exclusive 252.
+
+Watch polling holds shared 252 during repository reads and catalogue preparation.
+It takes 253 only to capture a local Watch fingerprint and to index/reconcile.
+If the fingerprint changed during the read, it discards the remote snapshot
+before modifying any Watch projection. Background and manual sync yield promptly
+on contention or stale snapshots; background polling retries after at least
+60 seconds. Continuous Watch edits can postpone sync completion.
+
+Each operation retains a dedicated checked-out connection until its callback
+settles. The lock pool must remain separate from the Prisma query pool and close
+with the application. Interactive Watch writes wait up to five seconds per lock
+acquisition; bounded pool waits prevent exhausting the shared connection pool.
+
+New accounts default to Public. Start creates a queued job and an immutable
 migration row atomically, rejects active imports/deletion, requires publication
 confirmation for a Public target, and returns the same job for duplicate starts.
 A different target is rejected until the existing migration finishes.

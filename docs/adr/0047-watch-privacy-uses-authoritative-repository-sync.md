@@ -21,12 +21,28 @@ allows another account's sync to run. Private accounts without Watch access wait
 for reconnection, while their visibility remains Private. Successful sync time
 is separate from attempt time and errors.
 
-Interactive writes, migration and account deletion share a PostgreSQL session
-advisory lock. The dedicated two-connection lock pool is budgeted alongside
-Prisma's pool; same-account contention fails promptly. Other accounts can wait up to five
-seconds for a pool connection, with at most 16 queued requests; exhausted
-capacity returns a retryable service-busy response and background imports retry. Network
-verification runs before the short final database transaction. That transaction
+Locking update for #736 (2026-11-11): interactive writes, background work,
+migration and account deletion retain a PostgreSQL session advisory barrier
+(namespace 252). Watch writes take it shared and serialize on the Watch mutex
+(253). Watch privacy migration and account deletion take the barrier exclusively.
+Content privacy background jobs take it shared with a separate content mutex
+(254), so Library, Notes and List polling or migration cannot block Watch writes.
+Interactive content writes still take the exclusive barrier, excluding content
+background reconciliation. Content jobs remain serialized with each other.
+
+Watch polling holds the shared barrier throughout remote reads and catalogue
+preparation, but takes the Watch mutex only to capture the local fingerprint
+and later index/reconcile. Before applying the repository snapshot, it compares
+that fingerprint again under the mutex. A concurrent Watch create, edit or
+delete discards the stale snapshot with a retryable busy conflict. Manual sync
+also yields promptly; background polling retries at its existing interval of
+at least 60 seconds. Continuous Watch changes may postpone a successful sync.
+
+The dedicated two-connection lock pool remains separate from Prisma's pool.
+Interactive Watch writes wait up to five seconds per lock acquisition; background
+work fails promptly on contention. Pool waits are bounded to five seconds and
+16 queued requests; exhausted capacity returns a retryable service-busy response.
+Network verification runs before the short final database transaction, which
 commits visibility, local reconciliation and recovery cleanup together.
 
 Both migration directions require the PDS capability

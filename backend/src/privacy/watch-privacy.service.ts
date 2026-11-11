@@ -137,34 +137,37 @@ export class WatchPrivacyService {
 		return this.status(did, session);
 	}
 	async sync(did: string, session: unknown) {
-		await this.coordinator.read(did, async (visibility, signal, withWrite) => {
-			const before = await withWrite(() => this.localSnapshot(did));
-			const pds = new WatchMigrationPds(
-				did,
-				requireWatchSession(session),
-				signal,
-			);
-			if (visibility === "private") await pds.assertExistingPrivate();
-			const records = await this.snapshot(pds, visibility);
-			if (visibility === "private") await pds.assertExistingPrivate();
-			// Catalogue requests can be slow too. Warm missing media before taking
-			// the write mutex, so indexing below only touches the local projection.
-			await this.prepareCatalogue(records, signal);
-			await withWrite(async () => {
-				if (before !== (await this.localSnapshot(did)))
-					throw new WatchAccountBusyError();
-				signal.throwIfAborted();
-				await this.index(did, records, signal);
-				signal.throwIfAborted();
-				await this.prisma.$transaction((tx) =>
-					this.reconcile(tx, did, records),
+		await this.coordinator.readThenWrite(
+			did,
+			async (visibility, signal, withWrite) => {
+				const before = await withWrite(() => this.localWatchFingerprint(did));
+				const pds = new WatchMigrationPds(
+					did,
+					requireWatchSession(session),
+					signal,
 				);
-			});
-		});
+				if (visibility === "private") await pds.assertExistingPrivate();
+				const records = await this.snapshot(pds, visibility);
+				if (visibility === "private") await pds.assertExistingPrivate();
+				// Catalogue requests can be slow too. Warm missing media before taking
+				// the write mutex, so indexing below only touches the local projection.
+				await this.prepareCatalogue(records, signal);
+				await withWrite(async () => {
+					if (before !== (await this.localWatchFingerprint(did)))
+						throw new WatchAccountBusyError();
+					signal.throwIfAborted();
+					await this.index(did, records, signal);
+					signal.throwIfAborted();
+					await this.prisma.$transaction((tx) =>
+						this.reconcile(tx, did, records),
+					);
+				});
+			},
+		);
 		return this.status(did, session);
 	}
 
-	private async localSnapshot(did: string) {
+	private async localWatchFingerprint(did: string) {
 		const where = { userDid: did };
 		const select = {
 			rkey: true,

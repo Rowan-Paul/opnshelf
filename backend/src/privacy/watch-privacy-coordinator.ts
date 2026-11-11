@@ -74,7 +74,7 @@ export class WatchPrivacyCoordinator {
 
 	/** Read repositories without holding the Watch mutex; local projection work
 	 * must use withWrite and reject a snapshot if Watches changed during the read. */
-	async read<T>(
+	async readThenWrite<T>(
 		ownerDid: string,
 		operation: (
 			visibility: WatchVisibility,
