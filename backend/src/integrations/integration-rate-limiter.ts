@@ -139,8 +139,7 @@ export class IntegrationRateLimiter {
 			if (headers && rateLimitExhausted(headers))
 				queue.retryAt = Math.max(
 					queue.retryAt,
-					Date.now() +
-						rateLimitRetrySeconds(headers, this.policy.retrySeconds) * 1000,
+					Date.now() + rateLimitRetrySeconds(headers, 0) * 1000,
 				);
 			return result;
 		} catch (error) {

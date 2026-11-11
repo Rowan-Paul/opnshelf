@@ -230,3 +230,23 @@ it("charges every authenticated batch record, including conservative puts", asyn
 	});
 	expect(run.mock.calls.at(-1)?.[2]).toBe(3);
 });
+
+it("reports malformed batch bodies as typed failures before sending them", async () => {
+	vi.spyOn(syncPdsRequests, "run").mockImplementation(async (_did, request) =>
+		request(),
+	);
+	const fetchHandler = vi.fn(async () => Response.json({}));
+	const session = await syncPdsSession(
+		{ restore: async () => ({ did: "fixture-batch", fetchHandler }) } as never,
+		"fixture-batch",
+	);
+	for (const body of ["malformed", "{}", new Uint8Array([1])]) {
+		expect(() =>
+			session.fetchHandler("/xrpc/com.atproto.repo.applyWrites", {
+				method: "POST",
+				body,
+			}),
+		).toThrow("Your changes are preserved");
+	}
+	expect(fetchHandler).not.toHaveBeenCalled();
+});

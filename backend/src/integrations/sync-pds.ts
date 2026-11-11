@@ -84,11 +84,31 @@ function syncWritePoints(path: string, init?: RequestInit) {
 	if (method.endsWith(".createRecord") || method.endsWith(".putRecord"))
 		return 3;
 	if (!method.endsWith(".applyWrites")) return 0;
-	const body = JSON.parse(String(init?.body)) as {
-		writes: { $type?: string }[];
-	};
-	return body.writes.reduce(
-		(points, write) => points + (write.$type?.endsWith("#delete") ? 1 : 3),
-		0,
-	);
+	try {
+		if (typeof init?.body !== "string") throw new Error();
+		const body: unknown = JSON.parse(init.body);
+		if (
+			!body ||
+			typeof body !== "object" ||
+			!("writes" in body) ||
+			!Array.isArray(body.writes)
+		)
+			throw new Error();
+		return body.writes.reduce(
+			(points: number, write: unknown) =>
+				points +
+				(write &&
+				typeof write === "object" &&
+				"$type" in write &&
+				typeof write.$type === "string" &&
+				write.$type.endsWith("#delete")
+					? 1
+					: 3),
+			0,
+		);
+	} catch {
+		throw new IntegrationError(
+			"The repository write could not be prepared. Your changes are preserved.",
+		);
+	}
 }

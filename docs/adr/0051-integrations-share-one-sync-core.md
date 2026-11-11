@@ -40,8 +40,10 @@ only typed integration failures.
 
 While a connection holds its lease, its external account ID scopes requests,
 including token refresh, so token rotation cannot reset its budget or cooldown.
-Outside a connection operation, credential fingerprints or a separate OAuth
-scope provide the fallback key; raw credentials are never limiter keys.
+During a connect callback, the verified authorization state scopes token exchange,
+profile fetch and cleanup to that User. Outside these operations, credential
+fingerprints or a separate app OAuth scope provide the fallback key; raw
+credentials are never limiter keys.
 
 Current policies retain a conservative 1.1-second request interval. Trakt adds
 its standard 500-request five-minute budget; Bingers adds its 60-request minute
@@ -53,3 +55,7 @@ wait within normal pacing instead of yielding a whole run. Longer cooldowns yiel
 immediately. Reading an existing cooldown never extends its absolute deadline.
 Reset headers support contemporary epoch timestamps and delta-seconds; an
 explicitly elapsed reset uses the minimum delay, not the full fallback interval.
+
+The shorter Trakt and Bingers request-budget windows provide a guard if interval
+policies change; the current conservative pacing normally stays below them.
+Successful responses without a parseable reset do not invoke the 429 fallback.

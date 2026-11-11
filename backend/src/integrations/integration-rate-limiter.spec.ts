@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
 import { TraktSyncClient } from "../trakt-sync/trakt-sync.client";
+import { TraktSyncService } from "../trakt-sync/trakt-sync.service";
 import { BingersSyncClient } from "../bingers-sync/bingers-sync.client";
 import { syncPdsSession } from "./sync-pds";
 import {
@@ -47,6 +48,41 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
 	vi.useRealTimers();
 	vi.unstubAllGlobals();
+});
+
+it("sets and clears the external account scope around a real connection lease", async () => {
+	const service = new TraktSyncService(
+		{
+			integrationConnection: { updateMany: async () => ({ count: 1 }) },
+		} as never,
+		new TraktSyncClient(config),
+		{} as never,
+		config,
+		{} as never,
+	);
+	await service["locked"](
+		{ id: "connection", accountId: "external-account" } as never,
+		async () => {
+			expect(integrationRateLimitScope.getStore()).toBe("external-account");
+		},
+	);
+	expect(integrationRateLimitScope.getStore()).toBeUndefined();
+});
+
+it("does not apply a long cooldown to successful exhausted headers without reset data", async () => {
+	const client = new TraktSyncClient(config);
+	const fetcher = vi.fn(async () =>
+		Response.json(
+			{},
+			{ headers: { "x-ratelimit": JSON.stringify({ remaining: 0 }) } },
+		),
+	);
+	vi.stubGlobal("fetch", fetcher);
+	await client.request("/sync/history", "account", {});
+	const next = client.request("/sync/history", "account", {});
+	await vi.advanceTimersByTimeAsync(1100);
+	await next;
+	expect(fetcher).toHaveBeenCalledTimes(2);
 });
 
 it("does not extend an existing cooldown when repeatedly checking it", async () => {
