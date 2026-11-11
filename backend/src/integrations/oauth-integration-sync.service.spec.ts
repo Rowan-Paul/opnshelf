@@ -77,3 +77,78 @@ it("returns Trakt's legacy mobile callback and the onboarding callback from the 
 		(await service.authorize("owner", "mobile", "onboarding")).returnUrl,
 	).toBe("opnshelf://onboarding");
 });
+
+it("keeps one User's rate-limited token exchange from blocking another User's connect", async () => {
+	vi.useFakeTimers();
+	try {
+		const states = new Map<
+			string,
+			{ key: string; expiresAt: Date; stateData: string }
+		>();
+		const prisma = {
+			authState: {
+				create: async ({
+					data,
+				}: {
+					data: { key: string; expiresAt: Date; stateData: string };
+				}) => {
+					states.set(data.key, data);
+				},
+				findUnique: async ({ where }: { where: { key: string } }) =>
+					states.get(where.key),
+				deleteMany: async ({ where }: { where: { key: string } }) => ({
+					count: Number(states.delete(where.key)),
+				}),
+			},
+			integrationConnection: {
+				findFirst: async () => null,
+				findUnique: async () => null,
+				create: vi.fn(),
+			},
+		};
+		const fetcher = vi
+			.fn()
+			.mockResolvedValueOnce(
+				new Response(null, { status: 429, headers: { "retry-after": "900" } }),
+			)
+			.mockResolvedValueOnce(
+				Response.json({
+					access_token: "access",
+					refresh_token: "refresh",
+					expires_in: 3600,
+					created_at: 1700000000,
+				}),
+			)
+			.mockResolvedValueOnce(
+				Response.json({
+					user: { username: "fixture", ids: { uuid: "external-account" } },
+				}),
+			);
+		vi.stubGlobal("fetch", fetcher);
+		const service = new TraktSyncService(
+			prisma as never,
+			new TraktSyncClient(config),
+			{} as never,
+			config,
+			{} as never,
+		);
+		const first = await service.authorize("owner-a", "web");
+		expect(
+			await service.callback(
+				new URL(first.url).searchParams.get("state") ?? "",
+				"code-a",
+			),
+		).toContain("connection=failed");
+		const second = await service.authorize("owner-b", "web");
+		const result = service.callback(
+			new URL(second.url).searchParams.get("state") ?? "",
+			"code-b",
+		);
+		await vi.runAllTimersAsync();
+		expect(await result).toContain("connection=connected");
+		expect(fetcher).toHaveBeenCalledTimes(3);
+	} finally {
+		vi.useRealTimers();
+		vi.unstubAllGlobals();
+	}
+});

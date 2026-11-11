@@ -1,3 +1,4 @@
+import { integrationRateLimitScope } from "./integration-rate-limiter";
 import { captureProductEvent } from "../analytics/capture";
 import {
 	BadRequestException,
@@ -175,67 +176,79 @@ export abstract class OAuthIntegrationSyncService<
 				);
 				return `${redirect}?${this.callbackQuery}connection=cancelled`;
 			}
-			stage = "token-exchange";
-			const token = await this.oauth.exchange(code, data.verifier);
-			try {
-				stage = "profile-fetch";
-				const profile = await this.oauthProfile(token, state);
-				stage = "connection-save";
-				const previous = await this.current(data.userDid);
-				if (
-					previous &&
-					previous.status !== "disconnected" &&
-					previous.accountId !== profile.accountId
-				)
-					throw new ConflictException(
-						`Disconnect the current ${this.name} account before switching.`,
-					);
-				const existing = await this.prisma.integrationConnection.findUnique({
-					where: {
-						userDid_provider_accountId: {
-							userDid: data.userDid,
-							provider: this.provider,
-							accountId: profile.accountId,
-						},
-					},
-				});
-				if (existing)
-					await this.locked(existing, async () => {
-						await this.prisma.integrationConnection.update({
-							select: { id: true },
-							where: { id: existing.id },
-							data: {
-								...this.tokenData(token),
-								...this.connectionDefaults,
-								username: profile.username,
-								status: "paused",
-								lastError: null,
+			return await integrationRateLimitScope.run(
+				`oauth:${data.userDid}`,
+				async () => {
+					stage = "token-exchange";
+					const token = await this.oauth.exchange(code, data.verifier);
+					try {
+						stage = "profile-fetch";
+						const profile = await this.oauthProfile(token, state);
+						stage = "connection-save";
+						const previous = await this.current(data.userDid);
+						if (
+							previous &&
+							previous.status !== "disconnected" &&
+							previous.accountId !== profile.accountId
+						)
+							throw new ConflictException(
+								`Disconnect the current ${this.name} account before switching.`,
+							);
+						const existing = await this.prisma.integrationConnection.findUnique(
+							{
+								where: {
+									userDid_provider_accountId: {
+										userDid: data.userDid,
+										provider: this.provider,
+										accountId: profile.accountId,
+									},
+								},
 							},
-						});
-					});
-				else
-					await this.prisma.integrationConnection.create({
-						data: {
-							userDid: data.userDid,
+						);
+						if (existing)
+							await this.locked(existing, async () => {
+								await this.prisma.integrationConnection.update({
+									select: { id: true },
+									where: { id: existing.id },
+									data: {
+										...this.tokenData(token),
+										...this.connectionDefaults,
+										username: profile.username,
+										status: "paused",
+										lastError: null,
+									},
+								});
+							});
+						else
+							await this.prisma.integrationConnection.create({
+								data: {
+									userDid: data.userDid,
+									provider: this.provider,
+									accountId: profile.accountId,
+									username: profile.username,
+									...this.tokenData(token),
+									...this.connectionDefaults,
+								},
+							});
+					} catch (error) {
+						await Promise.allSettled(
+							[token.refresh_token, token.access_token].map((credential) =>
+								this.oauth.revoke(credential),
+							),
+						);
+						throw error;
+					}
+					captureProductEvent(
+						this.config,
+						data.userDid,
+						"integration_connected",
+						{
 							provider: this.provider,
-							accountId: profile.accountId,
-							username: profile.username,
-							...this.tokenData(token),
-							...this.connectionDefaults,
 						},
-					});
-			} catch (error) {
-				await Promise.allSettled(
-					[token.refresh_token, token.access_token].map((credential) =>
-						this.oauth.revoke(credential),
-					),
-				);
-				throw error;
-			}
-			captureProductEvent(this.config, data.userDid, "integration_connected", {
-				provider: this.provider,
-			});
-			return `${redirect}?${this.callbackQuery}connection=connected`;
+					);
+					return `${redirect}?${this.callbackQuery}connection=connected`;
+				},
+			);
 		} catch (error) {
 			if (owner)
 				captureProductEvent(

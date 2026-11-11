@@ -7,6 +7,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
+import { syncPdsSession } from "./sync-pds";
 import { main as ratingSchema } from "../lexicons/xyz/opnshelf/rating";
 import { MoviesService } from "../movies/movies.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -201,9 +202,7 @@ export class LocalSyncRecords {
 		];
 	}
 	private async agent(userDid: string) {
-		const session = await this.auth.restore(userDid);
-		if (!session)
-			throw new Error("Sign in to Opnshelf again to continue syncing.");
+		const session = await syncPdsSession(this.auth, userDid);
 		return new Agent(session);
 	}
 	/** Confirm absence in the source of truth, not merely a temporarily incomplete index. */

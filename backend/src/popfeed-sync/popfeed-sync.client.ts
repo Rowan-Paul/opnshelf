@@ -18,6 +18,11 @@ import {
 	REVIEW,
 } from "./popfeed-records";
 import type { PopfeedWriter } from "./popfeed-writer";
+import {
+	syncPdsFailure,
+	syncPdsRequests,
+	syncPdsRequest,
+} from "../integrations/sync-pds";
 
 /**
  * Where the User's Popfeed records live and the timezone their dates mean.
@@ -50,11 +55,17 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 	private async get(credential: PopfeedCredential, path: string) {
 		let response: Response;
 		try {
-			response = await fetch(new URL(`/xrpc/${path}`, credential.pds), {
-				headers: { accept: "application/json" },
-				signal: AbortSignal.timeout(15_000),
-			});
-		} catch {
+			response = await syncPdsRequests.run(credential.did, () =>
+				syncPdsRequest(() =>
+					fetch(new URL(`/xrpc/${path}`, credential.pds), {
+						headers: { accept: "application/json" },
+						signal: AbortSignal.timeout(15_000),
+					}),
+				),
+			);
+		} catch (error) {
+			const failure = syncPdsFailure(error);
+			if (failure instanceof IntegrationError) throw failure;
 			throw new IntegrationError(
 				"Your repository could not be reached. Sync will retry.",
 				0,

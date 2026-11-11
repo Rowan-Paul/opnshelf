@@ -1,3 +1,4 @@
+import { PdsRequestError } from "../common/pds-request-error";
 import type { Mocked } from "vitest";
 import { type ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -60,6 +61,23 @@ describe("AuthGuard", () => {
 	});
 
 	describe("canActivate", () => {
+		it.each([429, 503])(
+			"keeps temporary OAuth HTTP %s from becoming a logout",
+			async (status) => {
+				mockAuthService.getSessionById.mockResolvedValue({
+					id: "slot",
+					userDid: "did:plc:fixture",
+					expiresAt: futureExpiry(),
+				});
+				const failure = new PdsRequestError(status, 900);
+				mockAuthService.restoreBySession.mockRejectedValueOnce(failure);
+				await expect(
+					guard.canActivate(createMockExecutionContext({ session: "slot" })),
+				).rejects.toBe(failure);
+				expect(failure.getStatus()).toBe(503);
+				expect(mockAuthService.touchSession).not.toHaveBeenCalled();
+			},
+		);
 		it("should throw UnauthorizedException when no session cookie", async () => {
 			const context = createMockExecutionContext({});
 

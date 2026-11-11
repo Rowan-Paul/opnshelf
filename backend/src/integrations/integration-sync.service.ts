@@ -1,3 +1,4 @@
+import { integrationRateLimitScope } from "./integration-rate-limiter";
 import {
 	captureProductEvent,
 	isProductAnalyticsEnabled,
@@ -37,6 +38,8 @@ import {
 } from "./content-value";
 import {
 	IntegrationError,
+	IntegrationUnavailable,
+	integrationFailure,
 	isSyncBusy,
 	SyncSnapshotChanged,
 	syncBusy,
@@ -391,7 +394,9 @@ export abstract class IntegrationSyncService<Credential>
 			30_000,
 		);
 		try {
-			return await operation(lease, leaseId);
+			return await integrationRateLimitScope.run(c.accountId ?? c.id, () =>
+				operation(lease, leaseId),
+			);
 		} finally {
 			clearInterval(heartbeat);
 			await this.prisma.integrationConnection.updateMany({
@@ -1218,7 +1223,8 @@ export abstract class IntegrationSyncService<Credential>
 			await this.locked(c, async (lease, leaseId) => {
 				try {
 					await this.process(c, lease, leaseId);
-				} catch (error) {
+				} catch (caught) {
+					const error = integrationFailure(caught);
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.integrationConnection.update({
 							select: { id: true },
@@ -1722,7 +1728,8 @@ export abstract class IntegrationSyncService<Credential>
 					continue;
 				}
 				writes++;
-			} catch (error) {
+			} catch (caught) {
+				const error = integrationFailure(caught);
 				if (error instanceof WatchAccountBusyError) {
 					stopped = true;
 					remaining++;
@@ -1738,7 +1745,7 @@ export abstract class IntegrationSyncService<Credential>
 					error instanceof IntegrationError &&
 					error.status >= 400 &&
 					error.status < 500 &&
-					![408, 499].includes(error.status) &&
+					![401, 408, 429, 499].includes(error.status) &&
 					!entry.remoteKey
 				)
 					await this.prisma.integrationEntry.update({
@@ -1747,8 +1754,9 @@ export abstract class IntegrationSyncService<Credential>
 						data: { pending: Prisma.DbNull },
 					});
 				if (
-					error instanceof IntegrationError &&
-					[401, 429].includes(error.status)
+					error instanceof IntegrationUnavailable ||
+					(error instanceof IntegrationError &&
+						[401, 429].includes(error.status))
 				)
 					throw error;
 				await this.issue(

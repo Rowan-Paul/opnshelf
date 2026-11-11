@@ -1,3 +1,8 @@
+import {
+	IntegrationRateLimiter,
+	integrationRateLimitKey,
+} from "../integrations/integration-rate-limiter";
+import { rateLimitRetrySeconds } from "../common/rate-limit-headers";
 import { Injectable } from "@nestjs/common";
 import { getFrontendUrl } from "../auth/auth-flow";
 import { z } from "zod";
@@ -133,6 +138,16 @@ export function bingersRecords(payload: unknown): {
 
 @Injectable()
 export class BingersSyncClient {
+	private readonly requests = new IntegrationRateLimiter({
+		name: "Bingers",
+		intervalMs: 1100,
+		retrySeconds: 60,
+		requestPoints: 1,
+		budgets: [
+			[60_000, 60],
+			[60 * 60_000, 1000],
+		],
+	});
 	private jwks: JWTVerifyGetKey = createRemoteJWKSet(
 		new URL(`${origin}/auth/jwks`),
 	);
@@ -165,39 +180,45 @@ export class BingersSyncClient {
 		};
 	}
 	private async request(path: string, token?: string, form?: URLSearchParams) {
-		const response = await fetch(`${origin}${path}`, {
-			method: form ? "POST" : "GET",
-			redirect: "error",
-			headers: {
-				Accept: "application/json",
-				...(token ? { Authorization: `Bearer ${token}` } : {}),
-				...(form
-					? { "Content-Type": "application/x-www-form-urlencoded" }
-					: {}),
-			},
-			body: form,
-			signal: AbortSignal.timeout(15_000),
+		const key = integrationRateLimitKey(token);
+		const result = await this.requests.run(key, async () => {
+			const response = await fetch(`${origin}${path}`, {
+				method: form ? "POST" : "GET",
+				redirect: "error",
+				headers: {
+					Accept: "application/json",
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
+					...(form
+						? { "Content-Type": "application/x-www-form-urlencoded" }
+						: {}),
+				},
+				body: form,
+				signal: AbortSignal.timeout(15_000),
+			});
+			if (!response.ok) {
+				const retry = rateLimitRetrySeconds(
+					response.headers,
+					response.status === 403 ? 3600 : 60,
+				);
+				throw new BingersSyncError(
+					response.status === 403
+						? "Bingers API access requires a Legend or Icon subscription and library read permission. Restore access, then reconnect Bingers."
+						: response.status === 401
+							? "Reconnect Bingers to continue syncing."
+							: response.status === 429
+								? "Bingers rate limit reached. Sync will retry."
+								: "Bingers could not complete the request. Sync will retry.",
+					response.status === 403 ? 401 : response.status,
+					retry,
+				);
+			}
+			const text = await response.text();
+			return {
+				data: text.trim() ? (JSON.parse(text) as unknown) : null,
+				headers: response.headers,
+			};
 		});
-		if (!response.ok) {
-			const retry = Number(response.headers.get("retry-after"));
-			throw new BingersSyncError(
-				response.status === 403
-					? "Bingers API access requires a Legend or Icon subscription and library read permission. Restore access, then reconnect Bingers."
-					: response.status === 401
-						? "Reconnect Bingers to continue syncing."
-						: response.status === 429
-							? "Bingers rate limit reached. Sync will retry."
-							: "Bingers could not complete the request. Sync will retry.",
-				response.status === 403 ? 401 : response.status,
-				Number.isFinite(retry) && retry > 0
-					? retry
-					: response.status === 403
-						? 3600
-						: 60,
-			);
-		}
-		const text = await response.text();
-		return text.trim() ? (JSON.parse(text) as unknown) : null;
+		return result.data;
 	}
 	private async tokens(fields: Record<string, string>) {
 		const token = tokenSchema.parse(
@@ -317,8 +338,6 @@ export class BingersSyncClient {
 			cursor = page.next_cursor;
 			seen.add(cursor);
 			if (!page.has_more) break;
-			// Stay below the documented minute budget. Hourly throttling is handled by Retry-After.
-			await new Promise((resolve) => setTimeout(resolve, 1100));
 		}
 		return { cursor, records: [...current.values()] };
 	}
