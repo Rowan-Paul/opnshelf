@@ -143,13 +143,23 @@ export type TmdbPage<T> = {
  * discover, recommendations, person search) read like every other list.
  * `pageSize` is the combined width when several TMDB pages are merged.
  */
-export function fromTmdbPage<T, R = T>(
+export function fromTmdbPage<T>(
 	page: TmdbPage<T>,
-	map: (item: T) => R = (item) => item as unknown as R,
+	map?: undefined,
+	pageSize?: number,
+): PaginatedResult<T>;
+export function fromTmdbPage<T, R>(
+	page: TmdbPage<T>,
+	map: (item: T) => R,
+	pageSize?: number,
+): PaginatedResult<R>;
+export function fromTmdbPage<T, R>(
+	page: TmdbPage<T>,
+	map?: (item: T) => R,
 	pageSize = TMDB_PAGE_SIZE,
-): PaginatedResult<R> {
+): PaginatedResult<T | R> {
 	return {
-		items: page.results.map(map),
+		items: map ? page.results.map(map) : page.results.map((item) => item),
 		page: page.page,
 		pageSize,
 		total: page.total_results,
