@@ -1,9 +1,9 @@
 ---
 {
-  "status": "draft",
+  "status": "published",
   "slug": "bingers-sync-and-sync-alerts",
   "title": "Bingers Sync, sync alerts and a new typeface",
-  "publishedAt": "2026-11-11T12:21:05.000Z",
+  "publishedAt": "2026-11-11T12:25:15.824Z",
   "summary": "Bring your movies in from Bingers, get a push when a sync needs you, and read Opnshelf in a new typeface.",
   "platforms": {
     "web": { "status": "available" },
