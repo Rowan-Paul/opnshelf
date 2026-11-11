@@ -1,5 +1,9 @@
 import { createRequire } from "node:module";
-import { POPFEED_INTEGRATION, TRAKT_INTEGRATION } from "@opnshelf/api";
+import {
+	BINGERS_INTEGRATION,
+	POPFEED_INTEGRATION,
+	TRAKT_INTEGRATION,
+} from "@opnshelf/api";
 import { Modal, Pressable } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterAll, afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -16,7 +20,12 @@ afterAll(() => {
 	else delete require.extensions[".png"];
 });
 
+vi.mock("@/lib/posthog", () => ({
+	posthog: { capture: (...args: unknown[]) => mocks.capture(...args) },
+}));
+
 const mocks = vi.hoisted(() => ({
+	capture: vi.fn(),
 	mutate: vi.fn(),
 	active: false,
 	disconnected: false,
@@ -576,4 +585,24 @@ it("connects Popfeed in place instead of opening a browser", () => {
 	});
 	press("Set up Popfeed Sync");
 	expect(mocks.mutate).toHaveBeenCalledWith({ platform: "mobile" });
+});
+
+it("offers only incoming Bingers sync and explains subscription and history limits", () => {
+	act(() => {
+		renderer = create(
+			<IntegrationSyncManager integration={BINGERS_INTEGRATION} embedded />,
+		);
+	});
+	const directions = renderer.root
+		.findAll(
+			(node) =>
+				node.type === Pressable && node.props.accessibilityRole === "radio",
+		)
+		.map((node) => node.props.accessibilityLabel)
+		.filter((label: string) => /→|Both/.test(label));
+	expect(directions).toEqual(["Bingers → Opnshelf"]);
+	expect(JSON.stringify(renderer.toJSON())).toContain("Legend or Icon");
+	expect(JSON.stringify(renderer.toJSON())).toContain(
+		"Rewatches and episodes stay in Needs attention",
+	);
 });

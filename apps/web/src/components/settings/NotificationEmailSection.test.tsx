@@ -64,10 +64,13 @@ describe("email setup", () => {
 			screen.queryByRole("button", { name: "Send test email" }),
 		).toBeNull();
 	});
-	it("keeps maintenance options visible in Settings", () => {
+	it("keeps maintenance options visible and mobile categories in the Mobile App", () => {
 		render(<NotificationEmailSection />);
 		expect(
 			screen.getByRole("button", { name: "Send test email" }),
 		).toBeDefined();
+		expect(
+			screen.queryByRole("switch", { name: "Sync errors and disconnections" }),
+		).toBeNull();
 	});
 });

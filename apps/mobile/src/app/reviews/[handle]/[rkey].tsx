@@ -72,22 +72,24 @@ export default function ReviewDetailScreen() {
 			episodeNumber: review?.episodeNumber,
 		},
 	});
-	const { data: likes } = useQuery({
+	const likesQuery = useQuery({
 		...reviewsControllerGetReviewLikesOptions({
 			path: { reviewId: review?.id ?? "" },
 		}),
 		enabled: Boolean(review?.id),
 	});
-	const invalidateLikes = () => {
-		queryClient.invalidateQueries({ queryKey: likesQueryKey });
-		queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-	};
+	const { data: likes } = likesQuery;
+	const invalidateLikes = () =>
+		Promise.all([
+			queryClient.invalidateQueries({ queryKey: likesQueryKey }),
+			queryClient.invalidateQueries({ queryKey: mediaReviewsKey }),
+		]);
 	const likeMutation = useMutation({
 		mutationKey: ["reviews", review?.id, "like"],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
 			posthog?.capture("review_liked", { source: "mobile" });
-			invalidateLikes();
+			return invalidateLikes();
 		},
 		onError: (error) => {
 			toast.error(
@@ -106,7 +108,11 @@ export default function ReviewDetailScreen() {
 		},
 	});
 	const isLikePending = likeMutation.isPending || unlikeMutation.isPending;
-	const canLike = isAuthenticated && user?.did !== review?.author.did;
+	const canLike =
+		isAuthenticated &&
+		user?.did !== review?.author.did &&
+		likesQuery.isSuccess &&
+		!likesQuery.isFetching;
 	const handleToggleLike = () => {
 		if (!review || !canLike || isLikePending) return;
 		if (likes?.hasLiked)
@@ -217,7 +223,7 @@ export default function ReviewDetailScreen() {
 						<View className="flex-row items-center justify-between gap-3">
 							<Link href={`/profile/${review.author.handle}` as Href} asChild>
 								<Pressable className="min-w-0 flex-1 flex-row items-center gap-2 active:opacity-70">
-									<View className="size-7 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
+									<View className="size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background-subtle">
 										{review.author.avatar ? (
 											<Image
 												source={{ uri: review.author.avatar }}
@@ -228,27 +234,16 @@ export default function ReviewDetailScreen() {
 											<User color={colors.mutedForeground} size={15} />
 										)}
 									</View>
+									{/* Not selectable: Android ignores numberOfLines' ellipsis on
+									    selectable text and lets a clipped second line show. */}
 									<Text
-										selectable
-										className="text-foreground text-sm"
+										className="shrink text-foreground text-sm"
 										numberOfLines={1}
 									>
 										{review.author.displayName || review.author.handle}
 									</Text>
 								</Pressable>
 							</Link>
-							<View className="flex-row items-center gap-1.5">
-								<CalendarDays color={colors.mutedForeground} size={14} />
-								<Text selectable className="text-muted-foreground text-xs">
-									{formatLongDate(review.createdAt)}
-									{/* Same "(updated …)" note as the Web App, after a minute's grace. */}
-									{new Date(review.updatedAt).getTime() -
-										new Date(review.createdAt).getTime() >
-									60_000
-										? ` (updated ${formatLongDate(review.updatedAt)})`
-										: ""}
-								</Text>
-							</View>
 							<Pressable
 								onPress={handleToggleLike}
 								disabled={!canLike || isLikePending}
@@ -281,7 +276,7 @@ export default function ReviewDetailScreen() {
 											: colors.mutedForeground,
 									}}
 								>
-									{likes?.total ?? 0}
+									{likes?.total ?? "—"}
 								</Text>
 							</Pressable>
 							<Pressable
@@ -294,7 +289,37 @@ export default function ReviewDetailScreen() {
 								<Share2 color={colors.mutedForeground} size={16} />
 							</Pressable>
 						</View>
+						{/* Dates get their own row so they can wrap instead of squeezing the author out. */}
+						<View className="flex-row items-start gap-1.5">
+							<View className="h-4 justify-center">
+								<CalendarDays color={colors.mutedForeground} size={14} />
+							</View>
+							<Text selectable className="shrink text-muted-foreground text-xs">
+								{formatLongDate(review.createdAt)}
+								{/* Same "(updated …)" note as the Web App, after a minute's grace. */}
+								{new Date(review.updatedAt).getTime() -
+									new Date(review.createdAt).getTime() >
+								60_000
+									? ` (updated ${formatLongDate(review.updatedAt)})`
+									: ""}
+							</Text>
+						</View>
 					</View>
+
+					{likesQuery.isError && (
+						<View className="flex-row items-center gap-2">
+							<Text className="text-muted-foreground text-sm">
+								Couldn't load review likes.
+							</Text>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel="Retry loading review likes"
+								onPress={() => void likesQuery.refetch()}
+							>
+								<Text className="text-primary text-sm">Try again</Text>
+							</Pressable>
+						</View>
+					)}
 
 					<SpoilerShield spoiler={review.spoiler} authorDid={review.author.did}>
 						<Markdown value={review.markdown} />

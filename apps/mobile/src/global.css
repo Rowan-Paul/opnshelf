@@ -50,14 +50,17 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Fonts (theme-agnostic constants). React Native cannot synthesize a weight
-   * for a registered custom font, so `font-bold` on `font-display` silently
-   * renders Medium. Each display weight is its own family, registered in
-   * src/app/_layout.tsx: use `font-display-semibold` / `font-display-bold`. */
-  --font-sans: 'Inter';
-  --font-display: 'PlusJakartaSans';
-  --font-display-semibold: 'PlusJakartaSans-SemiBold';
-  --font-display-bold: 'PlusJakartaSans-Bold';
+  /* Fonts (theme-agnostic constants). React Native cannot pick a weight inside
+   * a registered custom font, so each weight is its own family, registered in
+   * src/app/_layout.tsx. The Text primitive maps `font-medium|semibold|bold`
+   * to `font-sans-*`; for display text use `font-display-semibold|bold`. */
+  --font-sans: 'TimelessSans';
+  --font-sans-medium: 'TimelessSans-Medium';
+  --font-sans-semibold: 'TimelessSans-Semibold';
+  --font-sans-bold: 'TimelessSans-Bold';
+  --font-display: 'TimelessSans-Medium';
+  --font-display-semibold: 'TimelessSans-Semibold';
+  --font-display-bold: 'TimelessSans-Bold';
 }
 
 /*
@@ -68,21 +71,21 @@
  *   3: section headings
  */
 @utility text-display-1 {
-  font-family: 'PlusJakartaSans-Bold';
+  font-family: 'TimelessSans-Bold';
   font-size: 34px;
   line-height: 40px;
   letter-spacing: -0.6px;
 }
 
 @utility text-display-2 {
-  font-family: 'PlusJakartaSans-Bold';
+  font-family: 'TimelessSans-Bold';
   font-size: 28px;
   line-height: 34px;
   letter-spacing: -0.4px;
 }
 
 @utility text-display-3 {
-  font-family: 'PlusJakartaSans-SemiBold';
+  font-family: 'TimelessSans-Semibold';
   font-size: 20px;
   line-height: 26px;
   letter-spacing: -0.2px;

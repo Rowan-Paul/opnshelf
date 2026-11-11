@@ -48,7 +48,7 @@ const MARK_SIZE = 18;
  * these labels carry vendor-mandated colours that must not be overridden by
  * the themed Text primitive's own `text-foreground`.
  */
-const LABEL_FONT = "Inter-SemiBold";
+const LABEL_FONT = "TimelessSans-Semibold";
 
 /**
  * Google's published light colour palette for the button.

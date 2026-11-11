@@ -1,3 +1,8 @@
+import { integrationRateLimitScope } from "./integration-rate-limiter";
+import {
+	captureProductEvent,
+	isProductAnalyticsEnabled,
+} from "../analytics/capture";
 import { TID } from "@atproto/common";
 import {
 	BadRequestException,
@@ -33,6 +38,8 @@ import {
 } from "./content-value";
 import {
 	IntegrationError,
+	IntegrationUnavailable,
+	integrationFailure,
 	isSyncBusy,
 	SyncSnapshotChanged,
 	syncBusy,
@@ -97,6 +104,17 @@ const IDLE_RUN_MS = 2 * 60_000;
 // Retrying it on every run forced a full remote read under the lease every
 // few seconds; Retry in Needs attention clears the issue and skips this wait.
 const FAILED_TRANSFER_RETRY_MS = 5 * 60_000;
+/**
+ * Start of the failure episode a new failure belongs to. Every recovery path
+ * clears lastError, so a failure after a healthy state starts a new episode.
+ */
+export const failingSince = (
+	c: Pick<IntegrationConnection, "status" | "lastError" | "failingSince">,
+) =>
+	c.lastError || c.status === "reconnect"
+		? (c.failingSince ?? new Date())
+		: new Date();
+
 const coolingDown = (
 	entry: Pick<
 		IntegrationEntry,
@@ -156,6 +174,7 @@ const display = (r: SyncRecord | null, name: string) =>
 				title: r.title,
 				season: r.season,
 				episode: r.episode,
+				coordinatesUnknown: r.coordinatesUnknown,
 				displayValue: r.unreadable
 					? `${name} could not return the complete List. Its contents are preserved.`
 					: isContentRecord(r)
@@ -285,7 +304,7 @@ export abstract class IntegrationSyncService<Credential>
 		const c = await this.prisma.integrationConnection.findFirst({
 			where: { userDid, provider: this.provider },
 			orderBy: [{ updatedAt: "desc" }],
-			omit: { remoteSnapshot: true },
+			omit: { remoteSnapshot: true, remoteFeed: true },
 		});
 		const counts = c
 			? await this.prisma.integrationEntry.groupBy({
@@ -344,7 +363,7 @@ export abstract class IntegrationSyncService<Credential>
 	}
 	protected async locked<T>(
 		c: IntegrationConnection,
-		operation: (lease: () => Promise<void>) => Promise<T>,
+		operation: (lease: () => Promise<void>, leaseId: string) => Promise<T>,
 	): Promise<T> {
 		const leaseId = randomUUID();
 		const claim = await this.prisma.integrationConnection.updateMany({
@@ -375,7 +394,9 @@ export abstract class IntegrationSyncService<Credential>
 			30_000,
 		);
 		try {
-			return await operation(lease);
+			return await integrationRateLimitScope.run(c.accountId ?? c.id, () =>
+				operation(lease, leaseId),
+			);
 		} finally {
 			clearInterval(heartbeat);
 			await this.prisma.integrationConnection.updateMany({
@@ -745,6 +766,7 @@ export abstract class IntegrationSyncService<Credential>
 						)
 					: [];
 			const match =
+				!r.problem &&
 				matches.length === 1 &&
 				((r.kind !== "watch" &&
 					((!isListRecord(r) && !isContentRecord(r)) ||
@@ -886,7 +908,10 @@ export abstract class IntegrationSyncService<Credential>
 			const source =
 				l ?? r ?? readRecord(e.localBase) ?? readRecord(e.remoteBase);
 			const matches =
-				source && !isListRecord(source) && (!e.linked || (l && !r))
+				source &&
+				!r?.problem &&
+				!isListRecord(source) &&
+				(!e.linked || (l && !r))
 					? e.linked
 						? remote.filter((v) => mediaKey(v) === mediaKey(source))
 						: candidates(source, l ? remote : local)
@@ -923,13 +948,14 @@ export abstract class IntegrationSyncService<Credential>
 			items: pageItems.map(({ e, l, r, matches }) => {
 				const uncertain = unconfirmedCreate(e);
 				return {
-					recovery: r?.unreadable
-						? ("retry" as const)
-						: uncertain
-							? ("verify" as const)
-							: (l && r) || e.linked || e.issue === SOURCE_CHANGED
-								? ("choose" as const)
-								: ("retry" as const),
+					recovery:
+						r?.unreadable || r?.problem
+							? ("retry" as const)
+							: uncertain
+								? ("verify" as const)
+								: (l && r) || e.linked || e.issue === SOURCE_CHANGED
+									? ("choose" as const)
+									: ("retry" as const),
 					remoteState: r
 						? ("present" as const)
 						: uncertain
@@ -971,7 +997,7 @@ export abstract class IntegrationSyncService<Credential>
 		dto: IntegrationResolve,
 	) {
 		const c = await this.requireConnection(userDid);
-		await this.locked(c, async () => {
+		await this.locked(c, async (_lease, leaseId) => {
 			const entry = await this.prisma.integrationEntry.findFirst({
 				where: { id, connectionId: c.id },
 			});
@@ -1010,7 +1036,11 @@ export abstract class IntegrationSyncService<Credential>
 				const desired = readRecord(
 					(entry.pending as { desired?: unknown }).desired,
 				);
-				const remote = await this.remote.snapshot(await this.credential(c), c);
+				const remote = await this.remote.snapshot(
+					await this.credential(c),
+					c,
+					leaseId,
+				);
 				const peers = await this.prisma.integrationEntry.findMany({
 					where: {
 						connectionId: c.id,
@@ -1094,6 +1124,10 @@ export abstract class IntegrationSyncService<Credential>
 				const r = entry.linked
 					? readRecord(other.remoteBase)
 					: (readRecord(entry.remoteBase) ?? readRecord(other.remoteBase));
+				if (l?.problem || r?.problem)
+					throw new BadRequestException(
+						"These records cannot be represented faithfully. Retry or ignore this item.",
+					);
 				if (!l || !r || mediaKey(l) !== mediaKey(r))
 					throw new BadRequestException(
 						"These records describe different titles.",
@@ -1186,10 +1220,11 @@ export abstract class IntegrationSyncService<Credential>
 				orderBy: { nextRunAt: "asc" },
 			});
 			if (!c) return;
-			await this.locked(c, async (lease) => {
+			await this.locked(c, async (lease, leaseId) => {
 				try {
-					await this.process(c, lease);
-				} catch (error) {
+					await this.process(c, lease, leaseId);
+				} catch (caught) {
+					const error = integrationFailure(caught);
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.integrationConnection.update({
 							select: { id: true },
@@ -1223,6 +1258,12 @@ export abstract class IntegrationSyncService<Credential>
 									: undefined,
 						}),
 					);
+					// Re-read: a credential refresh may already have recorded the failure.
+					const failing =
+						await this.prisma.integrationConnection.findUniqueOrThrow({
+							where: { id: c.id },
+							select: { status: true, lastError: true, failingSince: true },
+						});
 					await this.prisma.integrationConnection.update({
 						select: { id: true },
 						where: { id: c.id },
@@ -1234,6 +1275,9 @@ export abstract class IntegrationSyncService<Credential>
 							...(error instanceof IntegrationError && error.status === 401
 								? { status: "reconnect" }
 								: {}),
+							// Every recovery path clears lastError, so a failure after a
+							// healthy state starts a new episode for sync warnings.
+							failingSince: failingSince(failing),
 							nextRunAt: new Date(
 								Date.now() +
 									(error instanceof IntegrationError
@@ -1244,6 +1288,24 @@ export abstract class IntegrationSyncService<Credential>
 							remoteReadAt: null,
 						},
 					});
+					const reconnect =
+						error instanceof IntegrationError && error.status === 401;
+					if (!c.lastError || (reconnect && c.status !== "reconnect"))
+						captureProductEvent(
+							this.config,
+							c.userDid,
+							reconnect
+								? "integration_reconnect_required"
+								: "integration_sync_failed",
+							{
+								provider: this.provider,
+								direction: c.direction,
+								error_category:
+									error instanceof IntegrationError ? "provider" : "internal",
+								http_status:
+									error instanceof IntegrationError ? error.status : null,
+							},
+						);
 				}
 			});
 		} catch {
@@ -1299,7 +1361,9 @@ export abstract class IntegrationSyncService<Credential>
 	protected async process(
 		c: IntegrationConnection,
 		lease: () => Promise<void>,
+		leaseId?: string,
 	) {
+		const startedAtRun = Date.now();
 		let remote = records(c.remoteSnapshot);
 		// Account reads and transfers share the privacy lock, but slow remote
 		// pagination must not prevent someone from adding a Watch to their Shelf.
@@ -1339,7 +1403,7 @@ export abstract class IntegrationSyncService<Credential>
 			!c.remoteReadAt ||
 			c.remoteReadAt.getTime() < Date.now() - 15 * 60_000
 		) {
-			remote = await this.remote.snapshot(token, c);
+			remote = await this.remote.snapshot(token, c, leaseId);
 			await lease();
 			await this.prisma.integrationConnection.update({
 				select: { id: true },
@@ -1395,6 +1459,11 @@ export abstract class IntegrationSyncService<Credential>
 					remaining: 0,
 					remainingTotal: 0,
 				},
+			});
+			captureProductEvent(this.config, c.userDid, "integration_sync_prepared", {
+				provider: this.provider,
+				direction: c.direction,
+				duration_ms: Date.now() - startedAtRun,
 			});
 			return;
 		}
@@ -1659,7 +1728,8 @@ export abstract class IntegrationSyncService<Credential>
 					continue;
 				}
 				writes++;
-			} catch (error) {
+			} catch (caught) {
+				const error = integrationFailure(caught);
 				if (error instanceof WatchAccountBusyError) {
 					stopped = true;
 					remaining++;
@@ -1675,7 +1745,7 @@ export abstract class IntegrationSyncService<Credential>
 					error instanceof IntegrationError &&
 					error.status >= 400 &&
 					error.status < 500 &&
-					![408, 499].includes(error.status) &&
+					![401, 408, 429, 499].includes(error.status) &&
 					!entry.remoteKey
 				)
 					await this.prisma.integrationEntry.update({
@@ -1684,8 +1754,9 @@ export abstract class IntegrationSyncService<Credential>
 						data: { pending: Prisma.DbNull },
 					});
 				if (
-					error instanceof IntegrationError &&
-					[401, 429].includes(error.status)
+					error instanceof IntegrationUnavailable ||
+					(error instanceof IntegrationError &&
+						[401, 429].includes(error.status))
 				)
 					throw error;
 				await this.issue(
@@ -1725,6 +1796,57 @@ export abstract class IntegrationSyncService<Credential>
 					: 0,
 			},
 		});
+		if (!isProductAnalyticsEnabled(this.config)) return;
+		const needsAttention = await this.prisma.integrationEntry
+			.count({
+				where: {
+					connectionId: c.id,
+					issue: { not: null },
+					ignored: false,
+					OR: [{ eligible: true }, { linked: true }],
+				},
+			})
+			.catch(() => null);
+		const previousAttention = known.filter(
+			(e) => e.issue && !e.ignored && (e.eligible || e.linked),
+		).length;
+		if (
+			writes ||
+			remaining ||
+			c.lastError ||
+			needsAttention !== previousAttention
+		)
+			captureProductEvent(
+				this.config,
+				c.userDid,
+				"integration_sync_completed",
+				{
+					provider: this.provider,
+					direction: c.direction,
+					duration_ms: Date.now() - startedAtRun,
+					transferred_count: writes,
+					remaining_count: remaining,
+					needs_attention_count: needsAttention,
+					caught_up: remaining === 0 && needsAttention === 0,
+				},
+			);
+		if (needsAttention !== null && needsAttention !== previousAttention)
+			captureProductEvent(
+				this.config,
+				c.userDid,
+				"integration_attention_changed",
+				{
+					provider: this.provider,
+					needs_attention_count: needsAttention,
+				},
+			);
+		if (c.lastError)
+			captureProductEvent(
+				this.config,
+				c.userDid,
+				"integration_sync_recovered",
+				{ provider: this.provider },
+			);
 	}
 	protected issue(id: string, issue: string) {
 		return this.prisma.integrationEntry.update({

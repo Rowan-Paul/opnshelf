@@ -23,7 +23,7 @@ An AT Protocol access-control and synchronization boundary. Each author has a se
 
 **Release Notes**:
 Opnshelf's user-facing announcements explaining product changes, available in the Web App and Mobile App. They are the complete version of the shorter release announcements published on Bluesky.
-_Avoid_: Notification (reserved for media and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
+_Avoid_: Notification (reserved for media, sync health and Watch Recap delivery), Bluesky Cross-post (reserved for a User's Review announcement)
 
 **Rating**:
 A user's numeric 1–10 score for a specific media item, with no text. Its own first-class entity. Each user has at most one Rating per media item. A Rating can exist with no Review and a Review with no Rating — the two are independent.
@@ -94,7 +94,7 @@ The saved selection of Media Items from a release Notification, presented within
 A saved summary of a User’s dated movie and episode Watches for a completed week, month, or year in their timezone, including rewatches, most-watched titles, and first and last Watches. Email and Mobile App push open the same private recap.
 
 **Notification**:
-An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or a weekly, monthly, or yearly **Watch Recap**. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Each category email includes an unsubscribe link that requires no sign-in and disables only that email category after confirmation. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly.
+An optional email or Mobile App push message about a watchlisted title's release, a new season of a followed show, new movies and shows in a weekly digest, or a weekly, monthly, or yearly **Watch Recap**. Email categories start enabled with a verified delivery address; Mobile App push categories start after device permission. Users manage delivery and categories in Settings → Notifications on both clients; there is no in-app notification inbox. Each category email includes an unsubscribe link that requires no sign-in and disables only that email category after confirmation. Weekly digests and alerts covering several titles open a **Notification Collection**; single-title alerts open the title directly. Registered Mobile App devices also receive push-only sync health Notifications when Trakt Sync or Popfeed Sync has a run error or needs reconnecting. These open the integration and are sent once per failure: a run error only after it has persisted for 15 minutes, a needed reconnection right away (also when it follows an earlier error warning). A successful run, a reconnect or a manual retry ends the failure, so a later one warns again. Recovery, pause and deliberate disconnect suppress pending sync warnings. The account-wide **Sync errors and disconnections** switch in Settings → Notifications in the Mobile App controls this push-only delivery, including queued warnings. It starts enabled, requires a registered mobile device, and is preserved across device registration and token refresh. OS notification permission is also required; media category switches do not apply.
 
 **Shelf**:
 The collection of media items a user has marked as watched or tracked. Its dated
@@ -133,11 +133,17 @@ An **Integration** for the optional ongoing transfer of a User's chosen Watch hi
 _Avoid_: backup (does not describe synchronization)
 
 **Integration**:
-An optional ongoing sync between a User's Opnshelf records and another service, such as Trakt or Popfeed, managed from the **Integrations** settings section. Every Integration follows the same rules for direction, record links, conflicts and Needs attention.
+An optional ongoing sync between a User's Opnshelf records and another service, such as Trakt, Popfeed or Bingers, managed from the **Integrations** settings section. Every Integration follows the same rules for direction, record links, conflicts and Needs attention.
 _Avoid_: Connection (the social term), Import (retired one-time copy)
 
 **Popfeed Sync**:
 An **Integration** that syncs a User's Watches, Ratings, Reviews, Lists and watchlist with the Popfeed records in their own AT Protocol repository, from Popfeed to Opnshelf, from Opnshelf to Popfeed, or in both directions.
+
+**Bingers Sync**:
+An optional inbound **Integration** that brings representable movie **Watches**
+and **Ratings** from Bingers into Opnshelf. Aggregate rewatches and episodes
+without verified coordinates remain in **Needs attention**. Requires Bingers API
+access on a Legend or Icon subscription. Distinct from **Sync Watches**.
 
 **Activity**:
 A single item in the followed-users feed — a followed user's **Watch** (movie or episode) or **Review**, surfaced to the people who follow them. Not a separately stored entity; it is a projection over Watches and Reviews, ordered by when the action happened.

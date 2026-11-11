@@ -180,3 +180,63 @@ test("watch completion fixture advances only after a Watch and resets", async ()
   assert.equal((await read()).episodesWatched, 1);
  } finally { await new Promise(resolve => server.close(resolve)); }
 });
+
+test("notification fixtures persist the mobile sync preference without changing email", async () => {
+	const server = createScenarioServer("issue-fixes");
+	await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+	const url = `http://127.0.0.1:${server.address().port}/notifications/settings`;
+	try {
+		const initial = await (await fetch(url)).json();
+		assert.equal(initial.pushSyncErrors, true);
+		await fetch(url, {
+			method: "PATCH", headers: { "content-type": "application/json" },
+			body: JSON.stringify({ pushSyncErrors: false, emailVerified: false }),
+		});
+		const saved = await (await fetch(url)).json();
+		assert.equal(saved.pushSyncErrors, false);
+		assert.equal(saved.emailVerified, true);
+	} finally { await new Promise(resolve => server.close(resolve)); }
+});
+
+
+test("Bingers fixtures connect, configure incoming sync and retain aggregate attention", async () => {
+	const server = createScenarioServer("issue-fixes");
+	await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+	const base = `http://127.0.0.1:${server.address().port}`;
+	const read = async (path) => (await fetch(`${base}${path}`)).json();
+	try {
+		assert.equal((await read("/bingers-sync")).status, "disconnected");
+		const connect = await (
+			await fetch(`${base}/bingers-sync/connect`, {
+				method: "POST",
+				body: JSON.stringify({ platform: "web" }),
+			})
+		).json();
+		assert.match(connect.url, /bingers-sync\/callback/);
+		assert.equal((await read("/bingers-sync")).status, "paused");
+		await fetch(`${base}/bingers-sync`, {
+			method: "PATCH",
+			body: JSON.stringify({ direction: "inbound", publicationConsent: true }),
+		});
+		assert.equal((await read("/bingers-sync")).needsAttention, 1);
+		assert.equal(
+			(await read("/bingers-sync/issues")).items[0].recovery,
+			"retry",
+		);
+		await fetch(`${base}/bingers-sync/issues/aggregate`, {
+			method: "POST",
+			body: '{"action":"ignore"}',
+		});
+		assert.equal(
+			(await read("/bingers-sync/issues?view=ignored")).items.length,
+			1,
+		);
+		await fetch(`${base}/bingers-sync/action`, {
+			method: "POST",
+			body: '{"action":"disconnect"}',
+		});
+		assert.equal((await read("/bingers-sync")).status, "disconnected");
+	} finally {
+		await new Promise((resolve) => server.close(resolve));
+	}
+});

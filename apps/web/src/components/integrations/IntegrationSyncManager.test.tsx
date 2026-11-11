@@ -1,4 +1,5 @@
 import {
+	BINGERS_INTEGRATION,
 	type IntegrationDefinition,
 	type IntegrationIssuesDto,
 	POPFEED_INTEGRATION,
@@ -17,7 +18,12 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IntegrationSyncManager, SyncSettings } from "./IntegrationSyncManager";
 
+vi.mock("#/integrations/posthog/provider", () => ({
+	posthog: { capture: (...args: unknown[]) => mocks.capture(...args) },
+}));
+
 const mocks = vi.hoisted(() => ({
+	capture: vi.fn(),
 	configure: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
 	action: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
 	resolve: vi.fn(async (..._args: unknown[]) => ({}) as SyncStatusDto),
@@ -149,6 +155,16 @@ describe("Trakt Sync setup and conflict choices", () => {
 				expect.anything(),
 			),
 		);
+		await waitFor(() =>
+			expect(mocks.capture).toHaveBeenCalledWith(
+				"integration_action_completed",
+				{
+					provider: "trakt",
+					platform: "web",
+					action: "disconnect",
+				},
+			),
+		);
 		expect(mocks.configure).not.toHaveBeenCalled();
 		expect(screen.queryByLabelText(/I understand that sync/)).toBeNull();
 	});
@@ -183,6 +199,15 @@ describe("Trakt Sync setup and conflict choices", () => {
 				}),
 				expect.anything(),
 			),
+		);
+		await waitFor(() =>
+			expect(mocks.capture).toHaveBeenCalledWith("integration_settings_saved", {
+				provider: "trakt",
+				platform: "web",
+				direction: "both",
+				history_scope: "all",
+				record_types: ["watches", "ratings"],
+			}),
 		);
 	});
 	it("shows an existing connection inline without repeating setup or offering another Import", async () => {
@@ -363,6 +388,18 @@ it("checks an uncertain transfer without offering a deletion choice", async () =
 		expect(mocks.resolve).toHaveBeenCalledWith(
 			{ path: { id: "one" }, body: { action: "retry" } },
 			expect.anything(),
+		),
+	);
+	await waitFor(() =>
+		expect(mocks.capture).toHaveBeenCalledWith(
+			"integration_issue_action_completed",
+			{
+				provider: "trakt",
+				platform: "web",
+				action: "retry",
+				record_type: "watch",
+				all_ratings: false,
+			},
 		),
 	);
 });
@@ -601,6 +638,13 @@ describe("Popfeed Sync", () => {
 				expect.anything(),
 			),
 		);
+		expect(mocks.capture).toHaveBeenCalledWith(
+			"integration_connection_requested",
+			{
+				provider: "popfeed",
+				platform: "web",
+			},
+		);
 		expect(await screen.findByText("@fixture.test ·")).toBeTruthy();
 		expect(
 			screen.getByRole("heading", { name: "Your Popfeed records" }),
@@ -665,4 +709,90 @@ describe("Popfeed Sync", () => {
 			"Reviews",
 		]);
 	});
+});
+
+it("offers only incoming Bingers sync and explains subscription and history limits", async () => {
+	const client = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	});
+	const bingers = {
+		...BINGERS_INTEGRATION,
+		api: { ...BINGERS_INTEGRATION.api, status, issues },
+	};
+	render(
+		<QueryClientProvider client={client}>
+			<IntegrationSyncManager integration={bingers} />
+		</QueryClientProvider>,
+	);
+	expect(
+		await screen.findByRole("radio", { name: "Bingers → Opnshelf" }),
+	).toBeTruthy();
+	expect(
+		screen.queryByRole("radio", { name: "Opnshelf → Bingers" }),
+	).toBeNull();
+	expect(screen.queryByRole("radio", { name: "Both directions" })).toBeNull();
+	expect(
+		screen.getByText(/Bring movie Watches and Ratings from Bingers/)
+			.textContent,
+	).toContain("Legend or Icon");
+});
+
+it("stays in its loading state until the browser leaves for OAuth", async () => {
+	const assign = vi.fn();
+	vi.stubGlobal("location", { ...window.location, assign });
+	try {
+		const connect = vi.fn(async () => ({
+			url: "https://bingers.example/auth",
+		}));
+		const bingers: IntegrationDefinition = {
+			...BINGERS_INTEGRATION,
+			api: {
+				...BINGERS_INTEGRATION.api,
+				status: async () =>
+					({ ...(await status()), status: "disconnected" }) as SyncStatusDto,
+				issues,
+				connect,
+			},
+		};
+		render(
+			<QueryClientProvider
+				client={
+					new QueryClient({
+						defaultOptions: {
+							queries: { retry: false },
+							mutations: { retry: false },
+						},
+					})
+				}
+			>
+				<IntegrationSyncManager integration={bingers} />
+			</QueryClientProvider>,
+		);
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Connect Bingers" }),
+		);
+		await waitFor(() =>
+			expect(assign).toHaveBeenCalledWith("https://bingers.example/auth"),
+		);
+		const button = screen.getByRole("button", { name: "Opening Bingers…" });
+		expect(button.hasAttribute("disabled")).toBe(true);
+		// Returning through the back/forward cache offers the button again.
+		window.dispatchEvent(
+			new PageTransitionEvent("pageshow", { persisted: true }),
+		);
+		expect(
+			await screen.findByRole("button", { name: "Connect Bingers" }),
+		).toBeTruthy();
+	} finally {
+		vi.unstubAllGlobals();
+	}
+});
+
+it("does not capture a completed action when the API rejects it", async () => {
+	mocks.action.mockRejectedValueOnce(new Error("Fixture failure"));
+	mount(false, true);
+	fireEvent.click(await screen.findByRole("button", { name: "Disconnect" }));
+	fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+	await screen.findByText("Fixture failure");
+	expect(mocks.capture).not.toHaveBeenCalled();
 });

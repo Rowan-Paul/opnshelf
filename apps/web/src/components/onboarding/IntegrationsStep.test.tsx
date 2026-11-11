@@ -13,6 +13,7 @@ import { IntegrationsStep } from "./IntegrationsStep";
 const api = vi.hoisted(() => ({
 	trakt: { status: vi.fn(), connect: vi.fn() },
 	popfeed: { status: vi.fn(), connect: vi.fn() },
+	bingers: { status: vi.fn(), connect: vi.fn() },
 }));
 vi.mock("@opnshelf/api", async (original) => {
 	const actual = await original<typeof import("@opnshelf/api")>();
@@ -62,13 +63,16 @@ beforeEach(() => {
 	vi.resetAllMocks();
 	api.trakt.status.mockResolvedValue(status());
 	api.popfeed.status.mockResolvedValue(status());
+	api.bingers.status.mockResolvedValue(status());
 });
 afterEach(cleanup);
 
-it("offers Trakt and Popfeed in one step and can be skipped", async () => {
+it("offers Trakt, Popfeed and Bingers in one step and can be skipped", async () => {
 	const { onNext } = setup();
 	expect(
-		screen.getByRole("heading", { name: "Already on Trakt or Popfeed?" }),
+		screen.getByRole("heading", {
+			name: "Already on Trakt, Popfeed, or Bingers?",
+		}),
 	).toBeTruthy();
 	expect(
 		await screen.findByRole("button", { name: "Set up Trakt Sync" }),

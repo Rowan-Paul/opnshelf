@@ -1677,6 +1677,32 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(localRecords).toHaveLength(1);
 		expect((await service.status(userDid)).lastError).toContain("incomplete");
 	});
+	it("keeps a failure episode across retries and starts a new one after recovery", async () => {
+		await configure();
+		await tick();
+		const failingSince = async () =>
+			(
+				await db.integrationConnection.findFirstOrThrow({
+					where: { userDid },
+				})
+			).failingSince;
+		const fail = async () => {
+			remoteApi.snapshot.mockRejectedValueOnce(
+				new TraktSyncError("Trakt is unavailable."),
+			);
+			await tick();
+		};
+		await fail();
+		const first = await failingSince();
+		expect(first).toBeInstanceOf(Date);
+		await fail();
+		expect(await failingSince()).toEqual(first);
+		await tick();
+		await fail();
+		expect((await failingSince())?.getTime()).toBeGreaterThan(
+			first?.getTime() ?? Infinity,
+		);
+	});
 	it("logs why a Sync run failed, without internal exception messages", async () => {
 		const warn = vi
 			.spyOn(Logger.prototype, "warn")

@@ -759,6 +759,53 @@ describe("ListsService", () => {
 			});
 		});
 
+		it.each([
+			{ total: 0, page: undefined, pageSize: undefined, expectedSize: 0 },
+			{ total: 0, page: 9, pageSize: 2, expectedSize: 2 },
+			{ total: 5, page: 0, pageSize: 0, expectedSize: 1 },
+			{ total: 5, page: undefined, pageSize: 100, expectedSize: 50 },
+		])(
+			"preserves pagination for total=$total, page=$page, pageSize=$pageSize",
+			async ({ total, page, pageSize, expectedSize }) => {
+				mockPrismaService.list.findFirst.mockResolvedValue({
+					id: "list-1",
+					rkey: "favorites",
+					userDid: "did:plc:abc123",
+					name: "Favorites",
+					slug: "favorites",
+					createdAt: new Date("2024-01-01"),
+					updatedAt: new Date("2024-01-02"),
+					_count: { items: total },
+				});
+				mockPrismaService.listItem.findMany.mockResolvedValue([]);
+
+				const result = await service.getList(
+					"did:plc:abc123",
+					"favorites",
+					null,
+					page,
+					pageSize,
+				);
+
+				expect(result).toMatchObject({
+					total,
+					page: 1,
+					pageSize: expectedSize,
+					totalPages: total === 0 ? 0 : Math.ceil(total / expectedSize),
+					hasPreviousPage: false,
+					hasNextPage: total > expectedSize,
+				});
+				if (total === 0) {
+					expect(result?.items).toEqual([]);
+					expect(mockPrismaService.listItem.findMany).not.toHaveBeenCalled();
+				} else {
+					expect(mockPrismaService.listItem.findMany).toHaveBeenCalledWith(
+						expect.objectContaining({ skip: 0, take: expectedSize }),
+					);
+				}
+			},
+		);
+
 		it("uses createdAt desc for the `added` sort", async () => {
 			mockPrismaService.list.findFirst.mockResolvedValue({
 				id: "list-1",

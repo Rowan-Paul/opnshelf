@@ -143,7 +143,7 @@ export class SignupController {
 			dto.timezone,
 			// Native account on our own PDS: starts unverified and is gated until
 			// the email is confirmed (see needsEmailVerification / ADR-0004).
-			{ isNativePds: true },
+			{ isNativePds: true, signupMethod: "password" },
 		);
 
 		// Register the new repo with Tab for tracking/backfill (best-effort).

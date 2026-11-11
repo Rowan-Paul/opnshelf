@@ -44,7 +44,7 @@ vi.mock("./session-hint", () => ({
 	rememberSignedIn: vi.fn(),
 }));
 vi.mock("#/integrations/posthog/provider", () => ({
-	posthog: { reset: vi.fn() },
+	posthog: { reset: vi.fn(), identify: vi.fn() },
 }));
 
 function client(name: string) {

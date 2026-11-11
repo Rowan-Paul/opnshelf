@@ -51,6 +51,39 @@ function contextLine(pathname: string): string {
 	return `\n\n— mobile · ${pathname} · ${Platform.OS} ${Platform.Version} · app ${version}`;
 }
 
+/** Matches `CreateFeedbackDto.screenshot`'s maximum length. */
+const MAX_SCREENSHOT = 80000;
+
+/** Encodings tried in order (output pixel width, JPEG quality). Poster-heavy
+ * screens can exceed the upload limit at the first one; a capture
+ * takes tens of milliseconds, so a smaller one beats losing the screenshot. */
+const SCREENSHOT_ENCODINGS = [
+	{ pixels: 540, quality: 0.6 },
+	{ pixels: 432, quality: 0.45 },
+	{ pixels: 360, quality: 0.35 },
+];
+
+/** Captures the screen at the first encoding that fits the upload limit.
+ * `stopped` turns true once the sheet opens without a screenshot: capturing
+ * after that would picture the sheet instead of the screen behind it. */
+async function captureScreenshot(stopped: () => boolean): Promise<string> {
+	const screen = Dimensions.get("screen");
+	for (const { pixels, quality } of SCREENSHOT_ENCODINGS) {
+		if (stopped()) break;
+		// iOS takes the size in points, Android in pixels.
+		const width = Platform.OS === "ios" ? pixels / PixelRatio.get() : pixels;
+		const image = await captureScreen({
+			format: "jpg",
+			quality,
+			width: Math.round(width),
+			height: Math.round((width * screen.height) / screen.width),
+			result: "base64",
+		});
+		if (image.length <= MAX_SCREENSHOT) return image;
+	}
+	throw new Error("Screenshot too large");
+}
+
 const CATEGORIES: { value: Category; label: string; icon: typeof Bug }[] = [
 	{ value: "bug", label: "Bug", icon: Bug },
 	{ value: "feature_request", label: "Idea", icon: Lightbulb },
@@ -234,19 +267,11 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 		opening.current = true;
 		setOpenId(++sequence.current);
 		setScreenshot(undefined);
-		const screen = Dimensions.get("screen");
-		const width = Platform.OS === "ios" ? 540 / PixelRatio.get() : 540;
 		let timeout: ReturnType<typeof setTimeout> | undefined;
+		let settled = false;
+		// One deadline covers every encoding attempt.
 		void Promise.race([
-			Promise.resolve().then(() =>
-				captureScreen({
-					format: "jpg",
-					quality: 0.6,
-					width: Math.round(width),
-					height: Math.round((width * screen.height) / screen.width),
-					result: "base64",
-				}),
-			),
+			captureScreenshot(() => settled),
 			new Promise<string>((_, reject) => {
 				timeout = setTimeout(
 					() => reject(new Error("Screenshot timed out")),
@@ -254,16 +279,14 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 				);
 			}),
 		])
-			.then((image) => {
-				if (image.length > 80000) throw new Error("Screenshot too large");
-				setScreenshot(image);
-			})
+			.then(setScreenshot)
 			.catch(() =>
 				toast.error(
 					"Couldn't attach a screenshot. You can still send feedback.",
 				),
 			)
 			.finally(() => {
+				settled = true;
 				clearTimeout(timeout);
 				setVisible(true);
 			});

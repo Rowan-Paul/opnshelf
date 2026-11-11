@@ -30,7 +30,15 @@ export const posthog =
 	isPostHogEnabled && apiKey
 		? new PostHog(apiKey, {
 				host,
-				before_send: preparePostHogEvent,
+				before_send: (event) => {
+					if (event?.properties) {
+						event.properties.platform = "mobile";
+						delete event.properties.$current_url;
+						delete event.properties.$pathname;
+						delete event.properties.$referrer;
+					}
+					return preparePostHogEvent(event);
+				},
 				captureAppLifecycleEvents: true,
 				errorTracking: {
 					autocapture: {

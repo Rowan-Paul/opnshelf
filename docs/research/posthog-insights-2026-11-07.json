@@ -1,0 +1,543 @@
+{
+  "project": 133952,
+  "dashboard": 562597,
+  "before": {
+    "l48yuLaJ": {
+      "kind": "InsightVizNode",
+      "source": {
+        "kind": "FunnelsQuery",
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "user_signed_up",
+            "optionalInFunnel": false
+          },
+          {
+            "kind": "EventsNode",
+            "event": "email_verified",
+            "optionalInFunnel": false
+          },
+          {
+            "kind": "EventsNode",
+            "event": "onboarding_completed",
+            "optionalInFunnel": false
+          },
+          {
+            "kind": "EventsNode",
+            "event": "watch_logged",
+            "optionalInFunnel": false
+          }
+        ],
+        "version": 2,
+        "dateRange": {
+          "date_from": "-30d",
+          "explicitDate": false,
+          "excludeIncompletePeriods": false
+        },
+        "properties": [],
+        "funnelsFilter": {
+          "layout": "vertical",
+          "exclusions": [],
+          "showLegend": false,
+          "funnelVizType": "steps",
+          "legendPosition": "bottom",
+          "funnelOrderType": "ordered",
+          "showAnnotations": true,
+          "showValuesOnSeries": false,
+          "funnelStepReference": "total",
+          "funnelWindowInterval": 7,
+          "breakdownAttributionType": "first_touch",
+          "funnelWindowIntervalUnit": "day",
+          "hideIncompleteConversionWindowPeriods": false
+        },
+        "filterTestAccounts": false
+      }
+    },
+    "RTrp9nlS": {
+      "kind": "InsightVizNode",
+      "source": {
+        "kind": "TrendsQuery",
+        "series": [
+          {
+            "kind": "EventsNode",
+            "math": "dau",
+            "event": "Application Opened",
+            "custom_name": "Active users"
+          }
+        ],
+        "version": 4,
+        "interval": "week",
+        "dateRange": {
+          "date_from": "-90d",
+          "explicitDate": false
+        },
+        "properties": [],
+        "trendsFilter": {
+          "display": "ActionsAreaGraph",
+          "showLegend": false,
+          "hideWeekends": false,
+          "yAxisScaleType": "linear",
+          "showMultipleYAxes": false,
+          "showValuesOnSeries": false,
+          "smoothingIntervals": 1,
+          "showPercentStackView": false,
+          "aggregationAxisFormat": "numeric",
+          "resultCustomizationBy": "value",
+          "showAlertThresholdLines": false
+        },
+        "filterTestAccounts": true
+      }
+    },
+    "IyKm1L1v": {
+      "kind": "InsightVizNode",
+      "source": {
+        "kind": "TrendsQuery",
+        "series": [
+          {
+            "kind": "EventsNode",
+            "math": "total",
+            "event": "trakt_import_finished"
+          }
+        ],
+        "version": 4,
+        "interval": "day",
+        "dateRange": {
+          "date_from": "-30d",
+          "explicitDate": false,
+          "excludeIncompletePeriods": false
+        },
+        "properties": [],
+        "trendsFilter": {
+          "display": "ActionsBar",
+          "showLegend": false,
+          "hideWeekends": false,
+          "metricSummary": "total",
+          "legendPosition": "bottom",
+          "yAxisScaleType": "linear",
+          "showAnnotations": true,
+          "metricShowChange": true,
+          "showMultipleYAxes": false,
+          "showValuesOnSeries": false,
+          "smoothingIntervals": 1,
+          "showPercentStackView": false,
+          "stackBreakdownValues": false,
+          "aggregationAxisFormat": "numeric",
+          "resultCustomizationBy": "value",
+          "excludeBoxPlotOutliers": true,
+          "metricColorByDirection": false,
+          "showAlertThresholdLines": false
+        },
+        "breakdownFilter": {
+          "breakdowns": [
+            {
+              "type": "event",
+              "property": "status"
+            }
+          ],
+          "breakdown_type": "event",
+          "breakdown_limit": 25
+        },
+        "filterTestAccounts": false
+      }
+    },
+    "WcNbILeM": {
+      "kind": "InsightVizNode",
+      "source": {
+        "kind": "FunnelsQuery",
+        "series": [
+          {
+            "kind": "EventsNode",
+            "event": "trakt_import_previewed",
+            "optionalInFunnel": false
+          },
+          {
+            "kind": "EventsNode",
+            "event": "trakt_import_started",
+            "optionalInFunnel": false
+          },
+          {
+            "kind": "EventsNode",
+            "event": "trakt_import_finished",
+            "optionalInFunnel": false
+          }
+        ],
+        "version": 2,
+        "dateRange": {
+          "date_from": "-30d",
+          "explicitDate": false,
+          "excludeIncompletePeriods": false
+        },
+        "properties": [],
+        "funnelsFilter": {
+          "layout": "vertical",
+          "exclusions": [],
+          "showLegend": false,
+          "funnelVizType": "steps",
+          "legendPosition": "bottom",
+          "funnelOrderType": "ordered",
+          "showAnnotations": true,
+          "showValuesOnSeries": false,
+          "funnelStepReference": "total",
+          "funnelWindowInterval": 14,
+          "breakdownAttributionType": "first_touch",
+          "funnelWindowIntervalUnit": "day",
+          "hideIncompleteConversionWindowPeriods": false
+        },
+        "filterTestAccounts": false
+      }
+    },
+    "uO3hntT1": {
+      "kind": "InsightVizNode",
+      "source": {
+        "kind": "TrendsQuery",
+        "series": [
+          {
+            "kind": "EventsNode",
+            "math": "dau",
+            "event": "user_logged_in",
+            "custom_name": "Sign-ins"
+          }
+        ],
+        "version": 4,
+        "interval": "week",
+        "dateRange": {
+          "date_from": "-90d",
+          "explicitDate": false
+        },
+        "properties": [],
+        "trendsFilter": {
+          "display": "ActionsLineGraph",
+          "showLegend": false,
+          "hideWeekends": false,
+          "yAxisScaleType": "linear",
+          "showMultipleYAxes": false,
+          "showValuesOnSeries": false,
+          "smoothingIntervals": 1,
+          "showPercentStackView": false,
+          "aggregationAxisFormat": "numeric",
+          "resultCustomizationBy": "value",
+          "showAlertThresholdLines": false
+        },
+        "filterTestAccounts": true
+      }
+    }
+  },
+  "updates": [
+    {
+      "id": "l48yuLaJ",
+      "name": "Activation — account created to first Watch (7 days)",
+      "description": "Backend account creation → onboarding → first Watch. Includes externally verified accounts; new creation events begin after deployment.",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "FunnelsQuery",
+          "series": [
+            {
+              "kind": "EventsNode",
+              "event": "account_created",
+              "optionalInFunnel": false
+            },
+            {
+              "kind": "EventsNode",
+              "event": "onboarding_completed",
+              "optionalInFunnel": false
+            },
+            {
+              "kind": "EventsNode",
+              "event": "watch_logged",
+              "optionalInFunnel": false
+            }
+          ],
+          "version": 2,
+          "dateRange": {
+            "date_from": "-30d",
+            "explicitDate": false,
+            "excludeIncompletePeriods": false
+          },
+          "properties": [],
+          "funnelsFilter": {
+            "layout": "vertical",
+            "exclusions": [],
+            "showLegend": false,
+            "funnelVizType": "steps",
+            "legendPosition": "bottom",
+            "funnelOrderType": "ordered",
+            "showAnnotations": true,
+            "showValuesOnSeries": false,
+            "funnelStepReference": "total",
+            "funnelWindowInterval": 7,
+            "breakdownAttributionType": "first_touch",
+            "funnelWindowIntervalUnit": "day",
+            "hideIncompleteConversionWindowPeriods": false
+          },
+          "filterTestAccounts": false
+        }
+      }
+    },
+    {
+      "id": "RTrp9nlS",
+      "name": "Mobile active users",
+      "description": "Unique users opening the Mobile App. Web visitors are measured separately."
+    },
+    {
+      "id": "IyKm1L1v",
+      "name": "Historical Trakt import terminal status",
+      "description": "Retired one-time Import, preserved for historical analysis. Does not monitor ongoing Sync.",
+      "dashboards": []
+    },
+    {
+      "id": "WcNbILeM",
+      "name": "Historical Trakt import — preview to completion",
+      "description": "Retired one-time Import funnel, preserved for historical analysis. Does not monitor ongoing Sync.",
+      "dashboards": []
+    },
+    {
+      "id": "uO3hntT1",
+      "name": "Completed sign-ins",
+      "description": "Unique users completing Backend-confirmed OAuth sign-ins, excluding permission replacements and legacy client events. Begins after Backend analytics rollout.",
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "series": [
+            {
+              "kind": "EventsNode",
+              "math": "dau",
+              "event": "user_logged_in",
+              "custom_name": "Sign-ins"
+            }
+          ],
+          "version": 4,
+          "interval": "week",
+          "dateRange": {
+            "date_from": "-90d",
+            "explicitDate": false
+          },
+          "properties": [
+            {
+              "type": "event",
+              "key": "platform",
+              "operator": "exact",
+              "value": [
+                "backend"
+              ]
+            }
+          ],
+          "trendsFilter": {
+            "display": "ActionsLineGraph",
+            "showLegend": false,
+            "hideWeekends": false,
+            "yAxisScaleType": "linear",
+            "showMultipleYAxes": false,
+            "showValuesOnSeries": false,
+            "smoothingIntervals": 1,
+            "showPercentStackView": false,
+            "aggregationAxisFormat": "numeric",
+            "resultCustomizationBy": "value",
+            "showAlertThresholdLines": false
+          },
+          "filterTestAccounts": true
+        }
+      }
+    }
+  ],
+  "created": [
+    {
+      "name": "Trakt Sync setup — connected to prepared",
+      "description": "Connection completed → settings accepted → initial comparison finished within seven days. Events begin after deployment.",
+      "dashboards": [
+        562597
+      ],
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "FunnelsQuery",
+          "series": [
+            {
+              "kind": "EventsNode",
+              "event": "integration_connected"
+            },
+            {
+              "kind": "EventsNode",
+              "event": "integration_settings_saved"
+            },
+            {
+              "kind": "EventsNode",
+              "event": "integration_sync_prepared"
+            }
+          ],
+          "version": 2,
+          "dateRange": {
+            "date_from": "-30d",
+            "explicitDate": false,
+            "excludeIncompletePeriods": false
+          },
+          "properties": [
+            {
+              "type": "event",
+              "key": "provider",
+              "operator": "exact",
+              "value": [
+                "trakt"
+              ]
+            }
+          ],
+          "funnelsFilter": {
+            "layout": "vertical",
+            "exclusions": [],
+            "showLegend": false,
+            "funnelVizType": "steps",
+            "legendPosition": "bottom",
+            "funnelOrderType": "ordered",
+            "showAnnotations": true,
+            "showValuesOnSeries": false,
+            "funnelStepReference": "total",
+            "funnelWindowInterval": 7,
+            "breakdownAttributionType": "first_touch",
+            "funnelWindowIntervalUnit": "day",
+            "hideIncompleteConversionWindowPeriods": false
+          },
+          "filterTestAccounts": false
+        }
+      },
+      "result": {
+        "id": "7173398",
+        "short_id": "OejRB4Bx"
+      }
+    },
+    {
+      "name": "Popfeed Sync setup — connected to prepared",
+      "description": "Connection completed → settings accepted → initial comparison finished within seven days. Events begin after deployment.",
+      "dashboards": [
+        562597
+      ],
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "FunnelsQuery",
+          "series": [
+            {
+              "kind": "EventsNode",
+              "event": "integration_connected"
+            },
+            {
+              "kind": "EventsNode",
+              "event": "integration_settings_saved"
+            },
+            {
+              "kind": "EventsNode",
+              "event": "integration_sync_prepared"
+            }
+          ],
+          "version": 2,
+          "dateRange": {
+            "date_from": "-30d",
+            "explicitDate": false,
+            "excludeIncompletePeriods": false
+          },
+          "properties": [
+            {
+              "type": "event",
+              "key": "provider",
+              "operator": "exact",
+              "value": [
+                "popfeed"
+              ]
+            }
+          ],
+          "funnelsFilter": {
+            "layout": "vertical",
+            "exclusions": [],
+            "showLegend": false,
+            "funnelVizType": "steps",
+            "legendPosition": "bottom",
+            "funnelOrderType": "ordered",
+            "showAnnotations": true,
+            "showValuesOnSeries": false,
+            "funnelStepReference": "total",
+            "funnelWindowInterval": 7,
+            "breakdownAttributionType": "first_touch",
+            "funnelWindowIntervalUnit": "day",
+            "hideIncompleteConversionWindowPeriods": false
+          },
+          "filterTestAccounts": false
+        }
+      },
+      "result": {
+        "id": "7173399",
+        "short_id": "KderT7vo"
+      }
+    },
+    {
+      "name": "Integration Sync — failures, reconnects and recovery",
+      "description": "Failure episodes and recovery transitions by provider. Idle checks are excluded; event arrival requires Backend analytics configuration.",
+      "dashboards": [
+        562597
+      ],
+      "query": {
+        "kind": "InsightVizNode",
+        "source": {
+          "kind": "TrendsQuery",
+          "series": [
+            {
+              "kind": "EventsNode",
+              "event": "integration_sync_failed",
+              "math": "total"
+            },
+            {
+              "kind": "EventsNode",
+              "event": "integration_reconnect_required",
+              "math": "total"
+            },
+            {
+              "kind": "EventsNode",
+              "event": "integration_sync_recovered",
+              "math": "total"
+            }
+          ],
+          "version": 4,
+          "interval": "day",
+          "dateRange": {
+            "date_from": "-30d",
+            "explicitDate": false,
+            "excludeIncompletePeriods": false
+          },
+          "properties": [],
+          "trendsFilter": {
+            "display": "ActionsBar",
+            "showLegend": true,
+            "hideWeekends": false,
+            "metricSummary": "total",
+            "legendPosition": "bottom",
+            "yAxisScaleType": "linear",
+            "showAnnotations": true,
+            "metricShowChange": true,
+            "showMultipleYAxes": false,
+            "showValuesOnSeries": false,
+            "smoothingIntervals": 1,
+            "showPercentStackView": false,
+            "stackBreakdownValues": false,
+            "aggregationAxisFormat": "numeric",
+            "resultCustomizationBy": "value",
+            "excludeBoxPlotOutliers": true,
+            "metricColorByDirection": false,
+            "showAlertThresholdLines": false
+          },
+          "breakdownFilter": {
+            "breakdowns": [
+              {
+                "type": "event",
+                "property": "provider"
+              }
+            ]
+          },
+          "filterTestAccounts": false
+        }
+      },
+      "result": {
+        "id": "7173400",
+        "short_id": "1vnCJxjC"
+      }
+    }
+  ]
+}

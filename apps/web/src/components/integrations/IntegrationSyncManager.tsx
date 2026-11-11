@@ -42,7 +42,7 @@ import {
 	Link2,
 	Settings2,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IntegrationMark } from "#/components/integrations/IntegrationMark";
 import { PermissionRequestDialog } from "#/components/settings/PermissionRequestDialog";
 import {
@@ -53,6 +53,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "#/components/ui/dialog";
+import { posthog } from "#/integrations/posthog/provider";
 import { ONBOARDING_INTEGRATION } from "#/lib/onboarding-steps";
 
 function displayValue(value: string) {
@@ -87,19 +88,43 @@ export function IntegrationSyncManager({
 		queryFn: ({ signal }) => integration.api.status(signal),
 		refetchInterval: 5000,
 	});
+	// The mutation settles before the browser leaves for the provider, so the
+	// button stays busy until navigation. A back/forward-cache restore resets it.
+	const [redirecting, setRedirecting] = useState(false);
+	useEffect(() => {
+		const reset = (event: PageTransitionEvent) => {
+			if (event.persisted) setRedirecting(false);
+		};
+		window.addEventListener("pageshow", reset);
+		return () => window.removeEventListener("pageshow", reset);
+	}, []);
 	const connect = useMutation({
 		mutationKey: [...rootKey, "connect"],
 		mutationFn: integration.api.connect,
 		onSuccess: (data) => {
-			if (data.url) window.location.assign(data.url);
-			else void refresh();
+			posthog.capture("integration_connection_requested", {
+				provider: id,
+				platform: "web",
+			});
+			if (data.url) {
+				setRedirecting(true);
+				window.location.assign(data.url);
+			} else void refresh();
 		},
 	});
+	const connecting = connect.isPending || redirecting;
 	const action = useMutation({
 		mutationKey: [...rootKey, "action"],
 		mutationFn: (name: SyncActionDto["action"]) => integration.api.action(name),
 		...integrationSyncBusyRetry,
-		onSuccess: refresh,
+		onSuccess: (_data, action) => {
+			posthog.capture("integration_action_completed", {
+				provider: id,
+				platform: "web",
+				action,
+			});
+			return refresh();
+		},
 	});
 	const [disconnect, setDisconnect] = useState(false);
 	const [editing, setEditing] = useState(false);
@@ -180,6 +205,11 @@ export function IntegrationSyncManager({
 				className={embedded ? "" : card}
 				aria-label={`${name} connection`}
 			>
+				{embedded && (
+					<p className="mb-4 text-(--foreground-muted) text-sm">
+						{integration.summary}
+					</p>
+				)}
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div>
 						<h2 className="font-semibold text-lg">{words.heading}</h2>
@@ -218,10 +248,10 @@ export function IntegrationSyncManager({
 					<button
 						className="btn btn-primary mt-5"
 						type="button"
-						disabled={connect.isPending}
+						disabled={connecting}
 						onClick={() => connect.mutate({ platform: "web" })}
 					>
-						{connect.isPending
+						{connecting
 							? words.starting
 							: data.status === "reconnect"
 								? `Reconnect ${name}`
@@ -469,7 +499,16 @@ export function SyncSettings({
 		mutationKey: [...integrationKey(integration), "configure"],
 		mutationFn: integration.api.configure,
 		...integrationSyncBusyRetry,
-		onSuccess: () => {
+		onSuccess: (_data, settings) => {
+			posthog.capture("integration_settings_saved", {
+				provider: integration.id,
+				platform: "web",
+				direction: settings.direction,
+				history_scope: settings.historyScope,
+				record_types: integrationRecords(integration)
+					.filter(({ value }) => settings[value])
+					.map(({ value }) => value),
+			});
 			setReviewing(false);
 			onSaved();
 		},
@@ -954,7 +993,14 @@ function SyncIssue({
 		mutationFn: (body: IntegrationResolveDto) =>
 			integration.api.resolve(item.id, body),
 		...integrationSyncBusyRetry,
-		onSuccess: () => {
+		onSuccess: (_data, choice) => {
+			posthog.capture("integration_issue_action_completed", {
+				provider: integration.id,
+				platform: "web",
+				action: choice.action,
+				record_type: item.kind,
+				all_ratings: choice.allRatings ?? false,
+			});
 			setChoice(null);
 			void client.invalidateQueries({ queryKey: rootKey });
 		},
@@ -1009,32 +1055,40 @@ function SyncIssue({
 				<div className="flex flex-wrap gap-2">
 					{connected &&
 						integrationIssueRecovery(item) !== "retry" &&
-						(["remote", "opnshelf"] as const).map((action) => (
-							<button
-								key={action}
-								type="button"
-								className="btn btn-secondary max-w-full whitespace-normal"
-								disabled={mutation.isPending}
-								onClick={() =>
-									setChoice({
-										action,
-										...(integrationIssueRecovery(item) === "verify"
-											? { confirmedRemoteMissing: false }
-											: {}),
-									})
-								}
-							>
-								{integrationIssueRecovery(item) === "verify"
-									? action === "opnshelf"
-										? `Send after checking ${name}`
-										: "Remove from Opnshelf"
-									: integrationResolutionLabel(
+						(["remote", "opnshelf"] as const)
+							.filter(
+								(action) =>
+									action === "remote" ||
+									integration.directions.some(
+										(direction) => direction !== "inbound",
+									),
+							)
+							.map((action) => (
+								<button
+									key={action}
+									type="button"
+									className="btn btn-secondary max-w-full whitespace-normal"
+									disabled={mutation.isPending}
+									onClick={() =>
+										setChoice({
 											action,
-											Boolean(item[action]),
-											name,
-										)}
-							</button>
-						))}
+											...(integrationIssueRecovery(item) === "verify"
+												? { confirmedRemoteMissing: false }
+												: {}),
+										})
+									}
+								>
+									{integrationIssueRecovery(item) === "verify"
+										? action === "opnshelf"
+											? `Send after checking ${name}`
+											: "Remove from Opnshelf"
+										: integrationResolutionLabel(
+												action,
+												Boolean(item[action]),
+												name,
+											)}
+								</button>
+							))}
 					{connected && (
 						<button
 							type="button"

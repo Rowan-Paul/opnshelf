@@ -1,3 +1,4 @@
+import * as analytics from "../analytics/capture";
 import { Logger } from "@nestjs/common";
 import { afterEach, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
@@ -15,6 +16,9 @@ it.each([
 	["save", "connection-save"],
 ] as const)("logs safe diagnostics when %s fails", async (failure, stage) => {
 	const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
+	const capture = vi
+		.spyOn(analytics, "captureProductEvent")
+		.mockImplementation(() => {});
 	const config = parseEnvironment({
 		NODE_ENV: "test",
 		TRAKT_API_KEY: "fixture-client",
@@ -66,6 +70,18 @@ it.each([
 	const state = new URL(url).searchParams.get("state") ?? "";
 	expect(await service.callback(state, "private-code")).toBe(
 		"https://example.test/trakt-sync?connection=failed",
+	);
+	expect(capture).toHaveBeenCalledWith(
+		config,
+		"private-did",
+		"integration_connection_failed",
+		{
+			provider: "trakt",
+			stage,
+		},
+	);
+	expect(JSON.stringify(capture.mock.calls)).not.toMatch(
+		/private-code|private-token|private-user/,
 	);
 	expect(warn.mock.calls.map(([message]) => [JSON.parse(message)])).toEqual([
 		[
@@ -433,7 +449,7 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 				>,
 		);
 		service["locked"] = async (_connection, operation) =>
-			operation(async () => undefined);
+			operation(async () => undefined, "fixture-lease");
 		await expect(service.resolve("fixture", "old", { action })).rejects.toThrow(
 			"outside your sync scope",
 		);
@@ -460,7 +476,7 @@ it("logs why a resolve was rejected, since the HTTP log only has the status", as
 			>,
 	);
 	service["locked"] = async (_connection, operation) =>
-		operation(async () => undefined);
+		operation(async () => undefined, "fixture-lease");
 	await expect(
 		service.resolve("fixture", "item-1", { action: "link" }),
 	).rejects.toThrow("outside your sync scope");
@@ -1032,3 +1048,57 @@ it.each([
 		).toEqual(["remote:available"]);
 	},
 );
+
+it("reports reconnect once, excludes raw provider errors, and leaves repeated failures quiet", async () => {
+	const capture = vi
+		.spyOn(analytics, "captureProductEvent")
+		.mockImplementation(() => {});
+	const config = parseEnvironment({ NODE_ENV: "test" });
+	let connection = {
+		id: "fixture",
+		userDid: "did:plc:fixture",
+		direction: "both",
+		status: "active",
+		lastError: null as string | null,
+	};
+	const prisma = {
+		integrationConnection: {
+			findFirst: vi.fn(async () => connection),
+			findUniqueOrThrow: vi.fn(async () => connection),
+			updateMany: vi.fn(async () => ({ count: 1 })),
+			update: vi.fn(async () => ({})),
+		},
+	};
+	const service = new TraktSyncService(
+		prisma as unknown as PrismaService,
+		{ configured: true } as TraktSyncClient,
+		{} as LocalSyncRecords,
+		{ ...config, PROVIDER_STATE_SECRET: "fixture" },
+		{} as WatchAccountLock,
+	);
+	vi.spyOn(
+		service as unknown as { process: () => Promise<void> },
+		"process",
+	).mockRejectedValue(new TraktSyncError("private-token private-content", 401));
+	await service.tick();
+	expect(capture).toHaveBeenCalledWith(
+		expect.anything(),
+		"did:plc:fixture",
+		"integration_reconnect_required",
+		{
+			provider: "trakt",
+			direction: "both",
+			error_category: "provider",
+			http_status: 401,
+		},
+	);
+	expect(JSON.stringify(capture.mock.calls)).not.toContain("private-token");
+	capture.mockClear();
+	connection = {
+		...connection,
+		status: "reconnect",
+		lastError: "prior failure",
+	};
+	await service.tick();
+	expect(analytics.captureProductEvent).not.toHaveBeenCalled();
+});

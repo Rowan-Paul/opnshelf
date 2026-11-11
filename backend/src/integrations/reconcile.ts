@@ -26,6 +26,8 @@ export type SyncRecord = {
 	remoteParentId?: number;
 	// A Watch whose source has a date but no time, stored as noon in the owner's timezone.
 	dateOnly?: boolean;
+	// An unsupported episode whose provider has not supplied its coordinates.
+	coordinatesUnknown?: boolean;
 	// A Watch from a provider that never stores Watch dates, such as Popfeed episodes.
 	undated?: boolean;
 	// A List whose provider keeps no member order, such as Popfeed.

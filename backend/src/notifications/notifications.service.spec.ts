@@ -17,6 +17,7 @@ describe("NotificationsService", () => {
 		pushWatchlistReleases: false,
 		pushNewSeasons: false,
 		pushStats: false,
+		pushSyncErrors: false,
 		emailNewReleases: true,
 		emailWatchlistReleases: true,
 		emailNewSeasons: true,
@@ -133,6 +134,19 @@ describe("NotificationsService", () => {
 		expect(prisma.notificationSettings.update).not.toHaveBeenCalled();
 	});
 
+	it("returns and saves the sync push preference independently of media categories", async () => {
+		expect(await service.getSettings(settings.userDid)).toMatchObject({
+			pushSyncErrors: false,
+		});
+		await service.updateSettings(settings.userDid, { pushSyncErrors: true });
+		expect(prisma.notificationSettings.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { userDid: settings.userDid },
+				update: { pushSyncErrors: true, nextQueueAt: expect.any(Date) },
+			}),
+		);
+	});
+
 	it("enables push defaults only on the first device registration", async () => {
 		prisma.pushDevice.upsert.mockResolvedValue({});
 		await service.registerPushDevice("did:plc:user", {
@@ -147,6 +161,9 @@ describe("NotificationsService", () => {
 				}),
 			}),
 		);
+		expect(
+			prisma.notificationSettings.update.mock.calls[0][0].data.pushSyncErrors,
+		).toBeUndefined();
 		prisma.notificationSettings.update.mockClear();
 		prisma.notificationSettings.upsert.mockResolvedValue({
 			...settings,

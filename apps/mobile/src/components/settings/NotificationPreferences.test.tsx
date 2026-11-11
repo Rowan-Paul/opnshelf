@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationPreferences } from "./NotificationPreferences";
 
 const mocks = vi.hoisted(() => ({
-	settings: { email: "viewer@example.com", emailVerified: true },
+	settings: {
+		email: "viewer@example.com",
+		emailVerified: true,
+		pushSyncErrors: true,
+	},
 	mutateAsync: vi.fn(),
 }));
 vi.mock("@opnshelf/api", () => ({
@@ -21,7 +25,11 @@ vi.mock("@tanstack/react-query", () => ({
 	useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 beforeEach(() => {
-	mocks.settings = { email: "viewer@example.com", emailVerified: true };
+	mocks.settings = {
+		email: "viewer@example.com",
+		emailVerified: true,
+		pushSyncErrors: true,
+	};
 	vi.clearAllMocks();
 });
 
@@ -93,15 +101,37 @@ describe("onboarding email disclosure", () => {
 		const renderer = render();
 		expect(buttons(renderer, "Email options")).toHaveLength(0);
 		expect(renderer.root.findAllByType("input")).toHaveLength(1);
-		mocks.settings = { ...mocks.settings, emailVerified: true };
+		mocks.settings = {
+			...mocks.settings,
+			emailVerified: true,
+			pushSyncErrors: true,
+		};
 		act(() => renderer.update(<NotificationPreferences onboarding />));
 		expect(renderer.root.findAllByType("input")).toHaveLength(0);
 		expect(buttons(renderer, "Email options")).toHaveLength(1);
-		expect(renderer.root.findAllByType("switch")).toHaveLength(8);
+		expect(renderer.root.findAllByType("switch")).toHaveLength(9);
 	});
 	it("keeps Settings maintenance options visible without a disclosure", () => {
 		const renderer = render(false);
 		expect(buttons(renderer, "Send test email")).toHaveLength(1);
 		expect(buttons(renderer, "Email options")).toHaveLength(0);
+	});
+});
+
+it("saves the dedicated sync preference without changing other categories", async () => {
+	const renderer = render(false);
+	const toggle = renderer.root.findAll(
+		(node) =>
+			node.type === "switch" &&
+			node.props.accessibilityLabel === "Sync errors and disconnections",
+	)[0];
+	expect(toggle.props.value).toBe(true);
+	// Like the other push categories, it needs OS permission first.
+	expect(toggle.props.disabled).toBe(true);
+	await act(async () => {
+		await toggle.props.onValueChange(false);
+	});
+	expect(mocks.mutateAsync).toHaveBeenCalledWith({
+		body: { pushSyncErrors: false },
 	});
 });

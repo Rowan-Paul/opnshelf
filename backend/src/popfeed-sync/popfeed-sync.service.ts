@@ -1,3 +1,4 @@
+import { captureProductEvent } from "../analytics/capture";
 import { Agent } from "@atproto/api";
 import { IdResolver, MemoryCache } from "@atproto/identity";
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
@@ -21,6 +22,7 @@ import {
 	PopfeedSyncClient,
 } from "./popfeed-sync.client";
 import { type PopfeedRepo, PopfeedWriter } from "./popfeed-writer";
+import { syncPdsSession } from "../integrations/sync-pds";
 
 const POSTER_SOURCE = "https://image.tmdb.org/t/p/w500";
 // Popfeed's own posters are well under this; never upload an unbounded image.
@@ -79,12 +81,7 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 			timeZone: owner.timezone,
 		};
 		if (!owner.popfeedWriteEnabled) return credential;
-		const session = await this.auth.restore(c.userDid);
-		if (!session)
-			throw new IntegrationError(
-				"Sign in to Opnshelf again to keep sending changes to Popfeed.",
-				401,
-			);
+		const session = await syncPdsSession(this.auth, c.userDid);
 		credential.writer = new PopfeedWriter(
 			this.repository(new Agent(session), credential),
 			this.media,
@@ -176,6 +173,10 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 					where: { id: existing.id },
 					data: { status: "paused", username: user.handle, lastError: null },
 				});
+			});
+		if (!existing || existing.status === "disconnected")
+			captureProductEvent(this.config, userDid, "integration_connected", {
+				provider: this.provider,
 			});
 		return this.status(userDid);
 	}

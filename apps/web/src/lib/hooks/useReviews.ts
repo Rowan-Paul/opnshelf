@@ -214,7 +214,7 @@ export function useCreateReview(options: UseReviewMutationOptions) {
 			posthog.capture("review_published", {
 				media_type: resolvedMediaType,
 				spoiler: !!variables.body.spoiler,
-				mirrored_to_blog: !!variables.body.mirrorToBlog,
+				mirror_requested: !!variables.body.mirrorToBlog,
 				shared_to_bluesky: data.blueskyCrossPost.status === "posted",
 			});
 			toast.success("Review published");
@@ -327,17 +327,22 @@ export function useReviewLikes({
 		},
 	});
 
+	const invalidateLikes = () =>
+		Promise.all([
+			queryClient.invalidateQueries({
+				queryKey: reviewsControllerGetReviewLikesQueryKey({
+					path: { reviewId },
+				}),
+			}),
+			queryClient.invalidateQueries({ queryKey: mediaReviewsKey }),
+		]);
+
 	const likeMutation = useMutation({
 		mutationKey: ["reviews", reviewId, "like"],
 		...reviewsControllerLikeReviewMutation(),
 		onSuccess: () => {
 			posthog.capture("review_liked", { source: "web" });
-			queryClient.invalidateQueries({
-				queryKey: reviewsControllerGetReviewLikesQueryKey({
-					path: { reviewId },
-				}),
-			});
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
+			return invalidateLikes();
 		},
 		onError: (error) => {
 			toast.error(
@@ -350,12 +355,7 @@ export function useReviewLikes({
 		mutationKey: ["reviews", reviewId, "unlike"],
 		...reviewsControllerUnlikeReviewMutation(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: reviewsControllerGetReviewLikesQueryKey({
-					path: { reviewId },
-				}),
-			});
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
+			return invalidateLikes();
 		},
 		onError: (error) => {
 			toast.error(
@@ -461,6 +461,16 @@ export function useToggleReviewLike({
 		},
 	});
 
+	const invalidateLikes = (reviewId: string) =>
+		Promise.all([
+			queryClient.invalidateQueries({ queryKey: mediaReviewsKey }),
+			queryClient.invalidateQueries({
+				queryKey: reviewsControllerGetReviewLikesQueryKey({
+					path: { reviewId },
+				}),
+			}),
+		]);
+
 	const likeMutation = useMutation({
 		mutationKey: [
 			"reviews",
@@ -471,9 +481,9 @@ export function useToggleReviewLike({
 			"toggle-like",
 		],
 		...reviewsControllerLikeReviewMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, { path: { reviewId } }) => {
 			posthog.capture("review_liked", { source: "web" });
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
+			return invalidateLikes(reviewId);
 		},
 		onError: (error) => {
 			toast.error(
@@ -492,9 +502,7 @@ export function useToggleReviewLike({
 			"toggle-unlike",
 		],
 		...reviewsControllerUnlikeReviewMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-		},
+		onSuccess: (_data, { path: { reviewId } }) => invalidateLikes(reviewId),
 		onError: (error) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to unlike review",

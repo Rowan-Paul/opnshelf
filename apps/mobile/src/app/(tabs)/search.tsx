@@ -16,6 +16,7 @@ import {
 	type UnifiedSearchResultDto,
 	usersControllerGetMySettingsOptions,
 } from "@opnshelf/api";
+import { useSearchAnalytics } from "@opnshelf/api/analytics-react";
 import { FlashList } from "@shopify/flash-list";
 import {
 	hashKey,
@@ -464,21 +465,24 @@ function KeywordSearchScreen() {
 			),
 		[castQuery.data],
 	);
-	useEffect(() => {
-		if (!hasQuery || !mediaQuery.data) return;
-		posthog?.capture("search_performed", {
-			surface: "search",
-			tab: activeTab,
-			query_length: debouncedQuery.length,
-			result_count: results.length,
-		});
-	}, [
-		activeTab,
-		debouncedQuery.length,
-		hasQuery,
-		mediaQuery.data,
-		results.length,
-	]);
+	const trackedQuery =
+		activeTab === "people"
+			? peopleQuery
+			: activeTab === "cast"
+				? castQuery
+				: mediaQuery;
+	useSearchAnalytics({
+		query: debouncedQuery,
+		tab: activeTab,
+		surface: "search",
+		enabled: isFocused,
+		ready:
+			trackedQuery.isSuccess &&
+			!trackedQuery.isFetching &&
+			!trackedQuery.isPlaceholderData,
+		resultCount: trackedQuery.data?.pages[0]?.items.length ?? 0,
+		capture: (event, properties) => posthog?.capture(event, properties),
+	});
 
 	const isPeople = activeTab === "people";
 	const isCast = activeTab === "cast";

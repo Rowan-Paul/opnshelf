@@ -1,4 +1,11 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { syncPdsRequests } from "../integrations/sync-pds";
+
+beforeEach(() => {
+	vi.spyOn(syncPdsRequests, "run").mockImplementation(async (_did, request) =>
+		request(),
+	);
+});
 import {
 	IntegrationError,
 	SyncSnapshotChanged,
@@ -10,6 +17,7 @@ import {
 
 afterEach(() => {
 	vi.unstubAllGlobals();
+	vi.restoreAllMocks();
 });
 
 /** A fake PDS whose commit revision the test controls. */

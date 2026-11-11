@@ -20,9 +20,42 @@ describe("show Watch index", () => {
 		expect(getShowWatchIndex(history)).toBe(index);
 		expect(index.episodes.get("1-1")).toBe(2);
 		expect(index.episodes.size).toBe(2);
+		expect([...index.seasons]).toEqual([
+			[1, 2],
+			[2, 1],
+		]);
 		expect(index.latestWatchedDate).toBe("2026-09-01T00:00:00.000Z");
 		const updated = getShowWatchIndex(history.slice(1));
 		expect(updated.episodes.get("1-1")).toBe(1);
+		expect(updated.seasons.get(1)).toBe(1);
 		expect(index.episodes.get("1-1")).toBe(2);
+		expect(index.seasons.get(1)).toBe(2);
+	});
+
+	it("totals different episodes in each season, including undated Watches", () => {
+		const index = getShowWatchIndex([
+			{ seasonNumber: 0, episodeNumber: 1 },
+			{ seasonNumber: 1, episodeNumber: 1, watchedDate: null },
+			{ seasonNumber: 1, episodeNumber: 2 },
+		]);
+
+		expect([...index.episodes]).toEqual([
+			["0-1", 1],
+			["1-1", 1],
+			["1-2", 1],
+		]);
+		expect([...index.seasons]).toEqual([
+			[0, 1],
+			[1, 2],
+		]);
+		expect(index.latestWatchedDate).toBeUndefined();
+	});
+
+	it("returns an empty index for empty history", () => {
+		const index = getShowWatchIndex([]);
+
+		expect(index.episodes.size).toBe(0);
+		expect(index.seasons.size).toBe(0);
+		expect(index.latestWatchedDate).toBeUndefined();
 	});
 });

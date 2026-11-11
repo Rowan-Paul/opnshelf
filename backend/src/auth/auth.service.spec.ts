@@ -1,3 +1,5 @@
+import { captureProductEvent } from "../analytics/capture";
+vi.mock("../analytics/capture", () => ({ captureProductEvent: vi.fn() }));
 import { mockEnvironment } from "../../test/env";
 import type { Mock } from "vitest";
 import { BackendEnv } from "../config/env.schema";
@@ -167,6 +169,37 @@ describe("AuthService", () => {
 		// Initialize the OAuth client, as Nest does at boot.
 		module.get(OAuthClientFactory).onModuleInit();
 	});
+
+	it.each(["password", "google", "apple", "oauth"] as const)(
+		"captures authoritative account creation for %s once",
+		async (method) => {
+			const profile = {
+				did: "did:plc:fixture",
+				handle: "fixture.test",
+				displayName: null,
+				avatar: null,
+			};
+			mockPrismaService.user.findUnique
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({ ...profile, emailVerifiedAt: null });
+			const createdAt = new Date("2026-10-01T12:00:00.000Z");
+			mockPrismaService.user.upsert.mockResolvedValue({
+				...profile,
+				createdAt,
+			});
+			await service.upsertUser(profile, undefined, { signupMethod: method });
+			await service.upsertUser(profile, undefined, { signupMethod: method });
+			expect(captureProductEvent).toHaveBeenCalledTimes(1);
+			expect(captureProductEvent).toHaveBeenCalledWith(
+				mockBackendEnv,
+				profile.did,
+				"account_created",
+				{ method },
+				`account_created:${profile.did}`,
+				createdAt,
+			);
+		},
+	);
 
 	describe("getUser", () => {
 		it("should return user when found", async () => {

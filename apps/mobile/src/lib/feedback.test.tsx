@@ -151,6 +151,69 @@ it.each([
 	expect(mocks.mutate.mock.calls[0][0].body.screenshot).toBeUndefined();
 });
 
+it("recaptures a busy screen smaller until it fits the upload limit", async () => {
+	mocks.capture
+		.mockResolvedValueOnce("a".repeat(80001))
+		.mockResolvedValueOnce("/9j/small");
+	await act(async () => open());
+	expect(mocks.capture).toHaveBeenCalledTimes(2);
+	const [first, second] = mocks.capture.mock.calls.map(([options]) => options);
+	expect(second.width * second.quality).toBeLessThan(
+		first.width * first.quality,
+	);
+	expect(second.height / second.width).toBeCloseTo(first.height / first.width);
+	expect(mocks.error).not.toHaveBeenCalled();
+	expect(view.root.findByType("image" as never).props.source.uri).toBe(
+		"data:image/jpeg;base64,/9j/small",
+	);
+	await submit();
+	expect(mocks.mutate.mock.calls[0][0].body.screenshot).toBe("/9j/small");
+});
+
+it("opens text feedback when no recapture fits, after a bounded number of tries", async () => {
+	mocks.capture.mockResolvedValue("a".repeat(80001));
+	await act(async () => open());
+	expect(mocks.capture.mock.calls.length).toBeGreaterThan(1);
+	expect(mocks.capture.mock.calls.length).toBeLessThanOrEqual(3);
+	expect(modal().props.visible).toBe(true);
+	expect(mocks.error).toHaveBeenCalledOnce();
+	await submit();
+	expect(mocks.mutate.mock.calls[0][0].body.screenshot).toBeUndefined();
+});
+
+it("shares one timeout across recaptures and stops capturing once the sheet opens", async () => {
+	vi.useFakeTimers();
+	let resolve!: (image: string) => void;
+	mocks.capture
+		.mockImplementationOnce(
+			() =>
+				new Promise<string>((done) => {
+					setTimeout(() => done("a".repeat(80001)), 2000);
+				}),
+		)
+		.mockReturnValueOnce(
+			new Promise<string>((done) => {
+				resolve = done;
+			}),
+		);
+	await act(async () => open());
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(2000);
+	});
+	expect(mocks.capture).toHaveBeenCalledTimes(2);
+	expect(modal().props.visible).toBe(false);
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1000);
+	});
+	expect(modal().props.visible).toBe(true);
+	expect(mocks.error).toHaveBeenCalledOnce();
+	// The late oversize result must not start a capture of the open sheet.
+	await act(async () => resolve("a".repeat(80001)));
+	expect(mocks.capture).toHaveBeenCalledTimes(2);
+	expect(view.root.findAllByType("image" as never)).toHaveLength(0);
+	expect(vi.getTimerCount()).toBe(0);
+});
+
 it("preserves the closing modal and ignores a send from an earlier opening", async () => {
 	await act(async () => open());
 	await submit();

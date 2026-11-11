@@ -16,8 +16,8 @@ import { Text } from "@/components/ui/text";
 import { openExternalWebUrl } from "@/lib/safe-links";
 
 const MONO = "Courier";
-const BOLD = "Inter-Bold";
-const ITALIC = "Inter-Italic";
+const BOLD = "TimelessSans-Bold";
+const ITALIC = "TimelessSans-Italic";
 
 const HEADING_CLASS: Record<HeadingNode["depth"], string> = {
 	1: "text-foreground text-xl",
@@ -29,12 +29,12 @@ const HEADING_CLASS: Record<HeadingNode["depth"], string> = {
 };
 
 const HEADING_FAMILY: Record<HeadingNode["depth"], string> = {
-	1: "PlusJakartaSans-Bold",
-	2: "PlusJakartaSans-Bold",
-	3: "PlusJakartaSans-SemiBold",
-	4: "PlusJakartaSans-SemiBold",
-	5: "PlusJakartaSans-SemiBold",
-	6: "PlusJakartaSans-SemiBold",
+	1: "TimelessSans-Bold",
+	2: "TimelessSans-Bold",
+	3: "TimelessSans-Semibold",
+	4: "TimelessSans-Semibold",
+	5: "TimelessSans-Semibold",
+	6: "TimelessSans-Semibold",
 };
 
 const AUTOLINK_RE = /<((?:https?:\/\/)[^<>\s]+)>/gi;

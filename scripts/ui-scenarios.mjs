@@ -60,10 +60,12 @@ export function sample(schema, seen = new Set()) {
 }
 export function createScenarioServer(
  initial = "normal",
- { webOrigin = "http://127.0.0.1:3390", respond } = {},
+ { webOrigin = "http://127.0.0.1:3390", apiOrigin = "http://127.0.0.1:3391", respond } = {},
 ) {
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	const watchedEpisodes = new Set([1]);
+ let bingersStatus = "disconnected", bingersIgnored = false;
+ let bingersSettings = {direction: "inbound", watches: true, ratings: true, historyScope: "all", publicationConsent: false};
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
 		completed = ["watch-completion", "social-bundles", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
@@ -78,6 +80,13 @@ export function createScenarioServer(
 		streamingServiceIds: [8],
 		welcomeTourWebVersion: 999,
 		welcomeTourMobileVersion: 999,
+	};
+	const notificationSettings = {
+		...sample(spec.components.schemas.NotificationSettingsDto),
+		email: "fixture@example.com",
+		emailVerified: true,
+		pushDeviceCount: 0,
+		pushSyncErrors: true,
 	};
 	const user = {
 		...sample(spec.components.schemas.UserDto),
@@ -144,6 +153,8 @@ export function createScenarioServer(
 				return;
 			}
 			scenario = body.scenario;
+ bingersStatus = "disconnected"; bingersIgnored = false;
+ bingersSettings = {direction: "inbound", watches: true, ratings: true, historyScope: "all", publicationConsent: false};
  watchedEpisodes.clear(); watchedEpisodes.add(1);
  fixtureSyncState = "idle";
  fixtureIssue = true;
@@ -311,12 +322,123 @@ export function createScenarioServer(
 			return;
 		}
 		if (url.pathname === "/notifications/settings") {
-			json({
-				...sample(spec.components.schemas.NotificationSettingsDto),
-				email: "fixture@example.com",
-				emailVerified: true,
-				pushDeviceCount: 0,
+			if (req.method === "PATCH") {
+				for (const key of Object.keys(spec.components.schemas.UpdateNotificationSettingsDto.properties)) {
+					if (typeof body[key] === "boolean") notificationSettings[key] = body[key];
+				}
+			}
+			json(notificationSettings);
+			return;
+		}
+
+		if (url.pathname === "/bingers-sync/callback") {
+			const path =
+				url.searchParams.get("returnTo") === "onboarding"
+					? "onboarding"
+					: "integrations/bingers";
+			const target =
+				url.searchParams.get("platform") === "mobile"
+					? `opnshelf://${path}`
+					: `${webOrigin}/${path}`;
+			res.writeHead(302, {
+				Location: `${target}?provider=bingers&connection=connected`,
 			});
+			res.end();
+			return;
+		}
+		if (
+			[
+				"/bingers-sync",
+				"/bingers-sync/connect",
+				"/bingers-sync/action",
+				"/bingers-sync/issues",
+				"/bingers-sync/issues/aggregate",
+			].includes(url.pathname)
+		) {
+			const status = () => ({
+				...sample(spec.components.schemas.SyncStatusDto),
+				...bingersSettings,
+				configured: true,
+				status: bingersStatus,
+				username: bingersStatus === "disconnected" ? undefined : "fixture",
+				syncState: "idle",
+				needsAttention: bingersStatus === "active" && !bingersIgnored ? 1 : 0,
+				ignored: bingersIgnored ? 1 : 0,
+				remaining: 0,
+			});
+			if (url.pathname === "/bingers-sync/connect" && req.method === "POST") {
+				bingersStatus = "paused";
+				const params = new URLSearchParams({
+					platform: body.platform ?? "web",
+					returnTo: body.returnTo ?? "",
+				});
+				const returnPath = body.returnTo === "onboarding" ? "onboarding" : "integrations/bingers";
+				json({
+					url: `${apiOrigin}/bingers-sync/callback?${params}`,
+					returnUrl: body.platform === "mobile" ? `opnshelf://${returnPath}` : `${webOrigin}/${returnPath}`,
+				});
+				return;
+			}
+			if (url.pathname === "/bingers-sync" && req.method === "PATCH") {
+				if (body.direction !== "inbound") {
+					json({ message: "Incoming only" }, 400);
+					return;
+				}
+				bingersSettings = { ...bingersSettings, ...body };
+				bingersStatus = "active";
+			}
+			if (url.pathname === "/bingers-sync/action")
+				bingersStatus =
+					body.action === "disconnect"
+						? "disconnected"
+						: body.action === "pause"
+							? "paused"
+							: "active";
+			if (url.pathname === "/bingers-sync/issues/aggregate") {
+				if (body.action === "ignore") bingersIgnored = true;
+				if (body.action === "undo") bingersIgnored = false;
+				json(status());
+				return;
+			}
+			if (url.pathname === "/bingers-sync/issues") {
+				const visible =
+					bingersStatus === "active" &&
+					(url.searchParams.get("view") === "ignored"
+						? bingersIgnored
+						: !bingersIgnored);
+				json({
+					page: 1,
+					pageSize: 20,
+					total: visible ? 1 : 0,
+					totalPages: 1,
+					items: visible
+						? [
+								{
+									id: "aggregate",
+									kind: "watch",
+									recovery: "retry",
+									remoteState: "present",
+									ignored: bingersIgnored,
+									issue:
+										"Bingers does not expose individual dates for this Watch history. No Watches were invented or replaced.",
+									remote: {
+										key: "watch:movie:fixture",
+										kind: "watch",
+										mediaType: "movie",
+										mediaId: "1",
+										season: 0,
+										episode: 0,
+										title: "Fixture film",
+										displayValue: "2026-10-01T21:00:00Z",
+									},
+									candidates: [],
+								},
+							]
+						: [],
+				});
+				return;
+			}
+			json(status());
 			return;
 		}
 		if (url.pathname === "/trakt-sync/action" && req.method === "POST") {

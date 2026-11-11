@@ -2,6 +2,7 @@ import {
 	type MediaReviewItemDto,
 	reviewsControllerGetMediaReviewsOptions,
 	reviewsControllerGetMediaReviewsQueryKey,
+	reviewsControllerGetReviewLikesQueryKey,
 	reviewsControllerLikeReviewMutation,
 	reviewsControllerUnlikeReviewMutation,
 } from "@opnshelf/api";
@@ -51,8 +52,8 @@ function resolveMediaType(
 
 /**
  * Like / unlike toggle for review cards, mirroring web's `useToggleReviewLike`.
- * Both mutations invalidate the media-reviews query so `likeCount` / `hasLiked`
- * refresh from the server after a toggle.
+ * Both mutations refresh the media reviews and detail likes queries so the
+ * count and viewer state agree after a toggle.
  */
 function useToggleReviewLike({
 	mediaType,
@@ -77,6 +78,16 @@ function useToggleReviewLike({
 		},
 	});
 
+	const invalidateLikes = (reviewId: string) =>
+		Promise.all([
+			queryClient.invalidateQueries({ queryKey: mediaReviewsKey }),
+			queryClient.invalidateQueries({
+				queryKey: reviewsControllerGetReviewLikesQueryKey({
+					path: { reviewId },
+				}),
+			}),
+		]);
+
 	const likeMutation = useMutation({
 		mutationKey: [
 			"reviews",
@@ -87,9 +98,9 @@ function useToggleReviewLike({
 			"toggle-like",
 		],
 		...reviewsControllerLikeReviewMutation(),
-		onSuccess: () => {
+		onSuccess: (_data, { path: { reviewId } }) => {
 			posthog?.capture("review_liked", { source: "mobile" });
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
+			return invalidateLikes(reviewId);
 		},
 		onError: (error) => {
 			toast.error(
@@ -108,9 +119,7 @@ function useToggleReviewLike({
 			"toggle-unlike",
 		],
 		...reviewsControllerUnlikeReviewMutation(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: mediaReviewsKey });
-		},
+		onSuccess: (_data, { path: { reviewId } }) => invalidateLikes(reviewId),
 		onError: (error) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to unlike review",
@@ -263,6 +272,8 @@ function ReviewCard({
 				) : (
 					<Pressable
 						onPress={onToggleLike}
+						accessibilityRole="button"
+						accessibilityLabel={isLiked ? "Unlike review" : "Like review"}
 						disabled={!canLike || likePending}
 						hitSlop={8}
 						className="flex-row items-center gap-1.5 rounded-md py-1 pr-2"

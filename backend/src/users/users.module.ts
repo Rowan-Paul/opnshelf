@@ -1,3 +1,4 @@
+import { BingersSyncModule } from "../bingers-sync/bingers-sync.module";
 import { PrivacyModule } from "../privacy/privacy.module";
 import { forwardRef, Module } from "@nestjs/common";
 import { PdsModule } from "../pds/pds.module";
@@ -25,6 +26,7 @@ import { PopfeedSyncModule } from "../popfeed-sync/popfeed-sync.module";
 		PrismaModule,
 		TraktSyncModule,
 		PopfeedSyncModule,
+		forwardRef(() => BingersSyncModule),
 		ListsModule,
 		MoviesModule,
 		ShowsModule,

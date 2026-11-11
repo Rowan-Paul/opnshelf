@@ -1,5 +1,12 @@
 import { getHttpStatus } from "./http-errors";
 import {
+	bingersSyncControllerAction,
+	bingersSyncControllerConfigure,
+	bingersSyncControllerConnect,
+	bingersSyncControllerIssues,
+	bingersSyncControllerMatches,
+	bingersSyncControllerResolve,
+	bingersSyncControllerStatus,
 	popfeedSyncControllerAction,
 	popfeedSyncControllerConfigure,
 	popfeedSyncControllerConnect,
@@ -30,7 +37,7 @@ import type {
  * One definition per Integration (ADR 0051). Both clients render every
  * Integration from these, so names, record types and directions stay in step.
  */
-export type IntegrationId = "trakt" | "popfeed";
+export type IntegrationId = "trakt" | "popfeed" | "bingers";
 export type IntegrationRecordType =
 	| "watches"
 	| "ratings"
@@ -48,7 +55,7 @@ export type IntegrationApi = {
 	connect(options: {
 		platform: "web" | "mobile";
 		returnTo?: "onboarding";
-	}): Promise<{ url?: string }>;
+	}): Promise<{ url?: string; returnUrl?: string }>;
 	configure(settings: SyncSettingsDto): Promise<SyncStatusDto>;
 	action(action: SyncActionDto["action"]): Promise<SyncStatusDto>;
 	issues(
@@ -219,9 +226,62 @@ const popfeed: IntegrationDefinition = {
 	},
 };
 
+const bingers: IntegrationDefinition = {
+	id: "bingers",
+	name: "Bingers",
+	summary:
+		"Bring movie Watches and Ratings from Bingers into Opnshelf. Requires a Legend or Icon subscription; the API is in beta.",
+	records: ["watches", "ratings"],
+	directions: ["inbound"],
+	connect: "oauth",
+	checkCopy: "Bingers is checked about every 15 minutes.",
+	directionNote:
+		"Incoming only. Movie Watches with one dated viewing and movie Ratings can be transferred. Rewatches and episodes stay in Needs attention.",
+	api: {
+		status: async (signal) =>
+			(await bingersSyncControllerStatus({ signal, throwOnError: true })).data,
+		connect: async (body) =>
+			(await bingersSyncControllerConnect({ body, throwOnError: true })).data,
+		configure: async (body) =>
+			(await bingersSyncControllerConfigure({ body, throwOnError: true })).data,
+		action: async (action) =>
+			(
+				await bingersSyncControllerAction({
+					body: { action },
+					throwOnError: true,
+				})
+			).data,
+		issues: async (query, signal) =>
+			(await bingersSyncControllerIssues({ query, signal, throwOnError: true }))
+				.data,
+		resolve: async (id, body) =>
+			(
+				await bingersSyncControllerResolve({
+					path: { id },
+					body,
+					throwOnError: true,
+				})
+			).data,
+		matches: async (id, q, signal) =>
+			(
+				await bingersSyncControllerMatches({
+					path: { id },
+					query: { q },
+					signal,
+					throwOnError: true,
+				})
+			).data,
+	},
+};
+
 export const TRAKT_INTEGRATION = trakt;
 export const POPFEED_INTEGRATION = popfeed;
-export const INTEGRATIONS: readonly IntegrationDefinition[] = [trakt, popfeed];
+export const BINGERS_INTEGRATION = bingers;
+export const INTEGRATIONS: readonly IntegrationDefinition[] = [
+	trakt,
+	popfeed,
+	bingers,
+];
 
 export function findIntegration(
 	id: string | undefined,

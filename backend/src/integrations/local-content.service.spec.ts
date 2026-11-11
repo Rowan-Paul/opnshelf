@@ -1,5 +1,6 @@
 import { cidForCbor } from "@atproto/common";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { syncPdsRequests } from "./sync-pds";
 import type { AuthService } from "../auth/auth.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import type { ContentPrivacyCoordinator } from "../privacy/content-privacy-coordinator";
@@ -10,6 +11,12 @@ import { watchOperation } from "../privacy/watch-operation";
 import { encodeContent, type ContentKind } from "./content-value";
 import { LocalSyncContent, localContentRecord } from "./local-content.service";
 import type { SyncRecord } from "./reconcile";
+beforeEach(() => {
+	vi.spyOn(syncPdsRequests, "run").mockImplementation(async (_did, request) =>
+		request(),
+	);
+});
+
 const did = "did:plc:fixture";
 const rkey = "3m5esn73w2s2j";
 function desired(kind: ContentKind): SyncRecord {

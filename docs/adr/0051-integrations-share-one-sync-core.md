@@ -22,3 +22,40 @@ Integrations whose records live in the User's own AT Protocol repository, such a
 ## Consequences
 
 The extraction touches the largest backend module before any user-visible gain. In return, a later integration is an adapter plus its mapping brief. A User may connect several integrations that cover the same records; each has its own links, and a record transferred by one integration is an ordinary Opnshelf change to the others.
+
+## Shared request limiting (2026-11-11)
+
+The operator requested the same rate-limiting behavior for every integration.
+All adapters use one request-limiter implementation for serialized pacing,
+rolling budgets, queued-request cancellation on throttling, and cooldowns.
+Policies supply the provider name, interval, fallback retry delay and budget
+windows. PDS adapters additionally supply the cost of each repository operation.
+The PDS account budget is shared across integrations writing that account.
+
+Retry-After (seconds or HTTP date), RateLimit-Reset and exhausted remaining
+headers have the same meaning for every adapter. The shared parser also supports
+Trakt's X-Ratelimit JSON metadata. Provider-specific payload validation, error
+diagnostics and credentials remain in their adapters; the shared core handles
+only typed integration failures.
+
+While a connection holds its lease, its external account ID scopes requests,
+including token refresh, so token rotation cannot reset its budget or cooldown.
+During a connect callback, the verified authorization state scopes token exchange,
+profile fetch and cleanup to that User. Outside these operations, credential
+fingerprints or a separate app OAuth scope provide the fallback key; raw
+credentials are never limiter keys.
+
+Current policies retain a conservative 1.1-second request interval. Trakt adds
+its standard 500-request five-minute budget; Bingers adds its 60-request minute
+and 1,000-request hour budgets. PDS write allowances remain as described in
+ADR 0052. Limits are per server process; multiple workers need shared state.
+
+Short advertised reset windows that fit inside the configured request interval
+wait within normal pacing instead of yielding a whole run. Longer cooldowns yield
+immediately. Reading an existing cooldown never extends its absolute deadline.
+Reset headers support contemporary epoch timestamps and delta-seconds; an
+explicitly elapsed reset uses the minimum delay, not the full fallback interval.
+
+The shorter Trakt and Bingers request-budget windows provide a guard if interval
+policies change; the current conservative pacing normally stays below them.
+Successful responses without a parseable reset do not invoke the 429 fallback.

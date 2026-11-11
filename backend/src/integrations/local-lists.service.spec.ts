@@ -1,5 +1,6 @@
 import { cidForCbor } from "@atproto/common";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { syncPdsRequests } from "./sync-pds";
 import type { AuthService } from "../auth/auth.service";
 import type { ListsService } from "../lists/lists.service";
 import type { PrismaService } from "../prisma/prisma.service";
@@ -9,6 +10,12 @@ import { watchOperation } from "../privacy/watch-operation";
 import { listValue, encodeList } from "./list-value";
 import { LocalSyncLists } from "./local-lists.service";
 import type { SyncRecord } from "./reconcile";
+
+beforeEach(() => {
+	vi.spyOn(syncPdsRequests, "run").mockImplementation(async (_did, request) =>
+		request(),
+	);
+});
 
 const did = "did:plc:fixture";
 const rkey = "3m5esn73w2s2j";

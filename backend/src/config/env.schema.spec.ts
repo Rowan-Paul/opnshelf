@@ -69,7 +69,28 @@ describe("backend environment", () => {
 	});
 
 	it.each([
+		"https://eu.i.posthog.com/i/v0/e/",
+		"https://eu.i.posthog.com?",
+		"https://eu.i.posthog.com/#",
+		"https://eu.i.posthog.com?key=private",
+		"https://eu.i.posthog.com/#private",
+		"https://user:private@eu.i.posthog.com",
+	])("rejects a non-origin PostHog host (%s)", (POSTHOG_HOST) => {
+		expect(() => parseEnvironment({ POSTHOG_HOST })).toThrow(
+			"Invalid backend environment (missing or invalid): POSTHOG_HOST",
+		);
+	});
+	it.each([
+		"https://eu.i.posthog.com",
+		"https://eu.i.posthog.com/",
+		"http://localhost:8000",
+	])("accepts a PostHog origin (%s)", (POSTHOG_HOST) => {
+		expect(parseEnvironment({ POSTHOG_HOST }).POSTHOG_HOST).toBe(POSTHOG_HOST);
+	});
+
+	it.each([
 		["NODE_ENV", "prod-secret"],
+		["POSTHOG_HOST", "invalid-private-origin"],
 		["PORT", "65536"],
 		["PORT", "0"],
 		["PORT", "3.5"],

@@ -18,8 +18,6 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "^5.0.0",
-    "@expo-google-fonts/inter": "^0.4.2",
-    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/dom-webview": "~58.0.2",
     "@expo/metro-runtime": "~58.0.14",
     "@opnshelf/api": "workspace:*",

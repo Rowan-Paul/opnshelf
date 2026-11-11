@@ -82,10 +82,14 @@ function OnboardingPage() {
 		const connection = new URLSearchParams(window.location.search).get(
 			"connection",
 		);
+		const provider =
+			findIntegration(
+				new URLSearchParams(window.location.search).get("provider") ?? "trakt",
+			)?.id ?? "trakt";
 		if (connection)
 			return {
-				open: connection === "connected" ? "trakt" : null,
-				failed: connection === "failed" ? "trakt" : null,
+				open: connection === "connected" ? provider : null,
+				failed: connection === "failed" ? provider : null,
 			};
 		const left = findIntegration(
 			sessionStorage.getItem(ONBOARDING_INTEGRATION) ?? "",
@@ -98,6 +102,7 @@ function OnboardingPage() {
 		const url = new URL(window.location.href);
 		if (!url.searchParams.has("connection")) return;
 		url.searchParams.delete("connection");
+		url.searchParams.delete("provider");
 		window.history.replaceState(null, "", url.toString());
 	}, [resume]);
 	// A declined Popfeed grant comes back with ?permission=declined.

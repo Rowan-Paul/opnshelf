@@ -4,9 +4,15 @@ import { TraktMark } from "@/components/marks/TraktMark";
 
 /**
  * Each provider keeps its own logo. Popfeed publishes no brand kit; its mark is
- * the avatar of its official @popfeed.social account, shown unaltered. Same
+ * the avatar of its official @popfeed.social account, shown unaltered. Bingers'
+ * mark is the app icon it serves at bingers.app/apple-touch-icon.png. Same
  * choice as the Web App's `IntegrationMark`.
  */
+const marks = {
+	bingers: require("../../../assets/images/bingers.png"),
+	popfeed: require("../../../assets/images/popfeed.png"),
+};
+
 export function IntegrationMark({
 	id,
 	size = 44,
@@ -17,7 +23,7 @@ export function IntegrationMark({
 	if (id === "trakt") return <TraktMark size={size} />;
 	return (
 		<Image
-			source={require("../../../assets/images/popfeed.png")}
+			source={marks[id]}
 			accessible={false}
 			style={{ width: size, height: size, borderRadius: size * 0.22 }}
 		/>
