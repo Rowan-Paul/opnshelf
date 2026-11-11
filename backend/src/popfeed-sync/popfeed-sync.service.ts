@@ -156,6 +156,8 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 			select: { handle: true },
 		});
 		const existing = await this.current(userDid);
+		const recoveryStates = ["disconnected", "reconnect"];
+		let recovered = false;
 		if (!existing)
 			await this.prisma.integrationConnection.create({
 				data: {
@@ -166,15 +168,27 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 					direction: "inbound",
 				},
 			});
-		else if (existing.status === "disconnected")
+		else if (recoveryStates.includes(existing.status))
 			await this.locked(existing, async () => {
+				const current =
+					await this.prisma.integrationConnection.findUniqueOrThrow({
+						where: { id: existing.id },
+					});
+				if (!recoveryStates.includes(current.status)) return;
 				await this.prisma.integrationConnection.update({
 					select: { id: true },
 					where: { id: existing.id },
-					data: { status: "paused", username: user.handle, lastError: null },
+					data: {
+						status: "paused",
+						username: user.handle,
+						lastError: null,
+						failingSince: null,
+						remoteReadAt: null,
+					},
 				});
+				recovered = true;
 			});
-		if (!existing || existing.status === "disconnected")
+		if (!existing || recovered)
 			captureProductEvent(this.config, userDid, "integration_connected", {
 				provider: this.provider,
 			});
