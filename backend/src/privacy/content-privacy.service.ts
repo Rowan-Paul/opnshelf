@@ -243,25 +243,164 @@ export class ContentPrivacyService {
 		const initial = await this.prisma.privacyScope.findUniqueOrThrow({
 			where: { id },
 		});
-		return this.locks.run(initial.userDid, async (lockSignal) => {
-			await this.coordinator.assertAccount(initial.userDid);
-			const state = await this.prisma.privacyScope.findUniqueOrThrow({
-				where: { id },
-			});
-			if (
-				!state.migrationId ||
-				!state.targetVisibility ||
-				!["queued", "running"].includes(state.status ?? "")
-			)
-				return;
-			const generation = state.migrationId,
-				target = visibility(state.targetVisibility);
-			const signal = AbortSignal.any([lockSignal, AbortSignal.timeout(120000)]);
-			await this.prisma.privacyScope.update({
-				where: { id },
-				data: { status: "running" },
-			});
-			try {
+		return this.locks.run(
+			initial.userDid,
+			async (lockSignal) => {
+				await this.coordinator.assertAccount(initial.userDid);
+				const state = await this.prisma.privacyScope.findUniqueOrThrow({
+					where: { id },
+				});
+				if (
+					!state.migrationId ||
+					!state.targetVisibility ||
+					!["queued", "running"].includes(state.status ?? "")
+				)
+					return;
+				const generation = state.migrationId,
+					target = visibility(state.targetVisibility);
+				const signal = AbortSignal.any([
+					lockSignal,
+					AbortSignal.timeout(120000),
+				]);
+				await this.prisma.privacyScope.update({
+					where: { id },
+					data: { status: "running" },
+				});
+				try {
+					const pds = this.repository(
+						state.userDid,
+						await this.auth.restore(state.userDid),
+						categoryOf(state),
+						state.listRkey ?? undefined,
+						signal,
+					);
+					if (target === "private") await pds.assertPrivate();
+					else await pds.assertExistingPrivate();
+					const sources = await this.snapshot(pds, state, target === "public");
+					// A verified copy can still be in the source after an interrupted deletion.
+					// Count the union so retries do not inflate the denominator.
+					const copied = await this.prisma.privacyCopy.findMany({
+						where: { scopeId: id, migrationId: generation },
+						select: { collection: true, rkey: true },
+					});
+					const totalRecords = new Set(
+						[...sources, ...copied].map(
+							(record) => `${record.collection}/${record.rkey}`,
+						),
+					).size;
+					await this.prisma.privacyScope.update({
+						where: { id, migrationId: generation },
+						data: { totalRecords },
+					});
+					const journal = new ContentPrivacyJournal(
+						this.prisma,
+						id,
+						generation,
+						state.userDid,
+						target,
+					);
+					if (sources.length) {
+						for (const record of sources.slice(0, 5)) {
+							const ref = { collection: record.collection, rkey: record.rkey };
+							if (target === "private")
+								await moveWatchToPrivate(ref, pds, journal);
+							else await moveWatchToPublic(ref, pds, journal);
+						}
+						signal.throwIfAborted();
+						await this.prisma.privacyScope.update({
+							where: { id },
+							data: { status: "queued" },
+						});
+						return;
+					}
+					const destination = await this.snapshot(
+						pds,
+						state,
+						target === "private",
+					);
+					const receipts = await this.prisma.privacyCopy.findMany({
+						where: { scopeId: id, migrationId: generation },
+					});
+					const cids = new Map(
+						destination.map((r) => [`${r.collection}/${r.rkey}`, r.cid]),
+					);
+					if (
+						receipts.some(
+							(r) => cids.get(`${r.collection}/${r.rkey}`) !== r.cid,
+						)
+					)
+						throw new WatchMigrationConflict();
+					await this.projection.index(state.userDid, destination, signal);
+					if (
+						!sameSnapshot(
+							destination,
+							await this.snapshot(pds, state, target === "private"),
+						) ||
+						(await this.snapshot(pds, state, target === "public")).length
+					)
+						throw new WatchMigrationConflict();
+					await pds.assertExistingPrivate();
+					signal.throwIfAborted();
+					await this.prisma.$transaction(async (tx) => {
+						await this.projection.reconcile(
+							tx,
+							state.userDid,
+							categoryOf(state),
+							destination,
+							state.listRkey,
+						);
+						await tx.privacyCopy.deleteMany({
+							where: { scopeId: id, migrationId: generation },
+						});
+						await tx.privacyScope.update({
+							where: { id, migrationId: generation },
+							data: {
+								visibility: target,
+								targetVisibility: null,
+								totalRecords: null,
+								migrationId: null,
+								status: null,
+								error: null,
+								syncedAt: new Date(),
+								syncAttemptedAt: new Date(),
+							},
+						});
+					});
+				} catch (error) {
+					if (!busy(error))
+						await this.prisma.privacyScope.updateMany({
+							where: { id, migrationId: generation },
+							data: {
+								status: "failed",
+								error:
+									error instanceof WatchMigrationConflict
+										? "Records changed in another app. Resolve the conflicting records, then resume."
+										: "This privacy change stopped. Retry to continue; recovery copies were retained.",
+							},
+						});
+					throw error;
+				}
+			},
+			{ mode: "write", scope: "content" },
+		);
+	}
+	async sync(id: string) {
+		const initial = await this.prisma.privacyScope.findUniqueOrThrow({
+			where: { id },
+		});
+		return this.locks.run(
+			initial.userDid,
+			async (lockSignal) => {
+				await this.coordinator.assertAccount(initial.userDid);
+				const state = await this.prisma.privacyScope.findUniqueOrThrow({
+					where: { id },
+				});
+				if (state.targetVisibility)
+					throw new ConflictException("Privacy change in progress");
+				const signal = AbortSignal.any([
+					lockSignal,
+					AbortSignal.timeout(120000),
+				]);
 				const pds = this.repository(
 					state.userDid,
 					await this.auth.restore(state.userDid),
@@ -269,158 +408,35 @@ export class ContentPrivacyService {
 					state.listRkey ?? undefined,
 					signal,
 				);
-				if (target === "private") await pds.assertPrivate();
-				else await pds.assertExistingPrivate();
-				const sources = await this.snapshot(pds, state, target === "public");
-				// A verified copy can still be in the source after an interrupted deletion.
-				// Count the union so retries do not inflate the denominator.
-				const copied = await this.prisma.privacyCopy.findMany({
-					where: { scopeId: id, migrationId: generation },
-					select: { collection: true, rkey: true },
-				});
-				const totalRecords = new Set(
-					[...sources, ...copied].map(
-						(record) => `${record.collection}/${record.rkey}`,
-					),
-				).size;
-				await this.prisma.privacyScope.update({
-					where: { id, migrationId: generation },
-					data: { totalRecords },
-				});
-				const journal = new ContentPrivacyJournal(
-					this.prisma,
-					id,
-					generation,
-					state.userDid,
-					target,
-				);
-				if (sources.length) {
-					for (const record of sources.slice(0, 5)) {
-						const ref = { collection: record.collection, rkey: record.rkey };
-						if (target === "private")
-							await moveWatchToPrivate(ref, pds, journal);
-						else await moveWatchToPublic(ref, pds, journal);
-					}
-					signal.throwIfAborted();
-					await this.prisma.privacyScope.update({
-						where: { id },
-						data: { status: "queued" },
-					});
-					return;
-				}
-				const destination = await this.snapshot(
+				if (state.visibility === "private") await pds.assertExistingPrivate();
+				const records = await this.snapshot(
 					pds,
 					state,
-					target === "private",
+					state.visibility === "private",
 				);
-				const receipts = await this.prisma.privacyCopy.findMany({
-					where: { scopeId: id, migrationId: generation },
-				});
-				const cids = new Map(
-					destination.map((r) => [`${r.collection}/${r.rkey}`, r.cid]),
-				);
-				if (
-					receipts.some((r) => cids.get(`${r.collection}/${r.rkey}`) !== r.cid)
-				)
-					throw new WatchMigrationConflict();
-				await this.projection.index(state.userDid, destination, signal);
-				if (
-					!sameSnapshot(
-						destination,
-						await this.snapshot(pds, state, target === "private"),
-					) ||
-					(await this.snapshot(pds, state, target === "public")).length
-				)
-					throw new WatchMigrationConflict();
-				await pds.assertExistingPrivate();
+				await this.projection.index(state.userDid, records, signal);
+				if (state.visibility === "private") await pds.assertExistingPrivate();
 				signal.throwIfAborted();
 				await this.prisma.$transaction(async (tx) => {
 					await this.projection.reconcile(
 						tx,
 						state.userDid,
 						categoryOf(state),
-						destination,
+						records,
 						state.listRkey,
 					);
-					await tx.privacyCopy.deleteMany({
-						where: { scopeId: id, migrationId: generation },
-					});
 					await tx.privacyScope.update({
-						where: { id, migrationId: generation },
+						where: { id },
 						data: {
-							visibility: target,
-							targetVisibility: null,
-							totalRecords: null,
-							migrationId: null,
-							status: null,
-							error: null,
 							syncedAt: new Date(),
 							syncAttemptedAt: new Date(),
+							error: null,
 						},
 					});
 				});
-			} catch (error) {
-				if (!busy(error))
-					await this.prisma.privacyScope.updateMany({
-						where: { id, migrationId: generation },
-						data: {
-							status: "failed",
-							error:
-								error instanceof WatchMigrationConflict
-									? "Records changed in another app. Resolve the conflicting records, then resume."
-									: "This privacy change stopped. Retry to continue; recovery copies were retained.",
-						},
-					});
-				throw error;
-			}
-		});
-	}
-	async sync(id: string) {
-		const initial = await this.prisma.privacyScope.findUniqueOrThrow({
-			where: { id },
-		});
-		return this.locks.run(initial.userDid, async (lockSignal) => {
-			await this.coordinator.assertAccount(initial.userDid);
-			const state = await this.prisma.privacyScope.findUniqueOrThrow({
-				where: { id },
-			});
-			if (state.targetVisibility)
-				throw new ConflictException("Privacy change in progress");
-			const signal = AbortSignal.any([lockSignal, AbortSignal.timeout(120000)]);
-			const pds = this.repository(
-				state.userDid,
-				await this.auth.restore(state.userDid),
-				categoryOf(state),
-				state.listRkey ?? undefined,
-				signal,
-			);
-			if (state.visibility === "private") await pds.assertExistingPrivate();
-			const records = await this.snapshot(
-				pds,
-				state,
-				state.visibility === "private",
-			);
-			await this.projection.index(state.userDid, records, signal);
-			if (state.visibility === "private") await pds.assertExistingPrivate();
-			signal.throwIfAborted();
-			await this.prisma.$transaction(async (tx) => {
-				await this.projection.reconcile(
-					tx,
-					state.userDid,
-					categoryOf(state),
-					records,
-					state.listRkey,
-				);
-				await tx.privacyScope.update({
-					where: { id },
-					data: {
-						syncedAt: new Date(),
-						syncAttemptedAt: new Date(),
-						error: null,
-					},
-				});
-			});
-		});
+			},
+			{ mode: "write", scope: "content" },
+		);
 	}
 	async tick() {
 		const migration = await this.prisma.privacyScope.findFirst({

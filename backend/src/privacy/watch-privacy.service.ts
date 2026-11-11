@@ -15,6 +15,7 @@ import { MoviesService } from "../movies/movies.service";
 import { ShowsService } from "../shows/shows.service";
 import { main as movieSchema } from "../lexicons/xyz/opnshelf/movie";
 import { main as episodeSchema } from "../lexicons/xyz/opnshelf/episode";
+import { WatchAccountBusyError } from "./watch-account-lock";
 import { WatchPrivacyCoordinator } from "./watch-privacy-coordinator";
 import {
 	WatchMigrationPds,
@@ -136,7 +137,8 @@ export class WatchPrivacyService {
 		return this.status(did, session);
 	}
 	async sync(did: string, session: unknown) {
-		await this.coordinator.write(did, async (visibility, signal) => {
+		await this.coordinator.read(did, async (visibility, signal, withWrite) => {
+			const before = await withWrite(() => this.localSnapshot(did));
 			const pds = new WatchMigrationPds(
 				did,
 				requireWatchSession(session),
@@ -144,12 +146,72 @@ export class WatchPrivacyService {
 			);
 			if (visibility === "private") await pds.assertExistingPrivate();
 			const records = await this.snapshot(pds, visibility);
-			await this.index(did, records, signal);
 			if (visibility === "private") await pds.assertExistingPrivate();
-			signal.throwIfAborted();
-			await this.prisma.$transaction((tx) => this.reconcile(tx, did, records));
+			// Catalogue requests can be slow too. Warm missing media before taking
+			// the write mutex, so indexing below only touches the local projection.
+			await this.prepareCatalogue(records, signal);
+			await withWrite(async () => {
+				if (before !== (await this.localSnapshot(did)))
+					throw new WatchAccountBusyError();
+				signal.throwIfAborted();
+				await this.index(did, records, signal);
+				signal.throwIfAborted();
+				await this.prisma.$transaction((tx) =>
+					this.reconcile(tx, did, records),
+				);
+			});
 		});
 		return this.status(did, session);
+	}
+
+	private async localSnapshot(did: string) {
+		const where = { userDid: did };
+		const select = {
+			rkey: true,
+			cid: true,
+			uri: true,
+			updatedAt: true,
+		} as const;
+		const orderBy = { rkey: "asc" } as const;
+		return JSON.stringify(
+			await Promise.all([
+				this.prisma.trackedMovie.findMany({ where, select, orderBy }),
+				this.prisma.trackedEpisode.findMany({ where, select, orderBy }),
+			]),
+		);
+	}
+
+	private async prepareCatalogue(records: Snapshot, signal: AbortSignal) {
+		for (const record of records) {
+			signal.throwIfAborted();
+			if (record.collection === "xyz.opnshelf.movie") {
+				const { movieId } = movieSchema.parse(record.value);
+				if (
+					!(await this.prisma.movie.findUnique({
+						where: { movieId },
+						select: { movieId: true },
+					}))
+				) {
+					const movie = await this.movies.getMovieDetails(movieId);
+					if (movie.id?.toString() !== movieId)
+						throw new Error("Invalid movie catalogue response");
+					await this.movies.upsertMovie(movie);
+				}
+			} else {
+				const { showId } = episodeSchema.parse(record.value);
+				if (
+					!(await this.prisma.show.findUnique({
+						where: { showId },
+						select: { showId: true },
+					}))
+				) {
+					const show = await this.shows.getShowDetails(showId);
+					if (show.id?.toString() !== showId)
+						throw new Error("Invalid Show catalogue response");
+					await this.shows.upsertShow(show);
+				}
+			}
+		}
 	}
 
 	/** One account per tick, with small record batches and durable retry state. */

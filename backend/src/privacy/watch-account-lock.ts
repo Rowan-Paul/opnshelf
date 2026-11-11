@@ -36,7 +36,12 @@ export class WatchAccountLock {
 		{
 			wait = false,
 			mode = "exclusive",
-		}: { wait?: boolean; mode?: AccountLockMode } = {},
+			scope = "watches",
+		}: {
+			wait?: boolean;
+			mode?: AccountLockMode;
+			scope?: "watches" | "content";
+		} = {},
 	): Promise<T> {
 		// Give other accounts a bounded chance to use a released connection.
 		// Pool connectionTimeoutMillis caps the wait; cap queue length as well.
@@ -59,7 +64,9 @@ export class WatchAccountLock {
 			controller.abort(new Error("Watch operation lost its account lock"));
 		};
 		client.on("error", onError);
-		// 252 excludes privacy changes/deletion. 253 serializes local writes.
+		// 252 excludes privacy changes/deletion. Content background work uses
+		// a separate mutex so it cannot hold up interactive Watch writes.
+		const writeNamespace = scope === "content" ? 254 : 253;
 		// Always acquire in that order, on this same checked-out session.
 		const shared = mode !== "exclusive";
 		const acquire = async (namespace: number, sharedLock = false) => {
@@ -89,7 +96,7 @@ export class WatchAccountLock {
 			if (!writeAcquired || broken) return;
 			try {
 				await client.query({
-					text: "SELECT pg_advisory_unlock(hashtextextended($1, 253))",
+					text: `SELECT pg_advisory_unlock(hashtextextended($1, ${writeNamespace}))`,
 					values: [ownerDid],
 				});
 				writeAcquired = false;
@@ -102,7 +109,7 @@ export class WatchAccountLock {
 			if (!active) throw new Error("Account lock operation has ended");
 			controller.signal.throwIfAborted();
 			if (mode !== "shared") return work();
-			await acquire(253);
+			await acquire(writeNamespace);
 			writeAcquired = true;
 			try {
 				controller.signal.throwIfAborted();
@@ -115,7 +122,7 @@ export class WatchAccountLock {
 			await acquire(252, shared);
 			acquired = true;
 			if (mode === "write") {
-				await acquire(253);
+				await acquire(writeNamespace);
 				writeAcquired = true;
 			}
 			controller.signal.throwIfAborted();

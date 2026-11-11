@@ -2,7 +2,7 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import type { Prisma } from "../generated/client";
 import type { PrismaService } from "../prisma/prisma.service";
 import { WATCH_PRIVACY_JOB_TYPE } from "./watch-migration-journal";
-import { WatchAccountLock } from "./watch-account-lock";
+import { WatchAccountLock, type WithAccountWrite } from "./watch-account-lock";
 import { WatchMigrationConflict } from "./watch-record-migration";
 import type { WatchVisibility } from "./watch-record-migration";
 
@@ -69,9 +69,34 @@ export class WatchPrivacyCoordinator {
 		ownerDid: string,
 		operation: (visibility: WatchVisibility, signal: AbortSignal) => Promise<T>,
 	) {
+		return this.run(ownerDid, operation, { wait: true, mode: "write" });
+	}
+
+	/** Read repositories without holding the Watch mutex; local projection work
+	 * must use withWrite and reject a snapshot if Watches changed during the read. */
+	async read<T>(
+		ownerDid: string,
+		operation: (
+			visibility: WatchVisibility,
+			signal: AbortSignal,
+			withWrite: WithAccountWrite,
+		) => Promise<T>,
+	) {
+		return this.run(ownerDid, operation, { mode: "shared" });
+	}
+
+	private async run<T>(
+		ownerDid: string,
+		operation: (
+			visibility: WatchVisibility,
+			signal: AbortSignal,
+			withWrite: WithAccountWrite,
+		) => Promise<T>,
+		options: { wait?: boolean; mode: "write" | "shared" },
+	) {
 		return this.locks.run(
 			ownerDid,
-			async (lockSignal) => {
+			async (lockSignal, withWrite) => {
 				const signal = AbortSignal.any([
 					lockSignal,
 					AbortSignal.timeout(this.transactionTimeoutMs),
@@ -96,11 +121,11 @@ export class WatchPrivacyCoordinator {
 				)
 					throw new Error("Invalid Watch visibility");
 				signal.throwIfAborted();
-				const result = await operation(user.watchVisibility, signal);
+				const result = await operation(user.watchVisibility, signal, withWrite);
 				signal.throwIfAborted();
 				return result;
 			},
-			{ wait: true, mode: "write" },
+			options,
 		);
 	}
 
