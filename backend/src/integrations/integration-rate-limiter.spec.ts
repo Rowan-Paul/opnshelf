@@ -177,6 +177,62 @@ it.each(["Trakt", "Bingers"] as const)(
 	},
 );
 
+it.each(["Trakt", "Bingers"] as const)(
+	"%s keeps OAuth refresh inside the account cooldown without blocking another account",
+	async (provider) => {
+		const client =
+			provider === "Trakt"
+				? new TraktSyncClient(config)
+				: new BingersSyncClient(config);
+		const fetcher = vi
+			.fn()
+			.mockResolvedValueOnce(
+				new Response(null, { status: 429, headers: { "retry-after": "900" } }),
+			)
+			.mockImplementation(async () =>
+				Response.json({
+					access_token: "fixture-access",
+					refresh_token: "fixture-refresh",
+					token_type: "Bearer",
+					created_at: 1700000000,
+					expires_in: 3600,
+				}),
+			);
+		vi.stubGlobal("fetch", fetcher);
+		await integrationRateLimitScope.run("limited-account", async () => {
+			await expect(
+				client instanceof TraktSyncClient
+					? client.request("/users/settings", "fixture-old-access")
+					: client.readFeed("fixture-old-access"),
+			).rejects.toMatchObject({ status: 429, retrySeconds: 900 });
+			await expect(
+				client.refresh("fixture-limited-refresh"),
+			).rejects.toMatchObject({
+				status: 429,
+				retrySeconds: 900,
+			});
+		});
+		expect(fetcher).toHaveBeenCalledOnce();
+		await integrationRateLimitScope.run("other-account", async () => {
+			await expect(
+				client.refresh("fixture-other-refresh"),
+			).resolves.toMatchObject({
+				access_token: "fixture-access",
+			});
+		});
+		expect(fetcher).toHaveBeenCalledTimes(2);
+		await vi.advanceTimersByTimeAsync(900_000);
+		await integrationRateLimitScope.run("limited-account", async () => {
+			await expect(
+				client.refresh("fixture-limited-refresh"),
+			).resolves.toMatchObject({
+				access_token: "fixture-access",
+			});
+		});
+		expect(fetcher).toHaveBeenCalledTimes(3);
+	},
+);
+
 it("uses configured rolling budgets and yields instead of sending over budget", async () => {
 	const limiter = new IntegrationRateLimiter({
 		name: "Fixture",
