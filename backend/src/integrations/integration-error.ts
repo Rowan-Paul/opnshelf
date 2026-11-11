@@ -18,6 +18,21 @@ export class IntegrationError extends Error {
  */
 export class SyncSnapshotChanged extends IntegrationError {}
 
+/** A provider-wide outage stops the run without marking individual items. */
+export class IntegrationUnavailable extends IntegrationError {}
+
+/** SDK transports can wrap a provider's typed failure in an error cause. */
+export function integrationFailure(error: unknown): unknown {
+	const seen = new Set<unknown>();
+	let cause = error;
+	while (cause && typeof cause === "object" && !seen.has(cause)) {
+		if (cause instanceof IntegrationError) return cause;
+		seen.add(cause);
+		cause = "cause" in cause ? cause.cause : undefined;
+	}
+	return error;
+}
+
 /**
  * The connection is busy with a sync run. Clients retry a 409 carrying this
  * code automatically; nothing was changed when it is thrown.

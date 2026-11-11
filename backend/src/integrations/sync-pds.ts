@@ -4,7 +4,11 @@ import {
 	PdsRequestError,
 	retryAfterSeconds,
 } from "../common/pds-request-error";
-import { IntegrationError } from "./integration-error";
+import {
+	IntegrationError,
+	IntegrationUnavailable,
+	integrationFailure,
+} from "./integration-error";
 
 const REQUEST_INTERVAL_MS = 1100;
 type Queue = {
@@ -65,7 +69,7 @@ export class SyncPdsRequests {
 					queue.retryAt,
 					Date.now() + failure.retrySeconds * 1000,
 				);
-			throw failure ?? error;
+			throw syncPdsFailure(failure ?? error);
 		} finally {
 			queue.pending--;
 			release();
@@ -100,10 +104,11 @@ export async function syncPdsSession(
 }
 
 export function syncPdsFailure(error: unknown) {
-	if (error instanceof IntegrationError) return error;
+	const typed = integrationFailure(error);
+	if (typed instanceof IntegrationError) return typed;
 	const failure = pdsRequestError(error);
 	return failure
-		? new IntegrationError(
+		? new IntegrationUnavailable(
 				failure.message,
 				failure.upstreamStatus,
 				failure.retrySeconds,

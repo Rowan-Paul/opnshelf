@@ -2,6 +2,7 @@ import { expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
 import { PopfeedSyncService } from "../popfeed-sync/popfeed-sync.service";
 import type { SyncRecord } from "./reconcile";
+import { syncPdsFailure } from "./sync-pds";
 
 it.each([429, 503])(
 	"stops an inbound backlog on OAuth HTTP %s and schedules a retry without reconnecting",
@@ -72,14 +73,16 @@ it.each([429, 503])(
 			operation(new AbortController().signal, async (write) => write());
 		service["discover"] = async () => {};
 		const transfer = vi.fn<(typeof service)["transfer"]>().mockRejectedValue(
-			new Error("OAuth resolver failed", {
-				cause: {
-					response: new Response(null, {
-						status,
-						headers: { "retry-after": "900" },
-					}),
-				},
-			}),
+			syncPdsFailure(
+				new Error("OAuth resolver failed", {
+					cause: {
+						response: new Response(null, {
+							status,
+							headers: { "retry-after": "900" },
+						}),
+					},
+				}),
+			),
 		);
 		service["transfer"] = transfer;
 		const started = Date.now();

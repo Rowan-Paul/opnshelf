@@ -37,6 +37,8 @@ import {
 } from "./content-value";
 import {
 	IntegrationError,
+	IntegrationUnavailable,
+	integrationFailure,
 	isSyncBusy,
 	SyncSnapshotChanged,
 	syncBusy,
@@ -49,7 +51,6 @@ import {
 	type ListValue,
 } from "./list-value";
 import type { LocalSyncRecords } from "./local-records.service";
-import { syncPdsFailure } from "./sync-pds";
 import {
 	candidates,
 	decide,
@@ -1220,7 +1221,7 @@ export abstract class IntegrationSyncService<Credential>
 				try {
 					await this.process(c, lease, leaseId);
 				} catch (caught) {
-					const error = syncPdsFailure(caught);
+					const error = integrationFailure(caught);
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.integrationConnection.update({
 							select: { id: true },
@@ -1725,7 +1726,7 @@ export abstract class IntegrationSyncService<Credential>
 				}
 				writes++;
 			} catch (caught) {
-				const error = syncPdsFailure(caught);
+				const error = integrationFailure(caught);
 				if (error instanceof WatchAccountBusyError) {
 					stopped = true;
 					remaining++;
@@ -1750,8 +1751,9 @@ export abstract class IntegrationSyncService<Credential>
 						data: { pending: Prisma.DbNull },
 					});
 				if (
-					error instanceof IntegrationError &&
-					([401, 429].includes(error.status) || error.status >= 500)
+					error instanceof IntegrationUnavailable ||
+					(error instanceof IntegrationError &&
+						[401, 429].includes(error.status))
 				)
 					throw error;
 				await this.issue(

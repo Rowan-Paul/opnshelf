@@ -139,7 +139,7 @@ it("requires reconnection only when the saved session is missing", async () => {
 			},
 			"limited-owner",
 		),
-	).rejects.toBe(failure);
+	).rejects.toMatchObject({ status: 429, retrySeconds: 900 });
 	const restore = vi.fn();
 	await expect(
 		syncPdsSession({ restore }, "limited-owner"),
