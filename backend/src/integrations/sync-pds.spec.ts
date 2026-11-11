@@ -1,3 +1,7 @@
+import {
+	IntegrationUnavailable,
+	integrationFailure,
+} from "./integration-error";
 import { IntegrationRateLimiter } from "./integration-rate-limiter";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Agent } from "@atproto/api";
@@ -16,6 +20,53 @@ afterEach(() => {
 	vi.useRealTimers();
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
+});
+
+it("classifies a raw Popfeed repository 503 as a provider-wide retry and releases its body", async () => {
+	const response = new Response("unavailable", {
+		status: 503,
+		headers: { "retry-after": "120" },
+	});
+	if (!response.body) throw new Error("Expected a response body");
+	const cancel = vi.spyOn(response.body, "cancel");
+	vi.stubGlobal(
+		"fetch",
+		vi.fn(async () => response),
+	);
+	const result = new PopfeedSyncClient().repository({
+		did: "did:plc:unavailable-public",
+		pds: "https://pds.fixture.test",
+		timeZone: "UTC",
+	});
+	await expect(result).rejects.toMatchObject({
+		status: 503,
+		retrySeconds: 120,
+	});
+	await expect(result).rejects.toBeInstanceOf(IntegrationUnavailable);
+	expect(cancel).toHaveBeenCalledOnce();
+});
+
+it("preserves an authenticated raw PDS 503 through the SDK wrapper", async () => {
+	const response = new Response("unavailable", { status: 503 });
+	const session = await syncPdsSession(
+		{
+			restore: async () => ({
+				did: "did:plc:unavailable-authenticated",
+				fetchHandler: async () => response,
+			}),
+		} as never,
+		"did:plc:unavailable-authenticated",
+	);
+	const result = new Agent(session).com.atproto.repo
+		.listRecords({
+			repo: "did:plc:unavailable-authenticated",
+			collection: "social.popfeed.feed.listItem",
+		})
+		.catch(integrationFailure);
+	await vi.runAllTimersAsync();
+	expect(await result).toBeInstanceOf(IntegrationUnavailable);
+	expect(await result).toMatchObject({ status: 503, retrySeconds: 60 });
+	expect(response.bodyUsed).toBe(true);
 });
 
 it("honors Retry-After on real Popfeed repository reads and blocks another run", async () => {

@@ -25,9 +25,18 @@ export const syncPdsRequests = new IntegrationRateLimiter(
 	PDS_RATE_LIMIT_POLICY,
 );
 
-async function pdsRequest<T>(request: () => Promise<T>): Promise<T> {
+export async function syncPdsRequest<T>(request: () => Promise<T>): Promise<T> {
 	try {
-		return await request();
+		const result = await request();
+		if (
+			result instanceof Response &&
+			(result.status === 429 || result.status >= 500)
+		) {
+			const failure = syncPdsFailure(result);
+			await result.body?.cancel().catch(() => undefined);
+			throw failure;
+		}
+		return result;
 	} catch (error) {
 		throw syncPdsFailure(error);
 	}
@@ -41,7 +50,7 @@ export async function syncPdsSession(
 	did: string,
 ) {
 	const session = await syncPdsRequests.run(did, () =>
-		pdsRequest(() => auth.restore(did)),
+		syncPdsRequest(() => auth.restore(did)),
 	);
 	if (!session)
 		throw new IntegrationError(
@@ -54,7 +63,7 @@ export async function syncPdsSession(
 				return (path: string, init?: RequestInit) =>
 					syncPdsRequests.run(
 						did,
-						() => pdsRequest(() => target.fetchHandler(path, init)),
+						() => syncPdsRequest(() => target.fetchHandler(path, init)),
 						syncWritePoints(path, init),
 					);
 			const value = Reflect.get(target, key, target);

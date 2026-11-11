@@ -18,7 +18,11 @@ import {
 	REVIEW,
 } from "./popfeed-records";
 import type { PopfeedWriter } from "./popfeed-writer";
-import { syncPdsFailure, syncPdsRequests } from "../integrations/sync-pds";
+import {
+	syncPdsFailure,
+	syncPdsRequests,
+	syncPdsRequest,
+} from "../integrations/sync-pds";
 
 /**
  * Where the User's Popfeed records live and the timezone their dates mean.
@@ -52,10 +56,12 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 		let response: Response;
 		try {
 			response = await syncPdsRequests.run(credential.did, () =>
-				fetch(new URL(`/xrpc/${path}`, credential.pds), {
-					headers: { accept: "application/json" },
-					signal: AbortSignal.timeout(15_000),
-				}),
+				syncPdsRequest(() =>
+					fetch(new URL(`/xrpc/${path}`, credential.pds), {
+						headers: { accept: "application/json" },
+						signal: AbortSignal.timeout(15_000),
+					}),
+				),
 			);
 		} catch (error) {
 			const failure = syncPdsFailure(error);
