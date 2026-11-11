@@ -49,6 +49,7 @@ import {
 	type ListValue,
 } from "./list-value";
 import type { LocalSyncRecords } from "./local-records.service";
+import { syncPdsFailure } from "./sync-pds";
 import {
 	candidates,
 	decide,
@@ -1218,7 +1219,8 @@ export abstract class IntegrationSyncService<Credential>
 			await this.locked(c, async (lease, leaseId) => {
 				try {
 					await this.process(c, lease, leaseId);
-				} catch (error) {
+				} catch (caught) {
+					const error = syncPdsFailure(caught);
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.integrationConnection.update({
 							select: { id: true },
@@ -1722,7 +1724,8 @@ export abstract class IntegrationSyncService<Credential>
 					continue;
 				}
 				writes++;
-			} catch (error) {
+			} catch (caught) {
+				const error = syncPdsFailure(caught);
 				if (error instanceof WatchAccountBusyError) {
 					stopped = true;
 					remaining++;
@@ -1748,7 +1751,7 @@ export abstract class IntegrationSyncService<Credential>
 					});
 				if (
 					error instanceof IntegrationError &&
-					[401, 429].includes(error.status)
+					([401, 429].includes(error.status) || error.status >= 500)
 				)
 					throw error;
 				await this.issue(

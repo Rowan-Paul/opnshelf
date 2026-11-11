@@ -570,6 +570,31 @@ describe("DeviceSessionsService", () => {
 	});
 
 	describe("restoreBySession", () => {
+		it.each([429, 503])(
+			"keeps OAuth HTTP %s retryable without revoking the session",
+			async (status) => {
+				sharedOAuthClient.restore.mockRejectedValue(
+					new Error("OAuth resolver failed", {
+						cause: {
+							response: new Response(null, {
+								status,
+								headers: { "retry-after": "900" },
+							}),
+						},
+					}),
+				);
+				const revoke = vi.spyOn(service, "revokeBySessionId");
+				await expect(
+					service.restoreBySession({
+						id: "limited-slot",
+						userDid: "did:plc:abc123",
+						kind: "oauth",
+						sessionData: "{}",
+					}),
+				).rejects.toMatchObject({ upstreamStatus: status, retrySeconds: 900 });
+				expect(revoke).not.toHaveBeenCalled();
+			},
+		);
 		it("reuses one credential session manager for repeated requests from a device", async () => {
 			mockPrismaService.authSession.upsert.mockResolvedValue({});
 			const record = {

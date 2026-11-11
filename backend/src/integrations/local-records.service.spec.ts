@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { syncPdsRequests } from "./sync-pds";
+
+beforeEach(() => {
+	vi.spyOn(syncPdsRequests, "run").mockImplementation(async (_did, request) =>
+		request(),
+	);
+});
 import type { LocalSyncLists } from "./local-lists.service";
 import { LocalSyncRecords } from "./local-records.service";
 import type { SyncRecord } from "./reconcile";

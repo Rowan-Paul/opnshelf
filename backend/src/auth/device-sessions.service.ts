@@ -10,6 +10,7 @@ import { randomUUID } from "node:crypto";
 import { Prisma } from "../generated/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { OAuthClientFactory } from "./oauth-client.factory";
+import { pdsRequestError } from "../common/pds-request-error";
 
 /**
  * Absolute session lifetime, aligned with the 14-day session cookie maxAge set
@@ -254,6 +255,8 @@ export class DeviceSessionsService {
 		try {
 			return await client.restore(record.userDid);
 		} catch (error) {
+			const temporary = pdsRequestError(error);
+			if (temporary) throw temporary;
 			// The session id is the bearer credential — never log it.
 			this.logger.warn(
 				`Failed to restore session for ${record.userDid}`,

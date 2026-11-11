@@ -25,6 +25,7 @@ import {
 	type ListMember,
 } from "./list-value";
 import { equivalent, fingerprint, type SyncRecord } from "./reconcile";
+import { syncPdsSession } from "./sync-pds";
 
 type Stored = Awaited<ReturnType<WatchMigrationPds["list"]>>["records"][number];
 const LIST = "xyz.opnshelf.list";
@@ -39,8 +40,7 @@ export class LocalSyncLists {
 		@Inject(AUTH_SERVICE) private readonly auth: Pick<AuthService, "restore">,
 	) {}
 	private async session(did: string) {
-		const session = await this.auth.restore(did);
-		if (!session) throw new Error("Sign in again to sync Lists.");
+		const session = await syncPdsSession(this.auth, did);
 		return requireWatchSession(session);
 	}
 	private async all(

@@ -1,4 +1,5 @@
 import { Agent } from "@atproto/api";
+import { syncPdsSession } from "./sync-pds";
 import { Inject, Injectable } from "@nestjs/common";
 import { AUTH_SERVICE } from "../auth/auth.tokens";
 import type { AuthService } from "../auth/auth.service";
@@ -95,8 +96,7 @@ export class LocalSyncContent {
 		@Inject(AUTH_SERVICE) private readonly auth: Pick<AuthService, "restore">,
 	) {}
 	private async session(did: string) {
-		const session = await this.auth.restore(did);
-		if (!session) throw new Error("Sign in again to sync your content.");
+		const session = await syncPdsSession(this.auth, did);
 		return requireWatchSession(session);
 	}
 	private async repository(did: string, kind: ContentKind) {
