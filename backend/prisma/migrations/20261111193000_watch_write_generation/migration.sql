@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "watchWriteGeneration" BIGINT NOT NULL DEFAULT 0;

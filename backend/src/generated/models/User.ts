@@ -30,12 +30,14 @@ export type UserAvgAggregateOutputType = {
   streamingServiceIds: number | null
   welcomeTourWebVersion: number | null
   welcomeTourMobileVersion: number | null
+  watchWriteGeneration: number | null
 }
 
 export type UserSumAggregateOutputType = {
   streamingServiceIds: number[]
   welcomeTourWebVersion: number | null
   welcomeTourMobileVersion: number | null
+  watchWriteGeneration: bigint | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -73,6 +75,7 @@ export type UserMinAggregateOutputType = {
   watchSyncAttemptedAt: Date | null
   watchSyncedAt: Date | null
   watchSyncError: string | null
+  watchWriteGeneration: bigint | null
   listsDefaultVisibility: string | null
   watchPrivacyManaged: boolean | null
   watchPrivacyEnabled: boolean | null
@@ -122,6 +125,7 @@ export type UserMaxAggregateOutputType = {
   watchSyncAttemptedAt: Date | null
   watchSyncedAt: Date | null
   watchSyncError: string | null
+  watchWriteGeneration: bigint | null
   listsDefaultVisibility: string | null
   watchPrivacyManaged: boolean | null
   watchPrivacyEnabled: boolean | null
@@ -172,6 +176,7 @@ export type UserCountAggregateOutputType = {
   watchSyncAttemptedAt: number
   watchSyncedAt: number
   watchSyncError: number
+  watchWriteGeneration: number
   listsDefaultVisibility: number
   watchPrivacyManaged: number
   watchPrivacyEnabled: number
@@ -192,12 +197,14 @@ export type UserAvgAggregateInputType = {
   streamingServiceIds?: true
   welcomeTourWebVersion?: true
   welcomeTourMobileVersion?: true
+  watchWriteGeneration?: true
 }
 
 export type UserSumAggregateInputType = {
   streamingServiceIds?: true
   welcomeTourWebVersion?: true
   welcomeTourMobileVersion?: true
+  watchWriteGeneration?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -235,6 +242,7 @@ export type UserMinAggregateInputType = {
   watchSyncAttemptedAt?: true
   watchSyncedAt?: true
   watchSyncError?: true
+  watchWriteGeneration?: true
   listsDefaultVisibility?: true
   watchPrivacyManaged?: true
   watchPrivacyEnabled?: true
@@ -284,6 +292,7 @@ export type UserMaxAggregateInputType = {
   watchSyncAttemptedAt?: true
   watchSyncedAt?: true
   watchSyncError?: true
+  watchWriteGeneration?: true
   listsDefaultVisibility?: true
   watchPrivacyManaged?: true
   watchPrivacyEnabled?: true
@@ -334,6 +343,7 @@ export type UserCountAggregateInputType = {
   watchSyncAttemptedAt?: true
   watchSyncedAt?: true
   watchSyncError?: true
+  watchWriteGeneration?: true
   listsDefaultVisibility?: true
   watchPrivacyManaged?: true
   watchPrivacyEnabled?: true
@@ -471,6 +481,7 @@ export type UserGroupByOutputType = {
   watchSyncAttemptedAt: Date | null
   watchSyncedAt: Date | null
   watchSyncError: string | null
+  watchWriteGeneration: bigint
   listsDefaultVisibility: string
   watchPrivacyManaged: boolean
   watchPrivacyEnabled: boolean
@@ -544,6 +555,7 @@ export type UserWhereInput = {
   watchSyncAttemptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncError?: Prisma.StringNullableFilter<"User"> | string | null
+  watchWriteGeneration?: Prisma.BigIntFilter<"User"> | bigint | number
   listsDefaultVisibility?: Prisma.StringFilter<"User"> | string
   watchPrivacyManaged?: Prisma.BoolFilter<"User"> | boolean
   watchPrivacyEnabled?: Prisma.BoolFilter<"User"> | boolean
@@ -614,6 +626,7 @@ export type UserOrderByWithRelationInput = {
   watchSyncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchWriteGeneration?: Prisma.SortOrder
   listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
@@ -687,6 +700,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   watchSyncAttemptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   watchSyncError?: Prisma.StringNullableFilter<"User"> | string | null
+  watchWriteGeneration?: Prisma.BigIntFilter<"User"> | bigint | number
   listsDefaultVisibility?: Prisma.StringFilter<"User"> | string
   watchPrivacyManaged?: Prisma.BoolFilter<"User"> | boolean
   watchPrivacyEnabled?: Prisma.BoolFilter<"User"> | boolean
@@ -757,6 +771,7 @@ export type UserOrderByWithAggregationInput = {
   watchSyncAttemptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   watchSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  watchWriteGeneration?: Prisma.SortOrder
   listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
@@ -815,6 +830,7 @@ export type UserScalarWhereWithAggregatesInput = {
   watchSyncAttemptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   watchSyncedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   watchSyncError?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  watchWriteGeneration?: Prisma.BigIntWithAggregatesFilter<"User"> | bigint | number
   listsDefaultVisibility?: Prisma.StringWithAggregatesFilter<"User"> | string
   watchPrivacyManaged?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   watchPrivacyEnabled?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
@@ -865,6 +881,7 @@ export type UserCreateInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -935,6 +952,7 @@ export type UserUncheckedCreateInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -1005,6 +1023,7 @@ export type UserUpdateInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1075,6 +1094,7 @@ export type UserUncheckedUpdateInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1145,6 +1165,7 @@ export type UserCreateManyInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -1195,6 +1216,7 @@ export type UserUpdateManyMutationInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1245,6 +1267,7 @@ export type UserUncheckedUpdateManyInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1303,6 +1326,7 @@ export type UserCountOrderByAggregateInput = {
   watchSyncAttemptedAt?: Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrder
   watchSyncError?: Prisma.SortOrder
+  watchWriteGeneration?: Prisma.SortOrder
   listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
@@ -1321,6 +1345,7 @@ export type UserAvgOrderByAggregateInput = {
   streamingServiceIds?: Prisma.SortOrder
   welcomeTourWebVersion?: Prisma.SortOrder
   welcomeTourMobileVersion?: Prisma.SortOrder
+  watchWriteGeneration?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -1358,6 +1383,7 @@ export type UserMaxOrderByAggregateInput = {
   watchSyncAttemptedAt?: Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrder
   watchSyncError?: Prisma.SortOrder
+  watchWriteGeneration?: Prisma.SortOrder
   listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
@@ -1407,6 +1433,7 @@ export type UserMinOrderByAggregateInput = {
   watchSyncAttemptedAt?: Prisma.SortOrder
   watchSyncedAt?: Prisma.SortOrder
   watchSyncError?: Prisma.SortOrder
+  watchWriteGeneration?: Prisma.SortOrder
   listsDefaultVisibility?: Prisma.SortOrder
   watchPrivacyManaged?: Prisma.SortOrder
   watchPrivacyEnabled?: Prisma.SortOrder
@@ -1425,6 +1452,7 @@ export type UserSumOrderByAggregateInput = {
   streamingServiceIds?: Prisma.SortOrder
   welcomeTourWebVersion?: Prisma.SortOrder
   welcomeTourMobileVersion?: Prisma.SortOrder
+  watchWriteGeneration?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -1468,6 +1496,14 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type BigIntFieldUpdateOperationsInput = {
+  set?: bigint | number
+  increment?: bigint | number
+  decrement?: bigint | number
+  multiply?: bigint | number
+  divide?: bigint | number
 }
 
 export type EnumBlogMirrorFormatFieldUpdateOperationsInput = {
@@ -1796,6 +1832,7 @@ export type UserCreateWithoutIntegrationConnectionsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -1865,6 +1902,7 @@ export type UserUncheckedCreateWithoutIntegrationConnectionsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -1950,6 +1988,7 @@ export type UserUpdateWithoutIntegrationConnectionsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2019,6 +2058,7 @@ export type UserUncheckedUpdateWithoutIntegrationConnectionsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2088,6 +2128,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -2157,6 +2198,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -2242,6 +2284,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2311,6 +2354,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2380,6 +2424,7 @@ export type UserCreateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -2449,6 +2494,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -2534,6 +2580,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2603,6 +2650,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2672,6 +2720,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -2741,6 +2790,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -2826,6 +2876,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2895,6 +2946,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2964,6 +3016,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3033,6 +3086,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3118,6 +3172,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3187,6 +3242,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3256,6 +3312,7 @@ export type UserCreateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3325,6 +3382,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3399,6 +3457,7 @@ export type UserCreateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3468,6 +3527,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3553,6 +3613,7 @@ export type UserUpdateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3622,6 +3683,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3702,6 +3764,7 @@ export type UserUpdateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3771,6 +3834,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3840,6 +3904,7 @@ export type UserCreateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3909,6 +3974,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -3994,6 +4060,7 @@ export type UserUpdateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4063,6 +4130,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4132,6 +4200,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -4201,6 +4270,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -4286,6 +4356,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4355,6 +4426,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4424,6 +4496,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -4493,6 +4566,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -4578,6 +4652,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4647,6 +4722,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4716,6 +4792,7 @@ export type UserCreateWithoutListsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -4785,6 +4862,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -4870,6 +4948,7 @@ export type UserUpdateWithoutListsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4939,6 +5018,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5008,6 +5088,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -5077,6 +5158,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -5162,6 +5244,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5231,6 +5314,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5300,6 +5384,7 @@ export type UserCreateWithoutNotesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -5369,6 +5454,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -5454,6 +5540,7 @@ export type UserUpdateWithoutNotesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5523,6 +5610,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5592,6 +5680,7 @@ export type UserCreateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -5661,6 +5750,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -5746,6 +5836,7 @@ export type UserUpdateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5815,6 +5906,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5884,6 +5976,7 @@ export type UserCreateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -5953,6 +6046,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -6038,6 +6132,7 @@ export type UserUpdateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6107,6 +6202,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6176,6 +6272,7 @@ export type UserCreateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -6245,6 +6342,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -6330,6 +6428,7 @@ export type UserUpdateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6399,6 +6498,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6468,6 +6568,7 @@ export type UserCreateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -6537,6 +6638,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -6622,6 +6724,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6691,6 +6794,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6760,6 +6864,7 @@ export type UserCreateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -6829,6 +6934,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -6914,6 +7020,7 @@ export type UserUpdateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -6983,6 +7090,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -7052,6 +7160,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -7121,6 +7230,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -7206,6 +7316,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -7275,6 +7386,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -7344,6 +7456,7 @@ export type UserCreateWithoutPrivacyScopesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -7413,6 +7526,7 @@ export type UserUncheckedCreateWithoutPrivacyScopesInput = {
   watchSyncAttemptedAt?: Date | string | null
   watchSyncedAt?: Date | string | null
   watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
   listsDefaultVisibility?: string
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -7498,6 +7612,7 @@ export type UserUpdateWithoutPrivacyScopesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -7567,6 +7682,7 @@ export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
   watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
   watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
   watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -7820,6 +7936,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  watchWriteGeneration?: boolean
   listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -7891,6 +8008,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  watchWriteGeneration?: boolean
   listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -7941,6 +8059,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  watchWriteGeneration?: boolean
   listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -7991,6 +8110,7 @@ export type UserSelectScalar = {
   watchSyncAttemptedAt?: boolean
   watchSyncedAt?: boolean
   watchSyncError?: boolean
+  watchWriteGeneration?: boolean
   listsDefaultVisibility?: boolean
   watchPrivacyManaged?: boolean
   watchPrivacyEnabled?: boolean
@@ -8005,7 +8125,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "listsDefaultVisibility" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "popfeedWriteEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"did" | "handle" | "displayName" | "avatar" | "profileRkey" | "profileUri" | "profileCid" | "profileDisplayName" | "profileAvatarCid" | "profileAvatarMimeType" | "profileUpdatedAt" | "timezone" | "timeFormat" | "watchCountry" | "streamingServiceIds" | "alwaysShowSpoilers" | "onboardingCompletedAt" | "atStoreReviewHandledAt" | "atStoreReviewRkey" | "welcomeTourWebVersion" | "welcomeTourMobileVersion" | "releaseNotesReadAt" | "emailVerifiedAt" | "backfillStartedAt" | "lastIngestAt" | "isNativePds" | "blueskyProfileUrl" | "tangledProfileUrl" | "showBlueskyOnProfile" | "showTangledOnProfile" | "reviewsPublicationUri" | "reviewsPublicationName" | "watchSyncAttemptedAt" | "watchSyncedAt" | "watchSyncError" | "watchWriteGeneration" | "listsDefaultVisibility" | "watchPrivacyManaged" | "watchPrivacyEnabled" | "watchVisibility" | "privateSettingsEnabled" | "privateSettingsHasCopy" | "blogIntegrationEnabled" | "blueskyCrossPostEnabled" | "popfeedWriteEnabled" | "reviewsMirrorFormat" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   privacyScopes?: boolean | Prisma.User$privacyScopesArgs<ExtArgs>
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
@@ -8092,6 +8212,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     watchSyncAttemptedAt: Date | null
     watchSyncedAt: Date | null
     watchSyncError: string | null
+    watchWriteGeneration: bigint
     listsDefaultVisibility: string
     watchPrivacyManaged: boolean
     watchPrivacyEnabled: boolean
@@ -8582,6 +8703,7 @@ export interface UserFieldRefs {
   readonly watchSyncAttemptedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly watchSyncedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly watchSyncError: Prisma.FieldRef<"User", 'String'>
+  readonly watchWriteGeneration: Prisma.FieldRef<"User", 'BigInt'>
   readonly listsDefaultVisibility: Prisma.FieldRef<"User", 'String'>
   readonly watchPrivacyManaged: Prisma.FieldRef<"User", 'Boolean'>
   readonly watchPrivacyEnabled: Prisma.FieldRef<"User", 'Boolean'>

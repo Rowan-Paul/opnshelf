@@ -15,6 +15,7 @@ export class WatchAccountBusyError extends ConflictException {
  * it while a PDS request is still running. The application owns this small pool's
  * lifecycle; do not share it with Prisma's query pool. */
 export class WatchAccountLock {
+	private remoteOperations = 0;
 	constructor(private readonly pool: Pool) {
 		if (
 			!pool.options.query_timeout ||
@@ -36,15 +37,27 @@ export class WatchAccountLock {
 		{
 			wait = false,
 			mode = "exclusive",
-		}: { wait?: boolean; mode?: AccountLockMode } = {},
+			scope = "watches",
+		}: {
+			wait?: boolean;
+			mode?: AccountLockMode;
+			scope?: "watches" | "content";
+		} = {},
 	): Promise<T> {
+		// Keep one pool connection available for foreground work. Shared remote
+		// phases and content background jobs must yield before checking one out.
+		const remote = mode === "shared" || scope === "content";
+		if (remote && this.remoteOperations >= (this.pool.options.max ?? 10) - 1)
+			throw new WatchAccountBusyError();
 		// Give other accounts a bounded chance to use a released connection.
 		// Pool connectionTimeoutMillis caps the wait; cap queue length as well.
 		if (this.pool.waitingCount >= 16)
 			throw new ServiceUnavailableException(
 				"Watch operations are busy. Try again shortly.",
 			);
+		if (remote) this.remoteOperations++;
 		const client = await this.pool.connect().catch(() => {
+			if (remote) this.remoteOperations--;
 			throw new ServiceUnavailableException(
 				"Watch operations are busy. Try again shortly.",
 			);
@@ -59,7 +72,9 @@ export class WatchAccountLock {
 			controller.abort(new Error("Watch operation lost its account lock"));
 		};
 		client.on("error", onError);
-		// 252 excludes privacy changes/deletion. 253 serializes local writes.
+		// 252 excludes privacy changes/deletion. Content background work uses
+		// a separate mutex so it cannot hold up interactive Watch writes.
+		const writeNamespace = scope === "content" ? 254 : 253;
 		// Always acquire in that order, on this same checked-out session.
 		const shared = mode !== "exclusive";
 		const acquire = async (namespace: number, sharedLock = false) => {
@@ -85,11 +100,23 @@ export class WatchAccountLock {
 			if (!wait && rows[0]?.acquired !== true)
 				throw new WatchAccountBusyError();
 		};
+		const advanceWriteGeneration = async () => {
+			if (scope !== "watches") return;
+			try {
+				await client.query({
+					text: 'UPDATE "User" SET "watchWriteGeneration" = "watchWriteGeneration" + 1 WHERE did = $1',
+					values: [ownerDid],
+				});
+			} catch (error) {
+				onError();
+				throw error;
+			}
+		};
 		const unlockWrite = async () => {
 			if (!writeAcquired || broken) return;
 			try {
 				await client.query({
-					text: "SELECT pg_advisory_unlock(hashtextextended($1, 253))",
+					text: `SELECT pg_advisory_unlock(hashtextextended($1, ${writeNamespace}))`,
 					values: [ownerDid],
 				});
 				writeAcquired = false;
@@ -102,9 +129,10 @@ export class WatchAccountLock {
 			if (!active) throw new Error("Account lock operation has ended");
 			controller.signal.throwIfAborted();
 			if (mode !== "shared") return work();
-			await acquire(253);
+			await acquire(writeNamespace);
 			writeAcquired = true;
 			try {
+				await advanceWriteGeneration();
 				controller.signal.throwIfAborted();
 				return await work();
 			} finally {
@@ -115,8 +143,9 @@ export class WatchAccountLock {
 			await acquire(252, shared);
 			acquired = true;
 			if (mode === "write") {
-				await acquire(253);
+				await acquire(writeNamespace);
 				writeAcquired = true;
+				await advanceWriteGeneration();
 			}
 			controller.signal.throwIfAborted();
 			const result = await operation(controller.signal, withWrite);
@@ -136,6 +165,7 @@ export class WatchAccountLock {
 			}
 			client.removeListener("error", onError);
 			client.release(broken);
+			if (remote) this.remoteOperations--;
 		}
 	}
 }

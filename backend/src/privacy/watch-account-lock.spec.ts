@@ -113,6 +113,7 @@ it("holds the privacy barrier while releasing the local write mutex before remot
 			expect(f.client.query.mock.calls.map(([query]) => query.text)).toEqual([
 				"SELECT pg_try_advisory_lock_shared(hashtextextended($1, 252)) AS acquired",
 				"SELECT pg_try_advisory_lock(hashtextextended($1, 253)) AS acquired",
+				'UPDATE "User" SET "watchWriteGeneration" = "watchWriteGeneration" + 1 WHERE did = $1',
 				"SELECT pg_advisory_unlock(hashtextextended($1, 253))",
 			]);
 		},
@@ -166,3 +167,25 @@ it("aborts and discards the session if the scoped write mutex cannot be released
 	expect(remote).not.toHaveBeenCalled();
 	expect(f.client.release).toHaveBeenCalledWith(true);
 });
+
+it.each(["connect", "work"] as const)(
+	"releases remote admission after a %s failure",
+	async (failure) => {
+		const f = fixture();
+		f.client.query.mockResolvedValue({ rows: [{ acquired: true }] });
+		if (failure === "connect")
+			f.pool.connect.mockRejectedValueOnce(new Error("offline"));
+		await expect(
+			f.lock.run(
+				"did:plc:owner",
+				async () => {
+					throw new Error("failed work");
+				},
+				{ mode: "shared" },
+			),
+		).rejects.toThrow();
+		await expect(
+			f.lock.run("did:plc:owner", async () => "retry", { mode: "shared" }),
+		).resolves.toBe("retry");
+	},
+);
