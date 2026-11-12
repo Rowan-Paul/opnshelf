@@ -9,9 +9,11 @@ polling and migrations, account deletion, and permission changes. No lock semant
 2. Copy `accountHash` from the failed acquisition. Search all backend replicas'
    logs for that hash around the event's `timestamp`; do not limit the search to
    the failed request's replica. Start earlier if an acquisition is missing.
-3. Find `account_lock.acquired` events whose matching `account_lock.released`
-   occurs after the failure. Match events by `lockId` and `namespace`. The
-   `operation` identifies the holder, for example `trakt.snapshot`,
+3. Find `account_lock.acquired` events from before the failure whose matching
+   `account_lock.released` occurs after the failure or has not been observed.
+   Match events by `lockId` and `namespace`. A holder may still be running;
+   inspect `discarded` and `transaction_failed` separately, since neither
+   confirms release. The `operation` identifies the holder, for example `trakt.snapshot`,
    `trakt.transfer.pull`, or `ShowsController.markWatched`.
 
 Namespace 252 is the privacy/deletion barrier. An exclusive holder blocks shared
