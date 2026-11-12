@@ -1,6 +1,6 @@
 # Trace an account lock conflict
 
-Backend runtime logs contain JSON `account_lock.*` events from `WatchAccountLock`.
+Backend runtime logs contain JSON `account_lock.*` events from the shared account-lock logger.
 They cover interactive Watch writes, integration snapshots and transfers, content
 polling and migrations, account deletion, and permission changes. No lock semantics change.
 
