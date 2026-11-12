@@ -41,8 +41,12 @@ export class ContentPrivacyInterceptor implements NestInterceptor {
 				if (!list) throw new NotFoundException("List not found");
 				listRkey = list.rkey;
 			}
-			return this.coordinator.write(req.user.did, category, listRkey, () =>
-				lastValueFrom(next.handle()),
+			return this.coordinator.write(
+				req.user.did,
+				category,
+				listRkey,
+				() => lastValueFrom(next.handle()),
+				`${context.getClass().name}.${context.getHandler().name}`,
 			);
 		});
 	}

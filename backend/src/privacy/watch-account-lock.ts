@@ -1,11 +1,10 @@
-import { createHash, randomUUID } from "node:crypto";
 import {
 	ConflictException,
 	Logger,
 	ServiceUnavailableException,
 } from "@nestjs/common";
 import type { Pool } from "pg";
-import { requestContext } from "../common/request-id";
+import { createAccountLockLog } from "./account-lock-log";
 
 export type WithAccountWrite = <T>(operation: () => Promise<T>) => Promise<T>;
 export type AccountLockMode = "exclusive" | "write" | "shared";
@@ -53,29 +52,12 @@ export class WatchAccountLock {
 			operationName?: string;
 		} = {},
 	): Promise<T> {
-		const startedAt = Date.now();
-		const context = {
-			lockId: randomUUID(),
-			accountHash: createHash("sha256").update(ownerDid).digest("hex"),
+		const log = createAccountLockLog(this.logger, {
+			ownerDid,
 			operation: operationName,
-			requestId: requestContext.getStore()?.requestId ?? null,
 			mode,
 			scope,
-		};
-		// One identifier spans the privacy barrier and each scoped write mutex.
-		// Hash the account so logs correlate without recording the DID or content.
-		const log = (event: string, namespace?: number, sharedLock?: boolean) => {
-			this.logger.log(
-				JSON.stringify({
-					event: `account_lock.${event}`,
-					timestamp: new Date().toISOString(),
-					...context,
-					namespace,
-					shared: sharedLock,
-					elapsedMs: Date.now() - startedAt,
-				}),
-			);
-		};
+		});
 		// Keep one pool connection available for foreground work. Shared remote
 		// phases and content background jobs must yield before checking one out.
 		const remote = mode === "shared" || scope === "content";

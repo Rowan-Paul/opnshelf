@@ -65,6 +65,7 @@ export class ContentPrivacyCoordinator {
 		category: ContentCategory,
 		listRkey: string | undefined,
 		work: () => Promise<T>,
+		operationName = "content-privacy-coordinator.write",
 	): Promise<T> {
 		const run = async (signal: AbortSignal) => {
 			await this.assertAccount(did);
@@ -103,7 +104,7 @@ export class ContentPrivacyCoordinator {
 		return parent?.did === did
 			? run(parent.signal)
 			: this.locks.run(did, run, {
-					operationName: "content-privacy-coordinator.write",
+					operationName,
 				});
 	}
 	async prepareNewList(did: string, rkey: string) {

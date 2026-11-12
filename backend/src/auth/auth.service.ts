@@ -1,3 +1,4 @@
+import { createAccountLockLog } from "../privacy/account-lock-log";
 import { captureProductEvent } from "../analytics/capture";
 import { Agent } from "@atproto/api";
 import { randomUUID } from "node:crypto";
@@ -246,58 +247,81 @@ export class AuthService {
 		this.logger.log(
 			`Permission change for ${did}: dropping every session except ${retainedSessionId.slice(0, 8)}…`,
 		);
-		await this.prisma.$transaction(async (tx) => {
-			if (preferences.watchPrivacyEnabled === false) {
-				const rows = await tx.$queryRaw<
-					{ locked: boolean }[]
-				>`SELECT pg_try_advisory_xact_lock(hashtextextended(${did}, 252)) AS locked`;
-				if (!rows[0]?.locked)
-					throw new ConflictException(
-						"Another Watch operation is in progress. Reconnect and try again.",
-					);
-				const owner = await tx.user.findUnique({
-					where: { did },
-					select: {
-						watchPrivacyEnabled: true,
-						watchVisibility: true,
-						watchPrivacyMigration: { select: { jobId: true } },
-						listsDefaultVisibility: true,
-						privacyScopes: {
-							where: {
-								OR: [
-									{ visibility: "private" },
-									{ targetVisibility: { not: null } },
-								],
+		const log = createAccountLockLog(this.logger, {
+			ownerDid: did,
+			operation: "AuthService.completePermissionChange",
+			mode: "exclusive",
+			scope: "watches",
+		});
+		let locked = false;
+		await this.prisma
+			.$transaction(async (tx) => {
+				if (preferences.watchPrivacyEnabled === false) {
+					log("acquiring", 252, false);
+					const rows = await tx.$queryRaw<
+						{ locked: boolean }[]
+					>`SELECT pg_try_advisory_xact_lock(hashtextextended(${did}, 252)) AS locked`;
+					if (!rows[0]?.locked) {
+						log("busy", 252, false);
+						throw new ConflictException(
+							"Another Watch operation is in progress. Reconnect and try again.",
+						);
+					}
+					locked = true;
+					log("acquired", 252, false);
+					const owner = await tx.user.findUnique({
+						where: { did },
+						select: {
+							watchPrivacyEnabled: true,
+							watchVisibility: true,
+							watchPrivacyMigration: { select: { jobId: true } },
+							listsDefaultVisibility: true,
+							privacyScopes: {
+								where: {
+									OR: [
+										{ visibility: "private" },
+										{ targetVisibility: { not: null } },
+									],
+								},
+								select: { id: true },
 							},
-							select: { id: true },
 						},
+					});
+					if (
+						owner?.watchPrivacyEnabled &&
+						(owner.watchVisibility !== "public" ||
+							owner.watchPrivacyMigration ||
+							owner.listsDefaultVisibility === "private" ||
+							owner.privacyScopes?.length)
+					)
+						throw new ConflictException(
+							"Finish making all content and the new-List default Public before disconnecting Private data access.",
+						);
+				}
+				await tx.user.update({
+					where: { did },
+					data: {
+						privateSettingsEnabled: Boolean(preferences.privateSettingsEnabled),
+						watchPrivacyEnabled: Boolean(preferences.watchPrivacyEnabled),
+						blogIntegrationEnabled: Boolean(preferences.blogEnabled),
+						blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
+						popfeedWriteEnabled: Boolean(preferences.popfeedEnabled),
 					},
 				});
-				if (
-					owner?.watchPrivacyEnabled &&
-					(owner.watchVisibility !== "public" ||
-						owner.watchPrivacyMigration ||
-						owner.listsDefaultVisibility === "private" ||
-						owner.privacyScopes?.length)
-				)
-					throw new ConflictException(
-						"Finish making all content and the new-List default Public before disconnecting Private data access.",
-					);
-			}
-			await tx.user.update({
-				where: { did },
-				data: {
-					privateSettingsEnabled: Boolean(preferences.privateSettingsEnabled),
-					watchPrivacyEnabled: Boolean(preferences.watchPrivacyEnabled),
-					blogIntegrationEnabled: Boolean(preferences.blogEnabled),
-					blueskyCrossPostEnabled: Boolean(preferences.blueskyEnabled),
-					popfeedWriteEnabled: Boolean(preferences.popfeedEnabled),
+				await tx.authSession.deleteMany({
+					where: { userDid: did, id: { not: retainedSessionId } },
+				});
+			})
+			.then(
+				() => {
+					if (locked) log("released", 252, false);
 				},
-			});
-			await tx.authSession.deleteMany({
-				where: { userDid: did, id: { not: retainedSessionId } },
-			});
-		});
+				(error: unknown) => {
+					if (preferences.watchPrivacyEnabled === false)
+						log("transaction_failed", 252, false);
+					throw error;
+				},
+			);
 		this.sessions.evictAllExcept(retainedSessionId);
 	}
 

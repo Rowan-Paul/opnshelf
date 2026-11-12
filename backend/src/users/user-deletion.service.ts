@@ -436,7 +436,10 @@ export class UserDeletionService {
 					}
 					return true;
 				},
-				{ operationName: "account-deletion.deletePdsRecordsWithProgress" },
+				{
+					operationName:
+						"account-deletion.deletePdsRecordsWithProgress.watches",
+				},
 			);
 			if (!complete) return false;
 		}
@@ -483,7 +486,10 @@ export class UserDeletionService {
 					}
 					return true;
 				},
-				{ operationName: "account-deletion.deletePdsRecordsWithProgress" },
+				{
+					operationName:
+						"account-deletion.deletePdsRecordsWithProgress.content",
+				},
 			);
 			if (!complete) return false;
 		}

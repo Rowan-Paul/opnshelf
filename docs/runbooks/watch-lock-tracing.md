@@ -2,7 +2,7 @@
 
 Backend runtime logs contain JSON `account_lock.*` events from `WatchAccountLock`.
 They cover interactive Watch writes, integration snapshots and transfers, content
-polling and migrations, and account deletion. No lock semantics change.
+polling and migrations, account deletion, and permission changes. No lock semantics change.
 
 1. Find the failed request using the PostHog event's `request_id`. Its lock events
    use the same value as `requestId`.
@@ -25,11 +25,17 @@ privacy barrier, so follow each namespace separately.
 the database call failed, including a bounded wait timing out; it does not prove
 ownership. `discarded` means the connection was invalidated, not that an unlock
 was confirmed. `admission_busy`, `queue_full` and `connection_failed` describe
-capacity failures before account lock acquisition.
+capacity failures before account lock acquisition. Permission changes use a
+transaction lock: `released` is logged after successful transaction completion;
+`transaction_failed` means the transaction rejected and its outcome may require
+checking, so it is not reported as a confirmed release. `connection_invalidated`
+marks an unusable session, including an acquisition with an unknown outcome.
+`finished` marks the end of an invocation after cleanup on a healthy connection;
+it does not mean the business operation succeeded.
 
 `lockId` identifies one invocation across its barrier and scoped writes.
 `elapsedMs` measures time since that invocation began. `accountHash` is the
-SHA-256 of the DID, allowing correlation without logging the DID or record
-content. HTTP operations carry `requestId`; background operations have null.
+SHA-256 of the DID, a stable pseudonym rather than anonymization: an operator
+with a known DID can compute its hash. Record content is not logged. HTTP operations carry `requestId`; background operations have null.
 Logs contain no request bodies, credentials, record identifiers or upstream
 error messages. These events are available only after deploying this change.
