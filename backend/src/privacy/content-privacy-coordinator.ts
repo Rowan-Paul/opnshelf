@@ -100,7 +100,11 @@ export class ContentPrivacyCoordinator {
 			);
 		};
 		const parent = watchOperation.getStore();
-		return parent?.did === did ? run(parent.signal) : this.locks.run(did, run);
+		return parent?.did === did
+			? run(parent.signal)
+			: this.locks.run(did, run, {
+					operationName: "content-privacy-coordinator.write",
+				});
 	}
 	async prepareNewList(did: string, rkey: string) {
 		const context = watchOperation.getStore();
@@ -140,13 +144,17 @@ export class ContentPrivacyCoordinator {
 		totalRecords?: number,
 	) {
 		this.confirmPublication(target, confirmed);
-		return this.locks.run(did, async () => {
-			await this.assertAccount(did);
-			return this.prisma.$transaction(async (tx) => {
-				await tx.$queryRaw`SELECT did FROM "User" WHERE did = ${did} FOR UPDATE`;
-				return this.queue(tx, did, category, target, listRkey, totalRecords);
-			});
-		});
+		return this.locks.run(
+			did,
+			async () => {
+				await this.assertAccount(did);
+				return this.prisma.$transaction(async (tx) => {
+					await tx.$queryRaw`SELECT did FROM "User" WHERE did = ${did} FOR UPDATE`;
+					return this.queue(tx, did, category, target, listRkey, totalRecords);
+				});
+			},
+			{ operationName: "content-privacy-coordinator.start" },
+		);
 	}
 	/** Acceptance is atomic: the worker cannot start one List between requests
 	 * for the remaining Lists and their default. Preflight happens before this. */
@@ -158,18 +166,22 @@ export class ContentPrivacyCoordinator {
 		totals: Record<string, number | undefined> = {},
 	) {
 		this.confirmPublication(target, confirmed);
-		return this.locks.run(did, async () => {
-			await this.assertAccount(did);
-			return this.prisma.$transaction(async (tx) => {
-				await tx.$queryRaw`SELECT did FROM "User" WHERE did = ${did} FOR UPDATE`;
-				for (const rkey of rkeys)
-					await this.queue(tx, did, "lists", target, rkey, totals[rkey]);
-				await tx.user.update({
-					where: { did },
-					data: { listsDefaultVisibility: target },
+		return this.locks.run(
+			did,
+			async () => {
+				await this.assertAccount(did);
+				return this.prisma.$transaction(async (tx) => {
+					await tx.$queryRaw`SELECT did FROM "User" WHERE did = ${did} FOR UPDATE`;
+					for (const rkey of rkeys)
+						await this.queue(tx, did, "lists", target, rkey, totals[rkey]);
+					await tx.user.update({
+						where: { did },
+						data: { listsDefaultVisibility: target },
+					});
 				});
-			});
-		});
+			},
+			{ operationName: "content-privacy-coordinator.startAllLists" },
+		);
 	}
 	private confirmPublication(target: PrivacyVisibility, confirmed: boolean) {
 		if (target === "public" && !confirmed)
@@ -221,15 +233,19 @@ export class ContentPrivacyCoordinator {
 		});
 	}
 	async retry(did: string, category: ContentCategory, listRkey?: string) {
-		return this.locks.run(did, async () => {
-			await this.assertAccount(did);
-			const current = await this.scope(did, category, listRkey);
-			if (!current?.migrationId)
-				throw new NotFoundException("Privacy change not found");
-			return this.prisma.privacyScope.update({
-				where: { id: current.id },
-				data: { status: "queued", error: null },
-			});
-		});
+		return this.locks.run(
+			did,
+			async () => {
+				await this.assertAccount(did);
+				const current = await this.scope(did, category, listRkey);
+				if (!current?.migrationId)
+					throw new NotFoundException("Privacy change not found");
+				return this.prisma.privacyScope.update({
+					where: { id: current.id },
+					data: { status: "queued", error: null },
+				});
+			},
+			{ operationName: "content-privacy-coordinator.retry" },
+		);
 	}
 }
