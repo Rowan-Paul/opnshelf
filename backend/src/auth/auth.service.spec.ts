@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { captureProductEvent } from "../analytics/capture";
 vi.mock("../analytics/capture", () => ({ captureProductEvent: vi.fn() }));
 import { mockEnvironment } from "../../test/env";
@@ -441,6 +442,20 @@ describe("AuthService", () => {
 	});
 
 	describe("completePermissionChange", () => {
+		let lockEvents: {
+			event: string;
+			operation: string;
+			namespace: number;
+			lockId: string;
+		}[];
+		beforeEach(() => {
+			lockEvents = [];
+			vi.spyOn(Logger.prototype, "log").mockImplementation((message) => {
+				if (typeof message === "string" && message.startsWith("{"))
+					lockEvents.push(JSON.parse(message));
+			});
+		});
+		afterEach(() => vi.restoreAllMocks());
 		it.each([
 			{ locked: false, visibility: "public", migration: null },
 			{ locked: true, visibility: "private", migration: null },
@@ -483,6 +498,11 @@ describe("AuthService", () => {
 				).rejects.toThrow();
 				expect(tx.user.update).not.toHaveBeenCalled();
 				expect(tx.authSession.deleteMany).not.toHaveBeenCalled();
+				expect(lockEvents.map((entry) => entry.event)).toEqual([
+					"account_lock.acquiring",
+					locked ? "account_lock.acquired" : "account_lock.busy",
+					"account_lock.transaction_failed",
+				]);
 			},
 		);
 		it("disconnects Watch access after Watches are Public", async () => {
@@ -499,7 +519,12 @@ describe("AuthService", () => {
 				authSession: { deleteMany: vi.fn() },
 			};
 			mockPrismaService.$transaction.mockImplementation(
-				async (fn: (tx: unknown) => Promise<void>) => fn(tx),
+				async (fn: (tx: unknown) => Promise<void>) => {
+					await fn(tx);
+					expect(
+						lockEvents.some((entry) => entry.event === "account_lock.released"),
+					).toBe(false);
+				},
 			);
 			await service.completePermissionChange("did:plc:abc123", "retained", {
 				watchPrivacyEnabled: false,
@@ -510,6 +535,16 @@ describe("AuthService", () => {
 				}),
 			);
 			expect(tx.authSession.deleteMany).toHaveBeenCalled();
+			expect(lockEvents.map((entry) => entry.event)).toEqual([
+				"account_lock.acquiring",
+				"account_lock.acquired",
+				"account_lock.released",
+			]);
+			expect(new Set(lockEvents.map((entry) => entry.lockId)).size).toBe(1);
+			expect(lockEvents.at(-1)).toMatchObject({
+				operation: "AuthService.completePermissionChange",
+				namespace: 252,
+			});
 		});
 
 		it("saves the account-wide preferences and drops every other session", async () => {

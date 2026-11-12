@@ -178,7 +178,7 @@ export class UserDeletionService {
 			this.watchPrivacy.withAccountLock(
 				did,
 				() => this.createDeletionJobLocked(did, deletePdsData),
-				{ wait: true },
+				{ wait: true, operationName: "account-deletion.createDeletionJob" },
 			),
 		);
 	}
@@ -436,6 +436,10 @@ export class UserDeletionService {
 					}
 					return true;
 				},
+				{
+					operationName:
+						"account-deletion.deletePdsRecordsWithProgress.watches",
+				},
 			);
 			if (!complete) return false;
 		}
@@ -481,6 +485,10 @@ export class UserDeletionService {
 						}
 					}
 					return true;
+				},
+				{
+					operationName:
+						"account-deletion.deletePdsRecordsWithProgress.content",
 				},
 			);
 			if (!complete) return false;

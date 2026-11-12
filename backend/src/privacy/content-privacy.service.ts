@@ -381,7 +381,11 @@ export class ContentPrivacyService {
 					throw error;
 				}
 			},
-			{ mode: "write", scope: "content" },
+			{
+				mode: "write",
+				scope: "content",
+				operationName: "content-privacy.service.runMigration",
+			},
 		);
 	}
 	async sync(id: string) {
@@ -435,7 +439,11 @@ export class ContentPrivacyService {
 					});
 				});
 			},
-			{ mode: "write", scope: "content" },
+			{
+				mode: "write",
+				scope: "content",
+				operationName: "content-privacy.service.sync",
+			},
 		);
 	}
 	async tick() {

@@ -31,10 +31,13 @@ export class WatchWriteInterceptor implements NestInterceptor {
 	intercept(context: ExecutionContext, next: CallHandler) {
 		const { user } = context.switchToHttp().getRequest<AuthenticatedRequest>();
 		return defer(() =>
-			this.coordinator.write(user.did, (visibility, signal) =>
-				watchOperation.run({ did: user.did, visibility, signal }, () =>
-					lastValueFrom(next.handle()),
-				),
+			this.coordinator.write(
+				user.did,
+				(visibility, signal) =>
+					watchOperation.run({ did: user.did, visibility, signal }, () =>
+						lastValueFrom(next.handle()),
+					),
+				`${context.getClass().name}.${context.getHandler().name}`,
 			),
 		);
 	}

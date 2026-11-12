@@ -27,7 +27,10 @@ export class WatchPrivacyCoordinator {
 			tx: Prisma.TransactionClient,
 			signal: AbortSignal,
 		) => Promise<T>,
-		{ wait = false }: { wait?: boolean } = {},
+		{
+			wait = false,
+			operationName = "watch.transaction",
+		}: { wait?: boolean; operationName?: string } = {},
 	): Promise<T> {
 		return this.locks.run(
 			ownerDid,
@@ -59,7 +62,7 @@ export class WatchPrivacyCoordinator {
 					await work?.catch(() => {});
 				}
 			},
-			{ wait },
+			{ wait, operationName },
 		);
 	}
 
@@ -68,8 +71,13 @@ export class WatchPrivacyCoordinator {
 	async write<T>(
 		ownerDid: string,
 		operation: (visibility: WatchVisibility, signal: AbortSignal) => Promise<T>,
+		operationName = "watch.write",
 	) {
-		return this.run(ownerDid, operation, { wait: true, mode: "write" });
+		return this.run(ownerDid, operation, {
+			wait: true,
+			mode: "write",
+			operationName,
+		});
 	}
 
 	/** Read repositories without holding the Watch mutex; local projection work
@@ -82,7 +90,10 @@ export class WatchPrivacyCoordinator {
 			withWrite: WithAccountWrite,
 		) => Promise<T>,
 	) {
-		return this.run(ownerDid, operation, { mode: "shared" });
+		return this.run(ownerDid, operation, {
+			mode: "shared",
+			operationName: "watch.sync",
+		});
 	}
 
 	private async run<T>(
@@ -92,7 +103,11 @@ export class WatchPrivacyCoordinator {
 			signal: AbortSignal,
 			withWrite: WithAccountWrite,
 		) => Promise<T>,
-		options: { wait?: boolean; mode: "write" | "shared" },
+		options: {
+			wait?: boolean;
+			mode: "write" | "shared";
+			operationName: string;
+		},
 	) {
 		return this.locks.run(
 			ownerDid,
@@ -143,74 +158,82 @@ export class WatchPrivacyCoordinator {
 			throw new ConflictException(
 				"Confirm publication before making Watches public.",
 			);
-		return this.withAccountLock(ownerDid, async (tx) => {
-			const user = await tx.user.findUnique({
-				where: { did: ownerDid },
-				select: { watchVisibility: true },
-			});
-			if (!user) throw new NotFoundException("Account not found");
-			const existing = await tx.watchPrivacyMigration.findUnique({
-				where: { userDid: ownerDid },
-				include: { job: true },
-			});
-			if (existing) {
-				if (existing.targetVisibility !== target)
+		return this.withAccountLock(
+			ownerDid,
+			async (tx) => {
+				const user = await tx.user.findUnique({
+					where: { did: ownerDid },
+					select: { watchVisibility: true },
+				});
+				if (!user) throw new NotFoundException("Account not found");
+				const existing = await tx.watchPrivacyMigration.findUnique({
+					where: { userDid: ownerDid },
+					include: { job: true },
+				});
+				if (existing) {
+					if (existing.targetVisibility !== target)
+						throw new ConflictException(
+							"Finish the current privacy change before reversing it.",
+						);
+					return existing.job;
+				}
+				if (user.watchVisibility === target) return null;
+				const otherJob = await tx.backgroundJob.findFirst({
+					where: {
+						userDid: ownerDid,
+						type: "account_deletion",
+						status: { in: ACTIVE_JOB_STATUSES },
+					},
+					select: { id: true },
+				});
+				if (otherJob)
 					throw new ConflictException(
-						"Finish the current privacy change before reversing it.",
+						"Finish account deletion before changing Watch privacy.",
 					);
-				return existing.job;
-			}
-			if (user.watchVisibility === target) return null;
-			const otherJob = await tx.backgroundJob.findFirst({
-				where: {
-					userDid: ownerDid,
-					type: "account_deletion",
-					status: { in: ACTIVE_JOB_STATUSES },
-				},
-				select: { id: true },
-			});
-			if (otherJob)
-				throw new ConflictException(
-					"Finish account deletion before changing Watch privacy.",
-				);
-			await tx.user.update({
-				where: { did: ownerDid },
-				data: { watchPrivacyManaged: true },
-			});
-			return tx.backgroundJob.create({
-				data: {
-					type: WATCH_PRIVACY_JOB_TYPE,
-					userDid: ownerDid,
-					status: "queued",
-					data: totalRecords == null ? {} : { totalRecords },
-					watchPrivacyMigration: {
-						create: {
-							userDid: ownerDid,
-							sourceVisibility: user.watchVisibility,
-							targetVisibility: target,
+				await tx.user.update({
+					where: { did: ownerDid },
+					data: { watchPrivacyManaged: true },
+				});
+				return tx.backgroundJob.create({
+					data: {
+						type: WATCH_PRIVACY_JOB_TYPE,
+						userDid: ownerDid,
+						status: "queued",
+						data: totalRecords == null ? {} : { totalRecords },
+						watchPrivacyMigration: {
+							create: {
+								userDid: ownerDid,
+								sourceVisibility: user.watchVisibility,
+								targetVisibility: target,
+							},
 						},
 					},
-				},
-			});
-		});
+				});
+			},
+			{ operationName: "watch-privacy-coordinator.start" },
+		);
 	}
 
 	async retry(ownerDid: string, jobId: string) {
-		return this.withAccountLock(ownerDid, async (tx) => {
-			await this.requireNoDeletion(tx, ownerDid);
-			const migration = await this.requireMigration(tx, ownerDid, jobId);
-			if (
-				migration.job.status !== "failed" &&
-				migration.job.status !== "waiting_retry" &&
-				migration.job.status !== "running" &&
-				migration.job.status !== "stopped_for_deletion"
-			)
-				return migration.job;
-			return tx.backgroundJob.update({
-				where: { id: jobId },
-				data: { status: "queued", lastError: null, nextRunAt: new Date() },
-			});
-		});
+		return this.withAccountLock(
+			ownerDid,
+			async (tx) => {
+				await this.requireNoDeletion(tx, ownerDid);
+				const migration = await this.requireMigration(tx, ownerDid, jobId);
+				if (
+					migration.job.status !== "failed" &&
+					migration.job.status !== "waiting_retry" &&
+					migration.job.status !== "running" &&
+					migration.job.status !== "stopped_for_deletion"
+				)
+					return migration.job;
+				return tx.backgroundJob.update({
+					where: { id: jobId },
+					data: { status: "queued", lastError: null, nextRunAt: new Date() },
+				});
+			},
+			{ operationName: "watch-privacy-coordinator.retry" },
+		);
 	}
 
 	/** Run one bounded batch. A crash leaves a durable running job which the next
@@ -223,43 +246,47 @@ export class WatchPrivacyCoordinator {
 		jobId: string,
 		operation: (target: WatchVisibility, signal: AbortSignal) => Promise<T>,
 	) {
-		return this.withAccountLock(ownerDid, async (tx, signal) => {
-			const migration = await this.requireMigration(tx, ownerDid, jobId);
-			await this.requireNoDeletion(tx, ownerDid);
-			if (!["queued", "running"].includes(migration.job.status))
-				throw new ConflictException("Privacy change is not ready to run.");
-			const target = migration.targetVisibility;
-			if (target !== "public" && target !== "private")
-				throw new Error("Invalid Watch visibility");
-			// Commit independently: the journal must see running, and must survive
-			// rollback of the outer lock transaction after an external PDS write.
-			await this.prisma.backgroundJob.update({
-				where: { id: jobId },
-				data: { status: "running", startedAt: new Date(), lastError: null },
-			});
-			try {
-				signal.throwIfAborted();
-				const result = await operation(target, signal);
-				signal.throwIfAborted();
-				await tx.backgroundJob.update({
-					where: { id: jobId },
-					data: { status: "queued" },
-				});
-				return result;
-			} catch (error) {
+		return this.withAccountLock(
+			ownerDid,
+			async (tx, signal) => {
+				const migration = await this.requireMigration(tx, ownerDid, jobId);
+				await this.requireNoDeletion(tx, ownerDid);
+				if (!["queued", "running"].includes(migration.job.status))
+					throw new ConflictException("Privacy change is not ready to run.");
+				const target = migration.targetVisibility;
+				if (target !== "public" && target !== "private")
+					throw new Error("Invalid Watch visibility");
+				// Commit independently: the journal must see running, and must survive
+				// rollback of the outer lock transaction after an external PDS write.
 				await this.prisma.backgroundJob.update({
 					where: { id: jobId },
-					data: {
-						status: "failed",
-						lastError:
-							error instanceof WatchMigrationConflict
-								? "A Watch changed during migration. Review the conflicting records before retrying."
-								: "The privacy change stopped safely. Reconnect and retry; recovery snapshots were retained.",
-					},
+					data: { status: "running", startedAt: new Date(), lastError: null },
 				});
-				throw error;
-			}
-		});
+				try {
+					signal.throwIfAborted();
+					const result = await operation(target, signal);
+					signal.throwIfAborted();
+					await tx.backgroundJob.update({
+						where: { id: jobId },
+						data: { status: "queued" },
+					});
+					return result;
+				} catch (error) {
+					await this.prisma.backgroundJob.update({
+						where: { id: jobId },
+						data: {
+							status: "failed",
+							lastError:
+								error instanceof WatchMigrationConflict
+									? "A Watch changed during migration. Review the conflicting records before retrying."
+									: "The privacy change stopped safely. Reconnect and retry; recovery snapshots were retained.",
+						},
+					});
+					throw error;
+				}
+			},
+			{ operationName: "watch-privacy-coordinator.batch" },
+		);
 	}
 
 	/** Verify while holding the independent account lock, then commit only local
@@ -275,54 +302,58 @@ export class WatchPrivacyCoordinator {
 		) => Promise<void>,
 		verify?: (target: WatchVisibility, signal: AbortSignal) => Promise<void>,
 	) {
-		return this.locks.run(ownerDid, async (lockSignal) => {
-			const signal = AbortSignal.any([
-				lockSignal,
-				AbortSignal.timeout(300_000),
-			]);
-			await this.requireNoDeletion(this.prisma, ownerDid);
-			const migration = await this.requireMigration(
-				this.prisma,
-				ownerDid,
-				jobId,
-			);
-			if (migration.job.status !== "queued")
-				throw new ConflictException(
-					"Verify the privacy change before finishing.",
+		return this.locks.run(
+			ownerDid,
+			async (lockSignal) => {
+				const signal = AbortSignal.any([
+					lockSignal,
+					AbortSignal.timeout(300_000),
+				]);
+				await this.requireNoDeletion(this.prisma, ownerDid);
+				const migration = await this.requireMigration(
+					this.prisma,
+					ownerDid,
+					jobId,
 				);
-			const target = migration.targetVisibility;
-			if (target !== "public" && target !== "private")
-				throw new Error("Invalid Watch visibility");
-			await verify?.(target, signal);
-			signal.throwIfAborted();
-			await this.prisma.$transaction(
-				async (tx) => {
-					await this.requireNoDeletion(tx, ownerDid);
-					const current = await this.requireMigration(tx, ownerDid, jobId);
-					if (current.job.status !== "queued")
-						throw new ConflictException(
-							"Privacy change is not ready to finish.",
-						);
-					await reconcile(tx, target, signal);
-					signal.throwIfAborted();
-					await tx.user.update({
-						where: { did: ownerDid },
-						data: { watchVisibility: target },
-					});
-					await tx.watchPrivacyCopy.deleteMany({ where: { jobId } });
-					await tx.watchPrivacyMigration.delete({ where: { jobId } });
-					await tx.backgroundJob.update({
-						where: { id: jobId },
-						data: {
-							status: "completed",
-							completedAt: new Date(),
-							lastError: null,
-						},
-					});
-				},
-				{ timeout: 30_000, maxWait: 5000 },
-			);
-		});
+				if (migration.job.status !== "queued")
+					throw new ConflictException(
+						"Verify the privacy change before finishing.",
+					);
+				const target = migration.targetVisibility;
+				if (target !== "public" && target !== "private")
+					throw new Error("Invalid Watch visibility");
+				await verify?.(target, signal);
+				signal.throwIfAborted();
+				await this.prisma.$transaction(
+					async (tx) => {
+						await this.requireNoDeletion(tx, ownerDid);
+						const current = await this.requireMigration(tx, ownerDid, jobId);
+						if (current.job.status !== "queued")
+							throw new ConflictException(
+								"Privacy change is not ready to finish.",
+							);
+						await reconcile(tx, target, signal);
+						signal.throwIfAborted();
+						await tx.user.update({
+							where: { did: ownerDid },
+							data: { watchVisibility: target },
+						});
+						await tx.watchPrivacyCopy.deleteMany({ where: { jobId } });
+						await tx.watchPrivacyMigration.delete({ where: { jobId } });
+						await tx.backgroundJob.update({
+							where: { id: jobId },
+							data: {
+								status: "completed",
+								completedAt: new Date(),
+								lastError: null,
+							},
+						});
+					},
+					{ timeout: 30_000, maxWait: 5000 },
+				);
+			},
+			{ operationName: "watch-privacy-coordinator.finish" },
+		);
 	}
 
 	/** Acquire this stop before requesting PDS account deletion. It waits for no
@@ -345,7 +376,10 @@ export class WatchPrivacyCoordinator {
 					},
 				});
 			},
-			options,
+			{
+				...options,
+				operationName: "watch-privacy-coordinator.stopForAccountDeletion",
+			},
 		);
 	}
 
@@ -373,7 +407,10 @@ export class WatchPrivacyCoordinator {
 				await tx.backgroundJob.deleteMany({ where: { id: { in: jobIds } } });
 				await deleteAccount(tx);
 			},
-			options,
+			{
+				...options,
+				operationName: "watch-privacy-coordinator.deleteLocalAccount",
+			},
 		);
 	}
 

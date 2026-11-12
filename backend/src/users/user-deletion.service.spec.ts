@@ -298,7 +298,7 @@ describe("UserDeletionService", () => {
 			expect(watch.withAccountLock).toHaveBeenCalledWith(
 				"did:plc:test",
 				expect.any(Function),
-				{ wait: true },
+				{ wait: true, operationName: "account-deletion.createDeletionJob" },
 			);
 		});
 	});

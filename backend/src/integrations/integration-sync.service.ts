@@ -1320,6 +1320,7 @@ export abstract class IntegrationSyncService<Credential>
 		c: IntegrationConnection,
 		work: (signal: AbortSignal, withWrite: WithAccountWrite) => Promise<T>,
 		mode: AccountLockMode = "exclusive",
+		phase = "snapshot",
 	): Promise<T> {
 		return this.watchLocks.run(
 			c.userDid,
@@ -1354,7 +1355,7 @@ export abstract class IntegrationSyncService<Credential>
 					() => work(signal, withWrite),
 				);
 			},
-			{ mode },
+			{ mode, operationName: `${this.provider}.${phase}` },
 		);
 	}
 
@@ -1721,6 +1722,7 @@ export abstract class IntegrationSyncService<Credential>
 						return true;
 					},
 					decision === "push" ? "shared" : "exclusive",
+					`transfer.${decision}`,
 				);
 				if (!transferred) {
 					stopped = true;
