@@ -49,10 +49,21 @@ it("leaves the Lists to the browser when SSR cannot tell who is asking", async (
 });
 
 it("fetches the Lists with the viewer's session under the browser's query key", async () => {
-	viewer.fetch = vi.fn() as unknown as typeof globalThis.fetch;
+	const sessionFetch = vi.fn(async () => Response.json([]));
+	viewer.fetch = sessionFetch as unknown as typeof globalThis.fetch;
 	const { ensureQueryData } = await runLoader();
 	const withSession = ensureQueryData.mock.calls[1]?.[0];
 	expect(JSON.stringify(withSession?.queryKey)).toContain(profile.did);
+
+	// The request itself has to go through the session-carrying fetch: a
+	// matching key alone would also pass for a signed-out read.
+	const queryFn = withSession?.queryFn;
+	if (typeof queryFn !== "function") throw new Error("Expected a queryFn");
+	await queryFn({
+		queryKey: withSession?.queryKey,
+		signal: new AbortController().signal,
+	} as Parameters<typeof queryFn>[0]);
+	expect(sessionFetch).toHaveBeenCalledTimes(1);
 
 	viewer.fetch = undefined;
 	const anonymous = (await runLoader()).ensureQueryData.mock.calls[1]?.[0];
