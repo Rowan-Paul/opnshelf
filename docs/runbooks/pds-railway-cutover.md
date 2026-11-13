@@ -9,11 +9,11 @@ Create project `opnshelf-pds` in EU West / Amsterdam. It contains only:
 | Service | Source / image | Persistent state | Connectivity |
 | --- | --- | --- | --- |
 | `postgres` | Railway Postgres | dedicated PDS database | private to Tranquil |
-| `tranquil-pds` | `rowanpaul/tranquil-pds:latest` | Railway Bucket, S3 backend | public `opnshelf.social` and `*.opnshelf.social` |
+| `tranquil-pds` | `rowanpaul/tranquil-pds`, pinned to an image digest | Railway Bucket, S3 backend | public `opnshelf.social` and `*.opnshelf.social` |
 | `mail-relay` | `services/mail-relay/Dockerfile` | none | private SMTP from Tranquil |
 | `pds-operator` | `rowanpaul/pds-operator:latest` | `/data` volume | public `operator.opnshelf.xyz` |
 
-Keep Web, Server, Tap, and application Postgres in the existing `opnshelf` project. Set Railway image services to automatically update Docker images and configure an HTTP health check before enabling that setting: Tranquil `GET /xrpc/_health`; PDS Operator `GET /`.
+Keep Web, Server, Tap, and application Postgres in the existing `opnshelf` project. Configure an HTTP health check on both image services: Tranquil `GET /xrpc/_health`; PDS Operator `GET /`. Set PDS Operator to automatically update its Docker image once its health check is in place. Keep automatic updates off for Tranquil: a new image can carry a database migration, so an operator switches the pinned digest after the backup and stopped-replica steps in the fork's `docs/8_SPACES_OPERATIONS.md`.
 
 The PDS database uses no scheduled backup or PITR. The Railway blob bucket has no versioning or secondary replica. These are accepted limitations, not omitted checklist items.
 

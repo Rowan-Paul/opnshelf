@@ -1,5 +1,8 @@
 # Builds the Tranquil PDS fork image and publishes it directly to Docker Hub.
-# Railway follows `latest`; do not add a repository pin-bump or promotion step here.
+# Publishing does not deploy: the Railway service is pinned to an image digest with
+# automatic updates off, and an operator switches the digest after the backup and
+# stopped-replica steps in the fork's docs/8_SPACES_OPERATIONS.md. Do not add a
+# repository pin-bump or promotion step here.
 name: tranquil-image
 
 on:
