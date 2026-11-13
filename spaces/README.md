@@ -16,6 +16,10 @@ The declaration shapes were checked against the pinned reference alpha image's
 The Backend declaration tests verify their keys and collection lists; they are
 not part of the workspace formatting gate.
 
+The declarations name their consent-screen label `title`, as the November 12
+alpha requires. A Tranquil PDS older than its November 12 update rejects a
+declaration without `name`, so deploy that PDS update before republishing.
+
 Publish only with explicit operator approval, before enabling Privacy Alpha in
 production. The authority account must publish these as
 `com.atproto.lexicon.schema` records, with their NSIDs as record keys, and the

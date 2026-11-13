@@ -48,6 +48,12 @@ Verified 2026-10-07: all six collections passed against
 `ghcr.io/bluesky-social/atproto:pds-spaces-alpha` at digest
 `sha256:1cf9349e9f0e89789784569fed376cd647742ea7c368948625f44779ba03f150`.
 
+Verified 2026-11-13 with `pnpm test:privacy-reference`: declined consent, OAuth
+and all six collections passed against the November 12 alpha at index digest
+`sha256:1b3113b40eac2581b8f928bcec8840c8a0912c3a3d90bf3b965a775f8a97067a`. That
+release renames a declaration's `name` to `title` and the provider sign-in field
+`username` to `identifier`; the declarations and the check follow both.
+
 ## Local application verification (2026-10-07)
 
 The disposable Tranquil stack at `http://127.0.0.1:3000/settings/privacy` was

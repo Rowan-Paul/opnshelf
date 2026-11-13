@@ -4,7 +4,7 @@
   "defs": {
     "main": {
       "type": "space",
-      "name": "Opnshelf Lists",
+      "title": "Opnshelf Lists",
       "collections": [
         "xyz.opnshelf.list",
         "xyz.opnshelf.list.item"
