@@ -4,7 +4,7 @@
   "defs": {
     "main": {
       "type": "space",
-      "name": "Opnshelf Watches",
+      "title": "Opnshelf Watches",
       "collections": [
         "xyz.opnshelf.movie",
         "xyz.opnshelf.episode"

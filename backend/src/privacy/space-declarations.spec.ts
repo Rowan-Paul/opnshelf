@@ -28,7 +28,7 @@ describe("published Space declarations", () => {
 				key: category === "lists" ? "any" : "literal:self",
 				collections: config.collections,
 			});
-			expect(document.defs.main.name.length).toBeGreaterThan(0);
+			expect(document.defs.main.title.length).toBeGreaterThan(0);
 		},
 	);
 	it("keeps a declaration for authorizing retired Settings cleanup", () => {
