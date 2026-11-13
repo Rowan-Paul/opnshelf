@@ -1,6 +1,13 @@
+import { Logger } from "@nestjs/common";
+import { requestContext } from "../common/request-id";
 import { EventEmitter } from "node:events";
 import type { Pool } from "pg";
 import { WatchAccountBusyError, WatchAccountLock } from "./watch-account-lock";
+
+beforeEach(() =>
+	vi.spyOn(Logger.prototype, "log").mockImplementation(() => {}),
+);
+afterEach(() => vi.restoreAllMocks());
 
 function fixture() {
 	const client = Object.assign(new EventEmitter(), {
@@ -113,6 +120,7 @@ it("holds the privacy barrier while releasing the local write mutex before remot
 			expect(f.client.query.mock.calls.map(([query]) => query.text)).toEqual([
 				"SELECT pg_try_advisory_lock_shared(hashtextextended($1, 252)) AS acquired",
 				"SELECT pg_try_advisory_lock(hashtextextended($1, 253)) AS acquired",
+				'UPDATE "User" SET "watchWriteGeneration" = "watchWriteGeneration" + 1 WHERE did = $1',
 				"SELECT pg_advisory_unlock(hashtextextended($1, 253))",
 			]);
 		},
@@ -165,4 +173,129 @@ it("aborts and discards the session if the scoped write mutex cannot be released
 	).rejects.toThrow("unlock timeout");
 	expect(remote).not.toHaveBeenCalled();
 	expect(f.client.release).toHaveBeenCalledWith(true);
+});
+
+it.each(["connect", "work"] as const)(
+	"releases remote admission after a %s failure",
+	async (failure) => {
+		const f = fixture();
+		f.client.query.mockResolvedValue({ rows: [{ acquired: true }] });
+		if (failure === "connect")
+			f.pool.connect.mockRejectedValueOnce(new Error("offline"));
+		await expect(
+			f.lock.run(
+				"did:plc:owner",
+				async () => {
+					throw new Error("failed work");
+				},
+				{ mode: "shared" },
+			),
+		).rejects.toThrow();
+		await expect(
+			f.lock.run("did:plc:owner", async () => "retry", { mode: "shared" }),
+		).resolves.toBe("retry");
+	},
+);
+
+function capturedLogs() {
+	const spy = vi.spyOn(Logger.prototype, "log").mockImplementation(() => {});
+	return () => spy.mock.calls.map(([message]) => JSON.parse(message as string));
+}
+
+it("correlates the holder and a timed-out waiter across lock instances", async () => {
+	const logs = capturedLogs();
+	const holder = fixture();
+	const waiter = fixture();
+	holder.client.query.mockResolvedValue({ rows: [{ acquired: true }] });
+	waiter.client.query.mockRejectedValue(new Error("Query read timeout"));
+	await holder.lock.run(
+		"did:plc:owner",
+		async () => {
+			await requestContext.run({ requestId: "request-123" }, async () => {
+				await expect(
+					waiter.lock.run("did:plc:owner", async () => {}, {
+						wait: true,
+						mode: "write",
+						operationName: "watch.write",
+					}),
+				).rejects.toBeInstanceOf(WatchAccountBusyError);
+			});
+			expect(logs()).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						event: "account_lock.acquired",
+						operation: "trakt.snapshot",
+						namespace: 252,
+						shared: false,
+					}),
+					expect.objectContaining({
+						event: "account_lock.acquisition_failed",
+						operation: "watch.write",
+						requestId: "request-123",
+						namespace: 252,
+						shared: true,
+					}),
+				]),
+			);
+		},
+		{ operationName: "trakt.snapshot" },
+	);
+	const acquired = logs().find(
+		(entry) => entry.event === "account_lock.acquired",
+	);
+	const failed = logs().find(
+		(entry) => entry.event === "account_lock.acquisition_failed",
+	);
+	expect(acquired.accountHash).toBe(failed.accountHash);
+	expect(acquired.lockId).not.toBe(failed.lockId);
+	expect(
+		logs()
+			.filter((entry) => entry.lockId === failed.lockId)
+			.map((entry) => entry.event),
+	).toEqual([
+		"account_lock.acquiring",
+		"account_lock.acquisition_failed",
+		"account_lock.connection_invalidated",
+		"account_lock.discarded",
+	]);
+	expect(
+		logs().find((entry) => entry.event === "account_lock.released"),
+	).toMatchObject({ lockId: acquired.lockId, namespace: 252 });
+	expect(JSON.stringify(logs())).not.toContain("did:plc:owner");
+});
+
+it("logs each scoped write release before the shared operation finishes", async () => {
+	const logs = capturedLogs();
+	const f = fixture();
+	f.client.query.mockResolvedValue({ rows: [{ acquired: true }] });
+	await f.lock.run(
+		"did:plc:owner",
+		async (_signal, withWrite) => {
+			await withWrite(async () => {});
+			expect(logs().at(-1)).toMatchObject({
+				event: "account_lock.released",
+				namespace: 254,
+			});
+		},
+		{ mode: "shared", scope: "content", operationName: "content.sync" },
+	);
+	expect(
+		logs()
+			.filter((entry) => entry.event === "account_lock.released")
+			.map((entry) => entry.namespace),
+	).toEqual([254, 252]);
+	expect(new Set(logs().map((entry) => entry.lockId)).size).toBe(1);
+});
+
+it("does not report a successful release when unlocking fails", async () => {
+	const logs = capturedLogs();
+	const f = fixture();
+	f.client.query
+		.mockResolvedValueOnce({ rows: [{ acquired: true }] })
+		.mockRejectedValueOnce(new Error("unlock timeout"));
+	await f.lock.run("did:plc:owner", async () => {});
+	expect(logs().some((entry) => entry.event === "account_lock.released")).toBe(
+		false,
+	);
+	expect(logs().at(-1)).toMatchObject({ event: "account_lock.discarded" });
 });

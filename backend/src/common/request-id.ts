@@ -1,5 +1,8 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import type { RequestHandler } from "express";
+
+export const requestContext = new AsyncLocalStorage<{ requestId: string }>();
 
 /**
  * Give every request a correlation ID. It is returned as X-Request-ID (CORS
@@ -15,5 +18,5 @@ export const assignRequestId: RequestHandler = (_request, response, next) => {
 	// Account data is never a shared cache entry. Explicit catalogue routes
 	// may override this header with their public metadata cache policy.
 	response.setHeader("Cache-Control", "private, no-store");
-	next();
+	requestContext.run({ requestId }, next);
 };

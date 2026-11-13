@@ -24,8 +24,8 @@ describe("List privacy write routing", () => {
 						params: { slug: "favorites" },
 					}),
 				}),
-				getHandler: vi.fn(),
-				getClass: vi.fn(),
+				getHandler: () => function update() {},
+				getClass: () => class ListsController {},
 			} as unknown as ExecutionContext;
 			const result = lastValueFrom(interceptor.intercept(context, next));
 			if (!list) {
@@ -39,6 +39,7 @@ describe("List privacy write routing", () => {
 					"lists",
 					"owned-list",
 					expect.any(Function),
+					"ListsController.update",
 				);
 			}
 			expect(findUnique).toHaveBeenCalledWith({

@@ -158,7 +158,9 @@ async function snapshot(db: PrismaClient) {
 		where: { key: { startsWith: `trakt:${FOREIGN}` } },
 		orderBy: { key: "asc" },
 	});
-	return JSON.stringify({ users, states });
+	return JSON.stringify({ users, states }, (_key, value) =>
+		typeof value === "bigint" ? value.toString() : value,
+	);
 }
 
 export async function setup() {

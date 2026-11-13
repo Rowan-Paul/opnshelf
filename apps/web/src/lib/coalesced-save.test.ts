@@ -51,6 +51,41 @@ describe("createCoalescedSaver", () => {
 		expect(save).toHaveBeenCalledTimes(1);
 	});
 
+	it("keeps coalescing edits while a queued save is in flight", async () => {
+		const first = deferred<void>();
+		const second = deferred<void>();
+		const third = deferred<void>();
+		const save = vi.fn<(v: number[]) => Promise<void>>();
+		save
+			.mockReturnValueOnce(first.promise)
+			.mockReturnValueOnce(second.promise)
+			.mockReturnValueOnce(third.promise);
+		const saver = createCoalescedSaver(save, sameIdSet);
+
+		saver.submit([8]);
+		saver.submit([8, 337]);
+		first.resolve();
+		await tick();
+		expect(save).toHaveBeenCalledTimes(2);
+		expect(save).toHaveBeenLastCalledWith([8, 337]);
+		expect(saver.isDirty()).toBe(true);
+
+		saver.submit([337]);
+		saver.submit([337, 2]);
+		expect(save).toHaveBeenCalledTimes(2);
+
+		second.resolve();
+		await tick();
+		expect(save).toHaveBeenCalledTimes(3);
+		expect(save).toHaveBeenLastCalledWith([337, 2]);
+		expect(saver.isDirty()).toBe(true);
+
+		third.resolve();
+		await tick();
+		expect(save).toHaveBeenCalledTimes(3);
+		expect(saver.isDirty()).toBe(false);
+	});
+
 	it("preserves queued writes after an undefined value", async () => {
 		const first = deferred<void>();
 		const save = vi.fn<(v: undefined) => Promise<void>>();

@@ -63,6 +63,8 @@ model User {
   watchSyncAttemptedAt DateTime?
   watchSyncedAt DateTime?
   watchSyncError String?
+  // Durable invalidation token for shared Watch write-mutex acquisitions.
+  watchWriteGeneration BigInt @default(0)
   privacyScopes PrivacyScope[]
   listsDefaultVisibility String @default("public")
   watchPrivacyManaged Boolean @default(false)

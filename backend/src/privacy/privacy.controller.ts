@@ -178,13 +178,17 @@ export class PrivacyController {
 			throw new ForbiddenException(
 				"Authorize Private data access before continuing.",
 			);
-		await this.locks.run(req.user.did, async () => {
-			await this.coordinator.assertAccount(req.user.did);
-			await this.prisma.user.update({
-				where: { did: req.user.did },
-				data: { listsDefaultVisibility: body.visibility },
-			});
-		});
+		await this.locks.run(
+			req.user.did,
+			async () => {
+				await this.coordinator.assertAccount(req.user.did);
+				await this.prisma.user.update({
+					where: { did: req.user.did },
+					data: { listsDefaultVisibility: body.visibility },
+				});
+			},
+			{ operationName: "privacy.controller.listsDefault" },
+		);
 		return this.status(req);
 	}
 	@Post("lists/change-all")
