@@ -84,10 +84,12 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 	private async collection(
 		credential: PopfeedCredential,
 		collection: string,
+		checkpoint?: () => void,
 	): Promise<PopfeedRecord[]> {
 		const records: PopfeedRecord[] = [];
 		let cursor: string | undefined;
 		for (let page = 0; page < MAX_PAGES; page++) {
+			checkpoint?.();
 			const query = new URLSearchParams({
 				repo: credential.did,
 				collection,
@@ -97,6 +99,7 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 			const data = pageSchema.parse(
 				await this.get(credential, `com.atproto.repo.listRecords?${query}`),
 			);
+			checkpoint?.();
 			records.push(...data.records);
 			if (!data.cursor || !data.records.length) return records;
 			cursor = data.cursor;
@@ -116,9 +119,11 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 	async snapshot(
 		credential: PopfeedCredential,
 		types: SyncRecordTypes = {},
+		_leaseId?: string,
+		checkpoint?: () => void,
 	): Promise<SyncRecord[]> {
 		return popfeedRecords(
-			await this.repository(credential),
+			await this.repository(credential, checkpoint),
 			types,
 			credential.timeZone,
 		);
@@ -129,8 +134,11 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 	 * A writer given a partial view could recreate a record it missed, so a
 	 * read the repository changed under stops the run instead.
 	 */
-	async repository(credential: PopfeedCredential): Promise<PopfeedRepository> {
-		const repository = await this.read(credential);
+	async repository(
+		credential: PopfeedCredential,
+		checkpoint?: () => void,
+	): Promise<PopfeedRepository> {
+		const repository = await this.read(credential, checkpoint);
 		if (!repository)
 			throw new SyncSnapshotChanged(
 				"Your Popfeed records changed during the read. Sync will read a fresh snapshot.",
@@ -149,24 +157,29 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 	 */
 	private async read(
 		credential: PopfeedCredential,
+		checkpoint?: () => void,
 	): Promise<PopfeedRepository | null> {
+		checkpoint?.();
 		const before = await this.revision(credential);
+		checkpoint?.();
 		if (credential.read?.rev === before) return credential.read.repository;
-		const repository = await this.collections(credential);
+		const repository = await this.collections(credential, checkpoint);
 		if ((await this.revision(credential)) !== before) return null;
+		checkpoint?.();
 		credential.read = { rev: before, repository };
 		return repository;
 	}
 
 	private async collections(
 		credential: PopfeedCredential,
+		checkpoint?: () => void,
 	): Promise<PopfeedRepository> {
-		const [listItems, reviews, lists] = await Promise.all([
-			this.collection(credential, LIST_ITEM),
-			this.collection(credential, REVIEW),
-			// List records name custom Lists and, on older items, carry the List role.
-			this.collection(credential, LIST),
-		]);
+		// Requests are already serialized by the PDS limiter. Read collections
+		// sequentially so a yield never leaves another collection reading behind.
+		const listItems = await this.collection(credential, LIST_ITEM, checkpoint);
+		const reviews = await this.collection(credential, REVIEW, checkpoint);
+		// List records name custom Lists and, on older items, carry the List role.
+		const lists = await this.collection(credential, LIST, checkpoint);
 		return { listItems, reviews, lists };
 	}
 

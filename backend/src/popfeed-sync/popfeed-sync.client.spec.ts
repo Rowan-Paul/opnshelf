@@ -93,3 +93,40 @@ it("never hands a writer a read the repository changed under", async () => {
 	);
 	expect(c.read).toBeUndefined();
 });
+
+it("yields between pages without caching a partial repository or reading more collections", async () => {
+	const stop = new Error("yield requested");
+	let requested = false;
+	const fetch = vi.fn(async (url: URL) => {
+		if (url.pathname.endsWith("com.atproto.sync.getLatestCommit"))
+			return Response.json({ cid: "cid-a", rev: "a" });
+		requested = true;
+		return Response.json({
+			records: [
+				{
+					uri: "at://did:plc:fixture/social.popfeed.feed.listItem/one",
+					value: {},
+				},
+			],
+			cursor: "more",
+		});
+	});
+	vi.stubGlobal("fetch", fetch);
+	const c = credential();
+	const client = new PopfeedSyncClient();
+	await expect(
+		client.snapshot(c, {}, "lease", () => {
+			if (requested) throw stop;
+		}),
+	).rejects.toBe(stop);
+	expect(fetch).toHaveBeenCalledTimes(2);
+	expect(c.read).toBeUndefined();
+	requested = false;
+	fetch.mockImplementation(async (url: URL) =>
+		url.pathname.endsWith("com.atproto.sync.getLatestCommit")
+			? Response.json({ cid: "cid-a", rev: "a" })
+			: Response.json({ records: [] }),
+	);
+	await client.snapshot(c);
+	expect(c.read?.rev).toBe("a");
+});
