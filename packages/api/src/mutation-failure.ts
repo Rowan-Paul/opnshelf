@@ -35,6 +35,10 @@ export interface MutationFailureReport {
 		mutation_key: string;
 		http_status: number | null;
 		error_name: string;
+		failure_reason: "http" | "aborted" | "timeout" | "network" | "unknown";
+		/** Observed client boundaries; null for errors outside the API client. */
+		request_created: boolean | null;
+		response_received: boolean | null;
 		request_id: string | null;
 		/** Registered server error code, e.g. SYNC_BUSY. */
 		error_code: string | null;
@@ -85,6 +89,9 @@ export function describeMutationFailure(
 			mutation_key: key,
 			http_status: status ?? null,
 			error_name: errorName(error),
+			failure_reason: failureReason(error),
+			request_created: booleanField(error, "apiRequestCreated"),
+			response_received: booleanField(error, "apiResponseReceived"),
 			request_id: errorField(error, "requestId", UUID),
 			error_code: errorField(error, "code", ERROR_CODE),
 			api_operation: errorField(error, "apiOperation", API_OPERATION),
@@ -133,4 +140,34 @@ function errorName(error: unknown): string {
 	if (error instanceof Error && error.name) return error.name;
 	if (typeof error === "object" && error !== null) return "object";
 	return typeof error;
+}
+
+/** Exact known transport messages are mapped locally; raw text never leaves. */
+function failureReason(
+	error: unknown,
+): MutationFailureReport["properties"]["failure_reason"] {
+	if (getHttpStatus(error) !== undefined) return "http";
+	if (!(error instanceof Error)) return "unknown";
+	if (error.name === "AbortError") return "aborted";
+	if (
+		error.name === "TimeoutError" ||
+		error.message === "Network request timed out"
+	)
+		return "timeout";
+	if (
+		[
+			"Network request failed",
+			"Failed to fetch",
+			"NetworkError when attempting to fetch resource.",
+			"Load failed",
+		].includes(error.message)
+	)
+		return "network";
+	return "unknown";
+}
+
+function booleanField(error: unknown, key: string): boolean | null {
+	if (typeof error !== "object" || error === null) return null;
+	const value = (error as Record<string, unknown>)[key];
+	return typeof value === "boolean" ? value : null;
 }
