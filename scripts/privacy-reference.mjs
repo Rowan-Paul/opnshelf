@@ -15,7 +15,7 @@ import { spawn, execFileSync } from "node:child_process";
 import { root } from "./dev-session.mjs";
 
 const image =
-	"ghcr.io/bluesky-social/atproto@sha256:f003adf7ca7cbb8ff60a4d99323fd009dfc1259b208f468f71accf0366ecab1e";
+	"ghcr.io/bluesky-social/atproto@sha256:1b3113b40eac2581b8f928bcec8840c8a0912c3a3d90bf3b965a775f8a97067a";
 const base = "http://localhost:3213";
 let authority = "did:plc:aaaaaaaaaaaaaaaaaaaaaaaa";
 const directory = mkdtempSync(join(tmpdir(), "opnshelf-reference-"));
@@ -210,7 +210,7 @@ async function authorize(account, reject = false) {
 		return json(response, endpoint);
 	}
 	const login = await api("sign-in", {
-		username: account.handle,
+		identifier: account.handle,
 		password: account.password,
 		remember: false,
 		locale: "en",

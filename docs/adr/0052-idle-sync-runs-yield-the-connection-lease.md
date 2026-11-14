@@ -58,3 +58,23 @@ defaulting to one minute for server failures. The adapters translate these into
 typed integration failures; the shared core does not interpret HTTP errors from
 an arbitrary service. Other item-specific failures retain the five-minute Needs
 attention behavior above.
+
+## Interactive contention extension (2026-11-14)
+
+A User request rejected with `SYNC_BUSY` now asks the active run in the same
+provider service to yield. The run finishes its current snapshot, discovery
+write or transfer, then ends at a checkpoint and releases its connection lease.
+It schedules a follow-up five seconds later, leaving the existing two-second
+client retry a chance to claim the lease. Completed changes and pending intents
+remain persisted. Buffered discovery candidates are flushed before yielding.
+A yield does not set a run error, mark success or require reconnection.
+
+This does not queue User actions or release the lease while a run continues:
+the HTTP request still receives `SYNC_BUSY` and must retry. Popfeed repository reads check between pages and collections, without caching
+a partial snapshot. In-flight I/O and atomic transfers are allowed to finish;
+a single slow operation can still delay the checkpoint. Progress counts retain
+the last completed run’s estimate until a later run recomputes them; a yield
+does not claim that catch-up finished.
+The signal is local to the provider service in the single backend process,
+matching the request limiter's deployment assumption. Multiple backend processes
+would need a shared yield signal in addition to shared rate limiting.

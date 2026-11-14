@@ -163,7 +163,9 @@ export function toUnseenDiscoverItems(
 	shownKeys: Set<string>,
 ): UnifiedSearchResultDto[] {
 	return results
-		.filter((r) => !shownKeys.has(`${mediaType}-${r.id}`))
+		.filter(
+			(r) => !shownKeys.has(mediaKey({ id: r.id, media_type: mediaType })),
+		)
 		.map((r) => toUnifiedResult(r, mediaType));
 }
 

@@ -41,6 +41,26 @@ export const mayBeSignedIn = createIsomorphicFn()
 	.server((): boolean => hasSignedInHint(getRequestHeader("cookie")))
 	.client((): boolean => hasSignedInHint(document.cookie));
 
+/** Whether a raw `Cookie` header carries the hint but no session to forward. */
+export function hasHintWithoutSession(
+	cookieHeader: string | undefined,
+): boolean {
+	return hasSignedInHint(cookieHeader) && !hasSessionCookie(cookieHeader);
+}
+
+/**
+ * Whether this server render is for a visitor who may be signed in but whose
+ * session the Web server cannot forward. An API call made here would answer
+ * for a signed-out visitor, and hydrating that answer as fresh hides
+ * owner-only content, such as Private Lists, from its owner (#753). Loaders
+ * of viewer-dependent data skip the fetch then and leave it to the browser.
+ *
+ * Never in the browser: its requests carry the API's own cookie.
+ */
+export const ssrCannotIdentifyViewer = createIsomorphicFn()
+	.server((): boolean => hasHintWithoutSession(getRequestHeader("cookie")))
+	.client((): boolean => false);
+
 /** Records the browser session check's outcome for the next page load. */
 export function rememberSignedIn(signedIn: boolean): void {
 	if (typeof document === "undefined") return;

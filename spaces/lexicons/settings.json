@@ -4,7 +4,7 @@
   "defs": {
     "main": {
       "type": "space",
-      "name": "Opnshelf Settings",
+      "title": "Opnshelf Settings",
       "collections": [
         "xyz.opnshelf.privateSettings"
       ],
