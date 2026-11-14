@@ -11,7 +11,7 @@ import { getCurrentPathname, posthog, release } from "@/lib/posthog";
  * Staging and local runs out of the numbers.
  */
 export function createReportingMutationCache(): MutationCache {
-	const pending = new WeakMap<
+	const lifecycleByMutation = new WeakMap<
 		object,
 		{
 			startedIn: ReturnType<typeof appState>;
@@ -22,20 +22,20 @@ export function createReportingMutationCache(): MutationCache {
 	return new MutationCache({
 		onMutate: (_variables, mutation) => {
 			if (!posthog) return;
-			const state = {
+			const lifecycle = {
 				startedIn: appState(),
 				backgrounded: AppState.currentState === "background",
 				remove: () => {},
 			};
 			const subscription = AppState.addEventListener("change", (next) => {
-				if (next === "background") state.backgrounded = true;
+				if (next === "background") lifecycle.backgrounded = true;
 			});
-			state.remove = () => subscription.remove();
-			pending.set(mutation, state);
+			lifecycle.remove = () => subscription.remove();
+			lifecycleByMutation.set(mutation, lifecycle);
 		},
 		onSettled: (_data, _error, _variables, _context, mutation) => {
-			pending.get(mutation)?.remove();
-			pending.delete(mutation);
+			lifecycleByMutation.get(mutation)?.remove();
+			lifecycleByMutation.delete(mutation);
 		},
 		onError: (error, _variables, _onMutateResult, mutation) => {
 			if (!posthog) return;
@@ -45,12 +45,12 @@ export function createReportingMutationCache(): MutationCache {
 				{ pathname: getCurrentPathname(), release },
 			);
 			if (report) {
-				const state = pending.get(mutation);
+				const lifecycle = lifecycleByMutation.get(mutation);
 				posthog.captureException(report.error, {
 					...report.properties,
-					app_state_at_start: state?.startedIn ?? "unknown",
+					app_state_at_start: lifecycle?.startedIn ?? "unknown",
 					app_state_at_failure: appState(),
-					app_backgrounded_while_pending: state?.backgrounded ?? null,
+					app_backgrounded_while_pending: lifecycle?.backgrounded ?? null,
 				});
 			}
 		},

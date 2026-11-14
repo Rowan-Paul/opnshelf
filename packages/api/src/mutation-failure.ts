@@ -149,7 +149,11 @@ function failureReason(
 	if (getHttpStatus(error) !== undefined) return "http";
 	if (!(error instanceof Error)) return "unknown";
 	if (error.name === "AbortError") return "aborted";
-	if (error.name === "TimeoutError") return "timeout";
+	if (
+		error.name === "TimeoutError" ||
+		error.message === "Network request timed out"
+	)
+		return "timeout";
 	if (
 		[
 			"Network request failed",

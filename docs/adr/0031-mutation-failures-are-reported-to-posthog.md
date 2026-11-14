@@ -56,7 +56,7 @@ and dropped when it does not match, so tokens, verification codes, email
 addresses and request bodies stay out. The message and fingerprint are
 unchanged, so existing PostHog issues keep grouping as before.
 
-## Diagnostics for failures without an HTTP response (#758)
+## Amendment: diagnostics for failures without an HTTP response (#758)
 
 The shared API client records only whether it constructed a Request and received
 an HTTP Response. These boundaries do not prove the server received a request.
@@ -64,13 +64,17 @@ Mutation reports carry `request_created` and `response_received` as booleans,
 or null for errors outside the API client. `failure_reason` is one of `http`,
 `aborted`, `timeout`, `network`, or `unknown`. Only exact known transport messages
 and abort/timeout names are mapped locally; arbitrary messages stay unknown.
-Neither raw error messages nor request/response bodies are sent.
+Neither raw error messages nor request/response bodies are sent. Legacy failures
+thrown as primitive strings cannot carry the boundary flags; those remain null
+and the reason remains unknown.
 
 Mobile also records `app_state_at_start`, `app_state_at_failure` and
 `app_backgrounded_while_pending`, distinguishing a failure after a pending
 mutation crossed a background transition from a request started in the
 foreground. States are restricted to active, inactive, background and unknown.
 Each pending mutation's lifecycle listener is removed on success or failure.
+A paused mutation retains its listener until it settles, so backgrounding while
+paused remains observable.
 These diagnostics change no retries, requests, error handling or fingerprints.
 Web uses the shared transport diagnostics; native app lifecycle fields apply
 only to Mobile. This diagnostic patch does not establish the cause of #758.

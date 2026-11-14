@@ -289,3 +289,18 @@ it("cleans up successful mutations without reporting an error", async () => {
 	expect(mocks.listeners.size).toBe(0);
 	expect(mocks.captureException).not.toHaveBeenCalled();
 });
+
+it("records a mutation started in the background without needing a transition", async () => {
+	mocks.appState = "background";
+	await failMutation(["fixture"], new Error("Network request timed out"));
+	expect(mocks.captureException).toHaveBeenCalledWith(
+		expect.any(Error),
+		expect.objectContaining({
+			failure_reason: "timeout",
+			app_state_at_start: "background",
+			app_state_at_failure: "background",
+			app_backgrounded_while_pending: true,
+		}),
+	);
+	expect(mocks.listeners.size).toBe(0);
+});
