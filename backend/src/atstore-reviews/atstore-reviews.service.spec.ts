@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const agentHarness = vi.hoisted(() => ({
 	listRecords: vi.fn(),
 	putRecord: vi.fn(),
+	createRecord: vi.fn(),
 }));
 
 vi.mock("@atproto/api", () => ({
@@ -54,7 +55,12 @@ describe("AtStoreReviewsService", () => {
 		prisma = createPrisma();
 		service = new AtStoreReviewsService(prisma as never);
 		agentHarness.listRecords.mockReset();
-		agentHarness.putRecord.mockReset();
+		agentHarness.putRecord.mockRejectedValue(
+			new Error(
+				'Missing required scope "repo:fyi.atstore.listing.review?action=update"',
+			),
+		);
+		agentHarness.createRecord.mockReset();
 		mockFetchListing();
 	});
 
@@ -155,7 +161,7 @@ describe("AtStoreReviewsService", () => {
 			});
 		prisma.user.updateMany.mockResolvedValue({ count: 1 });
 		agentHarness.listRecords.mockResolvedValue({ data: { records: [] } });
-		agentHarness.putRecord.mockResolvedValue({
+		agentHarness.createRecord.mockResolvedValue({
 			data: { uri: `at://${did}/fyi.atstore.listing.review/3mtesttid` },
 		});
 
@@ -164,7 +170,7 @@ describe("AtStoreReviewsService", () => {
 		).resolves.toEqual({
 			uri: `at://${did}/fyi.atstore.listing.review/3mtesttid`,
 		});
-		expect(agentHarness.putRecord).toHaveBeenCalledWith({
+		expect(agentHarness.createRecord).toHaveBeenCalledWith({
 			repo: did,
 			collection: "fyi.atstore.listing.review",
 			rkey: "3mtesttid",
@@ -188,14 +194,14 @@ describe("AtStoreReviewsService", () => {
 			atStoreReviewHandledAt: null,
 		});
 		agentHarness.listRecords.mockResolvedValue({ data: { records: [] } });
-		agentHarness.putRecord.mockRejectedValue(
+		agentHarness.createRecord.mockRejectedValue(
 			new Error("temporary PDS failure"),
 		);
 
 		await expect(service.publish(did, session, { rating: 4 })).rejects.toThrow(
 			"temporary PDS failure",
 		);
-		expect(agentHarness.putRecord).toHaveBeenCalledWith(
+		expect(agentHarness.createRecord).toHaveBeenCalledWith(
 			expect.objectContaining({ rkey: "3mretry" }),
 		);
 		expect(prisma.user.update).not.toHaveBeenCalled();
@@ -209,6 +215,6 @@ describe("AtStoreReviewsService", () => {
 		await expect(
 			service.publish(did, session, { rating: 4 }),
 		).rejects.toBeInstanceOf(ConflictException);
-		expect(agentHarness.putRecord).not.toHaveBeenCalled();
+		expect(agentHarness.createRecord).not.toHaveBeenCalled();
 	});
 });
