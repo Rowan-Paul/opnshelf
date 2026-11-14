@@ -107,6 +107,7 @@ client.interceptors.error.use((error, response, request, options) => {
 			: undefined;
 	return Object.assign(
 		error,
+		{ apiRequestCreated: Boolean(request), apiResponseReceived: Boolean(response) },
 		requestId ? { requestId } : {},
 		apiOperation ? { apiOperation } : {},
 	);

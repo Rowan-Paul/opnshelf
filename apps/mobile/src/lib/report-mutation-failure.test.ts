@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
 	captureException: vi.fn(),
 	posthog: null as { captureException: (...args: unknown[]) => void } | null,
 	pathname: null as string | null,
+	appState: "active",
+	listeners: new Set<(state: string) => void>(),
 }));
 
 vi.mock("@/lib/posthog", () => ({
@@ -13,6 +15,18 @@ vi.mock("@/lib/posthog", () => ({
 	},
 	release: "c94eadea",
 	getCurrentPathname: () => mocks.pathname,
+}));
+
+vi.mock("react-native", () => ({
+	AppState: {
+		get currentState() {
+			return mocks.appState;
+		},
+		addEventListener: (_event: string, listener: (state: string) => void) => {
+			mocks.listeners.add(listener);
+			return { remove: () => mocks.listeners.delete(listener) };
+		},
+	},
 }));
 
 import { queryClient } from "@/lib/query-client";
@@ -33,13 +47,15 @@ async function failMutation(
 	await mutation.execute(undefined).catch(() => undefined);
 }
 
-describe("shared QueryClient mutation failure reporting", () => {
-	beforeEach(() => {
-		mocks.captureException.mockClear();
-		mocks.posthog = { captureException: mocks.captureException };
-		mocks.pathname = null;
-	});
+beforeEach(() => {
+	mocks.captureException.mockClear();
+	mocks.posthog = { captureException: mocks.captureException };
+	mocks.pathname = null;
+	mocks.appState = "active";
+	mocks.listeners.clear();
+});
 
+describe("shared QueryClient mutation failure reporting", () => {
 	it("reports a failed mutation to PostHog with categorical properties only", async () => {
 		const serverError = Object.assign(new Error("Too many parts"), {
 			status: 400,
@@ -65,11 +81,17 @@ describe("shared QueryClient mutation failure reporting", () => {
 			mutation_key: "users/me/profile/avatar/upload",
 			http_status: 400,
 			error_name: "Error",
+			failure_reason: "http",
+			request_created: null,
+			response_received: null,
 			request_id: null,
 			error_code: null,
 			api_operation: null,
 			route: null,
 			release: "c94eadea",
+			app_state_at_start: "active",
+			app_state_at_failure: "active",
+			app_backgrounded_while_pending: false,
 		});
 	});
 
@@ -132,11 +154,17 @@ describe("shared QueryClient mutation failure reporting", () => {
 			mutation_key: "auth/verify-email",
 			http_status: 400,
 			error_name: "object",
+			failure_reason: "http",
+			request_created: true,
+			response_received: true,
 			request_id: "1bb20dbc-dbf4-4636-9919-c0dd15d04084",
 			error_code: "EMAIL_CODE_EXPIRED",
 			api_operation: "POST /auth/verify-email",
 			route: "/verify-email",
 			release: "c94eadea",
+			app_state_at_start: "active",
+			app_state_at_failure: "active",
+			app_backgrounded_while_pending: false,
 		});
 		const sent = JSON.stringify([reported.message, properties]);
 		expect(sent).not.toMatch(/482913|secret-token|example\.com|Bearer/);
@@ -148,6 +176,8 @@ describe("shared QueryClient mutation failure reporting", () => {
 			code: "someone@example.com",
 			requestId: "secret-token",
 			apiOperation: "POST /auth/verify-email?code=482913",
+			apiRequestCreated: "secret-token",
+			apiResponseReceived: "someone@example.com",
 		});
 
 		const [, properties] = mocks.captureException.mock.calls[0];
@@ -155,6 +185,8 @@ describe("shared QueryClient mutation failure reporting", () => {
 			error_code: null,
 			request_id: null,
 			api_operation: null,
+			request_created: null,
+			response_received: null,
 		});
 		expect(JSON.stringify(properties)).not.toMatch(
 			/482913|secret-token|example\.com/,
@@ -171,11 +203,17 @@ describe("shared QueryClient mutation failure reporting", () => {
 				mutation_key: "reviews/create",
 				http_status: null,
 				error_name: "TypeError",
+				failure_reason: "network",
+				request_created: null,
+				response_received: null,
 				request_id: null,
 				error_code: null,
 				api_operation: null,
 				route: null,
 				release: "c94eadea",
+				app_state_at_start: "active",
+				app_state_at_failure: "active",
+				app_backgrounded_while_pending: false,
 			},
 		);
 	});
@@ -206,4 +244,48 @@ describe("shared QueryClient mutation failure reporting", () => {
 
 		expect(mocks.captureException).not.toHaveBeenCalled();
 	});
+});
+
+it("records backgrounding during a pending mutation and removes its lifecycle listener", async () => {
+	let fail!: (error: Error) => void;
+	const mutation = queryClient.getMutationCache().build(queryClient, {
+		mutationKey: ["popfeed-sync", "issues", "resolve"],
+		mutationFn: () =>
+			new Promise<void>((_resolve, reject) => {
+				fail = reject;
+			}),
+	});
+	const result = mutation.execute(undefined).catch(() => undefined);
+	await vi.waitFor(() => expect(fail).toBeDefined());
+	mocks.appState = "background";
+	for (const listener of mocks.listeners) listener("background");
+	mocks.appState = "active";
+	for (const listener of mocks.listeners) listener("active");
+	fail(new Error("private-token someone@example.com"));
+	await result;
+	expect(mocks.captureException).toHaveBeenCalledWith(
+		expect.any(Error),
+		expect.objectContaining({
+			failure_reason: "unknown",
+			app_state_at_start: "active",
+			app_state_at_failure: "active",
+			app_backgrounded_while_pending: true,
+		}),
+	);
+	expect(mocks.listeners.size).toBe(0);
+	expect(JSON.stringify(mocks.captureException.mock.calls)).not.toMatch(
+		/private-token|someone@example.com/,
+	);
+});
+
+it("cleans up successful mutations without reporting an error", async () => {
+	mocks.captureException.mockClear();
+	const mutation = queryClient.getMutationCache().build(queryClient, {
+		mutationFn: async () => {
+			expect(mocks.listeners.size).toBe(1);
+		},
+	});
+	await mutation.execute(undefined);
+	expect(mocks.listeners.size).toBe(0);
+	expect(mocks.captureException).not.toHaveBeenCalled();
 });

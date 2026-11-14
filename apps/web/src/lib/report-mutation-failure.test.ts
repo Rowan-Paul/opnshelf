@@ -62,6 +62,9 @@ describe("app QueryClient mutation failure reporting", () => {
 			mutation_key: "users/me/profile/avatar/upload",
 			http_status: 400,
 			error_name: "Error",
+			failure_reason: "http",
+			request_created: null,
+			response_received: null,
 			request_id: null,
 			error_code: null,
 			api_operation: null,
@@ -111,6 +114,9 @@ describe("app QueryClient mutation failure reporting", () => {
 			mutation_key: "auth/verify-email",
 			http_status: 400,
 			error_name: "object",
+			failure_reason: "http",
+			request_created: true,
+			response_received: true,
 			request_id: "1bb20dbc-dbf4-4636-9919-c0dd15d04084",
 			error_code: "EMAIL_CODE_EXPIRED",
 			api_operation: "POST /auth/verify-email",
@@ -127,6 +133,8 @@ describe("app QueryClient mutation failure reporting", () => {
 			code: "someone@example.com",
 			requestId: "secret-token",
 			apiOperation: "POST /auth/verify-email?code=482913",
+			apiRequestCreated: "secret-token",
+			apiResponseReceived: "someone@example.com",
 		});
 
 		const [, properties] = mocks.captureException.mock.calls[0];
@@ -134,6 +142,8 @@ describe("app QueryClient mutation failure reporting", () => {
 			error_code: null,
 			request_id: null,
 			api_operation: null,
+			request_created: null,
+			response_received: null,
 		});
 		expect(JSON.stringify(properties)).not.toMatch(
 			/482913|secret-token|example\.com/,
@@ -150,6 +160,9 @@ describe("app QueryClient mutation failure reporting", () => {
 				mutation_key: "reviews/create",
 				http_status: null,
 				error_name: "TypeError",
+				failure_reason: "network",
+				request_created: null,
+				response_received: null,
 				request_id: null,
 				error_code: null,
 				api_operation: null,
