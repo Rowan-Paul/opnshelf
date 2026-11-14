@@ -118,7 +118,9 @@ export class AtStoreReviewsService {
 			session as unknown as ConstructorParameters<typeof Agent>[0],
 		);
 
-		const response = await agent.com.atproto.repo.putRecord({
+		// The third-party permission set grants create only; putRecord also
+		// requires update permission, even when this key does not exist yet.
+		const response = await agent.com.atproto.repo.createRecord({
 			repo: session.did,
 			collection: ATSTORE_REVIEW_COLLECTION,
 			rkey,
