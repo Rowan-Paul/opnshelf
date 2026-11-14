@@ -12,7 +12,7 @@ function gate() {
 	return { promise, release };
 }
 
-it.each(["snapshot", "discovery", "transfer"] as const)(
+it.each(["snapshot", "discovery", "initialisation", "transfer"] as const)(
 	"releases a busy Popfeed lease after the current %s so a resolution can retry",
 	async (phase) => {
 		const entered = gate();
@@ -48,7 +48,7 @@ it.each(["snapshot", "discovery", "transfer"] as const)(
 			status: "active",
 			direction: "inbound",
 			watches: true,
-			initialised: true,
+			initialised: phase !== "initialisation",
 			historyScope: "all",
 			remoteSnapshot: remote,
 			remoteReadAt: null,
@@ -105,6 +105,14 @@ it.each(["snapshot", "discovery", "transfer"] as const)(
 		service["publicWatchOperation"] = async (_c, operation) =>
 			operation(new AbortController().signal, async (write) => write());
 		service.status = vi.fn(async () => ({}) as never);
+		if (phase === "initialisation") {
+			Object.assign(prisma.integrationEntry, {
+				update: vi.fn(async () => {
+					await pause();
+					return {};
+				}),
+			});
+		}
 		if (phase === "discovery") {
 			// Pause an actual discovery write, rather than replacing discovery itself.
 			entries[0].localKey = null;
@@ -152,6 +160,8 @@ it.each(["snapshot", "discovery", "transfer"] as const)(
 		transfer.mockClear();
 		await service.tick();
 		expect(held).toBe(false);
-		expect(transfer).toHaveBeenCalledTimes(phase === "discovery" ? 1 : 2);
+		expect(transfer).toHaveBeenCalledTimes(
+			phase === "initialisation" ? 0 : phase === "discovery" ? 1 : 2,
+		);
 	},
 );

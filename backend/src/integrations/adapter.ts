@@ -23,6 +23,8 @@ export interface IntegrationRemote<Credential> {
 		credential: Credential,
 		types?: SyncRecordTypes,
 		leaseId?: string,
+		/** Read-only checkpoints may stop a long snapshot between requests. */
+		checkpoint?: () => void,
 	): Promise<SyncRecord[]>;
 	/** A scoped read that confirms the outcome of one write. */
 	readForRecord(

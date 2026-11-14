@@ -748,121 +748,127 @@ export abstract class IntegrationSyncService<Credential>
 			await this.prisma.integrationEntry.createMany({ data: [...creations] });
 			creations.length = 0;
 		};
-		for (const r of newRemote) {
-			this.throwIfYieldRequested(c);
-			// A write may have reached the remote before its acknowledgement was lost.
-			// Let that durable intent claim the result before ordinary discovery.
-			if (
-				(pendingByMedia.get(mediaKey(r)) ?? []).some((e) => {
-					if (
-						!e.pending ||
-						(e.pending as { direction?: string }).direction !== "push"
-					)
-						return false;
-					const desired = readRecord(
-						(e.pending as { desired?: unknown }).desired,
-					);
-					return (
-						equivalent(desired, r) ||
-						(r.unreadable &&
-							isListRecord(r) &&
-							!e.remoteKey &&
-							desired?.kind === r.kind &&
-							desired.title === r.title)
-					);
-				})
-			)
-				continue;
-			const possibleReplacement =
-				r.kind === "watch" &&
-				(missingWatchWithoutBase || missingWatchMedia.has(mediaKey(r)));
-			const matches =
-				r.mediaId || isListRecord(r)
-					? candidates(
-							r,
-							(localByMedia.get(mediaKey(r)) ?? []).filter(
-								(l) => !usedLocal.has(l.key),
-							),
+		try {
+			for (const r of newRemote) {
+				this.throwIfYieldRequested(c);
+				// A write may have reached the remote before its acknowledgement was lost.
+				// Let that durable intent claim the result before ordinary discovery.
+				if (
+					(pendingByMedia.get(mediaKey(r)) ?? []).some((e) => {
+						if (
+							!e.pending ||
+							(e.pending as { direction?: string }).direction !== "push"
 						)
-					: [];
-			const match =
-				!r.problem &&
-				matches.length === 1 &&
-				((r.kind !== "watch" &&
-					((!isListRecord(r) && !isContentRecord(r)) ||
-						candidates(
-							matches[0],
-							newRemoteByMedia.get(mediaKey(matches[0])) ?? [],
-						).length === 1)) ||
-					((r.undated || (r.value !== null && matches[0].value !== null)) &&
-						equivalent(matches[0], r) &&
-						candidates(
-							matches[0],
-							newRemoteByMedia.get(mediaKey(matches[0])) ?? [],
-						).length === 1))
-					? matches[0]
-					: null;
-			const eligible =
-				enabled(c, r) && (c.initialised || c.historyScope === "all");
-			creations.push({
-				connectionId: c.id,
-				kind: r.kind,
-				remoteKey: r.key,
-				localKey: match?.key,
-				localBase: json(match),
-				remoteBase: json(r),
-				linked: Boolean(eligible && match && equivalent(match, r)),
-				eligible,
-				issue:
-					r.problem ??
-					(!r.mediaId && !isListRecord(r)
-						? "Choose a TMDB match for this title."
-						: possibleReplacement || (!match && matches.length)
-							? isListRecord(r)
+							return false;
+						const desired = readRecord(
+							(e.pending as { desired?: unknown }).desired,
+						);
+						return (
+							equivalent(desired, r) ||
+							(r.unreadable &&
+								isListRecord(r) &&
+								!e.remoteKey &&
+								desired?.kind === r.kind &&
+								desired.title === r.title)
+						);
+					})
+				)
+					continue;
+				const possibleReplacement =
+					r.kind === "watch" &&
+					(missingWatchWithoutBase || missingWatchMedia.has(mediaKey(r)));
+				const matches =
+					r.mediaId || isListRecord(r)
+						? candidates(
+								r,
+								(localByMedia.get(mediaKey(r)) ?? []).filter(
+									(l) => !usedLocal.has(l.key),
+								),
+							)
+						: [];
+				const match =
+					!r.problem &&
+					matches.length === 1 &&
+					((r.kind !== "watch" &&
+						((!isListRecord(r) && !isContentRecord(r)) ||
+							candidates(
+								matches[0],
+								newRemoteByMedia.get(mediaKey(matches[0])) ?? [],
+							).length === 1)) ||
+						((r.undated || (r.value !== null && matches[0].value !== null)) &&
+							equivalent(matches[0], r) &&
+							candidates(
+								matches[0],
+								newRemoteByMedia.get(mediaKey(matches[0])) ?? [],
+							).length === 1))
+						? matches[0]
+						: null;
+				const eligible =
+					enabled(c, r) && (c.initialised || c.historyScope === "all");
+				creations.push({
+					connectionId: c.id,
+					kind: r.kind,
+					remoteKey: r.key,
+					localKey: match?.key,
+					localBase: json(match),
+					remoteBase: json(r),
+					linked: Boolean(eligible && match && equivalent(match, r)),
+					eligible,
+					issue:
+						r.problem ??
+						(!r.mediaId && !isListRecord(r)
+							? "Choose a TMDB match for this title."
+							: possibleReplacement || (!match && matches.length)
+								? isListRecord(r)
+									? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
+									: isContentRecord(r)
+										? "Content pairing is ambiguous. Choose a matching record before retrying."
+										: "Confirm whether these Watches are the same viewing."
+								: null),
+				});
+				if (creations.length >= 500) await flush();
+				if (match) usedLocal.add(match.key);
+			}
+			for (const l of newLocal) {
+				this.throwIfYieldRequested(c);
+				if (usedLocal.has(l.key)) continue;
+				if (
+					(pendingByMedia.get(mediaKey(l)) ?? []).some(
+						(e) =>
+							e.pending &&
+							(e.pending as { direction?: string }).direction === "pull" &&
+							equivalent(
+								readRecord((e.pending as { desired?: unknown }).desired),
+								l,
+							),
+					)
+				)
+					continue;
+				const near = candidates(l, remoteByMedia.get(mediaKey(l)) ?? []);
+				creations.push({
+					connectionId: c.id,
+					kind: l.kind,
+					localKey: l.key,
+					localBase: json(l),
+					eligible:
+						enabled(c, l) && (c.initialised || c.historyScope === "all"),
+					issue:
+						near.length &&
+						(l.kind === "watch" || isListRecord(l) || isContentRecord(l))
+							? isListRecord(l)
 								? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
-								: isContentRecord(r)
+								: isContentRecord(l)
 									? "Content pairing is ambiguous. Choose a matching record before retrying."
 									: "Confirm whether these Watches are the same viewing."
-							: null),
-			});
-			if (creations.length >= 500) await flush();
-			if (match) usedLocal.add(match.key);
+							: null,
+				});
+				if (creations.length >= 500) await flush();
+			}
+			await flush();
+		} catch (error) {
+			if (error instanceof SyncRunYield) await flush();
+			throw error;
 		}
-		for (const l of newLocal) {
-			this.throwIfYieldRequested(c);
-			if (usedLocal.has(l.key)) continue;
-			if (
-				(pendingByMedia.get(mediaKey(l)) ?? []).some(
-					(e) =>
-						e.pending &&
-						(e.pending as { direction?: string }).direction === "pull" &&
-						equivalent(
-							readRecord((e.pending as { desired?: unknown }).desired),
-							l,
-						),
-				)
-			)
-				continue;
-			const near = candidates(l, remoteByMedia.get(mediaKey(l)) ?? []);
-			creations.push({
-				connectionId: c.id,
-				kind: l.kind,
-				localKey: l.key,
-				localBase: json(l),
-				eligible: enabled(c, l) && (c.initialised || c.historyScope === "all"),
-				issue:
-					near.length &&
-					(l.kind === "watch" || isListRecord(l) || isContentRecord(l))
-						? isListRecord(l)
-							? "List pairing is ambiguous. Rename the Lists to distinguish them, then retry."
-							: isContentRecord(l)
-								? "Content pairing is ambiguous. Choose a matching record before retrying."
-								: "Confirm whether these Watches are the same viewing."
-						: null,
-			});
-			if (creations.length >= 500) await flush();
-		}
-		await flush();
 	}
 	async listIssues(userDid: string, query: IntegrationIssuesQuery) {
 		const c = await this.requireConnection(userDid);
@@ -1436,7 +1442,9 @@ export abstract class IntegrationSyncService<Credential>
 			!c.remoteReadAt ||
 			c.remoteReadAt.getTime() < Date.now() - 15 * 60_000
 		) {
-			remote = await this.remote.snapshot(token, c, leaseId);
+			remote = await this.remote.snapshot(token, c, leaseId, () =>
+				this.throwIfYieldRequested(c),
+			);
 			await lease();
 			await this.prisma.integrationConnection.update({
 				select: { id: true },
@@ -1472,6 +1480,7 @@ export abstract class IntegrationSyncService<Credential>
 				where: { connectionId: c.id, linked: false },
 			});
 			for (const e of unlinked) {
+				this.throwIfYieldRequested(c);
 				if (!enabled(c, { kind: e.kind as SyncRecord["kind"] })) continue;
 				await this.prisma.integrationEntry.update({
 					select: { id: true },
