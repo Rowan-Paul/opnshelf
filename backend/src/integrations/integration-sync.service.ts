@@ -238,6 +238,8 @@ const enabled = (c: IntegrationConnection, r: Pick<SyncRecord, "kind">) =>
 								? c.favorites
 								: c.watchlist;
 
+class SyncRunYield extends Error {}
+
 /**
  * The shared Integration sync loop (ADR 0049, ADR 0051): links, baselines,
  * conflicts, Needs attention, leases and the privacy barrier. A provider
@@ -249,6 +251,14 @@ export abstract class IntegrationSyncService<Credential>
 	protected readonly logger = new Logger(this.constructor.name);
 	private timer?: NodeJS.Timeout;
 	private busy = false;
+	// One tick runs per provider in this process. A failed interactive lease
+	// claim asks that run to finish its current operation, then release the lease.
+	private activeRun?: { id: string; yieldRequested: boolean };
+
+	private yieldToUser(c: IntegrationConnection): void {
+		if (this.activeRun?.id === c.id && this.activeRun.yieldRequested)
+			throw new SyncRunYield();
+	}
 	/** Stored on every connection row, e.g. "trakt". */
 	protected abstract readonly provider: string;
 	/** User-facing provider name in messages, e.g. "Trakt". */
@@ -373,7 +383,10 @@ export abstract class IntegrationSyncService<Credential>
 			},
 			data: { leaseId, leaseUntil: new Date(Date.now() + 120_000) },
 		});
-		if (!claim.count) throw syncBusy();
+		if (!claim.count) {
+			if (this.activeRun?.id === c.id) this.activeRun.yieldRequested = true;
+			throw syncBusy();
+		}
 		let lost = false;
 		const lease = async () => {
 			const updated = await this.prisma.integrationConnection.updateMany({
@@ -606,6 +619,7 @@ export abstract class IntegrationSyncService<Credential>
 		};
 		const pendingByMedia = new Map<string, IntegrationEntry[]>();
 		for (const e of entries) {
+			this.yieldToUser(c);
 			if (!e.pending) continue;
 			const desired = readRecord((e.pending as { desired?: unknown }).desired);
 			if (!desired) continue;
@@ -619,6 +633,7 @@ export abstract class IntegrationSyncService<Credential>
 		// Adopt a completed legacy recovery even if the process died before saving
 		// its link. Never create a second PDS Watch over the recovered viewing.
 		for (const e of entries) {
+			this.yieldToUser(c);
 			if (e.localKey || e.linked || e.pending) continue;
 			const r = remoteByKey.get(e.remoteKey ?? "");
 			if (!r || r.value === null) continue;
@@ -648,6 +663,7 @@ export abstract class IntegrationSyncService<Credential>
 			e.linked = e.eligible;
 		}
 		for (const e of entries) {
+			this.yieldToUser(c);
 			if (!e.pending || !isContentRecord(e) || e.remoteKey) continue;
 			const intent = e.pending as { direction?: string; desired?: unknown };
 			const desired = readRecord(intent.desired);
@@ -673,6 +689,7 @@ export abstract class IntegrationSyncService<Credential>
 			e.linked = true;
 		}
 		for (const e of entries) {
+			this.yieldToUser(c);
 			if (!e.pending || !isListRecord(e)) continue;
 			const intent = e.pending as { direction: string; desired?: unknown };
 			const desired = readRecord(intent.desired);
@@ -715,6 +732,7 @@ export abstract class IntegrationSyncService<Credential>
 		const missingWatchMedia = new Set<string>();
 		let missingWatchWithoutBase = false;
 		for (const e of entries) {
+			this.yieldToUser(c);
 			if (!e.linked || !e.remoteKey || remoteByKey.has(e.remoteKey)) continue;
 			const base = readRecord(e.remoteBase);
 			if (base) missingWatchMedia.add(mediaKey(base));
@@ -730,6 +748,7 @@ export abstract class IntegrationSyncService<Credential>
 			creations.length = 0;
 		};
 		for (const r of newRemote) {
+			this.yieldToUser(c);
 			// A write may have reached the remote before its acknowledgement was lost.
 			// Let that durable intent claim the result before ordinary discovery.
 			if (
@@ -809,6 +828,7 @@ export abstract class IntegrationSyncService<Credential>
 			if (match) usedLocal.add(match.key);
 		}
 		for (const l of newLocal) {
+			this.yieldToUser(c);
 			if (usedLocal.has(l.key)) continue;
 			if (
 				(pendingByMedia.get(mediaKey(l)) ?? []).some(
@@ -1221,9 +1241,18 @@ export abstract class IntegrationSyncService<Credential>
 			});
 			if (!c) return;
 			await this.locked(c, async (lease, leaseId) => {
+				this.activeRun = { id: c.id, yieldRequested: false };
 				try {
 					await this.process(c, lease, leaseId);
 				} catch (caught) {
+					if (caught instanceof SyncRunYield) {
+						await this.prisma.integrationConnection.update({
+							select: { id: true },
+							where: { id: c.id },
+							data: { nextRunAt: new Date(Date.now() + BUSY_RUN_MS) },
+						});
+						return;
+					}
 					const error = integrationFailure(caught);
 					if (error instanceof WatchAccountBusyError) {
 						await this.prisma.integrationConnection.update({
@@ -1313,6 +1342,7 @@ export abstract class IntegrationSyncService<Credential>
 				`${this.name} Sync tick could not complete; it will retry.`,
 			);
 		} finally {
+			this.activeRun = undefined;
 			this.busy = false;
 		}
 	}
@@ -1378,6 +1408,7 @@ export abstract class IntegrationSyncService<Credential>
 				),
 			);
 		});
+		this.yieldToUser(c);
 		const token = await this.credential(c);
 		const known = await this.prisma.integrationEntry.findMany({
 			where: { connectionId: c.id },
@@ -1414,6 +1445,7 @@ export abstract class IntegrationSyncService<Credential>
 					remoteReadAt: new Date(),
 				},
 			});
+			this.yieldToUser(c);
 			local = await this.publicWatchOperation(c, async () => {
 				await lease();
 				return this.local.snapshot(
@@ -1432,6 +1464,7 @@ export abstract class IntegrationSyncService<Credential>
 		const remoteByKey = new Map(remote.map((r) => [r.key, r]));
 		await lease();
 		await this.discover(c, local, remote, known);
+		this.yieldToUser(c);
 		if (!c.initialised) {
 			// Initial comparison runs in the worker: large accounts never hold an HTTP request open.
 			const unlinked = await this.prisma.integrationEntry.findMany({
@@ -1483,6 +1516,7 @@ export abstract class IntegrationSyncService<Credential>
 		let stopped = false;
 		let remaining = 0;
 		for (const entry of entries) {
+			this.yieldToUser(c);
 			if (!enabled(c, { kind: entry.kind as SyncRecord["kind"] })) continue;
 			if (coolingDown(entry)) continue;
 			const l = localByKey.get(entry.localKey ?? "") ?? null;
