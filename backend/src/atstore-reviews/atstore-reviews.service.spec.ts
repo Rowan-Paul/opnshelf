@@ -55,11 +55,13 @@ describe("AtStoreReviewsService", () => {
 		prisma = createPrisma();
 		service = new AtStoreReviewsService(prisma as never);
 		agentHarness.listRecords.mockReset();
-		agentHarness.putRecord.mockRejectedValue(
-			new Error(
-				'Missing required scope "repo:fyi.atstore.listing.review?action=update"',
-			),
-		);
+		agentHarness.putRecord
+			.mockReset()
+			.mockRejectedValue(
+				new Error(
+					'Missing required scope "repo:fyi.atstore.listing.review?action=update"',
+				),
+			);
 		agentHarness.createRecord.mockReset();
 		mockFetchListing();
 	});
@@ -170,6 +172,7 @@ describe("AtStoreReviewsService", () => {
 		).resolves.toEqual({
 			uri: `at://${did}/fyi.atstore.listing.review/3mtesttid`,
 		});
+		expect(agentHarness.putRecord).not.toHaveBeenCalled();
 		expect(agentHarness.createRecord).toHaveBeenCalledWith({
 			repo: did,
 			collection: "fyi.atstore.listing.review",
