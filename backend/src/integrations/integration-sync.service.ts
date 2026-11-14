@@ -253,9 +253,10 @@ export abstract class IntegrationSyncService<Credential>
 	private busy = false;
 	// One tick runs per provider in this process. A failed interactive lease
 	// claim asks that run to finish its current operation, then release the lease.
+	// Check each phase boundary and per-entry loop before starting more work.
 	private activeRun?: { id: string; yieldRequested: boolean };
 
-	private yieldToUser(c: IntegrationConnection): void {
+	private throwIfYieldRequested(c: IntegrationConnection): void {
 		if (this.activeRun?.id === c.id && this.activeRun.yieldRequested)
 			throw new SyncRunYield();
 	}
@@ -619,7 +620,7 @@ export abstract class IntegrationSyncService<Credential>
 		};
 		const pendingByMedia = new Map<string, IntegrationEntry[]>();
 		for (const e of entries) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			if (!e.pending) continue;
 			const desired = readRecord((e.pending as { desired?: unknown }).desired);
 			if (!desired) continue;
@@ -633,7 +634,7 @@ export abstract class IntegrationSyncService<Credential>
 		// Adopt a completed legacy recovery even if the process died before saving
 		// its link. Never create a second PDS Watch over the recovered viewing.
 		for (const e of entries) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			if (e.localKey || e.linked || e.pending) continue;
 			const r = remoteByKey.get(e.remoteKey ?? "");
 			if (!r || r.value === null) continue;
@@ -663,7 +664,7 @@ export abstract class IntegrationSyncService<Credential>
 			e.linked = e.eligible;
 		}
 		for (const e of entries) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			if (!e.pending || !isContentRecord(e) || e.remoteKey) continue;
 			const intent = e.pending as { direction?: string; desired?: unknown };
 			const desired = readRecord(intent.desired);
@@ -689,7 +690,7 @@ export abstract class IntegrationSyncService<Credential>
 			e.linked = true;
 		}
 		for (const e of entries) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			if (!e.pending || !isListRecord(e)) continue;
 			const intent = e.pending as { direction: string; desired?: unknown };
 			const desired = readRecord(intent.desired);
@@ -732,7 +733,7 @@ export abstract class IntegrationSyncService<Credential>
 		const missingWatchMedia = new Set<string>();
 		let missingWatchWithoutBase = false;
 		for (const e of entries) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			if (!e.linked || !e.remoteKey || remoteByKey.has(e.remoteKey)) continue;
 			const base = readRecord(e.remoteBase);
 			if (base) missingWatchMedia.add(mediaKey(base));
@@ -748,7 +749,7 @@ export abstract class IntegrationSyncService<Credential>
 			creations.length = 0;
 		};
 		for (const r of newRemote) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			// A write may have reached the remote before its acknowledgement was lost.
 			// Let that durable intent claim the result before ordinary discovery.
 			if (
@@ -828,7 +829,7 @@ export abstract class IntegrationSyncService<Credential>
 			if (match) usedLocal.add(match.key);
 		}
 		for (const l of newLocal) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			if (usedLocal.has(l.key)) continue;
 			if (
 				(pendingByMedia.get(mediaKey(l)) ?? []).some(
@@ -1408,7 +1409,7 @@ export abstract class IntegrationSyncService<Credential>
 				),
 			);
 		});
-		this.yieldToUser(c);
+		this.throwIfYieldRequested(c);
 		const token = await this.credential(c);
 		const known = await this.prisma.integrationEntry.findMany({
 			where: { connectionId: c.id },
@@ -1445,7 +1446,7 @@ export abstract class IntegrationSyncService<Credential>
 					remoteReadAt: new Date(),
 				},
 			});
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			local = await this.publicWatchOperation(c, async () => {
 				await lease();
 				return this.local.snapshot(
@@ -1464,7 +1465,7 @@ export abstract class IntegrationSyncService<Credential>
 		const remoteByKey = new Map(remote.map((r) => [r.key, r]));
 		await lease();
 		await this.discover(c, local, remote, known);
-		this.yieldToUser(c);
+		this.throwIfYieldRequested(c);
 		if (!c.initialised) {
 			// Initial comparison runs in the worker: large accounts never hold an HTTP request open.
 			const unlinked = await this.prisma.integrationEntry.findMany({
@@ -1516,7 +1517,7 @@ export abstract class IntegrationSyncService<Credential>
 		let stopped = false;
 		let remaining = 0;
 		for (const entry of entries) {
-			this.yieldToUser(c);
+			this.throwIfYieldRequested(c);
 			if (!enabled(c, { kind: entry.kind as SyncRecord["kind"] })) continue;
 			if (coolingDown(entry)) continue;
 			const l = localByKey.get(entry.localKey ?? "") ?? null;
