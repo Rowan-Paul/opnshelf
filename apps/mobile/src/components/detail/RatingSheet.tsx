@@ -7,7 +7,7 @@ import { useThemeColors } from "@/theme/colors";
 
 /**
  * Bottom sheet for setting the single star rating of a media item. Keeps the
- * rating off the main detail surface (it's opened from `RatingButton`) so it
+ * rating off the main detail surface (it's opened from media cards and actions) so it
  * isn't competing for attention with tracking actions.
  */
 export function RatingSheet({
