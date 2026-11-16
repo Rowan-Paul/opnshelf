@@ -1356,7 +1356,11 @@ export abstract class IntegrationSyncService<Credential>
 	protected async publicWatchOperation<T>(
 		c: IntegrationConnection,
 		work: (signal: AbortSignal, withWrite: WithAccountWrite) => Promise<T>,
-		mode: AccountLockMode = "exclusive",
+		// The shared barrier already excludes a Watch privacy change and account
+		// deletion. A snapshot pages through List and content repositories, so
+		// holding the barrier exclusively would reject Watch writes meanwhile.
+		// Transfers re-check the local snapshot under the write mutex.
+		mode: AccountLockMode = "shared",
 		phase = "snapshot",
 	): Promise<T> {
 		return this.watchLocks.run(
@@ -1403,8 +1407,9 @@ export abstract class IntegrationSyncService<Credential>
 	) {
 		const startedAtRun = Date.now();
 		let remote = records(c.remoteSnapshot);
-		// Account reads and transfers share the privacy lock, but slow remote
-		// pagination must not prevent someone from adding a Watch to their Shelf.
+		// Account reads and transfers share the privacy barrier, but slow
+		// repository pagination must not prevent someone from adding a Watch to
+		// their Shelf.
 		let local = await this.publicWatchOperation(c, async () => {
 			await lease();
 			return this.local.snapshot(
