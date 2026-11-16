@@ -69,7 +69,7 @@ describe("media numbering metadata", () => {
 		["0", "2", "Show Season 0 | Opnshelf", "Show S0E2 | Opnshelf"],
 		[undefined, undefined, "Show Season | Opnshelf", "Show | Opnshelf"],
 		["invalid", "invalid", "Show Season | Opnshelf", "Show | Opnshelf"],
-	] as const)("preserves numbering for season %s and episode %s", (seasonNumber, episodeNumber, seasonTitle, episodeTitle) => {
+	] as const)("formats numbering for season %s and episode %s", (seasonNumber, episodeNumber, seasonTitle, episodeTitle) => {
 		expect(buildSeasonPageMeta(undefined, undefined, seasonNumber).title).toBe(
 			seasonTitle,
 		);
