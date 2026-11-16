@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getPageMeta, getSharingImageUrl } from "./media-meta";
+import {
+	buildEpisodePageMeta,
+	buildSeasonPageMeta,
+	getPageMeta,
+	getSharingImageUrl,
+} from "./media-meta";
 
 describe("page sharing metadata", () => {
 	it("includes matching Open Graph and Twitter text, an absolute URL, and a fallback image", () => {
@@ -55,5 +60,24 @@ describe("page sharing metadata", () => {
 				},
 			]),
 		);
+	});
+});
+
+describe("media numbering metadata", () => {
+	it.each([
+		[0, 2, "Show Season 0 | Opnshelf", "Show S0E2 | Opnshelf"],
+		["0", "2", "Show Season 0 | Opnshelf", "Show S0E2 | Opnshelf"],
+		[undefined, undefined, "Show Season | Opnshelf", "Show | Opnshelf"],
+		["invalid", "invalid", "Show Season | Opnshelf", "Show | Opnshelf"],
+	] as const)("preserves numbering for season %s and episode %s", (seasonNumber, episodeNumber, seasonTitle, episodeTitle) => {
+		expect(buildSeasonPageMeta(undefined, undefined, seasonNumber).title).toBe(
+			seasonTitle,
+		);
+		expect(
+			buildEpisodePageMeta(undefined, undefined, {
+				seasonNumber,
+				episodeNumber,
+			}).title,
+		).toBe(episodeTitle);
 	});
 });

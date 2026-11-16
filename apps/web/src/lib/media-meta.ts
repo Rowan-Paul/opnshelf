@@ -139,8 +139,7 @@ export function buildSeasonPageMeta(
 	season?: TmdbSeasonDetailDto | null,
 	seasonNumber?: string | number,
 ): PageMeta {
-	const normalizedSeasonNumber =
-		typeof seasonNumber === "number" ? seasonNumber : Number(seasonNumber);
+	const normalizedSeasonNumber = Number(seasonNumber);
 	const safeSeasonNumber = Number.isNaN(normalizedSeasonNumber)
 		? season?.season_number
 		: normalizedSeasonNumber;
@@ -172,16 +171,9 @@ export function buildEpisodePageMeta(
 	},
 ): PageMeta {
 	const showName = show?.name || "Show";
-	const seasonNumber =
-		episode?.season_number ??
-		(typeof params?.seasonNumber === "number"
-			? params.seasonNumber
-			: Number(params?.seasonNumber));
+	const seasonNumber = episode?.season_number ?? Number(params?.seasonNumber);
 	const episodeNumber =
-		episode?.episode_number ??
-		(typeof params?.episodeNumber === "number"
-			? params.episodeNumber
-			: Number(params?.episodeNumber));
+		episode?.episode_number ?? Number(params?.episodeNumber);
 	const numbering =
 		Number.isNaN(seasonNumber) || Number.isNaN(episodeNumber)
 			? ""
