@@ -1124,6 +1124,7 @@ function SettingsColumns({
 
 function SettingsNavigation({ active }: { active?: string }) {
 	const colors = useThemeColors();
+	const { user } = useAuth();
 	return (
 		<Screen topInset={false}>
 			<ScrollView
@@ -1166,8 +1167,9 @@ function SettingsNavigation({ active }: { active?: string }) {
 				</View>
 				{/* Sign out sits on the Settings index so it is one tap from the
 				    list, not buried under Account (#769). The Account pane already
-				    shows it, so the wide layout skips this copy there. */}
-				{active !== SETTINGS_TITLES.account && (
+				    shows it, so the wide layout skips this copy there. A guest who
+				    deep-links here has no session to end. */}
+				{user && active !== SETTINGS_TITLES.account && (
 					<View className="pt-5">
 						<SignOutButton />
 					</View>
