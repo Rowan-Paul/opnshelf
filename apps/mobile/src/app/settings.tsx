@@ -179,6 +179,33 @@ function AppearanceSetting() {
 	);
 }
 
+/** Sign out is reversible, so it stays a neutral outline button. */
+function SignOutButton() {
+	const { signOut } = useAuth();
+	const [isSigningOut, setIsSigningOut] = useState(false);
+
+	const handleSignOut = async () => {
+		if (isSigningOut) {
+			return;
+		}
+		setIsSigningOut(true);
+		try {
+			await signOut();
+		} finally {
+			setIsSigningOut(false);
+		}
+	};
+
+	return (
+		<Button
+			label="Sign out"
+			variant="secondary"
+			loading={isSigningOut}
+			onPress={handleSignOut}
+		/>
+	);
+}
+
 export type SettingsCategory =
 	| "profile"
 	| "preferences"
@@ -226,20 +253,6 @@ export function SettingsCategoryScreen({
 		},
 		onError: () => toast.error("Could not reset onboarding. Please try again."),
 	});
-	const [isSigningOut, setIsSigningOut] = useState(false);
-
-	const handleSignOut = async () => {
-		if (isSigningOut) {
-			return;
-		}
-		setIsSigningOut(true);
-		try {
-			await signOut();
-		} finally {
-			setIsSigningOut(false);
-		}
-	};
-
 	// Settings (timezone / time format / watch country / reviews target). Same
 	// query the web settings page reads.
 	const {
@@ -941,12 +954,7 @@ export function SettingsCategoryScreen({
 							{/* Sign out — reversible, so a neutral outline; red stays reserved
 							    for the irreversible Delete Account below. Same order as
 							    the Web App: Devices, Sign out, Danger Zone. */}
-							<Button
-								label="Sign out"
-								variant="secondary"
-								loading={isSigningOut}
-								onPress={handleSignOut}
-							/>
+							<SignOutButton />
 							<View className="gap-4 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
 								<View className="gap-1">
 									<Text className="font-display-semibold text-destructive text-lg">
@@ -1156,6 +1164,14 @@ function SettingsNavigation({ active }: { active?: string }) {
 						</Link>
 					))}
 				</View>
+				{/* Sign out sits on the Settings index so it is one tap from the
+				    list, not buried under Account (#769). The Account pane already
+				    shows it, so the wide layout skips this copy there. */}
+				{active !== SETTINGS_TITLES.account && (
+					<View className="pt-5">
+						<SignOutButton />
+					</View>
+				)}
 				<Text
 					selectable
 					className="pt-6 text-center text-muted-foreground text-xs"
