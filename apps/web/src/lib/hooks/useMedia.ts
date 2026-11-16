@@ -214,7 +214,10 @@ export function useUnmarkEpisodeWatched() {
 				episodeNumber?: number;
 			};
 		}) => {
-			const result = await showsControllerUnmarkWatched(variables);
+			const result = await showsControllerUnmarkWatched({
+				...variables,
+				throwOnError: true,
+			});
 			return result.data;
 		},
 		onSuccess: () => {
