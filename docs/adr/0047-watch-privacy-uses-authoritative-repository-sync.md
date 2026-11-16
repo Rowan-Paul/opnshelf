@@ -42,6 +42,14 @@ fingerprint remains a second check on local projection changes. Manual sync
 also yields promptly; background polling retries at its existing interval of
 at least 60 seconds. Continuous Watch changes may postpone a successful sync.
 
+Locking update for #764 (2026-11-16): integration sync (Trakt, Popfeed) reads
+its local snapshot under the shared barrier. The read pages through List and
+content repositories and held the barrier exclusively for over 20 seconds, so
+an interactive Watch write timed out with a busy conflict. The shared barrier
+still excludes a Watch privacy change and account deletion, and each transfer
+re-checks the local snapshot under the Watch mutex. Only an inbound transfer,
+which writes a Watch, still takes the barrier exclusively.
+
 The dedicated two-connection lock pool remains separate from Prisma's pool.
 Remote-phase operations share a process-local admission limit of at most
 `pool.max - 1` checked-out connections, reserving one connection for foreground
