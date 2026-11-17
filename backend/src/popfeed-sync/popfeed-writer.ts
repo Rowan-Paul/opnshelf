@@ -43,7 +43,11 @@ type Raw = Record<string, unknown> & {
 	creativeWorkType?: string;
 	listType?: string;
 	listUri?: string;
-	identifiers?: { tmdbId?: string };
+	identifiers?: {
+		tmdbId?: string;
+		seasonNumber?: number;
+		episodeNumber?: number;
+	};
 	watchedEpisodes?: {
 		seasonNumber: number;
 		episodeNumber: number;
@@ -271,7 +275,11 @@ export class PopfeedWriter {
 				(review) =>
 					raw(review).creativeWorkType ===
 						(type === "movie" ? "movie" : "tv_show") &&
-					tmdbOf(review) === record.mediaId,
+					tmdbOf(review) === record.mediaId &&
+					// A season or episode review shares its show's TMDB ID; the reader
+					// treats it as that season's or episode's, so it is not this title's.
+					!raw(review).identifiers?.seasonNumber &&
+					!raw(review).identifiers?.episodeNumber,
 			)
 			.sort((a, b) =>
 				String(raw(b).createdAt ?? "").localeCompare(

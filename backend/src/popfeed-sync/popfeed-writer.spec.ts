@@ -377,4 +377,29 @@ describe("Popfeed Lists", () => {
 			expect.objectContaining({ rating: 8 }),
 		);
 	});
+	it("leaves an episode review alone when rating its show", async () => {
+		const uri = `at://${did}/${REVIEW}/episode`;
+		const episode = {
+			$type: REVIEW,
+			creativeWorkType: "tv_show",
+			identifiers: { tmdbId: "55", seasonNumber: 1, episodeNumber: 2 },
+			rating: 4,
+			createdAt: "2026-01-01T10:00:00Z",
+		};
+		records.set(uri, episode);
+		await writer.write({
+			key: "rating:show:55:0:0",
+			kind: "rating",
+			mediaType: "show",
+			mediaId: "55",
+			season: 0,
+			episode: 0,
+			title: "",
+			value: 9,
+		});
+		expect(records.get(uri)).toEqual(episode);
+		expect(
+			[...records.values()].filter((value) => value.rating === 9),
+		).toHaveLength(1);
+	});
 });
