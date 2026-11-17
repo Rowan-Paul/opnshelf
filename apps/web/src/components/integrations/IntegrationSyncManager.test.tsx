@@ -176,6 +176,18 @@ describe("Trakt Sync setup and conflict choices", () => {
 		).toBeTruthy();
 	});
 
+	it("lets a later error replace the failed sign-in notice", async () => {
+		mocks.action.mockRejectedValueOnce(new Error("Fixture failure"));
+		mount(true, true);
+		await screen.findByText("Trakt could not connect. Try connecting again.");
+		fireEvent.click(await screen.findByRole("button", { name: "Disconnect" }));
+		fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+		expect(await screen.findByText("Fixture failure")).toBeTruthy();
+		expect(
+			screen.queryByText("Trakt could not connect. Try connecting again."),
+		).toBeNull();
+	});
+
 	it("requires publication consent and a concrete review before enabling", async () => {
 		mount();
 		const review = await screen.findByRole("button", { name: "Enable sync" });

@@ -101,6 +101,8 @@ export function IntegrationSyncManager({
 	const connect = useMutation({
 		mutationKey: [...rootKey, "connect"],
 		mutationFn: integration.api.connect,
+		// Connecting again takes the sync lease, like every other control.
+		...integrationSyncBusyRetry,
 		onSuccess: (data) => {
 			posthog.capture("integration_connection_requested", {
 				provider: id,
@@ -172,6 +174,9 @@ export function IntegrationSyncManager({
 				<SyncIssues integration={integration} connected={connected} />
 			</div>
 		);
+	// The failed return stays in the URL; anything done here since supersedes it.
+	const signInFailed =
+		connectionFailed && !connect.isSuccess && !action.isSuccess;
 	const needsSetup =
 		connected &&
 		data.status === "paused" &&
@@ -378,22 +383,22 @@ export function IntegrationSyncManager({
 						{integrationStateMessage(data, name)}
 					</output>
 				)}
-				{action.isPending && isIntegrationSyncBusy(action.failureReason) && (
+				{((action.isPending && isIntegrationSyncBusy(action.failureReason)) ||
+					(connect.isPending &&
+						isIntegrationSyncBusy(connect.failureReason))) && (
 					<output className="mt-4 block text-(--foreground-muted) text-sm">
 						Waiting for the current sync to finish…
 					</output>
 				)}
-				{(connectionFailed ||
-					connect.error ||
-					action.error ||
-					data.lastError) && (
+				{(signInFailed || connect.error || action.error || data.lastError) && (
 					<p role="alert" className="mt-4 text-(--destructive)">
-						{connectionFailed
-							? `${name} could not connect. Try connecting again.`
-							: connect.error
-								? traktError(connect.error)
-								: action.error
-									? traktError(action.error)
+						{/* A failed sign-in return is the oldest news on this page. */}
+						{connect.error
+							? traktError(connect.error)
+							: action.error
+								? traktError(action.error)
+								: signInFailed
+									? `${name} could not connect. Try connecting again.`
 									: data.lastError}
 					</p>
 				)}
