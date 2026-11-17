@@ -301,3 +301,37 @@ it("reports malformed batch bodies as typed failures before sending them", async
 	}
 	expect(fetchHandler).not.toHaveBeenCalled();
 });
+
+it("gives up on a repository that stops answering instead of holding the queue", async () => {
+	const did = "did:plc:silent-repository";
+	const fetchHandler = vi.fn(
+		(_path: string, init?: RequestInit) =>
+			new Promise<Response>((_resolve, reject) => {
+				init?.signal?.addEventListener("abort", () =>
+					reject(init.signal?.reason),
+				);
+			}),
+	);
+	const session = await syncPdsSession(
+		{ restore: vi.fn(async () => ({ did, fetchHandler })) } as never,
+		did,
+	);
+	const request = (session.fetchHandler as (path: string) => Promise<Response>)(
+		"/xrpc/com.atproto.repo.listRecords",
+	).catch((error: unknown) => error);
+	// Request pacing delays the start, so allow for it on top of the timeout.
+	await vi.advanceTimersByTimeAsync(35_000);
+	const failure = await request;
+	expect(failure).toBeInstanceOf(IntegrationUnavailable);
+	expect((failure as Error).message).toContain("could not be reached");
+});
+
+it("gives up on a session restore that never settles", async () => {
+	const restore = vi.fn(() => new Promise<never>(() => undefined));
+	const session = syncPdsSession(
+		{ restore } as never,
+		"did:plc:silent-restore",
+	).catch((error: unknown) => error);
+	await vi.advanceTimersByTimeAsync(31_000);
+	expect(await session).toBeInstanceOf(IntegrationUnavailable);
+});
