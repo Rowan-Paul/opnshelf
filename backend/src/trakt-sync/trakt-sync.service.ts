@@ -89,9 +89,6 @@ export class TraktSyncService extends OAuthIntegrationSyncService<
 	protected get oauth() {
 		return this.api;
 	}
-	protected get returnPath() {
-		return "trakt-sync";
-	}
 	protected tokenExpiry(token: TraktToken) {
 		return new Date((token.created_at + token.expires_in) * 1000);
 	}

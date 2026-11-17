@@ -69,7 +69,7 @@ it.each([
 	const { url } = await service.authorize("private-did", "web");
 	const state = new URL(url).searchParams.get("state") ?? "";
 	expect(await service.callback(state, "private-code")).toBe(
-		"https://example.test/trakt-sync?provider=trakt&connection=failed",
+		"https://example.test/integrations/trakt?provider=trakt&connection=failed",
 	);
 	expect(capture).toHaveBeenCalledWith(
 		config,
