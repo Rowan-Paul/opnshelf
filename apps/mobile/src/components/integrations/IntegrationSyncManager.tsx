@@ -1339,8 +1339,13 @@ function useWriteGrant(
 	action: "connect" | "disconnect",
 ) {
 	const { runAuthorizationUrl } = useAuth();
+	const queryClient = useQueryClient();
 	return useMutation({
 		mutationKey: [...integrationKey(integration), "write-access", action],
+		// The status holds writeAccess. Onboarding does not poll it, so without
+		// this "Enable sync" stayed disabled after access was granted.
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: integrationKey(integration) }),
 		mutationFn: async () => {
 			if (!integration.writeGrant) return;
 			// Handoff code (ADR 0026): the callback returns a single-use code.
