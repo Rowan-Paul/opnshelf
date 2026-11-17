@@ -30,7 +30,12 @@ import {
 	type WithAccountWrite,
 } from "../privacy/watch-account-lock";
 import { watchOperation } from "../privacy/watch-operation";
-import type { IntegrationRemote, SyncRecordTypes } from "./adapter";
+import {
+	SYNC_RECORD_TYPES,
+	type IntegrationCapabilities,
+	type IntegrationRemote,
+	type SyncRecordTypes,
+} from "./adapter";
 import {
 	contentValue,
 	isContentRecord,
@@ -265,6 +270,8 @@ export abstract class IntegrationSyncService<Credential>
 	/** User-facing provider name in messages, e.g. "Trakt". */
 	protected abstract readonly name: string;
 	protected abstract readonly remote: IntegrationRemote<Credential>;
+	/** The record types and directions this provider's adapter implements. */
+	protected abstract readonly capabilities: IntegrationCapabilities;
 	protected abstract get configured(): boolean;
 	/** A usable credential, refreshed if needed. Throws when the User must reconnect. */
 	protected abstract credential(c: IntegrationConnection): Promise<Credential>;
@@ -420,6 +427,20 @@ export abstract class IntegrationSyncService<Credential>
 		}
 	}
 	async configure(userDid: string, dto: IntegrationSettings) {
+		const { records, directions } = this.capabilities;
+		if (!directions.includes(dto.direction))
+			throw new BadRequestException(
+				directions.length === 1 && directions[0] === "inbound"
+					? `${this.name} supports incoming changes only.`
+					: `${this.name} does not support this sync direction.`,
+			);
+		const unsupported = (
+			Object.keys(SYNC_RECORD_TYPES) as (keyof SyncRecordTypes)[]
+		).filter((type) => dto[type] && !records.includes(type));
+		if (unsupported.length)
+			throw new BadRequestException(
+				`${this.name} cannot sync ${unsupported.map((type) => SYNC_RECORD_TYPES[type]).join(", ")}.`,
+			);
 		if (
 			!dto.watches &&
 			!dto.ratings &&
@@ -1018,6 +1039,16 @@ export abstract class IntegrationSyncService<Credential>
 		};
 	}
 	async resolveIssue(userDid: string, id: string, dto: IntegrationResolve) {
+		const { directions } = this.capabilities;
+		if (
+			(dto.action === "opnshelf" && !directions.some((d) => d !== "inbound")) ||
+			(dto.action === "remote" && !directions.some((d) => d !== "outbound"))
+		)
+			throw new BadRequestException(
+				dto.action === "opnshelf"
+					? `Sending changes to ${this.name} is not supported.`
+					: `Bringing changes from ${this.name} is not supported.`,
+			);
 		try {
 			return await this.applyResolution(userDid, id, dto);
 		} catch (error) {

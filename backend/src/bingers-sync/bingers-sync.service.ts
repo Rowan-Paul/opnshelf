@@ -4,14 +4,10 @@ import type {
 	IntegrationRemote,
 	SyncRecordTypes,
 } from "../integrations/adapter";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { OAuthIntegrationSyncService } from "../integrations/oauth-integration-sync.service";
 import { BackendEnv } from "../config/env.schema";
 import { Prisma, type IntegrationConnection } from "../generated/client";
-import {
-	type IntegrationSettings,
-	type IntegrationResolve,
-} from "../integrations/integration-sync.service";
 import { LocalSyncRecords } from "../integrations/local-records.service";
 import {
 	readRecord,
@@ -37,6 +33,10 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 > {
 	protected readonly provider = "bingers";
 	protected readonly name = "Bingers";
+	protected readonly capabilities = {
+		records: ["watches", "ratings"],
+		directions: ["inbound"],
+	} as const;
 	protected readonly remote: IntegrationRemote<BingersCredential>;
 	constructor(
 		prisma: PrismaService,
@@ -60,9 +60,6 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		"https://api.bingers.app/auth/oauth2/authorize";
 	protected get oauth() {
 		return this.api;
-	}
-	protected get callbackQuery() {
-		return "provider=bingers&";
 	}
 	protected get connectionDefaults() {
 		return { direction: "inbound" };
@@ -184,27 +181,5 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	}
 	protected mappingKey(record: SyncRecord) {
 		return record.key.split(":").slice(1).join(":");
-	}
-	async configure(userDid: string, dto: IntegrationSettings) {
-		if (
-			dto.direction !== "inbound" ||
-			dto.lists ||
-			dto.watchlist ||
-			dto.favorites ||
-			dto.notes ||
-			dto.library ||
-			dto.reviews
-		)
-			throw new BadRequestException(
-				"Bingers supports incoming Watches and Ratings only.",
-			);
-		return super.configure(userDid, dto);
-	}
-	async resolveIssue(userDid: string, id: string, dto: IntegrationResolve) {
-		if (dto.action === "opnshelf")
-			throw new BadRequestException(
-				"Sending changes to Bingers is not supported.",
-			);
-		return super.resolveIssue(userDid, id, dto);
 	}
 }

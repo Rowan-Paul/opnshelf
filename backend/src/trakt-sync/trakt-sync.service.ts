@@ -64,6 +64,19 @@ export class TraktSyncService extends OAuthIntegrationSyncService<
 > {
 	protected readonly provider = "trakt";
 	protected readonly name = "Trakt";
+	protected readonly capabilities = {
+		records: [
+			"watches",
+			"ratings",
+			"lists",
+			"watchlist",
+			"favorites",
+			"notes",
+			"library",
+			"reviews",
+		],
+		directions: ["inbound", "outbound", "both"],
+	} as const;
 	protected readonly remote: TraktSyncClient;
 	constructor(
 		prisma: PrismaService,

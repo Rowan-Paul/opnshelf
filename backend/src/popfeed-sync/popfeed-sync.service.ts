@@ -43,6 +43,10 @@ const DID_MAX_MS = 60 * 60_000;
 export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential> {
 	protected readonly provider = "popfeed";
 	protected readonly name = "Popfeed";
+	protected readonly capabilities = {
+		records: ["watches", "ratings", "watchlist", "lists", "reviews"],
+		directions: ["inbound", "outbound", "both"],
+	} as const;
 	protected readonly remote: PopfeedSyncClient;
 	private readonly identity: IdResolver;
 	constructor(
@@ -235,10 +239,6 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 					"Allow Opnshelf to write your Popfeed records before sending changes to Popfeed.",
 				);
 		}
-		if (dto.favorites || dto.notes || dto.library)
-			throw new BadRequestException(
-				"Popfeed has no Favorites, Notes or Library Items to sync.",
-			);
 		return super.configure(userDid, dto);
 	}
 }

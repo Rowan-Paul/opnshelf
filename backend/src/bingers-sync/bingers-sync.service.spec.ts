@@ -176,6 +176,17 @@ it("rejects outbound settings and explicit remote writes before touching data", 
 	await expect(
 		service.resolveIssue("fixture", "entry", { action: "opnshelf" }),
 	).rejects.toThrow("not supported");
+	await expect(
+		service.configure("fixture", {
+			direction: "inbound",
+			watches: true,
+			ratings: true,
+			lists: true,
+			listPublicationConsent: true,
+			historyScope: "all",
+			publicationConsent: true,
+		}),
+	).rejects.toThrow("Bingers cannot sync Lists.");
 });
 it("does not pair unsupported aggregate history with an existing local Watch", async () => {
 	const record = {
