@@ -3,7 +3,11 @@ import type { IntegrationConnection } from "../generated/client";
 /** A failed run retries within minutes; only warn once the failure persists. */
 export const SYNC_ERROR_GRACE_MS = 15 * 60_000;
 
-const PROVIDERS = { trakt: "Trakt", popfeed: "Popfeed" } as const;
+const PROVIDERS = {
+	trakt: "Trakt",
+	popfeed: "Popfeed",
+	bingers: "Bingers",
+} as const;
 
 export const syncErrorWhere = {
 	provider: { in: Object.keys(PROVIDERS) },
