@@ -1654,6 +1654,27 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		expect(remoteRecords).toHaveLength(1);
 		expect(equivalent(remoteRecords[0], localRecords[1])).toBe(true);
 	});
+	it("keeps a not-yet-synced future addition in scope when settings are saved again", async () => {
+		localRecords = [watch("movie:old")];
+		await configure("future");
+		await tick();
+		localRecords.push(watch("movie:new", "1990-01-01T00:00:00Z"));
+		// Discover the addition without transferring it, then save settings.
+		await db.integrationConnection.updateMany({
+			where: { userDid },
+			data: { status: "paused" },
+		});
+		await service["discover"](
+			await db.integrationConnection.findFirstOrThrow({ where: { userDid } }),
+			localRecords,
+			[],
+		);
+		await configure("future");
+		await tick();
+		await tick();
+		expect(remoteRecords).toHaveLength(1);
+		expect(equivalent(remoteRecords[0], localRecords[1])).toBe(true);
+	});
 	it("keeps initial Rating conflicts pending until the user chooses", async () => {
 		localRecords = [{ ...watch("rating:one"), kind: "rating", value: 7 }];
 		remoteRecords = [{ ...watch("rating:remote"), kind: "rating", value: 9 }];

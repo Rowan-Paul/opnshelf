@@ -1504,7 +1504,10 @@ export abstract class IntegrationSyncService<Credential>
 					select: { id: true },
 					where: { id: e.id },
 					data: {
-						eligible: c.historyScope === "all",
+						// Saving settings again repeats this comparison. Records that
+						// entered scope since the first one stay in scope; only history
+						// that was never eligible remains excluded.
+						eligible: c.historyScope === "all" || e.eligible,
 						localBase: json(localByKey.get(e.localKey ?? "") ?? null),
 						remoteBase: json(
 							remoteByKey.get(e.remoteKey ?? "") ?? readRecord(e.remoteBase),
