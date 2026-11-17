@@ -283,6 +283,21 @@ describe("Trakt transport boundaries", () => {
 			client.pages("/sync/history", "fixture", "watch"),
 		).rejects.toThrow("incomplete results");
 	});
+	it("stops a long history read between pages when a User action is waiting", async () => {
+		const client = new TraktSyncClient(config);
+		const request = vi
+			.spyOn(client, "request")
+			.mockResolvedValueOnce(page([movie], 2, 2))
+			.mockResolvedValueOnce(page([{ ...movie, id: 42 }], 2, 2));
+		let checks = 0;
+		const waiting = new Error("yield");
+		await expect(
+			client.pages("/sync/history", "fixture", "watch", () => {
+				if (++checks === 2) throw waiting;
+			}),
+		).rejects.toBe(waiting);
+		expect(request).toHaveBeenCalledTimes(1);
+	});
 	it("rejects a history snapshot when activity changed during its pages", async () => {
 		const client = new TraktSyncClient(config);
 		vi.spyOn(client, "pages").mockResolvedValue([]);

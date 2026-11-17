@@ -306,6 +306,21 @@ it("replaces a rejected cursor only after a complete reread succeeds", async () 
 	expect(h.fetcher.mock.calls.at(-1)?.[0]).not.toContain("cursor=");
 	expect(h.feed()).toEqual({ cursor: "fresh", records: [] });
 });
+it("stops a feed read between pages for a waiting User action and keeps the saved feed", async () => {
+	const h = harness();
+	h.fetcher.mockResolvedValueOnce(response(page()));
+	await h.snapshot();
+	const before = structuredClone(h.feed());
+	const calls = h.fetcher.mock.calls.length;
+	const waiting = new Error("yield");
+	await expect(
+		h.service["remote"].snapshot(credential, undefined, "fixture-lease", () => {
+			throw waiting;
+		}),
+	).rejects.toBe(waiting);
+	expect(h.fetcher).toHaveBeenCalledTimes(calls);
+	expect(h.feed()).toEqual(before);
+});
 it("keeps the last complete feed when cursor recovery fails, without looping", async () => {
 	const h = harness();
 	h.fetcher.mockResolvedValueOnce(response(page()));

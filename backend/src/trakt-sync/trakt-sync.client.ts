@@ -280,23 +280,35 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 	async snapshot(
 		token: string,
 		options: SyncRecordTypes = {},
+		_leaseId?: string,
+		// A long history is hundreds of paced requests. Let a waiting User action
+		// end the read between them; nothing is kept from a read that stops.
+		checkpoint?: () => void,
 	): Promise<SyncRecord[]> {
+		checkpoint?.();
 		const before = (await this.request("/sync/last_activities", token)).data;
 		const watches =
 			options.watches === false
 				? []
-				: await this.pages("/sync/history", token, "watch");
+				: await this.pages("/sync/history", token, "watch", checkpoint);
 		const ratings: SyncRecord[] = [];
 		for (const type of options.ratings === false
 			? []
 			: ["movies", "shows", "seasons", "episodes"])
 			ratings.push(
-				...(await this.pages(`/sync/ratings/${type}`, token, "rating")),
+				...(await this.pages(
+					`/sync/ratings/${type}`,
+					token,
+					"rating",
+					checkpoint,
+				)),
 			);
+		checkpoint?.();
 		const lists =
 			options.lists || options.watchlist || options.favorites
 				? await snapshotLists(this, token, options)
 				: [];
+		checkpoint?.();
 		const content =
 			options.notes || options.library || options.reviews
 				? await snapshotContent(this, token, options)
@@ -375,6 +387,7 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		path: string,
 		token: string,
 		kind: "watch" | "rating",
+		checkpoint?: () => void,
 	): Promise<SyncRecord[]> {
 		const result: SyncRecord[] = [];
 		const seen = new Set<string>();
@@ -382,6 +395,7 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		// count is the one that matches the rows actually returned.
 		let expectedCount: number | undefined;
 		for (let page = 1; ; page++) {
+			checkpoint?.();
 			const { data, headers } = await this.request(
 				`${path}?page=${page}&limit=100`,
 				token,

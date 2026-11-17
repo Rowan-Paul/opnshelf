@@ -308,6 +308,9 @@ export class BingersSyncClient {
 	async readFeed(
 		token: string,
 		feed: BingersFeed = { records: [] },
+		// Lets a waiting User action end the read between pages. The feed is
+		// saved only when a read completes, so a stopped read changes nothing.
+		checkpoint?: () => void,
 	): Promise<BingersFeed> {
 		const current = new Map<string, SyncRecord>();
 		for (const record of feed.records) current.set(record.key, record);
@@ -318,6 +321,7 @@ export class BingersSyncClient {
 				throw new BingersSyncError(
 					"Bingers history is too large for one read. No partial state was applied.",
 				);
+			checkpoint?.();
 			const query = new URLSearchParams({
 				include: "titles",
 				limit: "200",
