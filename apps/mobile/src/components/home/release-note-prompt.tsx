@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useReleaseNotes } from "@/lib/use-release-notes";
 
 // Updated with each Mobile release that has a corresponding Release Note.
-const INSTALLED_RELEASE_NOTE = "smoother-sync-settings";
+const INSTALLED_RELEASE_NOTE = "more-reliable-integrations";
 
 /** Holds the slot (and its height) while we learn whether there is news. */
 function Placeholder() {
