@@ -42,8 +42,9 @@ export abstract class OAuthIntegrationSyncService<
 	protected get returnPath() {
 		return `integrations/${this.provider}`;
 	}
+	/** Onboarding receives every provider's return on one URL, so always name it. */
 	protected get callbackQuery() {
-		return "";
+		return `provider=${this.provider}&`;
 	}
 	protected get connectionDefaults(): Partial<
 		Pick<IntegrationConnection, "direction">

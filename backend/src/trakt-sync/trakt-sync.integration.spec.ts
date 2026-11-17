@@ -1240,7 +1240,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 		const state = new URL(authUrl).searchParams.get("state") ?? "missing-state";
 		await service.callback(state, "code");
 		await expect(service.callback(state, "code")).resolves.toBe(
-			"http://localhost:3000/trakt-sync?connection=failed",
+			"http://localhost:3000/trakt-sync?provider=trakt&connection=failed",
 		);
 	});
 	it("redirects callback errors to the trusted platform and consumes failed state", async () => {
@@ -1250,10 +1250,10 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			new Error("private provider failure"),
 		);
 		await expect(service.callback(state, "code")).resolves.toBe(
-			"opnshelf://trakt-sync?connection=failed",
+			"opnshelf://trakt-sync?provider=trakt&connection=failed",
 		);
 		await expect(service.callback(state, "code")).resolves.toBe(
-			"http://localhost:3000/trakt-sync?connection=failed",
+			"http://localhost:3000/trakt-sync?provider=trakt&connection=failed",
 		);
 		const { url: expiredUrl } = await service.authorize(userDid, "mobile");
 		const expired = new URL(expiredUrl).searchParams.get("state") ?? "";
@@ -1262,7 +1262,7 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 			data: { expiresAt: new Date(0) },
 		});
 		await expect(service.callback(expired, "code")).resolves.toBe(
-			"opnshelf://trakt-sync?connection=failed",
+			"opnshelf://trakt-sync?provider=trakt&connection=failed",
 		);
 	});
 	it("returns to Onboarding when authorization starts there", async () => {
@@ -1272,14 +1272,18 @@ describe.skipIf(!url)("Trakt Sync persisted reconciliation", () => {
 				new URL(web.url).searchParams.get("state") ?? "",
 				undefined,
 			),
-		).resolves.toBe("http://localhost:3000/onboarding?connection=cancelled");
+		).resolves.toBe(
+			"http://localhost:3000/onboarding?provider=trakt&connection=cancelled",
+		);
 		const mobile = await service.authorize(userDid, "mobile", "onboarding");
 		await expect(
 			service.callback(
 				new URL(mobile.url).searchParams.get("state") ?? "",
 				undefined,
 			),
-		).resolves.toBe("opnshelf://onboarding?connection=cancelled");
+		).resolves.toBe(
+			"opnshelf://onboarding?provider=trakt&connection=cancelled",
+		);
 	});
 	it("disconnects for account deletion even when remote revocation fails", async () => {
 		remoteApi.revoke.mockRejectedValueOnce(new Error("Trakt unavailable"));
