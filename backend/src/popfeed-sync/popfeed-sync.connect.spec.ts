@@ -119,3 +119,23 @@ it("does not replace a connection state changed before acquiring the lease", asy
 	expect(f.prisma.integrationConnection.update).not.toHaveBeenCalled();
 	expect(f.connection.status).toBe("active");
 });
+
+it.each(["resume", "sync", "pause"] as const)(
+	"refuses to %s a disconnected connection until it is connected again",
+	async (action) => {
+		const f = fixture("disconnected");
+		await expect(f.service.action(f.userDid, action)).rejects.toThrow(
+			"Connect Popfeed first.",
+		);
+		await expect(
+			f.service.configure(f.userDid, {
+				direction: "inbound",
+				historyScope: "all",
+				watches: true,
+				ratings: true,
+				publicationConsent: true,
+			}),
+		).rejects.toThrow("Connect Popfeed first.");
+		expect(f.connection.status).toBe("disconnected");
+	},
+);

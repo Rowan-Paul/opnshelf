@@ -454,6 +454,7 @@ export abstract class IntegrationSyncService<Credential>
 				"Acknowledge that Notes, Library Items and Reviews may become public on the destination.",
 			);
 		const c = await this.requireConnection(userDid);
+		this.assertConnected(c);
 		await this.locked(c, async (lease) => {
 			await this.credential(c);
 			await lease();
@@ -481,6 +482,15 @@ export abstract class IntegrationSyncService<Credential>
 		});
 		return this.status(userDid);
 	}
+	/**
+	 * A disconnected connection keeps its links for a later reconnect, but only
+	 * the provider's connect flow may revive it. Providers without a stored
+	 * credential (Popfeed) would otherwise resume from any settings request.
+	 */
+	protected assertConnected(c: Pick<IntegrationConnection, "status">) {
+		if (c.status === "disconnected")
+			throw new BadRequestException(`Connect ${this.name} first.`);
+	}
 	protected async requireConnection(userDid: string) {
 		const c = await this.current(userDid);
 		if (!c)
@@ -494,6 +504,7 @@ export abstract class IntegrationSyncService<Credential>
 		action: "pause" | "resume" | "sync" | "disconnect",
 	) {
 		let c = await this.requireConnection(userDid);
+		if (action !== "disconnect") this.assertConnected(c);
 		if (action === "sync") {
 			if (c.lastError && c.nextRunAt > new Date()) return this.status(userDid);
 			if (!this.credentialed(c) || c.status === "reconnect")
@@ -549,6 +560,8 @@ export abstract class IntegrationSyncService<Credential>
 					},
 				});
 			} else {
+				// Re-read under the lease: a disconnect may have completed meanwhile.
+				this.assertConnected(c);
 				if (!this.credentialed(c) || c.status === "reconnect")
 					throw new BadRequestException(`Reconnect ${this.name} first.`);
 				if (
