@@ -1280,9 +1280,29 @@ export abstract class IntegrationSyncService<Credential>
 			(query?.trim() || record.title).slice(0, 200),
 		);
 	}
+	/**
+	 * Run every connection that is due, one at a time. Stopping after one
+	 * capped a provider at one connection per timer interval, so idle
+	 * connections fell behind once there were more than a couple of dozen.
+	 * A connection runs at most once per tick, whatever its run left behind.
+	 */
 	async tick() {
 		if (this.busy || !this.configured) return;
 		this.busy = true;
+		try {
+			const ran = new Set<string>();
+			for (;;) {
+				const id = await this.runNext(ran);
+				if (!id) return;
+				ran.add(id);
+			}
+		} finally {
+			this.busy = false;
+		}
+	}
+	/** Run the connection that has waited longest; returns its id, or null when none is due. */
+	private async runNext(skip: ReadonlySet<string>): Promise<string | null> {
+		let ran: string | null = null;
 		try {
 			const c = await this.prisma.integrationConnection.findFirst({
 				where: {
@@ -1290,10 +1310,12 @@ export abstract class IntegrationSyncService<Credential>
 					status: "active",
 					nextRunAt: { lte: new Date() },
 					OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }],
+					...(skip.size ? { id: { notIn: [...skip] } } : {}),
 				},
 				orderBy: { nextRunAt: "asc" },
 			});
-			if (!c) return;
+			if (!c || skip.has(c.id)) return null;
+			ran = c.id;
 			await this.locked(c, async (lease, leaseId) => {
 				this.activeRun = { id: c.id, yieldRequested: false };
 				try {
@@ -1397,8 +1419,8 @@ export abstract class IntegrationSyncService<Credential>
 			);
 		} finally {
 			this.activeRun = undefined;
-			this.busy = false;
 		}
+		return ran;
 	}
 	protected async publicWatchOperation<T>(
 		c: IntegrationConnection,
