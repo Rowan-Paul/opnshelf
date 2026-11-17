@@ -109,6 +109,28 @@ describe("Pick for me", () => {
 		).toBe(2);
 		expect(result.items.some((i) => i.id === "show:3")).toBe(true);
 	});
+	it("selects episodes chronologically without reordering catalogue arrays", async () => {
+		const seasons = Object.freeze([{ season_number: 2 }, { season_number: 1 }]);
+		const episodes = Object.freeze([episode(2), episode(1)]);
+		shows.getShowDetails.mockResolvedValue({ name: "Show", seasons });
+		shows.getSeasonDetails.mockImplementation(async (_id, seasonNumber) => ({
+			episodes: seasonNumber === 1 ? episodes : [],
+		}));
+
+		const result = await service.get("did:plc:test", {
+			minutes: 180,
+			type: "show",
+		});
+
+		expect(result.items[0].episodes.map((item) => item.episodeNumber)).toEqual([
+			1, 2,
+		]);
+		expect(shows.getSeasonDetails.mock.calls.map((call) => call[1])).toEqual([
+			1, 2,
+		]);
+		expect(seasons.map((season) => season.season_number)).toEqual([2, 1]);
+		expect(episodes.map((item) => item.episode_number)).toEqual([2, 1]);
+	});
 	it("stops at a season unavailable on selected services", async () => {
 		shows.getShowDetails.mockResolvedValue({
 			name: "Show",

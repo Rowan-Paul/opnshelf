@@ -289,6 +289,78 @@ describe("Popfeed record mapping", () => {
 	});
 });
 
+describe("Popfeed records Opnshelf cannot read", () => {
+	const read = (repository: Partial<PopfeedRepository>) => () =>
+		popfeedRecords({ ...empty, ...repository }, all, "UTC");
+	// A record missing from a snapshot reads as deleted on Popfeed.
+	it.each([
+		["a film without its List", { listItems: [movieItem("a", {})] }],
+		[
+			"a show with a malformed watched episode",
+			{
+				listItems: [
+					movieItem("a", {
+						creativeWorkType: "tv_show",
+						listUri: `${repo}/social.popfeed.feed.list/x`,
+						addedAt: "2026-01-01T10:00:00Z",
+						watchedEpisodes: [{ seasonNumber: 1, episode: 2 }],
+					}),
+				],
+			},
+		],
+		[
+			"a show with a malformed episode beside valid ones",
+			{
+				listItems: [
+					movieItem("a", {
+						creativeWorkType: "tv_show",
+						listUri: `${repo}/social.popfeed.feed.list/x`,
+						addedAt: "2026-01-01T10:00:00Z",
+						watchedEpisodes: [
+							{ seasonNumber: 1, episodeNumber: 1 },
+							{ seasonNumber: 1, episode: 2 },
+						],
+					}),
+				],
+			},
+		],
+		["a Review without its date", { reviews: [review("a", { rating: 8 })] }],
+		[
+			"a List without a name",
+			{ lists: [{ uri: `${repo}/social.popfeed.feed.list/x`, value: {} }] },
+		],
+	])("stops the read instead of dropping %s", (_name, repository) => {
+		expect(read(repository)).toThrow("Nothing was removed");
+	});
+	it("still sets aside records of other media", () => {
+		expect(
+			read({
+				listItems: [movieItem("a", { creativeWorkType: "book" })],
+				reviews: [review("a", { creativeWorkType: "video_game" })],
+			})().filter((r) => r.kind !== "watchlist"),
+		).toEqual([]);
+	});
+	it("reads the other episodes of a show that also lists a special", () => {
+		expect(
+			read({
+				listItems: [
+					movieItem("a", {
+						creativeWorkType: "tv_show",
+						listUri: `${repo}/social.popfeed.feed.list/x`,
+						addedAt: "2026-01-01T10:00:00Z",
+						watchedEpisodes: [
+							{ seasonNumber: 0, episodeNumber: 0 },
+							{ seasonNumber: 1, episodeNumber: 2 },
+						],
+					}),
+				],
+			})()
+				.filter((r) => r.kind === "watch")
+				.map((r) => [r.season, r.episode]),
+		).toEqual([[1, 2]]);
+	});
+});
+
 describe("Popfeed review facets", () => {
 	it("turns link facets into Markdown links by byte range", () => {
 		const text = "Read más here";

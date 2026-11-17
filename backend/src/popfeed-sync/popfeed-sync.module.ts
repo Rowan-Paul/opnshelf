@@ -6,7 +6,6 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { ShowsModule } from "../shows/shows.module";
 import { PopfeedMediaService } from "./popfeed-media";
 import { PopfeedSyncClient } from "./popfeed-sync.client";
-import { PopfeedSyncController } from "./popfeed-sync.controller";
 import { PopfeedSyncService } from "./popfeed-sync.service";
 
 @Module({
@@ -17,7 +16,6 @@ import { PopfeedSyncService } from "./popfeed-sync.service";
 		ShowsModule,
 		forwardRef(() => AuthModule),
 	],
-	controllers: [PopfeedSyncController],
 	providers: [PopfeedSyncClient, PopfeedMediaService, PopfeedSyncService],
 	exports: [PopfeedSyncService],
 })

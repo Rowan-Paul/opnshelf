@@ -1,7 +1,7 @@
 import {
 	client,
 	describeMutationFailure,
-	traktSyncControllerStatus,
+	integrationApiControllerStatus,
 } from "@opnshelf/api";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -22,7 +22,9 @@ describe("api client", () => {
 				}),
 		);
 
-		const { data } = await traktSyncControllerStatus();
+		const { data } = await integrationApiControllerStatus({
+			path: { provider: "trakt" },
+		});
 
 		expect(data).toBeNull();
 	});
@@ -38,7 +40,10 @@ describe("api client", () => {
 		vi.stubGlobal("fetch", vi.fn().mockRejectedValue(error));
 		let failure: unknown;
 		try {
-			await traktSyncControllerStatus({ throwOnError: true });
+			await integrationApiControllerStatus({
+				path: { provider: "trakt" },
+				throwOnError: true,
+			});
 		} catch (caught) {
 			failure = caught;
 		}

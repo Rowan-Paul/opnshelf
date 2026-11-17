@@ -11,7 +11,10 @@ import {
 	IntegrationSyncService,
 	type IntegrationSettings,
 } from "../integrations/integration-sync.service";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	SyncSnapshotChanged,
+} from "../integrations/integration-error";
 import { LocalSyncRecords } from "../integrations/local-records.service";
 import type { SyncRecord } from "../integrations/reconcile";
 import { PrismaService } from "../prisma/prisma.service";
@@ -38,8 +41,11 @@ const DID_MAX_MS = 60 * 60_000;
  */
 @Injectable()
 export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential> {
-	protected readonly provider = "popfeed";
-	protected readonly name = "Popfeed";
+	protected readonly provider = "popfeed" as const;
+	protected readonly capabilities = {
+		records: ["watches", "ratings", "watchlist", "lists", "reviews"],
+		directions: ["inbound", "outbound", "both"],
+	} as const;
 	protected readonly remote: PopfeedSyncClient;
 	private readonly identity: IdResolver;
 	constructor(
@@ -101,6 +107,21 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 				);
 			return { collection, rkey: key };
 		};
+		// Popfeed changed this record after it was read. Writing or removing the
+		// copy read earlier would discard that change, so read again instead.
+		const unlessChanged = async (write: () => Promise<unknown>) => {
+			try {
+				await write();
+			} catch (error) {
+				if ((error as { error?: unknown } | null)?.error === "InvalidSwap")
+					throw new SyncSnapshotChanged(
+						"Your Popfeed records changed during the transfer. Sync will read a fresh snapshot.",
+						0,
+						5,
+					);
+				throw error;
+			}
+		};
 		return {
 			read: () => this.remote.repository(credential),
 			create: async (collection, record) =>
@@ -111,12 +132,23 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 						record,
 					})
 				).data.uri,
-			put: async (uri, record) => {
-				await agent.com.atproto.repo.putRecord({ repo, ...rkey(uri), record });
-			},
-			remove: async (uri) => {
-				await agent.com.atproto.repo.deleteRecord({ repo, ...rkey(uri) });
-			},
+			put: (source, record) =>
+				unlessChanged(() =>
+					agent.com.atproto.repo.putRecord({
+						repo,
+						...rkey(source.uri),
+						record,
+						...(source.cid ? { swapRecord: source.cid } : {}),
+					}),
+				),
+			remove: (source) =>
+				unlessChanged(() =>
+					agent.com.atproto.repo.deleteRecord({
+						repo,
+						...rkey(source.uri),
+						...(source.cid ? { swapRecord: source.cid } : {}),
+					}),
+				),
 			poster: async (posterPath) => {
 				try {
 					const response = await safeFetch(`${POSTER_SOURCE}${posterPath}`, {
@@ -150,6 +182,11 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 		return null;
 	}
 
+	protected readonly connectMethod = "repository" as const;
+	async connectRequest(userDid: string) {
+		await this.connect(userDid);
+		return {};
+	}
 	async connect(userDid: string) {
 		const user = await this.prisma.user.findUniqueOrThrow({
 			where: { did: userDid },
@@ -215,10 +252,6 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 					"Allow Opnshelf to write your Popfeed records before sending changes to Popfeed.",
 				);
 		}
-		if (dto.favorites || dto.notes || dto.library)
-			throw new BadRequestException(
-				"Popfeed has no Favorites, Notes or Library Items to sync.",
-			);
 		return super.configure(userDid, dto);
 	}
 }

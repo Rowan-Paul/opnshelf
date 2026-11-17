@@ -4,14 +4,10 @@ import type {
 	IntegrationRemote,
 	SyncRecordTypes,
 } from "../integrations/adapter";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { OAuthIntegrationSyncService } from "../integrations/oauth-integration-sync.service";
 import { BackendEnv } from "../config/env.schema";
 import { Prisma, type IntegrationConnection } from "../generated/client";
-import {
-	type IntegrationSettings,
-	type IntegrationResolve,
-} from "../integrations/integration-sync.service";
 import { LocalSyncRecords } from "../integrations/local-records.service";
 import {
 	readRecord,
@@ -35,8 +31,11 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	BingersCredential,
 	BingersToken
 > {
-	protected readonly provider = "bingers";
-	protected readonly name = "Bingers";
+	protected readonly provider = "bingers" as const;
+	protected readonly capabilities = {
+		records: ["watches", "ratings"],
+		directions: ["inbound"],
+	} as const;
 	protected readonly remote: IntegrationRemote<BingersCredential>;
 	constructor(
 		prisma: PrismaService,
@@ -47,8 +46,8 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	) {
 		super(prisma, local, config, watchLocks);
 		this.remote = {
-			snapshot: (credential, types, leaseId) =>
-				this.readSnapshot(credential, types, true, leaseId),
+			snapshot: (credential, types, leaseId, checkpoint) =>
+				this.readSnapshot(credential, types, true, leaseId, checkpoint),
 			readForRecord: async (credential, record) =>
 				(await this.readSnapshot(credential, undefined, false)).filter(
 					(r) => r.key === record.key,
@@ -60,9 +59,6 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		"https://api.bingers.app/auth/oauth2/authorize";
 	protected get oauth() {
 		return this.api;
-	}
-	protected get callbackQuery() {
-		return "provider=bingers&";
 	}
 	protected get connectionDefaults() {
 		return { direction: "inbound" };
@@ -116,6 +112,7 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		types?: SyncRecordTypes,
 		persist = true,
 		leaseId?: string,
+		checkpoint?: () => void,
 	) {
 		const row = await this.prisma.integrationConnection.findUniqueOrThrow({
 			where: { id: c.connectionId },
@@ -145,14 +142,15 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		});
 		let feed: BingersFeed;
 		try {
-			feed = await this.api.readFeed(c.token, {
-				cursor: saved.cursor,
-				records,
-			});
+			feed = await this.api.readFeed(
+				c.token,
+				{ cursor: saved.cursor, records },
+				checkpoint,
+			);
 		} catch (error) {
 			if (!(error instanceof BingersCursorRejected) || !persist) throw error;
 			// Discard only the in-memory attempt. Never publish an empty or partial replacement.
-			feed = await this.api.readFeed(c.token);
+			feed = await this.api.readFeed(c.token, undefined, checkpoint);
 		}
 		if (persist) {
 			if (!leaseId)
@@ -184,27 +182,5 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	}
 	protected mappingKey(record: SyncRecord) {
 		return record.key.split(":").slice(1).join(":");
-	}
-	async configure(userDid: string, dto: IntegrationSettings) {
-		if (
-			dto.direction !== "inbound" ||
-			dto.lists ||
-			dto.watchlist ||
-			dto.favorites ||
-			dto.notes ||
-			dto.library ||
-			dto.reviews
-		)
-			throw new BadRequestException(
-				"Bingers supports incoming Watches and Ratings only.",
-			);
-		return super.configure(userDid, dto);
-	}
-	async resolveIssue(userDid: string, id: string, dto: IntegrationResolve) {
-		if (dto.action === "opnshelf")
-			throw new BadRequestException(
-				"Sending changes to Bingers is not supported.",
-			);
-		return super.resolveIssue(userDid, id, dto);
 	}
 }

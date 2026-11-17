@@ -76,14 +76,14 @@ it.each([
 		name: "action",
 		run: () => POPFEED_INTEGRATION.api.action("pause"),
 		body: { action: "pause" },
-		path: "/popfeed-sync/action",
+		path: "/integrations/popfeed/action",
 	},
 	{
 		name: "issue resolution",
 		run: () =>
 			POPFEED_INTEGRATION.api.resolve("fixture-item", { action: "link" }),
 		body: { action: "link" },
-		path: "/popfeed-sync/issues/fixture-item",
+		path: "/integrations/popfeed/issues/fixture-item",
 	},
 ])("retries a busy $name request with the same body", async ({
 	run,

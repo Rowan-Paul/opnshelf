@@ -8,7 +8,15 @@ import { getFrontendUrl } from "../auth/auth-flow";
 import { z } from "zod";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { BackendEnv } from "../config/env.schema";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	IntegrationUnavailable,
+} from "../integrations/integration-error";
+import {
+	integrationFetch,
+	integrationJson,
+	isOutageStatus,
+} from "../integrations/integration-fetch";
 import { type SyncRecord } from "../integrations/reconcile";
 
 const origin = "https://api.bingers.app";
@@ -182,7 +190,7 @@ export class BingersSyncClient {
 	private async request(path: string, token?: string, form?: URLSearchParams) {
 		const key = integrationRateLimitKey(token);
 		const result = await this.requests.run(key, async () => {
-			const response = await fetch(`${origin}${path}`, {
+			const response = await integrationFetch("Bingers", `${origin}${path}`, {
 				method: form ? "POST" : "GET",
 				redirect: "error",
 				headers: {
@@ -193,13 +201,18 @@ export class BingersSyncClient {
 						: {}),
 				},
 				body: form,
-				signal: AbortSignal.timeout(15_000),
 			});
 			if (!response.ok) {
 				const retry = rateLimitRetrySeconds(
 					response.headers,
 					response.status === 403 ? 3600 : 60,
 				);
+				if (isOutageStatus(response.status))
+					throw new IntegrationUnavailable(
+						"Bingers could not complete the request. Sync will retry.",
+						response.status,
+						retry,
+					);
 				throw new BingersSyncError(
 					response.status === 403
 						? "Bingers API access requires a Legend or Icon subscription and library read permission. Restore access, then reconnect Bingers."
@@ -212,9 +225,8 @@ export class BingersSyncClient {
 					retry,
 				);
 			}
-			const text = await response.text();
 			return {
-				data: text.trim() ? (JSON.parse(text) as unknown) : null,
+				data: await integrationJson("Bingers", response),
 				headers: response.headers,
 			};
 		});
@@ -296,6 +308,9 @@ export class BingersSyncClient {
 	async readFeed(
 		token: string,
 		feed: BingersFeed = { records: [] },
+		// Lets a waiting User action end the read between pages. The feed is
+		// saved only when a read completes, so a stopped read changes nothing.
+		checkpoint?: () => void,
 	): Promise<BingersFeed> {
 		const current = new Map<string, SyncRecord>();
 		for (const record of feed.records) current.set(record.key, record);
@@ -306,6 +321,7 @@ export class BingersSyncClient {
 				throw new BingersSyncError(
 					"Bingers history is too large for one read. No partial state was applied.",
 				);
+			checkpoint?.();
 			const query = new URLSearchParams({
 				include: "titles",
 				limit: "200",

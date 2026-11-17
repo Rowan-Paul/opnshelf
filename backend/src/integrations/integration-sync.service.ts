@@ -30,7 +30,12 @@ import {
 	type WithAccountWrite,
 } from "../privacy/watch-account-lock";
 import { watchOperation } from "../privacy/watch-operation";
-import type { IntegrationRemote, SyncRecordTypes } from "./adapter";
+import {
+	SYNC_RECORD_TYPES,
+	type IntegrationCapabilities,
+	type IntegrationRemote,
+	type SyncRecordTypes,
+} from "./adapter";
 import {
 	contentValue,
 	isContentRecord,
@@ -52,6 +57,7 @@ import {
 	type ListValue,
 } from "./list-value";
 import type { LocalSyncRecords } from "./local-records.service";
+import { INTEGRATION_PROVIDERS, type IntegrationProviderId } from "./providers";
 import {
 	candidates,
 	decide,
@@ -261,10 +267,25 @@ export abstract class IntegrationSyncService<Credential>
 			throw new SyncRunYield();
 	}
 	/** Stored on every connection row, e.g. "trakt". */
-	protected abstract readonly provider: string;
+	protected abstract readonly provider: IntegrationProviderId;
 	/** User-facing provider name in messages, e.g. "Trakt". */
-	protected abstract readonly name: string;
+	protected get name(): string {
+		return INTEGRATION_PROVIDERS[this.provider];
+	}
 	protected abstract readonly remote: IntegrationRemote<Credential>;
+	/** The record types and directions this provider's adapter implements. */
+	protected abstract readonly capabilities: IntegrationCapabilities;
+	/** How a User connects: a provider sign-in to open, or in place. */
+	protected abstract readonly connectMethod: "oauth" | "repository";
+	/**
+	 * Start connecting. OAuth providers return the sign-in URL to open;
+	 * repository providers connect at once and return nothing to open.
+	 */
+	abstract connectRequest(
+		userDid: string,
+		platform: "web" | "mobile",
+		returnTo?: "onboarding",
+	): Promise<{ url?: string; returnUrl?: string }>;
 	protected abstract get configured(): boolean;
 	/** A usable credential, refreshed if needed. Throws when the User must reconnect. */
 	protected abstract credential(c: IntegrationConnection): Promise<Credential>;
@@ -368,6 +389,11 @@ export abstract class IntegrationSyncService<Credential>
 							((c.remainingTotal - c.remaining) / c.remainingTotal) * 100,
 						)
 					: undefined,
+			capabilities: {
+				records: [...this.capabilities.records],
+				directions: [...this.capabilities.directions],
+				connect: this.connectMethod,
+			},
 			needsAttention: counts.find((g) => !g.ignored)?._count ?? 0,
 			ignored: counts.find((g) => g.ignored)?._count ?? 0,
 		};
@@ -420,6 +446,20 @@ export abstract class IntegrationSyncService<Credential>
 		}
 	}
 	async configure(userDid: string, dto: IntegrationSettings) {
+		const { records, directions } = this.capabilities;
+		if (!directions.includes(dto.direction))
+			throw new BadRequestException(
+				directions.length === 1 && directions[0] === "inbound"
+					? `${this.name} supports incoming changes only.`
+					: `${this.name} does not support this sync direction.`,
+			);
+		const unsupported = (
+			Object.keys(SYNC_RECORD_TYPES) as (keyof SyncRecordTypes)[]
+		).filter((type) => dto[type] && !records.includes(type));
+		if (unsupported.length)
+			throw new BadRequestException(
+				`${this.name} cannot sync ${unsupported.map((type) => SYNC_RECORD_TYPES[type]).join(", ")}.`,
+			);
 		if (
 			!dto.watches &&
 			!dto.ratings &&
@@ -454,7 +494,15 @@ export abstract class IntegrationSyncService<Credential>
 				"Acknowledge that Notes, Library Items and Reviews may become public on the destination.",
 			);
 		const c = await this.requireConnection(userDid);
+		this.assertConnected(c);
 		await this.locked(c, async (lease) => {
+			// A disconnect may have completed between the read above and the lease.
+			this.assertConnected(
+				await this.prisma.integrationConnection.findUniqueOrThrow({
+					where: { id: c.id },
+					select: { status: true },
+				}),
+			);
 			await this.credential(c);
 			await lease();
 			const settings = { ...dto };
@@ -481,6 +529,15 @@ export abstract class IntegrationSyncService<Credential>
 		});
 		return this.status(userDid);
 	}
+	/**
+	 * A disconnected connection keeps its links for a later reconnect, but only
+	 * the provider's connect flow may revive it. Providers without a stored
+	 * credential (Popfeed) would otherwise resume from any settings request.
+	 */
+	protected assertConnected(c: Pick<IntegrationConnection, "status">) {
+		if (c.status === "disconnected")
+			throw new BadRequestException(`Connect ${this.name} first.`);
+	}
 	protected async requireConnection(userDid: string) {
 		const c = await this.current(userDid);
 		if (!c)
@@ -494,6 +551,7 @@ export abstract class IntegrationSyncService<Credential>
 		action: "pause" | "resume" | "sync" | "disconnect",
 	) {
 		let c = await this.requireConnection(userDid);
+		if (action !== "disconnect") this.assertConnected(c);
 		if (action === "sync") {
 			if (c.lastError && c.nextRunAt > new Date()) return this.status(userDid);
 			if (!this.credentialed(c) || c.status === "reconnect")
@@ -549,6 +607,8 @@ export abstract class IntegrationSyncService<Credential>
 					},
 				});
 			} else {
+				// Re-read under the lease: a disconnect may have completed meanwhile.
+				this.assertConnected(c);
 				if (!this.credentialed(c) || c.status === "reconnect")
 					throw new BadRequestException(`Reconnect ${this.name} first.`);
 				if (
@@ -1005,6 +1065,16 @@ export abstract class IntegrationSyncService<Credential>
 		};
 	}
 	async resolveIssue(userDid: string, id: string, dto: IntegrationResolve) {
+		const { directions } = this.capabilities;
+		if (
+			(dto.action === "opnshelf" && !directions.some((d) => d !== "inbound")) ||
+			(dto.action === "remote" && !directions.some((d) => d !== "outbound"))
+		)
+			throw new BadRequestException(
+				dto.action === "opnshelf"
+					? `Sending changes to ${this.name} is not supported.`
+					: `Bringing changes from ${this.name} is not supported.`,
+			);
 		try {
 			return await this.applyResolution(userDid, id, dto);
 		} catch (error) {
@@ -1233,9 +1303,29 @@ export abstract class IntegrationSyncService<Credential>
 			(query?.trim() || record.title).slice(0, 200),
 		);
 	}
+	/**
+	 * Run every connection that is due, one at a time. Stopping after one
+	 * capped a provider at one connection per timer interval, so idle
+	 * connections fell behind once there were more than a couple of dozen.
+	 * A connection runs at most once per tick, whatever its run left behind.
+	 */
 	async tick() {
 		if (this.busy || !this.configured) return;
 		this.busy = true;
+		try {
+			const ran = new Set<string>();
+			for (;;) {
+				const id = await this.runNext(ran);
+				if (!id) return;
+				ran.add(id);
+			}
+		} finally {
+			this.busy = false;
+		}
+	}
+	/** Run the connection that has waited longest; returns its id, or null when none is due. */
+	private async runNext(skip: ReadonlySet<string>): Promise<string | null> {
+		let ran: string | null = null;
 		try {
 			const c = await this.prisma.integrationConnection.findFirst({
 				where: {
@@ -1243,10 +1333,12 @@ export abstract class IntegrationSyncService<Credential>
 					status: "active",
 					nextRunAt: { lte: new Date() },
 					OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }],
+					...(skip.size ? { id: { notIn: [...skip] } } : {}),
 				},
 				orderBy: { nextRunAt: "asc" },
 			});
-			if (!c) return;
+			if (!c || skip.has(c.id)) return null;
+			ran = c.id;
 			await this.locked(c, async (lease, leaseId) => {
 				this.activeRun = { id: c.id, yieldRequested: false };
 				try {
@@ -1350,13 +1442,17 @@ export abstract class IntegrationSyncService<Credential>
 			);
 		} finally {
 			this.activeRun = undefined;
-			this.busy = false;
 		}
+		return ran;
 	}
 	protected async publicWatchOperation<T>(
 		c: IntegrationConnection,
 		work: (signal: AbortSignal, withWrite: WithAccountWrite) => Promise<T>,
-		mode: AccountLockMode = "exclusive",
+		// The shared barrier already excludes a Watch privacy change and account
+		// deletion. A snapshot pages through List and content repositories, so
+		// holding the barrier exclusively would reject Watch writes meanwhile.
+		// Transfers re-check the local snapshot under the write mutex.
+		mode: AccountLockMode = "shared",
 		phase = "snapshot",
 	): Promise<T> {
 		return this.watchLocks.run(
@@ -1403,8 +1499,9 @@ export abstract class IntegrationSyncService<Credential>
 	) {
 		const startedAtRun = Date.now();
 		let remote = records(c.remoteSnapshot);
-		// Account reads and transfers share the privacy lock, but slow remote
-		// pagination must not prevent someone from adding a Watch to their Shelf.
+		// Account reads and transfers share the privacy barrier, but slow
+		// repository pagination must not prevent someone from adding a Watch to
+		// their Shelf.
 		let local = await this.publicWatchOperation(c, async () => {
 			await lease();
 			return this.local.snapshot(
@@ -1486,7 +1583,10 @@ export abstract class IntegrationSyncService<Credential>
 					select: { id: true },
 					where: { id: e.id },
 					data: {
-						eligible: c.historyScope === "all",
+						// Saving settings again repeats this comparison. Records that
+						// entered scope since the first one stay in scope; only history
+						// that was never eligible remains excluded.
+						eligible: c.historyScope === "all" || e.eligible,
 						localBase: json(localByKey.get(e.localKey ?? "") ?? null),
 						remoteBase: json(
 							remoteByKey.get(e.remoteKey ?? "") ?? readRecord(e.remoteBase),

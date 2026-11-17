@@ -25,6 +25,7 @@ import {
 	traktError,
 	traktRecordTitle,
 	traktSettings,
+	withCapabilities,
 } from "@opnshelf/api";
 import {
 	keepPreviousData,
@@ -122,7 +123,7 @@ function Toggle({
 }
 
 export function IntegrationSyncManager({
-	integration,
+	integration: definition,
 	connectionFailed = false,
 	embedded = false,
 	issuesOnly = false,
@@ -132,19 +133,23 @@ export function IntegrationSyncManager({
 	embedded?: boolean;
 	issuesOnly?: boolean;
 }) {
-	const { id, name } = integration;
-	const rootKey = integrationKey(integration);
+	const { id, name } = definition;
+	const rootKey = integrationKey(definition);
 	const insets = useSafeAreaInsets();
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
 	const status = useQuery({
 		queryKey: [...rootKey, "status"],
-		queryFn: ({ signal }) => integration.api.status(signal),
+		queryFn: ({ signal }) => definition.api.status(signal),
 		refetchInterval: 5000,
 	});
+	// What this Integration supports comes from the server once it has answered.
+	const integration = withCapabilities(definition, status.data);
 	const connect = useMutation({
 		mutationKey: [...rootKey, "connect"],
 		mutationFn: integration.api.connect,
+		// Connecting again takes the sync lease, like every other control.
+		...integrationSyncBusyRetry,
 		onSuccess: async (data) => {
 			posthog?.capture("integration_connection_requested", {
 				provider: id,
@@ -210,6 +215,9 @@ export function IntegrationSyncManager({
 		data.status !== "disconnected" && data.status !== "reconnect";
 	if (issuesOnly)
 		return <SyncIssues integration={integration} connected={connected} />;
+	// The failed return stays in the URL; anything done here since supersedes it.
+	const signInFailed =
+		connectionFailed && !connect.isSuccess && !action.isSuccess;
 	const needsSetup =
 		connected &&
 		data.status === "paused" &&
@@ -371,26 +379,26 @@ export function IntegrationSyncManager({
 						{integrationStateMessage(data, name)}
 					</Text>
 				)}
-				{action.isPending && isIntegrationSyncBusy(action.failureReason) && (
+				{((action.isPending && isIntegrationSyncBusy(action.failureReason)) ||
+					(connect.isPending &&
+						isIntegrationSyncBusy(connect.failureReason))) && (
 					<Text accessibilityLiveRegion="polite" className={copy}>
 						Waiting for the current sync to finish…
 					</Text>
 				)}
-				{(connectionFailed ||
-					connect.error ||
-					action.error ||
-					data.lastError) && (
+				{(signInFailed || connect.error || action.error || data.lastError) && (
 					<Text
 						selectable
 						accessibilityRole="alert"
 						className="text-destructive text-sm"
 					>
-						{connectionFailed
-							? `${name} could not connect. Try connecting again.`
-							: connect.error
-								? traktError(connect.error)
-								: action.error
-									? traktError(action.error)
+						{/* A failed sign-in return is the oldest news on this page. */}
+						{connect.error
+							? traktError(connect.error)
+							: action.error
+								? traktError(action.error)
+								: signInFailed
+									? `${name} could not connect. Try connecting again.`
 									: data.lastError}
 					</Text>
 				)}
@@ -467,7 +475,7 @@ export function IntegrationSyncManager({
 }
 
 export function SyncSettings({
-	integration,
+	integration: definition,
 	status,
 	onSaved,
 	className = card,
@@ -482,6 +490,7 @@ export function SyncSettings({
 	onCancel?: () => void;
 }) {
 	const colors = useThemeColors();
+	const integration = withCapabilities(definition, status);
 	const { name } = integration;
 	const records = integrationRecords(integration);
 	const directions = integrationDirections(integration);
@@ -1330,8 +1339,13 @@ function useWriteGrant(
 	action: "connect" | "disconnect",
 ) {
 	const { runAuthorizationUrl } = useAuth();
+	const queryClient = useQueryClient();
 	return useMutation({
 		mutationKey: [...integrationKey(integration), "write-access", action],
+		// The status holds writeAccess. Onboarding does not poll it, so without
+		// this "Enable sync" stayed disabled after access was granted.
+		onSuccess: () =>
+			queryClient.invalidateQueries({ queryKey: integrationKey(integration) }),
 		mutationFn: async () => {
 			if (!integration.writeGrant) return;
 			// Handoff code (ADR 0026): the callback returns a single-use code.

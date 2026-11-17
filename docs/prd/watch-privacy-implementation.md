@@ -80,6 +80,10 @@ fingerprint discards the remote snapshot before modifying any Watch projection. 
 on contention or stale snapshots; background polling retries after at least
 60 seconds. Continuous Watch edits can postpone sync completion.
 
+Integration sync reads its local snapshot under shared 252 and takes 253 only
+to re-check that snapshot before each transfer. An inbound transfer holds 252
+exclusively while it writes the Watch.
+
 Remote phases admit at most `pool.max - 1` operations per lock pool, reserving
 one connection for foreground writes. Extra manual/background reads yield
 before checking out a connection. Each admitted operation retains a dedicated

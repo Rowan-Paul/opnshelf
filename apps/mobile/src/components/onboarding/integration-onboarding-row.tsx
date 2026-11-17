@@ -1,6 +1,7 @@
 import {
 	type IntegrationDefinition,
 	integrationKey,
+	integrationSyncBusyRetry,
 	onboardingIntegrationAction,
 	type SyncStatusDto,
 	traktError,
@@ -48,6 +49,8 @@ export function IntegrationOnboardingRow({
 	const connect = useMutation({
 		mutationKey: [...integrationKey(integration), "connect"],
 		mutationFn: integration.api.connect,
+		// Connecting again takes the sync lease, like every other control.
+		...integrationSyncBusyRetry,
 		onSuccess: async (result) => {
 			if (result.url) {
 				if (!result.returnUrl)

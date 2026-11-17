@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { IntegrationUnavailable } from "../integrations/integration-error";
 import type { TraktSyncClient } from "./trakt-sync.client";
 import {
 	encodeList,
@@ -171,7 +172,8 @@ async function readList(list: SyncRecord, read: () => Promise<SyncRecord>) {
 	try {
 		return await read();
 	} catch (error) {
-		// Authentication and provider-wide backoff still apply to the account.
+		// Authentication, an outage and provider-wide backoff apply to the account.
+		if (error instanceof IntegrationUnavailable) throw error;
 		if (
 			error &&
 			typeof error === "object" &&

@@ -6,6 +6,7 @@ import {
 	type ListMember,
 	memberKey,
 } from "../integrations/list-value";
+import { IntegrationUnavailable } from "../integrations/integration-error";
 import type { MediaType, SyncRecord } from "../integrations/reconcile";
 
 /**
@@ -37,15 +38,16 @@ const listItemSchema = z
 		addedAt: z.string(),
 		identifiers,
 		title: z.string().optional(),
+		// A malformed entry fails the record; dropping the array would read as
+		// every episode of the show having been unwatched.
 		watchedEpisodes: z
 			.array(
 				z.object({
 					seasonNumber: z.number().int().nonnegative(),
-					episodeNumber: z.number().int().positive(),
+					episodeNumber: z.number().int().nonnegative(),
 				}),
 			)
-			.optional()
-			.catch(undefined),
+			.nullish(),
 	})
 	.passthrough();
 const reviewSchema = z
@@ -68,7 +70,8 @@ const listSchema = z
 	})
 	.passthrough();
 
-export type PopfeedRecord = { uri: string; value: unknown };
+/** `cid` is the version read, so a write can refuse to replace a newer one. */
+export type PopfeedRecord = { uri: string; cid?: string; value: unknown };
 export type PopfeedRepository = {
 	listItems: PopfeedRecord[];
 	reviews: PopfeedRecord[];
@@ -184,9 +187,24 @@ const titleType = (creativeWorkType: string): "movie" | "show" | null =>
 			? "show"
 			: null;
 
+const filmOrShow = z.object({ creativeWorkType: z.enum(["movie", "tv_show"]) });
+/**
+ * A snapshot must be complete: a record missing from it reads as deleted on
+ * Popfeed, and Sync would remove its linked Opnshelf record. Records of other
+ * media (books, games) are not Opnshelf's to read and are skipped; a film,
+ * show or List that cannot be read stops the run instead.
+ */
+const unreadable = () =>
+	new IntegrationUnavailable(
+		"Popfeed returned a record Opnshelf could not read. Nothing was removed; Sync will retry.",
+		0,
+		300,
+	);
 const parse = <T>(schema: z.ZodType<T>, record: PopfeedRecord) => {
 	const result = schema.safeParse(record.value);
-	return result.success ? result.data : null;
+	if (result.success) return result.data;
+	if (filmOrShow.safeParse(record.value).success) throw unreadable();
+	return null;
 };
 
 /** Map one consistent read of a User's Popfeed records to Integration records. */
@@ -197,9 +215,11 @@ export function popfeedRecords(
 ): SyncRecord[] {
 	const result: SyncRecord[] = [];
 	const lists = new Map(
-		repo.lists.flatMap((r) => {
-			const list = parse(listSchema, r);
-			return list ? [[r.uri, list] as const] : [];
+		repo.lists.map((r) => {
+			// Lists carry no media type, so none can be set aside as another medium's.
+			const list = listSchema.safeParse(r.value);
+			if (!list.success) throw unreadable();
+			return [r.uri, list.data] as const;
 		}),
 	);
 	const watchlist: ListMember[] = [];
@@ -229,6 +249,8 @@ export function popfeedRecords(
 		}
 		if (types.watches && type === "show")
 			for (const ep of item.watchedEpisodes ?? []) {
+				// Episode 0 is not an episode Opnshelf can hold a Watch for.
+				if (!ep.episodeNumber) continue;
 				// A show can sit in several Popfeed Lists; each episode is one Watch.
 				const key = `watch:episode:${mediaId ?? raw.uri}:${ep.seasonNumber}:${ep.episodeNumber}`;
 				if (episodes.has(key)) continue;

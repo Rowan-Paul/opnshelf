@@ -3,8 +3,15 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { User, X } from "lucide-react-native";
-import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { useRef, useState } from "react";
+import {
+	ActivityIndicator,
+	Pressable,
+	ScrollView,
+	type ScrollViewInstance,
+	type TextInputInstance,
+	View,
+} from "react-native";
 import { AppleMark } from "@/components/marks/AppleMark";
 import { GoogleMark } from "@/components/marks/GoogleMark";
 import {
@@ -47,6 +54,23 @@ export default function LoginScreen() {
 	const authBusy = isSubmitting || providerBusy || recentProvider.busy !== null;
 	const [error, setError] = useState<string | null>(null);
 	const avatarStyle = useTwStyle("size-9");
+
+	// The keyboard leaves room for the Handle field or for what follows it, not
+	// both: left alone, the field lands on the keyboard's edge with its
+	// suggestions and Sign In hidden below. Bring the Handle section as far up
+	// as the content allows whenever the field is focused.
+	const scrollRef = useRef<ScrollViewInstance>(null);
+	const handleInputRef = useRef<TextInputInstance>(null);
+	const scrollMetrics = useRef({ viewport: 0, content: 0, handleY: 0 });
+	const revealHandle = () => {
+		if (!handleInputRef.current?.isFocused()) {
+			return;
+		}
+		const { viewport, content, handleY } = scrollMetrics.current;
+		// iOS does not clamp scrollTo, so stop at the end of the content.
+		const y = Math.min(handleY, Math.max(0, content - viewport));
+		scrollRef.current?.scrollTo({ y, animated: true });
+	};
 
 	const debouncedHandle = useDebounce(handle, 300).trim();
 	const suggestionsQuery = useQuery({
@@ -99,7 +123,22 @@ export default function LoginScreen() {
 
 	return (
 		<Screen>
-			<View className="flex-1 justify-center gap-6">
+			{/* Scrolls so the keyboard cannot cover the Handle field: centered
+			    content in a fixed View overflows off both ends once the keyboard
+			    shrinks the screen. */}
+			<ScrollView
+				ref={scrollRef}
+				contentContainerClassName="flex-grow justify-center gap-6 py-8"
+				keyboardShouldPersistTaps="handled"
+				onLayout={(event) => {
+					scrollMetrics.current.viewport = event.nativeEvent.layout.height;
+					revealHandle();
+				}}
+				onContentSizeChange={(_width, height) => {
+					scrollMetrics.current.content = height;
+					revealHandle();
+				}}
+			>
 				<View className="items-center gap-4">
 					<Image
 						source={require("../../assets/images/icon.png")}
@@ -214,8 +253,14 @@ export default function LoginScreen() {
 					<View className="h-px flex-1 bg-border" />
 				</View>
 
-				<View className="gap-3">
+				<View
+					className="gap-3"
+					onLayout={(event) => {
+						scrollMetrics.current.handleY = event.nativeEvent.layout.y;
+					}}
+				>
 					<TextField
+						ref={handleInputRef}
 						label="Handle"
 						helperText="Already have a Bluesky or AT Protocol handle? That works here too."
 						value={handle}
@@ -225,6 +270,7 @@ export default function LoginScreen() {
 						autoCorrect={false}
 						returnKeyType="go"
 						editable={!authBusy}
+						onFocus={revealHandle}
 						onSubmitEditing={() => submit(() => login(handle))}
 					/>
 
@@ -240,6 +286,7 @@ export default function LoginScreen() {
 							) : (
 								<ScrollView
 									style={{ maxHeight: 232 }}
+									nestedScrollEnabled
 									keyboardShouldPersistTaps="handled"
 								>
 									{suggestions.map((actor, index) => (
@@ -311,7 +358,7 @@ export default function LoginScreen() {
 						</Text>
 					</Pressable>
 				</View>
-			</View>
+			</ScrollView>
 		</Screen>
 	);
 }

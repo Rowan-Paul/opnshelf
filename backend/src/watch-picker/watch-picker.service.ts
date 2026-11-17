@@ -164,7 +164,7 @@ export class WatchPickerService {
 		const start = context.next.get(result.mediaId);
 		const fallback = detail.episode_run_time?.find((n) => n > 0);
 		const finish = () => (result.episodes.length ? result : null);
-		for (const season of [...(detail.seasons ?? [])].sort(
+		for (const season of (detail.seasons ?? []).toSorted(
 			(a, b) => a.season_number - b.season_number,
 		)) {
 			if (
@@ -188,7 +188,7 @@ export class WatchPickerService {
 				.sort((a, b) => a - b);
 			const estimate =
 				fallback ?? knownRuntimes[Math.floor(knownRuntimes.length / 2)];
-			for (const episode of [...data.episodes].sort(
+			for (const episode of data.episodes.toSorted(
 				(a, b) => a.episode_number - b.episode_number,
 			)) {
 				if (

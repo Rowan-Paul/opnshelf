@@ -78,3 +78,20 @@ does not claim that catch-up finished.
 The signal is local to the provider service in the single backend process,
 matching the request limiter's deployment assumption. Multiple backend processes
 would need a shared yield signal in addition to shared rate limiting.
+
+## Every adapter yields and reports outages (2026-11-17)
+
+Only the Popfeed adapter honoured the yield checkpoint, so a long Trakt history
+read kept returning `SYNC_BUSY` to User actions. Trakt now checks between
+history and Rating pages and between record kinds; Bingers checks between feed
+pages. A read that stops keeps nothing: the Bingers feed is saved only when a
+read completes. Trakt List and content reads are not interrupted mid-kind,
+because their per-List error handling would report a yield as an unreadable List.
+
+Trakt and Bingers also reported every failed request alike, and timeouts and
+network errors were untyped, so an outage during a transfer marked that item in
+Needs attention. All adapters now share one fetch helper: timeouts, network
+failures, unreadable bodies and 408/5xx responses are a provider outage that
+stops the run, matching the PDS behavior above. Authenticated repository
+requests and session restoration time out after thirty seconds for the same
+reason.

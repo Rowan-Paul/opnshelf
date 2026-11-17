@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
-import { normalizeRemote, TraktSyncClient } from "./trakt-sync.client";
+import { IntegrationUnavailable } from "../integrations/integration-error";
+import {
+	normalizeRemote,
+	TraktSyncClient,
+	TraktSyncError,
+} from "./trakt-sync.client";
 
 const movie = {
 	type: "movie",
@@ -25,6 +30,39 @@ describe("Trakt transport boundaries", () => {
 	afterEach(() => {
 		vi.unstubAllGlobals();
 		vi.useRealTimers();
+	});
+	// An outage stops the run; an item-level failure would reach Needs attention.
+	it.each([
+		[
+			"a server error",
+			async () => new Response("bad gateway", { status: 502 }),
+		],
+		[
+			"a timeout",
+			async () => {
+				throw new DOMException("timed out", "TimeoutError");
+			},
+		],
+		["an unreadable body", async () => new Response("<html>")],
+	])(
+		"reports %s as an outage rather than a failed request",
+		async (_n, reply) => {
+			vi.stubGlobal("fetch", vi.fn(reply));
+			await expect(
+				new TraktSyncClient(config).request("/sync/history", "token"),
+			).rejects.toBeInstanceOf(IntegrationUnavailable);
+		},
+	);
+	it("keeps a rejected request as a failure of that request", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response(null, { status: 422 })),
+		);
+		const failure = await new TraktSyncClient(config)
+			.request("/sync/history", "token")
+			.catch((error: unknown) => error);
+		expect(failure).toBeInstanceOf(TraktSyncError);
+		expect(failure).not.toBeInstanceOf(IntegrationUnavailable);
 	});
 	it("accepts an empty successful revocation response", async () => {
 		vi.stubGlobal(
@@ -129,6 +167,27 @@ describe("Trakt transport boundaries", () => {
 		expect(request).toHaveBeenLastCalledWith(
 			"/sync/ratings/movies?page=1&limit=100",
 			"fixture",
+		);
+	});
+	it("rejects a multi-page Rating confirmation when Trakt changed during it", async () => {
+		const client = new TraktSyncClient(config);
+		const rating = {
+			...normalizeRemote(movie, "watch"),
+			kind: "rating" as const,
+		};
+		const rated = (id: number) => ({
+			type: "movie",
+			rating: 8,
+			rated_at: "2026-01-01T00:00:00.000Z",
+			movie: { title: "Fixture", ids: { trakt: id, tmdb: id } },
+		});
+		vi.spyOn(client, "request")
+			.mockResolvedValueOnce(page({ all: "before" }))
+			.mockResolvedValueOnce(page([rated(1)], 2, 2))
+			.mockResolvedValueOnce(page([rated(2)], 2, 2))
+			.mockResolvedValueOnce(page({ all: "after" }));
+		await expect(client.readForRecord("fixture", rating)).rejects.toThrow(
+			"changed during the read",
 		);
 	});
 	it("resolves an exported episode using its parent TMDB ID and episode coordinates", async () => {
@@ -244,6 +303,21 @@ describe("Trakt transport boundaries", () => {
 		await expect(
 			client.pages("/sync/history", "fixture", "watch"),
 		).rejects.toThrow("incomplete results");
+	});
+	it("stops a long history read between pages when a User action is waiting", async () => {
+		const client = new TraktSyncClient(config);
+		const request = vi
+			.spyOn(client, "request")
+			.mockResolvedValueOnce(page([movie], 2, 2))
+			.mockResolvedValueOnce(page([{ ...movie, id: 42 }], 2, 2));
+		let checks = 0;
+		const waiting = new Error("yield");
+		await expect(
+			client.pages("/sync/history", "fixture", "watch", () => {
+				if (++checks === 2) throw waiting;
+			}),
+		).rejects.toBe(waiting);
+		expect(request).toHaveBeenCalledTimes(1);
 	});
 	it("rejects a history snapshot when activity changed during its pages", async () => {
 		const client = new TraktSyncClient(config);

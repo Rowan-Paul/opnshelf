@@ -25,8 +25,13 @@ export interface PopfeedRepo {
 	/** A fresh read of the three Popfeed collections. */
 	read(): Promise<PopfeedRepository>;
 	create(collection: string, record: Record<string, unknown>): Promise<string>;
-	put(uri: string, record: Record<string, unknown>): Promise<void>;
-	remove(uri: string): Promise<void>;
+	/**
+	 * Replace the version that was read. A record changed on Popfeed since then
+	 * is not overwritten; the run reads a fresh snapshot instead.
+	 */
+	put(source: PopfeedRecord, record: Record<string, unknown>): Promise<void>;
+	/** Remove the version that was read; one changed since then is kept. */
+	remove(source: PopfeedRecord): Promise<void>;
 	/** Upload a TMDB poster as a blob, or nothing when it cannot be fetched. */
 	poster(posterPath: string): Promise<unknown | undefined>;
 }
@@ -39,7 +44,11 @@ type Raw = Record<string, unknown> & {
 	creativeWorkType?: string;
 	listType?: string;
 	listUri?: string;
-	identifiers?: { tmdbId?: string };
+	identifiers?: {
+		tmdbId?: string;
+		seasonNumber?: number;
+		episodeNumber?: number;
+	};
 	watchedEpisodes?: {
 		seasonNumber: number;
 		episodeNumber: number;
@@ -171,7 +180,11 @@ export class PopfeedWriter {
 		if (remove) {
 			const uri = uriOf(record.key, "watch:");
 			if (!uri) throw unrepresentable("This Watch is not a Popfeed record.");
-			return this.repo.remove(uri);
+			// The key names the record. When this read found it, removing that
+			// version keeps a newer one; an item the read missed is removed by URI.
+			return this.repo.remove(
+				repo.listItems.find((item) => item.uri === uri) ?? { uri, value: {} },
+			);
 		}
 		if (typeof record.value !== "string")
 			throw unrepresentable(
@@ -217,7 +230,7 @@ export class PopfeedWriter {
 			for (const show of shows) {
 				const episodes = raw(show).watchedEpisodes ?? [];
 				if (episodes.some(matches))
-					await this.repo.put(show.uri, {
+					await this.repo.put(show, {
 						...raw(show),
 						watchedEpisodes: episodes.filter((ep) => !matches(ep)),
 					});
@@ -234,7 +247,7 @@ export class PopfeedWriter {
 		};
 		const [show] = shows;
 		if (show)
-			return this.repo.put(show.uri, {
+			return this.repo.put(show, {
 				...raw(show),
 				watchedEpisodes: [...(raw(show).watchedEpisodes ?? []), episode],
 			});
@@ -267,7 +280,11 @@ export class PopfeedWriter {
 				(review) =>
 					raw(review).creativeWorkType ===
 						(type === "movie" ? "movie" : "tv_show") &&
-					tmdbOf(review) === record.mediaId,
+					tmdbOf(review) === record.mediaId &&
+					// A season or episode review shares its show's TMDB ID; the reader
+					// treats it as that season's or episode's, so it is not this title's.
+					!raw(review).identifiers?.seasonNumber &&
+					!raw(review).identifiers?.episodeNumber,
 			)
 			.sort((a, b) =>
 				String(raw(b).createdAt ?? "").localeCompare(
@@ -288,11 +305,11 @@ export class PopfeedWriter {
 			if (!rated) return;
 			// Popfeed requires a rating; 0 keeps a review's text without a score.
 			if (raw(rated).text?.trim())
-				return this.repo.put(rated.uri, { ...raw(rated), rating: 0 });
-			return this.repo.remove(rated.uri);
+				return this.repo.put(rated, { ...raw(rated), rating: 0 });
+			return this.repo.remove(rated);
 		}
 		if (rated)
-			return this.repo.put(rated.uri, { ...raw(rated), rating: record.value });
+			return this.repo.put(rated, { ...raw(rated), rating: record.value });
 		await this.repo.create(REVIEW, {
 			$type: REVIEW,
 			...(await this.fields(this.titleType(record), record.mediaId)),
@@ -321,13 +338,13 @@ export class PopfeedWriter {
 			if (!existing) return;
 			// Keep the record when it also carries the title's Popfeed rating.
 			if ((raw(existing).rating ?? 0) > 0)
-				return this.repo.put(existing.uri, {
+				return this.repo.put(existing, {
 					...raw(existing),
 					text: "",
 					facets: [],
 					containsSpoilers: false,
 				});
-			return this.repo.remove(existing.uri);
+			return this.repo.remove(existing);
 		}
 		const value = contentValue(record);
 		const text = {
@@ -335,8 +352,7 @@ export class PopfeedWriter {
 			facets: [],
 			containsSpoilers: value.spoiler,
 		};
-		if (existing)
-			return this.repo.put(existing.uri, { ...raw(existing), ...text });
+		if (existing) return this.repo.put(existing, { ...raw(existing), ...text });
 		const rating =
 			raw(
 				this.reviewsFor(repo, record).find(
@@ -385,7 +401,7 @@ export class PopfeedWriter {
 			if (!tmdbOf(item) || (type !== "movie" && type !== "tv_show")) continue;
 			const key = memberKey(this.member(item));
 			if (wanted.has(key) && !present.has(key)) present.add(key);
-			else await this.repo.remove(item.uri);
+			else await this.repo.remove(item);
 		}
 		for (const member of members) {
 			const key = memberKey(member);
@@ -433,9 +449,8 @@ export class PopfeedWriter {
 		if (remove) {
 			if (!existing) return;
 			for (const item of repo.listItems)
-				if (raw(item).listUri === existing.uri)
-					await this.repo.remove(item.uri);
-			return this.repo.remove(existing.uri);
+				if (raw(item).listUri === existing.uri) await this.repo.remove(item);
+			return this.repo.remove(existing);
 		}
 		const value = listValue(record);
 		this.assertMembers(value.items);
@@ -451,7 +466,7 @@ export class PopfeedWriter {
 					createdAt: this.now().toISOString(),
 				});
 		if (existing)
-			await this.repo.put(existing.uri, {
+			await this.repo.put(existing, {
 				...raw(existing),
 				name: value.name,
 				description: value.description,

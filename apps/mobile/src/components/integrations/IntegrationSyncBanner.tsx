@@ -1,9 +1,10 @@
 import {
-	traktSyncCatchUpMessage,
-	traktSyncControllerStatus,
-	traktSyncErrorMessage,
+	INTEGRATIONS,
+	integrationBanner,
+	integrationCatchUpMessage,
+	integrationKey,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { AlertTriangle } from "lucide-react-native";
 import type { ReactNode } from "react";
@@ -15,31 +16,39 @@ import {
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/theme/colors";
-export function TraktSyncBanner({ children }: { children: ReactNode }) {
+/** Strip above the tabs for whichever Integration needs the User or is catching up. */
+export function IntegrationSyncBanner({ children }: { children: ReactNode }) {
 	const colors = useThemeColors();
 	const insets = useSafeAreaInsets();
 	const { isAuthenticated } = useAuth();
-	// Shares Trakt Sync's status cache, so Settings changes show up here at once.
-	const { data: sync } = useQuery({
-		queryKey: ["trakt-sync", "status"],
-		queryFn: async ({ signal }) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
-		enabled: isAuthenticated,
-		refetchInterval: (query) =>
-			query.state.data?.status === "active" ||
-			traktSyncCatchUpMessage(query.state.data)
-				? 5000
-				: false,
+	// Shares each Integration's status cache, so Settings changes show up here at once.
+	const statuses = useQueries({
+		queries: INTEGRATIONS.map((integration) => ({
+			queryKey: [...integrationKey(integration), "status"],
+			queryFn: ({ signal }: { signal: AbortSignal }) =>
+				integration.api.status(signal),
+			enabled: isAuthenticated,
+			refetchInterval: (query: {
+				state: { data?: Awaited<ReturnType<typeof integration.api.status>> };
+			}) =>
+				query.state.data?.status === "active" ||
+				integrationCatchUpMessage(query.state.data, integration.name)
+					? 5000
+					: (false as const),
+		})),
 	});
-	const syncMessage = isAuthenticated ? traktSyncCatchUpMessage(sync) : null;
-	const syncError = traktSyncErrorMessage(sync);
+	const banner = isAuthenticated
+		? integrationBanner(statuses.map((status) => status.data))
+		: null;
+	const syncMessage = banner?.message;
+	const syncError = banner?.error;
 	if (!syncMessage) return <>{children}</>;
 	return (
 		<View className="flex-1 bg-background">
 			<Link
 				href={{
 					pathname: "/integrations/[provider]",
-					params: { provider: "trakt" },
+					params: { provider: banner?.integration.id ?? "trakt" },
 				}}
 				asChild
 			>

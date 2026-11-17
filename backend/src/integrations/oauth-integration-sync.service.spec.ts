@@ -61,7 +61,7 @@ it.each([false, true])(
 		} else expect(api.refresh).not.toHaveBeenCalled();
 	},
 );
-it("returns Trakt's legacy mobile callback and the onboarding callback from the server", async () => {
+it("returns Trakt to its Integration page, or to onboarding, from the server", async () => {
 	const prisma = { authState: { create: vi.fn() } };
 	const service = new TraktSyncService(
 		prisma as unknown as PrismaService,
@@ -71,7 +71,7 @@ it("returns Trakt's legacy mobile callback and the onboarding callback from the 
 		{} as WatchAccountLock,
 	);
 	expect((await service.authorize("owner", "mobile")).returnUrl).toBe(
-		"opnshelf://trakt-sync",
+		"opnshelf://integrations/trakt",
 	);
 	expect(
 		(await service.authorize("owner", "mobile", "onboarding")).returnUrl,
