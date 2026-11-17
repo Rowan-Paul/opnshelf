@@ -11,7 +11,10 @@ import {
 	IntegrationSyncService,
 	type IntegrationSettings,
 } from "../integrations/integration-sync.service";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	SyncSnapshotChanged,
+} from "../integrations/integration-error";
 import { LocalSyncRecords } from "../integrations/local-records.service";
 import type { SyncRecord } from "../integrations/reconcile";
 import { PrismaService } from "../prisma/prisma.service";
@@ -111,8 +114,25 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 						record,
 					})
 				).data.uri,
-			put: async (uri, record) => {
-				await agent.com.atproto.repo.putRecord({ repo, ...rkey(uri), record });
+			put: async (source, record) => {
+				try {
+					await agent.com.atproto.repo.putRecord({
+						repo,
+						...rkey(source.uri),
+						record,
+						...(source.cid ? { swapRecord: source.cid } : {}),
+					});
+				} catch (error) {
+					// Popfeed changed this record after it was read. Writing the copy
+					// read earlier would discard that change.
+					if ((error as { error?: unknown } | null)?.error === "InvalidSwap")
+						throw new SyncSnapshotChanged(
+							"Your Popfeed records changed during the transfer. Sync will read a fresh snapshot.",
+							0,
+							5,
+						);
+					throw error;
+				}
 			},
 			remove: async (uri) => {
 				await agent.com.atproto.repo.deleteRecord({ repo, ...rkey(uri) });

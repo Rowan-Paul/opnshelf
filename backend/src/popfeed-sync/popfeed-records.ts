@@ -70,7 +70,8 @@ const listSchema = z
 	})
 	.passthrough();
 
-export type PopfeedRecord = { uri: string; value: unknown };
+/** `cid` is the version read, so a write can refuse to replace a newer one. */
+export type PopfeedRecord = { uri: string; cid?: string; value: unknown };
 export type PopfeedRepository = {
 	listItems: PopfeedRecord[];
 	reviews: PopfeedRecord[];

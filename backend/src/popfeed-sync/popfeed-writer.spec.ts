@@ -27,8 +27,8 @@ const repo = {
 		records.set(uri, structuredClone(record));
 		return uri;
 	}),
-	put: vi.fn(async (uri: string, record: Record<string, unknown>) => {
-		records.set(uri, structuredClone(record));
+	put: vi.fn(async (source: PopfeedRecord, record: Record<string, unknown>) => {
+		records.set(source.uri, structuredClone(record));
 	}),
 	remove: vi.fn(async (uri: string) => {
 		records.delete(uri);
@@ -345,5 +345,36 @@ describe("Popfeed Lists", () => {
 		await expect(
 			writer.write(watchlist([member("2", "show")])),
 		).rejects.toThrow("movies only");
+	});
+	it("replaces the version it read, so a newer Popfeed edit is not overwritten", async () => {
+		const uri = `at://${did}/${REVIEW}/existing`;
+		records.set(uri, {
+			$type: REVIEW,
+			creativeWorkType: "movie",
+			identifiers: { tmdbId: "120" },
+			rating: 6,
+			createdAt: "2026-01-01T10:00:00Z",
+		});
+		repo.read.mockImplementationOnce(async () => ({
+			listItems: [],
+			lists: [],
+			reviews: [
+				{ uri, cid: "bafy-read", value: structuredClone(records.get(uri)) },
+			],
+		}));
+		await writer.write({
+			key: "rating:movie:120:0:0",
+			kind: "rating",
+			mediaType: "movie",
+			mediaId: "120",
+			season: 0,
+			episode: 0,
+			title: "",
+			value: 8,
+		});
+		expect(repo.put).toHaveBeenCalledWith(
+			expect.objectContaining({ uri, cid: "bafy-read" }),
+			expect.objectContaining({ rating: 8 }),
+		);
 	});
 });

@@ -73,10 +73,10 @@ describe.skipIf(!url)("Popfeed Sync persisted inbound reconciliation", () => {
 			else repo.listItems.push(entry);
 			return uri;
 		},
-		put: async (uri, record) => {
+		put: async (source, record) => {
 			for (const records of [repo.lists, repo.reviews, repo.listItems])
 				for (const entry of records)
-					if (entry.uri === uri) entry.value = structuredClone(record);
+					if (entry.uri === source.uri) entry.value = structuredClone(record);
 		},
 		remove: async (uri) => {
 			const keep = (records: PopfeedRecord[]) =>

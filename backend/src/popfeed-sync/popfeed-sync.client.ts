@@ -46,7 +46,13 @@ const PAGE = 100;
 const MAX_PAGES = 200;
 
 const pageSchema = z.object({
-	records: z.array(z.object({ uri: z.string(), value: z.unknown() })),
+	records: z.array(
+		z.object({
+			uri: z.string(),
+			cid: z.string().optional(),
+			value: z.unknown(),
+		}),
+	),
 	cursor: z.string().optional(),
 });
 const commitSchema = z.object({ cid: z.string(), rev: z.string() });

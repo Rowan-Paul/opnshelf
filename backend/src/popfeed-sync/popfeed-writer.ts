@@ -25,7 +25,11 @@ export interface PopfeedRepo {
 	/** A fresh read of the three Popfeed collections. */
 	read(): Promise<PopfeedRepository>;
 	create(collection: string, record: Record<string, unknown>): Promise<string>;
-	put(uri: string, record: Record<string, unknown>): Promise<void>;
+	/**
+	 * Replace the version that was read. A record changed on Popfeed since then
+	 * is not overwritten; the run reads a fresh snapshot instead.
+	 */
+	put(source: PopfeedRecord, record: Record<string, unknown>): Promise<void>;
 	remove(uri: string): Promise<void>;
 	/** Upload a TMDB poster as a blob, or nothing when it cannot be fetched. */
 	poster(posterPath: string): Promise<unknown | undefined>;
@@ -217,7 +221,7 @@ export class PopfeedWriter {
 			for (const show of shows) {
 				const episodes = raw(show).watchedEpisodes ?? [];
 				if (episodes.some(matches))
-					await this.repo.put(show.uri, {
+					await this.repo.put(show, {
 						...raw(show),
 						watchedEpisodes: episodes.filter((ep) => !matches(ep)),
 					});
@@ -234,7 +238,7 @@ export class PopfeedWriter {
 		};
 		const [show] = shows;
 		if (show)
-			return this.repo.put(show.uri, {
+			return this.repo.put(show, {
 				...raw(show),
 				watchedEpisodes: [...(raw(show).watchedEpisodes ?? []), episode],
 			});
@@ -288,11 +292,11 @@ export class PopfeedWriter {
 			if (!rated) return;
 			// Popfeed requires a rating; 0 keeps a review's text without a score.
 			if (raw(rated).text?.trim())
-				return this.repo.put(rated.uri, { ...raw(rated), rating: 0 });
+				return this.repo.put(rated, { ...raw(rated), rating: 0 });
 			return this.repo.remove(rated.uri);
 		}
 		if (rated)
-			return this.repo.put(rated.uri, { ...raw(rated), rating: record.value });
+			return this.repo.put(rated, { ...raw(rated), rating: record.value });
 		await this.repo.create(REVIEW, {
 			$type: REVIEW,
 			...(await this.fields(this.titleType(record), record.mediaId)),
@@ -321,7 +325,7 @@ export class PopfeedWriter {
 			if (!existing) return;
 			// Keep the record when it also carries the title's Popfeed rating.
 			if ((raw(existing).rating ?? 0) > 0)
-				return this.repo.put(existing.uri, {
+				return this.repo.put(existing, {
 					...raw(existing),
 					text: "",
 					facets: [],
@@ -335,8 +339,7 @@ export class PopfeedWriter {
 			facets: [],
 			containsSpoilers: value.spoiler,
 		};
-		if (existing)
-			return this.repo.put(existing.uri, { ...raw(existing), ...text });
+		if (existing) return this.repo.put(existing, { ...raw(existing), ...text });
 		const rating =
 			raw(
 				this.reviewsFor(repo, record).find(
@@ -451,7 +454,7 @@ export class PopfeedWriter {
 					createdAt: this.now().toISOString(),
 				});
 		if (existing)
-			await this.repo.put(existing.uri, {
+			await this.repo.put(existing, {
 				...raw(existing),
 				name: value.name,
 				description: value.description,
