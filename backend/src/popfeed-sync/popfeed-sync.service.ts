@@ -41,8 +41,7 @@ const DID_MAX_MS = 60 * 60_000;
  */
 @Injectable()
 export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential> {
-	protected readonly provider = "popfeed";
-	protected readonly name = "Popfeed";
+	protected readonly provider = "popfeed" as const;
 	protected readonly capabilities = {
 		records: ["watches", "ratings", "watchlist", "lists", "reviews"],
 		directions: ["inbound", "outbound", "both"],

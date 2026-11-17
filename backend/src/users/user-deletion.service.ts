@@ -39,6 +39,7 @@ import { TraktSyncService } from "../trakt-sync/trakt-sync.service";
 import { PopfeedSyncService } from "../popfeed-sync/popfeed-sync.service";
 import { syncBusy } from "../integrations/integration-error";
 import { WatchAccountBusyError } from "../privacy/watch-account-lock";
+import type { IntegrationProviderId } from "../integrations/providers";
 import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import {
 	ACCOUNT_DELETION_JOB_TYPE,
@@ -108,9 +109,17 @@ export class UserDeletionService {
 
 	/** Stop every Integration first so no sync run starts during deletion. */
 	private async disconnectIntegrations(did: string) {
-		await this.traktSync?.disconnectForDeletion(did);
-		await this.popfeedSync?.disconnectForDeletion(did);
-		await this.bingersSync?.disconnectForDeletion(did);
+		// Typed by provider id: a new Integration fails to compile until it is here.
+		const services: Record<
+			IntegrationProviderId,
+			{ disconnectForDeletion(did: string): Promise<void> } | undefined
+		> = {
+			trakt: this.traktSync,
+			popfeed: this.popfeedSync,
+			bingers: this.bingersSync,
+		};
+		for (const service of Object.values(services))
+			await service?.disconnectForDeletion(did);
 	}
 
 	/**

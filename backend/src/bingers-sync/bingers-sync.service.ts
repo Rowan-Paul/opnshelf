@@ -31,8 +31,7 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	BingersCredential,
 	BingersToken
 > {
-	protected readonly provider = "bingers";
-	protected readonly name = "Bingers";
+	protected readonly provider = "bingers" as const;
 	protected readonly capabilities = {
 		records: ["watches", "ratings"],
 		directions: ["inbound"],
@@ -47,8 +46,8 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 	) {
 		super(prisma, local, config, watchLocks);
 		this.remote = {
-			snapshot: (credential, types, leaseId) =>
-				this.readSnapshot(credential, types, true, leaseId),
+			snapshot: (credential, types, leaseId, checkpoint) =>
+				this.readSnapshot(credential, types, true, leaseId, checkpoint),
 			readForRecord: async (credential, record) =>
 				(await this.readSnapshot(credential, undefined, false)).filter(
 					(r) => r.key === record.key,
@@ -113,6 +112,7 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		types?: SyncRecordTypes,
 		persist = true,
 		leaseId?: string,
+		checkpoint?: () => void,
 	) {
 		const row = await this.prisma.integrationConnection.findUniqueOrThrow({
 			where: { id: c.connectionId },
@@ -142,14 +142,15 @@ export class BingersSyncService extends OAuthIntegrationSyncService<
 		});
 		let feed: BingersFeed;
 		try {
-			feed = await this.api.readFeed(c.token, {
-				cursor: saved.cursor,
-				records,
-			});
+			feed = await this.api.readFeed(
+				c.token,
+				{ cursor: saved.cursor, records },
+				checkpoint,
+			);
 		} catch (error) {
 			if (!(error instanceof BingersCursorRejected) || !persist) throw error;
 			// Discard only the in-memory attempt. Never publish an empty or partial replacement.
-			feed = await this.api.readFeed(c.token);
+			feed = await this.api.readFeed(c.token, undefined, checkpoint);
 		}
 		if (persist) {
 			if (!leaseId)

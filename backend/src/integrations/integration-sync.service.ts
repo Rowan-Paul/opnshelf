@@ -57,6 +57,7 @@ import {
 	type ListValue,
 } from "./list-value";
 import type { LocalSyncRecords } from "./local-records.service";
+import { INTEGRATION_PROVIDERS, type IntegrationProviderId } from "./providers";
 import {
 	candidates,
 	decide,
@@ -266,9 +267,11 @@ export abstract class IntegrationSyncService<Credential>
 			throw new SyncRunYield();
 	}
 	/** Stored on every connection row, e.g. "trakt". */
-	protected abstract readonly provider: string;
+	protected abstract readonly provider: IntegrationProviderId;
 	/** User-facing provider name in messages, e.g. "Trakt". */
-	protected abstract readonly name: string;
+	protected get name(): string {
+		return INTEGRATION_PROVIDERS[this.provider];
+	}
 	protected abstract readonly remote: IntegrationRemote<Credential>;
 	/** The record types and directions this provider's adapter implements. */
 	protected abstract readonly capabilities: IntegrationCapabilities;

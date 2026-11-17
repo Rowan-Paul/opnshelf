@@ -62,8 +62,7 @@ export class TraktSyncService extends OAuthIntegrationSyncService<
 	string,
 	TraktToken
 > {
-	protected readonly provider = "trakt";
-	protected readonly name = "Trakt";
+	protected readonly provider = "trakt" as const;
 	protected readonly capabilities = {
 		records: [
 			"watches",
