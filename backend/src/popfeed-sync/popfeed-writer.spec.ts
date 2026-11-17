@@ -30,8 +30,8 @@ const repo = {
 	put: vi.fn(async (source: PopfeedRecord, record: Record<string, unknown>) => {
 		records.set(source.uri, structuredClone(record));
 	}),
-	remove: vi.fn(async (uri: string) => {
-		records.delete(uri);
+	remove: vi.fn(async (source: PopfeedRecord) => {
+		records.delete(source.uri);
 	}),
 	poster: vi.fn(async () => ({ $type: "blob", ref: { $link: "bafy" } })),
 };
@@ -401,5 +401,37 @@ describe("Popfeed Lists", () => {
 		expect(
 			[...records.values()].filter((value) => value.rating === 9),
 		).toHaveLength(1);
+	});
+	it("removes the version it read, so text added on Popfeed since is kept", async () => {
+		const uri = `at://${did}/${REVIEW}/rated`;
+		const scoreOnly = {
+			$type: REVIEW,
+			creativeWorkType: "movie",
+			identifiers: { tmdbId: "120" },
+			rating: 6,
+			createdAt: "2026-01-01T10:00:00Z",
+		};
+		records.set(uri, scoreOnly);
+		repo.read.mockImplementationOnce(async () => ({
+			listItems: [],
+			lists: [],
+			reviews: [{ uri, cid: "bafy-read", value: structuredClone(scoreOnly) }],
+		}));
+		await writer.write(
+			{
+				key: "rating:movie:120:0:0",
+				kind: "rating",
+				mediaType: "movie",
+				mediaId: "120",
+				season: 0,
+				episode: 0,
+				title: "",
+				value: 6,
+			},
+			true,
+		);
+		expect(repo.remove).toHaveBeenCalledWith(
+			expect.objectContaining({ uri, cid: "bafy-read" }),
+		);
 	});
 });

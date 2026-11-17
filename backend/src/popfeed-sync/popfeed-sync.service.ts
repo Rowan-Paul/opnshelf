@@ -107,6 +107,21 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 				);
 			return { collection, rkey: key };
 		};
+		// Popfeed changed this record after it was read. Writing or removing the
+		// copy read earlier would discard that change, so read again instead.
+		const unlessChanged = async (write: () => Promise<unknown>) => {
+			try {
+				await write();
+			} catch (error) {
+				if ((error as { error?: unknown } | null)?.error === "InvalidSwap")
+					throw new SyncSnapshotChanged(
+						"Your Popfeed records changed during the transfer. Sync will read a fresh snapshot.",
+						0,
+						5,
+					);
+				throw error;
+			}
+		};
 		return {
 			read: () => this.remote.repository(credential),
 			create: async (collection, record) =>
@@ -117,29 +132,23 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 						record,
 					})
 				).data.uri,
-			put: async (source, record) => {
-				try {
-					await agent.com.atproto.repo.putRecord({
+			put: (source, record) =>
+				unlessChanged(() =>
+					agent.com.atproto.repo.putRecord({
 						repo,
 						...rkey(source.uri),
 						record,
 						...(source.cid ? { swapRecord: source.cid } : {}),
-					});
-				} catch (error) {
-					// Popfeed changed this record after it was read. Writing the copy
-					// read earlier would discard that change.
-					if ((error as { error?: unknown } | null)?.error === "InvalidSwap")
-						throw new SyncSnapshotChanged(
-							"Your Popfeed records changed during the transfer. Sync will read a fresh snapshot.",
-							0,
-							5,
-						);
-					throw error;
-				}
-			},
-			remove: async (uri) => {
-				await agent.com.atproto.repo.deleteRecord({ repo, ...rkey(uri) });
-			},
+					}),
+				),
+			remove: (source) =>
+				unlessChanged(() =>
+					agent.com.atproto.repo.deleteRecord({
+						repo,
+						...rkey(source.uri),
+						...(source.cid ? { swapRecord: source.cid } : {}),
+					}),
+				),
 			poster: async (posterPath) => {
 				try {
 					const response = await safeFetch(`${POSTER_SOURCE}${posterPath}`, {

@@ -30,7 +30,8 @@ export interface PopfeedRepo {
 	 * is not overwritten; the run reads a fresh snapshot instead.
 	 */
 	put(source: PopfeedRecord, record: Record<string, unknown>): Promise<void>;
-	remove(uri: string): Promise<void>;
+	/** Remove the version that was read; one changed since then is kept. */
+	remove(source: PopfeedRecord): Promise<void>;
 	/** Upload a TMDB poster as a blob, or nothing when it cannot be fetched. */
 	poster(posterPath: string): Promise<unknown | undefined>;
 }
@@ -179,7 +180,10 @@ export class PopfeedWriter {
 		if (remove) {
 			const uri = uriOf(record.key, "watch:");
 			if (!uri) throw unrepresentable("This Watch is not a Popfeed record.");
-			return this.repo.remove(uri);
+			// The key names the record; removing the version read keeps a newer one.
+			return this.repo.remove(
+				repo.listItems.find((item) => item.uri === uri) ?? { uri, value: {} },
+			);
 		}
 		if (typeof record.value !== "string")
 			throw unrepresentable(
@@ -301,7 +305,7 @@ export class PopfeedWriter {
 			// Popfeed requires a rating; 0 keeps a review's text without a score.
 			if (raw(rated).text?.trim())
 				return this.repo.put(rated, { ...raw(rated), rating: 0 });
-			return this.repo.remove(rated.uri);
+			return this.repo.remove(rated);
 		}
 		if (rated)
 			return this.repo.put(rated, { ...raw(rated), rating: record.value });
@@ -339,7 +343,7 @@ export class PopfeedWriter {
 					facets: [],
 					containsSpoilers: false,
 				});
-			return this.repo.remove(existing.uri);
+			return this.repo.remove(existing);
 		}
 		const value = contentValue(record);
 		const text = {
@@ -396,7 +400,7 @@ export class PopfeedWriter {
 			if (!tmdbOf(item) || (type !== "movie" && type !== "tv_show")) continue;
 			const key = memberKey(this.member(item));
 			if (wanted.has(key) && !present.has(key)) present.add(key);
-			else await this.repo.remove(item.uri);
+			else await this.repo.remove(item);
 		}
 		for (const member of members) {
 			const key = memberKey(member);
@@ -444,9 +448,8 @@ export class PopfeedWriter {
 		if (remove) {
 			if (!existing) return;
 			for (const item of repo.listItems)
-				if (raw(item).listUri === existing.uri)
-					await this.repo.remove(item.uri);
-			return this.repo.remove(existing.uri);
+				if (raw(item).listUri === existing.uri) await this.repo.remove(item);
+			return this.repo.remove(existing);
 		}
 		const value = listValue(record);
 		this.assertMembers(value.items);

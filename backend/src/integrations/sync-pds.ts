@@ -85,11 +85,21 @@ export async function syncPdsSession(
 								const timeout = new AbortController();
 								const timer = setTimeout(() => timeout.abort(), PDS_TIMEOUT_MS);
 								try {
-									return await target.fetchHandler(path, {
+									const response = await target.fetchHandler(path, {
 										...init,
 										signal: init?.signal
 											? AbortSignal.any([init.signal, timeout.signal])
 											: timeout.signal,
+									});
+									// Headers can arrive while the body stalls. Read it inside
+									// the deadline so the caller never waits on it unbounded.
+									const body = response.body
+										? await response.arrayBuffer()
+										: null;
+									return new Response(body, {
+										status: response.status,
+										statusText: response.statusText,
+										headers: response.headers,
 									});
 								} catch (error) {
 									if (timeout.signal.aborted) throw unreachable();

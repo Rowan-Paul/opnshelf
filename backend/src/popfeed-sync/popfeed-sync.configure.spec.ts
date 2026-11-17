@@ -9,6 +9,7 @@ it("distinguishes a busy configure lease from ownership loss and saves after rel
 	const prisma = {
 		integrationConnection: {
 			findFirst: vi.fn(async () => connection),
+			findUniqueOrThrow: vi.fn(async () => ({ status: "active" })),
 			update,
 			updateMany: vi.fn(async ({ where, data }) => {
 				if (where.OR) {
@@ -77,5 +78,43 @@ it("distinguishes a busy configure lease from ownership loss and saves after rel
 			message: "Sync ownership changed. Try again.",
 		},
 	});
+	expect(update).not.toHaveBeenCalled();
+});
+
+it("does not revive a connection that was disconnected while settings waited for the lease", async () => {
+	const update = vi.fn(async () => ({}));
+	const connection = {
+		id: "fixture",
+		userDid: "did:plc:fixture",
+		status: "active",
+	};
+	const prisma = {
+		integrationConnection: {
+			// The request read an active connection; a disconnect finished since.
+			findFirst: vi.fn(async () => connection),
+			findUniqueOrThrow: vi.fn(async () => ({ status: "disconnected" })),
+			update,
+			updateMany: vi.fn(async () => ({ count: 1 })),
+		},
+	};
+	const service = new PopfeedSyncService(
+		prisma as never,
+		{} as never,
+		{} as never,
+		{ NODE_ENV: "test" } as never,
+		{} as never,
+		{} as never,
+		{} as never,
+	);
+	service["credential"] = vi.fn(async () => ({}) as never);
+	await expect(
+		service.configure(connection.userDid, {
+			direction: "inbound",
+			historyScope: "all",
+			watches: true,
+			ratings: false,
+			publicationConsent: true,
+		}),
+	).rejects.toThrow("Connect Popfeed first.");
 	expect(update).not.toHaveBeenCalled();
 });

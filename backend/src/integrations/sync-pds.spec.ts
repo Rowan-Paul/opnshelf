@@ -335,3 +335,46 @@ it("gives up on a session restore that never settles", async () => {
 	await vi.advanceTimersByTimeAsync(31_000);
 	expect(await session).toBeInstanceOf(IntegrationUnavailable);
 });
+
+it("gives up on a response whose body stalls after the headers arrived", async () => {
+	const did = "did:plc:stalled-body";
+	const fetchHandler = vi.fn(
+		async (_path: string, init?: RequestInit) =>
+			new Response(
+				new ReadableStream({
+					start(controller) {
+						init?.signal?.addEventListener("abort", () =>
+							controller.error(init.signal?.reason),
+						);
+					},
+				}),
+			),
+	);
+	const session = await syncPdsSession(
+		{ restore: vi.fn(async () => ({ did, fetchHandler })) } as never,
+		did,
+	);
+	const request = (session.fetchHandler as (path: string) => Promise<Response>)(
+		"/xrpc/com.atproto.repo.listRecords",
+	).catch((error: unknown) => error);
+	await vi.advanceTimersByTimeAsync(35_000);
+	expect(await request).toBeInstanceOf(IntegrationUnavailable);
+});
+
+it("hands back the whole body of a response that arrives in time", async () => {
+	const did = "did:plc:complete-body";
+	const session = await syncPdsSession(
+		{
+			restore: vi.fn(async () => ({
+				did,
+				fetchHandler: async () => Response.json({ records: [1] }),
+			})),
+		} as never,
+		did,
+	);
+	const request = (session.fetchHandler as (path: string) => Promise<Response>)(
+		"/xrpc/com.atproto.repo.listRecords",
+	);
+	await vi.runAllTimersAsync();
+	expect(await (await request).json()).toEqual({ records: [1] });
+});

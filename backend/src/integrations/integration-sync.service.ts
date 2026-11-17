@@ -496,6 +496,13 @@ export abstract class IntegrationSyncService<Credential>
 		const c = await this.requireConnection(userDid);
 		this.assertConnected(c);
 		await this.locked(c, async (lease) => {
+			// A disconnect may have completed between the read above and the lease.
+			this.assertConnected(
+				await this.prisma.integrationConnection.findUniqueOrThrow({
+					where: { id: c.id },
+					select: { status: true },
+				}),
+			);
 			await this.credential(c);
 			await lease();
 			const settings = { ...dto };
