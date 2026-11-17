@@ -308,6 +308,22 @@ describe("Popfeed records Opnshelf cannot read", () => {
 				],
 			},
 		],
+		[
+			"a show with a malformed episode beside valid ones",
+			{
+				listItems: [
+					movieItem("a", {
+						creativeWorkType: "tv_show",
+						listUri: `${repo}/social.popfeed.feed.list/x`,
+						addedAt: "2026-01-01T10:00:00Z",
+						watchedEpisodes: [
+							{ seasonNumber: 1, episodeNumber: 1 },
+							{ seasonNumber: 1, episode: 2 },
+						],
+					}),
+				],
+			},
+		],
 		["a Review without its date", { reviews: [review("a", { rating: 8 })] }],
 		[
 			"a List without a name",

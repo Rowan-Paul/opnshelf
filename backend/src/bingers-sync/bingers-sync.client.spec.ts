@@ -312,13 +312,23 @@ it("stops a feed read between pages for a waiting User action and keeps the save
 	await h.snapshot();
 	const before = structuredClone(h.feed());
 	const calls = h.fetcher.mock.calls.length;
+	// The first page of the next read arrives; the User action lands before the second.
+	h.fetcher.mockResolvedValueOnce(
+		response(
+			page([{ ...row, deleted: true }], {
+				has_more: true,
+				next_cursor: "cursor-2",
+			}),
+		),
+	);
 	const waiting = new Error("yield");
+	let checks = 0;
 	await expect(
 		h.service["remote"].snapshot(credential, undefined, "fixture-lease", () => {
-			throw waiting;
+			if (++checks === 2) throw waiting;
 		}),
 	).rejects.toBe(waiting);
-	expect(h.fetcher).toHaveBeenCalledTimes(calls);
+	expect(h.fetcher).toHaveBeenCalledTimes(calls + 1);
 	expect(h.feed()).toEqual(before);
 });
 it("keeps the last complete feed when cursor recovery fails, without looping", async () => {

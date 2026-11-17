@@ -378,3 +378,25 @@ it("hands back the whole body of a response that arrives in time", async () => {
 	await vi.runAllTimersAsync();
 	expect(await (await request).json()).toEqual({ records: [1] });
 });
+
+it("keeps a rate limit's retry delay even when its body stalls", async () => {
+	const did = "did:plc:stalled-limit";
+	const session = await syncPdsSession(
+		{
+			restore: vi.fn(async () => ({
+				did,
+				fetchHandler: async () =>
+					new Response(new ReadableStream(), {
+						status: 429,
+						headers: { "retry-after": "900" },
+					}),
+			})),
+		} as never,
+		did,
+	);
+	const request = (session.fetchHandler as (path: string) => Promise<Response>)(
+		"/xrpc/com.atproto.repo.listRecords",
+	).catch((error: unknown) => error);
+	await vi.advanceTimersByTimeAsync(2_000);
+	expect(await request).toMatchObject({ status: 429, retrySeconds: 900 });
+});

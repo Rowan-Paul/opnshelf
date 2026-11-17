@@ -91,6 +91,11 @@ export async function syncPdsSession(
 											? AbortSignal.any([init.signal, timeout.signal])
 											: timeout.signal,
 									});
+									// syncPdsRequest classifies these from their status and
+									// headers and discards the body, so a stalled body must not
+									// replace their retry delay with a generic timeout.
+									if (response.status === 429 || response.status >= 500)
+										return response;
 									// Headers can arrive while the body stalls. Read it inside
 									// the deadline so the caller never waits on it unbounded.
 									const body = response.body

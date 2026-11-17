@@ -180,7 +180,8 @@ export class PopfeedWriter {
 		if (remove) {
 			const uri = uriOf(record.key, "watch:");
 			if (!uri) throw unrepresentable("This Watch is not a Popfeed record.");
-			// The key names the record; removing the version read keeps a newer one.
+			// The key names the record. When this read found it, removing that
+			// version keeps a newer one; an item the read missed is removed by URI.
 			return this.repo.remove(
 				repo.listItems.find((item) => item.uri === uri) ?? { uri, value: {} },
 			);
