@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseEnvironment } from "../config/env.schema";
-import { normalizeRemote, TraktSyncClient } from "./trakt-sync.client";
+import { IntegrationUnavailable } from "../integrations/integration-error";
+import {
+	normalizeRemote,
+	TraktSyncClient,
+	TraktSyncError,
+} from "./trakt-sync.client";
 
 const movie = {
 	type: "movie",
@@ -25,6 +30,39 @@ describe("Trakt transport boundaries", () => {
 	afterEach(() => {
 		vi.unstubAllGlobals();
 		vi.useRealTimers();
+	});
+	// An outage stops the run; an item-level failure would reach Needs attention.
+	it.each([
+		[
+			"a server error",
+			async () => new Response("bad gateway", { status: 502 }),
+		],
+		[
+			"a timeout",
+			async () => {
+				throw new DOMException("timed out", "TimeoutError");
+			},
+		],
+		["an unreadable body", async () => new Response("<html>")],
+	])(
+		"reports %s as an outage rather than a failed request",
+		async (_n, reply) => {
+			vi.stubGlobal("fetch", vi.fn(reply));
+			await expect(
+				new TraktSyncClient(config).request("/sync/history", "token"),
+			).rejects.toBeInstanceOf(IntegrationUnavailable);
+		},
+	);
+	it("keeps a rejected request as a failure of that request", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response(null, { status: 422 })),
+		);
+		const failure = await new TraktSyncClient(config)
+			.request("/sync/history", "token")
+			.catch((error: unknown) => error);
+		expect(failure).toBeInstanceOf(TraktSyncError);
+		expect(failure).not.toBeInstanceOf(IntegrationUnavailable);
 	});
 	it("accepts an empty successful revocation response", async () => {
 		vi.stubGlobal(

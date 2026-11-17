@@ -17,7 +17,15 @@ import type {
 	SyncRecordTypes,
 } from "../integrations/adapter";
 import { isContentRecord } from "../integrations/content-value";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	IntegrationUnavailable,
+} from "../integrations/integration-error";
+import {
+	integrationFetch,
+	integrationJson,
+	isOutageStatus,
+} from "../integrations/integration-fetch";
 import { snapshotContent, writeContent } from "./remote-content";
 import { snapshotLists, writeList } from "./remote-lists";
 
@@ -69,6 +77,18 @@ type TraktResponseDiagnostics = {
 	cloudflareRay?: string;
 };
 export class TraktSyncError extends IntegrationError {
+	constructor(
+		message: string,
+		status = 0,
+		retrySeconds = 60,
+		readonly diagnostics?: TraktResponseDiagnostics,
+	) {
+		super(message, status, retrySeconds);
+	}
+}
+
+/** Trakt is down or timing out: stop the run without marking any item. */
+export class TraktUnavailable extends IntegrationUnavailable {
 	constructor(
 		message: string,
 		status = 0,
@@ -149,18 +169,21 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 	): Promise<{ data: unknown; headers: Headers }> {
 		const key = integrationRateLimitKey(token);
 		return this.requests.run(key, async () => {
-			const response = await fetch(`https://api.trakt.tv${path}`, {
-				method,
-				headers: {
-					"Content-Type": "application/json",
-					"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
-					"trakt-api-key": this.clientId,
-					"trakt-api-version": "2",
-					...(token ? { Authorization: `Bearer ${token}` } : {}),
+			const response = await integrationFetch(
+				"Trakt",
+				`https://api.trakt.tv${path}`,
+				{
+					method,
+					headers: {
+						"Content-Type": "application/json",
+						"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
+						"trakt-api-key": this.clientId,
+						"trakt-api-version": "2",
+						...(token ? { Authorization: `Bearer ${token}` } : {}),
+					},
+					...(body === undefined ? {} : { body: JSON.stringify(body) }),
 				},
-				...(body === undefined ? {} : { body: JSON.stringify(body) }),
-				signal: AbortSignal.timeout(15_000),
-			});
+			);
 			if (!response.ok) {
 				const retry = rateLimitRetrySeconds(response.headers, 60);
 				const contentType = response.headers.get("content-type") ?? "";
@@ -173,7 +196,10 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 					oauthError = parsed.success ? parsed.data.error : undefined;
 				}
 				const ray = response.headers.get("cf-ray") ?? "";
-				throw new TraktSyncError(
+				// An outage stops the run; any other failure belongs to this request.
+				throw new (
+					isOutageStatus(response.status) ? TraktUnavailable : TraktSyncError
+				)(
 					response.status === 401
 						? "Reconnect Trakt to continue syncing."
 						: response.status === 429
@@ -203,9 +229,8 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 					},
 				);
 			}
-			const text = await response.text();
 			return {
-				data: text.trim() ? JSON.parse(text) : null,
+				data: await integrationJson("Trakt", response),
 				headers: response.headers,
 			};
 		});

@@ -1,3 +1,4 @@
+import { IntegrationUnavailable } from "../integrations/integration-error";
 import { BingersSyncService } from "./bingers-sync.service";
 import type { LocalSyncRecords } from "../integrations/local-records.service";
 import type { WatchAccountLock } from "../privacy/watch-account-lock";
@@ -313,7 +314,8 @@ it("keeps the last complete feed when cursor recovery fails, without looping", a
 	h.fetcher
 		.mockResolvedValueOnce(response({}, 400))
 		.mockResolvedValueOnce(response({}, 503));
-	await expect(h.snapshot()).rejects.toThrow();
+	// A server error is an outage: the run stops and no item is marked.
+	await expect(h.snapshot()).rejects.toBeInstanceOf(IntegrationUnavailable);
 	expect(h.feed()).toEqual(before);
 	expect(h.fetcher).toHaveBeenCalledTimes(3);
 });
