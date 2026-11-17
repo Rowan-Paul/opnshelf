@@ -1,4 +1,5 @@
 import {
+	integrationNames,
 	notificationsControllerConfirmEmailMutation,
 	notificationsControllerRequestEmailMutation,
 	notificationsControllerSettingsOptions,
@@ -267,7 +268,7 @@ export function NotificationPreferences({
 							Sync errors and disconnections
 						</Text>
 						<Text className="text-muted-foreground text-xs">
-							Mobile alerts for Trakt and Popfeed Sync
+							Mobile alerts for {integrationNames()} Sync
 						</Text>
 					</View>
 					<Switch

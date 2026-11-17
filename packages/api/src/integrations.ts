@@ -1,4 +1,3 @@
-import { getHttpStatus } from "./http-errors";
 import {
 	bingersSyncControllerAction,
 	bingersSyncControllerConfigure,
@@ -32,6 +31,7 @@ import type {
 	SyncStatusDto,
 	TraktMatchCandidateDto,
 } from "./generated/types.gen";
+import { getHttpStatus } from "./http-errors";
 
 /**
  * One definition per Integration (ADR 0051). Both clients render every
@@ -375,6 +375,38 @@ export function integrationCatchUpMessage(
 	return null;
 }
 
+/**
+ * The one Integration the site-wide banner reports, given a status per entry
+ * of INTEGRATIONS: the first that needs the User, otherwise the first that is
+ * still catching up.
+ */
+export function integrationBanner(
+	statuses: readonly (SyncStatusDto | undefined)[],
+): {
+	integration: IntegrationDefinition;
+	message: string;
+	error: boolean;
+} | null {
+	const rows = INTEGRATIONS.flatMap((integration, index) => {
+		const message = integrationCatchUpMessage(
+			statuses[index],
+			integration.name,
+		);
+		return message
+			? [
+					{
+						integration,
+						message,
+						error: Boolean(
+							integrationErrorMessage(statuses[index], integration.name),
+						),
+					},
+				]
+			: [];
+	});
+	return rows.find((row) => row.error) ?? rows[0] ?? null;
+}
+
 export function integrationActionLabel(
 	status: SyncStatusDto,
 	name: string,
@@ -476,14 +508,29 @@ export function bringsIntegrationWatches(
 }
 
 /** Words for the onboarding step that offers every Integration at once. */
-export function onboardingIntegrationsCopy(
+/** "Trakt, Popfeed, and Bingers", so copy never lists Integrations by hand. */
+export function integrationNames(
+	conjunction: "and" | "or" = "and",
 	integrations: readonly Pick<IntegrationDefinition, "name">[] = INTEGRATIONS,
 ) {
 	const names = integrations.map(({ name }) => name);
-	const either =
-		names.length < 3
-			? names.join(" or ")
-			: `${names.slice(0, -1).join(", ")}, or ${names.at(-1)}`;
+	return names.length < 3
+		? names.join(` ${conjunction} `)
+		: `${names.slice(0, -1).join(", ")}, ${conjunction} ${names.at(-1)}`;
+}
+
+/** What account deletion does to sync; only some Integrations receive records. */
+export function accountDeletionSyncCopy() {
+	const receiving = INTEGRATIONS.filter((integration) =>
+		integration.directions.some((direction) => direction !== "inbound"),
+	);
+	return `${integrationNames()} Sync stop; records already sent to ${integrationNames("or", receiving)} remain there.`;
+}
+
+export function onboardingIntegrationsCopy(
+	integrations: readonly Pick<IntegrationDefinition, "name">[] = INTEGRATIONS,
+) {
+	const either = integrationNames("or", integrations);
 	return {
 		title: `Already on ${either}?`,
 		body: "Bring your history over and keep it in step. You choose what moves and in which direction, and confirm before anything transfers.",

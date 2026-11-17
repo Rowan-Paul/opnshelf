@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 	mutateAsync: vi.fn(),
 }));
 vi.mock("@opnshelf/api", () => ({
+	integrationNames: () => "Trakt, Popfeed, and Bingers",
 	notificationsControllerSettingsOptions: () => ({
 		queryKey: ["notifications"],
 	}),

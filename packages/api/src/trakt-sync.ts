@@ -96,33 +96,6 @@ export function traktError(error: unknown): string {
 	}
 	return "Could not complete this action. Try again.";
 }
-/**
- * Errors and unresolved items take priority over background progress on both clients.
- */
-export function traktSyncErrorMessage(
-	sync:
-		| (Pick<SyncStatusDto, "status"> &
-				Partial<Pick<SyncStatusDto, "lastError" | "needsAttention">>)
-		| undefined,
-): string | null {
-	if (!sync || sync.status === "disconnected") return null;
-	if (sync.lastError) return "Trakt sync error";
-	if (sync.needsAttention) return "Trakt sync needs attention";
-	return null;
-}
-export function traktSyncCatchUpMessage(
-	sync:
-		| (Pick<SyncStatusDto, "status" | "remaining" | "progress"> &
-				Partial<Pick<SyncStatusDto, "lastError" | "needsAttention">>)
-		| undefined,
-): string | null {
-	const error = traktSyncErrorMessage(sync);
-	if (error) return error;
-	if (sync?.status === "preparing") return "Comparing with Trakt";
-	if (sync?.status === "active" && sync.remaining > 0)
-		return `Syncing with Trakt${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
-	return null;
-}
 /** Older servers omit structured recovery fields; keep uncertain writes safe during rollout. */
 export function traktIssueRecovery(
 	item: SyncIssueDto,

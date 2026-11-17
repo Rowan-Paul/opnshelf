@@ -1,8 +1,10 @@
 import {
+	accountDeletionSyncCopy,
 	authControllerMeQueryKey,
 	authControllerPermissionsMutation,
 	getAccountDeletionProgress,
 	getAccountDeletionStatusMessage,
+	integrationNames,
 	integrationSyncBusyRetry,
 	isIntegrationSyncBusy,
 	reviewsControllerListMyPublicationsOptions,
@@ -476,8 +478,7 @@ export function SettingsCategoryScreen({
 	const confirmDeleteAccount = () => {
 		showDialog({
 			title: "Delete your account?",
-			description:
-				"This action cannot be undone. All your data will be permanently removed. Trakt and Popfeed Sync stop; records already sent to Trakt or Popfeed remain there.",
+			description: `This action cannot be undone. All your data will be permanently removed. ${accountDeletionSyncCopy()}`,
 			actions: [
 				{ label: "Cancel" },
 				{
@@ -961,9 +962,8 @@ export function SettingsCategoryScreen({
 										Danger Zone
 									</Text>
 									<Text className="text-destructive/80 text-sm leading-5">
-										Permanently delete your account and all associated data.
-										Trakt and Popfeed Sync stop; records already sent to Trakt
-										or Popfeed remain there.
+										Permanently delete your account and all associated data.{" "}
+										{accountDeletionSyncCopy()}
 									</Text>
 								</View>
 
@@ -1083,7 +1083,7 @@ const SETTINGS_AREAS: {
 	{
 		href: "/settings/integrations",
 		label: SETTINGS_TITLES.integrations,
-		description: "Sync with Trakt and Popfeed",
+		description: `Sync with ${integrationNames()}`,
 		Icon: ArrowLeftRight,
 	},
 	{

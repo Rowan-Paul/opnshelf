@@ -29,7 +29,7 @@ import {
 } from "../components/ErrorBoundary";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { TraktSyncBanner } from "../components/trakt/TraktSyncBanner";
+import { IntegrationSyncBanner } from "../components/integrations/IntegrationSyncBanner";
 import { posthog } from "../integrations/posthog/provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -158,7 +158,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						) : (
 							<div className="flex min-h-screen flex-col">
 								<Header />
-								<TraktSyncBanner />
+								<IntegrationSyncBanner />
 								<MobileAppBanner />
 								<main className="flex-1">{children}</main>
 								<Footer />

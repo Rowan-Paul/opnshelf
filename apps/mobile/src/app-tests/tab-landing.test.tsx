@@ -66,8 +66,8 @@ vi.mock("@/components/home/HomeScreen", () => ({ default: host("home") }));
 vi.mock("@/components/feedback/ShakeToFeedback", () => ({
 	ShakeToFeedback: () => null,
 }));
-vi.mock("@/components/trakt/TraktSyncBanner", () => ({
-	TraktSyncBanner: host("banner"),
+vi.mock("@/components/integrations/IntegrationSyncBanner", () => ({
+	IntegrationSyncBanner: host("banner"),
 }));
 
 function hosts(root: ReactTestInstance, name: string) {
