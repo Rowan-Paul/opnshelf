@@ -57,6 +57,50 @@ export class SyncActionDto {
 	@IsIn(["pause", "resume", "sync", "disconnect"])
 	action: "pause" | "resume" | "sync" | "disconnect";
 }
+export class IntegrationCapabilitiesDto {
+	@ApiProperty({
+		description: "Record types this Integration can sync.",
+		isArray: true,
+		enum: [
+			"watches",
+			"ratings",
+			"lists",
+			"watchlist",
+			"favorites",
+			"notes",
+			"library",
+			"reviews",
+		],
+	})
+	records: string[];
+	@ApiProperty({ isArray: true, enum: ["inbound", "outbound", "both"] })
+	directions: string[];
+	@ApiProperty({
+		enum: ["oauth", "repository"],
+		description:
+			"oauth returns a provider URL to open; repository connects in place.",
+	})
+	connect: string;
+}
+export class IntegrationConnectDto {
+	@ApiProperty({ enum: ["web", "mobile"] })
+	@IsIn(["web", "mobile"])
+	platform: "web" | "mobile";
+	@ApiPropertyOptional({
+		enum: ["onboarding"],
+		description:
+			"Return to Onboarding after authorization instead of Integration management.",
+	})
+	@IsOptional()
+	@IsIn(["onboarding"])
+	returnTo?: "onboarding";
+}
+export class IntegrationConnectResultDto {
+	@ApiPropertyOptional({ description: "Provider sign-in page to open." })
+	url?: string;
+	@ApiPropertyOptional({ description: "Where the provider returns the User." })
+	returnUrl?: string;
+}
 export class SyncStatusDto {
 	@ApiPropertyOptional({ enum: ["idle", "queued", "running", "waiting"] })
 	syncState?: "idle" | "queued" | "running" | "waiting";
@@ -98,6 +142,8 @@ export class SyncStatusDto {
 			"Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it.",
 	})
 	writeAccess?: boolean;
+	@ApiPropertyOptional({ type: IntegrationCapabilitiesDto })
+	capabilities?: IntegrationCapabilitiesDto;
 }
 export class SyncRecordDto {
 	@ApiProperty() key: string;

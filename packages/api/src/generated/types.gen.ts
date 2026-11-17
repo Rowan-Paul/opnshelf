@@ -1636,6 +1636,18 @@ export type UpsertNoteDto = {
     content: string;
 };
 
+export type IntegrationCapabilitiesDto = {
+    /**
+     * Record types this Integration can sync.
+     */
+    records: Array<'watches' | 'ratings' | 'lists' | 'watchlist' | 'favorites' | 'notes' | 'library' | 'reviews'>;
+    directions: Array<'inbound' | 'outbound' | 'both'>;
+    /**
+     * oauth returns a provider URL to open; repository connects in place.
+     */
+    connect: 'oauth' | 'repository';
+};
+
 export type SyncStatusDto = {
     syncState?: 'idle' | 'queued' | 'running' | 'waiting';
     nextCheckAt?: string;
@@ -1671,6 +1683,7 @@ export type SyncStatusDto = {
      * Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it.
      */
     writeAccess?: boolean;
+    capabilities?: IntegrationCapabilitiesDto;
 };
 
 export type SyncConnectDto = {
@@ -2520,6 +2533,25 @@ export type PublishAtStoreReviewResponseDto = {
      * AT URI of the review record
      */
     uri: string;
+};
+
+export type IntegrationConnectDto = {
+    platform: 'web' | 'mobile';
+    /**
+     * Return to Onboarding after authorization instead of Integration management.
+     */
+    returnTo?: 'onboarding';
+};
+
+export type IntegrationConnectResultDto = {
+    /**
+     * Provider sign-in page to open.
+     */
+    url?: string;
+    /**
+     * Where the provider returns the User.
+     */
+    returnUrl?: string;
 };
 
 export type WatchRecapHighlightDto = {
@@ -6601,6 +6633,125 @@ export type AtStoreReviewsControllerPublishResponses = {
 };
 
 export type AtStoreReviewsControllerPublishResponse = AtStoreReviewsControllerPublishResponses[keyof AtStoreReviewsControllerPublishResponses];
+
+export type IntegrationApiControllerStatusData = {
+    body?: never;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}';
+};
+
+export type IntegrationApiControllerStatusResponses = {
+    200: SyncStatusDto;
+};
+
+export type IntegrationApiControllerStatusResponse = IntegrationApiControllerStatusResponses[keyof IntegrationApiControllerStatusResponses];
+
+export type IntegrationApiControllerConfigureData = {
+    body: SyncSettingsDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}';
+};
+
+export type IntegrationApiControllerConfigureResponses = {
+    200: SyncStatusDto;
+};
+
+export type IntegrationApiControllerConfigureResponse = IntegrationApiControllerConfigureResponses[keyof IntegrationApiControllerConfigureResponses];
+
+export type IntegrationApiControllerConnectData = {
+    body: IntegrationConnectDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}/connect';
+};
+
+export type IntegrationApiControllerConnectResponses = {
+    201: IntegrationConnectResultDto;
+};
+
+export type IntegrationApiControllerConnectResponse = IntegrationApiControllerConnectResponses[keyof IntegrationApiControllerConnectResponses];
+
+export type IntegrationApiControllerActionData = {
+    body: SyncActionDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}/action';
+};
+
+export type IntegrationApiControllerActionResponses = {
+    201: SyncStatusDto;
+};
+
+export type IntegrationApiControllerActionResponse = IntegrationApiControllerActionResponses[keyof IntegrationApiControllerActionResponses];
+
+export type IntegrationApiControllerIssuesData = {
+    body?: never;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: {
+        /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        view?: 'attention' | 'ignored';
+    };
+    url: '/integrations/{provider}/issues';
+};
+
+export type IntegrationApiControllerIssuesResponses = {
+    200: IntegrationIssuesDto;
+};
+
+export type IntegrationApiControllerIssuesResponse = IntegrationApiControllerIssuesResponses[keyof IntegrationApiControllerIssuesResponses];
+
+export type IntegrationApiControllerResolveData = {
+    body: IntegrationResolveDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+        id: string;
+    };
+    query?: never;
+    url: '/integrations/{provider}/issues/{id}';
+};
+
+export type IntegrationApiControllerResolveResponses = {
+    201: SyncStatusDto;
+};
+
+export type IntegrationApiControllerResolveResponse = IntegrationApiControllerResolveResponses[keyof IntegrationApiControllerResolveResponses];
+
+export type IntegrationApiControllerMatchesData = {
+    body?: never;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+        id: string;
+    };
+    query?: {
+        q?: string;
+    };
+    url: '/integrations/{provider}/issues/{id}/matches';
+};
+
+export type IntegrationApiControllerMatchesResponses = {
+    200: Array<TraktMatchCandidateDto>;
+};
+
+export type IntegrationApiControllerMatchesResponse = IntegrationApiControllerMatchesResponses[keyof IntegrationApiControllerMatchesResponses];
 
 export type NotificationsControllerCollectionData = {
     body?: never;

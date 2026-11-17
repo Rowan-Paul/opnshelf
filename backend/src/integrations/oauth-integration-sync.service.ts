@@ -39,6 +39,14 @@ export abstract class OAuthIntegrationSyncService<
 > extends IntegrationSyncService<Credential> {
 	protected abstract readonly oauth: OAuthClient<Token>;
 	protected abstract readonly authorizationEndpoint: string;
+	protected readonly connectMethod = "oauth" as const;
+	connectRequest(
+		userDid: string,
+		platform: "web" | "mobile",
+		returnTo?: "onboarding",
+	) {
+		return this.authorize(userDid, platform, returnTo);
+	}
 	protected get returnPath() {
 		return `integrations/${this.provider}`;
 	}

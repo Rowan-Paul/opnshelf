@@ -72,6 +72,18 @@ and account deletion is typed by provider id, so adding a provider fails to
 compile until both handle it. The core, not a stored credential, refuses
 actions on a disconnected connection; only the provider's connect flow revives it.
 
-The Trakt API keeps its own request and response names (`trakt` for the remote
-side). Released Mobile builds call those endpoints, so moving Trakt onto the
-shared DTOs needs a versioned rollout and is not part of this change.
+## One API for every Integration (2026-11-17)
+
+Every Integration answers the same requests under `/integrations/{provider}`:
+status, connect, settings, actions, Needs attention, resolve and TMDB matches,
+with the shared DTOs. Connect returns a provider sign-in URL for OAuth
+Integrations and nothing for repository ones. The status carries the provider's
+capabilities and connect method, so the clients take them from the server and
+keep their own definition only until a status has loaded.
+
+Both clients use this API through one factory. The per-provider controllers
+remain: OAuth callbacks and Bingers client metadata have URLs registered with
+the providers, and released Mobile builds still call `/trakt-sync`,
+`/popfeed-sync` and `/bingers-sync`, including Trakt's own names (`trakt` for
+the remote side). Remove their duplicated routes once those builds are retired.
+The backend must be deployed before a client that uses the shared API.

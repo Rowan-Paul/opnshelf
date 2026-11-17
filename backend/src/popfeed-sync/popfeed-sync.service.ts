@@ -173,6 +173,11 @@ export class PopfeedSyncService extends IntegrationSyncService<PopfeedCredential
 		return null;
 	}
 
+	protected readonly connectMethod = "repository" as const;
+	async connectRequest(userDid: string) {
+		await this.connect(userDid);
+		return {};
+	}
 	async connect(userDid: string) {
 		const user = await this.prisma.user.findUniqueOrThrow({
 			where: { did: userDid },

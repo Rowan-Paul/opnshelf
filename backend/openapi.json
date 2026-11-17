@@ -6505,6 +6505,348 @@
         ]
       }
     },
+    "/integrations/{provider}": {
+      "get": {
+        "operationId": "IntegrationApiController_status",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "trakt",
+                "popfeed",
+                "bingers"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "integrations"
+        ]
+      },
+      "patch": {
+        "operationId": "IntegrationApiController_configure",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "trakt",
+                "popfeed",
+                "bingers"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{provider}/connect": {
+      "post": {
+        "operationId": "IntegrationApiController_connect",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "trakt",
+                "popfeed",
+                "bingers"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationConnectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationConnectResultDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{provider}/action": {
+      "post": {
+        "operationId": "IntegrationApiController_action",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "trakt",
+                "popfeed",
+                "bingers"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{provider}/issues": {
+      "get": {
+        "operationId": "IntegrationApiController_issues",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "trakt",
+                "popfeed",
+                "bingers"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number to return (1-based)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "view",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "attention",
+                "ignored"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationIssuesDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{provider}/issues/{id}": {
+      "post": {
+        "operationId": "IntegrationApiController_resolve",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "trakt",
+                "popfeed",
+                "bingers"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResolveDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{provider}/issues/{id}/matches": {
+      "get": {
+        "operationId": "IntegrationApiController_matches",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "trakt",
+                "popfeed",
+                "bingers"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/notifications/collections/{id}": {
       "get": {
         "operationId": "NotificationsController_collection",
@@ -11085,6 +11427,52 @@
           "content"
         ]
       },
+      "IntegrationCapabilitiesDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "description": "Record types this Integration can sync.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "watches",
+                "ratings",
+                "lists",
+                "watchlist",
+                "favorites",
+                "notes",
+                "library",
+                "reviews"
+              ]
+            }
+          },
+          "directions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "inbound",
+                "outbound",
+                "both"
+              ]
+            }
+          },
+          "connect": {
+            "type": "string",
+            "enum": [
+              "oauth",
+              "repository"
+            ],
+            "description": "oauth returns a provider URL to open; repository connects in place."
+          }
+        },
+        "required": [
+          "records",
+          "directions",
+          "connect"
+        ]
+      },
       "SyncStatusDto": {
         "type": "object",
         "properties": {
@@ -11187,6 +11575,9 @@
           "writeAccess": {
             "type": "boolean",
             "description": "Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it."
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/IntegrationCapabilitiesDto"
           }
         },
         "required": [
@@ -13070,6 +13461,41 @@
         "required": [
           "uri"
         ]
+      },
+      "IntegrationConnectDto": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "web",
+              "mobile"
+            ]
+          },
+          "returnTo": {
+            "type": "string",
+            "enum": [
+              "onboarding"
+            ],
+            "description": "Return to Onboarding after authorization instead of Integration management."
+          }
+        },
+        "required": [
+          "platform"
+        ]
+      },
+      "IntegrationConnectResultDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Provider sign-in page to open."
+          },
+          "returnUrl": {
+            "type": "string",
+            "description": "Where the provider returns the User."
+          }
+        }
       },
       "WatchRecapHighlightDto": {
         "type": "object",

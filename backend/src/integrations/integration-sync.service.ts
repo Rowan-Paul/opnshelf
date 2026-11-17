@@ -275,6 +275,17 @@ export abstract class IntegrationSyncService<Credential>
 	protected abstract readonly remote: IntegrationRemote<Credential>;
 	/** The record types and directions this provider's adapter implements. */
 	protected abstract readonly capabilities: IntegrationCapabilities;
+	/** How a User connects: a provider sign-in to open, or in place. */
+	protected abstract readonly connectMethod: "oauth" | "repository";
+	/**
+	 * Start connecting. OAuth providers return the sign-in URL to open;
+	 * repository providers connect at once and return nothing to open.
+	 */
+	abstract connectRequest(
+		userDid: string,
+		platform: "web" | "mobile",
+		returnTo?: "onboarding",
+	): Promise<{ url?: string; returnUrl?: string }>;
 	protected abstract get configured(): boolean;
 	/** A usable credential, refreshed if needed. Throws when the User must reconnect. */
 	protected abstract credential(c: IntegrationConnection): Promise<Credential>;
@@ -378,6 +389,11 @@ export abstract class IntegrationSyncService<Credential>
 							((c.remainingTotal - c.remaining) / c.remainingTotal) * 100,
 						)
 					: undefined,
+			capabilities: {
+				records: [...this.capabilities.records],
+				directions: [...this.capabilities.directions],
+				connect: this.connectMethod,
+			},
 			needsAttention: counts.find((g) => !g.ignored)?._count ?? 0,
 			ignored: counts.find((g) => g.ignored)?._count ?? 0,
 		};

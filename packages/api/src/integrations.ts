@@ -1,32 +1,17 @@
 import {
-	bingersSyncControllerAction,
-	bingersSyncControllerConfigure,
-	bingersSyncControllerConnect,
-	bingersSyncControllerIssues,
-	bingersSyncControllerMatches,
-	bingersSyncControllerResolve,
-	bingersSyncControllerStatus,
-	popfeedSyncControllerAction,
-	popfeedSyncControllerConfigure,
-	popfeedSyncControllerConnect,
-	popfeedSyncControllerIssues,
-	popfeedSyncControllerMatches,
-	popfeedSyncControllerResolve,
-	popfeedSyncControllerStatus,
-	traktSyncControllerAction,
-	traktSyncControllerConfigure,
-	traktSyncControllerConnect,
-	traktSyncControllerIssues,
-	traktSyncControllerMatches,
-	traktSyncControllerResolve,
-	traktSyncControllerStatus,
+	integrationApiControllerAction,
+	integrationApiControllerConfigure,
+	integrationApiControllerConnect,
+	integrationApiControllerIssues,
+	integrationApiControllerMatches,
+	integrationApiControllerResolve,
+	integrationApiControllerStatus,
 } from "./generated/sdk.gen";
 import type {
 	IntegrationIssueDto,
 	IntegrationIssuesDto,
 	IntegrationResolveDto,
 	SyncActionDto,
-	SyncIssueDto,
 	SyncSettingsDto,
 	SyncStatusDto,
 	TraktMatchCandidateDto,
@@ -104,15 +89,70 @@ export const INTEGRATION_RECORDS: {
 	{ value: "reviews", label: "Reviews" },
 ];
 
-const traktIssue = ({
-	trakt,
-	traktState,
-	...item
-}: SyncIssueDto): IntegrationIssueDto => ({
-	...item,
-	remote: trakt,
-	remoteState: traktState,
-});
+/** Every Integration answers the same requests under /integrations/{id}. */
+function integrationApi(provider: IntegrationId): IntegrationApi {
+	const path = { provider };
+	return {
+		status: async (signal) =>
+			(
+				await integrationApiControllerStatus({
+					path,
+					signal,
+					throwOnError: true,
+				})
+			).data,
+		connect: async (body) =>
+			(
+				await integrationApiControllerConnect({
+					path,
+					body,
+					throwOnError: true,
+				})
+			).data,
+		configure: async (body) =>
+			(
+				await integrationApiControllerConfigure({
+					path,
+					body,
+					throwOnError: true,
+				})
+			).data,
+		action: async (action) =>
+			(
+				await integrationApiControllerAction({
+					path,
+					body: { action },
+					throwOnError: true,
+				})
+			).data,
+		issues: async (query, signal) =>
+			(
+				await integrationApiControllerIssues({
+					path,
+					query,
+					signal,
+					throwOnError: true,
+				})
+			).data,
+		resolve: async (id, body) =>
+			(
+				await integrationApiControllerResolve({
+					path: { ...path, id },
+					body,
+					throwOnError: true,
+				})
+			).data,
+		matches: async (id, q, signal) =>
+			(
+				await integrationApiControllerMatches({
+					path: { ...path, id },
+					query: { q },
+					signal,
+					throwOnError: true,
+				})
+			).data,
+	};
+}
 
 const trakt: IntegrationDefinition = {
 	id: "trakt",
@@ -133,48 +173,7 @@ const trakt: IntegrationDefinition = {
 	connect: "oauth",
 	checkCopy:
 		"Trakt is checked about every 15 minutes; rate limits can delay transfers.",
-	api: {
-		status: async (signal) =>
-			(await traktSyncControllerStatus({ signal, throwOnError: true })).data,
-		connect: async (body) =>
-			(await traktSyncControllerConnect({ body, throwOnError: true })).data,
-		configure: async (body) =>
-			(await traktSyncControllerConfigure({ body, throwOnError: true })).data,
-		action: async (action) =>
-			(
-				await traktSyncControllerAction({
-					body: { action },
-					throwOnError: true,
-				})
-			).data,
-		issues: async (query, signal) => {
-			const page = (
-				await traktSyncControllerIssues({ query, signal, throwOnError: true })
-			).data;
-			return { ...page, items: page.items.map(traktIssue) };
-		},
-		resolve: async (id, { action, confirmedRemoteMissing, ...choice }) =>
-			(
-				await traktSyncControllerResolve({
-					path: { id },
-					body: {
-						...choice,
-						action: action === "remote" ? "trakt" : action,
-						confirmedTraktMissing: confirmedRemoteMissing,
-					},
-					throwOnError: true,
-				})
-			).data,
-		matches: async (id, q, signal) =>
-			(
-				await traktSyncControllerMatches({
-					path: { id },
-					query: { q },
-					signal,
-					throwOnError: true,
-				})
-			).data,
-	},
+	api: integrationApi("trakt"),
 };
 
 const popfeed: IntegrationDefinition = {
@@ -187,43 +186,7 @@ const popfeed: IntegrationDefinition = {
 	connect: "repository",
 	checkCopy: "Popfeed is checked about every 15 minutes.",
 	writeGrant: "popfeed",
-	api: {
-		status: async (signal) =>
-			(await popfeedSyncControllerStatus({ signal, throwOnError: true })).data,
-		connect: async () => {
-			await popfeedSyncControllerConnect({ throwOnError: true });
-			return {};
-		},
-		configure: async (body) =>
-			(await popfeedSyncControllerConfigure({ body, throwOnError: true })).data,
-		action: async (action) =>
-			(
-				await popfeedSyncControllerAction({
-					body: { action },
-					throwOnError: true,
-				})
-			).data,
-		issues: async (query, signal) =>
-			(await popfeedSyncControllerIssues({ query, signal, throwOnError: true }))
-				.data,
-		resolve: async (id, body) =>
-			(
-				await popfeedSyncControllerResolve({
-					path: { id },
-					body,
-					throwOnError: true,
-				})
-			).data,
-		matches: async (id, q, signal) =>
-			(
-				await popfeedSyncControllerMatches({
-					path: { id },
-					query: { q },
-					signal,
-					throwOnError: true,
-				})
-			).data,
-	},
+	api: integrationApi("popfeed"),
 };
 
 const bingers: IntegrationDefinition = {
@@ -237,41 +200,7 @@ const bingers: IntegrationDefinition = {
 	checkCopy: "Bingers is checked about every 15 minutes.",
 	directionNote:
 		"Incoming only. Movie Watches with one dated viewing and movie Ratings can be transferred. Rewatches and episodes stay in Needs attention.",
-	api: {
-		status: async (signal) =>
-			(await bingersSyncControllerStatus({ signal, throwOnError: true })).data,
-		connect: async (body) =>
-			(await bingersSyncControllerConnect({ body, throwOnError: true })).data,
-		configure: async (body) =>
-			(await bingersSyncControllerConfigure({ body, throwOnError: true })).data,
-		action: async (action) =>
-			(
-				await bingersSyncControllerAction({
-					body: { action },
-					throwOnError: true,
-				})
-			).data,
-		issues: async (query, signal) =>
-			(await bingersSyncControllerIssues({ query, signal, throwOnError: true }))
-				.data,
-		resolve: async (id, body) =>
-			(
-				await bingersSyncControllerResolve({
-					path: { id },
-					body,
-					throwOnError: true,
-				})
-			).data,
-		matches: async (id, q, signal) =>
-			(
-				await bingersSyncControllerMatches({
-					path: { id },
-					query: { q },
-					signal,
-					throwOnError: true,
-				})
-			).data,
-	},
+	api: integrationApi("bingers"),
 };
 
 export const TRAKT_INTEGRATION = trakt;
@@ -282,6 +211,25 @@ export const INTEGRATIONS: readonly IntegrationDefinition[] = [
 	popfeed,
 	bingers,
 ];
+
+/**
+ * The Integration as the server describes it. Its status says which record
+ * types and directions it supports and how it connects; the definition above
+ * only stands in until a status has loaded.
+ */
+export function withCapabilities<T extends IntegrationDefinition>(
+	integration: T,
+	status: Pick<SyncStatusDto, "capabilities"> | undefined,
+): T {
+	const capabilities = status?.capabilities;
+	if (!capabilities) return integration;
+	return {
+		...integration,
+		records: capabilities.records,
+		directions: capabilities.directions,
+		connect: capabilities.connect,
+	};
+}
 
 export function findIntegration(
 	id: string | undefined,
