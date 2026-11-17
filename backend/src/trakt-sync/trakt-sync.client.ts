@@ -20,6 +20,7 @@ import { isContentRecord } from "../integrations/content-value";
 import {
 	IntegrationError,
 	IntegrationUnavailable,
+	SyncSnapshotChanged,
 } from "../integrations/integration-error";
 import {
 	integrationFetch,
@@ -340,8 +341,31 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 				favorites: record.kind === "favorites",
 			});
 		const plural = `${record.mediaType}s`;
-		if (record.kind === "rating")
-			return this.pages(`/sync/ratings/${plural}`, token, "rating");
+		if (record.kind === "rating") {
+			// A Rating removed on Trakt while a category spans several pages shifts
+			// an unread row onto a page already read, and the totals still agree.
+			// The result replaces this category in the saved snapshot, so the
+			// missed Rating would read as deleted. One page cannot shift.
+			const before = (await this.request("/sync/last_activities", token)).data;
+			const read = await this.readPages(
+				`/sync/ratings/${plural}`,
+				token,
+				"rating",
+			);
+			if (
+				read.pages > 1 &&
+				JSON.stringify(before) !==
+					JSON.stringify(
+						(await this.request("/sync/last_activities", token)).data,
+					)
+			)
+				throw new SyncSnapshotChanged(
+					"Trakt changed during the read. Sync will read a fresh snapshot.",
+					0,
+					5,
+				);
+			return read.records;
+		}
 		let remoteId = record.remoteId;
 		if (!remoteId) {
 			if (!record.mediaId)
@@ -389,7 +413,16 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		kind: "watch" | "rating",
 		checkpoint?: () => void,
 	): Promise<SyncRecord[]> {
+		return (await this.readPages(path, token, kind, checkpoint)).records;
+	}
+	private async readPages(
+		path: string,
+		token: string,
+		kind: "watch" | "rating",
+		checkpoint?: () => void,
+	): Promise<{ records: SyncRecord[]; pages: number }> {
 		const result: SyncRecord[] = [];
+		let pageCount = 0;
 		const seen = new Set<string>();
 		// Trakt can serve a stale item count on earlier pages; the last page's
 		// count is the one that matches the rows actually returned.
@@ -402,6 +435,7 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 			);
 			const rows = z.array(z.unknown()).parse(data);
 			const pages = Number(headers.get("x-pagination-page-count"));
+			pageCount = pages;
 			const countHeader = headers.get("x-pagination-item-count");
 			const count = countHeader === null ? undefined : Number(countHeader);
 			expectedCount = count;
@@ -431,7 +465,7 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		}
 		if (expectedCount !== undefined && expectedCount !== result.length)
 			throw new TraktSyncError("Trakt returned incomplete results.");
-		return result;
+		return { records: result, pages: pageCount };
 	}
 	async write(
 		token: string,

@@ -169,6 +169,27 @@ describe("Trakt transport boundaries", () => {
 			"fixture",
 		);
 	});
+	it("rejects a multi-page Rating confirmation when Trakt changed during it", async () => {
+		const client = new TraktSyncClient(config);
+		const rating = {
+			...normalizeRemote(movie, "watch"),
+			kind: "rating" as const,
+		};
+		const rated = (id: number) => ({
+			type: "movie",
+			rating: 8,
+			rated_at: "2026-01-01T00:00:00.000Z",
+			movie: { title: "Fixture", ids: { trakt: id, tmdb: id } },
+		});
+		vi.spyOn(client, "request")
+			.mockResolvedValueOnce(page({ all: "before" }))
+			.mockResolvedValueOnce(page([rated(1)], 2, 2))
+			.mockResolvedValueOnce(page([rated(2)], 2, 2))
+			.mockResolvedValueOnce(page({ all: "after" }));
+		await expect(client.readForRecord("fixture", rating)).rejects.toThrow(
+			"changed during the read",
+		);
+	});
 	it("resolves an exported episode using its parent TMDB ID and episode coordinates", async () => {
 		const client = new TraktSyncClient(config);
 		const request = vi
