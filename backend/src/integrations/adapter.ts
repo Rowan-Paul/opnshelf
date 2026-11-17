@@ -1,4 +1,4 @@
-import type { SyncRecord } from "./reconcile";
+import type { Direction, SyncRecord } from "./reconcile";
 
 /** Record types a User can enable per Integration connection. */
 export type SyncRecordTypes = {
@@ -10,6 +10,26 @@ export type SyncRecordTypes = {
 	notes?: boolean;
 	library?: boolean;
 	reviews?: boolean;
+};
+
+export const SYNC_RECORD_TYPES = {
+	watches: "Watches",
+	ratings: "Ratings",
+	lists: "Lists",
+	watchlist: "the watchlist",
+	favorites: "Favorites",
+	notes: "Notes",
+	library: "Library Items",
+	reviews: "Reviews",
+} as const satisfies Record<keyof SyncRecordTypes, string>;
+
+/**
+ * What a provider can sync (ADR 0051). The shared core refuses settings and
+ * Needs attention choices outside it, so no adapter repeats those checks.
+ */
+export type IntegrationCapabilities = {
+	records: readonly (keyof SyncRecordTypes)[];
+	directions: readonly Direction[];
 };
 
 /**

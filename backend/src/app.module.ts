@@ -31,6 +31,7 @@ import { ShowsModule } from "./shows/shows.module";
 import { UsersModule } from "./users/users.module";
 import { PopfeedSyncModule } from "./popfeed-sync/popfeed-sync.module";
 import { BingersSyncModule } from "./bingers-sync/bingers-sync.module";
+import { IntegrationApiModule } from "./integration-api/integration-api.module";
 
 @Module({
 	imports: [
@@ -57,6 +58,7 @@ import { BingersSyncModule } from "./bingers-sync/bingers-sync.module";
 		UsersModule,
 		PopfeedSyncModule,
 		BingersSyncModule,
+		IntegrationApiModule,
 		ListsModule,
 		LibraryModule,
 		NotesModule,

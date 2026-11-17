@@ -36,11 +36,6 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("@opnshelf/api", async (original) => ({
 	...(await original<typeof import("@opnshelf/api")>()),
-	traktSyncControllerMatchesOptions: () => ({}),
-	traktSyncControllerResolveMutation: () => ({}),
-	traktSyncControllerConnectMutation: () => ({}),
-	traktSyncControllerActionMutation: () => ({}),
-	traktSyncControllerConfigureMutation: () => ({}),
 }));
 vi.mock("@tanstack/react-query", () => ({
 	keepPreviousData: (data: unknown) => data,

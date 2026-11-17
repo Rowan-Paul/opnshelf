@@ -7,7 +7,7 @@ import { dismissMobileApp } from "#/lib/prompt-state";
 import { APP_STORE_URL, PLAY_STORE_URL } from "./StoreBadges";
 
 /**
- * Slim site-wide strip offering the Mobile App, matching TraktSyncBanner's
+ * Slim site-wide strip offering the Mobile App, matching IntegrationSyncBanner's
  * shape so the site has one Banner language rather than two.
  *
  * Rendered for every visitor and hidden with CSS, decided before first paint

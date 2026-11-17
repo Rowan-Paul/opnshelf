@@ -25,6 +25,7 @@ import {
 	traktError,
 	traktRecordTitle,
 	traktSettings,
+	withCapabilities,
 } from "@opnshelf/api";
 import {
 	keepPreviousData,
@@ -69,7 +70,7 @@ const card =
 	"rounded-2xl border border-(--border) bg-(--background-elevated) p-5 sm:p-7";
 
 export function IntegrationSyncManager({
-	integration,
+	integration: definition,
 	connectionFailed = false,
 	embedded = false,
 	issuesOnly = false,
@@ -79,15 +80,17 @@ export function IntegrationSyncManager({
 	embedded?: boolean;
 	issuesOnly?: boolean;
 }) {
-	const { id, name } = integration;
-	const rootKey = integrationKey(integration);
+	const { id, name } = definition;
+	const rootKey = integrationKey(definition);
 	const queryClient = useQueryClient();
 	const refresh = () => queryClient.invalidateQueries({ queryKey: rootKey });
 	const status = useQuery({
 		queryKey: [...rootKey, "status"],
-		queryFn: ({ signal }) => integration.api.status(signal),
+		queryFn: ({ signal }) => definition.api.status(signal),
 		refetchInterval: 5000,
 	});
+	// What this Integration supports comes from the server once it has answered.
+	const integration = withCapabilities(definition, status.data);
 	// The mutation settles before the browser leaves for the provider, so the
 	// button stays busy until navigation. A back/forward-cache restore resets it.
 	const [redirecting, setRedirecting] = useState(false);
@@ -101,6 +104,8 @@ export function IntegrationSyncManager({
 	const connect = useMutation({
 		mutationKey: [...rootKey, "connect"],
 		mutationFn: integration.api.connect,
+		// Connecting again takes the sync lease, like every other control.
+		...integrationSyncBusyRetry,
 		onSuccess: (data) => {
 			posthog.capture("integration_connection_requested", {
 				provider: id,
@@ -172,6 +177,9 @@ export function IntegrationSyncManager({
 				<SyncIssues integration={integration} connected={connected} />
 			</div>
 		);
+	// The failed return stays in the URL; anything done here since supersedes it.
+	const signInFailed =
+		connectionFailed && !connect.isSuccess && !action.isSuccess;
 	const needsSetup =
 		connected &&
 		data.status === "paused" &&
@@ -378,22 +386,22 @@ export function IntegrationSyncManager({
 						{integrationStateMessage(data, name)}
 					</output>
 				)}
-				{action.isPending && isIntegrationSyncBusy(action.failureReason) && (
+				{((action.isPending && isIntegrationSyncBusy(action.failureReason)) ||
+					(connect.isPending &&
+						isIntegrationSyncBusy(connect.failureReason))) && (
 					<output className="mt-4 block text-(--foreground-muted) text-sm">
 						Waiting for the current sync to finish…
 					</output>
 				)}
-				{(connectionFailed ||
-					connect.error ||
-					action.error ||
-					data.lastError) && (
+				{(signInFailed || connect.error || action.error || data.lastError) && (
 					<p role="alert" className="mt-4 text-(--destructive)">
-						{connectionFailed
-							? `${name} could not connect. Try connecting again.`
-							: connect.error
-								? traktError(connect.error)
-								: action.error
-									? traktError(action.error)
+						{/* A failed sign-in return is the oldest news on this page. */}
+						{connect.error
+							? traktError(connect.error)
+							: action.error
+								? traktError(action.error)
+								: signInFailed
+									? `${name} could not connect. Try connecting again.`
 									: data.lastError}
 					</p>
 				)}
@@ -457,7 +465,7 @@ export function IntegrationSyncManager({
 }
 
 export function SyncSettings({
-	integration,
+	integration: definition,
 	status,
 	onSaved,
 	className = card,
@@ -473,6 +481,7 @@ export function SyncSettings({
 	onboarding?: boolean;
 	onCancel?: () => void;
 }) {
+	const integration = withCapabilities(definition, status);
 	const { name } = integration;
 	const records = integrationRecords(integration);
 	const directions = integrationDirections(integration);

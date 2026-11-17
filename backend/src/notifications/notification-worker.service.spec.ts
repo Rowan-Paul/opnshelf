@@ -172,6 +172,27 @@ describe("NotificationWorkerService", () => {
 			},
 		);
 
+		it("warns about a Bingers connection that needs reconnecting", async () => {
+			prisma.pushDevice.findMany.mockResolvedValue([{ token: "device" }]);
+			prisma.integrationConnection.findMany.mockResolvedValue([
+				{
+					...connection,
+					provider: "bingers",
+					status: "reconnect",
+					lastError: null,
+				},
+			]);
+			await worker.queueSyncErrors();
+			expect(prisma.notificationDelivery.upsert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					create: expect.objectContaining({
+						title: "Bingers Sync needs reconnecting",
+						url: "/integrations/bingers",
+					}),
+				}),
+			);
+		});
+
 		it("links Popfeed reconnection to Popfeed and requires a registered device", async () => {
 			prisma.integrationConnection.findMany.mockResolvedValue([
 				{

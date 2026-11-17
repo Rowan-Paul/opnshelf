@@ -1636,154 +1636,6 @@ export type UpsertNoteDto = {
     content: string;
 };
 
-export type SyncStatusDto = {
-    syncState?: 'idle' | 'queued' | 'running' | 'waiting';
-    nextCheckAt?: string;
-    configured: boolean;
-    status: 'disconnected' | 'paused' | 'preparing' | 'active' | 'reconnect';
-    username?: string;
-    direction: 'inbound' | 'outbound' | 'both';
-    watches: boolean;
-    ratings: boolean;
-    lists?: boolean;
-    watchlist?: boolean;
-    favorites?: boolean;
-    notes?: boolean;
-    library?: boolean;
-    reviews?: boolean;
-    contentPublicationConsent?: boolean;
-    listPublicationConsent?: boolean;
-    historyScope: 'all' | 'future';
-    publicationConsent: boolean;
-    lastSuccessAt?: string;
-    lastError?: string;
-    /**
-     * Records still waiting to transfer while sync catches up
-     */
-    remaining: number;
-    /**
-     * Catch-up progress (0–100) while records remain
-     */
-    progress?: number;
-    needsAttention: number;
-    ignored: number;
-    /**
-     * Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it.
-     */
-    writeAccess?: boolean;
-};
-
-export type SyncConnectDto = {
-    platform: 'web' | 'mobile';
-    /**
-     * Return to Onboarding after authorization instead of Integration management.
-     */
-    returnTo?: 'onboarding';
-};
-
-export type SyncAuthorizeDto = {
-    url: string;
-    returnUrl: string;
-};
-
-export type SyncSettingsDto = {
-    direction: 'inbound' | 'outbound' | 'both';
-    watches: boolean;
-    ratings: boolean;
-    lists?: boolean;
-    watchlist?: boolean;
-    favorites?: boolean;
-    listPublicationConsent?: boolean;
-    notes?: boolean;
-    library?: boolean;
-    reviews?: boolean;
-    contentPublicationConsent?: boolean;
-    historyScope: 'all' | 'future';
-    publicationConsent: boolean;
-};
-
-export type SyncActionDto = {
-    action: 'pause' | 'resume' | 'sync' | 'disconnect';
-};
-
-export type SyncRecordDto = {
-    key: string;
-    kind: string;
-    mediaType: string;
-    mediaId: string | null;
-    title: string;
-    season: number;
-    episode: number;
-    coordinatesUnknown?: boolean;
-    /**
-     * Watch date, No date, or Rating
-     */
-    displayValue: string;
-};
-
-export type SyncIssueDto = {
-    recovery?: 'verify' | 'choose' | 'retry';
-    traktState?: 'unknown' | 'missing' | 'present';
-    id: string;
-    kind: string;
-    issue: string;
-    ignored: boolean;
-    opnshelf?: SyncRecordDto;
-    trakt?: SyncRecordDto;
-    candidates: Array<SyncRecordDto>;
-};
-
-export type SyncIssuesDto = {
-    /**
-     * Total count of items across all pages
-     */
-    total: number;
-    /**
-     * Current page number after server-side clamping
-     */
-    page: number;
-    /**
-     * Number of items per page
-     */
-    pageSize: number;
-    /**
-     * Total number of available pages
-     */
-    totalPages: number;
-    /**
-     * Whether a next page exists
-     */
-    hasNextPage: boolean;
-    /**
-     * Whether a previous page exists
-     */
-    hasPreviousPage: boolean;
-    items: Array<SyncIssueDto>;
-};
-
-export type SyncResolveDto = {
-    action: 'trakt' | 'opnshelf' | 'ignore' | 'undo' | 'retry' | 'link' | 'match' | 'separate';
-    candidateKey?: string;
-    /**
-     * TMDB movie or show ID
-     */
-    mediaId?: string;
-    allRatings?: boolean;
-    /**
-     * The User checked Trakt and confirmed the unacknowledged creation is missing before choosing a version.
-     */
-    confirmedTraktMissing?: boolean;
-};
-
-export type TraktMatchCandidateDto = {
-    tmdbId: string;
-    mediaType: 'movie' | 'show';
-    title: string;
-    year?: number;
-    posterPath?: string;
-    overview?: string;
-};
-
 export type RatingResponseDto = {
     id: string;
     rkey: string;
@@ -1846,63 +1698,6 @@ export type SetRatingDto = {
     rating: number;
 };
 
-export type IntegrationIssueDto = {
-    recovery?: 'verify' | 'choose' | 'retry';
-    remoteState?: 'unknown' | 'missing' | 'present';
-    id: string;
-    kind: string;
-    issue: string;
-    ignored: boolean;
-    opnshelf?: SyncRecordDto;
-    remote?: SyncRecordDto;
-    candidates: Array<SyncRecordDto>;
-};
-
-export type IntegrationIssuesDto = {
-    /**
-     * Total count of items across all pages
-     */
-    total: number;
-    /**
-     * Current page number after server-side clamping
-     */
-    page: number;
-    /**
-     * Number of items per page
-     */
-    pageSize: number;
-    /**
-     * Total number of available pages
-     */
-    totalPages: number;
-    /**
-     * Whether a next page exists
-     */
-    hasNextPage: boolean;
-    /**
-     * Whether a previous page exists
-     */
-    hasPreviousPage: boolean;
-    items: Array<IntegrationIssueDto>;
-};
-
-export type IntegrationResolveDto = {
-    /**
-     * remote keeps the provider's version; opnshelf keeps Opnshelf's.
-     */
-    action: 'remote' | 'opnshelf' | 'ignore' | 'undo' | 'retry' | 'link' | 'match' | 'separate';
-    candidateKey?: string;
-    /**
-     * TMDB movie or show ID
-     */
-    mediaId?: string;
-    allRatings?: boolean;
-    /**
-     * The User checked the provider and confirmed the unacknowledged creation is missing before choosing a version.
-     */
-    confirmedRemoteMissing?: boolean;
-};
-
 export type UserRelationshipDto = {
     targetDid: string;
     isFollowing: boolean;
@@ -1913,12 +1708,8 @@ export type UserRelationshipDto = {
 export type SocialActorDto = {
     did: string;
     handle: string;
-    displayName?: {
-        [key: string]: unknown;
-    } | null;
-    avatar?: {
-        [key: string]: unknown;
-    } | null;
+    displayName?: string | null;
+    avatar?: string | null;
     followersCount: number;
     followingCount: number;
 };
@@ -2520,6 +2311,176 @@ export type PublishAtStoreReviewResponseDto = {
      * AT URI of the review record
      */
     uri: string;
+};
+
+export type IntegrationCapabilitiesDto = {
+    /**
+     * Record types this Integration can sync.
+     */
+    records: Array<'watches' | 'ratings' | 'lists' | 'watchlist' | 'favorites' | 'notes' | 'library' | 'reviews'>;
+    directions: Array<'inbound' | 'outbound' | 'both'>;
+    /**
+     * oauth returns a provider URL to open; repository connects in place.
+     */
+    connect: 'oauth' | 'repository';
+};
+
+export type SyncStatusDto = {
+    syncState?: 'idle' | 'queued' | 'running' | 'waiting';
+    nextCheckAt?: string;
+    configured: boolean;
+    status: 'disconnected' | 'paused' | 'preparing' | 'active' | 'reconnect';
+    username?: string;
+    direction: 'inbound' | 'outbound' | 'both';
+    watches: boolean;
+    ratings: boolean;
+    lists?: boolean;
+    watchlist?: boolean;
+    favorites?: boolean;
+    notes?: boolean;
+    library?: boolean;
+    reviews?: boolean;
+    contentPublicationConsent?: boolean;
+    listPublicationConsent?: boolean;
+    historyScope: 'all' | 'future';
+    publicationConsent: boolean;
+    lastSuccessAt?: string;
+    lastError?: string;
+    /**
+     * Records still waiting to transfer while sync catches up
+     */
+    remaining: number;
+    /**
+     * Catch-up progress (0–100) while records remain
+     */
+    progress?: number;
+    needsAttention: number;
+    ignored: number;
+    /**
+     * Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it.
+     */
+    writeAccess?: boolean;
+    capabilities?: IntegrationCapabilitiesDto;
+};
+
+export type IntegrationConnectDto = {
+    platform: 'web' | 'mobile';
+    /**
+     * Return to Onboarding after authorization instead of Integration management.
+     */
+    returnTo?: 'onboarding';
+};
+
+export type IntegrationConnectResultDto = {
+    /**
+     * Provider sign-in page to open.
+     */
+    url?: string;
+    /**
+     * Where the provider returns the User.
+     */
+    returnUrl?: string;
+};
+
+export type SyncSettingsDto = {
+    direction: 'inbound' | 'outbound' | 'both';
+    watches: boolean;
+    ratings: boolean;
+    lists?: boolean;
+    watchlist?: boolean;
+    favorites?: boolean;
+    listPublicationConsent?: boolean;
+    notes?: boolean;
+    library?: boolean;
+    reviews?: boolean;
+    contentPublicationConsent?: boolean;
+    historyScope: 'all' | 'future';
+    publicationConsent: boolean;
+};
+
+export type SyncActionDto = {
+    action: 'pause' | 'resume' | 'sync' | 'disconnect';
+};
+
+export type SyncRecordDto = {
+    key: string;
+    kind: string;
+    mediaType: string;
+    mediaId: string | null;
+    title: string;
+    season: number;
+    episode: number;
+    coordinatesUnknown?: boolean;
+    /**
+     * Watch date, No date, or Rating
+     */
+    displayValue: string;
+};
+
+export type IntegrationIssueDto = {
+    recovery?: 'verify' | 'choose' | 'retry';
+    remoteState?: 'unknown' | 'missing' | 'present';
+    id: string;
+    kind: string;
+    issue: string;
+    ignored: boolean;
+    opnshelf?: SyncRecordDto;
+    remote?: SyncRecordDto;
+    candidates: Array<SyncRecordDto>;
+};
+
+export type IntegrationIssuesDto = {
+    /**
+     * Total count of items across all pages
+     */
+    total: number;
+    /**
+     * Current page number after server-side clamping
+     */
+    page: number;
+    /**
+     * Number of items per page
+     */
+    pageSize: number;
+    /**
+     * Total number of available pages
+     */
+    totalPages: number;
+    /**
+     * Whether a next page exists
+     */
+    hasNextPage: boolean;
+    /**
+     * Whether a previous page exists
+     */
+    hasPreviousPage: boolean;
+    items: Array<IntegrationIssueDto>;
+};
+
+export type IntegrationResolveDto = {
+    /**
+     * remote keeps the provider's version; opnshelf keeps Opnshelf's.
+     */
+    action: 'remote' | 'opnshelf' | 'ignore' | 'undo' | 'retry' | 'link' | 'match' | 'separate';
+    candidateKey?: string;
+    /**
+     * TMDB movie or show ID
+     */
+    mediaId?: string;
+    allRatings?: boolean;
+    /**
+     * The User checked the provider and confirmed the unacknowledged creation is missing before choosing a version.
+     */
+    confirmedRemoteMissing?: boolean;
+};
+
+export type IntegrationMatchCandidateDto = {
+    tmdbId: string;
+    mediaType: 'movie' | 'show';
+    title: string;
+    year?: number;
+    posterPath?: string;
+    overview?: string;
 };
 
 export type WatchRecapHighlightDto = {
@@ -5383,45 +5344,6 @@ export type NotesControllerDeleteNoteResponses = {
     200: unknown;
 };
 
-export type TraktSyncControllerStatusData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/trakt-sync';
-};
-
-export type TraktSyncControllerStatusResponses = {
-    200: SyncStatusDto;
-};
-
-export type TraktSyncControllerStatusResponse = TraktSyncControllerStatusResponses[keyof TraktSyncControllerStatusResponses];
-
-export type TraktSyncControllerConfigureData = {
-    body: SyncSettingsDto;
-    path?: never;
-    query?: never;
-    url: '/trakt-sync';
-};
-
-export type TraktSyncControllerConfigureResponses = {
-    200: SyncStatusDto;
-};
-
-export type TraktSyncControllerConfigureResponse = TraktSyncControllerConfigureResponses[keyof TraktSyncControllerConfigureResponses];
-
-export type TraktSyncControllerConnectData = {
-    body: SyncConnectDto;
-    path?: never;
-    query?: never;
-    url: '/trakt-sync/connect';
-};
-
-export type TraktSyncControllerConnectResponses = {
-    201: SyncAuthorizeDto;
-};
-
-export type TraktSyncControllerConnectResponse = TraktSyncControllerConnectResponses[keyof TraktSyncControllerConnectResponses];
-
 export type TraktSyncControllerCallbackData = {
     body?: never;
     path?: never;
@@ -5434,74 +5356,6 @@ export type TraktSyncControllerCallbackData = {
 export type TraktSyncControllerCallbackResponses = {
     200: unknown;
 };
-
-export type TraktSyncControllerActionData = {
-    body: SyncActionDto;
-    path?: never;
-    query?: never;
-    url: '/trakt-sync/action';
-};
-
-export type TraktSyncControllerActionResponses = {
-    201: SyncStatusDto;
-};
-
-export type TraktSyncControllerActionResponse = TraktSyncControllerActionResponses[keyof TraktSyncControllerActionResponses];
-
-export type TraktSyncControllerIssuesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Page number to return (1-based)
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-        view?: 'attention' | 'ignored';
-    };
-    url: '/trakt-sync/issues';
-};
-
-export type TraktSyncControllerIssuesResponses = {
-    200: SyncIssuesDto;
-};
-
-export type TraktSyncControllerIssuesResponse = TraktSyncControllerIssuesResponses[keyof TraktSyncControllerIssuesResponses];
-
-export type TraktSyncControllerResolveData = {
-    body: SyncResolveDto;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/trakt-sync/issues/{id}';
-};
-
-export type TraktSyncControllerResolveResponses = {
-    201: SyncStatusDto;
-};
-
-export type TraktSyncControllerResolveResponse = TraktSyncControllerResolveResponses[keyof TraktSyncControllerResolveResponses];
-
-export type TraktSyncControllerMatchesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: {
-        q?: string;
-    };
-    url: '/trakt-sync/issues/{id}/matches';
-};
-
-export type TraktSyncControllerMatchesResponses = {
-    200: Array<TraktMatchCandidateDto>;
-};
-
-export type TraktSyncControllerMatchesResponse = TraktSyncControllerMatchesResponses[keyof TraktSyncControllerMatchesResponses];
 
 export type RatingsControllerGetRatingData = {
     body?: never;
@@ -5649,113 +5503,6 @@ export type RatingsControllerClearRatingResponses = {
     200: unknown;
 };
 
-export type PopfeedSyncControllerStatusData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/popfeed-sync';
-};
-
-export type PopfeedSyncControllerStatusResponses = {
-    200: SyncStatusDto;
-};
-
-export type PopfeedSyncControllerStatusResponse = PopfeedSyncControllerStatusResponses[keyof PopfeedSyncControllerStatusResponses];
-
-export type PopfeedSyncControllerConfigureData = {
-    body: SyncSettingsDto;
-    path?: never;
-    query?: never;
-    url: '/popfeed-sync';
-};
-
-export type PopfeedSyncControllerConfigureResponses = {
-    200: SyncStatusDto;
-};
-
-export type PopfeedSyncControllerConfigureResponse = PopfeedSyncControllerConfigureResponses[keyof PopfeedSyncControllerConfigureResponses];
-
-export type PopfeedSyncControllerConnectData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/popfeed-sync/connect';
-};
-
-export type PopfeedSyncControllerConnectResponses = {
-    201: SyncStatusDto;
-};
-
-export type PopfeedSyncControllerConnectResponse = PopfeedSyncControllerConnectResponses[keyof PopfeedSyncControllerConnectResponses];
-
-export type PopfeedSyncControllerActionData = {
-    body: SyncActionDto;
-    path?: never;
-    query?: never;
-    url: '/popfeed-sync/action';
-};
-
-export type PopfeedSyncControllerActionResponses = {
-    201: SyncStatusDto;
-};
-
-export type PopfeedSyncControllerActionResponse = PopfeedSyncControllerActionResponses[keyof PopfeedSyncControllerActionResponses];
-
-export type PopfeedSyncControllerIssuesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Page number to return (1-based)
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-        view?: 'attention' | 'ignored';
-    };
-    url: '/popfeed-sync/issues';
-};
-
-export type PopfeedSyncControllerIssuesResponses = {
-    200: IntegrationIssuesDto;
-};
-
-export type PopfeedSyncControllerIssuesResponse = PopfeedSyncControllerIssuesResponses[keyof PopfeedSyncControllerIssuesResponses];
-
-export type PopfeedSyncControllerResolveData = {
-    body: IntegrationResolveDto;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/popfeed-sync/issues/{id}';
-};
-
-export type PopfeedSyncControllerResolveResponses = {
-    201: SyncStatusDto;
-};
-
-export type PopfeedSyncControllerResolveResponse = PopfeedSyncControllerResolveResponses[keyof PopfeedSyncControllerResolveResponses];
-
-export type PopfeedSyncControllerMatchesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: {
-        q?: string;
-    };
-    url: '/popfeed-sync/issues/{id}/matches';
-};
-
-export type PopfeedSyncControllerMatchesResponses = {
-    200: Array<TraktMatchCandidateDto>;
-};
-
-export type PopfeedSyncControllerMatchesResponse = PopfeedSyncControllerMatchesResponses[keyof PopfeedSyncControllerMatchesResponses];
-
 export type BingersSyncControllerMetadataData = {
     body?: never;
     path?: never;
@@ -5766,45 +5513,6 @@ export type BingersSyncControllerMetadataData = {
 export type BingersSyncControllerMetadataResponses = {
     200: unknown;
 };
-
-export type BingersSyncControllerStatusData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/bingers-sync';
-};
-
-export type BingersSyncControllerStatusResponses = {
-    200: SyncStatusDto;
-};
-
-export type BingersSyncControllerStatusResponse = BingersSyncControllerStatusResponses[keyof BingersSyncControllerStatusResponses];
-
-export type BingersSyncControllerConfigureData = {
-    body: SyncSettingsDto;
-    path?: never;
-    query?: never;
-    url: '/bingers-sync';
-};
-
-export type BingersSyncControllerConfigureResponses = {
-    200: SyncStatusDto;
-};
-
-export type BingersSyncControllerConfigureResponse = BingersSyncControllerConfigureResponses[keyof BingersSyncControllerConfigureResponses];
-
-export type BingersSyncControllerConnectData = {
-    body: SyncConnectDto;
-    path?: never;
-    query?: never;
-    url: '/bingers-sync/connect';
-};
-
-export type BingersSyncControllerConnectResponses = {
-    201: SyncAuthorizeDto;
-};
-
-export type BingersSyncControllerConnectResponse = BingersSyncControllerConnectResponses[keyof BingersSyncControllerConnectResponses];
 
 export type BingersSyncControllerCallbackData = {
     body?: never;
@@ -5818,74 +5526,6 @@ export type BingersSyncControllerCallbackData = {
 export type BingersSyncControllerCallbackResponses = {
     200: unknown;
 };
-
-export type BingersSyncControllerActionData = {
-    body: SyncActionDto;
-    path?: never;
-    query?: never;
-    url: '/bingers-sync/action';
-};
-
-export type BingersSyncControllerActionResponses = {
-    201: SyncStatusDto;
-};
-
-export type BingersSyncControllerActionResponse = BingersSyncControllerActionResponses[keyof BingersSyncControllerActionResponses];
-
-export type BingersSyncControllerIssuesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Page number to return (1-based)
-         */
-        page?: number;
-        /**
-         * Number of items to return per page
-         */
-        pageSize?: number;
-        view?: 'attention' | 'ignored';
-    };
-    url: '/bingers-sync/issues';
-};
-
-export type BingersSyncControllerIssuesResponses = {
-    200: IntegrationIssuesDto;
-};
-
-export type BingersSyncControllerIssuesResponse = BingersSyncControllerIssuesResponses[keyof BingersSyncControllerIssuesResponses];
-
-export type BingersSyncControllerResolveData = {
-    body: IntegrationResolveDto;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/bingers-sync/issues/{id}';
-};
-
-export type BingersSyncControllerResolveResponses = {
-    201: SyncStatusDto;
-};
-
-export type BingersSyncControllerResolveResponse = BingersSyncControllerResolveResponses[keyof BingersSyncControllerResolveResponses];
-
-export type BingersSyncControllerMatchesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: {
-        q?: string;
-    };
-    url: '/bingers-sync/issues/{id}/matches';
-};
-
-export type BingersSyncControllerMatchesResponses = {
-    200: Array<TraktMatchCandidateDto>;
-};
-
-export type BingersSyncControllerMatchesResponse = BingersSyncControllerMatchesResponses[keyof BingersSyncControllerMatchesResponses];
 
 export type SocialControllerGetSuggestionsData = {
     body?: never;
@@ -6601,6 +6241,125 @@ export type AtStoreReviewsControllerPublishResponses = {
 };
 
 export type AtStoreReviewsControllerPublishResponse = AtStoreReviewsControllerPublishResponses[keyof AtStoreReviewsControllerPublishResponses];
+
+export type IntegrationApiControllerStatusData = {
+    body?: never;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}';
+};
+
+export type IntegrationApiControllerStatusResponses = {
+    200: SyncStatusDto;
+};
+
+export type IntegrationApiControllerStatusResponse = IntegrationApiControllerStatusResponses[keyof IntegrationApiControllerStatusResponses];
+
+export type IntegrationApiControllerConfigureData = {
+    body: SyncSettingsDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}';
+};
+
+export type IntegrationApiControllerConfigureResponses = {
+    200: SyncStatusDto;
+};
+
+export type IntegrationApiControllerConfigureResponse = IntegrationApiControllerConfigureResponses[keyof IntegrationApiControllerConfigureResponses];
+
+export type IntegrationApiControllerConnectData = {
+    body: IntegrationConnectDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}/connect';
+};
+
+export type IntegrationApiControllerConnectResponses = {
+    201: IntegrationConnectResultDto;
+};
+
+export type IntegrationApiControllerConnectResponse = IntegrationApiControllerConnectResponses[keyof IntegrationApiControllerConnectResponses];
+
+export type IntegrationApiControllerActionData = {
+    body: SyncActionDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: never;
+    url: '/integrations/{provider}/action';
+};
+
+export type IntegrationApiControllerActionResponses = {
+    201: SyncStatusDto;
+};
+
+export type IntegrationApiControllerActionResponse = IntegrationApiControllerActionResponses[keyof IntegrationApiControllerActionResponses];
+
+export type IntegrationApiControllerIssuesData = {
+    body?: never;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+    };
+    query?: {
+        /**
+         * Page number to return (1-based)
+         */
+        page?: number;
+        /**
+         * Number of items to return per page
+         */
+        pageSize?: number;
+        view?: 'attention' | 'ignored';
+    };
+    url: '/integrations/{provider}/issues';
+};
+
+export type IntegrationApiControllerIssuesResponses = {
+    200: IntegrationIssuesDto;
+};
+
+export type IntegrationApiControllerIssuesResponse = IntegrationApiControllerIssuesResponses[keyof IntegrationApiControllerIssuesResponses];
+
+export type IntegrationApiControllerResolveData = {
+    body: IntegrationResolveDto;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+        id: string;
+    };
+    query?: never;
+    url: '/integrations/{provider}/issues/{id}';
+};
+
+export type IntegrationApiControllerResolveResponses = {
+    201: SyncStatusDto;
+};
+
+export type IntegrationApiControllerResolveResponse = IntegrationApiControllerResolveResponses[keyof IntegrationApiControllerResolveResponses];
+
+export type IntegrationApiControllerMatchesData = {
+    body?: never;
+    path: {
+        provider: 'trakt' | 'popfeed' | 'bingers';
+        id: string;
+    };
+    query?: {
+        q?: string;
+    };
+    url: '/integrations/{provider}/issues/{id}/matches';
+};
+
+export type IntegrationApiControllerMatchesResponses = {
+    200: Array<IntegrationMatchCandidateDto>;
+};
+
+export type IntegrationApiControllerMatchesResponse = IntegrationApiControllerMatchesResponses[keyof IntegrationApiControllerMatchesResponses];
 
 export type NotificationsControllerCollectionData = {
     body?: never;

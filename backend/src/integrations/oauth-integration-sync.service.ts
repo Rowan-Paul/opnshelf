@@ -39,11 +39,20 @@ export abstract class OAuthIntegrationSyncService<
 > extends IntegrationSyncService<Credential> {
 	protected abstract readonly oauth: OAuthClient<Token>;
 	protected abstract readonly authorizationEndpoint: string;
+	protected readonly connectMethod = "oauth" as const;
+	connectRequest(
+		userDid: string,
+		platform: "web" | "mobile",
+		returnTo?: "onboarding",
+	) {
+		return this.authorize(userDid, platform, returnTo);
+	}
 	protected get returnPath() {
 		return `integrations/${this.provider}`;
 	}
+	/** Onboarding receives every provider's return on one URL, so always name it. */
 	protected get callbackQuery() {
-		return "";
+		return `provider=${this.provider}&`;
 	}
 	protected get connectionDefaults(): Partial<
 		Pick<IntegrationConnection, "direction">

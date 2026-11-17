@@ -8,9 +8,9 @@ import {
 	View,
 } from "react-native";
 import { ShakeToFeedback } from "@/components/feedback/ShakeToFeedback";
+import { IntegrationSyncBanner } from "@/components/integrations/IntegrationSyncBanner";
 import { NativeTabAvatar } from "@/components/navigation/native-tab-avatar";
 import { tabIcons } from "@/components/navigation/tab-icons";
-import { TraktSyncBanner } from "@/components/trakt/TraktSyncBanner";
 import { useAuth } from "@/lib/auth-context";
 import { darkNavTheme, lightNavTheme } from "@/theme";
 
@@ -41,7 +41,7 @@ export default function TabLayout() {
 	if (user?.needsOnboarding) return <Redirect href="/onboarding" />;
 	const guest = !isAuthenticated || !user;
 	return (
-		<TraktSyncBanner>
+		<IntegrationSyncBanner>
 			<ShakeToFeedback />
 			{!guest && (
 				<NativeTabAvatar
@@ -129,6 +129,6 @@ export default function TabLayout() {
 					)}
 				</NativeTabs.Trigger>
 			</NativeTabs>
-		</TraktSyncBanner>
+		</IntegrationSyncBanner>
 	);
 }

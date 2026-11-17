@@ -1,4 +1,5 @@
 import {
+	accountDeletionSyncCopy,
 	integrationSyncBusyRetry,
 	isIntegrationSyncBusy,
 	usersControllerDeleteMyAccountMutation,
@@ -138,8 +139,7 @@ export function DeleteAccountSection() {
 						</DialogTitle>
 						<DialogDescription>
 							This action cannot be undone. All your data will be permanently
-							removed. Trakt and Popfeed Sync stop; records already sent to
-							Trakt or Popfeed remain there.
+							removed. {accountDeletionSyncCopy()}
 						</DialogDescription>
 					</DialogHeader>
 

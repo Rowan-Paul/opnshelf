@@ -1,3 +1,4 @@
+import { integrationNames } from "@opnshelf/api";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
 	ArrowLeftRight,
@@ -49,7 +50,7 @@ export const SETTINGS_AREAS = [
 	{
 		section: "integrations",
 		label: "Integrations",
-		description: "Sync with Trakt and Popfeed",
+		description: `Sync with ${integrationNames()}`,
 		Icon: ArrowLeftRight,
 	},
 	{

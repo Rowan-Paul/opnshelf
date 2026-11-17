@@ -1,3 +1,4 @@
+import { IntegrationUnavailable } from "../integrations/integration-error";
 import { BingersSyncService } from "./bingers-sync.service";
 import type { LocalSyncRecords } from "../integrations/local-records.service";
 import type { WatchAccountLock } from "../privacy/watch-account-lock";
@@ -305,6 +306,31 @@ it("replaces a rejected cursor only after a complete reread succeeds", async () 
 	expect(h.fetcher.mock.calls.at(-1)?.[0]).not.toContain("cursor=");
 	expect(h.feed()).toEqual({ cursor: "fresh", records: [] });
 });
+it("stops a feed read between pages for a waiting User action and keeps the saved feed", async () => {
+	const h = harness();
+	h.fetcher.mockResolvedValueOnce(response(page()));
+	await h.snapshot();
+	const before = structuredClone(h.feed());
+	const calls = h.fetcher.mock.calls.length;
+	// The first page of the next read arrives; the User action lands before the second.
+	h.fetcher.mockResolvedValueOnce(
+		response(
+			page([{ ...row, deleted: true }], {
+				has_more: true,
+				next_cursor: "cursor-2",
+			}),
+		),
+	);
+	const waiting = new Error("yield");
+	let checks = 0;
+	await expect(
+		h.service["remote"].snapshot(credential, undefined, "fixture-lease", () => {
+			if (++checks === 2) throw waiting;
+		}),
+	).rejects.toBe(waiting);
+	expect(h.fetcher).toHaveBeenCalledTimes(calls + 1);
+	expect(h.feed()).toEqual(before);
+});
 it("keeps the last complete feed when cursor recovery fails, without looping", async () => {
 	const h = harness();
 	h.fetcher.mockResolvedValueOnce(response(page()));
@@ -313,7 +339,8 @@ it("keeps the last complete feed when cursor recovery fails, without looping", a
 	h.fetcher
 		.mockResolvedValueOnce(response({}, 400))
 		.mockResolvedValueOnce(response({}, 503));
-	await expect(h.snapshot()).rejects.toThrow();
+	// A server error is an outage: the run stops and no item is marked.
+	await expect(h.snapshot()).rejects.toBeInstanceOf(IntegrationUnavailable);
 	expect(h.feed()).toEqual(before);
 	expect(h.fetcher).toHaveBeenCalledTimes(3);
 });

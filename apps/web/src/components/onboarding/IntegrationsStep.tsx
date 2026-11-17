@@ -3,6 +3,7 @@ import {
 	type IntegrationDefinition,
 	type IntegrationId,
 	integrationKey,
+	integrationSyncBusyRetry,
 	onboardingIntegrationAction,
 	onboardingIntegrationsCopy,
 	type SyncStatusDto,
@@ -105,6 +106,8 @@ function IntegrationRow({
 	const connect = useMutation({
 		mutationKey: [...integrationKey(integration), "connect"],
 		mutationFn: integration.api.connect,
+		// Connecting again takes the sync lease, like every other control.
+		...integrationSyncBusyRetry,
 		onSuccess: async (result) => {
 			if (result.url) return window.location.assign(result.url);
 			await refresh();

@@ -6,6 +6,7 @@ import type {
 } from "../integrations/adapter";
 import {
 	IntegrationError,
+	IntegrationUnavailable,
 	SyncSnapshotChanged,
 } from "../integrations/integration-error";
 import type { SyncRecord } from "../integrations/reconcile";
@@ -45,7 +46,13 @@ const PAGE = 100;
 const MAX_PAGES = 200;
 
 const pageSchema = z.object({
-	records: z.array(z.object({ uri: z.string(), value: z.unknown() })),
+	records: z.array(
+		z.object({
+			uri: z.string(),
+			cid: z.string().optional(),
+			value: z.unknown(),
+		}),
+	),
 	cursor: z.string().optional(),
 });
 const commitSchema = z.object({ cid: z.string(), rev: z.string() });
@@ -66,10 +73,9 @@ export class PopfeedSyncClient implements IntegrationRemote<PopfeedCredential> {
 		} catch (error) {
 			const failure = syncPdsFailure(error);
 			if (failure instanceof IntegrationError) throw failure;
-			throw new IntegrationError(
+			// A repository that cannot be reached is an outage, not an item failure.
+			throw new IntegrationUnavailable(
 				"Your repository could not be reached. Sync will retry.",
-				0,
-				60,
 			);
 		}
 		if (!response.ok)

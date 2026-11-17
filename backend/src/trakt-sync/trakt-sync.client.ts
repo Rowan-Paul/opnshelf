@@ -17,7 +17,16 @@ import type {
 	SyncRecordTypes,
 } from "../integrations/adapter";
 import { isContentRecord } from "../integrations/content-value";
-import { IntegrationError } from "../integrations/integration-error";
+import {
+	IntegrationError,
+	IntegrationUnavailable,
+	SyncSnapshotChanged,
+} from "../integrations/integration-error";
+import {
+	integrationFetch,
+	integrationJson,
+	isOutageStatus,
+} from "../integrations/integration-fetch";
 import { snapshotContent, writeContent } from "./remote-content";
 import { snapshotLists, writeList } from "./remote-lists";
 
@@ -69,6 +78,18 @@ type TraktResponseDiagnostics = {
 	cloudflareRay?: string;
 };
 export class TraktSyncError extends IntegrationError {
+	constructor(
+		message: string,
+		status = 0,
+		retrySeconds = 60,
+		readonly diagnostics?: TraktResponseDiagnostics,
+	) {
+		super(message, status, retrySeconds);
+	}
+}
+
+/** Trakt is down or timing out: stop the run without marking any item. */
+export class TraktUnavailable extends IntegrationUnavailable {
 	constructor(
 		message: string,
 		status = 0,
@@ -149,18 +170,21 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 	): Promise<{ data: unknown; headers: Headers }> {
 		const key = integrationRateLimitKey(token);
 		return this.requests.run(key, async () => {
-			const response = await fetch(`https://api.trakt.tv${path}`, {
-				method,
-				headers: {
-					"Content-Type": "application/json",
-					"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
-					"trakt-api-key": this.clientId,
-					"trakt-api-version": "2",
-					...(token ? { Authorization: `Bearer ${token}` } : {}),
+			const response = await integrationFetch(
+				"Trakt",
+				`https://api.trakt.tv${path}`,
+				{
+					method,
+					headers: {
+						"Content-Type": "application/json",
+						"User-Agent": "Opnshelf/1.0 (+https://opnshelf.xyz)",
+						"trakt-api-key": this.clientId,
+						"trakt-api-version": "2",
+						...(token ? { Authorization: `Bearer ${token}` } : {}),
+					},
+					...(body === undefined ? {} : { body: JSON.stringify(body) }),
 				},
-				...(body === undefined ? {} : { body: JSON.stringify(body) }),
-				signal: AbortSignal.timeout(15_000),
-			});
+			);
 			if (!response.ok) {
 				const retry = rateLimitRetrySeconds(response.headers, 60);
 				const contentType = response.headers.get("content-type") ?? "";
@@ -173,7 +197,10 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 					oauthError = parsed.success ? parsed.data.error : undefined;
 				}
 				const ray = response.headers.get("cf-ray") ?? "";
-				throw new TraktSyncError(
+				// An outage stops the run; any other failure belongs to this request.
+				throw new (
+					isOutageStatus(response.status) ? TraktUnavailable : TraktSyncError
+				)(
 					response.status === 401
 						? "Reconnect Trakt to continue syncing."
 						: response.status === 429
@@ -203,9 +230,8 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 					},
 				);
 			}
-			const text = await response.text();
 			return {
-				data: text.trim() ? JSON.parse(text) : null,
+				data: await integrationJson("Trakt", response),
 				headers: response.headers,
 			};
 		});
@@ -255,23 +281,35 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 	async snapshot(
 		token: string,
 		options: SyncRecordTypes = {},
+		_leaseId?: string,
+		// A long history is hundreds of paced requests. Let a waiting User action
+		// end the read between them; nothing is kept from a read that stops.
+		checkpoint?: () => void,
 	): Promise<SyncRecord[]> {
+		checkpoint?.();
 		const before = (await this.request("/sync/last_activities", token)).data;
 		const watches =
 			options.watches === false
 				? []
-				: await this.pages("/sync/history", token, "watch");
+				: await this.pages("/sync/history", token, "watch", checkpoint);
 		const ratings: SyncRecord[] = [];
 		for (const type of options.ratings === false
 			? []
 			: ["movies", "shows", "seasons", "episodes"])
 			ratings.push(
-				...(await this.pages(`/sync/ratings/${type}`, token, "rating")),
+				...(await this.pages(
+					`/sync/ratings/${type}`,
+					token,
+					"rating",
+					checkpoint,
+				)),
 			);
+		checkpoint?.();
 		const lists =
 			options.lists || options.watchlist || options.favorites
 				? await snapshotLists(this, token, options)
 				: [];
+		checkpoint?.();
 		const content =
 			options.notes || options.library || options.reviews
 				? await snapshotContent(this, token, options)
@@ -303,8 +341,31 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 				favorites: record.kind === "favorites",
 			});
 		const plural = `${record.mediaType}s`;
-		if (record.kind === "rating")
-			return this.pages(`/sync/ratings/${plural}`, token, "rating");
+		if (record.kind === "rating") {
+			// A Rating removed on Trakt while a category spans several pages shifts
+			// an unread row onto a page already read, and the totals still agree.
+			// The result replaces this category in the saved snapshot, so the
+			// missed Rating would read as deleted. One page cannot shift.
+			const before = (await this.request("/sync/last_activities", token)).data;
+			const read = await this.readPages(
+				`/sync/ratings/${plural}`,
+				token,
+				"rating",
+			);
+			if (
+				read.pages > 1 &&
+				JSON.stringify(before) !==
+					JSON.stringify(
+						(await this.request("/sync/last_activities", token)).data,
+					)
+			)
+				throw new SyncSnapshotChanged(
+					"Trakt changed during the read. Sync will read a fresh snapshot.",
+					0,
+					5,
+				);
+			return read.records;
+		}
 		let remoteId = record.remoteId;
 		if (!remoteId) {
 			if (!record.mediaId)
@@ -350,19 +411,31 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		path: string,
 		token: string,
 		kind: "watch" | "rating",
+		checkpoint?: () => void,
 	): Promise<SyncRecord[]> {
+		return (await this.readPages(path, token, kind, checkpoint)).records;
+	}
+	private async readPages(
+		path: string,
+		token: string,
+		kind: "watch" | "rating",
+		checkpoint?: () => void,
+	): Promise<{ records: SyncRecord[]; pages: number }> {
 		const result: SyncRecord[] = [];
+		let pageCount = 0;
 		const seen = new Set<string>();
 		// Trakt can serve a stale item count on earlier pages; the last page's
 		// count is the one that matches the rows actually returned.
 		let expectedCount: number | undefined;
 		for (let page = 1; ; page++) {
+			checkpoint?.();
 			const { data, headers } = await this.request(
 				`${path}?page=${page}&limit=100`,
 				token,
 			);
 			const rows = z.array(z.unknown()).parse(data);
 			const pages = Number(headers.get("x-pagination-page-count"));
+			pageCount = pages;
 			const countHeader = headers.get("x-pagination-item-count");
 			const count = countHeader === null ? undefined : Number(countHeader);
 			expectedCount = count;
@@ -392,7 +465,7 @@ export class TraktSyncClient implements IntegrationRemote<string> {
 		}
 		if (expectedCount !== undefined && expectedCount !== result.length)
 			throw new TraktSyncError("Trakt returned incomplete results.");
-		return result;
+		return { records: result, pages: pageCount };
 	}
 	async write(
 		token: string,

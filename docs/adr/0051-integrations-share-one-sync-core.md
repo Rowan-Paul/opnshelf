@@ -59,3 +59,32 @@ explicitly elapsed reset uses the minimum delay, not the full fallback interval.
 The shorter Trakt and Bingers request-budget windows provide a guard if interval
 policies change; the current conservative pacing normally stays below them.
 Successful responses without a parseable reset do not invoke the 429 fallback.
+
+## Declared capabilities and one provider registry (2026-11-17)
+
+Each provider service declares the record types and directions its adapter
+implements. The shared core rejects settings and Needs attention choices outside
+them, replacing the checks Bingers and Popfeed had each written by hand. Popfeed
+keeps its own check that write access was granted before an outbound direction.
+
+Provider ids and User-facing names live in one registry. Sync warnings read it
+and account deletion is typed by provider id, so adding a provider fails to
+compile until both handle it. The core, not a stored credential, refuses
+actions on a disconnected connection; only the provider's connect flow revives it.
+
+## One API for every Integration (2026-11-17)
+
+Every Integration answers the same requests under `/integrations/{provider}`:
+status, connect, settings, actions, Needs attention, resolve and TMDB matches,
+with the shared DTOs. Connect returns a provider sign-in URL for OAuth
+Integrations and nothing for repository ones. The status carries the provider's
+capabilities and connect method, so the clients take them from the server and
+keep their own definition only until a status has loaded.
+
+Both clients use this API through one factory. Each provider's own controller
+keeps only what has a URL registered with the provider: the Trakt and Bingers
+OAuth callbacks and Bingers client metadata. The operator accepted on
+2026-11-17 that Mobile builds from before this change stop syncing until they
+update; their `/trakt-sync`, `/popfeed-sync` and `/bingers-sync` requests,
+including Trakt's own names (`trakt` for the remote side), no longer exist.
+The backend must be deployed before a client that uses the shared API.

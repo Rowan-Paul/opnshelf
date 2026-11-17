@@ -19,10 +19,10 @@ const CHECK_COOLDOWN_MS = 5 * 60 * 1000;
 /**
  * Wraps the root navigator with a slim banner announcing a downloaded OTA
  * update, so it shows on every screen — tabs, pushed detail and settings
- * screens, and guest sessions alike. It mirrors TraktSyncBanner's structure:
+ * screens, and guest sessions alike. It mirrors IntegrationSyncBanner's structure:
  * while the banner shows it consumes the top safe-area inset and zeroes it for
  * the wrapped subtree, so screen content and AppHeader sit flush under the
- * banner instead of double-gapped. TraktSyncBanner (inside the tabs) reads the
+ * banner instead of double-gapped. IntegrationSyncBanner (inside the tabs) reads the
  * zeroed inset, so the two stack without a gap between them.
  *
  * The banner stays hidden on the auth and onboarding routes (see

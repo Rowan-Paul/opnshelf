@@ -25,6 +25,23 @@ export const syncPdsRequests = new IntegrationRateLimiter(
 	PDS_RATE_LIMIT_POLICY,
 );
 
+// A repository that stops answering would otherwise hold the account's request
+// queue, and the connection lease, until the process restarts.
+const PDS_TIMEOUT_MS = 30_000;
+const unreachable = () =>
+	new IntegrationUnavailable(
+		"Your repository could not be reached. Sync will retry.",
+	);
+function withTimeout<T>(request: () => Promise<T>): Promise<T> {
+	let timer: NodeJS.Timeout | undefined;
+	return Promise.race([
+		request(),
+		new Promise<never>((_resolve, reject) => {
+			timer = setTimeout(() => reject(unreachable()), PDS_TIMEOUT_MS);
+		}),
+	]).finally(() => clearTimeout(timer));
+}
+
 export async function syncPdsRequest<T>(request: () => Promise<T>): Promise<T> {
 	try {
 		const result = await request();
@@ -50,7 +67,7 @@ export async function syncPdsSession(
 	did: string,
 ) {
 	const session = await syncPdsRequests.run(did, () =>
-		syncPdsRequest(() => auth.restore(did)),
+		syncPdsRequest(() => withTimeout(() => auth.restore(did))),
 	);
 	if (!session)
 		throw new IntegrationError(
@@ -63,7 +80,39 @@ export async function syncPdsSession(
 				return (path: string, init?: RequestInit) =>
 					syncPdsRequests.run(
 						did,
-						() => syncPdsRequest(() => target.fetchHandler(path, init)),
+						() =>
+							syncPdsRequest(async () => {
+								const timeout = new AbortController();
+								const timer = setTimeout(() => timeout.abort(), PDS_TIMEOUT_MS);
+								try {
+									const response = await target.fetchHandler(path, {
+										...init,
+										signal: init?.signal
+											? AbortSignal.any([init.signal, timeout.signal])
+											: timeout.signal,
+									});
+									// syncPdsRequest classifies these from their status and
+									// headers and discards the body, so a stalled body must not
+									// replace their retry delay with a generic timeout.
+									if (response.status === 429 || response.status >= 500)
+										return response;
+									// Headers can arrive while the body stalls. Read it inside
+									// the deadline so the caller never waits on it unbounded.
+									const body = response.body
+										? await response.arrayBuffer()
+										: null;
+									return new Response(body, {
+										status: response.status,
+										statusText: response.statusText,
+										headers: response.headers,
+									});
+								} catch (error) {
+									if (timeout.signal.aborted) throw unreachable();
+									throw error;
+								} finally {
+									clearTimeout(timer);
+								}
+							}),
 						syncWritePoints(path, init),
 					);
 			const value = Reflect.get(target, key, target);

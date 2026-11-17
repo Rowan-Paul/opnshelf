@@ -155,6 +155,10 @@ export default function RootLayout() {
 					<Stack.Screen
 						name="integrations/[provider]"
 						options={{ headerShown: true }}
+						// On Android a provider's sign-in return arrives as a link to
+						// this screen. Reuse the one already open for that Integration
+						// instead of stacking a second copy on top of it.
+						dangerouslySingular={(_name, params) => String(params.provider)}
 					/>
 					<Stack.Screen
 						name="integrations/[provider]/attention"

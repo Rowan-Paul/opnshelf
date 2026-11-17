@@ -1,7 +1,5 @@
 import type {
-	SyncIssueDto,
 	SyncRecordDto,
-	SyncResolveDto,
 	SyncSettingsDto,
 	SyncStatusDto,
 } from "./generated/types.gen";
@@ -75,13 +73,6 @@ export function traktSettings(status: SyncStatusDto): SyncSettingsDto {
 		publicationConsent: status.publicationConsent,
 	};
 }
-export function traktResolutionLabel(
-	action: SyncResolveDto["action"],
-	sourceExists: boolean,
-) {
-	if (action !== "trakt" && action !== "opnshelf") return action;
-	return `Use ${action === "trakt" ? "Trakt" : "Opnshelf"}${sourceExists ? " (keep or restore this version)" : " (delete the other version)"}`;
-}
 export function traktError(error: unknown): string {
 	if (error instanceof Error) return error.message;
 	if (error && typeof error === "object" && "message" in error) {
@@ -96,46 +87,6 @@ export function traktError(error: unknown): string {
 	}
 	return "Could not complete this action. Try again.";
 }
-/**
- * Errors and unresolved items take priority over background progress on both clients.
- */
-export function traktSyncErrorMessage(
-	sync:
-		| (Pick<SyncStatusDto, "status"> &
-				Partial<Pick<SyncStatusDto, "lastError" | "needsAttention">>)
-		| undefined,
-): string | null {
-	if (!sync || sync.status === "disconnected") return null;
-	if (sync.lastError) return "Trakt sync error";
-	if (sync.needsAttention) return "Trakt sync needs attention";
-	return null;
-}
-export function traktSyncCatchUpMessage(
-	sync:
-		| (Pick<SyncStatusDto, "status" | "remaining" | "progress"> &
-				Partial<Pick<SyncStatusDto, "lastError" | "needsAttention">>)
-		| undefined,
-): string | null {
-	const error = traktSyncErrorMessage(sync);
-	if (error) return error;
-	if (sync?.status === "preparing") return "Comparing with Trakt";
-	if (sync?.status === "active" && sync.remaining > 0)
-		return `Syncing with Trakt${sync.progress !== undefined ? ` — ${sync.progress}%` : ""}`;
-	return null;
-}
-/** Older servers omit structured recovery fields; keep uncertain writes safe during rollout. */
-export function traktIssueRecovery(
-	item: SyncIssueDto,
-): "verify" | "choose" | "retry" {
-	if (item.recovery) return item.recovery;
-	if (/outcome of creating .* is unknown/i.test(item.issue)) return "verify";
-	return item.opnshelf && item.trakt ? "choose" : "retry";
-}
-export const TRAKT_UNCONFIRMED_CHOICE_COPY =
-	"Check your Trakt account first. If this item is missing, choosing Opnshelf sends the current version to Trakt once, even if sync is now inbound. Choosing Trakt deletes the Opnshelf version. An earlier request could still complete and create a duplicate.";
-export const TRAKT_MISSING_CONFIRMATION =
-	"I checked Trakt and confirmed this item is missing.";
-
 export function traktSyncActionLabel(status: SyncStatusDto): string {
 	return status.syncState === "running"
 		? "Syncing with Trakt…"
