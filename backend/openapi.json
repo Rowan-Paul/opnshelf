@@ -10866,11 +10866,11 @@
             "type": "string"
           },
           "displayName": {
-            "type": "object",
+            "type": "string",
             "nullable": true
           },
           "avatar": {
-            "type": "object",
+            "type": "string",
             "nullable": true
           },
           "followersCount": {

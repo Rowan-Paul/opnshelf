@@ -52,10 +52,10 @@ export class SocialActorDto {
 	@ApiProperty()
 	handle: string;
 
-	@ApiPropertyOptional({ nullable: true })
+	@ApiPropertyOptional({ type: String, nullable: true })
 	displayName: string | null;
 
-	@ApiPropertyOptional({ nullable: true })
+	@ApiPropertyOptional({ type: String, nullable: true })
 	avatar: string | null;
 
 	@ApiProperty()

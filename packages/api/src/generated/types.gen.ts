@@ -1708,12 +1708,8 @@ export type UserRelationshipDto = {
 export type SocialActorDto = {
     did: string;
     handle: string;
-    displayName?: {
-        [key: string]: unknown;
-    } | null;
-    avatar?: {
-        [key: string]: unknown;
-    } | null;
+    displayName?: string | null;
+    avatar?: string | null;
     followersCount: number;
     followingCount: number;
 };
