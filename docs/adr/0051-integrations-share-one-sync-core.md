@@ -59,3 +59,19 @@ explicitly elapsed reset uses the minimum delay, not the full fallback interval.
 The shorter Trakt and Bingers request-budget windows provide a guard if interval
 policies change; the current conservative pacing normally stays below them.
 Successful responses without a parseable reset do not invoke the 429 fallback.
+
+## Declared capabilities and one provider registry (2026-11-17)
+
+Each provider service declares the record types and directions its adapter
+implements. The shared core rejects settings and Needs attention choices outside
+them, replacing the checks Bingers and Popfeed had each written by hand. Popfeed
+keeps its own check that write access was granted before an outbound direction.
+
+Provider ids and User-facing names live in one registry. Sync warnings read it
+and account deletion is typed by provider id, so adding a provider fails to
+compile until both handle it. The core, not a stored credential, refuses
+actions on a disconnected connection; only the provider's connect flow revives it.
+
+The Trakt API keeps its own request and response names (`trakt` for the remote
+side). Released Mobile builds call those endpoints, so moving Trakt onto the
+shared DTOs needs a versioned rollout and is not part of this change.
