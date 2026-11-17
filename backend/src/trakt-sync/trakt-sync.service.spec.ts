@@ -416,7 +416,7 @@ it("excludes historical issues from both the review list and its count", async (
 			Promise.resolve(connection) as ReturnType<(typeof service)["current"]>,
 	);
 	service["requireConnection"] = vi.fn(async () => connection);
-	await service.issues("fixture", {});
+	await service.listIssues("fixture", {});
 	await service.status("fixture");
 	for (const query of [groupBy.mock.calls[0]])
 		expect(query).toEqual([
@@ -428,7 +428,7 @@ it("excludes historical issues from both the review list and its count", async (
 		]);
 });
 
-it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
+it.each(["link", "opnshelf", "remote", "match", "retry"] as const)(
 	"rejects %s from a stale screen for excluded history",
 	async (action) => {
 		const service = new TraktSyncService(
@@ -450,9 +450,9 @@ it.each(["link", "opnshelf", "trakt", "match", "retry"] as const)(
 		);
 		service["locked"] = async (_connection, operation) =>
 			operation(async () => undefined, "fixture-lease");
-		await expect(service.resolve("fixture", "old", { action })).rejects.toThrow(
-			"outside your sync scope",
-		);
+		await expect(
+			service.resolveIssue("fixture", "old", { action }),
+		).rejects.toThrow("outside your sync scope");
 	},
 );
 
@@ -478,13 +478,13 @@ it("logs why a resolve was rejected, since the HTTP log only has the status", as
 	service["locked"] = async (_connection, operation) =>
 		operation(async () => undefined, "fixture-lease");
 	await expect(
-		service.resolve("fixture", "item-1", { action: "link" }),
+		service.resolveIssue("fixture", "item-1", { action: "link" }),
 	).rejects.toThrow("outside your sync scope");
 	expect(warn).toHaveBeenCalledWith(
 		'Resolve link on sync item "item-1" rejected with 400: This existing item is outside your sync scope.',
 	);
 	await expect(
-		service.resolve("fixture", "x\nforged line", { action: "link" }),
+		service.resolveIssue("fixture", "x\nforged line", { action: "link" }),
 	).rejects.toThrow();
 	expect(warn).toHaveBeenLastCalledWith(
 		expect.stringContaining('sync item "x\\nforged line" rejected'),
@@ -546,7 +546,7 @@ it("builds candidate comparisons only for the requested sync issue page", async 
 	} as unknown as NonNullable<Awaited<ReturnType<(typeof service)["current"]>>>;
 	service["requireConnection"] = vi.fn(async () => connection);
 	comparisons = 0;
-	const result = await service.issues("fixture", { page: 2, pageSize: 1 });
+	const result = await service.listIssues("fixture", { page: 2, pageSize: 1 });
 	expect(result).toMatchObject({ page: 2, total: 200, hasNextPage: true });
 	expect(result.items.map((item) => item.id)).toEqual(["issue:1"]);
 	expect(result.items[0].candidates).toHaveLength(1);
@@ -611,8 +611,8 @@ it("parses saved title mappings once when paging unmatched Trakt records", async
 				Awaited<ReturnType<(typeof service)["current"]>>
 			>,
 	);
-	const result = await service.issues("fixture", { page: 2, pageSize: 1 });
-	expect(result.items[0].trakt?.mediaId).toBe("1");
+	const result = await service.listIssues("fixture", { page: 2, pageSize: 1 });
+	expect(result.items[0].remote?.mediaId).toBe("1");
 	expect(reads).toBeLessThanOrEqual(entries.length);
 	expect(titleComparisons).toBeLessThanOrEqual(entries.length * 2);
 });
@@ -638,7 +638,7 @@ it("does not read local repositories when the issue queue is empty", async () =>
 			>,
 	);
 	expect(
-		await service.issues("fixture", { page: 3, pageSize: 1 }),
+		await service.listIssues("fixture", { page: 3, pageSize: 1 }),
 	).toMatchObject({
 		items: [],
 		total: 0,
@@ -682,7 +682,7 @@ it("reads only the enabled content repositories needed for the visible issue pag
 				Awaited<ReturnType<(typeof service)["current"]>>
 			>,
 	);
-	await service.issues("fixture", { page: 1, pageSize: 1 });
+	await service.listIssues("fixture", { page: 1, pageSize: 1 });
 	expect(snapshot.mock.calls[0]).toEqual([
 		"fixture",
 		expect.objectContaining({
@@ -695,7 +695,7 @@ it("reads only the enabled content repositories needed for the visible issue pag
 		}),
 		new Set(["watch"]),
 	]);
-	await service.issues("fixture", { page: 2, pageSize: 1 });
+	await service.listIssues("fixture", { page: 2, pageSize: 1 });
 	expect(snapshot.mock.calls[1]).toEqual([
 		"fixture",
 		expect.objectContaining({
@@ -824,8 +824,8 @@ it.each([
 					Awaited<ReturnType<(typeof service)["current"]>>
 				>,
 		);
-		const result = await service.issues("fixture", { pageSize: 1 });
-		expect(result.items[0].trakt?.mediaId).toBe(expected);
+		const result = await service.listIssues("fixture", { pageSize: 1 });
+		expect(result.items[0].remote?.mediaId).toBe(expected);
 	},
 );
 
@@ -940,8 +940,8 @@ it.each([
 					ReturnType<(typeof service)["requireConnection"]>
 				>,
 		);
-		const result = await service.issues("fixture", { page, pageSize: 1 });
-		expect(result.items[0].trakt?.mediaId).toBe(expectedMediaId);
+		const result = await service.listIssues("fixture", { page, pageSize: 1 });
+		expect(result.items[0].remote?.mediaId).toBe(expectedMediaId);
 		expect(
 			findMany.mock.calls.filter(([query]) => query.select?.remoteBase),
 		).toHaveLength(mappingReads);
@@ -1031,7 +1031,7 @@ it.each([
 					ReturnType<(typeof service)["requireConnection"]>
 				>,
 		);
-		const result = await service.issues("fixture", {});
+		const result = await service.listIssues("fixture", {});
 		expect(findMany).toHaveBeenLastCalledWith({
 			where: {
 				connectionId: "fixture",

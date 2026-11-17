@@ -18,6 +18,7 @@ import {
 	IntegrationConnectDto,
 	IntegrationConnectResultDto,
 	IntegrationIssuesDto,
+	IntegrationMatchCandidateDto,
 	IntegrationResolveDto,
 	SyncActionDto,
 	SyncIssuesQueryDto,
@@ -30,7 +31,6 @@ import {
 	type IntegrationProviderId,
 } from "../integrations/providers";
 import { PopfeedSyncService } from "../popfeed-sync/popfeed-sync.service";
-import { TraktMatchCandidateDto } from "../trakt-sync/trakt-sync.dto";
 import { TraktSyncService } from "../trakt-sync/trakt-sync.service";
 
 const Provider = () =>
@@ -129,7 +129,7 @@ export class IntegrationApiController {
 	@Get("issues/:id/matches")
 	@Provider()
 	@ApiQuery({ name: "q", required: false })
-	@ApiResponse({ status: 200, type: [TraktMatchCandidateDto] })
+	@ApiResponse({ status: 200, type: [IntegrationMatchCandidateDto] })
 	matches(
 		@Req() req: AuthenticatedRequest,
 		@Param("provider") provider: string,

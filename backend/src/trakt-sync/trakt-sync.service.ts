@@ -3,7 +3,6 @@ import { OAuthIntegrationSyncService } from "../integrations/oauth-integration-s
 import { BackendEnv } from "../config/env.schema";
 import type { IntegrationConnection } from "../generated/client";
 import { isContentRecord } from "../integrations/content-value";
-import { type IntegrationIssuesQuery } from "../integrations/integration-sync.service";
 import type { ListValue } from "../integrations/list-value";
 import { LocalSyncRecords } from "../integrations/local-records.service";
 import {
@@ -15,7 +14,6 @@ import { PrismaService } from "../prisma/prisma.service";
 import { WatchAccountLock } from "../privacy/watch-account-lock";
 import { TraktSyncClient, type TraktToken } from "./trakt-sync.client";
 import { validateOutboundContent } from "./remote-content";
-import type { SyncResolveDto } from "./trakt-sync.dto";
 
 // The readback endpoints cover a Watch title, a Rating category, or an entire
 // List/content kind. Use the same scope for pre-write checks and cache updates.
@@ -125,25 +123,5 @@ export class TraktSyncService extends OAuthIntegrationSyncService<
 			throw new Error(
 				"A List note exceeds Trakt's 500-character limit. No text was truncated.",
 			);
-	}
-	/** The Trakt API names the remote side "trakt"; the shared core calls it "remote". */
-	async resolve(userDid: string, id: string, dto: SyncResolveDto) {
-		const { confirmedTraktMissing, ...rest } = dto;
-		return this.resolveIssue(userDid, id, {
-			...rest,
-			action: dto.action === "trakt" ? "remote" : dto.action,
-			confirmedRemoteMissing: confirmedTraktMissing,
-		});
-	}
-	async issues(userDid: string, query: IntegrationIssuesQuery) {
-		const page = await this.listIssues(userDid, query);
-		return {
-			...page,
-			items: page.items.map(({ remote, remoteState, ...item }) => ({
-				...item,
-				traktState: remoteState,
-				trakt: remote,
-			})),
-		};
 	}
 }

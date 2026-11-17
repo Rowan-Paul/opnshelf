@@ -81,9 +81,10 @@ Integrations and nothing for repository ones. The status carries the provider's
 capabilities and connect method, so the clients take them from the server and
 keep their own definition only until a status has loaded.
 
-Both clients use this API through one factory. The per-provider controllers
-remain: OAuth callbacks and Bingers client metadata have URLs registered with
-the providers, and released Mobile builds still call `/trakt-sync`,
-`/popfeed-sync` and `/bingers-sync`, including Trakt's own names (`trakt` for
-the remote side). Remove their duplicated routes once those builds are retired.
+Both clients use this API through one factory. Each provider's own controller
+keeps only what has a URL registered with the provider: the Trakt and Bingers
+OAuth callbacks and Bingers client metadata. The operator accepted on
+2026-11-17 that Mobile builds from before this change stop syncing until they
+update; their `/trakt-sync`, `/popfeed-sync` and `/bingers-sync` requests,
+including Trakt's own names (`trakt` for the remote side), no longer exist.
 The backend must be deployed before a client that uses the shared API.

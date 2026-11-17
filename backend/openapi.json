@@ -4087,87 +4087,6 @@
         ]
       }
     },
-    "/trakt-sync": {
-      "get": {
-        "operationId": "TraktSyncController_status",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "trakt-sync"
-        ]
-      },
-      "patch": {
-        "operationId": "TraktSyncController_configure",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncSettingsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "trakt-sync"
-        ]
-      }
-    },
-    "/trakt-sync/connect": {
-      "post": {
-        "operationId": "TraktSyncController_connect",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncConnectDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncAuthorizeDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "trakt-sync"
-        ]
-      }
-    },
     "/trakt-sync/callback": {
       "get": {
         "operationId": "TraktSyncController_callback",
@@ -4184,172 +4103,6 @@
         "responses": {
           "200": {
             "description": ""
-          }
-        },
-        "tags": [
-          "trakt-sync"
-        ]
-      }
-    },
-    "/trakt-sync/action": {
-      "post": {
-        "operationId": "TraktSyncController_action",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncActionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "trakt-sync"
-        ]
-      }
-    },
-    "/trakt-sync/issues": {
-      "get": {
-        "operationId": "TraktSyncController_issues",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page number to return (1-based)",
-            "schema": {
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "description": "Number of items to return per page",
-            "schema": {
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "view",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "attention",
-                "ignored"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncIssuesDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "trakt-sync"
-        ]
-      }
-    },
-    "/trakt-sync/issues/{id}": {
-      "post": {
-        "operationId": "TraktSyncController_resolve",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncResolveDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "trakt-sync"
-        ]
-      }
-    },
-    "/trakt-sync/issues/{id}/matches": {
-      "get": {
-        "operationId": "TraktSyncController_matches",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "q",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
-                  }
-                }
-              }
-            }
           }
         },
         "tags": [
@@ -4627,243 +4380,6 @@
         ]
       }
     },
-    "/popfeed-sync": {
-      "get": {
-        "operationId": "PopfeedSyncController_status",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "popfeed-sync"
-        ]
-      },
-      "patch": {
-        "operationId": "PopfeedSyncController_configure",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncSettingsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "popfeed-sync"
-        ]
-      }
-    },
-    "/popfeed-sync/connect": {
-      "post": {
-        "operationId": "PopfeedSyncController_connect",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "popfeed-sync"
-        ]
-      }
-    },
-    "/popfeed-sync/action": {
-      "post": {
-        "operationId": "PopfeedSyncController_action",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncActionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "popfeed-sync"
-        ]
-      }
-    },
-    "/popfeed-sync/issues": {
-      "get": {
-        "operationId": "PopfeedSyncController_issues",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page number to return (1-based)",
-            "schema": {
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "description": "Number of items to return per page",
-            "schema": {
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "view",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "attention",
-                "ignored"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationIssuesDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "popfeed-sync"
-        ]
-      }
-    },
-    "/popfeed-sync/issues/{id}": {
-      "post": {
-        "operationId": "PopfeedSyncController_resolve",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IntegrationResolveDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "popfeed-sync"
-        ]
-      }
-    },
-    "/popfeed-sync/issues/{id}/matches": {
-      "get": {
-        "operationId": "PopfeedSyncController_matches",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "q",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "popfeed-sync"
-        ]
-      }
-    },
     "/bingers-sync/client-metadata": {
       "get": {
         "operationId": "BingersSyncController_metadata",
@@ -4871,87 +4387,6 @@
         "responses": {
           "200": {
             "description": ""
-          }
-        },
-        "tags": [
-          "bingers-sync"
-        ]
-      }
-    },
-    "/bingers-sync": {
-      "get": {
-        "operationId": "BingersSyncController_status",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "bingers-sync"
-        ]
-      },
-      "patch": {
-        "operationId": "BingersSyncController_configure",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncSettingsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "bingers-sync"
-        ]
-      }
-    },
-    "/bingers-sync/connect": {
-      "post": {
-        "operationId": "BingersSyncController_connect",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncConnectDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncAuthorizeDto"
-                }
-              }
-            }
           }
         },
         "tags": [
@@ -4975,172 +4410,6 @@
         "responses": {
           "200": {
             "description": ""
-          }
-        },
-        "tags": [
-          "bingers-sync"
-        ]
-      }
-    },
-    "/bingers-sync/action": {
-      "post": {
-        "operationId": "BingersSyncController_action",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SyncActionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "bingers-sync"
-        ]
-      }
-    },
-    "/bingers-sync/issues": {
-      "get": {
-        "operationId": "BingersSyncController_issues",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page number to return (1-based)",
-            "schema": {
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "description": "Number of items to return per page",
-            "schema": {
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "view",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "attention",
-                "ignored"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationIssuesDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "bingers-sync"
-        ]
-      }
-    },
-    "/bingers-sync/issues/{id}": {
-      "post": {
-        "operationId": "BingersSyncController_resolve",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IntegrationResolveDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "bingers-sync"
-        ]
-      }
-    },
-    "/bingers-sync/issues/{id}/matches": {
-      "get": {
-        "operationId": "BingersSyncController_matches",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "q",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
-                  }
-                }
-              }
-            }
           }
         },
         "tags": [
@@ -6835,7 +6104,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TraktMatchCandidateDto"
+                    "$ref": "#/components/schemas/IntegrationMatchCandidateDto"
                   }
                 }
               }
@@ -11427,501 +10696,6 @@
           "content"
         ]
       },
-      "IntegrationCapabilitiesDto": {
-        "type": "object",
-        "properties": {
-          "records": {
-            "type": "array",
-            "description": "Record types this Integration can sync.",
-            "items": {
-              "type": "string",
-              "enum": [
-                "watches",
-                "ratings",
-                "lists",
-                "watchlist",
-                "favorites",
-                "notes",
-                "library",
-                "reviews"
-              ]
-            }
-          },
-          "directions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "inbound",
-                "outbound",
-                "both"
-              ]
-            }
-          },
-          "connect": {
-            "type": "string",
-            "enum": [
-              "oauth",
-              "repository"
-            ],
-            "description": "oauth returns a provider URL to open; repository connects in place."
-          }
-        },
-        "required": [
-          "records",
-          "directions",
-          "connect"
-        ]
-      },
-      "SyncStatusDto": {
-        "type": "object",
-        "properties": {
-          "syncState": {
-            "type": "string",
-            "enum": [
-              "idle",
-              "queued",
-              "running",
-              "waiting"
-            ]
-          },
-          "nextCheckAt": {
-            "type": "string"
-          },
-          "configured": {
-            "type": "boolean"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "disconnected",
-              "paused",
-              "preparing",
-              "active",
-              "reconnect"
-            ]
-          },
-          "username": {
-            "type": "string"
-          },
-          "direction": {
-            "type": "string",
-            "enum": [
-              "inbound",
-              "outbound",
-              "both"
-            ]
-          },
-          "watches": {
-            "type": "boolean"
-          },
-          "ratings": {
-            "type": "boolean"
-          },
-          "lists": {
-            "type": "boolean"
-          },
-          "watchlist": {
-            "type": "boolean"
-          },
-          "favorites": {
-            "type": "boolean"
-          },
-          "notes": {
-            "type": "boolean"
-          },
-          "library": {
-            "type": "boolean"
-          },
-          "reviews": {
-            "type": "boolean"
-          },
-          "contentPublicationConsent": {
-            "type": "boolean"
-          },
-          "listPublicationConsent": {
-            "type": "boolean"
-          },
-          "historyScope": {
-            "type": "string",
-            "enum": [
-              "all",
-              "future"
-            ]
-          },
-          "publicationConsent": {
-            "type": "boolean"
-          },
-          "lastSuccessAt": {
-            "type": "string"
-          },
-          "lastError": {
-            "type": "string"
-          },
-          "remaining": {
-            "type": "number",
-            "description": "Records still waiting to transfer while sync catches up"
-          },
-          "progress": {
-            "type": "number",
-            "description": "Catch-up progress (0–100) while records remain"
-          },
-          "needsAttention": {
-            "type": "number"
-          },
-          "ignored": {
-            "type": "number"
-          },
-          "writeAccess": {
-            "type": "boolean",
-            "description": "Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it."
-          },
-          "capabilities": {
-            "$ref": "#/components/schemas/IntegrationCapabilitiesDto"
-          }
-        },
-        "required": [
-          "configured",
-          "status",
-          "direction",
-          "watches",
-          "ratings",
-          "historyScope",
-          "publicationConsent",
-          "remaining",
-          "needsAttention",
-          "ignored"
-        ]
-      },
-      "SyncConnectDto": {
-        "type": "object",
-        "properties": {
-          "platform": {
-            "type": "string",
-            "enum": [
-              "web",
-              "mobile"
-            ]
-          },
-          "returnTo": {
-            "type": "string",
-            "enum": [
-              "onboarding"
-            ],
-            "description": "Return to Onboarding after authorization instead of Integration management."
-          }
-        },
-        "required": [
-          "platform"
-        ]
-      },
-      "SyncAuthorizeDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "returnUrl": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "url",
-          "returnUrl"
-        ]
-      },
-      "SyncSettingsDto": {
-        "type": "object",
-        "properties": {
-          "direction": {
-            "type": "string",
-            "enum": [
-              "inbound",
-              "outbound",
-              "both"
-            ]
-          },
-          "watches": {
-            "type": "boolean"
-          },
-          "ratings": {
-            "type": "boolean"
-          },
-          "lists": {
-            "type": "boolean",
-            "default": false
-          },
-          "watchlist": {
-            "type": "boolean",
-            "default": false
-          },
-          "favorites": {
-            "type": "boolean",
-            "default": false
-          },
-          "listPublicationConsent": {
-            "type": "boolean",
-            "default": false
-          },
-          "notes": {
-            "type": "boolean",
-            "default": false
-          },
-          "library": {
-            "type": "boolean",
-            "default": false
-          },
-          "reviews": {
-            "type": "boolean",
-            "default": false
-          },
-          "contentPublicationConsent": {
-            "type": "boolean",
-            "default": false
-          },
-          "historyScope": {
-            "type": "string",
-            "enum": [
-              "all",
-              "future"
-            ]
-          },
-          "publicationConsent": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "direction",
-          "watches",
-          "ratings",
-          "historyScope",
-          "publicationConsent"
-        ]
-      },
-      "SyncActionDto": {
-        "type": "object",
-        "properties": {
-          "action": {
-            "type": "string",
-            "enum": [
-              "pause",
-              "resume",
-              "sync",
-              "disconnect"
-            ]
-          }
-        },
-        "required": [
-          "action"
-        ]
-      },
-      "SyncRecordDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "mediaType": {
-            "type": "string"
-          },
-          "mediaId": {
-            "type": "string",
-            "nullable": true
-          },
-          "title": {
-            "type": "string"
-          },
-          "season": {
-            "type": "number"
-          },
-          "episode": {
-            "type": "number"
-          },
-          "coordinatesUnknown": {
-            "type": "boolean"
-          },
-          "displayValue": {
-            "type": "string",
-            "description": "Watch date, No date, or Rating"
-          }
-        },
-        "required": [
-          "key",
-          "kind",
-          "mediaType",
-          "mediaId",
-          "title",
-          "season",
-          "episode",
-          "displayValue"
-        ]
-      },
-      "SyncIssueDto": {
-        "type": "object",
-        "properties": {
-          "recovery": {
-            "type": "string",
-            "enum": [
-              "verify",
-              "choose",
-              "retry"
-            ]
-          },
-          "traktState": {
-            "type": "string",
-            "enum": [
-              "unknown",
-              "missing",
-              "present"
-            ]
-          },
-          "id": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "issue": {
-            "type": "string"
-          },
-          "ignored": {
-            "type": "boolean"
-          },
-          "opnshelf": {
-            "$ref": "#/components/schemas/SyncRecordDto"
-          },
-          "trakt": {
-            "$ref": "#/components/schemas/SyncRecordDto"
-          },
-          "candidates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SyncRecordDto"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "issue",
-          "ignored",
-          "candidates"
-        ]
-      },
-      "SyncIssuesDto": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "number",
-            "description": "Total count of items across all pages"
-          },
-          "page": {
-            "type": "number",
-            "description": "Current page number after server-side clamping"
-          },
-          "pageSize": {
-            "type": "number",
-            "description": "Number of items per page"
-          },
-          "totalPages": {
-            "type": "number",
-            "description": "Total number of available pages"
-          },
-          "hasNextPage": {
-            "type": "boolean",
-            "description": "Whether a next page exists"
-          },
-          "hasPreviousPage": {
-            "type": "boolean",
-            "description": "Whether a previous page exists"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SyncIssueDto"
-            }
-          }
-        },
-        "required": [
-          "total",
-          "page",
-          "pageSize",
-          "totalPages",
-          "hasNextPage",
-          "hasPreviousPage",
-          "items"
-        ]
-      },
-      "SyncResolveDto": {
-        "type": "object",
-        "properties": {
-          "action": {
-            "type": "string",
-            "enum": [
-              "trakt",
-              "opnshelf",
-              "ignore",
-              "undo",
-              "retry",
-              "link",
-              "match",
-              "separate"
-            ]
-          },
-          "candidateKey": {
-            "type": "string"
-          },
-          "mediaId": {
-            "type": "string",
-            "description": "TMDB movie or show ID"
-          },
-          "allRatings": {
-            "type": "boolean"
-          },
-          "confirmedTraktMissing": {
-            "type": "boolean",
-            "description": "The User checked Trakt and confirmed the unacknowledged creation is missing before choosing a version."
-          }
-        },
-        "required": [
-          "action"
-        ]
-      },
-      "TraktMatchCandidateDto": {
-        "type": "object",
-        "properties": {
-          "tmdbId": {
-            "type": "string"
-          },
-          "mediaType": {
-            "type": "string",
-            "enum": [
-              "movie",
-              "show"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "year": {
-            "type": "number"
-          },
-          "posterPath": {
-            "type": "string"
-          },
-          "overview": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "tmdbId",
-          "mediaType",
-          "title"
-        ]
-      },
       "RatingResponseDto": {
         "type": "object",
         "properties": {
@@ -12057,138 +10831,6 @@
           "mediaType",
           "mediaId",
           "rating"
-        ]
-      },
-      "IntegrationIssueDto": {
-        "type": "object",
-        "properties": {
-          "recovery": {
-            "type": "string",
-            "enum": [
-              "verify",
-              "choose",
-              "retry"
-            ]
-          },
-          "remoteState": {
-            "type": "string",
-            "enum": [
-              "unknown",
-              "missing",
-              "present"
-            ]
-          },
-          "id": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "issue": {
-            "type": "string"
-          },
-          "ignored": {
-            "type": "boolean"
-          },
-          "opnshelf": {
-            "$ref": "#/components/schemas/SyncRecordDto"
-          },
-          "remote": {
-            "$ref": "#/components/schemas/SyncRecordDto"
-          },
-          "candidates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SyncRecordDto"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "issue",
-          "ignored",
-          "candidates"
-        ]
-      },
-      "IntegrationIssuesDto": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "number",
-            "description": "Total count of items across all pages"
-          },
-          "page": {
-            "type": "number",
-            "description": "Current page number after server-side clamping"
-          },
-          "pageSize": {
-            "type": "number",
-            "description": "Number of items per page"
-          },
-          "totalPages": {
-            "type": "number",
-            "description": "Total number of available pages"
-          },
-          "hasNextPage": {
-            "type": "boolean",
-            "description": "Whether a next page exists"
-          },
-          "hasPreviousPage": {
-            "type": "boolean",
-            "description": "Whether a previous page exists"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IntegrationIssueDto"
-            }
-          }
-        },
-        "required": [
-          "total",
-          "page",
-          "pageSize",
-          "totalPages",
-          "hasNextPage",
-          "hasPreviousPage",
-          "items"
-        ]
-      },
-      "IntegrationResolveDto": {
-        "type": "object",
-        "properties": {
-          "action": {
-            "type": "string",
-            "description": "remote keeps the provider's version; opnshelf keeps Opnshelf's.",
-            "enum": [
-              "remote",
-              "opnshelf",
-              "ignore",
-              "undo",
-              "retry",
-              "link",
-              "match",
-              "separate"
-            ]
-          },
-          "candidateKey": {
-            "type": "string"
-          },
-          "mediaId": {
-            "type": "string",
-            "description": "TMDB movie or show ID"
-          },
-          "allRatings": {
-            "type": "boolean"
-          },
-          "confirmedRemoteMissing": {
-            "type": "boolean",
-            "description": "The User checked the provider and confirmed the unacknowledged creation is missing before choosing a version."
-          }
-        },
-        "required": [
-          "action"
         ]
       },
       "UserRelationshipDto": {
@@ -13462,6 +12104,172 @@
           "uri"
         ]
       },
+      "IntegrationCapabilitiesDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "description": "Record types this Integration can sync.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "watches",
+                "ratings",
+                "lists",
+                "watchlist",
+                "favorites",
+                "notes",
+                "library",
+                "reviews"
+              ]
+            }
+          },
+          "directions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "inbound",
+                "outbound",
+                "both"
+              ]
+            }
+          },
+          "connect": {
+            "type": "string",
+            "enum": [
+              "oauth",
+              "repository"
+            ],
+            "description": "oauth returns a provider URL to open; repository connects in place."
+          }
+        },
+        "required": [
+          "records",
+          "directions",
+          "connect"
+        ]
+      },
+      "SyncStatusDto": {
+        "type": "object",
+        "properties": {
+          "syncState": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "queued",
+              "running",
+              "waiting"
+            ]
+          },
+          "nextCheckAt": {
+            "type": "string"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "disconnected",
+              "paused",
+              "preparing",
+              "active",
+              "reconnect"
+            ]
+          },
+          "username": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound",
+              "both"
+            ]
+          },
+          "watches": {
+            "type": "boolean"
+          },
+          "ratings": {
+            "type": "boolean"
+          },
+          "lists": {
+            "type": "boolean"
+          },
+          "watchlist": {
+            "type": "boolean"
+          },
+          "favorites": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "boolean"
+          },
+          "library": {
+            "type": "boolean"
+          },
+          "reviews": {
+            "type": "boolean"
+          },
+          "contentPublicationConsent": {
+            "type": "boolean"
+          },
+          "listPublicationConsent": {
+            "type": "boolean"
+          },
+          "historyScope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "future"
+            ]
+          },
+          "publicationConsent": {
+            "type": "boolean"
+          },
+          "lastSuccessAt": {
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": "number",
+            "description": "Records still waiting to transfer while sync catches up"
+          },
+          "progress": {
+            "type": "number",
+            "description": "Catch-up progress (0–100) while records remain"
+          },
+          "needsAttention": {
+            "type": "number"
+          },
+          "ignored": {
+            "type": "number"
+          },
+          "writeAccess": {
+            "type": "boolean",
+            "description": "Whether Opnshelf may write this provider's records in the User's repository. Omitted when the provider's own sign-in grants it."
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/IntegrationCapabilitiesDto"
+          }
+        },
+        "required": [
+          "configured",
+          "status",
+          "direction",
+          "watches",
+          "ratings",
+          "historyScope",
+          "publicationConsent",
+          "remaining",
+          "needsAttention",
+          "ignored"
+        ]
+      },
       "IntegrationConnectDto": {
         "type": "object",
         "properties": {
@@ -13496,6 +12304,299 @@
             "description": "Where the provider returns the User."
           }
         }
+      },
+      "SyncSettingsDto": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound",
+              "both"
+            ]
+          },
+          "watches": {
+            "type": "boolean"
+          },
+          "ratings": {
+            "type": "boolean"
+          },
+          "lists": {
+            "type": "boolean",
+            "default": false
+          },
+          "watchlist": {
+            "type": "boolean",
+            "default": false
+          },
+          "favorites": {
+            "type": "boolean",
+            "default": false
+          },
+          "listPublicationConsent": {
+            "type": "boolean",
+            "default": false
+          },
+          "notes": {
+            "type": "boolean",
+            "default": false
+          },
+          "library": {
+            "type": "boolean",
+            "default": false
+          },
+          "reviews": {
+            "type": "boolean",
+            "default": false
+          },
+          "contentPublicationConsent": {
+            "type": "boolean",
+            "default": false
+          },
+          "historyScope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "future"
+            ]
+          },
+          "publicationConsent": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "direction",
+          "watches",
+          "ratings",
+          "historyScope",
+          "publicationConsent"
+        ]
+      },
+      "SyncActionDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "pause",
+              "resume",
+              "sync",
+              "disconnect"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "SyncRecordDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "mediaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "season": {
+            "type": "number"
+          },
+          "episode": {
+            "type": "number"
+          },
+          "coordinatesUnknown": {
+            "type": "boolean"
+          },
+          "displayValue": {
+            "type": "string",
+            "description": "Watch date, No date, or Rating"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "mediaType",
+          "mediaId",
+          "title",
+          "season",
+          "episode",
+          "displayValue"
+        ]
+      },
+      "IntegrationIssueDto": {
+        "type": "object",
+        "properties": {
+          "recovery": {
+            "type": "string",
+            "enum": [
+              "verify",
+              "choose",
+              "retry"
+            ]
+          },
+          "remoteState": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "missing",
+              "present"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "ignored": {
+            "type": "boolean"
+          },
+          "opnshelf": {
+            "$ref": "#/components/schemas/SyncRecordDto"
+          },
+          "remote": {
+            "$ref": "#/components/schemas/SyncRecordDto"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncRecordDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "issue",
+          "ignored",
+          "candidates"
+        ]
+      },
+      "IntegrationIssuesDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total count of items across all pages"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number after server-side clamping"
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether a next page exists"
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Whether a previous page exists"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationIssueDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage",
+          "items"
+        ]
+      },
+      "IntegrationResolveDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "remote keeps the provider's version; opnshelf keeps Opnshelf's.",
+            "enum": [
+              "remote",
+              "opnshelf",
+              "ignore",
+              "undo",
+              "retry",
+              "link",
+              "match",
+              "separate"
+            ]
+          },
+          "candidateKey": {
+            "type": "string"
+          },
+          "mediaId": {
+            "type": "string",
+            "description": "TMDB movie or show ID"
+          },
+          "allRatings": {
+            "type": "boolean"
+          },
+          "confirmedRemoteMissing": {
+            "type": "boolean",
+            "description": "The User checked the provider and confirmed the unacknowledged creation is missing before choosing a version."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "IntegrationMatchCandidateDto": {
+        "type": "object",
+        "properties": {
+          "tmdbId": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          },
+          "posterPath": {
+            "type": "string"
+          },
+          "overview": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tmdbId",
+          "mediaType",
+          "title"
+        ]
       },
       "WatchRecapHighlightDto": {
         "type": "object",

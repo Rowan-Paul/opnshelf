@@ -232,3 +232,22 @@ export class IntegrationIssueDto {
 export class IntegrationIssuesDto extends PaginationMetaDto {
 	@ApiProperty({ type: [IntegrationIssueDto] }) items: IntegrationIssueDto[];
 }
+export class IntegrationMatchCandidateDto {
+	@ApiProperty()
+	tmdbId: string;
+
+	@ApiProperty({ enum: ["movie", "show"] })
+	mediaType: "movie" | "show";
+
+	@ApiProperty()
+	title: string;
+
+	@ApiPropertyOptional()
+	year?: number;
+
+	@ApiPropertyOptional()
+	posterPath?: string;
+
+	@ApiPropertyOptional()
+	overview?: string;
+}

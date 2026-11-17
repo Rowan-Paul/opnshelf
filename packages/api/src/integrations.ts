@@ -10,11 +10,11 @@ import {
 import type {
 	IntegrationIssueDto,
 	IntegrationIssuesDto,
+	IntegrationMatchCandidateDto,
 	IntegrationResolveDto,
 	SyncActionDto,
 	SyncSettingsDto,
 	SyncStatusDto,
-	TraktMatchCandidateDto,
 } from "./generated/types.gen";
 import { getHttpStatus } from "./http-errors";
 
@@ -52,7 +52,7 @@ export type IntegrationApi = {
 		id: string,
 		query: string,
 		signal?: AbortSignal,
-	): Promise<TraktMatchCandidateDto[]>;
+	): Promise<IntegrationMatchCandidateDto[]>;
 };
 
 export type IntegrationDefinition = {
