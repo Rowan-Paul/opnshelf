@@ -66,7 +66,10 @@ beforeEach(() => {
 	api.popfeed.status.mockResolvedValue(status());
 	api.bingers.status.mockResolvedValue(status());
 });
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.useRealTimers();
+});
 
 it("offers Trakt, Popfeed and Bingers in one step and can be skipped", async () => {
 	const { onNext } = setup();
@@ -142,8 +145,12 @@ it("keeps Popfeed setup pending through a busy sync, then opens its settings", a
 	const connect = await screen.findByRole("button", {
 		name: "Set up Popfeed Sync",
 	});
-	fireEvent.click(connect);
-	await waitFor(() => expect(api.popfeed.connect).toHaveBeenCalledTimes(1));
+	vi.useFakeTimers();
+	await act(async () => {
+		fireEvent.click(connect);
+		await vi.advanceTimersByTimeAsync(0);
+	});
+	expect(api.popfeed.connect).toHaveBeenCalledTimes(1);
 	expect(connect.hasAttribute("disabled")).toBe(true);
 	expect(connect.textContent).toBe("Setting up…");
 	expect(screen.queryByRole("alert")).toBeNull();
@@ -151,9 +158,14 @@ it("keeps Popfeed setup pending through a busy sync, then opens its settings", a
 	// A repeated click must not bypass the automatic retry delay.
 	fireEvent.click(connect);
 	expect(api.popfeed.connect).toHaveBeenCalledTimes(1);
-	await waitFor(() => expect(api.popfeed.connect).toHaveBeenCalledTimes(2), {
-		timeout: 4000,
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1999);
 	});
+	expect(api.popfeed.connect).toHaveBeenCalledTimes(1);
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1);
+	});
+	expect(api.popfeed.connect).toHaveBeenCalledTimes(2);
 	expect(connect.hasAttribute("disabled")).toBe(true);
 	expect(connect.textContent).toBe("Setting up…");
 	expect(screen.queryByRole("alert")).toBeNull();
@@ -163,7 +175,9 @@ it("keeps Popfeed setup pending through a busy sync, then opens its settings", a
 	);
 	await act(async () => {
 		finishConnect({});
+		await vi.advanceTimersByTimeAsync(0);
 	});
+	vi.useRealTimers();
 	expect(await screen.findByText("Popfeed settings")).toBeTruthy();
 	expect(screen.getByText("@reader.test")).toBeTruthy();
 	expect(api.popfeed.connect).toHaveBeenCalledTimes(2);
