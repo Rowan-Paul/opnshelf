@@ -1,6 +1,7 @@
 import type { SyncStatusDto } from "@opnshelf/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -125,4 +126,45 @@ it("shows an Integration the server has not configured as unavailable", async ()
 	api.popfeed.status.mockResolvedValue(status({ configured: false }));
 	setup();
 	expect(await screen.findByText("Unavailable")).toBeTruthy();
+});
+
+it("waits for a busy Popfeed sync before completing onboarding setup", async () => {
+	let finishConnect!: (result: { url?: string }) => void;
+	api.popfeed.connect
+		.mockRejectedValueOnce({ statusCode: 409, code: "SYNC_BUSY" })
+		.mockImplementationOnce(
+			() =>
+				new Promise<{ url?: string }>((resolve) => {
+					finishConnect = resolve;
+				}),
+		);
+	setup();
+	const connect = await screen.findByRole("button", {
+		name: "Set up Popfeed Sync",
+	});
+	fireEvent.click(connect);
+	await waitFor(() => expect(api.popfeed.connect).toHaveBeenCalledTimes(1));
+	expect(connect.hasAttribute("disabled")).toBe(true);
+	expect(screen.queryByRole("alert")).toBeNull();
+	expect(screen.queryByText("Popfeed settings")).toBeNull();
+	fireEvent.click(connect);
+	await waitFor(() => expect(api.popfeed.connect).toHaveBeenCalledTimes(2), {
+		timeout: 4000,
+	});
+	expect(connect.hasAttribute("disabled")).toBe(true);
+	expect(screen.queryByRole("alert")).toBeNull();
+	expect(screen.queryByText("Popfeed settings")).toBeNull();
+	api.popfeed.status.mockResolvedValue(
+		status({ status: "paused", username: "reader.test" }),
+	);
+	await act(async () => {
+		finishConnect({});
+	});
+	expect(await screen.findByText("Popfeed settings")).toBeTruthy();
+	expect(screen.getByText("@reader.test")).toBeTruthy();
+	expect(api.popfeed.connect).toHaveBeenCalledTimes(2);
+	expect(api.popfeed.connect.mock.calls.map(([input]) => input)).toEqual([
+		{ platform: "web", returnTo: "onboarding" },
+		{ platform: "web", returnTo: "onboarding" },
+	]);
 });
