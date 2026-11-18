@@ -159,7 +159,7 @@ export function fromTmdbPage<T, R>(
 	pageSize = TMDB_PAGE_SIZE,
 ): PaginatedResult<T | R> {
 	return {
-		items: map ? page.results.map(map) : page.results.map((item) => item),
+		items: map ? page.results.map(map) : page.results.slice(),
 		page: page.page,
 		pageSize,
 		total: page.total_results,
