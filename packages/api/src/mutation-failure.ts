@@ -1,27 +1,5 @@
 import { getHttpStatus, isUnauthorizedError } from "./http-errors";
 
-/**
- * What a client reports to PostHog when a TanStack mutation fails.
- *
- * Mutation failures end in a toast, so they never reach exception autocapture
- * (which only sees uncaught errors and unhandled rejections). The avatar
- * upload regression in #283 returned 400 on every attempt for weeks without a
- * single PostHog event. Each client wires `describeMutationFailure` into its
- * QueryClient's MutationCache so every failed mutation becomes one exception
- * event.
- *
- * The report is deliberately categorical. The server message and the thrown
- * error are left out: validation messages can echo user input, and the URL
- * fields are already stripped from PostHog events for the same reason.
- *
- * What it does carry is enough to investigate someone else's failure without
- * asking them to reproduce it: the server's `code` (a registered, categorical
- * reason such as EMAIL_CODE_EXPIRED), the request ID that also appears in the
- * backend's log line for that request, the API operation (method and path
- * template, never the filled-in path), the route section and the release.
- * Every field is checked against a strict shape, so a stray token, code or
- * email address in the error can never pass through.
- */
 export interface MutationFailureReport {
 	/** Synthetic error whose message groups by mutation key and status. */
 	error: Error;
@@ -40,13 +18,11 @@ export interface MutationFailureReport {
 		request_created: boolean | null;
 		response_received: boolean | null;
 		request_id: string | null;
-		/** Registered server error code, e.g. SYNC_BUSY. */
 		error_code: string | null;
 		/** API call that failed, e.g. "POST /auth/verify-email". */
 		api_operation: string | null;
 		/** First path segment of the screen, e.g. "/settings". */
 		route: string | null;
-		/** Commit SHA of the client build. */
 		release: string | null;
 	};
 }

@@ -18,3 +18,11 @@ last URL that still used a word the glossary had dropped.
   in sync every time either side gains a route.
 - `/dashboard` and the `/following` redirect are removed. Old bookmarks to
   either break; both are signed-in surfaces with no search traffic to lose.
+
+## Slug generation
+
+Both clients use the same slug helper. It transliterates accented titles so
+“Pokémon” becomes `pokemon` and uses `-` when a title is missing or produces
+an empty slug. An empty segment would fail route matching. Once the URL
+matches, the numeric ID identifies the item and older links keep working
+after a title change.

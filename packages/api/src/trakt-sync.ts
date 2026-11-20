@@ -77,7 +77,6 @@ export function traktError(error: unknown): string {
 	if (error instanceof Error) return error.message;
 	if (error && typeof error === "object" && "message" in error) {
 		if (typeof error.message === "string") return error.message;
-		// Validation failures arrive as a list of messages.
 		if (
 			Array.isArray(error.message) &&
 			error.message.every((item) => typeof item === "string") &&

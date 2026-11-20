@@ -1,6 +1,5 @@
 import { client } from './generated/client.gen';
 
-// Allow configuring base URL
 let baseUrl = 'http://127.0.0.1:3001';
 
 /** Session token for mobile auth (cookies don't work in native apps) */
@@ -34,19 +33,11 @@ export function setOnUnauthorized(
 	onUnauthorized = callback;
 }
 
-/**
- * Set the session token for mobile auth.
- * When set, requests will use Authorization header instead of cookies.
- */
 export function setSessionToken(token: string | null): void {
 	sessionToken = token;
-	// Update client config with new auth header
 	updateClientConfig();
 }
 
-/**
- * Get the current session token (useful for checking if logged in)
- */
 export function getSessionToken(): string | null {
 	return sessionToken;
 }
@@ -80,10 +71,6 @@ client.interceptors.response.use(async (response, request) => {
 		const authorization = request.headers.get("Authorization");
 		onUnauthorized?.(authorization?.replace(/^Bearer /, "") ?? null);
 	}
-	// Nest answers a `null` controller result with a bodiless 200, and the
-	// generated client turns an empty body into `{}`. Endpoints typed
-	// `X | null` then hand the app a truthy empty object, so `if (job)` passes
-	// and the first field read blows up. Give them real null instead.
 	if (response.ok && response.headers.get("content-length") === "0") {
 		return new Response("null", {
 			status: response.status,
@@ -113,7 +100,6 @@ client.interceptors.error.use((error, response, request, options) => {
 	);
 });
 
-// Initialize client with default config
 updateClientConfig();
 
 export function configureApiClient(url: string) {
@@ -123,7 +109,6 @@ export function configureApiClient(url: string) {
 
 export { client };
 
-// Auth types
 export interface AuthUser {
 	did: string;
 	handle: string;
@@ -165,7 +150,6 @@ export function getLoginUrl(
 	return `${baseUrl}/auth/login${queryString ? `?${queryString}` : ""}`;
 }
 
-// URL helper for PDS signup (redirects to the PDS's built-in account creation page)
 export function getSignupUrl(
 	timezone?: string,
 	platform?: string,

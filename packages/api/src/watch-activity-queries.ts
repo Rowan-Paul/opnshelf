@@ -13,14 +13,12 @@ import type { QueryClient } from "@tanstack/react-query";
  * Keep this list in sync when a new endpoint starts reading watch history.
  */
 export const WATCH_ACTIVITY_QUERY_IDS = [
-	// Recommendation row seeded from recent watches
 	"discoverControllerBecauseYouWatched",
 	// List items carry a viewer-relative `watched` flag and `watchedCount`
 	"listsControllerGetList",
 	"listsControllerGetPublicUserList",
 	"listsControllerGetPublicUserLists",
 	"listsControllerGetUserLists",
-	// Movies the user tracks, and the plays behind them
 	"moviesControllerGetMovieWatchHistory",
 	"moviesControllerGetUserMovieWatchCounts",
 	"moviesControllerGetUserMovies",
@@ -30,7 +28,6 @@ export const WATCH_ACTIVITY_QUERY_IDS = [
 	// Shelf + the activity summary behind the stats strip
 	"shelfControllerGetUserActivitySummary",
 	"shelfControllerGetUserShelf",
-	// Shows the user tracks, their plays, and what comes next
 	"showsControllerGetShowProgress",
 	"showsControllerGetShowWatchHistory",
 	"showsControllerGetUserEpisodesPaginated",
@@ -46,7 +43,6 @@ const WATCH_ACTIVITY_QUERY_ID_SET: ReadonlySet<string> = new Set(
 	WATCH_ACTIVITY_QUERY_IDS,
 );
 
-/** True when `queryKey` belongs to a watch-activity-derived query. */
 export function isWatchActivityQueryKey(queryKey: readonly unknown[]): boolean {
 	const first = queryKey[0] as { _id?: unknown } | undefined;
 	return (
