@@ -140,11 +140,12 @@ function ProfileLayout() {
 	const isPending = followMutation.isPending || unfollowMutation.isPending;
 
 	return (
-		<div className="container-app py-8">
-			{/* Profile Header */}
-			<div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center">
+		<div className="container-app py-6">
+			{/* Profile Header. On a phone the avatar sits beside the name, like
+			    the Mobile App, with the counts on their own row below. */}
+			<div className="mb-6 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 sm:flex sm:gap-4">
 				{/* Avatar */}
-				<div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated)">
+				<div className="flex size-16 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated) sm:size-20">
 					<UserAvatar
 						src={profile.avatar}
 						alt={profile.displayName || profile.handle}
@@ -153,9 +154,9 @@ function ProfileLayout() {
 				</div>
 
 				{/* Name, Handle & Follow */}
-				<div className="flex-1">
+				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<h1 className="text-display-2">
+						<h1 className="min-w-0 break-words text-display-2">
 							{profile.displayName || profile.handle}
 						</h1>
 						{isOwner && <span className="badge badge-subtle text-xs">You</span>}
@@ -245,7 +246,7 @@ function ProfileLayout() {
 				</div>
 
 				{/* Stats */}
-				<div className="flex gap-6">
+				<div className="col-span-2 flex gap-6 sm:col-span-1">
 					<Link
 						to="/profile/$handle/connections"
 						params={{ handle }}
@@ -268,7 +269,7 @@ function ProfileLayout() {
 			</div>
 
 			{/* Tab Navigation */}
-			<div className="mb-8 border-(--border) border-b">
+			<div className="mb-6 border-(--border) border-b">
 				<nav className="flex gap-1 overflow-x-auto">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;

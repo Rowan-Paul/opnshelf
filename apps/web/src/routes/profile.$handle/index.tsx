@@ -120,7 +120,7 @@ function ProfileOverviewPage() {
 	const favorites = listsData?.find((l) => l.slug === "favorites");
 
 	return (
-		<div className="space-y-10">
+		<div className="space-y-6">
 			{canReadWatches ? (
 				<>
 					{/* Stats strip: 30-day activity graph + a few headline stats */}
@@ -134,10 +134,10 @@ function ProfileOverviewPage() {
 					/>
 
 					{/* Last Movies & Episodes */}
-					<div className="grid gap-8 lg:grid-cols-2">
+					<div className="grid gap-6 lg:grid-cols-2">
 						{/* Last Movies */}
 						<section className="min-w-0">
-							<div className="mb-4 flex items-center justify-between">
+							<div className="mb-3 flex items-center justify-between">
 								<h2 className="text-display-3">Recent Movies</h2>
 								<Link
 									to="/profile/$handle/shelf"
@@ -188,7 +188,7 @@ function ProfileOverviewPage() {
 									))}
 								</div>
 							) : (
-								<div className="card p-8 text-center">
+								<div className="card p-6 text-center">
 									<p className="text-(--foreground-muted)">
 										No movies watched yet.
 									</p>
@@ -198,7 +198,7 @@ function ProfileOverviewPage() {
 
 						{/* Last Episodes */}
 						<section className="min-w-0">
-							<div className="mb-4 flex items-center justify-between">
+							<div className="mb-3 flex items-center justify-between">
 								<h2 className="text-display-3">Recent Episodes</h2>
 								<Link
 									to="/profile/$handle/shelf"
@@ -260,7 +260,7 @@ function ProfileOverviewPage() {
 									))}
 								</div>
 							) : (
-								<div className="card p-8 text-center">
+								<div className="card p-6 text-center">
 									<p className="text-(--foreground-muted)">
 										No episodes watched yet.
 									</p>
@@ -273,7 +273,7 @@ function ProfileOverviewPage() {
 				<PrivateNotice message="Watches are private." />
 			) : null}
 			{/* Lists Preview */}
-			<div className="grid gap-8 lg:grid-cols-2">
+			<div className="grid gap-6 lg:grid-cols-2">
 				<ListPreview
 					title="Watchlist"
 					list={watchlist}
@@ -294,7 +294,7 @@ function ProfileOverviewPage() {
 
 			{/* Recent Reviews */}
 			<section>
-				<div className="mb-4 flex items-center justify-between">
+				<div className="mb-3 flex items-center justify-between">
 					<h2 className="text-display-3">Recent Reviews</h2>
 					<Link
 						to="/profile/$handle/reviews"
@@ -326,7 +326,7 @@ function ProfileOverviewPage() {
 						))}
 					</div>
 				) : (
-					<div className="card p-8 text-center">
+					<div className="card p-6 text-center">
 						<p className="text-(--foreground-muted)">No reviews yet.</p>
 					</div>
 				)}
@@ -413,7 +413,7 @@ function ListPreview({
 
 	return (
 		<section className="min-w-0">
-			<div className="mb-4 flex items-center justify-between">
+			<div className="mb-3 flex items-center justify-between">
 				<h2 className="text-display-3">{title}</h2>
 				{list && (
 					<Link
