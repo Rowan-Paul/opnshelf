@@ -110,115 +110,120 @@ function CircleDetailPage() {
 	};
 
 	return (
-		<div className="container-app py-8">
-			<Link
-				to="/social/circles"
-				search={selectedCircleId ? { circleId: selectedCircleId } : {}}
-				className="mb-4 inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
-			>
-				<ArrowLeft className="size-4" /> Circles
-			</Link>
-			<div className="space-y-8">
-				<div className="flex items-center gap-2">
-					<input
-						className="input flex-1 font-display font-semibold text-lg"
-						value={name}
-						maxLength={50}
-						onChange={(event) => setName(event.target.value)}
-						onBlur={rename}
-						onKeyDown={(event) =>
-							event.key === "Enter" && event.currentTarget.blur()
-						}
-					/>
-					<button
-						type="button"
-						className="btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
-						onClick={remove}
-						disabled={deleteCircle.isPending}
-						title="Delete circle"
-					>
-						<Trash2 className="size-4" />
-					</button>
-				</div>
+		<div className="container-app py-6">
+			{/* Same column as the Social feed these pages open from. */}
+			<div className="mx-auto max-w-3xl">
+				<Link
+					to="/social/circles"
+					search={selectedCircleId ? { circleId: selectedCircleId } : {}}
+					className="mb-4 inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+				>
+					<ArrowLeft className="size-4" /> Circles
+				</Link>
+				<div className="space-y-6">
+					<div className="flex items-center gap-2">
+						<input
+							className="input flex-1 font-display font-semibold text-lg"
+							value={name}
+							maxLength={50}
+							onChange={(event) => setName(event.target.value)}
+							onBlur={rename}
+							onKeyDown={(event) =>
+								event.key === "Enter" && event.currentTarget.blur()
+							}
+						/>
+						<button
+							type="button"
+							className="btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"
+							onClick={remove}
+							disabled={deleteCircle.isPending}
+							title="Delete circle"
+						>
+							<Trash2 className="size-4" />
+						</button>
+					</div>
 
-				<section className="space-y-3">
-					<h2 className="font-display font-semibold">
-						Members ({members.length})
-					</h2>
-					{members.length === 0 ? (
-						<p className="text-(--foreground-muted) text-sm">
-							No one in this circle yet. Add people below.
-						</p>
-					) : (
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-							{members.map((member) => (
-								<UserLine
-									key={member.did}
-									user={member}
-									action={
-										<button
-											type="button"
-											className="btn btn-secondary btn-sm"
-											disabled={
-												removeMember.isPending &&
-												removeMember.variables?.path?.targetDid === member.did
-											}
-											onClick={() =>
-												removeMember.mutate({
-													path: { circleId, targetDid: member.did },
-												})
-											}
-										>
-											Remove
-										</button>
-									}
-								/>
-							))}
-						</div>
-					)}
-				</section>
-
-				<section className="space-y-3">
-					<h2 className="font-display font-semibold">Add people you follow</h2>
-					{addable.length === 0 ? (
-						<p className="text-(--foreground-muted) text-sm">
-							Everyone you follow is already in this circle.
-						</p>
-					) : (
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-							{addable.map((person) => {
-								const pending =
-									addMember.isPending &&
-									addMember.variables?.path?.targetDid === person.did;
-								return (
+					<section className="space-y-3">
+						<h2 className="font-display font-semibold">
+							Members ({members.length})
+						</h2>
+						{members.length === 0 ? (
+							<p className="text-(--foreground-muted) text-sm">
+								No one in this circle yet. Add people below.
+							</p>
+						) : (
+							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+								{members.map((member) => (
 									<UserLine
-										key={person.did}
-										user={person}
+										key={member.did}
+										user={member}
 										action={
 											<button
 												type="button"
-												className="btn btn-primary btn-sm"
-												disabled={pending}
+												className="btn btn-secondary btn-sm"
+												disabled={
+													removeMember.isPending &&
+													removeMember.variables?.path?.targetDid === member.did
+												}
 												onClick={() =>
-													addMember.mutate({
-														path: { circleId, targetDid: person.did },
+													removeMember.mutate({
+														path: { circleId, targetDid: member.did },
 													})
 												}
 											>
-												{pending ? (
-													<Loader2 className="size-3 animate-spin" />
-												) : (
-													<Plus className="mr-1 size-3" />
-												)}
-												Add
+												Remove
 											</button>
 										}
 									/>
-								);
-							})}
-						</div>
-					)}
-				</section>
+								))}
+							</div>
+						)}
+					</section>
+
+					<section className="space-y-3">
+						<h2 className="font-display font-semibold">
+							Add people you follow
+						</h2>
+						{addable.length === 0 ? (
+							<p className="text-(--foreground-muted) text-sm">
+								Everyone you follow is already in this circle.
+							</p>
+						) : (
+							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+								{addable.map((person) => {
+									const pending =
+										addMember.isPending &&
+										addMember.variables?.path?.targetDid === person.did;
+									return (
+										<UserLine
+											key={person.did}
+											user={person}
+											action={
+												<button
+													type="button"
+													className="btn btn-primary btn-sm"
+													disabled={pending}
+													onClick={() =>
+														addMember.mutate({
+															path: { circleId, targetDid: person.did },
+														})
+													}
+												>
+													{pending ? (
+														<Loader2 className="size-3 animate-spin" />
+													) : (
+														<Plus className="mr-1 size-3" />
+													)}
+													Add
+												</button>
+											}
+										/>
+									);
+								})}
+							</div>
+						)}
+					</section>
+				</div>
 			</div>
 		</div>
 	);
