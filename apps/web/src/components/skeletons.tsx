@@ -64,12 +64,12 @@ export function UserRowsSkeleton({ rows = 4 }: { rows?: number }) {
  * pill, then poster + text lines. */
 export function ActivityCardsSkeleton({ rows = 4 }: { rows?: number }) {
 	return (
-		<div className="space-y-4">
+		<div className="space-y-3">
 			{IDX(rows).map((i) => (
 				<div
 					key={i}
 					data-testid="activity-card-skeleton"
-					className="card flex flex-col gap-3 p-5"
+					className="card flex flex-col gap-3 p-4"
 				>
 					<div className="flex items-start gap-2">
 						<div className={`size-8 shrink-0 rounded-full ${PULSE}`} />

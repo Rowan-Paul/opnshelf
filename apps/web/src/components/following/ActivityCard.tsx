@@ -42,7 +42,7 @@ export function ActivityCard({
 		// Whole card is clickable through the stretched title link below (an ::after
 		// overlay covering the card), so this is the positioning context. Secondary
 		// targets (actor, episode, actions, spoiler reveal) sit above it with z-10.
-		<article className="card relative flex w-full flex-col gap-3 p-5 transition-shadow hover:shadow-md">
+		<article className="card relative flex w-full flex-col gap-3 p-4 transition-shadow hover:shadow-md">
 			{/* Actor + action header: full width on top so the poster doesn't
 			    leave a gap beside a short content column. */}
 			<div className="flex items-start gap-2">
@@ -206,7 +206,7 @@ export function ActivityCard({
 
 					{/* Actions for watch items (Reviews stay read-only) */}
 					{!bundled && !isReview && (
-						<div className="relative z-10 flex flex-wrap items-center gap-4 pt-1">
+						<div className="relative z-10 flex flex-wrap items-center gap-2 pt-1">
 							{activity.type === "movie" ? (
 								<FeedItemActions
 									type="movie"

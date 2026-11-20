@@ -98,8 +98,10 @@ function SocialPage() {
 	}, [feed.data]);
 
 	return (
-		<div className="container-app py-8">
-			<div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+		// A feed reads as one column: at the container's full width a card's
+		// text ran to 1100px lines beside a small poster.
+		<div className="container-app py-6">
+			<div className="mx-auto mb-4 flex max-w-3xl flex-wrap items-start justify-between gap-x-4 gap-y-3">
 				<div>
 					<h1 className="text-display-2" data-tour="social">
 						Social
@@ -126,7 +128,7 @@ function SocialPage() {
 				</div>
 			</div>
 
-			<div className="space-y-6">
+			<div className="mx-auto max-w-3xl space-y-4">
 				{circles.length > 0 && (
 					<CircleFilterBar
 						circles={circles}
