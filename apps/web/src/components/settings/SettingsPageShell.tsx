@@ -88,7 +88,7 @@ export function SettingsPageShell({
 
 	if (authLoading) {
 		return (
-			<div className="container-app flex min-h-[50vh] items-center justify-center py-8">
+			<div className="container-app flex min-h-[50vh] items-center justify-center py-6">
 				<Loader2 className="size-8 animate-spin text-(--accent)" />
 			</div>
 		);
@@ -99,8 +99,8 @@ export function SettingsPageShell({
 	}
 
 	return (
-		<div className="container-app max-w-5xl py-8 sm:py-10">
-			<div className="mb-8 flex items-center gap-3 lg:ml-56">
+		<div className="container-app max-w-5xl py-6 sm:py-8">
+			<div className="mb-6 flex items-center gap-3 lg:ml-56">
 				<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
 					<Settings className="size-5" />
 				</div>

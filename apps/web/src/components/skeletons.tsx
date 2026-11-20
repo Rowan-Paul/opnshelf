@@ -64,12 +64,12 @@ export function UserRowsSkeleton({ rows = 4 }: { rows?: number }) {
  * pill, then poster + text lines. */
 export function ActivityCardsSkeleton({ rows = 4 }: { rows?: number }) {
 	return (
-		<div className="space-y-4">
+		<div className="space-y-3">
 			{IDX(rows).map((i) => (
 				<div
 					key={i}
 					data-testid="activity-card-skeleton"
-					className="card flex flex-col gap-3 p-5"
+					className="card flex flex-col gap-3 p-4"
 				>
 					<div className="flex items-start gap-2">
 						<div className={`size-8 shrink-0 rounded-full ${PULSE}`} />
@@ -175,14 +175,14 @@ export function CalendarSkeleton() {
 export function DetailPageSkeleton() {
 	return (
 		<div className="relative z-10 min-h-[50vh]">
-			<div className="container-app pt-8">
+			<div className="container-app pt-6">
 				<div className={`h-4 w-48 ${PULSE}`} />
-				<div className="mt-8 grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
+				<div className="mt-6 grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
 					<div className="hidden lg:block">
 						<div className={`aspect-[2/3] rounded-xl ${PULSE}`} />
 					</div>
-					<div className="flex flex-col justify-end pb-8 lg:pb-16">
-						<div className="mb-6 flex gap-4 lg:hidden">
+					<div className="flex flex-col justify-end pb-6 lg:pb-10">
+						<div className="mb-4 flex gap-4 lg:hidden">
 							<div className={`h-40 w-28 shrink-0 rounded-lg ${PULSE}`} />
 							<div className="flex flex-col justify-center gap-2">
 								<div className={`h-6 w-48 ${PULSE}`} />
@@ -195,7 +195,7 @@ export function DetailPageSkeleton() {
 							<div className={`h-4 w-24 ${PULSE}`} />
 							<div className={`h-4 w-20 ${PULSE}`} />
 						</div>
-						<div className="mt-6 flex gap-2 lg:gap-3">
+						<div className="mt-5 flex gap-2 lg:gap-3">
 							<div className={`h-10 w-36 rounded-md ${PULSE}`} />
 							{IDX(4).map((i) => (
 								<div key={i} className={`size-10 rounded-md ${PULSE}`} />
@@ -203,7 +203,7 @@ export function DetailPageSkeleton() {
 						</div>
 					</div>
 				</div>
-				<div className="mt-8 space-y-2">
+				<div className="mt-6 space-y-2">
 					<div className={`h-3 w-full max-w-2xl ${PULSE}`} />
 					<div className={`h-3 w-full max-w-2xl ${PULSE}`} />
 					<div className={`h-3 w-2/3 max-w-2xl ${PULSE}`} />
@@ -216,10 +216,10 @@ export function DetailPageSkeleton() {
 /** Discover's initial load: unnamed horizontal rows until all sections are ready. */
 export function DiscoverRowsSkeleton() {
 	return (
-		<output className="block space-y-8" aria-label="Loading Discover">
+		<output className="block space-y-6" aria-label="Loading Discover">
 			{IDX(3).map((i) => (
 				<div key={i} aria-hidden="true">
-					<div className={`mb-3 h-7 w-56 ${PULSE}`} />
+					<div className={`mb-2 h-7 w-56 ${PULSE}`} />
 					<PosterGridSkeleton
 						count={8}
 						gridClassName="grid-flow-col auto-cols-[8rem] gap-3 overflow-hidden sm:auto-cols-[10rem]"

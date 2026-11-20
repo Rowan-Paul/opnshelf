@@ -39,10 +39,10 @@ function NotificationCollectionPage() {
 	});
 	const collection = isAuthenticated ? query.data : undefined;
 	return (
-		<div className="container-app max-w-5xl py-8">
+		<div className="container-app max-w-5xl py-6">
 			<Link
 				to="/search"
-				className="mb-6 inline-flex items-center gap-2 text-(--foreground-muted) text-sm"
+				className="mb-4 inline-flex items-center gap-2 text-(--foreground-muted) text-sm"
 			>
 				<ArrowLeft className="size-4" />
 				Discover
@@ -62,7 +62,7 @@ function NotificationCollectionPage() {
 				</section>
 			) : collection ? (
 				<>
-					<header className="mb-8 space-y-3">
+					<header className="mb-6 space-y-3">
 						<p className="font-semibold text-(--foreground-muted) text-sm">
 							{collection.periodStart === collection.periodEnd
 								? formatDate(collection.periodStart)
@@ -82,7 +82,7 @@ function NotificationCollectionPage() {
 						)}
 					</header>
 					{collection.recap && collection.items.length > 0 && (
-						<h2 className="mb-6 font-bold font-display text-2xl">
+						<h2 className="mb-4 font-bold font-display text-2xl">
 							Your most-watched titles
 						</h2>
 					)}
@@ -219,8 +219,8 @@ function CollectionSkeleton() {
 			className="motion-safe:animate-pulse"
 		>
 			<div className="mb-3 h-4 w-40 rounded bg-(--background-subtle)" />
-			<div className="mb-8 h-10 w-3/4 rounded bg-(--background-subtle)" />
-			<div className="grid gap-8 md:grid-cols-2">
+			<div className="mb-6 h-10 w-3/4 rounded bg-(--background-subtle)" />
+			<div className="grid gap-6 md:grid-cols-2">
 				{[0, 1, 2, 3].map((key) => (
 					<div key={key} className="flex gap-4">
 						<div className="aspect-2/3 w-24 shrink-0 rounded-lg bg-(--background-subtle) sm:w-28" />

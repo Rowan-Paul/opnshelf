@@ -119,8 +119,8 @@ function PersonDetailPage() {
 			<div className="min-h-screen pb-8">
 				{/* Hero Section */}
 				<div className="relative z-10 min-h-[40vh] overflow-hidden">
-					<div className="container-app relative pt-8">
-						<div className="mb-6 h-9 w-40 animate-pulse rounded bg-(--background-subtle)" />
+					<div className="container-app relative pt-6">
+						<div className="mb-4 h-9 w-40 animate-pulse rounded bg-(--background-subtle)" />
 
 						<div className="grid gap-8 lg:grid-cols-[280px_1fr] lg:gap-12">
 							{/* Profile Photo — Desktop */}
@@ -131,7 +131,7 @@ function PersonDetailPage() {
 							{/* Info */}
 							<div className="flex flex-col justify-end pb-8 lg:pb-16">
 								{/* Mobile Photo + Name */}
-								<div className="mb-6 flex gap-4 lg:hidden">
+								<div className="mb-4 flex gap-4 lg:hidden">
 									<div className="h-40 w-28 shrink-0 animate-pulse rounded-lg bg-(--background-subtle)" />
 									<div className="flex flex-col justify-center gap-2">
 										<div className="h-7 w-48 animate-pulse rounded bg-(--background-subtle)" />
@@ -153,12 +153,12 @@ function PersonDetailPage() {
 				</div>
 
 				{/* Main Content */}
-				<div className="container-app relative z-20 mt-8">
-					<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
+				<div className="container-app relative z-20 mt-6">
+					<div className="grid gap-6 lg:grid-cols-[2fr_1fr] lg:gap-12">
 						{/* Left Column */}
-						<div className="space-y-8">
+						<div className="space-y-6">
 							<section>
-								<h2 className="mb-4 text-display-3">Filmography</h2>
+								<h2 className="mb-3 text-display-3">Filmography</h2>
 								<PosterGridSkeleton count={12} gridClassName={POSTER_GRID} />
 							</section>
 						</div>
@@ -208,8 +208,8 @@ function PersonDetailPage() {
 				<div className="absolute inset-0 bg-linear-to-t from-(--background) via-(--background)/60 to-transparent" />
 				<div className="absolute inset-0 bg-linear-to-r from-(--background) via-(--background)/40 to-transparent" />
 
-				<div className="container-app relative pt-8">
-					<Link to="/" className="btn btn-secondary mb-6 inline-flex gap-2">
+				<div className="container-app relative pt-6">
+					<Link to="/" className="btn btn-secondary mb-4 inline-flex gap-2">
 						<ChevronLeft className="size-4" />
 						Back to Home
 					</Link>
@@ -238,7 +238,7 @@ function PersonDetailPage() {
 						{/* Info */}
 						<div className="flex flex-col justify-end pb-8 lg:pb-16">
 							{/* Mobile Photo + Name */}
-							<div className="mb-6 flex gap-4 lg:hidden">
+							<div className="mb-4 flex gap-4 lg:hidden">
 								<div className="h-40 w-28 shrink-0 overflow-hidden rounded-lg">
 									{profileUrl ? (
 										<img
@@ -300,14 +300,14 @@ function PersonDetailPage() {
 			</div>
 
 			{/* Main Content */}
-			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
+			<div className="container-app relative z-20 mt-6">
+				<div className="grid gap-6 lg:grid-cols-[2fr_1fr] lg:gap-12">
 					{/* Left Column */}
-					<div className="space-y-8">
+					<div className="space-y-6">
 						{/* Biography */}
 						{person.biography && (
 							<section>
-								<h2 className="mb-4 text-display-3">Biography</h2>
+								<h2 className="mb-3 text-display-3">Biography</h2>
 								<p className="whitespace-pre-line text-(--foreground-muted) leading-relaxed">
 									{person.biography}
 								</p>
@@ -317,7 +317,7 @@ function PersonDetailPage() {
 						{/* Known For */}
 						{knownForItems.length > 0 && (
 							<section>
-								<h2 className="mb-4 text-display-3">Known for</h2>
+								<h2 className="mb-3 text-display-3">Known for</h2>
 								<ShowProgressScope
 									showIds={knownForItems
 										.filter((item) => item.media_type === "tv")
@@ -354,7 +354,7 @@ function PersonDetailPage() {
 
 						{/* Full Filmography */}
 						<section>
-							<h2 className="mb-4 text-display-3">Filmography</h2>
+							<h2 className="mb-3 text-display-3">Filmography</h2>
 							{allFilmography.length === 0 ? (
 								<p className="text-(--foreground-muted) text-sm">
 									No filmography available.

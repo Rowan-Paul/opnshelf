@@ -127,7 +127,7 @@ function DiscoverRow({
 	const unique = dedupeResults(items);
 	return (
 		<section>
-			<h2 className="mb-3 text-display-3">{title}</h2>
+			<h2 className="mb-2 text-display-3">{title}</h2>
 			{/* Single horizontal row (carousel), matching the mobile discovery
 			    rails — discovery sections scroll sideways instead of wrapping. */}
 			<ShowProgressScope
@@ -459,9 +459,9 @@ function KeywordSearchPage() {
 	};
 
 	return (
-		<div className="container-app py-8">
-			<div className="mx-auto mb-8 max-w-2xl">
-				<h1 className="mb-4 text-center text-display-2" data-tour="discover">
+		<div className="container-app py-6">
+			<div className="mx-auto mb-6 max-w-2xl">
+				<h1 className="mb-3 text-center text-display-2" data-tour="discover">
 					Discover
 				</h1>
 				<div className="relative">
@@ -497,7 +497,7 @@ function KeywordSearchPage() {
 						/>
 					)
 				) : !hasResults ? (
-					<div className="flex flex-col items-center justify-center py-20 text-(--foreground-muted)">
+					<div className="flex flex-col items-center justify-center py-12 text-(--foreground-muted)">
 						<Search className="mb-4 size-12 opacity-40" />
 						<p className="text-lg">
 							No results found for &quot;{debouncedQuery}&quot;
@@ -595,7 +595,7 @@ function KeywordSearchPage() {
 						{activeTab === "people" && (
 							<section>
 								{!isAuthenticated ? (
-									<div className="card p-8 text-center">
+									<div className="card p-6 text-center">
 										<Users className="mx-auto mb-3 size-10 text-(--foreground-muted)" />
 										<p className="mb-2 text-(--foreground-muted)">
 											Sign in to search users
@@ -682,7 +682,7 @@ function KeywordSearchPage() {
 										))}
 									</div>
 								) : hasQuery ? (
-									<div className="py-8 text-center text-(--foreground-muted)">
+									<div className="py-6 text-center text-(--foreground-muted)">
 										No users found for &quot;{debouncedQuery}&quot;
 									</div>
 								) : null}
@@ -726,7 +726,7 @@ function KeywordSearchPage() {
 									</div>
 								</section>
 							) : hasQuery ? (
-								<div className="py-8 text-center text-(--foreground-muted)">
+								<div className="py-6 text-center text-(--foreground-muted)">
 									No cast or crew found for &quot;{debouncedQuery}&quot;
 								</div>
 							) : null)}
@@ -758,7 +758,7 @@ function KeywordSearchPage() {
 			) : !discoverReady && discoverPending ? (
 				<DiscoverRowsSkeleton />
 			) : (
-				<div className="space-y-8">
+				<div className="space-y-6">
 					{discoverRows.map((row) => (
 						<DiscoverRow key={row.key} title={row.title} items={row.items} />
 					))}

@@ -150,9 +150,9 @@ function CalendarPage() {
 
 	if (isLoading) {
 		return (
-			<div className="container-app py-8">
-				<div className="mb-8">
-					<h1 className="mb-2 text-display-2">Release Calendar</h1>
+			<div className="container-app py-6">
+				<div className="mb-6">
+					<h1 className="mb-1 text-display-2">Release Calendar</h1>
 					<p className="text-(--foreground-muted)">
 						Track upcoming movies and TV shows you're following.
 					</p>
@@ -168,17 +168,17 @@ function CalendarPage() {
 	}
 
 	return (
-		<div className="container-app py-8">
+		<div className="container-app py-6">
 			{/* Header */}
-			<div className="mb-8">
-				<h1 className="mb-2 text-display-2">Release Calendar</h1>
+			<div className="mb-6">
+				<h1 className="mb-1 text-display-2">Release Calendar</h1>
 				<p className="text-(--foreground-muted)">
 					Track upcoming movies and TV shows you're following.
 				</p>
 			</div>
 
 			{/* Desktop: Calendar Navigation */}
-			<div className="mb-6 hidden items-center justify-between lg:flex">
+			<div className="mb-4 hidden items-center justify-between lg:flex">
 				<button type="button" onClick={prevMonth} className="btn btn-secondary">
 					<ChevronLeft className="size-4" />
 					Previous
@@ -204,7 +204,7 @@ function CalendarPage() {
 			</div>
 
 			{/* Mobile: Week Navigation */}
-			<div className="mb-6 flex items-center justify-between lg:hidden">
+			<div className="mb-4 flex items-center justify-between lg:hidden">
 				<button
 					type="button"
 					onClick={goToPrevWeek}
@@ -240,25 +240,40 @@ function CalendarPage() {
 			</div>
 
 			{/* Mobile: Week List View */}
-			<div className="space-y-6 lg:hidden">
-				{mobileWeekDays.map((day) => (
-					<section key={day.dateKey} className={day.isToday ? "relative" : ""}>
-						{day.isToday && (
-							<div className="absolute top-0 bottom-0 -left-3 w-1 rounded-full bg-(--accent)" />
-						)}
-						<h3
-							className={`mb-3 text-display-3 ${
-								day.isToday ? "text-(--accent)" : ""
-							}`}
+			<div className="space-y-3 lg:hidden">
+				{mobileWeekDays.map((day) =>
+					// A day with nothing on it is one row, like the Mobile App, not
+					// a heading over an empty card: a quiet week was mostly those.
+					day.releases.length === 0 ? (
+						<div
+							key={day.dateKey}
+							className="flex items-center justify-between gap-3"
 						>
-							{formatWeekDayLabel(day.date, userTimezone)}
-						</h3>
+							<h3
+								className={`font-display font-medium text-sm ${
+									day.isToday ? "text-(--accent)" : "text-(--foreground-muted)"
+								}`}
+							>
+								{formatWeekDayLabel(day.date, userTimezone)}
+							</h3>
+							<p className="text-(--foreground-muted) text-xs">No releases</p>
+						</div>
+					) : (
+						<section
+							key={day.dateKey}
+							className={day.isToday ? "relative" : ""}
+						>
+							{day.isToday && (
+								<div className="absolute top-0 bottom-0 -left-3 w-1 rounded-full bg-(--accent)" />
+							)}
+							<h3
+								className={`mb-2 text-display-3 ${
+									day.isToday ? "text-(--accent)" : ""
+								}`}
+							>
+								{formatWeekDayLabel(day.date, userTimezone)}
+							</h3>
 
-						{day.releases.length === 0 ? (
-							<div className="card p-4">
-								<p className="text-(--foreground-muted) text-sm">No releases</p>
-							</div>
-						) : (
 							<div className="space-y-3">
 								{day.releases.map((release) => (
 									<Link
@@ -317,13 +332,13 @@ function CalendarPage() {
 									</Link>
 								))}
 							</div>
-						)}
-					</section>
-				))}
+						</section>
+					),
+				)}
 			</div>
 
 			{/* Desktop View */}
-			<div className="hidden gap-8 lg:grid lg:grid-cols-3">
+			<div className="hidden gap-6 lg:grid lg:grid-cols-3">
 				{/* Calendar Grid */}
 				<div className="lg:col-span-2">
 					{/* Weekday Headers */}
@@ -440,7 +455,7 @@ function CalendarPage() {
 				<div className="space-y-6">
 					{/* Selected Week Releases */}
 					<section>
-						<h3 className="mb-4 flex items-center gap-2 text-display-3">
+						<h3 className="mb-3 flex items-center gap-2 text-display-3">
 							<CalendarIcon className="h-5 w-5" />
 							{selectedWeekStart
 								? formatWeekRange(selectedWeekStart, userTimezone)

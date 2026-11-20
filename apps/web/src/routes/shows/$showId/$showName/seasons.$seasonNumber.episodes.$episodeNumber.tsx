@@ -448,19 +448,19 @@ function EpisodeDetailPage() {
 			/>
 
 			{/* Main Content */}
-			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
+			<div className="container-app relative z-20 mt-6">
+				<div className="grid gap-6 lg:grid-cols-[2fr_1fr] lg:gap-12">
 					{/* Left Column */}
-					<div className="space-y-8">
+					<div className="space-y-6">
 						{/* Overview */}
 						<section>
-							<h2 className="mb-4 text-display-3">Overview</h2>
+							<h2 className="mb-3 text-display-3">Overview</h2>
 							<p className="text-(--foreground-muted) leading-relaxed">
 								{episode.overview || "No overview available."}
 							</p>
 						</section>
 
-						<div className="hidden space-y-8 lg:block">
+						<div className="hidden space-y-6 lg:block">
 							<PersonGrid people={cast} />
 							<PersonGrid
 								people={guestStars}
@@ -539,7 +539,7 @@ function EpisodeDetailPage() {
 					</div>
 				</div>
 
-				<div className="mt-8 space-y-8 lg:hidden">
+				<div className="mt-6 space-y-6 lg:hidden">
 					<PersonGrid people={cast} />
 					<PersonGrid
 						people={guestStars}

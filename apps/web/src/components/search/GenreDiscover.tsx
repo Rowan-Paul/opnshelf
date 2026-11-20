@@ -39,8 +39,8 @@ export function GenreDiscover({
 			toUnifiedResult(item, filter.type === "movies" ? "movie" : "tv"),
 		) ?? [];
 	return (
-		<div className="container-app py-8">
-			<div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+		<div className="container-app py-6">
+			<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<p className="mb-1 text-(--foreground-muted) text-sm">Discover</p>
 					<h1 className="text-display-2">
@@ -71,7 +71,7 @@ export function GenreDiscover({
 					gridClassName="grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
 				/>
 			) : items.length === 0 && !query.isError ? (
-				<p className="py-16 text-center text-(--foreground-muted)">
+				<p className="py-12 text-center text-(--foreground-muted)">
 					No {filter.type} found in this genre.
 				</p>
 			) : (

@@ -103,7 +103,7 @@ export default function HomeScreen() {
 					/>
 				}
 			>
-				<View className="gap-8 px-4">
+				<View className="gap-6 px-4">
 					<WelcomeHeader user={user} />
 					{stats}
 
@@ -116,11 +116,11 @@ export default function HomeScreen() {
 
 					{wide ? (
 						<View className="flex-row items-start gap-6">
-							<View className="min-w-0 gap-8" style={{ width: primaryWidth }}>
+							<View className="min-w-0 gap-6" style={{ width: primaryWidth }}>
 								<UpNextPreview handle={user?.handle} />
 								<ShelfPreviewRow userDid={userDid} />
 							</View>
-							<View className="min-w-0 flex-1 gap-8">
+							<View className="min-w-0 flex-1 gap-6">
 								<FriendsActivity />
 								<UpcomingReleases />
 							</View>

@@ -48,7 +48,7 @@ export function CreditsSummary({
 		crewTotal > Math.min(6, credits?.crew?.length ?? 0);
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
 			<PersonGrid people={castToPeople(credits?.cast).slice(0, 6)} />
 			<PersonGrid
 				people={crewToPeople(credits?.crew).slice(0, 6)}
@@ -106,13 +106,13 @@ export function FullCredits({
 
 	if (isPending || !data) {
 		return (
-			<div className="space-y-8">
+			<div className="space-y-6">
 				<section>
-					<h2 className="mb-4 text-display-3">Cast</h2>
+					<h2 className="mb-3 text-display-3">Cast</h2>
 					<UserRowsSkeleton rows={6} />
 				</section>
 				<section>
-					<h2 className="mb-4 text-display-3">Crew</h2>
+					<h2 className="mb-3 text-display-3">Crew</h2>
 					<UserRowsSkeleton rows={6} />
 				</section>
 			</div>
@@ -120,7 +120,7 @@ export function FullCredits({
 	}
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
 			<PersonGrid
 				people={castToPeople(data.cast)}
 				initialCount={data.cast.length}
