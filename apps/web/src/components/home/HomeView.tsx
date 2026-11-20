@@ -105,6 +105,15 @@ function formatWatchedDate(
 	return `${formattedDate} · ${timeString}`;
 }
 
+/**
+ * Your Shelf: one swipeable row on a phone, like the Mobile App, and a grid
+ * from `sm` up. Stacked full-width cards made a phone scroll past six more
+ * backdrops before it reached Upcoming. Up Next stays stacked on both clients.
+ */
+const CARD_ROW =
+	"flex snap-x gap-3 overflow-x-auto [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible xl:grid-cols-3";
+const CARD_ROW_ITEM = "w-[78%] shrink-0 snap-start sm:w-auto";
+
 export function HomeView() {
 	const {
 		user,
@@ -296,17 +305,17 @@ export function HomeView() {
 	}
 
 	return (
-		<div className="container-app py-8">
+		<div className="container-app py-6">
 			{/* Welcome Section */}
-			<div className="mb-8">
-				<h1 className="mb-2 text-display-2">
+			<div className="mb-6">
+				<h1 className="mb-1 text-display-2">
 					{`Welcome back, ${user?.displayName || user?.handle || ""}`}
 				</h1>
 				<p className="text-(--foreground-muted)">@{user?.handle}</p>
 			</div>
 
 			{/* Stats strip: 30-day activity graph + headline stats */}
-			<div className="mb-8">
+			<div className="mb-6">
 				<StatsStrip
 					activity={profile?.activityLast30Days}
 					mostWatchedShow={profile?.mostWatchedShow ?? null}
@@ -325,12 +334,12 @@ export function HomeView() {
 				<AtStoreReviewPrompt />
 			</PromptSlot>
 
-			<div className="grid gap-8 lg:grid-cols-3">
+			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Main Content - Continue Watching */}
-				<div className="space-y-8 lg:col-span-2">
+				<div className="space-y-6 lg:col-span-2">
 					{/* Up Next - Shows the next episodes to watch */}
 					<section data-tour="up-next" className="scroll-mt-24">
-						<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+						<div className="mb-3 flex flex-wrap items-center justify-between gap-3">
 							<h2 className="text-display-3">Up Next</h2>
 							<div className="flex shrink-0 items-center gap-4">
 								<Link
@@ -384,8 +393,8 @@ export function HomeView() {
 								))}
 							</div>
 						) : (
-							<div className="card p-8 text-center">
-								<Tv className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
+							<div className="card p-6 text-center">
+								<Tv className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
 								<p className="mb-2 text-(--foreground-muted)">
 									You're all caught up!
 								</p>
@@ -405,7 +414,7 @@ export function HomeView() {
 
 					{/* Continue Watching */}
 					<section data-tour="shelf" className="scroll-mt-24">
-						<div className="mb-4 flex items-center justify-between">
+						<div className="mb-3 flex items-center justify-between">
 							<h2 className="text-display-3">Your Shelf</h2>
 							{user && (
 								<Link
@@ -427,49 +436,50 @@ export function HomeView() {
 						)}
 
 						{isLoading ? (
-							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+							<div className={CARD_ROW}>
 								{[1, 2, 3, 4, 5, 6].map((i) => (
 									<div
 										key={i}
-										className="aspect-video animate-pulse rounded-lg bg-(--background-subtle)"
+										className={`${CARD_ROW_ITEM} aspect-video animate-pulse rounded-lg bg-(--background-subtle)`}
 									/>
 								))}
 							</div>
 						) : userContent.length > 0 ? (
-							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+							<div className={CARD_ROW}>
 								{userContent.map((item) => (
-									<DashboardMediaCard
-										key={item.key}
-										id={item.id}
-										showId={item.showId}
-										title={item.title}
-										displayTitle={item.displayTitle}
-										seasonNumber={item.seasonNumber}
-										episodeNumber={item.episodeNumber}
-										posterUrl={item.posterUrl}
-										backdropUrl={item.backdropUrl}
-										type={item.type}
-										episodeInfo={item.episodeInfo}
-										isWatched={item.isWatched}
-										watchCount={item.watchCount}
-										watchedDate={
-											item.watchedDate
-												? formatWatchedDate(
-														item.watchedDate,
-														userTimezone,
-														userTimeFormat,
-													)
-												: item.isWatched
-													? "No date"
-													: undefined
-										}
-										layout="backdrop"
-										size="md"
-									/>
+									<div key={item.key} className={CARD_ROW_ITEM}>
+										<DashboardMediaCard
+											id={item.id}
+											showId={item.showId}
+											title={item.title}
+											displayTitle={item.displayTitle}
+											seasonNumber={item.seasonNumber}
+											episodeNumber={item.episodeNumber}
+											posterUrl={item.posterUrl}
+											backdropUrl={item.backdropUrl}
+											type={item.type}
+											episodeInfo={item.episodeInfo}
+											isWatched={item.isWatched}
+											watchCount={item.watchCount}
+											watchedDate={
+												item.watchedDate
+													? formatWatchedDate(
+															item.watchedDate,
+															userTimezone,
+															userTimeFormat,
+														)
+													: item.isWatched
+														? "No date"
+														: undefined
+											}
+											layout="backdrop"
+											size="md"
+										/>
+									</div>
 								))}
 							</div>
 						) : isSyncing ? (
-							<div className="card p-8 text-center">
+							<div className="card p-6 text-center">
 								<Loader2 className="mx-auto mb-3 size-6 animate-spin text-(--accent)" />
 								<p className="mb-2 text-(--foreground-muted)">
 									Syncing your watch history…
@@ -480,7 +490,7 @@ export function HomeView() {
 								</p>
 							</div>
 						) : (
-							<div className="card p-8 text-center">
+							<div className="card p-6 text-center">
 								<p className="mb-2 text-(--foreground-muted)">
 									Your shelf is empty
 								</p>
@@ -497,21 +507,13 @@ export function HomeView() {
 							</div>
 						)}
 					</section>
-
-					{/* Social Feed - Activity from people you follow */}
-					<FriendsActivitySection
-						items={feedData?.items ?? []}
-						isLoading={feedLoading}
-						userTimezone={userTimezone}
-						userTimeFormat={userTimeFormat}
-					/>
 				</div>
 
 				{/* Sidebar */}
-				<div className="space-y-8">
+				<div className="space-y-6">
 					{/* Upcoming */}
 					<section>
-						<div className="mb-4 flex items-center justify-between">
+						<div className="mb-3 flex items-center justify-between">
 							<h2 className="text-display-3">Upcoming</h2>
 							<Link
 								to="/calendar"
@@ -624,6 +626,16 @@ export function HomeView() {
 							</div>
 						)}
 					</section>
+
+					{/* Social: activity from people you follow. Beside the main
+					    column on a wide screen, like the Mobile App's wide layout,
+					    so the sidebar is not one short list above empty space. */}
+					<FriendsActivitySection
+						items={feedData?.items ?? []}
+						isLoading={feedLoading}
+						userTimezone={userTimezone}
+						userTimeFormat={userTimeFormat}
+					/>
 				</div>
 			</div>
 		</div>

@@ -131,13 +131,13 @@ function IndexPage() {
 function HomeSkeleton() {
 	const pulse = "animate-pulse rounded bg-(--background-subtle)";
 	return (
-		<div className="container-app min-h-screen py-8" aria-hidden>
-			<div className="mb-8 space-y-3">
+		<div className="container-app min-h-screen py-6" aria-hidden>
+			<div className="mb-6 space-y-2">
 				<div className={`h-9 w-72 max-w-full ${pulse}`} />
 				<div className={`h-5 w-40 ${pulse}`} />
 			</div>
-			<div className="card mb-8 h-[236px] animate-pulse lg:h-[156px]" />
-			<div className={`mb-4 h-7 w-32 ${pulse}`} />
+			<div className="card mb-6 h-[236px] animate-pulse lg:h-[154px]" />
+			<div className={`mb-3 h-7 w-32 ${pulse}`} />
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 				{["a", "b", "c"].map((key) => (
 					<div key={key} className={`aspect-video ${pulse}`} />
