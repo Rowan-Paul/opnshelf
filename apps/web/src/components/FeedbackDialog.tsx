@@ -29,6 +29,17 @@ export function FeedbackDialog({
 	const [category, setCategory] = useState<"bug" | "feature_request">("bug");
 	const [message, setMessage] = useState("");
 	const [submitted, setSubmitted] = useState(false);
+	const [wasOpen, setWasOpen] = useState(open);
+
+	// Keep the exit content intact and reset the form before the next opening.
+	if (wasOpen !== open) {
+		setWasOpen(open);
+		if (open) {
+			setSubmitted(false);
+			setMessage("");
+			setCategory("bug");
+		}
+	}
 
 	const startSend = useDialogOpening(open);
 
@@ -36,17 +47,12 @@ export function FeedbackDialog({
 		e.preventDefault();
 		if (!message.trim()) return;
 		const isCurrent = startSend();
-		const sent = message;
+		const sent = message.trim();
 
 		try {
-			await onSubmit({ category, message: sent.trim() });
+			await onSubmit({ category, message: sent });
 			toast.success("Feedback sent. Thank you!");
-			// A send that finishes after the dialog closed or reopened leaves it
-			// alone, apart from clearing a form that still holds this send.
-			if (!isCurrent()) {
-				setMessage((current) => (current === sent ? "" : current));
-				return;
-			}
+			if (!isCurrent()) return;
 			setSubmitted(true);
 			setMessage("");
 			setCategory("bug");
@@ -55,20 +61,8 @@ export function FeedbackDialog({
 		}
 	};
 
-	const handleOpenChange = (value: boolean) => {
-		onOpenChange(value);
-		if (!value) {
-			// Reset after close animation
-			setTimeout(() => {
-				setSubmitted(false);
-				setMessage("");
-				setCategory("bug");
-			}, 200);
-		}
-	};
-
 	return (
-		<Dialog open={open} onOpenChange={handleOpenChange}>
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>Send Feedback</DialogTitle>
@@ -151,7 +145,7 @@ export function FeedbackDialog({
 						<DialogFooter>
 							<button
 								type="button"
-								onClick={() => handleOpenChange(false)}
+								onClick={() => onOpenChange(false)}
 								className="btn btn-secondary"
 								disabled={isSubmitting}
 							>
