@@ -215,8 +215,8 @@ export function DiscoverRowsSkeleton() {
 	return (
 		<View accessibilityLabel="Loading Discover" accessibilityRole="progressbar">
 			{IDX(3).map((i) => (
-				<View key={i} className="pt-2 pb-4">
-					<View className="mx-4 mb-3 h-6 w-56 rounded bg-background-subtle" />
+				<View key={i} className="pt-1 pb-3">
+					<View className="mx-4 mb-2 h-6 w-56 rounded bg-background-subtle" />
 					<View className="pl-4">
 						<PosterRowSkeleton width={112} />
 					</View>
