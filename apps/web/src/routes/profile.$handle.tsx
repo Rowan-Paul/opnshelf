@@ -143,7 +143,7 @@ function ProfileLayout() {
 		<div className="container-app py-6">
 			{/* Profile Header. On a phone the avatar sits beside the name, like
 			    the Mobile App, with the counts on their own row below. */}
-			<div className="mb-6 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 sm:flex sm:gap-4">
+			<div className="mb-6 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:flex sm:gap-4">
 				{/* Avatar */}
 				<div className="flex size-16 items-center justify-center overflow-hidden rounded-full border border-(--border) bg-(--background-elevated) sm:size-20">
 					<UserAvatar
@@ -161,7 +161,9 @@ function ProfileLayout() {
 						</h1>
 						{isOwner && <span className="badge badge-subtle text-xs">You</span>}
 					</div>
-					<p className="text-(--foreground-muted)">@{profile.handle}</p>
+					<p className="break-words text-(--foreground-muted)">
+						@{profile.handle}
+					</p>
 
 					{/* Social Links */}
 					{(profile.blueskyProfileUrl || profile.tangledProfileUrl) && (

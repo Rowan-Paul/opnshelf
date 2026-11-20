@@ -180,7 +180,9 @@ function MostWatchedShowStat({ show }: { show: MostWatchedShowDto }) {
 			) : (
 				<div className="h-14 w-10 shrink-0 rounded bg-(--background-subtle)" />
 			)}
-			<div className="min-w-0">
+			{/* Capped: beside the graph on a wide screen this group does not
+			    shrink, so a long title would otherwise squeeze the graph. */}
+			<div className="min-w-0 max-w-48">
 				<p className="text-(--foreground-muted) text-xs">Most watched</p>
 				<p className="line-clamp-2 font-semibold text-sm">{show.title}</p>
 				<p className="text-(--foreground-muted) text-xs">
