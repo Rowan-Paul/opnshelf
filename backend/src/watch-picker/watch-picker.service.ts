@@ -137,20 +137,16 @@ export class WatchPickerService {
 				return null;
 			const availability = (await this.movies.getWatchProviders(mediaId))
 				?.results[context.country];
-			const services = availability?.flatrate ?? [];
-			if (
-				context.serviceIds.length &&
-				!services.some((s) => context.serviceIds.includes(s.provider_id))
-			)
-				return null;
+			const services = (availability?.flatrate ?? []).filter(
+				(s) =>
+					!context.serviceIds.length ||
+					context.serviceIds.includes(s.provider_id),
+			);
+			if (context.serviceIds.length && !services.length) return null;
 			return {
 				...result,
 				minutes: detail.runtime,
-				services: services.filter(
-					(s) =>
-						!context.serviceIds.length ||
-						context.serviceIds.includes(s.provider_id),
-				),
+				services,
 				watchLink: availability?.link,
 			};
 		}
