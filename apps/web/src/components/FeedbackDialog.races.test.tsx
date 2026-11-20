@@ -97,6 +97,7 @@ it("leaves a reopened dialog alone when the earlier send finishes", async () => 
 	await openDialog();
 	await type("New draft");
 	await step(() => mocks.send.calls[0].resolve({}));
+	await step(() => new Promise((resolve) => setTimeout(resolve, 200)));
 	expect(isOpen()).toBe(true);
 	expect(thanked()).toBe(false);
 	expect(message().value).toBe("New draft");
