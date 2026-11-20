@@ -35,16 +35,16 @@ function MovieCreditsPage() {
 	const { data: movie } = useMovieDetails(movieId);
 
 	return (
-		<div className="mx-auto min-h-screen max-w-5xl px-4 py-8">
+		<div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
 			<Link
 				to="/movies/$movieId/$movieName"
 				params={{ movieId, movieName }}
-				className="mb-6 inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+				className="mb-4 inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
 			>
 				<ChevronLeft className="size-4" />
 				{movie?.title ?? "Back to movie"}
 			</Link>
-			<h1 className="mb-8 text-display-2">Cast & crew</h1>
+			<h1 className="mb-6 text-display-2">Cast & crew</h1>
 			<FullCredits mediaType="movie" mediaId={movieId} />
 		</div>
 	);

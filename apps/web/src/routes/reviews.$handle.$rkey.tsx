@@ -145,10 +145,10 @@ function CanonicalReviewPage() {
 	const dateTimezone = hydrated ? undefined : "UTC";
 
 	return (
-		<article className="container-app py-8">
+		<article className="container-app py-6">
 			<Link
 				to={mediaHref(review)}
-				className="mb-6 inline-flex items-center gap-1.5 text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
+				className="mb-4 inline-flex items-center gap-1.5 text-(--foreground-muted) text-sm transition-colors hover:text-(--foreground)"
 			>
 				<ArrowLeft className="size-4" />
 				{review.mediaTitle ?? "Back to media"}

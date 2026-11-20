@@ -14,8 +14,8 @@ export default function ErrorState({
 	backLabel = "Back to Home",
 }: ErrorStateProps) {
 	return (
-		<div className="container-app py-8">
-			<div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center text-red-800">
+		<div className="container-app py-6">
+			<div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-800">
 				<p className="font-medium text-lg">{message}</p>
 				<p className="mt-2">{subMessage}</p>
 				<Link to={backTo} className="btn btn-primary mt-4 inline-flex">

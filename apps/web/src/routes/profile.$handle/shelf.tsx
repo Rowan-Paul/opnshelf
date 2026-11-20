@@ -286,13 +286,13 @@ function ProfileShelfPage() {
 					))}
 				</div>
 			) : items.length === 0 ? (
-				<div className="card p-8 text-center">
+				<div className="card p-6 text-center">
 					<p className="text-(--foreground-muted)">
 						{searchQuery ? "No results found." : "Shelf is empty."}
 					</p>
 				</div>
 			) : showDividers ? (
-				<div className="space-y-8">
+				<div className="space-y-6">
 					{sections.map((section) => (
 						<section key={section.label} className="space-y-3">
 							<h2 className="border-(--border) border-b pb-2 text-display-3">
