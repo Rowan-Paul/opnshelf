@@ -76,7 +76,7 @@ function SimilarRail({
 	if (items.length === 0) return null;
 	return (
 		<View>
-			<Text className="mb-3 px-4 text-display-3 text-foreground">{title}</Text>
+			<Text className="mb-2 px-4 text-display-3 text-foreground">{title}</Text>
 			<ShowProgressScope
 				showIds={items
 					.filter((item) => item.type === "show")

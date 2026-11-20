@@ -76,12 +76,12 @@ export default function MediaHero({
 			</div>
 
 			{/* Content */}
-			<div className="container-app relative pt-8">
+			<div className="container-app relative pt-6">
 				{/* Breadcrumbs / Back Button. White + text shadow: these sit on the raw
 				    backdrop image where the gradient overlays are transparent, so theme
 				    text colors vanish. */}
 				{breadcrumbs && breadcrumbs.length > 0 ? (
-					<nav className="mb-6 flex items-center gap-2 overflow-x-auto text-sm [scrollbar-width:none] [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] [&::-webkit-scrollbar]:hidden">
+					<nav className="mb-4 flex items-center gap-2 overflow-x-auto text-sm [scrollbar-width:none] [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] [&::-webkit-scrollbar]:hidden">
 						{breadcrumbs.map((crumb, index) => (
 							<span
 								key={crumb.to}
@@ -115,7 +115,7 @@ export default function MediaHero({
 						))}
 					</nav>
 				) : (
-					<Link to="/" className="btn btn-secondary mb-6 inline-flex gap-2">
+					<Link to="/" className="btn btn-secondary mb-4 inline-flex gap-2">
 						<ChevronLeft className="size-4" />
 						{backLabel}
 					</Link>
@@ -149,9 +149,9 @@ export default function MediaHero({
 					</div>
 
 					{/* Info */}
-					<div className="flex flex-col justify-end pb-8 lg:pb-16">
+					<div className="flex flex-col justify-end pb-6 lg:pb-10">
 						{/* Mobile Poster */}
-						<div className="mb-6 flex gap-4 lg:hidden">
+						<div className="mb-4 flex gap-4 lg:hidden">
 							<div className="relative h-40 w-28 shrink-0 overflow-hidden rounded-lg">
 								{posterUrl ? (
 									<img
@@ -204,7 +204,7 @@ export default function MediaHero({
 
 						{/* Action Buttons */}
 						{actions && (
-							<div className="mt-6 flex flex-wrap gap-2 lg:gap-3">
+							<div className="mt-5 flex flex-wrap gap-2 lg:gap-3">
 								{actions}
 							</div>
 						)}

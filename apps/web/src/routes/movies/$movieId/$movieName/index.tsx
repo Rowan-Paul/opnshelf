@@ -264,12 +264,12 @@ function MovieDetailPage() {
 			/>
 
 			{/* Main Content */}
-			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-x-12 lg:gap-y-8">
+			<div className="container-app relative z-20 mt-6">
+				<div className="grid gap-6 lg:grid-cols-[2fr_1fr] lg:gap-x-12 lg:gap-y-6">
 					{/* Left Column */}
-					<div className="space-y-8">
+					<div className="space-y-6">
 						<section>
-							<h2 className="mb-4 text-display-3">Overview</h2>
+							<h2 className="mb-3 text-display-3">Overview</h2>
 							<p className="text-(--foreground-muted) leading-relaxed">
 								{movie.overview}
 							</p>
@@ -344,7 +344,7 @@ function MovieDetailPage() {
 					</div>
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}
-					<div className="order-last space-y-8 lg:order-none lg:col-start-1 lg:row-start-2">
+					<div className="order-last space-y-6 lg:order-none lg:col-start-1 lg:row-start-2">
 						<div className="lg:hidden">
 							<CreditsSummary
 								credits={movie.credits}

@@ -399,7 +399,7 @@ export default function CommunityReviews({
 	if (isLoading) {
 		return (
 			<section id="community-reviews">
-				<h2 className="mb-4 text-display-3">Community Reviews</h2>
+				<h2 className="mb-3 text-display-3">Community Reviews</h2>
 				<div className="space-y-4">
 					{[1, 2, 3].map((n) => (
 						<div key={`skeleton-${n}`} className="card h-32 animate-pulse p-4">
@@ -420,7 +420,7 @@ export default function CommunityReviews({
 
 	return (
 		<section id="community-reviews">
-			<div className="mb-4 flex items-center justify-between gap-2">
+			<div className="mb-3 flex items-center justify-between gap-2">
 				<h2 className="text-display-3">Community Reviews</h2>
 				{isAuthenticated && (
 					<button

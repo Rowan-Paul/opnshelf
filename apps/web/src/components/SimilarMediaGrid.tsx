@@ -28,7 +28,7 @@ export default function SimilarMediaGrid({
 
 	return (
 		<section>
-			<h2 className="mb-4 text-display-3">{title}</h2>
+			<h2 className="mb-3 text-display-3">{title}</h2>
 			<ShowProgressScope
 				showIds={items
 					.filter((item) => item.type === "show")
