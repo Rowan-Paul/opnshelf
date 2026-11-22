@@ -46,7 +46,7 @@ function note(slug: string, publishedAt: string): ReleaseNote {
 
 // This is the announcement shipped with this bundle, not the newest server note.
 const installed = note(
-	"more-reliable-integrations",
+	"clearer-layout-and-smoother-list-edits",
 	"2026-11-02T13:16:56.000Z",
 );
 let renderer: ReactTestRenderer;
