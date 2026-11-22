@@ -1,4 +1,4 @@
-import type { TmdbPersonDetailDto } from "@opnshelf/api";
+import { formatCatalogueDate, type TmdbPersonDetailDto } from "@opnshelf/api";
 import { Calendar, Clapperboard, MapPin, User } from "lucide-react-native";
 import { View } from "react-native";
 import { PosterImage } from "@/components/media/PosterImage";
@@ -8,19 +8,8 @@ import { useThemeColors } from "@/theme/colors";
 
 function yearOf(date?: string): number | null {
 	if (!date) return null;
-	const year = new Date(date).getFullYear();
+	const year = new Date(date).getUTCFullYear();
 	return Number.isNaN(year) ? null : year;
-}
-
-function formatDate(iso?: string): string | undefined {
-	if (!iso) return undefined;
-	const d = new Date(iso);
-	if (Number.isNaN(d.getTime())) return undefined;
-	return d.toLocaleDateString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
 }
 
 /**
@@ -35,7 +24,7 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 	const birthYear = yearOf(person.birthday);
 	const deathYear = yearOf(person.deathday);
 	const age = birthYear
-		? (deathYear ?? new Date().getFullYear()) - birthYear
+		? (deathYear ?? new Date().getUTCFullYear()) - birthYear
 		: null;
 
 	return (
@@ -68,7 +57,7 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 					<View className="flex-row items-center gap-1.5">
 						<Calendar color={colors.mutedForeground} size={14} />
 						<Text className="text-muted-foreground text-sm">
-							Born {formatDate(person.birthday)}
+							Born {formatCatalogueDate(person.birthday, undefined, "short")}
 							{age !== null && !person.deathday ? ` (${age})` : ""}
 						</Text>
 					</View>
@@ -77,7 +66,7 @@ export function PersonHero({ person }: { person: TmdbPersonDetailDto }) {
 					<View className="flex-row items-center gap-1.5">
 						<Calendar color={colors.mutedForeground} size={14} />
 						<Text className="text-muted-foreground text-sm">
-							Died {formatDate(person.deathday)}
+							Died {formatCatalogueDate(person.deathday, undefined, "short")}
 							{age !== null ? ` (aged ${age})` : ""}
 						</Text>
 					</View>

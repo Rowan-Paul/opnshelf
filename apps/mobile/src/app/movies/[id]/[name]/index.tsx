@@ -1,4 +1,7 @@
-import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
+import {
+	formatCatalogueDate,
+	moviesControllerGetMovieDetailsOptions,
+} from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
@@ -21,7 +24,6 @@ import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import {
 	backdropUrl,
-	formatLongDate,
 	formatRuntime,
 	posterUrl,
 	yearFromDate,
@@ -109,7 +111,7 @@ export default function MovieDetailScreen() {
 									{ label: "Runtime", value: formatRuntime(data.runtime) },
 									{
 										label: "Release",
-										value: formatLongDate(data.release_date) ?? "Unknown",
+										value: formatCatalogueDate(data.release_date) ?? "Unknown",
 									},
 									{
 										label: "Genres",
