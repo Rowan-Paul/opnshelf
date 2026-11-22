@@ -25,7 +25,7 @@ export function FriendsActivitySection({
 
 	return (
 		<section>
-			<div className="mb-4 flex items-center justify-between">
+			<div className="mb-3 flex items-center justify-between">
 				<h2 className="text-display-3">Social</h2>
 				<Link
 					to="/social"
@@ -36,7 +36,7 @@ export function FriendsActivitySection({
 			</div>
 
 			{isLoading ? (
-				<div className="card p-8">
+				<div className="card p-4">
 					<div className="space-y-3">
 						{[1, 2, 3].map((i) => (
 							<div key={i} className="flex animate-pulse items-start gap-3">
@@ -61,8 +61,8 @@ export function FriendsActivitySection({
 					))}
 				</div>
 			) : (
-				<div className="card p-8 text-center">
-					<MessageCircle className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
+				<div className="card p-6 text-center">
+					<MessageCircle className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
 					<p className="text-(--foreground-muted)">
 						Activity from people you follow will appear here.
 					</p>

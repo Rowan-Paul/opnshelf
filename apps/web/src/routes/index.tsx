@@ -5,11 +5,18 @@ import {
 	Clapperboard,
 	Compass,
 	LayoutDashboard,
+	type LucideIcon,
 	Smartphone,
-	Sparkles,
 	UserCircle,
 } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import {
+	lazy,
+	type ReactNode,
+	Suspense,
+	useCallback,
+	useEffect,
+	useState,
+} from "react";
 import StoreBadges from "#/components/StoreBadges";
 import { useAuth } from "#/lib/auth-context";
 import { prefetchHomePrompts } from "#/lib/home-prompts";
@@ -46,7 +53,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Your personal home for what you've recently watched, what to watch next, and what your friends are up to — all in one place.",
 		icon: LayoutDashboard,
-		image: "/screenshots/dashboard.jpg",
+		image: "/screenshots/dashboard",
 		imageAlt: "Opnshelf home preview",
 	},
 	{
@@ -54,7 +61,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Search across movies, TV shows, and people. Filter by what's trending, top-rated, or coming soon. Your next favorite is one search away.",
 		icon: Compass,
-		image: "/screenshots/search.jpg",
+		image: "/screenshots/search",
 		imageAlt: "Search preview",
 	},
 	{
@@ -62,7 +69,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Every title has a home. Browse cast, crew, seasons, episodes, and where to watch. Read and write reviews that help the community decide.",
 		icon: Clapperboard,
-		image: "/screenshots/media-detail.jpg",
+		image: "/screenshots/media-detail",
 		imageAlt: "Media detail preview",
 	},
 	{
@@ -70,7 +77,7 @@ const SCREENSHOT_SECTIONS = [
 		description:
 			"Showcase your taste. Share your shelf, reviews, lists, and ratings with the world. Follow friends and see what they're loving.",
 		icon: UserCircle,
-		image: "/screenshots/profile.jpg",
+		image: "/screenshots/profile",
 		imageAlt: "Profile preview",
 	},
 ];
@@ -124,13 +131,13 @@ function IndexPage() {
 function HomeSkeleton() {
 	const pulse = "animate-pulse rounded bg-(--background-subtle)";
 	return (
-		<div className="container-app min-h-screen py-8" aria-hidden>
-			<div className="mb-8 space-y-3">
+		<div className="container-app min-h-screen py-6" aria-hidden>
+			<div className="mb-6 space-y-2">
 				<div className={`h-9 w-72 max-w-full ${pulse}`} />
 				<div className={`h-5 w-40 ${pulse}`} />
 			</div>
-			<div className="card mb-8 h-[236px] animate-pulse lg:h-[156px]" />
-			<div className={`mb-4 h-7 w-32 ${pulse}`} />
+			<div className="card mb-6 h-[236px] animate-pulse lg:h-[154px]" />
+			<div className={`mb-3 h-7 w-32 ${pulse}`} />
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 				{["a", "b", "c"].map((key) => (
 					<div key={key} className={`aspect-video ${pulse}`} />
@@ -149,7 +156,7 @@ function LandingPage() {
 	return (
 		<div className="min-h-screen">
 			{/* Hero Section */}
-			<section className="relative flex min-h-[70vh] items-center justify-center overflow-hidden">
+			<section className="relative flex min-h-[70vh] items-center justify-center overflow-hidden py-16">
 				{/* Movie backdrop */}
 				<div className="absolute inset-0">
 					<img
@@ -169,21 +176,15 @@ function LandingPage() {
 
 				<div className="container-app relative z-10">
 					<div className="mx-auto max-w-3xl text-center">
-						{/* Badge */}
-						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm text-white/90 backdrop-blur-sm">
-							<Sparkles className="h-4 w-4 text-(--accent-400)" />
-							<span>A better way to track what you watch</span>
-						</div>
-
-						{/* Headline */}
-						<h1 className="mb-6 text-display-1 text-white">
+						{/* Headline. 4xl on a phone keeps each sentence on one line. */}
+						<h1 className="mb-4 font-bold font-display text-4xl text-white leading-[1.1] sm:text-5xl">
 							Track what you watch.
 							<br />
 							Share with friends.
 						</h1>
 
 						{/* Subheadline */}
-						<p className="mx-auto mb-10 max-w-xl text-lg text-white/75">
+						<p className="mx-auto mb-8 max-w-xl text-lg text-white/75">
 							Opnshelf is your personal media tracker. Log movies and shows, see
 							what friends are watching, and discover your next favorite.
 						</p>
@@ -201,7 +202,7 @@ function LandingPage() {
 
 						{/* Mobile App. The MobileAppBanner deliberately skips `/`, so
 						    this is the only ask a phone visitor sees here. */}
-						<p className="mt-10 mb-4 text-sm text-white/60">
+						<p className="mt-8 mb-3 text-sm text-white/60">
 							Also on iPhone and Android
 						</p>
 						<StoreBadges />
@@ -209,98 +210,73 @@ function LandingPage() {
 				</div>
 			</section>
 
-			{/* Screenshot Feature Sections */}
-			{SCREENSHOT_SECTIONS.map((section, index) => {
-				const Icon = section.icon;
-				const isReversed = index % 2 === 1;
-
-				return (
-					<section
-						key={section.title}
-						className="border-(--border) border-t py-20 lg:py-28"
-					>
-						<div className="container-app">
-							<div
-								className={`flex flex-col items-center gap-12 lg:gap-20 ${
-									isReversed ? "lg:flex-row-reverse" : "lg:flex-row"
-								}`}
-							>
-								{/* Text side */}
-								<div className="flex-1">
-									<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
-										<Icon className="h-6 w-6" />
-									</div>
-									<h2 className="mb-4 text-display-2">{section.title}</h2>
-									<p className="max-w-md text-(--foreground-muted) text-lg leading-relaxed">
-										{section.description}
-									</p>
-								</div>
-
-								{/* Screenshot side */}
-								<div className="w-full flex-1">
-									<ScreenshotFrame
-										image={section.image}
-										alt={section.imageAlt}
-										label={section.title}
-									/>
-								</div>
-							</div>
-						</div>
-					</section>
-				);
-			})}
-
-			{/* Mobile App. Led by the Home-Screen Widget because it is the one
-			    thing the Web App cannot do, which is the only honest argument
-			    for installing. */}
-			<section className="border-(--border) border-t py-20 lg:py-28">
-				<div className="container-app">
-					<div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-20">
-						<div className="flex-1">
-							<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-subtle) text-(--accent)">
-								<Smartphone className="h-6 w-6" />
-							</div>
-							<h2 className="mb-4 text-display-2">On your home screen</h2>
-							<p className="mb-8 max-w-md text-(--foreground-muted) text-lg leading-relaxed">
-								Put your watching year on your home screen. The widget shows
-								your last 30 days and your total, and opens your profile in a
-								tap.
-							</p>
-							<StoreBadges className="justify-start" />
-						</div>
-
-						<div className="w-full flex-1">
-							<img
-								src="/screenshots/widget-android.png"
-								loading="lazy"
-								decoding="async"
-								alt="The Opnshelf home-screen widget, showing a bar graph of the last 30 days of watches and a total count"
-								width={946}
-								height={512}
-								className="w-full shadow-xl"
-								/* The crop is the widget's exact bounds, so the launcher
-								   wallpaper survives in its rounded corners. Clipping at the
-								   widget's own radius removes it. Measured: 42px clears every
-								   wallpaper pixel, so 48px (5.07% by 9.38% of 946x512) has
-								   margin. Percentages, so it holds at any render width. */
-								style={{ borderRadius: "5.07% / 9.38%" }}
+			{/* Feature rows: one section and one rhythm, so the page reads as a
+			    single list instead of five separately framed blocks. */}
+			<section className="border-(--border) border-t py-14 lg:py-24">
+				<div className="container-app space-y-14 lg:space-y-24">
+					{SCREENSHOT_SECTIONS.map((section, index) => (
+						<FeatureRow
+							key={section.title}
+							icon={section.icon}
+							title={section.title}
+							description={section.description}
+							reversed={index % 2 === 1}
+						>
+							{/* One capture per theme. The hidden one is `display: none`,
+							    so its lazy image is never fetched. */}
+							<ScreenshotFrame
+								className="dark:hidden"
+								image={`${section.image}-light.jpg`}
+								alt={section.imageAlt}
+								label={section.title}
 							/>
-						</div>
-					</div>
+							<ScreenshotFrame
+								className="hidden dark:block"
+								image={`${section.image}-dark.jpg`}
+								alt={section.imageAlt}
+								label={section.title}
+							/>
+						</FeatureRow>
+					))}
+
+					{/* Mobile App. Led by the Home-Screen Widget because it is the
+					    one thing the Web App cannot do, which is the only honest
+					    argument for installing. */}
+					<FeatureRow
+						icon={Smartphone}
+						title="On your home screen"
+						description="Put your watching year on your home screen. The widget shows your last 30 days and your total, and opens your profile in a tap."
+						reversed={SCREENSHOT_SECTIONS.length % 2 === 1}
+						action={<StoreBadges className="justify-start" />}
+					>
+						<img
+							src="/screenshots/widget-android.png"
+							loading="lazy"
+							decoding="async"
+							alt="The Opnshelf home-screen widget, showing a bar graph of the last 30 days of watches and a total count"
+							width={946}
+							height={512}
+							className="w-full shadow-xl"
+							/* The crop is the widget's exact bounds, so the launcher
+							   wallpaper survives in its rounded corners. Clipping at the
+							   widget's own radius removes it. Measured: 42px clears every
+							   wallpaper pixel, so 48px (5.07% by 9.38% of 946x512) has
+							   margin. Percentages, so it holds at any render width. */
+							style={{ borderRadius: "5.07% / 9.38%" }}
+						/>
+					</FeatureRow>
 				</div>
 			</section>
 
-			{/* Extra features row (compact) */}
-			<section className="border-(--border) border-t py-20">
-				<div className="container-app">
-					<div className="mb-12 text-center">
-						<h2 className="mb-3 text-display-2">And so much more</h2>
-						<p className="mx-auto max-w-lg text-(--foreground-muted)">
-							A complete toolkit for media tracking and social discovery.
-						</p>
-					</div>
+			{/* Extra features (compact) */}
+			<section className="border-(--border) border-t py-12 lg:py-16">
+				<div className="container-app text-center">
+					<h2 className="mb-2 text-display-3">And so much more</h2>
+					<p className="mx-auto mb-6 max-w-lg text-(--foreground-muted)">
+						A complete toolkit for media tracking and social discovery.
+					</p>
 
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+					<ul className="mx-auto flex max-w-4xl flex-wrap justify-center gap-2">
 						{[
 							"Release Calendar",
 							"Social Feed",
@@ -309,23 +285,23 @@ function LandingPage() {
 							"Rate & Review",
 							"Import History",
 						].map((feature) => (
-							<div
+							<li
 								key={feature}
-								className="rounded-xl border border-(--border) bg-(--background-elevated) px-4 py-6 text-center shadow-sm"
+								className="rounded-full border border-(--border) bg-(--background-elevated) px-4 py-2 font-medium text-sm"
 							>
-								<p className="font-medium text-sm">{feature}</p>
-							</div>
+								{feature}
+							</li>
 						))}
-					</div>
+					</ul>
 				</div>
 			</section>
 
 			{/* CTA Section */}
-			<section className="border-(--border) border-t py-24">
+			<section className="border-(--border) border-t py-14 lg:py-20">
 				<div className="container-app">
 					<div className="mx-auto max-w-2xl text-center">
-						<h2 className="mb-4 text-display-2">Ready to start tracking?</h2>
-						<p className="mb-8 text-(--foreground-muted)">
+						<h2 className="mb-3 text-display-2">Ready to start tracking?</h2>
+						<p className="mb-6 text-(--foreground-muted)">
 							Build your shelf, share your taste, and discover what to watch
 							next. Your media history stays portable and under your control.
 						</p>
@@ -343,15 +319,59 @@ function LandingPage() {
 	);
 }
 
+/**
+ * One landing-page feature: copy beside its picture. The picture gets the
+ * wider column, because the screenshots are full pages and unreadable small.
+ */
+function FeatureRow({
+	icon: Icon,
+	title,
+	description,
+	reversed,
+	action,
+	children,
+}: {
+	icon: LucideIcon;
+	title: string;
+	description: string;
+	reversed: boolean;
+	/** Sits under the copy, e.g. the store badges. */
+	action?: ReactNode;
+	children: ReactNode;
+}) {
+	return (
+		<div className="grid items-center gap-6 lg:grid-cols-12 lg:gap-16">
+			<div className={`lg:col-span-5 ${reversed ? "lg:order-2" : ""}`}>
+				<div className="mb-3 flex items-center gap-3">
+					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
+						<Icon className="size-5" />
+					</div>
+					<h2 className="font-bold font-display text-3xl leading-[1.15] sm:text-4xl">
+						{title}
+					</h2>
+				</div>
+				<p className="max-w-md text-(--foreground-muted) text-lg leading-relaxed">
+					{description}
+				</p>
+				{action && <div className="mt-6">{action}</div>}
+			</div>
+
+			<div className="lg:col-span-7">{children}</div>
+		</div>
+	);
+}
+
 /* ------------------------------------------------------------------ */
 /* Screenshot Frame — shows a screenshot if available, otherwise a   */
 /* styled placeholder. No browser chrome — just the raw image.       */
 /* ------------------------------------------------------------------ */
 function ScreenshotFrame({
+	className = "",
 	image,
 	alt,
 	label,
 }: {
+	className?: string;
 	image: string;
 	alt: string;
 	label: string;
@@ -368,15 +388,17 @@ function ScreenshotFrame({
 	}, []);
 
 	return (
-		<div className="overflow-hidden rounded-xl border border-(--border) bg-(--background-elevated) shadow-xl">
+		<div
+			className={`overflow-hidden rounded-xl border border-(--border) bg-(--background-elevated) shadow-xl ${className}`}
+		>
 			<div className="relative aspect-video bg-(--background-subtle)">
 				{!error && (
 					<img
 						ref={syncLoaded}
 						src={image}
 						alt={alt}
-						width={1120}
-						height={630}
+						width={1440}
+						height={810}
 						loading="lazy"
 						decoding="async"
 						className={`h-full w-full object-cover transition-opacity duration-500 ${

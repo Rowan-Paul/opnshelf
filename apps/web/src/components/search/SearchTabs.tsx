@@ -29,7 +29,7 @@ export function SearchTabs({
 }) {
 	return (
 		<div
-			className={`mb-6 border-(--border) border-b ${hidden ? "hidden" : ""}`}
+			className={`mb-4 border-(--border) border-b ${hidden ? "hidden" : ""}`}
 		>
 			<nav className="flex gap-1 overflow-x-auto">
 				{SEARCH_TAB_OPTIONS.map((tab) => {

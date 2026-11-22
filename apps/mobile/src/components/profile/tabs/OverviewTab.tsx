@@ -151,7 +151,7 @@ export function OverviewTab({
 	const reviewItems = reviews.data?.items ?? [];
 
 	return (
-		<View className="gap-8 px-4 pt-4 pb-12">
+		<View className="gap-6 px-4 pt-4 pb-12">
 			{canReadWatches ? (
 				<>
 					<StatsStrip

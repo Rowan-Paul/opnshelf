@@ -4,13 +4,6 @@ import type {
 	MovieWatchCountDto,
 } from "./generated";
 
-/**
- * Pure helpers for the once-per-viewer reads that replaced per-card requests
- * (ADR 0040): list membership from `GET /lists/items/memberships`, and watch
- * counts from `GET /movies/user/:did/watch-counts`. Shared so Web and Mobile
- * derive a card's state, and patch it optimistically, the same way.
- */
-
 /** A media item as the lists store it: season and episode are 0 when absent. */
 export interface ListItemRef {
 	mediaType: "movie" | "show" | "season" | "episode";
@@ -19,7 +12,6 @@ export interface ListItemRef {
 	episodeNumber?: number;
 }
 
-/** The fields of the viewer's lists a card needs. */
 export interface ListRef {
 	id: string;
 	name: string;
@@ -54,7 +46,6 @@ export function listsForItem(
 	}));
 }
 
-/** Memberships with one item added to or removed from one list. */
 export function withMembership(
 	memberships: ListMembershipDto[],
 	item: ListItemRef,
@@ -94,7 +85,6 @@ export function movieWatchCount(
 	return counts?.find((count) => count.movieId === movieId)?.watchCount ?? 0;
 }
 
-/** Counts with one more Watch of a movie, as marking it watched logs. */
 export function withMovieWatch(
 	counts: MovieWatchCountDto[],
 	movieId: string,
@@ -109,7 +99,6 @@ export function withMovieWatch(
 	);
 }
 
-/** Counts without a movie, as removing all of its Watches leaves them. */
 export function withoutMovieWatches(
 	counts: MovieWatchCountDto[],
 	movieId: string,

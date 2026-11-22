@@ -1,5 +1,5 @@
 export { type ActivityGroup, groupActivities } from "./activity-groups";
-// Export generated SDK
+export { formatCatalogueDate } from "./catalogue-date";
 
 export type { AccountDeletionStatusJob } from "./account-deletion-status";
 export {
@@ -9,7 +9,6 @@ export {
 	isActiveAccountDeletionStatus,
 	isTerminalAccountDeletionStatus,
 } from "./account-deletion-status";
-// Re-export auth utilities from custom client wrapper
 export {
 	type AuthUser,
 	type BlueskyProfileStatus,
@@ -28,7 +27,6 @@ export {
 	featuredTitle,
 	scheduleFeaturedExpiry,
 } from "./featured-content";
-// Export TanStack Query hooks
 export * from "./generated/@tanstack/react-query.gen";
 export type {
 	Client,
@@ -37,7 +35,6 @@ export type {
 	Options,
 } from "./generated/client/index";
 export { createClient, createConfig } from "./generated/client/index";
-// Export client configuration utilities
 export { client } from "./generated/client.gen";
 export * from "./generated/index";
 export {

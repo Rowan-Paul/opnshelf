@@ -42,61 +42,64 @@ function FindPeoplePage() {
 	const suggestions = useQuery({ ...socialControllerGetSuggestionsOptions() });
 
 	return (
-		<div className="container-app py-8">
-			<Link
-				to="/social"
-				search={circleId ? { circleId } : {}}
-				className="mb-4 inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
-			>
-				<ArrowLeft className="size-4" /> Social
-			</Link>
-			<div className="space-y-6">
-				<div>
-					<h1 className="text-display-2">Find people</h1>
-					<p className="text-(--foreground-muted)">
-						Find people to follow and keep full lists on your Profile.
-					</p>
-				</div>
-				<PeopleSearch
-					query={query}
-					onQueryChange={setQuery}
-					isSearching
-					onFocus={() => {}}
-					onBlur={() => {}}
-					results={search.data?.items ?? []}
-					isLoading={search.isLoading}
-					error={search.error}
-					onRetry={() => search.refetch()}
-					suggestions={suggestions.data?.items ?? []}
-					isSuggestionsLoading={suggestions.isLoading}
-					suggestionsError={suggestions.error}
-					onRetrySuggestions={() => suggestions.refetch()}
-					inline
-					onFollow={follow}
-					onUnfollow={unfollow}
-					pendingFollowDid={pendingFollowDid}
-					pendingUnfollowDid={pendingUnfollowDid}
-				/>
-				{user && (
-					<div className="flex flex-wrap gap-2 border-(--border) border-t pt-6">
-						<Link
-							to="/profile/$handle/connections"
-							params={{ handle: user.handle }}
-							search={{ tab: "following" }}
-							className="btn btn-secondary"
-						>
-							<Users className="mr-2 size-4" /> Following
-						</Link>
-						<Link
-							to="/profile/$handle/connections"
-							params={{ handle: user.handle }}
-							search={{ tab: "followers" }}
-							className="btn btn-secondary"
-						>
-							<Users className="mr-2 size-4" /> Followers
-						</Link>
+		<div className="container-app py-6">
+			{/* Same column as the Social feed these pages open from. */}
+			<div className="mx-auto max-w-3xl">
+				<Link
+					to="/social"
+					search={circleId ? { circleId } : {}}
+					className="mb-4 inline-flex items-center gap-1 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+				>
+					<ArrowLeft className="size-4" /> Social
+				</Link>
+				<div className="space-y-6">
+					<div>
+						<h1 className="text-display-2">Find people</h1>
+						<p className="text-(--foreground-muted)">
+							Find people to follow and keep full lists on your Profile.
+						</p>
 					</div>
-				)}
+					<PeopleSearch
+						query={query}
+						onQueryChange={setQuery}
+						isSearching
+						onFocus={() => {}}
+						onBlur={() => {}}
+						results={search.data?.items ?? []}
+						isLoading={search.isLoading}
+						error={search.error}
+						onRetry={() => search.refetch()}
+						suggestions={suggestions.data?.items ?? []}
+						isSuggestionsLoading={suggestions.isLoading}
+						suggestionsError={suggestions.error}
+						onRetrySuggestions={() => suggestions.refetch()}
+						inline
+						onFollow={follow}
+						onUnfollow={unfollow}
+						pendingFollowDid={pendingFollowDid}
+						pendingUnfollowDid={pendingUnfollowDid}
+					/>
+					{user && (
+						<div className="flex flex-wrap gap-2 border-(--border) border-t pt-6">
+							<Link
+								to="/profile/$handle/connections"
+								params={{ handle: user.handle }}
+								search={{ tab: "following" }}
+								className="btn btn-secondary"
+							>
+								<Users className="mr-2 size-4" /> Following
+							</Link>
+							<Link
+								to="/profile/$handle/connections"
+								params={{ handle: user.handle }}
+								search={{ tab: "followers" }}
+								className="btn btn-secondary"
+							>
+								<Users className="mr-2 size-4" /> Followers
+							</Link>
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	);

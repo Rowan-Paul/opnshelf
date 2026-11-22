@@ -96,7 +96,7 @@ export function FeaturedContent() {
 			</p>
 		) : null;
 	return (
-		<section className="mb-8" aria-label="Featured Content">
+		<section className="mb-6" aria-label="Featured Content">
 			<div className="mb-3 flex items-center justify-between gap-3">
 				<h2 className="text-display-3">Featured Content</h2>
 				{canEdit && (

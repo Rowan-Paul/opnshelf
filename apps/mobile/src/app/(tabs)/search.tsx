@@ -182,8 +182,8 @@ function DiscoverRail({
 	const cardWidth = wide ? 148 : 124;
 	if (items.length === 0) return null;
 	return (
-		<View className="pt-2 pb-4">
-			<Text className="mb-3 px-4 text-display-3 text-foreground">{title}</Text>
+		<View className="pt-1 pb-3">
+			<Text className="mb-2 px-4 text-display-3 text-foreground">{title}</Text>
 			{/* Horizontal ScrollView, not FlatList: these rails live inside a
 			    vertical ScrollView, and nested VirtualizedLists mis-measure their
 			    height (later rails get clipped). Rails are short, so no

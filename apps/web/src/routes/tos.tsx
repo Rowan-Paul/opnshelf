@@ -15,14 +15,14 @@ export const Route = createFileRoute("/tos")({
 
 function TermsOfServicePage() {
 	return (
-		<div className="container-app py-12">
+		<div className="container-app py-8">
 			<div className="mx-auto max-w-3xl">
 				<h1 className="mb-2 text-display-1">Terms of Service</h1>
-				<p className="mb-10 text-(--foreground-muted) text-sm">
+				<p className="mb-6 text-(--foreground-muted) text-sm">
 					Last updated: May 2026
 				</p>
 
-				<div className="prose-content space-y-8 text-(--foreground-muted)">
+				<div className="prose-content space-y-6 text-(--foreground-muted)">
 					<section className="space-y-3">
 						<h2 className="text-(--foreground) text-display-3">
 							1. Acceptance of Terms
@@ -160,7 +160,7 @@ function TermsOfServicePage() {
 					</section>
 				</div>
 
-				<div className="mt-12 border-(--border) border-t pt-8">
+				<div className="mt-8 border-(--border) border-t pt-6">
 					<Link
 						to="/privacy"
 						className="text-(--accent) text-sm hover:underline"

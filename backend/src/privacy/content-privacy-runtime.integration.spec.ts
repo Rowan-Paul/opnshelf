@@ -63,6 +63,18 @@ describe.skipIf(!url)("content Privacy Alpha on PostgreSQL", () => {
 			update: {},
 		});
 	});
+
+	it("lets a Watchlist write finish while a Trakt snapshot is still open", async () => {
+		await locks.run(
+			did,
+			async () => {
+				await expect(
+					coordinator.write(did, "lists", "watchlist", async () => "saved"),
+				).resolves.toBe("saved");
+			},
+			{ mode: "shared", operationName: "trakt.snapshot" },
+		);
+	});
 	afterEach(async () => {
 		await db.user.delete({ where: { did } });
 	});

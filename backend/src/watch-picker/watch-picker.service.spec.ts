@@ -168,6 +168,32 @@ describe("Pick for me", () => {
 				.items,
 		).toHaveLength(1);
 	});
+	it.each([
+		{ services: "8", expected: [8] },
+		{ services: "9,8", expected: [8, 9] },
+		{ services: "10", expected: null },
+		{ services: undefined, expected: [8, 9] },
+	])("filters movie services for $services", async ({ services, expected }) => {
+		const providers = [netflix, { ...netflix, provider_id: 9 }];
+		movies.getWatchProviders.mockResolvedValue({
+			results: { NL: { flatrate: providers, link: "https://example.com" } },
+		});
+
+		const { items } = await service.get("did:plc:test", {
+			minutes: 180,
+			type: "movie",
+			services,
+		});
+
+		expect(items).toHaveLength(expected === null ? 0 : 1);
+		if (expected !== null) {
+			expect(items[0].services.map((provider) => provider.provider_id)).toEqual(
+				expected,
+			);
+			expect(items[0].watchLink).toBe("https://example.com");
+		}
+		expect(providers.map((provider) => provider.provider_id)).toEqual([8, 9]);
+	});
 	it("labels fallback runtimes and stops before unaired episodes", async () => {
 		shows.getSeasonDetails.mockResolvedValue({
 			episodes: [

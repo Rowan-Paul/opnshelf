@@ -1,6 +1,5 @@
 import { nameExceptionIssue } from "./exception-issue-name";
 
-/** Shared send hook for manual and automatically captured client exceptions. */
 export function preparePostHogEvent<
 	T extends { event: string; properties?: Record<string, unknown> } | null,
 >(event: T): T | null {

@@ -41,14 +41,14 @@ export function StatsStrip({
 		return (
 			<div
 				key="loading"
-				className="card flex flex-col gap-6 p-5"
+				className="card flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:gap-6 lg:p-5"
 				aria-busy="true"
 			>
-				<div className="animate-pulse">
+				<div className="animate-pulse lg:flex-1">
 					<div className="mb-3 h-5 w-32 rounded bg-(--background-subtle)" />
 					<div className="h-20 rounded bg-(--background-subtle)" />
 				</div>
-				<div className="flex flex-wrap items-center gap-6 border-(--border) border-t pt-4">
+				<div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-(--border) border-t pt-4 lg:shrink-0 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
 					<div className="h-14 w-64 animate-pulse rounded bg-(--background-subtle)" />
 					<div className="h-12 w-24 animate-pulse rounded bg-(--background-subtle)" />
 					<div className="h-12 w-24 animate-pulse rounded bg-(--background-subtle)" />
@@ -62,9 +62,12 @@ export function StatsStrip({
 	const last30Total = days.reduce((sum, d) => sum + d.count, 0);
 
 	return (
-		<div key="loaded" className="card flex flex-col gap-6 p-5">
+		<div
+			key="loaded"
+			className="card flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:gap-6 lg:p-5"
+		>
 			{/* Activity graph */}
-			<div className="min-w-0">
+			<div className="min-w-0 lg:flex-1">
 				<div className="mb-3 flex items-baseline justify-between">
 					<h2 className="flex items-center gap-2 font-medium text-(--foreground-muted) text-sm">
 						<Clock className="size-4 text-(--accent)" />
@@ -77,8 +80,8 @@ export function StatsStrip({
 				<ActivityGraph data={days} />
 			</div>
 
-			{/* Headline stats */}
-			<div className="flex flex-wrap items-center gap-6 border-(--border) border-t pt-4">
+			{/* Headline stats: under the graph, or beside it on a wide screen. */}
+			<div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-(--border) border-t pt-4 lg:shrink-0 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
 				{mostWatchedShow && <MostWatchedShowStat show={mostWatchedShow} />}
 				<NumberStat label="Added this month" value={watchedThisMonth} />
 				<NumberStat
@@ -177,7 +180,9 @@ function MostWatchedShowStat({ show }: { show: MostWatchedShowDto }) {
 			) : (
 				<div className="h-14 w-10 shrink-0 rounded bg-(--background-subtle)" />
 			)}
-			<div className="min-w-0">
+			{/* Capped: beside the graph on a wide screen this group does not
+			    shrink, so a long title would otherwise squeeze the graph. */}
+			<div className="min-w-0 max-w-48">
 				<p className="text-(--foreground-muted) text-xs">Most watched</p>
 				<p className="line-clamp-2 font-semibold text-sm">{show.title}</p>
 				<p className="text-(--foreground-muted) text-xs">

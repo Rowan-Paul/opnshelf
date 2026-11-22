@@ -27,7 +27,7 @@ export function ReleaseAvailability({ entry }: { entry: ReleaseNote }) {
 export function ReleaseNotesSkeleton() {
 	return (
 		<section
-			className="mx-auto max-w-3xl space-y-10 px-4 py-12"
+			className="mx-auto max-w-3xl space-y-8 px-4 py-8"
 			aria-label="Loading release notes"
 		>
 			{[0, 1, 2].map((i) => (
@@ -46,18 +46,18 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 	if (!notes.data && notes.isPending) return <ReleaseNotesSkeleton />;
 	const entry = notes.data?.find((item) => item.slug === slug);
 	return (
-		<div className="container-app py-10 sm:py-14">
+		<div className="container-app py-8 sm:py-10">
 			<div className="mx-auto max-w-3xl">
 				{slug && (
 					<Link
 						to="/whats-new"
-						className="mb-8 inline-flex items-center gap-2 text-(--foreground-muted) text-sm hover:text-(--foreground)"
+						className="mb-6 inline-flex items-center gap-2 text-(--foreground-muted) text-sm hover:text-(--foreground)"
 					>
 						<ArrowLeft className="size-4" />
 						All release notes
 					</Link>
 				)}
-				<header className="mb-10 space-y-3">
+				<header className="mb-6 space-y-3">
 					<h1 className="text-display-1">
 						{slug
 							? (entry?.title ??
@@ -111,7 +111,7 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 				)}
 				{slug ? (
 					entry ? (
-						<article className="space-y-8">
+						<article className="space-y-6">
 							<ReleaseAvailability entry={entry} />
 							<div className="[&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl">
 								<MarkdownContent markdown={entry.markdown} />
@@ -128,7 +128,7 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 				) : (
 					<>
 						{notes.data?.length === 0 && (
-							<div className="rounded-xl border border-(--border) p-8">
+							<div className="rounded-xl border border-(--border) p-6">
 								<h2 className="font-display font-semibold text-lg">
 									The next chapter starts here
 								</h2>
@@ -140,7 +140,7 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 						)}
 						<div className="divide-y divide-(--border)">
 							{notes.data?.map((note) => (
-								<article key={note.slug} className="space-y-4 py-8 first:pt-0">
+								<article key={note.slug} className="space-y-4 py-6 first:pt-0">
 									<time
 										className="text-(--foreground-muted) text-xs"
 										dateTime={note.publishedAt}

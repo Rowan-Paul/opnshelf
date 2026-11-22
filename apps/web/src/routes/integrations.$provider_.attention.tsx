@@ -29,7 +29,7 @@ function AttentionPage() {
 	const integration = findIntegration(provider);
 	if (!integration) return null;
 	return (
-		<div className="container-app py-8 sm:py-12">
+		<div className="container-app py-6 sm:py-8">
 			<IntegrationSyncManager
 				key={integration.id}
 				integration={integration}

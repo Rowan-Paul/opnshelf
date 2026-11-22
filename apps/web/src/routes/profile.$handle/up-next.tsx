@@ -200,7 +200,7 @@ function ProfileUpNextPage() {
 				</div>
 			) : isError && !data ? null : items.length === 0 ? (
 				<div
-					className="card p-8 text-center"
+					className="card p-6 text-center"
 					aria-busy={isFetching}
 					style={{ opacity: isFetching ? 0.5 : 1 }}
 				>

@@ -126,7 +126,7 @@ function ProfileConnectionsPage() {
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-display-2">@{handle}</h1>
+			<h1 className="break-words text-display-2">@{handle}</h1>
 
 			{/* Sub-tabs */}
 			<div className="flex gap-2 border-(--border) border-b">
@@ -158,7 +158,7 @@ function ProfileConnectionsPage() {
 			{activeQuery.isLoading ? (
 				<UserRowsSkeleton />
 			) : !activeQuery.data || activeQuery.data.items.length === 0 ? (
-				<div className="card p-8 text-center">
+				<div className="card p-6 text-center">
 					<Users className="mx-auto mb-3 size-12 text-(--foreground-muted)" />
 					<p className="text-(--foreground-muted)">
 						{activeTab === "followers"

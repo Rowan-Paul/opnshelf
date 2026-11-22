@@ -106,12 +106,12 @@ export function ActivityFeed({
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-3">
 			{groupActivities(activities, userTimezone ?? "UTC", now).map(
 				(group, index, groups) => (
 					<div key={group.id}>
 						{(index === 0 || groups[index - 1].day !== group.day) && (
-							<h2 className="mb-3 font-semibold text-(--foreground-muted) text-sm">
+							<h2 className="mb-2 font-semibold text-(--foreground-muted) text-sm">
 								{group.label}
 							</h2>
 						)}

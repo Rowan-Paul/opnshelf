@@ -3,6 +3,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, Home, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { posthog } from "#/integrations/posthog/provider";
+import { movieBoundaryDiagnostics } from "#/lib/movie-loader-diagnostics";
 
 interface ErrorComponentProps {
 	// The router types thrown values as unknown: anything can be thrown.
@@ -24,6 +25,7 @@ export function DefaultErrorComponent({
 		if (thrown) {
 			posthog.captureException(thrown, {
 				error_boundary: "tanstack_router",
+				...movieBoundaryDiagnostics(routeId, thrown),
 				$issue_name: `Page failed: ${routeId}${status === undefined ? "" : ` (HTTP ${status})`}`,
 			});
 		}

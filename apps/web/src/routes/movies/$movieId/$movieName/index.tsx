@@ -1,4 +1,4 @@
-import { moviesControllerGetMovieDetailsOptions } from "@opnshelf/api";
+import { formatCatalogueDate } from "@opnshelf/api";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -13,7 +13,6 @@ import {
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
-import { withUserLocale } from "#/lib/date-utils";
 import { formatRuntime } from "#/lib/format-runtime";
 import {
 	useMediaWatchStatus,
@@ -27,6 +26,7 @@ import {
 	buildMoviePageMeta,
 	getOpenGraphMetaDescriptors,
 } from "#/lib/media-meta";
+import { loadMovieDetails } from "#/lib/movie-loader-diagnostics";
 import CommunityReviews from "../../../../components/CommunityReviews";
 import { CreditsSummary } from "../../../../components/CreditsSections";
 import DetailsCard from "../../../../components/DetailsCard";
@@ -40,13 +40,8 @@ import { DetailPageSkeleton } from "../../../../components/skeletons";
 import WatchProviders from "../../../../components/WatchProviders";
 import { YourActivity } from "../../../../components/YourActivity";
 export const Route = createFileRoute("/movies/$movieId/$movieName/")({
-	loader: async ({ context, params }) => {
-		return context.queryClient.ensureQueryData(
-			moviesControllerGetMovieDetailsOptions({
-				path: { movieId: params.movieId },
-			}),
-		);
-	},
+	loader: ({ context, params }) =>
+		loadMovieDetails(context.queryClient, params.movieId),
 	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData, params, match }) => {
 		const meta = buildMoviePageMeta(loaderData, params.movieName);
@@ -77,7 +72,6 @@ function MovieDetailPage() {
 		isLoading: authLoading,
 	} = useAuth();
 	const navigate = useNavigate();
-	const userTimezone = userSettings?.timezone;
 
 	// Redirect authenticated users who still need onboarding
 	useEffect(() => {
@@ -144,6 +138,9 @@ function MovieDetailPage() {
 		? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
 		: "";
 
+	const releaseDate =
+		formatCatalogueDate(movie.release_date, "en-US") ?? "Unknown";
+
 	const director =
 		movie.credits?.crew?.find((person) => person.job === "Director")?.name ||
 		"Unknown";
@@ -157,7 +154,7 @@ function MovieDetailPage() {
 				title: m.title,
 				type: "movie" as const,
 				year: m.release_date
-					? new Date(m.release_date).getFullYear()
+					? new Date(m.release_date).getUTCFullYear()
 					: undefined,
 				posterUrl: m.poster_path
 					? `https://image.tmdb.org/t/p/w300${m.poster_path}`
@@ -190,17 +187,7 @@ function MovieDetailPage() {
 							</>
 						) : null}
 						<span className="text-(--border-strong)">•</span>
-						<span>
-							{movie.release_date
-								? new Date(movie.release_date).toLocaleDateString(
-										"en-US",
-										withUserLocale(
-											{ month: "long", day: "numeric", year: "numeric" },
-											userTimezone,
-										),
-									)
-								: "Unknown"}
-						</span>
+						<span>{releaseDate}</span>
 						<span className="text-(--border-strong)">•</span>
 						<GenreLinks genres={movie.genres} mediaType="movie" />
 					</>
@@ -264,12 +251,12 @@ function MovieDetailPage() {
 			/>
 
 			{/* Main Content */}
-			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-x-12 lg:gap-y-8">
+			<div className="container-app relative z-20 mt-6">
+				<div className="grid gap-6 lg:grid-cols-[2fr_1fr] lg:gap-x-12 lg:gap-y-6">
 					{/* Left Column */}
-					<div className="space-y-8">
+					<div className="space-y-6">
 						<section>
-							<h2 className="mb-4 text-display-3">Overview</h2>
+							<h2 className="mb-3 text-display-3">Overview</h2>
 							<p className="text-(--foreground-muted) leading-relaxed">
 								{movie.overview}
 							</p>
@@ -297,15 +284,7 @@ function MovieDetailPage() {
 								},
 								{
 									label: "Release",
-									value: movie.release_date
-										? new Date(movie.release_date).toLocaleDateString(
-												"en-US",
-												withUserLocale(
-													{ month: "long", day: "numeric", year: "numeric" },
-													userTimezone,
-												),
-											)
-										: "Unknown",
+									value: releaseDate,
 								},
 								{
 									label: "Genres",
@@ -344,7 +323,7 @@ function MovieDetailPage() {
 					</div>
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}
-					<div className="order-last space-y-8 lg:order-none lg:col-start-1 lg:row-start-2">
+					<div className="order-last space-y-6 lg:order-none lg:col-start-1 lg:row-start-2">
 						<div className="lg:hidden">
 							<CreditsSummary
 								credits={movie.credits}

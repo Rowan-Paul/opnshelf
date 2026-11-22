@@ -340,13 +340,13 @@ function ShowDetailPage() {
 			/>
 
 			{/* Main Content */}
-			<div className="container-app relative z-20 mt-8">
-				<div className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
+			<div className="container-app relative z-20 mt-6">
+				<div className="grid gap-6 lg:grid-cols-[2fr_1fr] lg:gap-12">
 					{/* Left Column */}
-					<div className="space-y-8">
+					<div className="space-y-6">
 						{/* Overview */}
 						<section>
-							<h2 className="mb-4 text-display-3">Overview</h2>
+							<h2 className="mb-3 text-display-3">Overview</h2>
 							<p className="text-(--foreground-muted) leading-relaxed">
 								{show.overview || "No overview available."}
 							</p>
@@ -355,7 +355,7 @@ function ShowDetailPage() {
 						{/* Episodes */}
 						{show.seasons && show.seasons.length > 0 && (
 							<section>
-								<h2 className="mb-4 text-display-3">Seasons</h2>
+								<h2 className="mb-3 text-display-3">Seasons</h2>
 								<div className="space-y-3">
 									{show.seasons
 										.filter((season) => season.season_number > 0)
@@ -390,7 +390,7 @@ function ShowDetailPage() {
 							</section>
 						)}
 
-						<div className="hidden space-y-8 lg:block">
+						<div className="hidden space-y-6 lg:block">
 							<CreditsSummary
 								credits={show.credits}
 								creditsTo="/shows/$showId/$showName/credits"
@@ -450,7 +450,7 @@ function ShowDetailPage() {
 					</div>
 				</div>
 
-				<div className="mt-8 space-y-8 lg:hidden">
+				<div className="mt-6 space-y-6 lg:hidden">
 					<CreditsSummary
 						credits={show.credits}
 						creditsTo="/shows/$showId/$showName/credits"
