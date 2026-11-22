@@ -1,11 +1,13 @@
 import { cleanup, render } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Route } from "./index";
 
 const state = vi.hoisted(() => ({
 	averageRating: undefined as number | undefined,
 	voteAverage: undefined as number | undefined,
+	timezone: undefined as string | undefined,
 }));
 vi.mock("@tanstack/react-router", () => ({
 	createFileRoute: () => (options: object) => ({
@@ -16,7 +18,10 @@ vi.mock("@tanstack/react-router", () => ({
 	useNavigate: () => vi.fn(),
 }));
 vi.mock("#/lib/auth-context", () => ({
-	useAuth: () => ({ isAuthenticated: false }),
+	useAuth: () => ({
+		isAuthenticated: false,
+		userSettings: { timezone: state.timezone },
+	}),
 }));
 vi.mock("#/lib/hooks/useRatings", () => ({
 	useMediaRating: () => ({
@@ -25,7 +30,12 @@ vi.mock("#/lib/hooks/useRatings", () => ({
 }));
 vi.mock("#/lib/hooks", () => ({
 	useMovieDetails: () => ({
-		data: { id: 1, title: "Fixture film", vote_average: state.voteAverage },
+		data: {
+			id: 1,
+			title: "Fixture film",
+			release_date: "2026-01-01",
+			vote_average: state.voteAverage,
+		},
 	}),
 	useMovieRecommendations: () => ({}),
 	useMediaWatchStatus: () => ({}),
@@ -54,7 +64,25 @@ vi.mock("../../../../components/SimilarMediaGrid", () => ({
 	default: () => null,
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+	state.timezone = undefined;
+	cleanup();
+});
+
+it("hydrates the catalogue release day across server and user timezones", () => {
+	const Page = Route.options.component as ComponentType;
+	const container = document.createElement("div");
+	container.innerHTML = renderToString(<Page />);
+	state.timezone = "America/Los_Angeles";
+	const onRecoverableError = vi.fn();
+	const view = render(<Page />, {
+		container,
+		hydrate: true,
+		onRecoverableError,
+	});
+	expect(view.getAllByText("January 1, 2026")).toHaveLength(2);
+	expect(onRecoverableError).not.toHaveBeenCalled();
+});
 
 describe("Movie hero rating", () => {
 	it.each([

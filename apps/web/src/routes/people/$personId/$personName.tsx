@@ -1,5 +1,8 @@
 import type { PersonFilmographyItemDto } from "@opnshelf/api";
-import { peopleControllerGetPersonDetailsOptions } from "@opnshelf/api";
+import {
+	formatCatalogueDate,
+	peopleControllerGetPersonDetailsOptions,
+} from "@opnshelf/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Calendar,
@@ -12,7 +15,6 @@ import { useMemo } from "react";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
-import { formatDate } from "#/lib/date-utils";
 import {
 	ShowProgressScope,
 	usePersonDetails,
@@ -47,7 +49,7 @@ function getRoleText(item: PersonFilmographyItemDto): string | undefined {
 function getYear(item: PersonFilmographyItemDto): string | undefined {
 	const date = item.release_date || item.first_air_date;
 	if (!date) return undefined;
-	const year = new Date(date).getFullYear();
+	const year = new Date(date).getUTCFullYear();
 	return Number.isNaN(year) ? undefined : String(year);
 }
 
@@ -86,8 +88,7 @@ export const Route = createFileRoute("/people/$personId/$personName")({
 
 function PersonDetailPage() {
 	const { personId } = Route.useParams();
-	const { userSettings, isAuthenticated } = useAuth();
-	const userTimezone = userSettings?.timezone;
+	const { isAuthenticated } = useAuth();
 
 	const { data: person, isLoading, error } = usePersonDetails(personId);
 	const {
@@ -186,17 +187,19 @@ function PersonDetailPage() {
 		? `https://image.tmdb.org/t/p/w500${person.profile_path}`
 		: "";
 
+	const birthday = formatCatalogueDate(person.birthday, "en-US") ?? "Unknown";
+	const deathday = formatCatalogueDate(person.deathday, "en-US") ?? "Unknown";
 	const birthYear = person.birthday
-		? new Date(person.birthday).getFullYear()
+		? new Date(person.birthday).getUTCFullYear()
 		: null;
 	const deathYear = person.deathday
-		? new Date(person.deathday).getFullYear()
+		? new Date(person.deathday).getUTCFullYear()
 		: null;
 	const age =
 		birthYear && !Number.isNaN(birthYear)
 			? deathYear && !Number.isNaN(deathYear)
 				? deathYear - birthYear
-				: new Date().getFullYear() - birthYear
+				: new Date().getUTCFullYear() - birthYear
 			: null;
 
 	return (
@@ -276,14 +279,14 @@ function PersonDetailPage() {
 								{person.birthday && (
 									<span className="flex items-center gap-1 text-(--foreground-muted)">
 										<Calendar className="size-4" />
-										Born {formatDate(person.birthday, userTimezone)}
+										Born {birthday}
 										{age !== null && !person.deathday && ` (${age} years)`}
 									</span>
 								)}
 								{person.deathday && (
 									<span className="flex items-center gap-1 text-(--foreground-muted)">
 										<Calendar className="size-4" />
-										Died {formatDate(person.deathday, userTimezone)}
+										Died {deathday}
 										{age !== null && ` (aged ${age})`}
 									</span>
 								)}
@@ -419,9 +422,7 @@ function PersonDetailPage() {
 								},
 								{
 									label: "Born",
-									value: person.birthday
-										? formatDate(person.birthday, userTimezone)
-										: "Unknown",
+									value: birthday,
 								},
 								{
 									label: "Birthplace",
@@ -438,7 +439,7 @@ function PersonDetailPage() {
 									? [
 											{
 												label: "Died",
-												value: formatDate(person.deathday, userTimezone),
+												value: deathday,
 											},
 										]
 									: []),
