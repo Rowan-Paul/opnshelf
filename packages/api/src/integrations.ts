@@ -18,10 +18,6 @@ import type {
 } from "./generated/types.gen";
 import { getHttpStatus } from "./http-errors";
 
-/**
- * One definition per Integration (ADR 0051). Both clients render every
- * Integration from these, so names, record types and directions stay in step.
- */
 export type IntegrationId = "trakt" | "popfeed" | "bingers";
 export type IntegrationRecordType =
 	| "watches"
@@ -294,7 +290,6 @@ export function integrationIssueRecovery(
 	return item.opnshelf && item.remote ? "choose" : "retry";
 }
 
-/** Errors and unresolved items take priority over background progress on both clients. */
 export function integrationErrorMessage(
 	sync:
 		| (Pick<SyncStatusDto, "status"> &
@@ -390,7 +385,6 @@ export function integrationMissingConfirmation(name: string) {
 	return `I checked ${name} and confirmed this item is missing.`;
 }
 
-/** A short status line for the Integrations list. */
 export function integrationStatusLabel(status: SyncStatusDto | undefined) {
 	if (!status || status.status === "disconnected") return "Not connected";
 	if (status.status === "reconnect") return "Reconnect to continue";
@@ -455,7 +449,6 @@ export function bringsIntegrationWatches(
 	);
 }
 
-/** Words for the onboarding step that offers every Integration at once. */
 /** "Trakt, Popfeed, and Bingers", so copy never lists Integrations by hand. */
 export function integrationNames(
 	conjunction: "and" | "or" = "and",

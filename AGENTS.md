@@ -46,7 +46,7 @@ Run commands from the repository root. `pnpm typecheck` and `pnpm check` cover W
 | Web | `pnpm --filter web run test` |
 | Backend | `pnpm --filter backend run test`<br>`pnpm --filter backend run build` |
 | Mobile | `pnpm --filter mobile run test` |
-| API client | `pnpm generate:api`<br>Review the intended changes in `backend/openapi.json` and `packages/api/src/generated`<br>`pnpm --filter @opnshelf/api exec tsc --noEmit` |
+| API client | `pnpm generate:api`<br>Review the intended changes in `backend/openapi.json` and `packages/api/src/generated`<br>`pnpm --filter @opnshelf/api exec tsc --noEmit`<br>`pnpm check:api-comments` |
 | Mail relay | `npm --prefix services/mail-relay ci`<br>`node --check services/mail-relay/index.js`<br>For deploy-image changes: `docker build --file services/mail-relay/Dockerfile .` |
 | Docs only | No code gate unless the document changes executable examples or generated artifacts |
 
@@ -69,6 +69,7 @@ Never hand-edit generated output. Change its source, run the owning command, and
 | `backend/src/generated/**` | `pnpm prisma:generate` (Prisma schema: `backend/prisma/schema.prisma`) |
 | `backend/src/lexicons/**` | `pnpm --filter backend run lex:build` (source: `lexicons/**`) |
 | `backend/openapi.json`, `packages/api/src/generated/**` | `pnpm generate:api` (source: backend controllers and DTOs) |
+| `scripts/api-comment-baseline.json` | `pnpm check:api-comments --prune` (handwritten TypeScript in `packages/api/src`) |
 | `apps/web/src/routeTree.gen.ts` | TanStack Router tooling; edit `apps/web/src/routes/**`, then run the relevant web dev/build tooling to regenerate it |
 
 ## Safety boundaries
