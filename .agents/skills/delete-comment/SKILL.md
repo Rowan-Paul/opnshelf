@@ -4,7 +4,8 @@ description: Audit and remove code comments in a requested Opnshelf scope. Use w
 ---
 
 Default to handwritten `packages/api/src`. Run `pnpm check:api-comments --list`
-to inventory comments and estimate removable lines there. For other scopes,
+to inventory comments and count comment-only lines, an upper bound on line
+savings. For other scopes,
 inspect the requested source directly. Exclude generated files.
 
 Read each comment with its surrounding code and applicable ADRs.
@@ -21,5 +22,7 @@ Read each comment with its surrounding code and applicable ADRs.
   in place and report the reason.
 
 Run `pnpm check:api-comments --prune` after deleting comments in the shared
-API source. Run the affected gates from AGENTS.md. Report the lines removed,
+API source. The pilot matches comments by file and text, so adding, editing,
+or moving them across files requires a deliberate change to the lint policy.
+Run the affected gates from AGENTS.md. Report the lines removed,
 the remaining estimate, ADR updates, and issue drafts.

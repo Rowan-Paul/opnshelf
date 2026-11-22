@@ -2,8 +2,14 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
-const api = new URL("../packages/api/", import.meta.url);
-const ts = createRequire(api)("typescript");
+const [mode, ...extraArguments] = process.argv.slice(2);
+if (extraArguments.length || (mode !== undefined && !["--list", "--prune"].includes(mode))) {
+	console.error("Usage: pnpm check:api-comments [--list | --prune]");
+	process.exit(1);
+}
+
+const apiPackageUrl = new URL("../packages/api/", import.meta.url);
+const ts = createRequire(apiPackageUrl)("typescript");
 const baselineFile = new URL("./api-comment-baseline.json", import.meta.url);
 
 function* sourceFiles(directory, prefix = "") {
@@ -18,14 +24,13 @@ function* sourceFiles(directory, prefix = "") {
 	}
 }
 
-const remaining = JSON.parse(readFileSync(baselineFile, "utf8"));
-const current = {};
+const remainingBaselineCounts = JSON.parse(readFileSync(baselineFile, "utf8"));
+const observedCounts = {};
 let removableLines = 0;
 let additions = 0;
-const mode = process.argv[2];
 const list = mode === "--list";
 
-for (const [path, text] of sourceFiles(new URL("src/", api))) {
+for (const [path, text] of sourceFiles(new URL("src/", apiPackageUrl))) {
 	const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
 	const spans = ts.getSyntacticClassifications(
 		{ throwIfCancellationRequested() {} },
@@ -54,28 +59,28 @@ for (const [path, text] of sourceFiles(new URL("src/", api))) {
 		const first = source.getLineAndCharacterOfPosition(start).line;
 		const location = `packages/api/src/${path}:${first + 1}`;
 		const key = `${path}:${createHash("sha256").update(comment).digest("hex")}`;
-		current[key] = (current[key] ?? 0) + 1;
+		observedCounts[key] = (observedCounts[key] ?? 0) + 1;
 		if (list) {
 			console.log(`${location} ${comment}`);
-		} else if ((remaining[key] ?? 0) < 1) {
+		} else if ((remainingBaselineCounts[key] ?? 0) < 1) {
 			console.error(`${location} New or edited comment.`);
 			additions++;
 		} else {
-			remaining[key]--;
+			remainingBaselineCounts[key]--;
 		}
 	}
 }
 
 if (list) {
-	console.log(`Approximately ${removableLines} lines could be removed.`);
+	console.log(`${removableLines} comment-only lines remain.`);
 } else if (additions > 0) {
 	process.exitCode = 1;
 } else if (mode === "--prune") {
 	const sorted = Object.fromEntries(
-		Object.keys(current).sort().map((key) => [key, current[key]]),
+		Object.keys(observedCounts).sort().map((key) => [key, observedCounts[key]]),
 	);
 	writeFileSync(baselineFile, JSON.stringify(sorted, null, 2) + "\n");
-} else if (Object.values(remaining).some((count) => count > 0)) {
+} else if (Object.values(remainingBaselineCounts).some((count) => count > 0)) {
 	console.error("Run pnpm check:api-comments --prune to retire removed comments from the baseline.");
 	process.exitCode = 1;
 }

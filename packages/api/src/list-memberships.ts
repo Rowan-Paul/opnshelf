@@ -4,7 +4,6 @@ import type {
 	MovieWatchCountDto,
 } from "./generated";
 
-
 /** A media item as the lists store it: season and episode are 0 when absent. */
 export interface ListItemRef {
 	mediaType: "movie" | "show" | "season" | "episode";

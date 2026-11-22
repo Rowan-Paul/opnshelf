@@ -84,7 +84,7 @@ jobs:
               - 'turbo.json'
               - '.github/workflows/ci.yml'
             api:
-              - 'scripts/check-api-comments.mjs'
+              - 'scripts/check-api-comments*.mjs'
               - 'scripts/api-comment-baseline.json'
               - 'backend/**'
               - 'packages/api/**'
@@ -309,7 +309,9 @@ jobs:
         run: pnpm --filter @opnshelf/api exec tsc --noEmit
 
       - name: Check shared API comments
-        run: pnpm check:api-comments
+        run: |
+          pnpm check:api-comments
+          node --test scripts/check-api-comments.test.mjs
 
   ci:
     name: CI result
