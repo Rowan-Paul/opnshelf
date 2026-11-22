@@ -37,9 +37,15 @@ for (const [path, text] of sourceFiles(new URL("src/", apiPackageUrl))) {
 		source,
 		{ start: 0, length: text.length },
 	);
-	const comments = spans
-		.filter(({ classificationType }) => classificationType === "comment")
-		.map(({ textSpan }) => textSpan);
+	const comments = [];
+	let commentEnd = 0;
+	for (const { classificationType, textSpan: { start } } of spans) {
+		if (classificationType !== "comment" || start < commentEnd) continue;
+		const [range] = ts.getTrailingCommentRanges(text, start) ?? [];
+		if (range?.pos !== start) continue;
+		commentEnd = range.end;
+		comments.push({ start, length: commentEnd - start });
+	}
 	if (list) {
 		let end = 0;
 		let stripped = "";
