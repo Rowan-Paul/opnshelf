@@ -1,7 +1,4 @@
-import {
-	formatCatalogueDate,
-	moviesControllerGetMovieDetailsOptions,
-} from "@opnshelf/api";
+import { formatCatalogueDate } from "@opnshelf/api";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +26,7 @@ import {
 	buildMoviePageMeta,
 	getOpenGraphMetaDescriptors,
 } from "#/lib/media-meta";
+import { loadMovieDetails } from "#/lib/movie-loader-diagnostics";
 import CommunityReviews from "../../../../components/CommunityReviews";
 import { CreditsSummary } from "../../../../components/CreditsSections";
 import DetailsCard from "../../../../components/DetailsCard";
@@ -42,13 +40,8 @@ import { DetailPageSkeleton } from "../../../../components/skeletons";
 import WatchProviders from "../../../../components/WatchProviders";
 import { YourActivity } from "../../../../components/YourActivity";
 export const Route = createFileRoute("/movies/$movieId/$movieName/")({
-	loader: async ({ context, params }) => {
-		return context.queryClient.ensureQueryData(
-			moviesControllerGetMovieDetailsOptions({
-				path: { movieId: params.movieId },
-			}),
-		);
-	},
+	loader: ({ context, params }) =>
+		loadMovieDetails(context.queryClient, params.movieId),
 	headers: ({ loaderData }) => publicMediaPageHeaders(Boolean(loaderData)),
 	head: ({ loaderData, params, match }) => {
 		const meta = buildMoviePageMeta(loaderData, params.movieName);
