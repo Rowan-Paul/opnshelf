@@ -71,13 +71,6 @@ client.interceptors.response.use(async (response, request) => {
 		const authorization = request.headers.get("Authorization");
 		onUnauthorized?.(authorization?.replace(/^Bearer /, "") ?? null);
 	}
-	if (response.ok && response.headers.get("content-length") === "0") {
-		return new Response("null", {
-			status: response.status,
-			statusText: response.statusText,
-			headers: { "content-type": "application/json" },
-		});
-	}
 	return response;
 });
 
