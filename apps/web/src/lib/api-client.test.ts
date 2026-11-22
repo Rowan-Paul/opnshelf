@@ -2,28 +2,29 @@ import {
 	client,
 	describeMutationFailure,
 	integrationApiControllerStatus,
+	notesControllerGetNote,
 } from "@opnshelf/api";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("api client", () => {
-	it("reads a bodiless 200 as null, not an empty object", async () => {
-		// An empty JSON response must remain null.
+	it("reads explicit JSON null from a 200 response", async () => {
 		vi.stubGlobal(
 			"fetch",
 			async () =>
-				new Response(null, {
+				new Response("null", {
 					status: 200,
 					headers: {
 						"content-type": "application/json",
-						"content-length": "0",
+						"content-length": "4",
 					},
 				}),
 		);
 
-		const { data } = await integrationApiControllerStatus({
-			path: { provider: "trakt" },
+		const { data } = await notesControllerGetNote({
+			path: { userDid: "did:plc:test" },
+			query: { mediaType: "movie", mediaId: "603" },
 		});
 
 		expect(data).toBeNull();

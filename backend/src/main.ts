@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/http-exception.filter";
+import { JsonNullExpressAdapter } from "./common/json-null-express-adapter";
 import { installProcessErrorHandlers } from "./common/process-error-handlers";
 import { assignRequestId } from "./common/request-id";
 import { createOpenApiDocument } from "./openapi";
@@ -17,12 +18,16 @@ const processLogger = new Logger("Process");
 installProcessErrorHandlers(processLogger);
 
 async function bootstrap() {
-	const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-		logger: isProduction
-			? ["log", "error", "warn"]
-			: ["log", "error", "warn", "debug", "verbose"],
-		bufferLogs: false,
-	});
+	const app = await NestFactory.create<NestExpressApplication>(
+		AppModule,
+		new JsonNullExpressAdapter(),
+		{
+			logger: isProduction
+				? ["log", "error", "warn"]
+				: ["log", "error", "warn", "debug", "verbose"],
+			bufferLogs: false,
+		},
+	);
 
 	// Single proxy hop in front of us (Railway), so trust the first X-Forwarded-*
 	// entry. This makes req.ip resolve to the real client address.
