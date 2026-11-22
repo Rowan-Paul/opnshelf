@@ -60,7 +60,7 @@ export class WatchAccountLock {
 		});
 		// Keep one pool connection available for foreground work. Shared remote
 		// phases and content background jobs must yield before checking one out.
-		const remote = mode === "shared" || scope === "content";
+		const remote = !wait && (mode === "shared" || scope === "content");
 		if (remote && this.remoteOperations >= (this.pool.options.max ?? 10) - 1) {
 			log("admission_busy");
 			throw new WatchAccountBusyError();

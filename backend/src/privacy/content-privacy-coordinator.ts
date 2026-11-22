@@ -104,6 +104,9 @@ export class ContentPrivacyCoordinator {
 		return parent?.did === did
 			? run(parent.signal)
 			: this.locks.run(did, run, {
+					mode: "write",
+					scope: "content",
+					wait: true,
 					operationName,
 				});
 	}
