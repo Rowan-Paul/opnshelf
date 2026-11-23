@@ -666,7 +666,12 @@ function EntryForm({
 				</p>
 			)}
 			<div className="mt-6 flex flex-wrap gap-3">
-				<button type="submit" className="btn btn-primary" disabled={pending}>
+				<button
+					type="submit"
+					className="btn btn-primary"
+					disabled={pending}
+					aria-busy={pending}
+				>
 					{pending
 						? "Saving…"
 						: item?.active

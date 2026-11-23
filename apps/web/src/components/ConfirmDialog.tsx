@@ -57,6 +57,7 @@ export default function ConfirmDialog({
 						type="button"
 						onClick={onConfirm}
 						disabled={isPending}
+						aria-busy={isPending}
 						className={
 							variant === "destructive"
 								? "btn bg-destructive-solid text-white hover:bg-destructive-solid-hover"

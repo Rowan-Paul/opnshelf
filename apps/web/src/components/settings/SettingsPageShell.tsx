@@ -101,7 +101,7 @@ export function SettingsPageShell({
 	return (
 		<div className="container-app max-w-5xl py-6 sm:py-8">
 			<div className="mb-6 flex items-center gap-3 lg:ml-56">
-				<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
+				<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent-text)">
 					<Settings className="size-5" />
 				</div>
 				<div>
@@ -119,9 +119,9 @@ export function SettingsPageShell({
 								to="/settings/$section"
 								params={{ section }}
 								activeProps={{
-									className: "bg-(--accent-subtle) text-(--accent)",
+									className: "bg-(--accent-subtle) text-(--accent-text)",
 								}}
-								className="block rounded-lg px-3 py-2 font-medium text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+								className="block rounded-lg px-3 py-2 font-medium text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-(--ring) focus-visible:ring-2"
 							>
 								{label}
 							</Link>

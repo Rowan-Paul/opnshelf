@@ -67,6 +67,7 @@ function CirclesPage() {
 							className="btn btn-primary"
 							onClick={create}
 							disabled={!name.trim() || createCircle.isPending}
+							aria-busy={createCircle.isPending}
 						>
 							{createCircle.isPending ? (
 								<Loader2 className="size-4 animate-spin" />

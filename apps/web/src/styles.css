@@ -44,12 +44,19 @@
   --background-strong: var(--slate-200);
 
   --foreground: var(--slate-900);
-  --foreground-muted: var(--slate-500);
-  --foreground-subtle: var(--slate-400);
+  /* slate-500 darkened by 3% lightness: slate-500 itself is 4.34:1 on
+     --background-subtle, under the 4.5:1 that text needs. This is 4.8:1. */
+  --foreground-muted: #5e6d83;
+  /* Same value as muted: no lighter step reaches 4.5:1. */
+  --foreground-subtle: var(--foreground-muted);
 
   --accent: var(--accent-600);
   --accent-hover: var(--accent-700);
   --accent-foreground: #3f2e00;
+  /* Amber as a text colour. --accent is a fill: on the light surfaces it is
+     under 2:1, so links and labels use this darker step there. */
+  --accent-text: var(--accent-800);
+  --accent-text-hover: var(--accent-900);
   --accent-subtle: var(--accent-50);
   --accent-muted: var(--accent-100);
 
@@ -57,17 +64,20 @@
   --border-strong: var(--slate-300);
   --border-subtle: rgba(226, 232, 240, 0.6);
 
+  /* An HSL triplet: use it inside hsl(), never rgb(). */
   --shadow-color: 215 28% 17%;
-  --shadow-sm: 0 1px 2px 0 rgb(var(--shadow-color) / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(var(--shadow-color) / 0.08), 0 2px 4px -2px rgb(var(--shadow-color) / 0.04);
-  --shadow-lg: 0 10px 15px -3px rgb(var(--shadow-color) / 0.08), 0 4px 6px -4px rgb(var(--shadow-color) / 0.04);
-  --shadow-xl: 0 20px 25px -5px rgb(var(--shadow-color) / 0.08), 0 8px 10px -6px rgb(var(--shadow-color) / 0.04);
+  --shadow-sm: 0 1px 2px 0 hsl(var(--shadow-color) / 0.05);
+  --shadow-md: 0 4px 6px -1px hsl(var(--shadow-color) / 0.08), 0 2px 4px -2px hsl(var(--shadow-color) / 0.04);
+  --shadow-lg: 0 10px 15px -3px hsl(var(--shadow-color) / 0.08), 0 4px 6px -4px hsl(var(--shadow-color) / 0.04);
+  --shadow-xl: 0 20px 25px -5px hsl(var(--shadow-color) / 0.08), 0 8px 10px -6px hsl(var(--shadow-color) / 0.04);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
+  /* shadcn's base radius, read by the toast styling. */
+  --radius: var(--radius-md);
 
   /* shadcn/ui compatibility */
   --card: var(--background-elevated);
@@ -90,7 +100,8 @@
   --success: #16a34a;
   --warning: #d97706;
   --input: var(--border);
-  --ring: var(--accent-300);
+  /* A focus ring needs 3:1 against the surface it lands on. */
+  --ring: var(--accent-800);
 }
 
 .dark {
@@ -101,11 +112,13 @@
 
   --foreground: var(--slate-50);
   --foreground-muted: var(--slate-400);
-  --foreground-subtle: var(--slate-500);
+  --foreground-subtle: var(--foreground-muted);
 
   --accent: var(--accent-400);
   --accent-hover: var(--accent-300);
   --accent-foreground: #3f2e00;
+  --accent-text: var(--accent);
+  --accent-text-hover: var(--accent-hover);
   --accent-subtle: rgba(251, 191, 36, 0.15);
   --accent-muted: rgba(251, 191, 36, 0.25);
 
@@ -114,10 +127,10 @@
   --border-subtle: rgba(30, 41, 59, 0.8);
 
   --shadow-color: 0 0% 0%;
-  --shadow-sm: 0 1px 2px 0 rgb(var(--shadow-color) / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(var(--shadow-color) / 0.4), 0 2px 4px -2px rgb(var(--shadow-color) / 0.2);
-  --shadow-lg: 0 10px 15px -3px rgb(var(--shadow-color) / 0.4), 0 4px 6px -4px rgb(var(--shadow-color) / 0.2);
-  --shadow-xl: 0 20px 25px -5px rgb(var(--shadow-color) / 0.4), 0 8px 10px -6px rgb(var(--shadow-color) / 0.2);
+  --shadow-sm: 0 1px 2px 0 hsl(var(--shadow-color) / 0.3);
+  --shadow-md: 0 4px 6px -1px hsl(var(--shadow-color) / 0.4), 0 2px 4px -2px hsl(var(--shadow-color) / 0.2);
+  --shadow-lg: 0 10px 15px -3px hsl(var(--shadow-color) / 0.4), 0 4px 6px -4px hsl(var(--shadow-color) / 0.2);
+  --shadow-xl: 0 20px 25px -5px hsl(var(--shadow-color) / 0.4), 0 8px 10px -6px hsl(var(--shadow-color) / 0.2);
 
   --card: var(--background-elevated);
   --card-foreground: var(--foreground);
@@ -199,7 +212,7 @@ body {
 /* Selection */
 ::selection {
   background-color: var(--accent-subtle);
-  color: var(--accent-hover);
+  color: var(--accent-text);
 }
 
 /* ==========================================================================
@@ -286,7 +299,9 @@ body {
   transform: translateY(-2px);
 }
 
-/* Button base — in @layer components so Tailwind utilities (p-0, gap-2, …) can override */
+/* Button base — in @layer components so Tailwind utilities (p-0, gap-2, …) can override.
+   The Button component (components/ui/button.tsx) renders these same classes,
+   so a `.btn` in markup and a <Button> cannot drift apart. */
 @layer components {
   .btn {
     display: inline-flex;
@@ -309,6 +324,13 @@ body {
     outline-offset: 2px;
   }
 
+  /* Matches the Mobile button: every dimmed button dims by the same amount. */
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
   .btn-primary {
     background-color: var(--accent);
     color: #3f2e00;
@@ -318,6 +340,17 @@ body {
   .btn-primary:hover {
     background-color: var(--accent-hover);
     border-color: var(--accent-hover);
+  }
+
+  /* Fading the amber fill collapses the contrast against its dark label, so a
+     disabled primary gets a muted fill instead. A busy button keeps the fill:
+     that state is momentary. */
+  .btn-primary:disabled:not([aria-busy="true"]),
+  .btn-primary[aria-disabled="true"]:not([aria-busy="true"]) {
+    opacity: 1;
+    background-color: var(--background-subtle);
+    border-color: var(--border);
+    color: var(--foreground-muted);
   }
 
   .btn-secondary {
@@ -354,10 +387,12 @@ body {
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
+/* The ring itself is the opaque 2px of --ring (border plus 1px); the amber
+   halo around it is decoration and carries no contrast on its own. */
 .input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring), 0 0 0 4px var(--accent-subtle);
 }
 
 .input::placeholder {
@@ -419,85 +454,7 @@ body {
 
 .badge-accent {
   background-color: var(--accent-subtle);
-  color: var(--accent);
-}
-
-/* ==========================================================================
-   Media Cards
-   ========================================================================== */
-
-.media-card {
-  position: relative;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background-color: var(--background-elevated);
-  border: 1px solid var(--border);
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-
-.media-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.media-card-poster {
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  width: 100%;
-}
-
-.media-card-content {
-  padding: 0.75rem;
-}
-
-.media-card-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  color: var(--foreground);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.media-card-meta {
-  font-size: 0.75rem;
-  color: var(--foreground-muted);
-  margin-top: 0.25rem;
-}
-
-/* ==========================================================================
-   Empty States
-   ========================================================================== */
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1.5rem;
-  text-align: center;
-}
-
-.empty-state-icon {
-  width: 48px;
-  height: 48px;
-  color: var(--foreground-subtle);
-  margin-bottom: 1rem;
-}
-
-.empty-state-title {
-  font-family: var(--font-display);
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--foreground);
-  margin-bottom: 0.5rem;
-}
-
-.empty-state-description {
-  font-size: 0.875rem;
-  color: var(--foreground-muted);
-  max-width: 400px;
+  color: var(--accent-text);
 }
 
 /* ==========================================================================
@@ -561,19 +518,6 @@ body {
   animation: review-flash 2s ease-out forwards;
 }
 
-/* Stagger children animations */
-.stagger-children > * {
-  opacity: 0;
-  animation: slide-up 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
-
 /* ==========================================================================
    Scrollbar
    ========================================================================== */
@@ -616,14 +560,6 @@ body {
   text-wrap: balance;
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, var(--accent-400), #f97316);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 /* Glass effect for headers */
 .glass {
   background-color: rgba(255, 255, 255, 0.8);
@@ -637,7 +573,7 @@ body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     background-color: var(--background);

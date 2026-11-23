@@ -148,7 +148,7 @@ function ToastItem({
 						}}
 						className="rounded-lg bg-background-subtle px-2.5 py-1.5"
 					>
-						<Text className="font-semibold text-primary text-xs">
+						<Text className="font-semibold text-accent-text text-xs">
 							{toast.action.label}
 						</Text>
 					</Pressable>

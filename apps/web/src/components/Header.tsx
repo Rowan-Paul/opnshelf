@@ -250,7 +250,7 @@ export default function Header() {
 											onClick={() => setMobileMenuOpen(false)}
 											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
 												isActive
-													? "bg-(--accent-subtle) text-(--accent)"
+													? "bg-(--accent-subtle) text-(--accent-text)"
 													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
 											}`}
 										>
@@ -275,7 +275,7 @@ export default function Header() {
 													onClick={() => setMobileMenuOpen(false)}
 													className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
 														isActive
-															? "bg-(--accent-subtle) text-(--accent)"
+															? "bg-(--accent-subtle) text-(--accent-text)"
 															: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
 													}`}
 												>
@@ -290,7 +290,7 @@ export default function Header() {
 											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
 												currentPath === "/whats-new" ||
 												currentPath.startsWith("/whats-new/")
-													? "bg-(--accent-subtle) text-(--accent)"
+													? "bg-(--accent-subtle) text-(--accent-text)"
 													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
 											}`}
 										>
@@ -302,7 +302,7 @@ export default function Header() {
 											onClick={() => setMobileMenuOpen(false)}
 											className={`flex items-center gap-3 rounded-md px-3 py-3 font-medium text-sm transition-colors ${
 												currentPath === "/settings"
-													? "bg-(--accent-subtle) text-(--accent)"
+													? "bg-(--accent-subtle) text-(--accent-text)"
 													: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--foreground)"
 											}`}
 										>

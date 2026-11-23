@@ -206,7 +206,7 @@ export default function SignupScreen() {
 				>
 					<Text className="text-muted-foreground text-sm">
 						Already have an account?{" "}
-						<Text className="font-semibold text-accent">Sign in</Text>
+						<Text className="font-semibold text-accent-text">Sign in</Text>
 					</Text>
 				</Pressable>
 			</ScrollView>

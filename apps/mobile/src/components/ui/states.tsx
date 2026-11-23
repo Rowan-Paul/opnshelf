@@ -53,7 +53,9 @@ export function ErrorState({
 					onPress={onRetry}
 					className="mt-2 rounded-lg border border-border px-4 py-2.5"
 				>
-					<Text className="font-semibold text-primary text-sm">Try again</Text>
+					<Text className="font-semibold text-accent-text text-sm">
+						Try again
+					</Text>
 				</Pressable>
 			) : null}
 		</View>
@@ -86,7 +88,7 @@ export function StaleDataNotice({
 					hitSlop={6}
 					onPress={onRetry}
 				>
-					<Text className="font-semibold text-primary text-xs">
+					<Text className="font-semibold text-accent-text text-xs">
 						{isRetrying ? "Retrying…" : "Retry"}
 					</Text>
 				</Pressable>
@@ -160,7 +162,7 @@ export function EmptyState({
 			{action ? (
 				<Link href={action.href} asChild>
 					<Pressable className="mt-2 rounded-lg border border-border px-4 py-2.5">
-						<Text className="font-semibold text-primary text-sm">
+						<Text className="font-semibold text-accent-text text-sm">
 							{action.label}
 						</Text>
 					</Pressable>

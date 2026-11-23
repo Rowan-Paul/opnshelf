@@ -49,7 +49,7 @@ export type ThemeColors = ReturnType<typeof useThemeColors>;
 
 const LIGHT_FALLBACK = {
 	accent: "#f3bc00",
-	mutedForeground: "#64748b",
+	mutedForeground: "#5e6d83",
 	destructive: "#dc2626",
 	success: "#16a34a",
 	borderStrong: "#cbd5e1",

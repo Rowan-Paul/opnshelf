@@ -136,7 +136,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 						type="button"
 						onClick={() => fileInputRef.current?.click()}
 						aria-label="Upload profile photo"
-						className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+						className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--ring) focus-visible:ring-2"
 					>
 						<UserAvatar
 							src={user.avatar}
@@ -205,6 +205,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 								updateProfileMutation.isPending ||
 								displayName === (user.displayName ?? "")
 							}
+							aria-busy={updateProfileMutation.isPending}
 						>
 							{updateProfileMutation.isPending ? (
 								<Loader2 data-icon="inline-start" className="animate-spin" />
@@ -242,7 +243,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 							type="button"
 							onClick={() => refreshSocialLinksMutation.mutate({})}
 							disabled={refreshSocialLinksMutation.isPending}
-							className="inline-flex items-center gap-1.5 text-(--accent) text-sm hover:underline disabled:opacity-50"
+							className="inline-flex items-center gap-1.5 text-(--accent-text) text-sm hover:underline disabled:opacity-50"
 						>
 							{refreshSocialLinksMutation.isPending ? (
 								<Loader2 className="size-3.5 animate-spin" />
@@ -268,7 +269,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 										href={user.blueskyProfileUrl}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+										className="inline-flex items-center gap-1 text-(--accent-text) text-xs hover:underline"
 									>
 										View profile
 										<ExternalLink className="size-3" />
@@ -314,7 +315,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 										href={user.tangledProfileUrl}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+										className="inline-flex items-center gap-1 text-(--accent-text) text-xs hover:underline"
 									>
 										View profile
 										<ExternalLink className="size-3" />

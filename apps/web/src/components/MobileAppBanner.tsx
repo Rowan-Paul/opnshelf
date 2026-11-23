@@ -27,7 +27,7 @@ export function MobileAppBanner() {
 	if (isLanding || dismissed) return null;
 
 	const linkClass =
-		"min-w-0 flex-1 font-medium text-(--accent) hover:underline";
+		"min-w-0 flex-1 font-medium text-(--accent-text) hover:underline";
 	const capture = (store: "app_store" | "play") => () =>
 		posthog.capture("mobile_app_link_opened", { surface: "banner", store });
 

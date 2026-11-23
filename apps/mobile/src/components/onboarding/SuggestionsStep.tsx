@@ -66,7 +66,7 @@ export function SuggestionsStep({ onFollowed }: { onFollowed: () => void }) {
 							hitSlop={8}
 							onPress={() => setQuery("")}
 						>
-							<Text className="text-primary">Clear</Text>
+							<Text className="text-accent-text">Clear</Text>
 						</Pressable>
 					) : undefined
 				}

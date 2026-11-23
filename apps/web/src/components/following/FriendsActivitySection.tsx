@@ -29,7 +29,7 @@ export function FriendsActivitySection({
 				<h2 className="text-display-3">Social</h2>
 				<Link
 					to="/social"
-					className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+					className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 				>
 					View all
 				</Link>

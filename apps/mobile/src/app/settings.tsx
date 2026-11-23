@@ -168,7 +168,7 @@ function AppearanceSetting() {
 						<Text
 							className={
 								selected
-									? "font-semibold text-primary text-sm"
+									? "font-semibold text-accent-text text-sm"
 									: "font-medium text-foreground text-sm"
 							}
 						>

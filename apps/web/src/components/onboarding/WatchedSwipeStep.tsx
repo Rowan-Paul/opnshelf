@@ -264,6 +264,7 @@ export function WatchedSwipeStep({
 					className="btn btn-secondary"
 					onClick={skip}
 					disabled={isPending}
+					aria-busy={isPending}
 					aria-label="Skip this title"
 				>
 					<X className="size-5 text-destructive" /> Skip
@@ -273,6 +274,7 @@ export function WatchedSwipeStep({
 					className="btn btn-primary"
 					onClick={markWatched}
 					disabled={isPending}
+					aria-busy={isPending}
 					aria-label="Mark this title as watched"
 				>
 					<Check className="size-5" /> Watched

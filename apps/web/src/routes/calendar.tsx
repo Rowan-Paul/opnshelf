@@ -251,7 +251,9 @@ function CalendarPage() {
 						>
 							<h3
 								className={`font-display font-medium text-sm ${
-									day.isToday ? "text-(--accent)" : "text-(--foreground-muted)"
+									day.isToday
+										? "text-(--accent-text)"
+										: "text-(--foreground-muted)"
 								}`}
 							>
 								{formatWeekDayLabel(day.date, userTimezone)}
@@ -268,7 +270,7 @@ function CalendarPage() {
 							)}
 							<h3
 								className={`mb-2 text-display-3 ${
-									day.isToday ? "text-(--accent)" : ""
+									day.isToday ? "text-(--accent-text)" : ""
 								}`}
 							>
 								{formatWeekDayLabel(day.date, userTimezone)}
@@ -317,7 +319,7 @@ function CalendarPage() {
 													{formatReleaseDate(day.dateKey, userTimezone)}
 												</span>
 												{formatRelativeReleaseDate(day.dateKey) && (
-													<span className="font-medium text-(--accent)">
+													<span className="font-medium text-(--accent-text)">
 														• {formatRelativeReleaseDate(day.dateKey)}
 													</span>
 												)}
@@ -400,7 +402,7 @@ function CalendarPage() {
 								>
 									<span
 										className={`font-medium text-sm ${
-											isToday ? "text-(--accent)" : "text-(--foreground)"
+											isToday ? "text-(--accent-text)" : "text-(--foreground)"
 										}`}
 									>
 										{day}

@@ -322,12 +322,14 @@ function VerifyEmailStep() {
 						className="input"
 						autoComplete="one-time-code"
 						disabled={isSubmitting}
+						aria-busy={isSubmitting}
 					/>
 				</div>
 
 				<button
 					type="submit"
 					disabled={isSubmitting || !code.trim()}
+					aria-busy={isSubmitting}
 					className="btn btn-primary w-full"
 				>
 					{isSubmitting ? (
@@ -351,7 +353,7 @@ function VerifyEmailStep() {
 						type="button"
 						onClick={() => resendMutation.mutate({})}
 						disabled={resendMutation.isPending || cooldown > 0}
-						className="text-(--accent) hover:underline disabled:cursor-not-allowed disabled:text-(--foreground-muted) disabled:no-underline"
+						className="text-(--accent-text) hover:underline disabled:cursor-not-allowed disabled:text-(--foreground-muted) disabled:no-underline"
 					>
 						{getResendLabel(cooldown, resendMutation.isPending)}
 					</button>
@@ -479,7 +481,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 						type="button"
 						onClick={() => fileInputRef.current?.click()}
 						aria-label="Upload profile photo"
-						className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+						className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--ring) focus-visible:ring-2"
 					>
 						{user?.avatar ? (
 							<img
@@ -582,6 +584,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 						onNext();
 					}}
 					disabled={isMutating}
+					aria-busy={isMutating}
 					className="btn btn-primary w-full"
 				>
 					{updateProfileMutation.isPending ? (
@@ -689,6 +692,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 					type="button"
 					onClick={handleSave}
 					disabled={settingsLoading || updateSettingsMutation.isPending}
+					aria-busy={settingsLoading || updateSettingsMutation.isPending}
 					className="btn btn-primary w-full"
 				>
 					{updateSettingsMutation.isPending ? (
@@ -792,6 +796,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 					type="button"
 					onClick={handleSave}
 					disabled={settingsLoading || updateSettingsMutation.isPending}
+					aria-busy={settingsLoading || updateSettingsMutation.isPending}
 					className="btn btn-primary w-full"
 				>
 					{updateSettingsMutation.isPending ? (

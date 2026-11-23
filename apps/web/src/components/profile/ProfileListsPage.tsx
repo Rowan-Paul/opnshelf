@@ -544,6 +544,7 @@ export function ProfileListsPage({
 												type="button"
 												onClick={saveReorder}
 												disabled={reorderMutation.isPending}
+												aria-busy={reorderMutation.isPending}
 												className="btn btn-primary btn-sm gap-1.5 rounded-full!"
 											>
 												{reorderMutation.isPending ? (
@@ -708,6 +709,7 @@ export function ProfileListsPage({
 									<Button
 										className="ml-auto"
 										disabled={listFetching}
+										aria-busy={listFetching}
 										onClick={() => refetchList()}
 										size="sm"
 										variant="ghost"

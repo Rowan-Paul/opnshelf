@@ -298,7 +298,7 @@ export default function CalendarScreen() {
 									<Text
 										className={
 											isToday
-												? "font-display font-medium text-primary text-sm"
+												? "font-display font-medium text-accent-text text-sm"
 												: "font-display font-medium text-muted-foreground text-sm"
 										}
 									>
@@ -315,7 +315,7 @@ export default function CalendarScreen() {
 								<Text
 									className={
 										isToday
-											? "text-display-3 text-primary"
+											? "text-accent-text text-display-3"
 											: "text-display-3 text-foreground"
 									}
 								>

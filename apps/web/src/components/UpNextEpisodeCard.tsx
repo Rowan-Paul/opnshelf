@@ -37,7 +37,7 @@ export function UpNextEpisodeCard({
 			<Link
 				to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 				params={params}
-				className="relative block aspect-video overflow-hidden bg-slate-800 focus-visible:outline-(--accent) focus-visible:outline-2 focus-visible:outline-offset-2"
+				className="relative block aspect-video overflow-hidden bg-slate-800 focus-visible:outline-(--ring) focus-visible:outline-2 focus-visible:outline-offset-2"
 			>
 				{imagePath ? (
 					<img
@@ -72,7 +72,7 @@ export function UpNextEpisodeCard({
 				<Link
 					to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 					params={params}
-					className="line-clamp-2 font-medium text-sm hover:text-(--accent)"
+					className="line-clamp-2 font-medium text-sm hover:text-(--accent-text)"
 				>
 					{episode.name || `Episode ${episode.episodeNumber}`}
 				</Link>

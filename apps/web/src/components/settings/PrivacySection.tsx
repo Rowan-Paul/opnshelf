@@ -404,7 +404,7 @@ export function PrivacySection({
 					<button
 						type="button"
 						aria-label={`List visibility: ${scopes?.[0]?.visibility === "private" ? "Private" : "Public"}. Change visibility`}
-						className="inline-flex items-center gap-1.5 rounded text-(--foreground-muted) text-xs transition-colors hover:text-(--foreground) focus-visible:outline-(--accent) focus-visible:outline-2"
+						className="inline-flex items-center gap-1.5 rounded text-(--foreground-muted) text-xs transition-colors hover:text-(--foreground) focus-visible:outline-(--ring) focus-visible:outline-2"
 						onClick={() =>
 							changing ? setShowProgress(true) : setManageLists(true)
 						}
@@ -458,6 +458,7 @@ export function PrivacySection({
 								type="button"
 								className="text-(--foreground-muted) text-xs underline underline-offset-2 disabled:opacity-50"
 								disabled={query.isFetching}
+								aria-busy={query.isFetching}
 								onClick={() => void query.refetch()}
 							>
 								Check again
@@ -551,6 +552,7 @@ export function PrivacySection({
 								mutation.isPending ||
 								data.scopes.some((scope) => scope.migration)
 							}
+							aria-busy={mutation.isPending}
 							className="btn btn-primary mt-4 w-full"
 							onClick={onContinue}
 						>

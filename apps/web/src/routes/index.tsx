@@ -343,7 +343,7 @@ function FeatureRow({
 		<div className="grid items-center gap-6 lg:grid-cols-12 lg:gap-16">
 			<div className={`lg:col-span-5 ${reversed ? "lg:order-2" : ""}`}>
 				<div className="mb-3 flex items-center gap-3">
-					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent)">
+					<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--accent-subtle) text-(--accent-text)">
 						<Icon className="size-5" />
 					</div>
 					<h2 className="font-bold font-display text-3xl leading-[1.15] sm:text-4xl">
@@ -412,7 +412,7 @@ function ScreenshotFrame({
 				{/* Placeholder shown while loading or on error */}
 				{(!loaded || error) && (
 					<div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent-subtle) text-(--accent)">
+						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-(--accent-subtle) text-(--accent-text)">
 							<Clapperboard className="h-8 w-8" />
 						</div>
 						<p className="font-medium text-(--foreground-muted)">{label}</p>

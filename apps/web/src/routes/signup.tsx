@@ -288,6 +288,7 @@ function SignupPage() {
 								password.length < 8 ||
 								!captchaReady
 							}
+							aria-busy={isSubmitting}
 							className="btn btn-primary w-full"
 						>
 							{isSubmitting ? (
@@ -307,7 +308,10 @@ function SignupPage() {
 					<div className="mt-6 text-center text-(--foreground-muted) text-sm">
 						<p>
 							Already have an account?{" "}
-							<Link to="/login" className="text-(--accent) hover:underline">
+							<Link
+								to="/login"
+								className="text-(--accent-text) hover:underline"
+							>
 								Sign in
 							</Link>
 						</p>

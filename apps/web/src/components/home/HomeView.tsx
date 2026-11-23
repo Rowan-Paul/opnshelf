@@ -344,7 +344,7 @@ export function HomeView() {
 							<div className="flex shrink-0 items-center gap-4">
 								<Link
 									to="/pick-for-me"
-									className="font-medium text-(--accent) text-sm"
+									className="font-medium text-(--accent-text) text-sm"
 								>
 									Pick for me
 								</Link>
@@ -352,7 +352,7 @@ export function HomeView() {
 									<Link
 										to="/profile/$handle/up-next"
 										params={{ handle: user.handle }}
-										className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+										className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 									>
 										View all
 										<ChevronRight className="size-4" />
@@ -420,7 +420,7 @@ export function HomeView() {
 								<Link
 									to="/profile/$handle/shelf"
 									params={{ handle: user.handle }}
-									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+									className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 								>
 									View all
 									<ChevronRight className="size-4" />
@@ -517,7 +517,7 @@ export function HomeView() {
 							<h2 className="text-display-3">Upcoming</h2>
 							<Link
 								to="/calendar"
-								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+								className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 							>
 								<Calendar className="size-4" />
 								Calendar
@@ -602,7 +602,7 @@ export function HomeView() {
 														userTimeFormat,
 													)}
 												</span>
-												<span className="text-(--accent)">
+												<span className="text-(--accent-text)">
 													• {formatRelativeDate(release.releaseDate)}
 												</span>
 											</div>

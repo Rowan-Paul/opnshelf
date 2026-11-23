@@ -61,7 +61,7 @@ function DayCellView({
 				<Text
 					className={
 						cell.isToday
-							? "font-semibold text-primary text-xs"
+							? "font-semibold text-accent-text text-xs"
 							: "font-medium text-foreground text-xs"
 					}
 				>

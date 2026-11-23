@@ -34,7 +34,9 @@ export function GenreLinks({
 					>
 						<Text
 							className={
-								compact ? "text-primary text-sm" : "text-primary text-xs"
+								compact
+									? "text-accent-text text-sm"
+									: "text-accent-text text-xs"
 							}
 						>
 							{genre.name}

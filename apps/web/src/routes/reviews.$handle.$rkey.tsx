@@ -200,7 +200,7 @@ function CanonicalReviewPage() {
 							<button
 								type="button"
 								aria-label="Retry loading review likes"
-								className="text-(--accent) underline"
+								className="text-(--accent-text) underline"
 								onClick={() => void refetchLikes()}
 							>
 								Try again

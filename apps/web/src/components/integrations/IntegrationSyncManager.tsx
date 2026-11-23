@@ -257,6 +257,7 @@ export function IntegrationSyncManager({
 						className="btn btn-primary mt-5"
 						type="button"
 						disabled={connecting}
+						aria-busy={connecting}
 						onClick={() => connect.mutate({ platform: "web" })}
 					>
 						{connecting
@@ -366,6 +367,7 @@ export function IntegrationSyncManager({
 									type="button"
 									className="btn btn-primary max-w-full whitespace-normal"
 									disabled={action.isPending}
+									aria-busy={action.isPending}
 									onClick={() =>
 										action.mutate("disconnect", {
 											onSuccess: () => setDisconnect(false),
@@ -572,7 +574,7 @@ export function SyncSettings({
 						<button
 							type="button"
 							aria-expanded={choosingRecords}
-							className="shrink-0 rounded-md py-1 font-medium text-(--accent) text-sm underline-offset-4 hover:underline focus-visible:outline-2"
+							className="shrink-0 rounded-md py-1 font-medium text-(--accent-text) text-sm underline-offset-4 hover:underline focus-visible:outline-2"
 							onClick={() => setChoosingRecords(true)}
 						>
 							Choose records
@@ -644,7 +646,7 @@ export function SyncSettings({
 											setSettings({ ...settings, direction: choice.value })
 										}
 									/>
-									<span className="flex h-full flex-col items-center gap-2 rounded-xl border border-(--border) px-2 py-4 text-center transition-colors peer-checked:border-(--accent) peer-checked:bg-(--accent)/10 peer-focus-visible:ring-(--accent) peer-focus-visible:ring-2">
+									<span className="flex h-full flex-col items-center gap-2 rounded-xl border border-(--border) px-2 py-4 text-center transition-colors peer-checked:border-(--accent) peer-checked:bg-(--accent)/10 peer-focus-visible:ring-(--ring) peer-focus-visible:ring-2">
 										<span
 											aria-hidden="true"
 											className="flex items-center gap-2"
@@ -822,14 +824,16 @@ export function SyncSettings({
 							type="button"
 							className="btn btn-secondary"
 							disabled={save.isPending}
+							aria-busy={save.isPending}
 							onClick={() => setReviewing(false)}
 						>
 							Back
 						</button>
 						<button
 							type="button"
-							className="btn btn-primary disabled:opacity-50"
+							className="btn btn-primary"
 							disabled={save.isPending || !canSave}
+							aria-busy={save.isPending}
 							onClick={() => save.mutate({ ...settings })}
 						>
 							{save.isPending
@@ -1144,6 +1148,7 @@ function SyncIssue({
 							className="btn btn-primary w-full"
 							aria-describedby={`sync-candidate-${item.id}-${index}`}
 							disabled={mutation.isPending}
+							aria-busy={mutation.isPending}
 							onClick={() =>
 								setChoice({ action: "link", candidateKey: candidate.key })
 							}
@@ -1300,6 +1305,7 @@ function SyncIssue({
 								disabled={
 									mutation.isPending || choice.confirmedRemoteMissing === false
 								}
+								aria-busy={mutation.isPending}
 								onClick={() => resolve(choice)}
 							>
 								{mutation.isPending ? "Saving…" : "Confirm choice"}
@@ -1361,6 +1367,7 @@ function WriteGrant({
 				type="button"
 				className="btn btn-primary"
 				disabled={grant.isPending}
+				aria-busy={grant.isPending}
 				onClick={() => setExplaining(true)}
 			>
 				{grant.isPending

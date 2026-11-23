@@ -464,7 +464,7 @@ export function IntegrationSyncManager({
 								pathname: "/integrations/[provider]/attention",
 								params: { provider: id },
 							}}
-							className="font-semibold text-primary"
+							className="font-semibold text-accent-text"
 						>
 							Review items →
 						</Link>
@@ -589,7 +589,7 @@ export function SyncSettings({
 						className="min-h-11 justify-center"
 						onPress={() => setChoosingRecords(true)}
 					>
-						<Text className="font-medium text-primary text-sm">
+						<Text className="font-medium text-accent-text text-sm">
 							Choose records
 						</Text>
 					</Pressable>

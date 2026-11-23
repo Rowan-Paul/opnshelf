@@ -143,7 +143,7 @@ function ProfileOverviewPage() {
 									to="/profile/$handle/shelf"
 									params={{ handle }}
 									search={{ type: "movie" }}
-									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+									className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 								>
 									View all
 									<ChevronRight className="size-4" />
@@ -204,7 +204,7 @@ function ProfileOverviewPage() {
 									to="/profile/$handle/shelf"
 									params={{ handle }}
 									search={{ type: "episode" }}
-									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+									className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 								>
 									View all
 									<ChevronRight className="size-4" />
@@ -299,7 +299,7 @@ function ProfileOverviewPage() {
 					<Link
 						to="/profile/$handle/reviews"
 						params={{ handle }}
-						className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+						className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 					>
 						View all
 						<ChevronRight className="size-4" />
@@ -419,7 +419,7 @@ function ListPreview({
 					<Link
 						to="/profile/$handle/lists/$listSlug"
 						params={{ handle, listSlug: list.slug }}
-						className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+						className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 					>
 						View all
 						<ChevronRight className="size-4" />

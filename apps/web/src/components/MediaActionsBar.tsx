@@ -203,7 +203,7 @@ export default function MediaActionsBar({
 							? "Could not load your reviews. Click to retry."
 							: undefined
 					}
-					className={`inline-flex h-10 items-center justify-center gap-1 rounded-md border transition-all duration-150 lg:gap-2 ${rating > 0 ? "px-1.5 lg:px-3" : "w-10"} ${hasReviewed || rating > 0 ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
+					className={`inline-flex h-10 items-center justify-center gap-1 rounded-md border transition-all duration-150 lg:gap-2 ${rating > 0 ? "px-1.5 lg:px-3" : "w-10"} ${hasReviewed || rating > 0 ? "border-(--accent)/20 bg-(--accent)/10 text-(--accent-text) hover:bg-(--accent)/20" : "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"}`}
 					aria-label={
 						rating > 0
 							? `Your rating: ${rating} out of 10. Rate and review`
@@ -325,7 +325,7 @@ export default function MediaActionsBar({
 						onClick={() => setNoteDialogOpen(true)}
 						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
 							note?.content
-								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent-text) hover:bg-(--accent)/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
 						aria-label={note?.content ? "Edit note" : "Add note"}
@@ -347,7 +347,7 @@ export default function MediaActionsBar({
 						}
 						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
 							rating > 0
-								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent-text) hover:bg-(--accent)/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
 						aria-label={
@@ -364,7 +364,7 @@ export default function MediaActionsBar({
 						onClick={() => setLibraryDialogOpen(true)}
 						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
 							ownedCount > 0
-								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent-text) hover:bg-(--accent)/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
 						aria-label={
@@ -389,7 +389,7 @@ export default function MediaActionsBar({
 						}
 						className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-150 ${
 							hasReviewed
-								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent-text) hover:bg-(--accent)/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
 						aria-label={hasReviewed ? "Edit review" : "Write a review"}
@@ -403,7 +403,7 @@ export default function MediaActionsBar({
 						onClick={() => setListsDialogOpen(true)}
 						className={`inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 transition-all duration-150 ${
 							customListCount > 0
-								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent) hover:bg-(--accent)/20"
+								? "border-(--accent)/20 bg-(--accent)/10 text-(--accent-text) hover:bg-(--accent)/20"
 								: "border-(--border) bg-(--background-elevated) text-(--foreground) hover:border-(--border-strong) hover:bg-(--background-subtle)"
 						}`}
 						aria-label={customListCount > 0 ? "Edit lists" : "Add to a list"}

@@ -214,7 +214,7 @@ function ReviewCard({
 							<button
 								type="button"
 								onClick={() => setDialogOpen(true)}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent-text)"
 								aria-label="Edit review"
 							>
 								<Pencil className="size-3.5" />

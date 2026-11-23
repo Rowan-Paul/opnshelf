@@ -206,7 +206,7 @@ export default function ReviewDetailScreen() {
 										{mediaKind}
 									</Text>
 									<View className="mt-1 flex-row items-center gap-1">
-										<Text className="font-medium text-primary text-sm">
+										<Text className="font-medium text-accent-text text-sm">
 											Explore title
 										</Text>
 										<ArrowRight color={colors.accent} size={16} />
@@ -316,7 +316,7 @@ export default function ReviewDetailScreen() {
 								accessibilityLabel="Retry loading review likes"
 								onPress={() => void likesQuery.refetch()}
 							>
-								<Text className="text-primary text-sm">Try again</Text>
+								<Text className="text-accent-text text-sm">Try again</Text>
 							</Pressable>
 						</View>
 					)}

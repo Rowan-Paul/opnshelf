@@ -62,7 +62,7 @@ export function ActivityCard({
 						<Link
 							to="/profile/$handle"
 							params={{ handle: activity.actor.handle }}
-							className="relative z-10 font-semibold text-(--foreground) hover:text-(--accent)"
+							className="relative z-10 font-semibold text-(--foreground) hover:text-(--accent-text)"
 						>
 							{String(activity.actor.displayName || activity.actor.handle)}
 						</Link>
@@ -85,7 +85,7 @@ export function ActivityCard({
 									movieId: String(activity.movieId),
 									movieName: slugifyName(activity.title || ""),
 								}}
-								className="font-medium text-(--foreground) after:absolute after:inset-0 hover:text-(--accent)"
+								className="font-medium text-(--foreground) after:absolute after:inset-0 hover:text-(--accent-text)"
 							>
 								{activity.title}
 							</Link>
@@ -99,7 +99,7 @@ export function ActivityCard({
 									showId: String(activity.showId),
 									showName: slugifyName(activity.showTitle || ""),
 								}}
-								className="font-medium text-(--foreground) after:absolute after:inset-0 hover:text-(--accent)"
+								className="font-medium text-(--foreground) after:absolute after:inset-0 hover:text-(--accent-text)"
 							>
 								{activity.showTitle}
 							</Link>
@@ -169,7 +169,7 @@ export function ActivityCard({
 									seasonNumber: String(activity.seasonNumber || 0),
 									episodeNumber: String(activity.episodeNumber || 0),
 								}}
-								className="relative z-10 font-semibold text-(--foreground) text-sm hover:text-(--accent)"
+								className="relative z-10 font-semibold text-(--foreground) text-sm hover:text-(--accent-text)"
 							>
 								{activity.seasonNumber && activity.episodeNumber
 									? `S${activity.seasonNumber}E${activity.episodeNumber}`
@@ -240,7 +240,7 @@ export function ActivityCard({
 								seasonNumber: String(episode.seasonNumber),
 								episodeNumber: String(episode.episodeNumber),
 							}}
-							className="block border-(--border) border-t py-2 text-sm hover:text-(--accent)"
+							className="block border-(--border) border-t py-2 text-sm hover:text-(--accent-text)"
 						>
 							<span className="font-semibold">
 								S{episode.seasonNumber}E{episode.episodeNumber}

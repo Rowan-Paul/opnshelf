@@ -185,7 +185,7 @@ function FeedbackSheet({
 									onPress={onRemoveScreenshot}
 									hitSlop={8}
 								>
-									<Text className="text-primary text-sm">
+									<Text className="text-accent-text text-sm">
 										Remove screenshot
 									</Text>
 								</Pressable>
@@ -214,7 +214,7 @@ function FeedbackSheet({
 									<Text
 										className={
 											selected
-												? "font-semibold text-primary text-sm"
+												? "font-semibold text-accent-text text-sm"
 												: "font-medium text-foreground text-sm"
 										}
 									>

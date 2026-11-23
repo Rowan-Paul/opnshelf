@@ -625,7 +625,7 @@ function KeywordSearchPage() {
 														params={{
 															handle: person.handle || person.did,
 														}}
-														className="block truncate font-medium text-sm hover:text-(--accent)"
+														className="block truncate font-medium text-sm hover:text-(--accent-text)"
 													>
 														{String(person.displayName || person.handle)}
 													</Link>

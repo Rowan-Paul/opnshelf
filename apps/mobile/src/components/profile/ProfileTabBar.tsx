@@ -70,7 +70,7 @@ export function ProfileTabBar({
 							<Text
 								className={cn(
 									"font-medium text-sm",
-									isActive ? "text-primary" : "text-muted-foreground",
+									isActive ? "text-accent-text" : "text-muted-foreground",
 								)}
 							>
 								{tab.label}
