@@ -76,6 +76,8 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
+  /* shadcn's base radius, read by the toast styling. */
+  --radius: var(--radius-md);
 
   /* shadcn/ui compatibility */
   --card: var(--background-elevated);
