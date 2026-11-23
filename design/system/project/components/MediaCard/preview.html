@@ -1,0 +1,20 @@
+<!-- @dsCard group="Media" height=392 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>MediaCard</title></head>
+<body>
+<div id="root" class="ds-row" style="align-items:flex-start;gap:16px"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var noop = function () {};
+  var base = { posterUrl: 'data:,', onMarkWatched: noop, onUnmarkWatched: noop };
+  function card(p) { return h(O.MediaCard, Object.assign({}, base, p)); }
+  var view = h(F, null,
+    card({ id: 1, title: 'Past Lives', type: 'movie', year: 2023, globalRating: 8.1, duration: '1h 46m' }),
+    card({ id: 2, title: 'Dune: Part Two', type: 'movie', year: 2024, globalRating: 8.4, duration: '2h 46m', isWatched: true, watchCount: 1, userRating: 9 }),
+    card({ id: 3, title: 'The Grand Budapest Hotel', type: 'movie', year: 2014, globalRating: 8.0, isWatched: true, watchCount: 3 }),
+    card({ id: 4, title: 'Severance', type: 'show', year: 2022, globalRating: 8.6, isWatched: true, episodeProgress: { watched: 12, total: 19, percentage: 63 } }));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

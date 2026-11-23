@@ -1,0 +1,16 @@
+<!-- @dsCard group="Media" height=64 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>WatchCountBadge</title></head>
+<body>
+<div id="root" class="ds-row" style="gap:16px"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var view = h(F, null,
+    h(O.WatchCountBadge, { className: 'h-6 w-6' }),
+    h(O.WatchCountBadge, { watchCount: 3, className: 'h-6' }),
+    h(O.WatchCountBadge, { watchCount: 12, className: 'h-6' }));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

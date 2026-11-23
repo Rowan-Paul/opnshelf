@@ -1,0 +1,21 @@
+<!-- @dsCard group="Overlays" height=260 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>DropdownMenu</title></head>
+<body>
+<div id="root" class="ds-row"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var view = h(O.DropdownMenu, null,
+    h(O.DropdownMenuTrigger, { asChild: true }, h(O.Button, { variant: 'outline' }, h(I.MoreHorizontal), 'List options')),
+    h(O.DropdownMenuContent, { align: 'start' },
+      h(O.DropdownMenuLabel, null, 'Rainy Sunday rewatches'),
+      h(O.DropdownMenuSeparator),
+      h(O.DropdownMenuItem, null, h(I.Plus), 'Add items'),
+      h(O.DropdownMenuItem, null, h(I.Settings), 'Edit list'),
+      h(O.DropdownMenuSeparator),
+      h(O.DropdownMenuItem, { variant: 'destructive' }, h(I.Trash2), 'Delete list')));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

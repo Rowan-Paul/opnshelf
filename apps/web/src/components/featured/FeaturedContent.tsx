@@ -25,7 +25,7 @@ export function FeaturedCard({ item }: { item: FeaturedDto }) {
 							? buildSeasonUrl(item.mediaId, item.title, item.seasonNumber)
 							: buildShowUrl(item.mediaId, item.title)
 				}
-				className="group flex flex-1 gap-4 p-4 focus-visible:outline-(--primary) focus-visible:outline-2"
+				className="group flex flex-1 gap-4 p-4 focus-visible:outline-(--ring) focus-visible:outline-2"
 			>
 				<div className="h-36 w-24 shrink-0 overflow-hidden rounded-lg bg-(--background-subtle)">
 					{item.posterPath && item.posterPath !== failedPoster ? (

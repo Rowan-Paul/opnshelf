@@ -1,0 +1,15 @@
+<!-- @dsCard group="Feedback" height=168 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ContentState</title></head>
+<body>
+<div id="root" class="ds-row" style="align-items:stretch"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var view = h(F, null,
+    h('div', { style: { width: 280 } }, h(O.ContentState, { icon: I.StickyNote, message: 'No notes yet.' })),
+    h('div', { style: { width: 280 } }, h(O.ContentState, { variant: 'error', message: "Couldn't load reviews." })));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>
