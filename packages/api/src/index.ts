@@ -1,5 +1,6 @@
 export { type ActivityGroup, groupActivities } from "./activity-groups";
 export { formatCatalogueDate } from "./catalogue-date";
+export { formatRuntime } from "./format-runtime";
 
 export type { AccountDeletionStatusJob } from "./account-deletion-status";
 export {

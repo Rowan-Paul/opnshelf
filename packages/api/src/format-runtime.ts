@@ -1,8 +1,3 @@
-/**
- * Format a runtime in minutes as `1h 42m` / `42m` / `2h`, matching the Mobile
- * App's `formatRuntime`. Returns undefined for a missing or zero runtime so
- * callers hide it rather than printing "0h 0m".
- */
 export function formatRuntime(
 	minutes: number | null | undefined,
 ): string | undefined {

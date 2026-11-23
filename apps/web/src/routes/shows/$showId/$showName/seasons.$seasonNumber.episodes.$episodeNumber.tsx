@@ -1,4 +1,5 @@
 import {
+	formatRuntime,
 	getHttpStatus,
 	showsControllerGetEpisodeDetailsOptions,
 	showsControllerGetShowDetailsOptions,
@@ -17,7 +18,6 @@ import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
 import { formatDate } from "#/lib/date-utils";
-import { formatRuntime } from "#/lib/format-runtime";
 import {
 	useEpisodeDetails,
 	useShowDetails,

@@ -1,4 +1,5 @@
 import {
+	formatRuntime,
 	showsControllerGetEpisodeDetailsOptions,
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
@@ -27,13 +28,7 @@ import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
-import {
-	formatLongDate,
-	formatRuntime,
-	posterUrl,
-	stillUrl,
-	yearFromDate,
-} from "@/lib/tmdb";
+import { formatLongDate, posterUrl, stillUrl, yearFromDate } from "@/lib/tmdb";
 import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { findShowProgress, useShowProgress } from "@/lib/use-show-progress";
