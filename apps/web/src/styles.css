@@ -44,12 +44,19 @@
   --background-strong: var(--slate-200);
 
   --foreground: var(--slate-900);
-  --foreground-muted: var(--slate-500);
-  --foreground-subtle: var(--slate-400);
+  /* slate-500 darkened by 3% lightness: slate-500 itself is 4.34:1 on
+     --background-subtle, under the 4.5:1 that text needs. This is 4.8:1. */
+  --foreground-muted: #5e6d83;
+  /* Same value as muted: no lighter step reaches 4.5:1. */
+  --foreground-subtle: var(--foreground-muted);
 
   --accent: var(--accent-600);
   --accent-hover: var(--accent-700);
   --accent-foreground: #3f2e00;
+  /* Amber as a text colour. --accent is a fill: on the light surfaces it is
+     under 2:1, so links and labels use this darker step there. */
+  --accent-text: var(--accent-800);
+  --accent-text-hover: var(--accent-900);
   --accent-subtle: var(--accent-50);
   --accent-muted: var(--accent-100);
 
@@ -91,7 +98,8 @@
   --success: #16a34a;
   --warning: #d97706;
   --input: var(--border);
-  --ring: var(--accent-300);
+  /* A focus ring needs 3:1 against the surface it lands on. */
+  --ring: var(--accent-800);
 }
 
 .dark {
@@ -102,11 +110,13 @@
 
   --foreground: var(--slate-50);
   --foreground-muted: var(--slate-400);
-  --foreground-subtle: var(--slate-500);
+  --foreground-subtle: var(--foreground-muted);
 
   --accent: var(--accent-400);
   --accent-hover: var(--accent-300);
   --accent-foreground: #3f2e00;
+  --accent-text: var(--accent);
+  --accent-text-hover: var(--accent-hover);
   --accent-subtle: rgba(251, 191, 36, 0.15);
   --accent-muted: rgba(251, 191, 36, 0.25);
 
@@ -200,7 +210,7 @@ body {
 /* Selection */
 ::selection {
   background-color: var(--accent-subtle);
-  color: var(--accent-hover);
+  color: var(--accent-text);
 }
 
 /* ==========================================================================
@@ -420,7 +430,7 @@ body {
 
 .badge-accent {
   background-color: var(--accent-subtle);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* ==========================================================================
@@ -539,7 +549,7 @@ body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     background-color: var(--background);

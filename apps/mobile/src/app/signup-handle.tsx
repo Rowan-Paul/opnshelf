@@ -278,7 +278,7 @@ export default function SignupHandleScreen() {
 				>
 					<Text className="text-muted-foreground text-sm">
 						Wrong {providerName} account?{" "}
-						<Text className="font-semibold text-accent">Start again</Text>
+						<Text className="font-semibold text-accent-text">Start again</Text>
 					</Text>
 				</Pressable>
 			</ScrollView>

@@ -318,7 +318,7 @@ export function OwnListScreen() {
 											{reorder.isPending ? (
 												<ActivityIndicator color={themeColors.accent} />
 											) : (
-												<Text className="font-semibold text-base text-primary">
+												<Text className="font-semibold text-accent-text text-base">
 													Done
 												</Text>
 											)}

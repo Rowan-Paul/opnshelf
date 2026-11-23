@@ -112,7 +112,7 @@ export function ReleaseNotesScreen({ slug }: { slug?: string }) {
 										This release note isn’t available.
 									</Text>
 									<Link href="/whats-new">
-										<Text className="text-primary text-sm">
+										<Text className="text-accent-text text-sm">
 											Browse all release notes
 										</Text>
 									</Link>

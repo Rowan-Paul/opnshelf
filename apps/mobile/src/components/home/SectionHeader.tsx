@@ -21,7 +21,7 @@ export function SectionHeader({
 	href?: Href;
 	right?: ReactNode;
 }) {
-	const linkStyle = useTwStyle("text-primary");
+	const linkStyle = useTwStyle("text-accent-text");
 	return (
 		<View className="mb-3 flex-row items-center justify-between">
 			<View className="min-w-0 flex-1 flex-row items-center gap-2">
@@ -31,7 +31,9 @@ export function SectionHeader({
 				(href ? (
 					<Link href={href} asChild>
 						<Pressable hitSlop={8} className="flex-row items-center gap-1">
-							<Text className="font-medium text-primary text-sm">View all</Text>
+							<Text className="font-medium text-accent-text text-sm">
+								View all
+							</Text>
 							<ChevronRight color={linkStyle.color} size={15} />
 						</Pressable>
 					</Link>

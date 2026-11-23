@@ -242,7 +242,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 							type="button"
 							onClick={() => refreshSocialLinksMutation.mutate({})}
 							disabled={refreshSocialLinksMutation.isPending}
-							className="inline-flex items-center gap-1.5 text-(--accent) text-sm hover:underline disabled:opacity-50"
+							className="inline-flex items-center gap-1.5 text-(--accent-text) text-sm hover:underline disabled:opacity-50"
 						>
 							{refreshSocialLinksMutation.isPending ? (
 								<Loader2 className="size-3.5 animate-spin" />
@@ -268,7 +268,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 										href={user.blueskyProfileUrl}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+										className="inline-flex items-center gap-1 text-(--accent-text) text-xs hover:underline"
 									>
 										View profile
 										<ExternalLink className="size-3" />
@@ -314,7 +314,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 										href={user.tangledProfileUrl}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="inline-flex items-center gap-1 text-(--accent) text-xs hover:underline"
+										className="inline-flex items-center gap-1 text-(--accent-text) text-xs hover:underline"
 									>
 										View profile
 										<ExternalLink className="size-3" />

@@ -35,7 +35,7 @@ function getBackdropUrl(media: Record<string, unknown>): string | undefined {
 
 const CHIP =
 	"rounded-full border px-3 py-1 text-sm transition-colors disabled:opacity-50";
-const CHIP_ON = "border-(--accent) bg-(--accent)/10 text-(--accent)";
+const CHIP_ON = "border-(--accent) bg-(--accent)/10 text-(--accent-text)";
 const CHIP_OFF =
 	"border-(--border) text-(--foreground-muted) hover:border-(--border-strong)";
 

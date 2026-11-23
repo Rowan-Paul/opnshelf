@@ -29,13 +29,15 @@ export function ReviewBody({
 			{href ? (
 				<Link href={href} asChild>
 					<Pressable hitSlop={6}>
-						<Text className="mt-1 font-medium text-primary text-sm">
+						<Text className="mt-1 font-medium text-accent-text text-sm">
 							Read more
 						</Text>
 					</Pressable>
 				</Link>
 			) : (
-				<Text className="mt-1 font-medium text-primary text-sm">Read more</Text>
+				<Text className="mt-1 font-medium text-accent-text text-sm">
+					Read more
+				</Text>
 			)}
 		</View>
 	);

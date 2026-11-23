@@ -154,7 +154,7 @@ export default function WatchProviderDtos({
 										}}
 										className={`w-full px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--background-subtle) ${
 											code === country
-												? "font-semibold text-(--accent)"
+												? "font-semibold text-(--accent-text)"
 												: "text-(--foreground)"
 										}`}
 									>

@@ -27,7 +27,7 @@ function ViewAll() {
 	const colors = useThemeColors();
 	return (
 		<View className="flex-row items-center gap-1">
-			<Text className="font-medium text-primary text-sm">View all</Text>
+			<Text className="font-medium text-accent-text text-sm">View all</Text>
 			<ChevronRight color={colors.accent} size={15} />
 		</View>
 	);

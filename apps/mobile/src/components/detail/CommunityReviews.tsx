@@ -213,7 +213,7 @@ function ReviewCard({
 								</Text>
 								{isOwn ? (
 									<View className="rounded-full bg-primary/20 px-1.5 py-0.5">
-										<Text className="font-medium text-[10px] text-primary">
+										<Text className="font-medium text-[10px] text-accent-text">
 											Your review
 										</Text>
 									</View>

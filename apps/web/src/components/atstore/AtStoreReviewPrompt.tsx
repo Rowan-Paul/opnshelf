@@ -200,7 +200,7 @@ export function AtStoreReviewPrompt() {
 									aria-label={`${value} ${value === 1 ? "star" : "stars"}`}
 									aria-pressed={rating === value}
 									onClick={() => setRating(value)}
-									className="rounded-lg p-1.5 text-(--foreground-muted) outline-none transition-transform hover:scale-110 hover:text-(--accent) focus-visible:ring-(--accent) focus-visible:ring-2"
+									className="rounded-lg p-1.5 text-(--foreground-muted) outline-none transition-transform hover:scale-110 hover:text-(--accent-text) focus-visible:ring-(--accent) focus-visible:ring-2"
 								>
 									<Star
 										className={`size-8 ${rating !== null && value <= rating ? "fill-(--accent) text-(--accent)" : ""}`}

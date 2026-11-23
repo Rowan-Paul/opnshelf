@@ -47,7 +47,7 @@ export function ProfileContentCard({
 							to={to}
 							params={params}
 							hash={hash}
-							className="relative z-[1] line-clamp-2 font-medium text-sm hover:text-(--accent)"
+							className="relative z-[1] line-clamp-2 font-medium text-sm hover:text-(--accent-text)"
 						>
 							{title}
 						</Link>

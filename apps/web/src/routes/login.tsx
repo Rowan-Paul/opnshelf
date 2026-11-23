@@ -407,11 +407,14 @@ function LoginPage() {
 				<div className="mt-6 text-center text-(--foreground-muted) text-sm">
 					<p>
 						By signing in, you agree to our{" "}
-						<Link to="/tos" className="text-(--accent) hover:underline">
+						<Link to="/tos" className="text-(--accent-text) hover:underline">
 							Terms of Service
 						</Link>{" "}
 						and{" "}
-						<Link to="/privacy" className="text-(--accent) hover:underline">
+						<Link
+							to="/privacy"
+							className="text-(--accent-text) hover:underline"
+						>
 							Privacy Policy
 						</Link>
 						.

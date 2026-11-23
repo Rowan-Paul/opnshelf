@@ -49,7 +49,7 @@ export function LoadMoreFooter({
 				hitSlop={8}
 				onPress={onRetry}
 			>
-				<Text className="font-medium text-primary text-sm">Retry</Text>
+				<Text className="font-medium text-accent-text text-sm">Retry</Text>
 			</Pressable>
 		</View>
 	);

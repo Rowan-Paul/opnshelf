@@ -80,7 +80,7 @@ export function GenreDiscover({ filter }: { filter: GenreDiscovery }) {
 					onPress={() => router.replace("/search")}
 					className="self-start rounded-lg border border-border px-3 py-2"
 				>
-					<Text className="text-primary">Clear genre</Text>
+					<Text className="text-accent-text">Clear genre</Text>
 				</Pressable>
 			</View>
 			{query.isPending ? (

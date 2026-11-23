@@ -112,7 +112,7 @@ export function ReviewReaderDialog({
 								<Link
 									to="/profile/$handle"
 									params={{ handle: review.author.handle }}
-									className="flex min-w-0 items-center gap-3 transition-colors hover:text-(--accent)"
+									className="flex min-w-0 items-center gap-3 transition-colors hover:text-(--accent-text)"
 								>
 									<UserAvatar
 										src={review.author.avatar ?? undefined}

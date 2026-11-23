@@ -22,7 +22,7 @@ function SettingsPage() {
 							index > 0 ? "border-(--border) border-t" : ""
 						}`}
 					>
-						<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--background-subtle) text-(--accent) group-hover:bg-(--accent-subtle)">
+						<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--background-subtle) text-(--accent-text) group-hover:bg-(--accent-subtle)">
 							<Icon className="size-5" />
 						</div>
 						<div className="min-w-0 flex-1">

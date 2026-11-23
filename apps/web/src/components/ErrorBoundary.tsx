@@ -117,7 +117,7 @@ export function NotFoundComponent() {
 		<div className="container-app flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
 			{/* 404 Icon */}
 			<div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-(--accent-subtle)">
-				<span className="font-bold text-(--accent) text-4xl">404</span>
+				<span className="font-bold text-(--accent-text) text-4xl">404</span>
 			</div>
 
 			{/* Title */}

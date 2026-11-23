@@ -169,7 +169,7 @@ export default function VerifyEmailScreen() {
 							className={
 								resendMutation.isPending || cooldown > 0
 									? "font-semibold text-muted-foreground text-sm"
-									: "font-semibold text-accent text-sm"
+									: "font-semibold text-accent-text text-sm"
 							}
 						>
 							{cooldown > 0

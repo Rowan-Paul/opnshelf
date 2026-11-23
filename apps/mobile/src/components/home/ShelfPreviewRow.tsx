@@ -58,7 +58,7 @@ export function ShelfPreviewRow({ userDid }: { userDid: string }) {
 						<Text className="text-center text-muted-foreground text-sm">
 							Your shelf is empty. Track movies and shows to see them here.
 						</Text>
-						<Text className="font-semibold text-primary text-sm">
+						<Text className="font-semibold text-accent-text text-sm">
 							Discover something to watch
 						</Text>
 					</Pressable>

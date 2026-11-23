@@ -37,7 +37,7 @@ function AppearanceSetting() {
 						aria-pressed={selected}
 						className={`flex-1 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
 							selected
-								? "border-(--accent) bg-(--accent-subtle) font-semibold text-(--accent)"
+								? "border-(--accent) bg-(--accent-subtle) font-semibold text-(--accent-text)"
 								: "border-(--border) font-medium hover:bg-(--background-subtle)"
 						}`}
 					>

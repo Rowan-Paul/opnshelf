@@ -72,7 +72,7 @@ export function UpNextEpisodeCard({
 				<Link
 					to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 					params={params}
-					className="line-clamp-2 font-medium text-sm hover:text-(--accent)"
+					className="line-clamp-2 font-medium text-sm hover:text-(--accent-text)"
 				>
 					{episode.name || `Episode ${episode.episodeNumber}`}
 				</Link>

@@ -27,7 +27,7 @@ export function PromptCard({
 		<section className="overflow-hidden rounded-2xl border border-(--border) bg-(--background-elevated) p-5 sm:p-6">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
 				<div className="flex min-w-0 items-start gap-4">
-					<div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--accent-subtle) text-(--accent)">
+					<div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--accent-subtle) text-(--accent-text)">
 						<Icon className="size-5" aria-hidden="true" />
 					</div>
 					<div className="min-w-0">

@@ -135,7 +135,7 @@ function ProfileConnectionsPage() {
 					onClick={() => setActiveTab("followers")}
 					className={`border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
 						activeTab === "followers"
-							? "border-(--accent) text-(--accent)"
+							? "border-(--accent) text-(--accent-text)"
 							: "border-transparent text-(--foreground-muted) hover:text-(--foreground)"
 					}`}
 				>
@@ -146,7 +146,7 @@ function ProfileConnectionsPage() {
 					onClick={() => setActiveTab("following")}
 					className={`border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
 						activeTab === "following"
-							? "border-(--accent) text-(--accent)"
+							? "border-(--accent) text-(--accent-text)"
 							: "border-transparent text-(--foreground-muted) hover:text-(--foreground)"
 					}`}
 				>

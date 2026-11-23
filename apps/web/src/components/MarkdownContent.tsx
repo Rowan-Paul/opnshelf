@@ -15,7 +15,7 @@ export const PROSE_CLASS = [
 	"[&_code]:rounded [&_code]:bg-(--background-subtle) [&_code]:px-1",
 	"[&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-(--background-subtle) [&_pre]:p-3 [&_pre]:text-xs",
 	"[&_pre_code]:bg-transparent [&_pre_code]:p-0",
-	"[&_a]:text-(--accent) [&_a]:underline hover:[&_a]:no-underline",
+	"[&_a]:text-(--accent-text) [&_a]:underline hover:[&_a]:no-underline",
 ].join(" ");
 
 /**

@@ -572,7 +572,7 @@ export function SyncSettings({
 						<button
 							type="button"
 							aria-expanded={choosingRecords}
-							className="shrink-0 rounded-md py-1 font-medium text-(--accent) text-sm underline-offset-4 hover:underline focus-visible:outline-2"
+							className="shrink-0 rounded-md py-1 font-medium text-(--accent-text) text-sm underline-offset-4 hover:underline focus-visible:outline-2"
 							onClick={() => setChoosingRecords(true)}
 						>
 							Choose records

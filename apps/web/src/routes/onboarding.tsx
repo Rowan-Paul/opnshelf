@@ -351,7 +351,7 @@ function VerifyEmailStep() {
 						type="button"
 						onClick={() => resendMutation.mutate({})}
 						disabled={resendMutation.isPending || cooldown > 0}
-						className="text-(--accent) hover:underline disabled:cursor-not-allowed disabled:text-(--foreground-muted) disabled:no-underline"
+						className="text-(--accent-text) hover:underline disabled:cursor-not-allowed disabled:text-(--foreground-muted) disabled:no-underline"
 					>
 						{getResendLabel(cooldown, resendMutation.isPending)}
 					</button>

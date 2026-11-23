@@ -115,7 +115,7 @@ export function ReleaseRow({ item }: { item: ReleaseCalendarItemDto }) {
 						{shortDate(item.releaseDate)}
 					</Text>
 					{relativeDate(item.releaseDate) ? (
-						<Text className="font-medium text-primary text-xs">
+						<Text className="font-medium text-accent-text text-xs">
 							• {relativeDate(item.releaseDate)}
 						</Text>
 					) : null}
