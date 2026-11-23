@@ -1,5 +1,6 @@
 import {
 	formatCatalogueDate,
+	formatRuntime,
 	moviesControllerGetMovieDetailsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -22,12 +23,7 @@ import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
-import {
-	backdropUrl,
-	formatRuntime,
-	posterUrl,
-	yearFromDate,
-} from "@/lib/tmdb";
+import { backdropUrl, posterUrl, yearFromDate } from "@/lib/tmdb";
 import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { webMediaUrl } from "@/lib/web-url";

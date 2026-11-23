@@ -1,4 +1,4 @@
-import { formatCatalogueDate } from "@opnshelf/api";
+import { formatCatalogueDate, formatRuntime } from "@opnshelf/api";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -13,7 +13,6 @@ import {
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
-import { formatRuntime } from "#/lib/format-runtime";
 import {
 	useMediaWatchStatus,
 	useMovieDetails,
