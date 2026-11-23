@@ -13,7 +13,8 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "design:build": "node design-system/build.mjs"
   },
   "dependencies": {
     "@milkdown/kit": "7.22.2",

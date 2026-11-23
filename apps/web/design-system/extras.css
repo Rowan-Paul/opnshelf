@@ -1,0 +1,20 @@
+
+/* ---- Design system extras: appended to bundle.css, not part of the Web App ---- */
+
+/* Mobile Button rendition - apps/mobile/src/components/ui/button.tsx */
+.m-button{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:.5rem;box-sizing:border-box;height:3rem;padding:0 1rem;border:0;border-radius:var(--radius-lg);font-family:inherit;font-size:1rem;font-weight:600;line-height:1.5rem;background:transparent;color:var(--foreground);white-space:nowrap}
+.m-button[data-size="sm"]{height:2.5rem;padding:0 .75rem;font-size:.875rem;line-height:1.25rem}
+.m-button[data-variant="primary"]{background-color:var(--primary);color:var(--primary-foreground)}
+.m-button[data-variant="secondary"]{border:1px solid var(--border)}
+.m-button[data-variant="destructive"]{border:1px solid var(--destructive);color:var(--destructive)}
+.m-button:disabled{opacity:.6}
+.m-button[data-variant="primary"]:disabled{opacity:1;border:1px solid var(--border);background-color:var(--background-subtle);color:var(--muted-foreground)}
+
+/* Field wrapper - apps/mobile/src/components/ui/text-field.tsx */
+.field{display:flex;flex-direction:column;gap:.375rem}
+.field-label{font-size:.875rem;font-weight:500;line-height:1.25rem;color:var(--foreground)}
+.field-hint{font-size:.75rem;line-height:1rem;color:var(--muted-foreground)}
+.field-error{font-size:.75rem;line-height:1rem;color:var(--destructive)}
+
+/* Preview layout helper (not part of the product). */
+.ds-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px}

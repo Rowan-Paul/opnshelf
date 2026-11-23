@@ -1,0 +1,34 @@
+<!-- @dsCard group="Actions" height=232 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Button</title></head>
+<body>
+<div id="root" style="padding:16px"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  function row() { return h.apply(null, ['div', { className: 'ds-row', style: { padding: 0 } }].concat([].slice.call(arguments))); }
+  var view = h('div', { style: { display: 'grid', gap: 16 } },
+    row(
+      h(O.Button, null, h(I.Plus), 'Add to shelf'),
+      h(O.Button, { variant: 'secondary' }, 'Add to list'),
+      h(O.Button, { variant: 'outline' }, 'Mark remaining watched'),
+      h(O.Button, { variant: 'ghost' }, 'Cancel'),
+      h(O.Button, { variant: 'destructive' }, 'Remove from shelf'),
+      h(O.Button, { variant: 'link' }, 'Read the Release Notes')),
+    row(
+      h(O.Button, { size: 'xs' }, 'Follow'),
+      h(O.Button, { size: 'sm' }, 'Follow'),
+      h(O.Button, null, 'Follow'),
+      h(O.Button, { size: 'lg' }, 'Follow'),
+      h(O.Button, { variant: 'outline', size: 'icon', 'aria-label': 'Add to shelf' }, h(I.Plus)),
+      h(O.Button, { disabled: true }, 'Publish review')),
+    row(
+      h('button', { className: 'm-button', 'data-variant': 'primary' }, 'Create account'),
+      h('button', { className: 'm-button', 'data-variant': 'secondary' }, 'Sign in'),
+      h('button', { className: 'm-button', 'data-variant': 'ghost' }, 'Not now'),
+      h('button', { className: 'm-button', 'data-variant': 'destructive', 'data-size': 'sm' }, 'Delete account'),
+      h('button', { className: 'm-button', 'data-variant': 'primary', disabled: true }, 'Create account')));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

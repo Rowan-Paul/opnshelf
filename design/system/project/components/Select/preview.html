@@ -1,0 +1,21 @@
+<!-- @dsCard group="Forms" height=260 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Select</title></head>
+<body>
+<div id="root" class="ds-row"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var view = h(O.Select, null,
+    h(O.SelectTrigger, { style: { width: 240 }, 'aria-label': 'Streaming Service' }, h(O.SelectValue, { placeholder: 'Choose a service' })),
+    h(O.SelectContent, null,
+      h(O.SelectGroup, null,
+        h(O.SelectLabel, null, 'My Services'),
+        h(O.SelectItem, { value: 'netflix' }, 'Netflix'),
+        h(O.SelectItem, { value: 'disney' }, 'Disney+'),
+        h(O.SelectItem, { value: 'apple' }, 'Apple TV+'),
+        h(O.SelectItem, { value: 'max' }, 'Max'))));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

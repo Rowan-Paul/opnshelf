@@ -1,0 +1,18 @@
+<!-- @dsCard group="Overlays" height=240 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Popover</title></head>
+<body>
+<div id="root" class="ds-row"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var view = h(O.Popover, null,
+    h(O.PopoverTrigger, { asChild: true }, h(O.Button, { variant: 'outline' }, h(I.Clock), 'Watched 14 November')),
+    h(O.PopoverContent, { align: 'start' },
+      h(O.PopoverHeader, null,
+        h(O.PopoverTitle, null, 'Watch date'),
+        h(O.PopoverDescription, null, 'Change when you watched this. It updates your Watch Recap.'))));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

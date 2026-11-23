@@ -1,0 +1,21 @@
+<!-- @dsCard group="Media" height=72 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>StarRating</title></head>
+<body>
+<div id="root" class="ds-row" style="gap:28px"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  function Editable() {
+    var s = React.useState(6);
+    return h(O.StarRating, { value: s[0], onChange: s[1], showValue: true });
+  }
+  var view = h(F, null,
+    h(O.StarRating, { value: 8, readOnly: true }),
+    h(O.StarRating, { value: 7, readOnly: true }),
+    h(O.StarRating, { value: 9, readOnly: true, size: 'sm' }),
+    h(Editable));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

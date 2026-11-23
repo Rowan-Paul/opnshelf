@@ -1,0 +1,6 @@
+# Built by `pnpm design:build`; published, never committed.
+project/components/bundle.js
+project/components/bundle.css
+# The page's own index (title, libraries, uploaded asset ids). Read from the
+# page right before each publish, so a copy here would only go stale.
+project/design-system.json
