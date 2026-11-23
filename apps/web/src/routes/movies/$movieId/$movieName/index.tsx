@@ -224,6 +224,7 @@ function MovieDetailPage() {
 									type="button"
 									onClick={() => markMovieWatched()}
 									disabled={isMarkMoviePending}
+									aria-busy={isMarkMoviePending}
 									className="btn btn-primary gap-2"
 								>
 									{isMarkMoviePending ? (

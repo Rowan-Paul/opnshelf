@@ -257,6 +257,7 @@ export function IntegrationSyncManager({
 						className="btn btn-primary mt-5"
 						type="button"
 						disabled={connecting}
+						aria-busy={connecting}
 						onClick={() => connect.mutate({ platform: "web" })}
 					>
 						{connecting
@@ -366,6 +367,7 @@ export function IntegrationSyncManager({
 									type="button"
 									className="btn btn-primary max-w-full whitespace-normal"
 									disabled={action.isPending}
+									aria-busy={action.isPending}
 									onClick={() =>
 										action.mutate("disconnect", {
 											onSuccess: () => setDisconnect(false),
@@ -822,6 +824,7 @@ export function SyncSettings({
 							type="button"
 							className="btn btn-secondary"
 							disabled={save.isPending}
+							aria-busy={save.isPending}
 							onClick={() => setReviewing(false)}
 						>
 							Back
@@ -830,6 +833,7 @@ export function SyncSettings({
 							type="button"
 							className="btn btn-primary"
 							disabled={save.isPending || !canSave}
+							aria-busy={save.isPending}
 							onClick={() => save.mutate({ ...settings })}
 						>
 							{save.isPending
@@ -1144,6 +1148,7 @@ function SyncIssue({
 							className="btn btn-primary w-full"
 							aria-describedby={`sync-candidate-${item.id}-${index}`}
 							disabled={mutation.isPending}
+							aria-busy={mutation.isPending}
 							onClick={() =>
 								setChoice({ action: "link", candidateKey: candidate.key })
 							}
@@ -1300,6 +1305,7 @@ function SyncIssue({
 								disabled={
 									mutation.isPending || choice.confirmedRemoteMissing === false
 								}
+								aria-busy={mutation.isPending}
 								onClick={() => resolve(choice)}
 							>
 								{mutation.isPending ? "Saving…" : "Confirm choice"}
@@ -1361,6 +1367,7 @@ function WriteGrant({
 				type="button"
 				className="btn btn-primary"
 				disabled={grant.isPending}
+				aria-busy={grant.isPending}
 				onClick={() => setExplaining(true)}
 			>
 				{grant.isPending

@@ -322,12 +322,14 @@ function VerifyEmailStep() {
 						className="input"
 						autoComplete="one-time-code"
 						disabled={isSubmitting}
+						aria-busy={isSubmitting}
 					/>
 				</div>
 
 				<button
 					type="submit"
 					disabled={isSubmitting || !code.trim()}
+					aria-busy={isSubmitting}
 					className="btn btn-primary w-full"
 				>
 					{isSubmitting ? (
@@ -582,6 +584,7 @@ function ProfileStep({ onNext }: { onNext: () => void }) {
 						onNext();
 					}}
 					disabled={isMutating}
+					aria-busy={isMutating}
 					className="btn btn-primary w-full"
 				>
 					{updateProfileMutation.isPending ? (
@@ -689,6 +692,7 @@ function PreferencesStep({ onNext }: { onNext: () => void }) {
 					type="button"
 					onClick={handleSave}
 					disabled={settingsLoading || updateSettingsMutation.isPending}
+					aria-busy={settingsLoading || updateSettingsMutation.isPending}
 					className="btn btn-primary w-full"
 				>
 					{updateSettingsMutation.isPending ? (
@@ -792,6 +796,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 					type="button"
 					onClick={handleSave}
 					disabled={settingsLoading || updateSettingsMutation.isPending}
+					aria-busy={settingsLoading || updateSettingsMutation.isPending}
 					className="btn btn-primary w-full"
 				>
 					{updateSettingsMutation.isPending ? (

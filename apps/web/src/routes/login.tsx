@@ -342,6 +342,7 @@ function LoginPage() {
 						<button
 							type="submit"
 							disabled={busy || !handle.trim()}
+							aria-busy={busy}
 							className="btn btn-primary w-full"
 						>
 							{isLoading ? (

@@ -384,6 +384,7 @@ function EpisodeDetailPage() {
 									type="button"
 									onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
 									disabled={isMarkEpisodePending}
+									aria-busy={isMarkEpisodePending}
 									className="btn btn-primary gap-2"
 								>
 									{isMarkEpisodePending ? (

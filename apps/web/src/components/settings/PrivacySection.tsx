@@ -458,6 +458,7 @@ export function PrivacySection({
 								type="button"
 								className="text-(--foreground-muted) text-xs underline underline-offset-2 disabled:opacity-50"
 								disabled={query.isFetching}
+								aria-busy={query.isFetching}
 								onClick={() => void query.refetch()}
 							>
 								Check again
@@ -551,6 +552,7 @@ export function PrivacySection({
 								mutation.isPending ||
 								data.scopes.some((scope) => scope.migration)
 							}
+							aria-busy={mutation.isPending}
 							className="btn btn-primary mt-4 w-full"
 							onClick={onContinue}
 						>

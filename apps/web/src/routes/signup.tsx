@@ -288,6 +288,7 @@ function SignupPage() {
 								password.length < 8 ||
 								!captchaReady
 							}
+							aria-busy={isSubmitting}
 							className="btn btn-primary w-full"
 						>
 							{isSubmitting ? (

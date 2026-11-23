@@ -203,6 +203,7 @@ function CircleDetailPage() {
 													type="button"
 													className="btn btn-primary btn-sm"
 													disabled={pending}
+													aria-busy={pending}
 													onClick={() =>
 														addMember.mutate({
 															path: { circleId, targetDid: person.did },

@@ -72,7 +72,12 @@ export function PermissionRequestDialog({
 					<Button type="button" variant="outline" onClick={onCancel}>
 						Not now
 					</Button>
-					<Button type="button" disabled={pending} onClick={onContinue}>
+					<Button
+						type="button"
+						disabled={pending}
+						aria-busy={pending}
+						onClick={onContinue}
+					>
 						Continue
 						<ExternalLink />
 					</Button>

@@ -173,6 +173,10 @@ export function FollowSuggestionsStep({
 										followMutation.isPending &&
 										followMutation.variables?.path?.targetDid === person.did
 									}
+									aria-busy={
+										followMutation.isPending &&
+										followMutation.variables?.path?.targetDid === person.did
+									}
 								>
 									{followMutation.isPending &&
 									followMutation.variables?.path?.targetDid === person.did ? (

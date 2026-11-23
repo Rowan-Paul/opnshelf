@@ -209,6 +209,7 @@ function AppleSignupPage() {
 							disabled={
 								isSubmitting || username.trim().length < 3 || !captchaReady
 							}
+							aria-busy={isSubmitting}
 							className="btn btn-primary w-full"
 						>
 							{isSubmitting ? (

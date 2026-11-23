@@ -233,6 +233,7 @@ function ProfileLayout() {
 										})
 									}
 									disabled={isPending}
+									aria-busy={isPending}
 									className="btn btn-primary gap-2"
 								>
 									{isPending ? (

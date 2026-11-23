@@ -134,6 +134,7 @@ export function WatchDatePicker({
 						onClick={handleConfirm}
 						// An empty field is not a way to say "undated": "No date" is.
 						disabled={isPending || (!noDate && (watchedAt === "" || isFuture))}
+						aria-busy={isPending}
 						className="btn btn-primary flex-1"
 					>
 						{isPending ? "Saving…" : isEditing ? "Save" : "Confirm"}

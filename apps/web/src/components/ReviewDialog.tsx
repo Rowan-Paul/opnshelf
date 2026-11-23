@@ -440,6 +440,7 @@ export function ReviewDialog({
 							type="button"
 							onClick={handleSave}
 							disabled={isPending}
+							aria-busy={isPending}
 							className="btn btn-primary btn-sm gap-1"
 						>
 							{isPending ? (

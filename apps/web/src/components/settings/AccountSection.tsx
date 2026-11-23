@@ -205,6 +205,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 								updateProfileMutation.isPending ||
 								displayName === (user.displayName ?? "")
 							}
+							aria-busy={updateProfileMutation.isPending}
 						>
 							{updateProfileMutation.isPending ? (
 								<Loader2 data-icon="inline-start" className="animate-spin" />

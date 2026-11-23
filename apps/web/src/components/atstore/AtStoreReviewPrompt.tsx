@@ -156,6 +156,7 @@ export function AtStoreReviewPrompt() {
 						<Button
 							type="button"
 							disabled={permissionMutation.isPending}
+							aria-busy={permissionMutation.isPending}
 							onClick={openComposer}
 						>
 							Leave a review
@@ -235,6 +236,7 @@ export function AtStoreReviewPrompt() {
 						<Button
 							type="button"
 							disabled={rating === null || publishMutation.isPending}
+							aria-busy={publishMutation.isPending}
 							onClick={() =>
 								rating !== null &&
 								publishMutation.mutate({
