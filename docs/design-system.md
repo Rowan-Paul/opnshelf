@@ -35,9 +35,13 @@ not kept here a second time.
    `design/system/project/tokens.json` states the Web value. Change all three
    in one commit.
 2. **Amber is a fill, not a text colour.** Text uses `text-(--accent-text)` on
-   Web and `text-accent-text` on Mobile. Icons, spinners and filled stars may
-   stay `accent`.
-3. **Focus uses the ring token.** Never name the accent in a focus style.
+   Web and `text-accent-text` on Mobile. `primary` is an alias of the accent
+   and counts the same. Icons, spinners and filled stars may stay `accent`:
+   the check accepts a line that is one self-closing icon element, or classes
+   with `fill-` or `animate-spin`. `StarRating` and `UserAvatar` build their
+   icon classes on a separate line and are exempt by name in the script.
+3. **Focus uses the ring token.** Never name the accent or `primary` in a
+   focus style.
    `--ring` is opaque and passes 3:1 on every surface in both themes.
 4. **One button.** `<Button>` and `className="btn …"` are the same definition
    (`.btn` in `styles.css`). A primary button that is disabled only while its
@@ -90,4 +94,8 @@ a plain anchor in place of the router link and a no-op in place of analytics.
 - Shadows differ between the clients by design and are compared only between
   Web and `tokens.json`.
 - The check reads class names line by line. It cannot see a colour assembled at
-  run time.
+  run time, an icon whose classes sit on a different line from its tag (add the
+  file to `GRAPHIC_FILES` in the script), or amber text inside the two files
+  that list names.
+- Only declarations written directly in `:root`, `.dark` and the Mobile theme
+  blocks are read. A token set anywhere else is not compared.

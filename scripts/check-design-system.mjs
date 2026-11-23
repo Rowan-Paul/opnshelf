@@ -15,27 +15,34 @@ import { fileURLToPath } from "node:url";
 
 const THEMES = ["light", "dark"];
 
-/** Tokens one client has and the other does not need. Hover has no Mobile counterpart. */
-const WEB_ONLY = new Set(["accent-text-hover", "destructive-solid-hover", "shadow-color", "radius"]);
+/** Tokens only Web needs: Mobile has no hover. A token missing from this list must exist on both clients. */
+const WEB_ONLY = new Set(["accent-text-hover", "destructive-solid-hover", "shadow-color"]);
 
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 const normalize = (value) => value.trim().toLowerCase().replace(/\s+/g, " ");
 
-/** The declarations of the first block that `opener` starts, as `{ name: value }` without the leading dashes. */
+/**
+ * The declarations written directly in the first block that `opener` starts,
+ * as `{ name: value }` without the leading dashes. A declaration inside a
+ * nested rule belongs to that rule, so it is left out: read as the block's
+ * own, it would hide the value the block really sets.
+ */
 export function declarations(css, opener) {
 	const start = css.indexOf(opener);
 	if (start < 0) throw new Error(`No "${opener}" block found`);
 	let depth = 0;
-	let end = start;
+	let own = "";
 	for (let i = css.indexOf("{", start); i < css.length; i++) {
-		if (css[i] === "{") depth++;
-		if (css[i] === "}" && --depth === 0) {
-			end = i;
-			break;
-		}
+		const char = css[i];
+		if (char === "{") depth++;
+		else if (char === "}") {
+			if (--depth === 0) break;
+			// Ends the nested rule's text so it cannot join the next declaration.
+			own += ";";
+		} else if (depth === 1) own += char;
 	}
 	const out = {};
-	for (const [, name, value] of css.slice(start, end).matchAll(/--([\w.-]+)\s*:\s*([^;]+);/g)) out[name] = value.trim();
+	for (const [, name, value] of own.matchAll(/(?:^|[;\s])--([\w.-]+)\s*:\s*([^;]+);/g)) out[name] = value.trim();
 	return out;
 }
 
@@ -89,8 +96,12 @@ export function compareClients(web, mobile) {
 		for (const [name, value] of Object.entries(web[theme])) {
 			if (!isShared(name)) continue;
 			const other = mobile[theme][name];
-			if (other === undefined) problems.push(`Mobile has no --color-${name} (${theme}). Web sets --${name} to ${value}.`);
+			if (other === undefined) problems.push(`Mobile has no "${name}" token (${theme}). Web sets --${name} to ${value}.`);
 			else if (other !== value) problems.push(`--${name} differs in ${theme}: Web ${value}, Mobile ${other}.`);
+		}
+		// The other direction: a token removed from Web must not linger on Mobile.
+		for (const [name, value] of Object.entries(mobile[theme])) {
+			if (isShared(name) && !(name in web[theme])) problems.push(`Web has no --${name} (${theme}). Mobile sets it to ${value}.`);
 		}
 	}
 	return problems;
@@ -112,27 +123,49 @@ export function comparePublished(web, published) {
 	return [...new Set(problems)];
 }
 
-// An icon, spinner or filled star may stay amber: it is a graphic, not text.
-const GRAPHIC = /\bsize-|animate-spin|\bfill-|iconSizes|sizeClasses/;
+// Amber may colour a graphic, never text. A line counts as a graphic only when
+// it is one self-closing component and nothing else (`<Star className="…" />`),
+// or when the classes themselves say so: `fill-` exists only on SVG, and
+// `animate-spin` is the spinner. A class such as `size-8` proves nothing, and
+// text on the same line as an icon stays text.
+const ICON_ELEMENT = /^\s*<[A-Z]\w*\s[^<>]*\/>\s*$/;
+const GRAPHIC_CLASS = /(?<![\w-])fill-|(?<![\w-])animate-spin(?![\w-])/;
 
-/** Class patterns ADR 0053 retired. Each returns a message for a line that breaks it. */
+/** Files whose amber classes sit on an icon the two patterns above cannot see: the class string is built on its own line. */
+const GRAPHIC_FILES = new Set(["apps/web/src/components/StarRating.tsx", "apps/web/src/components/following/UserAvatar.tsx"]);
+
+// `primary` is an alias of the accent, so it is the same colour under another name.
+const WEB_AMBER_TEXT = /(?<![\w-])text-(?:\(--(?:accent|primary)\)|(?:accent|primary)(?![\w-]))/;
+const WEB_AMBER_HOVER = /hover:text-(?:\(--(?:accent|primary)\)|(?:accent|primary)(?![\w-]))/;
+const WEB_AMBER_FOCUS = /focus(?:-visible|-within)?:(?:ring|border|outline)-(?:\(--(?:accent|primary)\)|(?:accent|primary)(?![\w-]))/;
+const MOBILE_AMBER_TEXT = /(?<![\w-])text-(?:primary|accent)(?![\w-])/;
+
+const isGraphic = (line, file) => ICON_ELEMENT.test(line) || GRAPHIC_CLASS.test(line) || GRAPHIC_FILES.has(file);
+
+/**
+ * Class patterns ADR 0053 retired. Each takes a source line and its
+ * repository-relative path and returns a message when the line breaks it.
+ * An opacity suffix (`text-accent/60`) is still the same colour.
+ */
 export const CLASS_RULES = {
 	web: [
-		(line) =>
-			/hover:text-\(--accent\)/.test(line) || (/text-\(--accent\)|(?<![\w(-])text-accent(?![\w-])/.test(line) && !GRAPHIC.test(line))
+		(line, file) =>
+			WEB_AMBER_HOVER.test(line) || (WEB_AMBER_TEXT.test(line) && !isGraphic(line, file))
 				? "amber text is under 2:1 in the light theme; use text-(--accent-text)"
 				: null,
-		(line) =>
-			/focus(-visible|-within)?:(ring|border|outline)-\(--accent\)/.test(line) ? "a focus style must use the ring token: (--ring), not (--accent)" : null,
+		(line) => (WEB_AMBER_FOCUS.test(line) ? "a focus style must use the ring token: (--ring), not the accent" : null),
 	],
-	mobile: [(line) => (/(?<![\w-])text-(primary|accent)(?![\w/-])/.test(line) ? "amber text is under 2:1 in the light theme; use text-accent-text" : null)],
+	mobile: [
+		(line, file) =>
+			MOBILE_AMBER_TEXT.test(line) && !isGraphic(line, file) ? "amber text is under 2:1 in the light theme; use text-accent-text" : null,
+	],
 };
 
-export function checkClasses(source, rules) {
+export function checkClasses(source, rules, file = "") {
 	const problems = [];
 	source.split("\n").forEach((line, index) => {
 		for (const rule of rules) {
-			const message = rule(line);
+			const message = rule(line, file);
 			if (message) problems.push({ line: index + 1, message });
 		}
 	});
@@ -154,8 +187,9 @@ export function checkRepository(root) {
 	];
 	for (const [client, rules] of Object.entries(CLASS_RULES)) {
 		for (const file of sourceFiles(path.join(root, "apps", client, "src"))) {
-			for (const { line, message } of checkClasses(readFileSync(file, "utf8"), rules)) {
-				problems.push(`${path.relative(root, file)}:${line}: ${message}.`);
+			const relative = path.relative(root, file).split(path.sep).join("/");
+			for (const { line, message } of checkClasses(readFileSync(file, "utf8"), rules, relative)) {
+				problems.push(`${relative}:${line}: ${message}.`);
 			}
 		}
 	}
