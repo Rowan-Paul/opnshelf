@@ -53,6 +53,14 @@ const rowProps: ComponentProps<typeof EpisodeRow> = {
 };
 
 describe("EpisodeRow", () => {
+	it("uses a level-three heading for the episode title", () => {
+		renderRow(false);
+
+		expect(
+			screen.getByRole("heading", { level: 3, name: "Pilot" }),
+		).toBeTruthy();
+	});
+
 	it("keeps the shelf button outside the episode link", () => {
 		const { onMarkWatched } = renderRow(false);
 
