@@ -136,7 +136,7 @@ export function AccountSection({ user }: { user: UserDto }) {
 						type="button"
 						onClick={() => fileInputRef.current?.click()}
 						aria-label="Upload profile photo"
-						className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+						className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-(--border) border-2 bg-(--background-subtle) transition-colors hover:border-(--accent) focus-visible:outline-none focus-visible:ring-(--ring) focus-visible:ring-2"
 					>
 						<UserAvatar
 							src={user.avatar}

@@ -121,7 +121,7 @@ export function SettingsPageShell({
 								activeProps={{
 									className: "bg-(--accent-subtle) text-(--accent-text)",
 								}}
-								className="block rounded-lg px-3 py-2 font-medium text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2"
+								className="block rounded-lg px-3 py-2 font-medium text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-(--ring) focus-visible:ring-2"
 							>
 								{label}
 							</Link>

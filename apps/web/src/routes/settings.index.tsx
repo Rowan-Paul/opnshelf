@@ -18,7 +18,7 @@ function SettingsPage() {
 						key={section}
 						to="/settings/$section"
 						params={{ section }}
-						className={`group flex items-center gap-4 p-5 transition-colors hover:bg-(--background-subtle) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2 sm:p-6 ${
+						className={`group flex items-center gap-4 p-5 transition-colors hover:bg-(--background-subtle) focus-visible:outline-none focus-visible:ring-(--ring) focus-visible:ring-2 sm:p-6 ${
 							index > 0 ? "border-(--border) border-t" : ""
 						}`}
 					>

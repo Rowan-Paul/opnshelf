@@ -200,7 +200,7 @@ export function AtStoreReviewPrompt() {
 									aria-label={`${value} ${value === 1 ? "star" : "stars"}`}
 									aria-pressed={rating === value}
 									onClick={() => setRating(value)}
-									className="rounded-lg p-1.5 text-(--foreground-muted) outline-none transition-transform hover:scale-110 hover:text-(--accent-text) focus-visible:ring-(--accent) focus-visible:ring-2"
+									className="rounded-lg p-1.5 text-(--foreground-muted) outline-none transition-transform hover:scale-110 hover:text-(--accent-text) focus-visible:ring-(--ring) focus-visible:ring-2"
 								>
 									<Star
 										className={`size-8 ${rating !== null && value <= rating ? "fill-(--accent) text-(--accent)" : ""}`}
@@ -221,7 +221,7 @@ export function AtStoreReviewPrompt() {
 							maxLength={8000}
 							rows={6}
 							placeholder="What has your experience been like?"
-							className="min-h-32 resize-y rounded-lg border border-(--border) bg-background px-3 py-2 font-normal text-base outline-none focus:border-(--accent) focus:ring-(--accent)/20 focus:ring-2"
+							className="min-h-32 resize-y rounded-lg border border-(--border) bg-background px-3 py-2 font-normal text-base outline-none focus:border-(--ring) focus:ring-(--ring) focus:ring-2"
 						/>
 						<span className="text-right font-normal text-(--foreground-muted) text-xs tabular-nums">
 							{text.length.toLocaleString()} / 8,000

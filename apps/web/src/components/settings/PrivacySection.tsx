@@ -404,7 +404,7 @@ export function PrivacySection({
 					<button
 						type="button"
 						aria-label={`List visibility: ${scopes?.[0]?.visibility === "private" ? "Private" : "Public"}. Change visibility`}
-						className="inline-flex items-center gap-1.5 rounded text-(--foreground-muted) text-xs transition-colors hover:text-(--foreground) focus-visible:outline-(--accent) focus-visible:outline-2"
+						className="inline-flex items-center gap-1.5 rounded text-(--foreground-muted) text-xs transition-colors hover:text-(--foreground) focus-visible:outline-(--ring) focus-visible:outline-2"
 						onClick={() =>
 							changing ? setShowProgress(true) : setManageLists(true)
 						}

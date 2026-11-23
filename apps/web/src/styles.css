@@ -387,10 +387,12 @@ body {
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
+/* The ring itself is the opaque 2px of --ring (border plus 1px); the amber
+   halo around it is decoration and carries no contrast on its own. */
 .input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring), 0 0 0 4px var(--accent-subtle);
 }
 
 .input::placeholder {

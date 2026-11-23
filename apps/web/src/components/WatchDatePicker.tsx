@@ -112,7 +112,7 @@ export function WatchDatePicker({
 						// You cannot have watched something you have not watched yet.
 						max={latestAllowed}
 						onChange={(e) => setWatchedAt(e.target.value)}
-						className="w-full rounded-md border bg-(--background) px-3 py-2 text-sm outline-hidden focus:ring-(--accent) focus:ring-2"
+						className="w-full rounded-md border bg-(--background) px-3 py-2 text-sm outline-hidden focus:ring-(--ring) focus:ring-2"
 					/>
 				</div>
 				{isEditing && (

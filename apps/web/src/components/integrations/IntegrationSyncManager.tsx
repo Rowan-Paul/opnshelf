@@ -644,7 +644,7 @@ export function SyncSettings({
 											setSettings({ ...settings, direction: choice.value })
 										}
 									/>
-									<span className="flex h-full flex-col items-center gap-2 rounded-xl border border-(--border) px-2 py-4 text-center transition-colors peer-checked:border-(--accent) peer-checked:bg-(--accent)/10 peer-focus-visible:ring-(--accent) peer-focus-visible:ring-2">
+									<span className="flex h-full flex-col items-center gap-2 rounded-xl border border-(--border) px-2 py-4 text-center transition-colors peer-checked:border-(--accent) peer-checked:bg-(--accent)/10 peer-focus-visible:ring-(--ring) peer-focus-visible:ring-2">
 										<span
 											aria-hidden="true"
 											className="flex items-center gap-2"
