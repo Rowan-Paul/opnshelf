@@ -194,7 +194,7 @@ function CollectionItem({ item }: { item: NotificationCollectionItemDto }) {
 							disabled={isPending || !listsForItem}
 							aria-busy={isPending}
 							aria-label={`${isInWatchlist ? "Remove" : "Add"} ${item.title} ${isInWatchlist ? "from" : "to"} Watchlist`}
-							className="btn btn-secondary inline-flex items-center gap-2 text-sm disabled:opacity-50"
+							className="btn btn-secondary inline-flex items-center gap-2 text-sm"
 							onClick={() => toggleWatchlist(isInWatchlist)}
 						>
 							{isInWatchlist ? (

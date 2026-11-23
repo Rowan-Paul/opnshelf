@@ -828,7 +828,7 @@ export function SyncSettings({
 						</button>
 						<button
 							type="button"
-							className="btn btn-primary disabled:opacity-50"
+							className="btn btn-primary"
 							disabled={save.isPending || !canSave}
 							onClick={() => save.mutate({ ...settings })}
 						>

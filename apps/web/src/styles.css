@@ -297,7 +297,9 @@ body {
   transform: translateY(-2px);
 }
 
-/* Button base — in @layer components so Tailwind utilities (p-0, gap-2, …) can override */
+/* Button base — in @layer components so Tailwind utilities (p-0, gap-2, …) can override.
+   The Button component (components/ui/button.tsx) renders these same classes,
+   so a `.btn` in markup and a <Button> cannot drift apart. */
 @layer components {
   .btn {
     display: inline-flex;
@@ -320,6 +322,13 @@ body {
     outline-offset: 2px;
   }
 
+  /* Matches the Mobile button: every dimmed button dims by the same amount. */
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
   .btn-primary {
     background-color: var(--accent);
     color: #3f2e00;
@@ -329,6 +338,17 @@ body {
   .btn-primary:hover {
     background-color: var(--accent-hover);
     border-color: var(--accent-hover);
+  }
+
+  /* Fading the amber fill collapses the contrast against its dark label, so a
+     disabled primary gets a muted fill instead. A busy button keeps the fill:
+     that state is momentary. */
+  .btn-primary:disabled:not([aria-busy="true"]),
+  .btn-primary[aria-disabled="true"]:not([aria-busy="true"]) {
+    opacity: 1;
+    background-color: var(--background-subtle);
+    border-color: var(--border);
+    color: var(--foreground-muted);
   }
 
   .btn-secondary {
