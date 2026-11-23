@@ -39,7 +39,7 @@ export default function CountrySelector({
 					aria-expanded={open}
 					aria-label="Select country"
 					className={cn(
-						"input flex h-10 w-full items-center justify-between rounded-md border bg-background px-3 py-2 text-left font-normal text-sm shadow-none transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+						"input flex h-10 w-full items-center justify-between rounded-md border bg-background px-3 py-2 text-left font-normal text-sm shadow-none transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
 						!value && "text-muted-foreground",
 					)}
 				>
