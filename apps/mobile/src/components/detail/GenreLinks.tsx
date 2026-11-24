@@ -27,15 +27,13 @@ export function GenreLinks({
 				>
 					<Pressable
 						accessibilityRole="link"
-						className={
-							compact ? "py-1" : "rounded-full bg-background-subtle px-3 py-1"
-						}
+						className={`rounded-full bg-background-subtle px-3 py-1 ${compact ? "max-w-full active:bg-muted" : ""}`}
 						hitSlop={4}
 					>
 						<Text
 							className={
 								compact
-									? "text-accent-text text-sm"
+									? "font-semibold text-muted-foreground text-xs"
 									: "text-accent-text text-xs"
 							}
 						>
