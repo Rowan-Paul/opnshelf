@@ -82,14 +82,14 @@ export type TrackingTarget =
 
 /**
  * The line under "On shelf", worded like the Web App's: the day of the only
- * play, the day of the latest of several, or a note that none has a date.
+ * Watch, the day of the latest of several, or a note that none has a date.
  */
 function watchSummary(
-	plays: number,
+	watchCount: number,
 	latest: string | undefined,
 	timeZone: string | undefined,
 ): string | undefined {
-	if (plays === 0) return undefined;
+	if (watchCount === 0) return undefined;
 	if (!latest) return "Watched · No date";
 	const day = new Date(latest).toLocaleDateString(undefined, {
 		day: "numeric",
@@ -97,7 +97,7 @@ function watchSummary(
 		year: "numeric",
 		timeZone,
 	});
-	return `${plays > 1 ? "Last watched" : "Watched"} ${day}`;
+	return `${watchCount > 1 ? "Last watched" : "Watched"} ${day}`;
 }
 
 /**
@@ -189,14 +189,14 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			isOnShelf =
 				status.isEpisodeWatched?.(props.seasonNumber, props.episodeNumber) ??
 				false;
-			const plays = showHistory.filter(
+			const watches = showHistory.filter(
 				(ep) =>
 					ep.seasonNumber === props.seasonNumber &&
 					ep.episodeNumber === props.episodeNumber,
 			);
 			detail = watchSummary(
-				plays.length,
-				latestWatchDate(plays),
+				watches.length,
+				latestWatchDate(watches),
 				settings?.timezone,
 			);
 			break;
@@ -439,6 +439,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 										: "Add to shelf"
 							}
 							loading={isPending}
+							disabled={checkIn.pending}
 							variant={shelfVariant}
 							className="min-w-0 flex-1 rounded-r-none px-1"
 							onPress={() =>

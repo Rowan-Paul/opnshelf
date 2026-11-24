@@ -159,7 +159,7 @@ export function MediaQuickActionsSheet({
 									icon={watched ? X : Plus}
 									label={watchLabel}
 									onPress={onToggleWatched}
-									disabled={isWatchPending}
+									disabled={isWatchPending || checkIn.pending}
 									primary={!watched}
 								/>
 								{checkInTarget && (

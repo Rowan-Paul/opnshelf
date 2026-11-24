@@ -7,17 +7,22 @@ import { useQuery } from "@tanstack/react-query";
 import { View } from "react-native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { cn } from "@/lib/cn";
+import { useWatchingCheckIn } from "@/lib/use-watching-check-in";
 
 export function WatchingActivity({
 	items,
 	following,
+	className = "px-4",
 }: {
 	items?: WatchingCheckInDto[];
 	following?: boolean;
+	/** Horizontal inset; pass "" inside a container that already has one. */
+	className?: string;
 }) {
 	if (!items?.length) return null;
 	return (
-		<View className="gap-2 px-4 pb-3">
+		<View className={cn("gap-2 pb-3", className)}>
 			{items.map((item) => (
 				<View
 					key={item.rkey}
@@ -36,13 +41,23 @@ export function WatchingActivity({
 }
 
 export function ProfileWatchingActivity({ did }: { did: string }) {
+	const { user } = useAuth();
+	// The profile endpoint answers for the public, so it hides the check-in of
+	// a Private Shelf. Its owner still sees it, from their own session.
+	const own = !!did && user?.did === did;
+	const { active } = useWatchingCheckIn(own, own);
 	const { data } = useQuery({
 		...checkInsControllerProfileOptions({ path: { did } }),
-		enabled: !!did,
+		enabled: !!did && !own,
 		refetchInterval: 10_000,
 		retry: false,
 	});
-	return <WatchingActivity items={data?.items} />;
+	const items = own
+		? active && !active.finishing
+			? [active]
+			: []
+		: data?.items;
+	return <WatchingActivity items={items} />;
 }
 
 export function useFollowingWatchingActivity({

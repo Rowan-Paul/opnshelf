@@ -168,11 +168,16 @@ export default function SocialScreen() {
 				/>
 			) : following.items.length === 0 ? (
 				<NoFollowsContent />
-			) : isError && items.length === 0 && watching.length === 0 ? (
-				<ErrorState
-					message="Couldn't load activity."
-					onRetry={() => void refetch()}
-				/>
+			) : isError && items.length === 0 ? (
+				// Check-ins come from their own request, so they stay visible
+				// above the feed's error instead of hiding it.
+				<>
+					<WatchingActivity items={watching} following />
+					<ErrorState
+						message="Couldn't load activity."
+						onRetry={() => void refetch()}
+					/>
+				</>
 			) : items.length === 0 && watching.length === 0 ? (
 				<EmptyFeed
 					activeCircleId={activeCircleId}

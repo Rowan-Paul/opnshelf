@@ -102,7 +102,6 @@ export default function ProfileTab() {
 				{isPending ? (
 					<>
 						<ProfileHeaderSkeleton />
-						<ProfileWatchingActivity did={userDid} />
 						<View className="gap-6 px-4">
 							<View className="h-11 rounded-lg bg-background-subtle" />
 							<View className="flex-row flex-wrap gap-3">
@@ -132,6 +131,7 @@ export default function ProfileTab() {
 								router.push(`/profile/${handle}/connections?tab=${tab}` as Href)
 							}
 						/>
+						<ProfileWatchingActivity did={userDid} />
 						<View className="gap-6 px-4">
 							<View className="flex-row gap-3">
 								<Link href="/edit-profile" asChild>

@@ -4,6 +4,8 @@ import {
 	type WatchingCheckInDto,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "#/lib/auth-context";
+import { useWatchingCheckIn } from "#/lib/use-watching-check-in";
 
 export function WatchingActivity({
 	items,
@@ -28,12 +30,23 @@ export function WatchingActivity({
 }
 
 export function ProfileWatchingActivity({ did }: { did: string }) {
+	const { user } = useAuth();
+	// The profile endpoint answers for the public, so it hides the check-in of
+	// a Private Shelf. Its owner still sees it, from their own session.
+	const own = user?.did === did;
+	const { active } = useWatchingCheckIn(own, own);
 	const { data } = useQuery({
 		...checkInsControllerProfileOptions({ path: { did } }),
+		enabled: !own,
 		refetchInterval: 10_000,
 		retry: false,
 	});
-	return <WatchingActivity items={data?.items} />;
+	const items = own
+		? active && !active.finishing
+			? [active]
+			: []
+		: data?.items;
+	return <WatchingActivity items={items} />;
 }
 
 export function useFollowingWatchingActivity({

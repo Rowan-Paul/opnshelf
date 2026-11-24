@@ -1,12 +1,18 @@
-import type { FollowedActivityItemDto } from "@opnshelf/api";
+import type {
+	FollowedActivityItemDto,
+	WatchingCheckInDto,
+} from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { MessageCircle, Users } from "lucide-react";
+import { WatchingActivity } from "#/components/WatchingActivity";
 import { MiniActivityCard } from "./MiniActivityCard";
 
 const MAX_AGE_DAYS = 30;
 
 interface FriendsActivitySectionProps {
 	items: FollowedActivityItemDto[];
+	/** Active check-ins of followed Users, shown above the recent activity. */
+	watching?: WatchingCheckInDto[];
 	isLoading: boolean;
 	userTimezone?: string;
 	userTimeFormat?: "12h" | "24h";
@@ -14,6 +20,7 @@ interface FriendsActivitySectionProps {
 
 export function FriendsActivitySection({
 	items,
+	watching,
 	isLoading,
 	userTimezone,
 	userTimeFormat,
@@ -35,6 +42,7 @@ export function FriendsActivitySection({
 				</Link>
 			</div>
 
+			<WatchingActivity items={watching} following />
 			{isLoading ? (
 				<div className="card p-4">
 					<div className="space-y-3">
@@ -60,7 +68,7 @@ export function FriendsActivitySection({
 						/>
 					))}
 				</div>
-			) : (
+			) : watching?.length ? null : (
 				<div className="card p-6 text-center">
 					<MessageCircle className="mx-auto mb-3 size-8 text-(--foreground-muted)" />
 					<p className="text-(--foreground-muted)">

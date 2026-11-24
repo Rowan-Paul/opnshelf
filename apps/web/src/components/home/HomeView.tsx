@@ -17,6 +17,7 @@ import { NotificationPrompt } from "#/components/NotificationPrompt";
 import { PromptSlot } from "#/components/PromptSlot";
 import { ReleaseNotePrompt } from "#/components/release-notes/ReleaseNotePrompt";
 import { StatsStrip } from "#/components/StatsStrip";
+import { useFollowingWatchingActivity } from "#/components/WatchingActivity";
 import { useAuth } from "#/lib/auth-context";
 import { formatLocalDateKey } from "#/lib/calendar-grid";
 import { withUserLocale } from "#/lib/date-utils";
@@ -157,6 +158,8 @@ export function HomeView() {
 	const { data: upNextData, isLoading: upNextLoading } = useUserUpNext(
 		userDid || "",
 	);
+
+	const watching = useFollowingWatchingActivity({ enabled: !!user });
 
 	// Fetch social activity feed
 	const { data: feedData, isLoading: feedLoading } = useQuery({
@@ -632,6 +635,7 @@ export function HomeView() {
 					    so the sidebar is not one short list above empty space. */}
 					<FriendsActivitySection
 						items={feedData?.items ?? []}
+						watching={watching}
 						isLoading={feedLoading}
 						userTimezone={userTimezone}
 						userTimeFormat={userTimeFormat}

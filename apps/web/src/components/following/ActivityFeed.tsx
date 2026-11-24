@@ -45,13 +45,23 @@ export function ActivityFeed({
 		return () => clearInterval(timer);
 	}, []);
 
-	if (isLoading && activities.length === 0 && !watching?.length) {
-		return <ActivityCardsSkeleton rows={3} />;
+	// Check-ins come from their own request. They show above the feed's
+	// loading and error states instead of standing in for them.
+	if (isLoading && activities.length === 0) {
+		return (
+			<div className="space-y-3">
+				<WatchingActivity items={watching} following />
+				<ActivityCardsSkeleton rows={3} />
+			</div>
+		);
 	}
 
-	if (error && activities.length === 0 && !watching?.length) {
+	if (error && activities.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12 text-(--foreground-muted)">
+				<div className="w-full">
+					<WatchingActivity items={watching} following />
+				</div>
 				<Activity className="mb-4 size-12 opacity-50" />
 				<p>Couldn&apos;t load activity.</p>
 				<button
