@@ -21,7 +21,7 @@ export function GenreLinks({
 					search={genreDiscoverySearch(mediaType, genre)}
 					className={
 						compact
-							? "text-(--accent-text) hover:underline"
+							? "badge badge-subtle whitespace-normal! max-w-full text-start hover:text-(--accent-text) hover:underline"
 							: "badge badge-subtle hover:text-(--accent-text)"
 					}
 				>
