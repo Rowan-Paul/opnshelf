@@ -24,7 +24,7 @@ function* sourceFiles(directory, prefix = "") {
 	}
 }
 
-const remainingBaselineCounts = JSON.parse(readFileSync(baselineFile, "utf8"));
+const baselineCounts = JSON.parse(readFileSync(baselineFile, "utf8"));
 const observedCounts = {};
 let removableLines = 0;
 let additions = 0;
@@ -68,11 +68,9 @@ for (const [path, text] of sourceFiles(new URL("src/", apiPackageUrl))) {
 		observedCounts[key] = (observedCounts[key] ?? 0) + 1;
 		if (list) {
 			console.log(`${location} ${comment}`);
-		} else if ((remainingBaselineCounts[key] ?? 0) < 1) {
+		} else if (observedCounts[key] > (baselineCounts[key] ?? 0)) {
 			console.error(`${location} New or edited comment.`);
 			additions++;
-		} else {
-			remainingBaselineCounts[key]--;
 		}
 	}
 }
@@ -86,7 +84,7 @@ if (list) {
 		Object.keys(observedCounts).sort().map((key) => [key, observedCounts[key]]),
 	);
 	writeFileSync(baselineFile, JSON.stringify(sorted, null, 2) + "\n");
-} else if (Object.values(remainingBaselineCounts).some((count) => count > 0)) {
+} else if (Object.entries(baselineCounts).some(([key, count]) => (observedCounts[key] ?? 0) < count)) {
 	console.error("Run pnpm check:api-comments --prune to retire removed comments from the baseline.");
 	process.exitCode = 1;
 }
