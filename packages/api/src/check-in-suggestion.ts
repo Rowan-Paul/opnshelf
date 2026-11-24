@@ -20,12 +20,14 @@ export async function getCheckInSuggestion(
 		episodeNumber,
 	} = completed;
 	if (seasonNumber == null || episodeNumber == null) {
-		const history = await client.fetchQuery({
-			...moviesControllerGetMovieWatchHistoryOptions({
-				path: { userDid, movieId: completed.mediaId },
-			}),
-			staleTime: 0,
+		const movieHistory = moviesControllerGetMovieWatchHistoryOptions({
+			path: { userDid, movieId: completed.mediaId },
 		});
+		await client.cancelQueries({
+			queryKey: movieHistory.queryKey,
+			exact: true,
+		});
+		const history = await client.fetchQuery({ ...movieHistory, staleTime: 0 });
 		if (!history.some((entry) => entry.watchedDate === startedAt)) return null;
 		const { suggestion } = await client.fetchQuery(
 			moviesControllerGetWatchSuggestionOptions({
@@ -37,10 +39,11 @@ export async function getCheckInSuggestion(
 			: null;
 	}
 
-	const history = await client.fetchQuery({
-		...showsControllerGetShowWatchHistoryOptions({ path: { userDid, showId } }),
-		staleTime: 0,
+	const showHistory = showsControllerGetShowWatchHistoryOptions({
+		path: { userDid, showId },
 	});
+	await client.cancelQueries({ queryKey: showHistory.queryKey, exact: true });
+	const history = await client.fetchQuery({ ...showHistory, staleTime: 0 });
 	if (
 		!history.some(
 			(entry) =>
