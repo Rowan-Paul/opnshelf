@@ -18,6 +18,7 @@ export const scenarios = [
  "social-bundles",
 	"normal",
  "watch-completion",
+	"watching-check-in",
 	"native-tabs-guest",
 	"native-tabs-verify",
 	"native-tabs-avatar",
@@ -64,11 +65,13 @@ export function createScenarioServer(
 ) {
 	if (!scenarios.includes(initial)) throw new Error("Unknown UI scenario");
 	const watchedEpisodes = new Set([1]);
+	let activeCheckIn;
+	const fixtureMovieWatches = [];
  let bingersStatus = "disconnected", bingersIgnored = false;
  let bingersSettings = {direction: "inbound", watches: true, ratings: true, historyScope: "all", publicationConsent: false};
 	let scenario = initial,
 		authorized = !["sheet-overlap", "delayed-auth"].includes(initial),
-		completed = ["watch-completion", "social-bundles", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
+		completed = ["watching-check-in", "watch-completion", "social-bundles", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(initial),
  fixtureSyncState = "idle",
  fixtureIssue = true,
  fixtureIgnored = false;
@@ -153,6 +156,8 @@ export function createScenarioServer(
 				return;
 			}
 			scenario = body.scenario;
+			activeCheckIn = undefined;
+			fixtureMovieWatches.length = 0;
  bingersStatus = "disconnected"; bingersIgnored = false;
  bingersSettings = {direction: "inbound", watches: true, ratings: true, historyScope: "all", publicationConsent: false};
  watchedEpisodes.clear(); watchedEpisodes.add(1);
@@ -161,7 +166,7 @@ export function createScenarioServer(
  reviewQueue.forEach((item) => { item.ignored = false; item.resolved = false; });
  fixtureIgnored = false;
 			authorized = !["sheet-overlap", "delayed-auth"].includes(scenario);
-			completed = ["watch-completion", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(scenario);
+			completed = ["watching-check-in", "watch-completion", "issue-fixes", "trakt-sync-error", "trakt-sync-attention", "privacy-unsupported", "privacy-unavailable"].includes(scenario);
 			json({ scenario });
 			return;
 		}
@@ -585,6 +590,60 @@ export function createScenarioServer(
 				],
 			});
 			return;
+		}
+		if (scenario === "watching-check-in") {
+			const logCheckIn = () => {
+				if (!activeCheckIn) return;
+				if (activeCheckIn.episodeNumber === null) {
+					fixtureMovieWatches.push({
+						id: activeCheckIn.rkey,
+						movieId: activeCheckIn.mediaId,
+						watchedDate: activeCheckIn.startedAt,
+					});
+				}
+				activeCheckIn = undefined;
+			};
+			if (url.pathname === "/check-ins" && req.method === "POST") {
+				if (activeCheckIn && activeCheckIn.rkey !== body.replaceId) {
+					json({ message: "Your check-in has changed" }, 409);
+					return;
+				}
+				const { mediaId, seasonNumber = null, episodeNumber = null } = body;
+				activeCheckIn = {
+					rkey: crypto.randomUUID(),
+					userDid: user.did,
+					handle: user.handle,
+					mediaId,
+					seasonNumber,
+					episodeNumber,
+					title: episodeNumber === null ? `Fixture film ${mediaId}` : `Episode ${episodeNumber}`,
+					startedAt: new Date().toISOString(),
+					endsAt: new Date(Date.now() + (episodeNumber === null ? 104 : 30) * 60_000).toISOString(),
+					finishing: false,
+				};
+				json(activeCheckIn, 201);
+				return;
+			}
+			if (url.pathname.startsWith("/check-ins")) {
+				const rkey = url.pathname.split("/")[2];
+				if (activeCheckIn && rkey === activeCheckIn.rkey) {
+					if (req.method === "DELETE") activeCheckIn = undefined;
+					if (url.pathname.endsWith("/finish")) logCheckIn();
+				}
+				json({ items: activeCheckIn ? [activeCheckIn] : [] });
+				return;
+			}
+			const historyMovieId = /^\/movies\/user\/[^/]+\/movie\/([^/]+)\/history$/.exec(url.pathname)?.[1];
+			if (historyMovieId) {
+				json(fixtureMovieWatches.filter(({ movieId }) => movieId === historyMovieId));
+				return;
+			}
+			if (url.pathname.endsWith("/watch-counts")) {
+				const counts = new Map();
+				for (const { movieId } of fixtureMovieWatches) counts.set(movieId, (counts.get(movieId) ?? 0) + 1);
+				json([...counts].map(([movieId, watchCount]) => ({ movieId, watchCount })));
+				return;
+			}
 		}
     if (scenario === "watch-completion") {
       if (url.pathname === "/shows/progress") {

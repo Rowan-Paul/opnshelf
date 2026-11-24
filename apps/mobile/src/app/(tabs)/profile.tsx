@@ -23,6 +23,7 @@ import {
 } from "@/components/navigation/native-tab-screen";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { UnreadDot } from "@/components/release-notes/UnreadDot";
+import { ProfileWatchingActivity } from "@/components/social/WatchingActivity";
 import {
 	PosterRowSkeleton,
 	ProfileHeaderSkeleton,
@@ -101,6 +102,7 @@ export default function ProfileTab() {
 				{isPending ? (
 					<>
 						<ProfileHeaderSkeleton />
+						<ProfileWatchingActivity did={userDid} />
 						<View className="gap-6 px-4">
 							<View className="h-11 rounded-lg bg-background-subtle" />
 							<View className="flex-row flex-wrap gap-3">

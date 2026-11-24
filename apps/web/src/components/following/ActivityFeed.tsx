@@ -1,12 +1,18 @@
-import { type FollowedActivityItemDto, groupActivities } from "@opnshelf/api";
+import {
+	type FollowedActivityItemDto,
+	groupActivities,
+	type WatchingCheckInDto,
+} from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Activity, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ActivityCardsSkeleton } from "#/components/skeletons";
+import { WatchingActivity } from "#/components/WatchingActivity";
 import { ActivityCard } from "./ActivityCard";
 
 interface ActivityFeedProps {
 	activities: FollowedActivityItemDto[];
+	watching?: WatchingCheckInDto[];
 	isLoading: boolean;
 	error: Error | null;
 	userTimezone?: string;
@@ -21,6 +27,7 @@ interface ActivityFeedProps {
 
 export function ActivityFeed({
 	activities,
+	watching,
 	isLoading,
 	error,
 	userTimezone,
@@ -38,11 +45,11 @@ export function ActivityFeed({
 		return () => clearInterval(timer);
 	}, []);
 
-	if (isLoading && activities.length === 0) {
+	if (isLoading && activities.length === 0 && !watching?.length) {
 		return <ActivityCardsSkeleton rows={3} />;
 	}
 
-	if (error && activities.length === 0) {
+	if (error && activities.length === 0 && !watching?.length) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12 text-(--foreground-muted)">
 				<Activity className="mb-4 size-12 opacity-50" />
@@ -58,7 +65,7 @@ export function ActivityFeed({
 		);
 	}
 
-	if (activities.length === 0) {
+	if (activities.length === 0 && !watching?.length) {
 		if (activeCircleId) {
 			return (
 				<div className="flex flex-col items-center justify-center py-12 text-center text-(--foreground-muted)">
@@ -107,6 +114,7 @@ export function ActivityFeed({
 
 	return (
 		<div className="space-y-3">
+			<WatchingActivity items={watching} following />
 			{groupActivities(activities, userTimezone ?? "UTC", now).map(
 				(group, index, groups) => (
 					<div key={group.id}>

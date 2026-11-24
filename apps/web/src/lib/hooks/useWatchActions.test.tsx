@@ -65,9 +65,8 @@ function History({ episode }: { episode: boolean }) {
 			))}
 			<YourActivity
 				watchHistory={[{ id: "a" }, { id: "b" }, { id: "c" }]}
-				onAddToShelf={() => {}}
 				onDeleteEntry={() => {}}
-				onEditEntry={save}
+				onRequestEdit={() => {}}
 				updatingEntryIds={
 					episode
 						? actions.updatingEpisodeWatchIds
@@ -108,7 +107,7 @@ describe("concurrent Watch date edits", () => {
 		const expectPending = (pending: boolean[]) => {
 			for (const label of ["Edit watch date", "Remove this watch"]) {
 				const buttons = screen.getAllByRole<HTMLButtonElement>("button", {
-					name: label,
+					name: new RegExp(`^${label},`),
 				});
 				expect(buttons.map((button) => button.disabled)).toEqual(pending);
 			}

@@ -183,6 +183,52 @@ describe("MoviesService", () => {
 		});
 	});
 
+	describe("getWatchSuggestion", () => {
+		it.each([
+			{ sequelDate: "2021-01-01", kind: "collection", movieId: "2" },
+			{ sequelDate: "2099-01-01", kind: "similar", movieId: "4" },
+		])(
+			"uses the released collection sequel first, then recommendations ($kind)",
+			async ({ sequelDate, kind, movieId }) => {
+				const source = {
+					id: 1,
+					title: "First",
+					release_date: "2020-01-01",
+					belongs_to_collection: { id: 10 },
+				};
+				const movies = [
+					{ id: 2, title: "Second", release_date: sequelDate },
+					{ id: 3, title: "Earlier", release_date: "2019-01-01" },
+					{ id: 4, title: "Related", release_date: "2022-01-01" },
+				];
+				mockFetch.mockImplementation(async (input: string | URL) => {
+					const path = new URL(String(input)).pathname;
+					if (path.endsWith("/videos")) return Response.json({ results: [] });
+					if (path.endsWith("/collection/10"))
+						return Response.json({ parts: [movies[1], movies[0], source] });
+					if (path.endsWith("/recommendations"))
+						return Response.json({
+							results: [
+								source,
+								{ id: 5, title: "Upcoming", release_date: "2099-01-01" },
+								movies[2],
+							],
+						});
+					if (path.endsWith("/movie/1")) return Response.json(source);
+					const detail = movies.find((movie) =>
+						path.endsWith(`/movie/${movie.id}`),
+					);
+					return detail
+						? Response.json({ ...detail, runtime: 102 })
+						: new Response(null, { status: 404 });
+				});
+				await expect(service.getWatchSuggestion("1")).resolves.toMatchObject({
+					suggestion: { kind, movieId, runtime: 102 },
+				});
+			},
+		);
+	});
+
 	describe("getMovieDetails", () => {
 		it("should get movie details from TMDB API with ranked trailer", async () => {
 			const mockMovie = {

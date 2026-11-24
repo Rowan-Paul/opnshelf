@@ -26,6 +26,7 @@ import {
 	UserPlus,
 } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import { ProfileWatchingActivity } from "#/components/WatchingActivity";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
@@ -300,6 +301,7 @@ function ProfileLayout() {
 			</div>
 
 			{/* Child Route Content */}
+			<ProfileWatchingActivity did={profile.did} />
 			<Outlet />
 		</div>
 	);

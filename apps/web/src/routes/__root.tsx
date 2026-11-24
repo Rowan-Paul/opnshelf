@@ -16,6 +16,7 @@ import { AccountDeletionGate } from "#/components/AccountDeletionGate";
 import { MobileAppBanner } from "#/components/MobileAppBanner";
 import { WelcomeTour } from "#/components/tour/WelcomeTour";
 import { Toaster } from "#/components/ui/sonner";
+import { WatchingDock } from "#/components/WatchingCheckIn";
 import { ssrAuthOptions, ssrCanResolveSession } from "#/lib/api";
 import { APP_BANNER_SCRIPT } from "#/lib/app-banner";
 import { AuthProvider } from "#/lib/auth-context";
@@ -162,6 +163,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 								<MobileAppBanner />
 								<main className="flex-1">{children}</main>
 								<Footer />
+								<WatchingDock />
 							</div>
 						)}
 						<AccountDeletionGate />

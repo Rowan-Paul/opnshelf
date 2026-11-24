@@ -1,62 +1,26 @@
-import { Loader2, Pencil, Plus, X } from "lucide-react";
-import type { ComponentProps } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { WatchCountBadge } from "#/components/WatchCountBadge";
-import { WatchDatePicker } from "#/components/WatchDatePicker";
 import { useAuth } from "#/lib/auth-context";
 import { formatDateTime } from "#/lib/date-utils";
 
-interface WatchHistoryEntry {
+export interface WatchHistoryEntry {
 	id: string;
 	watchedDate?: string;
 }
 
-interface YourActivityProps {
+export interface YourActivityProps {
 	watchHistory: WatchHistoryEntry[];
-	/** `null` creates an undated Watch. */
-	onAddToShelf: (watchedAt: string | null) => void;
 	onDeleteEntry: (id: string) => void;
-	onEditEntry?: (id: string, watchedAt: string | null) => Promise<unknown>;
+	onRequestEdit?: (entry: WatchHistoryEntry) => void;
 	updatingEntryIds?: string[];
-	isAddPending?: boolean;
 	isDeletePending?: boolean;
-}
-
-// Spreads the rest props: Radix's `asChild` clones this and injects its own
-// handlers and ref onto it.
-function AddToShelfTrigger({
-	isPending,
-	className,
-	...props
-}: ComponentProps<"button"> & { isPending: boolean }) {
-	return (
-		<button
-			type="button"
-			disabled={isPending}
-			className={`btn btn-secondary gap-2 ${className ?? ""}`}
-			{...props}
-		>
-			{isPending ? (
-				<>
-					<Loader2 className="size-4 animate-spin" />
-					Loading
-				</>
-			) : (
-				<>
-					<Plus className="size-4" />
-					Add to shelf
-				</>
-			)}
-		</button>
-	);
 }
 
 export function YourActivity({
 	watchHistory,
-	onAddToShelf,
 	onDeleteEntry,
-	onEditEntry,
+	onRequestEdit,
 	updatingEntryIds = [],
-	isAddPending = false,
 	isDeletePending = false,
 }: YourActivityProps) {
 	const { userSettings } = useAuth();
@@ -64,92 +28,58 @@ export function YourActivity({
 	const userTimeFormat = userSettings?.timeFormat;
 
 	return (
-		<section className="card p-5">
-			<div className="mb-4 flex items-center justify-between gap-2">
-				<h2 className="font-display font-semibold">Your Activity</h2>
-				{/* Same pill the posters use, so the count reads the same whether you
-				    got here from a card or from the detail page. */}
-				{watchHistory.length > 0 && (
-					<WatchCountBadge
-						watchCount={watchHistory.length}
-						className={`h-6 ${watchHistory.length > 1 ? "" : "w-6"}`}
-					/>
-				)}
-			</div>
+		<section aria-label="Logged Watches">
+			{watchHistory.length > 0 && (
+				<WatchCountBadge
+					watchCount={watchHistory.length}
+					className={`absolute top-6 right-12 h-6 ${watchHistory.length > 1 ? "" : "w-6"}`}
+				/>
+			)}
 			{watchHistory.length > 0 ? (
-				<div className="space-y-1">
-					{watchHistory.map((entry, index) => (
-						<div
-							key={entry.id || index}
-							className="group flex items-center rounded-lg transition-colors hover:bg-(--background-subtle)"
-						>
-							<div className="flex flex-1 items-center p-2">
-								<span className="font-medium text-sm">
-									{entry.watchedDate
-										? formatDateTime(
-												entry.watchedDate,
-												userTimezone,
-												userTimeFormat,
-											)
-										: "No date"}
-								</span>
-							</div>
-							{onEditEntry && (
-								<WatchDatePicker
-									initialWatchedAt={entry.watchedDate ?? null}
-									isPending={updatingEntryIds.includes(entry.id)}
-									onConfirm={(date) => onEditEntry(entry.id, date)}
-									trigger={
-										<button
-											type="button"
-											disabled={updatingEntryIds.includes(entry.id)}
-											aria-label="Edit watch date"
-											className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-(--foreground-muted) hover:bg-(--background-subtle)"
-										>
-											<Pencil className="size-4" />
-										</button>
-									}
-								/>
-							)}
-							<button
-								type="button"
-								onClick={() => onDeleteEntry(entry.id)}
-								disabled={
-									isDeletePending || updatingEntryIds.includes(entry.id)
-								}
-								className="flex h-8 w-8 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive"
-								aria-label="Remove this watch"
+				<div className="max-h-[50dvh] space-y-1 overflow-y-auto">
+					{watchHistory.map((entry, index) => {
+						const date = entry.watchedDate
+							? formatDateTime(entry.watchedDate, userTimezone, userTimeFormat)
+							: "No date";
+						return (
+							<div
+								key={entry.id || index}
+								className="group flex items-center rounded-lg transition-colors hover:bg-(--background-subtle)"
 							>
-								<X className="size-4" />
-							</button>
-						</div>
-					))}
-					<WatchDatePicker
-						isPending={isAddPending}
-						onConfirm={onAddToShelf}
-						trigger={
-							<AddToShelfTrigger
-								isPending={isAddPending}
-								className="mt-3 w-full"
-							/>
-						}
-					/>
+								<div className="flex flex-1 items-center p-2">
+									<span className="font-medium text-sm">{date}</span>
+								</div>
+								{onRequestEdit && (
+									<button
+										type="button"
+										disabled={updatingEntryIds.includes(entry.id)}
+										aria-label={`Edit watch date, ${date}`}
+										className="flex size-10 shrink-0 items-center justify-center rounded-md text-(--foreground-muted) hover:bg-(--background-subtle)"
+										onClick={() => onRequestEdit(entry)}
+									>
+										<Pencil className="size-4" />
+									</button>
+								)}
+								<button
+									type="button"
+									onClick={() => onDeleteEntry(entry.id)}
+									disabled={
+										isDeletePending || updatingEntryIds.includes(entry.id)
+									}
+									className="flex size-10 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-destructive/10 hover:text-destructive"
+									aria-label={`Remove this watch, ${date}`}
+								>
+									<Trash2 className="size-4" />
+								</button>
+							</div>
+						);
+					})}
 				</div>
 			) : (
 				<div className="space-y-3">
 					<p className="text-(--foreground-muted) text-sm">
-						You haven&apos;t watched this yet
+						No Watches logged yet
 					</p>
-					<WatchDatePicker
-						isPending={isAddPending}
-						onConfirm={onAddToShelf}
-						trigger={
-							<AddToShelfTrigger
-								isPending={isAddPending}
-								className="w-full text-sm"
-							/>
-						}
-					/>
 				</div>
 			)}
 		</section>

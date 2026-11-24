@@ -18,9 +18,9 @@ interface MediaHeroProps {
 	backdropUrl: string;
 	posterUrl: string;
 	metaItems?: ReactNode;
+	breadcrumbPager?: ReactNode;
 	actions?: ReactNode;
 	breadcrumbs?: Breadcrumb[];
-	currentProgress?: ReactNode;
 	progress?: PosterProgressValue;
 	progressLabel?: "Show progress" | "Season progress";
 	isProgressLoading?: boolean;
@@ -32,9 +32,9 @@ export default function MediaHero({
 	backdropUrl,
 	posterUrl,
 	metaItems,
+	breadcrumbPager,
 	actions,
 	breadcrumbs,
-	currentProgress,
 	progress,
 	progressLabel = "Show progress",
 	isProgressLoading = false,
@@ -80,46 +80,58 @@ export default function MediaHero({
 				{/* Breadcrumbs / Back Button. White + text shadow: these sit on the raw
 				    backdrop image where the gradient overlays are transparent, so theme
 				    text colors vanish. */}
-				{breadcrumbs && breadcrumbs.length > 0 ? (
-					<nav className="mb-4 flex items-center gap-2 overflow-x-auto text-sm [scrollbar-width:none] [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] [&::-webkit-scrollbar]:hidden">
-						{breadcrumbs.map((crumb, index) => (
-							<span
-								key={crumb.to}
-								className="flex min-w-0 shrink-0 items-center gap-2 last:min-w-0 last:shrink"
-							>
-								{index > 0 && <span className="text-white/60">/</span>}
-								{index === breadcrumbs.length - 1 ? (
-									<span className="truncate whitespace-nowrap text-white">
-										{crumb.label}
-									</span>
-								) : (
-									<Link
-										to={crumb.to}
-										className="inline-flex min-w-0 items-center gap-1 text-white/80 transition-colors hover:text-white"
-									>
-										{index === 0 && (
-											<ChevronLeft className="size-4 shrink-0 drop-shadow-[0_1px_2px_rgb(0_0_0/0.6)]" />
-										)}
-										<span
-											className={
-												index === 0
-													? "max-w-[40vw] truncate whitespace-nowrap sm:max-w-xs"
-													: "whitespace-nowrap"
-											}
-										>
+				<div className="mb-4 flex items-center justify-between gap-2">
+					{breadcrumbs && breadcrumbs.length > 0 ? (
+						<nav
+							aria-label="Breadcrumb"
+							className="flex min-w-0 items-center gap-2 overflow-x-auto text-sm [scrollbar-width:none] [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] [&::-webkit-scrollbar]:hidden"
+						>
+							{breadcrumbs.map((crumb, index) => (
+								<span
+									key={crumb.to}
+									// Beside a pager there is no room for the current page on
+									// a phone, and the title below already names it.
+									className={`min-w-0 shrink-0 items-center gap-2 last:min-w-0 last:shrink ${
+										breadcrumbPager && index === breadcrumbs.length - 1
+											? "hidden sm:flex"
+											: "flex"
+									}`}
+								>
+									{index > 0 && <span className="text-white/60">/</span>}
+									{index === breadcrumbs.length - 1 ? (
+										<span className="truncate whitespace-nowrap text-white">
 											{crumb.label}
 										</span>
-									</Link>
-								)}
-							</span>
-						))}
-					</nav>
-				) : (
-					<Link to="/" className="btn btn-secondary mb-4 inline-flex gap-2">
-						<ChevronLeft className="size-4" />
-						{backLabel}
-					</Link>
-				)}
+									) : (
+										<Link
+											to={crumb.to}
+											className="inline-flex min-w-0 items-center gap-1 text-white/80 transition-colors hover:text-white"
+										>
+											{index === 0 && (
+												<ChevronLeft className="size-4 shrink-0 drop-shadow-[0_1px_2px_rgb(0_0_0/0.6)]" />
+											)}
+											<span
+												className={
+													index === 0
+														? "max-w-[40vw] truncate whitespace-nowrap sm:max-w-xs"
+														: "whitespace-nowrap"
+												}
+											>
+												{crumb.label}
+											</span>
+										</Link>
+									)}
+								</span>
+							))}
+						</nav>
+					) : (
+						<Link to="/" className="btn btn-secondary inline-flex gap-2">
+							<ChevronLeft className="size-4" />
+							{backLabel}
+						</Link>
+					)}
+					{breadcrumbPager}
+				</div>
 
 				{/* Media Info Header */}
 				<div className="grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
@@ -210,7 +222,6 @@ export default function MediaHero({
 						)}
 
 						{/* Current Progress */}
-						{currentProgress && <div className="mt-4">{currentProgress}</div>}
 					</div>
 				</div>
 			</div>

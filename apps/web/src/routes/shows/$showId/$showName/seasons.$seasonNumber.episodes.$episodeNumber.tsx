@@ -5,7 +5,7 @@ import {
 	showsControllerGetShowDetailsOptions,
 } from "@opnshelf/api";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
+import { AlertTriangle, Loader2, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	Dialog,
@@ -14,6 +14,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { ShelfWatchButton } from "#/components/WatchingCheckIn";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
@@ -45,7 +46,6 @@ import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import { DetailPageSkeleton } from "../../../../components/skeletons";
 import WatchProviders from "../../../../components/WatchProviders";
-import { YourActivity } from "../../../../components/YourActivity";
 export const Route = createFileRoute(
 	"/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber",
 )({
@@ -172,8 +172,6 @@ function EpisodeDetailPage() {
 				ep.seasonNumber === seasonNum && ep.episodeNumber === episodeNum,
 		);
 	}, [watchHistory, seasonNum, episodeNum]);
-
-	const isWatched = episodeWatchHistory.length > 0;
 
 	if (showLoading || episodeLoading) return <DetailPageSkeleton />;
 	if (showError || episodeError || !show || !episode) {
@@ -354,52 +352,31 @@ function EpisodeDetailPage() {
 				actions={
 					isAuthenticated ? (
 						<>
-							{isWatched ? (
-								<button
-									type="button"
-									onClick={() => {
-										if (episodeWatchHistory && episodeWatchHistory.length > 1) {
-											setConfirmRemoveOpen(true);
-										} else {
-											unmarkEpisodeWatched(seasonNum, episodeNum);
-										}
-									}}
-									disabled={isUnmarkEpisodePending}
-									className="btn gap-2 border-success/20 bg-success/10 text-success hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
-								>
-									{isUnmarkEpisodePending ? (
-										<>
-											<Loader2 className="size-4 animate-spin" />
-											Loading
-										</>
-									) : (
-										<>
-											<X className="size-4" />
-											Remove from shelf
-										</>
-									)}
-								</button>
-							) : (
-								<button
-									type="button"
-									onClick={() => markEpisodeWatched(seasonNum, episodeNum)}
-									disabled={isMarkEpisodePending}
-									aria-busy={isMarkEpisodePending}
-									className="btn btn-primary gap-2"
-								>
-									{isMarkEpisodePending ? (
-										<>
-											<Loader2 className="size-4 animate-spin" />
-											Loading
-										</>
-									) : (
-										<>
-											<Plus className="size-4" />
-											Add to shelf
-										</>
-									)}
-								</button>
-							)}
+							<ShelfWatchButton
+								title={episode.name}
+								history={{
+									watchHistory: episodeWatchHistory,
+									onEditEntry: updateEpisodeWatchDate,
+									updatingEntryIds: updatingEpisodeWatchIds,
+									onDeleteEntry: deleteEpisodeWatchHistoryEntry,
+									isDeletePending: isDeleteEpisodeHistoryPending,
+								}}
+								target={{
+									mediaId: showId,
+									seasonNumber: seasonNum,
+									episodeNumber: episodeNum,
+								}}
+								count={episodeWatchHistory.length}
+								busy={isMarkEpisodePending || isUnmarkEpisodePending}
+								onLog={(date) =>
+									markEpisodeWatched(seasonNum, episodeNum, date)
+								}
+								onRemove={() => {
+									if (episodeWatchHistory.length > 1)
+										setConfirmRemoveOpen(true);
+									else unmarkEpisodeWatched(seasonNum, episodeNum);
+								}}
+							/>
 							<MediaActionsBar
 								mediaType="show"
 								mediaId={showId}
@@ -414,7 +391,7 @@ function EpisodeDetailPage() {
 					)
 				}
 				breadcrumbs={breadcrumbs}
-				currentProgress={
+				breadcrumbPager={
 					<PrevNextNav
 						previous={
 							prevEpisode
@@ -490,21 +467,6 @@ function EpisodeDetailPage() {
 							mediaType="show"
 							mediaId={`${showId}:season:${seasonNum}:episode:${episodeNum}`}
 						/>
-
-						{/* Your Activity */}
-						{isAuthenticated && (
-							<YourActivity
-								onEditEntry={updateEpisodeWatchDate}
-								updatingEntryIds={updatingEpisodeWatchIds}
-								watchHistory={episodeWatchHistory}
-								onAddToShelf={(watchedAt) =>
-									markEpisodeWatched(seasonNum, episodeNum, watchedAt)
-								}
-								onDeleteEntry={deleteEpisodeWatchHistoryEntry}
-								isAddPending={isMarkEpisodePending}
-								isDeletePending={isDeleteEpisodeHistoryPending}
-							/>
-						)}
 
 						{/* Details */}
 						<DetailsCard

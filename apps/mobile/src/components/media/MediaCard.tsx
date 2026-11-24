@@ -593,6 +593,15 @@ function MediaCardWithActions({
 			/>
 
 			<MediaQuickActionsSheet
+				checkInTarget={
+					isMovie || ep
+						? {
+								mediaId: mediaId,
+								seasonNumber: ep?.seasonNumber,
+								episodeNumber: ep?.episodeNumber,
+							}
+						: undefined
+				}
 				visible={quickVisible}
 				onDismiss={() => setQuickVisible(false)}
 				title={item.title}

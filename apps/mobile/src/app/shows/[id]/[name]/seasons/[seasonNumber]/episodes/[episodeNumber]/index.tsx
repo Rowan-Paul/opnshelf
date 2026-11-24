@@ -15,7 +15,10 @@ import {
 	CrewSection,
 } from "@/components/detail/CreditsSection";
 import { DetailActions } from "@/components/detail/DetailActions";
-import { DetailColumns } from "@/components/detail/DetailColumns";
+import {
+	DetailColumns,
+	DetailPlacement,
+} from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -124,10 +127,37 @@ export default function EpisodeDetailScreen() {
 		);
 	};
 
+	const pager = (
+		<PrevNextNav
+			previous={
+				prevEpisode
+					? {
+							label: "Previous episode",
+							code: `S${prevEpisode.season}E${prevEpisode.episode}`,
+							onPress: () => goToEpisode(prevEpisode),
+						}
+					: undefined
+			}
+			next={
+				nextEpisode
+					? {
+							label: "Next episode",
+							code: `S${nextEpisode.season}E${nextEpisode.episode}`,
+							onPress: () => goToEpisode(nextEpisode),
+						}
+					: undefined
+			}
+		/>
+	);
+
 	return (
 		<ScreenFrame>
 			<Stack.Screen
-				options={{ headerShown: true, title: data?.name ?? "Episode" }}
+				options={{
+					headerShown: true,
+					title: data?.name ?? "Episode",
+					headerRight: () => pager,
+				}}
 			/>
 			{isLoading ? (
 				<DetailSkeleton />
@@ -222,27 +252,9 @@ export default function EpisodeDetailScreen() {
 										: undefined
 								}
 							/>
-
-							<PrevNextNav
-								previous={
-									prevEpisode
-										? {
-												label: "Previous episode",
-												code: `S${prevEpisode.season}E${prevEpisode.episode}`,
-												onPress: () => goToEpisode(prevEpisode),
-											}
-										: undefined
-								}
-								next={
-									nextEpisode
-										? {
-												label: "Next episode",
-												code: `S${nextEpisode.season}E${nextEpisode.episode}`,
-												onPress: () => goToEpisode(nextEpisode),
-											}
-										: undefined
-								}
-							/>
+							<DetailPlacement when="wide">
+								<WatchProviders mediaType="show" mediaId={id} />
+							</DetailPlacement>
 						</>
 					}
 					secondary={
@@ -276,7 +288,9 @@ export default function EpisodeDetailScreen() {
 								mediaType="show"
 								mediaId={`${id}:season:${seasonNum}:episode:${episodeNum}`}
 							/>
-							<WatchProviders mediaType="show" mediaId={id} />
+							<DetailPlacement when="compact">
+								<WatchProviders mediaType="show" mediaId={id} />
+							</DetailPlacement>
 							<CastSection cast={showData?.credits?.cast} />
 							<CreditsSection
 								title="Guest Stars"

@@ -155,6 +155,19 @@ export type WatchProvidersResponseDto = {
     availableCountries?: Array<string>;
 };
 
+export type MovieWatchSuggestionDto = {
+    kind: 'collection' | 'similar';
+    movieId: string;
+    title: string;
+    posterPath?: string;
+    releaseDate?: string;
+    runtime?: number;
+};
+
+export type MovieWatchSuggestionResponseDto = {
+    suggestion?: MovieWatchSuggestionDto;
+};
+
 export type MovieDto = {
     movieId: string;
     title: string;
@@ -2566,6 +2579,30 @@ export type RemovePushDeviceDto = {
     token: string;
 };
 
+export type WatchingCheckInDto = {
+    rkey: string;
+    userDid: string;
+    handle: string;
+    mediaId: string;
+    title: string;
+    seasonNumber: number | null;
+    episodeNumber: number | null;
+    startedAt: string;
+    endsAt: string | null;
+    finishing: boolean;
+};
+
+export type CheckInsDto = {
+    items: Array<WatchingCheckInDto>;
+};
+
+export type StartCheckInDto = {
+    mediaId: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+    replaceId?: string;
+};
+
 export type UnifiedSearchResultDto = {
     id: number;
     media_type: 'movie' | 'tv';
@@ -3074,6 +3111,21 @@ export type MoviesControllerGetRecommendationsResponses = {
 };
 
 export type MoviesControllerGetRecommendationsResponse = MoviesControllerGetRecommendationsResponses[keyof MoviesControllerGetRecommendationsResponses];
+
+export type MoviesControllerGetWatchSuggestionData = {
+    body?: never;
+    path: {
+        movieId: string;
+    };
+    query?: never;
+    url: '/movies/tmdb/{movieId}/watch-suggestion';
+};
+
+export type MoviesControllerGetWatchSuggestionResponses = {
+    200: MovieWatchSuggestionResponseDto;
+};
+
+export type MoviesControllerGetWatchSuggestionResponse = MoviesControllerGetWatchSuggestionResponses[keyof MoviesControllerGetWatchSuggestionResponses];
 
 export type MoviesControllerGetUserMoviesData = {
     body?: never;
@@ -6462,6 +6514,92 @@ export type NotificationsControllerRegisterDeviceResponses = {
 };
 
 export type NotificationsControllerRegisterDeviceResponse = NotificationsControllerRegisterDeviceResponses[keyof NotificationsControllerRegisterDeviceResponses];
+
+export type CheckInsControllerOwnData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/check-ins';
+};
+
+export type CheckInsControllerOwnResponses = {
+    200: CheckInsDto;
+};
+
+export type CheckInsControllerOwnResponse = CheckInsControllerOwnResponses[keyof CheckInsControllerOwnResponses];
+
+export type CheckInsControllerStartData = {
+    body: StartCheckInDto;
+    path?: never;
+    query?: never;
+    url: '/check-ins';
+};
+
+export type CheckInsControllerStartResponses = {
+    201: WatchingCheckInDto;
+};
+
+export type CheckInsControllerStartResponse = CheckInsControllerStartResponses[keyof CheckInsControllerStartResponses];
+
+export type CheckInsControllerProfileData = {
+    body?: never;
+    path: {
+        did: string;
+    };
+    query?: never;
+    url: '/check-ins/profile/{did}';
+};
+
+export type CheckInsControllerProfileResponses = {
+    200: CheckInsDto;
+};
+
+export type CheckInsControllerProfileResponse = CheckInsControllerProfileResponses[keyof CheckInsControllerProfileResponses];
+
+export type CheckInsControllerFollowingData = {
+    body?: never;
+    path?: never;
+    query?: {
+        circleId?: string;
+    };
+    url: '/check-ins/following';
+};
+
+export type CheckInsControllerFollowingResponses = {
+    200: CheckInsDto;
+};
+
+export type CheckInsControllerFollowingResponse = CheckInsControllerFollowingResponses[keyof CheckInsControllerFollowingResponses];
+
+export type CheckInsControllerFinishData = {
+    body?: never;
+    path: {
+        rkey: string;
+    };
+    query?: never;
+    url: '/check-ins/{rkey}/finish';
+};
+
+export type CheckInsControllerFinishResponses = {
+    201: CheckInsDto;
+};
+
+export type CheckInsControllerFinishResponse = CheckInsControllerFinishResponses[keyof CheckInsControllerFinishResponses];
+
+export type CheckInsControllerCancelData = {
+    body?: never;
+    path: {
+        rkey: string;
+    };
+    query?: never;
+    url: '/check-ins/{rkey}';
+};
+
+export type CheckInsControllerCancelResponses = {
+    200: CheckInsDto;
+};
+
+export type CheckInsControllerCancelResponse = CheckInsControllerCancelResponses[keyof CheckInsControllerCancelResponses];
 
 export type SearchControllerSearchAllData = {
     body?: never;

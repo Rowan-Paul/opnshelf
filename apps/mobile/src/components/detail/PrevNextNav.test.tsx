@@ -7,6 +7,8 @@ vi.mock("react-native", async () => {
 	return {
 		View: (props: Record<string, unknown>) =>
 			createElement("view", props, props.children as never),
+		Pressable: (props: Record<string, unknown>) =>
+			createElement("button", props, props.children as never),
 	};
 });
 vi.mock("lucide-react-native", () => ({
@@ -16,10 +18,11 @@ vi.mock("lucide-react-native", () => ({
 vi.mock("@/theme/colors", () => ({
 	useThemeColors: () => ({ mutedForeground: "muted" }),
 }));
-vi.mock("@/components/ui/button", async () => {
+vi.mock("@/components/ui/text", async () => {
 	const { createElement } = await import("react");
 	return {
-		Button: (props: Record<string, unknown>) => createElement("button", props),
+		Text: (props: Record<string, unknown>) =>
+			createElement("text", props, props.children as never),
 	};
 });
 
@@ -33,9 +36,11 @@ function render(element: React.ReactElement) {
 
 const buttons = (renderer: ReactTestRenderer) =>
 	renderer.root.findAll((n) => n.type === "button");
+const codes = (renderer: ReactTestRenderer) =>
+	renderer.root.findAll((n) => n.type === "text").map((n) => n.props.children);
 
 describe("PrevNextNav", () => {
-	it("labels both neighbours with their codes", () => {
+	it("labels both neighbours and shows their codes", () => {
 		const onPrevious = vi.fn();
 		const renderer = render(
 			<PrevNextNav
@@ -44,34 +49,21 @@ describe("PrevNextNav", () => {
 			/>,
 		);
 		const [previous, next] = buttons(renderer);
-		expect(previous.props).toMatchObject({
-			label: "Previous season",
-			description: "S1",
-		});
-		expect(next.props).toMatchObject({
-			label: "Next season",
-			description: "S3",
-		});
+		expect(previous.props.accessibilityLabel).toBe("Previous season, S1");
+		expect(next.props.accessibilityLabel).toBe("Next season, S3");
+		expect(codes(renderer)).toEqual(["S1", "S3"]);
 		act(() => previous.props.onPress());
 		expect(onPrevious).toHaveBeenCalledOnce();
 	});
 
-	it("hides the side with no neighbour and keeps the other on its edge", () => {
+	it("leaves out the side with no neighbour", () => {
 		const renderer = render(
 			<PrevNextNav
 				next={{ label: "Next episode", code: "S1E2", onPress: vi.fn() }}
 			/>,
 		);
 		expect(buttons(renderer)).toHaveLength(1);
-		// An empty half holds the previous slot, so Next stays on the right.
-		const row = renderer.toJSON() as {
-			children: { type: string; props: Record<string, unknown> }[];
-		};
-		const [first, second] = row.children;
-		expect(first.type).toBe("view");
-		expect(first.props.className).toBe("flex-1");
-		expect(second.type).toBe("button");
-		expect(second.props.label).toBe("Next episode");
+		expect(codes(renderer)).toEqual(["S1E2"]);
 	});
 
 	it("renders nothing without neighbours", () => {

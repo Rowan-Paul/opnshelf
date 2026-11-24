@@ -1,21 +1,36 @@
 import { usersControllerGetMySettingsOptions } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { type Href, Link } from "expo-router";
-import { Check, ChevronRight, Play, Plus, X } from "lucide-react-native";
-import { type ReactNode, useState } from "react";
+import {
+	CalendarClock,
+	CalendarOff,
+	Check,
+	ChevronDown,
+	ChevronRight,
+	Play,
+	Plus,
+	X,
+} from "lucide-react-native";
+import { type ReactNode, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { WatchDatePickerModal } from "@/components/detail/WatchDatePickerModal";
 import {
 	type WatchHistoryEntry,
 	WatchHistorySheet,
 } from "@/components/detail/WatchHistorySheet";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { useDetailLayoutLock } from "@/lib/detail-layout-lock";
 import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";
-import { formatWatchDateTime, latestWatchDate } from "@/lib/watch-date";
+import {
+	confirmWatchingCheckIn,
+	useWatchingCheckIn,
+} from "@/lib/use-watching-check-in";
+import { latestWatchDate } from "@/lib/watch-date";
 import { useThemeColors } from "@/theme/colors";
 
 type MediaTrackingActionsProps = TrackingTarget & {
@@ -66,6 +81,26 @@ export type TrackingTarget =
 	  };
 
 /**
+ * The line under "On shelf", worded like the Web App's: the day of the only
+ * play, the day of the latest of several, or a note that none has a date.
+ */
+function watchSummary(
+	plays: number,
+	latest: string | undefined,
+	timeZone: string | undefined,
+): string | undefined {
+	if (plays === 0) return undefined;
+	if (!latest) return "Watched · No date";
+	const day = new Date(latest).toLocaleDateString(undefined, {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+		timeZone,
+	});
+	return `${plays > 1 ? "Last watched" : "Watched"} ${day}`;
+}
+
+/**
  * The shared "shelf" button for every media detail surface — movie, show,
  * season and episode. The primary action toggles the item on/off the shelf
  * ("Add to shelf" / "Remove from shelf"); `renderTrailing` fills the rest of
@@ -77,6 +112,11 @@ export type TrackingTarget =
  */
 export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	const colors = useThemeColors();
+	const checkIn = useWatchingCheckIn();
+	const [shelfMenu, setShelfMenu] = useState(false);
+	const afterMenu = useRef<(() => void) | undefined>(undefined);
+	const afterHistory = useRef<(() => void) | undefined>(undefined);
+	useDetailLayoutLock(shelfMenu);
 	const { isAuthenticated } = useAuth();
 	const { data: settings } = useQuery({
 		...usersControllerGetMySettingsOptions(),
@@ -122,10 +162,11 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 	switch (props.mediaType) {
 		case "movie": {
 			isOnShelf = !!status.isWatched;
-			const date = formatWatchDateTime(status.latestWatchedDate);
-			detail = date
-				? `${date}${status.totalMovieWatches > 1 ? ` · ${status.totalMovieWatches} watches` : ""}`
-				: undefined;
+			detail = watchSummary(
+				status.totalMovieWatches,
+				status.latestWatchedDate,
+				settings?.timezone,
+			);
 			break;
 		}
 		case "show": {
@@ -148,16 +189,16 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			isOnShelf =
 				status.isEpisodeWatched?.(props.seasonNumber, props.episodeNumber) ??
 				false;
-			const watchedDate = formatWatchDateTime(
-				latestWatchDate(
-					showHistory.filter(
-						(ep) =>
-							ep.seasonNumber === props.seasonNumber &&
-							ep.episodeNumber === props.episodeNumber,
-					),
-				),
+			const plays = showHistory.filter(
+				(ep) =>
+					ep.seasonNumber === props.seasonNumber &&
+					ep.episodeNumber === props.episodeNumber,
 			);
-			detail = watchedDate ? `Watched ${watchedDate}` : undefined;
+			detail = watchSummary(
+				plays.length,
+				latestWatchDate(plays),
+				settings?.timezone,
+			);
 			break;
 		}
 	}
@@ -202,6 +243,10 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			.map((e) => ({ id: e.id, watchedDate: e.watchedDate }));
 		historySubtitle = `S${props.seasonNumber}E${props.episodeNumber}`;
 	}
+	const watchCount = Math.max(
+		isMovie ? status.totalMovieWatches : 0,
+		historyEntries.length,
+	);
 	const deleteHistoryEntry = (id: string) => {
 		if (props.mediaType === "movie") actions.deleteMovieWatchHistoryEntry(id);
 		else if (props.mediaType === "episode")
@@ -246,7 +291,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			case "movie":
 				confirmRemoveWatches({
 					title: props.title ?? "this movie",
-					entryCount: historyEntries.length,
+					entryCount: watchCount,
 					onConfirm: () => actions.unmarkMovieWatched(),
 				});
 				break;
@@ -261,7 +306,7 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 				const episodeLabel = `S${seasonNumber}E${episodeNumber}`;
 				confirmRemoveWatches({
 					title: title ? `${title} ${episodeLabel}` : episodeLabel,
-					entryCount: historyEntries.length,
+					entryCount: watchCount,
 					onConfirm: () =>
 						actions.unmarkEpisodeWatched(seasonNumber, episodeNumber, "all"),
 				});
@@ -305,14 +350,34 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 		);
 	}
 
-	// Movies can be logged multiple times, so keep "Add with date" available even
-	// once on the shelf. The other types are binary, so drop it when on the shelf.
-	const showCalendar = !isOnShelf || isMovie;
+	// Movies and episodes put logging options in the Shelf menu.
+	const target =
+		props.mediaType === "movie"
+			? { mediaId: props.movieId }
+			: props.mediaType === "episode"
+				? {
+						mediaId: props.showId,
+						seasonNumber: props.seasonNumber,
+						episodeNumber: props.episodeNumber,
+					}
+				: undefined;
+	const active = checkIn.active;
+	const watching =
+		!!target &&
+		active?.mediaId === target.mediaId &&
+		active.seasonNumber === (target.seasonNumber ?? null) &&
+		active.episodeNumber === (target.episodeNumber ?? null);
+	const closeMenu = (next?: () => void) => {
+		afterMenu.current = next;
+		setShelfMenu(false);
+	};
+	const showCalendar = !canManageHistory && !isOnShelf;
 	const continueTo =
 		props.mediaType === "show" || props.mediaType === "season"
 			? props.continueTo
 			: undefined;
-	const shelfVariant = isOnShelf || continueTo ? "secondary" : "primary";
+	const shelfVariant =
+		watching || isOnShelf || continueTo ? "secondary" : "primary";
 
 	return (
 		<View className="gap-3 px-4">
@@ -363,44 +428,162 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 			) : null}
 
 			<View className="flex-row gap-2">
-				<Button
-					// The row shares its width with three buttons, so the visible label
-					// stays short; the status card above says what it acts on.
-					label={
-						isOnShelf ? "Remove" : isPartial ? "Mark watched" : "Add to shelf"
-					}
-					accessibilityLabel={
-						isOnShelf
-							? "Remove from shelf"
-							: isPartial
-								? "Mark remaining watched"
-								: "Add to shelf"
-					}
-					loadingLabel="Loading"
-					variant={shelfVariant}
-					className="flex-1"
-					loading={isPending}
-					leading={
-						isOnShelf ? (
-							<X color={colors.destructive} size={18} />
-						) : (
-							<Plus
+				{target ? (
+					<View className="min-w-0 flex-1 flex-row">
+						<Button
+							label={
+								watching
+									? "Now watching"
+									: isOnShelf
+										? `On shelf (${watchCount})`
+										: "Add to shelf"
+							}
+							loading={isPending}
+							variant={shelfVariant}
+							className="min-w-0 flex-1 rounded-r-none px-1"
+							onPress={() =>
+								watching || isOnShelf ? setShelfMenu(true) : addToShelf()
+							}
+						/>
+						<Pressable
+							accessibilityRole="button"
+							accessibilityLabel="Shelf actions"
+							disabled={isPending || checkIn.pending}
+							onPress={() => setShelfMenu(true)}
+							className={`w-10 items-center justify-center rounded-r-lg border-border border-l ${shelfVariant === "primary" ? "bg-primary" : "border bg-background"}`}
+						>
+							<ChevronDown
+								size={18}
 								color={
 									shelfVariant === "primary"
 										? colors.accentForeground
 										: colors.foreground
 								}
-								size={18}
-								strokeWidth={2.5}
 							/>
-						)
-					}
-					onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
-				/>
+						</Pressable>
+					</View>
+				) : (
+					<Button
+						// The row shares its width with three buttons, so the visible label
+						// stays short; the status card above says what it acts on.
+						label={
+							isOnShelf ? "Remove" : isPartial ? "Mark watched" : "Add to shelf"
+						}
+						accessibilityLabel={
+							isOnShelf
+								? "Remove from shelf"
+								: isPartial
+									? "Mark remaining watched"
+									: "Add to shelf"
+						}
+						loadingLabel="Loading"
+						variant={shelfVariant}
+						className="flex-1"
+						loading={isPending}
+						leading={
+							isOnShelf ? (
+								<X color={colors.destructive} size={18} />
+							) : (
+								<Plus
+									color={
+										shelfVariant === "primary"
+											? colors.accentForeground
+											: colors.foreground
+									}
+									size={18}
+									strokeWidth={2.5}
+								/>
+							)
+						}
+						onPress={() => (isOnShelf ? removeFromShelf() : addToShelf())}
+					/>
+				)}
 				{props.renderTrailing(
 					showCalendar ? () => setDatePickerVisible(true) : undefined,
 				)}
 			</View>
+
+			{target && (
+				<BottomSheetModal
+					visible={shelfMenu}
+					onRequestClose={() => closeMenu()}
+					onClosed={() => {
+						const next = afterMenu.current;
+						afterMenu.current = undefined;
+						next?.();
+					}}
+				>
+					<View className="flex-1 justify-end">
+						<Pressable
+							className="flex-1"
+							onPress={() => closeMenu()}
+							accessibilityLabel="Close shelf actions"
+						/>
+						<View className="gap-2 rounded-t-2xl border border-border bg-card p-5 pb-10">
+							<View className="mb-1 h-1 w-8 self-center rounded-full bg-muted" />
+							<Text className="font-display-bold text-foreground text-lg">
+								{watching
+									? "Now watching"
+									: isOnShelf
+										? "Watch again"
+										: "Add to shelf"}
+							</Text>
+							{watching ? (
+								<>
+									<Button
+										variant="secondary"
+										label={active.finishing ? "Try logging again" : "I’m done"}
+										disabled={checkIn.pending}
+										onPress={() => closeMenu(() => checkIn.finish())}
+									/>
+									<Button
+										variant="ghost"
+										label="Cancel check-in"
+										disabled={active.finishing || checkIn.pending}
+										onPress={() => closeMenu(() => checkIn.cancel())}
+									/>
+								</>
+							) : (
+								<>
+									<Button
+										variant="secondary"
+										label="Start watching now"
+										leading={<Play size={17} color={colors.foreground} />}
+										disabled={active?.finishing || checkIn.pending}
+										onPress={() =>
+											closeMenu(() => confirmWatchingCheckIn(target, checkIn))
+										}
+									/>
+									{isOnShelf && (
+										<Button
+											variant="secondary"
+											label="Just finished"
+											leading={<Check size={17} color={colors.foreground} />}
+											onPress={() => closeMenu(() => addToShelf())}
+										/>
+									)}
+									<Button
+										variant="secondary"
+										label="Pick a date and time…"
+										leading={
+											<CalendarClock size={17} color={colors.foreground} />
+										}
+										onPress={() => closeMenu(() => setDatePickerVisible(true))}
+									/>
+									<Button
+										variant="secondary"
+										label="No date"
+										leading={
+											<CalendarOff size={17} color={colors.foreground} />
+										}
+										onPress={() => closeMenu(() => addToShelf(null))}
+									/>
+								</>
+							)}
+						</View>
+					</View>
+				</BottomSheetModal>
+			)}
 
 			<WatchDatePickerModal
 				visible={datePickerVisible}
@@ -425,16 +608,23 @@ export function MediaTrackingActions(props: MediaTrackingActionsProps) {
 					entries={historyEntries}
 					timeZone={settings?.timezone}
 					hour12={settings?.timeFormat === "12h"}
+					onClosed={() => {
+						const next = afterHistory.current;
+						afterHistory.current = undefined;
+						next?.();
+					}}
 					onEdit={(entry) => {
+						afterHistory.current = () => {
+							setEditingEntry(entry);
+							setDatePickerVisible(true);
+						};
 						setHistoryVisible(false);
-						setEditingEntry(entry);
-						setDatePickerVisible(true);
 					}}
 					onDelete={deleteHistoryEntry}
 					isDeleting={isDeletingHistoryEntry}
-					onAddWatch={() => {
+					onRemoveAll={() => {
+						afterHistory.current = removeFromShelf;
 						setHistoryVisible(false);
-						setDatePickerVisible(true);
 					}}
 				/>
 			) : null}

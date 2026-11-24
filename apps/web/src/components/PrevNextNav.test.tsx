@@ -34,17 +34,17 @@ describe("PrevNextNav", () => {
 		).toBe("/s/3");
 	});
 
-	it("hides the side with no neighbour and keeps the other on its edge", () => {
+	it("leaves out the side with no neighbour", () => {
 		render(
 			<PrevNextNav
 				next={{ label: "Next episode", code: "S1E2", href: "/e/2" }}
 			/>,
 		);
 		expect(screen.getAllByRole("link")).toHaveLength(1);
-		expect(screen.queryByText("Previous episode")).toBeNull();
 		expect(
-			screen.getByRole("link", { name: "Next episode, S1E2" }).className,
-		).toContain("ml-auto");
+			screen.getByRole("link", { name: "Next episode, S1E2" }),
+		).toBeTruthy();
+		expect(screen.getByText("S1E2")).toBeTruthy();
 	});
 
 	it("renders nothing without neighbours", () => {

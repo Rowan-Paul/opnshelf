@@ -1,4 +1,4 @@
-import { Pencil, Plus, X } from "lucide-react-native";
+import { Pencil, X } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { WatchCountBadge } from "@/components/media/WatchCountBadge";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -12,32 +12,27 @@ export interface WatchHistoryEntry {
 	watchedDate?: string;
 }
 
-/**
- * Bottom sheet listing every logged watch for a movie or episode, each with a
- * delete control, plus an "Add a watch" action. Mirrors the web "Your Activity"
- * card — lets users manage individual Watches (rewatches) rather than the
- * binary on/off-shelf toggle. The parent owns the data + mutations; adding a dated
- * watch defers to the parent's date picker via `onAddWatch`.
- */
 export function WatchHistorySheet({
 	visible,
 	onDismiss,
+	onClosed,
 	title,
 	entries,
 	onDelete,
 	isDeleting,
-	onAddWatch,
+	onRemoveAll,
 	onEdit,
 	timeZone,
 	hour12,
 }: {
 	visible: boolean;
 	onDismiss: () => void;
+	onClosed: () => void;
 	title?: string;
 	entries: WatchHistoryEntry[];
 	onDelete: (id: string) => void;
 	isDeleting?: boolean;
-	onAddWatch: () => void;
+	onRemoveAll: () => void;
 	onEdit?: (entry: WatchHistoryEntry) => void;
 	timeZone?: string;
 	hour12?: boolean;
@@ -45,7 +40,11 @@ export function WatchHistorySheet({
 	const colors = useThemeColors();
 	useDetailLayoutLock(visible);
 	return (
-		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
+		<BottomSheetModal
+			visible={visible}
+			onRequestClose={onDismiss}
+			onClosed={onClosed}
+		>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -71,7 +70,12 @@ export function WatchHistorySheet({
 								className={`h-7 ${entries.length > 1 ? "" : "w-7"}`}
 							/>
 						) : null}
-						<Pressable hitSlop={8} onPress={onDismiss}>
+						<Pressable
+							hitSlop={8}
+							onPress={onDismiss}
+							accessibilityRole="button"
+							accessibilityLabel="Close watch history"
+						>
 							<X color={colors.mutedForeground} size={22} />
 						</Pressable>
 					</View>
@@ -111,6 +115,8 @@ export function WatchHistorySheet({
 											</Pressable>
 										)}
 										<Pressable
+											accessibilityRole="button"
+											accessibilityLabel="Remove this watch"
 											hitSlop={8}
 											onPress={() => onDelete(entry.id)}
 											disabled={isDeleting}
@@ -125,13 +131,17 @@ export function WatchHistorySheet({
 						</ScrollView>
 					)}
 
-					<Pressable
-						onPress={onAddWatch}
-						className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
-					>
-						<Plus color={colors.mutedForeground} size={18} />
-						<Text className="font-semibold text-foreground">Add a watch</Text>
-					</Pressable>
+					{entries.length > 0 && (
+						<Pressable
+							onPress={onRemoveAll}
+							className="flex-row items-center justify-center gap-2 rounded-lg border border-border py-3"
+						>
+							<X color={colors.destructive} size={18} />
+							<Text className="font-semibold text-foreground">
+								Remove from shelf
+							</Text>
+						</Pressable>
+					)}
 				</View>
 			</View>
 		</BottomSheetModal>
