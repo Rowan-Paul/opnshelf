@@ -34,6 +34,7 @@ function fixture() {
 		update: vi.fn().mockResolvedValue(row),
 		upsert: vi.fn().mockResolvedValue(row),
 		deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+		updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 	};
 	const movies = {
 		getMovieDetails: vi
@@ -158,6 +159,74 @@ describe("Watching Check-ins", () => {
 					},
 				}),
 			);
+			expect(repo.putRecord).toHaveBeenCalledOnce();
+			expect(table.deleteMany).toHaveBeenCalledWith({
+				where: { userDid, rkey: row.rkey },
+			});
+		} finally {
+			service.onModuleDestroy();
+			vi.useRealTimers();
+		}
+	});
+
+	it("backs off a check-in that fails before it is claimed and still logs the next one", async () => {
+		vi.useFakeTimers();
+		const { service, table, row, userDid } = fixture();
+		const endsAt = new Date(Date.now() - 1_000);
+		table.findMany.mockResolvedValue([
+			{ userDid: "did:plc:contended", rkey: "contended-key" },
+			{ userDid, rkey: row.rkey },
+		]);
+		table.findUnique
+			.mockRejectedValueOnce(new Error("Lock unavailable"))
+			.mockResolvedValue({ ...row, endsAt });
+		repo.getRecord.mockReset().mockRejectedValue({ error: "RecordNotFound" });
+		repo.putRecord
+			.mockReset()
+			.mockResolvedValue({ data: { uri: "at://watch", cid: "cid" } });
+		service.onModuleInit();
+		try {
+			const tick = Date.now() + 10_000;
+			await vi.advanceTimersByTimeAsync(10_000);
+			expect(table.updateMany).toHaveBeenCalledOnce();
+			expect(table.updateMany).toHaveBeenCalledWith({
+				where: {
+					userDid: "did:plc:contended",
+					rkey: "contended-key",
+					OR: [{ retryAfter: null }, { retryAfter: { lte: new Date(tick) } }],
+				},
+				data: { retryAfter: new Date(tick + 60_000) },
+			});
+			expect(repo.putRecord).toHaveBeenCalledOnce();
+			expect(table.deleteMany).toHaveBeenCalledWith({
+				where: { userDid, rkey: row.rkey },
+			});
+		} finally {
+			service.onModuleDestroy();
+			vi.useRealTimers();
+		}
+	});
+
+	it("leaves a backed-off check-in alone until its retry time", async () => {
+		vi.useFakeTimers();
+		const { service, table, row, userDid } = fixture();
+		const retryAfter = new Date(Date.now() + 60_000);
+		table.findMany.mockResolvedValue([{ userDid, rkey: row.rkey }]);
+		table.findUnique.mockResolvedValue({
+			...row,
+			endsAt: new Date(Date.now() - 1_000),
+			retryAfter,
+		});
+		repo.getRecord.mockReset().mockRejectedValue({ error: "RecordNotFound" });
+		repo.putRecord
+			.mockReset()
+			.mockResolvedValue({ data: { uri: "at://watch", cid: "cid" } });
+		service.onModuleInit();
+		try {
+			await vi.advanceTimersByTimeAsync(50_000);
+			expect(table.update).not.toHaveBeenCalled();
+			expect(repo.putRecord).not.toHaveBeenCalled();
+			await vi.advanceTimersByTimeAsync(10_000);
 			expect(repo.putRecord).toHaveBeenCalledOnce();
 			expect(table.deleteMany).toHaveBeenCalledWith({
 				where: { userDid, rkey: row.rkey },
