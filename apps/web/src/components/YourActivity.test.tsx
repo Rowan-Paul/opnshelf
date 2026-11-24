@@ -13,7 +13,6 @@ function renderActivity(entryCount: number) {
 				id: `watch-${i}`,
 				watchedDate: "2026-08-15T10:53:00.000Z",
 			}))}
-			onAddToShelf={vi.fn()}
 			onDeleteEntry={vi.fn()}
 		/>,
 	);

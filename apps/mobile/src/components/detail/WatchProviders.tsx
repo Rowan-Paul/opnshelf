@@ -5,7 +5,7 @@ import {
 	usersControllerGetMySettingsOptions,
 	type WatchProviderDto,
 } from "@opnshelf/api";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
 import { useState } from "react";
@@ -133,7 +133,18 @@ export function WatchProviders({
 		enabled: !!user,
 	});
 
-	const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+	// The detail screens mount this section once per layout, so a fold or
+	// rotation swaps the instance. The picked country lives in the query cache
+	// to survive that swap.
+	const queryClient = useQueryClient();
+	const selectionKey = ["watch-providers-country", mediaType, mediaId];
+	const { data: selectedCountry = null } = useQuery<string | null>({
+		queryKey: selectionKey,
+		queryFn: () => null,
+		enabled: false,
+	});
+	const setSelectedCountry = (next: string) =>
+		queryClient.setQueryData(selectionKey, next);
 	const country = selectedCountry ?? settings?.watchCountry ?? "US";
 	const [showRentBuy, setShowRentBuy] = useState(false);
 	// Wait for the viewer's country before fetching providers. Otherwise a

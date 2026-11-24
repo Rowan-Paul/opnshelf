@@ -572,6 +572,7 @@ export type UserWhereInput = {
   watchPrivacyMigration?: Prisma.XOR<Prisma.WatchPrivacyMigrationNullableScalarRelationFilter, Prisma.WatchPrivacyMigrationWhereInput> | null
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
   trackedEpisodes?: Prisma.TrackedEpisodeListRelationFilter
+  watchingCheckIn?: Prisma.XOR<Prisma.WatchingCheckInNullableScalarRelationFilter, Prisma.WatchingCheckInWhereInput> | null
   lists?: Prisma.ListListRelationFilter
   libraryItems?: Prisma.LibraryItemListRelationFilter
   notes?: Prisma.NoteListRelationFilter
@@ -643,6 +644,7 @@ export type UserOrderByWithRelationInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationOrderByWithRelationInput
   trackedMovies?: Prisma.TrackedMovieOrderByRelationAggregateInput
   trackedEpisodes?: Prisma.TrackedEpisodeOrderByRelationAggregateInput
+  watchingCheckIn?: Prisma.WatchingCheckInOrderByWithRelationInput
   lists?: Prisma.ListOrderByRelationAggregateInput
   libraryItems?: Prisma.LibraryItemOrderByRelationAggregateInput
   notes?: Prisma.NoteOrderByRelationAggregateInput
@@ -717,6 +719,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   watchPrivacyMigration?: Prisma.XOR<Prisma.WatchPrivacyMigrationNullableScalarRelationFilter, Prisma.WatchPrivacyMigrationWhereInput> | null
   trackedMovies?: Prisma.TrackedMovieListRelationFilter
   trackedEpisodes?: Prisma.TrackedEpisodeListRelationFilter
+  watchingCheckIn?: Prisma.XOR<Prisma.WatchingCheckInNullableScalarRelationFilter, Prisma.WatchingCheckInWhereInput> | null
   lists?: Prisma.ListListRelationFilter
   libraryItems?: Prisma.LibraryItemListRelationFilter
   notes?: Prisma.NoteListRelationFilter
@@ -898,6 +901,7 @@ export type UserCreateInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -969,6 +973,7 @@ export type UserUncheckedCreateInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -1040,6 +1045,7 @@ export type UserUpdateInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -1111,6 +1117,7 @@ export type UserUncheckedUpdateInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -1796,6 +1803,20 @@ export type UserUpdateOneRequiredWithoutPrivacyScopesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPrivacyScopesInput, Prisma.UserUpdateWithoutPrivacyScopesInput>, Prisma.UserUncheckedUpdateWithoutPrivacyScopesInput>
 }
 
+export type UserCreateNestedOneWithoutWatchingCheckInInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWatchingCheckInInput, Prisma.UserUncheckedCreateWithoutWatchingCheckInInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWatchingCheckInInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWatchingCheckInNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWatchingCheckInInput, Prisma.UserUncheckedCreateWithoutWatchingCheckInInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWatchingCheckInInput
+  upsert?: Prisma.UserUpsertWithoutWatchingCheckInInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWatchingCheckInInput, Prisma.UserUpdateWithoutWatchingCheckInInput>, Prisma.UserUncheckedUpdateWithoutWatchingCheckInInput>
+}
+
 export type UserCreateWithoutIntegrationConnectionsInput = {
   did: string
   handle: string
@@ -1849,6 +1870,7 @@ export type UserCreateWithoutIntegrationConnectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -1919,6 +1941,7 @@ export type UserUncheckedCreateWithoutIntegrationConnectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -2005,6 +2028,7 @@ export type UserUpdateWithoutIntegrationConnectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -2075,6 +2099,7 @@ export type UserUncheckedUpdateWithoutIntegrationConnectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -2145,6 +2170,7 @@ export type UserCreateWithoutNotificationSettingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -2215,6 +2241,7 @@ export type UserUncheckedCreateWithoutNotificationSettingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -2301,6 +2328,7 @@ export type UserUpdateWithoutNotificationSettingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -2371,6 +2399,7 @@ export type UserUncheckedUpdateWithoutNotificationSettingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -2441,6 +2470,7 @@ export type UserCreateWithoutPushDevicesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -2511,6 +2541,7 @@ export type UserUncheckedCreateWithoutPushDevicesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -2597,6 +2628,7 @@ export type UserUpdateWithoutPushDevicesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -2667,6 +2699,7 @@ export type UserUncheckedUpdateWithoutPushDevicesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -2737,6 +2770,7 @@ export type UserCreateWithoutNotificationCollectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -2807,6 +2841,7 @@ export type UserUncheckedCreateWithoutNotificationCollectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -2893,6 +2928,7 @@ export type UserUpdateWithoutNotificationCollectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -2963,6 +2999,7 @@ export type UserUncheckedUpdateWithoutNotificationCollectionsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -3033,6 +3070,7 @@ export type UserCreateWithoutNotificationDeliveriesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -3103,6 +3141,7 @@ export type UserUncheckedCreateWithoutNotificationDeliveriesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -3189,6 +3228,7 @@ export type UserUpdateWithoutNotificationDeliveriesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -3259,6 +3299,7 @@ export type UserUncheckedUpdateWithoutNotificationDeliveriesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -3329,6 +3370,7 @@ export type UserCreateWithoutFollowingInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -3399,6 +3441,7 @@ export type UserUncheckedCreateWithoutFollowingInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -3474,6 +3517,7 @@ export type UserCreateWithoutFollowersInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -3544,6 +3588,7 @@ export type UserUncheckedCreateWithoutFollowersInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -3630,6 +3675,7 @@ export type UserUpdateWithoutFollowingInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -3700,6 +3746,7 @@ export type UserUncheckedUpdateWithoutFollowingInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -3781,6 +3828,7 @@ export type UserUpdateWithoutFollowersInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -3851,6 +3899,7 @@ export type UserUncheckedUpdateWithoutFollowersInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -3921,6 +3970,7 @@ export type UserCreateWithoutCirclesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -3991,6 +4041,7 @@ export type UserUncheckedCreateWithoutCirclesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -4077,6 +4128,7 @@ export type UserUpdateWithoutCirclesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -4147,6 +4199,7 @@ export type UserUncheckedUpdateWithoutCirclesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -4216,6 +4269,7 @@ export type UserCreateWithoutTrackedMoviesInput = {
   privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -4286,6 +4340,7 @@ export type UserUncheckedCreateWithoutTrackedMoviesInput = {
   privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -4372,6 +4427,7 @@ export type UserUpdateWithoutTrackedMoviesInput = {
   privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -4442,6 +4498,7 @@ export type UserUncheckedUpdateWithoutTrackedMoviesInput = {
   privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -4512,6 +4569,7 @@ export type UserCreateWithoutTrackedEpisodesInput = {
   privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -4582,6 +4640,7 @@ export type UserUncheckedCreateWithoutTrackedEpisodesInput = {
   privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -4668,6 +4727,7 @@ export type UserUpdateWithoutTrackedEpisodesInput = {
   privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -4738,6 +4798,7 @@ export type UserUncheckedUpdateWithoutTrackedEpisodesInput = {
   privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -4809,6 +4870,7 @@ export type UserCreateWithoutListsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -4879,6 +4941,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -4965,6 +5028,7 @@ export type UserUpdateWithoutListsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -5035,6 +5099,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -5105,6 +5170,7 @@ export type UserCreateWithoutLibraryItemsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -5175,6 +5241,7 @@ export type UserUncheckedCreateWithoutLibraryItemsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -5261,6 +5328,7 @@ export type UserUpdateWithoutLibraryItemsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -5331,6 +5399,7 @@ export type UserUncheckedUpdateWithoutLibraryItemsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -5401,6 +5470,7 @@ export type UserCreateWithoutNotesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
@@ -5471,6 +5541,7 @@ export type UserUncheckedCreateWithoutNotesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
@@ -5557,6 +5628,7 @@ export type UserUpdateWithoutNotesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
@@ -5627,6 +5699,7 @@ export type UserUncheckedUpdateWithoutNotesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
@@ -5697,6 +5770,7 @@ export type UserCreateWithoutReviewsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -5767,6 +5841,7 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -5853,6 +5928,7 @@ export type UserUpdateWithoutReviewsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -5923,6 +5999,7 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -5993,6 +6070,7 @@ export type UserCreateWithoutPublicationsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -6063,6 +6141,7 @@ export type UserUncheckedCreateWithoutPublicationsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -6149,6 +6228,7 @@ export type UserUpdateWithoutPublicationsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -6219,6 +6299,7 @@ export type UserUncheckedUpdateWithoutPublicationsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -6289,6 +6370,7 @@ export type UserCreateWithoutRatingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -6359,6 +6441,7 @@ export type UserUncheckedCreateWithoutRatingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -6445,6 +6528,7 @@ export type UserUpdateWithoutRatingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -6515,6 +6599,7 @@ export type UserUncheckedUpdateWithoutRatingsInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -6585,6 +6670,7 @@ export type UserCreateWithoutReviewLikesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -6655,6 +6741,7 @@ export type UserUncheckedCreateWithoutReviewLikesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -6741,6 +6828,7 @@ export type UserUpdateWithoutReviewLikesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -6811,6 +6899,7 @@ export type UserUncheckedUpdateWithoutReviewLikesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -6881,6 +6970,7 @@ export type UserCreateWithoutFeedbackInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -6951,6 +7041,7 @@ export type UserUncheckedCreateWithoutFeedbackInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -7037,6 +7128,7 @@ export type UserUpdateWithoutFeedbackInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -7107,6 +7199,7 @@ export type UserUncheckedUpdateWithoutFeedbackInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -7176,6 +7269,7 @@ export type UserCreateWithoutWatchPrivacyMigrationInput = {
   privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -7246,6 +7340,7 @@ export type UserUncheckedCreateWithoutWatchPrivacyMigrationInput = {
   privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -7332,6 +7427,7 @@ export type UserUpdateWithoutWatchPrivacyMigrationInput = {
   privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -7402,6 +7498,7 @@ export type UserUncheckedUpdateWithoutWatchPrivacyMigrationInput = {
   privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
@@ -7472,6 +7569,7 @@ export type UserCreateWithoutPrivacyScopesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInCreateNestedOneWithoutUserInput
   lists?: Prisma.ListCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteCreateNestedManyWithoutUserInput
@@ -7542,6 +7640,7 @@ export type UserUncheckedCreateWithoutPrivacyScopesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
   trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedCreateNestedOneWithoutUserInput
   lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
   libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
   notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
@@ -7628,6 +7727,7 @@ export type UserUpdateWithoutPrivacyScopesInput = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUpdateOneWithoutUserNestedInput
   lists?: Prisma.ListUpdateManyWithoutUserNestedInput
   libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
   notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
@@ -7695,6 +7795,307 @@ export type UserUncheckedUpdateWithoutPrivacyScopesInput = {
   reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
+  trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
+  watchingCheckIn?: Prisma.WatchingCheckInUncheckedUpdateOneWithoutUserNestedInput
+  lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
+  libraryItems?: Prisma.LibraryItemUncheckedUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUncheckedUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUncheckedUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUncheckedUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUncheckedUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUncheckedUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUncheckedUpdateManyWithoutOwnerNestedInput
+  notificationSettings?: Prisma.NotificationSettingsUncheckedUpdateOneWithoutUserNestedInput
+  pushDevices?: Prisma.PushDeviceUncheckedUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedUpdateManyWithoutUserNestedInput
+  notificationCollections?: Prisma.NotificationCollectionUncheckedUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutWatchingCheckInInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: boolean
+  onboardingCompletedAt?: Date | string | null
+  atStoreReviewHandledAt?: Date | string | null
+  atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
+  releaseNotesReadAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
+  listsDefaultVisibility?: string
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
+  watchVisibility?: string
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
+  blogIntegrationEnabled?: boolean
+  blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeCreateNestedManyWithoutUserInput
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationCreateNestedOneWithoutUserInput
+  trackedMovies?: Prisma.TrackedMovieCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListCreateNestedManyWithoutUserInput
+  libraryItems?: Prisma.LibraryItemCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleCreateNestedManyWithoutOwnerInput
+  notificationSettings?: Prisma.NotificationSettingsCreateNestedOneWithoutUserInput
+  pushDevices?: Prisma.PushDeviceCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryCreateNestedManyWithoutUserInput
+  notificationCollections?: Prisma.NotificationCollectionCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutWatchingCheckInInput = {
+  did: string
+  handle: string
+  displayName?: string | null
+  avatar?: string | null
+  profileRkey?: string | null
+  profileUri?: string | null
+  profileCid?: string | null
+  profileDisplayName?: string | null
+  profileAvatarCid?: string | null
+  profileAvatarMimeType?: string | null
+  profileUpdatedAt?: Date | string | null
+  timezone?: string
+  timeFormat?: string
+  watchCountry?: string
+  streamingServiceIds?: Prisma.UserCreatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: boolean
+  onboardingCompletedAt?: Date | string | null
+  atStoreReviewHandledAt?: Date | string | null
+  atStoreReviewRkey?: string | null
+  welcomeTourWebVersion?: number
+  welcomeTourMobileVersion?: number
+  releaseNotesReadAt?: Date | string | null
+  emailVerifiedAt?: Date | string | null
+  backfillStartedAt?: Date | string | null
+  lastIngestAt?: Date | string | null
+  isNativePds?: boolean
+  blueskyProfileUrl?: string | null
+  tangledProfileUrl?: string | null
+  showBlueskyOnProfile?: boolean
+  showTangledOnProfile?: boolean
+  reviewsPublicationUri?: string | null
+  reviewsPublicationName?: string | null
+  watchSyncAttemptedAt?: Date | string | null
+  watchSyncedAt?: Date | string | null
+  watchSyncError?: string | null
+  watchWriteGeneration?: bigint | number
+  listsDefaultVisibility?: string
+  watchPrivacyManaged?: boolean
+  watchPrivacyEnabled?: boolean
+  watchVisibility?: string
+  privateSettingsEnabled?: boolean
+  privateSettingsHasCopy?: boolean
+  blogIntegrationEnabled?: boolean
+  blueskyCrossPostEnabled?: boolean
+  popfeedWriteEnabled?: boolean
+  reviewsMirrorFormat?: $Enums.BlogMirrorFormat
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedCreateNestedManyWithoutUserInput
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedCreateNestedOneWithoutUserInput
+  trackedMovies?: Prisma.TrackedMovieUncheckedCreateNestedManyWithoutUserInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
+  libraryItems?: Prisma.LibraryItemUncheckedCreateNestedManyWithoutUserInput
+  notes?: Prisma.NoteUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  publications?: Prisma.PublicationUncheckedCreateNestedManyWithoutUserInput
+  ratings?: Prisma.RatingUncheckedCreateNestedManyWithoutUserInput
+  reviewLikes?: Prisma.ReviewLikeUncheckedCreateNestedManyWithoutUserInput
+  feedback?: Prisma.FeedbackUncheckedCreateNestedManyWithoutUserInput
+  following?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowerInput
+  followers?: Prisma.FollowUncheckedCreateNestedManyWithoutFollowingInput
+  circles?: Prisma.CircleUncheckedCreateNestedManyWithoutOwnerInput
+  notificationSettings?: Prisma.NotificationSettingsUncheckedCreateNestedOneWithoutUserInput
+  pushDevices?: Prisma.PushDeviceUncheckedCreateNestedManyWithoutUserInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUncheckedCreateNestedManyWithoutUserInput
+  notificationCollections?: Prisma.NotificationCollectionUncheckedCreateNestedManyWithoutUserInput
+  integrationConnections?: Prisma.IntegrationConnectionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutWatchingCheckInInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWatchingCheckInInput, Prisma.UserUncheckedCreateWithoutWatchingCheckInInput>
+}
+
+export type UserUpsertWithoutWatchingCheckInInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWatchingCheckInInput, Prisma.UserUncheckedUpdateWithoutWatchingCheckInInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWatchingCheckInInput, Prisma.UserUncheckedCreateWithoutWatchingCheckInInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWatchingCheckInInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWatchingCheckInInput, Prisma.UserUncheckedUpdateWithoutWatchingCheckInInput>
+}
+
+export type UserUpdateWithoutWatchingCheckInInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  releaseNotesReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUpdateManyWithoutUserNestedInput
+  watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUpdateOneWithoutUserNestedInput
+  trackedMovies?: Prisma.TrackedMovieUpdateManyWithoutUserNestedInput
+  trackedEpisodes?: Prisma.TrackedEpisodeUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUpdateManyWithoutUserNestedInput
+  libraryItems?: Prisma.LibraryItemUpdateManyWithoutUserNestedInput
+  notes?: Prisma.NoteUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  publications?: Prisma.PublicationUpdateManyWithoutUserNestedInput
+  ratings?: Prisma.RatingUpdateManyWithoutUserNestedInput
+  reviewLikes?: Prisma.ReviewLikeUpdateManyWithoutUserNestedInput
+  feedback?: Prisma.FeedbackUpdateManyWithoutUserNestedInput
+  following?: Prisma.FollowUpdateManyWithoutFollowerNestedInput
+  followers?: Prisma.FollowUpdateManyWithoutFollowingNestedInput
+  circles?: Prisma.CircleUpdateManyWithoutOwnerNestedInput
+  notificationSettings?: Prisma.NotificationSettingsUpdateOneWithoutUserNestedInput
+  pushDevices?: Prisma.PushDeviceUpdateManyWithoutUserNestedInput
+  notificationDeliveries?: Prisma.NotificationDeliveryUpdateManyWithoutUserNestedInput
+  notificationCollections?: Prisma.NotificationCollectionUpdateManyWithoutUserNestedInput
+  integrationConnections?: Prisma.IntegrationConnectionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWatchingCheckInInput = {
+  did?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarCid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileAvatarMimeType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  timeFormat?: Prisma.StringFieldUpdateOperationsInput | string
+  watchCountry?: Prisma.StringFieldUpdateOperationsInput | string
+  streamingServiceIds?: Prisma.UserUpdatestreamingServiceIdsInput | number[]
+  alwaysShowSpoilers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingCompletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewHandledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  atStoreReviewRkey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeTourWebVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  welcomeTourMobileVersion?: Prisma.IntFieldUpdateOperationsInput | number
+  releaseNotesReadAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  backfillStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastIngestAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isNativePds?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tangledProfileUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  showBlueskyOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showTangledOnProfile?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsPublicationUri?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewsPublicationName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchSyncAttemptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  watchSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  watchWriteGeneration?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  listsDefaultVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  watchPrivacyManaged?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchPrivacyEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  watchVisibility?: Prisma.StringFieldUpdateOperationsInput | string
+  privateSettingsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  privateSettingsHasCopy?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blogIntegrationEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blueskyCrossPostEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popfeedWriteEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reviewsMirrorFormat?: Prisma.EnumBlogMirrorFormatFieldUpdateOperationsInput | $Enums.BlogMirrorFormat
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privacyScopes?: Prisma.PrivacyScopeUncheckedUpdateManyWithoutUserNestedInput
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationUncheckedUpdateOneWithoutUserNestedInput
   trackedMovies?: Prisma.TrackedMovieUncheckedUpdateManyWithoutUserNestedInput
   trackedEpisodes?: Prisma.TrackedEpisodeUncheckedUpdateManyWithoutUserNestedInput
@@ -7953,6 +8354,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
+  watchingCheckIn?: boolean | Prisma.User$watchingCheckInArgs<ExtArgs>
   lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   libraryItems?: boolean | Prisma.User$libraryItemsArgs<ExtArgs>
   notes?: boolean | Prisma.User$notesArgs<ExtArgs>
@@ -8131,6 +8533,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   watchPrivacyMigration?: boolean | Prisma.User$watchPrivacyMigrationArgs<ExtArgs>
   trackedMovies?: boolean | Prisma.User$trackedMoviesArgs<ExtArgs>
   trackedEpisodes?: boolean | Prisma.User$trackedEpisodesArgs<ExtArgs>
+  watchingCheckIn?: boolean | Prisma.User$watchingCheckInArgs<ExtArgs>
   lists?: boolean | Prisma.User$listsArgs<ExtArgs>
   libraryItems?: boolean | Prisma.User$libraryItemsArgs<ExtArgs>
   notes?: boolean | Prisma.User$notesArgs<ExtArgs>
@@ -8159,6 +8562,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     watchPrivacyMigration: Prisma.$WatchPrivacyMigrationPayload<ExtArgs> | null
     trackedMovies: Prisma.$TrackedMoviePayload<ExtArgs>[]
     trackedEpisodes: Prisma.$TrackedEpisodePayload<ExtArgs>[]
+    watchingCheckIn: Prisma.$WatchingCheckInPayload<ExtArgs> | null
     lists: Prisma.$ListPayload<ExtArgs>[]
     libraryItems: Prisma.$LibraryItemPayload<ExtArgs>[]
     notes: Prisma.$NotePayload<ExtArgs>[]
@@ -8623,6 +9027,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   watchPrivacyMigration<T extends Prisma.User$watchPrivacyMigrationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$watchPrivacyMigrationArgs<ExtArgs>>): Prisma.Prisma__WatchPrivacyMigrationClient<runtime.Types.Result.GetResult<Prisma.$WatchPrivacyMigrationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   trackedMovies<T extends Prisma.User$trackedMoviesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trackedMoviesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrackedMoviePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   trackedEpisodes<T extends Prisma.User$trackedEpisodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$trackedEpisodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TrackedEpisodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  watchingCheckIn<T extends Prisma.User$watchingCheckInArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$watchingCheckInArgs<ExtArgs>>): Prisma.Prisma__WatchingCheckInClient<runtime.Types.Result.GetResult<Prisma.$WatchingCheckInPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   lists<T extends Prisma.User$listsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$listsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   libraryItems<T extends Prisma.User$libraryItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$libraryItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LibraryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notes<T extends Prisma.User$notesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -9197,6 +9602,25 @@ export type User$trackedEpisodesArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.TrackedEpisodeScalarFieldEnum | Prisma.TrackedEpisodeScalarFieldEnum[]
+}
+
+/**
+ * User.watchingCheckIn
+ */
+export type User$watchingCheckInArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WatchingCheckIn
+   */
+  select?: Prisma.WatchingCheckInSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WatchingCheckIn
+   */
+  omit?: Prisma.WatchingCheckInOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WatchingCheckInInclude<ExtArgs> | null
+  where?: Prisma.WatchingCheckInWhereInput
 }
 
 /**

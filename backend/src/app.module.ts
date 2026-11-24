@@ -28,6 +28,7 @@ import { SearchModule } from "./search/search.module";
 import { SocialModule } from "./social/social.module";
 import { ShelfModule } from "./shelf/shelf.module";
 import { ShowsModule } from "./shows/shows.module";
+import { CheckInsModule } from "./check-ins/check-ins.module";
 import { UsersModule } from "./users/users.module";
 import { PopfeedSyncModule } from "./popfeed-sync/popfeed-sync.module";
 import { BingersSyncModule } from "./bingers-sync/bingers-sync.module";
@@ -66,6 +67,7 @@ import { IntegrationApiModule } from "./integration-api/integration-api.module";
 		RatingsModule,
 		ReviewsModule,
 		ShowsModule,
+		CheckInsModule,
 		ShelfModule,
 		SearchModule,
 		SocialModule,

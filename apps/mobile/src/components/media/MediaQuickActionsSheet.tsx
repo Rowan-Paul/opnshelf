@@ -1,15 +1,23 @@
+import type { StartCheckInDto } from "@opnshelf/api";
 import {
+	Check,
 	ListPlus,
 	type LucideIcon,
 	Pencil,
+	Play,
 	Plus,
 	Star,
 	StickyNote,
 	X,
 } from "lucide-react-native";
+import { useRef } from "react";
 import { Pressable, View } from "react-native";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { Text } from "@/components/ui/text";
+import {
+	confirmWatchingCheckIn,
+	useWatchingCheckIn,
+} from "@/lib/use-watching-check-in";
 import { useThemeColors } from "@/theme/colors";
 
 /** A single tappable row in the quick-actions sheet. */
@@ -65,6 +73,7 @@ function ActionRow({
  */
 export function MediaQuickActionsSheet({
 	visible,
+	checkInTarget,
 	onDismiss,
 	title,
 	watched,
@@ -76,6 +85,7 @@ export function MediaQuickActionsSheet({
 	isWatchPending,
 }: {
 	visible: boolean;
+	checkInTarget?: StartCheckInDto;
 	onDismiss: () => void;
 	title: string;
 	/** Whether the item is currently on the user's shelf. */
@@ -88,10 +98,30 @@ export function MediaQuickActionsSheet({
 	isWatchPending?: boolean;
 }) {
 	const colors = useThemeColors();
+	const checkIn = useWatchingCheckIn(false, visible && !!checkInTarget);
+	const afterClose = useRef<(() => void) | undefined>(undefined);
+	const active = checkIn.active;
+	const watching =
+		!!checkInTarget &&
+		active?.mediaId === checkInTarget.mediaId &&
+		active.seasonNumber === (checkInTarget.seasonNumber ?? null) &&
+		active.episodeNumber === (checkInTarget.episodeNumber ?? null);
+	const closeThen = (next: () => void) => {
+		afterClose.current = next;
+		onDismiss();
+	};
 	const watchLabel = watched ? "Remove from shelf" : "Add to shelf";
 
 	return (
-		<BottomSheetModal visible={visible} onRequestClose={onDismiss}>
+		<BottomSheetModal
+			visible={visible}
+			onRequestClose={onDismiss}
+			onClosed={() => {
+				const next = afterClose.current;
+				afterClose.current = undefined;
+				next?.();
+			}}
+		>
 			<View className="flex-1 justify-end">
 				<Pressable className="flex-1" onPress={onDismiss} />
 				<View className="gap-3 rounded-t-2xl border border-border bg-card p-5">
@@ -108,13 +138,44 @@ export function MediaQuickActionsSheet({
 					</View>
 
 					<View className="gap-2">
-						<ActionRow
-							icon={watched ? X : Plus}
-							label={watchLabel}
-							onPress={onToggleWatched}
-							disabled={isWatchPending}
-							primary={!watched}
-						/>
+						{watching ? (
+							<>
+								<ActionRow
+									icon={Check}
+									label={active.finishing ? "Try logging again" : "I’m done"}
+									disabled={checkIn.pending}
+									onPress={() => closeThen(() => checkIn.finish())}
+								/>
+								<ActionRow
+									icon={X}
+									label="Cancel check-in"
+									disabled={active.finishing || checkIn.pending}
+									onPress={() => closeThen(() => checkIn.cancel())}
+								/>
+							</>
+						) : (
+							<>
+								<ActionRow
+									icon={watched ? X : Plus}
+									label={watchLabel}
+									onPress={onToggleWatched}
+									disabled={isWatchPending || checkIn.pending}
+									primary={!watched}
+								/>
+								{checkInTarget && (
+									<ActionRow
+										icon={Play}
+										label="Start watching now"
+										disabled={active?.finishing || checkIn.pending}
+										onPress={() =>
+											closeThen(() =>
+												confirmWatchingCheckIn(checkInTarget, checkIn),
+											)
+										}
+									/>
+								)}
+							</>
+						)}
 						<ActionRow icon={Star} label="Rate" onPress={onRate} />
 						<ActionRow
 							icon={ListPlus}

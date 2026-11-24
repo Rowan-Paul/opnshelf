@@ -22,7 +22,10 @@ import {
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CastSection, CrewSection } from "@/components/detail/CreditsSection";
 import { DetailActions } from "@/components/detail/DetailActions";
-import { DetailColumns } from "@/components/detail/DetailColumns";
+import {
+	DetailColumns,
+	DetailPlacement,
+} from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { EpisodeCard } from "@/components/detail/EpisodeCard";
@@ -138,10 +141,37 @@ export default function SeasonDetailScreen() {
 		router.replace(`/shows/${id}/${name}/seasons/${season}` as const);
 	};
 
+	const pager = (
+		<PrevNextNav
+			previous={
+				prevSeason
+					? {
+							label: "Previous season",
+							code: `S${prevSeason.season_number}`,
+							onPress: () => goToSeason(prevSeason.season_number),
+						}
+					: undefined
+			}
+			next={
+				nextSeason
+					? {
+							label: "Next season",
+							code: `S${nextSeason.season_number}`,
+							onPress: () => goToSeason(nextSeason.season_number),
+						}
+					: undefined
+			}
+		/>
+	);
+
 	return (
 		<ScreenFrame>
 			<Stack.Screen
-				options={{ headerShown: true, title: data?.name ?? "Season" }}
+				options={{
+					headerShown: true,
+					title: data?.name ?? "Season",
+					headerRight: () => pager,
+				}}
 			/>
 			{isLoading ? (
 				<View className="gap-6">
@@ -228,27 +258,9 @@ export default function SeasonDetailScreen() {
 										: undefined
 								}
 							/>
-
-							<PrevNextNav
-								previous={
-									prevSeason
-										? {
-												label: "Previous season",
-												code: `S${prevSeason.season_number}`,
-												onPress: () => goToSeason(prevSeason.season_number),
-											}
-										: undefined
-								}
-								next={
-									nextSeason
-										? {
-												label: "Next season",
-												code: `S${nextSeason.season_number}`,
-												onPress: () => goToSeason(nextSeason.season_number),
-											}
-										: undefined
-								}
-							/>
+							<DetailPlacement when="wide">
+								<WatchProviders mediaType="show" mediaId={id} />
+							</DetailPlacement>
 						</>
 					}
 					secondary={
@@ -335,7 +347,9 @@ export default function SeasonDetailScreen() {
 										]}
 									/>
 
-									<WatchProviders mediaType="show" mediaId={id} />
+									<DetailPlacement when="compact">
+										<WatchProviders mediaType="show" mediaId={id} />
+									</DetailPlacement>
 
 									<CastSection cast={showData?.credits?.cast} />
 									<CrewSection crew={showData?.credits?.crew} />

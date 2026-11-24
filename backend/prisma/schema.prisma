@@ -86,6 +86,7 @@ model User {
 
   trackedMovies   TrackedMovie[]
   trackedEpisodes TrackedEpisode[]
+  watchingCheckIn WatchingCheckIn?
   lists           List[]
   libraryItems    LibraryItem[]
   notes           Note[]
@@ -875,4 +876,21 @@ model PrivacyCopy {
  value Json
  createdAt DateTime @default(now())
  @@id([scopeId, collection, rkey])
+}
+
+/// Temporary Opnshelf state that creates a Watch on completion.
+model WatchingCheckIn {
+  userDid       String    @id
+  user          User      @relation(fields: [userDid], references: [did], onDelete: Cascade)
+  rkey          String
+  mediaId       String
+  title         String
+  seasonNumber  Int?
+  episodeNumber Int?
+  startedAt     DateTime
+  endsAt        DateTime?
+  finishingAt   DateTime?
+  retryAfter    DateTime?
+
+  @@index([endsAt])
 }

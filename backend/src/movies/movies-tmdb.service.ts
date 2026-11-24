@@ -1,3 +1,4 @@
+import type { MovieWatchSuggestionResponseDto } from "./dto/movie-suggestion.dto";
 import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import { BackendEnv } from "../config/env.schema";
 import { TMDB_CACHE_STORE } from "../tmdb/tmdb-cache.module";
@@ -25,6 +26,7 @@ import {
 } from "../tmdb/tmdb-trailer.util";
 
 export interface TMDBMovie {
+	belongs_to_collection?: { id: number } | null;
 	runtime?: number;
 	genres?: Array<{ id: number; name: string }>;
 	id: number;
@@ -213,6 +215,62 @@ export class MoviesTmdbService {
 			throw tmdbErrorForResponse(similar, "Failed to fetch recommendations");
 		}
 		return similar.json<TMDBSearchResponse>();
+	}
+
+	async getWatchSuggestion(
+		movieId: string,
+	): Promise<MovieWatchSuggestionResponseDto> {
+		const current = await this.getMovieDetails(movieId);
+		const today = new Date().toISOString().slice(0, 10);
+		const eligible = (movie: TMDBMovie) =>
+			movie.id !== current.id &&
+			!!movie.title &&
+			!!movie.release_date &&
+			movie.release_date <= today;
+		const next = await this.getNextCollectionMovie(current, eligible).catch(
+			() => undefined,
+		);
+		const candidate =
+			next ?? (await this.getRecommendations(movieId)).results.find(eligible);
+		if (!candidate) return {};
+		const detail = await this.getMovieDetails(String(candidate.id)).catch(
+			() => undefined,
+		);
+		return {
+			suggestion: {
+				kind: next ? "collection" : "similar",
+				movieId: String(candidate.id),
+				title: candidate.title,
+				posterPath: detail?.poster_path ?? candidate.poster_path ?? undefined,
+				releaseDate: candidate.release_date,
+				runtime: detail?.runtime,
+			},
+		};
+	}
+
+	private async getNextCollectionMovie(
+		current: TMDBMovie,
+		eligible: (movie: TMDBMovie) => boolean,
+	) {
+		const collectionId = current.belongs_to_collection?.id;
+		if (!collectionId || !current.release_date) return undefined;
+		const releaseDate = current.release_date;
+		const response = await this.http.fetchCached(
+			`${this.tmdbBaseUrl}/collection/${collectionId}?api_key=${this.tmdbApiKey}`,
+			`movie:collection:${collectionId}`,
+			TMDB_DETAIL_CACHE_TTL_MS,
+		);
+		if (!response.ok) return undefined;
+		const { parts } = await response.json<{ parts: TMDBMovie[] }>();
+		return parts
+			.filter(
+				(movie) => eligible(movie) && (movie.release_date ?? "") > releaseDate,
+			)
+			.sort(
+				(a, b) =>
+					(a.release_date ?? "").localeCompare(b.release_date ?? "") ||
+					a.id - b.id,
+			)[0];
 	}
 
 	async getMovieDetails(movieId: string): Promise<TMDBMovie> {

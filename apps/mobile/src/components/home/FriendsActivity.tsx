@@ -7,6 +7,10 @@ import { MessageCircle, Users } from "lucide-react-native";
 import { View } from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { ActivityRow } from "@/components/social/ActivityRow";
+import {
+	useFollowingWatchingActivity,
+	WatchingActivity,
+} from "@/components/social/WatchingActivity";
 import { EmptyState } from "@/components/ui/states";
 
 const MAX_AGE_DAYS = 30;
@@ -57,6 +61,8 @@ export function FriendsActivity() {
 		}),
 	});
 
+	const watching = useFollowingWatchingActivity({});
+
 	const cutoff = Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 	const recentItems = (data?.items ?? [])
 		.filter((item) => new Date(item.activityAt).getTime() >= cutoff)
@@ -65,19 +71,22 @@ export function FriendsActivity() {
 	return (
 		<View>
 			<SectionHeader title="Social" href="/social" />
+			<WatchingActivity items={watching} following className="" />
 			{isLoading ? (
 				<FriendsActivitySkeleton />
 			) : recentItems.length === 0 ? (
-				<EmptyState
-					variant="card"
-					icon={MessageCircle}
-					message="Activity from people you follow will appear here."
-					action={{
-						label: "Find people to follow",
-						href: "/social/find",
-						icon: Users,
-					}}
-				/>
+				watching.length > 0 ? null : (
+					<EmptyState
+						variant="card"
+						icon={MessageCircle}
+						message="Activity from people you follow will appear here."
+						action={{
+							label: "Find people to follow",
+							href: "/social/find",
+							icon: Users,
+						}}
+					/>
+				)
 			) : (
 				<View className="overflow-hidden rounded-xl border border-border bg-card">
 					{recentItems.map((item, index) => (

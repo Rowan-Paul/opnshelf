@@ -204,3 +204,8 @@ export type PrivacyScope = Prisma.PrivacyScopeModel
  * 
  */
 export type PrivacyCopy = Prisma.PrivacyCopyModel
+/**
+ * Model WatchingCheckIn
+ * Temporary Opnshelf state that creates a Watch on completion.
+ */
+export type WatchingCheckIn = Prisma.WatchingCheckInModel

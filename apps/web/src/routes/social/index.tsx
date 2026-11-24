@@ -13,6 +13,7 @@ import { ActivityFeed } from "#/components/following/ActivityFeed";
 import { CircleFilterBar } from "#/components/following/CircleFilterBar";
 import { PeopleSearch } from "#/components/following/PeopleSearch";
 import { useSocialFollowActions } from "#/components/following/useSocialFollowActions";
+import { useFollowingWatchingActivity } from "#/components/WatchingActivity";
 import { useDebounce } from "#/hooks/useDebounce";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
@@ -45,6 +46,10 @@ function SocialPage() {
 		isAuthenticated,
 		isLoading: authLoading,
 	} = useAuth();
+	const watching = useFollowingWatchingActivity({
+		circleId: activeCircleId,
+		enabled: isAuthenticated,
+	});
 	const navigate = useNavigate();
 	const circlesQuery = useCircles();
 	const circles = circlesQuery.data ?? [];
@@ -156,6 +161,7 @@ function SocialPage() {
 				) : (
 					<ActivityFeed
 						activities={activities}
+						watching={watching}
 						isLoading={feed.isLoading || followingQuery.isLoading}
 						error={feed.error}
 						activeCircleId={activeCircleId}

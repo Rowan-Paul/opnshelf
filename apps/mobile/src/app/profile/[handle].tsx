@@ -15,6 +15,7 @@ import { OverviewTab } from "@/components/profile/tabs/OverviewTab";
 import { ReviewsTab } from "@/components/profile/tabs/ReviewsTab";
 import { ShelfTab } from "@/components/profile/tabs/ShelfTab";
 import { UpNextTab } from "@/components/profile/tabs/UpNextTab";
+import { ProfileWatchingActivity } from "@/components/social/WatchingActivity";
 import { ProfileHeaderSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
@@ -117,6 +118,7 @@ export default function ProfileScreen() {
 						<ProfileTabBar active={tab} onChange={setTab} />
 					</View>
 
+					<ProfileWatchingActivity did={userDid} />
 					{!isOwner &&
 					!profile.watchesPublic &&
 					(tab === "shelf" || tab === "up-next") ? (

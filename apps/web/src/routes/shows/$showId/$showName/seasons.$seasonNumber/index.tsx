@@ -431,7 +431,7 @@ function SeasonDetailPage() {
 						</Link>
 					)
 				}
-				currentProgress={
+				breadcrumbPager={
 					<PrevNextNav
 						previous={
 							previousSeason

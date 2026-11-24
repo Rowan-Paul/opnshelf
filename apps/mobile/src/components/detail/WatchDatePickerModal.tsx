@@ -97,7 +97,7 @@ export function WatchDatePickerModal({
 				accessible={false}
 				onPress={onDismiss}
 				disabled={isLoading}
-				className="flex-1 items-center justify-center bg-black/70 px-6"
+				className="flex-1 items-center justify-center bg-black/70 px-4"
 			>
 				<Pressable
 					accessible={false}
@@ -135,6 +135,9 @@ export function WatchDatePickerModal({
 							disabled={isLoading}
 							mode="datetime"
 							display="inline"
+							// Without this the calendar keeps system blue beside the brand
+							// yellow button.
+							accentColor={colors.accent}
 							maximumDate={new Date()}
 							onChange={handleChange}
 							themeVariant={themeVariant}
@@ -186,14 +189,13 @@ export function WatchDatePickerModal({
 					)}
 
 					<View className="flex-row gap-3">
-						<Pressable
-							accessibilityRole="button"
-							onPress={onDismiss}
+						<Button
+							variant="secondary"
+							label="Cancel"
 							disabled={isLoading}
-							className="flex-1 items-center rounded-lg border border-border py-3"
-						>
-							<Text className="font-semibold text-foreground">Cancel</Text>
-						</Pressable>
+							className="flex-1"
+							onPress={onDismiss}
+						/>
 						<Button
 							label={isEditing ? "Save" : "Add watch"}
 							disabled={!noDate && date.getTime() > Date.now()}

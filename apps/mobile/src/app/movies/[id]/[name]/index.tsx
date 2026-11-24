@@ -11,7 +11,10 @@ import { RefreshControl } from "react-native";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CreditsSummary } from "@/components/detail/CreditsSection";
 import { DetailActions } from "@/components/detail/DetailActions";
-import { DetailColumns } from "@/components/detail/DetailColumns";
+import {
+	DetailColumns,
+	DetailPlacement,
+} from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -91,6 +94,9 @@ export default function MovieDetailScreen() {
 									title: data.title,
 								}}
 							/>
+							<DetailPlacement when="wide">
+								<WatchProviders mediaType="movie" mediaId={id} />
+							</DetailPlacement>
 						</>
 					}
 					secondary={
@@ -125,7 +131,9 @@ export default function MovieDetailScreen() {
 							/>
 
 							<FriendWatchers mediaType="movie" mediaId={id} />
-							<WatchProviders mediaType="movie" mediaId={id} />
+							<DetailPlacement when="compact">
+								<WatchProviders mediaType="movie" mediaId={id} />
+							</DetailPlacement>
 							<CreditsSummary
 								credits={data.credits}
 								creditsHref={`/movies/${id}/${name}/credits`}

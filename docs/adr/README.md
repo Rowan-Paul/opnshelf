@@ -71,3 +71,4 @@ Numbering notes:
 | [0051-integrations-share-one-sync-core.md](0051-integrations-share-one-sync-core.md) | 0051 | Integrations share one sync core | Accepted |
 | [0052-idle-sync-runs-yield-the-connection-lease.md](0052-idle-sync-runs-yield-the-connection-lease.md) | 0052 | Idle sync runs yield the connection lease | Accepted |
 | [0053-design-tokens-and-the-design-system-follow-the-code.md](0053-design-tokens-and-the-design-system-follow-the-code.md) | 0053 | Design tokens and the design system follow the code | Accepted |
+| [0054-check-ins-create-watches-on-completion.md](0054-check-ins-create-watches-on-completion.md) | 0054 | Check-ins create Watches on completion | Accepted |

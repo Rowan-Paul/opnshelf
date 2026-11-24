@@ -7,7 +7,10 @@ import { RefreshControl, View } from "react-native";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CreditsSummary } from "@/components/detail/CreditsSection";
 import { DetailActions } from "@/components/detail/DetailActions";
-import { DetailColumns } from "@/components/detail/DetailColumns";
+import {
+	DetailColumns,
+	DetailPlacement,
+} from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
@@ -147,6 +150,9 @@ export default function ShowDetailScreen() {
 									title: data.name,
 								}}
 							/>
+							<DetailPlacement when="wide">
+								<WatchProviders mediaType="show" mediaId={id} />
+							</DetailPlacement>
 						</>
 					}
 					secondary={
@@ -212,7 +218,9 @@ export default function ShowDetailScreen() {
 
 							<FriendWatchers mediaType="show" mediaId={id} />
 
-							<WatchProviders mediaType="show" mediaId={id} />
+							<DetailPlacement when="compact">
+								<WatchProviders mediaType="show" mediaId={id} />
+							</DetailPlacement>
 
 							<CreditsSummary
 								credits={data.credits}
