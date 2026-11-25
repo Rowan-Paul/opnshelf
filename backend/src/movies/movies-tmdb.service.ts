@@ -56,6 +56,9 @@ export interface MovieCollection {
 
 type TMDBCollection = { id: number; name?: string; parts?: TMDBMovie[] };
 
+/** How long movie details wait for the optional collection lookup. */
+const COLLECTION_BUDGET_MS = 2500;
+
 /** Release order, undated last, TMDB id as the stable tie-break. */
 const byReleaseDate = (a: TMDBMovie, b: TMDBMovie) =>
 	Number(!a.release_date) - Number(!b.release_date) ||
@@ -298,17 +301,25 @@ export class MoviesTmdbService {
 	/**
 	 * The collection a movie belongs to, for switching between its movies on
 	 * the detail page. Undefined when the movie stands alone, when TMDB lists
-	 * it as the collection's only movie, or when the collection can't be read:
-	 * the page works without it.
+	 * it as the collection's only movie, or when the collection can't be read
+	 * in time: the page works without it.
 	 */
 	async getMovieCollection(
 		movie: TMDBMovie,
 	): Promise<MovieCollection | undefined> {
 		const collectionId = movie.belongs_to_collection?.id;
 		if (!collectionId) return undefined;
-		const collection = await this.fetchCollection(collectionId).catch(
-			() => undefined,
-		);
+		// The page must not wait out TMDB's retries for an optional row: past
+		// the budget it goes without, and the lookup finishes into the cache
+		// for the next request.
+		const budget = new AbortController();
+		const collection = await Promise.race([
+			this.fetchCollection(collectionId).catch(() => undefined),
+			new Promise<undefined>((resolve) => {
+				const timer = setTimeout(resolve, COLLECTION_BUDGET_MS);
+				budget.signal.addEventListener("abort", () => clearTimeout(timer));
+			}),
+		]).finally(() => budget.abort());
 		const movies = (collection?.parts ?? [])
 			.filter((part) => !!part.title)
 			.sort(byReleaseDate);

@@ -121,15 +121,17 @@ describe("MovieCollectionRail", () => {
 		expect(screen.queryByText(/watched/)).toBeNull();
 	});
 
-	it("shows the viewer's progress and offers the shelf actions when signed in", () => {
+	it("shows the viewer's progress and offers the shelf actions on the other movies when signed in", () => {
 		state.isAuthenticated = true;
 		state.watchCounts = [{ movieId: "1", watchCount: 1 }];
 		render(<MovieCollectionRail collection={collection} movieId="3" />);
 
 		expect(screen.getByText("1 of 5 watched")).toBeTruthy();
 		expect(
-			screen.getAllByRole("link")[0].getAttribute("data-interactive"),
-		).toBe("true");
+			screen
+				.getAllByRole("link")
+				.map((link) => link.getAttribute("data-interactive")),
+		).toEqual(["true", "true", "false", "true", "true"]);
 	});
 });
 
@@ -151,6 +153,7 @@ describe("MovieCollectionEyebrow", () => {
 			behavior: "smooth",
 			block: "center",
 		});
+		expect(document.activeElement).toBe(rail);
 	});
 
 	it("renders nothing for a movie that stands alone", () => {

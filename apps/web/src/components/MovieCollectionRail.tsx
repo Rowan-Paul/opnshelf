@@ -27,15 +27,18 @@ export function MovieCollectionEyebrow({
 	return (
 		<button
 			type="button"
-			onClick={() =>
-				document.getElementById(RAIL_ID)?.scrollIntoView({
+			onClick={() => {
+				const railSection = document.getElementById(RAIL_ID);
+				railSection?.scrollIntoView({
 					behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
 						.matches
 						? "auto"
 						: "smooth",
 					block: "center",
-				})
-			}
+				});
+				// Keyboard focus follows, so Tab carries on from the row.
+				railSection?.focus({ preventScroll: true });
+			}}
 			// An opaque pill: the hero's backdrop is too uneven to carry small
 			// text on its own.
 			className="badge badge-subtle mb-2 max-w-full transition-colors hover:text-(--foreground)"
@@ -95,7 +98,7 @@ export function MovieCollectionRail({
 	if (!rail) return null;
 
 	return (
-		<section id={RAIL_ID} aria-labelledby={`${RAIL_ID}-heading`}>
+		<section id={RAIL_ID} aria-labelledby={`${RAIL_ID}-heading`} tabIndex={-1}>
 			<div className="mb-3 flex items-baseline justify-between gap-4">
 				<h2 id={`${RAIL_ID}-heading`} className="text-display-3">
 					{rail.name} movies
@@ -132,7 +135,8 @@ export function MovieCollectionRail({
 							year={item.year ?? "TBA"}
 							size="sm"
 							layout="poster"
-							interactive={isAuthenticated}
+							// This page has the current movie's own shelf button.
+							interactive={isAuthenticated && !item.isCurrent}
 						/>
 						{/* Lies over the card's poster: the place in the collection,
 						    and the accent ring on the movie this page is about. */}

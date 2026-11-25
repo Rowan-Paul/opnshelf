@@ -245,6 +245,18 @@ describe("MoviesService", () => {
 					: new Response(null, { status: 500 }),
 			);
 
+		it("gives up on a slow lookup so the page is not held back", async () => {
+			vi.useFakeTimers();
+			try {
+				mockFetch.mockImplementation(() => new Promise(() => {}));
+				const result = service.getMovieCollection(current);
+				await vi.advanceTimersByTimeAsync(2500);
+				await expect(result).resolves.toBeUndefined();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
 		it("lists the collection in release order, undated movies last", async () => {
 			respondWith([
 				{ id: 4, title: "Announced", release_date: "" },
