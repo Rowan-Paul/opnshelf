@@ -26,7 +26,7 @@ import {
 } from "../tmdb/tmdb-trailer.util";
 
 export interface TMDBMovie {
-	belongs_to_collection?: { id: number } | null;
+	belongs_to_collection?: { id: number; name?: string } | null;
 	runtime?: number;
 	genres?: Array<{ id: number; name: string }>;
 	id: number;
@@ -40,6 +40,27 @@ export interface TMDBMovie {
 	vote_count: number;
 	trailer?: TMDBTrailer;
 }
+
+/** The movies TMDB groups with a movie, e.g. every Mad Max movie. */
+export interface MovieCollection {
+	id: number;
+	name: string;
+	/** Release order; movies without a date yet come last. */
+	movies: Array<{
+		id: number;
+		title: string;
+		poster_path?: string;
+		release_date?: string;
+	}>;
+}
+
+type TMDBCollection = { id: number; name?: string; parts?: TMDBMovie[] };
+
+/** Release order, undated last, TMDB id as the stable tie-break. */
+const byReleaseDate = (a: TMDBMovie, b: TMDBMovie) =>
+	Number(!a.release_date) - Number(!b.release_date) ||
+	(a.release_date ?? "").localeCompare(b.release_date ?? "") ||
+	a.id - b.id;
 
 export interface TMDBSearchResponse {
 	page: number;
@@ -255,22 +276,56 @@ export class MoviesTmdbService {
 		const collectionId = current.belongs_to_collection?.id;
 		if (!collectionId || !current.release_date) return undefined;
 		const releaseDate = current.release_date;
+		const collection = await this.fetchCollection(collectionId);
+		return (collection?.parts ?? [])
+			.filter(
+				(movie) => eligible(movie) && (movie.release_date ?? "") > releaseDate,
+			)
+			.sort(byReleaseDate)[0];
+	}
+
+	private async fetchCollection(
+		collectionId: number,
+	): Promise<TMDBCollection | undefined> {
 		const response = await this.http.fetchCached(
 			`${this.tmdbBaseUrl}/collection/${collectionId}?api_key=${this.tmdbApiKey}`,
 			`movie:collection:${collectionId}`,
 			TMDB_DETAIL_CACHE_TTL_MS,
 		);
-		if (!response.ok) return undefined;
-		const { parts } = await response.json<{ parts: TMDBMovie[] }>();
-		return parts
-			.filter(
-				(movie) => eligible(movie) && (movie.release_date ?? "") > releaseDate,
-			)
-			.sort(
-				(a, b) =>
-					(a.release_date ?? "").localeCompare(b.release_date ?? "") ||
-					a.id - b.id,
-			)[0];
+		return response.ok ? response.json<TMDBCollection>() : undefined;
+	}
+
+	/**
+	 * The collection a movie belongs to, for switching between its movies on
+	 * the detail page. Undefined when the movie stands alone, when TMDB lists
+	 * it as the collection's only movie, or when the collection can't be read:
+	 * the page works without it.
+	 */
+	async getMovieCollection(
+		movie: TMDBMovie,
+	): Promise<MovieCollection | undefined> {
+		const collectionId = movie.belongs_to_collection?.id;
+		if (!collectionId) return undefined;
+		const collection = await this.fetchCollection(collectionId).catch(
+			() => undefined,
+		);
+		const movies = (collection?.parts ?? [])
+			.filter((part) => !!part.title)
+			.sort(byReleaseDate);
+		if (movies.length < 2 || !movies.some((part) => part.id === movie.id)) {
+			return undefined;
+		}
+		return {
+			id: collectionId,
+			name:
+				collection?.name ?? movie.belongs_to_collection?.name ?? "Collection",
+			movies: movies.map((part) => ({
+				id: part.id,
+				title: part.title,
+				poster_path: part.poster_path ?? undefined,
+				release_date: part.release_date || undefined,
+			})),
+		};
 	}
 
 	async getMovieDetails(movieId: string): Promise<TMDBMovie> {

@@ -229,6 +229,71 @@ describe("MoviesService", () => {
 		);
 	});
 
+	describe("getMovieCollection", () => {
+		const current = {
+			id: 2,
+			title: "Second",
+			popularity: 1,
+			vote_average: 1,
+			vote_count: 1,
+			belongs_to_collection: { id: 10, name: "Example Collection" },
+		};
+		const respondWith = (parts: unknown[] | undefined) =>
+			mockFetch.mockImplementation(async () =>
+				parts
+					? Response.json({ id: 10, name: "Example Collection", parts })
+					: new Response(null, { status: 500 }),
+			);
+
+		it("lists the collection in release order, undated movies last", async () => {
+			respondWith([
+				{ id: 4, title: "Announced", release_date: "" },
+				{ id: 3, title: "Third", release_date: "2024-05-01" },
+				{ id: 2, title: "Second", release_date: "2021-01-01" },
+				{
+					id: 1,
+					title: "First",
+					release_date: "2020-01-01",
+					poster_path: "/1",
+				},
+			]);
+
+			await expect(service.getMovieCollection(current)).resolves.toEqual({
+				id: 10,
+				name: "Example Collection",
+				movies: [
+					{
+						id: 1,
+						title: "First",
+						release_date: "2020-01-01",
+						poster_path: "/1",
+					},
+					{ id: 2, title: "Second", release_date: "2021-01-01" },
+					{ id: 3, title: "Third", release_date: "2024-05-01" },
+					{ id: 4, title: "Announced" },
+				],
+			});
+		});
+
+		it.each([
+			[
+				"the movie stands alone",
+				{ ...current, belongs_to_collection: null },
+				[],
+			],
+			[
+				"it is the collection's only movie",
+				current,
+				[{ id: 2, title: "Second" }],
+			],
+			["TMDB can't return the collection", current, undefined],
+		])("returns nothing when %s", async (_case, movie, parts) => {
+			respondWith(parts);
+
+			await expect(service.getMovieCollection(movie)).resolves.toBeUndefined();
+		});
+	});
+
 	describe("getMovieDetails", () => {
 		it("should get movie details from TMDB API with ranked trailer", async () => {
 			const mockMovie = {

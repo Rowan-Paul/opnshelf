@@ -34,6 +34,10 @@ import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
+import {
+	MovieCollectionEyebrow,
+	MovieCollectionRail,
+} from "../../../../components/MovieCollectionRail";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import { DetailPageSkeleton } from "../../../../components/skeletons";
@@ -172,6 +176,12 @@ function MovieDetailPage() {
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
 				backLabel="Back to Home"
+				eyebrow={
+					<MovieCollectionEyebrow
+						collection={movie.collection}
+						movieId={movieId}
+					/>
+				}
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
@@ -286,7 +296,7 @@ function MovieDetailPage() {
 					</div>
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}
-					<div className="order-last space-y-6 lg:order-none lg:col-start-1 lg:row-start-2">
+					<div className="order-last min-w-0 space-y-6 lg:order-none lg:col-start-1 lg:row-start-2">
 						<div className="lg:hidden">
 							<CreditsSummary
 								credits={movie.credits}
@@ -299,6 +309,12 @@ function MovieDetailPage() {
 							mediaId={movieId}
 							onAddReview={() => setReviewDialogOpen(true)}
 						/>
+						{movie.collection && (
+							<MovieCollectionRail
+								collection={movie.collection}
+								movieId={movieId}
+							/>
+						)}
 						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
 				</div>

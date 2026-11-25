@@ -18,6 +18,8 @@ interface MediaHeroProps {
 	backdropUrl: string;
 	posterUrl: string;
 	metaItems?: ReactNode;
+	/** A small line above the title, e.g. where a movie sits in its collection. */
+	eyebrow?: ReactNode;
 	breadcrumbPager?: ReactNode;
 	actions?: ReactNode;
 	breadcrumbs?: Breadcrumb[];
@@ -32,6 +34,7 @@ export default function MediaHero({
 	backdropUrl,
 	posterUrl,
 	metaItems,
+	eyebrow,
 	breadcrumbPager,
 	actions,
 	breadcrumbs,
@@ -183,13 +186,15 @@ export default function MediaHero({
 								)}
 								{progressOverlay}
 							</div>
-							<div className="flex min-w-0 flex-col justify-center overflow-hidden">
+							<div className="flex min-w-0 flex-col items-start justify-center overflow-hidden">
+								{eyebrow}
 								<h1 className="break-words text-display-2">{title}</h1>
 							</div>
 						</div>
 
 						{/* Desktop Title */}
 						<div className="hidden lg:block">
+							{eyebrow}
 							<h1 className="break-words text-display-2">{title}</h1>
 						</div>
 

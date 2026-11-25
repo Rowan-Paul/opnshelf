@@ -61,6 +61,12 @@ export {
 } from "./list-memberships";
 export { slugifyName } from "./media-slug";
 export {
+	type MovieCollectionRail,
+	type MovieCollectionRailItem,
+	movieCollectionName,
+	movieCollectionRail,
+} from "./movie-collection";
+export {
 	describeMutationFailure,
 	MutationFailedError,
 	type MutationFailureContext,

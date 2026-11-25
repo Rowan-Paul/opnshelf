@@ -20,6 +20,10 @@ import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { GenreLinks } from "@/components/detail/GenreLinks";
 import { MetadataPills } from "@/components/detail/MetadataPills";
+import {
+	MovieCollectionEyebrow,
+	MovieCollectionRail,
+} from "@/components/detail/MovieCollectionRail";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
@@ -42,6 +46,7 @@ export default function MovieDetailScreen() {
 		reviewId?: string;
 	}>();
 	const scrollRef = useRef<ScrollViewInstance>(null);
+	const collectionRailY = useRef(0);
 
 	const { data, isLoading, isError } = useQuery({
 		...moviesControllerGetMovieDetailsOptions({ path: { movieId: id } }),
@@ -69,6 +74,18 @@ export default function MovieDetailScreen() {
 						<>
 							<DetailHero
 								title={data.title}
+								eyebrow={
+									<MovieCollectionEyebrow
+										collection={data.collection}
+										movieId={id}
+										onPress={() =>
+											scrollRef.current?.scrollTo({
+												y: Math.max(0, collectionRailY.current - 12),
+												animated: true,
+											})
+										}
+									/>
+								}
 								backdropUrl={backdropUrl(data.backdrop_path)}
 								posterUrl={posterUrl(data.poster_path)}
 								rating={rating}
@@ -148,6 +165,13 @@ export default function MovieDetailScreen() {
 									id,
 									name: data.title,
 								})}
+							/>
+							<MovieCollectionRail
+								collection={data.collection}
+								movieId={id}
+								onLayout={(event) => {
+									collectionRailY.current = event.nativeEvent.layout.y;
+								}}
 							/>
 							<SimilarMedia mediaType="movie" mediaId={id} />
 						</>
