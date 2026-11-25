@@ -148,6 +148,11 @@ export class CheckInsService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	async finish(userDid: string, rkey: string, session?: unknown) {
+		await this.complete(userDid, rkey, session);
+		return this.own(userDid);
+	}
+
+	private async complete(userDid: string, rkey: string, session?: unknown) {
 		await this.coordinator.write(
 			userDid,
 			(visibility, signal) =>
@@ -230,7 +235,6 @@ export class CheckInsService implements OnModuleInit, OnModuleDestroy {
 				}),
 			"watch.check-in.finish",
 		);
-		return this.own(userDid);
 	}
 
 	private async finishDue() {
@@ -254,10 +258,10 @@ export class CheckInsService implements OnModuleInit, OnModuleDestroy {
 			});
 			for (const { userDid, rkey } of rows) {
 				try {
-					await this.finish(userDid, rkey);
+					await this.complete(userDid, rkey);
 				} catch (error) {
 					// Contention and an in-progress privacy migration can fail before
-					// finish() claims the row. Back off so other due check-ins can run.
+					// complete() claims the row. Back off so other due check-ins can run.
 					await this.prisma.watchingCheckIn.updateMany({
 						where: {
 							userDid,
