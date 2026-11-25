@@ -98,7 +98,14 @@ export function MovieCollectionRail({
 	if (!rail) return null;
 
 	return (
-		<section id={RAIL_ID} aria-labelledby={`${RAIL_ID}-heading`} tabIndex={-1}>
+		<section
+			id={RAIL_ID}
+			aria-labelledby={`${RAIL_ID}-heading`}
+			// A scroll target for the hero pill, not a control: it takes focus
+			// so Tab continues from here, without a ring of its own.
+			tabIndex={-1}
+			className="outline-none"
+		>
 			<div className="mb-3 flex items-baseline justify-between gap-4">
 				<h2 id={`${RAIL_ID}-heading`} className="text-display-3">
 					{rail.name} movies
