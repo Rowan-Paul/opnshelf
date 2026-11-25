@@ -112,10 +112,7 @@ export default function MediaCard({
 	isInAnyList = false,
 }: MediaCardProps) {
 	const [imageLoaded, setImageLoaded] = useState(false);
-	// No URL at all never fires onError, so it starts as the fallback.
-	const [imageError, setImageError] = useState(
-		!(layout === "backdrop" && backdropUrl ? backdropUrl : posterUrl),
-	);
+	const [loadFailed, setImageError] = useState(false);
 
 	const sizeClasses = {
 		sm: {
@@ -139,6 +136,16 @@ export default function MediaCard({
 
 	const imageUrl =
 		layout === "backdrop" && backdropUrl ? backdropUrl : posterUrl;
+	// A card can stay mounted while its image changes: the load state belongs
+	// to the URL it was recorded for.
+	const [loadStateUrl, setLoadStateUrl] = useState(imageUrl);
+	if (loadStateUrl !== imageUrl) {
+		setLoadStateUrl(imageUrl);
+		setImageLoaded(false);
+		setImageError(false);
+	}
+	// No URL at all never fires onError, so it counts as the fallback.
+	const imageError = loadFailed || !imageUrl;
 	const posterSources = posterSrcSet(imageUrl);
 
 	const linkHref = (() => {
