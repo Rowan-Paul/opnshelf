@@ -100,6 +100,25 @@ export type TmdbTrailerDto = {
     sourceMediaType: 'movie' | 'show' | 'season' | 'episode';
 };
 
+export type MovieCollectionMovieDto = {
+    id: number;
+    title: string;
+    poster_path?: string;
+    release_date?: string;
+};
+
+export type MovieCollectionDto = {
+    /**
+     * TMDB collection ID
+     */
+    id: number;
+    name: string;
+    /**
+     * Every movie in the collection, this one included, in release order. Movies without a release date come last.
+     */
+    movies: Array<MovieCollectionMovieDto>;
+};
+
 export type TmdbMovieDetailDto = {
     id: number;
     title: string;
@@ -114,6 +133,10 @@ export type TmdbMovieDetailDto = {
     colors?: MovieColorsDto;
     credits?: TmdbCreditsDto;
     trailer?: TmdbTrailerDto;
+    /**
+     * The collection this movie belongs to. Absent when it stands alone.
+     */
+    collection?: MovieCollectionDto;
 };
 
 export type CrewDepartmentDto = {

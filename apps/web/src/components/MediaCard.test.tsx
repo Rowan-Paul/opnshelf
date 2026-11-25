@@ -152,3 +152,19 @@ it("keeps shelf and list actions visible when progress is unavailable and follow
 	fireEvent.click(screen.getByRole("button", { name: "Add to list" }));
 	expect(manageLists).toHaveBeenCalledOnce();
 });
+
+it("shows the fallback without a poster and the image once one arrives", () => {
+	const { rerender, container } = render(
+		<MediaCard id="920" title="Cars" posterUrl="" type="movie" />,
+	);
+	expect(screen.getAllByText("Cars")).toHaveLength(2);
+
+	rerender(
+		<MediaCard id="920" title="Cars" posterUrl="/poster.jpg" type="movie" />,
+	);
+	const image = container.querySelector("img") as HTMLImageElement;
+	fireEvent.load(image);
+
+	expect(screen.getAllByText("Cars")).toHaveLength(1);
+	expect(image.className).toContain("opacity-100");
+});

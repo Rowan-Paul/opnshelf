@@ -71,6 +71,10 @@ _Avoid_: Blog copy (does not distinguish the managed mirror from abandoned histo
 **Media Item**:
 A movie, show, season, or episode that can be tracked, reviewed, and listed.
 
+**Movie Collection**:
+The movies TMDB groups as one series, such as the Mad Max movies, in release order with undated movies last. A movie's page shows its Movie Collection as a poster rail for switching between those movies, marked with the viewer's Watches, and names it without TMDB's trailing "Collection" ("Mad Max movies"). A movie that stands alone, or is the only movie in its collection, has none.
+_Avoid_: Franchise, Film series, Collection on its own (see **Notification Collection** and **Library**)
+
 **Streaming Service**:
 A flat-rate subscription video service on which a Media Item can be watched in a given watch country — Netflix, Disney+ and the like, as listed by TMDB/JustWatch. Rent, buy, free and ad-supported availability are not Streaming Service availability. Availability is reckoned per **season** for shows, so a show can be on a Streaming Service while its newest season is not.
 _Avoid_: Provider, watch provider (collides with **Provider Sign-In**'s identity providers), platform, subscription (that is the user's relationship to a service, not the service), channel

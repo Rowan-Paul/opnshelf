@@ -7553,6 +7553,52 @@
           "sourceMediaType"
         ]
       },
+      "MovieCollectionMovieDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "poster_path": {
+            "type": "string"
+          },
+          "release_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
+      "MovieCollectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "TMDB collection ID"
+          },
+          "name": {
+            "type": "string",
+            "example": "Mad Max Collection"
+          },
+          "movies": {
+            "description": "Every movie in the collection, this one included, in release order. Movies without a release date come last.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovieCollectionMovieDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "movies"
+        ]
+      },
       "TMDBMovieDetailDto": {
         "type": "object",
         "properties": {
@@ -7597,6 +7643,14 @@
           },
           "trailer": {
             "$ref": "#/components/schemas/TMDBTrailerDto"
+          },
+          "collection": {
+            "description": "The collection this movie belongs to. Absent when it stands alone.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MovieCollectionDto"
+              }
+            ]
           }
         },
         "required": [

@@ -63,6 +63,10 @@ export class MoviesService {
 		return this.moviesTmdb.getWatchSuggestion(movieId);
 	}
 
+	getMovieCollection(movie: TMDBMovie) {
+		return this.moviesTmdb.getMovieCollection(movie);
+	}
+
 	async getMovieDetails(movieId: string): Promise<TMDBMovie> {
 		return this.moviesTmdb.getMovieDetails(movieId);
 	}

@@ -27,6 +27,7 @@ describe("MoviesController", () => {
 		searchMovies: vi.fn(),
 		getMovieDetails: vi.fn(),
 		getMovieCredits: vi.fn(),
+		getMovieCollection: vi.fn(),
 		getUserMovies: vi.fn(),
 		getMovieByTMDBId: vi.fn(),
 		getMovieWatchHistory: vi.fn(),
@@ -163,6 +164,27 @@ describe("MoviesController", () => {
 			expect(mockMoviesService.getMovieDetails).toHaveBeenCalledWith("123");
 			expect(mockMoviesService.getMovieByTMDBId).not.toHaveBeenCalled();
 			expect(mockMoviesService.upsertMovie).not.toHaveBeenCalled();
+		});
+
+		it("adds the collection the movie belongs to", async () => {
+			const movie = { id: 2, title: "Second" };
+			const collection = {
+				id: 10,
+				name: "Example Collection",
+				movies: [
+					{ id: 1, title: "First" },
+					{ id: 2, title: "Second" },
+				],
+			};
+			mockMoviesService.getMovieDetails.mockResolvedValue(movie);
+			mockMoviesService.getMovieCredits.mockResolvedValue(undefined);
+			mockMoviesService.getMovieCollection.mockResolvedValue(collection);
+
+			await expect(controller.getMovieDetails("2")).resolves.toEqual({
+				...movie,
+				collection,
+			});
+			expect(mockMoviesService.getMovieCollection).toHaveBeenCalledWith(movie);
 		});
 
 		it("should handle movie not found", async () => {
