@@ -107,7 +107,9 @@ describe("Watching Check-ins", () => {
 			service.finish(userDid, row.rkey, { did: userDid }),
 		).rejects.toThrow("Index unavailable");
 		expect(table.deleteMany).not.toHaveBeenCalled();
-		await service.finish(userDid, row.rkey, { did: userDid });
+		await expect(
+			service.finish(userDid, row.rkey, { did: userDid }),
+		).resolves.toMatchObject({ items: expect.any(Array) });
 		expect(repo.putRecord).toHaveBeenCalledOnce();
 		expect(movies.buildMovieWatchRecord).toHaveBeenLastCalledWith(
 			row.mediaId,
@@ -159,6 +161,9 @@ describe("Watching Check-ins", () => {
 					},
 				}),
 			);
+			expect(table.findUnique).toHaveBeenCalledExactlyOnceWith({
+				where: { userDid, rkey: row.rkey },
+			});
 			expect(repo.putRecord).toHaveBeenCalledOnce();
 			expect(table.deleteMany).toHaveBeenCalledWith({
 				where: { userDid, rkey: row.rkey },
