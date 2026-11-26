@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 
 export function migrationManifest(source) {
@@ -45,10 +44,7 @@ export function assertCompatible(baseline, candidate) {
 	}
 }
 
-if (
-	process.argv[1] &&
-	resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (import.meta.main) {
 	try {
 		const [command, source, baselineImage, legacySource] =
 			process.argv.slice(2);

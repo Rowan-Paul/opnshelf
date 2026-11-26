@@ -173,10 +173,7 @@ export function nativeFingerprint(workspace = root) {
 	return hash.digest("hex");
 }
 
-if (
-	process.argv[1] &&
-	resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (import.meta.main) {
 	try {
 		const [command = "status", device] = process.argv.slice(2);
 		if (command === "status") {
