@@ -1,6 +1,4 @@
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const login = (value) => value.toLowerCase().replace(/\[bot\]$/, "");
 export function reviewReadiness(pr, reviewer) {
@@ -21,10 +19,7 @@ export function reviewReadiness(pr, reviewer) {
 		ready: latest?.state === "APPROVED",
 	};
 }
-if (
-	process.argv[1] &&
-	resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (import.meta.main) {
 	try {
 		const [pr, reviewer] = process.argv.slice(2);
 		if (!pr || !reviewer)

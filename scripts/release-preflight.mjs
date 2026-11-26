@@ -13,8 +13,6 @@
 // With variable names, only those credentials are checked.
 //
 // Where every copy lives: docs/runbooks/credential-rotation.md.
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const TIMEOUT_MS = 10_000;
 
@@ -122,10 +120,7 @@ export function formatResult({ name, variable, status, detail }) {
 	return `${name} (${variable}): ${status}${detail ? ` (${detail})` : ""}`;
 }
 
-if (
-	process.argv[1] &&
-	resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (import.meta.main) {
 	const only = process.argv.slice(2);
 	const unknown = only.filter((v) => !checks.some((c) => c.variable === v));
 	if (unknown.length) {

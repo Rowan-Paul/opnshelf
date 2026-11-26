@@ -5,7 +5,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { leaseRoot, root } from "./dev-session.mjs";
 
 export const webBase = "http://127.0.0.1:3390";
@@ -213,7 +212,7 @@ async function main() {
 	}
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))
+if (import.meta.main)
 	main().catch((error) => {
 		console.error(error.message);
 		process.exitCode = 1;

@@ -1,8 +1,7 @@
 // Loopback-only API fixtures. Never proxy requests to a real backend or PDS.
 import { createServer } from "node:http";
 import { readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { spawn } from "node:child_process";
 import {
 	root,
@@ -716,10 +715,7 @@ export function createScenarioServer(
 	});
 }
 
-if (
-	process.argv[1] &&
-	resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (import.meta.main) {
 	const [clients = "web", scenario = "normal"] = process.argv.slice(2);
 	const children = [];
 	let leasePath;
