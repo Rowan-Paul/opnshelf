@@ -196,7 +196,7 @@ export function checkRepository(root) {
 	return problems;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (import.meta.main) {
 	const problems = checkRepository(path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."));
 	if (problems.length > 0) {
 		console.error(`Design system check failed (${problems.length}):\n${problems.map((problem) => `  - ${problem}`).join("\n")}\n\nSee docs/design-system.md.`);
