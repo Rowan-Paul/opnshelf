@@ -37,6 +37,8 @@ for (const [path, text] of sourceFiles(new URL("src/", apiPackageUrl))) {
 		source,
 		{ start: 0, length: text.length },
 	);
+	const location = (start) =>
+		`packages/api/src/${path}:${source.getLineAndCharacterOfPosition(start).line + 1}`;
 	const comments = [];
 	let commentEnd = 0;
 	for (const { classificationType, textSpan: { start } } of spans) {
@@ -62,14 +64,14 @@ for (const [path, text] of sourceFiles(new URL("src/", apiPackageUrl))) {
 	}
 	for (const { start, length } of comments) {
 		const comment = text.slice(start, start + length).replaceAll("\r\n", "\n");
-		const first = source.getLineAndCharacterOfPosition(start).line;
-		const location = `packages/api/src/${path}:${first + 1}`;
+		if (list) {
+			console.log(`${location(start)} ${comment}`);
+			continue;
+		}
 		const key = `${path}:${createHash("sha256").update(comment).digest("hex")}`;
 		observedCounts[key] = (observedCounts[key] ?? 0) + 1;
-		if (list) {
-			console.log(`${location} ${comment}`);
-		} else if (observedCounts[key] > (baselineCounts[key] ?? 0)) {
-			console.error(`${location} New or edited comment.`);
+		if (observedCounts[key] > (baselineCounts[key] ?? 0)) {
+			console.error(`${location(start)} New or edited comment.`);
 			additions++;
 		}
 	}
