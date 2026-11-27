@@ -189,7 +189,10 @@ jobs:
   #
   # Its own job so a Tangled outage shows red here without touching the GitHub
   # release, the store build or the OTA. Runs after `release` because that is
-  # what creates the tag.
+  # what creates the tag, but not only when it succeeds: `release` also
+  # dispatches the store build after publishing, and a failure there must not
+  # leave Tangled behind. `main` has moved either way, and a tag that was never
+  # created goes out with the next release, since every `v*` tag is pushed.
   #
   # The remote is the repo DID, not `rowanpaulflynn.dev/opnshelf`: over SSH the
   # handle path resolves to an abandoned copy on the knot, not the repo the site
@@ -198,7 +201,7 @@ jobs:
   mirror:
     name: Mirror to Tangled
     needs: release
-    if: github.event_name == 'push'
+    if: ${{ !cancelled() && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -211,13 +214,17 @@ jobs:
           TANGLED_SSH_KEY: ${{ secrets.TANGLED_SSH_KEY }}
           TANGLED_REMOTE: git@tangled.org:did:plc:nriu6sat6bmls5pejggchhoo
           # Pinned so a first connection cannot be answered by someone else.
-          # Refresh with `ssh-keyscan -t ed25519 tangled.org` if Tangled rotates it.
+          # If Tangled rotates it, `ssh-keyscan -t ed25519 tangled.org` only
+          # gives a candidate: confirm it against what Tangled announces before
+          # pinning, or the pin authenticates whoever answered the scan.
           TANGLED_HOST_KEY: tangled.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII2UShEm/FFPmYZUizaPnIqOJuynoCQpcLhl5PPHd02n
         run: |
           set -euo pipefail
+          # Fails rather than skips: a green run that mirrored nothing is how
+          # Tangled fell a month behind unnoticed.
           if [ -z "$TANGLED_SSH_KEY" ]; then
-            echo "::warning::TANGLED_SSH_KEY is not set; skipping the Tangled mirror."
-            exit 0
+            echo "::error::TANGLED_SSH_KEY is not set, so nothing was mirrored to Tangled. See docs/runbooks/credential-rotation.md."
+            exit 1
           fi
           umask 077
           mkdir -p ~/.ssh

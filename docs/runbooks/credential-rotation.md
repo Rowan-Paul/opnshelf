@@ -48,7 +48,7 @@ the upload preset may not grant `project:read`.
 | Store signing and submission: iOS distribution certificate and provisioning profiles, App Store Connect access for `eas submit`, Android upload keystore, Google Play service-account key | Apple, Google | none | none | Stored in EAS credentials (`eas credentials`), not environment variables. The Play service-account key is assigned under EAS → Credentials → Android → `com.rowanpaul.opnshelf` (`apps/mobile/RELEASE.md`) | no |
 | `EXPO_APPLE_ID`, `EXPO_ASC_APP_ID`, `EXPO_APPLE_TEAM_ID` (identifiers for `eas submit`, not secrets) | Apple | none | same names (`eas-build.yml` `build`) | none | no |
 | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` | Docker Hub | none | same names (`pds-operator-image.yml`, `tranquil-image.yml`) | none | no |
-| `TANGLED_SSH_KEY`: private half of an SSH key registered under Tangled → Settings → Keys. Tangled keys are per account, not per repository, so it can push to every repo the account owns | Tangled | none | `TANGLED_SSH_KEY` (`release.yml` `mirror`). Missing: the job warns and skips. Revoked or wrong: the job fails after the GitHub release is already published | none | no |
+| `TANGLED_SSH_KEY`: private half of an SSH key registered under Tangled → Settings → Keys. Tangled keys are per account, not per repository, so it can push to every repo the account owns | Tangled | none | `TANGLED_SSH_KEY` (`release.yml` `mirror`). Missing, revoked or wrong: the job fails after the GitHub release is already published, and Tangled stays behind until it is fixed and the job re-run | none | no |
 
 Public, domain-locked keys are not secrets, but they also have several copies
 and are baked in at build time, so a change needs every copy and a rebuild or
