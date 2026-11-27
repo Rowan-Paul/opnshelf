@@ -168,6 +168,8 @@ const config: ExpoConfig = {
 		"expo-font",
 		"expo-image",
 		"expo-notifications",
+		"expo-status-bar",
+		"expo-web-browser",
 		[
 			"expo-splash-screen",
 			{
