@@ -388,6 +388,7 @@ export function ProfileListsPage({
 
 	const noteTooLong =
 		noteEditor !== null && isListItemNoteTooLong(noteEditor.text);
+	const [noteAction, setNoteAction] = useState<"save" | "remove">("save");
 	const openNote = (item: MediaInListDto, trigger: HTMLButtonElement) => {
 		noteTrigger.current = trigger;
 		setNoteEditor({ item, text: item.notes ?? "" });
@@ -404,8 +405,11 @@ export function ProfileListsPage({
 			});
 			setNoteEditor(null);
 		},
-		onError: () => toast.error("Couldn't save the List item note"),
+		onError: () =>
+			toast.error("Couldn't update the List item note. Please try again."),
 	});
+
+	const removingNote = noteMutation.isPending && noteAction === "remove";
 
 	// Reorder items mutation (owner only, position order only)
 	const reorderMutation = useMutation({
@@ -1215,6 +1219,7 @@ export function ProfileListsPage({
 								onSubmit={(event) => {
 									event.preventDefault();
 									if (noteMutation.isPending || noteTooLong) return;
+									setNoteAction("save");
 									noteMutation.mutate({
 										path: {
 											slug: selectedListSlug,
@@ -1249,13 +1254,37 @@ export function ProfileListsPage({
 										Use 1,000 characters or fewer.
 									</output>
 								)}
-								<Button
-									type="submit"
-									disabled={noteMutation.isPending || noteTooLong}
-									aria-busy={noteMutation.isPending}
-								>
-									{noteMutation.isPending ? "Saving…" : "Save note"}
-								</Button>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										type="submit"
+										disabled={noteMutation.isPending || noteTooLong}
+										aria-busy={noteMutation.isPending && !removingNote}
+									>
+										{noteMutation.isPending && !removingNote
+											? "Saving…"
+											: "Save note"}
+									</Button>
+									{noteEditor.item.notes && (
+										<Button
+											type="button"
+											variant="outline"
+											disabled={noteMutation.isPending}
+											aria-busy={removingNote}
+											onClick={() => {
+												setNoteAction("remove");
+												noteMutation.mutate({
+													path: {
+														slug: selectedListSlug,
+														itemId: noteEditor.item.id,
+													},
+													body: { notes: "" },
+												});
+											}}
+										>
+											{removingNote ? "Removing…" : "Remove note"}
+										</Button>
+									)}
+								</div>
 							</form>
 						) : (
 							<p className="wrap-anywhere max-h-80 overflow-y-auto whitespace-pre-wrap">
