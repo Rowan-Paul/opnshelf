@@ -24,6 +24,7 @@ import { useThemeColors } from "@/theme/colors";
  */
 export function DetailHero({
 	title,
+	eyebrow,
 	subtitle,
 	backdropUrl,
 	posterUrl,
@@ -35,6 +36,8 @@ export function DetailHero({
 	children,
 }: {
 	title: string;
+	/** A small line above the title, e.g. where a movie sits in its collection. */
+	eyebrow?: ReactNode;
 	subtitle?: string;
 	backdropUrl?: string;
 	posterUrl?: string;
@@ -97,6 +100,7 @@ export function DetailHero({
 						poster
 					)}
 					<View className="flex-1 justify-end pb-1">
+						{eyebrow}
 						<Text className="text-display-2 text-foreground">{title}</Text>
 						{subtitle ? (
 							<Text className="mt-0.5 text-muted-foreground text-sm">

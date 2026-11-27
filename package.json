@@ -13,7 +13,7 @@
     "generate:api": "pnpm --filter backend run openapi:generate && pnpm --filter @opnshelf/api exec openapi-ts",
     "prisma:generate": "pnpm --filter backend exec prisma generate",
     "prisma:migrate": "pnpm --filter backend exec prisma migrate dev",
-    "check": "turbo run check && pnpm check:api-comments",
+    "check": "turbo run check && pnpm check:api-comments && pnpm check:design-system",
     "check:write": "turbo run check -- --write --unsafe",
     "typecheck": "turbo run typecheck",
     "prepare": "husky",
@@ -31,7 +31,9 @@
     "test:privacy-reference": "node scripts/privacy-reference.mjs",
     "review:status": "node scripts/review-readiness.mjs",
     "test:lighthouse": "node scripts/lighthouse.mjs",
-    "check:api-comments": "node scripts/check-api-comments.mjs"
+    "check:api-comments": "node scripts/check-api-comments.mjs",
+    "check:design-system": "node scripts/check-design-system.mjs",
+    "design:build": "pnpm --filter web run design:build"
   },
   "workspaces": [
     "apps/*",

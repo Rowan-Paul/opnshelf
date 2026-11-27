@@ -27,6 +27,7 @@ jobs:
       mobile: ${{ steps.filter.outputs.mobile }}
       api: ${{ steps.filter.outputs.api }}
       scripts: ${{ steps.filter.outputs.scripts }}
+      design_system: ${{ steps.filter.outputs.design_system }}
       privacy_reference: ${{ steps.filter.outputs.privacy_reference }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,6 +41,12 @@ jobs:
               - 'scripts/**'
               - 'package.json'
               - '.github/workflows/**'
+            design_system:
+              - 'apps/web/src/**'
+              - 'apps/mobile/src/**'
+              - 'design/system/**'
+              - 'scripts/check-design-system.mjs'
+              - '.github/workflows/ci.yml'
             privacy_reference:
               - 'backend/src/privacy/**'
               - 'backend/src/auth/oauth-scopes*'
@@ -114,6 +121,21 @@ jobs:
           for file in scripts/*.mjs scripts/*.cjs; do node --check "$file"; done
       - name: Test repository scripts
         run: node --test scripts/*.test.cjs scripts/*.test.mjs
+
+  design-system:
+    needs: changes
+    if: ${{ needs.changes.outputs.design_system == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.1"
+      # Uses only Node built-ins, so it needs no install.
+      - name: Check design tokens and retired class patterns
+        run: node scripts/check-design-system.mjs
 
   privacy-reference:
     needs: changes
@@ -315,7 +337,7 @@ jobs:
 
   ci:
     name: CI result
-    needs: [changes, web, web-image, backend, mobile, api, scripts, privacy-reference]
+    needs: [changes, web, web-image, backend, mobile, api, scripts, design-system, privacy-reference]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
@@ -328,6 +350,7 @@ jobs:
           MOBILE_RESULT: ${{ needs.mobile.result }}
           API_RESULT: ${{ needs.api.result }}
           SCRIPTS_RESULT: ${{ needs.scripts.result }}
+          DESIGN_SYSTEM_RESULT: ${{ needs.design-system.result }}
           REFERENCE_RESULT: ${{ needs.privacy-reference.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
@@ -335,7 +358,7 @@ jobs:
             exit 1
           fi
 
-          for result in "$WEB_RESULT" "$WEB_IMAGE_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT" "$SCRIPTS_RESULT" "$REFERENCE_RESULT"; do
+          for result in "$WEB_RESULT" "$WEB_IMAGE_RESULT" "$BACKEND_RESULT" "$MOBILE_RESULT" "$API_RESULT" "$SCRIPTS_RESULT" "$DESIGN_SYSTEM_RESULT" "$REFERENCE_RESULT"; do
             case "$result" in
               success|skipped) ;;
               *)

@@ -1,3 +1,4 @@
+import { MovieWatchSuggestionResponseDto } from "./dto/movie-suggestion.dto";
 import { WatchWriteInterceptor } from "../privacy/watch-operation";
 import { UseInterceptors } from "@nestjs/common";
 import { OptionalAuthGuard } from "../auth/optional-auth.guard";
@@ -88,14 +89,17 @@ export class MoviesController {
 	@ApiOperation({ summary: "Get movie details from TMDB" })
 	@ApiResponse({ status: 200, type: TMDBMovieDetailDto })
 	async getMovieDetails(@Param("movieId") movieId: string) {
-		const [movieData, credits] = await Promise.all([
-			this.moviesService.getMovieDetails(movieId),
+		const details = this.moviesService.getMovieDetails(movieId);
+		const [movieData, credits, collection] = await Promise.all([
+			details,
 			this.moviesService.getMovieCredits(movieId),
+			details.then((movie) => this.moviesService.getMovieCollection(movie)),
 		]);
 
 		return {
 			...movieData,
 			credits,
+			collection,
 		};
 	}
 
@@ -146,6 +150,14 @@ export class MoviesController {
 		return fromTmdbPage(
 			await this.moviesService.getRecommendations(movieId, parsePage(page)),
 		);
+	}
+
+	@Get("tmdb/:movieId/watch-suggestion")
+	@Header("Cache-Control", PUBLIC_CATALOGUE_CACHE_CONTROL)
+	@ApiOperation({ summary: "Get a movie suggestion after a Watch" })
+	@ApiResponse({ status: 200, type: MovieWatchSuggestionResponseDto })
+	getWatchSuggestion(@Param("movieId") movieId: string) {
+		return this.moviesService.getWatchSuggestion(movieId);
 	}
 
 	@Get("user/:userDid")

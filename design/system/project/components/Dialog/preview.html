@@ -1,0 +1,21 @@
+<!-- @dsCard group="Overlays" height=320 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Dialog</title></head>
+<body>
+<div id="root" class="ds-row"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var view = h(O.Dialog, null,
+    h(O.DialogTrigger, { asChild: true }, h(O.Button, { variant: 'outline' }, 'Remove from shelf')),
+    h(O.DialogContent, null,
+      h(O.DialogHeader, null,
+        h(O.DialogTitle, null, 'Remove from shelf?'),
+        h(O.DialogDescription, null, 'This removes your 3 logged watches of The Grand Budapest Hotel. Your Rating and Reviews stay.')),
+      h(O.DialogFooter, null,
+        h(O.DialogClose, { asChild: true }, h(O.Button, { variant: 'ghost' }, 'Cancel')),
+        h(O.DialogClose, { asChild: true }, h(O.Button, { variant: 'destructive' }, 'Remove from shelf')))));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

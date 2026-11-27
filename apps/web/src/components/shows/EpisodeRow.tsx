@@ -113,7 +113,7 @@ export default function EpisodeRow({
 			</div>
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<h4 className="truncate font-medium">
+					<h3 className="truncate font-medium">
 						<Link
 							to="/shows/$showId/$showName/seasons/$seasonNumber/episodes/$episodeNumber"
 							params={{
@@ -126,7 +126,7 @@ export default function EpisodeRow({
 						>
 							{episode.name}
 						</Link>
-					</h4>
+					</h3>
 					{isUpNext && <span className="badge badge-accent">Up Next</span>}
 				</div>
 				<p className="text-(--foreground-muted) text-sm">

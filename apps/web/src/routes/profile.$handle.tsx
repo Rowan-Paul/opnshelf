@@ -26,6 +26,7 @@ import {
 	UserPlus,
 } from "lucide-react";
 import { UserAvatar } from "#/components/following/UserAvatar";
+import { ProfileWatchingActivity } from "#/components/WatchingActivity";
 import { posthog } from "#/integrations/posthog/provider";
 import { useAuth } from "#/lib/auth-context";
 
@@ -233,6 +234,7 @@ function ProfileLayout() {
 										})
 									}
 									disabled={isPending}
+									aria-busy={isPending}
 									className="btn btn-primary gap-2"
 								>
 									{isPending ? (
@@ -253,7 +255,7 @@ function ProfileLayout() {
 						to="/profile/$handle/connections"
 						params={{ handle }}
 						search={{ tab: "followers" }}
-						className="rounded-md text-center transition-colors hover:text-(--accent)"
+						className="rounded-md text-center transition-colors hover:text-(--accent-text)"
 					>
 						<p className="font-semibold text-lg">{profile.followersCount}</p>
 						<p className="text-(--foreground-muted) text-sm">Followers</p>
@@ -262,7 +264,7 @@ function ProfileLayout() {
 						to="/profile/$handle/connections"
 						params={{ handle }}
 						search={{ tab: "following" }}
-						className="rounded-md text-center transition-colors hover:text-(--accent)"
+						className="rounded-md text-center transition-colors hover:text-(--accent-text)"
 					>
 						<p className="font-semibold text-lg">{profile.followingCount}</p>
 						<p className="text-(--foreground-muted) text-sm">Following</p>
@@ -282,7 +284,7 @@ function ProfileLayout() {
 								params={{ handle }}
 								activeOptions={tab.exact ? { exact: true } : undefined}
 								activeProps={{
-									className: "border-(--accent) text-(--accent)",
+									className: "border-(--accent) text-(--accent-text)",
 								}}
 								inactiveProps={{
 									className:
@@ -299,6 +301,7 @@ function ProfileLayout() {
 			</div>
 
 			{/* Child Route Content */}
+			<ProfileWatchingActivity did={profile.did} />
 			<Outlet />
 		</div>
 	);

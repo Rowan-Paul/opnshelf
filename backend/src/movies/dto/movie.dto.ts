@@ -355,6 +355,35 @@ export class TMDBTrailerDto {
 	sourceMediaType: "movie" | "show" | "season" | "episode";
 }
 
+export class MovieCollectionMovieDto {
+	@ApiProperty()
+	id: number;
+
+	@ApiProperty()
+	title: string;
+
+	@ApiPropertyOptional()
+	poster_path?: string;
+
+	@ApiPropertyOptional()
+	release_date?: string;
+}
+
+export class MovieCollectionDto {
+	@ApiProperty({ description: "TMDB collection ID" })
+	id: number;
+
+	@ApiProperty({ example: "Mad Max Collection" })
+	name: string;
+
+	@ApiProperty({
+		type: [MovieCollectionMovieDto],
+		description:
+			"Every movie in the collection, this one included, in release order. Movies without a release date come last.",
+	})
+	movies: MovieCollectionMovieDto[];
+}
+
 export class TMDBMovieDetailDto extends TMDBMovieResultDto {
 	@ApiPropertyOptional()
 	@IsOptional()
@@ -376,6 +405,13 @@ export class TMDBMovieDetailDto extends TMDBMovieResultDto {
 
 	@ApiPropertyOptional({ type: TMDBTrailerDto })
 	trailer?: TMDBTrailerDto;
+
+	@ApiPropertyOptional({
+		type: MovieCollectionDto,
+		description:
+			"The collection this movie belongs to. Absent when it stands alone.",
+	})
+	collection?: MovieCollectionDto;
 }
 
 export class SearchResultsDto extends PaginationMetaDto {

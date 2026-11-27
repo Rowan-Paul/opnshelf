@@ -229,7 +229,7 @@ function renderInlineNodes(
 				return (
 					<Text
 						key={key}
-						className="text-accent underline"
+						className="text-accent-text underline"
 						onPress={() => {
 							openExternalWebUrl(node.href, Linking.openURL);
 						}}
@@ -534,7 +534,7 @@ function renderPreviewInlineNodes(
 				);
 			case "link":
 				return (
-					<Text key={key} className="text-accent underline">
+					<Text key={key} className="text-accent-text underline">
 						{renderPreviewInlineNodes(node.children, key)}
 					</Text>
 				);

@@ -82,7 +82,7 @@ export function MiniActivityCard({
 						<Link
 							to="/profile/$handle"
 							params={{ handle: activity.actor.handle }}
-							className="relative z-10 font-semibold hover:text-(--accent)"
+							className="relative z-10 font-semibold hover:text-(--accent-text)"
 						>
 							{String(activity.actor.displayName || activity.actor.handle)}
 						</Link>
@@ -99,7 +99,7 @@ export function MiniActivityCard({
 						<Link
 							{...mediaLink}
 							hash={hash}
-							className="font-medium after:absolute after:inset-0 hover:text-(--accent)"
+							className="font-medium after:absolute after:inset-0 hover:text-(--accent-text)"
 						>
 							{activity.movieId ? activity.title : activity.showTitle}
 						</Link>
@@ -120,7 +120,7 @@ export function MiniActivityCard({
 								seasonNumber: String(activity.seasonNumber || 0),
 								episodeNumber: String(activity.episodeNumber || 0),
 							}}
-							className="relative z-10 mt-1 block font-semibold text-(--foreground) text-sm hover:text-(--accent)"
+							className="relative z-10 mt-1 block font-semibold text-(--foreground) text-sm hover:text-(--accent-text)"
 						>
 							{activity.seasonNumber && activity.episodeNumber
 								? `S${activity.seasonNumber}E${activity.episodeNumber}`

@@ -64,13 +64,13 @@ export function ProfileTabBar({
 							)}
 						>
 							<Icon
-								color={isActive ? colors.accent : colors.mutedForeground}
+								color={isActive ? colors.accentText : colors.mutedForeground}
 								size={15}
 							/>
 							<Text
 								className={cn(
 									"font-medium text-sm",
-									isActive ? "text-primary" : "text-muted-foreground",
+									isActive ? "text-accent-text" : "text-muted-foreground",
 								)}
 							>
 								{tab.label}

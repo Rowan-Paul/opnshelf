@@ -1,12 +1,18 @@
-import { type FollowedActivityItemDto, groupActivities } from "@opnshelf/api";
+import {
+	type FollowedActivityItemDto,
+	groupActivities,
+	type WatchingCheckInDto,
+} from "@opnshelf/api";
 import { Link } from "@tanstack/react-router";
 import { Activity, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ActivityCardsSkeleton } from "#/components/skeletons";
+import { WatchingActivity } from "#/components/WatchingActivity";
 import { ActivityCard } from "./ActivityCard";
 
 interface ActivityFeedProps {
 	activities: FollowedActivityItemDto[];
+	watching?: WatchingCheckInDto[];
 	isLoading: boolean;
 	error: Error | null;
 	userTimezone?: string;
@@ -21,6 +27,7 @@ interface ActivityFeedProps {
 
 export function ActivityFeed({
 	activities,
+	watching,
 	isLoading,
 	error,
 	userTimezone,
@@ -38,13 +45,23 @@ export function ActivityFeed({
 		return () => clearInterval(timer);
 	}, []);
 
+	// Check-ins come from their own request. They show above the feed's
+	// loading and error states instead of standing in for them.
 	if (isLoading && activities.length === 0) {
-		return <ActivityCardsSkeleton rows={3} />;
+		return (
+			<div className="space-y-3">
+				<WatchingActivity items={watching} following />
+				<ActivityCardsSkeleton rows={3} />
+			</div>
+		);
 	}
 
 	if (error && activities.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12 text-(--foreground-muted)">
+				<div className="w-full">
+					<WatchingActivity items={watching} following />
+				</div>
 				<Activity className="mb-4 size-12 opacity-50" />
 				<p>Couldn&apos;t load activity.</p>
 				<button
@@ -58,7 +75,7 @@ export function ActivityFeed({
 		);
 	}
 
-	if (activities.length === 0) {
+	if (activities.length === 0 && !watching?.length) {
 		if (activeCircleId) {
 			return (
 				<div className="flex flex-col items-center justify-center py-12 text-center text-(--foreground-muted)">
@@ -107,6 +124,7 @@ export function ActivityFeed({
 
 	return (
 		<div className="space-y-3">
+			<WatchingActivity items={watching} following />
 			{groupActivities(activities, userTimezone ?? "UTC", now).map(
 				(group, index, groups) => (
 					<div key={group.id}>

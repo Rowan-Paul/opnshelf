@@ -52,7 +52,7 @@ export default function NotificationCollectionScreen() {
 						Sign in to the account that received this notification, then open
 						its link again.
 					</Text>
-					<Link href="/login" className="text-primary">
+					<Link href="/login" className="text-accent-text">
 						Sign in
 					</Link>
 				</View>

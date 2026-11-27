@@ -113,7 +113,7 @@ export default function Footer() {
 								href="https://rowanpaulflynn.com"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-accent hover:underline"
+								className="text-(--accent-text) hover:underline"
 							>
 								Rowan Paul Flynn
 							</a>

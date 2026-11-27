@@ -187,6 +187,7 @@ function GoogleSignupPage() {
 							disabled={
 								isSubmitting || username.trim().length < 3 || !captchaReady
 							}
+							aria-busy={isSubmitting}
 							className="btn btn-primary w-full"
 						>
 							{isSubmitting ? (
@@ -205,7 +206,7 @@ function GoogleSignupPage() {
 
 					<p className="mt-6 text-center text-(--foreground-muted) text-sm">
 						Wrong Google account?{" "}
-						<Link to="/signup" className="text-(--accent) hover:underline">
+						<Link to="/signup" className="text-(--accent-text) hover:underline">
 							Start again
 						</Link>
 					</p>

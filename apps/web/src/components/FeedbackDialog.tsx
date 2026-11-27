@@ -148,6 +148,7 @@ export function FeedbackDialog({
 								onClick={() => onOpenChange(false)}
 								className="btn btn-secondary"
 								disabled={isSubmitting}
+								aria-busy={isSubmitting}
 							>
 								Cancel
 							</button>
@@ -155,6 +156,7 @@ export function FeedbackDialog({
 								type="submit"
 								className="btn btn-primary"
 								disabled={isSubmitting || !message.trim()}
+								aria-busy={isSubmitting}
 							>
 								{isSubmitting ? (
 									<>

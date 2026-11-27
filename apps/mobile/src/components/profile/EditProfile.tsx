@@ -114,7 +114,7 @@ export function EditProfile({ user }: { user: UserDto }) {
 						) : (
 							<RefreshCw color={colors.accent} size={14} />
 						)}
-						<Text className="text-primary text-sm">Refresh</Text>
+						<Text className="text-accent-text text-sm">Refresh</Text>
 					</Pressable>
 				</View>
 				<Text className="text-muted-foreground text-xs leading-5">
@@ -175,7 +175,7 @@ function SocialLinkRow({
 						className="flex-row items-center gap-1"
 						hitSlop={6}
 					>
-						<Text className="text-primary text-xs">View profile</Text>
+						<Text className="text-accent-text text-xs">View profile</Text>
 						<ExternalLink color={colors.accent} size={12} />
 					</Pressable>
 				) : (

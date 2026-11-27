@@ -1,3 +1,4 @@
+import { formatRuntime } from "@opnshelf/api";
 import { Link } from "expo-router";
 import { Check, Plus, Star } from "lucide-react-native";
 import type { ReactNode } from "react";
@@ -6,7 +7,7 @@ import { PosterImage } from "@/components/media/PosterImage";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { formatRuntime, stillUrl } from "@/lib/tmdb";
+import { stillUrl } from "@/lib/tmdb";
 import { useConfirmRemoveWatches } from "@/lib/use-confirm-remove-watches";
 import { useWatchActions } from "@/lib/use-watch-actions";
 import { useWatchStatus } from "@/lib/use-watch-status";

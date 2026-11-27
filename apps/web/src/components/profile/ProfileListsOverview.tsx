@@ -332,6 +332,7 @@ export function ProfileListsOverview({
 					<Button
 						className="ml-auto"
 						disabled={isFetching}
+						aria-busy={isFetching}
 						onClick={() => refetchLists()}
 						size="sm"
 						variant="ghost"
@@ -427,6 +428,7 @@ export function ProfileListsOverview({
 							<Button
 								onClick={handleCreateList}
 								disabled={!newListName.trim() || createListMutation.isPending}
+								aria-busy={createListMutation.isPending}
 							>
 								{createListMutation.isPending ? (
 									<>

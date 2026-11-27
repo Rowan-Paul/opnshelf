@@ -1,5 +1,6 @@
 export { type ActivityGroup, groupActivities } from "./activity-groups";
 export { formatCatalogueDate } from "./catalogue-date";
+export { formatRuntime } from "./format-runtime";
 
 export type { AccountDeletionStatusJob } from "./account-deletion-status";
 export {
@@ -50,6 +51,12 @@ export {
 	retryUnlessNotFound,
 } from "./http-errors";
 export {
+	filterLibraryItems,
+	LIBRARY_SORT_OPTIONS,
+	type LibrarySort,
+	libraryItemTitle,
+} from "./library-view";
+export {
 	type ListItemRef,
 	type ListRef,
 	listsForItem,
@@ -58,7 +65,14 @@ export {
 	withMovieWatch,
 	withoutMovieWatches,
 } from "./list-memberships";
+export { isListItemNoteTooLong } from "./list-item-note";
 export { slugifyName } from "./media-slug";
+export {
+	type MovieCollectionRail,
+	type MovieCollectionRailItem,
+	movieCollectionName,
+	movieCollectionRail,
+} from "./movie-collection";
 export {
 	describeMutationFailure,
 	MutationFailedError,
@@ -106,3 +120,4 @@ export {
 	restorePickerFilters,
 } from "./watch-picker";
 export { getWatchProviderLink } from "./watch-provider-link";
+export { getCheckInSuggestion } from "./check-in-suggestion";

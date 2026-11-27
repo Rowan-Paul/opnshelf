@@ -159,6 +159,15 @@ export function MediaActionBar({
 			</View>
 
 			<MediaQuickActionsSheet
+				checkInTarget={
+					isMovie || ep
+						? {
+								mediaId: id,
+								seasonNumber: ep?.seasonNumber,
+								episodeNumber: ep?.episodeNumber,
+							}
+						: undefined
+				}
 				visible={quickVisible}
 				onDismiss={() => setQuickVisible(false)}
 				title={title}

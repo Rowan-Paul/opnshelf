@@ -1,0 +1,5 @@
+- Check in to show what you are watching now. Opnshelf logs the Watch when the runtime is over.
+- Search your Library by title, Box Set or episode, and sort it by date added, title or release year.
+- Add, edit or remove notes on the items in your Lists.
+- See the other movies of a Movie Collection on a movie page, and page between seasons and episodes from the header.
+- Up Next cards fit wider screens, plus clearer contrast and fixes throughout Opnshelf.

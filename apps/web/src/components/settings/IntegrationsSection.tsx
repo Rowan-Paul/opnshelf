@@ -25,7 +25,7 @@ export function IntegrationsSection() {
 						key={integration.id}
 						to="/integrations/$provider"
 						params={{ provider: integration.id }}
-						className={`group flex items-center gap-4 p-5 transition-colors hover:bg-(--background-subtle) focus-visible:outline-none focus-visible:ring-(--accent) focus-visible:ring-2 sm:p-7 ${
+						className={`group flex items-center gap-4 p-5 transition-colors hover:bg-(--background-subtle) focus-visible:outline-none focus-visible:ring-(--ring) focus-visible:ring-2 sm:p-7 ${
 							index > 0 ? "border-(--border) border-t" : ""
 						}`}
 					>

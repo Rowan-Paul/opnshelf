@@ -83,7 +83,8 @@ export const ModelName = {
   WatchPrivacyCopy: 'WatchPrivacyCopy',
   WatchPrivacyMigration: 'WatchPrivacyMigration',
   PrivacyScope: 'PrivacyScope',
-  PrivacyCopy: 'PrivacyCopy'
+  PrivacyCopy: 'PrivacyCopy',
+  WatchingCheckIn: 'WatchingCheckIn'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -707,6 +708,22 @@ export const PrivacyCopyScalarFieldEnum = {
 } as const
 
 export type PrivacyCopyScalarFieldEnum = (typeof PrivacyCopyScalarFieldEnum)[keyof typeof PrivacyCopyScalarFieldEnum]
+
+
+export const WatchingCheckInScalarFieldEnum = {
+  userDid: 'userDid',
+  rkey: 'rkey',
+  mediaId: 'mediaId',
+  title: 'title',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  startedAt: 'startedAt',
+  endsAt: 'endsAt',
+  finishingAt: 'finishingAt',
+  retryAfter: 'retryAfter'
+} as const
+
+export type WatchingCheckInScalarFieldEnum = (typeof WatchingCheckInScalarFieldEnum)[keyof typeof WatchingCheckInScalarFieldEnum]
 
 
 export const SortOrder = {

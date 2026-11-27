@@ -11,6 +11,7 @@ This file is the root guide for automated coding work in Opnshelf. Keep changes 
 - `lexicons/`: source JSON definitions for the `xyz.opnshelf.*` AT Protocol records.
 - `spaces/lexicons/`: alpha Space declarations for publication, separate from record validators. Read `spaces/README.md` before changing or publishing them.
 - `services/mail-relay/`: standalone mail relay for the PDS. It sits outside the pnpm workspace, so root commands never touch it.
+- `design/`: `branding/` holds the logo masters; `system/project/` holds the design system's brand book, token notes, component guidelines and previews. `apps/web/design-system/` builds its component bundle.
 - `docs/`: `adr/` for decisions, `prd/` for product briefs, `runbooks/` for operational procedures.
 - `plans/`: numbered implementation plans with a status table in `plans/README.md`. When the task names a plan, read it in full, honor its STOP conditions, and update its status row when you finish that plan.
 
@@ -18,6 +19,7 @@ Use Node.js 24 and run workspace commands with the repository's pnpm version fro
 
 ## Source-of-truth documents
 
+- [`docs/design-system.md`](docs/design-system.md) covers design tokens, shared components and the published design system. Read it before changing a colour, radius, focus style, button or anything under `design/system/`.
 - `GLOSSARY.md` controls exact product vocabulary. Use its canonical terms and respect its avoid lists. When a change adds, renames, or retires a product concept, update `GLOSSARY.md` in the same change.
 - `docs/adr/**` records architectural decisions. Read the relevant accepted and superseding ADRs before changing behavior or boundaries.
 - `.github/workflows/ci.yml` is the source of truth for workspace verification gates; package scripts provide their implementations. The standalone mail relay has local gates below because CI does not cover it.
@@ -48,6 +50,7 @@ Run commands from the repository root. `pnpm typecheck` and `pnpm check` cover W
 | Mobile | `pnpm --filter mobile run test` |
 | API client | `pnpm generate:api`<br>Review the intended changes in `backend/openapi.json` and `packages/api/src/generated`<br>`pnpm --filter @opnshelf/api exec tsc --noEmit`<br>`pnpm check:api-comments` |
 | Mail relay | `npm --prefix services/mail-relay ci`<br>`node --check services/mail-relay/index.js`<br>For deploy-image changes: `docker build --file services/mail-relay/Dockerfile .` |
+| Design tokens, shared UI primitives, or `design/system/**` | `pnpm check:design-system` (also part of `pnpm check`)<br>`pnpm design:build` when `apps/web/design-system/**` or a bundled component changed |
 | Docs only | No code gate unless the document changes executable examples or generated artifacts |
 
 The pre-commit hook runs `pnpm typecheck` and `pnpm check` and writes nothing, so a commit fails on type, lint, or formatting errors. Formatting stays a separate manual step: run `pnpm check:write`, review the diff, then stage.
@@ -71,6 +74,7 @@ Never hand-edit generated output. Change its source, run the owning command, and
 | `backend/openapi.json`, `packages/api/src/generated/**` | `pnpm generate:api` (source: backend controllers and DTOs) |
 | `scripts/api-comment-baseline.json` | `pnpm check:api-comments --prune` (handwritten TypeScript in `packages/api/src`) |
 | `apps/web/src/routeTree.gen.ts` | TanStack Router tooling; edit `apps/web/src/routes/**`, then run the relevant web dev/build tooling to regenerate it |
+| `design/system/project/components/bundle.js`, `bundle.css` | `pnpm design:build` (source: `apps/web/src/styles.css`, `apps/web/design-system/`). Gitignored; published, never committed |
 
 ## Safety boundaries
 

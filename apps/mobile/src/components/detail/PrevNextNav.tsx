@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { View } from "react-native";
-import { Button } from "@/components/ui/button";
+import { Pressable, View } from "react-native";
+import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/theme/colors";
 
 export interface PrevNextTarget {
@@ -12,10 +12,11 @@ export interface PrevNextTarget {
 }
 
 /**
- * Previous/next paging between sibling seasons or episodes. A side with no
- * neighbour is left out rather than disabled; an empty half holds its place so
- * the remaining button keeps to its own edge. Mirrors the Web App's
- * `PrevNextNav`.
+ * Previous/next paging between sibling seasons or episodes, for the stack
+ * header's `headerRight` so it stays in one place however long the screen is.
+ * Each side shows its target's code beside the chevron, which tells it apart
+ * from the back button and says where the tap leads. A side with no neighbour
+ * is left out rather than disabled. Mirrors the Web App's `PrevNextNav`.
  */
 export function PrevNextNav({
 	previous,
@@ -28,31 +29,28 @@ export function PrevNextNav({
 	if (!previous && !next) return null;
 
 	return (
-		<View className="flex-row gap-2 px-4">
-			{previous ? (
-				<Button
-					variant="secondary"
-					className="flex-1"
-					label={previous.label}
-					description={previous.code}
-					leading={<ChevronLeft color={colors.mutedForeground} size={18} />}
-					onPress={previous.onPress}
-				/>
-			) : (
-				<View className="flex-1" />
-			)}
-			{next ? (
-				<Button
-					variant="secondary"
-					className="flex-1"
-					label={next.label}
-					description={next.code}
-					trailing={<ChevronRight color={colors.mutedForeground} size={18} />}
-					onPress={next.onPress}
-				/>
-			) : (
-				<View className="flex-1" />
-			)}
+		<View className="-mr-2 flex-row gap-1">
+			{[previous, next].map((target, index) => {
+				if (!target) return null;
+				const Icon = index === 0 ? ChevronLeft : ChevronRight;
+				return (
+					<Pressable
+						key={target.label}
+						accessibilityRole="button"
+						accessibilityLabel={`${target.label}, ${target.code}`}
+						onPress={target.onPress}
+						className={`h-11 min-w-11 items-center justify-center gap-0.5 px-1 ${index === 0 ? "flex-row" : "flex-row-reverse"}`}
+					>
+						<Icon color={colors.mutedForeground} size={18} />
+						<Text
+							className="font-medium text-muted-foreground text-xs"
+							style={{ fontVariant: ["tabular-nums"] }}
+						>
+							{target.code}
+						</Text>
+					</Pressable>
+				);
+			})}
 		</View>
 	);
 }

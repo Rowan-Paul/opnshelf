@@ -10,9 +10,10 @@ export interface PrevNextTarget {
 }
 
 /**
- * Previous/next paging between sibling seasons or episodes. A side with no
- * neighbour is left out rather than disabled, and the remaining button keeps
- * to its own edge. Mirrors the Mobile App's `PrevNextNav`.
+ * Previous/next paging between sibling seasons or episodes, sized for the
+ * breadcrumb row of `MediaHero`. Each side shows its target's code beside the
+ * chevron; a side with no neighbour is left out rather than disabled. Mirrors
+ * the Mobile App's `PrevNextNav`.
  */
 export function PrevNextNav({
 	previous,
@@ -24,37 +25,28 @@ export function PrevNextNav({
 	if (!previous && !next) return null;
 
 	return (
-		<nav aria-label="Previous and next" className="flex items-center gap-2">
-			{previous && (
-				<Link
-					to={previous.href}
-					aria-label={`${previous.label}, ${previous.code}`}
-					className="btn btn-secondary gap-2"
-				>
-					<ChevronLeft className="size-4" />
-					<span className="flex flex-col items-start leading-tight">
-						<span>{previous.label}</span>
-						<span className="text-(--foreground-muted) text-xs">
-							{previous.code}
-						</span>
-					</span>
-				</Link>
-			)}
-			{next && (
-				<Link
-					to={next.href}
-					aria-label={`${next.label}, ${next.code}`}
-					className="btn btn-secondary ml-auto gap-2"
-				>
-					<span className="flex flex-col items-end leading-tight">
-						<span>{next.label}</span>
-						<span className="text-(--foreground-muted) text-xs">
-							{next.code}
-						</span>
-					</span>
-					<ChevronRight className="size-4" />
-				</Link>
-			)}
+		<nav
+			aria-label="Previous and next"
+			className="ml-auto flex shrink-0 items-center gap-2 text-sm [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] sm:gap-4"
+		>
+			{[previous, next].map((target, index) => {
+				if (!target) return null;
+				const Icon = index === 0 ? ChevronLeft : ChevronRight;
+				return (
+					<Link
+						key={target.href}
+						to={target.href}
+						aria-label={`${target.label}, ${target.code}`}
+						className="btn h-11 min-w-11 gap-1 p-0 text-white/80 hover:text-white"
+					>
+						<Icon
+							aria-hidden="true"
+							className={index === 0 ? "size-4" : "order-last size-4"}
+						/>
+						<span>{target.code}</span>
+					</Link>
+				);
+			})}
 		</nav>
 	);
 }

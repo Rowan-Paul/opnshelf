@@ -33,7 +33,7 @@ export function ReviewLikeButton({
 					? "cursor-not-allowed text-(--foreground-muted) opacity-50"
 					: isLiked
 						? "text-destructive hover:bg-destructive/10"
-						: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--accent)"
+						: "text-(--foreground-muted) hover:bg-(--background-subtle) hover:text-(--accent-text)"
 			}`}
 			aria-label={
 				!isAuthenticated

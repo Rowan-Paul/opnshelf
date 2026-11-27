@@ -152,7 +152,7 @@ function ReviewCard({
 		<a
 			href={review.reviewUrl}
 			onClick={openReview}
-			className="transition-colors hover:text-(--accent)"
+			className="transition-colors hover:text-(--accent-text)"
 		>
 			{review.reviewTitle}
 		</a>
@@ -184,7 +184,7 @@ function ReviewCard({
 					/>
 					<div className="min-w-0">
 						<div className="flex items-center gap-2">
-							<p className="truncate font-medium text-sm transition-colors hover:text-(--accent)">
+							<p className="truncate font-medium text-sm transition-colors hover:text-(--accent-text)">
 								{displayName}
 							</p>
 							{isOwnReview && (
@@ -207,7 +207,7 @@ function ReviewCard({
 							<button
 								type="button"
 								onClick={() => setEditOpen(true)}
-								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+								className="flex h-7 w-7 items-center justify-center rounded-md text-(--foreground-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--accent-text)"
 								aria-label="Edit review"
 							>
 								<Pencil className="size-3.5" />
@@ -283,7 +283,7 @@ function ReviewCard({
 					<ShareButton
 						url={`?review=${encodeURIComponent(review.reviewUrl)}`}
 						surface="review_card"
-						className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--accent)"
+						className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-(--foreground-muted) text-sm transition-colors hover:bg-(--background-subtle) hover:text-(--accent-text)"
 					/>
 				)}
 			</div>

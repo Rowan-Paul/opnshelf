@@ -151,7 +151,7 @@ function TermsOfServicePage() {
 								href="https://bsky.app/profile/opnshelf.xyz"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-(--accent) hover:underline"
+								className="text-(--accent-text) hover:underline"
 							>
 								Bluesky
 							</a>
@@ -163,7 +163,7 @@ function TermsOfServicePage() {
 				<div className="mt-8 border-(--border) border-t pt-6">
 					<Link
 						to="/privacy"
-						className="text-(--accent) text-sm hover:underline"
+						className="text-(--accent-text) text-sm hover:underline"
 					>
 						Read our Privacy Policy →
 					</Link>

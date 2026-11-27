@@ -254,6 +254,37 @@
         ]
       }
     },
+    "/movies/tmdb/{movieId}/watch-suggestion": {
+      "get": {
+        "operationId": "MoviesController_getWatchSuggestion",
+        "parameters": [
+          {
+            "name": "movieId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieWatchSuggestionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a movie suggestion after a Watch",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
     "/movies/user/{userDid}": {
       "get": {
         "operationId": "MoviesController_getUserMovies",
@@ -3741,6 +3772,59 @@
         ]
       }
     },
+    "/lists/{slug}/items/{itemId}/note": {
+      "put": {
+        "operationId": "ListsController_updateListItemNote",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateListItemNoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Note saved"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "List or item not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a list item's note",
+        "tags": [
+          "lists"
+        ]
+      }
+    },
     "/lists/{slug}/items/{mediaType}/{mediaId}": {
       "delete": {
         "operationId": "ListsController_removeItemFromList",
@@ -6375,6 +6459,176 @@
         ]
       }
     },
+    "/check-ins": {
+      "get": {
+        "operationId": "CheckInsController_own",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "check-ins"
+        ]
+      },
+      "post": {
+        "operationId": "CheckInsController_start",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartCheckInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchingCheckInDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "check-ins"
+        ]
+      }
+    },
+    "/check-ins/profile/{did}": {
+      "get": {
+        "operationId": "CheckInsController_profile",
+        "parameters": [
+          {
+            "name": "did",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "check-ins"
+        ]
+      }
+    },
+    "/check-ins/following": {
+      "get": {
+        "operationId": "CheckInsController_following",
+        "parameters": [
+          {
+            "name": "circleId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "check-ins"
+        ]
+      }
+    },
+    "/check-ins/{rkey}/finish": {
+      "post": {
+        "operationId": "CheckInsController_finish",
+        "parameters": [
+          {
+            "name": "rkey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "check-ins"
+        ]
+      }
+    },
+    "/check-ins/{rkey}": {
+      "delete": {
+        "operationId": "CheckInsController_cancel",
+        "parameters": [
+          {
+            "name": "rkey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "check-ins"
+        ]
+      }
+    },
     "/search/all": {
       "get": {
         "operationId": "SearchController_searchAll",
@@ -7352,6 +7606,52 @@
           "sourceMediaType"
         ]
       },
+      "MovieCollectionMovieDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "poster_path": {
+            "type": "string"
+          },
+          "release_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
+      "MovieCollectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "TMDB collection ID"
+          },
+          "name": {
+            "type": "string",
+            "example": "Mad Max Collection"
+          },
+          "movies": {
+            "description": "Every movie in the collection, this one included, in release order. Movies without a release date come last.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovieCollectionMovieDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "movies"
+        ]
+      },
       "TMDBMovieDetailDto": {
         "type": "object",
         "properties": {
@@ -7396,6 +7696,14 @@
           },
           "trailer": {
             "$ref": "#/components/schemas/TMDBTrailerDto"
+          },
+          "collection": {
+            "description": "The collection this movie belongs to. Absent when it stands alone.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MovieCollectionDto"
+              }
+            ]
           }
         },
         "required": [
@@ -7514,6 +7822,46 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "MovieWatchSuggestionDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "collection",
+              "similar"
+            ]
+          },
+          "movieId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "posterPath": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string"
+          },
+          "runtime": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "movieId",
+          "title"
+        ]
+      },
+      "MovieWatchSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "suggestion": {
+            "$ref": "#/components/schemas/MovieWatchSuggestionDto"
           }
         }
       },
@@ -10486,6 +10834,19 @@
           "ids"
         ]
       },
+      "UpdateListItemNoteDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "description": "List item note. Send an empty string to clear it.",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "notes"
+        ]
+      },
       "ListsForItemDto": {
         "type": "object",
         "properties": {
@@ -12896,6 +13257,92 @@
         },
         "required": [
           "token"
+        ]
+      },
+      "WatchingCheckInDto": {
+        "type": "object",
+        "properties": {
+          "rkey": {
+            "type": "string"
+          },
+          "userDid": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "mediaId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "seasonNumber": {
+            "type": "number",
+            "nullable": true
+          },
+          "episodeNumber": {
+            "type": "number",
+            "nullable": true
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "finishing": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rkey",
+          "userDid",
+          "handle",
+          "mediaId",
+          "title",
+          "seasonNumber",
+          "episodeNumber",
+          "startedAt",
+          "endsAt",
+          "finishing"
+        ]
+      },
+      "CheckInsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchingCheckInDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "StartCheckInDto": {
+        "type": "object",
+        "properties": {
+          "mediaId": {
+            "type": "string"
+          },
+          "seasonNumber": {
+            "type": "number"
+          },
+          "episodeNumber": {
+            "type": "number"
+          },
+          "replaceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mediaId"
         ]
       },
       "UnifiedSearchResultDto": {

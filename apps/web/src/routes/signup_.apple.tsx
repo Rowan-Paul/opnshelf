@@ -209,6 +209,7 @@ function AppleSignupPage() {
 							disabled={
 								isSubmitting || username.trim().length < 3 || !captchaReady
 							}
+							aria-busy={isSubmitting}
 							className="btn btn-primary w-full"
 						>
 							{isSubmitting ? (
@@ -230,12 +231,15 @@ function AppleSignupPage() {
 						{isMobile ? (
 							<a
 								href={MOBILE_START_AGAIN}
-								className="text-(--accent) hover:underline"
+								className="text-(--accent-text) hover:underline"
 							>
 								Start again
 							</a>
 						) : (
-							<Link to="/signup" className="text-(--accent) hover:underline">
+							<Link
+								to="/signup"
+								className="text-(--accent-text) hover:underline"
+							>
 								Start again
 							</Link>
 						)}

@@ -95,7 +95,7 @@ export default function SeasonRow({
 									onMarkSeasonWatched();
 								}}
 								disabled={isProcessingSeason}
-								className="flex items-center gap-1.5 rounded-md bg-(--background-subtle) px-3 py-1.5 font-medium text-(--foreground-muted) text-xs transition-colors hover:bg-(--accent-subtle) hover:text-(--accent)"
+								className="flex items-center gap-1.5 rounded-md bg-(--background-subtle) px-3 py-1.5 font-medium text-(--foreground-muted) text-xs transition-colors hover:bg-(--accent-subtle) hover:text-(--accent-text)"
 								title="Add all episodes in this season to your shelf"
 							>
 								{isProcessingSeason ? (

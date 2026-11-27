@@ -429,7 +429,8 @@ export const ModelName = {
   WatchPrivacyCopy: 'WatchPrivacyCopy',
   WatchPrivacyMigration: 'WatchPrivacyMigration',
   PrivacyScope: 'PrivacyScope',
-  PrivacyCopy: 'PrivacyCopy'
+  PrivacyCopy: 'PrivacyCopy',
+  WatchingCheckIn: 'WatchingCheckIn'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -445,7 +446,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "integrationConnection" | "integrationEntry" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration" | "privacyScope" | "privacyCopy"
+    modelProps: "user" | "integrationConnection" | "integrationEntry" | "notificationSettings" | "pushDevice" | "notificationCollection" | "notificationDelivery" | "follow" | "circle" | "circleMember" | "authSession" | "authState" | "backgroundJob" | "movie" | "show" | "season" | "episode" | "trackedMovie" | "trackedEpisode" | "list" | "listItem" | "libraryItem" | "note" | "review" | "publication" | "rating" | "reviewLike" | "feedback" | "featuredContent" | "watchPrivacyCopy" | "watchPrivacyMigration" | "privacyScope" | "privacyCopy" | "watchingCheckIn"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2891,6 +2892,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WatchingCheckIn: {
+      payload: Prisma.$WatchingCheckInPayload<ExtArgs>
+      fields: Prisma.WatchingCheckInFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WatchingCheckInFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WatchingCheckInFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>
+        }
+        findFirst: {
+          args: Prisma.WatchingCheckInFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WatchingCheckInFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>
+        }
+        findMany: {
+          args: Prisma.WatchingCheckInFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>[]
+        }
+        create: {
+          args: Prisma.WatchingCheckInCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>
+        }
+        createMany: {
+          args: Prisma.WatchingCheckInCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WatchingCheckInCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>[]
+        }
+        delete: {
+          args: Prisma.WatchingCheckInDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>
+        }
+        update: {
+          args: Prisma.WatchingCheckInUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>
+        }
+        deleteMany: {
+          args: Prisma.WatchingCheckInDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WatchingCheckInUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WatchingCheckInUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>[]
+        }
+        upsert: {
+          args: Prisma.WatchingCheckInUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchingCheckInPayload>
+        }
+        aggregate: {
+          args: Prisma.WatchingCheckInAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWatchingCheckIn>
+        }
+        groupBy: {
+          args: Prisma.WatchingCheckInGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchingCheckInGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WatchingCheckInCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchingCheckInCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -3537,6 +3612,22 @@ export const PrivacyCopyScalarFieldEnum = {
 export type PrivacyCopyScalarFieldEnum = (typeof PrivacyCopyScalarFieldEnum)[keyof typeof PrivacyCopyScalarFieldEnum]
 
 
+export const WatchingCheckInScalarFieldEnum = {
+  userDid: 'userDid',
+  rkey: 'rkey',
+  mediaId: 'mediaId',
+  title: 'title',
+  seasonNumber: 'seasonNumber',
+  episodeNumber: 'episodeNumber',
+  startedAt: 'startedAt',
+  endsAt: 'endsAt',
+  finishingAt: 'finishingAt',
+  retryAfter: 'retryAfter'
+} as const
+
+export type WatchingCheckInScalarFieldEnum = (typeof WatchingCheckInScalarFieldEnum)[keyof typeof WatchingCheckInScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -3907,6 +3998,7 @@ export type GlobalOmitConfig = {
   watchPrivacyMigration?: Prisma.WatchPrivacyMigrationOmit
   privacyScope?: Prisma.PrivacyScopeOmit
   privacyCopy?: Prisma.PrivacyCopyOmit
+  watchingCheckIn?: Prisma.WatchingCheckInOmit
 }
 
 /* Types for Logging */

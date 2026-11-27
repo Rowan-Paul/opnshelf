@@ -17,9 +17,9 @@ export default function DetailsCard({
 			<h2 className="mb-4 font-display font-semibold">{title}</h2>
 			<div className="space-y-3 text-sm">
 				{items.map((item) => (
-					<div key={item.label} className="flex justify-between">
+					<div key={item.label} className="flex justify-between gap-4">
 						<span className="text-(--foreground-muted)">{item.label}</span>
-						<span className="text-right font-medium">{item.value}</span>
+						<span className="min-w-0 text-right font-medium">{item.value}</span>
 					</div>
 				))}
 			</div>

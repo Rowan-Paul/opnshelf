@@ -1,5 +1,6 @@
 import {
 	formatCatalogueDate,
+	formatRuntime,
 	moviesControllerGetMovieDetailsOptions,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
@@ -10,24 +11,26 @@ import { RefreshControl } from "react-native";
 import { CommunityReviews } from "@/components/detail/CommunityReviews";
 import { CreditsSummary } from "@/components/detail/CreditsSection";
 import { DetailActions } from "@/components/detail/DetailActions";
-import { DetailColumns } from "@/components/detail/DetailColumns";
+import {
+	DetailColumns,
+	DetailPlacement,
+} from "@/components/detail/DetailColumns";
 import { DetailHero } from "@/components/detail/DetailHero";
 import { DetailsCard } from "@/components/detail/DetailsCard";
 import { FriendWatchers } from "@/components/detail/FriendWatchers";
 import { GenreLinks } from "@/components/detail/GenreLinks";
 import { MetadataPills } from "@/components/detail/MetadataPills";
+import {
+	MovieCollectionEyebrow,
+	MovieCollectionRail,
+} from "@/components/detail/MovieCollectionRail";
 import { OverviewSection } from "@/components/detail/OverviewSection";
 import { SimilarMedia } from "@/components/detail/SimilarMedia";
 import { WatchProviders } from "@/components/detail/WatchProviders";
 import { ScreenFrame } from "@/components/ui/screen-frame";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 import { ErrorState } from "@/components/ui/states";
-import {
-	backdropUrl,
-	formatRuntime,
-	posterUrl,
-	yearFromDate,
-} from "@/lib/tmdb";
+import { backdropUrl, posterUrl, yearFromDate } from "@/lib/tmdb";
 import { useMediaRating } from "@/lib/use-media-rating";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
 import { webMediaUrl } from "@/lib/web-url";
@@ -43,6 +46,7 @@ export default function MovieDetailScreen() {
 		reviewId?: string;
 	}>();
 	const scrollRef = useRef<ScrollViewInstance>(null);
+	const collectionRailY = useRef(0);
 
 	const { data, isLoading, isError } = useQuery({
 		...moviesControllerGetMovieDetailsOptions({ path: { movieId: id } }),
@@ -70,6 +74,18 @@ export default function MovieDetailScreen() {
 						<>
 							<DetailHero
 								title={data.title}
+								eyebrow={
+									<MovieCollectionEyebrow
+										collection={data.collection}
+										movieId={id}
+										onPress={() =>
+											scrollRef.current?.scrollTo({
+												y: Math.max(0, collectionRailY.current - 12),
+												animated: true,
+											})
+										}
+									/>
+								}
 								backdropUrl={backdropUrl(data.backdrop_path)}
 								posterUrl={posterUrl(data.poster_path)}
 								rating={rating}
@@ -95,6 +111,9 @@ export default function MovieDetailScreen() {
 									title: data.title,
 								}}
 							/>
+							<DetailPlacement when="wide">
+								<WatchProviders mediaType="movie" mediaId={id} />
+							</DetailPlacement>
 						</>
 					}
 					secondary={
@@ -129,7 +148,9 @@ export default function MovieDetailScreen() {
 							/>
 
 							<FriendWatchers mediaType="movie" mediaId={id} />
-							<WatchProviders mediaType="movie" mediaId={id} />
+							<DetailPlacement when="compact">
+								<WatchProviders mediaType="movie" mediaId={id} />
+							</DetailPlacement>
 							<CreditsSummary
 								credits={data.credits}
 								creditsHref={`/movies/${id}/${name}/credits`}
@@ -144,6 +165,13 @@ export default function MovieDetailScreen() {
 									id,
 									name: data.title,
 								})}
+							/>
+							<MovieCollectionRail
+								collection={data.collection}
+								movieId={id}
+								onLayout={(event) => {
+									collectionRailY.current = event.nativeEvent.layout.y;
+								}}
 							/>
 							<SimilarMedia mediaType="movie" mediaId={id} />
 						</>

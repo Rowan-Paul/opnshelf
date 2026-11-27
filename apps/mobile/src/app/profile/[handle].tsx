@@ -15,6 +15,7 @@ import { OverviewTab } from "@/components/profile/tabs/OverviewTab";
 import { ReviewsTab } from "@/components/profile/tabs/ReviewsTab";
 import { ShelfTab } from "@/components/profile/tabs/ShelfTab";
 import { UpNextTab } from "@/components/profile/tabs/UpNextTab";
+import { ProfileWatchingActivity } from "@/components/social/WatchingActivity";
 import { ProfileHeaderSkeleton } from "@/components/ui/skeletons";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
@@ -103,6 +104,7 @@ export default function ProfileScreen() {
 			) : (
 				<EndReachedScrollView
 					stickyHeaderIndices={[1]}
+					keyboardShouldPersistTaps={tab === "library" ? "handled" : undefined}
 					showsVerticalScrollIndicator={false}
 				>
 					<ProfileHeader
@@ -117,6 +119,7 @@ export default function ProfileScreen() {
 						<ProfileTabBar active={tab} onChange={setTab} />
 					</View>
 
+					<ProfileWatchingActivity did={userDid} />
 					{!isOwner &&
 					!profile.watchesPublic &&
 					(tab === "shelf" || tab === "up-next") ? (
@@ -150,7 +153,7 @@ export default function ProfileScreen() {
 						<ListsTab userDid={userDid} handle={profile.handle} />
 					) : tab === "library" ? (
 						isOwner || profile.libraryPublic !== false ? (
-							<LibraryTab userDid={userDid} />
+							<LibraryTab key={userDid} userDid={userDid} />
 						) : (
 							<View className="px-4 pt-4 pb-12">
 								<EmptyState

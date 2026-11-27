@@ -81,7 +81,7 @@ const EDITOR_CLASS = [
 	"[&_.ProseMirror_code]:rounded [&_.ProseMirror_code]:bg-(--background-subtle) [&_.ProseMirror_code]:px-1",
 	"[&_.ProseMirror_pre]:overflow-auto [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:bg-(--background-subtle) [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:text-xs",
 	"[&_.ProseMirror_pre_code]:bg-transparent [&_.ProseMirror_pre_code]:p-0",
-	"[&_.ProseMirror_a]:text-(--accent) [&_.ProseMirror_a]:underline",
+	"[&_.ProseMirror_a]:text-(--accent-text) [&_.ProseMirror_a]:underline",
 ].join(" ");
 
 type BubblePos = { left: number; top: number };

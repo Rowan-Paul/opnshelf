@@ -183,6 +183,129 @@ describe("MoviesService", () => {
 		});
 	});
 
+	describe("getWatchSuggestion", () => {
+		it.each([
+			{ sequelDate: "2021-01-01", kind: "collection", movieId: "2" },
+			{ sequelDate: "2099-01-01", kind: "similar", movieId: "4" },
+		])(
+			"uses the released collection sequel first, then recommendations ($kind)",
+			async ({ sequelDate, kind, movieId }) => {
+				const source = {
+					id: 1,
+					title: "First",
+					release_date: "2020-01-01",
+					belongs_to_collection: { id: 10 },
+				};
+				const movies = [
+					{ id: 2, title: "Second", release_date: sequelDate },
+					{ id: 3, title: "Earlier", release_date: "2019-01-01" },
+					{ id: 4, title: "Related", release_date: "2022-01-01" },
+				];
+				mockFetch.mockImplementation(async (input: string | URL) => {
+					const path = new URL(String(input)).pathname;
+					if (path.endsWith("/videos")) return Response.json({ results: [] });
+					if (path.endsWith("/collection/10"))
+						return Response.json({ parts: [movies[1], movies[0], source] });
+					if (path.endsWith("/recommendations"))
+						return Response.json({
+							results: [
+								source,
+								{ id: 5, title: "Upcoming", release_date: "2099-01-01" },
+								movies[2],
+							],
+						});
+					if (path.endsWith("/movie/1")) return Response.json(source);
+					const detail = movies.find((movie) =>
+						path.endsWith(`/movie/${movie.id}`),
+					);
+					return detail
+						? Response.json({ ...detail, runtime: 102 })
+						: new Response(null, { status: 404 });
+				});
+				await expect(service.getWatchSuggestion("1")).resolves.toMatchObject({
+					suggestion: { kind, movieId, runtime: 102 },
+				});
+			},
+		);
+	});
+
+	describe("getMovieCollection", () => {
+		const current = {
+			id: 2,
+			title: "Second",
+			popularity: 1,
+			vote_average: 1,
+			vote_count: 1,
+			belongs_to_collection: { id: 10, name: "Example Collection" },
+		};
+		const respondWith = (parts: unknown[] | undefined) =>
+			mockFetch.mockImplementation(async () =>
+				parts
+					? Response.json({ id: 10, name: "Example Collection", parts })
+					: new Response(null, { status: 500 }),
+			);
+
+		it("gives up on a slow lookup so the page is not held back", async () => {
+			vi.useFakeTimers();
+			try {
+				mockFetch.mockImplementation(() => new Promise(() => {}));
+				const result = service.getMovieCollection(current);
+				await vi.advanceTimersByTimeAsync(2500);
+				await expect(result).resolves.toBeUndefined();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it("lists the collection in release order, undated movies last", async () => {
+			respondWith([
+				{ id: 4, title: "Announced", release_date: "" },
+				{ id: 3, title: "Third", release_date: "2024-05-01" },
+				{ id: 2, title: "Second", release_date: "2021-01-01" },
+				{
+					id: 1,
+					title: "First",
+					release_date: "2020-01-01",
+					poster_path: "/1",
+				},
+			]);
+
+			await expect(service.getMovieCollection(current)).resolves.toEqual({
+				id: 10,
+				name: "Example Collection",
+				movies: [
+					{
+						id: 1,
+						title: "First",
+						release_date: "2020-01-01",
+						poster_path: "/1",
+					},
+					{ id: 2, title: "Second", release_date: "2021-01-01" },
+					{ id: 3, title: "Third", release_date: "2024-05-01" },
+					{ id: 4, title: "Announced" },
+				],
+			});
+		});
+
+		it.each([
+			[
+				"the movie stands alone",
+				{ ...current, belongs_to_collection: null },
+				[],
+			],
+			[
+				"it is the collection's only movie",
+				current,
+				[{ id: 2, title: "Second" }],
+			],
+			["TMDB can't return the collection", current, undefined],
+		])("returns nothing when %s", async (_case, movie, parts) => {
+			respondWith(parts);
+
+			await expect(service.getMovieCollection(movie)).resolves.toBeUndefined();
+		});
+	});
+
 	describe("getMovieDetails", () => {
 		it("should get movie details from TMDB API with ranked trailer", async () => {
 			const mockMovie = {

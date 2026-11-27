@@ -1,6 +1,6 @@
-import { formatCatalogueDate } from "@opnshelf/api";
+import { formatCatalogueDate, formatRuntime } from "@opnshelf/api";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Loader2, Plus, Star, X } from "lucide-react";
+import { AlertTriangle, Loader2, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { GenreLinks } from "#/components/GenreLinks";
 import {
@@ -10,10 +10,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { ShelfWatchButton } from "#/components/WatchingCheckIn";
 import { env } from "#/env";
 import { useAuth } from "#/lib/auth-context";
 import { publicMediaPageHeaders } from "#/lib/cache-control";
-import { formatRuntime } from "#/lib/format-runtime";
 import {
 	useMediaWatchStatus,
 	useMovieDetails,
@@ -34,11 +34,14 @@ import ErrorState from "../../../../components/ErrorState";
 import { FriendWatchers } from "../../../../components/FriendWatchers";
 import MediaActionsBar from "../../../../components/MediaActionsBar";
 import MediaHero from "../../../../components/MediaHero";
+import {
+	MovieCollectionEyebrow,
+	MovieCollectionRail,
+} from "../../../../components/MovieCollectionRail";
 import { ReviewDialog } from "../../../../components/ReviewDialog";
 import SimilarMediaGrid from "../../../../components/SimilarMediaGrid";
 import { DetailPageSkeleton } from "../../../../components/skeletons";
 import WatchProviders from "../../../../components/WatchProviders";
-import { YourActivity } from "../../../../components/YourActivity";
 export const Route = createFileRoute("/movies/$movieId/$movieName/")({
 	loader: ({ context, params }) =>
 		loadMovieDetails(context.queryClient, params.movieId),
@@ -82,10 +85,14 @@ function MovieDetailPage() {
 
 	const { data: movie, isLoading, error } = useMovieDetails(movieId);
 	const { data: similarMoviesData } = useMovieRecommendations(movieId);
-	const { isWatched, movieWatchHistory } = useMediaWatchStatus({
+	const { movieWatchCount, movieWatchHistory } = useMediaWatchStatus({
 		mediaType: "movie",
 		movieId,
 	});
+	const watchCount = Math.max(
+		movieWatchCount ?? 0,
+		movieWatchHistory?.length ?? 0,
+	);
 	const {
 		markMovieWatched,
 		unmarkMovieWatched,
@@ -169,6 +176,12 @@ function MovieDetailPage() {
 				backdropUrl={backdropUrl}
 				posterUrl={posterUrl}
 				backLabel="Back to Home"
+				eyebrow={
+					<MovieCollectionEyebrow
+						collection={movie.collection}
+						movieId={movieId}
+					/>
+				}
 				metaItems={
 					<>
 						<div className="flex items-center gap-1">
@@ -195,51 +208,24 @@ function MovieDetailPage() {
 				actions={
 					isAuthenticated ? (
 						<>
-							{isWatched ? (
-								<button
-									type="button"
-									onClick={() => {
-										if (movieWatchHistory && movieWatchHistory.length > 1) {
-											setConfirmRemoveOpen(true);
-										} else {
-											unmarkMovieWatched();
-										}
-									}}
-									disabled={isUnmarkMoviePending}
-									className="btn gap-2 border-success/20 bg-success/10 text-success hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
-								>
-									{isUnmarkMoviePending ? (
-										<>
-											<Loader2 className="size-4 animate-spin" />
-											Loading
-										</>
-									) : (
-										<>
-											<X className="size-4" />
-											Remove from shelf
-										</>
-									)}
-								</button>
-							) : (
-								<button
-									type="button"
-									onClick={() => markMovieWatched()}
-									disabled={isMarkMoviePending}
-									className="btn btn-primary gap-2"
-								>
-									{isMarkMoviePending ? (
-										<>
-											<Loader2 className="size-4 animate-spin" />
-											Loading
-										</>
-									) : (
-										<>
-											<Plus className="size-4" />
-											Add to shelf
-										</>
-									)}
-								</button>
-							)}
+							<ShelfWatchButton
+								title={movie.title}
+								history={{
+									watchHistory: movieWatchHistory ?? [],
+									onEditEntry: updateMovieWatchDate,
+									updatingEntryIds: updatingMovieWatchIds,
+									onDeleteEntry: deleteMovieWatchHistoryEntry,
+									isDeletePending: isDeleteMovieHistoryPending,
+								}}
+								target={{ mediaId: movieId }}
+								count={watchCount}
+								busy={isMarkMoviePending || isUnmarkMoviePending}
+								onLog={markMovieWatched}
+								onRemove={() => {
+									if (watchCount > 1) setConfirmRemoveOpen(true);
+									else unmarkMovieWatched();
+								}}
+							/>
 							<MediaActionsBar mediaType="movie" mediaId={movieId} />
 						</>
 					) : (
@@ -307,23 +293,10 @@ function MovieDetailPage() {
 							country={watchProvidersCountry}
 							onCountryChange={setWatchProvidersCountry}
 						/>
-
-						{/* Your Activity */}
-						{isAuthenticated && (
-							<YourActivity
-								onEditEntry={updateMovieWatchDate}
-								updatingEntryIds={updatingMovieWatchIds}
-								watchHistory={movieWatchHistory || []}
-								onAddToShelf={(watchedAt) => markMovieWatched(watchedAt)}
-								onDeleteEntry={deleteMovieWatchHistoryEntry}
-								isAddPending={isMarkMoviePending}
-								isDeletePending={isDeleteMovieHistoryPending}
-							/>
-						)}
 					</div>
 
 					{/* Similar Movies — last on mobile, below left column on desktop */}
-					<div className="order-last space-y-6 lg:order-none lg:col-start-1 lg:row-start-2">
+					<div className="order-last min-w-0 space-y-6 lg:order-none lg:col-start-1 lg:row-start-2">
 						<div className="lg:hidden">
 							<CreditsSummary
 								credits={movie.credits}
@@ -336,6 +309,12 @@ function MovieDetailPage() {
 							mediaId={movieId}
 							onAddReview={() => setReviewDialogOpen(true)}
 						/>
+						{movie.collection && (
+							<MovieCollectionRail
+								collection={movie.collection}
+								movieId={movieId}
+							/>
+						)}
 						<SimilarMediaGrid items={similarMovies} title="Similar Movies" />
 					</div>
 				</div>
@@ -357,8 +336,7 @@ function MovieDetailPage() {
 							Remove all watches?
 						</DialogTitle>
 						<DialogDescription>
-							This will remove all{" "}
-							<strong>{movieWatchHistory?.length || 0}</strong> watches of{" "}
+							This will remove all <strong>{watchCount}</strong> watches of{" "}
 							<strong>{movie.title}</strong>. This action cannot be undone.
 						</DialogDescription>
 					</DialogHeader>

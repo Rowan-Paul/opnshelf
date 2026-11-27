@@ -35,12 +35,12 @@ export function ReviewBody({
 				<a
 					href={href}
 					onClick={onReadMoreClick}
-					className="relative z-[1] mt-1 inline-block font-medium text-(--accent) text-sm hover:underline"
+					className="relative z-[1] mt-1 inline-block font-medium text-(--accent-text) text-sm hover:underline"
 				>
 					Read more
 				</a>
 			) : (
-				<span className="mt-1 inline-block font-medium text-(--accent) text-sm">
+				<span className="mt-1 inline-block font-medium text-(--accent-text) text-sm">
 					Read more
 				</span>
 			)}

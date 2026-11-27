@@ -8,8 +8,6 @@ import {
 	writeFileSync,
 	appendFileSync,
 } from "node:fs";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { createLighthouseServer } from "./lighthouse-fixtures.mjs";
 import { pages, webOrigin, apiOrigin } from "./lighthouse-pages.cjs";
 import dashboard from "../services/lighthouse/package.json" with { type: "json" };
@@ -249,10 +247,7 @@ async function run() {
 	}
 }
 
-if (
-	process.argv[1] &&
-	resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (import.meta.main) {
 	run().catch((error) => {
 		console.error(error);
 		process.exitCode = 1;

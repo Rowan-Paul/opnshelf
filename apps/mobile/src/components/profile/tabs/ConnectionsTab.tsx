@@ -70,7 +70,7 @@ export function ConnectionsTab({
 							<Text
 								className={cn(
 									"font-medium text-sm capitalize",
-									isActive ? "text-primary" : "text-muted-foreground",
+									isActive ? "text-accent-text" : "text-muted-foreground",
 								)}
 							>
 								{key}

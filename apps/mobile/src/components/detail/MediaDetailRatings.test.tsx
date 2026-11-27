@@ -127,6 +127,10 @@ vi.mock("@/components/detail/OverviewSection", () => ({
 	OverviewSection: () => null,
 }));
 vi.mock("@/components/detail/PrevNextNav", () => ({ PrevNextNav: () => null }));
+vi.mock("@/components/detail/MovieCollectionRail", () => ({
+	MovieCollectionEyebrow: () => null,
+	MovieCollectionRail: () => null,
+}));
 vi.mock("@/components/detail/SimilarMedia", () => ({
 	SimilarMedia: () => null,
 }));

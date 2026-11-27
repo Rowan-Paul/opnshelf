@@ -27,6 +27,10 @@ import {
 import { ActivityCard } from "@/components/social/ActivityCard";
 import { CircleFilterBar } from "@/components/social/CircleFilterBar";
 import { UserRow } from "@/components/social/UserRow";
+import {
+	useFollowingWatchingActivity,
+	WatchingActivity,
+} from "@/components/social/WatchingActivity";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +76,7 @@ export default function SocialScreen() {
 	const { data: circles = [] } = useCircles();
 	const following = useFollowing(user?.handle ?? "", 1);
 	const [activeCircleId, setActiveCircleId] = useState<string | undefined>();
+	const watching = useFollowingWatchingActivity({ circleId: activeCircleId });
 
 	// If the selected circle was deleted elsewhere, fall back to the full feed.
 	useEffect(() => {
@@ -164,11 +169,16 @@ export default function SocialScreen() {
 			) : following.items.length === 0 ? (
 				<NoFollowsContent />
 			) : isError && items.length === 0 ? (
-				<ErrorState
-					message="Couldn't load activity."
-					onRetry={() => void refetch()}
-				/>
-			) : items.length === 0 ? (
+				// Check-ins come from their own request, so they stay visible
+				// above the feed's error instead of hiding it.
+				<>
+					<WatchingActivity items={watching} following />
+					<ErrorState
+						message="Couldn't load activity."
+						onRetry={() => void refetch()}
+					/>
+				</>
+			) : items.length === 0 && watching.length === 0 ? (
 				<EmptyFeed
 					activeCircleId={activeCircleId}
 					onShowAll={() => setActiveCircleId(undefined)}
@@ -176,6 +186,7 @@ export default function SocialScreen() {
 			) : (
 				<FlashList
 					data={groups}
+					ListHeaderComponent={<WatchingActivity items={watching} following />}
 					keyExtractor={(item) => item.id}
 					renderItem={({ item, index }) => (
 						<View className="gap-3">

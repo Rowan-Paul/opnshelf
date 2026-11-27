@@ -27,6 +27,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 							id: title,
 							mediaType: "movie",
 							media: { title },
+							notes: title === "Gamma" ? "Old note" : undefined,
 						})),
 						{
 							id: "Delta",
@@ -67,6 +68,58 @@ afterEach(() => {
 	mutate.mockClear();
 	mocks.uri = undefined;
 	mocks.empty = false;
+});
+
+it.each([
+	"🎬",
+	"✈️",
+])("accepts 1,000 API-counted characters ending in %s", (lastCharacter) => {
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner
+		/>,
+	);
+	fireEvent.click(screen.getByRole("button", { name: "Add note for Alpha" }));
+	const input = screen.getByRole("textbox", { name: "Note" });
+	const save = screen.getByRole<HTMLButtonElement>("button", {
+		name: "Save note",
+	});
+	const notes = `${"a".repeat(999)}${lastCharacter}`;
+	fireEvent.change(input, { target: { value: `${notes}b` } });
+	expect(save.disabled).toBe(true);
+	expect(screen.getByText("Use 1,000 characters or fewer.")).toBeTruthy();
+	fireEvent.change(input, { target: { value: notes } });
+	expect(save.disabled).toBe(false);
+	fireEvent.click(save);
+	expect(mutate).toHaveBeenCalledWith({
+		path: { slug: "test", itemId: "Alpha" },
+		body: { notes },
+	});
+});
+
+it("removes an existing List item note and offers no removal for an empty one", () => {
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner
+		/>,
+	);
+	fireEvent.click(screen.getByRole("button", { name: "Add note for Alpha" }));
+	expect(screen.queryByRole("button", { name: "Remove note" })).toBeNull();
+	fireEvent.keyDown(document.activeElement ?? document.body, {
+		key: "Escape",
+	});
+	fireEvent.click(screen.getByRole("button", { name: "Edit note for Gamma" }));
+	fireEvent.click(screen.getByRole("button", { name: "Remove note" }));
+	expect(mutate).toHaveBeenCalledWith({
+		path: { slug: "test", itemId: "Gamma" },
+		body: { notes: "" },
+	});
 });
 
 it.each([

@@ -17,6 +17,7 @@ import { NotificationPrompt } from "#/components/NotificationPrompt";
 import { PromptSlot } from "#/components/PromptSlot";
 import { ReleaseNotePrompt } from "#/components/release-notes/ReleaseNotePrompt";
 import { StatsStrip } from "#/components/StatsStrip";
+import { useFollowingWatchingActivity } from "#/components/WatchingActivity";
 import { useAuth } from "#/lib/auth-context";
 import { formatLocalDateKey } from "#/lib/calendar-grid";
 import { withUserLocale } from "#/lib/date-utils";
@@ -157,6 +158,8 @@ export function HomeView() {
 	const { data: upNextData, isLoading: upNextLoading } = useUserUpNext(
 		userDid || "",
 	);
+
+	const watching = useFollowingWatchingActivity({ enabled: !!user });
 
 	// Fetch social activity feed
 	const { data: feedData, isLoading: feedLoading } = useQuery({
@@ -344,7 +347,7 @@ export function HomeView() {
 							<div className="flex shrink-0 items-center gap-4">
 								<Link
 									to="/pick-for-me"
-									className="font-medium text-(--accent) text-sm"
+									className="font-medium text-(--accent-text) text-sm"
 								>
 									Pick for me
 								</Link>
@@ -352,7 +355,7 @@ export function HomeView() {
 									<Link
 										to="/profile/$handle/up-next"
 										params={{ handle: user.handle }}
-										className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+										className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 									>
 										View all
 										<ChevronRight className="size-4" />
@@ -420,7 +423,7 @@ export function HomeView() {
 								<Link
 									to="/profile/$handle/shelf"
 									params={{ handle: user.handle }}
-									className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+									className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 								>
 									View all
 									<ChevronRight className="size-4" />
@@ -517,7 +520,7 @@ export function HomeView() {
 							<h2 className="text-display-3">Upcoming</h2>
 							<Link
 								to="/calendar"
-								className="flex items-center gap-1 font-medium text-(--accent) text-sm hover:text-(--accent-hover)"
+								className="flex items-center gap-1 font-medium text-(--accent-text) text-sm hover:text-(--accent-text-hover)"
 							>
 								<Calendar className="size-4" />
 								Calendar
@@ -602,7 +605,7 @@ export function HomeView() {
 														userTimeFormat,
 													)}
 												</span>
-												<span className="text-(--accent)">
+												<span className="text-(--accent-text)">
 													• {formatRelativeDate(release.releaseDate)}
 												</span>
 											</div>
@@ -632,6 +635,7 @@ export function HomeView() {
 					    so the sidebar is not one short list above empty space. */}
 					<FriendsActivitySection
 						items={feedData?.items ?? []}
+						watching={watching}
 						isLoading={feedLoading}
 						userTimezone={userTimezone}
 						userTimeFormat={userTimeFormat}

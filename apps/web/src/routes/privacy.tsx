@@ -136,7 +136,7 @@ function PrivacyPolicyPage() {
 									href="https://www.themoviedb.org/privacy-policy"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-(--accent) hover:underline"
+									className="text-(--accent-text) hover:underline"
 								>
 									TMDB's privacy policy
 								</a>
@@ -151,7 +151,7 @@ function PrivacyPolicyPage() {
 									href="https://atproto.com"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-(--accent) hover:underline"
+									className="text-(--accent-text) hover:underline"
 								>
 									atproto.com
 								</a>
@@ -165,7 +165,7 @@ function PrivacyPolicyPage() {
 									href="https://policies.google.com/privacy"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-(--accent) hover:underline"
+									className="text-(--accent-text) hover:underline"
 								>
 									Google's privacy policy
 								</a>
@@ -180,7 +180,7 @@ function PrivacyPolicyPage() {
 									href="https://www.cloudflare.com/privacypolicy/"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-(--accent) hover:underline"
+									className="text-(--accent-text) hover:underline"
 								>
 									Cloudflare's privacy policy
 								</a>
@@ -198,7 +198,7 @@ function PrivacyPolicyPage() {
 									href="https://posthog.com/privacy"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-(--accent) hover:underline"
+									className="text-(--accent-text) hover:underline"
 								>
 									PostHog's privacy policy
 								</a>
@@ -231,7 +231,7 @@ function PrivacyPolicyPage() {
 								href="https://bsky.app/profile/opnshelf.xyz"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-(--accent) hover:underline"
+								className="text-(--accent-text) hover:underline"
 							>
 								Bluesky
 							</a>
@@ -272,7 +272,7 @@ function PrivacyPolicyPage() {
 								href="https://bsky.app/profile/opnshelf.xyz"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-(--accent) hover:underline"
+								className="text-(--accent-text) hover:underline"
 							>
 								Bluesky
 							</a>
@@ -282,7 +282,10 @@ function PrivacyPolicyPage() {
 				</div>
 
 				<div className="mt-8 border-(--border) border-t pt-6">
-					<Link to="/tos" className="text-(--accent) text-sm hover:underline">
+					<Link
+						to="/tos"
+						className="text-(--accent-text) text-sm hover:underline"
+					>
 						Read our Terms of Service →
 					</Link>
 				</div>

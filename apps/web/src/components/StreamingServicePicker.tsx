@@ -167,7 +167,7 @@ export default function StreamingServicePicker({
 								"relative flex flex-col items-center gap-1.5 rounded-xl border p-2 text-center transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
 								selected
 									? "border-(--accent) bg-(--accent)/10"
-									: "border-(--border) hover:bg-accent",
+									: "border-(--border) hover:bg-muted",
 							)}
 						>
 							<div className="size-10 overflow-hidden rounded-xl border border-(--border) bg-(--border)">

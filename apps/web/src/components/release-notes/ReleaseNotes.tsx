@@ -90,7 +90,7 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 						</p>
 						<button
 							type="button"
-							className="mt-2 text-(--accent) underline"
+							className="mt-2 text-(--accent-text) underline"
 							onClick={() => void notes.refetch()}
 						>
 							Try again
@@ -103,7 +103,7 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 						<button
 							type="button"
 							onClick={notes.retryMark}
-							className="text-(--accent) underline"
+							className="text-(--accent-text) underline"
 						>
 							Try again
 						</button>
@@ -151,7 +151,7 @@ export function ReleaseNotesPage({ slug }: { slug?: string }) {
 										<Link
 											to="/whats-new/$slug"
 											params={{ slug: note.slug }}
-											className="group inline-flex items-center gap-3 hover:text-(--accent)"
+											className="group inline-flex items-center gap-3 hover:text-(--accent-text)"
 										>
 											{note.title}
 											<ArrowUpRight className="size-5 shrink-0" />

@@ -170,7 +170,7 @@ export function ActivityCard({
 									}}
 									className="self-start rounded-lg border border-border px-3 py-2.5"
 								>
-									<Text className="font-semibold text-primary text-sm">
+									<Text className="font-semibold text-accent-text text-sm">
 										{expanded ? "Hide episodes" : "Show episodes"}
 									</Text>
 								</Pressable>

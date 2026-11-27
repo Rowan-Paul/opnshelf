@@ -198,6 +198,7 @@ function UserSearchRow({
 					className="btn btn-secondary btn-sm h-8 px-3 text-xs"
 					onClick={() => onUnfollow(person.did)}
 					disabled={pendingUnfollowDid === person.did}
+					aria-busy={pendingUnfollowDid === person.did}
 				>
 					{pendingUnfollowDid === person.did ? "Unfollowing…" : "Unfollow"}
 				</button>
@@ -207,6 +208,7 @@ function UserSearchRow({
 					className="btn btn-primary btn-sm h-8 px-3 text-xs"
 					onClick={() => onFollow(person.did)}
 					disabled={pendingFollowDid === person.did}
+					aria-busy={pendingFollowDid === person.did}
 				>
 					{pendingFollowDid === person.did ? (
 						"Following…"

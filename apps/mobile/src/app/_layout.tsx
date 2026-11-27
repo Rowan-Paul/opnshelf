@@ -7,10 +7,12 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import { AccountDeletionGate } from "@/components/AccountDeletionGate";
 import { AppHeader } from "@/components/AppHeader";
+import {
+	DockClearFrame,
+	WatchingDockLayout,
+} from "@/components/detail/WatchingDock";
 import { Providers } from "@/components/Providers";
 import { WelcomeTour } from "@/components/tour/WelcomeTour";
-import { UpdateBanner } from "@/components/UpdateBanner";
-import { ScreenFrame } from "@/components/ui/screen-frame";
 import { initializeApiClient } from "@/lib/api";
 import { env } from "@/lib/env";
 import { PickForMeIntentBridge } from "@/lib/pick-for-me-intent-bridge";
@@ -76,15 +78,15 @@ export default function RootLayout() {
 			<ScreenTracker />
 			{/* Above the navigator so a downloaded OTA update is announced on every
 			    screen, not just the tabs; hidden on the auth/onboarding routes. */}
-			<UpdateBanner>
+			<WatchingDockLayout>
 				{/* Custom `header` replaces the platform-native header on every screen
-				    with headerShown: true, so iOS and Android render the same bar. */}
+			    with headerShown: true, so iOS and Android render the same bar. */}
 				<Stack
 					screenLayout={({ children, route }) =>
 						route.name === "(tabs)" ? (
 							children
 						) : (
-							<ScreenFrame>{children}</ScreenFrame>
+							<DockClearFrame>{children}</DockClearFrame>
 						)
 					}
 					screenOptions={{
@@ -207,7 +209,7 @@ export default function RootLayout() {
 					<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/index" />
 					<Stack.Screen name="shows/[id]/[name]/seasons/[seasonNumber]/episodes/[episodeNumber]/index" />
 				</Stack>
-			</UpdateBanner>
+			</WatchingDockLayout>
 			<AccountDeletionGate />
 			{/* Above the tabs: the tour walks the user across them and has to
 			    survive each navigation (ADR 0024). */}

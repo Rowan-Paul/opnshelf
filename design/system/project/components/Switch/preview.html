@@ -1,0 +1,18 @@
+<!-- @dsCard group="Forms" height=64 -->
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Switch</title></head>
+<body>
+<div id="root" class="ds-row" style="gap:20px"></div>
+<script>
+  var O = window.Opnshelf, I = O.icons, h = React.createElement, F = React.Fragment;
+  var view = h(F, null,
+    h(O.Switch, { defaultChecked: true, 'aria-label': 'Email notifications' }),
+    h(O.Switch, { 'aria-label': 'Always show spoiler content' }),
+    h(O.Switch, { size: 'sm', defaultChecked: true, 'aria-label': 'Weekly digest' }),
+    h(O.Switch, { size: 'sm', 'aria-label': 'Sync errors and disconnections' }),
+    h(O.Switch, { defaultChecked: true, disabled: true, 'aria-label': 'Release alerts' }));
+  ReactDOM.createRoot(document.getElementById('root')).render(view);
+</script>
+</body>
+</html>

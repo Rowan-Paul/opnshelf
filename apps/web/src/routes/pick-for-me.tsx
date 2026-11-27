@@ -377,6 +377,7 @@ export function Picker({
 						<button
 							className="btn btn-primary"
 							disabled={!valid || query.isFetching || !ready}
+							aria-busy={query.isFetching}
 							type="submit"
 						>
 							Pick for me
@@ -512,6 +513,7 @@ export function Picker({
 										type="button"
 										className="btn btn-primary"
 										disabled={query.isFetching}
+										aria-busy={query.isFetching}
 										onClick={() => {
 											restoreActionFocus.current = true;
 											const next = [...skipped, selection.id];

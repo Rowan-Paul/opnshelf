@@ -71,6 +71,10 @@ _Avoid_: Blog copy (does not distinguish the managed mirror from abandoned histo
 **Media Item**:
 A movie, show, season, or episode that can be tracked, reviewed, and listed.
 
+**Movie Collection**:
+The movies TMDB groups as one series, such as the Mad Max movies, in release order with undated movies last. A movie's page shows its Movie Collection as a poster rail for switching between those movies, marked with the viewer's Watches, and names it without TMDB's trailing "Collection" ("Mad Max movies"). A movie that stands alone, or is the only movie in its collection, has none.
+_Avoid_: Franchise, Film series, Collection on its own (see **Notification Collection** and **Library**)
+
 **Streaming Service**:
 A flat-rate subscription video service on which a Media Item can be watched in a given watch country — Netflix, Disney+ and the like, as listed by TMDB/JustWatch. Rent, buy, free and ad-supported availability are not Streaming Service availability. Availability is reckoned per **season** for shows, so a show can be on a Streaming Service while its newest season is not.
 _Avoid_: Provider, watch provider (collides with **Provider Sign-In**'s identity providers), platform, subscription (that is the user's relationship to a service, not the service), channel
@@ -102,6 +106,12 @@ timeline view renders one card per **Watch**, so rewatches appear as separate
 cards under their respective watch dates. Date sections are labelled Today,
 Yesterday, or with a full calendar date in the viewer's timezone; every Watch
 card repeats its full date and time without a timezone abbreviation.
+
+**Watching Check-in**:
+A temporary status for a movie or episode a User is watching now. Each User
+can have one active check-in. Completion logs one Watch dated at the start.
+Cancelling or replacing a check-in before completion logs no Watch. The
+profile and Activity Feed show active check-ins according to Shelf visibility.
 
 **Watch**:
 A single logged instance of a user watching a media item — a tracked record with watched status and an optional watch date and time. Correcting or clearing that date preserves the same Watch. Only a **movie** or an **episode** is Watched: a show or season is tracked through its episodes, so it has an **episode Watch count** but never a Watch count of its own, and no surface states one for it. Rewatches are distinct Watches (no uniqueness constraint per user+item, so watching the same episode twice produces two Watches); an item merely added to a watchlist is **not** a Watch. An undated Watch belongs on the Shelf but not in date-based Activity or statistics; **No date** is the canonical user-facing wording for one, on every surface and in every picker. Counts of dated "watched" activity (the profile activity graph, "Added this month", Watch Streak, most-watched show) count Watches, not distinct titles, and are reckoned in the **Watcher's own timezone** — the same definition powers both the public profile and the private dashboard.
@@ -345,6 +355,12 @@ _Avoid_: private account (visibility is chosen by category).
 The OAuth permission requested as part of choosing Private. Permission alone
 does not change visibility, and declining it preserves the previous choice.
 _Avoid_: Watch access, Connect privacy, privacy enabled.
+
+**List item note**:
+Up to 1000 characters attached to an item in a specific List. The List’s owner
+can edit it and anyone who can view the List can read it. It follows the List’s
+Data Visibility. A standalone **Note** belongs to a Media Item and follows the
+Notes visibility category.
 
 **List default visibility**:
 The Public/Private choice applied only to newly created Lists. Existing Lists

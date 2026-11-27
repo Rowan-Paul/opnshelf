@@ -112,7 +112,7 @@ export default function MediaCard({
 	isInAnyList = false,
 }: MediaCardProps) {
 	const [imageLoaded, setImageLoaded] = useState(false);
-	const [imageError, setImageError] = useState(false);
+	const [loadFailed, setImageError] = useState(false);
 
 	const sizeClasses = {
 		sm: {
@@ -136,6 +136,16 @@ export default function MediaCard({
 
 	const imageUrl =
 		layout === "backdrop" && backdropUrl ? backdropUrl : posterUrl;
+	// A card can stay mounted while its image changes: the load state belongs
+	// to the URL it was recorded for.
+	const [loadStateUrl, setLoadStateUrl] = useState(imageUrl);
+	if (loadStateUrl !== imageUrl) {
+		setLoadStateUrl(imageUrl);
+		setImageLoaded(false);
+		setImageError(false);
+	}
+	// No URL at all never fires onError, so it counts as the fallback.
+	const imageError = loadFailed || !imageUrl;
 	const posterSources = posterSrcSet(imageUrl);
 
 	const linkHref = (() => {
@@ -196,6 +206,12 @@ export default function MediaCard({
 						src={imageUrl}
 						srcSet={posterSources}
 						sizes={posterSources ? POSTER_GRID_SIZES : undefined}
+						// A server-rendered poster can finish loading before React
+						// attaches onLoad, which would leave it invisible.
+						ref={(image) => {
+							if (image?.complete && image.naturalWidth > 0)
+								setImageLoaded(true);
+						}}
 						loading={imageLoading}
 						decoding="async"
 						alt={title}
