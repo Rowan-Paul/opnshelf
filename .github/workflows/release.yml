@@ -180,8 +180,12 @@ jobs:
           gh workflow run eas-build.yml --ref main \
             -f platform=all -f profile=production -f submit=false
 
-  # The Tangled copy (linked from the Web footer) has no pull mirror, so it only
-  # moves when something pushes. Done by hand it sat at v1.7.8 for a month.
+  # The Tangled copy (linked from the Web footer) only moves when something
+  # pushes to it. The SyncHub GitHub App used to; from 2026-10-24 its sync for
+  # this repository failed, Tangled sat at v1.7.8 for a month, and a resync
+  # replayed old pushes and re-created every deleted branch. It is disabled for
+  # this repository on synchub.to. Keep it that way: it force-pushes, so
+  # re-enabling it would overwrite what this job writes.
   #
   # Its own job so a Tangled outage shows red here without touching the GitHub
   # release, the store build or the OTA. Runs after `release` because that is
