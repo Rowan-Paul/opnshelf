@@ -64,7 +64,7 @@ export function ProfileTabBar({
 							)}
 						>
 							<Icon
-								color={isActive ? colors.accent : colors.mutedForeground}
+								color={isActive ? colors.accentText : colors.mutedForeground}
 								size={15}
 							/>
 							<Text
