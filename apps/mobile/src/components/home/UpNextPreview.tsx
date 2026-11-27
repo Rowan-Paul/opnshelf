@@ -1,6 +1,12 @@
 import { Link } from "expo-router";
 import { Tv } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { useState } from "react";
+import {
+	Pressable,
+	useWindowDimensions,
+	View,
+	type ViewStyle,
+} from "react-native";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { TourAnchor } from "@/components/tour/WelcomeTour";
 import { EmptyState, ErrorState } from "@/components/ui/states";
@@ -10,7 +16,7 @@ import { useUpNext } from "@/lib/use-up-next";
 
 /**
  * "Up Next" preview for Home: the next few unwatched episodes across tracked
- * shows as a row of episode-still tiles, each with a one-tap "add to shelf"
+ * shows as episode-still tiles, each with a one-tap "add to shelf"
  * action. Mirrors the Web App's Home Up Next cards (preview-only, capped) —
  * the full queue lives on the profile Up Next tab, linked via "View all".
  *
@@ -18,17 +24,24 @@ import { useUpNext } from "@/lib/use-up-next";
  * `useUpNext`); rendered inside the dashboard ScrollView, so it shows a fixed
  * preview slice rather than owning its own scrolling list.
  */
-/**
- * Stacked full-width tiles, the shape the Web App's Up Next grid takes at
- * phone width. Capped so Home stays short; "View all" has the rest. A sideways
- * row was tried first and hid all but the first tile behind a swipe.
- */
 const PREVIEW_COUNT = 3;
+const TILE_GAP = 12;
 
 export function UpNextPreview({ handle }: { handle: string | undefined }) {
 	const { items, isLoading, isError } = useUpNext(PREVIEW_COUNT);
-
+	const { fontScale } = useWindowDimensions();
+	const [listWidth, setListWidth] = useState(0);
 	const preview = items.slice(0, PREVIEW_COUNT);
+	const twoColumns =
+		listWidth / Math.max(1, fontScale) >= 600 &&
+		(isLoading || preview.length > 1);
+	const tileWidth = twoColumns ? (listWidth - TILE_GAP) / 2 : listWidth;
+	const tileStyle: ViewStyle = {
+		width: twoColumns ? tileWidth : "100%",
+		...(tileWidth > 0
+			? { height: Math.min(243, (tileWidth * 9) / 16) }
+			: { aspectRatio: 16 / 9 }),
+	};
 
 	return (
 		<TourAnchor id="up-next">
@@ -55,19 +68,9 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 					) : undefined
 				}
 			/>
-			{isLoading ? (
-				<View className="gap-3">
-					{[0, 1, 2].map((i) => (
-						<View
-							key={i}
-							style={{ aspectRatio: 16 / 9 }}
-							className="animate-pulse rounded-xl border border-border bg-background-subtle"
-						/>
-					))}
-				</View>
-			) : isError ? (
+			{!isLoading && isError ? (
 				<ErrorState message="Couldn't load Up Next. Try again." />
-			) : preview.length === 0 ? (
+			) : !isLoading && preview.length === 0 ? (
 				<EmptyState
 					variant="card"
 					icon={Tv}
@@ -76,13 +79,26 @@ export function UpNextPreview({ handle }: { handle: string | undefined }) {
 					action={{ label: "Discover shows", href: "/search", icon: Tv }}
 				/>
 			) : (
-				<View className="gap-3">
-					{preview.map((item) => (
-						<UpNextTile
-							key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
-							item={item}
-						/>
-					))}
+				<View
+					className="flex-row flex-wrap"
+					style={{ gap: TILE_GAP }}
+					onLayout={({ nativeEvent }) => setListWidth(nativeEvent.layout.width)}
+				>
+					{isLoading
+						? [0, 1, 2].map((i) => (
+								<View
+									key={i}
+									style={tileStyle}
+									className="animate-pulse rounded-xl border border-border bg-background-subtle"
+								/>
+							))
+						: preview.map((item) => (
+								<UpNextTile
+									key={`${item.showId}-${item.nextEpisode.seasonNumber}-${item.nextEpisode.episodeNumber}`}
+									item={item}
+									style={tileStyle}
+								/>
+							))}
 				</View>
 			)}
 		</TourAnchor>

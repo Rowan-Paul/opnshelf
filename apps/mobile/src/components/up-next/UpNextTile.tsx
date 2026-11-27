@@ -4,7 +4,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { Plus, Tv } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	View,
+	type ViewStyle,
+} from "react-native";
 import { PosterProgress } from "@/components/media/poster-progress";
 import { Text } from "@/components/ui/text";
 import { showHref } from "@/lib/media-href";
@@ -20,7 +25,13 @@ import { useThemeColors } from "@/theme/colors";
  *
  * The tile owns its mutation, so only the episode being added shows pending.
  */
-export function UpNextTile({ item }: { item: UpNextShowDto }) {
+export function UpNextTile({
+	item,
+	style,
+}: {
+	item: UpNextShowDto;
+	style?: ViewStyle;
+}) {
 	const colors = useThemeColors();
 	const markEpisode = useMarkUpNextEpisode();
 	const { show, nextEpisode: ep } = item;
@@ -40,7 +51,7 @@ export function UpNextTile({ item }: { item: UpNextShowDto }) {
 
 	return (
 		<View
-			style={{ aspectRatio: 16 / 9 }}
+			style={style ?? { aspectRatio: 16 / 9 }}
 			className="overflow-hidden rounded-xl border border-border bg-background-subtle"
 		>
 			<Link
