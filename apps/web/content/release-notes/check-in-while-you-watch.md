@@ -7,8 +7,8 @@
   "summary": "Show what you are watching now, search and sort your Library, add notes to List items, and move between the movies of a Movie Collection.",
   "platforms": {
     "web": { "status": "available", "note": "v1.7.30" },
-    "ios": { "status": "coming-soon", "minimumVersion": "1.7.30", "note": "Requires the 1.7.30 App Store release, which is awaiting review." },
-    "android": { "status": "coming-soon", "minimumVersion": "1.7.30", "note": "Requires the 1.7.30 Google Play release, which is awaiting review." }
+    "ios": { "status": "update-required", "minimumVersion": "1.7.30", "note": "Requires the 1.7.30 App Store release." },
+    "android": { "status": "update-required", "minimumVersion": "1.7.30", "note": "Requires the 1.7.30 Google Play release." }
   }
 }
 ---
@@ -34,4 +34,4 @@ A movie that belongs to a Movie Collection shows the other movies in release ord
 
 Text, focus outlines and buttons have clearer contrast across Opnshelf, and episode titles are easier to navigate with a screen reader. Genre links on detail pages are tidier. On the Mobile App, Up Next cards fit wider screens and the active profile tab matches its label.
 
-**Availability:** Available on Web. On iOS and Android, these improvements require version 1.7.30, which is coming to the App Store and Google Play once review completes.
+**Availability:** Available on Web. On iOS and Android, these improvements require version 1.7.30 from the App Store or Google Play.

@@ -15,12 +15,19 @@ Use absolute HTTPS links and image URLs so they work on both clients.
    Use the actual publication time, not the date development began. New accounts
    start caught up through their creation time, so backdating hides the dot from
    accounts created after that timestamp.
-3. Set Web, iOS, and Android availability to `available`, `coming-soon`, or
-   `update-required`. A platform may include `minimumVersion` (e.g. `1.7.0`)
-   and a short `note`. State per-feature differences in the Markdown body.
+3. Set Web availability to `available`, and iOS and Android availability to
+   `available` or `update-required`. A platform may include `minimumVersion`
+   (e.g. `1.7.0`) and a short `note`. State per-feature differences in the Markdown body.
    OTA availability needs explicit wording; a native version alone cannot prove
    an OTA has been installed. Do not announce a store feature as available while
    it is still awaiting review.
+   For iOS and Android, never use `coming-soon` and never write "coming soon" or
+   "awaiting review" in a `note` or the body. Use `update-required` with the
+   `minimumVersion` and a note that names the version, e.g. "Requires the 1.7.30
+   App Store release.", from the first publication on. That wording stays true
+   before and after store approval. A review-state wording needs a follow-up
+   Web deployment once the stores approve, and that follow-up kept being
+   forgotten. `coming-soon` remains in the feed contract for old notes only.
    For a Mobile release with a dashboard announcement, set
    `INSTALLED_RELEASE_NOTE` in `apps/mobile/src/components/home/release-note-prompt.tsx`
    to the new slug in the Mobile update containing those changes. The card only
