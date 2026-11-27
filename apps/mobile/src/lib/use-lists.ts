@@ -266,7 +266,7 @@ export function useUpdateListItemNote() {
 			});
 		},
 		onError: (error) =>
-			toast.error(errorMessage(error, "Couldn't save the list item note")),
+			toast.error(errorMessage(error, "Couldn't save the List item note")),
 	});
 }
 

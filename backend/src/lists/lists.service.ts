@@ -1036,7 +1036,7 @@ export class ListsService {
 		session: ATSession,
 		slug: string,
 		itemId: string,
-		note: string,
+		rawNote: string,
 	): Promise<MediaInListDto> {
 		const item = await this.prisma.listItem.findFirst({
 			where: { id: itemId, list: { userDid, slug } },
@@ -1049,7 +1049,7 @@ export class ListsService {
 			collection: LIST_ITEM_COLLECTION,
 			rkey: item.rkey,
 		};
-		const notes = note.trim() || null;
+		const notes = rawNote.trim() || null;
 		let cid: string;
 		try {
 			const existing = await repo.getRecord(target);

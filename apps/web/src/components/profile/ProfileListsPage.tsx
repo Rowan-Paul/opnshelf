@@ -401,7 +401,7 @@ export function ProfileListsPage({
 			});
 			setNoteEditor(null);
 		},
-		onError: () => toast.error("Couldn't save the list item note"),
+		onError: () => toast.error("Couldn't save the List item note"),
 	});
 
 	// Reorder items mutation (owner only, position order only)
