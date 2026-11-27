@@ -1,5 +1,6 @@
 import {
 	getHttpStatus,
+	isListItemNoteTooLong,
 	listsControllerDeleteListMutation,
 	listsControllerGetPublicUserListOptions,
 	listsControllerGetPublicUserListQueryKey,
@@ -385,7 +386,8 @@ export function ProfileListsPage({
 		? undefined
 		: noteScope?.visibility;
 
-	const noteTooLong = noteEditor !== null && [...noteEditor.text].length > 1000;
+	const noteTooLong =
+		noteEditor !== null && isListItemNoteTooLong(noteEditor.text);
 	const openNote = (item: MediaInListDto, trigger: HTMLButtonElement) => {
 		noteTrigger.current = trigger;
 		setNoteEditor({ item, text: item.notes ?? "" });

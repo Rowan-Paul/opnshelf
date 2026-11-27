@@ -1,4 +1,5 @@
 import {
+	isListItemNoteTooLong,
 	type MediaInListDto,
 	privacyControllerStatusOptions,
 } from "@opnshelf/api";
@@ -129,7 +130,8 @@ export function OwnListScreen() {
 	const noteVisibility = noteScope?.migration
 		? undefined
 		: noteScope?.visibility;
-	const noteTooLong = noteEditor !== null && [...noteEditor.text].length > 1000;
+	const noteTooLong =
+		noteEditor !== null && isListItemNoteTooLong(noteEditor.text);
 	const noteSheetStyle = useTwStyle("flex-1 justify-end");
 	const closeNoteEditor = () => {
 		if (!noteMutation.isPending) setNoteEditor(null);

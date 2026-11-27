@@ -69,7 +69,10 @@ afterEach(() => {
 	mocks.empty = false;
 });
 
-it("accepts 1,000 Unicode characters and blocks longer List item notes", () => {
+it.each([
+	"🎬",
+	"✈️",
+])("accepts 1,000 API-counted characters ending in %s", (lastCharacter) => {
 	render(
 		<ProfileListsPage
 			userDid="did:test"
@@ -83,7 +86,7 @@ it("accepts 1,000 Unicode characters and blocks longer List item notes", () => {
 	const save = screen.getByRole<HTMLButtonElement>("button", {
 		name: "Save note",
 	});
-	const notes = `${"a".repeat(999)}🎬`;
+	const notes = `${"a".repeat(999)}${lastCharacter}`;
 	fireEvent.change(input, { target: { value: `${notes}b` } });
 	expect(save.disabled).toBe(true);
 	expect(screen.getByText("Use 1,000 characters or fewer.")).toBeTruthy();
