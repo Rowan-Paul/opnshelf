@@ -4,6 +4,7 @@ import { List as ListIcon } from "lucide-react-native";
 import { useState } from "react";
 import { RefreshControl, View } from "react-native";
 import { ListInfoCard } from "@/components/lists/ListInfoCard";
+import { ListItemCard } from "@/components/lists/ListItemCard";
 import {
 	LIST_EMPTY_TITLE,
 	LIST_NO_MATCHES_MESSAGE,
@@ -12,7 +13,6 @@ import {
 	useListItemsFilter,
 } from "@/components/lists/ListItemsToolbar";
 import { ListSortSheet } from "@/components/lists/ListSortSheet";
-import { MediaCard } from "@/components/media/MediaCard";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import {
 	EmptyState,
@@ -20,7 +20,6 @@ import {
 	StaleDataNotice,
 } from "@/components/ui/states";
 import { useAuth } from "@/lib/auth-context";
-import { listItemToMediaCardItem } from "@/lib/list-media";
 import type { ListSort } from "@/lib/use-lists";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useProfileList, usePublicProfile } from "@/lib/use-public-profile";
@@ -138,11 +137,7 @@ export function PublicListScreen() {
 						keyExtractor={(item) => item.id}
 						renderItem={({ item }) => (
 							<View className="flex-1 px-1 pb-3">
-								<MediaCard
-									item={listItemToMediaCardItem(item)}
-									actions
-									watchCount={item.watchCount}
-								/>
+								<ListItemCard item={item} />
 							</View>
 						)}
 						contentContainerStyle={gridStyle}

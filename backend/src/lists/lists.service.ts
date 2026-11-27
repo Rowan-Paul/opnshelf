@@ -6,6 +6,7 @@ import { Agent } from "@atproto/api";
 import { ContentPrivacyCoordinator } from "../privacy/content-privacy-coordinator";
 import { watchOperation } from "../privacy/watch-operation";
 import { createWatchAgent } from "../privacy/watch-operation";
+import { isAtprotoRecordMissingError } from "../common/atproto-record-errors";
 import { TID } from "@atproto/common";
 import {
 	BadRequestException,
@@ -1030,6 +1031,66 @@ export class ListsService {
 		return mapItemToDto(item);
 	}
 
+	async updateListItemNote(
+		userDid: string,
+		session: ATSession,
+		slug: string,
+		itemId: string,
+		rawNote: string,
+	): Promise<void> {
+		const item = await this.prisma.listItem.findFirst({
+			where: { id: itemId, list: { userDid, slug } },
+		});
+		if (!item) throw new NotFoundException("List item not found");
+
+		const repo = createWatchAgent(session).com.atproto.repo;
+		const target = {
+			repo: session.did,
+			collection: LIST_ITEM_COLLECTION,
+			rkey: item.rkey,
+		};
+		const notes = rawNote.trim() || null;
+		let cid: string;
+		try {
+			const existing = await repo.getRecord(target);
+			const record = { ...existing.data.value };
+			if (notes === null) delete record.notes;
+			else record.notes = notes;
+
+			const response = await repo.applyWrites({
+				repo: target.repo,
+				validate: false,
+				writes: [
+					{
+						$type: "com.atproto.repo.applyWrites#update",
+						collection: target.collection,
+						rkey: target.rkey,
+						value: record,
+					},
+				],
+			});
+			const result = response.data.results?.[0];
+			if (!result || !("cid" in result) || typeof result.cid !== "string") {
+				throw new Error("PDS did not return the updated List item");
+			}
+			cid = result.cid;
+		} catch (error) {
+			if (
+				isAtprotoRecordMissingError(error) ||
+				(error instanceof Error &&
+					error.message.includes("Update target record does not exist"))
+			) {
+				throw new NotFoundException("List item not found");
+			}
+			throw error;
+		}
+
+		await this.prisma.listItem.update({
+			where: { id: item.id },
+			data: { notes, cid },
+		});
+	}
+
 	async removeFromList(
 		userDid: string,
 		session: ATSession,
@@ -1238,7 +1299,7 @@ export class ListsService {
 						episodeNumber,
 						movieId: mediaType === "movie" ? mediaId : null,
 						showId: mediaType === "movie" ? null : mediaId,
-						notes: record.notes,
+						notes: record.notes ?? null,
 					},
 					update: {
 						cid,
@@ -1248,7 +1309,7 @@ export class ListsService {
 						episodeNumber,
 						movieId: mediaType === "movie" ? mediaId : null,
 						showId: mediaType === "movie" ? null : mediaId,
-						notes: record.notes,
+						notes: record.notes ?? null,
 					},
 				}),
 		);

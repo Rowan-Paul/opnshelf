@@ -1578,6 +1578,13 @@ export type ReorderListItemsDto = {
     ids: Array<string>;
 };
 
+export type UpdateListItemNoteDto = {
+    /**
+     * List item note. Send an empty string to clear it.
+     */
+    notes: string;
+};
+
 export type ListsForItemDto = {
     listId: string;
     listName: string;
@@ -5215,6 +5222,36 @@ export type ListsControllerReorderListItemsResponses = {
      */
     200: unknown;
 };
+
+export type ListsControllerUpdateListItemNoteData = {
+    body: UpdateListItemNoteDto;
+    path: {
+        slug: string;
+        itemId: string;
+    };
+    query?: never;
+    url: '/lists/{slug}/items/{itemId}/note';
+};
+
+export type ListsControllerUpdateListItemNoteErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * List or item not found
+     */
+    404: unknown;
+};
+
+export type ListsControllerUpdateListItemNoteResponses = {
+    /**
+     * Note saved
+     */
+    204: void;
+};
+
+export type ListsControllerUpdateListItemNoteResponse = ListsControllerUpdateListItemNoteResponses[keyof ListsControllerUpdateListItemNoteResponses];
 
 export type ListsControllerRemoveItemFromListData = {
     body?: never;

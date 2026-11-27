@@ -3772,6 +3772,59 @@
         ]
       }
     },
+    "/lists/{slug}/items/{itemId}/note": {
+      "put": {
+        "operationId": "ListsController_updateListItemNote",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateListItemNoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Note saved"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "List or item not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a list item's note",
+        "tags": [
+          "lists"
+        ]
+      }
+    },
     "/lists/{slug}/items/{mediaType}/{mediaId}": {
       "delete": {
         "operationId": "ListsController_removeItemFromList",
@@ -10779,6 +10832,19 @@
         },
         "required": [
           "ids"
+        ]
+      },
+      "UpdateListItemNoteDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "description": "List item note. Send an empty string to clear it.",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "notes"
         ]
       },
       "ListsForItemDto": {

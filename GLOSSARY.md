@@ -356,6 +356,12 @@ The OAuth permission requested as part of choosing Private. Permission alone
 does not change visibility, and declining it preserves the previous choice.
 _Avoid_: Watch access, Connect privacy, privacy enabled.
 
+**List item note**:
+Up to 1000 characters attached to an item in a specific List. The List’s owner
+can edit it and anyone who can view the List can read it. It follows the List’s
+Data Visibility. A standalone **Note** belongs to a Media Item and follows the
+Notes visibility category.
+
 **List default visibility**:
 The Public/Private choice applied only to newly created Lists. Existing Lists
 keep their individual choice unless the User selects **All Lists** when changing

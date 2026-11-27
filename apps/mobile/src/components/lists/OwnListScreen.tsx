@@ -1,5 +1,10 @@
-import type { MediaInListDto } from "@opnshelf/api";
+import {
+	isListItemNoteTooLong,
+	type MediaInListDto,
+	privacyControllerStatusOptions,
+} from "@opnshelf/api";
 import { FlashList } from "@shopify/flash-list";
+import { useQuery } from "@tanstack/react-query";
 import {
 	Stack,
 	useFocusEffect,
@@ -13,7 +18,6 @@ import {
 	Plus,
 	Share2,
 	Trash2,
-	X,
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -24,10 +28,12 @@ import {
 	Share,
 	View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { HeaderBackButton } from "@/components/AppHeader";
 import { AddItemsToListSheet } from "@/components/lists/AddItemsToListSheet";
 import { ListEditorSheet } from "@/components/lists/ListEditorSheet";
 import { ListInfoCard } from "@/components/lists/ListInfoCard";
+import { getItemLabel, ListItemCard } from "@/components/lists/ListItemCard";
 import {
 	LIST_EMPTY_OWNER_MESSAGE,
 	LIST_EMPTY_TITLE,
@@ -38,8 +44,10 @@ import {
 } from "@/components/lists/ListItemsToolbar";
 import { ListSortSheet } from "@/components/lists/ListSortSheet";
 import { ReorderableItemGrid } from "@/components/lists/ReorderableItemGrid";
-import { MediaCard } from "@/components/media/MediaCard";
+
+import { Button } from "@/components/ui/button";
 import { useDialog } from "@/components/ui/dialog";
+import { KeyboardSheetModal } from "@/components/ui/keyboard-sheet-modal";
 import { PosterGridSkeleton } from "@/components/ui/skeletons";
 import {
 	EmptyState,
@@ -47,10 +55,11 @@ import {
 	StaleDataNotice,
 } from "@/components/ui/states";
 import { Text } from "@/components/ui/text";
+import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
-import { listItemToMediaCardItem } from "@/lib/list-media";
+
 import { posthog } from "@/lib/posthog";
 import {
 	type ListSort,
@@ -59,6 +68,7 @@ import {
 	useRemoveListItem,
 	useReorderListItems,
 	useUpdateList,
+	useUpdateListItemNote,
 } from "@/lib/use-lists";
 import { useMediaCardColumns } from "@/lib/use-media-card-columns";
 import { useRefreshActiveQueries } from "@/lib/use-refresh";
@@ -70,33 +80,6 @@ import { useThemeColors } from "@/theme/colors";
 /** `${mediaType}:${mediaId}` key, collapsing season/episode entries onto the show. */
 const itemKey = (item: MediaInListDto) =>
 	`${item.mediaType === "movie" ? "movie" : "show"}:${item.mediaId}`;
-
-function ListItemCard({
-	item,
-	onRemove,
-}: {
-	item: MediaInListDto;
-	onRemove: (item: MediaInListDto) => void;
-}) {
-	return (
-		<View className="flex-1">
-			<MediaCard
-				item={listItemToMediaCardItem(item)}
-				actions
-				watchCount={item.watchCount}
-			/>
-			{/* Top-LEFT: the card's own watched toggle owns the top-right corner;
-			    stacking both there rendered the remove X on top of the gold check. */}
-			<Pressable
-				hitSlop={6}
-				onPress={() => onRemove(item)}
-				className="absolute top-1.5 left-1.5 size-7 items-center justify-center rounded-full bg-black/55"
-			>
-				<X color="#ffffff" size={16} strokeWidth={2.5} />
-			</Pressable>
-		</View>
-	);
-}
 
 /** The signed-in user's own List: reorder, add, edit and delete. */
 export function OwnListScreen() {
@@ -132,6 +115,27 @@ export function OwnListScreen() {
 	} = useList(slug, sort);
 	const updateList = useUpdateList();
 	const deleteList = useDeleteList();
+	const noteMutation = useUpdateListItemNote();
+	const [noteEditor, setNoteEditor] = useState<{
+		item: MediaInListDto;
+		text: string;
+	} | null>(null);
+	const { data: privacyStatus } = useQuery({
+		...privacyControllerStatusOptions(),
+		enabled: noteEditor !== null && !!list?.rkey,
+	});
+	const noteScope = privacyStatus?.scopes?.find(
+		(scope) => scope.category === "lists" && scope.listRkey === list?.rkey,
+	);
+	const noteVisibility = noteScope?.migration
+		? undefined
+		: noteScope?.visibility;
+	const noteTooLong =
+		noteEditor !== null && isListItemNoteTooLong(noteEditor.text);
+	const noteSheetStyle = useTwStyle("flex-1 justify-end");
+	const closeNoteEditor = () => {
+		if (!noteMutation.isPending) setNoteEditor(null);
+	};
 	const removeItem = useRemoveListItem(slug);
 	const reorder = useReorderListItems(slug);
 
@@ -388,7 +392,13 @@ export function OwnListScreen() {
 						keyExtractor={(item) => item.id}
 						renderItem={({ item }) => (
 							<View className="flex-1 px-1 pb-3">
-								<ListItemCard item={item} onRemove={handleRemove} />
+								<ListItemCard
+									item={item}
+									onRemove={handleRemove}
+									onEditNote={() =>
+										setNoteEditor({ item, text: item.notes ?? "" })
+									}
+								/>
 							</View>
 						)}
 						contentContainerStyle={gridStyle}
@@ -496,6 +506,67 @@ export function OwnListScreen() {
 				slug={slug}
 				existingKeys={existingKeys}
 			/>
+
+			<KeyboardSheetModal
+				visible={noteEditor !== null}
+				onRequestClose={closeNoteEditor}
+			>
+				{noteEditor && (
+					<KeyboardAvoidingView behavior="padding" style={noteSheetStyle}>
+						<Pressable
+							className="flex-1"
+							onPress={closeNoteEditor}
+							accessible={false}
+						/>
+						<View className="gap-4 rounded-t-2xl border border-border bg-card p-5">
+							<Text className="font-display-bold text-lg">List item note</Text>
+							<Text>{getItemLabel(noteEditor.item)}</Text>
+							<TextField
+								variant="subtle"
+								multiline
+								className="min-h-24"
+								accessibilityLabel="Note"
+								editable={!noteMutation.isPending}
+								value={noteEditor.text}
+								onChangeText={(text) => setNoteEditor({ ...noteEditor, text })}
+							/>
+							<Text className="text-muted-foreground text-sm">
+								{noteVisibility === "private"
+									? "Only you can read this note because this List is private."
+									: noteVisibility === "public"
+										? "Anyone who can view this List can read this note."
+										: "This note follows the List’s visibility."}
+							</Text>
+							{noteTooLong && (
+								<Text accessibilityLiveRegion="polite" className="text-sm">
+									Use 1,000 characters or fewer.
+								</Text>
+							)}
+							<Button
+								disabled={noteTooLong}
+								label="Save note"
+								loadingLabel="Saving…"
+								loading={noteMutation.isPending}
+								onPress={() =>
+									noteMutation.mutate(
+										{
+											path: { slug, itemId: noteEditor.item.id },
+											body: { notes: noteEditor.text },
+										},
+										{ onSuccess: () => setNoteEditor(null) },
+									)
+								}
+							/>
+							<Button
+								label="Cancel"
+								variant="ghost"
+								disabled={noteMutation.isPending}
+								onPress={closeNoteEditor}
+							/>
+						</View>
+					</KeyboardAvoidingView>
+				)}
+			</KeyboardSheetModal>
 
 			<ListEditorSheet
 				visible={editorVisible}

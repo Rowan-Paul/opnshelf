@@ -70,6 +70,36 @@ afterEach(() => {
 });
 
 it.each([
+	"🎬",
+	"✈️",
+])("accepts 1,000 API-counted characters ending in %s", (lastCharacter) => {
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner
+		/>,
+	);
+	fireEvent.click(screen.getByRole("button", { name: "Add note for Alpha" }));
+	const input = screen.getByRole("textbox", { name: "Note" });
+	const save = screen.getByRole<HTMLButtonElement>("button", {
+		name: "Save note",
+	});
+	const notes = `${"a".repeat(999)}${lastCharacter}`;
+	fireEvent.change(input, { target: { value: `${notes}b` } });
+	expect(save.disabled).toBe(true);
+	expect(screen.getByText("Use 1,000 characters or fewer.")).toBeTruthy();
+	fireEvent.change(input, { target: { value: notes } });
+	expect(save.disabled).toBe(false);
+	fireEvent.click(save);
+	expect(mutate).toHaveBeenCalledWith({
+		path: { slug: "test", itemId: "Alpha" },
+		body: { notes },
+	});
+});
+
+it.each([
 	["pointerup", ["Beta", "Gamma", "Alpha", "Delta"]],
 	["pointercancel", ["Alpha", "Beta", "Gamma", "Delta"]],
 	["lostpointercapture", ["Alpha", "Beta", "Gamma", "Delta"]],

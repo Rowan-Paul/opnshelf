@@ -92,6 +92,16 @@ export class AddToListDto {
 	notes?: string;
 }
 
+export class UpdateListItemNoteDto {
+	@ApiProperty({
+		description: "List item note. Send an empty string to clear it.",
+		maxLength: 1000,
+	})
+	@IsString()
+	@MaxLength(1000)
+	notes: string;
+}
+
 export class GetListQueryDto {
 	@ApiPropertyOptional({
 		description: "Page number to return",

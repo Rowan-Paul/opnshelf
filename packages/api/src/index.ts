@@ -59,6 +59,7 @@ export {
 	withMovieWatch,
 	withoutMovieWatches,
 } from "./list-memberships";
+export { isListItemNoteTooLong } from "./list-item-note";
 export { slugifyName } from "./media-slug";
 export {
 	type MovieCollectionRail,
