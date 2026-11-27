@@ -59,7 +59,7 @@ const config: ExpoConfig = {
 	name: "Opnshelf",
 	slug: "opnshelf",
 	owner: "rowanpaul",
-	version: "1.7.14",
+	version: "1.7.30",
 	scheme: "opnshelf",
 	orientation: "portrait",
 	icon: "./assets/images/icon.png",
@@ -168,6 +168,8 @@ const config: ExpoConfig = {
 		"expo-font",
 		"expo-image",
 		"expo-notifications",
+		"expo-status-bar",
+		"expo-web-browser",
 		[
 			"expo-splash-screen",
 			{
