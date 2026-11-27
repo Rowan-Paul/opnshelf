@@ -27,6 +27,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 							id: title,
 							mediaType: "movie",
 							media: { title },
+							notes: title === "Gamma" ? "Old note" : undefined,
 						})),
 						{
 							id: "Delta",
@@ -96,6 +97,28 @@ it.each([
 	expect(mutate).toHaveBeenCalledWith({
 		path: { slug: "test", itemId: "Alpha" },
 		body: { notes },
+	});
+});
+
+it("removes an existing List item note and offers no removal for an empty one", () => {
+	render(
+		<ProfileListsPage
+			userDid="did:test"
+			handle="test"
+			selectedListSlug="test"
+			isOwner
+		/>,
+	);
+	fireEvent.click(screen.getByRole("button", { name: "Add note for Alpha" }));
+	expect(screen.queryByRole("button", { name: "Remove note" })).toBeNull();
+	fireEvent.keyDown(document.activeElement ?? document.body, {
+		key: "Escape",
+	});
+	fireEvent.click(screen.getByRole("button", { name: "Edit note for Gamma" }));
+	fireEvent.click(screen.getByRole("button", { name: "Remove note" }));
+	expect(mutate).toHaveBeenCalledWith({
+		path: { slug: "test", itemId: "Gamma" },
+		body: { notes: "" },
 	});
 });
 

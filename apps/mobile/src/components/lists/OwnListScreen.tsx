@@ -132,6 +132,8 @@ export function OwnListScreen() {
 		: noteScope?.visibility;
 	const noteTooLong =
 		noteEditor !== null && isListItemNoteTooLong(noteEditor.text);
+	const removingNote =
+		noteMutation.isPending && noteMutation.variables?.body.notes === "";
 	const noteSheetStyle = useTwStyle("flex-1 justify-end");
 	const closeNoteEditor = () => {
 		if (!noteMutation.isPending) setNoteEditor(null);
@@ -543,10 +545,10 @@ export function OwnListScreen() {
 								</Text>
 							)}
 							<Button
-								disabled={noteTooLong}
+								disabled={noteTooLong || removingNote}
 								label="Save note"
 								loadingLabel="Saving…"
-								loading={noteMutation.isPending}
+								loading={noteMutation.isPending && !removingNote}
 								onPress={() =>
 									noteMutation.mutate(
 										{
@@ -557,6 +559,24 @@ export function OwnListScreen() {
 									)
 								}
 							/>
+							{noteEditor.item.notes && (
+								<Button
+									label="Remove note"
+									loadingLabel="Removing…"
+									variant="destructive"
+									disabled={noteMutation.isPending}
+									loading={removingNote}
+									onPress={() =>
+										noteMutation.mutate(
+											{
+												path: { slug, itemId: noteEditor.item.id },
+												body: { notes: "" },
+											},
+											{ onSuccess: () => setNoteEditor(null) },
+										)
+									}
+								/>
+							)}
 							<Button
 								label="Cancel"
 								variant="ghost"

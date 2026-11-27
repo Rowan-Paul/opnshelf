@@ -407,6 +407,9 @@ export function ProfileListsPage({
 		onError: () => toast.error("Couldn't save the List item note"),
 	});
 
+	const removingNote =
+		noteMutation.isPending && noteMutation.variables?.body.notes === "";
+
 	// Reorder items mutation (owner only, position order only)
 	const reorderMutation = useMutation({
 		mutationKey: ["lists", selectedListSlug ?? "", "reorder"],
@@ -1249,13 +1252,36 @@ export function ProfileListsPage({
 										Use 1,000 characters or fewer.
 									</output>
 								)}
-								<Button
-									type="submit"
-									disabled={noteMutation.isPending || noteTooLong}
-									aria-busy={noteMutation.isPending}
-								>
-									{noteMutation.isPending ? "Saving…" : "Save note"}
-								</Button>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										type="submit"
+										disabled={noteMutation.isPending || noteTooLong}
+										aria-busy={noteMutation.isPending && !removingNote}
+									>
+										{noteMutation.isPending && !removingNote
+											? "Saving…"
+											: "Save note"}
+									</Button>
+									{noteEditor.item.notes && (
+										<Button
+											type="button"
+											variant="outline"
+											disabled={noteMutation.isPending}
+											aria-busy={removingNote}
+											onClick={() =>
+												noteMutation.mutate({
+													path: {
+														slug: selectedListSlug,
+														itemId: noteEditor.item.id,
+													},
+													body: { notes: "" },
+												})
+											}
+										>
+											{removingNote ? "Removing…" : "Remove note"}
+										</Button>
+									)}
+								</div>
 							</form>
 						) : (
 							<p className="wrap-anywhere max-h-80 overflow-y-auto whitespace-pre-wrap">
