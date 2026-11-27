@@ -6,8 +6,10 @@ import {
 	listsControllerGetPublicUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	listsControllerReorderListItemsMutation,
+	listsControllerUpdateListItemNoteMutation,
 	listsControllerUpdateListMutation,
 	type MediaInListDto,
+	privacyControllerStatusOptions,
 	retryUnlessNotFound,
 } from "@opnshelf/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +29,7 @@ import {
 	Pencil,
 	Plus,
 	Search,
+	StickyNote,
 	Trash2,
 	Tv,
 	X,
@@ -164,6 +167,15 @@ function ReorderCaption({ item }: { item: MediaInListDto }) {
 	);
 }
 
+function noteActionLabel(item: MediaInListDto, isOwner: boolean) {
+	const action = isOwner
+		? item.notes
+			? "Edit note"
+			: "Add note"
+		: "Read note";
+	return `${action} for ${getItemLabel(item)}`;
+}
+
 function getRating(media: Record<string, unknown>): number | undefined {
 	if (media.vote_average && typeof media.vote_average === "number") {
 		return media.vote_average;
@@ -202,6 +214,11 @@ export function ProfileListsPage({
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sort, setSort] = useState<SortOption>("position");
 	const [filter, setFilter] = useState<FilterOption>("all");
+	const noteTrigger = useRef<HTMLButtonElement | null>(null);
+	const [noteEditor, setNoteEditor] = useState<{
+		item: MediaInListDto;
+		text: string;
+	} | null>(null);
 	const [showAddDialog, setShowAddDialog] = useState(false);
 	const [showEditDialog, setShowEditDialog] = useState(false);
 	const [editName, setEditName] = useState("");
@@ -356,6 +373,37 @@ export function ProfileListsPage({
 		setShowEditDialog(true);
 	};
 
+	const { data: privacyStatus } = useQuery({
+		...privacyControllerStatusOptions(),
+		enabled: isOwner && noteEditor !== null && !!listDetails?.rkey,
+	});
+	const noteScope = privacyStatus?.scopes?.find(
+		(scope) =>
+			scope.category === "lists" && scope.listRkey === listDetails?.rkey,
+	);
+	const noteVisibility = noteScope?.migration
+		? undefined
+		: noteScope?.visibility;
+
+	const openNote = (item: MediaInListDto, trigger: HTMLButtonElement) => {
+		noteTrigger.current = trigger;
+		setNoteEditor({ item, text: item.notes ?? "" });
+	};
+
+	const noteMutation = useMutation({
+		mutationKey: ["lists", "updateItemNote"],
+		...listsControllerUpdateListItemNoteMutation(),
+		onSuccess: async (_item, { path }) => {
+			await queryClient.invalidateQueries({
+				queryKey: listsControllerGetPublicUserListQueryKey({
+					path: { userDid, slug: path.slug },
+				}),
+			});
+			setNoteEditor(null);
+		},
+		onError: () => toast.error("Couldn't save the list item note"),
+	});
+
 	// Reorder items mutation (owner only, position order only)
 	const reorderMutation = useMutation({
 		mutationKey: ["lists", selectedListSlug ?? "", "reorder"],
@@ -386,6 +434,7 @@ export function ProfileListsPage({
 	// Reset per-list view controls when switching lists.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: slug is the trigger, not read inside
 	useEffect(() => {
+		setNoteEditor(null);
 		setSearchQuery("");
 		setFilter("all");
 		setReorderMode(false);
@@ -921,48 +970,90 @@ export function ProfileListsPage({
 													index === self.findIndex((i) => i.id === item.id),
 											)
 											.map((item: MediaInListDto) => (
-												<ActionableMediaCard
-													key={item.id}
-													fill
-													id={String(
-														(item.media as Record<string, unknown>).mediaId ??
-															item.mediaId,
+												<div key={item.id} className="min-w-0">
+													<div className="relative">
+														<ActionableMediaCard
+															fill
+															id={String(
+																(item.media as Record<string, unknown>)
+																	.mediaId ?? item.mediaId,
+															)}
+															title={getTitle(item.media)}
+															seasonNumber={item.seasonNumber}
+															episodeNumber={item.episodeNumber}
+															episodeInfo={getEpisodeInfo(item)}
+															posterUrl={getPosterUrl(item.media)}
+															backdropUrl={getBackdropUrl(item.media)}
+															type={
+																item.mediaType === "movie" ? "movie" : "show"
+															}
+															tmdbRating={getRating(item.media)}
+															duration={formatDuration(
+																item.media.runtime as number | undefined,
+															)}
+															onRemove={
+																isOwner
+																	? () =>
+																			removeItemMutation.mutate({
+																				path: {
+																					slug: selectedListSlug,
+																					mediaType: item.mediaType,
+																					mediaId: item.mediaId,
+																				},
+																				query: {
+																					seasonNumber: item.seasonNumber,
+																					episodeNumber: item.episodeNumber,
+																				},
+																			})
+																	: undefined
+															}
+															isRemoving={
+																isOwner &&
+																removeItemMutation.isPending &&
+																removeItemMutation.variables?.path?.mediaId ===
+																	item.mediaId
+															}
+															watchCount={item.watchCount}
+														/>
+														{(isOwner || item.notes) && (
+															<div className="pointer-events-none absolute inset-x-0 top-0 aspect-2/3">
+																<button
+																	type="button"
+																	aria-haspopup="dialog"
+																	aria-label={noteActionLabel(item, isOwner)}
+																	title={noteActionLabel(item, isOwner)}
+																	onClick={(event) =>
+																		openNote(item, event.currentTarget)
+																	}
+																	className={cn(
+																		"pointer-events-auto absolute bottom-2 left-2 flex h-11 min-w-11 items-center justify-center gap-1 rounded-full px-2 font-semibold text-xs focus-visible:outline-(--ring) focus-visible:outline-2 sm:h-7 sm:min-w-7",
+																		item.notes
+																			? "bg-white text-slate-900 hover:bg-slate-100"
+																			: "bg-black/55 text-white hover:bg-black/70",
+																	)}
+																>
+																	<StickyNote className="size-3.5" />
+																	{item.notes ? "Note" : null}
+																</button>
+															</div>
+														)}
+													</div>
+													{item.notes && (
+														<button
+															type="button"
+															aria-haspopup="dialog"
+															aria-label={`${noteActionLabel(item, isOwner)}: ${item.notes}`}
+															className="mt-1 block w-full text-left text-sm focus-visible:outline-(--ring) focus-visible:outline-2"
+															onClick={(event) =>
+																openNote(item, event.currentTarget)
+															}
+														>
+															<span className="wrap-anywhere line-clamp-2 whitespace-pre-wrap">
+																{item.notes}
+															</span>
+														</button>
 													)}
-													title={getTitle(item.media)}
-													seasonNumber={item.seasonNumber}
-													episodeNumber={item.episodeNumber}
-													episodeInfo={getEpisodeInfo(item)}
-													posterUrl={getPosterUrl(item.media)}
-													backdropUrl={getBackdropUrl(item.media)}
-													type={item.mediaType === "movie" ? "movie" : "show"}
-													tmdbRating={getRating(item.media)}
-													duration={formatDuration(
-														item.media.runtime as number | undefined,
-													)}
-													onRemove={
-														isOwner
-															? () =>
-																	removeItemMutation.mutate({
-																		path: {
-																			slug: selectedListSlug,
-																			mediaType: item.mediaType,
-																			mediaId: item.mediaId,
-																		},
-																		query: {
-																			seasonNumber: item.seasonNumber,
-																			episodeNumber: item.episodeNumber,
-																		},
-																	})
-															: undefined
-													}
-													isRemoving={
-														isOwner &&
-														removeItemMutation.isPending &&
-														removeItemMutation.variables?.path?.mediaId ===
-															item.mediaId
-													}
-													watchCount={item.watchCount}
-												/>
+												</div>
 											))}
 									</div>
 								</ShowProgressScope>
@@ -1090,6 +1181,76 @@ export function ProfileListsPage({
 								</Button>
 							</span>
 						</div>
+					</DialogContent>
+				</Dialog>
+			)}
+
+			{noteEditor && (
+				<Dialog
+					open
+					onOpenChange={(open) => {
+						if (!open && !noteMutation.isPending) setNoteEditor(null);
+					}}
+				>
+					<DialogContent
+						onCloseAutoFocus={(event) => {
+							if (noteTrigger.current?.isConnected) {
+								event.preventDefault();
+								noteTrigger.current.focus();
+							}
+						}}
+					>
+						<DialogHeader>
+							<DialogTitle>List item note</DialogTitle>
+							<DialogDescription>
+								{getItemLabel(noteEditor.item)}
+							</DialogDescription>
+						</DialogHeader>
+						{isOwner ? (
+							<form
+								className="space-y-3"
+								onSubmit={(event) => {
+									event.preventDefault();
+									if (noteMutation.isPending) return;
+									noteMutation.mutate({
+										path: {
+											slug: selectedListSlug,
+											itemId: noteEditor.item.id,
+										},
+										body: { notes: noteEditor.text },
+									});
+								}}
+							>
+								<textarea
+									aria-label="Note"
+									className="input min-h-24"
+									maxLength={1000}
+									value={noteEditor.text}
+									disabled={noteMutation.isPending}
+									onChange={(event) =>
+										setNoteEditor({ ...noteEditor, text: event.target.value })
+									}
+								/>
+								<p className="text-(--foreground-muted) text-sm">
+									{noteVisibility === "private"
+										? "Only you can read this note because this List is private."
+										: noteVisibility === "public"
+											? "Anyone who can view this List can read this note."
+											: "This note follows the List’s visibility."}
+								</p>
+								<Button
+									type="submit"
+									disabled={noteMutation.isPending}
+									aria-busy={noteMutation.isPending}
+								>
+									{noteMutation.isPending ? "Saving…" : "Save note"}
+								</Button>
+							</form>
+						) : (
+							<p className="wrap-anywhere max-h-80 overflow-y-auto whitespace-pre-wrap">
+								{noteEditor.text}
+							</p>
+						)}
 					</DialogContent>
 				</Dialog>
 			)}

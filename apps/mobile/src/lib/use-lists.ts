@@ -15,6 +15,7 @@ import {
 	listsControllerGetUserListsQueryKey,
 	listsControllerRemoveItemFromListMutation,
 	listsControllerReorderListItemsMutation,
+	listsControllerUpdateListItemNoteMutation,
 	listsControllerUpdateListMutation,
 	listsForItem,
 	retryUnlessNotFound,
@@ -248,6 +249,24 @@ export function useAddListItem(slug: string) {
 		},
 		onError: (error) =>
 			toast.error(errorMessage(error, "Failed to add to list")),
+	});
+}
+
+export function useUpdateListItemNote() {
+	const queryClient = useQueryClient();
+	const { user } = useAuth();
+	const toast = useToast();
+	return useMutation({
+		mutationKey: ["lists", "updateItemNote"],
+		...listsControllerUpdateListItemNoteMutation(),
+		onSuccess: async (_item, { path: { slug } }) => {
+			invalidatePublicListQueries(queryClient, user?.did, slug);
+			await queryClient.invalidateQueries({
+				queryKey: listsControllerGetListQueryKey({ path: { slug } }),
+			});
+		},
+		onError: (error) =>
+			toast.error(errorMessage(error, "Couldn't save the list item note")),
 	});
 }
 

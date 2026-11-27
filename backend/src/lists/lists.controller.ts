@@ -44,8 +44,10 @@ import {
 	ListsForItemDto,
 	ListSummaryDto,
 	ListWithItemsDto,
+	MediaInListDto,
 	ReorderListItemsDto,
 	UpdateListDto,
+	UpdateListItemNoteDto,
 } from "./dto/list.dto";
 
 @ApiTags("lists")
@@ -268,6 +270,30 @@ export class ListsController {
 	): Promise<{ success: boolean }> {
 		await this.listsService.reorderListItems(req.user.did, slug, dto.ids);
 		return { success: true };
+	}
+
+	@Put(":slug/items/:itemId/note")
+	@ContentPrivacyCategory("lists")
+	@UseInterceptors(ContentPrivacyInterceptor)
+	@UseGuards(AuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: "Update a list item's note" })
+	@ApiOkResponse({ description: "Note saved", type: MediaInListDto })
+	@ApiNotFoundResponse({ description: "List or item not found" })
+	@ApiUnauthorizedResponse({ description: "Not authenticated" })
+	async updateListItemNote(
+		@Req() req: AuthenticatedRequest,
+		@Param("slug") slug: string,
+		@Param("itemId") itemId: string,
+		@Body() dto: UpdateListItemNoteDto,
+	): Promise<MediaInListDto> {
+		return this.listsService.updateListItemNote(
+			req.user.did,
+			req.user.session as ATSession,
+			slug,
+			itemId,
+			dto.notes,
+		);
 	}
 
 	@Delete(":slug/items/:mediaType/:mediaId")

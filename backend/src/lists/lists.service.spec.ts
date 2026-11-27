@@ -19,6 +19,8 @@ vi.mock("../prisma/prisma.service", () => ({
 	PrismaService: vi.fn(),
 }));
 
+const mockGetRecord = vi.fn();
+const mockApplyWrites = vi.fn();
 const mockPutRecord = vi.fn();
 const mockDeleteRecord = vi.fn();
 const mockListRecords = vi.fn();
@@ -28,6 +30,8 @@ vi.mock("@atproto/api", () => ({
 			com: {
 				atproto: {
 					repo: {
+						getRecord: mockGetRecord,
+						applyWrites: mockApplyWrites,
 						putRecord: mockPutRecord,
 						deleteRecord: mockDeleteRecord,
 						listRecords: mockListRecords,
@@ -91,6 +95,7 @@ describe("ListsService", () => {
 			upsert: vi.fn(),
 		},
 		listItem: {
+			findFirst: vi.fn(),
 			findMany: vi.fn(),
 			findUnique: vi.fn(),
 			create: vi.fn(),
@@ -1249,6 +1254,67 @@ describe("ListsService", () => {
 				service.reorderListItems("did:plc:abc123", "watchlist", ["a", "a"]),
 			).rejects.toThrow("Duplicate");
 			expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+		});
+	});
+
+	it.each([
+		["  New note  ", "New note"],
+		["  ", null],
+	])("updates only the List item note for %j", async (input, notes) => {
+		const userDid = "did:plc:abc123";
+		const record = {
+			$type: "xyz.opnshelf.list.item",
+			listRkey: "watchlist-key",
+			mediaType: "episode",
+			mediaId: "123",
+			seasonNumber: 1,
+			episodeNumber: 2,
+			createdAt: "2024-01-01T00:00:00Z",
+		};
+		mockPrismaService.listItem.findFirst.mockResolvedValue({
+			id: "item-1",
+			rkey: "item-key",
+		});
+		mockGetRecord.mockResolvedValue({
+			data: { value: { ...record, notes: "Old note" } },
+		});
+		mockApplyWrites.mockResolvedValue({
+			data: { results: [{ cid: "updated-cid" }] },
+		});
+		mockPrismaService.listItem.update.mockResolvedValue({
+			id: "item-1",
+			mediaType: "episode",
+			notes,
+			createdAt: new Date(record.createdAt),
+		});
+
+		await service.updateListItemNote(
+			userDid,
+			{ did: userDid },
+			"watchlist",
+			"item-1",
+			input,
+		);
+
+		expect(mockPrismaService.listItem.findFirst).toHaveBeenCalledWith({
+			where: { id: "item-1", list: { userDid, slug: "watchlist" } },
+		});
+		expect(mockApplyWrites).toHaveBeenCalledWith({
+			repo: userDid,
+			validate: false,
+			writes: [
+				{
+					$type: "com.atproto.repo.applyWrites#update",
+					collection: "xyz.opnshelf.list.item",
+					rkey: "item-key",
+					value: notes === null ? record : { ...record, notes },
+				},
+			],
+		});
+		expect(mockPrismaService.listItem.update).toHaveBeenCalledWith({
+			where: { id: "item-1" },
+			data: { notes, cid: "updated-cid" },
+			include: { movie: true, show: true },
 		});
 	});
 
