@@ -18,16 +18,25 @@ export function sortLabel(sort: ListSort): string {
 }
 
 /** Small bottom sheet for picking the list item sort order. */
-export function ListSortSheet({
+export function ListSortSheet(
+	props: Omit<Parameters<typeof SortSheet<ListSort>>[0], "options">,
+) {
+	return <SortSheet {...props} options={SORT_OPTIONS} />;
+}
+
+/** Small bottom sheet for picking one sort order out of `options`. */
+export function SortSheet<T extends string>({
 	visible,
 	onDismiss,
 	value,
 	onChange,
+	options,
 }: {
 	visible: boolean;
 	onDismiss: () => void;
-	value: ListSort;
-	onChange: (sort: ListSort) => void;
+	value: T;
+	onChange: (sort: T) => void;
+	options: readonly { key: T; label: string }[];
 }) {
 	const colors = useThemeColors();
 	return (
@@ -45,7 +54,7 @@ export function ListSortSheet({
 					</View>
 
 					<View className="gap-2">
-						{SORT_OPTIONS.map((option) => {
+						{options.map((option) => {
 							const isActive = value === option.key;
 							return (
 								<Pressable

@@ -51,5 +51,5 @@ function LibraryPage() {
 
 	if (profile?.libraryPublic === false && user?.did !== profile.did)
 		return <PrivateNotice message="This Library is private." />;
-	return <ProfileLibraryPage userDid={profile?.did || ""} />;
+	return <ProfileLibraryPage key={profile?.did} userDid={profile?.did || ""} />;
 }

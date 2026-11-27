@@ -1,6 +1,10 @@
 import {
+	filterLibraryItems,
+	LIBRARY_SORT_OPTIONS,
 	type LibraryItemDto,
+	type LibrarySort,
 	libraryControllerGetUserLibraryOptions,
+	libraryItemTitle,
 } from "@opnshelf/api";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -12,12 +16,6 @@ import {
 	ShowProgressScope,
 } from "#/lib/hooks";
 import ActionableMediaCard from "../../components/ActionableMediaCard";
-
-function getTitle(media: Record<string, unknown>): string {
-	if (typeof media.title === "string") return media.title;
-	if (typeof media.name === "string") return media.name;
-	return "Unknown";
-}
 
 function getPosterUrl(media: Record<string, unknown>): string {
 	if (typeof media.posterPath === "string") {
@@ -55,7 +53,7 @@ function LibraryGrid({ items }: { items: LibraryItemDto[] }) {
 						key={item.id}
 						fill
 						id={String(item.mediaId)}
-						title={getTitle(item.media)}
+						title={libraryItemTitle(item)}
 						posterUrl={getPosterUrl(item.media)}
 						backdropUrl={getBackdropUrl(item.media)}
 						type={item.mediaType === "movie" ? "movie" : "show"}
@@ -70,6 +68,8 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 	const [formatFilter, setFormatFilter] = useState<LibraryFormat | "all">(
 		"all",
 	);
+	const [search, setSearch] = useState("");
+	const [sort, setSort] = useState<LibrarySort>("added");
 	const [groupByFormat, setGroupByFormat] = useState(false);
 
 	const { data: items, isLoading } = useQuery({
@@ -77,12 +77,11 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 		enabled: !!userDid,
 	});
 
-	const filtered = useMemo(() => {
-		const all = items ?? [];
-		return formatFilter === "all"
-			? all
-			: all.filter((item) => item.format === formatFilter);
-	}, [items, formatFilter]);
+	const filtered = useMemo(
+		() =>
+			filterLibraryItems(items ?? [], { format: formatFilter, search, sort }),
+		[items, formatFilter, search, sort],
+	);
 
 	const grouped = useMemo(() => {
 		if (!groupByFormat) return null;
@@ -104,6 +103,33 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 				</div>
 			) : (
 				<div className="space-y-4">
+					<div className="flex flex-wrap gap-2">
+						<input
+							type="search"
+							aria-label="Search Library"
+							placeholder="Search by title or Box Set"
+							className="input min-w-0 flex-1 basis-56"
+							value={search}
+							onChange={(event) => setSearch(event.target.value)}
+						/>
+						<select
+							aria-label="Sort Library by"
+							className="input w-auto!"
+							value={sort}
+							onChange={(event) => {
+								const option = LIBRARY_SORT_OPTIONS.find(
+									({ value }) => value === event.target.value,
+								);
+								if (option) setSort(option.value);
+							}}
+						>
+							{LIBRARY_SORT_OPTIONS.map(({ value, label }) => (
+								<option key={value} value={value}>
+									{label}
+								</option>
+							))}
+						</select>
+					</div>
 					<div className="flex flex-wrap items-center gap-2">
 						<button
 							type="button"
@@ -131,7 +157,20 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 						</button>
 					</div>
 
-					{grouped ? (
+					{filtered.length === 0 ? (
+						<div className="space-y-2 py-10 text-center text-(--foreground-muted) text-sm">
+							<output className="block">No Library Items match.</output>
+							{search && (
+								<button
+									type="button"
+									className="btn btn-secondary"
+									onClick={() => setSearch("")}
+								>
+									Clear search
+								</button>
+							)}
+						</div>
+					) : grouped ? (
 						<div className="space-y-6">
 							{grouped.map((group) => (
 								<section key={group.format} className="space-y-2">
