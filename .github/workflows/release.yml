@@ -180,6 +180,51 @@ jobs:
           gh workflow run eas-build.yml --ref main \
             -f platform=all -f profile=production -f submit=false
 
+  # The Tangled copy (linked from the Web footer) has no pull mirror, so it only
+  # moves when something pushes. Done by hand it sat at v1.7.8 for a month.
+  #
+  # Its own job so a Tangled outage shows red here without touching the GitHub
+  # release, the store build or the OTA. Runs after `release` because that is
+  # what creates the tag.
+  #
+  # The remote is the repo DID, not `rowanpaulflynn.dev/opnshelf`: over SSH the
+  # handle path resolves to an abandoned copy on the knot, not the repo the site
+  # shows. Plain pushes, never forced: a rejected one means Tangled got a commit
+  # GitHub lacks, which someone should look at.
+  mirror:
+    name: Mirror to Tangled
+    needs: release
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push main, develop and release tags
+        env:
+          TANGLED_SSH_KEY: ${{ secrets.TANGLED_SSH_KEY }}
+          TANGLED_REMOTE: git@tangled.org:did:plc:nriu6sat6bmls5pejggchhoo
+          # Pinned so a first connection cannot be answered by someone else.
+          # Refresh with `ssh-keyscan -t ed25519 tangled.org` if Tangled rotates it.
+          TANGLED_HOST_KEY: tangled.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII2UShEm/FFPmYZUizaPnIqOJuynoCQpcLhl5PPHd02n
+        run: |
+          set -euo pipefail
+          if [ -z "$TANGLED_SSH_KEY" ]; then
+            echo "::warning::TANGLED_SSH_KEY is not set; skipping the Tangled mirror."
+            exit 0
+          fi
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$TANGLED_SSH_KEY" > ~/.ssh/tangled
+          printf '%s\n' "$TANGLED_HOST_KEY" > ~/.ssh/tangled_known_hosts
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/tangled -o IdentitiesOnly=yes -o UserKnownHostsFile=~/.ssh/tangled_known_hosts -o StrictHostKeyChecking=yes"
+          git push "$TANGLED_REMOTE" \
+            "$GITHUB_SHA:refs/heads/main" \
+            'refs/remotes/origin/develop:refs/heads/develop' \
+            'refs/tags/v*:refs/tags/v*'
+
   # Its own job rather than a step, because publishing an update needs the whole
   # pnpm and EAS toolchain that the release job has no other use for.
   ota:
