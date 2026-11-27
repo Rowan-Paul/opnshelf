@@ -114,7 +114,7 @@ export function ProfileLibraryPage({ userDid }: { userDid: string }) {
 						/>
 						<select
 							aria-label="Sort Library by"
-							className="input w-auto"
+							className="input w-auto!"
 							value={sort}
 							onChange={(event) => {
 								const option = LIBRARY_SORT_OPTIONS.find(
