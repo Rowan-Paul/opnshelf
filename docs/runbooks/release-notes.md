@@ -15,9 +15,9 @@ Use absolute HTTPS links and image URLs so they work on both clients.
    Use the actual publication time, not the date development began. New accounts
    start caught up through their creation time, so backdating hides the dot from
    accounts created after that timestamp.
-3. Set Web, iOS, and Android availability to `available`, `coming-soon`, or
-   `update-required`. A platform may include `minimumVersion` (e.g. `1.7.0`)
-   and a short `note`. State per-feature differences in the Markdown body.
+3. Set Web availability to `available`, and iOS and Android availability to
+   `available` or `update-required`. A platform may include `minimumVersion`
+   (e.g. `1.7.0`) and a short `note`. State per-feature differences in the Markdown body.
    OTA availability needs explicit wording; a native version alone cannot prove
    an OTA has been installed. Do not announce a store feature as available while
    it is still awaiting review.

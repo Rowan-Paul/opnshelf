@@ -67,8 +67,11 @@ session. Not deployed.
 - Both clients read the same published feed. Older Mobile App installations
   that support Release Notes fetch new entries without needing an app update
   just to receive the notes.
-- Notes distinguish **available**, **coming soon**, and **update required**,
-  including minimum app versions where applicable. Entries that bundle changes
+- Notes distinguish **available** and **update required**, including minimum
+  app versions where applicable. A Mobile change that needs a store release
+  names the required version instead of saying "coming soon", so the note
+  stays true once the stores approve it; the **coming soon** status remains
+  only for older entries. Entries that bundle changes
   with different availability explain it per feature. Mobile OTA availability
   cannot be inferred from the native app version alone.
 - Begin with the next release; do not backfill historical Bluesky announcements.
