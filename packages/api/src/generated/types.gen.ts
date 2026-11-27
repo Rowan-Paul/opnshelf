@@ -5248,7 +5248,7 @@ export type ListsControllerUpdateListItemNoteResponses = {
     /**
      * Note saved
      */
-    200: MediaInListDto;
+    204: void;
 };
 
 export type ListsControllerUpdateListItemNoteResponse = ListsControllerUpdateListItemNoteResponses[keyof ListsControllerUpdateListItemNoteResponses];

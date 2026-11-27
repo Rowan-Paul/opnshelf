@@ -1281,12 +1281,6 @@ describe("ListsService", () => {
 		mockApplyWrites.mockResolvedValue({
 			data: { results: [{ cid: "updated-cid" }] },
 		});
-		mockPrismaService.listItem.update.mockResolvedValue({
-			id: "item-1",
-			mediaType: "episode",
-			notes,
-			createdAt: new Date(record.createdAt),
-		});
 
 		await service.updateListItemNote(
 			userDid,
@@ -1314,7 +1308,6 @@ describe("ListsService", () => {
 		expect(mockPrismaService.listItem.update).toHaveBeenCalledWith({
 			where: { id: "item-1" },
 			data: { notes, cid: "updated-cid" },
-			include: { movie: true, show: true },
 		});
 	});
 

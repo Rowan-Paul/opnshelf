@@ -1037,7 +1037,7 @@ export class ListsService {
 		slug: string,
 		itemId: string,
 		rawNote: string,
-	): Promise<MediaInListDto> {
+	): Promise<void> {
 		const item = await this.prisma.listItem.findFirst({
 			where: { id: itemId, list: { userDid, slug } },
 		});
@@ -1085,12 +1085,10 @@ export class ListsService {
 			throw error;
 		}
 
-		const updated = await this.prisma.listItem.update({
+		await this.prisma.listItem.update({
 			where: { id: item.id },
 			data: { notes, cid },
-			include: { movie: true, show: true },
 		});
-		return mapItemToDto(updated);
 	}
 
 	async removeFromList(

@@ -129,6 +129,7 @@ export function OwnListScreen() {
 	const noteVisibility = noteScope?.migration
 		? undefined
 		: noteScope?.visibility;
+	const noteTooLong = noteEditor !== null && [...noteEditor.text].length > 1000;
 	const noteSheetStyle = useTwStyle("flex-1 justify-end");
 	const closeNoteEditor = () => {
 		if (!noteMutation.isPending) setNoteEditor(null);
@@ -504,8 +505,11 @@ export function OwnListScreen() {
 				existingKeys={existingKeys}
 			/>
 
-			{noteEditor && (
-				<KeyboardSheetModal visible onRequestClose={closeNoteEditor}>
+			<KeyboardSheetModal
+				visible={noteEditor !== null}
+				onRequestClose={closeNoteEditor}
+			>
+				{noteEditor && (
 					<KeyboardAvoidingView behavior="padding" style={noteSheetStyle}>
 						<Pressable
 							className="flex-1"
@@ -520,7 +524,6 @@ export function OwnListScreen() {
 								multiline
 								className="min-h-24"
 								accessibilityLabel="Note"
-								maxLength={1000}
 								editable={!noteMutation.isPending}
 								value={noteEditor.text}
 								onChangeText={(text) => setNoteEditor({ ...noteEditor, text })}
@@ -532,7 +535,13 @@ export function OwnListScreen() {
 										? "Anyone who can view this List can read this note."
 										: "This note follows the List’s visibility."}
 							</Text>
+							{noteTooLong && (
+								<Text accessibilityLiveRegion="polite" className="text-sm">
+									Use 1,000 characters or fewer.
+								</Text>
+							)}
 							<Button
+								disabled={noteTooLong}
 								label="Save note"
 								loadingLabel="Saving…"
 								loading={noteMutation.isPending}
@@ -554,8 +563,8 @@ export function OwnListScreen() {
 							/>
 						</View>
 					</KeyboardAvoidingView>
-				</KeyboardSheetModal>
-			)}
+				)}
+			</KeyboardSheetModal>
 
 			<ListEditorSheet
 				visible={editorVisible}

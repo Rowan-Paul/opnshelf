@@ -3804,15 +3804,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Note saved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MediaInListDto"
-                }
-              }
-            }
+          "204": {
+            "description": "Note saved"
           },
           "401": {
             "description": "Not authenticated"

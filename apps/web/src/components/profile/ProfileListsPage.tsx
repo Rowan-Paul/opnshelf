@@ -385,6 +385,7 @@ export function ProfileListsPage({
 		? undefined
 		: noteScope?.visibility;
 
+	const noteTooLong = noteEditor !== null && [...noteEditor.text].length > 1000;
 	const openNote = (item: MediaInListDto, trigger: HTMLButtonElement) => {
 		noteTrigger.current = trigger;
 		setNoteEditor({ item, text: item.notes ?? "" });
@@ -1211,7 +1212,7 @@ export function ProfileListsPage({
 								className="space-y-3"
 								onSubmit={(event) => {
 									event.preventDefault();
-									if (noteMutation.isPending) return;
+									if (noteMutation.isPending || noteTooLong) return;
 									noteMutation.mutate({
 										path: {
 											slug: selectedListSlug,
@@ -1223,8 +1224,11 @@ export function ProfileListsPage({
 							>
 								<textarea
 									aria-label="Note"
+									aria-invalid={noteTooLong}
+									aria-describedby={
+										noteTooLong ? "list-note-length-error" : undefined
+									}
 									className="input min-h-24"
-									maxLength={1000}
 									value={noteEditor.text}
 									disabled={noteMutation.isPending}
 									onChange={(event) =>
@@ -1238,9 +1242,14 @@ export function ProfileListsPage({
 											? "Anyone who can view this List can read this note."
 											: "This note follows the List’s visibility."}
 								</p>
+								{noteTooLong && (
+									<output id="list-note-length-error" className="text-sm">
+										Use 1,000 characters or fewer.
+									</output>
+								)}
 								<Button
 									type="submit"
-									disabled={noteMutation.isPending}
+									disabled={noteMutation.isPending || noteTooLong}
 									aria-busy={noteMutation.isPending}
 								>
 									{noteMutation.isPending ? "Saving…" : "Save note"}

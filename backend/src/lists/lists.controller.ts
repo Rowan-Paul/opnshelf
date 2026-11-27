@@ -11,6 +11,7 @@ import {
 	Delete,
 	Get,
 	Header,
+	HttpCode,
 	NotFoundException,
 	Param,
 	Post,
@@ -23,6 +24,7 @@ import {
 	ApiBearerAuth,
 	ApiCreatedResponse,
 	ApiNotFoundResponse,
+	ApiNoContentResponse,
 	ApiOkResponse,
 	ApiOperation,
 	ApiParam,
@@ -44,7 +46,6 @@ import {
 	ListsForItemDto,
 	ListSummaryDto,
 	ListWithItemsDto,
-	MediaInListDto,
 	ReorderListItemsDto,
 	UpdateListDto,
 	UpdateListItemNoteDto,
@@ -273,12 +274,13 @@ export class ListsController {
 	}
 
 	@Put(":slug/items/:itemId/note")
+	@HttpCode(204)
 	@ContentPrivacyCategory("lists")
 	@UseInterceptors(ContentPrivacyInterceptor)
 	@UseGuards(AuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: "Update a list item's note" })
-	@ApiOkResponse({ description: "Note saved", type: MediaInListDto })
+	@ApiNoContentResponse({ description: "Note saved" })
 	@ApiNotFoundResponse({ description: "List or item not found" })
 	@ApiUnauthorizedResponse({ description: "Not authenticated" })
 	async updateListItemNote(
@@ -286,7 +288,7 @@ export class ListsController {
 		@Param("slug") slug: string,
 		@Param("itemId") itemId: string,
 		@Body() dto: UpdateListItemNoteDto,
-	): Promise<MediaInListDto> {
+	): Promise<void> {
 		return this.listsService.updateListItemNote(
 			req.user.did,
 			req.user.session as ATSession,
