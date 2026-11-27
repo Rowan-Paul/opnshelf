@@ -12,6 +12,7 @@ import { useCSSVariable } from "uniwind";
 export function useThemeColors() {
 	const [
 		accent,
+		accentText,
 		mutedForeground,
 		destructive,
 		success,
@@ -21,6 +22,7 @@ export function useThemeColors() {
 		warning,
 	] = useCSSVariable([
 		"--color-accent",
+		"--color-accent-text",
 		"--color-muted-foreground",
 		"--color-destructive",
 		"--color-success",
@@ -31,6 +33,8 @@ export function useThemeColors() {
 	]);
 	return {
 		accent: String(accent ?? LIGHT_FALLBACK.accent),
+		/** Icons beside `text-accent-text` labels, e.g. the active Profile tab. */
+		accentText: String(accentText ?? LIGHT_FALLBACK.accentText),
 		mutedForeground: String(mutedForeground ?? LIGHT_FALLBACK.mutedForeground),
 		destructive: String(destructive ?? LIGHT_FALLBACK.destructive),
 		success: String(success ?? LIGHT_FALLBACK.success),
@@ -49,6 +53,7 @@ export type ThemeColors = ReturnType<typeof useThemeColors>;
 
 const LIGHT_FALLBACK = {
 	accent: "#f3bc00",
+	accentText: "#92400e",
 	mutedForeground: "#5e6d83",
 	destructive: "#dc2626",
 	success: "#16a34a",
