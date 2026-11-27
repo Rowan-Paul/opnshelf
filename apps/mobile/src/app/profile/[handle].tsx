@@ -104,6 +104,7 @@ export default function ProfileScreen() {
 			) : (
 				<EndReachedScrollView
 					stickyHeaderIndices={[1]}
+					keyboardShouldPersistTaps={tab === "library" ? "handled" : undefined}
 					showsVerticalScrollIndicator={false}
 				>
 					<ProfileHeader
@@ -152,7 +153,7 @@ export default function ProfileScreen() {
 						<ListsTab userDid={userDid} handle={profile.handle} />
 					) : tab === "library" ? (
 						isOwner || profile.libraryPublic !== false ? (
-							<LibraryTab userDid={userDid} />
+							<LibraryTab key={userDid} userDid={userDid} />
 						) : (
 							<View className="px-4 pt-4 pb-12">
 								<EmptyState

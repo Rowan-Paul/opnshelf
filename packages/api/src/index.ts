@@ -51,6 +51,12 @@ export {
 	retryUnlessNotFound,
 } from "./http-errors";
 export {
+	filterLibraryItems,
+	LIBRARY_SORT_OPTIONS,
+	type LibrarySort,
+	libraryItemTitle,
+} from "./library-view";
+export {
 	type ListItemRef,
 	type ListRef,
 	listsForItem,
