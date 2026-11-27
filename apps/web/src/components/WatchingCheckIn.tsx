@@ -182,7 +182,7 @@ export function ShelfWatchButton({
 								aria-label="Shelf actions"
 								ref={menuTrigger}
 								disabled={busy || checkIn.pending}
-								className={`btn ${variant} rounded-l-none border-current/20 border-l px-2`}
+								className={`btn ${variant} rounded-l-none border-l-current/20 px-2`}
 							>
 								<ChevronDown className="size-4" />
 							</button>
