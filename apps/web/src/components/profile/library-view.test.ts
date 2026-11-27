@@ -66,3 +66,23 @@ it("combines title and Box Set search with Format and preserves the loaded order
 	).toEqual([]);
 	expect(entries.map(({ id }) => id)).toEqual(["1", "2", "3", "4"]);
 });
+
+it("matches an episode Library Item by its episode name", () => {
+	const episode: LibraryItemDto = {
+		id: "1",
+		rkey: "1",
+		mediaType: "episode",
+		mediaId: "1",
+		format: "digital",
+		createdAt: "2026-10-02",
+		media: { name: "Harbour Lights" },
+		episodeName: "Pilot",
+	};
+	expect(
+		filterLibraryItems([episode], {
+			format: "all",
+			search: "pilot",
+			sort: "added",
+		}),
+	).toEqual([episode]);
+});

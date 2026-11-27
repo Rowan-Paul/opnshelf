@@ -38,6 +38,7 @@ export function filterLibraryItems(
 			(format === "all" || item.format === format) &&
 			(!query ||
 				libraryItemTitle(item).toLowerCase().includes(query) ||
+				item.episodeName?.toLowerCase().includes(query) ||
 				item.boxSet?.toLowerCase().includes(query)),
 	);
 	if (sort === "added") return matches;
